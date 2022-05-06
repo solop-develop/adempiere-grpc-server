@@ -33,7 +33,7 @@ EXPOSE ${SERVER_PORT}
 
 
 # Download and uncompress project
-RUN	mkdir -p /opt/Apps/ADempiere-gRPC-Server && \
+RUN	mkdir -p /opt/Apps/backend && \
 	# delete unused files
 	rm -rf /var/cache/apk/* \
 		/var/lib/apt/list/* \
@@ -41,11 +41,11 @@ RUN	mkdir -p /opt/Apps/ADempiere-gRPC-Server && \
 
 
 # Add connection template and start script files
-COPY "build-docker/all_in_one_connection.yaml" "build-docker/start.sh" "/opt/Apps/ADempiere-gRPC-Server/bin/"
-COPY dist/adempiere-gRPC-Server/ /opt/Apps/ADempiere-gRPC-Server/
+COPY "build-docker/all_in_one_connection.yaml" "build-docker/start.sh" "/opt/Apps/backend/bin/"
+COPY dist/backend/ /opt/Apps/backend/
 
 
-WORKDIR /opt/Apps/ADempiere-gRPC-Server/bin/
+WORKDIR /opt/Apps/backend/bin/
 
 
 # Start app
