@@ -26,7 +26,8 @@ ENV \
 	DB_NAME="adempiere" \
 	DB_USER="adempiere" \
 	DB_PASSWORD="adempiere" \
-	DB_TYPE="PostgreSQL"
+	DB_TYPE="PostgreSQL" \
+	ADEMPIERE_APPS_TYPE="wildfly"
 
 
 EXPOSE ${SERVER_PORT}
