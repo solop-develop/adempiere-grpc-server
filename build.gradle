@@ -5,16 +5,19 @@ apply plugin: 'maven-publish'
 buildscript {
     repositories {
         maven { // The google mirror is less flaky than mavenCentral()
-            url "https://maven-central.storage-download.googleapis.com/repos/central/data/" }
+            url "https://maven-central.storage-download.googleapis.com/repos/central/data/"
+        }
     }
     dependencies { // ASSUMES GRADLE 2.12 OR HIGHER. Use plugin version 0.7.5 with earlier
         // gradle versions
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.11' }
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.11'
+    }
 }
 
 repositories {
     maven { // The google mirror is less flaky than mavenCentral()
-        url "https://maven-central.storage-download.googleapis.com/repos/central/data/" }
+        url "https://maven-central.storage-download.googleapis.com/repos/central/data/"
+    }
     mavenCentral()
     mavenLocal()
 }
@@ -33,7 +36,13 @@ def protobufVersion = '3.5.1'
 def protocVersion = '3.5.1-1'
 
 dependencies {
-    implementation fileTree(dir: 'dependences', include: ['*.jar'])
+    implementation fileTree(
+        dir: 'dependencies',
+        include: [
+            '*.jar'
+        ]
+    )
+
 	implementation "com.google.api.grpc:proto-google-common-protos:1.0.0"
     implementation "io.grpc:grpc-alts:${grpcVersion}"
     implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
