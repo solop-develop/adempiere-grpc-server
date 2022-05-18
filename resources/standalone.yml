@@ -20,3 +20,4 @@ database:
     user: adempiere
     password: adempiere
     type: PostgreSQL
+ 
