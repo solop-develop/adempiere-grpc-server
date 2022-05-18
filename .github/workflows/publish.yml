@@ -139,6 +139,8 @@ jobs:
             ghcr.io/${{ env.OWNER_LC }}/${{ env.REPO_LC }}:latest
             ghcr.io/${{ env.OWNER_LC }}/${{ env.REPO_LC }}:${{ github.sha }}
             ghcr.io/${{ env.OWNER_LC }}/${{ env.REPO_LC }}:${{ github.event.release.tag_name }}
+          build-args: |
+            JDK_RELEASE=11-jdk
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
@@ -199,6 +201,8 @@ jobs:
             ${{ env.ORG_LC }}/${{ env.REPO_LC }}:latest
             ${{ env.ORG_LC }}/${{ env.REPO_LC }}:${{ github.sha }}
             ${{ env.ORG_LC }}/${{ env.REPO_LC }}:${{ github.event.release.tag_name }}
+          build-args: |
+            JDK_RELEASE=11-jdk
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}

@@ -1,20 +1,8 @@
-FROM adoptopenjdk/openjdk11:alpine-jre
-
+ARG JDK_RELEASE $JDK_RELEASE
+FROM eclipse-temurin:$JDK_RELEASE
 
 LABEL	maintainer="ysenih@erpya.com; EdwinBetanc0urt@outlook.com" \
 	description="ADempiere gRPC All In One Server used as ADempiere backend"
-
-
-# Add operative system dependencies
-#RUN apk add --no-cache libc6-compat fontconfig ttf-dejavu
-RUN	rm -rf /var/cache/apk/* && \
-    rm /usr/glibc-compat/lib/ld-linux-x86-64.so.2 && /usr/glibc-compat/sbin/ldconfig && \
-	apk update && \
-	apk add \
-		bash \
-	 	fontconfig \
-		ttf-dejavu
-
 
 # Init ENV with default values
 ENV \
@@ -29,25 +17,18 @@ ENV \
 	DB_TYPE="PostgreSQL" \
 	ADEMPIERE_APPS_TYPE="wildfly"
 
+WORKDIR /opt/Apps/backend/bin/
 
 EXPOSE ${SERVER_PORT}
 
-
-# Download and uncompress project
-RUN	mkdir -p /opt/Apps/backend && \
-	# delete unused files
-	rm -rf /var/cache/apk/* \
-		/var/lib/apt/list/* \
-		/tmp/*
-
-
 # Add connection template and start script files
-COPY "build-docker/all_in_one_connection.yaml" "build-docker/start.sh" "/opt/Apps/backend/bin/"
-COPY dist/backend/ /opt/Apps/backend/
+ADD dist/backend/ /opt/Apps/backend/
+ADD "build-docker/all_in_one_connection.yaml" "build-docker/start.sh" "/opt/Apps/backend/bin/"
 
+RUN groupadd adempiere && \
+	useradd -r -u 1001 -g adempiere adempiere && \
+	chown -R adempiere /opt/Apps/backend/ && \
+	chmod +x start.sh
 
-WORKDIR /opt/Apps/backend/bin/
-
-
-# Start app
-CMD	'sh' 'start.sh'
+USER adempiere
+ENTRYPOINT ["sh" , "start.sh"]

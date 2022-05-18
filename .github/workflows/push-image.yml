@@ -97,6 +97,8 @@ jobs:
             ${{ env.ORG_LC }}/${{ env.REPO_LC }}:latest
             ${{ env.ORG_LC }}/${{ env.REPO_LC }}:${{ github.sha }}
             ${{ env.ORG_LC }}/${{ env.REPO_LC }}:${{ steps.branch-name.outputs.current_branch }}
+          build-args: |
+            JDK_RELEASE=11-jdk
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
