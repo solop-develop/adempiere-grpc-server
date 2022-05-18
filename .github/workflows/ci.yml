@@ -8,15 +8,16 @@ name: Continuous Integration with Gradle
 on:
   push:
     branches:
-      - master
-      - develop
-      - bugfix/**
-      - feature/**
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
 
   pull_request:
     branches:
+      - main
       - master
       - develop
+      - experimental
       - bugfix/**
       - feature/**
 

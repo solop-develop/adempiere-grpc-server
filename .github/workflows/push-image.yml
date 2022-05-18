@@ -9,8 +9,11 @@ on:
   push:
     branches:
       - develop
+      - experimental
+      - main
       - master
       - action-**
+      - test**
 
 jobs:
 
