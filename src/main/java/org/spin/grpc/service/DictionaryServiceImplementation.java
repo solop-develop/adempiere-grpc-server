@@ -603,9 +603,11 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if(tab.getTabLevel() > 0
 				&& tabs != null) {
 			Optional<MTab> optionalTab = tabs.stream()
-					.filter(parentTab -> parentTab.getAD_Tab_ID() != tabId)
-					.filter(parentTab -> parentTab.getTabLevel() == 0)
-					.findFirst();
+				.filter(parentTab -> {
+					return parentTab.getAD_Tab_ID() != tabId
+						&& parentTab.getTabLevel() == 0;
+				})
+				.findFirst();
 			String mainColumnName = null;
 			MTable mainTable = null;
 			if(optionalTab.isPresent()) {
@@ -613,13 +615,17 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				mainColumnName = mainTable.getKeyColumns()[0];
 			}
 			List<MTab> tabList = tabs.stream()
-					.filter(parentTab -> parentTab.getAD_Tab_ID() != tabId)
-					.filter(parentTab -> parentTab.getAD_Tab_ID() != optionalTab.get().getAD_Tab_ID())
-					.filter(parentTab -> parentTab.getSeqNo() < seqNo)
-					.filter(parentTab -> parentTab.getTabLevel() < tabLevel)
-					.filter(parentTab -> !parentTab.isTranslationTab())
-					.sorted(Comparator.comparing(MTab::getSeqNo).thenComparing(MTab::getTabLevel).reversed())
-					.collect(Collectors.toList());
+				.filter(parentTab -> {
+					return parentTab.getAD_Tab_ID() != tabId
+						&& parentTab.getAD_Tab_ID() != optionalTab.get().getAD_Tab_ID()
+						&& parentTab.getSeqNo() < seqNo
+						&& parentTab.getTabLevel() < tabLevel
+						&& !parentTab.isTranslationTab();
+				})
+				.sorted(Comparator.comparing(MTab::getSeqNo)
+				.thenComparing(MTab::getTabLevel)
+				.reversed())
+				.collect(Collectors.toList());
 			//	Validate direct child
 			if(tabList.size() == 0) {
 				if(tab.getParent_Column_ID() != 0) {
@@ -747,10 +753,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}
 		//	Process
 		List<MProcess> processList = getProcessActionFromTab(context, tab);
-		if(processList != null
-				&& processList.size() > 0) {
-			for(MProcess process : processList) {
-				Process.Builder processBuilder = convertProcess(context, process, true);
+		if (processList != null && processList.size() > 0) {
+			for (MProcess process : processList) {
+				// get process associated without parameters
+				Process.Builder processBuilder = convertProcess(context, process, false);
 				builder.addProcesses(processBuilder.build());
 			}
 		}
@@ -1014,9 +1020,12 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			if(processParameter.getAD_Element_ID() > 0) {
 				columnName = processParameter.getAD_Element().getColumnName();
 			}
+
 			MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, 0, displayTypeId, Language.getLanguage(Env.getAD_Language(context)), columnName, referenceValueId, false, validationCode, false);
-			Reference.Builder referenceBuilder = convertReference(context, info);
-			builder.setReference(referenceBuilder.build());
+			if (info != null) {
+				Reference.Builder referenceBuilder = convertReference(context, info);
+				builder.setReference(referenceBuilder.build());
+			}
 		}
 		return builder;
 	}
