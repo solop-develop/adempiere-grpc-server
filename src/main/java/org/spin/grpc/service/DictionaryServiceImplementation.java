@@ -753,8 +753,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}
 		//	Process
 		List<MProcess> processList = getProcessActionFromTab(context, tab);
-		if (processList != null && processList.size() > 0) {
-			for (MProcess process : processList) {
+		if(processList != null
+				&& processList.size() > 0) {
+			for(MProcess process : processList) {
 				// get process associated without parameters
 				Process.Builder processBuilder = convertProcess(context, process, false);
 				builder.addProcesses(processBuilder.build());
