@@ -2838,15 +2838,18 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		} else {
 			orderByClause = " ORDER BY " + orderByClause;
 		}
-		//	Count records
+		//	Get page and count
 		int count = RecordUtil.countRecords(parsedSQL, tableName, values);
 		String nexPageToken = null;
 		int pageMultiplier = page == 0? 1: page;
 		if(count > (RecordUtil.getPageSize(request.getPageSize()) * pageMultiplier)) {
 			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (page + 1);
 		}
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
 		//	Add Row Number
-		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, count, RecordUtil.getPageSize(request.getPageSize()));
+		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
 		parsedSQL = parsedSQL + orderByClause;
 		//	Return
