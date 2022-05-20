@@ -859,6 +859,16 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setIsDirectPrint(process.isDirectPrint())
 				.setIsReport(process.isReport())
 				.setIsActive(process.isActive());
+
+		if (process.getAD_Browse_ID() > 0) {
+			builder.setBrowserUuid(ValueUtil.validateNull(process.getAD_Browse().getUUID()));
+		}
+		if (process.getAD_Form_ID() > 0) {
+			builder.setFormUuid(ValueUtil.validateNull(process.getAD_Form().getUUID()));
+		}
+		if (process.getAD_Workflow_ID() > 0) {
+			builder.setWorkflowUuid(ValueUtil.validateNull(process.getAD_Workflow().getUUID()));
+		}
 		//	Report Types
 		if(process.isReport()) {
 			MReportView reportView = null;
@@ -912,6 +922,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		//	Set View UUID
 		if(browser.getAD_View_ID() > 0) {
 			builder.setViewUuid(ValueUtil.validateNull(browser.getAD_View().getUUID()));
+		}
+		// set table name
+		if (browser.getAD_Table_ID() > 0) {
+			builder.setTableName(ValueUtil.validateNull(browser.getAD_Table().getTableName()));	
 		}
 		//	Window Reference
 		if(browser.getAD_Window_ID() > 0) {
