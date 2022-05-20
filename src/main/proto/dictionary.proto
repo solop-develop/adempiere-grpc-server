@@ -268,6 +268,9 @@ message Process {
 	bool is_active = 12;
 	// Reporty Type
 	repeated ReportExportType report_export_types = 13;
+	string browser_uuid = 14;
+	string form_uuid = 15;
+	string workflow_uuid = 16;
 }
 
 // Form
@@ -304,6 +307,7 @@ message Browser {
 	Process process = 18;
 	repeated Field fields = 19;
 	bool is_active = 20;
+	string table_name = 21;
 }
 
 // Zoom Window
