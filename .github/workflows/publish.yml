@@ -146,7 +146,7 @@ jobs:
       - name: Build and push Alpine Docker image for Adempiere Backend
         uses: docker/build-push-action@v2
         with:
-          context: docker/adempiere
+          context: .
           file: build-docker/Dockerfile.alpine
           push: true
           tags: | 
