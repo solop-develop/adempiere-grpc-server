@@ -22,11 +22,11 @@ WORKDIR /opt/Apps/backend/bin/
 EXPOSE ${SERVER_PORT}
 
 # Add connection template and start script files
-ADD dist/backend/ /opt/Apps/backend/
+ADD dist/backend /opt/Apps/backend/
 ADD "build-docker/all_in_one_connection.yaml" "build-docker/start.sh" "/opt/Apps/backend/bin/"
 
-RUN groupadd adempiere && \
-	useradd -r -u 1001 -g adempiere adempiere && \
+RUN addgroup adempiere && \
+	adduser --disabled-password --gecos ""  --ingroup adempiere --no-create-home adempiere && \
 	chown -R adempiere /opt/Apps/backend/ && \
 	chmod +x start.sh
 
