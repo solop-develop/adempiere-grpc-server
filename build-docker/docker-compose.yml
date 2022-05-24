@@ -1,0 +1,31 @@
+version: "3.7"
+
+networks:
+  adempiere-backend:
+
+volumes:
+  pgdata:
+
+services:
+  adempiere.db:
+    image: solopcloud/adempiere-postgres
+    volumes:
+      - "pgdata:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_PASSWORD=adempiere
+      - DB_NAME=adempiere
+      - ADEMPIERE_PASSWORD=adempiere
+    networks:
+      - adempiere-backend
+      
+  adempiere.backend:
+    image: solopcloud/adempiere-backend
+    ports:
+      - "50059:50059"
+    environment:
+      - SERVICES_ENABLED="access; business; core; dashboarding; dictionary; enrollment; log; ui; workflow; store; pos;"
+      - DB_HOST=adempiere.db
+    depends_on:
+      - adempiere.db
+    networks:
+      - adempiere-backend

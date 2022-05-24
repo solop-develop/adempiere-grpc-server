@@ -1,0 +1,20 @@
+version: '3.1'
+
+services:
+
+  database:
+    image: solopcloud/adempiere-postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=adempiere
+      - DB_NAME=adempiere
+      - ADEMPIERE_PASSWORD=adempiere
+
+  application:
+    image: solopcloud/adempiere-backend
+    restart: always
+    environment:
+      - SERVICES_ENABLED="access; business; core; dashboarding; dictionary; enrollment; log; ui; workflow; store; pos;"
+      - DB_HOST=database
+    ports:
+      - 50059:50059
