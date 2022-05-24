@@ -302,7 +302,7 @@ public class RecordUtil {
 		}
 		return sql;
 	}
-	
+
 	/**
 	 * Count records
 	 * @param sql
@@ -311,7 +311,28 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static int countRecords(String sql, String tableName, List<Object> parameters) {
-		Matcher matcher = Pattern.compile("\\s+(FROM)\\s+(" + tableName + ")(\\s+)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
+		return countRecords(sql, tableName, null, parameters);
+	}
+	
+	/**
+	 * Count records
+	 * @param sql
+	 * @param tableName
+	 * @param tableNameAlias
+	 * @param parameters
+	 * @return
+	 */
+	public static int countRecords(String sql, String tableName, String tableNameAlias, List<Object> parameters) {
+		String tableWithAliases = tableName;
+		if (!Util.isEmpty(tableNameAlias)) {
+			// tableName tableAlias | tableName AS tableAlias | tableName
+			tableWithAliases = tableName + " " + tableNameAlias + "|" + tableName + " AS " + tableNameAlias; // + "|" + tableName;
+		}
+		Matcher matcher = Pattern.compile(
+				"\\s+(FROM)\\s+(" + tableWithAliases + ")(\\s+)",
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			)
+			.matcher(sql);
 		int positionFrom = -1;
 		if(matcher.find()) {
 			positionFrom = matcher.start();

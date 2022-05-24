@@ -1044,7 +1044,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			DB.close(rs, pstmt);
 		}
 		//	Set record counts
-		builder.setRecordCount(recordCount);
+		if (builder.getRecordCount() <= 0) {
+			builder.setRecordCount(recordCount);
+		}
 		//	Return
 		return builder;
 	}
@@ -2830,16 +2832,19 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		String tableNameAlias = parentDefinition.getTableAlias();
 		String tableName = parentDefinition.getAD_Table().getTableName();
 		//	
-		String parsedSQL = MRole.getDefault().addAccessSQL(sql.toString(),
-				tableNameAlias, MRole.SQL_FULLYQUALIFIED,
-				MRole.SQL_RO);
+		String parsedSQL = MRole.getDefault().addAccessSQL(
+			sql.toString(),
+			tableNameAlias,
+			MRole.SQL_FULLYQUALIFIED,
+			MRole.SQL_RO
+		);
 		if(Util.isEmpty(orderByClause)) {
 			orderByClause = "";
 		} else {
 			orderByClause = " ORDER BY " + orderByClause;
 		}
 		//	Get page and count
-		int count = RecordUtil.countRecords(parsedSQL, tableName, values);
+		int count = RecordUtil.countRecords(parsedSQL, tableName, tableNameAlias, values);
 		String nexPageToken = null;
 		int pageMultiplier = page == 0? 1: page;
 		if(count > (RecordUtil.getPageSize(request.getPageSize()) * pageMultiplier)) {
@@ -2856,6 +2861,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		builder = convertBrowserResult(browser, parsedSQL, values);
 		//	Validate page token
 		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setRecordCount(count);
 		//	Return
 		return builder;
 	}
@@ -2924,7 +2930,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			DB.close(rs, pstmt);
 		}
 		//	Set record counts
-		builder.setRecordCount(recordCount);
+		if (builder.getRecordCount() <= 0) {
+			builder.setRecordCount(recordCount);
+		}
 		//	Return
 		return builder;
 	}
