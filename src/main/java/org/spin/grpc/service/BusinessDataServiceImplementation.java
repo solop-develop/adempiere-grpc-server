@@ -530,10 +530,23 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 */
 	private Empty.Builder deleteEntity(Properties context, DeleteEntityRequest request) {
 		Trx.run(transactionName -> {
-			PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), request.getId(), transactionName);
-			if(entity != null
-					&& entity.get_ID() >= 0) {
-				entity.deleteEx(true);
+			if (!Util.isEmpty(request.getUuid()) || request.getId() > 0) {
+				PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), request.getId(), transactionName);
+				if (entity != null && entity.get_ID() > 0) {
+					entity.deleteEx(true);
+				}
+			}
+			else {
+				List<Integer> ids = request.getIdsList();
+				if (ids.size() > 0) {
+					MTable table = MTable.get(context, request.getTableName());
+					ids.stream().forEach(id -> {
+						PO entity = table.getPO(id, transactionName);
+						if (entity != null && entity.get_ID() > 0) {
+							entity.deleteEx(true);
+						}
+					});
+				}
 			}
 		});
 		//	Return

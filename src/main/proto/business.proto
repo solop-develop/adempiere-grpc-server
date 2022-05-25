@@ -337,6 +337,8 @@ message DeleteEntityRequest {
 	string table_name = 2;
 	string uuid = 3;
 	int32 id = 4;
+	repeated string uuids = 5;
+	repeated int32 ids = 6;
 }
 
 // Browsers List
