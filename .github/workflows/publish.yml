@@ -140,7 +140,7 @@ jobs:
       - name: Set Alpine Dockerfile 
         run: |
           cp build-docker/Dockerfile.prod build-docker/Dockerfile.alpine
-           sed -i "s|RUN|RUN $(cat build-docker/alpine-adds-on.txt)|g" build-docker/Dockerfile.alpine
+          sed -i "s|RUN|RUN $(cat build-docker/alpine-adds-on.txt)|g" build-docker/Dockerfile.alpine
 
       #Build Alpine Adempiere Based Tomcat Image
       - name: Build and push Alpine Docker image for Adempiere Backend
