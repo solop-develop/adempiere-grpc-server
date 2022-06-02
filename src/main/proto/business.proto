@@ -378,7 +378,7 @@ message GetDefaultValueRequest {
 	string browse_field_uuid = 4;
 	string column_uuid = 5;
 	repeated KeyValue context_attributes = 6;
-	
+	Value value = 7;
 }
 
 // Default Value Response

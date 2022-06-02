@@ -723,7 +723,12 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setParentTabUuid(ValueUtil.validateNull(parentTabUuid))
 				.setIsChangeLog(table.isChangeLog())
 				.setIsActive(tab.isActive())
-				.addAllContextColumnNames(DictionaryUtil.getContextColumnNames(Optional.ofNullable(whereClause.toString()).orElse("") + Optional.ofNullable(tab.getOrderByClause()).orElse("")));
+				.addAllContextColumnNames(
+					DictionaryUtil.getContextColumnNames(
+						Optional.ofNullable(whereClause.toString()).orElse("")
+						+ Optional.ofNullable(tab.getOrderByClause()).orElse("")
+					)
+				);
 		//	For link
 		if(contextInfoId > 0) {
 			ContextInfo.Builder contextInfoBuilder = convertContextInfo(context, contextInfoId);
@@ -918,7 +923,13 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setIsSelectedByDefault(browser.isSelectedByDefault())
 				.setIsShowTotal(browser.isShowTotal())
 				.setIsUpdateable(browser.isUpdateable())
-				.addAllContextColumnNames(DictionaryUtil.getContextColumnNames(Optional.ofNullable(query).orElse("") + Optional.ofNullable(browser.getWhereClause()).orElse("") + Optional.ofNullable(orderByClause).orElse("")));
+				.addAllContextColumnNames(
+					DictionaryUtil.getContextColumnNames(
+						Optional.ofNullable(query).orElse("")
+						+ Optional.ofNullable(browser.getWhereClause()).orElse("")
+						+ Optional.ofNullable(orderByClause).orElse("")
+					)
+				);
 		//	Set View UUID
 		if(browser.getAD_View_ID() > 0) {
 			builder.setViewUuid(ValueUtil.validateNull(browser.getAD_View().getUUID()));

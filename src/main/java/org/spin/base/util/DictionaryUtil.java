@@ -33,6 +33,7 @@ import org.compiere.model.MTable;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
+import org.compiere.util.Util;
 import org.spin.util.ASPUtil;
 
 /**
@@ -120,11 +121,11 @@ public class DictionaryUtil {
 		sql.append("SELECT DISTINCT ");
 		AtomicBoolean co = new AtomicBoolean(false);
 		ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID()).forEach(field -> {
-			if (co.get())
+			if (co.get()) {
 				sql.append(",");
+			}
 			MViewColumn viewColumn = field.getAD_View_Column();
-			if (viewColumn.getColumnSQL() != null
-					&& viewColumn.getColumnSQL().length() > 0) {
+			if (!Util.isEmpty(viewColumn.getColumnSQL(), true)) {
 				sql.append(viewColumn.getColumnSQL());
 				co.set(true);
 			}

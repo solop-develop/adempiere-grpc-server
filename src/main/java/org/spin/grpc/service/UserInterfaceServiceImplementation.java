@@ -2167,8 +2167,16 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		} else {
 			throw new AdempiereException("@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Process_Para_ID@ / @IsMandatory@");
 		}
+		
+		// overwrite default value with user value request
+		if (Optional.ofNullable(request.getValue()).isPresent()
+			&& !Util.isEmpty(request.getValue().getStringValue())) {
+			defaultValue = request.getValue().getStringValue();
+		}
+		
 		//	Validate SQL
-		return getDefaultKeyAndValue(request.getContextAttributesList(), defaultValue, referenceId, referenceValueId, columnName, validationRuleId);
+		DefaultValue.Builder builder = getDefaultKeyAndValue(request.getContextAttributesList(), defaultValue, referenceId, referenceValueId, columnName, validationRuleId);
+		return builder;
 	}
 	
 	
