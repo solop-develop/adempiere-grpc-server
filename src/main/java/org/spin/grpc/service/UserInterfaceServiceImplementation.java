@@ -178,6 +178,7 @@ import org.spin.grpc.util.SetPreferenceRequest;
 import org.spin.grpc.util.SetRecordAccessRequest;
 import org.spin.grpc.util.Translation;
 import org.spin.grpc.util.UnlockPrivateAccessRequest;
+import org.spin.grpc.util.UpdateBrowserEntityRequest;
 import org.spin.grpc.util.UserInterfaceGrpc.UserInterfaceImplBase;
 import org.spin.grpc.util.Value;
 import org.spin.model.I_AD_AttachmentReference;
@@ -337,7 +338,97 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+	@Override
+	public void updateBrowserEntity(UpdateBrowserEntityRequest request, StreamObserver<Entity> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Requested is Null");
+			}
+			log.fine("Object List Requested = " + request);
+			Properties context = ContextManager.getContext(
+				request.getClientRequest()
+			);
+
+			Entity.Builder entityValue = updateBrowserEntity(context, request);
+			responseObserver.onNext(entityValue.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.augmentDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+
+	/**
+	 * Update Browser Entity
+	 * @param context
+	 * @param request
+	 * @return
+	 */
+	private Entity.Builder updateBrowserEntity(Properties context, UpdateBrowserEntityRequest request) {
+		MBrowse browser = ASPUtil.getInstance(context).getBrowse(RecordUtil.getIdFromUuid(I_AD_Browse.Table_Name, request.getUuid(), null));
+
+		if (!browser.isUpdateable()) {
+			throw new AdempiereException("Smart Browser not updateable record");
+		}
+
+		if (browser.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("No Table defined in the Smart Browser");
+		}
+
+		PO entity = RecordUtil.getEntity(context, browser.getAD_Table_ID(), null, request.getRecordId(), null);
+		if (entity == null || entity.get_ID() <= 0) {
+			// Return
+			return ConvertUtil.convertEntity(entity);
+		}
+
+		MView view = new MView(context, browser.getAD_View_ID());
+		List<MViewColumn> viewColumnsList = view.getViewColumns();
+
+		request.getAttributesList().forEach(attribute -> {
+			// find view column definition
+			MViewColumn viewColumn = viewColumnsList
+				.stream()
+				.filter(column -> {
+					return column.getColumnName().equals(attribute.getKey());
+				})
+				.findFirst()
+				.get();
+
+			// if view aliases not exists, next element
+			if (viewColumn == null) {
+				return;
+			}
+			MViewDefinition viewDefinition = MViewDefinition.get(context, viewColumn.getAD_View_Definition_ID());
+
+			// not same table setting in smart browser and view definition
+			if (browser.getAD_Table_ID() != viewDefinition.getAD_Table_ID()) {
+				return;
+			}
+			String columnName = MColumn.getColumnName(context, viewColumn.getAD_Column_ID());
+
+			int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), columnName);
+
+			Object value = null;
+			if (referenceId > 0) {
+				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
+			}
+			if (value == null) {
+				value = ValueUtil.getObjectFromValue(attribute.getValue());
+			}
+			entity.set_ValueOfColumn(columnName, value);
+		});
+		//	Save entity
+		entity.saveEx();
+
+		//	Return
+		return ConvertUtil.convertEntity(entity);
+	}
+
 	@Override
 	public void listReferences(ListReferencesRequest request, StreamObserver<ListReferencesResponse> responseObserver) {
 		try {

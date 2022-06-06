@@ -218,6 +218,12 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static boolean getBooleanFromValue(Value value) {
+		if (!Util.isEmpty(value.getStringValue())) {
+			return "Y".equals(value.getStringValue())
+				|| "Yes".equals(value.getStringValue())
+				|| "true".equals(value.getStringValue());
+		}
+
 		return value.getBooleanValue();
 	}
 	

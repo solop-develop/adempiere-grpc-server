@@ -56,6 +56,8 @@ service UserInterface {
 	rpc ListLookupItems(ListLookupItemsRequest) returns (ListLookupItemsResponse) {}
 	//	Request Browser Data
 	rpc ListBrowserItems(ListBrowserItemsRequest) returns (ListBrowserItemsResponse) {}
+	// Update Browser Entity
+	rpc UpdateBrowserEntity(UpdateBrowserEntityRequest) returns (Entity) {}
 	// List a References
 	rpc ListReferences(ListReferencesRequest) returns (ListReferencesResponse) {}
 	// Get context Info
@@ -341,11 +343,30 @@ message DeleteEntityRequest {
 	repeated int32 ids = 6;
 }
 
+// Browser request
+message ListBrowserItemsRequest {
+	string uuid = 1;
+	ClientRequest client_request = 2;
+	Criteria criteria = 3;
+	repeated KeyValue context_attributes = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+}
+
 // Browsers List
 message ListBrowserItemsResponse {
 	int64 record_count = 1;
 	repeated Entity records = 2;
 	string next_page_token = 3;
+}
+
+// Update Browser Entity Request
+message UpdateBrowserEntityRequest {
+	ClientRequest client_request = 1;
+	string uuid = 2;
+	int32 id = 3;
+	int32 record_id = 4;
+	repeated KeyValue attributes = 5;
 }
 
 // Context Info Value
@@ -1121,16 +1142,6 @@ message ListDrillTablesResponse {
 	int64 record_count = 1;
 	repeated DrillTable drill_tables = 2;
 	string next_page_token = 3;
-}
-
-// Browser request
-message ListBrowserItemsRequest {
-	string uuid = 1;
-	ClientRequest client_request = 2;
-	Criteria criteria = 3;
-	repeated KeyValue context_attributes = 4;
-	int32 page_size = 5;
-	string page_token = 6;
 }
 
 // List References

@@ -570,7 +570,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			throw new AdempiereException("@Error@ PO is null");
 		}
 		request.getAttributesList().forEach(attribute -> {
-			int referenceId = getReferenceId(entity.get_Table_ID(), attribute.getKey());
+			int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if(referenceId > 0) {
 				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
@@ -597,7 +597,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		if(entity != null
 				&& entity.get_ID() >= 0) {
 			request.getAttributesList().forEach(attribute -> {
-				int referenceId = getReferenceId(entity.get_Table_ID(), attribute.getKey());
+				int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 				Object value = null;
 				if(referenceId > 0) {
 					value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
@@ -613,21 +613,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		//	Return
 		return ConvertUtil.convertEntity(entity);
 	}
-	
-	/**
-	 * Get reference from column name and table
-	 * @param tableId
-	 * @param columnName
-	 * @return
-	 */
-	private int getReferenceId(int tableId, String columnName) {
-		MColumn column = MTable.get(Env.getCtx(), tableId).getColumn(columnName);
-		if(column == null) {
-			return -1;
-		}
-		return column.getAD_Reference_ID();
-	}
-	
+
 	/**
 	 * Convert Object to list
 	 * @param request

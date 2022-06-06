@@ -98,7 +98,24 @@ public class RecordUtil {
 	public static boolean isValidNextPageToken(int count, int offset, int limit) {
 		return count > (offset + limit) && count > limit;
 	}
-	
+
+	/**
+	 * get Entity from Table ID and (Record UUID / Record ID)
+	 * @param context
+	 * @param tableId
+	 * @param uuid
+	 * @param recordId
+	 * @return
+	 */
+	public static PO getEntity(Properties context, int tableId, String uuid, int recordId, String transactionName) {
+		if (tableId <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		String tableName = MTable.getTableName(context, tableId);
+		return getEntity(context, tableName, uuid, recordId, transactionName);
+	}
+
 	/**
 	 * get Entity from Table and (UUID / Record ID)
 	 * @param context

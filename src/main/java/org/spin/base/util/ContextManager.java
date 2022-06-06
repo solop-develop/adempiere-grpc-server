@@ -34,6 +34,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.grpc.util.ClientRequest;
 
 /**
  * Class for handle Context
@@ -59,7 +60,21 @@ public class ContextManager {
 	public static Properties getContext(String sessionUuid, String language) {
 		return getContext(sessionUuid, language, null, null);
 	}
-	
+
+	/**
+	 * Get context from session
+	 * @param ClientRequest client request with session uuid, language, organization uuid, and warehouse uuid
+	 * @return context
+	 */
+	public static Properties getContext(ClientRequest clientRequest) {
+		return getContext(
+			clientRequest.getSessionUuid(), 
+			clientRequest.getLanguage(), 
+			clientRequest.getOrganizationUuid(), 
+			clientRequest.getWarehouseUuid()
+		);
+	}
+
 	/**
 	 * Get context from session
 	 * @param sessionUuid
