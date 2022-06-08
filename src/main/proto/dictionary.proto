@@ -271,7 +271,7 @@ message Process {
 	string browser_uuid = 14;
 	string form_uuid = 15;
 	string workflow_uuid = 16;
-	bool is_has_parameters = 17;
+
 }
 
 // Form

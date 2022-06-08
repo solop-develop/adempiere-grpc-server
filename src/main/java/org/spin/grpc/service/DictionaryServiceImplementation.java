@@ -792,11 +792,8 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			}
 		}
 		//	For parameters
-
-		List<MProcessPara> processParametersList = ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID());
-		builder.setIsHasParameters(processParametersList.size() > 0);
 		if(withParams) {
-			for(MProcessPara parameter : processParametersList) {
+			for(MProcessPara parameter : ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID())) {
 				Field.Builder fieldBuilder = convertProcessParameter(context, parameter);
 				builder.addParameters(fieldBuilder.build());
 			}
