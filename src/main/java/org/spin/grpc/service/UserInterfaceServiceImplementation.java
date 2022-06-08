@@ -1004,13 +1004,20 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
 			}
 		});
-		String where = Env.parseContext(context, windowNo, tab.getWhereClause(), false);
+
+		// get where clause including link column and parent column
+		String where = DictionaryUtil.getSQLWhereClauseFromTab(context, tab, null);
+		String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
+		
 		if(Util.isEmpty(where)
-				&& !Util.isEmpty(tab.getWhereClause())) {
+				&& !Util.isEmpty(parsedWhereClause)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
 		}
 		Criteria criteria = request.getFilters();
-		StringBuffer whereClause = new StringBuffer(where);
+		if (tab.getAD_Column_ID() > 0) {
+			
+		}
+		StringBuffer whereClause = new StringBuffer(parsedWhereClause);
 		List<Object> params = new ArrayList<>();
 		//	For dynamic condition
 		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(criteria, tableName, params);
@@ -1100,10 +1107,14 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
 				Entity.Builder valueObjectBuilder = Entity.newBuilder();
+				valueObjectBuilder.setTableName(table.getTableName());
 				ResultSetMetaData metaData = rs.getMetaData();
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
 						String columnName = metaData.getColumnName (index);
+						if (columnName.toUpperCase().equals("UUID")) {
+							valueObjectBuilder.setUuid(rs.getString(index));
+						}
 						MColumn field = columnsMap.get(columnName.toUpperCase());
 						Value.Builder valueBuilder = Value.newBuilder();
 						//	Display Columns
@@ -1114,6 +1125,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 								valueObjectBuilder.putValues(columnName, valueBuilder.build());
 							}
 							continue;
+						}
+						if (field.isKey()) {
+							valueObjectBuilder.setId(rs.getInt(index));
 						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
@@ -3296,6 +3310,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if(keyValue == null) {
 			return builder;
 		}
+		System.out.println(ValueUtil.validateNull(uuidValue));
 		builder.setUuid(ValueUtil.validateNull(uuidValue));
 		
 		if(keyValue instanceof Integer) {
