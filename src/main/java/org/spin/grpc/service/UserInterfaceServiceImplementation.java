@@ -1014,9 +1014,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
 		}
 		Criteria criteria = request.getFilters();
-		if (tab.getAD_Column_ID() > 0) {
-			
-		}
 		StringBuffer whereClause = new StringBuffer(parsedWhereClause);
 		List<Object> params = new ArrayList<>();
 		//	For dynamic condition
@@ -3310,7 +3307,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if(keyValue == null) {
 			return builder;
 		}
-		System.out.println(ValueUtil.validateNull(uuidValue));
 		builder.setUuid(ValueUtil.validateNull(uuidValue));
 		
 		if(keyValue instanceof Integer) {

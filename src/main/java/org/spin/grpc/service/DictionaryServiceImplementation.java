@@ -796,7 +796,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		List<MProcessPara> processParametersList = ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID());
 		builder.setIsHasParameters(processParametersList.size() > 0);
 		if(withParams) {
-			for (MProcessPara parameter : processParametersList) {
+			for(MProcessPara parameter : processParametersList) {
 				Field.Builder fieldBuilder = convertProcessParameter(context, parameter);
 				builder.addParameters(fieldBuilder.build());
 			}
@@ -855,7 +855,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			builder.setProcess(processBuilder.build());
 		}
 		//	For parameters
-		if (withFields) {
+		if(withFields) {
 			for(MBrowseField field : ASPUtil.getInstance(context).getBrowseFields(browser.getAD_Browse_ID())) {
 				Field.Builder fieldBuilder = convertBrowseField(context, field);
 				builder.addFields(fieldBuilder.build());
