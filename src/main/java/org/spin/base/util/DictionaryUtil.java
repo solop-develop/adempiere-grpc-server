@@ -155,9 +155,11 @@ public class DictionaryUtil {
 						&& parentTab.getTabLevel() < tabLevel
 						&& !parentTab.isTranslationTab();
 				})
-				.sorted(Comparator.comparing(MTab::getSeqNo)
-				.thenComparing(MTab::getTabLevel)
-				.reversed())
+				.sorted(
+					Comparator.comparing(MTab::getSeqNo)
+						.thenComparing(MTab::getTabLevel)
+						.reversed()
+				)
 				.collect(Collectors.toList());
 			//	Validate direct child
 			if(tabList.size() == 0) {
@@ -224,11 +226,11 @@ public class DictionaryUtil {
 			}
 		}
 
+		StringBuffer where = new StringBuffer(ValueUtil.validateNull(tab.getWhereClause()));
 		//	Set where clause for tab
-		if(!Util.isEmpty(tab.getWhereClause(), true)) {
-			whereClause.append(" AND ").append("(").append(tab.getWhereClause()).append(")");
-		} else {
-			whereClause.append(ValueUtil.validateNull(tab.getWhereClause()));
+		if(!Util.isEmpty(whereClause.toString(), true)) {
+			where.append(" AND ").append("(").append(whereClause).append(")");
+			return where.toString();
 		}
 		return whereClause.toString();
 	}

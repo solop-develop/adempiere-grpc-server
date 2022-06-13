@@ -1009,8 +1009,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		String where = DictionaryUtil.getSQLWhereClauseFromTab(context, tab, null);
 		String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
 		
-		if(Util.isEmpty(where)
-				&& !Util.isEmpty(parsedWhereClause)) {
+		if(Util.isEmpty(parsedWhereClause)
+				&& !Util.isEmpty(where)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
 		}
 		Criteria criteria = request.getFilters();
@@ -1018,8 +1018,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		List<Object> params = new ArrayList<>();
 		//	For dynamic condition
 		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(criteria, tableName, params);
-		if(!Util.isEmpty(dynamicWhere)) {
-			if(whereClause.length() > 0) {
+		if(!Util.isEmpty(dynamicWhere, true)) {
+			if(!Util.isEmpty(whereClause.toString(), true)) {
 				whereClause.append(" AND ");
 			}
 			//	Add
@@ -1044,7 +1044,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ListTabEntitiesResponse.Builder builder = ListTabEntitiesResponse.newBuilder();
 		//	
 		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromTab(tab));
-		if (whereClause.length() > 0) {
+		if (!Util.isEmpty(whereClause.toString(), true)) {
 			sql.append(" WHERE ").append(whereClause); // includes first AND
 		}
 		//	
