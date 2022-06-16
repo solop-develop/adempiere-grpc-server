@@ -228,11 +228,15 @@ public class DictionaryUtil {
 
 		StringBuffer where = new StringBuffer(ValueUtil.validateNull(tab.getWhereClause()));
 		//	Set where clause for tab
-		if(!Util.isEmpty(whereClause.toString(), true)) {
-			where.append(" AND ").append("(").append(whereClause).append(")");
+		if (Util.isEmpty(where.toString(), true)) {
+			return whereClause.toString();
+		}
+		if (Util.isEmpty(whereClause.toString(), true)) {
 			return where.toString();
 		}
-		return whereClause.toString();
+		// joined tab where clause with generated where clause
+		where.append(" AND ").append("(").append(whereClause).append(")");
+		return where.toString();
 	}
 	
 	/**
