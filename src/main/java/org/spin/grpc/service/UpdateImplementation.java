@@ -141,7 +141,7 @@ public class UpdateImplementation extends UpdateCenterImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber("page-token", request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		//	Get POS List
 		StringBuffer whereClause = new StringBuffer("AD_Migration_ID = ?");
 		List<Object> parameters = new ArrayList<>();
@@ -230,7 +230,7 @@ public class UpdateImplementation extends UpdateCenterImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber("page-token", request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		//	Get POS List
 		StringBuffer whereClause = new StringBuffer("EntityType = ?");
 		List<Object> parameters = new ArrayList<>();
@@ -303,7 +303,7 @@ public class UpdateImplementation extends UpdateCenterImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber("page-token", request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		//	Get POS List
 		String whereClause = null;
 		List<Object> parameters = new ArrayList<>();

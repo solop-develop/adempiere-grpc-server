@@ -346,7 +346,7 @@ public class LogsServiceImplementation extends LogsImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		Query query = new Query(Env.getCtx(), I_AD_WF_Process.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters);
 		int count = query.count();
@@ -405,7 +405,7 @@ public class LogsServiceImplementation extends LogsImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		Query query = new Query(Env.getCtx(), I_AD_ChangeLog.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters);
 		int count = query.count();
@@ -867,7 +867,7 @@ public class LogsServiceImplementation extends LogsImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int id = request.getId();
 		if(id <= 0) {
 			id = RecordUtil.getIdFromUuid(I_CM_Chat.Table_Name, request.getUuid(), null);
@@ -929,7 +929,7 @@ public class LogsServiceImplementation extends LogsImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		Query query = new Query(Env.getCtx(), I_CM_Chat.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters);
 		int count = query.count();

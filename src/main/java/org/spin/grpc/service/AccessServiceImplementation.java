@@ -256,7 +256,7 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		Query query = new Query(Env.getCtx(), I_AD_Role.Table_Name, 
 				"EXISTS(SELECT 1 FROM AD_User_Roles ur WHERE ur.AD_Role_ID = AD_Role.AD_Role_ID AND ur.AD_User_ID = ?)", null)
 				.setParameters(session.getCreatedBy());

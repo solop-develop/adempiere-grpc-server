@@ -184,7 +184,7 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		Query query = new Query(context, I_AD_WF_Activity.Table_Name, whereClause, null)
 				.setParameters(userId, userId, userId, userId);
 		int count = query.count();
@@ -428,7 +428,7 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		Query query = new Query(context, I_AD_Workflow.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters);
 		int count = query.count();

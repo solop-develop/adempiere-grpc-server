@@ -315,7 +315,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		ListBusinessPartnersResponse.Builder builder = ListBusinessPartnersResponse.newBuilder();
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int limit = (pageNumber + 1) * RecordUtil.getPageSize(request.getPageSize());
 		//	Get business partner list
 		//	Dynamic where clause
@@ -764,7 +764,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int limit = (pageNumber + 1) * RecordUtil.getPageSize(request.getPageSize());
 		Query query = new Query(Env.getCtx(), I_AD_Org.Table_Name, whereClause, null)
 				.setParameters(parameters)
@@ -798,7 +798,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int limit = (pageNumber + 1) * RecordUtil.getPageSize(request.getPageSize());
 		int id = request.getOrganizationId();
 		if(id <= 0) {
