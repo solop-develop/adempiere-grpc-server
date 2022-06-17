@@ -249,6 +249,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			}
 		}
 		PO entity = null;
+		List<KeyValue> parametersList = new ArrayList<KeyValue>();
+		parametersList.addAll(request.getParametersList());
 		if((recordId != 0
 				|| !Util.isEmpty(request.getUuid()))
 				&& !Util.isEmpty(request.getTableName())) {
@@ -260,7 +262,18 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			if(entity != null) {
 				recordId = entity.get_ID();
 			}
+
+			// Add record as parameter
+			Value.Builder value = Value.newBuilder()
+				.setValueType(Value.ValueType.INTEGER)
+				.setIntValue(recordId);
+			KeyValue.Builder recordParameter = KeyValue.newBuilder()
+				.setKey(request.getTableName() + "_ID")
+				.setValue(value);
+			// set as first position
+			parametersList.add(0, recordParameter.build());
 		}
+
 		//	Add to recent Item
 		addToRecentItem(MMenu.ACTION_Process, process.getAD_Process_ID());
 		//	Call process builder
@@ -291,7 +304,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		String documentAction = null;
 		//	Parameters
 		if(request.getParametersCount() > 0) {
-			for(KeyValue parameter : request.getParametersList()) {
+			for(KeyValue parameter : parametersList) {
 				Object value = ValueUtil.getObjectFromValue(parameter.getValue());
 				if(value != null) {
 					builder.withParameter(parameter.getKey(), value);
