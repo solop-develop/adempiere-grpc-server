@@ -1039,7 +1039,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int count = 0;
 		ListTabEntitiesResponse.Builder builder = ListTabEntitiesResponse.newBuilder();
 		//	
@@ -2665,7 +2665,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int count = 0;
 		//	Count records
 		count = RecordUtil.countRecords(sql, reference.TableName, parameters);
@@ -2962,7 +2962,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = pageNumber * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By

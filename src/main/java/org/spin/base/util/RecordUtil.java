@@ -63,12 +63,15 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static int getPageNumber(String sessionUuid, String pageToken) {
-		int page = 0;
+		int page = 1;
 		String pagePrefix = getPagePrefix(sessionUuid);
 		if(!Util.isEmpty(pageToken)) {
 			if(pageToken.startsWith(pagePrefix)) {
 				try {
 					page = Integer.parseInt(pageToken.replace(pagePrefix, ""));
+					if (page < 1) {
+						page = 1;
+					}
 				} catch (Exception e) {
 					//	
 				}
