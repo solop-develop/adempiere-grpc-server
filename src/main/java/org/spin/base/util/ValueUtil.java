@@ -262,8 +262,16 @@ public class ValueUtil {
 			return getValueFromDate((Timestamp) value);
 		} else if(DisplayType.isText(referenceId)) {
 			return getValueFromString((String) value);
+		} else if (DisplayType.Button == referenceId) {
+			if (value instanceof Integer) {
+				return getValueFromInteger((Integer) value);
+			} else if(value instanceof BigDecimal) {
+				return getValueFromInteger(((BigDecimal) value).intValue());
+			} else if (value instanceof String) {
+				return getValueFromString((String) value);
+			}
 		}
-		//	
+		//
 		return builderValue;
 	}
 	
