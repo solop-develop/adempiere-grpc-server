@@ -16,6 +16,9 @@
 package org.spin.base.util;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,6 +46,7 @@ import org.compiere.model.MCharge;
 import org.compiere.model.MChatEntry;
 import org.compiere.model.MCity;
 import org.compiere.model.MClientInfo;
+import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCountry;
 import org.compiere.model.MCurrency;
@@ -73,6 +77,7 @@ import org.compiere.model.MWarehouse;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.MimeType;
 import org.compiere.util.Util;
@@ -212,6 +217,10 @@ public class ConvertUtil {
 		//	Convert attributes
 		POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), entity.get_Table_ID());
 		builder.setTableName(ValueUtil.validateNull(poInfo.getTableName()));
+
+		MTable table = MTable.get(Env.getCtx(), entity.get_Table_ID());
+		ArrayList<MColumn> columnsList = new ArrayList<MColumn>();
+	
 		for(int index = 0; index < poInfo.getColumnCount(); index++) {
 			String columnName = poInfo.getColumnName(index);
 			int referenceId = poInfo.getColumnDisplayType(index);
@@ -225,10 +234,69 @@ public class ConvertUtil {
 			}
 			//	Add
 			builder.putValues(columnName, builderValue.build());
+			//	Add field to map
+			MColumn column = new Query(
+				Env.getCtx(),
+				MColumn.Table_Name,
+				MTable.COLUMNNAME_AD_Table_ID + " = ? AND " + MColumn.COLUMNNAME_ColumnName + " = ?",
+				null
+			)
+				.setParameters(table.getAD_Table_ID(), columnName)
+				.first();
+			if (column.isKey()) {
+				continue;
+			}
+			columnsList.add(column);
 		}
+		builder = addDisplayColumnEntity(builder, table, columnsList);
+		
 		//	
 		return builder;
 	}
+
+	/**
+	 * Add display column on entity
+	 * @param builder
+	 * @param table
+	 * @param columnsList
+	 * @return
+	 */
+	public static Entity.Builder addDisplayColumnEntity(Entity.Builder builder, MTable table, ArrayList<MColumn> columnsList) {
+		String sql = DictionaryUtil.getQueryWithReferencesFromColumns(table, columnsList);
+		String whereClause = " WHERE " + table.getTableName() + "." + MTable.COLUMNNAME_UUID + " = '" + builder.getUuid() + "' ";
+		
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sql + whereClause, null);
+			rs = pstmt.executeQuery();
+			while(rs.next()) {
+				ResultSetMetaData metaData = rs.getMetaData();
+				for (int index = 1; index <= metaData.getColumnCount(); index++) {
+					try {
+						String columnName = metaData.getColumnName (index);
+						Value.Builder valueBuilder = Value.newBuilder();
+						//	Display Columns
+						String value = rs.getString(index);
+						if(!Util.isEmpty(value)) {
+							valueBuilder = ValueUtil.getValueFromString(value);
+							builder.putValues(columnName, valueBuilder.build());
+						}
+					} catch (Exception e) {
+					}
+				}
+			}
+		} catch (Exception e) {
+		}
+		finally {
+			DB.close(rs, pstmt);
+			pstmt = null;
+			rs = null;
+		}
+		
+		return builder;
+	}
+	
 	
 	/**
 	 * Convert Document Action
