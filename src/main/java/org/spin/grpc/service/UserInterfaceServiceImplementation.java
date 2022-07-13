@@ -143,6 +143,7 @@ import org.spin.grpc.util.GetRecordAccessRequest;
 import org.spin.grpc.util.GetReportOutputRequest;
 import org.spin.grpc.util.GetResourceReferenceRequest;
 import org.spin.grpc.util.GetResourceRequest;
+import org.spin.grpc.util.GetTabEntityRequest;
 import org.spin.grpc.util.KeyValue;
 import org.spin.grpc.util.ListBrowserItemsRequest;
 import org.spin.grpc.util.ListBrowserItemsResponse;
@@ -956,6 +957,115 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 	}
 	
+	@Override
+	public void getTabEntity(GetTabEntityRequest request, StreamObserver<Entity> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Object Requested = " + request.getUuid());
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			Entity.Builder entityValue = getEntity(context, request);
+			responseObserver.onNext(entityValue.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.augmentDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+	/**
+	 * Convert a PO from query
+	 * @param request
+	 * @return
+	 */
+	private Entity.Builder getEntity(Properties context, GetTabEntityRequest request) {
+		MTab tab = new Query(context, MTab.Table_Name, MTab.COLUMNNAME_UUID + " = ? ", null)
+			.setParameters(request.getTabUuid())
+			.first();
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		String tableName = table.getTableName();
+		
+		String sql = DictionaryUtil.getQueryWithReferencesFromTab(tab);
+		// add filter
+		StringBuffer whereClause = new StringBuffer()
+			.append(" WHERE ")
+			.append(tableName + ".UUID = ?");
+		if (request.getId() > 0 && table.getColumn(tableName + "_ID") != null) {
+			whereClause.append(" OR " + tableName + "." + tableName + "_ID = ?");
+		}
+		sql += whereClause.toString();
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		Entity.Builder valueObjectBuilder = Entity.newBuilder();
+		valueObjectBuilder.setTableName(table.getTableName());
+		try {
+			LinkedHashMap<String, MColumn> columnsMap = new LinkedHashMap<>();
+			//	Add field to map
+			for (MColumn column: table.getColumnsAsList()) {
+				columnsMap.put(column.getColumnName().toUpperCase(), column);
+			}
+			
+			//	SELECT Key, Value, Name FROM ...
+			pstmt = DB.prepareStatement(sql, null);
+			// add query parameters
+			AtomicInteger parameterIndex = new AtomicInteger(1);
+			ValueUtil.setParameterFromObject(pstmt, request.getUuid(), parameterIndex.getAndIncrement());
+			if (request.getId() > 0) {
+				ValueUtil.setParameterFromObject(pstmt, request.getId(), parameterIndex.get());
+			}
+
+			//	Get from Query
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				ResultSetMetaData metaData = rs.getMetaData();
+				for (int index = 1; index <= metaData.getColumnCount(); index++) {
+					try {
+						String columnName = metaData.getColumnName (index);
+						if (columnName.toUpperCase().equals("UUID")) {
+							valueObjectBuilder.setUuid(rs.getString(index));
+						}
+						MColumn field = columnsMap.get(columnName.toUpperCase());
+						Value.Builder valueBuilder = Value.newBuilder();
+						//	Display Columns
+						if(field == null) {
+							String value = rs.getString(index);
+							if(!Util.isEmpty(value)) {
+								valueBuilder = ValueUtil.getValueFromString(value);
+								valueObjectBuilder.putValues(columnName, valueBuilder.build());
+							}
+							continue;
+						}
+						if (field.isKey()) {
+							valueObjectBuilder.setId(rs.getInt(index));
+						}
+						//	From field
+						String fieldColumnName = field.getColumnName();
+						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
+						if(!valueBuilder.getValueType().equals(Value.ValueType.UNRECOGNIZED)) {
+							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
+						}
+					} catch (Exception e) {
+						log.severe(e.getLocalizedMessage());
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+		} finally {
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+		
+		//	Return
+		return valueObjectBuilder;
+	}
+
 	@Override
 	public void listTabEntities(ListTabEntitiesRequest request, StreamObserver<ListTabEntitiesResponse> responseObserver) {
 		try {
