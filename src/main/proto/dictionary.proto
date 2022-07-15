@@ -139,6 +139,7 @@ message Tab {
 	repeated Process processes = 35;
 	repeated Field fields = 36;
 	FieldGroup field_group = 37;
+	string read_only_logic = 38;
 }
 
 // Field

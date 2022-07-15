@@ -608,6 +608,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setCommitWarning(ValueUtil.validateNull(tab.getCommitWarning()))
 				.setSequence(tab.getSeqNo())
 				.setDisplayLogic(ValueUtil.validateNull(tab.getDisplayLogic()))
+				.setReadOnlyLogic(ValueUtil.validateNull(tab.getReadOnlyLogic()))
 				.setIsAdvancedTab(tab.isAdvancedTab())
 				.setIsDeleteable(table.isDeleteable())
 				.setIsDocument(table.isDocument())
