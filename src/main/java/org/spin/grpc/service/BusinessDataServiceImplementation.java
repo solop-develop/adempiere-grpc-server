@@ -543,6 +543,10 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 */
 	private Empty.Builder deleteEntity(Properties context, DeleteEntityRequest request) {
 		Trx.run(transactionName -> {
+			if(Util.isEmpty(request.getTableName())) {
+				throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+			}
+			
 			if (!Util.isEmpty(request.getUuid()) || request.getId() > 0) {
 				PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), request.getId(), transactionName);
 				if (entity != null && entity.get_ID() > 0) {
@@ -606,6 +610,10 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @return
 	 */
 	private Entity.Builder updateEntity(Properties context, UpdateEntityRequest request) {
+		if(Util.isEmpty(request.getTableName())) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		
 		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), request.getId(), null);
 		if(entity != null
 				&& entity.get_ID() >= 0) {
