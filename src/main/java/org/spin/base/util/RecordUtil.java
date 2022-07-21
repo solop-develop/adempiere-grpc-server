@@ -45,7 +45,7 @@ import org.spin.util.AttachmentUtil;
  */
 public class RecordUtil {
 	/**	Page Size	*/
-	public static final int PAGE_SIZE = 50;
+	public static final int PAGE_SIZE = 15;
 	
 	/**
 	 * Get Page Size from client, else from default
