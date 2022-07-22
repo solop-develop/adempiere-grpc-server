@@ -1037,6 +1037,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
 								valueObjectBuilder.putValues(columnName, valueBuilder.build());
+							} else {
+								valueObjectBuilder.putValues(columnName, valueBuilder.build());
 							}
 							continue;
 						}
@@ -1229,6 +1231,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
+								valueObjectBuilder.putValues(columnName, valueBuilder.build());
+							} else {
 								valueObjectBuilder.putValues(columnName, valueBuilder.build());
 							}
 							continue;
