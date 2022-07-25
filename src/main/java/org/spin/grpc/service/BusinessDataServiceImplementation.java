@@ -759,8 +759,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
-								valueObjectBuilder.putValues(columnName, valueBuilder.build());
 							}
+							valueObjectBuilder.putValues(columnName, valueBuilder.build());
 							continue;
 						}
 						//	From field
