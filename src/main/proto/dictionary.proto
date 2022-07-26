@@ -39,6 +39,10 @@ service Dictionary {
 	rpc GetBrowser(EntityRequest) returns (Browser) {}
 	// Get Form
 	rpc GetForm(EntityRequest) returns (Form) {}
+	// List Identifiers Fields
+	rpc ListIdentifiersFields(ListFieldsRequest) returns (ListFieldsResponse) {}
+	// List Selections Fields
+	rpc ListTableSearchFields(ListFieldsRequest) returns (ListFieldsResponse) {}
 }
 
 
@@ -336,4 +340,25 @@ message ReportExportType {
 	string name = 1;
 	string description = 2;
 	string type = 3;
+}
+
+message ListFieldsRequest {
+	ApplicationRequest application_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	// with table
+	string table_uuid = 4;
+	int32 table_id = 5;
+	string table_name = 6;
+	// with tab
+	string window_uuid = 7;
+	int32 window_id = 8;
+	string tab_uuid = 9;
+	string tab_id = 10;
+}
+
+message ListFieldsResponse {
+	int64 record_count = 1;
+	repeated Field fields = 2;
+	string next_page_token = 3;
 }

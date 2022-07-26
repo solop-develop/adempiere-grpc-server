@@ -15,7 +15,9 @@
  *************************************************************************************/
 package org.spin.base.util;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.Map;
 import java.util.Properties;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -34,6 +36,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.grpc.util.ApplicationRequest;
 import org.spin.grpc.util.ClientRequest;
 
 /**
@@ -77,6 +80,18 @@ public class ContextManager {
 
 	/**
 	 * Get context from session
+	 * @param appliactionRequest application request with session uuid, language, organization uuid, and warehouse uuid
+	 * @return context
+	 */
+	public static Properties getContext(ApplicationRequest appliactionRequest) {
+		return getContext(
+			appliactionRequest.getSessionUuid(), 
+			appliactionRequest.getLanguage()
+		);
+	}
+	
+	/**
+	 * Get context from session
 	 * @param sessionUuid
 	 * @param language
 	 * @param organizationUuid
@@ -112,6 +127,38 @@ public class ContextManager {
 		sessionsContext.put(sessionUuid, context);
 		Env.setCtx((Properties) context.clone());
 		return context;
+	}
+	
+	/**
+	 * Set context with attributes
+	 * @param windowNo
+	 * @param context
+	 * @param attributes
+	 * @return {Properties} context with new values
+	 */
+	public static Properties setContextWithAttributes(int windowNo, Properties context, Map<String, Object> attributes) {
+		Env.clearWinContext(windowNo);
+		//	Fill context
+		attributes.entrySet().forEach(attribute -> {
+			if(attribute.getValue() instanceof Integer) {
+				Env.setContext(context, windowNo, attribute.getKey(), (Integer) attribute.getValue());
+			} else if(attribute.getValue() instanceof BigDecimal) {
+				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
+			} else if(attribute.getValue() instanceof Timestamp) {
+				Env.setContext(context, windowNo, attribute.getKey(), (Timestamp) attribute.getValue());
+			} else if(attribute.getValue() instanceof Boolean) {
+				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
+			} else if(attribute.getValue() instanceof String) {
+				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
+			}
+		});
+		
+		return context;
+	}
+
+	public static Properties setContextWithAttributes(int windowNo, Properties context, java.util.List<org.spin.grpc.util.KeyValue> values) {
+		Map<String, Object> attributes = ValueUtil.convertValuesToObjects(values);
+		return setContextWithAttributes(windowNo, context, attributes);
 	}
 	
 	/**

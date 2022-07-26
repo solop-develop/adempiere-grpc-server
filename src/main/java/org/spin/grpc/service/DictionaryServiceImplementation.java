@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.I_AD_Browse;
@@ -56,6 +57,7 @@ import org.compiere.model.Query;
 import org.compiere.model.X_AD_FieldGroup;
 import org.compiere.model.X_AD_Reference;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -75,6 +77,8 @@ import org.spin.grpc.util.FieldDefinition;
 import org.spin.grpc.util.FieldGroup;
 import org.spin.grpc.util.FieldRequest;
 import org.spin.grpc.util.Form;
+import org.spin.grpc.util.ListFieldsRequest;
+import org.spin.grpc.util.ListFieldsResponse;
 import org.spin.grpc.util.MessageText;
 import org.spin.grpc.util.Process;
 import org.spin.grpc.util.Reference;
@@ -1530,4 +1534,148 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setDescription(ValueUtil.validateNull(description))
 				.setIsSalesTransaction(window.isSOTrx());
 	}
+	
+	
+	@Override
+	public void listIdentifiersFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ApplicationRequest applicationInfo = request.getApplicationRequest();
+			if(applicationInfo == null
+					|| Util.isEmpty(applicationInfo.getSessionUuid())) {
+				throw new AdempiereException("Object Request Null");
+			}
+			
+			Properties context = ContextManager.getContext(request.getApplicationRequest());
+			ListFieldsResponse.Builder fielsListBuilder = getIdentifierFields(context, request);
+			responseObserver.onNext(fielsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.augmentDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+	
+	private ListFieldsResponse.Builder getIdentifierFields(Properties context, ListFieldsRequest request) {
+		MTable table = null;
+		int tableId = request.getTableId();
+		if (tableId > 0) {
+			table = MTable.get(context, tableId);
+		} else if(!Util.isEmpty(request.getTableUuid(), true)) {
+			table = new Query(context, MTable.Table_Name, MTable.COLUMNNAME_UUID + " = ?", null)
+				.setParameters(request.getTableUuid())
+				.setOnlyActiveRecords(true)
+				.first();
+		} else if (!Util.isEmpty(request.getTableName(), true)) {
+			table = MTable.get(context, request.getTableName());
+		} 
+		if (table == null) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		
+		ListFieldsResponse.Builder fieldsListBuilder = ListFieldsResponse.newBuilder();
+		
+		final String sql = "SELECT c.AD_Column_ID"
+			// + ", c.ColumnName, t.AD_Table_ID, t.TableName, c.ColumnSql "
+			+ " FROM AD_Table AS t "
+			+ "	INNER JOIN AD_Column c ON (t.AD_Table_ID=c.AD_Table_ID) "
+			+ "	WHERE c.AD_Reference_ID = 10 "
+			+ " AND t.AD_Table_ID = ? "
+			//	Displayed in Window
+			+ "	AND EXISTS (SELECT * FROM AD_Field AS f "
+			+ "	WHERE f.AD_Column_ID=c.AD_Column_ID "
+			+ " AND f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL) "
+			+ "	ORDER BY c.IsIdentifier DESC, c.SeqNo ";
+		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
+			while(resultSet.next()) {
+				MColumn column = MColumn.get(context, resultSet.getInt(MColumn.COLUMNNAME_AD_Column_ID));
+				if (column != null) {
+					Field.Builder fieldBuilder = convertField(context, column);
+					fieldsListBuilder.addFields(fieldBuilder.build());
+				}
+			}
+		}).onFailure(throwable -> {
+			log.log(Level.SEVERE, "loadPreferences", throwable);
+		});
+	
+		return fieldsListBuilder;
+	}
+
+	@Override
+	public void listTableSearchFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ApplicationRequest applicationInfo = request.getApplicationRequest();
+			if(applicationInfo == null
+					|| Util.isEmpty(applicationInfo.getSessionUuid())) {
+				throw new AdempiereException("Object Request Null");
+			}
+			
+			Properties context = ContextManager.getContext(request.getApplicationRequest());
+			ListFieldsResponse.Builder fielsListBuilder = getTableSearchFields(context, request);
+			responseObserver.onNext(fielsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.augmentDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+	
+	private ListFieldsResponse.Builder getTableSearchFields(Properties context, ListFieldsRequest request) {
+		MTable table = null;
+		int tableId = request.getTableId();
+		if (tableId > 0) {
+			table = MTable.get(context, tableId);
+		} else if(!Util.isEmpty(request.getTableUuid(), true)) {
+			table = new Query(context, MTable.Table_Name, MTable.COLUMNNAME_UUID + " = ?", null)
+				.setParameters(request.getTableUuid())
+				.setOnlyActiveRecords(true)
+				.first();
+		} else if (!Util.isEmpty(request.getTableName(), true)) {
+			table = MTable.get(context, request.getTableName());
+		} 
+		if (table == null || table.getAD_Table_ID() < 1) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		
+		ListFieldsResponse.Builder fieldsListBuilder = ListFieldsResponse.newBuilder();
+		
+		final String sql = "SELECT f.AD_Field_ID "
+			// + ", c.ColumnName, c.AD_Reference_ID, c.IsKey, f.IsDisplayed, c.AD_Reference_Value_ID, c.ColumnSql "
+			+ " FROM AD_Column c "
+			+ " INNER JOIN AD_Table t ON (c.AD_Table_ID=t.AD_Table_ID)"
+			+ " INNER JOIN AD_Tab tab ON (t.AD_Window_ID=tab.AD_Window_ID)"
+			+ " INNER JOIN AD_Field f ON (tab.AD_Tab_ID=f.AD_Tab_ID AND f.AD_Column_ID=c.AD_Column_ID) "
+			+ " WHERE t.AD_Table_ID=? "
+			+ " AND (c.IsKey='Y' OR "
+			//	+ " (f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
+				+ " (f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
+			+ "ORDER BY c.IsKey DESC, f.SeqNo";
+		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
+			while(resultSet.next()) {
+				MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
+				if (field != null) {
+					Field.Builder fieldBuilder = convertField(context, field, true);
+					fieldsListBuilder.addFields(fieldBuilder.build());
+				}
+			}
+		}).onFailure(throwable -> {
+			log.log(Level.SEVERE, "loadPreferences", throwable);
+		});
+		
+		return fieldsListBuilder;
+	}
+	
 }

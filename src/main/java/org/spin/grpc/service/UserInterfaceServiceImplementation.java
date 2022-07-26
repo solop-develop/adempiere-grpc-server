@@ -1099,21 +1099,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	
 		MTab tab = MTab.get(context, tabId);
 		String tableName = MTable.getTableName(context, tab.getAD_Table_ID());
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		Env.clearWinContext(windowNo);
-		Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+
 		//	Fill context
-		attributes.entrySet().forEach(attribute -> {
-			if(attribute.getValue() instanceof Integer) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Integer) attribute.getValue());
-			} else if(attribute.getValue() instanceof Timestamp) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Timestamp) attribute.getValue());
-			} else if(attribute.getValue() instanceof Boolean) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Boolean) attribute.getValue());
-			} else if(attribute.getValue() instanceof String) {
-				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
-			}
-		});
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
 		// get where clause including link column and parent column
 		String where = DictionaryUtil.getSQLWhereClauseFromTab(context, tab, null);
@@ -2406,22 +2395,12 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		DefaultValue.Builder builder = DefaultValue.newBuilder();
 		if(!Util.isEmpty(defaultValue)) {
 			Object defaultValueAsObject = null;
+
+			// Fill context
 			Properties context = Env.getCtx();
 			int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-			Env.clearWinContext(windowNo);
-			Map<String, Object> attributes = ValueUtil.convertValuesToObjects(contextAttributes);
-			//	Fill context
-			attributes.entrySet().forEach(attribute -> {
-				if(attribute.getValue() instanceof Integer) {
-					Env.setContext(context, windowNo, attribute.getKey(), (Integer) attribute.getValue());
-				} else if(attribute.getValue() instanceof Timestamp) {
-					Env.setContext(context, windowNo, attribute.getKey(), (Timestamp) attribute.getValue());
-				} else if(attribute.getValue() instanceof Boolean) {
-					Env.setContext(context, windowNo, attribute.getKey(), (Boolean) attribute.getValue());
-				} else if(attribute.getValue() instanceof String) {
-					Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
-				}
-			});
+			context = ContextManager.setContextWithAttributes(windowNo, context, contextAttributes);
+
 			if(defaultValue.trim().startsWith("@SQL=")) {
 				defaultValue = defaultValue.replace("@SQL=", "");
 				defaultValue = Env.parseContext(context, windowNo, defaultValue, false);
@@ -2579,23 +2558,14 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if(reference == null) {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
-		String sql = reference.QueryDirect;
+
+		//	Fill context
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		Env.clearWinContext(windowNo);
-		Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-		//	Fill context
-		attributes.entrySet().forEach(attribute -> {
-			if(attribute.getValue() instanceof Integer) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Integer) attribute.getValue());
-			} else if(attribute.getValue() instanceof Timestamp) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Timestamp) attribute.getValue());
-			} else if(attribute.getValue() instanceof Boolean) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Boolean) attribute.getValue());
-			} else if(attribute.getValue() instanceof String) {
-				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
-			}
-		});
+		ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+
+		String sql = reference.QueryDirect;
 		sql = Env.parseContext(context, windowNo, sql, false);
 		if(Util.isEmpty(sql)
 				&& !Util.isEmpty(reference.QueryDirect)) {
@@ -2745,23 +2715,13 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if(reference == null) {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
-		String sql = reference.Query;
+
+		//	Fill context
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		Env.clearWinContext(windowNo);
-		Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-		//	Fill context
-		attributes.entrySet().forEach(attribute -> {
-			if(attribute.getValue() instanceof Integer) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Integer) attribute.getValue());
-			} else if(attribute.getValue() instanceof Timestamp) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Timestamp) attribute.getValue());
-			} else if(attribute.getValue() instanceof Boolean) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Boolean) attribute.getValue());
-			} else if(attribute.getValue() instanceof String) {
-				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
-			}
-		});
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+
+		String sql = reference.Query;
 		sql = Env.parseContext(context, windowNo, sql, false);
 		if(Util.isEmpty(sql)
 				&& !Util.isEmpty(reference.Query)) {
