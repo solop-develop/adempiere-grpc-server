@@ -2562,8 +2562,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Fill context
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		Env.clearWinContext(windowNo);
-		ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
 		String sql = reference.QueryDirect;
 		sql = Env.parseContext(context, windowNo, sql, false);
