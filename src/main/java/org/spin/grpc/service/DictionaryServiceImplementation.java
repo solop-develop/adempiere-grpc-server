@@ -14,6 +14,9 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -1555,10 +1558,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.augmentDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
 		}
 	}
 	
@@ -1592,6 +1595,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			+ "	WHERE f.AD_Column_ID=c.AD_Column_ID "
 			+ " AND f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL) "
 			+ "	ORDER BY c.IsIdentifier DESC, c.SeqNo ";
+		/*
 		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
 			while(resultSet.next()) {
 				MColumn column = MColumn.get(context, resultSet.getInt(MColumn.COLUMNNAME_AD_Column_ID));
@@ -1603,7 +1607,33 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}).onFailure(throwable -> {
 			log.log(Level.SEVERE, "loadPreferences", throwable);
 		});
-	
+		*/
+
+		PreparedStatement pstmt = null;
+		ResultSet resultSet = null;
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			pstmt.setInt(1, table.getAD_Table_ID());
+			resultSet = pstmt.executeQuery();
+
+			while (resultSet.next()) {
+				MColumn column = MColumn.get(context, resultSet.getInt(MColumn.COLUMNNAME_AD_Column_ID));
+				if (column != null) {
+					Field.Builder fieldBuilder = convertField(context, column);
+					fieldsListBuilder.addFields(fieldBuilder.build());
+				}
+			}
+			resultSet.close();
+			pstmt.close();
+		}
+		catch (SQLException e) {
+			log.log(Level.SEVERE, sql, e);
+		}
+		finally {
+			DB.close(resultSet, pstmt);
+			resultSet = null;
+			pstmt = null;
+		}
 		return fieldsListBuilder;
 	}
 
@@ -1626,10 +1656,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.augmentDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
 		}
 	}
 	
@@ -1663,6 +1693,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			//	+ " (f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
 				+ " (f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
 			+ "ORDER BY c.IsKey DESC, f.SeqNo";
+		/*
 		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
 			while(resultSet.next()) {
 				MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
@@ -1674,6 +1705,33 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}).onFailure(throwable -> {
 			log.log(Level.SEVERE, "loadPreferences", throwable);
 		});
+		*/
+
+		PreparedStatement pstmt = null;
+		ResultSet resultSet = null;
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			pstmt.setInt(1, table.getAD_Table_ID());
+			resultSet = pstmt.executeQuery();
+
+			while (resultSet.next()) {
+				MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
+				if (field != null) {
+					Field.Builder fieldBuilder = convertField(context, field, true);
+					fieldsListBuilder.addFields(fieldBuilder.build());
+				}
+			}
+			resultSet.close();
+			pstmt.close();
+		}
+		catch (SQLException e) {
+			log.log(Level.SEVERE, sql, e);
+		}
+		finally {
+			DB.close(resultSet, pstmt);
+			resultSet = null;
+			pstmt = null;
+		}
 		
 		return fieldsListBuilder;
 	}
