@@ -22,12 +22,18 @@ import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.Services;
 import org.spin.grpc.service.AccessServiceImplementation;
 import org.spin.grpc.service.BusinessDataServiceImplementation;
+import org.spin.grpc.service.BusinessPartnerServiceImplementation;
 import org.spin.grpc.service.CoreFunctionalityImplementation;
 import org.spin.grpc.service.DashboardingServiceImplementation;
 import org.spin.grpc.service.DictionaryServiceImplementation;
 import org.spin.grpc.service.EnrollmentServiceImplementation;
+import org.spin.grpc.service.InOutServiceImplementation;
+import org.spin.grpc.service.InvoiceServiceImplementation;
 import org.spin.grpc.service.LogsServiceImplementation;
+import org.spin.grpc.service.OrderServiceImplementation;
+import org.spin.grpc.service.PaymentServiceImplementation;
 import org.spin.grpc.service.PointOfSalesServiceImplementation;
+import org.spin.grpc.service.ProductServiceImplementation;
 import org.spin.grpc.service.UpdateImplementation;
 import org.spin.grpc.service.UserInterfaceServiceImplementation;
 import org.spin.grpc.service.WebStoreServiceImplementation;
@@ -118,6 +124,36 @@ public class AllInOneServices {
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
 			  serverBuilder.addService(new UpdateImplementation());
 			  logger.info("Service " + Services.UPDATER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		  }
+		  //	Business Partner
+		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
+			  serverBuilder.addService(new BusinessPartnerServiceImplementation());
+			  logger.info("Service " + Services.BUSINESS_PARTNER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		  }
+		  //	In-Out
+		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
+			  serverBuilder.addService(new InOutServiceImplementation());
+			  logger.info("Service " + Services.IN_OUT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		  }
+		  //	Invoice
+		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
+			  serverBuilder.addService(new InvoiceServiceImplementation());
+			  logger.info("Service " + Services.INVOICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		  }
+		  //	Order
+		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
+			  serverBuilder.addService(new OrderServiceImplementation());
+			  logger.info("Service " + Services.ORDER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		  }
+		  //	Payment
+		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
+			  serverBuilder.addService(new PaymentServiceImplementation());
+			  logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		  }
+		  //	Product
+		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
+			  serverBuilder.addService(new ProductServiceImplementation());
+			  logger.info("Service " + Services.PRODUCT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		  }
 		  //	Add services
 		  if(SetupLoader.getInstance().getServer().isTlsEnabled()) {

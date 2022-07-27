@@ -31,7 +31,13 @@ public enum Services {
     STORE("store"),
     POS("pos"),
     UPDATER("updater"),
-    EXTENSION("extension");
+    EXTENSION("extension"),
+    BUSINESS_PARTNER("business_partner"),
+    IN_OUT("in_out"),
+    INVOICE("invoice"),
+    ORDER("order"),
+    PAYMENT("payment"),
+    PRODUCT("product");
 
 	/**	Service Name	*/
     private final String serviceName;

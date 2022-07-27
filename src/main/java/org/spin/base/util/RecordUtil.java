@@ -15,11 +15,16 @@
  *************************************************************************************/
 package org.spin.base.util;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,15 +32,20 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pipo.IDFinder;
 import org.compiere.model.I_AD_Element;
 import org.compiere.model.MClientInfo;
+import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
+import org.spin.grpc.util.Entity;
+import org.spin.grpc.util.ListEntitiesResponse;
+import org.spin.grpc.util.Value;
 import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
 
@@ -44,6 +54,9 @@ import org.spin.util.AttachmentUtil;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class RecordUtil {
+	/**	Logger			*/
+	private static CLogger log = CLogger.getCLogger(RecordUtil.class);
+	
 	/**	Page Size	*/
 	public static final int PAGE_SIZE = 15;
 	
@@ -407,5 +420,82 @@ public class RecordUtil {
 	 */
 	public static Timestamp getDate() {
 		return TimeUtil.getDay(System.currentTimeMillis());
+	}
+
+	/**
+	 * Convert Entities List
+	 * @param table
+	 * @param sql
+	 * @param params
+	 * @return
+	 */
+	public static ListEntitiesResponse.Builder convertListEntitiesResult(MTable table, String sql, List<Object> params) {
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
+		long recordCount = 0;
+		try {
+			LinkedHashMap<String, MColumn> columnsMap = new LinkedHashMap<>();
+			//	Add field to map
+			for(MColumn column: table.getColumnsAsList()) {
+				columnsMap.put(column.getColumnName().toUpperCase(), column);
+			}
+			//	SELECT Key, Value, Name FROM ...
+			pstmt = DB.prepareStatement(sql, null);
+			AtomicInteger parameterIndex = new AtomicInteger(1);
+			for(Object value : params) {
+				ValueUtil.setParameterFromObject(pstmt, value, parameterIndex.getAndIncrement());
+			} 
+			//	Get from Query
+			rs = pstmt.executeQuery();
+			while(rs.next()) {
+				Entity.Builder valueObjectBuilder = Entity.newBuilder();
+				valueObjectBuilder.setTableName(table.getTableName());
+				ResultSetMetaData metaData = rs.getMetaData();
+				for (int index = 1; index <= metaData.getColumnCount(); index++) {
+					try {
+						String columnName = metaData.getColumnName (index);
+						if (columnName.toUpperCase().equals("UUID")) {
+							valueObjectBuilder.setUuid(rs.getString(index));
+						}
+						MColumn field = columnsMap.get(columnName.toUpperCase());
+						Value.Builder valueBuilder = Value.newBuilder();
+						//	Display Columns
+						if(field == null) {
+							String value = rs.getString(index);
+							if(!Util.isEmpty(value)) {
+								valueBuilder = ValueUtil.getValueFromString(value);
+							}
+							valueObjectBuilder.putValues(columnName, valueBuilder.build());
+							continue;
+						}
+						if (field.isKey()) {
+							valueObjectBuilder.setId(rs.getInt(index));
+						}
+						//	From field
+						String fieldColumnName = field.getColumnName();
+						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
+						if(!valueBuilder.getValueType().equals(Value.ValueType.UNRECOGNIZED)) {
+							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
+						}
+					} catch (Exception e) {
+						log.severe(e.getLocalizedMessage());
+					}
+				}
+				//	
+				builder.addRecords(valueObjectBuilder.build());
+				recordCount++;
+			}
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+		} finally {
+			DB.close(rs, pstmt);
+		}
+		//	Set record counts
+		if (builder.getRecordCount() <= 0) {
+			builder.setRecordCount(recordCount);
+		}
+		//	Return
+		return builder;
 	}
 }
