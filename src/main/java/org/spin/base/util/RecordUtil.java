@@ -292,13 +292,23 @@ public class RecordUtil {
 			return sql;
 		}
 		StringBuffer whereClause = new StringBuffer();
-		table.getColumnsAsList().stream().filter(column -> (column.isIdentifier() || column.isSelectionColumn()) && Util.isEmpty(column.getColumnSQL()) && DisplayType.isText(column.getAD_Reference_ID())).forEach(column -> {
-			if(whereClause.length() > 0) {
-				whereClause.append(" OR ");
-			}
-			whereClause.append("UPPER(").append(tableName).append(".").append(column.getColumnName()).append(")").append(" LIKE ").append("'%'|| UPPER(?) || '%'");
-			parameters.add(searchValue);
-		});
+		table.getColumnsAsList().stream()
+			.filter(column -> {
+				return (column.isIdentifier() || column.isSelectionColumn())
+					&& Util.isEmpty(column.getColumnSQL()) && DisplayType.isText(column.getAD_Reference_ID());
+			})
+			.forEach(column -> {
+				if(whereClause.length() > 0) {
+					whereClause.append(" OR ");
+				}
+				whereClause.append("UPPER(")
+					.append(tableName).append(".")
+					.append(column.getColumnName())
+					.append(")")
+					.append(" LIKE ")
+					.append("'%'|| UPPER(?) || '%'");
+				parameters.add(searchValue);
+			});
 		//	Order by
 		//	Validate and return
 		if(whereClause.length() > 0) {

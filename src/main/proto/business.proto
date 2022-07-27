@@ -45,7 +45,7 @@ service UserInterface {
 	// Get a Tab Entity
 	rpc GetTabEntity(GetTabEntityRequest) returns (Entity) {}
 	//	List tab Entities
-	rpc ListTabEntities(ListTabEntitiesRequest) returns (ListTabEntitiesResponse) {}
+	rpc ListTabEntities(ListTabEntitiesRequest) returns (ListEntitiesResponse) {}
 	//	Rollback Entity Request
 	rpc RollbackEntity(RollbackEntityRequest) returns (Entity) {}
 	// Run a Callout
@@ -96,6 +96,8 @@ service UserInterface {
 	rpc SetPreference(SetPreferenceRequest) returns (Preference) {}
 	//	Delete Preference from field
 	rpc DeletePreference(DeletePreferenceRequest) returns (Empty) {}
+	//	List General Info
+	rpc ListGeneralInfo(ListGeneralInfoRequest) returns (ListEntitiesResponse) {}
 }
 
 //	Workflow management service
@@ -477,6 +479,7 @@ message ListTabEntitiesRequest {
 	string page_token = 10;
 }
 
+// @deprecated please use ListEntitiesResponse
 // List Entities Response
 message ListTabEntitiesResponse {
 	int64 record_count = 1;
@@ -1173,4 +1176,23 @@ message ListReferencesResponse {
 	int64 record_count = 1;
 	repeated RecordReferenceInfo references = 2;
 	string next_page_token = 3;
+}
+
+// List General Info Request
+message ListGeneralInfoRequest {
+	ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	// filters
+	Criteria filters = 4;
+	repeated KeyValue context_attributes = 5;
+	string search_value = 6;
+	// references
+	string process_parameter_uuid = 7;
+	string field_uuid = 8;
+	string browse_field_uuid = 9;
+	string reference_uuid = 10;
+	string column_uuid = 11;
+	string table_name = 12;
+	string column_name = 13;
 }

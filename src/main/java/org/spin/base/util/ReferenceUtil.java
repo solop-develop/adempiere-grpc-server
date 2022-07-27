@@ -142,12 +142,15 @@ public class ReferenceUtil {
 			//	Get info
 			lookupInformation = getLookupInfoFromReference(referenceValueId);	
 		}
-		MValRule validationRule = null;
-		//	For validation rule
-		if(validationRuleId > 0) {
-			validationRule = MValRule.get(Env.getCtx(), validationRuleId);
-		}
 		if(lookupInformation != null) {
+			MValRule validationRule = null;
+			//	For validation rule
+			if(validationRuleId > 0) {
+				validationRule = MValRule.get(Env.getCtx(), validationRuleId);
+				if (Util.isEmpty(lookupInformation.ValidationCode) && !Util.isEmpty(validationRule.getCode())) {
+					lookupInformation.ValidationCode = validationRule.getCode();
+				}
+			}
 			//	For validation
 			String queryForLookup = lookupInformation.Query;
 			int positionFrom = queryForLookup.lastIndexOf(" FROM ");
@@ -159,7 +162,7 @@ public class ReferenceUtil {
 						+ (!Util.isEmpty(lookupInformation.ValidationCode)? (hasWhereClause ? " AND " : " WHERE ") + lookupInformation.ValidationCode: "")
 						+ (validationRule != null? (hasWhereClause ? " AND " : " WHERE ") + validationRule.getCode():  "")
 						+ queryForLookup.substring(positionOrder);
-			} else {			
+			} else {
 				queryForLookup += (!Util.isEmpty(lookupInformation.ValidationCode)? (hasWhereClause ? " AND " : " WHERE ") + lookupInformation.ValidationCode: "") 
 						+ (validationRule != null? (hasWhereClause ? " AND " : " WHERE ") + validationRule.getCode():  "");
 			}

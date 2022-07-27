@@ -149,6 +149,8 @@ import org.spin.grpc.util.ListBrowserItemsRequest;
 import org.spin.grpc.util.ListBrowserItemsResponse;
 import org.spin.grpc.util.ListDrillTablesRequest;
 import org.spin.grpc.util.ListDrillTablesResponse;
+import org.spin.grpc.util.ListEntitiesResponse;
+import org.spin.grpc.util.ListGeneralInfoRequest;
 import org.spin.grpc.util.ListLookupItemsRequest;
 import org.spin.grpc.util.ListLookupItemsResponse;
 import org.spin.grpc.util.ListPrintFormatsRequest;
@@ -158,7 +160,6 @@ import org.spin.grpc.util.ListReferencesResponse;
 import org.spin.grpc.util.ListReportViewsRequest;
 import org.spin.grpc.util.ListReportViewsResponse;
 import org.spin.grpc.util.ListTabEntitiesRequest;
-import org.spin.grpc.util.ListTabEntitiesResponse;
 import org.spin.grpc.util.ListTranslationsRequest;
 import org.spin.grpc.util.ListTranslationsResponse;
 import org.spin.grpc.util.LockPrivateAccessRequest;
@@ -1067,13 +1068,13 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	}
 
 	@Override
-	public void listTabEntities(ListTabEntitiesRequest request, StreamObserver<ListTabEntitiesResponse> responseObserver) {
+	public void listTabEntities(ListTabEntitiesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 			Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
-			ListTabEntitiesResponse.Builder entityValueList = convertEntitiesList(context, request);
+			ListEntitiesResponse.Builder entityValueList = convertEntitiesList(context, request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1091,7 +1092,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListTabEntitiesResponse.Builder convertEntitiesList(Properties context, ListTabEntitiesRequest request) {
+	private ListEntitiesResponse.Builder convertEntitiesList(Properties context, ListTabEntitiesRequest request) {
 		int tabId = RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), null);
 		if(tabId <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
@@ -1140,7 +1141,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int count = 0;
-		ListTabEntitiesResponse.Builder builder = ListTabEntitiesResponse.newBuilder();
+		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		//	
 		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromTab(tab));
 		if (!Util.isEmpty(whereClause.toString(), true)) {
@@ -1180,12 +1181,13 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * Convert Entities List
 	 * @param table
 	 * @param sql
+	 * @param params
 	 * @return
 	 */
-	private ListTabEntitiesResponse.Builder convertListEntitiesResult(MTable table, String sql, List<Object> params) {
+	private ListEntitiesResponse.Builder convertListEntitiesResult(MTable table, String sql, List<Object> params) {
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		ListTabEntitiesResponse.Builder builder = ListTabEntitiesResponse.newBuilder();
+		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		long recordCount = 0;
 		try {
 			LinkedHashMap<String, MColumn> columnsMap = new LinkedHashMap<>();
@@ -1249,6 +1251,114 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			builder.setRecordCount(recordCount);
 		}
 		//	Return
+		return builder;
+	}
+
+	@Override
+	public void listGeneralInfo(ListGeneralInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			ListEntitiesResponse.Builder entityValueList = convertEntitiesListFronGeneralInfo(context, request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.augmentDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+	
+	/**
+	 * Get default value base on field, process parameter, browse field or column
+	 * @param request
+	 * @return
+	 */
+	private ListEntitiesResponse.Builder convertEntitiesListFronGeneralInfo(Properties context, ListGeneralInfoRequest request) {
+		String tableName = request.getTableName();
+		if (Util.isEmpty(tableName, true)) {
+			tableName = request.getFilters().getTableName();
+		}
+		if (Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		
+		MLookupInfo reference = getInfoFromRequest(
+			request.getReferenceUuid(),
+			request.getFieldUuid(),
+			request.getProcessParameterUuid(),
+			request.getBrowseFieldUuid(),
+			request.getColumnUuid(),
+			request.getColumnName(),
+			tableName
+		);
+		
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+
+		//
+		MTable table = MTable.get(context, tableName);
+		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
+		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
+
+		// validation code of field
+		String parsedValidationCode = Env.parseContext(context, windowNo, reference.ValidationCode, false);
+		if (!Util.isEmpty(reference.ValidationCode)) {
+			if (Util.isEmpty(parsedValidationCode)) {
+				throw new AdempiereException("@WhereClause@ @Unparseable@");
+			}
+			whereClause.append(" AND ").append(parsedValidationCode);
+		}
+
+		//	For dynamic condition
+		List<Object> params = new ArrayList<>(); // includes on filters criteria
+		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
+		if (!Util.isEmpty(dynamicWhere, true)) {
+			//	Add includes first AND
+			whereClause.append(" AND ")
+				.append("(")
+				.append(dynamicWhere)
+				.append(")");
+		}
+		
+		sql.append(whereClause); 
+		
+		// add where with access restriction
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sql.toString(), tableName, request.getSearchValue(), params);
+		parsedSQL = MRole.getDefault()
+			.addAccessSQL(parsedSQL,
+				null,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
+		
+		//	Get page and count
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int count = 0;
+		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
+		
+		//	Count records
+		count = RecordUtil.countRecords(parsedSQL, tableName, params);
+		//	Add Row Number
+		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
+		builder = convertListEntitiesResult(MTable.get(context, tableName), parsedSQL, params);
+		//	
+		builder.setRecordCount(count);
+		//	Set page token
+		String nexPageToken = null;
+		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		//	Set next page
+		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		
 		return builder;
 	}
 	

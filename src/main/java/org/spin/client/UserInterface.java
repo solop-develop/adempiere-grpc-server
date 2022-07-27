@@ -22,8 +22,8 @@ import org.spin.grpc.store.Condition.Operator;
 import org.spin.grpc.util.ClientRequest;
 import org.spin.grpc.util.Condition;
 import org.spin.grpc.util.Criteria;
+import org.spin.grpc.util.ListEntitiesResponse;
 import org.spin.grpc.util.ListTabEntitiesRequest;
-import org.spin.grpc.util.ListTabEntitiesResponse;
 import org.spin.grpc.util.UserInterfaceGrpc;
 import org.spin.grpc.util.Value;
 import org.spin.grpc.util.Value.ValueType;
@@ -76,7 +76,7 @@ public class UserInterface {
 										  .setValueTypeValue(ValueType.STRING_VALUE)))
 						  )
 				  .build();
-		  ListTabEntitiesResponse response;
+		  ListEntitiesResponse response;
 		  try {
 			  response = blockingStub.listTabEntities(request);
 			  logger.info("Cache Reset: " + response);

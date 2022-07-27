@@ -1617,6 +1617,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			resultSet = pstmt.executeQuery();
 
 			while (resultSet.next()) {
+				//	Only 4 Query Columns
+				if (fieldsListBuilder.getFieldsList().size() >= 4) {
+					break;
+				}
 				MColumn column = MColumn.get(context, resultSet.getInt(MColumn.COLUMNNAME_AD_Column_ID));
 				if (column != null) {
 					Field.Builder fieldBuilder = convertField(context, column);
@@ -1634,6 +1638,11 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			resultSet = null;
 			pstmt = null;
 		}
+
+		//	empty general info
+		// if (fieldsListBuilder.getFieldsList().size() == 0) {
+		// }
+		
 		return fieldsListBuilder;
 	}
 

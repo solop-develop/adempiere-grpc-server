@@ -88,6 +88,46 @@ public class DictionaryUtil {
 		queryToAdd.append(joinsToAdd);
 		return queryToAdd.toString();
 	}
+
+	/**
+	 * Add references to original query from columnsList
+	 * @param {MTable} table
+	 * @param {ArrayList<MColumn>} columns
+	 * @return
+	 */
+	public static String getQueryWithReferencesFromColumns(MTable table) {
+		String originalQuery = "SELECT " + table.getTableName() + ".* FROM " + table.getTableName() + " AS " + table.getTableName() + " ";
+		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
+		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
+		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
+		Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
+		List<MColumn> columnsList = table.getColumnsAsList();
+
+		for (MColumn column : columnsList) {
+			int displayTypeId = column.getAD_Reference_ID();
+
+			if (DisplayType.isLookup(displayTypeId)) {
+				//	Reference Value
+				int referenceValueId = column.getAD_Reference_Value_ID();
+
+				String columnName = column.getColumnName();
+				String tableName = table.getTableName();
+				queryToAdd.append(", ");
+
+				//	Validation Code
+				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
+					Env.getCtx()).getReferenceInfo(displayTypeId, referenceValueId, columnName, language.getAD_Language(),
+					tableName
+				);
+				if(referenceInfo != null) {
+					queryToAdd.append(referenceInfo.getDisplayValue(columnName));
+					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableName));
+				}
+			}
+		}
+		queryToAdd.append(joinsToAdd);
+		return queryToAdd.toString();
+	}
 	
 	/**
 	 * Get Context column names from context

@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -605,6 +606,27 @@ public class ValueUtil {
 		return getWhereClauseFromCriteria(criteria, null, params);
 	}
 	
+	/**
+	 * Get Where Clause from criteria and dynamic condition
+	 * @param criteria
+	 * @param params
+	 * @return
+	 */
+	public static String getWhereClauseFromCriteria(Criteria criteria, String tableName) {
+		List<Object> params = new ArrayList<>();
+		return getWhereClauseFromCriteria(criteria, tableName, params);
+	}
+	
+	/**
+	 * Get Where Clause from criteria and dynamic condition
+	 * @param criteria
+	 * @param params
+	 * @return
+	 */
+	public static String getWhereClauseFromCriteria(Criteria criteria) {
+		List<Object> params = new ArrayList<>();
+		return getWhereClauseFromCriteria(criteria, null, params);
+	}
 	
 	/**
 	 * Get Where Clause from criteria and dynamic condition
