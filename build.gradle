@@ -65,7 +65,7 @@ dependencies {
 	implementation 'com.lowagie:itext:2.1.7'
 	
 	// ADempiere external lib
-	implementation 'io.vavr:vavr:1.0.0-alpha-4'
+	// implementation 'io.vavr:vavr:1.0.0-alpha-4'
 	
 	//	ADempiere Core
 	implementation 'io.github.adempiere:base:3.9.4-develop-1.3'

@@ -1699,7 +1699,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			+ " INNER JOIN AD_Field f ON (tab.AD_Tab_ID=f.AD_Tab_ID AND f.AD_Column_ID=c.AD_Column_ID) "
 			+ " WHERE t.AD_Table_ID=? "
 			+ " AND (c.IsKey='Y' OR "
-			//	+ " (f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
+				// + " (f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
 				+ " (f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
 			+ "ORDER BY c.IsKey DESC, f.SeqNo";
 		/*
@@ -1722,14 +1722,16 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, table.getAD_Table_ID());
 			resultSet = pstmt.executeQuery();
-
+			int recordCount = 0;
 			while (resultSet.next()) {
 				MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
 				if (field != null) {
 					Field.Builder fieldBuilder = convertField(context, field, true);
 					fieldsListBuilder.addFields(fieldBuilder.build());
 				}
+				recordCount++;
 			}
+			fieldsListBuilder.setRecordCount(recordCount);
 			resultSet.close();
 			pstmt.close();
 		}
