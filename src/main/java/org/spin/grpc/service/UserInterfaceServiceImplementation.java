@@ -299,11 +299,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Lookup Request Null");
 			}
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			ListLookupItemsResponse.Builder entityValueList = convertLookupItemsList(request);
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			ListLookupItemsResponse.Builder entityValueList = convertLookupItemsList(context, request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2665,7 +2662,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListLookupItemsResponse.Builder convertLookupItemsList(ListLookupItemsRequest request) {
+	private ListLookupItemsResponse.Builder convertLookupItemsList(Properties context, ListLookupItemsRequest request) {
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceUuid(),
 			request.getFieldUuid(),
@@ -2680,7 +2677,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 
 		//	Fill context
-		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
@@ -2692,8 +2688,14 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		List<Object> parameters = new ArrayList<>();
 		sql = RecordUtil.addSearchValueAndGet(sql, reference.TableName, request.getSearchValue(), parameters);
-		sql = MRole.getDefault(Env.getCtx(), false).addAccessSQL(sql,
-				reference.TableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+		sql = MRole.getDefault(context, false)
+			.addAccessSQL(
+				sql,
+				reference.TableName,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());

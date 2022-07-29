@@ -142,34 +142,66 @@ public class ReferenceUtil {
 			//	Get info
 			lookupInformation = getLookupInfoFromReference(referenceValueId);	
 		}
-		if(lookupInformation != null) {
-			MValRule validationRule = null;
-			//	For validation rule
-			if(validationRuleId > 0) {
-				validationRule = MValRule.get(Env.getCtx(), validationRuleId);
-				if (Util.isEmpty(lookupInformation.ValidationCode) && !Util.isEmpty(validationRule.getCode())) {
-					lookupInformation.ValidationCode = validationRule.getCode();
+
+		// without lookup info
+		if (lookupInformation == null) {
+			return null;
+		}
+
+		//	For validation
+		String queryForLookup = lookupInformation.Query;
+		//	Add support to UUID
+		queryForLookup = getQueryWithUuid(lookupInformation.TableName, queryForLookup);
+		// set new query
+		lookupInformation.Query = queryForLookup;
+
+		MValRule validationRule = null;
+		//	For validation rule
+		if (validationRuleId > 0) {
+			validationRule = MValRule.get(Env.getCtx(), validationRuleId);
+			if (validationRule != null) {
+				if (!Util.isEmpty(validationRule.getCode())) {
+					String dynamicValidation = "(" + validationRule.getCode() + ")";
+					// table validation
+					if (!Util.isEmpty(lookupInformation.ValidationCode)) {
+						dynamicValidation += " AND (" + lookupInformation.ValidationCode + ")";
+					}
+					// overwrite ValidationCode with table validation on reference and dynamic validation
+					lookupInformation.ValidationCode = dynamicValidation;
 				}
 			}
-			//	For validation
-			String queryForLookup = lookupInformation.Query;
-			int positionFrom = queryForLookup.lastIndexOf(" FROM ");
-			boolean hasWhereClause = queryForLookup.indexOf(" WHERE ", positionFrom) != -1;
-			//
-			int positionOrder = queryForLookup.lastIndexOf(" ORDER BY ");
-			if (positionOrder != -1) {
-				queryForLookup = queryForLookup.substring(0, positionOrder) 
-						+ (!Util.isEmpty(lookupInformation.ValidationCode)? (hasWhereClause ? " AND " : " WHERE ") + lookupInformation.ValidationCode: "")
-						+ (validationRule != null? (hasWhereClause ? " AND " : " WHERE ") + validationRule.getCode():  "")
-						+ queryForLookup.substring(positionOrder);
-			} else {
-				queryForLookup += (!Util.isEmpty(lookupInformation.ValidationCode)? (hasWhereClause ? " AND " : " WHERE ") + lookupInformation.ValidationCode: "") 
-						+ (validationRule != null? (hasWhereClause ? " AND " : " WHERE ") + validationRule.getCode():  "");
-			}
-			//	Add support to UUID
-			queryForLookup = getQueryWithUuid(lookupInformation.TableName, queryForLookup);
-			lookupInformation.Query = queryForLookup;
 		}
+
+		// return only code without validation rule
+		if (Util.isEmpty(lookupInformation.ValidationCode)) {
+			return lookupInformation;
+		}
+
+		// remove order by
+		String queryWithoutOrder = queryForLookup;
+		int positionOrder = queryForLookup.lastIndexOf(" ORDER BY ");
+		String orderByQuery = "";
+		if (positionOrder != -1) {
+			orderByQuery = queryForLookup.substring(positionOrder);
+			queryWithoutOrder = queryForLookup.substring(0, positionOrder);
+		}
+
+		// add where clause with validation code
+		int positionFrom = queryForLookup.lastIndexOf(" FROM ");
+		boolean hasWhereClause = queryForLookup.indexOf(" WHERE ", positionFrom) != -1;
+		if (hasWhereClause) {
+			queryWithoutOrder += " AND ";
+		} else {
+			queryWithoutOrder += " WHERE ";
+		}
+		queryWithoutOrder += " " + lookupInformation.ValidationCode;
+		
+		// Add new query with where clause and order By
+		queryForLookup = queryWithoutOrder + orderByQuery;
+
+		// set new query
+		lookupInformation.Query = queryForLookup;
+
 		return lookupInformation;
 	}
 	
