@@ -62,8 +62,8 @@ public class AllInOneServices {
 	        }
 	        return GrpcSslContexts.configure(sslClientContextBuilder);
 	  }
-	  
-	  private void start() throws IOException {
+
+	private void start() throws IOException {
 		  NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(SetupLoader.getInstance().getServer().getPort());
 		  //	For Access
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.ACCESS.getServiceName())) {
@@ -125,36 +125,36 @@ public class AllInOneServices {
 			  serverBuilder.addService(new UpdateImplementation());
 			  logger.info("Service " + Services.UPDATER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		  }
-		  //	Business Partner
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
-			  serverBuilder.addService(new BusinessPartnerServiceImplementation());
-			  logger.info("Service " + Services.BUSINESS_PARTNER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
-		  //	In-Out
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
-			  serverBuilder.addService(new InOutServiceImplementation());
-			  logger.info("Service " + Services.IN_OUT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
-		  //	Invoice
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
-			  serverBuilder.addService(new InvoiceServiceImplementation());
-			  logger.info("Service " + Services.INVOICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
-		  //	Order
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
-			  serverBuilder.addService(new OrderServiceImplementation());
-			  logger.info("Service " + Services.ORDER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
-		  //	Payment
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
-			  serverBuilder.addService(new PaymentServiceImplementation());
-			  logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
-		  //	Product
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
-			  serverBuilder.addService(new ProductServiceImplementation());
-			  logger.info("Service " + Services.PRODUCT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
+		//	Business Partner
+		if(SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS_PARTNER.getServiceName())) {
+			serverBuilder.addService(new BusinessPartnerServiceImplementation());
+			logger.info("Service " + Services.BUSINESS_PARTNER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	In-Out
+		if(SetupLoader.getInstance().getServer().isValidService(Services.IN_OUT.getServiceName())) {
+			serverBuilder.addService(new InOutServiceImplementation());
+			logger.info("Service " + Services.IN_OUT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Invoice
+		if(SetupLoader.getInstance().getServer().isValidService(Services.INVOICE.getServiceName())) {
+			serverBuilder.addService(new InvoiceServiceImplementation());
+			logger.info("Service " + Services.INVOICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Order
+		if(SetupLoader.getInstance().getServer().isValidService(Services.ORDER.getServiceName())) {
+			serverBuilder.addService(new OrderServiceImplementation());
+			logger.info("Service " + Services.ORDER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Payment
+		if(SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT.getServiceName())) {
+			serverBuilder.addService(new PaymentServiceImplementation());
+			logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Product
+		if(SetupLoader.getInstance().getServer().isValidService(Services.PRODUCT.getServiceName())) {
+			serverBuilder.addService(new ProductServiceImplementation());
+			logger.info("Service " + Services.PRODUCT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		  //	Add services
 		  if(SetupLoader.getInstance().getServer().isTlsEnabled()) {
 			  

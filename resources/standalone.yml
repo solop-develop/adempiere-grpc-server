@@ -1,17 +1,23 @@
 server:
     port: 50059
     services:
-       -   access
-       -   enrollment
-       -   dictionary
-       -   business
-       -   core
-       -   ui
-       -   dashboarding
-       -   workflow
-       -   log
-       -   store
-       -   pos
+       - access
+       - enrollment
+       - dictionary
+       - business
+       - core
+       - ui
+       - dashboarding
+       - workflow
+       - log
+       - store
+       - pos
+       - business_partner
+       - in_out
+       - invoice
+       - order
+       - payment
+       - product
     log_level: WARNING
 database:
     host: localhost
