@@ -1,17 +1,17 @@
 /*************************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it    		 *
+ * This program is free software; you can redistribute it and/or modify it           *
  * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope   		 *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 		 *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           		 *
- * See the GNU General Public License for more details.                       		 *
- * You should have received a copy of the GNU General Public License along    		 *
- * with this program; if not, write to the Free Software Foundation, Inc.,    		 *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
- * For the text or an alternative of this public license, you may reach us    		 *
+ * by the Free Software Foundation. This program is distributed in the hope          *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
+ * See the GNU General Public License for more details.                              *
+ * You should have received a copy of the GNU General Public License along           *
+ * with this program; if not, write to the Free Software Foundation, Inc.,           *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
+ * For the text or an alternative of this public license, you may reach us           *
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
 
@@ -72,7 +72,7 @@ public class ReferenceInfo {
 	/**	Has Join value	*/
 	private boolean hasJoinValue;
 	/**	Default Column And Table Alias	*/
-	private final String DISPLAY_COLUMN_ALIAS = "DisplayColumn";
+	private final String DISPLAY_COLUMN_ALIAS = LookupUtil.DISPLAY_COLUMN_KEY;
 	
 	public boolean isHasJoinValue() {
 		return hasJoinValue;
@@ -332,9 +332,17 @@ public class ReferenceInfo {
 				validationRuleId = column.getAD_Val_Rule_ID();
 				columnName = column.getColumnName();
 			}
-		} else if(!Util.isEmpty(columnName)) {
-			referenceId = DisplayType.TableDir;
-		} else if(!Util.isEmpty(tableName)) {	//	Is a Table Direct
+		} else if(!Util.isEmpty(tableName) && !Util.isEmpty(columnName)) {
+			int columnId = MColumn.getColumn_ID(tableName, columnName);
+			if(columnId > 0) {
+				MColumn column = MColumn.get(Env.getCtx(), columnId);
+				referenceId = column.getAD_Reference_ID();
+				referenceValueId = column.getAD_Reference_Value_ID();
+				validationRuleId = column.getAD_Val_Rule_ID();
+				columnName = column.getColumnName();
+			}
+		} else if(!Util.isEmpty(tableName)) {
+			//	Is force a Table Direct
 			referenceId = DisplayType.TableDir;
 			columnName = tableName + "_ID";
 		} else {
