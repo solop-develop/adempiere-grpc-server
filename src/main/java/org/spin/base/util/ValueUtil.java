@@ -26,11 +26,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MQuery;
 import org.compiere.model.PO;
+import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -51,6 +53,9 @@ public class ValueUtil {
 	/**	Date format	*/
 	private static final String TIME_FORMAT = "yyyy-MM-dd hh:mm:ss";
 	private static final String DATE_FORMAT = "yyyy-MM-dd";
+	
+	/**	Logger			*/
+	private static CLogger log = CLogger.getCLogger(ValueUtil.class);
 	
 	/**
 	 * Get Value 
@@ -550,6 +555,18 @@ public class ValueUtil {
 				break;
 			}
 		return operator;
+	}
+	
+	public static void setParametersFromObjectsList(PreparedStatement pstmt, List<Object> parameters) {
+		try {
+			AtomicInteger parameterIndex = new AtomicInteger(1);
+			for(Object value : parameters) {
+				ValueUtil.setParameterFromObject(pstmt, value, parameterIndex.getAndIncrement());
+			}
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			throw new AdempiereException(e);
+		}
 	}
 	
 	/**

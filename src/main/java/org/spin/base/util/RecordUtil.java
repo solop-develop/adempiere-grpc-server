@@ -287,7 +287,7 @@ public class RecordUtil {
 		//	
 		return null;
 	}
-	
+
 	/**
 	 * Add where clause with search value and return the new complete SQL
 	 * @param sql
@@ -297,6 +297,18 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static String addSearchValueAndGet(String sql, String tableName, String searchValue, List<Object> parameters) {
+		return addSearchValueAndGet(sql, tableName, null, searchValue, parameters);
+	}
+	
+	/**
+	 * Add where clause with search value and return the new complete SQL
+	 * @param sql
+	 * @param tableName
+	 * @param searchValue
+	 * @param parameters
+	 * @return
+	 */
+	public static String addSearchValueAndGet(String sql, String tableName, String tableAlias, String searchValue, List<Object> parameters) {
 		if(Util.isEmpty(searchValue)) {
 			return sql;
 		}
@@ -325,7 +337,15 @@ public class RecordUtil {
 		//	Order by
 		//	Validate and return
 		if(whereClause.length() > 0) {
-			Matcher matcher = Pattern.compile("\\s+(FROM)\\s+(" + tableName + ")\\s+(WHERE)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
+			String patternAlias = "";
+			if (!Util.isEmpty(tableAlias, true)) {
+				patternAlias = "\\s+(" + tableAlias + "){0,1}";
+			}
+			Matcher matcher = Pattern.compile(
+					"\\s+(FROM)\\s+(" + tableName + ")" + patternAlias + "\\s+(WHERE)",
+					Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+				)
+				.matcher(sql);
 			Matcher matcherJoin = Pattern.compile("JOIN(\\w|\\s)*(\\((\\w|\\.|\\s|=|\\')*\\))(\\s*)(WHERE)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
 			Matcher matcherOrderBy = Pattern.compile("\\s+(ORDER BY)\\s+", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
 			int positionFrom = -1;
@@ -333,8 +353,7 @@ public class RecordUtil {
 				positionFrom = matcherOrderBy.start();
 			}
 			String conditional = " WHERE ";
-			if(matcher.find()
-					|| matcherJoin.find()) {
+			if (matcher.find() || matcherJoin.find()) {
 				conditional = " AND ";
 			}
 			if(positionFrom > 0) {

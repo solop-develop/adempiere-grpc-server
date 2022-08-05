@@ -119,6 +119,7 @@ import org.compiere.util.Util;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DictionaryUtil;
+import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
@@ -205,12 +206,6 @@ import io.grpc.stub.StreamObserver;
 public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(UserInterfaceServiceImplementation.class);
-	/**	Key column constant	*/
-	private final String KEY_COLUMN_KEY = "KeyColumn";
-	/**	Key column constant	*/
-	private final String DISPLAY_COLUMN_KEY = "DisplayColumn";
-	/**	Key column constant	*/
-	private final String VALUE_COLUMN_KEY = "ValueColumn";
 	/**	Browse Requested	*/
 	private static CCache<String, MBrowse> browserRequested = new CCache<String, MBrowse>(I_AD_Browse.Table_Name + "_UUID", 30, 0);	//	no time-out
 	/**	window Requested	*/
@@ -2645,7 +2640,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					uuid = rs.getString(uuidIndex);
 				}
 				//	
-				builder = convertObjectFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
+				builder = LookupUtil.convertObjectFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -2741,7 +2736,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					uuid = rs.getString(uuidIndex);
 				}
 				//	
-				LookupItem.Builder valueObject = convertObjectFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
+				LookupItem.Builder valueObject = LookupUtil.convertObjectFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
 				valueObject.setTableName(ValueUtil.validateNull(reference.TableName));
 				builder.addRecords(valueObject.build());
 			}
@@ -3296,38 +3291,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		return "";
 	}	//	processCallout
 	
-	/**
-	 * Convert Values from result
-	 * @param keyValue
-	 * @param uuidValue
-	 * @param value
-	 * @param displayValue
-	 * @return
-	 */
-	private LookupItem.Builder convertObjectFromResult(Object keyValue, String uuidValue, String value, String displayValue) {
-		LookupItem.Builder builder = LookupItem.newBuilder();
-		if(keyValue == null) {
-			return builder;
-		}
-		builder.setUuid(ValueUtil.validateNull(uuidValue));
-		
-		if(keyValue instanceof Integer) {
-			builder.setId((Integer) keyValue);
-			builder.putValues(KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build());
-		} else {
-			builder.putValues(KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build());
-		}
-		//	Set Value
-		if(!Util.isEmpty(value)) {
-			builder.putValues(VALUE_COLUMN_KEY, ValueUtil.getValueFromString(value).build());
-		}
-		//	Display column
-		if(!Util.isEmpty(displayValue)) {
-			builder.putValues(DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build());
-		}
-		//	
-		return builder;
-	}
 	
 	/**
 	 * Convert Values from result
@@ -3346,17 +3309,17 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		
 		if(keyValue instanceof Integer) {
 			builder.setId((Integer) keyValue);
-			builder.putValues(KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build());
+			builder.putValues(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build());
 		} else {
-			builder.putValues(KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build());
+			builder.putValues(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build());
 		}
 		//	Set Value
 		if(!Util.isEmpty(value)) {
-			builder.putValues(VALUE_COLUMN_KEY, ValueUtil.getValueFromString(value).build());
+			builder.putValues(LookupUtil.VALUE_COLUMN_KEY, ValueUtil.getValueFromString(value).build());
 		}
 		//	Display column
 		if(!Util.isEmpty(displayValue)) {
-			builder.putValues(DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build());
+			builder.putValues(LookupUtil.DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build());
 		}
 		//	
 		return builder;

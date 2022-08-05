@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.base.util;
 
@@ -37,6 +37,7 @@ public enum Services {
     INVOICE("invoice"),
     ORDER("order"),
     PAYMENT("payment"),
+    PAYROLL_ACTION_NOTICE("payroll_action_notice"),
     PRODUCT("product");
 
 	/**	Service Name	*/

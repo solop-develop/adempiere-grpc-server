@@ -18,6 +18,7 @@ server:
        - order
        - payment
        - product
+       - payroll_action_notice
     log_level: WARNING
 database:
     host: localhost
@@ -26,4 +27,3 @@ database:
     user: adempiere
     password: adempiere
     type: PostgreSQL
- 
