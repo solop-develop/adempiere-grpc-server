@@ -1009,12 +1009,17 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if(browseField.getAD_View_Column().getAD_Column_ID() != 0) {
 			MColumn column = MColumn.get(context, browseField.getAD_View_Column().getAD_Column_ID());
 			elementName = column.getColumnName();
+			builder.setColumnId(column.getAD_Column_ID());
+			builder.setColumnUuid(ValueUtil.validateNull(column.getUUID()));
 		}
 		//	Default element
 		if(Util.isEmpty(elementName)) {
 			elementName = browseField.getAD_Element().getColumnName();
 		}
 		builder.setElementName(ValueUtil.validateNull(elementName));
+		builder.setElementId(browseField.getAD_Element_ID());
+		builder.setElementUuid(ValueUtil.validateNull(browseField.getAD_Element().getUUID()));
+
 		//	
 		int displayTypeId = browseField.getAD_Reference_ID();
 		if(DisplayType.isLookup(displayTypeId)) {
@@ -1119,6 +1124,8 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}
 		//	Display Type
 		int displayTypeId = column.getAD_Reference_ID();
+		// element
+		M_Element element = new M_Element(context, column.getAD_Element_ID(), null);
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 				.setId(column.getAD_Column_ID())
@@ -1127,8 +1134,12 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setDescription(ValueUtil.validateNull(column.getDescription()))
 				.setHelp(ValueUtil.validateNull(column.getHelp()))
 				.setCallout(ValueUtil.validateNull(column.getCallout()))
+				.setColumnId(column.getAD_Column_ID())
+				.setColumnUuid(ValueUtil.validateNull(column.getUUID()))
 				.setColumnName(ValueUtil.validateNull(column.getColumnName()))
-				.setElementName(ValueUtil.validateNull(column.getColumnName()))
+				.setElementId(element.getAD_Element_ID())
+				.setElementUuid(ValueUtil.validateNull(element.getUUID()))
+				.setElementName(ValueUtil.validateNull(element.getColumnName()))
 				.setColumnSql(ValueUtil.validateNull(column.getColumnSQL()))
 				.setDefaultValue(ValueUtil.validateNull(defaultValue))
 				.setDisplayType(displayTypeId)
@@ -1166,9 +1177,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if(DisplayType.isLookup(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = column.getAD_Reference_Value_ID();
-			if(column.getAD_Reference_Value_ID() > 0) {
-				referenceValueId = column.getAD_Reference_Value_ID();
-			}
+
 			//	Validation Code
 			int validationRuleId = column.getAD_Val_Rule_ID();
 			//	Set Validation Code
@@ -1238,6 +1247,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	private Field.Builder convertField(Properties context, MField field, boolean translate) {
 		//`Column reference
 		MColumn column = MColumn.get(context, field.getAD_Column_ID());
+		M_Element element = new M_Element(context, column.getAD_Element_ID(), null);
 		String defaultValue = field.getDefaultValue();
 		if(Util.isEmpty(defaultValue)) {
 			defaultValue = column.getDefaultValue();
@@ -1260,8 +1270,12 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setDescription(ValueUtil.validateNull(field.getDescription()))
 				.setHelp(ValueUtil.validateNull(field.getHelp()))
 				.setCallout(ValueUtil.validateNull(column.getCallout()))
+				.setColumnId(column.getAD_Column_ID())
+				.setColumnUuid(column.getUUID())
 				.setColumnName(ValueUtil.validateNull(column.getColumnName()))
-				.setElementName(ValueUtil.validateNull(column.getColumnName()))
+				.setElementId(element.getAD_Element_ID())
+				.setElementUuid(ValueUtil.validateNull(element.getUUID()))
+				.setElementName(ValueUtil.validateNull(element.getColumnName()))
 				.setColumnSql(ValueUtil.validateNull(column.getColumnSQL()))
 				.setDefaultValue(ValueUtil.validateNull(defaultValue))
 				.setDisplayLogic(ValueUtil.validateNull(field.getDisplayLogic()))
@@ -1419,27 +1433,24 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 */
 	private Reference.Builder convertReference(Properties context, ReferenceRequest request) {
 		Reference.Builder builder = Reference.newBuilder();
+		MLookupInfo info = null;
 		if(!Util.isEmpty(request.getReferenceUuid())) {
 			X_AD_Reference reference = new Query(context, I_AD_Reference.Table_Name, I_AD_Reference.COLUMNNAME_UUID + " = ?", null)
 					.setParameters(request.getReferenceUuid())
 					.first();
 			if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_TableValidation)) {
-				MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, 0, DisplayType.Search, Language.getLanguage(Env.getAD_Language(context)), null, reference.getAD_Reference_ID(), false, null, false);
-				if(info != null) {
-					builder = convertReference(context, info);
-				}
+				info = MLookupFactory.getLookupInfo(context, 0, 0, DisplayType.Search, Language.getLanguage(Env.getAD_Language(context)), null, reference.getAD_Reference_ID(), false, null, false);
 			} else if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_ListValidation)) {
-				MLookupInfo info = MLookupFactory.getLookup_List(Language.getLanguage(Env.getAD_Language(context)), reference.getAD_Reference_ID());
-				if(info != null) {
-					builder = convertReference(context, info);
-				}
+				info = MLookupFactory.getLookup_List(Language.getLanguage(Env.getAD_Language(context)), reference.getAD_Reference_ID());
 			}
 		} else if(!Util.isEmpty(request.getColumnName())) {
-			MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, 0, DisplayType.TableDir, Language.getLanguage(Env.getAD_Language(context)), request.getColumnName(), 0, false, null, false);
-			if(info != null) {
-				builder = convertReference(context, info);
-			}
+			info = MLookupFactory.getLookupInfo(context, 0, 0, DisplayType.TableDir, Language.getLanguage(Env.getAD_Language(context)), request.getColumnName(), 0, false, null, false);
 		}
+
+		if (info != null) {
+			builder = convertReference(context, info);
+		}
+
 		return builder;
 	}
 	
@@ -1482,10 +1493,19 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.addAllContextColumnNames(
 						DictionaryUtil.getContextColumnNames(Optional.ofNullable(info.QueryDirect).orElse("") + Optional.ofNullable(info.Query).orElse("") + Optional.ofNullable(info.ValidationCode).orElse(""))
 				);
+
+		// reference value
+		if (info.AD_Reference_Value_ID > 0) {
+			builder.setId(info.AD_Reference_Value_ID);
+			String uuid = RecordUtil.getUuidFromId(X_AD_Reference.Table_Name, info.AD_Reference_Value_ID);
+			builder.setUuid(ValueUtil.validateNull(uuid));
+		}
+
 		//	Window Reference
 		if(info.ZoomWindow > 0) {
 			builder.addZoomWindows(convertZoomWindow(context, info.ZoomWindow).build());
 		}
+		// window reference Purchase Order
 		if(info.ZoomWindowPO > 0) {
 			builder.addZoomWindows(convertZoomWindow(context, info.ZoomWindowPO).build());
 		}

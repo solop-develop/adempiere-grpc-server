@@ -204,6 +204,10 @@ message Field {
 	string default_value_to = 51;
 	int32 field_length = 52;
 	repeated string context_column_names = 53;
+	int32 column_id = 54;
+	string column_uuid = 55;
+	int32 element_id = 56;
+	string element_uuid = 57;
 }
 
 // Context Info
@@ -333,6 +337,8 @@ message Reference {
 	repeated string context_column_names = 4;
 	// External Info
 	repeated ZoomWindow zoom_windows = 5;
+	int32 id = 6;
+	string uuid = 7;
 }
 
 // Report Type for Export

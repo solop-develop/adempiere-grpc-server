@@ -263,9 +263,7 @@ public class ReferenceInfo {
 		int referenceId = 0;
 		int referenceValueId = 0;
 		int validationRuleId = 0;
-		if(!Util.isEmpty(referenceUuid)) {
-			referenceId = RecordUtil.getIdFromUuid(I_AD_Reference.Table_Name, referenceUuid, null);
-		} else if(!Util.isEmpty(fieldUuid)) {
+		if(!Util.isEmpty(fieldUuid)) {
 			MField field = (MField) RecordUtil.getEntity(Env.getCtx(), I_AD_Field.Table_Name, fieldUuid, 0, null);
 			int fieldId = field.getAD_Field_ID();
 			List<MField> customFields = ASPUtil.getInstance(Env.getCtx()).getWindowFields(field.getAD_Tab_ID());
@@ -348,6 +346,13 @@ public class ReferenceInfo {
 		} else {
 			throw new AdempiereException("@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Process_Para_ID@ / @IsMandatory@");
 		}
+
+		// TODO: Add implementation to List Validations
+		// overwrite reference with request uuid
+		if(!Util.isEmpty(referenceUuid)) {
+			referenceValueId = RecordUtil.getIdFromUuid(I_AD_Reference.Table_Name, referenceUuid, null);
+			// X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceValueId, null);
+		} 
 		return ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
 	}
 	
