@@ -110,10 +110,10 @@ import org.spin.grpc.util.TaxRate;
 import org.spin.grpc.util.Value;
 import org.spin.grpc.util.Warehouse;
 import org.spin.grpc.util.ChatEntry.ModeratorStatus;
-import org.spin.store.model.I_C_PaymentMethod;
+import org.spin.model.I_C_PaymentMethod;
 import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
-import org.spin.store.util.VueStoreFrontUtil;
+import org.spin.util.VueStoreFrontUtil;
 
 /**
  * Class for convert any document
