@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License                 *
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.base.setup;
+package org.spin.base.internal.setup;
 
 import java.io.File;
 import java.io.IOException;
@@ -102,7 +102,7 @@ public class SetupLoader {
 	
 	/**
 	 * @return
-	 * @see org.spin.base.setup.SetupWrapper#getDatabase()
+	 * @see org.spin.base.internal.setup.SetupWrapper#getDatabase()
 	 */
 	public final Database getDatabase() {
 		return setup.getDatabase();
@@ -110,7 +110,7 @@ public class SetupLoader {
 	
 	/**
 	 * @return
-	 * @see org.spin.base.setup.SetupWrapper#getServer()
+	 * @see org.spin.base.internal.setup.SetupWrapper#getServer()
 	 */
 	public final Server getServer() {
 		return setup.getServer();
