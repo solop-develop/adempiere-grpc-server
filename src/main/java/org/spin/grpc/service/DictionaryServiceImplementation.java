@@ -27,6 +27,8 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.I_AD_Browse;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
+import org.adempiere.model.MView;
+import org.adempiere.model.MViewColumn;
 import org.compiere.model.I_AD_Column;
 import org.compiere.model.I_AD_Element;
 import org.compiere.model.I_AD_Field;
@@ -65,6 +67,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.compiere.wf.MWorkflow;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
@@ -72,6 +75,7 @@ import org.spin.base.util.ValueUtil;
 import org.spin.grpc.util.ApplicationRequest;
 import org.spin.grpc.util.Browser;
 import org.spin.grpc.util.ContextInfo;
+import org.spin.grpc.util.DependentField;
 import org.spin.grpc.util.DictionaryGrpc.DictionaryImplBase;
 import org.spin.grpc.util.EntityRequest;
 import org.spin.grpc.util.Field;
@@ -590,9 +594,8 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	private Tab.Builder convertTab(Properties context, MTab tab, List<MTab> tabs, boolean withFields) {
 		String parentTabUuid = null;
 		int tabId = tab.getAD_Tab_ID();
+		tab = ASPUtil.getInstance(context).getWindowTab(tab.getAD_Window_ID(), tabId);
 
-		Optional<MTab> currentOptionalTab = ASPUtil.getInstance(context).getWindowTabs(tab.getAD_Window_ID()).stream().filter(filterTab -> filterTab.getAD_Tab_ID() == tabId).findFirst();
-		tab = currentOptionalTab.get();
 		//	Get table attributes
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
 		boolean isReadOnly = tab.isReadOnly() || table.isView();
@@ -776,13 +779,15 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setIsActive(process.isActive());
 
 		if (process.getAD_Browse_ID() > 0) {
-			builder.setBrowserUuid(ValueUtil.validateNull(process.getAD_Browse().getUUID()));
+			MBrowse browse = ASPUtil.getInstance(context).getBrowse(process.getAD_Browse_ID());
+			builder.setBrowserUuid(ValueUtil.validateNull(browse.getUUID()));
 		}
 		if (process.getAD_Form_ID() > 0) {
 			builder.setFormUuid(ValueUtil.validateNull(process.getAD_Form().getUUID()));
 		}
 		if (process.getAD_Workflow_ID() > 0) {
-			builder.setWorkflowUuid(ValueUtil.validateNull(process.getAD_Workflow().getUUID()));
+			MWorkflow workflow = MWorkflow.get(Env.getCtx(), process.getAD_Workflow_ID());
+			builder.setWorkflowUuid(ValueUtil.validateNull(workflow.getUUID()));
 		}
 		//	Report Types
 		if(process.isReport()) {
@@ -842,15 +847,17 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				);
 		//	Set View UUID
 		if(browser.getAD_View_ID() > 0) {
-			builder.setViewUuid(ValueUtil.validateNull(browser.getAD_View().getUUID()));
+			MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
+			builder.setViewUuid(ValueUtil.validateNull(view.getUUID()));
 		}
 		// set table name
 		if (browser.getAD_Table_ID() > 0) {
-			builder.setTableName(ValueUtil.validateNull(browser.getAD_Table().getTableName()));	
+			MTable table = MTable.get(Env.getCtx(), browser.getAD_Table_ID());
+			builder.setTableName(ValueUtil.validateNull(table.getTableName()));	
 		}
 		//	Window Reference
 		if(browser.getAD_Window_ID() > 0) {
-			MWindow window = new MWindow(context, browser.getAD_Window_ID(), null);
+			MWindow window = ASPUtil.getInstance(context).getWindow(browser.getAD_Window_ID());
 			Window.Builder windowBuilder = convertWindow(context, window, false);
 			builder.setWindow(windowBuilder.build());
 		}
@@ -963,9 +970,63 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				builder.setReference(referenceBuilder.build());
 			}
 		}
+
+		List<DependentField> dependentProcessParameters = generateDependentProcessParameters(processParameter);
+		builder.addAllDependentFields(dependentProcessParameters);
+
 		return builder;
 	}
-	
+
+	private List<DependentField> generateDependentProcessParameters(MProcessPara processParameter) {
+		List<DependentField> depenentFieldsList = new ArrayList<>();
+
+		String parentColumnName = processParameter.getColumnName();
+
+		MProcess process = ASPUtil.getInstance().getProcess(processParameter.getAD_Process_ID());
+		List<MProcessPara> parametersList = ASPUtil.getInstance().getProcessParameters(processParameter.getAD_Process_ID());
+
+		parametersList.stream()
+			.filter(currentParameter -> {
+				if (!currentParameter.isActive()) {
+					return false;
+				}
+				// Display Logic
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentParameter.getDisplayLogic())) {
+					return true;
+				}
+				// Default Value of Column
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentParameter.getDefaultValue())) {
+					return true;
+				}
+				// ReadOnly Logic
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentParameter.getReadOnlyLogic())) {
+					return true;
+				}
+				// Dynamic Validation
+				if (currentParameter.getAD_Val_Rule_ID() > 0) {
+					MValRule validationRule = MValRule.get(Env.getCtx(), currentParameter.getAD_Val_Rule_ID());
+					if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
+						return true;
+					}
+				}
+				return false;
+			})
+			.forEach(currentParameter -> {
+				DependentField.Builder builder = DependentField.newBuilder();
+				builder.setContainerId(process.getAD_Process_ID());
+				builder.setContainerUuid(process.getUUID());
+				builder.setContainerName(process.getName());
+
+				builder.setId(currentParameter.getAD_Process_Para_ID());
+				builder.setUuid(currentParameter.getUUID());
+				builder.setColumnName(currentParameter.getColumnName());
+
+				depenentFieldsList.add(builder.build());
+			});
+
+		return depenentFieldsList;
+	}
+
 	/**
 	 * Convert Browse Field
 	 * @param browseField
@@ -1004,14 +1065,17 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.addAllContextColumnNames(
 						DictionaryUtil.getContextColumnNames(Optional.ofNullable(browseField.getDefaultValue()).orElse("") + Optional.ofNullable(browseField.getDefaultValue2()).orElse(""))
 				);
-		builder.setColumnName(ValueUtil.validateNull(browseField.getAD_View_Column().getColumnName()));
+		
 		String elementName = null;
-		if(browseField.getAD_View_Column().getAD_Column_ID() != 0) {
-			MColumn column = MColumn.get(context, browseField.getAD_View_Column().getAD_Column_ID());
+		MViewColumn viewColumn = MViewColumn.getById(context, browseField.getAD_View_Column_ID(), null);
+		builder.setColumnName(ValueUtil.validateNull(viewColumn.getColumnName()));
+		if(viewColumn.getAD_Column_ID() != 0) {
+			MColumn column = MColumn.get(context, viewColumn.getAD_Column_ID());
 			elementName = column.getColumnName();
 			builder.setColumnId(column.getAD_Column_ID());
 			builder.setColumnUuid(ValueUtil.validateNull(column.getUUID()));
 		}
+
 		//	Default element
 		if(Util.isEmpty(elementName)) {
 			elementName = browseField.getAD_Element().getColumnName();
@@ -1033,11 +1097,14 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				MValRule validationRule = MValRule.get(context, validationRuleId);
 				validationCode = validationRule.getCode();
 			}
+
+			// TODO: Verify this conditional with "elementName" variable
 			String columnName = browseField.getAD_Element().getColumnName();
-			if(browseField.getAD_View_Column().getAD_Column_ID() > 0) {
-				columnName = browseField.getAD_View_Column().getAD_Column().getColumnName();
+			if(viewColumn.getAD_Column_ID() > 0) {
+				MColumn column = MColumn.get(context, viewColumn.getAD_Column_ID());
+				columnName = column.getColumnName();
 			}
-			
+
 			MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, 0, displayTypeId, Language.getLanguage(Env.getAD_Language(context)), columnName, referenceValueId, false, validationCode, false);
 			if(info != null) {
 				Reference.Builder referenceBuilder = convertReference(context, info);
@@ -1046,9 +1113,85 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				builder.setDisplayType(DisplayType.String);
 			}
 		}
+
+		List<DependentField> dependentBrowseFieldsList = generateDependentBrowseFields(browseField);
+		builder.addAllDependentFields(dependentBrowseFieldsList);
+
 		return builder;
 	}
-	
+
+	private List<DependentField> generateDependentBrowseFields(MBrowseField browseField) {
+		List<DependentField> depenentFieldsList = new ArrayList<>();
+
+		MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), browseField.getAD_View_Column_ID(), null);
+		String parentColumnName = viewColumn.getColumnName();
+
+		String elementName = null;
+		if(viewColumn.getAD_Column_ID() != 0) {
+			MColumn column = MColumn.get(Env.getCtx(), viewColumn.getAD_Column_ID());
+			elementName = column.getColumnName();
+		}
+		if(Util.isEmpty(elementName, true)) {
+			elementName = browseField.getAD_Element().getColumnName();
+		}
+		String parentElementName = elementName;
+
+		MBrowse browse = ASPUtil.getInstance().getBrowse(browseField.getAD_Browse_ID());
+		List<MBrowseField> browseFieldsList = ASPUtil.getInstance().getBrowseFields(browseField.getAD_Browse_ID());
+
+		browseFieldsList.stream()
+			.filter(currentBrowseField -> {
+				if(!currentBrowseField.isActive()) {
+					return false;
+				}
+				// Display Logic
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentBrowseField.getDisplayLogic())
+					|| DictionaryUtil.isUseParentColumnOnContext(parentElementName, currentBrowseField.getDisplayLogic())) {
+					return true;
+				}
+				// Default Value
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentBrowseField.getDefaultValue())
+					|| DictionaryUtil.isUseParentColumnOnContext(parentElementName, currentBrowseField.getDefaultValue())) {
+					return true;
+				}
+				// Default Value 2
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentBrowseField.getDefaultValue2())
+					|| DictionaryUtil.isUseParentColumnOnContext(parentElementName, currentBrowseField.getDefaultValue2())) {
+					return true;
+				}
+				// ReadOnly Logic
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentBrowseField.getReadOnlyLogic())
+					|| DictionaryUtil.isUseParentColumnOnContext(parentElementName, currentBrowseField.getReadOnlyLogic())) {
+					return true;
+				}
+				// Dynamic Validation
+				if (currentBrowseField.getAD_Val_Rule_ID() > 0) {
+					MValRule validationRule = MValRule.get(Env.getCtx(), currentBrowseField.getAD_Val_Rule_ID());
+					if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())
+						|| DictionaryUtil.isUseParentColumnOnContext(parentElementName, validationRule.getCode())) {
+						return true;
+					}
+				}
+				return false;
+			})
+			.forEach(currentBrowseField -> {
+				DependentField.Builder builder = DependentField.newBuilder();
+
+				builder.setContainerId(browse.getAD_Browse_ID());
+				builder.setContainerUuid(browse.getUUID());
+				builder.setContainerName(browse.getName());
+				builder.setId(currentBrowseField.getAD_Browse_Field_ID());
+				builder.setUuid(currentBrowseField.getUUID());
+
+				MViewColumn currentViewColumn = MViewColumn.getById(Env.getCtx(), currentBrowseField.getAD_View_Column_ID(), null);
+				builder.setColumnName(currentViewColumn.getColumnName());
+
+				depenentFieldsList.add(builder.build());
+			});
+
+		return depenentFieldsList;
+	}
+
 	/**
 	 * Convert field from request
 	 * @param context
@@ -1194,9 +1337,65 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				builder.setDisplayType(DisplayType.String);
 			}
 		}
+
+		List<DependentField> depenentFieldsList = generateDependentColumns(column);
+		builder.addAllDependentFields(depenentFieldsList);
+
 		return builder;
 	}
+
+	private List<DependentField> generateDependentColumns(MColumn column) {
+		List<DependentField> depenentFieldsList = new ArrayList<>();
+
+		String parentColumnName = column.getColumnName();
+
+		MTable table = MTable.get(Env.getCtx(), column.getAD_Table_ID());
+		List<MColumn> columnsList = table.getColumnsAsList(false);
+
+		columnsList.stream()
+			.filter(currentColumn -> {
+				if(!currentColumn.isActive()) {
+					return false;
+				}
+				// Default Value
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentColumn.getDefaultValue())) {
+					return true;
+				}
+				// ReadOnly Logic
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentColumn.getReadOnlyLogic())) {
+					return true;
+				}
+				// Mandatory Logic
+				if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentColumn.getMandatoryLogic())) {
+					return true;
+				}
+				// Dynamic Validation
+				if (currentColumn.getAD_Val_Rule_ID() > 0) {
+					MValRule validationRule = MValRule.get(Env.getCtx(), currentColumn.getAD_Val_Rule_ID());
+					if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
+						return true;
+					}
+				}
+				return false;
+			})
+			.forEach(currentColumn -> {
+				DependentField.Builder builder = DependentField.newBuilder();
+
+				builder.setContainerId(table.getAD_Table_ID());
+				builder.setContainerUuid(table.getUUID());
+				builder.setContainerName(table.getTableName());
 	
+				builder.setId(currentColumn.getAD_Column_ID());
+				builder.setUuid(currentColumn.getUUID());
+	
+				builder.setColumnName(currentColumn.getColumnName());
+
+				depenentFieldsList.add(builder.build());
+			});
+
+		return depenentFieldsList;
+	}
+
 	/**
 	 * Convert field to builder
 	 * @param element
@@ -1359,9 +1558,92 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			FieldGroup.Builder fieldGroup = convertFieldGroup(context, field.getAD_FieldGroup_ID());
 			builder.setFieldGroup(fieldGroup.build());
 		}
+
+		List<DependentField> depenentFieldsList = generateDependentFields(field);
+		builder.addAllDependentFields(depenentFieldsList);
+
 		return builder;
 	}
-	
+
+	private List<DependentField> generateDependentFields(MField field) {
+		List<DependentField> depenentFieldsList = new ArrayList<>();
+
+		int columnId = field.getAD_Column_ID();
+		String parentColumnName = MColumn.getColumnName(Env.getCtx(), columnId);
+
+		MTab parentTab = MTab.get(Env.getCtx(), field.getAD_Tab_ID());
+		List<MTab> tabsList = ASPUtil.getInstance(Env.getCtx()).getWindowTabs(parentTab.getAD_Window_ID());
+
+		tabsList.stream()
+			.filter(currentTab -> {
+				return currentTab.isActive();
+			})
+			.forEach(tab -> {
+				List<MField> fieldsList = ASPUtil.getInstance().getWindowFields(tab.getAD_Tab_ID());
+
+				fieldsList.stream()
+					.filter(currentField -> {
+						if (!currentField.isActive()) {
+							return false;
+						}
+						// Display Logic
+						if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentField.getDisplayLogic())) {
+							return true;
+						}
+						// Default Value of Field
+						if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentField.getDisplayLogic())) {
+							return true;
+						}
+						// Dynamic Validation
+						if (currentField.getAD_Val_Rule_ID() > 0) {
+							MValRule validationRule = MValRule.get(Env.getCtx(), currentField.getAD_Val_Rule_ID());
+							if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
+								return true;
+							}
+						}
+
+						MColumn currentColumn = MColumn.get(Env.getCtx(), currentField.getAD_Column_ID());
+						// Default Value of Column
+						if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentColumn.getDefaultValue())) {
+							return true;
+						}
+						// ReadOnly Logic
+						if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentColumn.getReadOnlyLogic())) {
+							return true;
+						}
+						// Mandatory Logic
+						if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, currentColumn.getMandatoryLogic())) {
+							return true;
+						}
+						// Dynamic Validation
+						if (currentColumn.getAD_Val_Rule_ID() > 0) {
+							MValRule validationRule = MValRule.get(Env.getCtx(), currentColumn.getAD_Val_Rule_ID());
+							if (DictionaryUtil.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
+								return true;
+							}
+						}
+						return false;
+					})
+					.forEach(currentField -> {
+						DependentField.Builder builder = DependentField.newBuilder();
+						builder.setContainerId(tab.getAD_Tab_ID());
+						builder.setContainerUuid(tab.getUUID());
+						builder.setContainerName(tab.getName());
+
+						builder.setId(currentField.getAD_Field_ID());
+						builder.setUuid(currentField.getUUID());
+
+						String currentColumnName = MColumn.getColumnName(Env.getCtx(), currentField.getAD_Column_ID());
+						builder.setColumnName(currentColumnName);
+
+						depenentFieldsList.add(builder.build());
+					});
+			});
+
+		return depenentFieldsList;
+	}
+
+
 	/**
 	 * Convert Field Definition to builder
 	 * @param fieldDefinitionId
@@ -1533,7 +1815,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private ZoomWindow.Builder convertZoomWindow(Properties context, int windowId) {
-		MWindow window = new MWindow(context, windowId, null);
+		MWindow window = ASPUtil.getInstance(context).getWindow(windowId); // new MWindow(context, windowId, null);
 		//	Get translation
 		String name = null;
 		String description = null;
