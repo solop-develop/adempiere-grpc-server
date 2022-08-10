@@ -93,7 +93,11 @@ public class SetupLoader {
 		Ini.setProperty(Ini.P_CONNECTION, connection.toStringLong());
 		Ini.setClient(false);
 //		Ini.setProperty(Ini.P_ADEMPIERE_APPS_TYPE, "wildfly");
-		Level logLevel = Level.parse(setup.getServer().getLog_level().toUpperCase());
+		String logLevelAsString = setup.getServer().getLog_level();
+		if(logLevelAsString == null) {
+			logLevelAsString = "WARNING";
+		}
+		Level logLevel = Level.parse(logLevelAsString.toUpperCase());
 		Ini.setProperty(Ini.P_TRACEFILE, logLevel.getName());
 		CLogMgt.setLevel(logLevel);
 		DB.setDBTarget(connection);
