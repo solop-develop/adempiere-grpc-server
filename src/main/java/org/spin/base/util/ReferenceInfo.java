@@ -343,11 +343,11 @@ public class ReferenceInfo {
 				}
 				if (referenceId == DisplayType.ID) {
 					if (referenceValueId > 0) {
-						//	Is force a Table Direct
-						referenceId = DisplayType.TableDir;
-					} else {
 						//	Is force a Table
 						referenceId = DisplayType.Table;
+					} else {
+						//	Is force a Table Direct
+						referenceId = DisplayType.TableDir;
 					}
 				}
 				validationRuleId = column.getAD_Val_Rule_ID();
