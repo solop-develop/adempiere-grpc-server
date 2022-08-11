@@ -105,7 +105,7 @@ public class ValueUtil {
 	public static Value.Builder getValueFromString(String value) {
 		return Value.newBuilder().setStringValue(validateNull(value)).setValueType(ValueType.STRING);
 	}
-	
+
 	/**
 	 * Get value from a boolean value
 	 * @param value
@@ -114,13 +114,24 @@ public class ValueUtil {
 	public static Value.Builder getValueFromBoolean(boolean value) {
 		return Value.newBuilder().setBooleanValue(value).setValueType(ValueType.BOOLEAN);
 	}
-	
+	/**
+	 * Get value from a Boolean value
+	 * @param value
+	 * @return
+	 */
+	public static Value.Builder getValueFromBoolean(Boolean value) {
+		return Value.newBuilder().setBooleanValue(value.booleanValue()).setValueType(ValueType.BOOLEAN);
+	}
+
 	/**
 	 * Get value from a date
 	 * @param value
 	 * @return
 	 */
 	public static Value.Builder getValueFromDate(Timestamp value) {
+		if (value == null) {
+			return Value.newBuilder().setValueType(ValueType.DATE);
+		}
 		return Value.newBuilder().setLongValue(value.getTime()).setValueType(ValueType.DATE);
 	}
 	
@@ -130,6 +141,9 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromDecimal(BigDecimal value) {
+		if (value == null) {
+			return Value.newBuilder().setValueType(ValueType.DECIMAL);
+		}
 		return Value.newBuilder().setDecimalValue(Decimal.newBuilder().setDecimalValue(value.toPlainString()).setScale(value.scale())).setValueType(ValueType.DECIMAL);
 	}
 	

@@ -32,8 +32,10 @@ service PayrollActionNotice {
 	rpc ListPayrollProcess(ListPayrollProcessRequest) returns (data.ListLookupItemsResponse) {}
 	// List Employee Valid
 	rpc ListEmployeeValid(ListEmployeeValidRequest) returns (data.ListLookupItemsResponse) {}
-	// List Payroll Conceps
+	// List Payroll Concepts
 	rpc ListPayrollConcepts(ListPayrollConceptsRequest) returns (data.ListLookupItemsResponse) {}
+	// Get Payroll Concept Definition
+	rpc GetPayrollConceptDefinition(GetPayrollConceptDefinitionRequest) returns (data.Entity) {}
 	// List Payroll Movements
 	rpc ListPayrollMovements(ListPayrollMovementsRequest) returns (data.ListEntitiesResponse) {}
 	// Save Payroll Movement
@@ -70,6 +72,13 @@ message ListPayrollConceptsRequest {
 	// filters
 	repeated data.KeyValue context_attributes = 4;
 	string search_value = 5;
+}
+
+// Get Payroll Concept Definition Request
+message GetPayrollConceptDefinitionRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
 }
 
 // List Payroll Movements Request
