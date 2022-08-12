@@ -695,6 +695,7 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 
 	private Entity.Builder convertSaveMovement(Properties context, SavePayrollMovementRequest request) {
 		Entity.Builder builder = Entity.newBuilder();
+		builder.setTableName(MHRMovement.Table_Name);
 
 		Map<String, Object> contextAttributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
 		if (request.getContextAttributesList() == null || contextAttributesList.size() <= 0) {
@@ -740,23 +741,74 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 		movement.setSeqNo(concept.getSeqNo());
 		movement.setHR_Concept_ID(conceptId);
 
-		if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Quantity)) { // Quantity
+		if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Quantity)) {
+			// Quantity
 			Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_Qty))
-				.ifPresent(qty -> {
-					movement.setQty(BigDecimal.valueOf((int) qty));
+				.ifPresentOrElse(qty -> {
+					if (qty instanceof Integer) {
+						movement.setQty(BigDecimal.valueOf((int) qty));
+					} else {
+						movement.setQty((BigDecimal) qty);
+					}
+				}, () -> {
+					movement.setQty(null);
 				});
-		} else if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Amount)) { // Amount
+			movement.setAmount(null);
+			movement.setServiceDate(null);
+			movement.setTextMsg(null);
+		} else if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Amount)) {
+			// Amount
 			Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_Amount))
-			.ifPresent(amount -> {
-				movement.setAmount((BigDecimal) amount);
-			});
+				.ifPresentOrElse(amount -> {
+					if (amount instanceof Integer) {
+						movement.setAmount(BigDecimal.valueOf((int) amount));
+					} else {
+						movement.setAmount((BigDecimal) amount);
+					}
+				}, () -> {
+					movement.setAmount(null);
+				});
+			movement.setQty(null);
+			movement.setServiceDate(null);
+			movement.setTextMsg(null);
+		} else if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Text)) {
+			// Message Text
+			Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_TextMsg))
+				.ifPresentOrElse(textValue -> {	
+					movement.setTextMsg(textValue.toString());
+				}, () -> {
+					movement.setTextMsg(null);
+				});
+			movement.setQty(null);
+			movement.setAmount(null);
+			movement.setServiceDate(null);
+		} else if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Date)) {
+			// Service Date
+			Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_ServiceDate))
+				.ifPresentOrElse(serviceDate -> {	
+					movement.setServiceDate((Timestamp) serviceDate);
+				}, () -> {
+					movement.setServiceDate(null);
+				});
+			movement.setQty(null);
+			movement.setAmount(null);
+			movement.setTextMsg(null);
+		} else {
+			// without column type
+			movement.setQty(null);
+			movement.setAmount(null);
+			movement.setTextMsg(null);
+			movement.setServiceDate(null);
 		}
+
 		movement.setHR_Concept_Category_ID(concept.getHR_Concept_Category_ID());
 
 		// Description
 		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_Description))
-			.ifPresent(descriptionValue -> {	
+			.ifPresentOrElse(descriptionValue -> {	
 				movement.setDescription(descriptionValue.toString());
+			}, () -> {
+				movement.setDescription(null);
 			});
 
 		// payroll process id
@@ -765,34 +817,28 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 		// payroll period
 		I_HR_Period payrollPeriod = payrollProcess.getHR_Period();
 		Optional.ofNullable(payrollPeriod)
-			.ifPresent(period -> {
+			.ifPresentOrElse(period -> {
 				if (period.getHR_Period_ID() > 0) {
 					movement.setPeriodNo(period.getPeriodNo());
 				}
-			});
-
-		// Message Text
-		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_TextMsg))
-			.ifPresent(textValue -> {	
-				movement.setTextMsg(textValue.toString());
-			});
-
-		// Service Date
-		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_ServiceDate))
-			.ifPresent(serviceDate -> {	
-				movement.setServiceDate((Timestamp) serviceDate);
+			}, () -> {
+				movement.setPeriodNo(0);
 			});
 
 		// Valid From
 		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_ValidFrom))
-			.ifPresent(validFrom -> {	
+			.ifPresentOrElse(validFrom -> {	
 				movement.setValidFrom((Timestamp) validFrom);
+			}, () -> {
+				movement.setValidFrom(null);
 			});
 
 		// Valid To
 		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_ValidTo))
-			.ifPresent(validTo -> {	
+			.ifPresentOrElse(validTo -> {	
 				movement.setValidTo((Timestamp) validTo);
+			}, () -> {
+				movement.setValidTo(null);
 			});
 
 		movement.setC_BPartner_ID(businessPartnerId);
@@ -803,8 +849,10 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			movement.setHR_Department_ID(employee.getHR_Department_ID());
 			movement.setHR_Job_ID(employee.getHR_Job_ID());
 			movement.setHR_SkillType_ID(employee.getHR_SkillType_ID());
+
 			int activityId = employee.getC_Activity_ID() > 0 ? employee.getC_Activity_ID() : employee.getHR_Department().getC_Activity_ID();
 			movement.setC_Activity_ID(activityId);
+
 			movement.setHR_Payroll_ID(payroll.getHR_Payroll_ID());
 			movement.setHR_Contract_ID(payroll.getHR_Contract_ID());
 			movement.setHR_Employee_ID(employee.getHR_Employee_ID());
@@ -812,13 +860,126 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 		}
 
 		movement.setIsManual(true);
+	
 		movement.saveEx();
 		
-		builder.setId(movement.getHR_Movement_ID());
-		builder.setUuid(ValueUtil.validateNull(movement.getUUID()));
-		builder.setTableName(MHRMovement.Table_Name);
+		builder = generateEntityBuilderFromMovement(builder, movement);
 
 		return builder;
+	}
+	
+	private Entity.Builder generateEntityBuilderFromMovement(Entity.Builder entityBulder, MHRMovement payrollMovement) {
+		entityBulder.setId(payrollMovement.getHR_Movement_ID());
+		entityBulder.setUuid(ValueUtil.validateNull(payrollMovement.getUUID()));
+
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_HR_Movement_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getHR_Movement_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_UUID,
+			(ValueUtil.getValueFromString(payrollMovement.getUUID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_IsManual,
+			(ValueUtil.getValueFromBoolean(payrollMovement.isManual())).build()
+		);
+
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_SeqNo,
+			(ValueUtil.getValueFromInteger(payrollMovement.getSeqNo())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_HR_Concept_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getHR_Concept_ID())).build()
+		);
+
+		entityBulder.putValues(
+			MHRConcept.COLUMNNAME_HR_Concept_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getHR_Concept_ID())).build()
+		);
+		// Values
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_Qty,
+			(ValueUtil.getValueFromDecimal(payrollMovement.getQty())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_Amount,
+			(ValueUtil.getValueFromDecimal(payrollMovement.getAmount())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_TextMsg,
+			(ValueUtil.getValueFromString(payrollMovement.getTextMsg())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_ServiceDate,
+			(ValueUtil.getValueFromDate(payrollMovement.getServiceDate())).build()
+		);
+
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_HR_Concept_Category_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getHR_Concept_Category_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_Description,
+			(ValueUtil.getValueFromString(payrollMovement.getDescription())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_HR_Process_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getHR_Process_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_PeriodNo,
+			(ValueUtil.getValueFromInteger(payrollMovement.getPeriodNo())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_ValidFrom,
+			(ValueUtil.getValueFromDate(payrollMovement.getValidFrom())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_ValidTo,
+			(ValueUtil.getValueFromDate(payrollMovement.getValidTo())).build()
+		);
+
+		// employee attributes
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+		entityBulder.putValues(
+			MHRMovement.COLUMNNAME_AD_Org_ID,
+			(ValueUtil.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
+		);
+
+		return entityBulder;
 	}
 
 
