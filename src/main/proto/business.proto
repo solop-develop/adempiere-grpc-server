@@ -896,18 +896,19 @@ message WorkflowActivity {
 
 // Workflow Definition
 message WorkflowDefinition {
-	string workflow_uuid = 1;
-	string value = 2;
-	string name = 3;
-	string description = 4;
-	string help = 5;
-	string table_name = 6;
-	string responsible_uuid = 7;
-	string responsible_name = 8;
-	int32 priority = 9;
-	int64 valid_from = 10;
-	bool is_default = 11;
-	bool is_valid = 12;
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
+	string table_name = 7;
+	string responsible_uuid = 8;
+	string responsible_name = 9;
+	int32 priority = 10;
+	int64 valid_from = 11;
+	bool is_default = 12;
+	bool is_valid = 13;
 	enum DurationUnit {
 		DAY = 0;
 		HOUR = 1;
@@ -922,10 +923,10 @@ message WorkflowDefinition {
 		UNDER_REVISION = 2;
 		VOID = 3;
 	}
-	PublishStatus publish_status = 13;
-	DurationUnit duration_unit = 14;
-	WorkflowNode start_node = 15;
-	repeated WorkflowNode workflow_nodes = 16;
+	PublishStatus publish_status = 14;
+	DurationUnit duration_unit = 15;
+	WorkflowNode start_node = 16;
+	repeated WorkflowNode workflow_nodes = 17;
 }
 
 // Workflow Node

@@ -127,7 +127,8 @@ public class WorkflowUtil {
 	public static WorkflowDefinition.Builder convertWorkflowDefinition(MWorkflow workflow) {
 		MTable table = MTable.get(workflow.getCtx(), workflow.getAD_Table_ID());
 		WorkflowDefinition.Builder builder = WorkflowDefinition.newBuilder();
-		builder.setWorkflowUuid(ValueUtil.validateNull(workflow.getUUID()));
+		builder.setId(workflow.getAD_Workflow_ID());
+		builder.setUuid(ValueUtil.validateNull(workflow.getUUID()));
 		builder.setValue(ValueUtil.validateNull(workflow.getValue()));
 		String name = workflow.getName();
 		String description = workflow.getDescription();

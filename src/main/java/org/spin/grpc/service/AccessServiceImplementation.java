@@ -48,6 +48,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Login;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.compiere.wf.MWorkflow;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -972,6 +973,11 @@ public class AccessServiceImplementation extends SecurityImplBase {
 				if(menu.getAD_Browse_ID() > 0) {
 					MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
 					referenceUuid = smartBrowser.getUUID();
+				}
+			} else if(menu.getAction().equals(MMenu.ACTION_WorkFlow)) {
+				if(menu.getAD_Workflow_ID() > 0) {
+					MWorkflow workflow = MWorkflow.get(context, menu.getAD_Workflow_ID());
+					referenceUuid = workflow.getUUID();
 				}
 			}
 			builder.setReferenceUuid(ValueUtil.validateNull(referenceUuid));

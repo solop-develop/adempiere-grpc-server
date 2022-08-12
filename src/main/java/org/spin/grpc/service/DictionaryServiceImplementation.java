@@ -72,6 +72,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
+import org.spin.base.util.WorkflowUtil;
 import org.spin.grpc.util.ApplicationRequest;
 import org.spin.grpc.util.Browser;
 import org.spin.grpc.util.ContextInfo;
@@ -94,6 +95,7 @@ import org.spin.grpc.util.ReportExportType;
 import org.spin.grpc.util.Tab;
 import org.spin.grpc.util.ValidationRule;
 import org.spin.grpc.util.Window;
+import org.spin.grpc.util.WorkflowDefinition;
 import org.spin.grpc.util.ZoomWindow;
 import org.spin.model.MADContextInfo;
 import org.spin.model.MADFieldCondition;
@@ -430,7 +432,79 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		//	return
 		return builder;
 	}
+
+	@Override
+	public void getWorkflow(EntityRequest request, StreamObserver<WorkflowDefinition> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Menu Requested = " + request.getUuid());
+			ApplicationRequest applicationInfo = request.getApplicationRequest();
+			if(applicationInfo == null || Util.isEmpty(applicationInfo.getSessionUuid())) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			Properties context = ContextManager.getContext(request.getApplicationRequest());
+			WorkflowDefinition.Builder workflowBuilder = convertWorkflow(context, request.getUuid(), request.getId());
+			responseObserver.onNext(workflowBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.augmentDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
 	
+	/**
+	 * Request Workflow from uuid or id
+	 * @param context
+	 * @param uuid
+	 * @param id
+	 */
+	private WorkflowDefinition.Builder convertWorkflow(Properties context, String uuid, int id) {
+		String whereClause = null;
+		Object parameter = null;
+		if(id > 0) {
+			whereClause = MWorkflow.COLUMNNAME_AD_Workflow_ID + " = ?";
+			parameter = id;
+		} else if(!Util.isEmpty(uuid)) {
+			whereClause = MWorkflow.COLUMNNAME_UUID + " = ?";
+			parameter = uuid;
+		}
+		if(parameter == null) {
+			return WorkflowDefinition.newBuilder();
+		}
+
+		MWorkflow workflow = new Query(
+				context,
+				MWorkflow.Table_Name,
+				whereClause,
+				null
+			)
+			.setParameters(parameter)
+			.setOnlyActiveRecords(true)
+			.first();
+		return convertWorkflow(context, workflow);
+	}
+	
+	/**
+	 * Convert Workflow from Workflow Model
+	 * @param form
+	 * @return
+	 */
+	private WorkflowDefinition.Builder convertWorkflow(Properties context, MWorkflow workflowDefinition) {
+		WorkflowDefinition.Builder builder = WorkflowUtil.convertWorkflowDefinition(workflowDefinition);
+
+		//	Add to recent Item
+		// addToRecentItem(MMenu.ACTION_WorkFlow, workflowDefinition.getAD_Workflow_ID());
+
+		return builder;
+	}
+
 	/**
 	 * Convert Window from Window Model
 	 * @param window
