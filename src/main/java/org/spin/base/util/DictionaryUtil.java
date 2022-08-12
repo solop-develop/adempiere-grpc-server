@@ -29,7 +29,9 @@ import java.util.stream.Collectors;
 
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
+import org.adempiere.model.MView;
 import org.adempiere.model.MViewColumn;
+import org.adempiere.model.MViewDefinition;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MTab;
@@ -78,10 +80,18 @@ public class DictionaryUtil {
 				String columnName = column.getColumnName();
 				String tableName = table.getTableName();
 				queryToAdd.append(", ");
-				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx()).getReferenceInfo(displayTypeId, referenceValueId, columnName, language.getAD_Language(), tableName);
+				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
+					Env.getCtx()).getReferenceInfo(displayTypeId,
+					referenceValueId,
+					columnName, 
+					language.getAD_Language(),
+					tableName
+				);
 				if(referenceInfo != null) {
-					queryToAdd.append(referenceInfo.getDisplayValue(columnName));
-					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableName));
+					String displayedColumn = referenceInfo.getDisplayValue(columnName);
+					queryToAdd.append(displayedColumn);
+					String joinClause = referenceInfo.getJoinValue(columnName, tableName);
+					joinsToAdd.append(joinClause);
 				}
 			}
 		}
@@ -152,6 +162,34 @@ public class DictionaryUtil {
 			columnNamesMap.put(matcher.group().replace("@", "").replace("@", ""), true);
 		}
 		return new ArrayList<String>(columnNamesMap.keySet());
+	}
+
+	/**
+	 * Determinate if columnName is used on context values
+	 * @param columnName
+	 * @param context
+	 * @return boolean
+	 */
+	public static boolean isUseParentColumnOnContext(String columnName, String context) {
+		if (Util.isEmpty(columnName, true)) {
+			return false;
+		}
+		if (Util.isEmpty(context, true)) {
+			return false;
+		}
+
+		// @ColumnName@ , @#ColumnName@ , @$ColumnName@
+		StringBuffer patternValue = new StringBuffer()
+			.append("(@")
+			.append("($|#){0,1}")
+			.append(columnName)
+			.append("@)");
+
+		Pattern pattern = Pattern.compile(patternValue.toString(), Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(context);
+		boolean isUsedParentColumn = matcher.find();
+
+		return isUsedParentColumn;
 	}
 
 	/**
@@ -294,14 +332,18 @@ public class DictionaryUtil {
 			if (co.get()) {
 				sql.append(",");
 			}
-			MViewColumn viewColumn = field.getAD_View_Column();
+
+			MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), field.getAD_View_Column_ID(), null);
 			if (!Util.isEmpty(viewColumn.getColumnSQL(), true)) {
 				sql.append(viewColumn.getColumnSQL());
 				co.set(true);
 			}
+			
 			sql.append(" AS \"" + viewColumn.getColumnName() + "\"");
 		});
-		sql.append(" FROM ").append(browser.getAD_View().getFromClause());
+
+		MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
+		sql.append(" FROM ").append(view.getFromClause());
 		return sql.toString();
 	}
 	
@@ -321,15 +363,20 @@ public class DictionaryUtil {
 				//	Reference Value
 				int referenceValueId = browseField.getAD_Reference_Value_ID();
 				//	Validation Code
+
+				MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), browseField.getAD_View_Column_ID(), null);
+				MViewDefinition viewDefinition = MViewDefinition.get(Env.getCtx(), viewColumn.getAD_View_Definition_ID());
+				String tableName = viewDefinition.getTableAlias();
+
 				String columnName = browseField.getAD_Element().getColumnName();
-				String tableName = browseField.getAD_View_Column().getAD_View_Definition().getTableAlias();
-				if(browseField.getAD_View_Column().getAD_Column_ID() > 0) {
-					columnName = browseField.getAD_View_Column().getAD_Column().getColumnName();
+				if (viewColumn.getAD_Column_ID() > 0) {
+					MColumn column = MColumn.get(Env.getCtx(), viewColumn.getAD_Column_ID());
+					columnName = column.getColumnName();
 				}
 				queryToAdd.append(", ");
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx()).getReferenceInfo(displayTypeId, referenceValueId, columnName, Env.getAD_Language(Env.getCtx()), tableName);
 				if(referenceInfo != null) {
-					queryToAdd.append(referenceInfo.getDisplayValue(browseField.getAD_View_Column().getColumnName()));
+					queryToAdd.append(referenceInfo.getDisplayValue(viewColumn.getColumnName()));
 					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableName));
 				}
 			}
@@ -349,7 +396,9 @@ public class DictionaryUtil {
 			if (sqlOrderBy.length() > 0) {
 				sqlOrderBy.append(",");
 			}
-			sqlOrderBy.append(field.getAD_View_Column().getColumnSQL());
+
+			MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), field.getAD_View_Column_ID(), null);
+			sqlOrderBy.append(viewColumn.getColumnSQL());
 		}
 		return sqlOrderBy.length() > 0 ? sqlOrderBy.toString(): "";
 	}

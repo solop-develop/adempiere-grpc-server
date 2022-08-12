@@ -338,7 +338,18 @@ public class ReferenceInfo {
 			if(columnId > 0) {
 				MColumn column = MColumn.get(Env.getCtx(), columnId);
 				referenceId = column.getAD_Reference_ID();
-				referenceValueId = RecordUtil.getIdFromUuid(I_AD_Reference.Table_Name, referenceUuid, null);
+				if (referenceValueId <= 0) {
+					referenceValueId = column.getAD_Reference_Value_ID();
+				}
+				if (referenceId == DisplayType.ID) {
+					if (referenceValueId > 0) {
+						//	Is force a Table
+						referenceId = DisplayType.Table;
+					} else {
+						//	Is force a Table Direct
+						referenceId = DisplayType.TableDir;
+					}
+				}
 				validationRuleId = column.getAD_Val_Rule_ID();
 				columnName = column.getColumnName();
 			}

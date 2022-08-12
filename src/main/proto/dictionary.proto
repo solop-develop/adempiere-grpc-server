@@ -208,6 +208,16 @@ message Field {
 	string column_uuid = 55;
 	int32 element_id = 56;
 	string element_uuid = 57;
+	repeated DependentField dependent_fields = 58;
+}
+
+message DependentField {
+	int32 container_id = 1;
+	string container_uuid = 2;
+	string container_name = 3;
+	int32 id = 4;
+	string uuid = 5;
+	string column_name = 6;
 }
 
 // Context Info
