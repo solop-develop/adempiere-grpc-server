@@ -295,7 +295,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		}
 		int organizationId = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getClientRequest().getOrganizationUuid(), null);
 		if(organizationId < 0) {
-			organizationId = 0;
+			organizationId = Env.getAD_Org_ID(Env.getCtx());
 		}
 		//	
 		return RecordUtil.getConversionRate(organizationId, 

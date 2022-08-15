@@ -4241,7 +4241,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		BigDecimal multiplier = Env.ONE.subtract(discount.divide(Env.ONEHUNDRED, MathContext.DECIMAL128));
 		//	B = A / 100
 		BigDecimal finalPrice = basePrice.multiply(multiplier);
-		finalPrice = finalPrice.setScale(precision);
+		finalPrice = finalPrice.setScale(precision, BigDecimal.ROUND_HALF_UP);
 		return finalPrice;
 	}
 	
@@ -4262,7 +4262,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			discount = discount.multiply(Env.ONEHUNDRED);
 		}
 		if (discount.scale() > precision) {
-			discount = discount.setScale(precision);
+			discount = discount.setScale(precision, BigDecimal.ROUND_HALF_UP);
 		}
 		return discount.negate();
 	}
