@@ -1812,6 +1812,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			//	Count records
 			List<Object> parameters = new ArrayList<Object>();
 			parameters.add(posId);
+			parameters.add(cashClosing.getC_BankStatement_ID());
 			count = RecordUtil.countRecords(sql, "C_Payment p", parameters);
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, posId);
@@ -1832,6 +1833,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
 		}
