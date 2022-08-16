@@ -27,6 +27,8 @@ package workflow;
 
 //	Workflow management service
 service Workflow {
+	// Get Workflow
+	rpc GetWorkflow(WorkflowDefinitionRequest) returns (WorkflowDefinition) {}
 	//	List Workflow
 	rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse) {}
 	//	List Document Actions
@@ -35,6 +37,13 @@ service Workflow {
 	rpc ListDocumentStatuses(ListDocumentStatusesRequest) returns (ListDocumentStatusesResponse) {}
 	//	List Workflow Activities
 	rpc ListWorkflowActivities(ListWorkflowActivitiesRequest) returns (ListWorkflowActivitiesResponse) {}
+}
+
+// Object request
+message WorkflowDefinitionRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
 }
 
 // Workflow Definition Request

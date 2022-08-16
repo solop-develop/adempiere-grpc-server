@@ -47,6 +47,7 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.base.util.WorkflowUtil;
+import org.spin.grpc.util.ClientRequest;
 import org.spin.grpc.util.DocumentStatus;
 import org.spin.grpc.util.ListDocumentActionsRequest;
 import org.spin.grpc.util.ListDocumentActionsResponse;
@@ -58,6 +59,7 @@ import org.spin.grpc.util.ListWorkflowsRequest;
 import org.spin.grpc.util.ListWorkflowsResponse;
 import org.spin.grpc.util.WorkflowActivity;
 import org.spin.grpc.util.WorkflowDefinition;
+import org.spin.grpc.util.WorkflowDefinitionRequest;
 import org.spin.grpc.util.WorkflowGrpc.WorkflowImplBase;
 
 import io.grpc.Status;
@@ -71,7 +73,80 @@ import io.grpc.stub.StreamObserver;
 public class WorkflowServiceImplementation extends WorkflowImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(WorkflowServiceImplementation.class);
+
+
+	@Override
+	public void getWorkflow(WorkflowDefinitionRequest request, StreamObserver<WorkflowDefinition> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Menu Requested = " + request.getUuid());
+			ClientRequest applicationInfo = request.getClientRequest();
+			if(applicationInfo == null || Util.isEmpty(applicationInfo.getSessionUuid())) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			Properties context = ContextManager.getContext(applicationInfo);
+			WorkflowDefinition.Builder workflowBuilder = convertWorkflow(context, request.getUuid(), request.getId());
+			responseObserver.onNext(workflowBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.augmentDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
 	
+	/**
+	 * Request Workflow from uuid or id
+	 * @param context
+	 * @param uuid
+	 * @param id
+	 */
+	private WorkflowDefinition.Builder convertWorkflow(Properties context, String uuid, int id) {
+		String whereClause = null;
+		Object parameter = null;
+		if(id > 0) {
+			whereClause = MWorkflow.COLUMNNAME_AD_Workflow_ID + " = ?";
+			parameter = id;
+		} else if(!Util.isEmpty(uuid)) {
+			whereClause = MWorkflow.COLUMNNAME_UUID + " = ?";
+			parameter = uuid;
+		}
+		if(parameter == null) {
+			return WorkflowDefinition.newBuilder();
+		}
+
+		MWorkflow workflow = new Query(
+				context,
+				MWorkflow.Table_Name,
+				whereClause,
+				null
+			)
+			.setParameters(parameter)
+			.setOnlyActiveRecords(true)
+			.first();
+		return convertWorkflow(context, workflow);
+	}
+
+	/**
+	 * Convert Workflow from Workflow Model
+	 * @param form
+	 * @return
+	 */
+	private WorkflowDefinition.Builder convertWorkflow(Properties context, MWorkflow workflowDefinition) {
+		WorkflowDefinition.Builder builder = WorkflowUtil.convertWorkflowDefinition(workflowDefinition);
+
+		//	Add to recent Item
+		// addToRecentItem(MMenu.ACTION_WorkFlow, workflowDefinition.getAD_Workflow_ID());
+
+		return builder;
+	}
+
 	@Override
 	public void listWorkflows(ListWorkflowsRequest request, StreamObserver<ListWorkflowsResponse> responseObserver) {
 		try {
