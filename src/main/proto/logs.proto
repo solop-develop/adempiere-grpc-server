@@ -1,0 +1,189 @@
+/************************************************************************************
+ * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.grpc.util";
+option java_outer_classname = "ADempiereLogs";
+option objc_class_prefix = "HLW";
+
+import "base_data_type.proto";
+import "client.proto";
+import "business.proto";
+import "workflow.proto";
+
+package logs;
+
+
+//	Logger services
+service Logs {
+	//	Request BusinessProcess Activity from current session
+	rpc ListProcessLogs(ListProcessLogsRequest) returns (ListProcessLogsResponse) {}
+	//	Request Record Log List
+	rpc ListEntityLogs(ListEntityLogsRequest) returns (ListEntityLogsResponse) {}
+	//	Request Record Chat List
+	rpc ListEntityChats(ListEntityChatsRequest) returns (ListEntityChatsResponse) {}
+	//	Request Chat Entries List
+	rpc ListChatEntries(ListChatEntriesRequest) returns (ListChatEntriesResponse) {}
+	//	List workflow processes
+	rpc ListWorkflowLogs(ListWorkflowLogsRequest) returns (ListWorkflowLogsResponse) {}
+	//	Request Recent Items
+	rpc ListRecentItems(ListRecentItemsRequest) returns (ListRecentItemsResponse) {}
+}
+
+// BusinessProcess Activity Request
+message ListProcessLogsRequest {
+	data.ClientRequest client_request = 1;
+	string user_uuid = 2;
+	string instance_uuid = 3;
+	string table_name = 4;
+	int32 id = 5;
+	string uuid = 6;
+	int32 page_size = 7;
+	string page_token = 8;
+}
+
+// BusinessProcess Response List
+message ListProcessLogsResponse {
+	int64 record_count = 1;
+	repeated data.ProcessLog process_logs = 2;
+	string next_page_token = 3;
+}
+
+// Record Log Request
+message ListEntityLogsRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	int32 id = 3;
+	string uuid = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+}
+
+//	Record Log List
+message ListEntityLogsResponse {
+	int64 record_count = 1;
+	repeated data.EntityLog entity_logs = 2;
+	string next_page_token = 3;
+}
+
+
+// Record Chat Request
+message ListEntityChatsRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	int32 id = 3;
+	string uuid = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+}
+
+//	Record Chats List
+message ListEntityChatsResponse {
+	int64 record_count = 1;
+	repeated EntityChat entity_chats = 2;
+	string next_page_token = 3;
+}
+
+// Record Chat
+message EntityChat {
+	string chat_uuid = 1;
+	int32 id = 2;
+	string uuid = 3;
+	string table_name = 4;
+	string chat_type_uuid = 5;
+	string description = 6;
+	enum ConfidentialType {
+		PUBLIC = 0;
+		PARTER = 1;
+		INTERNAL = 2;
+	}
+	enum ModerationType {
+		NOT_MODERATED = 0;
+		BEFORE_PUBLISHING = 1;
+		AFTER_PUBLISHING = 2;
+	}
+	ConfidentialType confidential_type = 7;
+	ModerationType moderation_type = 8;
+	int64 log_date = 9;
+}
+
+// Record Chat Entry Request
+message ListChatEntriesRequest {
+	data.ClientRequest client_request = 1;
+	string uuid = 2;
+	int32 id = 3;
+	int32 page_size = 4;
+	string page_token = 5;
+}
+
+//	Record Chats List
+message ListChatEntriesResponse {
+	int64 record_count = 1;
+	repeated data.ChatEntry chat_entries = 2;
+	string next_page_token = 3;
+}
+
+// Recent Items Request
+message ListRecentItemsRequest {
+	data.ClientRequest client_request = 1;
+	string user_uuid = 2;
+	string role_uuid = 3;
+	bool current_session = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+}
+
+//	Recent Items List
+message ListRecentItemsResponse {
+	int64 record_count = 1;
+	repeated RecentItem recent_items = 2;
+	string next_page_token = 3;
+}
+
+// Recent Item
+message RecentItem {
+	string menu_uuid = 1;
+	string menu_name = 2;
+	string menu_description = 3;
+	string window_uuid = 4;
+	string tab_uuid = 5;
+	int32 table_id = 6;
+	string table_name = 7;
+	int32 id = 8;
+	string uuid = 9;
+	string display_name = 10;
+	int64 updated = 11;
+	string reference_uuid = 12;
+	string action = 13;
+}
+
+// Workflow Activities Request
+message ListWorkflowLogsRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	int32 id = 3;
+	string uuid = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+}
+
+//	Workflow Activities List
+message ListWorkflowLogsResponse {
+	int64 record_count = 1;
+	repeated workflow.WorkflowProcess workflow_logs = 2;
+	string next_page_token = 3;
+}
