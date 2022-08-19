@@ -1767,7 +1767,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				seller.set_ValueOfColumn("MaximumDailyRefundAllowed", pointOfSales.get_ValueAsBoolean("MaximumDailyRefundAllowed"));
 				seller.set_ValueOfColumn("MaximumDiscountAllowed", pointOfSales.get_ValueAsBoolean("MaximumDiscountAllowed"));
 				seller.set_ValueOfColumn("WriteOffAmtTolerance", pointOfSales.get_ValueAsBoolean("WriteOffAmtTolerance"));
-				seller.set_ValueOfColumn("IsAllowsBusinessPartnerCreate", pointOfSales.get_ValueAsBoolean("IsAllowsBusinessPartnerCreate"));
+				seller.set_ValueOfColumn("IsAllowsCreateCustomer", pointOfSales.get_ValueAsBoolean("IsAllowsCreateCustomer"));
 				seller.set_ValueOfColumn("IsAllowsPrintDocument", pointOfSales.get_ValueAsBoolean("IsAllowsPrintDocument"));
 			}
 			seller.set_ValueOfColumn("IsActive", true);
@@ -4866,7 +4866,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setIsAllowsCashClosing(pos.get_ValueAsBoolean("IsAllowsCashClosing"))
 			.setIsAllowsCashWithdrawal(pos.get_ValueAsBoolean("IsAllowsCashWithdrawal"))
 			.setIsAllowsApplyDiscount(pos.get_ValueAsBoolean("IsAllowsApplyDiscount"))
-			.setIsAllowsBusinessPartnerCreate(pos.get_ValueAsBoolean("IsAllowsBusinessPartnerCreate"))
+			.setIsAllowsCreateCustomer(pos.get_ValueAsBoolean("IsAllowsCreateCustomer"))
 			.setIsAllowsPrintDocument(pos.get_ValueAsBoolean("IsAllowsPrintDocument"))
 			;
 		} else {	//	Get from user
@@ -4889,7 +4889,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				.setIsAllowsCashClosing(userAllocated.get_ValueAsBoolean("IsAllowsCashClosing"))
 				.setIsAllowsCashWithdrawal(userAllocated.get_ValueAsBoolean("IsAllowsCashWithdrawal"))
 				.setIsAllowsApplyDiscount(userAllocated.get_ValueAsBoolean("IsAllowsApplyDiscount"))
-				.setIsAllowsBusinessPartnerCreate(pos.get_ValueAsBoolean("IsAllowsBusinessPartnerCreate"))
+				.setIsAllowsCreateCustomer(pos.get_ValueAsBoolean("IsAllowsCreateCustomer"))
 				.setIsAllowsPrintDocument(pos.get_ValueAsBoolean("IsAllowsPrintDocument"))
 				;
 				//	If is applied
