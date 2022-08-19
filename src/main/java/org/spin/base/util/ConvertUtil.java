@@ -541,6 +541,17 @@ public class ConvertUtil {
 		BigDecimal discountAmount = orderLines.stream()
 				.filter(orderLine -> orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId)
 				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal lineDiscountAmount = orderLines.stream()
+				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
+				.map(orderLine -> {
+					BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
+					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
+					return priceListAmount.subtract(priceActualAmount);
+				})
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		//	
+		discountAmount = discountAmount.add(lineDiscountAmount);
+		//	
 		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
 			BigDecimal paymentAmount = payment.getPayAmt();
 			if(!payment.isReceipt()) {
@@ -1024,10 +1035,10 @@ public class ConvertUtil {
 				.setAddress3(ValueUtil.validateNull(location.getAddress3()))
 				.setAddress4(ValueUtil.validateNull(location.getAddress4()))
 				.setPostalCode(ValueUtil.validateNull(location.getPostal()))
-				.setDescription(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("Description")))
-				.setFirstName(ValueUtil.validateNull(businessPartnerLocation.getName()))
-				.setLastName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("Name2")))
-				.setContactName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("ContactName")))
+//				.setDescription(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("Description")))
+//				.setFirstName(ValueUtil.validateNull(businessPartnerLocation.getName()))
+//				.setLastName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("Name2")))
+//				.setContactName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("ContactName")))
 				.setEmail(ValueUtil.validateNull(businessPartnerLocation.getEMail()))
 				.setPhone(ValueUtil.validateNull(businessPartnerLocation.getPhone()))
 				.setIsDefaultShipping(businessPartnerLocation.get_ValueAsBoolean(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping))
