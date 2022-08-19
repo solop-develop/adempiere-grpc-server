@@ -540,9 +540,9 @@ public class LogsServiceImplementation extends LogsImplBase {
 						.format (new BigDecimal (newValue));
 			} else if (column.getAD_Reference_ID() == DisplayType.Integer) {
 				if (oldValue != null)
-					displayOldValue = intFormat.format (new Integer (oldValue));
+					displayOldValue = intFormat.format(Integer.valueOf(oldValue));
 				if (newValue != null)
-					displayNewValue = intFormat.format (new Integer (newValue));
+					displayNewValue = intFormat.format(Integer.valueOf(newValue));
 			} else if (DisplayType.isNumeric (column.getAD_Reference_ID ())) {
 				if(column.getColumnName().equals(I_C_Order.COLUMNNAME_ProcessedOn)) {
 					if (oldValue != null) {

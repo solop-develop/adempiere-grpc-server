@@ -1021,26 +1021,28 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 				});
 			}
 			// delete with uuid's
-//			else {
-//				String sqlParams = " ?,".repeat(uuids.size());
-//				sqlParams = sqlParams.substring(0, sqlParams.length() - 1);
-//				String whereClause = MHRMovement.COLUMNNAME_UUID + " IN( " + sqlParams + " ) ";
-//
-//				List<MHRMovement> payrollMovementsList = new Query(
-//						Env.getCtx(),
-//						tableName,
-//						whereClause,
-//						transactionName
-//					)
-//					.setParameters(uuids)
-//					.list();
-//
-//				payrollMovementsList.forEach(payrollMovement -> {
-//					if (payrollMovement != null && payrollMovement.get_ID() > 0) {
-//						payrollMovement.deleteEx(true);
-//					}
-//				});
-//			}
+			/*
+			else {
+				String sqlParams = " ?,".repeat(uuids.size());
+				sqlParams = sqlParams.substring(0, sqlParams.length() - 1);
+				String whereClause = MHRMovement.COLUMNNAME_UUID + " IN( " + sqlParams + " ) ";
+
+				List<MHRMovement> payrollMovementsList = new Query(
+						Env.getCtx(),
+						tableName,
+						whereClause,
+						transactionName
+					)
+					.setParameters(uuids)
+					.list();
+
+				payrollMovementsList.forEach(payrollMovement -> {
+					if (payrollMovement != null && payrollMovement.get_ID() > 0) {
+						payrollMovement.deleteEx(true);
+					}
+				});
+			}
+			*/
 		});
 		//	Return
 		return Empty.newBuilder();

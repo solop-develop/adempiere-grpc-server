@@ -1767,6 +1767,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				seller.set_ValueOfColumn("MaximumDailyRefundAllowed", pointOfSales.get_ValueAsBoolean("MaximumDailyRefundAllowed"));
 				seller.set_ValueOfColumn("MaximumDiscountAllowed", pointOfSales.get_ValueAsBoolean("MaximumDiscountAllowed"));
 				seller.set_ValueOfColumn("WriteOffAmtTolerance", pointOfSales.get_ValueAsBoolean("WriteOffAmtTolerance"));
+				seller.set_ValueOfColumn("IsAllowsBusinessPartnerCreate", pointOfSales.get_ValueAsBoolean("IsAllowsBusinessPartnerCreate"));
+				seller.set_ValueOfColumn("IsAllowsPrintDocument", pointOfSales.get_ValueAsBoolean("IsAllowsPrintDocument"));
 			}
 			seller.set_ValueOfColumn("IsActive", true);
 			seller.saveEx();
@@ -4864,6 +4866,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setIsAllowsCashClosing(pos.get_ValueAsBoolean("IsAllowsCashClosing"))
 			.setIsAllowsCashWithdrawal(pos.get_ValueAsBoolean("IsAllowsCashWithdrawal"))
 			.setIsAllowsApplyDiscount(pos.get_ValueAsBoolean("IsAllowsApplyDiscount"))
+			.setIsAllowsBusinessPartnerCreate(pos.get_ValueAsBoolean("IsAllowsBusinessPartnerCreate"))
+			.setIsAllowsPrintDocument(pos.get_ValueAsBoolean("IsAllowsPrintDocument"))
 			;
 		} else {	//	Get from user
 			PO userAllocated = getUserAllowed(pos.getCtx(), pos.getC_POS_ID(), Env.getAD_User_ID(pos.getCtx()), null);
@@ -4884,7 +4888,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				.setIsAllowsCashOpening(userAllocated.get_ValueAsBoolean("IsAllowsCashOpening"))
 				.setIsAllowsCashClosing(userAllocated.get_ValueAsBoolean("IsAllowsCashClosing"))
 				.setIsAllowsCashWithdrawal(userAllocated.get_ValueAsBoolean("IsAllowsCashWithdrawal"))
-				.setIsAllowsApplyDiscount(userAllocated.get_ValueAsBoolean("IsAllowsApplyDiscount"));
+				.setIsAllowsApplyDiscount(userAllocated.get_ValueAsBoolean("IsAllowsApplyDiscount"))
+				.setIsAllowsBusinessPartnerCreate(pos.get_ValueAsBoolean("IsAllowsBusinessPartnerCreate"))
+				.setIsAllowsPrintDocument(pos.get_ValueAsBoolean("IsAllowsPrintDocument"))
+				;
 				//	If is applied
 				if(userAllocated.get_Value("MaximumRefundAllowed") != null) {
 					builder.setMaximumRefundAllowed(ValueUtil.getDecimalFromBigDecimal((BigDecimal) userAllocated.get_Value("MaximumRefundAllowed")));

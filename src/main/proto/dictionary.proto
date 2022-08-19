@@ -21,8 +21,6 @@ option objc_class_prefix = "HLW";
 
 package dictionary;
 
-import "business.proto";
-
 // The greeting service definition.
 service Dictionary {
 	// Request a Window
@@ -41,8 +39,6 @@ service Dictionary {
 	rpc GetBrowser(EntityRequest) returns (Browser) {}
 	// Get Form
 	rpc GetForm(EntityRequest) returns (Form) {}
-	// Get Workglow
-	rpc GetWorkflow(EntityRequest) returns (data.WorkflowDefinition) {}
 	// List Identifiers Fields
 	rpc ListIdentifiersFields(ListFieldsRequest) returns (ListFieldsResponse) {}
 	// List Selections Fields
