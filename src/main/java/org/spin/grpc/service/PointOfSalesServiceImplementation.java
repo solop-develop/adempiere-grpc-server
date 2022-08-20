@@ -192,7 +192,7 @@ import org.spin.grpc.util.PaymentSummary;
 import org.spin.grpc.util.PointOfSales;
 import org.spin.grpc.util.PointOfSalesRequest;
 import org.spin.grpc.util.PrintTicketRequest;
-import org.spin.grpc.util.PrintTicketResponse;
+import org.spin.grpc.util.ProcessLog;
 import org.spin.grpc.util.ProcessOrderRequest;
 import org.spin.grpc.util.ProcessShipmentRequest;
 import org.spin.grpc.util.ProductPrice;
@@ -983,16 +983,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	}
 	
 	@Override
-	public void printTicket(PrintTicketRequest request, StreamObserver<PrintTicketResponse> responseObserver) {
+	public void printTicket(PrintTicketRequest request, StreamObserver<ProcessLog> responseObserver) {
 		try {
 			if(Util.isEmpty(request.getOrderUuid())) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
 			log.fine("Print Ticket = " + request);
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
+			ContextManager.getContext(request.getClientRequest());
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
@@ -1007,7 +1004,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			//	Print it
 			handler.printTicket();
-			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder().setResult("Ok");
+			ProcessLog.Builder ticket = ProcessLog.newBuilder();
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

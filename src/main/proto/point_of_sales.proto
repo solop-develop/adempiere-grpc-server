@@ -96,7 +96,7 @@ service Store {
 	//	Get Daily Refund
 	rpc GetAvailableRefund(GetAvailableRefundRequest) returns (AvailableRefund) {}
 	//	Print Ticket
-	rpc PrintTicket(PrintTicketRequest) returns (PrintTicketResponse) {}
+	rpc PrintTicket(PrintTicketRequest) returns (ProcessLog) {}
 	//	Create Customer Account
 	rpc CreateCustomerBankAccount(CreateCustomerBankAccountRequest) returns (CustomerBankAccount) {}
 	//	Update Customer Account
@@ -561,11 +561,6 @@ message PrintTicketRequest {
 	ClientRequest client_request = 1;
 	string pos_uuid = 2;
 	string order_uuid = 3;
-}
-
-//	Response after print
-message PrintTicketResponse {
-	string result = 1;
 }
 
 //	Request Daily Refund
