@@ -1004,7 +1004,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			//	Print it
 			handler.printTicket();
-			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder();
+			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder()
+				.setResult("Ok");
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
