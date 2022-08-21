@@ -192,7 +192,7 @@ import org.spin.grpc.util.PaymentSummary;
 import org.spin.grpc.util.PointOfSales;
 import org.spin.grpc.util.PointOfSalesRequest;
 import org.spin.grpc.util.PrintTicketRequest;
-import org.spin.grpc.util.ProcessLog;
+import org.spin.grpc.util.PrintTicketResponse;
 import org.spin.grpc.util.ProcessOrderRequest;
 import org.spin.grpc.util.ProcessShipmentRequest;
 import org.spin.grpc.util.ProductPrice;
@@ -983,7 +983,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	}
 	
 	@Override
-	public void printTicket(PrintTicketRequest request, StreamObserver<ProcessLog> responseObserver) {
+	public void printTicket(PrintTicketRequest request, StreamObserver<PrintTicketResponse> responseObserver) {
 		try {
 			if(Util.isEmpty(request.getOrderUuid())) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
@@ -1004,7 +1004,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			//	Print it
 			handler.printTicket();
-			ProcessLog.Builder ticket = ProcessLog.newBuilder();
+			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder();
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
