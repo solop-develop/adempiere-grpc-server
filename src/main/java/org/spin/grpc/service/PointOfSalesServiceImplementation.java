@@ -989,10 +989,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
 			log.fine("Print Ticket = " + request);
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
+			ContextManager.getContext(request.getClientRequest());
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
@@ -1007,7 +1004,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			//	Print it
 			handler.printTicket();
-			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder().setResult("Ok");
+			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder()
+				.setResult("Ok");
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

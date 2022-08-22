@@ -566,6 +566,7 @@ message PrintTicketRequest {
 //	Response after print
 message PrintTicketResponse {
 	string result = 1;
+	ProcessLog process_log = 2;
 }
 
 //	Request Daily Refund
