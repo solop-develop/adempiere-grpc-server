@@ -353,6 +353,7 @@ message CreateShipmentRequest {
 	string order_uuid = 2;
 	string sales_representative_uuid = 3;
 	string pos_uuid = 4;
+	bool is_create_lines_from_order = 5;
 }
 
 // Request for create a Shipment from Order

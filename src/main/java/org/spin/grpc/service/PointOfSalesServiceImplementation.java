@@ -1300,10 +1300,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Create Shipment = " + request.getOrderUuid());
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
+			ContextManager.getContext(request.getClientRequest());
 			Shipment.Builder shipment = createShipment(request);
 			responseObserver.onNext(shipment.build());
 			responseObserver.onCompleted();
@@ -2494,9 +2491,64 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			shipment.saveEx(transactionName);
 			maybeShipment.set(shipment);
+			if (request.getIsCreateLinesFromOrder()) {
+				createShipmentLines(shipment, transactionName);
+			}
 		});
 		//	Convert order
 		return ConvertUtil.convertShipment(maybeShipment.get());
+	}
+	
+	private void createShipmentLines(MInOut shipmentHeader, String transactionName) {
+		MOrder order = new MOrder(Env.getCtx(), shipmentHeader.getC_Order_ID(), transactionName);
+		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
+
+		orderLines.stream().forEach(salesOrderLine -> {
+			if(!DocumentUtil.isDrafted(shipmentHeader)) {
+				throw new AdempiereException("@M_InOut_ID@ @Processed@");
+			}
+			//	Quantity
+			Optional<MInOutLine> maybeOrderLine = Arrays.asList(shipmentHeader.getLines(true))
+				.stream()
+				.filter(shipmentLineTofind -> shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID())
+				.findFirst();
+
+			AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
+			BigDecimal quantity = salesOrderLine.getQtyEntered();
+			//	Validate available
+			if(salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered()).compareTo(Optional.ofNullable(quantity).orElse(Env.ONE)) < 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
+			if(maybeOrderLine.isPresent()) {
+				MInOutLine shipmentLine = maybeOrderLine.get();
+				//	Set Quantity
+				BigDecimal quantityToOrder = quantity;
+				if(quantity == null) {
+					quantityToOrder = shipmentLine.getMovementQty();
+					quantityToOrder = quantityToOrder.add(Env.ONE);
+				}
+				//	Validate available
+				if(salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered()).compareTo(quantityToOrder) < 0) {
+					throw new AdempiereException("@QtyInsufficient@");
+				}
+				shipmentLine.setQty(quantityToOrder);
+				shipmentLine.saveEx();
+				shipmentLineReference.set(shipmentLine);
+			} else {
+				MInOutLine shipmentLine = new MInOutLine(shipmentHeader);
+				BigDecimal quantityToOrder = quantity;
+				if(quantity == null) {
+					quantityToOrder = Env.ONE;
+				}
+				//create new line
+				shipmentLine.setOrderLine(salesOrderLine, 0, quantityToOrder);
+				Optional.ofNullable(salesOrderLine.getDescription()).ifPresent(description -> shipmentLine.setDescription(description));
+				shipmentLine.setQty(quantityToOrder);
+				//	Save Line
+				shipmentLine.saveEx();
+				shipmentLineReference.set(shipmentLine);
+			}
+		});
 	}
 	
 	/**
