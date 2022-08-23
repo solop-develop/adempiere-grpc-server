@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.GenericPO;
-import org.adempiere.pos.AdempierePOSException;
 import org.adempiere.pos.process.ReverseTheSalesTransaction;
 import org.adempiere.pos.service.CPOS;
 import org.adempiere.pos.util.POSTicketHandler;
@@ -1006,6 +1005,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+			if (!getBooleanValueFromPOS(pos, 0, "IsAllowsPrintDocument")) {
+				throw new AdempiereException("@ActionNotAllowedHere@");
+			}
+
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
 			Env.clearWinContext(1);
 			CPOS posController = new CPOS();
@@ -1044,20 +1047,45 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
-			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
-			Env.clearWinContext(1);
-			CPOS posController = new CPOS();
-			posController.setOrder(orderId);
-			posController.setM_POS(pos);
-			posController.setWindowNo(1);
+			if (!getBooleanValueFromPOS(pos, 0, "IsAllowsPrintPreview")) {
+				throw new AdempiereException("@ActionNotAllowedHere@");
+			}
 
+			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
+			MOrder order = new MOrder(Env.getCtx(), orderId, null);
 			PrintPreviewResponse.Builder ticket = PrintPreviewResponse.newBuilder()
 				.setResult("Ok");
 
-			// preview document
-			ProcessLog.Builder processLog = printTicketAsProcess(context, posController, request.getReportType());
-			ticket.setProcessLog(processLog.build());
+			// run process request
+			// Rpt C_Order
+			int processId = 110;
+			int recordId = order.getC_Order_ID();
+			String tableName = I_C_Order.Table_Name;
+			int invoiceId = order.getC_Invoice_ID();
 			
+			if (invoiceId > 0) {
+				// Rpt C_Invoice
+				processId = 116;
+				tableName = I_C_Invoice.Table_Name;
+				recordId = invoiceId;
+			}
+			String processUuid = RecordUtil.getUuidFromId(I_AD_Process.Table_Name, processId, null);
+			String reportType = "pdf";
+			if (!Util.isEmpty(request.getReportType(), true)) {
+				reportType = request.getReportType();
+			}
+			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+				.setTableName(tableName)
+				.setId(recordId)
+				.setProcessUuid(processUuid)
+				.setReportType(reportType)
+			;
+
+			ProcessLog.Builder processLog = BusinessDataServiceImplementation.runProcess(context, processRequest.build());
+			
+			// preview document
+			ticket.setProcessLog(processLog.build());
+
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1071,43 +1099,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			);
 		}
 	}
-
-	private ProcessLog.Builder printTicketAsProcess(Properties context, CPOS posController, String reportTypeRequest) {
-		ProcessLog.Builder processLog = ProcessLog.newBuilder();
-		try {
-			// Rpt C_Order
-			int processId = 110;
-			String tableName = I_C_Order.Table_Name;
-			int recordId = posController.getC_Order_ID();
-			/*
-			if (posController.isInvoiced()) {
-				// Rpt C_Invoice
-				processId = 116;
-				tableName = I_C_Invoice.Table_Name;
-			}
-			*/
-			String processUuid = RecordUtil.getUuidFromId(I_AD_Process.Table_Name, processId, null);
-
-			String reportType = "pdf";
-			if (!Util.isEmpty(reportTypeRequest, true)) {
-				reportType = reportTypeRequest;
-			}
-			
-			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
-				.setTableName(tableName)
-				.setId(recordId)
-				.setProcessUuid(processUuid)
-				.setReportType(reportType)
-			;
-
-			processLog = BusinessDataServiceImplementation.runProcess(context, processRequest.build());
-		} catch (Exception e) {
-			throw new AdempierePOSException("PrintTicket - Error Printing Ticket");
-		}
-
-		return processLog;
-	}
-	
 
 	@Override
 	public void createCustomerBankAccount(CreateCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
