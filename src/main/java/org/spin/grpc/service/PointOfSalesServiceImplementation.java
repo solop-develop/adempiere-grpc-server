@@ -1014,11 +1014,12 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder()
 				.setResult("Ok");
 
+			/*
 			POSTicketHandler handler = POSTicketHandler.getTicketHandler(posController);
 			if(handler == null) {
 				throw new AdempiereException("@TicketClassName@ " + pos.getTicketClassName() + " @NotFound@");
 			}
-
+			*/
 			// preview document
 			ProcessLog.Builder processLog = printTicketAsProcess(context, posController);
 			ticket.setProcessLog(processLog.build());
