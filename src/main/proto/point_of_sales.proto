@@ -97,6 +97,8 @@ service Store {
 	rpc GetAvailableRefund(GetAvailableRefundRequest) returns (AvailableRefund) {}
 	//	Print Ticket
 	rpc PrintTicket(PrintTicketRequest) returns (PrintTicketResponse) {}
+	//	Print Preview
+	rpc PrintPreview(PrintPreviewRequest) returns (PrintPreviewResponse) {}
 	//	Create Customer Account
 	rpc CreateCustomerBankAccount(CreateCustomerBankAccountRequest) returns (CustomerBankAccount) {}
 	//	Update Customer Account
@@ -569,6 +571,19 @@ message PrintTicketRequest {
 //	Response after print
 message PrintTicketResponse {
 	string result = 1;
+}
+
+//	Print Preview Ticket
+message PrintPreviewRequest {
+	ClientRequest client_request = 1;
+	string pos_uuid = 2;
+	string order_uuid = 3;
+	string report_type = 4;
+}
+
+//	Response after preview
+message PrintPreviewResponse {
+	string result = 1;
 	ProcessLog process_log = 2;
 }
 
@@ -998,6 +1013,7 @@ message PointOfSales {
 	bool is_allows_apply_discount = 42;
 	bool is_allows_create_customer = 43;
 	bool is_allows_print_document = 44;
+	bool is_allows_preview_document = 45;
 }
 
 // Request for create a order
