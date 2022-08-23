@@ -33,10 +33,12 @@ import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.GenericPO;
+import org.adempiere.pos.AdempierePOSException;
 import org.adempiere.pos.process.ReverseTheSalesTransaction;
 import org.adempiere.pos.service.CPOS;
 import org.adempiere.pos.util.POSTicketHandler;
 import org.compiere.model.I_AD_PrintFormatItem;
+import org.compiere.model.I_AD_Process;
 import org.compiere.model.I_AD_Ref_List;
 import org.compiere.model.I_AD_User;
 import org.compiere.model.I_C_BP_BankAccount;
@@ -51,6 +53,7 @@ import org.compiere.model.I_C_ConversionType;
 import org.compiere.model.I_C_Country;
 import org.compiere.model.I_C_Currency;
 import org.compiere.model.I_C_DocType;
+import org.compiere.model.I_C_Invoice;
 import org.compiere.model.I_C_Order;
 import org.compiere.model.I_C_OrderLine;
 import org.compiere.model.I_C_POS;
@@ -61,9 +64,11 @@ import org.compiere.model.I_M_InOut;
 import org.compiere.model.I_M_InOutLine;
 import org.compiere.model.I_M_PriceList;
 import org.compiere.model.I_M_Product;
+import org.compiere.model.I_M_Storage;
 import org.compiere.model.I_M_Warehouse;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
+import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
@@ -92,6 +97,7 @@ import org.compiere.model.MProductPricing;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
+import org.compiere.model.MUOM;
 import org.compiere.model.MUser;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.M_Element;
@@ -184,6 +190,8 @@ import org.spin.grpc.util.ListProductPriceRequest;
 import org.spin.grpc.util.ListProductPriceResponse;
 import org.spin.grpc.util.ListShipmentLinesRequest;
 import org.spin.grpc.util.ListShipmentLinesResponse;
+import org.spin.grpc.util.ListStocksRequest;
+import org.spin.grpc.util.ListStocksResponse;
 import org.spin.grpc.util.Order;
 import org.spin.grpc.util.OrderLine;
 import org.spin.grpc.util.Payment;
@@ -193,13 +201,16 @@ import org.spin.grpc.util.PointOfSales;
 import org.spin.grpc.util.PointOfSalesRequest;
 import org.spin.grpc.util.PrintTicketRequest;
 import org.spin.grpc.util.PrintTicketResponse;
+import org.spin.grpc.util.ProcessLog;
 import org.spin.grpc.util.ProcessOrderRequest;
 import org.spin.grpc.util.ProcessShipmentRequest;
 import org.spin.grpc.util.ProductPrice;
 import org.spin.grpc.util.ReleaseOrderRequest;
 import org.spin.grpc.util.ReverseSalesRequest;
+import org.spin.grpc.util.RunBusinessProcessRequest;
 import org.spin.grpc.util.Shipment;
 import org.spin.grpc.util.ShipmentLine;
+import org.spin.grpc.util.Stock;
 import org.spin.grpc.util.StoreGrpc.StoreImplBase;
 import org.spin.grpc.util.UpdateCustomerBankAccountRequest;
 import org.spin.grpc.util.UpdateCustomerRequest;
@@ -989,7 +1000,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
 			log.fine("Print Ticket = " + request);
-			ContextManager.getContext(request.getClientRequest());
+			Properties context = ContextManager.getContext(request.getClientRequest());
+
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
@@ -998,14 +1010,19 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			posController.setOrder(orderId);
 			posController.setM_POS(pos);
 			posController.setWindowNo(1);
+
+			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder()
+				.setResult("Ok");
+
 			POSTicketHandler handler = POSTicketHandler.getTicketHandler(posController);
 			if(handler == null) {
 				throw new AdempiereException("@TicketClassName@ " + pos.getTicketClassName() + " @NotFound@");
 			}
-			//	Print it
-			handler.printTicket();
-			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder()
-				.setResult("Ok");
+
+			// preview document
+			ProcessLog.Builder processLog = printTicketAsProcess(context, posController);
+			ticket.setProcessLog(processLog.build());
+			
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1018,6 +1035,36 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 	}
 	
+	private ProcessLog.Builder printTicketAsProcess(Properties context, CPOS posController) {
+		ProcessLog.Builder processLog = ProcessLog.newBuilder();
+		try {
+			// Rpt C_Order
+			int processId = 110;
+			String tableName = I_C_Order.Table_Name;
+			int recordId = posController.getC_Order_ID();
+			if (posController.isInvoiced()) {
+				// Rpt C_Invoice
+				processId = 116;
+				tableName = I_C_Invoice.Table_Name;
+			}
+			String processUuid = RecordUtil.getUuidFromId(I_AD_Process.Table_Name, processId, null);
+
+			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+				.setTableName(tableName)
+				.setId(recordId)
+				.setProcessUuid(processUuid)
+				.setReportType("pdf")
+			;
+
+			processLog = BusinessDataServiceImplementation.runProcess(context, processRequest.build());
+		} catch (Exception e) {
+			throw new AdempierePOSException("PrintTicket - Error Printing Ticket");
+		}
+
+		return processLog;
+	}
+	
+
 	@Override
 	public void createCustomerBankAccount(CreateCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
 		try {
@@ -5834,6 +5881,197 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				validFrom.get(),
 				displayCurrencyId,
 				conversionTypeId,
-				Env.ONE);
+				Env.ONE
+			);
+	}
+
+	@Override
+	public void listStocks(ListStocksRequest request, StreamObserver<ListStocksResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Object Requested = " + request.getClientRequest().getSessionUuid());
+			ContextManager.getContext(request.getClientRequest());
+			ListStocksResponse.Builder stocks = listStocks(request);
+			responseObserver.onNext(stocks.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.augmentDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+	
+	/**
+	 * List Stocks
+	 * @param request
+	 * @return
+	 */
+	private ListStocksResponse.Builder listStocks(ListStocksRequest request) {
+		ListStocksResponse.Builder builder = ListStocksResponse.newBuilder();
+		Trx.run(transactionName -> {
+			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+			String sku = request.getSku();
+			if(request.getSku().contains(":")) {
+				sku = request.getSku().split(":")[0];
+			}
+			MProduct product = null;
+			if (!Util.isEmpty(sku, true)) {
+				product = getProductFromSku(sku);
+			} else if (!Util.isEmpty(request.getValue(), true)) {
+				product = getProductFromValue(request.getValue());
+			}
+			if(product == null) {
+				throw new AdempiereException("@M_Product_ID@ @NotFound@");
+			}
+
+			String nexPageToken = null;
+			int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+			int limit = RecordUtil.PAGE_SIZE;
+			int offset = pageNumber * RecordUtil.PAGE_SIZE;
+
+			String whereClause = I_M_Storage.COLUMNNAME_M_Product_ID + " = ? "
+				+ " AND EXISTS (SELECT 1 FROM C_POSWarehouseAllocation "
+				+ " JOIN C_POS ON C_POS.C_POS_ID = C_POSWarehouseAllocation.C_POS_ID "
+				+ " JOIN M_Locator ON M_Locator.M_Locator_ID = M_Storage.M_Locator_ID "
+				+ " AND C_POSWarehouseAllocation.M_Warehouse_ID = M_Locator.M_Warehouse_ID "
+				+ " WHERE C_POSWarehouseAllocation.C_POS_ID = ? "
+				+ ")"
+			;
+
+			/*
+			boolean IsMultiStoreStock = false;
+			int warehouseId = store.getM_Warehouse_ID();
+			if(!IsMultiStoreStock) {
+				whereClause = "AND M_Locator_ID IN (SELECT M_Locator_ID FROM M_Locator WHERE M_Warehouse_ID=" + warehouseId + ")";
+			}
+			*/
+			
+			Query query = new Query(
+					Env.getCtx(),
+					I_M_Storage.Table_Name, 
+					whereClause,
+					null
+				)
+				.setParameters(product.getM_Product_ID(), pos.getC_POS_ID())
+				.setClient_ID()
+				.setOnlyActiveRecords(true);
+			int count = query.count();
+			query.<MStorage>list().forEach(storage -> builder.addStocks(
+				(convertStock(storage)).build())
+			);
+			//	
+			builder.setRecordCount(count);
+			//	Set page token
+			if(count > offset && count > limit) {
+				nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+			}
+			//	Set next page
+			builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		});
+		
+		//	
+		return builder;
+	}
+
+	/**
+	 * Get product from SKU
+	 * @param sku
+	 * @return
+	 */
+	private MProduct getProductFromSku(String sku) {
+		//	SKU
+		if(Util.isEmpty(sku)) {
+			throw new AdempiereException("@SKU@ @IsMandatory@");
+		}
+		//	
+		MProduct product = new Query(
+				Env.getCtx(),
+				I_M_Product.Table_Name, 
+				"(UPPER(SKU) = UPPER(?))",
+				null
+			)
+			.setParameters(sku.trim())
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.first();
+		//	Validate product
+		if(product == null) {
+			throw new AdempiereException("@M_Product_ID@ @NotFound@");
+		}
+		//	Default
+		return product;
+	}
+
+	/**
+	 * Get product from Value
+	 * @param sku
+	 * @return
+	 */
+	private MProduct getProductFromValue(String value) {
+		if(Util.isEmpty(value)) {
+			throw new AdempiereException("@Value@ @IsMandatory@");
+		}
+		//	
+		MProduct product = new Query(
+				Env.getCtx(),
+				I_M_Product.Table_Name, 
+				"(UPPER(Value) = UPPER(?))",
+				null
+			)
+			.setParameters(value.trim())
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.first();
+		//	Validate product
+		if(product == null) {
+			throw new AdempiereException("@M_Product_ID@ @NotFound@");
+		}
+		//	Default
+		return product;
+	}
+
+	/**
+	 * Convert stock
+	 * @param storage
+	 * @return
+	 */
+	private Stock.Builder convertStock(MStorage storage) {
+		Stock.Builder builder = Stock.newBuilder();
+		if(storage == null) {
+			return builder;
+		}
+		BigDecimal quantityOnHand = Optional.ofNullable(storage.getQtyOnHand()).orElse(Env.ZERO);
+		BigDecimal quantityReserved = Optional.ofNullable(storage.getQtyReserved()).orElse(Env.ZERO);
+		BigDecimal quantityAvailable = quantityOnHand.subtract(quantityReserved);
+		builder.setIsInStock(quantityAvailable.signum() > 0);
+		builder.setQuantity(quantityAvailable.doubleValue());
+		//	
+		MProduct product = MProduct.get(Env.getCtx(), storage.getM_Product_ID());
+		MUOM unitOfMeasure = MUOM.get(Env.getCtx(), product.getC_UOM_ID());
+		Trx.run(transactionName -> {
+			MAttributeSetInstance attribute = new MAttributeSetInstance(Env.getCtx(), storage.getM_AttributeSetInstance_ID(), transactionName);
+			builder.setAttributeName(ValueUtil.validateNull(attribute.getDescription()));
+		});
+		
+		builder.setIsDecimalQuantity(unitOfMeasure.getStdPrecision() != 0);
+		//	References
+		builder.setProductId(storage.getM_Product_ID());
+
+		builder.setIsManageStock(product.isStocked());
+		//	Warehouse
+		MWarehouse warehouse = MWarehouse.get(Env.getCtx(), storage.getM_Warehouse_ID());
+		builder
+			.setWarehouseUuid(warehouse.getUUID())
+			.setWarehouseId(warehouse.getM_Warehouse_ID())
+			.setWarehouseName(Optional.ofNullable(warehouse.getName()).orElse("")
+		);
+		//	
+		return builder;
 	}
 }

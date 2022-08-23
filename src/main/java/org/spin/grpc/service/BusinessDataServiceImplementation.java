@@ -231,7 +231,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
-	private ProcessLog.Builder runProcess(Properties context, RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
+	public static ProcessLog.Builder runProcess(Properties context, RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
 		ProcessLog.Builder response = ProcessLog.newBuilder();
 		//	Get Process definition
 		MProcess process = MProcess.get(context, RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getProcessUuid(), null));
@@ -446,7 +446,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @param action
 	 * @param optionId
 	 */
-	private void addToRecentItem(String action, int optionId) {
+	private static void addToRecentItem(String action, int optionId) {
 		if(Util.isEmpty(action)) {
 			return;
 		}
@@ -474,7 +474,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @param name
 	 * @return
 	 */
-	private String getValidName(String fileName) {
+	private static String getValidName(String fileName) {
 		if(Util.isEmpty(fileName)) {
 			return "";
 		}
@@ -486,7 +486,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @param fileName
 	 * @return
 	 */
-	private String getExtension(String fileName) {
+	private static String getExtension(String fileName) {
 		if(Util.isEmpty(fileName)) {
 			return "";
 		}
@@ -503,7 +503,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @param log
 	 * @return
 	 */
-	private ProcessInfoLog.Builder convertProcessInfoLog(org.compiere.process.ProcessInfoLog log) {
+	private static ProcessInfoLog.Builder convertProcessInfoLog(org.compiere.process.ProcessInfoLog log) {
 		ProcessInfoLog.Builder processLog = ProcessInfoLog.newBuilder();
 		processLog.setRecordId(log.getP_ID());
 		processLog.setLog(ValueUtil.validateNull(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));

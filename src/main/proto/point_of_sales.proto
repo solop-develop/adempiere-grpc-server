@@ -147,6 +147,8 @@ service Store {
 	rpc DeletePaymentReference(DeletePaymentReferenceRequest) returns (Empty) {}
 	//	List Refund References
 	rpc ListPaymentReferences(ListPaymentReferencesRequest) returns (ListPaymentReferencesResponse) {}
+	//  List Stock: GET /api/stocks
+	rpc ListStocks(ListStocksRequest) returns (ListStocksResponse) {}
 }
 
 //	Delete Refund reference request
@@ -1296,4 +1298,52 @@ message Key {
 	string product_value = 10;
 	Decimal quantity = 11;
 	ResourceReference resource_reference = 12;
+}
+
+//	Stock
+message Stock {
+	int32 product_id = 1;
+	double quantity = 2;
+	bool is_in_stock = 3;
+	bool is_decimal_quantity = 4;
+	bool is_show_default_notification_message = 5;
+	bool is_use_config_minimum_quantity = 6;
+	double minimum_quantity = 7;
+	bool is_use_config_minimum_sale_quantity = 8;
+	double minimum_sale_quantity = 9;
+	bool is_use_config_maximum_sale_quantity = 10;
+	double maximum_sale_quantity = 11;
+	bool is_use_config_backorders = 12;
+	double backorders = 13;
+	bool is_use_config_notify_stock_quantity = 14;
+	double notify_stock_quantity = 15;
+	bool is_use_config_quantity_increments = 16;
+	double quantity_increments = 17;
+	bool is_use_config_enable_quantity_increments = 18;
+	bool is_enable_quantity_increments = 19;
+	bool is_use_config_manage_stock = 20;
+	bool is_manage_stock = 21;
+	string low_stock_date = 22;
+	bool is_decimal_divided = 23;
+	double stock_status_changed_auto = 24;
+	int32 warehouse_id = 25;
+	string warehouse_uuid = 26;
+	string warehouse_name = 27;
+	string attribute_name = 28;
+}
+
+message ListStocksRequest {
+	ClientRequest client_request = 1;
+	string sku = 2;
+	string value = 3;
+	int32 page_size = 4;
+	string page_token = 5;
+	string pos_uuid = 6;
+}
+
+//	List of Stock
+message ListStocksResponse {
+	int64 record_count = 1;
+	repeated Stock stocks = 2;
+	string next_page_token = 3;
 }
