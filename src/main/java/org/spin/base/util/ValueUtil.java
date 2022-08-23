@@ -181,7 +181,8 @@ public class ValueUtil {
 				|| Util.isEmpty(decimalValue.getDecimalValue())) {
 			return null;
 		}
-		return new BigDecimal(decimalValue.getDecimalValue());
+		return new BigDecimal(decimalValue.getDecimalValue())
+			.setScale(decimalValue.getScale());
 	}
 	
 	/**

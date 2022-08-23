@@ -1042,11 +1042,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			int processId = 110;
 			String tableName = I_C_Order.Table_Name;
 			int recordId = posController.getC_Order_ID();
+			/*
 			if (posController.isInvoiced()) {
 				// Rpt C_Invoice
 				processId = 116;
 				tableName = I_C_Invoice.Table_Name;
 			}
+			*/
 			String processUuid = RecordUtil.getUuidFromId(I_AD_Process.Table_Name, processId, null);
 
 			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
@@ -2433,6 +2435,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	        //create new line
 			shipmentLine.setOrderLine(salesOrderLine, 0, quantityToOrder);
 			Optional.ofNullable(request.getDescription()).ifPresent(description -> shipmentLine.setDescription(description));
+			shipmentLine.setQty(quantityToOrder);
 			//	Save Line
 			shipmentLine.saveEx();
 			shipmentLineReference.set(shipmentLine);
@@ -5935,7 +5938,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			int limit = RecordUtil.PAGE_SIZE;
 			int offset = pageNumber * RecordUtil.PAGE_SIZE;
 
-			String whereClause = I_M_Storage.COLUMNNAME_M_Product_ID + " = ? "
+			final String whereClause = I_M_Storage.COLUMNNAME_M_Product_ID + " = ? "
 				+ " AND EXISTS (SELECT 1 FROM C_POSWarehouseAllocation "
 				+ " JOIN C_POS ON C_POS.C_POS_ID = C_POSWarehouseAllocation.C_POS_ID "
 				+ " JOIN M_Locator ON M_Locator.M_Locator_ID = M_Storage.M_Locator_ID "
