@@ -1005,7 +1005,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
-			if (!getBooleanValueFromPOS(pos, 0, "IsAllowsPrintDocument")) {
+			int userId = Env.getAD_User_ID(pos.getCtx());
+			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPrintDocument")) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 
@@ -1047,7 +1048,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
-			if (!getBooleanValueFromPOS(pos, 0, "IsAllowsPrintPreview")) {
+			int userId = Env.getAD_User_ID(pos.getCtx());
+			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPrintPreview")) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 
