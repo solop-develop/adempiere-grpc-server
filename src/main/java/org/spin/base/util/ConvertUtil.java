@@ -541,19 +541,18 @@ public class ConvertUtil {
 
 		// discount
 		BigDecimal discountAmount = orderLines.stream()
-			.filter(orderLine -> orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId)
-			.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO))
-			.reduce(BigDecimal.ZERO, BigDecimal::add);
+				.filter(orderLine -> orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId)
+				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
 		BigDecimal lineDiscountAmount = orderLines.stream()
-			.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
-			.map(orderLine -> {
-				BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
-				BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
-				BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
-					.multiply(Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO));
-				return discountLine;
-			})
-			.reduce(BigDecimal.ZERO, BigDecimal::add);
+				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
+				.map(orderLine -> {
+					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
+					BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
+					BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
+						.multiply(Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO));
+					return discountLine;
+				})
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
 		//	
 		discountAmount = discountAmount.add(lineDiscountAmount);
