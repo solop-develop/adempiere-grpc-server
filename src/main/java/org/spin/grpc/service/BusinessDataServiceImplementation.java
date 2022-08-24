@@ -232,13 +232,17 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @throws FileNotFoundException 
 	 */
 	public static ProcessLog.Builder runProcess(Properties context, RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
-		ProcessLog.Builder response = ProcessLog.newBuilder();
 		//	Get Process definition
 		MProcess process = MProcess.get(context, RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getProcessUuid(), null));
 		if(process == null
 				|| process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
+
+		ProcessLog.Builder response = ProcessLog.newBuilder()
+			.setUuid(request.getProcessUuid())
+		;
+
 		int tableId = 0;
 		int recordId = request.getId();
 		if(!Util.isEmpty(request.getTableName())) {
