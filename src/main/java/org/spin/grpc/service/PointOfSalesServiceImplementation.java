@@ -410,9 +410,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Add Line for Order = " + request.getOrderLineUuid());
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(),
-					request.getClientRequest().getLanguage(),
-					request.getClientRequest().getOrganizationUuid(),
+			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
+					request.getClientRequest().getLanguage(), 
+					request.getClientRequest().getOrganizationUuid(), 
 					request.getClientRequest().getWarehouseUuid());
 			OrderLine.Builder orderLine = updateAndConvertOrderLine(request);
 			responseObserver.onNext(orderLine.build());
@@ -4741,9 +4741,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		//	Quantity
 		return ConvertUtil.convertOrderLine(
-				updateOrderLine(orderLineId,
-						ValueUtil.getBigDecimalFromDecimal(request.getQuantity()),
-						ValueUtil.getBigDecimalFromDecimal(request.getPrice()),
+				updateOrderLine(orderLineId, 
+						ValueUtil.getBigDecimalFromDecimal(request.getQuantity()), 
+						ValueUtil.getBigDecimalFromDecimal(request.getPrice()), 
 						ValueUtil.getBigDecimalFromDecimal(request.getDiscountRate()),
 						request.getIsAddQuantity(),
 						RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null)));
@@ -4770,10 +4770,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		//	Quantity
 		return ConvertUtil.convertOrderLine(
-				addOrderLine(orderId,
-						RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), null),
-						RecordUtil.getIdFromUuid(I_C_Charge.Table_Name, request.getChargeUuid(), null),
-						RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null),
+				addOrderLine(orderId, 
+						RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), null), 
+						RecordUtil.getIdFromUuid(I_C_Charge.Table_Name, request.getChargeUuid(), null), 
+						RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null), 
 						ValueUtil.getBigDecimalFromDecimal(request.getQuantity())));
 	}
 	
