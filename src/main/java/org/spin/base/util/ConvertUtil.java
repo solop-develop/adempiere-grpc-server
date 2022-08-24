@@ -546,9 +546,12 @@ public class ConvertUtil {
 				.map(orderLine -> {
 					BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
 					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
-					return priceListAmount.subtract(priceActualAmount);
+					BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
+						.multiply(Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO));
+					return discountLine;
 				})
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
+
 		//	
 		discountAmount = discountAmount.add(lineDiscountAmount);
 		//	

@@ -4892,16 +4892,30 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				}
 				quantityToOrder = currentQuantity.add(quantity);
 			}
-			BigDecimal priceToOrder = price;
-			if(price == null
-					|| price.equals(Env.ZERO)) {
-				BigDecimal discountAmount = orderLine.getPriceList().multiply(Optional.ofNullable(discountRate).orElse(Env.ZERO).divide(Env.ONEHUNDRED));
-				priceToOrder = orderLine.getPriceList().subtract(discountAmount);
+
+			// TODO: Verify with Price Entered/Actual
+			BigDecimal priceToOrder = orderLine.getPriceList();
+			if (price != null) {
+				priceToOrder = price;
 			}
+
+			BigDecimal discountRateToOrder = orderLine.getDiscount();
+			if (discountRate != null) {
+				discountRateToOrder = discountRate;
+			}
+
+			BigDecimal discountAmount = orderLine.getPriceList()
+				.multiply(Optional.ofNullable(discountRateToOrder).orElse(Env.ZERO)
+				.divide(Env.ONEHUNDRED));
+
+			priceToOrder = orderLine.getPriceList().subtract(discountAmount);
+
 			if(warehouseId > 0) {
 				orderLine.setM_Warehouse_ID(warehouseId);
 			}
+
 			//	Set values
+			orderLine.setDiscount(discountRateToOrder);
 			orderLine.setPrice(priceToOrder); //	sets List/limit
 			orderLine.setQty(quantityToOrder);
 			orderLine.setTax();
