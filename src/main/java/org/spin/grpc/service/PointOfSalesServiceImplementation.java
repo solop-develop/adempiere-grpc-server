@@ -2205,7 +2205,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		        .withParameter("C_Order_ID", orderId)
 		        .withParameter("Bill_BPartner_ID", order.getC_BPartner_ID())
 		        .withParameter("IsCancelled", true)
-		        .withParameter("C_DocTypeRMA_ID", pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID"))
+		        .withParameter("C_DocTypeRMA_ID", getReturnDocumentTypeId(pointOfSales, order.getC_DocTypeTarget_ID()))
 				.execute(transactionName);
 			MOrder returnOrder = new MOrder(Env.getCtx(), infoProcess.getRecord_ID(), transactionName);
 			if(!Util.isEmpty(request.getDescription())) {
@@ -2216,6 +2216,33 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		});
 		//	Default
 		return ConvertUtil.convertOrder(returnOrderReference.get());
+	}
+	
+	/**
+	 * Get Default document Type
+	 * @param pointOfSales
+	 * @param salesOrderDocumentTypeId
+	 * @return
+	 */
+	private int getReturnDocumentTypeId(MPOS pointOfSales, int salesOrderDocumentTypeId) {
+		final String TABLE_NAME = "C_POSDocumentTypeAllocation";
+		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
+			return pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
+		}
+		//	Get from current sales order document type
+		int returnDocumentTypeId = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ? AND C_DocType_ID = ?", null)
+			.setParameters(pointOfSales.getC_POS_ID(), salesOrderDocumentTypeId)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.firstId();
+		if(returnDocumentTypeId <= 0) {
+			returnDocumentTypeId = pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
+		}
+		if(returnDocumentTypeId <= 0) {
+			throw new AdempiereException("@C_DocTypeRMA_ID@ @NotFound@");
+		}
+		//	
+		return returnDocumentTypeId;
 	}
 	
 	/**
