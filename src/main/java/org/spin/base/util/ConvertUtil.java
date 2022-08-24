@@ -546,8 +546,8 @@ public class ConvertUtil {
 		BigDecimal lineDiscountAmount = orderLines.stream()
 				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
 				.map(orderLine -> {
-					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
 					BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
+					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
 					BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
 						.multiply(Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO));
 					return discountLine;
