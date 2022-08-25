@@ -4899,7 +4899,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			orderLine.setHeaderInfo(order);
 			//	Valid Complete
 			if (!DocumentUtil.isDrafted(order)) {
-				throw new AdempiereException("@C_Order_ID@ @IsDrafted@");
+				throw new AdempiereException("@C_Order_ID@ @IsProcessed@");
 			}
 			//	Get if is null
 			BigDecimal quantityToOrder = quantity;
