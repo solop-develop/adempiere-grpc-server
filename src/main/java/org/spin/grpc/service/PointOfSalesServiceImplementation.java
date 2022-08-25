@@ -4899,7 +4899,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			orderLine.setHeaderInfo(order);
 			//	Valid Complete
 			if (!DocumentUtil.isDrafted(order)) {
-				throw new AdempiereException("@C_Order_ID@ @IsDrafted@");
+				throw new AdempiereException("@C_Order_ID@ @Processed@");
 			}
 			int precision = MPriceList.getPricePrecision(Env.getCtx(), order.getM_PriceList_ID());
 			//	Get if is null
