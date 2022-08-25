@@ -4459,7 +4459,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if (discount.scale() > precision) {
 			discount = discount.setScale(precision, BigDecimal.ROUND_HALF_UP);
 		}
-		return discount.negate();
+		return discount;
 	}
 	
 	/**
@@ -4490,7 +4490,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		//	
 		int precision = MCurrency.getStdPrecision(order.getCtx(), order.getC_Currency_ID());
-		BigDecimal discountRateOff = getDiscount(baseAmount, baseAmount.add(discountAmountOff), precision);
+		BigDecimal discountRateOff = getDiscount(baseAmount, baseAmount.add(discountAmountOff), precision).negate();
 		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
 			throw new AdempiereException("@POS.MaximumDiscountAllowedExceeded@");
 		}
@@ -4901,6 +4901,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if (!DocumentUtil.isDrafted(order)) {
 				throw new AdempiereException("@C_Order_ID@ @IsDrafted@");
 			}
+			int precision = MPriceList.getPricePrecision(Env.getCtx(), order.getM_PriceList_ID());
 			//	Get if is null
 			BigDecimal quantityToOrder = quantity;
 			if(quantity == null
@@ -4916,25 +4917,21 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 			// TODO: Verify with Price Entered/Actual
 			BigDecimal priceToOrder = orderLine.getPriceList();
+			BigDecimal discountRateToOrder = Env.ZERO;
+			//	Calculate discount from final price
 			if (price != null) {
 				priceToOrder = price;
+				discountRateToOrder = getDiscount(orderLine.getPriceList(), price, precision);
 			}
-
-			BigDecimal discountRateToOrder = orderLine.getDiscount();
+			//	Calculate final price from discount
 			if (discountRate != null) {
 				discountRateToOrder = discountRate;
+				priceToOrder = getFinalPrice(orderLine.getPriceList(), discountRate, precision);
 			}
-
-			BigDecimal discountAmount = orderLine.getPriceList()
-				.multiply(Optional.ofNullable(discountRateToOrder).orElse(Env.ZERO)
-				.divide(Env.ONEHUNDRED));
-
-			priceToOrder = orderLine.getPriceList().subtract(discountAmount);
-
+			//	
 			if(warehouseId > 0) {
 				orderLine.setM_Warehouse_ID(warehouseId);
 			}
-
 			//	Set values
 			orderLine.setDiscount(discountRateToOrder);
 			orderLine.setPrice(priceToOrder); //	sets List/limit
