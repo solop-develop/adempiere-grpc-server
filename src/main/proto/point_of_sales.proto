@@ -748,9 +748,9 @@ message AvailableWarehouse {
 message AvailablePaymentMethod {
 	int32 id = 2;
 	string uuid = 3;
-	string key = 4;
-	string name = 5;
-	string tender_type = 6;
+	string name = 4;
+	string pos_uuid = 5;
+	bool is_displayedfrom_collection = 6;
 	bool is_pos_required_pin = 7;
 	bool is_allowed_to_refund = 8;
 	bool is_allowed_to_refund_open = 9;
@@ -759,6 +759,17 @@ message AvailablePaymentMethod {
 	Currency refund_reference_currency = 12;
 	Currency reference_currency = 13;
 	bool is_payment_reference = 14;
+	PaymentMethod payment_method = 15;
+}
+
+message PaymentMethod {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	string tender_type = 6;
+	bool is_active = 7;
 }
 
 //	List discount schema for POS
@@ -1116,6 +1127,7 @@ message ValidatePINRequest {
 	ClientRequest client_request = 1;
 	string pos_uuid = 2;
 	string pin = 3;
+	string requested_access = 4;
 }
 
 //	List Payments Response

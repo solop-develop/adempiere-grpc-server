@@ -194,6 +194,7 @@ import org.spin.grpc.util.ListStocksResponse;
 import org.spin.grpc.util.Order;
 import org.spin.grpc.util.OrderLine;
 import org.spin.grpc.util.Payment;
+import org.spin.grpc.util.PaymentMethod;
 import org.spin.grpc.util.PaymentReference;
 import org.spin.grpc.util.PaymentSummary;
 import org.spin.grpc.util.PointOfSales;
@@ -220,6 +221,7 @@ import org.spin.grpc.util.UpdateOrderRequest;
 import org.spin.grpc.util.UpdatePaymentRequest;
 import org.spin.grpc.util.ValidatePINRequest;
 import org.spin.model.I_C_PaymentMethod;
+import org.spin.model.MCPaymentMethod;
 import org.spin.util.VueStoreFrontUtil;
 
 import io.grpc.Status;
@@ -3209,19 +3211,34 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		.setLimit(limit, offset)
 		.list()
 		.forEach(availablePaymentMethod -> {
-			PO paymentMethod = paymentTypeTable.getPO(availablePaymentMethod.get_ValueAsInt("C_PaymentMethod_ID"), null);
-			AvailablePaymentMethod.Builder tenderTypeValue = AvailablePaymentMethod.newBuilder();
-			tenderTypeValue.setId(paymentMethod.get_ID())
-					.setUuid(ValueUtil.validateNull(paymentMethod.get_UUID()))
-					.setKey(ValueUtil.validateNull(paymentMethod.get_ValueAsString("Value")))
-					.setName(ValueUtil.validateNull(paymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)))
-					.setTenderType(ValueUtil.validateNull(paymentMethod.get_ValueAsString(I_C_Payment.COLUMNNAME_TenderType)))
+			MCPaymentMethod paymentMethod = (MCPaymentMethod) paymentTypeTable.getPO(availablePaymentMethod.get_ValueAsInt("C_PaymentMethod_ID"), null);
+			PaymentMethod.Builder paymentMethodBuilder = PaymentMethod.newBuilder()
+				.setUuid(ValueUtil.validateNull(paymentMethod.getUUID()))
+				.setId(paymentMethod.getC_PaymentMethod_ID())
+				.setName(ValueUtil.validateNull(paymentMethod.getName()))
+				.setValue(ValueUtil.validateNull(paymentMethod.getValue()))
+				.setDescription(ValueUtil.validateNull(paymentMethod.getDescription()))
+				.setTenderType(ValueUtil.validateNull(paymentMethod.getTenderType()))
+				.setIsActive(paymentMethod.isActive())
+			;
+
+			AvailablePaymentMethod.Builder tenderTypeValue = AvailablePaymentMethod.newBuilder()
+				.setId(availablePaymentMethod.get_ID())
+				.setUuid(ValueUtil.validateNull(availablePaymentMethod.get_UUID()))
+				.setName(
+					!Util.isEmpty(paymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name), true) ?
+						ValueUtil.validateNull(paymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)) : 
+						ValueUtil.validateNull(paymentMethod.getName())
+				)
+				.setPosUuid(ValueUtil.validateNull(request.getPosUuid()))
 					.setIsPosRequiredPin(availablePaymentMethod.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
 					.setIsAllowedToRefund(availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefund"))
 					.setIsAllowedToRefundOpen(availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefundOpen"))
 					.setMaximumRefundAllowed(ValueUtil.getDecimalFromBigDecimal((BigDecimal) availablePaymentMethod.get_Value("MaximumRefundAllowed")))
 					.setMaximumDailyRefundAllowed(ValueUtil.getDecimalFromBigDecimal((BigDecimal) availablePaymentMethod.get_Value("MaximumDailyRefundAllowed")))
-					.setIsPaymentReference(availablePaymentMethod.get_ValueAsBoolean("IsPaymentReference"));
+					.setIsPaymentReference(availablePaymentMethod.get_ValueAsBoolean("IsPaymentReference"))
+				.setPaymentMethod(paymentMethodBuilder)
+			;
 					if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
 						tenderTypeValue.setRefundReferenceCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID"))));
 					}
