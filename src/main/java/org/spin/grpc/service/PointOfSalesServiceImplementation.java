@@ -2232,13 +2232,17 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			return pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
 		}
 		//	Get from current sales order document type
-		int returnDocumentTypeId = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ? AND C_DocType_ID = ?", null)
+		PO documentTypeAllocation = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ? AND C_DocType_ID = ?", null)
 			.setParameters(pointOfSales.getC_POS_ID(), salesOrderDocumentTypeId)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
-			.firstId();
-		if(returnDocumentTypeId <= 0) {
+			.first();
+		int returnDocumentTypeId = 0;
+		if(documentTypeAllocation == null 
+				|| documentTypeAllocation.get_ID() <= 0) {
 			returnDocumentTypeId = pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
+		} else {
+			returnDocumentTypeId = documentTypeAllocation.get_ValueAsInt("POSReturnDocumentType_ID");
 		}
 		if(returnDocumentTypeId <= 0) {
 			throw new AdempiereException("@C_DocTypeRMA_ID@ @NotFound@");
