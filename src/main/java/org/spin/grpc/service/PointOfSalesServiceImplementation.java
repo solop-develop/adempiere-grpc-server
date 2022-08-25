@@ -1009,7 +1009,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 			int userId = Env.getAD_User_ID(pos.getCtx());
 			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPrintDocument")) {
-				throw new AdempiereException("@ActionNotAllowedHere@");
+				throw new AdempiereException("@POS.PrintDocumentNotAllowed@");
 			}
 
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
@@ -1052,7 +1052,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 			int userId = Env.getAD_User_ID(pos.getCtx());
 			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument")) {
-				throw new AdempiereException("@ActionNotAllowedHere@");
+				throw new AdempiereException("@POS.PreviewDocumentNotAllowed@");
 			}
 
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
@@ -1778,7 +1778,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
 		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
 		if(!pointOfSales.get_ValueAsBoolean("IsAllowsAllocateSeller")) {
-			throw new AdempiereException("@ActionNotAllowedHere@");
+			throw new AdempiereException("@POS.AllocateSellerNotAllowed@");
 		}
 		Trx.run(transactionName -> {
 			PO seller = new Query(Env.getCtx(), "C_POSSellerAllocation", "C_POS_ID = ? AND SalesRep_ID = ?", transactionName).setParameters(posId, salesRepresentativeId).first();
@@ -1809,7 +1809,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
 		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
 		if(!pointOfSales.get_ValueAsBoolean("IsAllowsAllocateSeller")) {
-			throw new AdempiereException("@ActionNotAllowedHere@");
+			throw new AdempiereException("@POS.AllocateSellerNotAllowed@");
 		}
 		Trx.run(transactionName -> {
 			List<Integer> allocatedSellersIds = new Query(Env.getCtx(), "C_POSSellerAllocation", "C_POS_ID = ?", transactionName).setParameters(posId).getIDsAsList();
@@ -4399,7 +4399,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		boolean isAllowsApplyDiscount = getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "IsAllowsApplyDiscount");
 		if(!isAllowsApplyDiscount) {
-			throw new AdempiereException("@ActionNotAllowedHere@");
+			throw new AdempiereException("@POS.ApplyDiscountNotAllowed@");
 		}
 		BigDecimal maximumDiscountAllowed = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "MaximumDiscountAllowed");
 		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
@@ -4477,7 +4477,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int defaultDiscountChargeId = pos.get_ValueAsInt("DefaultDiscountCharge_ID");
 		boolean isAllowsApplyDiscount = getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "IsAllowsApplyDiscount");
 		if(!isAllowsApplyDiscount) {
-			throw new AdempiereException("@ActionNotAllowedHere@");
+			throw new AdempiereException("@POS.ApplyDiscountNotAllowed@");
 		}
 		BigDecimal maximumDiscountAllowed = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "MaximumDiscountAllowed");
 		BigDecimal baseAmount = Optional.ofNullable(Arrays.asList(order.getLines()).stream()
