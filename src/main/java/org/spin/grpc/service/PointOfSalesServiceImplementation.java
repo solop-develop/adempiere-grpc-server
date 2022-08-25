@@ -2388,6 +2388,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		PaymentReference.Builder builder = PaymentReference.newBuilder();
 		if(paymentReference != null
 				&& paymentReference.get_ID() > 0) {
+			MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), null);
+			PaymentMethod.Builder paymentMethodBuilder = ConvertUtil.convertPaymentMethod(paymentMethod);
+
 			builder.setAmount(ValueUtil.getDecimalFromBigDecimal((BigDecimal) paymentReference.get_Value("Amount")))
 			.setDescription(ValueUtil.validateNull(paymentReference.get_ValueAsString("Description")))
 			.setIsPaid(paymentReference.get_ValueAsBoolean("IsPaid"))
@@ -2399,7 +2402,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setSalesRepresentative(ConvertUtil.convertSalesRepresentative(MUser.get(Env.getCtx(), paymentReference.get_ValueAsInt("SalesRep_ID"))))
 			.setId(paymentReference.get_ID())
 			.setUuid(ValueUtil.validateNull(paymentReference.get_UUID()))
-			.setPaymentMethodUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_PaymentMethod.Table_Name, paymentReference.get_ValueAsInt("C_PaymentMethod_ID"))))
+			.setPaymentMethod(paymentMethodBuilder)
 			.setPaymentDate(ValueUtil.validateNull(ValueUtil.convertDateToString((Timestamp) paymentReference.get_Value("PayDate"))))
 			.setIsAutomatic(paymentReference.get_ValueAsBoolean("IsAutoCreatedReference"))
 			.setIsProcessed(paymentReference.get_ValueAsBoolean("Processed"));
@@ -3216,15 +3219,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		.list()
 		.forEach(availablePaymentMethod -> {
 			MCPaymentMethod paymentMethod = (MCPaymentMethod) paymentTypeTable.getPO(availablePaymentMethod.get_ValueAsInt("C_PaymentMethod_ID"), null);
-			PaymentMethod.Builder paymentMethodBuilder = PaymentMethod.newBuilder()
-				.setUuid(ValueUtil.validateNull(paymentMethod.getUUID()))
-				.setId(paymentMethod.getC_PaymentMethod_ID())
-				.setName(ValueUtil.validateNull(paymentMethod.getName()))
-				.setValue(ValueUtil.validateNull(paymentMethod.getValue()))
-				.setDescription(ValueUtil.validateNull(paymentMethod.getDescription()))
-				.setTenderType(ValueUtil.validateNull(paymentMethod.getTenderType()))
-				.setIsActive(paymentMethod.isActive())
-			;
+			PaymentMethod.Builder paymentMethodBuilder = ConvertUtil.convertPaymentMethod(paymentMethod);
 
 			AvailablePaymentMethod.Builder tenderTypeValue = AvailablePaymentMethod.newBuilder()
 				.setId(availablePaymentMethod.get_ID())

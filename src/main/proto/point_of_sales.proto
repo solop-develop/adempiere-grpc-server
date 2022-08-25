@@ -234,7 +234,7 @@ message PaymentReference {
 	string payment_date = 7;
 	string tender_type_code = 8;
 	Currency currency = 9;
-	string payment_method_uuid = 10;
+	PaymentMethod payment_method = 10;
 	string payment_account_date = 11;
 	string customer_bank_account_uuid = 12;
 	string order_uuid = 13;
@@ -1157,8 +1157,9 @@ message Payment {
 	string tender_type_code = 16;
 	string currency_uuid = 17;
 	bool is_refund = 18;
-	string payment_method_uuid = 19;
+	string name = 19;
 	Decimal order_currency_rate = 20;
+	PaymentMethod payment_method = 21;
 }
 
 // Request for delete a order
