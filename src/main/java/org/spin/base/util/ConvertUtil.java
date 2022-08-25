@@ -99,6 +99,7 @@ import org.spin.grpc.util.Order;
 import org.spin.grpc.util.OrderLine;
 import org.spin.grpc.util.Organization;
 import org.spin.grpc.util.Payment;
+import org.spin.grpc.util.PaymentMethod;
 import org.spin.grpc.util.PriceList;
 import org.spin.grpc.util.Product;
 import org.spin.grpc.util.Region;
@@ -110,8 +111,8 @@ import org.spin.grpc.util.TaxRate;
 import org.spin.grpc.util.Value;
 import org.spin.grpc.util.Warehouse;
 import org.spin.grpc.util.ChatEntry.ModeratorStatus;
-import org.spin.model.I_C_PaymentMethod;
 import org.spin.model.MADAttachmentReference;
+import org.spin.model.MCPaymentMethod;
 import org.spin.util.AttachmentUtil;
 import org.spin.util.VueStoreFrontUtil;
 
@@ -664,6 +665,24 @@ public class ConvertUtil {
 		return Optional.ofNullable(conversionRate).orElse(Env.ZERO);
 	}
 	
+	public static PaymentMethod.Builder convertPaymentMethod(MCPaymentMethod paymentMethod) {
+		PaymentMethod.Builder paymentMethodBuilder = PaymentMethod.newBuilder();
+		if(paymentMethod == null) {
+			return paymentMethodBuilder;
+		}
+		paymentMethodBuilder
+			.setUuid(ValueUtil.validateNull(paymentMethod.getUUID()))
+			.setId(paymentMethod.getC_PaymentMethod_ID())
+			.setName(ValueUtil.validateNull(paymentMethod.getName()))
+			.setValue(ValueUtil.validateNull(paymentMethod.getValue()))
+			.setDescription(ValueUtil.validateNull(paymentMethod.getDescription()))
+			.setTenderType(ValueUtil.validateNull(paymentMethod.getTenderType()))
+			.setIsActive(paymentMethod.isActive())
+		;
+
+		return paymentMethodBuilder;
+	}
+	
 	/**
 	 * Convert payment
 	 * @param payment
@@ -687,6 +706,10 @@ public class ConvertUtil {
 			}
 		}
 		paymentAmount = paymentAmount.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+
+		MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), payment.get_ValueAsInt("C_PaymentMethod_ID"), null);
+		PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
+		
 		//	Convert
 		builder
 			.setId(payment.getC_Payment_ID())
@@ -694,7 +717,6 @@ public class ConvertUtil {
 			.setOrderUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Order.Table_Name, payment.getC_Order_ID())))
 			.setDocumentNo(ValueUtil.validateNull(payment.getDocumentNo()))
 			.setTenderTypeCode(ValueUtil.validateNull(payment.getTenderType()))
-			.setPaymentMethodUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_PaymentMethod.Table_Name, payment.get_ValueAsInt("C_PaymentMethod_ID"))))
 			.setReferenceNo(ValueUtil.validateNull(Optional.ofNullable(payment.getCheckNo()).orElse(payment.getDocumentNo())))
 			.setDescription(ValueUtil.validateNull(payment.getDescription()))
 			.setAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount))
@@ -708,6 +730,7 @@ public class ConvertUtil {
 			.setDocumentStatus(ConvertUtil.convertDocumentStatus(ValueUtil.validateNull(payment.getDocStatus()), 
 					ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
 					ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))))
+			.setPaymentMethod(paymentMethodBuilder)
 		;
 		return builder;
 	}
