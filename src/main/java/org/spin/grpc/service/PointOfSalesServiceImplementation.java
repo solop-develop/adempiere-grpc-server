@@ -1008,7 +1008,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 			int userId = Env.getAD_User_ID(pos.getCtx());
-			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument")) {
+			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPrintDocument")) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 
