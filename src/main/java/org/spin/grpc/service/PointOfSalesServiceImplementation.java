@@ -4443,6 +4443,11 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(Util.isEmpty(request.getPin())) {
 			throw new AdempiereException("@UserPIN@ @IsMandatory@");
 		}
+
+		if (validatePINSupervisor(pos.getC_POS_ID(), Env.getAD_User_ID(Env.getCtx()), request.getPin(), request.getRequestedAccess())) {
+			return Empty.newBuilder();
+		}
+
 		int supervisorId = pos.get_ValueAsInt("Supervisor_ID");
 		MUser user = MUser.get(Env.getCtx(), (supervisorId > 0? supervisorId: pos.getSalesRep_ID()));
 		if(supervisorId <= 0) {
@@ -4472,6 +4477,37 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		return Empty.newBuilder();
 	}
 	
+	private boolean validatePINSupervisor(int posId, int userId, String pin, String requestedAccess) {
+		if (Util.isEmpty(requestedAccess)) {
+			return false;
+		}
+
+		StringBuffer whereClause = new StringBuffer();
+		MTable table = MTable.get(Env.getCtx(), "C_POSSellerAllocation");
+		if (table != null && table.getColumn(requestedAccess) != null) {
+			whereClause.append(" AND seller.").append(requestedAccess).append("= 'Y'");
+		}
+		int supervisorId = new Query(
+				Env.getCtx(),
+				I_AD_User.Table_Name,
+				"EXISTS("
+				+ "		SELECT 1 FROM C_POSSellerAllocation AS seller "
+				+ "		WHERE seller.C_POS_ID = ? AND seller.SalesRep_ID = AD_User.AD_User_ID "
+				+ "		AND seller.IsActive = 'N' AND seller.IsAllowsPOSManager = 'Y' "
+				+ 		whereClause
+				+ ") "
+				+ "AND UserPIN = ? "
+				,
+				null
+			)
+			.setOnlyActiveRecords(true)
+			.setParameters(posId, pin)
+			.firstId()
+		;
+
+		return supervisorId > 0;
+	}
+
 	/**
 	 * Load Price List Version from Price List
 	 * @param priceListId
