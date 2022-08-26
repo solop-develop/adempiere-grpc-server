@@ -37,6 +37,8 @@ service Workflow {
 	rpc ListDocumentStatuses(ListDocumentStatusesRequest) returns (ListDocumentStatusesResponse) {}
 	//	List Workflow Activities
 	rpc ListWorkflowActivities(ListWorkflowActivitiesRequest) returns (ListWorkflowActivitiesResponse) {}
+	//	Run a Document Action
+	rpc RunDocumentAction(RunDocumentActionRequest) returns (data.ProcessLog) {}
 }
 
 // Object request
@@ -317,4 +319,13 @@ message WorkflowEvent {
 	WorkflowState workflow_state = 16;
 	EventType event_type = 17;
 	int64 log_date = 18;
+}
+
+// Run Document Action Request
+message RunDocumentActionRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	string uuid = 3;
+	int32 id = 4;
+	string document_action = 5;
 }

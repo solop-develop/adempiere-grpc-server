@@ -49,6 +49,8 @@ import org.spin.util.ASPUtil;
  */
 public class DictionaryUtil {
 	
+	public static String ID_PREFIX = "_ID";
+	
 	/**
 	 * Add references to original query from tab
 	 * @param originalQuery
