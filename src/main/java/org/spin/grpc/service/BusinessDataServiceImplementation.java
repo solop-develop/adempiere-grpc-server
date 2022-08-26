@@ -406,7 +406,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		//	Convert Log
 		if(result.getLogList() != null) {
 			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
-				response.addLogs(convertProcessInfoLog(log).build());
+				ProcessInfoLog.Builder infoLogBuilder = ConvertUtil.convertProcessInfoLog(log);
+				response.addLogs(infoLogBuilder.build());
 			}
 		}
 		//	Verify Output
@@ -500,18 +501,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		}
 		//	return
 		return fileName.substring(index + 1);
-	}
-	
-	/**
-	 * Convert Log to gRPC
-	 * @param log
-	 * @return
-	 */
-	private static ProcessInfoLog.Builder convertProcessInfoLog(org.compiere.process.ProcessInfoLog log) {
-		ProcessInfoLog.Builder processLog = ProcessInfoLog.newBuilder();
-		processLog.setRecordId(log.getP_ID());
-		processLog.setLog(ValueUtil.validateNull(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));
-		return processLog;
 	}
 	
 	/**

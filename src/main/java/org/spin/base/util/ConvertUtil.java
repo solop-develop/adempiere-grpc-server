@@ -75,6 +75,7 @@ import org.compiere.model.POInfo;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.MimeType;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.grpc.util.Address;
 import org.spin.grpc.util.Attachment;
@@ -101,6 +102,7 @@ import org.spin.grpc.util.Organization;
 import org.spin.grpc.util.Payment;
 import org.spin.grpc.util.PaymentMethod;
 import org.spin.grpc.util.PriceList;
+import org.spin.grpc.util.ProcessInfoLog;
 import org.spin.grpc.util.Product;
 import org.spin.grpc.util.Region;
 import org.spin.grpc.util.ResourceReference;
@@ -144,7 +146,19 @@ public class ConvertUtil {
 		}
 		return sellerInfo;
 	}
-	
+
+	/**
+	 * Convert ProcessInfoLog to gRPC
+	 * @param log
+	 * @return
+	 */
+	public static ProcessInfoLog.Builder convertProcessInfoLog(org.compiere.process.ProcessInfoLog log) {
+		ProcessInfoLog.Builder processLog = ProcessInfoLog.newBuilder();
+		processLog.setRecordId(log.getP_ID());
+		processLog.setLog(ValueUtil.validateNull(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));
+		return processLog;
+	}
+
 	/**
 	 * Convert PO class from Chat Entry process to builder
 	 * @param chatEntry
