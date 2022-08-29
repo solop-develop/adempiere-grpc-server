@@ -1210,9 +1210,11 @@ message UpdateOrderRequest {
 message UpdateOrderLineRequest {
 	ClientRequest client_request = 1;
 	string order_line_uuid = 2;
-	string description = 5;
-	Decimal quantity = 6;
-	Decimal price = 7;
+	string description = 3;
+	Decimal quantity = 4;
+	Decimal quantity_ordered = 5;
+	Decimal price = 6;
+	Decimal price_actual = 7;
 	Decimal discount_rate = 8;
 	bool is_add_quantity = 9;
 	string warehouse_uuid = 10;
@@ -1257,6 +1259,7 @@ message Order {
 	Decimal open_amount = 21;
 	Decimal payment_amount = 22;
 	Decimal refund_amount = 23;
+	Decimal charge_amount = 24;
 }
 
 // Sales Order Line
@@ -1285,6 +1288,8 @@ message OrderLine {
 	Decimal total_amount = 21;
 	Decimal total_amount_with_tax = 22;
 	int32 line = 23;
+	ProductConversion uom = 24;
+	ProductConversion product_uom = 25;
 }
 
 // Request Product Price

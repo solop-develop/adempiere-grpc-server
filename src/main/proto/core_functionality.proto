@@ -255,6 +255,16 @@ message UnitOfMeasure {
 	int32 costing_precision = 8;
 }
 
+// Product UOM Conversion
+message ProductConversion {
+	string uuid = 1;
+	int32 id = 2;
+	UnitOfMeasure uom = 3;
+	UnitOfMeasure product_uom = 4;
+	Decimal multiply_rate = 5;
+	Decimal divide_rate = 6;
+}
+
 // Charge definition
 message Charge {
 	string uuid = 1;
