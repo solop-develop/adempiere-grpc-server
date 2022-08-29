@@ -567,7 +567,8 @@ public class ConvertUtil {
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
 		//	
-		discountAmount = discountAmount.add(lineDiscountAmount);
+		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
+		
 		//	
 		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
 			BigDecimal paymentAmount = payment.getPayAmt();
@@ -612,7 +613,7 @@ public class ConvertUtil {
 			.setPriceList(ConvertUtil.convertPriceList(MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName())))
 			.setWarehouse(convertWarehouse(order.getM_Warehouse_ID()))
 			.setIsDelivered(order.isDelivered())
-			.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(discountAmount).orElse(Env.ZERO).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(totalDiscountAmount).orElse(Env.ZERO).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(grandTotal.subtract(totalLines.add(discountAmount)).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setTotalLines(ValueUtil.getDecimalFromBigDecimal(totalLines.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setGrandTotal(ValueUtil.getDecimalFromBigDecimal(grandTotal.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
