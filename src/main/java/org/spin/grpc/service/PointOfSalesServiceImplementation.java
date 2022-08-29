@@ -2191,10 +2191,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(Util.isEmpty(request.getOrderUuid())) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
-		MPOS pointOfSales = getPOSFromUuid(request.getPosUuid(), true);
-		if(pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID") <= 0) {
-			throw new AdempiereException("@C_DocTypeRMA_ID@ @NotFound@");
-		}
 		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), transactionName);
@@ -2207,7 +2203,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		        .withParameter("C_Order_ID", orderId)
 		        .withParameter("Bill_BPartner_ID", order.getC_BPartner_ID())
 		        .withParameter("IsCancelled", true)
-		        .withParameter("C_DocTypeRMA_ID", getReturnDocumentTypeId(pointOfSales, order.getC_DocTypeTarget_ID()))
+		        .withParameter("C_DocTypeRMA_ID", getReturnDocumentTypeId(order.getC_POS_ID(), order.getC_DocTypeTarget_ID()))
 				.execute(transactionName);
 			MOrder returnOrder = new MOrder(Env.getCtx(), infoProcess.getRecord_ID(), transactionName);
 			if(!Util.isEmpty(request.getDescription())) {
@@ -2226,7 +2222,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param salesOrderDocumentTypeId
 	 * @return
 	 */
-	private int getReturnDocumentTypeId(MPOS pointOfSales, int salesOrderDocumentTypeId) {
+	private int getReturnDocumentTypeId(int posId, int salesOrderDocumentTypeId) {
+		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
 		final String TABLE_NAME = "C_POSDocumentTypeAllocation";
 		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
 			return pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
