@@ -67,6 +67,7 @@ import org.compiere.model.MRegion;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
+import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.PO;
@@ -103,12 +104,14 @@ import org.spin.grpc.util.PaymentMethod;
 import org.spin.grpc.util.PriceList;
 import org.spin.grpc.util.ProcessInfoLog;
 import org.spin.grpc.util.Product;
+import org.spin.grpc.util.ProductConversion;
 import org.spin.grpc.util.Region;
 import org.spin.grpc.util.ResourceReference;
 import org.spin.grpc.util.SalesRepresentative;
 import org.spin.grpc.util.Shipment;
 import org.spin.grpc.util.ShipmentLine;
 import org.spin.grpc.util.TaxRate;
+import org.spin.grpc.util.UnitOfMeasure;
 import org.spin.grpc.util.Value;
 import org.spin.grpc.util.Warehouse;
 import org.spin.grpc.util.ChatEntry.ModeratorStatus;
@@ -1206,6 +1209,43 @@ public class ConvertUtil {
 				.setId(warehouse.getM_Warehouse_ID())
 				.setName(ValueUtil.validateNull(warehouse.getName()))
 				.setDescription(ValueUtil.validateNull(warehouse.getDescription()));
+	}
+
+	/**
+	 * Convert Unit of Measure
+	 * @param uom
+	 * @return
+	 */
+	public static UnitOfMeasure.Builder convertUnitOfMeasure(MUOM unitOfMeasure) {
+		return UnitOfMeasure.newBuilder()
+			.setUuid(ValueUtil.validateNull(unitOfMeasure.getUUID()))
+			.setId(unitOfMeasure.getC_UOM_ID())
+			.setName(ValueUtil.validateNull(unitOfMeasure.getName()))
+			.setCode(ValueUtil.validateNull(unitOfMeasure.getX12DE355()))
+			.setSymbol(unitOfMeasure.getUOMSymbol())
+			.setDescription(ValueUtil.validateNull(unitOfMeasure.getDescription()))
+			.setCostingPrecision(unitOfMeasure.getCostingPrecision())
+			.setStandardPrecision(unitOfMeasure.getStdPrecision())
+		;
+	}
+
+	/**
+	 * Convert Unit of Measure
+	 * @param uom
+	 * @return
+	 */
+	public static ProductConversion.Builder convertProductConversion(MUOMConversion productConversion) {
+		MUOM uom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_ID());
+		MUOM productUom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_To_ID());
+		
+		return ProductConversion.newBuilder()
+			.setUuid(ValueUtil.validateNull(productConversion.getUUID()))
+			.setId(productConversion.getC_UOM_Conversion_ID())
+			.setMultiplyRate(ValueUtil.getDecimalFromBigDecimal(productConversion.getMultiplyRate()))
+			.setDivideRate(ValueUtil.getDecimalFromBigDecimal(productConversion.getDivideRate()))
+			.setUom(convertUnitOfMeasure(uom))
+			.setProductUom(convertUnitOfMeasure(productUom))
+		;
 	}
 	
 	/**
