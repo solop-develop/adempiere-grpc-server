@@ -4493,7 +4493,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				+ "		AND seller.IsActive = 'N' AND seller.IsAllowsPOSManager = 'Y' "
 				+ 		whereClause
 				+ ") "
-				+ "OR IsPOSManager = 'Y') s"
+				+ "OR IsPOSManager = 'Y') "
 				+ "AND UserPIN = ? "
 				,
 				null
@@ -5024,6 +5024,15 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(pos.get_ValueAsInt("C_DocTypeRMA_ID") > 0) {
 			builder.setReturnDocumentType(ConvertUtil.convertDocumentType(MDocType.get(Env.getCtx(), pos.get_ValueAsInt("C_DocTypeRMA_ID"))));
 		}
+		// Campaign
+		if (pos.get_ValueAsInt("DefaultCampaign_ID") > 0) {
+			builder.setDefaultCampaignUuid(
+				ValueUtil.validateNull(
+					RecordUtil.getUuidFromId(I_C_Campaign.Table_Name, pos.get_ValueAsInt("DefaultCampaign_ID"))
+				)
+			);
+		}
+		
 		return builder;
 	}
 	
