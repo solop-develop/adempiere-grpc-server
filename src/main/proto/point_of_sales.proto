@@ -1155,7 +1155,7 @@ message Payment {
 	string payment_date = 14;
 	string payment_account_date = 15;
 	string tender_type_code = 16;
-	string currency_uuid = 17;
+	Currency currency = 17;
 	bool is_refund = 18;
 	string name = 19;
 	Decimal order_currency_rate = 20;

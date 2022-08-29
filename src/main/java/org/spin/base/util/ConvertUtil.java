@@ -30,7 +30,6 @@ import org.compiere.model.I_AD_User;
 import org.compiere.model.I_C_Bank;
 import org.compiere.model.I_C_Campaign;
 import org.compiere.model.I_C_ConversionType;
-import org.compiere.model.I_C_Currency;
 import org.compiere.model.I_C_Order;
 import org.compiere.model.I_C_POSKeyLayout;
 import org.compiere.model.MAttachment;
@@ -724,6 +723,9 @@ public class ConvertUtil {
 		MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), payment.get_ValueAsInt("C_PaymentMethod_ID"), null);
 		PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
 		
+		MCurrency currency = MCurrency.get(Env.getCtx(), payment.getC_Currency_ID());
+		Currency.Builder currencyBuilder = convertCurrency(currency);
+		
 		//	Convert
 		builder
 			.setId(payment.getC_Payment_ID())
@@ -737,7 +739,7 @@ public class ConvertUtil {
 			.setOrderCurrencyRate(ValueUtil.getDecimalFromBigDecimal(orderConversionRate))
 			.setBankUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Bank.Table_Name, payment.getC_Bank_ID())))
 			.setCustomer(ConvertUtil.convertCustomer((MBPartner) payment.getC_BPartner()))
-			.setCurrencyUuid(RecordUtil.getUuidFromId(I_C_Currency.Table_Name, payment.getC_Currency_ID()))
+			.setCurrency(currencyBuilder)
 			.setPaymentDate(ValueUtil.convertDateToString(payment.getDateTrx()))
 			.setIsRefund(!payment.isReceipt())
 			.setPaymentAccountDate(ValueUtil.convertDateToString(payment.getDateAcct()))
