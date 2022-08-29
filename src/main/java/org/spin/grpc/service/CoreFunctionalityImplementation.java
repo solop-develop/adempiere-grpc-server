@@ -18,6 +18,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_AD_Language;
@@ -30,6 +31,7 @@ import org.compiere.model.I_C_Country;
 import org.compiere.model.I_C_Currency;
 import org.compiere.model.I_C_POS;
 import org.compiere.model.I_C_Region;
+import org.compiere.model.I_C_UOM_Conversion;
 import org.compiere.model.I_M_Warehouse;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
@@ -39,6 +41,7 @@ import org.compiere.model.MLanguage;
 import org.compiere.model.MLocation;
 import org.compiere.model.MOrg;
 import org.compiere.model.MRole;
+import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
@@ -66,8 +69,11 @@ import org.spin.grpc.util.ListLanguagesRequest;
 import org.spin.grpc.util.ListLanguagesResponse;
 import org.spin.grpc.util.ListOrganizationsRequest;
 import org.spin.grpc.util.ListOrganizationsResponse;
+import org.spin.grpc.util.ListProductConversionRequest;
+import org.spin.grpc.util.ListProductConversionResponse;
 import org.spin.grpc.util.ListWarehousesRequest;
 import org.spin.grpc.util.ListWarehousesResponse;
+import org.spin.grpc.util.ProductConversion;
 import org.spin.grpc.util.CoreFunctionalityGrpc.CoreFunctionalityImplBase;
 
 import io.grpc.Status;
@@ -305,6 +311,59 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 				TimeUtil.getDay(conversionDate));
 	}
 	
+	
+	@Override
+	public void listProductConversion(ListProductConversionRequest request, StreamObserver<ListProductConversionResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Object Requested = " + request.getProductUuid());
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			ListProductConversionResponse.Builder conversionProductList = convertListProductConversion(context, request);
+			responseObserver.onNext(conversionProductList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.augmentDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private ListProductConversionResponse.Builder convertListProductConversion(Properties context, ListProductConversionRequest request) {
+		int productId = request.getProductId();
+		if (!Util.isEmpty(request.getProductUuid(), true)) {
+			productId = RecordUtil.getIdFromUuid(I_C_UOM_Conversion.Table_Name, request.getProductUuid(), null);
+		} 
+
+		if (productId <= 0) {
+			throw new AdempiereException("@M_Product_ID@ @NotFound@");
+		}
+
+		ListProductConversionResponse.Builder productConversionListBuilder = ListProductConversionResponse.newBuilder();
+		
+		List<MUOMConversion> productConversionList = new Query(
+				context,
+				I_C_UOM_Conversion.Table_Name,
+				" M_Product_ID = ? ",
+				null
+			)
+			.setParameters(productId)
+			.list()
+		;
+		productConversionList.forEach(productConversion -> {
+			ProductConversion.Builder productConversionBuilder = ConvertUtil.convertProductConversion(productConversion);
+			productConversionListBuilder.addProductConversion(productConversionBuilder);
+		});
+		
+		return productConversionListBuilder;
+	}
+
 	/**
 	 * List business partner
 	 * @param context
