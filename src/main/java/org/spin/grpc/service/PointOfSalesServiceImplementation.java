@@ -3423,7 +3423,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(paymentMethodAlocation == null) {
 				return false;
 			}
-			return paymentMethodAlocation.get_ValueAsBoolean("IsPaymentReference");
+			return paymentMethodAlocation.get_ValueAsBoolean("IsPaymentReference") && !paymentReference.get_ValueAsBoolean("IsAutoCreatedReference");
 		}).forEach(paymentReference -> {
 			paymentReference.set_ValueOfColumn("Processed", true);
 			paymentReference.saveEx();
