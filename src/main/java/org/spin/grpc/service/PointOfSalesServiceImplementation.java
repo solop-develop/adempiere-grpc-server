@@ -4828,7 +4828,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 
 			// TODO: Verify with Price Entered/Actual
-			BigDecimal priceToOrder = orderLine.getPriceList();
+			BigDecimal priceToOrder = orderLine.getPriceActual();
 			BigDecimal discountRateToOrder = Env.ZERO;
 			//	Calculate discount from final price
 			if (price != null) {
