@@ -3206,7 +3206,12 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		//	Aisle Seller
 		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ?", null)
+		Query query = new Query(
+				Env.getCtx(),
+				TABLE_NAME,
+				" C_POS_ID = ? AND IsDisplayedFromCollection = 'Y' ",
+				null
+			)
 				.setParameters(posId)
 				.setOnlyActiveRecords(true)
 				.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo);
