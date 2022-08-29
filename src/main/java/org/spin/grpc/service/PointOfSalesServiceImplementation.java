@@ -4815,39 +4815,40 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			int precision = MPriceList.getPricePrecision(Env.getCtx(), order.getM_PriceList_ID());
 			//	Get if is null
-			BigDecimal quantityToOrder = quantity;
-			if(quantity == null
-					|| quantity.equals(Env.ZERO)) {
-				quantityToOrder = orderLine.getQtyEntered();
-			} else if(isAddQuantity) {
-				BigDecimal currentQuantity = orderLine.getQtyEntered();
-				if(currentQuantity == null) {
-					currentQuantity = Env.ZERO;
+			if(quantity != null) {
+				BigDecimal quantityToOrder = quantity;
+				if(isAddQuantity) {
+					BigDecimal currentQuantity = orderLine.getQtyEntered();
+					if(currentQuantity == null) {
+						currentQuantity = Env.ZERO;
+					}
+					quantityToOrder = currentQuantity.add(quantity);
 				}
-				quantityToOrder = currentQuantity.add(quantity);
+				orderLine.setQty(quantityToOrder);
 			}
-
-			// TODO: Verify with Price Entered/Actual
-			BigDecimal priceToOrder = orderLine.getPriceActual();
-			BigDecimal discountRateToOrder = Env.ZERO;
 			//	Calculate discount from final price
-			if (price != null) {
-				priceToOrder = price;
-				discountRateToOrder = getDiscount(orderLine.getPriceList(), price, precision);
-			}
-			//	Calculate final price from discount
-			if (discountRate != null) {
-				discountRateToOrder = discountRate;
-				priceToOrder = getFinalPrice(orderLine.getPriceList(), discountRate, precision);
+			if(price != null
+					|| discountRate != null) {
+				// TODO: Verify with Price Entered/Actual
+				BigDecimal priceToOrder = orderLine.getPriceActual();
+				BigDecimal discountRateToOrder = Env.ZERO;
+				if (price != null) {
+					priceToOrder = price;
+					discountRateToOrder = getDiscount(orderLine.getPriceList(), price, precision);
+				}
+				//	Calculate final price from discount
+				if (discountRate != null) {
+					discountRateToOrder = discountRate;
+					priceToOrder = getFinalPrice(orderLine.getPriceList(), discountRate, precision);
+				}
+				orderLine.setDiscount(discountRateToOrder);
+				orderLine.setPrice(priceToOrder); //	sets List/limit
 			}
 			//	
 			if(warehouseId > 0) {
 				orderLine.setM_Warehouse_ID(warehouseId);
 			}
 			//	Set values
-			orderLine.setDiscount(discountRateToOrder);
-			orderLine.setPrice(priceToOrder); //	sets List/limit
-			orderLine.setQty(quantityToOrder);
 			orderLine.setTax();
 			orderLine.saveEx();
 			//	Apply Discount from order
