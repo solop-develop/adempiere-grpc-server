@@ -2193,6 +2193,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
+			int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), transactionName);
 			MOrder order = new MOrder(Env.getCtx(), orderId, transactionName);
 			ProcessInfo infoProcess = ProcessBuilder
@@ -2203,7 +2204,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		        .withParameter("C_Order_ID", orderId)
 		        .withParameter("Bill_BPartner_ID", order.getC_BPartner_ID())
 		        .withParameter("IsCancelled", true)
-		        .withParameter("C_DocTypeRMA_ID", getReturnDocumentTypeId(order.getC_POS_ID(), order.getC_DocTypeTarget_ID()))
+		        .withParameter("C_DocTypeRMA_ID", getReturnDocumentTypeId(order.getC_POS_ID(), posId, order.getC_DocTypeTarget_ID()))
 				.execute(transactionName);
 			MOrder returnOrder = new MOrder(Env.getCtx(), infoProcess.getRecord_ID(), transactionName);
 			if(!Util.isEmpty(request.getDescription())) {
@@ -2222,15 +2223,15 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param salesOrderDocumentTypeId
 	 * @return
 	 */
-	private int getReturnDocumentTypeId(int posId, int salesOrderDocumentTypeId) {
+	private int getReturnDocumentTypeId(int posId, int sessionPosId, int salesOrderDocumentTypeId) {
 		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
 		final String TABLE_NAME = "C_POSDocumentTypeAllocation";
 		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
 			return pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
 		}
 		//	Get from current sales order document type
-		PO documentTypeAllocation = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ? AND C_DocType_ID = ?", null)
-			.setParameters(pointOfSales.getC_POS_ID(), salesOrderDocumentTypeId)
+		PO documentTypeAllocation = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID IN(?, ?) AND C_DocType_ID = ?", null)
+			.setParameters(pointOfSales.getC_POS_ID(), sessionPosId, salesOrderDocumentTypeId)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
 			.first();
