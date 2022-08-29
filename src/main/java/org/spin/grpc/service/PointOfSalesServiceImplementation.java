@@ -4487,12 +4487,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int supervisorId = new Query(
 				Env.getCtx(),
 				I_AD_User.Table_Name,
-				"EXISTS("
+				"(EXISTS("
 				+ "		SELECT 1 FROM C_POSSellerAllocation AS seller "
 				+ "		WHERE seller.C_POS_ID = ? AND seller.SalesRep_ID = AD_User.AD_User_ID "
 				+ "		AND seller.IsActive = 'N' AND seller.IsAllowsPOSManager = 'Y' "
 				+ 		whereClause
 				+ ") "
+				+ "OR IsPOSManager = 'Y') s"
 				+ "AND UserPIN = ? "
 				,
 				null
