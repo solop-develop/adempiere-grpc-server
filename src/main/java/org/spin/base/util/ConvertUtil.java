@@ -568,7 +568,6 @@ public class ConvertUtil {
 					return discountLine;
 				})
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
-
 		//	
 		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
 		
@@ -594,11 +593,13 @@ public class ConvertUtil {
 		if(paidAmount.isPresent()) {
 			paymentAmount = paidAmount.get();
 		}
+
+		BigDecimal totalPaymentAmount = paymentAmount;
 		if(paymentReferenceAmount.isPresent()) {
-			paymentAmount = paymentAmount.subtract(paymentReferenceAmount.get());
+			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
 		}
-		BigDecimal openAmount = (grandTotal.subtract(paymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(paymentAmount));
-		BigDecimal refundAmount = (grandTotal.subtract(paymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(paymentAmount).negate());
+		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
+		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount).negate());
 		BigDecimal displayCurrencyRate = getDisplayConversionRateFromOrder(order);
 		//	Convert
 		return builder
@@ -626,7 +627,13 @@ public class ConvertUtil {
 			.setRefundAmount(ValueUtil.getDecimalFromBigDecimal(refundAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setDateOrdered(ValueUtil.convertDateToString(order.getDateOrdered()))
 			.setCustomer(convertCustomer((MBPartner) order.getC_BPartner()))
-			.setCampaignUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Campaign.Table_Name, order.getC_Campaign_ID())));
+			.setCampaignUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Campaign.Table_Name, order.getC_Campaign_ID())))
+			.setChargeAmount(
+				ValueUtil.getDecimalFromBigDecimal(
+						(paymentReferenceAmount.isPresent() ? paymentReferenceAmount.get() : Env.ZERO).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)
+				)
+			)
+		;
 	}
 	
 	/**
