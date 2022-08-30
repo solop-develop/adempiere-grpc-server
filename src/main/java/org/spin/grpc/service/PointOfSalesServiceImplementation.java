@@ -2033,7 +2033,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					createBankStatement(payment, cashClosingDocumentTypeId);
 				}
 				//	
-				processPayment(payment);
+				processPayment(pos, payment, transactionName);
 			});
 		});
 		return Empty.newBuilder();
@@ -2070,11 +2070,26 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	}
 	
 	/**
+	 * Process Payment
+	 * @param pointOfSalesDefinition
+	 * @param payment
+	 * @param transactionName
+	 */
+	private void processPayment(MPOS pointOfSalesDefinition, MPayment payment, String transactionName) {
+		//	Create bank transfer
+		MPayment relatedPayment = createRelatedPayment(pointOfSalesDefinition, payment, transactionName);
+		if(relatedPayment != null) {
+			completePayment(relatedPayment);
+		}
+		completePayment(payment);
+	}
+	
+	/**
 	 * Process or complete payment and add to bank statement
 	 * @param payment
 	 * @return void
 	 */
-	private void processPayment(MPayment payment) {
+	private void completePayment(MPayment payment) {
 		//	Process It
 		if(!payment.isProcessed()) {
 			payment.setDocStatus(MPayment.DOCSTATUS_Drafted);
@@ -2178,7 +2193,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			request.getPaymentsList().forEach(paymentRequest -> {
 				MPayment payment = createPaymentFromCharge(cashAccount.get_ValueAsInt("DefaultWithdrawalCharge_ID"), paymentRequest, pos, transactionName);
-				processPayment(payment);
+				processPayment(pos, payment, transactionName);
 			});
 		});
 		return Empty.newBuilder();
@@ -5504,14 +5519,38 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	}
 	
 	/**
-	 * Create Related Payment from payement
+	 * Create Related Payment from payment
+	 * @param pointOfSalesDefinition
 	 * @param sourcePayment
 	 * @param transactionName
 	 * @return
 	 */
-//	private MPayment createRelatedPayment(MPayment sourcePayment, String transactionName) {
-//		
-//	}
+	private MPayment createRelatedPayment(MPOS pointOfSalesDefinition, MPayment sourcePayment, String transactionName) {
+		if(sourcePayment.get_ValueAsInt("POSReferenceBankAccount_ID") <= 0) {
+			return null;
+		}
+		MPayment relatedPayment = new MPayment(Env.getCtx(), 0, transactionName);
+		PO.copyValues(sourcePayment, relatedPayment);
+		//	
+		relatedPayment.set_ValueOfColumn("POSReferenceBankAccount_ID", null);
+		relatedPayment.setC_BankAccount_ID(sourcePayment.get_ValueAsInt("POSReferenceBankAccount_ID"));
+		relatedPayment.setRelatedPayment_ID(sourcePayment.getC_Payment_ID());
+		int documentTypeId;
+		if(!sourcePayment.isReceipt()) {
+			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSOpeningDocumentType_ID");
+		} else {
+			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSWithdrawalDocumentType_ID");
+		}
+		if(documentTypeId > 0) {
+			relatedPayment.setC_DocType_ID(documentTypeId);
+		} else {
+			relatedPayment.setC_DocType_ID(!sourcePayment.isReceipt());
+		}
+		relatedPayment.saveEx();
+		sourcePayment.setRelatedPayment_ID(relatedPayment.getC_Payment_ID());
+		sourcePayment.saveEx();
+		return relatedPayment;
+	}
 	
 	/**
 	 * Create Payment based on request, transaction name and pos
