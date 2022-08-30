@@ -266,11 +266,8 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Object Requested = " + request.getConversionTypeUuid());
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			ConversionRate.Builder conversionRate = ConvertUtil.convertConversionRate(getConversionRate(request));
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			ConversionRate.Builder conversionRate = ConvertUtil.convertConversionRate(getConversionRate(context, request));
 			responseObserver.onNext(conversionRate.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
