@@ -16,6 +16,7 @@ package org.spin.grpc.service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -58,6 +59,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.grpc.util.BusinessPartner;
 import org.spin.grpc.util.ConversionRate;
+import org.spin.grpc.util.CoreFunctionalityGrpc.CoreFunctionalityImplBase;
 import org.spin.grpc.util.Country;
 import org.spin.grpc.util.CreateBusinessPartnerRequest;
 import org.spin.grpc.util.GetBusinessPartnerRequest;
@@ -74,7 +76,6 @@ import org.spin.grpc.util.ListProductConversionResponse;
 import org.spin.grpc.util.ListWarehousesRequest;
 import org.spin.grpc.util.ListWarehousesResponse;
 import org.spin.grpc.util.ProductConversion;
-import org.spin.grpc.util.CoreFunctionalityGrpc.CoreFunctionalityImplBase;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -346,18 +347,8 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		}
 
 		ListProductConversionResponse.Builder productConversionListBuilder = ListProductConversionResponse.newBuilder();
-		
-		List<MUOMConversion> productConversionList = new Query(
-				context,
-				I_C_UOM_Conversion.Table_Name,
-				" M_Product_ID = ? ",
-				null
-			)
-			.setParameters(productId)
-			.list()
-		;
-		productConversionList.forEach(productConversion -> {
-			ProductConversion.Builder productConversionBuilder = ConvertUtil.convertProductConversion(productConversion);
+		Arrays.asList(MUOMConversion.getProductConversions(context, productId)).forEach(conversion -> {
+			ProductConversion.Builder productConversionBuilder = ConvertUtil.convertProductConversion(conversion);
 			productConversionListBuilder.addProductConversion(productConversionBuilder);
 		});
 		

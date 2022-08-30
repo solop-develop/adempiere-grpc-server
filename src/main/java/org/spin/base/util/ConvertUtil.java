@@ -1248,15 +1248,15 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static ProductConversion.Builder convertProductConversion(MUOMConversion productConversion) {
-		MUOM uom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_ID());
-		MUOM productUom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_To_ID());
+		MUOM productUom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_ID());
+		MUOM uomToConvert = MUOM.get(Env.getCtx(), productConversion.getC_UOM_To_ID());
 		
 		return ProductConversion.newBuilder()
 			.setUuid(ValueUtil.validateNull(productConversion.getUUID()))
 			.setId(productConversion.getC_UOM_Conversion_ID())
 			.setMultiplyRate(ValueUtil.getDecimalFromBigDecimal(productConversion.getMultiplyRate()))
 			.setDivideRate(ValueUtil.getDecimalFromBigDecimal(productConversion.getDivideRate()))
-			.setUom(convertUnitOfMeasure(uom))
+			.setUom(convertUnitOfMeasure(uomToConvert))
 			.setProductUom(convertUnitOfMeasure(productUom))
 		;
 	}
