@@ -288,7 +288,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 	 * @param request
 	 * @return
 	 */
-	private MConversionRate getConversionRate(GetConversionRateRequest request) {
+	private MConversionRate getConversionRate(Properties context, GetConversionRateRequest request) {
 		if(Util.isEmpty(request.getConversionTypeUuid())
 				|| Util.isEmpty(request.getCurrencyFromUuid())
 				|| Util.isEmpty(request.getCurrencyToUuid())) {

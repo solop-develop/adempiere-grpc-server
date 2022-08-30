@@ -281,6 +281,18 @@ public class RecordUtil {
 				conversionTypeId, 
 				Env.getAD_Client_ID(Env.getCtx()), 
 				organizationId);
+		// get with * organization
+		if (conversionRateId <= 0 && organizationId > 0) {
+			organizationId = 0;
+			conversionRateId = MConversionRate.getConversionRateId(
+				currencyFromId, 
+				currencyToId, 
+				conversionDate, 
+				conversionTypeId, 
+				Env.getAD_Client_ID(Env.getCtx()), 
+				organizationId
+			);
+		}
 		if(conversionRateId > 0) {
 			return MConversionRate.get(Env.getCtx(), conversionRateId);
 		}
