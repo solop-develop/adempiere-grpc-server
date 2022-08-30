@@ -758,6 +758,11 @@ public class ConvertUtil {
 					ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
 					ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))))
 			.setPaymentMethod(paymentMethodBuilder)
+			.setCharge(convertCharge(payment.getC_Charge_ID()))
+			.setDocumentType(convertDocumentType(MDocType.get(Env.getCtx(), payment.getC_DocType_ID())))
+			.setBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.getC_BankAccount_ID())))
+			.setReferenceBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.get_ValueAsInt("POSReferenceBankAccount_ID"))))
+			
 		;
 		return builder;
 	}

@@ -44,6 +44,7 @@ import org.compiere.model.I_C_BP_BankAccount;
 import org.compiere.model.I_C_BP_Group;
 import org.compiere.model.I_C_BPartner;
 import org.compiere.model.I_C_Bank;
+import org.compiere.model.I_C_BankAccount;
 import org.compiere.model.I_C_BankStatement;
 import org.compiere.model.I_C_Campaign;
 import org.compiere.model.I_C_Charge;
@@ -59,6 +60,7 @@ import org.compiere.model.I_C_POS;
 import org.compiere.model.I_C_POSKeyLayout;
 import org.compiere.model.I_C_Payment;
 import org.compiere.model.I_C_Region;
+import org.compiere.model.I_C_UOM;
 import org.compiere.model.I_M_InOut;
 import org.compiere.model.I_M_InOutLine;
 import org.compiere.model.I_M_PriceList;
@@ -97,6 +99,7 @@ import org.compiere.model.MStorage;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
+import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.M_Element;
@@ -4685,7 +4688,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 						ValueUtil.getBigDecimalFromDecimal(request.getPrice()), 
 						ValueUtil.getBigDecimalFromDecimal(request.getDiscountRate()),
 						request.getIsAddQuantity(),
-						RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null)));
+						RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null),
+						RecordUtil.getIdFromUuid(I_C_UOM.Table_Name, request.getUomUuid(), null)));
 	}
 	
 	/**
@@ -4804,7 +4808,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param warehouseId
 	 * @return
 	 */
-	private MOrderLine updateOrderLine(int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId) {
+	private MOrderLine updateOrderLine(int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId, int unitOfMeasureId) {
 		if(orderLineId <= 0) {
 			return null;
 		}
@@ -4853,6 +4857,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			//	
 			if(warehouseId > 0) {
 				orderLine.setM_Warehouse_ID(warehouseId);
+			}
+			//	Validate UOM
+			if(unitOfMeasureId > 0 && unitOfMeasureId != orderLine.getC_UOM_ID()) {
+				BigDecimal quantityEntered = orderLine.getQtyEntered();
+				BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), unitOfMeasureId, quantityEntered);
+				orderLine.setC_UOM_ID(unitOfMeasureId);
+				orderLine.setQtyOrdered(convertedQuantity);
 			}
 			//	Set values
 			orderLine.setTax();
@@ -5493,6 +5504,16 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	}
 	
 	/**
+	 * Create Related Payment from payement
+	 * @param sourcePayment
+	 * @param transactionName
+	 * @return
+	 */
+//	private MPayment createRelatedPayment(MPayment sourcePayment, String transactionName) {
+//		
+//	}
+	
+	/**
 	 * Create Payment based on request, transaction name and pos
 	 * @param request
 	 * @param defaultChargeId
@@ -5514,6 +5535,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(cashAccount.getC_BPartner_ID() <= 0) {
 			throw new AdempiereException("@C_BankAccount_ID@ @C_BPartner_ID@ @NotFound@");
 		}
+		int referenceBankAccountId = RecordUtil.getIdFromUuid(I_C_BankAccount.Table_Name, request.getReferenceBankAccountUuid(), transactionName);
 		//	Validate or complete
 		if(Util.isEmpty(request.getUuid())) {
 			if(request.getAmount() == null) {
@@ -5612,6 +5634,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				payment.addDescription(request.getReferenceNo());
 			}
 			setCurrentDate(payment);
+			if(referenceBankAccountId > 0) {
+				payment.set_ValueOfColumn("POSReferenceBankAccount_ID", referenceBankAccountId);
+			}
 			payment.saveEx(transactionName);
 		} else {
 			int paymentId = RecordUtil.getIdFromUuid(I_C_Payment.Table_Name, request.getUuid(), transactionName);
@@ -5625,6 +5650,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(!Util.isEmpty(request.getCollectingAgentUuid())) {
 				payment.set_ValueOfColumn("CollectAgent_ID", RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getCollectingAgentUuid(), transactionName));
 			}
+			if(referenceBankAccountId > 0) {
+				payment.set_ValueOfColumn("POSReferenceBankAccount_ID", referenceBankAccountId);
+			}
+			payment.saveEx(transactionName);
 		}
 		return payment;
 	}
