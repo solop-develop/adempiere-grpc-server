@@ -554,7 +554,22 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 	 * @return
 	 */
 	private ListDocumentActionsResponse.Builder convertDocumentActions(Properties context, ListDocumentActionsRequest request) {
+		if(request.getId() <= 0 && Util.isEmpty(request.getUuid())) {
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+		}
+		if(Util.isEmpty(request.getTableName())) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		//	
+		MTable table = MTable.get(context, request.getTableName());
+		if(table == null || table.getAD_Table_ID() == 0) {
+			throw new AdempiereException("@AD_Table_ID@ @Invalid@");
+		}
 		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), request.getId(), null);
+		if (entity == null) {
+			throw new AdempiereException("@Error@ @PO@ @NotFound@");
+		}
+
 		//	
 		String documentStatus = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocStatus);
 		String documentAction = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocAction);
