@@ -1265,6 +1265,7 @@ message Order {
 	Decimal payment_amount = 22;
 	Decimal refund_amount = 23;
 	Decimal charge_amount = 24;
+	Decimal credit_amount = 25;
 }
 
 // Sales Order Line

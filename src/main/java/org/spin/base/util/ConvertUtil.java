@@ -595,9 +595,22 @@ public class ConvertUtil {
 		}
 
 		BigDecimal totalPaymentAmount = paymentAmount;
+		int standardPrecision = priceList.getStandardPrecision();
+		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+		BigDecimal creditAmt = BigDecimal.ZERO.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
 		if(paymentReferenceAmount.isPresent()) {
 			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
+			
+			if (paymentReferenceAmount.get().signum() > 0) {
+				chargeAmt = paymentReferenceAmount.get()
+					.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+			} else if (paymentReferenceAmount.get().signum() < 0) {
+				creditAmt = paymentReferenceAmount.get()
+					.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP)
+					.negate();
+			}
 		}
+
 		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
 		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount).negate());
 		BigDecimal displayCurrencyRate = getDisplayConversionRateFromOrder(order);
@@ -628,11 +641,8 @@ public class ConvertUtil {
 			.setDateOrdered(ValueUtil.convertDateToString(order.getDateOrdered()))
 			.setCustomer(convertCustomer((MBPartner) order.getC_BPartner()))
 			.setCampaignUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Campaign.Table_Name, order.getC_Campaign_ID())))
-			.setChargeAmount(
-				ValueUtil.getDecimalFromBigDecimal(
-						(paymentReferenceAmount.isPresent() ? paymentReferenceAmount.get() : Env.ZERO).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)
-				)
-			)
+			.setChargeAmount(ValueUtil.getDecimalFromBigDecimal(chargeAmt))
+			.setCreditAmount(ValueUtil.getDecimalFromBigDecimal(creditAmt))
 		;
 	}
 	
