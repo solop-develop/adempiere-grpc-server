@@ -874,6 +874,7 @@ public class ConvertUtil {
 		//	Units
 		BigDecimal priceListAmount = orderLine.getPriceList();
 		BigDecimal priceActualAmount = orderLine.getPriceActual();
+		BigDecimal priceEntered = orderLine.getPriceEntered();
 		BigDecimal discountRate = orderLine.getDiscount();
 		BigDecimal discountAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO).subtract(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO));
 		BigDecimal taxAmount = tax.calculateTax(orderLine.getPriceActual(), priceList.isTaxIncluded(), priceList.getStandardPrecision());
@@ -915,7 +916,7 @@ public class ConvertUtil {
 				.setWarehouse(convertWarehouse(orderLine.getM_Warehouse_ID()))
 				.setQuantity(ValueUtil.getDecimalFromBigDecimal(quantityOrdered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setPriceList(ValueUtil.getDecimalFromBigDecimal(priceListAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
-				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceActualAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceEntered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(discountAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setDiscountRate(ValueUtil.getDecimalFromBigDecimal(discountRate.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(taxAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))

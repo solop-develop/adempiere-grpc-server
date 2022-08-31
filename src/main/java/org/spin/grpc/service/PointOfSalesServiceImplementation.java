@@ -4829,6 +4829,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		Trx.run(transactionName -> {
 			MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
 			MOrder order = orderLine.getParent();
+			order.set_TrxName(transactionName);
 			validateOrderReleased(order);
 			setCurrentDate(order);
 			orderLine.setHeaderInfo(order);
@@ -4880,6 +4881,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				orderLine.setC_UOM_ID(unitOfMeasureId);
 				orderLine.setQtyOrdered(convertedQuantity);
 				orderLine.setPriceEntered(convertedPrice);
+				orderLine.setLineNetAmt();
+				orderLine.saveEx();
 			}
 			//	Set values
 			orderLine.setTax();
