@@ -4871,7 +4871,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			//	
 			if(warehouseId > 0) {
-				orderLine.setM_Warehouse_ID(warehouseId);
+//				orderLine.setM_Warehouse_ID(warehouseId);
+				orderLine.set_ValueOfColumn("Ref_WarehouseSource_ID", warehouseId);
 			}
 			//	Validate UOM
 			if(unitOfMeasureId > 0 && unitOfMeasureId != orderLine.getC_UOM_ID()) {
