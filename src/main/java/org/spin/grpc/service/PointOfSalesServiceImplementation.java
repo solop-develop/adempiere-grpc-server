@@ -4881,7 +4881,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(unitOfMeasureId > 0 && unitOfMeasureId != orderLine.getC_UOM_ID()) {
 				BigDecimal quantityEntered = orderLine.getQtyEntered();
 				BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), unitOfMeasureId, quantityEntered);
-				BigDecimal convertedPrice = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), unitOfMeasureId, orderLine.getPriceEntered());
+				BigDecimal convertedPrice = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), unitOfMeasureId, orderLine.getPriceActual());
 				orderLine.setC_UOM_ID(unitOfMeasureId);
 				orderLine.setQtyOrdered(convertedQuantity);
 				orderLine.setPriceEntered(convertedPrice);
