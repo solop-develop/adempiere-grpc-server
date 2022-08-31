@@ -151,6 +151,8 @@ service Store {
 	rpc ListPaymentReferences(ListPaymentReferencesRequest) returns (ListPaymentReferencesResponse) {}
 	//  List Stock: GET /api/stocks
 	rpc ListStocks(ListStocksRequest) returns (ListStocksResponse) {}
+	//  List Available Cash 
+	rpc ListAvailableCash(ListAvailableCashRequest) returns (ListAvailableCashResponse) {}
 }
 
 //	Delete Refund reference request
@@ -1387,4 +1389,29 @@ message ListStocksResponse {
 	int64 record_count = 1;
 	repeated Stock stocks = 2;
 	string next_page_token = 3;
+}
+
+//	List Cash Register for POS
+message ListAvailableCashRequest {
+	ClientRequest client_request = 1;
+	string pos_uuid = 2;
+	int32 page_size = 3;
+	string page_token = 4;
+}
+
+//	List Available Warehouses
+message ListAvailableCashResponse {
+	int64 record_count = 1;
+	repeated AvailableCash cash = 2;
+	string next_page_token = 3;
+}
+
+// Available Warehouse
+message AvailableCash {
+	int32 id = 2;
+	string uuid = 3;
+	string key = 4;
+	string name = 5;
+	bool is_pos_required_pin = 6;
+	BankAccount bank_account = 7;
 }
