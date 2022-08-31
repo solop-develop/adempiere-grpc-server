@@ -1280,24 +1280,25 @@ message OrderLine {
 	string description = 6;
 	Warehouse warehouse = 7;
 	Decimal quantity = 8;
-	Decimal price_list = 9;
-	Decimal price = 10;
-	Decimal discount_rate = 11;
-	Decimal discount_amount = 12;
-	Decimal tax_amount = 13;
-	TaxRate tax_rate = 14;
-	Decimal price_list_with_tax = 15;
-	Decimal price_with_tax = 16;
+	Decimal quantity_ordered = 9;
+	Decimal price_list = 10;
+	Decimal price = 11;
+	Decimal discount_rate = 12;
+	Decimal discount_amount = 13;
+	Decimal tax_amount = 14;
+	TaxRate tax_rate = 15;
+	Decimal price_list_with_tax = 16;
+	Decimal price_with_tax = 17;
 	//	Totals
-	Decimal total_discount_amount = 17;
-	Decimal total_tax_amount = 18;
-	Decimal total_base_amount = 19;
-	Decimal total_base_amount_with_tax = 20;
-	Decimal total_amount = 21;
-	Decimal total_amount_with_tax = 22;
-	int32 line = 23;
-	ProductConversion uom = 24;
-	ProductConversion product_uom = 25;
+	Decimal total_discount_amount = 18;
+	Decimal total_tax_amount = 19;
+	Decimal total_base_amount = 20;
+	Decimal total_base_amount_with_tax = 21;
+	Decimal total_amount = 22;
+	Decimal total_amount_with_tax = 23;
+	int32 line = 24;
+	ProductConversion uom = 25;
+	ProductConversion product_uom = 26;
 }
 
 // Request Product Price
