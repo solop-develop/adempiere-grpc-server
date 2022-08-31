@@ -116,9 +116,9 @@ import org.spin.grpc.util.Value;
 import org.spin.grpc.util.Warehouse;
 import org.spin.grpc.util.ChatEntry.ModeratorStatus;
 import org.spin.model.MADAttachmentReference;
-import org.spin.model.MCPaymentMethod;
+import org.spin.store.model.MCPaymentMethod;
 import org.spin.util.AttachmentUtil;
-import org.spin.util.VueStoreFrontUtil;
+import org.spin.store.util.VueStoreFrontUtil;
 
 /**
  * Class for convert any document

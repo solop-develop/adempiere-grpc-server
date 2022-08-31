@@ -226,9 +226,9 @@ import org.spin.grpc.util.UpdateOrderLineRequest;
 import org.spin.grpc.util.UpdateOrderRequest;
 import org.spin.grpc.util.UpdatePaymentRequest;
 import org.spin.grpc.util.ValidatePINRequest;
-import org.spin.model.I_C_PaymentMethod;
-import org.spin.model.MCPaymentMethod;
-import org.spin.util.VueStoreFrontUtil;
+import org.spin.store.model.I_C_PaymentMethod;
+import org.spin.store.model.MCPaymentMethod;
+import org.spin.store.util.VueStoreFrontUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
