@@ -1009,30 +1009,25 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
 			log.fine("Print Ticket = " + request);
-			ContextManager.getContext(request.getClientRequest());
-
+			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
+					request.getClientRequest().getLanguage(), 
+					request.getClientRequest().getOrganizationUuid(), 
+					request.getClientRequest().getWarehouseUuid());
 			//	
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
-			int userId = Env.getAD_User_ID(pos.getCtx());
-			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPrintDocument")) {
-				throw new AdempiereException("@POS.PrintDocumentNotAllowed@");
-			}
-
 			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
 			Env.clearWinContext(1);
 			CPOS posController = new CPOS();
 			posController.setOrder(orderId);
 			posController.setM_POS(pos);
 			posController.setWindowNo(1);
-
-			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder()
-				.setResult("Ok");
-
 			POSTicketHandler handler = POSTicketHandler.getTicketHandler(posController);
 			if(handler == null) {
 				throw new AdempiereException("@TicketClassName@ " + pos.getTicketClassName() + " @NotFound@");
 			}
-			
+			//	Print it
+			handler.printTicket();
+			PrintTicketResponse.Builder ticket = PrintTicketResponse.newBuilder().setResult("Ok");
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
