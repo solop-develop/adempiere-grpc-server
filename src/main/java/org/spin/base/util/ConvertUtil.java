@@ -876,6 +876,23 @@ public class ConvertUtil {
 		BigDecimal totalTaxAmount = tax.calculateTax(totalAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
 		BigDecimal totalBaseAmountWithTax = totalBaseAmount.add(totalTaxAmount);
 		BigDecimal totalAmountWithTax = totalAmount.add(totalTaxAmount);
+
+		MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
+		List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
+		MUOMConversion uom = productsConversion.stream()
+			.filter(productConversion -> {
+				return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+			})
+			.findFirst()
+			.get();
+
+		MUOMConversion productUom = productsConversion.stream()
+			.filter(productConversion -> {
+				return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+			})
+			.findFirst()
+			.get();
+	
 		//	Convert
 		return builder
 				.setUuid(ValueUtil.validateNull(orderLine.getUUID()))
@@ -901,7 +918,10 @@ public class ConvertUtil {
 				.setTotalBaseAmount(ValueUtil.getDecimalFromBigDecimal(totalBaseAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setTotalBaseAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalBaseAmountWithTax.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setTotalAmount(ValueUtil.getDecimalFromBigDecimal(totalAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
-				.setTotalAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalAmountWithTax.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)));
+				.setTotalAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalAmountWithTax.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setUom(ConvertUtil.convertProductConversion(uom))
+			.setProductUom(ConvertUtil.convertProductConversion(productUom))
+		;
 	}
 	
 	/**
