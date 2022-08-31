@@ -41,6 +41,8 @@ service CoreFunctionality {
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {}
 	//	Get Currency Rate
 	rpc GetConversionRate(GetConversionRateRequest) returns (ConversionRate) {}
+	//	List Product Conversion UOM
+	rpc ListProductConversion(ListProductConversionRequest) returns (ListProductConversionResponse) {}
 }
 
 // Get Country Request
@@ -253,6 +255,32 @@ message UnitOfMeasure {
 	string description = 6;
 	int32 standard_precision = 7;
 	int32 costing_precision = 8;
+}
+
+// List Product UOM Conversion Request
+message ListProductConversionRequest {
+	ClientRequest client_request = 1;
+	string product_uuid = 2;
+	int32 product_id = 3;
+	int32 page_size = 4;
+	string page_token = 5;
+}
+
+// Product UOM Conversion
+message ProductConversion {
+	string uuid = 1;
+	int32 id = 2;
+	UnitOfMeasure uom = 3;
+	UnitOfMeasure product_uom = 4;
+	Decimal multiply_rate = 5;
+	Decimal divide_rate = 6;
+}
+
+//	List Product Conversion Response
+message ListProductConversionResponse {
+	int64 record_count = 1;
+	repeated ProductConversion product_conversion = 2;
+	string next_page_token = 3;
 }
 
 // Charge definition

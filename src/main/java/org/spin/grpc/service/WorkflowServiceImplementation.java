@@ -14,6 +14,8 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,26 +26,35 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.I_AD_PInstance;
 import org.compiere.model.I_AD_User;
 import org.compiere.model.I_AD_WF_Activity;
+import org.compiere.model.I_AD_WF_Node;
 import org.compiere.model.I_AD_Workflow;
 import org.compiere.model.I_C_Order;
+import org.compiere.model.MColumn;
 import org.compiere.model.MDocType;
 import org.compiere.model.MOrder;
+import org.compiere.model.MPInstance;
+import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
 import org.compiere.process.DocOptions;
 import org.compiere.process.DocumentEngine;
+import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.compiere.wf.MWFActivity;
 import org.compiere.wf.MWorkflow;
+import org.eevolution.service.dsl.ProcessBuilder;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.base.util.WorkflowUtil;
@@ -57,6 +68,9 @@ import org.spin.grpc.util.ListWorkflowActivitiesRequest;
 import org.spin.grpc.util.ListWorkflowActivitiesResponse;
 import org.spin.grpc.util.ListWorkflowsRequest;
 import org.spin.grpc.util.ListWorkflowsResponse;
+import org.spin.grpc.util.ProcessInfoLog;
+import org.spin.grpc.util.ProcessLog;
+import org.spin.grpc.util.RunDocumentActionRequest;
 import org.spin.grpc.util.WorkflowActivity;
 import org.spin.grpc.util.WorkflowDefinition;
 import org.spin.grpc.util.WorkflowDefinitionRequest;
@@ -68,7 +82,7 @@ import io.grpc.stub.StreamObserver;
 /**
  * https://itnext.io/customizing-grpc-generated-code-5909a2551ca1
  * @author Yamel Senih, ysenih@erpya.com, ERPCyA http://www.erpya.com
- * Business data service
+ * Workflow service
  */
 public class WorkflowServiceImplementation extends WorkflowImplBase {
 	/**	Logger			*/
@@ -302,7 +316,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		Object isProcessing = "N";
 		//	New
 		int documentTypeId = 0;
-		statusesList.add(DocumentEngine.STATUS_Drafted);
 		//	Get Table from Name
 		MTable table = MTable.get(context, request.getTableName());
 		int recordId = 0;
@@ -313,7 +326,9 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			documentStatus = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocStatus);
 			documentAction = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocAction);
 			//
-			isProcessing = entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_Processing)? "Y": "N";
+			isProcessing = ValueUtil.booleanToString(
+				entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_Processing)
+			);
 			documentTypeId = entity.get_ValueAsInt(I_C_Order.COLUMNNAME_C_DocTypeTarget_ID);
 			if(documentTypeId == 0) {
 				documentTypeId = entity.get_ValueAsInt(I_C_Order.COLUMNNAME_C_DocType_ID);
@@ -325,14 +340,17 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 					orderType = documentType.getDocBaseType();
 				}
 			}
-			isSOTrx = entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)? "Y": "N";
+			isSOTrx = ValueUtil.booleanToString(
+				entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)
+			);
 			recordId = entity.get_ID();
 		}
-		//	
 		if (documentStatus == null) {
+			/** Drafted = DR */
 			documentStatus = DocumentEngine.STATUS_Drafted;
 		}
 		if (documentAction == null) {
+			/** Prepare = PR */
 			documentAction = DocumentEngine.ACTION_Prepare;
 		}
 		//	Standard
@@ -637,4 +655,137 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		//	Return
 		return builder;
 	}
+
+	@Override
+	public void runDocumentAction(RunDocumentActionRequest request, StreamObserver<ProcessLog> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			ProcessLog.Builder processReponse = runDocumentAction(context, request);
+			responseObserver.onNext(processReponse.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.augmentDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+	
+	/**
+	 * Run a process from request
+	 * @param context
+	 * @param request
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 */
+	private ProcessLog.Builder runDocumentAction(Properties context, RunDocumentActionRequest request) throws FileNotFoundException, IOException {
+		if(Util.isEmpty(request.getTableName())) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		//	get document action
+		if(Util.isEmpty(request.getDocumentAction())) {
+			throw new AdempiereException("@DocAction@ @NotFound@");
+		}
+		String documentAction = request.getDocumentAction();
+
+		int tableId = 0;
+		MTable table = MTable.get(context, request.getTableName());
+		if(table != null && table.getAD_Table_ID() > 0) {
+			tableId = table.getAD_Table_ID();
+		}
+
+		int recordId = request.getId();
+		if (recordId <= 0 && Util.isEmpty(request.getUuid())) {
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+		}
+		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), recordId, null);
+		if (entity != null) {
+			recordId = entity.get_ID();
+		}
+
+		MColumn docActionColumn = new Query(
+				context,
+				MColumn.Table_Name,
+				MColumn.COLUMNNAME_AD_Table_ID + " = ? AND " + MColumn.COLUMNNAME_ColumnName + " = ? ",
+				null
+			)
+			.setParameters(table.getAD_Table_ID(), I_AD_WF_Node.COLUMNNAME_DocAction)
+			.first();
+
+		MProcess process = MProcess.get(context, docActionColumn.getAD_Process_ID());
+		if (process == null || process.getAD_Process_ID() <= 0) {
+			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
+		}
+
+		//	Call process builder
+		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
+			.process(process.getAD_Process_ID())
+			.withRecordId(tableId, recordId)
+			.withoutPrintPreview()
+			.withoutBatchMode()
+			.withWindowNo(0)
+			.withTitle(process.getName())
+			.withParameter(table.getTableName() + DictionaryUtil.ID_PREFIX, recordId)
+			.withParameter(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
+	
+		//	For Document
+		if(!Util.isEmpty(documentAction) && process.getAD_Workflow_ID() != 0 && entity != null && DocAction.class.isAssignableFrom(entity.getClass())) {
+			entity.set_ValueOfColumn(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
+			entity.saveEx();
+			builder.withoutTransactionClose();
+		}
+
+		//	Execute Process
+		ProcessInfo result = null;
+		try {
+			result = builder.execute();
+		} catch (Exception e) {
+			result = builder.getProcessInfo();
+			//	Set error message
+			if(Util.isEmpty(result.getSummary())) {
+				result.setSummary(e.getLocalizedMessage());
+			}
+		}
+
+		ProcessLog.Builder response = ProcessLog.newBuilder();
+		//	Get process instance from identifier
+		if(result.getAD_PInstance_ID() != 0) {
+			MPInstance instance = new Query(
+					context,
+					I_AD_PInstance.Table_Name,
+					I_AD_PInstance.COLUMNNAME_AD_PInstance_ID + " = ?",
+					null
+				)
+				.setParameters(result.getAD_PInstance_ID())
+				.first();
+			response.setInstanceUuid(ValueUtil.validateNull(instance.getUUID()));
+			response.setLastRun(instance.getUpdated().getTime());
+		}
+		//
+		response.setIsError(result.isError());
+		if(!Util.isEmpty(result.getSummary())) {
+			response.setSummary(Msg.parseTranslation(context, result.getSummary()));
+		}
+		//
+		response.setResultTableName(ValueUtil.validateNull(result.getResultTableName()));
+		//	Convert Log
+		if(result.getLogList() != null) {
+			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
+				ProcessInfoLog.Builder infoLogBuilder = ConvertUtil.convertProcessInfoLog(log);
+				response.addLogs(infoLogBuilder.build());
+			}
+		}
+
+		return response;
+	}
+
 }

@@ -231,14 +231,18 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
-	private ProcessLog.Builder runProcess(Properties context, RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
-		ProcessLog.Builder response = ProcessLog.newBuilder();
+	public static ProcessLog.Builder runProcess(Properties context, RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
 		//	Get Process definition
 		MProcess process = MProcess.get(context, RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getProcessUuid(), null));
 		if(process == null
 				|| process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
+
+		ProcessLog.Builder response = ProcessLog.newBuilder()
+			.setUuid(request.getProcessUuid())
+		;
+
 		int tableId = 0;
 		int recordId = request.getId();
 		if(!Util.isEmpty(request.getTableName())) {
@@ -402,7 +406,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		//	Convert Log
 		if(result.getLogList() != null) {
 			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
-				response.addLogs(convertProcessInfoLog(log).build());
+				ProcessInfoLog.Builder infoLogBuilder = ConvertUtil.convertProcessInfoLog(log);
+				response.addLogs(infoLogBuilder.build());
 			}
 		}
 		//	Verify Output
@@ -446,7 +451,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @param action
 	 * @param optionId
 	 */
-	private void addToRecentItem(String action, int optionId) {
+	private static void addToRecentItem(String action, int optionId) {
 		if(Util.isEmpty(action)) {
 			return;
 		}
@@ -474,7 +479,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @param name
 	 * @return
 	 */
-	private String getValidName(String fileName) {
+	private static String getValidName(String fileName) {
 		if(Util.isEmpty(fileName)) {
 			return "";
 		}
@@ -486,7 +491,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @param fileName
 	 * @return
 	 */
-	private String getExtension(String fileName) {
+	private static String getExtension(String fileName) {
 		if(Util.isEmpty(fileName)) {
 			return "";
 		}
@@ -496,18 +501,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		}
 		//	return
 		return fileName.substring(index + 1);
-	}
-	
-	/**
-	 * Convert Log to gRPC
-	 * @param log
-	 * @return
-	 */
-	private ProcessInfoLog.Builder convertProcessInfoLog(org.compiere.process.ProcessInfoLog log) {
-		ProcessInfoLog.Builder processLog = ProcessInfoLog.newBuilder();
-		processLog.setRecordId(log.getP_ID());
-		processLog.setLog(ValueUtil.validateNull(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));
-		return processLog;
 	}
 	
 	/**

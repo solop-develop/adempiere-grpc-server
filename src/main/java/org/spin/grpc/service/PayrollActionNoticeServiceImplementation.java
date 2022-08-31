@@ -743,52 +743,48 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 
 		if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Quantity)) {
 			// Quantity
+			movement.setQty(null);
 			Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_Qty))
-				.ifPresentOrElse(qty -> {
+				.ifPresent(qty -> {
 					if (qty instanceof Integer) {
 						movement.setQty(BigDecimal.valueOf((int) qty));
 					} else {
 						movement.setQty((BigDecimal) qty);
 					}
-				}, () -> {
-					movement.setQty(null);
 				});
 			movement.setAmount(null);
 			movement.setServiceDate(null);
 			movement.setTextMsg(null);
 		} else if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Amount)) {
 			// Amount
+			movement.setAmount(null);
 			Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_Amount))
-				.ifPresentOrElse(amount -> {
+				.ifPresent(amount -> {
 					if (amount instanceof Integer) {
 						movement.setAmount(BigDecimal.valueOf((int) amount));
 					} else {
 						movement.setAmount((BigDecimal) amount);
 					}
-				}, () -> {
-					movement.setAmount(null);
 				});
 			movement.setQty(null);
 			movement.setServiceDate(null);
 			movement.setTextMsg(null);
 		} else if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Text)) {
 			// Message Text
+			movement.setTextMsg(null);
 			Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_TextMsg))
-				.ifPresentOrElse(textValue -> {	
+				.ifPresent(textValue -> {	
 					movement.setTextMsg(textValue.toString());
-				}, () -> {
-					movement.setTextMsg(null);
 				});
 			movement.setQty(null);
 			movement.setAmount(null);
 			movement.setServiceDate(null);
 		} else if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Date)) {
 			// Service Date
+			movement.setServiceDate(null);
 			Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_ServiceDate))
-				.ifPresentOrElse(serviceDate -> {	
+				.ifPresent(serviceDate -> {	
 					movement.setServiceDate((Timestamp) serviceDate);
-				}, () -> {
-					movement.setServiceDate(null);
 				});
 			movement.setQty(null);
 			movement.setAmount(null);
@@ -804,41 +800,37 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 		movement.setHR_Concept_Category_ID(concept.getHR_Concept_Category_ID());
 
 		// Description
+		movement.setDescription(null);
 		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_Description))
-			.ifPresentOrElse(descriptionValue -> {	
+			.ifPresent(descriptionValue -> {	
 				movement.setDescription(descriptionValue.toString());
-			}, () -> {
-				movement.setDescription(null);
 			});
 
 		// payroll process id
 		movement.setHR_Process_ID(payrollProcess.getHR_Process_ID());
 
 		// payroll period
+		movement.setPeriodNo(0);
 		I_HR_Period payrollPeriod = payrollProcess.getHR_Period();
 		Optional.ofNullable(payrollPeriod)
-			.ifPresentOrElse(period -> {
+			.ifPresent(period -> {
 				if (period.getHR_Period_ID() > 0) {
 					movement.setPeriodNo(period.getPeriodNo());
 				}
-			}, () -> {
-				movement.setPeriodNo(0);
 			});
 
 		// Valid From
+		movement.setValidFrom(null);
 		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_ValidFrom))
-			.ifPresentOrElse(validFrom -> {	
+			.ifPresent(validFrom -> {	
 				movement.setValidFrom((Timestamp) validFrom);
-			}, () -> {
-				movement.setValidFrom(null);
 			});
 
 		// Valid To
+		movement.setValidTo(null);
 		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_ValidTo))
-			.ifPresentOrElse(validTo -> {	
+			.ifPresent(validTo -> {	
 				movement.setValidTo((Timestamp) validTo);
-			}, () -> {
-				movement.setValidTo(null);
 			});
 
 		movement.setC_BPartner_ID(businessPartnerId);
@@ -1029,6 +1021,7 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 				});
 			}
 			// delete with uuid's
+			/*
 			else {
 				String sqlParams = " ?,".repeat(uuids.size());
 				sqlParams = sqlParams.substring(0, sqlParams.length() - 1);
@@ -1049,6 +1042,7 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 					}
 				});
 			}
+			*/
 		});
 		//	Return
 		return Empty.newBuilder();

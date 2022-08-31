@@ -30,7 +30,6 @@ import org.compiere.model.I_AD_User;
 import org.compiere.model.I_C_Bank;
 import org.compiere.model.I_C_Campaign;
 import org.compiere.model.I_C_ConversionType;
-import org.compiere.model.I_C_Currency;
 import org.compiere.model.I_C_Order;
 import org.compiere.model.I_C_POSKeyLayout;
 import org.compiere.model.MAttachment;
@@ -68,6 +67,7 @@ import org.compiere.model.MRegion;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
+import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.PO;
@@ -75,6 +75,7 @@ import org.compiere.model.POInfo;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.MimeType;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.grpc.util.Address;
 import org.spin.grpc.util.Attachment;
@@ -99,21 +100,25 @@ import org.spin.grpc.util.Order;
 import org.spin.grpc.util.OrderLine;
 import org.spin.grpc.util.Organization;
 import org.spin.grpc.util.Payment;
+import org.spin.grpc.util.PaymentMethod;
 import org.spin.grpc.util.PriceList;
+import org.spin.grpc.util.ProcessInfoLog;
 import org.spin.grpc.util.Product;
+import org.spin.grpc.util.ProductConversion;
 import org.spin.grpc.util.Region;
 import org.spin.grpc.util.ResourceReference;
 import org.spin.grpc.util.SalesRepresentative;
 import org.spin.grpc.util.Shipment;
 import org.spin.grpc.util.ShipmentLine;
 import org.spin.grpc.util.TaxRate;
+import org.spin.grpc.util.UnitOfMeasure;
 import org.spin.grpc.util.Value;
 import org.spin.grpc.util.Warehouse;
 import org.spin.grpc.util.ChatEntry.ModeratorStatus;
-import org.spin.store.model.I_C_PaymentMethod;
 import org.spin.model.MADAttachmentReference;
+import org.spin.model.MCPaymentMethod;
 import org.spin.util.AttachmentUtil;
-import org.spin.store.util.VueStoreFrontUtil;
+import org.spin.util.VueStoreFrontUtil;
 
 /**
  * Class for convert any document
@@ -143,7 +148,19 @@ public class ConvertUtil {
 		}
 		return sellerInfo;
 	}
-	
+
+	/**
+	 * Convert ProcessInfoLog to gRPC
+	 * @param log
+	 * @return
+	 */
+	public static ProcessInfoLog.Builder convertProcessInfoLog(org.compiere.process.ProcessInfoLog log) {
+		ProcessInfoLog.Builder processLog = ProcessInfoLog.newBuilder();
+		processLog.setRecordId(log.getP_ID());
+		processLog.setLog(ValueUtil.validateNull(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));
+		return processLog;
+	}
+
 	/**
 	 * Convert PO class from Chat Entry process to builder
 	 * @param chatEntry
@@ -541,6 +558,20 @@ public class ConvertUtil {
 		BigDecimal discountAmount = orderLines.stream()
 				.filter(orderLine -> orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId)
 				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal lineDiscountAmount = orderLines.stream()
+				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
+				.map(orderLine -> {
+					BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
+					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
+					BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
+						.multiply(Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO));
+					return discountLine;
+				})
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		//	
+		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
+		
+		//	
 		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
 			BigDecimal paymentAmount = payment.getPayAmt();
 			if(!payment.isReceipt()) {
@@ -562,11 +593,26 @@ public class ConvertUtil {
 		if(paidAmount.isPresent()) {
 			paymentAmount = paidAmount.get();
 		}
+
+		BigDecimal totalPaymentAmount = paymentAmount;
+		int standardPrecision = priceList.getStandardPrecision();
+		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+		BigDecimal creditAmt = BigDecimal.ZERO.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
 		if(paymentReferenceAmount.isPresent()) {
-			paymentAmount = paymentAmount.subtract(paymentReferenceAmount.get());
+			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
+			
+			if (paymentReferenceAmount.get().signum() > 0) {
+				chargeAmt = paymentReferenceAmount.get()
+					.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+			} else if (paymentReferenceAmount.get().signum() < 0) {
+				creditAmt = paymentReferenceAmount.get()
+					.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP)
+					.negate();
+			}
 		}
-		BigDecimal openAmount = (grandTotal.subtract(paymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(paymentAmount));
-		BigDecimal refundAmount = (grandTotal.subtract(paymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(paymentAmount).negate());
+
+		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
+		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount).negate());
 		BigDecimal displayCurrencyRate = getDisplayConversionRateFromOrder(order);
 		//	Convert
 		return builder
@@ -584,17 +630,20 @@ public class ConvertUtil {
 			.setPriceList(ConvertUtil.convertPriceList(MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName())))
 			.setWarehouse(convertWarehouse(order.getM_Warehouse_ID()))
 			.setIsDelivered(order.isDelivered())
-			.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(discountAmount).orElse(Env.ZERO).setScale(priceList.getStandardPrecision())))
-			.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(grandTotal.subtract(totalLines.add(discountAmount)).setScale(priceList.getStandardPrecision())))
-			.setTotalLines(ValueUtil.getDecimalFromBigDecimal(totalLines.setScale(priceList.getStandardPrecision())))
-			.setGrandTotal(ValueUtil.getDecimalFromBigDecimal(grandTotal.setScale(priceList.getStandardPrecision())))
-			.setDisplayCurrencyRate(ValueUtil.getDecimalFromBigDecimal(displayCurrencyRate.setScale(priceList.getStandardPrecision())))
-			.setPaymentAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount.setScale(priceList.getStandardPrecision())))
-			.setOpenAmount(ValueUtil.getDecimalFromBigDecimal(openAmount.setScale(priceList.getStandardPrecision())))
-			.setRefundAmount(ValueUtil.getDecimalFromBigDecimal(refundAmount.setScale(priceList.getStandardPrecision())))
+			.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(totalDiscountAmount).orElse(Env.ZERO).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(grandTotal.subtract(totalLines.add(discountAmount)).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setTotalLines(ValueUtil.getDecimalFromBigDecimal(totalLines.add(totalDiscountAmount).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setGrandTotal(ValueUtil.getDecimalFromBigDecimal(grandTotal.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setDisplayCurrencyRate(ValueUtil.getDecimalFromBigDecimal(displayCurrencyRate.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setPaymentAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setOpenAmount(ValueUtil.getDecimalFromBigDecimal(openAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setRefundAmount(ValueUtil.getDecimalFromBigDecimal(refundAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setDateOrdered(ValueUtil.convertDateToString(order.getDateOrdered()))
 			.setCustomer(convertCustomer((MBPartner) order.getC_BPartner()))
-			.setCampaignUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Campaign.Table_Name, order.getC_Campaign_ID())));
+			.setCampaignUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Campaign.Table_Name, order.getC_Campaign_ID())))
+			.setChargeAmount(ValueUtil.getDecimalFromBigDecimal(chargeAmt))
+			.setCreditAmount(ValueUtil.getDecimalFromBigDecimal(creditAmt))
+		;
 	}
 	
 	/**
@@ -650,6 +699,24 @@ public class ConvertUtil {
 		return Optional.ofNullable(conversionRate).orElse(Env.ZERO);
 	}
 	
+	public static PaymentMethod.Builder convertPaymentMethod(MCPaymentMethod paymentMethod) {
+		PaymentMethod.Builder paymentMethodBuilder = PaymentMethod.newBuilder();
+		if(paymentMethod == null) {
+			return paymentMethodBuilder;
+		}
+		paymentMethodBuilder
+			.setUuid(ValueUtil.validateNull(paymentMethod.getUUID()))
+			.setId(paymentMethod.getC_PaymentMethod_ID())
+			.setName(ValueUtil.validateNull(paymentMethod.getName()))
+			.setValue(ValueUtil.validateNull(paymentMethod.getValue()))
+			.setDescription(ValueUtil.validateNull(paymentMethod.getDescription()))
+			.setTenderType(ValueUtil.validateNull(paymentMethod.getTenderType()))
+			.setIsActive(paymentMethod.isActive())
+		;
+
+		return paymentMethodBuilder;
+	}
+	
 	/**
 	 * Convert payment
 	 * @param payment
@@ -672,7 +739,14 @@ public class ConvertUtil {
 				paymentAmount = creditMemo.getGrandTotal();
 			}
 		}
-		paymentAmount = paymentAmount.setScale(presicion);
+		paymentAmount = paymentAmount.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+
+		MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), payment.get_ValueAsInt("C_PaymentMethod_ID"), null);
+		PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
+		
+		MCurrency currency = MCurrency.get(Env.getCtx(), payment.getC_Currency_ID());
+		Currency.Builder currencyBuilder = convertCurrency(currency);
+		
 		//	Convert
 		builder
 			.setId(payment.getC_Payment_ID())
@@ -680,20 +754,25 @@ public class ConvertUtil {
 			.setOrderUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Order.Table_Name, payment.getC_Order_ID())))
 			.setDocumentNo(ValueUtil.validateNull(payment.getDocumentNo()))
 			.setTenderTypeCode(ValueUtil.validateNull(payment.getTenderType()))
-			.setPaymentMethodUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_PaymentMethod.Table_Name, payment.get_ValueAsInt("C_PaymentMethod_ID"))))
 			.setReferenceNo(ValueUtil.validateNull(Optional.ofNullable(payment.getCheckNo()).orElse(payment.getDocumentNo())))
 			.setDescription(ValueUtil.validateNull(payment.getDescription()))
 			.setAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount))
 			.setOrderCurrencyRate(ValueUtil.getDecimalFromBigDecimal(orderConversionRate))
 			.setBankUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Bank.Table_Name, payment.getC_Bank_ID())))
 			.setCustomer(ConvertUtil.convertCustomer((MBPartner) payment.getC_BPartner()))
-			.setCurrencyUuid(RecordUtil.getUuidFromId(I_C_Currency.Table_Name, payment.getC_Currency_ID()))
+			.setCurrency(currencyBuilder)
 			.setPaymentDate(ValueUtil.convertDateToString(payment.getDateTrx()))
 			.setIsRefund(!payment.isReceipt())
 			.setPaymentAccountDate(ValueUtil.convertDateToString(payment.getDateAcct()))
 			.setDocumentStatus(ConvertUtil.convertDocumentStatus(ValueUtil.validateNull(payment.getDocStatus()), 
 					ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
 					ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))))
+			.setPaymentMethod(paymentMethodBuilder)
+			.setCharge(convertCharge(payment.getC_Charge_ID()))
+			.setDocumentType(convertDocumentType(MDocType.get(Env.getCtx(), payment.getC_DocType_ID())))
+			.setBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.getC_BankAccount_ID())))
+			.setReferenceBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.get_ValueAsInt("POSReferenceBankAccount_ID"))))
+			
 		;
 		return builder;
 	}
@@ -807,6 +886,23 @@ public class ConvertUtil {
 		BigDecimal totalTaxAmount = tax.calculateTax(totalAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
 		BigDecimal totalBaseAmountWithTax = totalBaseAmount.add(totalTaxAmount);
 		BigDecimal totalAmountWithTax = totalAmount.add(totalTaxAmount);
+
+		MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
+		List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
+		MUOMConversion uom = productsConversion.stream()
+			.filter(productConversion -> {
+				return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+			})
+			.findFirst()
+			.get();
+
+		MUOMConversion productUom = productsConversion.stream()
+			.filter(productConversion -> {
+				return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+			})
+			.findFirst()
+			.get();
+	
 		//	Convert
 		return builder
 				.setUuid(ValueUtil.validateNull(orderLine.getUUID()))
@@ -817,22 +913,25 @@ public class ConvertUtil {
 				.setProduct(convertProduct(orderLine.getM_Product_ID()))
 				.setCharge(convertCharge(orderLine.getC_Charge_ID()))
 				.setWarehouse(convertWarehouse(orderLine.getM_Warehouse_ID()))
-				.setQuantity(ValueUtil.getDecimalFromBigDecimal(quantityOrdered.setScale(priceList.getStandardPrecision())))
-				.setPriceList(ValueUtil.getDecimalFromBigDecimal(priceListAmount.setScale(priceList.getStandardPrecision())))
-				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceActualAmount.setScale(priceList.getStandardPrecision())))
-				.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(discountAmount.setScale(priceList.getStandardPrecision())))
-				.setDiscountRate(ValueUtil.getDecimalFromBigDecimal(discountRate.setScale(priceList.getStandardPrecision())))
-				.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(taxAmount.setScale(priceList.getStandardPrecision())))
+				.setQuantity(ValueUtil.getDecimalFromBigDecimal(quantityOrdered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setPriceList(ValueUtil.getDecimalFromBigDecimal(priceListAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceActualAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(discountAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setDiscountRate(ValueUtil.getDecimalFromBigDecimal(discountRate.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(taxAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setTaxRate(ConvertUtil.convertTaxRate(tax))
-				.setPriceListWithTax(ValueUtil.getDecimalFromBigDecimal(priceListWithTaxAmount.setScale(priceList.getStandardPrecision())))
-				.setPriceWithTax(ValueUtil.getDecimalFromBigDecimal(priceActualWithTaxmount.setScale(priceList.getStandardPrecision())))
+				.setPriceListWithTax(ValueUtil.getDecimalFromBigDecimal(priceListWithTaxAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setPriceWithTax(ValueUtil.getDecimalFromBigDecimal(priceActualWithTaxmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				//	Totals
-				.setTotalDiscountAmount(ValueUtil.getDecimalFromBigDecimal(totalDiscountAmount.setScale(priceList.getStandardPrecision())))
-				.setTotalTaxAmount(ValueUtil.getDecimalFromBigDecimal(totalTaxAmount.setScale(priceList.getStandardPrecision())))
-				.setTotalBaseAmount(ValueUtil.getDecimalFromBigDecimal(totalBaseAmount.setScale(priceList.getStandardPrecision())))
-				.setTotalBaseAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalBaseAmountWithTax.setScale(priceList.getStandardPrecision())))
-				.setTotalAmount(ValueUtil.getDecimalFromBigDecimal(totalAmount.setScale(priceList.getStandardPrecision())))
-				.setTotalAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalAmountWithTax.setScale(priceList.getStandardPrecision())));
+				.setTotalDiscountAmount(ValueUtil.getDecimalFromBigDecimal(totalDiscountAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setTotalTaxAmount(ValueUtil.getDecimalFromBigDecimal(totalTaxAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setTotalBaseAmount(ValueUtil.getDecimalFromBigDecimal(totalBaseAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setTotalBaseAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalBaseAmountWithTax.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setTotalAmount(ValueUtil.getDecimalFromBigDecimal(totalAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setTotalAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalAmountWithTax.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setUom(ConvertUtil.convertProductConversion(uom))
+			.setProductUom(ConvertUtil.convertProductConversion(productUom))
+		;
 	}
 	
 	/**
@@ -1024,10 +1123,10 @@ public class ConvertUtil {
 				.setAddress3(ValueUtil.validateNull(location.getAddress3()))
 				.setAddress4(ValueUtil.validateNull(location.getAddress4()))
 				.setPostalCode(ValueUtil.validateNull(location.getPostal()))
-				.setDescription(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("Description")))
-				.setFirstName(ValueUtil.validateNull(businessPartnerLocation.getName()))
-				.setLastName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("Name2")))
-				.setContactName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("ContactName")))
+//				.setDescription(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("Description")))
+//				.setFirstName(ValueUtil.validateNull(businessPartnerLocation.getName()))
+//				.setLastName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("Name2")))
+//				.setContactName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString("ContactName")))
 				.setEmail(ValueUtil.validateNull(businessPartnerLocation.getEMail()))
 				.setPhone(ValueUtil.validateNull(businessPartnerLocation.getPhone()))
 				.setIsDefaultShipping(businessPartnerLocation.get_ValueAsBoolean(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping))
@@ -1153,6 +1252,43 @@ public class ConvertUtil {
 				.setId(warehouse.getM_Warehouse_ID())
 				.setName(ValueUtil.validateNull(warehouse.getName()))
 				.setDescription(ValueUtil.validateNull(warehouse.getDescription()));
+	}
+
+	/**
+	 * Convert Unit of Measure
+	 * @param uom
+	 * @return
+	 */
+	public static UnitOfMeasure.Builder convertUnitOfMeasure(MUOM unitOfMeasure) {
+		return UnitOfMeasure.newBuilder()
+			.setUuid(ValueUtil.validateNull(unitOfMeasure.getUUID()))
+			.setId(unitOfMeasure.getC_UOM_ID())
+			.setName(ValueUtil.validateNull(unitOfMeasure.getName()))
+			.setCode(ValueUtil.validateNull(unitOfMeasure.getX12DE355()))
+			.setSymbol(unitOfMeasure.getUOMSymbol())
+			.setDescription(ValueUtil.validateNull(unitOfMeasure.getDescription()))
+			.setCostingPrecision(unitOfMeasure.getCostingPrecision())
+			.setStandardPrecision(unitOfMeasure.getStdPrecision())
+		;
+	}
+
+	/**
+	 * Convert Unit of Measure
+	 * @param uom
+	 * @return
+	 */
+	public static ProductConversion.Builder convertProductConversion(MUOMConversion productConversion) {
+		MUOM productUom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_ID());
+		MUOM uomToConvert = MUOM.get(Env.getCtx(), productConversion.getC_UOM_To_ID());
+		
+		return ProductConversion.newBuilder()
+			.setUuid(ValueUtil.validateNull(productConversion.getUUID()))
+			.setId(productConversion.getC_UOM_Conversion_ID())
+			.setMultiplyRate(ValueUtil.getDecimalFromBigDecimal(productConversion.getMultiplyRate()))
+			.setDivideRate(ValueUtil.getDecimalFromBigDecimal(productConversion.getDivideRate()))
+			.setUom(convertUnitOfMeasure(uomToConvert))
+			.setProductUom(convertUnitOfMeasure(productUom))
+		;
 	}
 	
 	/**

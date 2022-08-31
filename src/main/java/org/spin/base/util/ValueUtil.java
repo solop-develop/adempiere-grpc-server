@@ -36,6 +36,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.grpc.util.Criteria;
 import org.spin.grpc.util.Decimal;
@@ -181,7 +182,8 @@ public class ValueUtil {
 				|| Util.isEmpty(decimalValue.getDecimalValue())) {
 			return null;
 		}
-		return new BigDecimal(decimalValue.getDecimalValue());
+		return new BigDecimal(decimalValue.getDecimalValue())
+			.setScale(decimalValue.getScale());
 	}
 	
 	/**
@@ -453,10 +455,13 @@ public class ValueUtil {
 			return false;
 		}
 		//	
-		return value.equals("Y") 
-				|| value.equals("N") 
-				|| value.equals("true") 
-				|| value.equals("false");
+		return value.equals("Y")
+			|| value.equals("N")
+			|| value.equals("Yes")
+			|| value.equals("No")
+			|| value.equals("true")
+			|| value.equals("false")
+		;
 	}
 	
 	/**
@@ -760,6 +765,33 @@ public class ValueUtil {
 			return null;
 		}
 		return new SimpleDateFormat(TIME_FORMAT).format(date);
+	}
+
+	public static boolean stringToBoolean(String value) {
+		if (value != null && ("Y".equals(value) || "Yes".equals(value) || "true".equals(value))) {
+			return true;
+		}
+		return false;
+	}
+
+	public static String booleanToString(String value) {
+		return booleanToString(stringToBoolean(value), false);
+	}
+	public static String booleanToString(String value, boolean translated) {
+		return booleanToString(stringToBoolean(value), translated);
+	}
+	public static String booleanToString(boolean value) {
+		return booleanToString(value, false);
+	}
+	public static String booleanToString(boolean value, boolean translated) {
+		String convertedValue = "N";
+		if (value) {
+			convertedValue = "Y";
+		}
+		if (translated) {
+			return Msg.getMsg(Env.getCtx(), convertedValue);
+		}
+		return convertedValue;
 	}
 
 }

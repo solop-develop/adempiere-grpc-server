@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 syntax = "proto3";
 
@@ -97,6 +97,8 @@ service Store {
 	rpc GetAvailableRefund(GetAvailableRefundRequest) returns (AvailableRefund) {}
 	//	Print Ticket
 	rpc PrintTicket(PrintTicketRequest) returns (PrintTicketResponse) {}
+	//	Print Preview
+	rpc PrintPreview(PrintPreviewRequest) returns (PrintPreviewResponse) {}
 	//	Create Customer Account
 	rpc CreateCustomerBankAccount(CreateCustomerBankAccountRequest) returns (CustomerBankAccount) {}
 	//	Update Customer Account
@@ -147,6 +149,10 @@ service Store {
 	rpc DeletePaymentReference(DeletePaymentReferenceRequest) returns (Empty) {}
 	//	List Refund References
 	rpc ListPaymentReferences(ListPaymentReferencesRequest) returns (ListPaymentReferencesResponse) {}
+	//  List Stock: GET /api/stocks
+	rpc ListStocks(ListStocksRequest) returns (ListStocksResponse) {}
+	//  List Available Cash 
+	rpc ListAvailableCash(ListAvailableCashRequest) returns (ListAvailableCashResponse) {}
 }
 
 //	Delete Refund reference request
@@ -154,6 +160,7 @@ message DeletePaymentReferenceRequest {
 	ClientRequest client_request = 1;
 	int32 id = 2;
 	string uuid = 3;
+	string pos_uuid = 4;
 }
 
 //	Allocate Seller Request
@@ -229,7 +236,7 @@ message PaymentReference {
 	string payment_date = 7;
 	string tender_type_code = 8;
 	Currency currency = 9;
-	string payment_method_uuid = 10;
+	PaymentMethod payment_method = 10;
 	string payment_account_date = 11;
 	string customer_bank_account_uuid = 12;
 	string order_uuid = 13;
@@ -349,6 +356,8 @@ message CreateShipmentRequest {
 	ClientRequest client_request = 1;
 	string order_uuid = 2;
 	string sales_representative_uuid = 3;
+	string pos_uuid = 4;
+	bool is_create_lines_from_order = 5;
 }
 
 // Request for create a Shipment from Order
@@ -362,12 +371,14 @@ message GetOpenShipmentRequest {
 message DeleteShipmentRequest {
 	ClientRequest client_request = 1;
 	string shipment_uuid = 2;
+	string pos_uuid = 3;
 }
 
 // Request for delete a Shipment Line
 message DeleteShipmentLineRequest {
 	ClientRequest client_request = 1;
 	string shipment_line_uuid = 2;
+	string pos_uuid = 3;
 }
 
 // Request for delete a Shipment Line
@@ -376,6 +387,7 @@ message UpdateShipmentLineRequest {
 	string shipment_line_uuid = 2;
 	string description = 5;
 	Decimal quantity = 6;
+	string pos_uuid = 7;
 }
 
 // Request for Create a Shipment Line
@@ -385,6 +397,7 @@ message CreateShipmentLineRequest {
 	string order_line_uuid = 3;
 	string description = 5;
 	Decimal quantity = 6;	
+	string pos_uuid = 7;
 }
 
 //	List Shipment Lines Request
@@ -393,6 +406,7 @@ message ListShipmentLinesRequest {
 	string shipment_uuid = 2;
 	int32 page_size = 3;
 	string page_token = 4;
+	string pos_uuid = 5;
 }
 
 //	List shipment Lines
@@ -421,6 +435,7 @@ message ProcessShipmentRequest {
 	string shipment_uuid = 2;
 	string description = 3;
 	string document_action = 4;
+	string pos_uuid = 5;
 }
 
 // Request for Reverse a Sales Transaction
@@ -449,6 +464,7 @@ message ListCustomerBankAccountsRequest {
 	string customer_uuid = 2;
 	int32 page_size = 3;
 	string page_token = 4;
+	string pos_uuid = 5;
 }
 
 //	List Customer Accounts Response
@@ -505,18 +521,21 @@ message UpdateCustomerBankAccountRequest {
 	string iban = 18;
 	bool is_payroll_account = 19;
 	string account_no = 20;
+	string pos_uuid = 21;
 }
 
 //	Delete Customer Account
 message DeleteCustomerBankAccountRequest {
 	ClientRequest client_request = 1;
 	string customer_bank_account_uuid = 2;
+	string pos_uuid = 3;
 }
 
 //	Get Customer Account
 message GetCustomerBankAccountRequest {
 	ClientRequest client_request = 1;
 	string customer_bank_account_uuid = 2;
+	string pos_uuid = 3;
 }
 
 
@@ -554,6 +573,20 @@ message PrintTicketRequest {
 //	Response after print
 message PrintTicketResponse {
 	string result = 1;
+}
+
+//	Print Preview Ticket
+message PrintPreviewRequest {
+	ClientRequest client_request = 1;
+	string pos_uuid = 2;
+	string order_uuid = 3;
+	string report_type = 4;
+}
+
+//	Response after preview
+message PrintPreviewResponse {
+	string result = 1;
+	ProcessLog process_log = 2;
 }
 
 //	Request Daily Refund
@@ -598,6 +631,7 @@ message AddressRequest {
 	string email = 19;
 	string phone = 20;
 	repeated KeyValue additional_attributes = 21;
+	string pos_uuid = 22;
 }
 
 // Request for create Customer
@@ -631,6 +665,7 @@ message UpdateCustomerRequest {
 	//	Location
 	repeated AddressRequest addresses = 10;
 	repeated KeyValue additional_attributes = 11;
+	string pos_uuid = 12;
 }
 
 // Request Get a Customer
@@ -643,6 +678,7 @@ message GetCustomerRequest {
 	string email = 7;
 	string postal_code = 8;
 	string phone = 9;
+	string pos_uuid = 10;
 }
 
 // Customer
@@ -714,9 +750,9 @@ message AvailableWarehouse {
 message AvailablePaymentMethod {
 	int32 id = 2;
 	string uuid = 3;
-	string key = 4;
-	string name = 5;
-	string tender_type = 6;
+	string name = 4;
+	string pos_uuid = 5;
+	bool is_displayedfrom_collection = 6;
 	bool is_pos_required_pin = 7;
 	bool is_allowed_to_refund = 8;
 	bool is_allowed_to_refund_open = 9;
@@ -725,6 +761,17 @@ message AvailablePaymentMethod {
 	Currency refund_reference_currency = 12;
 	Currency reference_currency = 13;
 	bool is_payment_reference = 14;
+	PaymentMethod payment_method = 15;
+}
+
+message PaymentMethod {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	string tender_type = 6;
+	bool is_active = 7;
 }
 
 //	List discount schema for POS
@@ -900,6 +947,7 @@ message ListOrderLinesRequest {
 	string order_uuid = 2;
 	int32 page_size = 3;
 	string page_token = 4;
+	string pos_uuid = 5;
 }
 
 // List Product Price Request
@@ -923,6 +971,7 @@ message ListPointOfSalesRequest {
 	string user_uuid = 2;
 	int32 page_size = 3;
 	string page_token = 4;
+	string pos_uuid = 5;
 }
 
 // Point of Sales request
@@ -975,7 +1024,9 @@ message PointOfSales {
 	bool is_allows_cash_opening = 40;
 	bool is_allows_cash_withdrawal = 41;
 	bool is_allows_apply_discount = 42;
-	
+	bool is_allows_create_customer = 43;
+	bool is_allows_print_document = 44;
+	bool is_allows_preview_document = 45;
 }
 
 // Request for create a order
@@ -1036,6 +1087,7 @@ message CreatePaymentRequest {
 	bool is_refund = 16;
 	string charge_uuid = 17;
 	string collecting_agent_uuid = 18;
+	string reference_bank_account_uuid = 19;
 }
 
 //	Update Payment
@@ -1050,12 +1102,15 @@ message UpdatePaymentRequest {
 	string tender_type_code = 8;
 	string payment_method_uuid = 9;
 	string payment_account_date = 10;
+	string pos_uuid = 11;
+	string reference_bank_account_uuid = 12;
 }
 
 // Request for delete a payment
 message DeletePaymentRequest {
 	ClientRequest client_request = 1;
 	string payment_uuid = 2;
+	string pos_uuid = 3;
 }
 
 // List Payments Request
@@ -1076,6 +1131,7 @@ message ValidatePINRequest {
 	ClientRequest client_request = 1;
 	string pos_uuid = 2;
 	string pin = 3;
+	string requested_access = 4;
 }
 
 //	List Payments Response
@@ -1103,22 +1159,29 @@ message Payment {
 	string payment_date = 14;
 	string payment_account_date = 15;
 	string tender_type_code = 16;
-	string currency_uuid = 17;
+	Currency currency = 17;
 	bool is_refund = 18;
-	string payment_method_uuid = 19;
+	string name = 19;
 	Decimal order_currency_rate = 20;
+	PaymentMethod payment_method = 21;
+	BankAccount bank_account = 22;
+	BankAccount reference_bank_account = 23;
+	Charge charge = 24;
+	DocumentType document_type = 25;
 }
 
 // Request for delete a order
 message DeleteOrderRequest {
 	ClientRequest client_request = 1;
 	string order_uuid = 2;
+	string pos_uuid = 3;
 }
 
 // Request for delete a order
 message DeleteOrderLineRequest {
 	ClientRequest client_request = 1;
 	string order_line_uuid = 2;
+	string pos_uuid = 3;
 }
 
 // Request for create a order line
@@ -1132,6 +1195,7 @@ message CreateOrderLineRequest {
 	Decimal price = 7;
 	Decimal discount_rate = 8;
 	string warehouse_uuid = 9;
+	string pos_uuid = 10;
 }
 
 // Request for update a order
@@ -1154,24 +1218,28 @@ message UpdateOrderRequest {
 message UpdateOrderLineRequest {
 	ClientRequest client_request = 1;
 	string order_line_uuid = 2;
-	string description = 5;
-	Decimal quantity = 6;
-	Decimal price = 7;
-	Decimal discount_rate = 8;
-	bool is_add_quantity = 9;
-	string warehouse_uuid = 10;
+	string description = 3;
+	Decimal quantity = 4;
+	Decimal price = 5;
+	string uom_uuid = 6;
+	Decimal discount_rate = 7;
+	bool is_add_quantity = 8;
+	string warehouse_uuid = 9;
+	string pos_uuid = 10;
 }
 
 // Request for get a order
 message GetOrderRequest {
 	ClientRequest client_request = 1;
 	string order_uuid = 2;
+	string pos_uuid = 3;
 }
 
 // Request for get a key layout
 message GetKeyLayoutRequest {
 	ClientRequest client_request = 1;
 	string key_layout_uuid = 2;
+	string pos_uuid = 3;
 }
 
 // Sales Order
@@ -1198,6 +1266,8 @@ message Order {
 	Decimal open_amount = 21;
 	Decimal payment_amount = 22;
 	Decimal refund_amount = 23;
+	Decimal charge_amount = 24;
+	Decimal credit_amount = 25;
 }
 
 // Sales Order Line
@@ -1226,6 +1296,8 @@ message OrderLine {
 	Decimal total_amount = 21;
 	Decimal total_amount_with_tax = 22;
 	int32 line = 23;
+	ProductConversion uom = 24;
+	ProductConversion product_uom = 25;
 }
 
 // Request Product Price
@@ -1269,4 +1341,77 @@ message Key {
 	string product_value = 10;
 	Decimal quantity = 11;
 	ResourceReference resource_reference = 12;
+}
+
+//	Stock
+message Stock {
+	int32 product_id = 1;
+	double quantity = 2;
+	bool is_in_stock = 3;
+	bool is_decimal_quantity = 4;
+	bool is_show_default_notification_message = 5;
+	bool is_use_config_minimum_quantity = 6;
+	double minimum_quantity = 7;
+	bool is_use_config_minimum_sale_quantity = 8;
+	double minimum_sale_quantity = 9;
+	bool is_use_config_maximum_sale_quantity = 10;
+	double maximum_sale_quantity = 11;
+	bool is_use_config_backorders = 12;
+	double backorders = 13;
+	bool is_use_config_notify_stock_quantity = 14;
+	double notify_stock_quantity = 15;
+	bool is_use_config_quantity_increments = 16;
+	double quantity_increments = 17;
+	bool is_use_config_enable_quantity_increments = 18;
+	bool is_enable_quantity_increments = 19;
+	bool is_use_config_manage_stock = 20;
+	bool is_manage_stock = 21;
+	string low_stock_date = 22;
+	bool is_decimal_divided = 23;
+	double stock_status_changed_auto = 24;
+	int32 warehouse_id = 25;
+	string warehouse_uuid = 26;
+	string warehouse_name = 27;
+	string attribute_name = 28;
+}
+
+message ListStocksRequest {
+	ClientRequest client_request = 1;
+	string sku = 2;
+	string value = 3;
+	int32 page_size = 4;
+	string page_token = 5;
+	string pos_uuid = 6;
+}
+
+//	List of Stock
+message ListStocksResponse {
+	int64 record_count = 1;
+	repeated Stock stocks = 2;
+	string next_page_token = 3;
+}
+
+//	List Cash Register for POS
+message ListAvailableCashRequest {
+	ClientRequest client_request = 1;
+	string pos_uuid = 2;
+	int32 page_size = 3;
+	string page_token = 4;
+}
+
+//	List Available Warehouses
+message ListAvailableCashResponse {
+	int64 record_count = 1;
+	repeated AvailableCash cash = 2;
+	string next_page_token = 3;
+}
+
+// Available Warehouse
+message AvailableCash {
+	int32 id = 2;
+	string uuid = 3;
+	string key = 4;
+	string name = 5;
+	bool is_pos_required_pin = 6;
+	BankAccount bank_account = 7;
 }
