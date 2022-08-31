@@ -5534,12 +5534,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		MPayment relatedPayment = new MPayment(Env.getCtx(), 0, transactionName);
 		PO.copyValues(sourcePayment, relatedPayment);
 		//	
+		relatedPayment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
 		relatedPayment.set_ValueOfColumn("POSReferenceBankAccount_ID", null);
 		relatedPayment.setC_BankAccount_ID(sourcePayment.get_ValueAsInt("POSReferenceBankAccount_ID"));
 		relatedPayment.setRelatedPayment_ID(sourcePayment.getC_Payment_ID());
 		int documentTypeId;
 		if(!sourcePayment.isReceipt()) {
-			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSOpeningDocumentType_ID");
+			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSDepositDocumentType_ID");
 		} else {
 			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSWithdrawalDocumentType_ID");
 		}
