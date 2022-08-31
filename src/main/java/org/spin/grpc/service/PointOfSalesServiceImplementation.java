@@ -5576,7 +5576,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(cashAccount.getC_BPartner_ID() <= 0) {
 			throw new AdempiereException("@C_BankAccount_ID@ @C_BPartner_ID@ @NotFound@");
 		}
-		int referenceBankAccountId = RecordUtil.getIdFromUuid(I_C_BankAccount.Table_Name, request.getReferenceBankAccountUuid(), transactionName);
 		//	Validate or complete
 		if(Util.isEmpty(request.getUuid())) {
 			if(request.getAmount() == null) {
@@ -5675,6 +5674,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				payment.addDescription(request.getReferenceNo());
 			}
 			setCurrentDate(payment);
+			int referenceBankAccountId = RecordUtil.getIdFromUuid(I_C_BankAccount.Table_Name, request.getReferenceBankAccountUuid(), transactionName);
 			if(referenceBankAccountId > 0) {
 				payment.set_ValueOfColumn("POSReferenceBankAccount_ID", referenceBankAccountId);
 			}
@@ -5690,9 +5690,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			if(!Util.isEmpty(request.getCollectingAgentUuid())) {
 				payment.set_ValueOfColumn("CollectAgent_ID", RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getCollectingAgentUuid(), transactionName));
-			}
-			if(referenceBankAccountId > 0) {
-				payment.set_ValueOfColumn("POSReferenceBankAccount_ID", referenceBankAccountId);
 			}
 			payment.saveEx(transactionName);
 		}
