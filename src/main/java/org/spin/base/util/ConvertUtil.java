@@ -632,7 +632,7 @@ public class ConvertUtil {
 			.setIsDelivered(order.isDelivered())
 			.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(totalDiscountAmount).orElse(Env.ZERO).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(grandTotal.subtract(totalLines.add(discountAmount)).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
-			.setTotalLines(ValueUtil.getDecimalFromBigDecimal(totalLines.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setTotalLines(ValueUtil.getDecimalFromBigDecimal(totalLines.add(totalDiscountAmount).setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setGrandTotal(ValueUtil.getDecimalFromBigDecimal(grandTotal.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setDisplayCurrencyRate(ValueUtil.getDecimalFromBigDecimal(displayCurrencyRate.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setPaymentAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
