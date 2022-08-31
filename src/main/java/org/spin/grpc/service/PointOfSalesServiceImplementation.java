@@ -124,6 +124,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.grpc.util.AddressRequest;
 import org.spin.grpc.util.AllocateSellerRequest;
+import org.spin.grpc.util.AvailableCash;
 import org.spin.grpc.util.AvailableDocumentType;
 import org.spin.grpc.util.AvailablePaymentMethod;
 import org.spin.grpc.util.AvailablePriceList;
@@ -160,6 +161,8 @@ import org.spin.grpc.util.GetProductPriceRequest;
 import org.spin.grpc.util.HoldOrderRequest;
 import org.spin.grpc.util.KeyLayout;
 import org.spin.grpc.util.KeyValue;
+import org.spin.grpc.util.ListAvailableCashRequest;
+import org.spin.grpc.util.ListAvailableCashResponse;
 import org.spin.grpc.util.ListAvailableCurrenciesRequest;
 import org.spin.grpc.util.ListAvailableCurrenciesResponse;
 import org.spin.grpc.util.ListAvailableDocumentTypesRequest;
@@ -6191,4 +6194,85 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		//	
 		return builder;
 	}
+
+	@Override
+	public void listAvailableCash(ListAvailableCashRequest request, StreamObserver<ListAvailableCashResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("List Available Warehouses = " + request.getPosUuid());
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			ListAvailableCashResponse.Builder cashListBuilder = listCash(context, request);
+			responseObserver.onNext(cashListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.augmentDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+	
+	/**
+	 * List Warehouses from POS UUID
+	 * @param request
+	 * @return
+	 */
+	private ListAvailableCashResponse.Builder listCash(Properties context, ListAvailableCashRequest request) {
+		if(Util.isEmpty(request.getPosUuid())) {
+			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+		}
+		ListAvailableCashResponse.Builder builder = ListAvailableCashResponse.newBuilder();
+		final String TABLE_NAME = "C_POSCashAllocation";
+		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
+			return builder;
+		}
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		//	Aisle Seller
+		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
+		//	Get Product list
+		Query query = new Query(
+				Env.getCtx(),
+				TABLE_NAME,
+				"C_POS_ID = ?",
+				null
+			)
+			.setParameters(posId)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo);
+		int count = query.count();
+		query
+			.setLimit(limit, offset)
+			.list()
+			.forEach(availableCash -> {
+				MBankAccount bankAccount = MBankAccount.get(context, availableCash.get_ValueAsInt("C_BankAccount_ID"));
+				AvailableCash.Builder availableCashBuilder = AvailableCash.newBuilder()
+					.setId(bankAccount.getC_BankAccount_ID())
+					.setUuid(ValueUtil.validateNull(bankAccount.getUUID()))
+					.setName(ValueUtil.validateNull(bankAccount.getName()))
+					.setKey(ValueUtil.validateNull(bankAccount.getAccountNo()))
+					.setIsPosRequiredPin(availableCash.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
+					.setBankAccount(ConvertUtil.convertBankAccount(bankAccount))
+				;
+
+				builder.addCash(availableCashBuilder);
+		});
+		//	
+		builder.setRecordCount(count);
+		//	Set page token
+		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		//	Set next page
+		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		return builder;
+	}
+	
 }
