@@ -1268,7 +1268,7 @@ public class ConvertUtil {
 			return unitOfMeasureBuilder;
 		}
 
-		return unitOfMeasureBuilder
+		unitOfMeasureBuilder
 			.setUuid(ValueUtil.validateNull(unitOfMeasure.getUUID()))
 			.setId(unitOfMeasure.getC_UOM_ID())
 			.setName(ValueUtil.validateNull(unitOfMeasure.getName()))
