@@ -1263,7 +1263,7 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static UnitOfMeasure.Builder convertUnitOfMeasure(MUOM unitOfMeasure) {
-		UnitOfMeasure.Builder unitOfMeasureBuilder = UnitOfMeasure.newBuilder()
+		UnitOfMeasure.Builder unitOfMeasureBuilder = UnitOfMeasure.newBuilder();
 		if (unitOfMeasure == null) {
 			return unitOfMeasureBuilder;
 		}
