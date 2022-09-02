@@ -1263,12 +1263,15 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static UnitOfMeasure.Builder convertUnitOfMeasure(MUOM unitOfMeasure) {
+		if (unitOfMeasure == null) {
+			return UnitOfMeasure.newBuilder();
+		}
 		return UnitOfMeasure.newBuilder()
 			.setUuid(ValueUtil.validateNull(unitOfMeasure.getUUID()))
 			.setId(unitOfMeasure.getC_UOM_ID())
 			.setName(ValueUtil.validateNull(unitOfMeasure.getName()))
 			.setCode(ValueUtil.validateNull(unitOfMeasure.getX12DE355()))
-			.setSymbol(unitOfMeasure.getUOMSymbol())
+			.setSymbol(ValueUtil.validateNull(unitOfMeasure.getUOMSymbol()))
 			.setDescription(ValueUtil.validateNull(unitOfMeasure.getDescription()))
 			.setCostingPrecision(unitOfMeasure.getCostingPrecision())
 			.setStandardPrecision(unitOfMeasure.getStdPrecision())
@@ -1276,11 +1279,14 @@ public class ConvertUtil {
 	}
 
 	/**
-	 * Convert Unit of Measure
+	 * Convert Unit of Measure Product Conversion
 	 * @param uom
 	 * @return
 	 */
 	public static ProductConversion.Builder convertProductConversion(MUOMConversion productConversion) {
+		if (productConversion == null) {
+			return ProductConversion.newBuilder();
+		}
 		MUOM productUom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_ID());
 		MUOM uomToConvert = MUOM.get(Env.getCtx(), productConversion.getC_UOM_To_ID());
 		
