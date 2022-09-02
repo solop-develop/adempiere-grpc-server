@@ -133,6 +133,9 @@ public class ConvertUtil {
 	 */
 	public static AvailableSeller.Builder convertSeller(MUser user) {
 		AvailableSeller.Builder sellerInfo = AvailableSeller.newBuilder();
+		if (user == null) {
+			return sellerInfo;
+		}
 		sellerInfo.setId(user.getAD_User_ID());
 		sellerInfo.setUuid(ValueUtil.validateNull(user.getUUID()));
 		sellerInfo.setName(ValueUtil.validateNull(user.getName()));
@@ -156,6 +159,9 @@ public class ConvertUtil {
 	 */
 	public static ProcessInfoLog.Builder convertProcessInfoLog(org.compiere.process.ProcessInfoLog log) {
 		ProcessInfoLog.Builder processLog = ProcessInfoLog.newBuilder();
+		if (log == null) {
+			return processLog;
+		}
 		processLog.setRecordId(log.getP_ID());
 		processLog.setLog(ValueUtil.validateNull(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));
 		return processLog;
@@ -168,6 +174,9 @@ public class ConvertUtil {
 	 */
 	public static ChatEntry.Builder convertChatEntry(MChatEntry chatEntry) {
 		ChatEntry.Builder builder = ChatEntry.newBuilder();
+		if (chatEntry == null) {
+			return builder;
+		}
 		builder.setUuid(ValueUtil.validateNull(chatEntry.getUUID()));
 		builder.setId(chatEntry.getCM_ChatEntry_ID());
 		builder.setChatUuid(ValueUtil.validateNull(chatEntry.getCM_Chat().getUUID()));
@@ -281,6 +290,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
+		if (documentType == null) {
+			DocumentType.newBuilder();
+		}
 		return DocumentType.newBuilder()
 				.setUuid(ValueUtil.validateNull(documentType.getUUID()))
 				.setId(documentType.getC_DocType_ID())
@@ -362,6 +374,9 @@ public class ConvertUtil {
 	 */
 	public static Product.Builder convertProduct(MProduct product) {
 		Product.Builder builder = Product.newBuilder();
+		if (product == null) {
+			return builder;
+		}
 		builder.setUuid(ValueUtil.validateNull(product.getUUID()))
 				.setId(product.getM_Product_ID())
 				.setValue(ValueUtil.validateNull(product.getValue()))
@@ -411,6 +426,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static org.spin.grpc.util.Language.Builder convertLanguage(MLanguage language) {
+		if (language == null) {
+			org.spin.grpc.util.Language.newBuilder();
+		}
 		String datePattern = language.getDatePattern();
 		String timePattern = language.getTimePattern();
 		if(Util.isEmpty(datePattern)) {
@@ -804,6 +822,9 @@ public class ConvertUtil {
 	 */
 	public static CustomerBankAccount.Builder convertCustomerBankAccount(MBPBankAccount customerBankAccount) {
 		CustomerBankAccount.Builder builder = CustomerBankAccount.newBuilder();
+		if (customerBankAccount == null) {
+			return builder;
+		}
 		builder.setCustomerBankAccountUuid(ValueUtil.validateNull(customerBankAccount.getUUID()))
 			.setCity(ValueUtil.validateNull(customerBankAccount.getA_City()))
 			.setCountry(ValueUtil.validateNull(customerBankAccount.getA_Country()))
@@ -1018,7 +1039,11 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static KeyLayout.Builder convertKeyLayout(MPOSKeyLayout keyLayout) {
-		KeyLayout.Builder builder = KeyLayout.newBuilder()
+		KeyLayout.Builder builder = KeyLayout.newBuilder();
+		if (keyLayout == null) {
+			return builder;
+		}
+		builder
 				.setUuid(ValueUtil.validateNull(keyLayout.getUUID()))
 				.setId(keyLayout.getC_POSKeyLayout_ID())
 				.setName(ValueUtil.validateNull(keyLayout.getName()))
@@ -1038,6 +1063,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static Key.Builder convertKey(MPOSKey key) {
+		if (key == null) {
+			return Key.newBuilder();
+		}
 		String productValue = null;
 		if(key.getM_Product_ID() > 0) {
 			productValue = MProduct.get(Env.getCtx(), key.getM_Product_ID()).getValue();
@@ -1062,6 +1090,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static SalesRepresentative.Builder convertSalesRepresentative(MUser salesRepresentative) {
+		if (salesRepresentative == null) {
+			return SalesRepresentative.newBuilder();
+		}
 		return SalesRepresentative.newBuilder()
 				.setUuid(ValueUtil.validateNull(salesRepresentative.getUUID()))
 				.setId(salesRepresentative.getAD_User_ID())
@@ -1220,6 +1251,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static Organization.Builder convertOrganization(MOrg organization) {
+		if (organization == null) {
+			return Organization.newBuilder();
+		}
 		MOrgInfo organizationInfo = MOrgInfo.get(Env.getCtx(), organization.getAD_Org_ID(), null);
 		AtomicReference<String> corporateImageBranding = new AtomicReference<String>();
 		if(organizationInfo.getCorporateBrandingImage_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(organizationInfo.getAD_Client_ID())) {
@@ -1250,6 +1284,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static Warehouse.Builder convertWarehouse(MWarehouse warehouse) {
+		if (warehouse == null) {
+			return Warehouse.newBuilder();
+		}
 		return Warehouse.newBuilder()
 				.setUuid(ValueUtil.validateNull(warehouse.getUUID()))
 				.setId(warehouse.getM_Warehouse_ID())
@@ -1346,6 +1383,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static TaxRate.Builder convertTaxRate(MTax tax) {
+		if (tax == null) {
+			return TaxRate.newBuilder();
+		}
 		return TaxRate.newBuilder().setName(ValueUtil.validateNull(tax.getName()))
 			.setDescription(ValueUtil.validateNull(tax.getDescription()))
 			.setTaxIndicator(ValueUtil.validateNull(tax.getTaxIndicator()))
