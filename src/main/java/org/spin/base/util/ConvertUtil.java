@@ -1300,10 +1300,12 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static UnitOfMeasure.Builder convertUnitOfMeasure(MUOM unitOfMeasure) {
+		UnitOfMeasure.Builder unitOfMeasureBuilder = UnitOfMeasure.newBuilder();
 		if (unitOfMeasure == null) {
-			return UnitOfMeasure.newBuilder();
+			return unitOfMeasureBuilder;
 		}
-		return UnitOfMeasure.newBuilder()
+
+		unitOfMeasureBuilder
 			.setUuid(ValueUtil.validateNull(unitOfMeasure.getUUID()))
 			.setId(unitOfMeasure.getC_UOM_ID())
 			.setName(ValueUtil.validateNull(unitOfMeasure.getName()))
@@ -1313,6 +1315,21 @@ public class ConvertUtil {
 			.setCostingPrecision(unitOfMeasure.getCostingPrecision())
 			.setStandardPrecision(unitOfMeasure.getStdPrecision())
 		;
+
+		// Unit of Measure translation
+		String language = Env.getAD_Language(Env.getCtx());
+		if(!Util.isEmpty(language) && !Env.isBaseLanguage(Env.getCtx(), "")) {
+			String translationName = unitOfMeasure.get_Translation("Name");
+			if (!Util.isEmpty(translationName)) {
+				unitOfMeasureBuilder.setName(translationName);
+			}
+			String translationDescription = unitOfMeasure.get_Translation("Name");
+			if (!Util.isEmpty(translationDescription)) {
+				unitOfMeasureBuilder.setName(translationDescription);
+			}
+		}
+	
+		return unitOfMeasureBuilder;
 	}
 
 	/**
