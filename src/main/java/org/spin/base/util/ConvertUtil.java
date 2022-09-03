@@ -16,6 +16,7 @@
 package org.spin.base.util;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_AD_Element;
 import org.compiere.model.I_AD_Ref_List;
 import org.compiere.model.I_AD_User;
@@ -32,6 +34,7 @@ import org.compiere.model.I_C_Campaign;
 import org.compiere.model.I_C_ConversionType;
 import org.compiere.model.I_C_Order;
 import org.compiere.model.I_C_POSKeyLayout;
+import org.compiere.model.I_C_UOM;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
@@ -815,6 +818,35 @@ public class ConvertUtil {
 	}
 	
 	/**
+	 * Validate conversion
+	 * @param order
+	 * @param currencyId
+	 * @param conversionTypeId
+	 * @param transactionDate
+	 */
+	public static void validateConversion(MOrder order, int currencyId, int conversionTypeId, Timestamp transactionDate) {
+		if(currencyId == order.getC_Currency_ID()) {
+			return;
+		}
+		int convertionRateId = MConversionRate.getConversionRateId(currencyId, 
+				order.getC_Currency_ID(), 
+				transactionDate, 
+				conversionTypeId, 
+				order.getAD_Client_ID(), 
+				order.getAD_Org_ID());
+		if(convertionRateId == -1) {
+			String error = MConversionRate.getErrorMessage(order.getCtx(), 
+					"ErrorConvertingDocumentCurrencyToBaseCurrency", 
+					currencyId, 
+					order.getC_Currency_ID(), 
+					conversionTypeId, 
+					transactionDate, 
+					null);
+			throw new AdempiereException(error);
+		}
+	}
+	
+	/**
 	 * Convert customer bank account
 	 * @param customerBankAccount
 	 * @return
@@ -1308,27 +1340,12 @@ public class ConvertUtil {
 		unitOfMeasureBuilder
 			.setUuid(ValueUtil.validateNull(unitOfMeasure.getUUID()))
 			.setId(unitOfMeasure.getC_UOM_ID())
-			.setName(ValueUtil.validateNull(unitOfMeasure.getName()))
+			.setName(ValueUtil.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Name)))
 			.setCode(ValueUtil.validateNull(unitOfMeasure.getX12DE355()))
-			.setSymbol(ValueUtil.validateNull(unitOfMeasure.getUOMSymbol()))
-			.setDescription(ValueUtil.validateNull(unitOfMeasure.getDescription()))
+			.setSymbol(ValueUtil.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_UOMSymbol)))
+			.setDescription(ValueUtil.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Description)))
 			.setCostingPrecision(unitOfMeasure.getCostingPrecision())
-			.setStandardPrecision(unitOfMeasure.getStdPrecision())
-		;
-
-		// Unit of Measure translation
-		String language = Env.getAD_Language(Env.getCtx());
-		if(!Util.isEmpty(language) && !Env.isBaseLanguage(Env.getCtx(), "")) {
-			String translationName = unitOfMeasure.get_Translation("Name");
-			if (!Util.isEmpty(translationName)) {
-				unitOfMeasureBuilder.setName(translationName);
-			}
-			String translationDescription = unitOfMeasure.get_Translation("Name");
-			if (!Util.isEmpty(translationDescription)) {
-				unitOfMeasureBuilder.setName(translationDescription);
-			}
-		}
-	
+			.setStandardPrecision(unitOfMeasure.getStdPrecision());
 		return unitOfMeasureBuilder;
 	}
 

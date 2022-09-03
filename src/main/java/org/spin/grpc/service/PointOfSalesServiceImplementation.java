@@ -1967,22 +1967,24 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				refundReferenceToCreate.set_ValueOfColumn("C_BP_BankAccount_ID", RecordUtil.getIdFromUuid(I_C_BP_BankAccount.Table_Name, request.getCustomerBankAccountUuid(), transactionName));
 			}
 			refundReferenceToCreate.set_ValueOfColumn("C_BPartner_ID", RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getCustomerUuid(), transactionName));
-			int id = RecordUtil.getIdFromUuid(I_C_ConversionType.Table_Name, request.getConversionTypeUuid(), transactionName);
-			if(id > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("C_ConversionType_ID", id);
+			int currencyId = RecordUtil.getIdFromUuid(I_C_Currency.Table_Name, request.getCurrencyUuid(), transactionName);
+			if(currencyId > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("C_Currency_ID", currencyId);
 			}
-			id = RecordUtil.getIdFromUuid(I_C_Currency.Table_Name, request.getCurrencyUuid(), transactionName);
-			if(id > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("C_Currency_ID", id);
+			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+			if(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID) > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("C_ConversionType_ID", pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
 			}
-			refundReferenceToCreate.set_ValueOfColumn("C_Order_ID", RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), transactionName));
-			id = RecordUtil.getIdFromUuid(I_C_PaymentMethod.Table_Name, request.getPaymentMethodUuid(), transactionName);
+			MOrder salesOrder = getOrder(request.getOrderUuid(), transactionName);
+			//	Throw if not exist conversion
+			ConvertUtil.validateConversion(salesOrder, currencyId, pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
+			refundReferenceToCreate.set_ValueOfColumn("C_Order_ID", salesOrder.getC_Order_ID());
+			int id = RecordUtil.getIdFromUuid(I_C_PaymentMethod.Table_Name, request.getPaymentMethodUuid(), transactionName);
 			if(id > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_PaymentMethod_ID", id);
 			}
-			id = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), transactionName);
-			if(id > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("C_POS_ID", id);
+			if(pos.getC_POS_ID() > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
 			}
 			id = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), transactionName);
 			if(id > 0) {
@@ -3244,9 +3246,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				.setId(availablePaymentMethod.get_ID())
 				.setUuid(ValueUtil.validateNull(availablePaymentMethod.get_UUID()))
 				.setName(
-					!Util.isEmpty(paymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name), true) ?
-						ValueUtil.validateNull(paymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)) : 
-						ValueUtil.validateNull(paymentMethod.getName())
+					Util.isEmpty(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)) ?
+						ValueUtil.validateNull(paymentMethod.getName()) : 
+						ValueUtil.validateNull(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name))
 				)
 				.setPosUuid(ValueUtil.validateNull(request.getPosUuid()))
 					.setIsPosRequiredPin(availablePaymentMethod.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
@@ -3654,14 +3656,15 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		creditMemo.setBPartner((MBPartner) payment.getC_BPartner());
 		creditMemo.setDescription(payment.getDescription());
 		creditMemo.setIsSOTrx(true);
-		creditMemo.setSalesRep_ID(salesOrder.getSalesRep_ID());
-		creditMemo.setAD_Org_ID(salesOrder.getAD_Org_ID());
-		creditMemo.setC_POS_ID(salesOrder.getC_POS_ID());
+		creditMemo.setSalesRep_ID(payment.get_ValueAsInt("CollectingAgent_ID"));
+		creditMemo.setAD_Org_ID(payment.getAD_Org_ID());
+		creditMemo.setC_POS_ID(payment.getC_POS_ID());
 		if(creditMemo.getM_PriceList_ID() <= 0
 				|| creditMemo.getC_Currency_ID() != payment.getC_Currency_ID()) {
-			MPriceList priceList = MPriceList.getDefault(salesOrder.getCtx(), true, MCurrency.getISO_Code(salesOrder.getCtx(), payment.getC_Currency_ID()));
+			String isoCode = MCurrency.getISO_Code(salesOrder.getCtx(), payment.getC_Currency_ID());
+			MPriceList priceList = MPriceList.getDefault(salesOrder.getCtx(), true, isoCode);
 			if(priceList == null) {
-				throw new AdempiereException("@M_PriceList_ID@ @NotFound@");
+				throw new AdempiereException("@M_PriceList_ID@ @NotFound@ (@C_Currency_ID@ " + isoCode + ")");
 			}
 			creditMemo.setM_PriceList_ID(priceList.getM_PriceList_ID());
 		}
@@ -5415,6 +5418,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(currencyId <= 0) {
 			currencyId = salesOrder.getC_Currency_ID();
 		}
+		//	Throw if not exist conversion
+		ConvertUtil.validateConversion(salesOrder, currencyId, pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
 		//	
 		MPayment payment = new MPayment(Env.getCtx(), 0, transactionName);
 		payment.setC_BankAccount_ID(pointOfSalesDefinition.getC_BankAccount_ID());
