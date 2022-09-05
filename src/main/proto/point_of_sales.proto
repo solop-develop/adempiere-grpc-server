@@ -1168,6 +1168,7 @@ message Payment {
 	BankAccount reference_bank_account = 23;
 	Charge charge = 24;
 	DocumentType document_type = 25;
+	bool is_processed = 27;
 }
 
 // Request for delete a order
@@ -1281,24 +1282,25 @@ message OrderLine {
 	Warehouse warehouse = 7;
 	Decimal quantity = 8;
 	Decimal quantity_ordered = 9;
-	Decimal price_list = 10;
-	Decimal price = 11;
-	Decimal discount_rate = 12;
-	Decimal discount_amount = 13;
-	Decimal tax_amount = 14;
-	TaxRate tax_rate = 15;
-	Decimal price_list_with_tax = 16;
-	Decimal price_with_tax = 17;
+	Decimal available_quantity = 10;
+	Decimal price_list = 11;
+	Decimal price = 12;
+	Decimal discount_rate = 13;
+	Decimal discount_amount = 14;
+	Decimal tax_amount = 15;
+	TaxRate tax_rate = 16;
+	Decimal price_list_with_tax = 17;
+	Decimal price_with_tax = 18;
 	//	Totals
-	Decimal total_discount_amount = 18;
-	Decimal total_tax_amount = 19;
-	Decimal total_base_amount = 20;
-	Decimal total_base_amount_with_tax = 21;
-	Decimal total_amount = 22;
-	Decimal total_amount_with_tax = 23;
-	int32 line = 24;
-	ProductConversion uom = 25;
-	ProductConversion product_uom = 26;
+	Decimal total_discount_amount = 19;
+	Decimal total_tax_amount = 20;
+	Decimal total_base_amount = 21;
+	Decimal total_base_amount_with_tax = 22;
+	Decimal total_amount = 23;
+	Decimal total_amount_with_tax = 24;
+	int32 line = 25;
+	ProductConversion uom = 26;
+	ProductConversion product_uom = 27;
 }
 
 // Request Product Price
