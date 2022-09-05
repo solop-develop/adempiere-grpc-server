@@ -947,14 +947,14 @@ public class ConvertUtil {
 		List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
 		MUOMConversion uom = productsConversion.stream()
 			.filter(productConversion -> {
-				return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+				return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
 			})
 			.findFirst()
 			.get();
 
 		MUOMConversion productUom = productsConversion.stream()
 			.filter(productConversion -> {
-				return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+				return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
 			})
 			.findFirst()
 			.get();
