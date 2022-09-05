@@ -3714,6 +3714,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			log.warning("@ProcessFailed@ :" + creditMemo.getProcessMsg());
 			throw new AdempiereException("@ProcessFailed@ :" + creditMemo.getProcessMsg());
 		}
+		creditMemo.setDocumentNo(payment.getDocumentNo());
 		creditMemo.saveEx(transactionName);
 	}
 	
@@ -4198,7 +4199,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			log.info("CPOS.SetC_BPartner_ID -" + partner);
 			order.setBPartner(partner);
 			AtomicBoolean priceListIsChanged = new AtomicBoolean(false);
-			if(partner.getM_PriceList_ID() > 0) {
+			if(partner.getM_PriceList_ID() > 0 && pos.get_ValueAsBoolean("IsKeepPriceFromCustomer")) {
 				MPriceList businesPartnerPriceList = MPriceList.get(Env.getCtx(), partner.getM_PriceList_ID(), null);
 				MPriceList currentPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
 				if(currentPriceList.getC_Currency_ID() != businesPartnerPriceList.getC_Currency_ID()) {
@@ -4206,6 +4207,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				} else if(currentPriceList.getM_PriceList_ID() != partner.getM_PriceList_ID()) {
 					priceListIsChanged.set(true);
 				}
+			} else {
+				order.setM_PriceList_ID(pos.getM_PriceList_ID());
 			}
 			//	
 			MBPartnerLocation [] partnerLocations = partner.getLocations(true);
