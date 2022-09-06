@@ -679,7 +679,7 @@ public class ConvertUtil {
 	 * @return
 	 * @return BigDecimal
 	 */
-	private static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
+	public static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
 		if(payment.get_ValueAsInt("C_Currency_ID") == order.getC_Currency_ID()
 				|| amount == null
 				|| amount.compareTo(Env.ZERO) == 0) {
@@ -756,7 +756,6 @@ public class ConvertUtil {
 		//	
 		MRefList reference = MRefList.get(Env.getCtx(), MPayment.DOCSTATUS_AD_REFERENCE_ID, payment.getDocStatus(), payment.get_TrxName());
 		int presicion = MCurrency.getStdPrecision(payment.getCtx(), payment.getC_Currency_ID());
-		BigDecimal orderConversionRate = getOrderConversionRateFromPayment(payment);
 		BigDecimal paymentAmount = payment.getPayAmt();
 		if(payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)
 				&& paymentAmount.compareTo(Env.ZERO) == 0) {
@@ -772,6 +771,9 @@ public class ConvertUtil {
 		
 		MCurrency currency = MCurrency.get(Env.getCtx(), payment.getC_Currency_ID());
 		Currency.Builder currencyBuilder = convertCurrency(currency);
+		MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
+		BigDecimal convertedAmount = getConvetedAmount(order, payment, paymentAmount)
+			.setScale(presicion, BigDecimal.ROUND_HALF_UP);
 		
 		//	Convert
 		builder
@@ -783,7 +785,7 @@ public class ConvertUtil {
 			.setReferenceNo(ValueUtil.validateNull(Optional.ofNullable(payment.getCheckNo()).orElse(payment.getDocumentNo())))
 			.setDescription(ValueUtil.validateNull(payment.getDescription()))
 			.setAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount))
-			.setOrderCurrencyRate(ValueUtil.getDecimalFromBigDecimal(orderConversionRate))
+			.setConvertedAmount(ValueUtil.getDecimalFromBigDecimal(convertedAmount))
 			.setBankUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Bank.Table_Name, payment.getC_Bank_ID())))
 			.setCustomer(ConvertUtil.convertCustomer((MBPartner) payment.getC_BPartner()))
 			.setCurrency(currencyBuilder)
@@ -801,25 +803,6 @@ public class ConvertUtil {
 			.setIsProcessed(payment.isProcessed())
 		;
 		return builder;
-	}
-	
-	/**
-	 * Get Order conversion rate for payment
-	 * @param payment
-	 * @return
-	 * @return BigDecimal
-	 */
-	private static BigDecimal getOrderConversionRateFromPayment(MPayment payment) {
-		if(payment.getC_Order_ID() <= 0) {
-			return Env.ONE;
-		}
-		MOrder order = (MOrder) payment.getC_Order();
-		if(payment.getC_Currency_ID() == order.getC_Currency_ID()) {
-			return Env.ONE;
-		}
-		BigDecimal conversionRate = MConversionRate.getRate(payment.getC_Currency_ID(), order.getC_Currency_ID(), payment.getDateAcct(), payment.getC_ConversionType_ID(), payment.getAD_Client_ID(), payment.getAD_Org_ID());
-		//	
-		return Optional.ofNullable(conversionRate).orElse(Env.ZERO);
 	}
 	
 	/**

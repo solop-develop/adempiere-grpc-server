@@ -2407,9 +2407,16 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), null);
 			PaymentMethod.Builder paymentMethodBuilder = ConvertUtil.convertPaymentMethod(paymentMethod);
 
-			BigDecimal orderConversionRate = ConvertUtil.getOrderConversionRateFromPaymentReference(paymentReference);
+			int presicion = MCurrency.getStdPrecision(paymentReference.getCtx(), paymentReference.get_ValueAsInt("C_Currency_ID"));
 
-			builder.setAmount(ValueUtil.getDecimalFromBigDecimal((BigDecimal) paymentReference.get_Value("Amount")))
+			BigDecimal amount = (BigDecimal) paymentReference.get_Value("Amount");
+			amount.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+
+			MOrder order = new MOrder(Env.getCtx(), paymentReference.get_ValueAsInt("C_Order_ID"), null);
+			BigDecimal convertedAmount = ConvertUtil.getConvetedAmount(order, paymentReference, amount)
+				.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+
+			builder.setAmount(ValueUtil.getDecimalFromBigDecimal(amount))
 			.setDescription(ValueUtil.validateNull(paymentReference.get_ValueAsString("Description")))
 			.setIsPaid(paymentReference.get_ValueAsBoolean("IsPaid"))
 			.setTenderTypeCode(ValueUtil.validateNull(paymentReference.get_ValueAsString("TenderType")))
@@ -2424,7 +2431,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setPaymentDate(ValueUtil.validateNull(ValueUtil.convertDateToString((Timestamp) paymentReference.get_Value("PayDate"))))
 			.setIsAutomatic(paymentReference.get_ValueAsBoolean("IsAutoCreatedReference"))
 			.setIsProcessed(paymentReference.get_ValueAsBoolean("Processed"))
-			.setOrderCurrencyRate(ValueUtil.getDecimalFromBigDecimal(orderConversionRate))
+			.setConvertedAmount(ValueUtil.getDecimalFromBigDecimal(convertedAmount))
 			;
 		}
 		//	
@@ -3758,7 +3765,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @return
 	 * @return BigDecimal
 	 */
-	private static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
+	public static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
 		if(payment.get_ValueAsInt("C_Currency_ID") == order.getC_Currency_ID()
 				|| amount == null
 				|| amount.compareTo(Env.ZERO) == 0) {
