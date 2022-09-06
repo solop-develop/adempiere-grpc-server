@@ -559,6 +559,29 @@ public class ConvertUtil {
 		return new Query(order.getCtx(), "C_POSPaymentReference", "C_Order_ID = ?", order.get_TrxName()).setParameters(order.getC_Order_ID()).list();
 	}
 	
+	private static List<PO> getPaymentReferencesList(MOrder order) {
+		return getPaymentReferences(order)
+			.stream()
+			.filter(paymentReference -> {
+				return (!paymentReference.get_ValueAsBoolean("Processed") && !paymentReference.get_ValueAsBoolean("IsPaid")) 
+					|| paymentReference.get_ValueAsBoolean("IsKeepReferenceAfterProcess");
+			})
+			.collect(Collectors.toList());
+	}
+
+	private static Optional<BigDecimal> getPaymentChageOrCredit(MOrder order, boolean isCredit) {
+		return getPaymentReferencesList(order)
+			.stream()
+			.filter(paymentReference -> {
+				return paymentReference.get_ValueAsBoolean("IsReceipt") == isCredit;
+			})
+			.map(paymentReference -> {
+				BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
+				return getConvetedAmount(order, paymentReference, amount);
+			})
+			.collect(Collectors.reducing(BigDecimal::add));
+	}
+
 	/**
 	 * Convert Order from entity
 	 * @param order
@@ -605,8 +628,9 @@ public class ConvertUtil {
 			}
 			return getConvetedAmount(order, payment, paymentAmount);
 		}).collect(Collectors.reducing(BigDecimal::add));
-		Optional<BigDecimal> paymentReferenceAmount = getPaymentReferences(order).stream()
-				.filter(paymentReference -> (!paymentReference.get_ValueAsBoolean("Processed") && !paymentReference.get_ValueAsBoolean("IsPaid")) || paymentReference.get_ValueAsBoolean("IsKeepReferenceAfterProcess"))
+
+		List<PO> paymentReferencesList = getPaymentReferencesList(order);
+		Optional<BigDecimal> paymentReferenceAmount = paymentReferencesList.stream()
 				.map(paymentReference -> {
 			BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
 			if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
@@ -620,21 +644,24 @@ public class ConvertUtil {
 			paymentAmount = paidAmount.get();
 		}
 
-		BigDecimal totalPaymentAmount = paymentAmount;
 		int standardPrecision = priceList.getStandardPrecision();
-		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+
 		BigDecimal creditAmt = BigDecimal.ZERO.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+		Optional<BigDecimal> maybeCreditAmt = getPaymentChageOrCredit(order, true);
+		if (maybeCreditAmt.isPresent()) {
+			creditAmt = maybeCreditAmt.get()
+				.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+		}
+		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+		Optional<BigDecimal> maybeChargeAmt = getPaymentChageOrCredit(order, false);
+		if (maybeChargeAmt.isPresent()) {
+			chargeAmt = maybeChargeAmt.get()
+				.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
+		}
+		
+		BigDecimal totalPaymentAmount = paymentAmount;
 		if(paymentReferenceAmount.isPresent()) {
 			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
-			
-			if (paymentReferenceAmount.get().signum() > 0) {
-				chargeAmt = paymentReferenceAmount.get()
-					.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP);
-			} else if (paymentReferenceAmount.get().signum() < 0) {
-				creditAmt = paymentReferenceAmount.get()
-					.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP)
-					.negate();
-			}
 		}
 
 		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
