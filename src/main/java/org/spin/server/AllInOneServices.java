@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import org.spin.base.setup.SetupLoader;
+import org.spin.base.internal.setup.SetupLoader;
 import org.spin.base.util.Services;
 import org.spin.grpc.service.AccessServiceImplementation;
 import org.spin.grpc.service.BusinessDataServiceImplementation;

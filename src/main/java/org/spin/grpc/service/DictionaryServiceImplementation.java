@@ -396,9 +396,12 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Form.Builder convertForm(Properties context, MForm form) {
-		Form.Builder builder = null;
+		Form.Builder builder = Form.newBuilder();
+		if (form == null) {
+			return builder;
+		}
 		//	
-		builder = Form.newBuilder()
+		builder
 				.setId(form.getAD_Form_ID())
 				.setUuid(ValueUtil.validateNull(form.getUUID()))
 				.setName(ValueUtil.validateNull(ValueUtil.getTranslation(form, MForm.COLUMNNAME_Name)))
@@ -438,6 +441,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Window.Builder convertWindow(Properties context, MWindow window, boolean withTabs) {
+		if (window == null) {
+			return Window.newBuilder();
+		}
 		window = ASPUtil.getInstance(context).getWindow(window.getAD_Window_ID());
 		Window.Builder builder = null;
 		ContextInfo.Builder contextInfoBuilder = convertContextInfo(context, window.getAD_ContextInfo_ID());
@@ -592,6 +598,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Tab.Builder convertTab(Properties context, MTab tab, List<MTab> tabs, boolean withFields) {
+		if (tab == null) {
+			return Tab.newBuilder();
+		}
 		String parentTabUuid = null;
 		int tabId = tab.getAD_Tab_ID();
 		tab = ASPUtil.getInstance(context).getWindowTab(tab.getAD_Window_ID(), tabId);
@@ -721,7 +730,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private ContextInfo.Builder convertContextInfo(Properties context, int contextInfoId) {
-		ContextInfo.Builder builder = null;
+		ContextInfo.Builder builder = ContextInfo.newBuilder();
 		if(contextInfoId > 0) {
 			MADContextInfo contextInfoValue = MADContextInfo.getById(context, contextInfoId);
 			MMessage message = MMessage.get(context, contextInfoValue.getAD_Message_ID());
@@ -741,19 +750,22 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				msgTip = message.getMsgTip();
 			}
 			//	Add message text
-			MessageText messageText = MessageText.newBuilder()
+			MessageText.Builder messageText = MessageText.newBuilder();
+			if (message != null) {
+				messageText
 					.setId(message.getAD_Message_ID())
 					.setUuid(ValueUtil.validateNull(message.getUUID()))
 					.setValue(ValueUtil.validateNull(message.getValue()))
 					.setMessageText(ValueUtil.validateNull(msgText))
 					.setMessageTip(ValueUtil.validateNull(msgTip))
-					.build();
+				;
+			}
 			builder = ContextInfo.newBuilder()
 					.setId(contextInfoValue.getAD_ContextInfo_ID())
 					.setUuid(ValueUtil.validateNull(contextInfoValue.getUUID()))
 					.setName(ValueUtil.validateNull(contextInfoValue.getName()))
 					.setDescription(ValueUtil.validateNull(contextInfoValue.getDescription()))
-					.setMessageText(messageText)
+					.setMessageText(messageText.build())
 					.setSqlStatement(ValueUtil.validateNull(contextInfoValue.getSQLStatement()));
 		}
 		return builder;
@@ -765,6 +777,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Process.Builder convertProcess(Properties context, MProcess process, boolean withParams) {
+		if (process == null) {
+			return Process.newBuilder();
+		}
 		process = ASPUtil.getInstance(context).getProcess(process.getAD_Process_ID());
 		Process.Builder builder = Process.newBuilder()
 				.setId(process.getAD_Process_ID())
@@ -821,6 +836,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Browser.Builder convertBrowser(Properties context, MBrowse browser, boolean withFields) {
+		if (browser == null) {
+			return Browser.newBuilder();
+		}
 		String query = DictionaryUtil.addQueryReferencesFromBrowser(browser);
 		String orderByClause = DictionaryUtil.getSQLOrderBy(browser);
 		Browser.Builder builder = Browser.newBuilder()
@@ -919,6 +937,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Field.Builder convertProcessParameter(Properties context, MProcessPara processParameter) {
+		if (processParameter == null) {
+			return Field.newBuilder();
+		}
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 				.setId(processParameter.getAD_Process_Para_ID())
@@ -1033,6 +1054,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Field.Builder convertBrowseField(Properties context, MBrowseField browseField) {
+		if (browseField == null) {
+			return Field.newBuilder();
+		}
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 				.setId(browseField.getAD_Browse_Field_ID())
@@ -1261,6 +1285,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Field.Builder convertField(Properties context, MColumn column) {
+		if (column == null) {
+			return Field.newBuilder();
+		}
 		String defaultValue = column.getDefaultValue();
 		if(Util.isEmpty(defaultValue)) {
 			defaultValue = column.getDefaultValue();
@@ -1346,6 +1373,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 
 	private List<DependentField> generateDependentColumns(MColumn column) {
 		List<DependentField> depenentFieldsList = new ArrayList<>();
+		if (column == null) {
+			return depenentFieldsList;
+		}
 
 		String parentColumnName = column.getColumnName();
 
@@ -1402,6 +1432,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Field.Builder convertField(Properties context, M_Element element) {
+		if (element == null) {
+			return Field.newBuilder();
+		}
 		//	Display Type
 		int displayTypeId = element.getAD_Reference_ID();
 		if(element.getAD_Reference_ID() > 0) {
@@ -1444,6 +1477,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Field.Builder convertField(Properties context, MField field, boolean translate) {
+		if (field == null) {
+			return Field.newBuilder();
+		}
 		//`Column reference
 		MColumn column = MColumn.get(context, field.getAD_Column_ID());
 		M_Element element = new M_Element(context, column.getAD_Element_ID(), null);
@@ -1567,6 +1603,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 
 	private List<DependentField> generateDependentFields(MField field) {
 		List<DependentField> depenentFieldsList = new ArrayList<>();
+		if (field == null) {
+			return depenentFieldsList;
+		}
 
 		int columnId = field.getAD_Column_ID();
 		String parentColumnName = MColumn.getColumnName(Env.getCtx(), columnId);
@@ -1683,7 +1722,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private FieldGroup.Builder convertFieldGroup(Properties context, int fieldGroupId) {
-		FieldGroup.Builder builder = null;
+		FieldGroup.Builder builder = FieldGroup.newBuilder();
 		if(fieldGroupId > 0) {
 			X_AD_FieldGroup fieldGroup  = new X_AD_FieldGroup(context, fieldGroupId, null);
 			//	Get translation
@@ -1751,6 +1790,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 					.setParameters(request.getUuid())
 					.first();
 		}
+		if (validationRule == null) {
+			return ValidationRule.newBuilder();
+		}
 		//	
 		return ValidationRule.newBuilder()
 				.setId(validationRule.getAD_Val_Rule_ID())
@@ -1768,6 +1810,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private Reference.Builder convertReference(Properties context, MLookupInfo info) {
+		if (info == null) {
+			return Reference.newBuilder();
+		}
 		Reference.Builder builder = Reference.newBuilder()
 				.setTableName(ValueUtil.validateNull(info.TableName))
 				.setKeyColumnName(ValueUtil.validateNull(info.KeyColumn))

@@ -16,6 +16,7 @@
 package org.spin.base.util;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_AD_Element;
 import org.compiere.model.I_AD_Ref_List;
 import org.compiere.model.I_AD_User;
@@ -32,6 +34,7 @@ import org.compiere.model.I_C_Campaign;
 import org.compiere.model.I_C_ConversionType;
 import org.compiere.model.I_C_Order;
 import org.compiere.model.I_C_POSKeyLayout;
+import org.compiere.model.I_C_UOM;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
@@ -64,6 +67,7 @@ import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategory;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRegion;
+import org.compiere.model.MStorage;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
@@ -118,7 +122,7 @@ import org.spin.grpc.util.ChatEntry.ModeratorStatus;
 import org.spin.model.MADAttachmentReference;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.util.AttachmentUtil;
-import org.spin.store.util.VueStoreFrontUtil;
+import org.spin.util.VueStoreFrontUtil;
 
 /**
  * Class for convert any document
@@ -133,6 +137,9 @@ public class ConvertUtil {
 	 */
 	public static AvailableSeller.Builder convertSeller(MUser user) {
 		AvailableSeller.Builder sellerInfo = AvailableSeller.newBuilder();
+		if (user == null) {
+			return sellerInfo;
+		}
 		sellerInfo.setId(user.getAD_User_ID());
 		sellerInfo.setUuid(ValueUtil.validateNull(user.getUUID()));
 		sellerInfo.setName(ValueUtil.validateNull(user.getName()));
@@ -156,6 +163,9 @@ public class ConvertUtil {
 	 */
 	public static ProcessInfoLog.Builder convertProcessInfoLog(org.compiere.process.ProcessInfoLog log) {
 		ProcessInfoLog.Builder processLog = ProcessInfoLog.newBuilder();
+		if (log == null) {
+			return processLog;
+		}
 		processLog.setRecordId(log.getP_ID());
 		processLog.setLog(ValueUtil.validateNull(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));
 		return processLog;
@@ -168,6 +178,9 @@ public class ConvertUtil {
 	 */
 	public static ChatEntry.Builder convertChatEntry(MChatEntry chatEntry) {
 		ChatEntry.Builder builder = ChatEntry.newBuilder();
+		if (chatEntry == null) {
+			return builder;
+		}
 		builder.setUuid(ValueUtil.validateNull(chatEntry.getUUID()));
 		builder.setId(chatEntry.getCM_ChatEntry_ID());
 		builder.setChatUuid(ValueUtil.validateNull(chatEntry.getCM_Chat().getUUID()));
@@ -281,6 +294,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
+		if (documentType == null) {
+			DocumentType.newBuilder();
+		}
 		return DocumentType.newBuilder()
 				.setUuid(ValueUtil.validateNull(documentType.getUUID()))
 				.setId(documentType.getC_DocType_ID())
@@ -362,6 +378,9 @@ public class ConvertUtil {
 	 */
 	public static Product.Builder convertProduct(MProduct product) {
 		Product.Builder builder = Product.newBuilder();
+		if (product == null) {
+			return builder;
+		}
 		builder.setUuid(ValueUtil.validateNull(product.getUUID()))
 				.setId(product.getM_Product_ID())
 				.setValue(ValueUtil.validateNull(product.getValue()))
@@ -411,6 +430,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static org.spin.grpc.util.Language.Builder convertLanguage(MLanguage language) {
+		if (language == null) {
+			org.spin.grpc.util.Language.newBuilder();
+		}
 		String datePattern = language.getDatePattern();
 		String timePattern = language.getTimePattern();
 		if(Util.isEmpty(datePattern)) {
@@ -772,7 +794,7 @@ public class ConvertUtil {
 			.setDocumentType(convertDocumentType(MDocType.get(Env.getCtx(), payment.getC_DocType_ID())))
 			.setBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.getC_BankAccount_ID())))
 			.setReferenceBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.get_ValueAsInt("POSReferenceBankAccount_ID"))))
-			
+			.setIsProcessed(payment.isProcessed())
 		;
 		return builder;
 	}
@@ -797,6 +819,35 @@ public class ConvertUtil {
 	}
 	
 	/**
+	 * Validate conversion
+	 * @param order
+	 * @param currencyId
+	 * @param conversionTypeId
+	 * @param transactionDate
+	 */
+	public static void validateConversion(MOrder order, int currencyId, int conversionTypeId, Timestamp transactionDate) {
+		if(currencyId == order.getC_Currency_ID()) {
+			return;
+		}
+		int convertionRateId = MConversionRate.getConversionRateId(currencyId, 
+				order.getC_Currency_ID(), 
+				transactionDate, 
+				conversionTypeId, 
+				order.getAD_Client_ID(), 
+				order.getAD_Org_ID());
+		if(convertionRateId == -1) {
+			String error = MConversionRate.getErrorMessage(order.getCtx(), 
+					"ErrorConvertingDocumentCurrencyToBaseCurrency", 
+					currencyId, 
+					order.getC_Currency_ID(), 
+					conversionTypeId, 
+					transactionDate, 
+					null);
+			throw new AdempiereException(error);
+		}
+	}
+	
+	/**
 	 * Convert customer bank account
 	 * @param customerBankAccount
 	 * @return
@@ -804,6 +855,9 @@ public class ConvertUtil {
 	 */
 	public static CustomerBankAccount.Builder convertCustomerBankAccount(MBPBankAccount customerBankAccount) {
 		CustomerBankAccount.Builder builder = CustomerBankAccount.newBuilder();
+		if (customerBankAccount == null) {
+			return builder;
+		}
 		builder.setCustomerBankAccountUuid(ValueUtil.validateNull(customerBankAccount.getUUID()))
 			.setCity(ValueUtil.validateNull(customerBankAccount.getA_City()))
 			.setCountry(ValueUtil.validateNull(customerBankAccount.getA_Country()))
@@ -870,10 +924,12 @@ public class ConvertUtil {
 		MTax tax = MTax.get(Env.getCtx(), orderLine.getC_Tax_ID());
 		MOrder order = orderLine.getParent();
 		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
+		BigDecimal quantityEntered = orderLine.getQtyEntered();
 		BigDecimal quantityOrdered = orderLine.getQtyOrdered();
 		//	Units
 		BigDecimal priceListAmount = orderLine.getPriceList();
 		BigDecimal priceActualAmount = orderLine.getPriceActual();
+		BigDecimal priceEntered = orderLine.getPriceEntered();
 		BigDecimal discountRate = orderLine.getDiscount();
 		BigDecimal discountAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO).subtract(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO));
 		BigDecimal taxAmount = tax.calculateTax(orderLine.getPriceActual(), priceList.isTaxIncluded(), priceList.getStandardPrecision());
@@ -903,6 +959,8 @@ public class ConvertUtil {
 			.findFirst()
 			.get();
 	
+		int standardPrecision = priceList.getStandardPrecision();
+		BigDecimal availableQuantity = MStorage.getQtyAvailable(orderLine.getM_Warehouse_ID(), 0, orderLine.getM_Product_ID(), orderLine.getM_AttributeSetInstance_ID(), null);
 		//	Convert
 		return builder
 				.setUuid(ValueUtil.validateNull(orderLine.getUUID()))
@@ -913,9 +971,11 @@ public class ConvertUtil {
 				.setProduct(convertProduct(orderLine.getM_Product_ID()))
 				.setCharge(convertCharge(orderLine.getC_Charge_ID()))
 				.setWarehouse(convertWarehouse(orderLine.getM_Warehouse_ID()))
-				.setQuantity(ValueUtil.getDecimalFromBigDecimal(quantityOrdered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setQuantity(ValueUtil.getDecimalFromBigDecimal(quantityEntered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setQuantityOrdered(ValueUtil.getDecimalFromBigDecimal(quantityOrdered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+			.setAvailableQuantity(ValueUtil.getDecimalFromBigDecimal(availableQuantity.setScale(standardPrecision)))
 				.setPriceList(ValueUtil.getDecimalFromBigDecimal(priceListAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
-				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceActualAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
+				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceEntered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(discountAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setDiscountRate(ValueUtil.getDecimalFromBigDecimal(discountRate.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(taxAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
@@ -1015,7 +1075,11 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static KeyLayout.Builder convertKeyLayout(MPOSKeyLayout keyLayout) {
-		KeyLayout.Builder builder = KeyLayout.newBuilder()
+		KeyLayout.Builder builder = KeyLayout.newBuilder();
+		if (keyLayout == null) {
+			return builder;
+		}
+		builder
 				.setUuid(ValueUtil.validateNull(keyLayout.getUUID()))
 				.setId(keyLayout.getC_POSKeyLayout_ID())
 				.setName(ValueUtil.validateNull(keyLayout.getName()))
@@ -1035,6 +1099,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static Key.Builder convertKey(MPOSKey key) {
+		if (key == null) {
+			return Key.newBuilder();
+		}
 		String productValue = null;
 		if(key.getM_Product_ID() > 0) {
 			productValue = MProduct.get(Env.getCtx(), key.getM_Product_ID()).getValue();
@@ -1059,6 +1126,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static SalesRepresentative.Builder convertSalesRepresentative(MUser salesRepresentative) {
+		if (salesRepresentative == null) {
+			return SalesRepresentative.newBuilder();
+		}
 		return SalesRepresentative.newBuilder()
 				.setUuid(ValueUtil.validateNull(salesRepresentative.getUUID()))
 				.setId(salesRepresentative.getAD_User_ID())
@@ -1217,6 +1287,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static Organization.Builder convertOrganization(MOrg organization) {
+		if (organization == null) {
+			return Organization.newBuilder();
+		}
 		MOrgInfo organizationInfo = MOrgInfo.get(Env.getCtx(), organization.getAD_Org_ID(), null);
 		AtomicReference<String> corporateImageBranding = new AtomicReference<String>();
 		if(organizationInfo.getCorporateBrandingImage_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(organizationInfo.getAD_Client_ID())) {
@@ -1247,6 +1320,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static Warehouse.Builder convertWarehouse(MWarehouse warehouse) {
+		if (warehouse == null) {
+			return Warehouse.newBuilder();
+		}
 		return Warehouse.newBuilder()
 				.setUuid(ValueUtil.validateNull(warehouse.getUUID()))
 				.setId(warehouse.getM_Warehouse_ID())
@@ -1260,24 +1336,32 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static UnitOfMeasure.Builder convertUnitOfMeasure(MUOM unitOfMeasure) {
-		return UnitOfMeasure.newBuilder()
+		UnitOfMeasure.Builder unitOfMeasureBuilder = UnitOfMeasure.newBuilder();
+		if (unitOfMeasure == null) {
+			return unitOfMeasureBuilder;
+		}
+
+		unitOfMeasureBuilder
 			.setUuid(ValueUtil.validateNull(unitOfMeasure.getUUID()))
 			.setId(unitOfMeasure.getC_UOM_ID())
-			.setName(ValueUtil.validateNull(unitOfMeasure.getName()))
+			.setName(ValueUtil.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Name)))
 			.setCode(ValueUtil.validateNull(unitOfMeasure.getX12DE355()))
-			.setSymbol(unitOfMeasure.getUOMSymbol())
-			.setDescription(ValueUtil.validateNull(unitOfMeasure.getDescription()))
+			.setSymbol(ValueUtil.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_UOMSymbol)))
+			.setDescription(ValueUtil.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Description)))
 			.setCostingPrecision(unitOfMeasure.getCostingPrecision())
-			.setStandardPrecision(unitOfMeasure.getStdPrecision())
-		;
+			.setStandardPrecision(unitOfMeasure.getStdPrecision());
+		return unitOfMeasureBuilder;
 	}
 
 	/**
-	 * Convert Unit of Measure
+	 * Convert Unit of Measure Product Conversion
 	 * @param uom
 	 * @return
 	 */
 	public static ProductConversion.Builder convertProductConversion(MUOMConversion productConversion) {
+		if (productConversion == null) {
+			return ProductConversion.newBuilder();
+		}
 		MUOM productUom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_ID());
 		MUOM uomToConvert = MUOM.get(Env.getCtx(), productConversion.getC_UOM_To_ID());
 		
@@ -1337,6 +1421,9 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static TaxRate.Builder convertTaxRate(MTax tax) {
+		if (tax == null) {
+			return TaxRate.newBuilder();
+		}
 		return TaxRate.newBuilder().setName(ValueUtil.validateNull(tax.getName()))
 			.setDescription(ValueUtil.validateNull(tax.getDescription()))
 			.setTaxIndicator(ValueUtil.validateNull(tax.getTaxIndicator()))

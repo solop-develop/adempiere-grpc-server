@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License                 *
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.base.setup;
+package org.spin.base.internal.setup;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,8 +92,12 @@ public class SetupLoader {
 		//	Set default init
 		Ini.setProperty(Ini.P_CONNECTION, connection.toStringLong());
 		Ini.setClient(false);
-		Ini.setProperty(Ini.P_ADEMPIERE_APPS_TYPE, "wildfly");
-		Level logLevel = Level.parse(setup.getServer().getLog_level().toUpperCase());
+//		Ini.setProperty(Ini.P_ADEMPIERE_APPS_TYPE, "wildfly");
+		String logLevelAsString = setup.getServer().getLog_level();
+		if(logLevelAsString == null) {
+			logLevelAsString = "WARNING";
+		}
+		Level logLevel = Level.parse(logLevelAsString.toUpperCase());
 		Ini.setProperty(Ini.P_TRACEFILE, logLevel.getName());
 		CLogMgt.setLevel(logLevel);
 		DB.setDBTarget(connection);
@@ -102,7 +106,7 @@ public class SetupLoader {
 	
 	/**
 	 * @return
-	 * @see org.spin.base.setup.SetupWrapper#getDatabase()
+	 * @see org.spin.base.internal.setup.SetupWrapper#getDatabase()
 	 */
 	public final Database getDatabase() {
 		return setup.getDatabase();
@@ -110,7 +114,7 @@ public class SetupLoader {
 	
 	/**
 	 * @return
-	 * @see org.spin.base.setup.SetupWrapper#getServer()
+	 * @see org.spin.base.internal.setup.SetupWrapper#getServer()
 	 */
 	public final Server getServer() {
 		return setup.getServer();
