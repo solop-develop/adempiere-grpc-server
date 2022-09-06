@@ -4528,7 +4528,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				"(EXISTS("
 				+ "		SELECT 1 FROM C_POSSellerAllocation AS seller "
 				+ "		WHERE seller.C_POS_ID = ? AND seller.SalesRep_ID = AD_User.AD_User_ID "
-				+ "		AND seller.IsActive = 'N' AND seller.IsAllowsPOSManager = 'Y' "
+				+ "		AND seller.IsActive = 'Y' AND seller.IsAllowsPOSManager = 'Y' "
 				+ 		whereClause
 				+ ") "
 				+ "OR IsPOSManager = 'Y') "
