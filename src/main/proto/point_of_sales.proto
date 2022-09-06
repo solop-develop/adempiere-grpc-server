@@ -245,6 +245,7 @@ message PaymentReference {
 	Decimal source_amount = 16;
 	bool is_automatic = 17;
 	bool is_processed = 18;
+	Decimal order_currency_rate = 19;
 }
 
 //	List Refund Reference Request

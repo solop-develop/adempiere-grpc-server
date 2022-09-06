@@ -823,6 +823,34 @@ public class ConvertUtil {
 	}
 	
 	/**
+	 * Get Order conversion rate for payment
+	 * @param payment
+	 * @return
+	 * @return BigDecimal
+	 */
+	public static BigDecimal getOrderConversionRateFromPaymentReference(PO paymentReference) {
+		if(paymentReference.get_ValueAsInt("C_Order_ID") <= 0) {
+			return Env.ONE;
+		}
+		MOrder order = new MOrder(Env.getCtx(), paymentReference.get_ValueAsInt("C_Order_ID"), null);
+		if(paymentReference.get_ValueAsInt("C_Currency_ID") == order.getC_Currency_ID()) {
+			return Env.ONE;
+		}
+		
+		Timestamp conversionDate = Timestamp.valueOf(paymentReference.get_ValueAsString("PayDate"));
+		BigDecimal conversionRate = MConversionRate.getRate(
+			paymentReference.get_ValueAsInt("C_Currency_ID"),
+			order.getC_Currency_ID(),
+			conversionDate,
+			paymentReference.get_ValueAsInt("C_ConversionType_ID"),
+			paymentReference.getAD_Client_ID(),
+			paymentReference.getAD_Org_ID()
+		);
+		//	
+		return Optional.ofNullable(conversionRate).orElse(Env.ZERO);
+	}
+	
+	/**
 	 * Validate conversion
 	 * @param order
 	 * @param currencyId

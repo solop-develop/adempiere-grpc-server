@@ -2407,6 +2407,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), null);
 			PaymentMethod.Builder paymentMethodBuilder = ConvertUtil.convertPaymentMethod(paymentMethod);
 
+			BigDecimal orderConversionRate = ConvertUtil.getOrderConversionRateFromPaymentReference(paymentReference);
+
 			builder.setAmount(ValueUtil.getDecimalFromBigDecimal((BigDecimal) paymentReference.get_Value("Amount")))
 			.setDescription(ValueUtil.validateNull(paymentReference.get_ValueAsString("Description")))
 			.setIsPaid(paymentReference.get_ValueAsBoolean("IsPaid"))
@@ -2421,8 +2423,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setPaymentMethod(paymentMethodBuilder)
 			.setPaymentDate(ValueUtil.validateNull(ValueUtil.convertDateToString((Timestamp) paymentReference.get_Value("PayDate"))))
 			.setIsAutomatic(paymentReference.get_ValueAsBoolean("IsAutoCreatedReference"))
-			.setIsProcessed(paymentReference.get_ValueAsBoolean("Processed"));
-			
+			.setIsProcessed(paymentReference.get_ValueAsBoolean("Processed"))
+			.setOrderCurrencyRate(ValueUtil.getDecimalFromBigDecimal(orderConversionRate))
+			;
 		}
 		//	
 		return builder;
