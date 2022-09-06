@@ -596,13 +596,17 @@ public class ConvertUtil {
 		//	
 		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
 			BigDecimal paymentAmount = payment.getPayAmt();
+			if(paymentAmount.compareTo(Env.ZERO) == 0) {
+				MInvoice creditMemo = new Query(payment.getCtx(), MInvoice.Table_Name, "C_Payment_ID = ?", payment.get_TrxName()).setParameters(payment.getC_Payment_ID()).first();
+				paymentAmount = creditMemo.getGrandTotal();
+			}
 			if(!payment.isReceipt()) {
 				paymentAmount = payment.getPayAmt().negate();
 			}
 			return getConvetedAmount(order, payment, paymentAmount);
 		}).collect(Collectors.reducing(BigDecimal::add));
 		Optional<BigDecimal> paymentReferenceAmount = getPaymentReferences(order).stream()
-				.filter(paymentReference -> !paymentReference.get_ValueAsBoolean("Processed") && !paymentReference.get_ValueAsBoolean("IsPaid"))
+				.filter(paymentReference -> (!paymentReference.get_ValueAsBoolean("Processed") && !paymentReference.get_ValueAsBoolean("IsPaid")) || paymentReference.get_ValueAsBoolean("IsKeepReferenceAfterProcess"))
 				.map(paymentReference -> {
 			BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
 			if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
@@ -947,14 +951,14 @@ public class ConvertUtil {
 		List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
 		MUOMConversion uom = productsConversion.stream()
 			.filter(productConversion -> {
-				return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+				return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
 			})
 			.findFirst()
 			.get();
 
 		MUOMConversion productUom = productsConversion.stream()
 			.filter(productConversion -> {
-				return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+				return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
 			})
 			.findFirst()
 			.get();

@@ -149,6 +149,10 @@ service Store {
 	rpc DeletePaymentReference(DeletePaymentReferenceRequest) returns (Empty) {}
 	//	List Refund References
 	rpc ListPaymentReferences(ListPaymentReferencesRequest) returns (ListPaymentReferencesResponse) {}
+	//  List Stock: GET /api/stocks
+	rpc ListStocks(ListStocksRequest) returns (ListStocksResponse) {}
+	//  List Available Cash 
+	rpc ListAvailableCash(ListAvailableCashRequest) returns (ListAvailableCashResponse) {}
 }
 
 //	Delete Refund reference request
