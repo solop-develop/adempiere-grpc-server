@@ -4779,16 +4779,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					.findFirst();
 			if(maybeOrderLine.isPresent()) {
 				MOrderLine orderLine = maybeOrderLine.get();
-				BigDecimal currentPrice = orderLine.getPriceEntered();
 				//	Set Quantity
 				BigDecimal quantityToOrder = quantity;
 				if(quantity == null) {
 					quantityToOrder = orderLine.getQtyEntered();
 					quantityToOrder = quantityToOrder.add(Env.ONE);
 				}
-				orderLine.setQty(quantityToOrder);
-				orderLine.setPrice(currentPrice); //	sets List/limit
-				orderLine.saveEx(transactionName);
+				updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
 				orderLineReference.set(orderLine);
 			} else {
 				BigDecimal quantityToOrder = quantity;
@@ -4890,16 +4887,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				orderLine.set_ValueOfColumn("Ref_WarehouseSource_ID", warehouseId);
 			}
 			//	Validate UOM
-			if(unitOfMeasureId > 0 && unitOfMeasureId != orderLine.getC_UOM_ID()) {
-				BigDecimal quantityEntered = orderLine.getQtyEntered();
-				BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), unitOfMeasureId, quantityEntered);
-				BigDecimal convertedPrice = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), unitOfMeasureId, orderLine.getPriceActual());
-				orderLine.setC_UOM_ID(unitOfMeasureId);
-				orderLine.setQtyOrdered(convertedQuantity);
-				orderLine.setPriceEntered(convertedPrice);
-				orderLine.setLineNetAmt();
-				orderLine.saveEx();
-			}
+			updateUomAndQuantity(orderLine, unitOfMeasureId, quantity);
 			//	Set values
 			orderLine.setTax();
 			orderLine.saveEx();
@@ -4909,6 +4897,28 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		});
 		return maybeOrderLine.get();
 	} //	UpdateLine
+	
+	/**
+	 * Set UOM and Quantiry based on unit of measure
+	 * @param orderLine
+	 * @param unitOfMeasureId
+	 * @param quantity
+	 */
+	private void updateUomAndQuantity(MOrderLine orderLine, int unitOfMeasureId, BigDecimal quantity) {
+		if(quantity != null) {
+			orderLine.setQty(quantity);
+		}
+		if(unitOfMeasureId > 0) {
+			orderLine.setC_UOM_ID(unitOfMeasureId);
+		}
+		BigDecimal quantityEntered = orderLine.getQtyEntered();
+		BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), quantityEntered);
+		BigDecimal convertedPrice = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), orderLine.getPriceActual());
+		orderLine.setQtyOrdered(convertedQuantity);
+		orderLine.setPriceEntered(convertedPrice);
+		orderLine.setLineNetAmt();
+		orderLine.saveEx();
+	}
 	
 	/**
 	 * Get list from user
