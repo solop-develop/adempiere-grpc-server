@@ -4801,8 +4801,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				}
 				orderLine.setQty(quantityToOrder);
 				orderLine.setPrice();
-				orderLine.setLineNetAmt();
+				orderLine.setTax();
 				//	Save Line
+				orderLine.saveEx(transactionName);
+				orderLine.setLineNetAmt();
 				orderLine.saveEx(transactionName);
 				//	Apply Discount from order
 				configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
