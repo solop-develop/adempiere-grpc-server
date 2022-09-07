@@ -619,9 +619,12 @@ public class ConvertUtil {
 		//	
 		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
 			BigDecimal paymentAmount = payment.getPayAmt();
-			if(paymentAmount.compareTo(Env.ZERO) == 0) {
+			if(paymentAmount.compareTo(Env.ZERO) == 0
+					&& payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
 				MInvoice creditMemo = new Query(payment.getCtx(), MInvoice.Table_Name, "C_Payment_ID = ?", payment.get_TrxName()).setParameters(payment.getC_Payment_ID()).first();
-				paymentAmount = creditMemo.getGrandTotal();
+				if(creditMemo != null) {
+					paymentAmount = creditMemo.getGrandTotal();
+				}
 			}
 			if(!payment.isReceipt()) {
 				paymentAmount = payment.getPayAmt().negate();
