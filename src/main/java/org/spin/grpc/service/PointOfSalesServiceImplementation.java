@@ -4804,8 +4804,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				orderLine.setTax();
 				//	Save Line
 				orderLine.saveEx(transactionName);
-				orderLine.setLineNetAmt();
-				orderLine.saveEx(transactionName);
 				//	Apply Discount from order
 				configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
 				orderLineReference.set(orderLine);
@@ -4922,6 +4920,27 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		orderLine.setLineNetAmt();
 		orderLine.saveEx();
 	}
+	
+	
+//	/**
+//	 * Get converted price and quantity on product UOM
+//	 * @param context
+//	 * @param product
+//	 * @param quantityEntered
+//	 * @return
+//	 */
+//	private BigDecimal convertQuantityToProductUom(Properties context, MProduct product, int uomToId, BigDecimal quantityEntered) {
+//		BigDecimal conversionRate = MUOMConversion.getProductRateFrom(context, product.getM_Product_ID(), uomToId);
+//		if (conversionRate != null) {
+//			if (Env.ONE.compareTo(conversionRate) == 0)
+//				return quantityEntered;
+//			MUOM uom = MUOM.get (context, product.getC_UOM_ID());
+//			if (uom != null)
+//				return uom.round(conversionRate.multiply(quantityEntered), true);
+//			return conversionRate.multiply(quantityEntered);
+//		}
+//		return null;
+//	}
 	
 	/**
 	 * Get list from user
