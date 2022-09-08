@@ -937,11 +937,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Create customer = " + request);
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			Customer.Builder customer = createCustomer(request);
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			Customer.Builder customer = createCustomer(context, request);
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2750,19 +2747,19 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param request
 	 * @return
 	 */
-	private Customer.Builder createCustomer(CreateCustomerRequest request) {
+	private Customer.Builder createCustomer(Properties context, CreateCustomerRequest request) {
 		//	Validate name
 		if(Util.isEmpty(request.getName())) {
 			throw new AdempiereException("@Name@ @IsMandatory@");
 		}
 		//	POS Uuid
 		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
-		MBPartner businessPartner = MBPartner.getTemplate(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()), pos.getC_POS_ID());
+		MBPartner businessPartner = MBPartner.getTemplate(context, Env.getAD_Client_ID(Env.getCtx()), pos.getC_POS_ID());
 		//	Validate Template
 		if(pos.getC_BPartnerCashTrx_ID() <= 0) {
 			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
 		}
-		MBPartner template = MBPartner.get(Env.getCtx(), pos.getC_BPartnerCashTrx_ID());
+		MBPartner template = MBPartner.get(context, pos.getC_BPartnerCashTrx_ID());
 		Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false)).stream().findFirst();
 		if(!maybeTemplateLocation.isPresent()) {
 			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @C_BPartner_Location_ID@ @NotFound@");
@@ -2811,6 +2808,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			setAdditionalAttributes(businessPartner, request.getAdditionalAttributesList());
 			//	Save it
 			businessPartner.saveEx(transactionName);
+			
+			// clear price list from business partner group
+			if (businessPartner.getM_PriceList_ID() > 0) {
+				businessPartner.setM_PriceList_ID(0);
+				businessPartner.saveEx(transactionName);
+			}
+			
 			//	Location
 			request.getAddressesList().forEach(address -> {
 				createCustomerAddress(businessPartner, address, templateLocation, transactionName);
