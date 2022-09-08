@@ -81,44 +81,44 @@ import org.compiere.util.Env;
 import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
-import org.spin.grpc.util.Address;
-import org.spin.grpc.util.Attachment;
-import org.spin.grpc.util.AvailableSeller;
-import org.spin.grpc.util.BankAccount;
-import org.spin.grpc.util.BusinessPartner;
-import org.spin.grpc.util.Charge;
-import org.spin.grpc.util.ChatEntry;
-import org.spin.grpc.util.City;
-import org.spin.grpc.util.ConversionRate;
-import org.spin.grpc.util.Country;
-import org.spin.grpc.util.Currency;
-import org.spin.grpc.util.Customer;
-import org.spin.grpc.util.CustomerBankAccount;
-import org.spin.grpc.util.DocumentAction;
-import org.spin.grpc.util.DocumentStatus;
-import org.spin.grpc.util.DocumentType;
-import org.spin.grpc.util.Entity;
-import org.spin.grpc.util.Key;
-import org.spin.grpc.util.KeyLayout;
-import org.spin.grpc.util.Order;
-import org.spin.grpc.util.OrderLine;
-import org.spin.grpc.util.Organization;
-import org.spin.grpc.util.Payment;
-import org.spin.grpc.util.PaymentMethod;
-import org.spin.grpc.util.PriceList;
-import org.spin.grpc.util.ProcessInfoLog;
-import org.spin.grpc.util.Product;
-import org.spin.grpc.util.ProductConversion;
-import org.spin.grpc.util.Region;
-import org.spin.grpc.util.ResourceReference;
-import org.spin.grpc.util.SalesRepresentative;
-import org.spin.grpc.util.Shipment;
-import org.spin.grpc.util.ShipmentLine;
-import org.spin.grpc.util.TaxRate;
-import org.spin.grpc.util.UnitOfMeasure;
-import org.spin.grpc.util.Value;
-import org.spin.grpc.util.Warehouse;
-import org.spin.grpc.util.ChatEntry.ModeratorStatus;
+import org.spin.backend.grpc.pos.Address;
+import org.spin.backend.grpc.common.Attachment;
+import org.spin.backend.grpc.pos.AvailableSeller;
+import org.spin.backend.grpc.common.BankAccount;
+import org.spin.backend.grpc.common.BusinessPartner;
+import org.spin.backend.grpc.common.Charge;
+import org.spin.backend.grpc.common.ChatEntry;
+import org.spin.backend.grpc.pos.City;
+import org.spin.backend.grpc.common.ConversionRate;
+import org.spin.backend.grpc.common.Country;
+import org.spin.backend.grpc.common.Currency;
+import org.spin.backend.grpc.pos.Customer;
+import org.spin.backend.grpc.pos.CustomerBankAccount;
+import org.spin.backend.grpc.common.DocumentAction;
+import org.spin.backend.grpc.common.DocumentStatus;
+import org.spin.backend.grpc.common.DocumentType;
+import org.spin.backend.grpc.common.Entity;
+import org.spin.backend.grpc.pos.Key;
+import org.spin.backend.grpc.pos.KeyLayout;
+import org.spin.backend.grpc.pos.Order;
+import org.spin.backend.grpc.pos.OrderLine;
+import org.spin.backend.grpc.common.Organization;
+import org.spin.backend.grpc.pos.Payment;
+import org.spin.backend.grpc.pos.PaymentMethod;
+import org.spin.backend.grpc.common.PriceList;
+import org.spin.backend.grpc.common.ProcessInfoLog;
+import org.spin.backend.grpc.common.Product;
+import org.spin.backend.grpc.common.ProductConversion;
+import org.spin.backend.grpc.pos.Region;
+import org.spin.backend.grpc.common.ResourceReference;
+import org.spin.backend.grpc.common.SalesRepresentative;
+import org.spin.backend.grpc.pos.Shipment;
+import org.spin.backend.grpc.pos.ShipmentLine;
+import org.spin.backend.grpc.common.TaxRate;
+import org.spin.backend.grpc.common.UnitOfMeasure;
+import org.spin.backend.grpc.common.Value;
+import org.spin.backend.grpc.common.Warehouse;
+import org.spin.backend.grpc.common.ChatEntry.ModeratorStatus;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MCPaymentMethod;
 import org.spin.util.AttachmentUtil;
@@ -195,11 +195,11 @@ public class ConvertUtil {
 		//	Confidential Type
 		if(!Util.isEmpty(chatEntry.getConfidentialType())) {
 			if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_PublicInformation)) {
-				builder.setConfidentialType(org.spin.grpc.util.ChatEntry.ConfidentialType.PUBLIC);
+				builder.setConfidentialType(org.spin.backend.grpc.common.ChatEntry.ConfidentialType.PUBLIC);
 			} else if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_PartnerConfidential)) {
-				builder.setConfidentialType(org.spin.grpc.util.ChatEntry.ConfidentialType.PARTER);
+				builder.setConfidentialType(org.spin.backend.grpc.common.ChatEntry.ConfidentialType.PARTER);
 			} else if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_Internal)) {
-				builder.setConfidentialType(org.spin.grpc.util.ChatEntry.ConfidentialType.INTERNAL);
+				builder.setConfidentialType(org.spin.backend.grpc.common.ChatEntry.ConfidentialType.INTERNAL);
 			}
 		}
 		//	Moderator Status
@@ -217,11 +217,11 @@ public class ConvertUtil {
 		//	Chat entry type
 		if(!Util.isEmpty(chatEntry.getChatEntryType())) {
 			if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_NoteFlat)) {
-				builder.setChatEntryType(org.spin.grpc.util.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.common.ChatEntry.ChatEntryType.NOTE_FLAT);
 			} else if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_ForumThreaded)) {
-				builder.setChatEntryType(org.spin.grpc.util.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.common.ChatEntry.ChatEntryType.NOTE_FLAT);
 			} else if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_Wiki)) {
-				builder.setChatEntryType(org.spin.grpc.util.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.common.ChatEntry.ChatEntryType.NOTE_FLAT);
 			}
 		}
   		return builder;
@@ -429,9 +429,9 @@ public class ConvertUtil {
 	 * @param language
 	 * @return
 	 */
-	public static org.spin.grpc.util.Language.Builder convertLanguage(MLanguage language) {
+	public static org.spin.backend.grpc.common.Language.Builder convertLanguage(MLanguage language) {
 		if (language == null) {
-			org.spin.grpc.util.Language.newBuilder();
+			org.spin.backend.grpc.common.Language.newBuilder();
 		}
 		String datePattern = language.getDatePattern();
 		String timePattern = language.getTimePattern();
@@ -451,7 +451,7 @@ public class ConvertUtil {
 				timePattern = staticLanguage.getTimeFormat().toPattern();
 			}
 		}
-		return org.spin.grpc.util.Language.newBuilder()
+		return org.spin.backend.grpc.common.Language.newBuilder()
 				.setLanguage(ValueUtil.validateNull(language.getAD_Language()))
 				.setCountryCode(ValueUtil.validateNull(language.getCountryCode()))
 				.setLanguageIso(ValueUtil.validateNull(language.getLanguageISO()))

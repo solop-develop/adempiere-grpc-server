@@ -18,11 +18,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.spin.grpc.enrollment.EnrollUserRequest;
-import org.spin.grpc.enrollment.RegisterGrpc;
-import org.spin.grpc.enrollment.ResetPasswordRequest;
-import org.spin.grpc.enrollment.ResetPasswordResponse;
-import org.spin.grpc.enrollment.User;
+import org.spin.backend.grpc.enrollment.EnrollUserRequest;
+import org.spin.backend.grpc.enrollment.RegisterGrpc;
+import org.spin.backend.grpc.enrollment.ResetPasswordRequest;
+import org.spin.backend.grpc.enrollment.ResetPasswordResponse;
+import org.spin.backend.grpc.enrollment.User;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

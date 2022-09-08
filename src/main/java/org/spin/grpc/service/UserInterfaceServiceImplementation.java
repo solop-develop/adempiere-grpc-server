@@ -124,66 +124,66 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.ValueUtil;
-import org.spin.grpc.util.Attachment;
-import org.spin.grpc.util.ChatEntry;
-import org.spin.grpc.util.Condition.Operator;
-import org.spin.grpc.util.ContextInfoValue;
-import org.spin.grpc.util.CreateChatEntryRequest;
-import org.spin.grpc.util.Criteria;
-import org.spin.grpc.util.DefaultValue;
-import org.spin.grpc.util.DeletePreferenceRequest;
-import org.spin.grpc.util.DrillTable;
-import org.spin.grpc.util.Empty;
-import org.spin.grpc.util.Entity;
-import org.spin.grpc.util.GetAttachmentRequest;
-import org.spin.grpc.util.GetContextInfoValueRequest;
-import org.spin.grpc.util.GetDefaultValueRequest;
-import org.spin.grpc.util.GetLookupItemRequest;
-import org.spin.grpc.util.GetPrivateAccessRequest;
-import org.spin.grpc.util.GetRecordAccessRequest;
-import org.spin.grpc.util.GetReportOutputRequest;
-import org.spin.grpc.util.GetResourceReferenceRequest;
-import org.spin.grpc.util.GetResourceRequest;
-import org.spin.grpc.util.GetTabEntityRequest;
-import org.spin.grpc.util.KeyValue;
-import org.spin.grpc.util.ListBrowserItemsRequest;
-import org.spin.grpc.util.ListBrowserItemsResponse;
-import org.spin.grpc.util.ListDrillTablesRequest;
-import org.spin.grpc.util.ListDrillTablesResponse;
-import org.spin.grpc.util.ListEntitiesResponse;
-import org.spin.grpc.util.ListGeneralInfoRequest;
-import org.spin.grpc.util.ListLookupItemsRequest;
-import org.spin.grpc.util.ListLookupItemsResponse;
-import org.spin.grpc.util.ListPrintFormatsRequest;
-import org.spin.grpc.util.ListPrintFormatsResponse;
-import org.spin.grpc.util.ListReferencesRequest;
-import org.spin.grpc.util.ListReferencesResponse;
-import org.spin.grpc.util.ListReportViewsRequest;
-import org.spin.grpc.util.ListReportViewsResponse;
-import org.spin.grpc.util.ListTabEntitiesRequest;
-import org.spin.grpc.util.ListTranslationsRequest;
-import org.spin.grpc.util.ListTranslationsResponse;
-import org.spin.grpc.util.LockPrivateAccessRequest;
-import org.spin.grpc.util.LookupItem;
-import org.spin.grpc.util.Preference;
-import org.spin.grpc.util.PrintFormat;
-import org.spin.grpc.util.PrivateAccess;
-import org.spin.grpc.util.RecordAccess;
-import org.spin.grpc.util.RecordAccessRole;
-import org.spin.grpc.util.RecordReferenceInfo;
-import org.spin.grpc.util.ReportOutput;
-import org.spin.grpc.util.ReportView;
-import org.spin.grpc.util.Resource;
-import org.spin.grpc.util.ResourceReference;
-import org.spin.grpc.util.RollbackEntityRequest;
-import org.spin.grpc.util.RunCalloutRequest;
-import org.spin.grpc.util.SetPreferenceRequest;
-import org.spin.grpc.util.SetRecordAccessRequest;
-import org.spin.grpc.util.Translation;
-import org.spin.grpc.util.UnlockPrivateAccessRequest;
-import org.spin.grpc.util.UpdateBrowserEntityRequest;
-import org.spin.grpc.util.UserInterfaceGrpc.UserInterfaceImplBase;
-import org.spin.grpc.util.Value;
+import org.spin.backend.grpc.common.Attachment;
+import org.spin.backend.grpc.common.ChatEntry;
+import org.spin.backend.grpc.common.Condition.Operator;
+import org.spin.backend.grpc.common.ContextInfoValue;
+import org.spin.backend.grpc.common.CreateChatEntryRequest;
+import org.spin.backend.grpc.common.Criteria;
+import org.spin.backend.grpc.common.DefaultValue;
+import org.spin.backend.grpc.common.DeletePreferenceRequest;
+import org.spin.backend.grpc.common.DrillTable;
+import org.spin.backend.grpc.common.Empty;
+import org.spin.backend.grpc.common.Entity;
+import org.spin.backend.grpc.common.GetAttachmentRequest;
+import org.spin.backend.grpc.common.GetContextInfoValueRequest;
+import org.spin.backend.grpc.common.GetDefaultValueRequest;
+import org.spin.backend.grpc.common.GetLookupItemRequest;
+import org.spin.backend.grpc.common.GetPrivateAccessRequest;
+import org.spin.backend.grpc.common.GetRecordAccessRequest;
+import org.spin.backend.grpc.common.GetReportOutputRequest;
+import org.spin.backend.grpc.common.GetResourceReferenceRequest;
+import org.spin.backend.grpc.common.GetResourceRequest;
+import org.spin.backend.grpc.common.GetTabEntityRequest;
+import org.spin.backend.grpc.common.KeyValue;
+import org.spin.backend.grpc.common.ListBrowserItemsRequest;
+import org.spin.backend.grpc.common.ListBrowserItemsResponse;
+import org.spin.backend.grpc.common.ListDrillTablesRequest;
+import org.spin.backend.grpc.common.ListDrillTablesResponse;
+import org.spin.backend.grpc.common.ListEntitiesResponse;
+import org.spin.backend.grpc.common.ListGeneralInfoRequest;
+import org.spin.backend.grpc.common.ListLookupItemsRequest;
+import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.common.ListPrintFormatsRequest;
+import org.spin.backend.grpc.common.ListPrintFormatsResponse;
+import org.spin.backend.grpc.common.ListReferencesRequest;
+import org.spin.backend.grpc.common.ListReferencesResponse;
+import org.spin.backend.grpc.common.ListReportViewsRequest;
+import org.spin.backend.grpc.common.ListReportViewsResponse;
+import org.spin.backend.grpc.common.ListTabEntitiesRequest;
+import org.spin.backend.grpc.common.ListTranslationsRequest;
+import org.spin.backend.grpc.common.ListTranslationsResponse;
+import org.spin.backend.grpc.common.LockPrivateAccessRequest;
+import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.common.Preference;
+import org.spin.backend.grpc.common.PrintFormat;
+import org.spin.backend.grpc.common.PrivateAccess;
+import org.spin.backend.grpc.common.RecordAccess;
+import org.spin.backend.grpc.common.RecordAccessRole;
+import org.spin.backend.grpc.common.RecordReferenceInfo;
+import org.spin.backend.grpc.common.ReportOutput;
+import org.spin.backend.grpc.common.ReportView;
+import org.spin.backend.grpc.common.Resource;
+import org.spin.backend.grpc.common.ResourceReference;
+import org.spin.backend.grpc.common.RollbackEntityRequest;
+import org.spin.backend.grpc.common.RunCalloutRequest;
+import org.spin.backend.grpc.common.SetPreferenceRequest;
+import org.spin.backend.grpc.common.SetRecordAccessRequest;
+import org.spin.backend.grpc.common.Translation;
+import org.spin.backend.grpc.common.UnlockPrivateAccessRequest;
+import org.spin.backend.grpc.common.UpdateBrowserEntityRequest;
+import org.spin.backend.grpc.common.UserInterfaceGrpc.UserInterfaceImplBase;
+import org.spin.backend.grpc.common.Value;
 import org.spin.model.I_AD_AttachmentReference;
 import org.spin.model.I_AD_ContextInfo;
 import org.spin.model.MADAttachmentReference;
@@ -240,7 +240,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	}
 	
 	@Override
-	public void runCallout(RunCalloutRequest request, StreamObserver<org.spin.grpc.util.Callout> responseObserver) {
+	public void runCallout(RunCalloutRequest request, StreamObserver<org.spin.backend.grpc.common.Callout> responseObserver) {
 		try {
 			if(request == null
 					|| Util.isEmpty(request.getCallout())) {
@@ -251,7 +251,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					request.getClientRequest().getLanguage(), 
 					request.getClientRequest().getOrganizationUuid(), 
 					request.getClientRequest().getWarehouseUuid());
-			org.spin.grpc.util.Callout.Builder calloutResponse = runcallout(request);
+			org.spin.backend.grpc.common.Callout.Builder calloutResponse = runcallout(request);
 			responseObserver.onNext(calloutResponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -3106,8 +3106,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private org.spin.grpc.util.Callout.Builder runcallout(RunCalloutRequest request) {
-		org.spin.grpc.util.Callout.Builder calloutBuilder = org.spin.grpc.util.Callout.newBuilder();
+	private org.spin.backend.grpc.common.Callout.Builder runcallout(RunCalloutRequest request) {
+		org.spin.backend.grpc.common.Callout.Builder calloutBuilder = org.spin.backend.grpc.common.Callout.newBuilder();
 		Trx.run(transactionName -> {
 			MTab tab = tabRequested.get(request.getTabUuid());
 			if(tab == null) {

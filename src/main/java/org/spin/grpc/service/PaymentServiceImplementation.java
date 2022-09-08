@@ -31,9 +31,9 @@ import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ValueUtil;
-import org.spin.grpc.util.ListEntitiesResponse;
-import org.spin.grpc.util.ListPaymentInfoRequest;
-import org.spin.grpc.util.PaymentGrpc.PaymentImplBase;
+import org.spin.backend.grpc.common.ListEntitiesResponse;
+import org.spin.backend.grpc.payment.ListPaymentInfoRequest;
+import org.spin.backend.grpc.payment.PaymentGrpc.PaymentImplBase;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

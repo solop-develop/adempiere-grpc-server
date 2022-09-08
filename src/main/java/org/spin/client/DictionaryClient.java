@@ -18,11 +18,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.spin.grpc.util.ApplicationRequest;
-import org.spin.grpc.util.DictionaryGrpc;
-import org.spin.grpc.util.EntityRequest;
-import org.spin.grpc.util.Tab;
-import org.spin.grpc.util.Window;
+import org.spin.backend.grpc.dictionary.ApplicationRequest;
+import org.spin.backend.grpc.dictionary.DictionaryGrpc;
+import org.spin.backend.grpc.dictionary.EntityRequest;
+import org.spin.backend.grpc.dictionary.Tab;
+import org.spin.backend.grpc.dictionary.Window;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
