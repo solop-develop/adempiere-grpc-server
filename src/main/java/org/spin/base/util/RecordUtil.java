@@ -43,9 +43,9 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.Entity;
-import org.spin.backend.grpc.ListEntitiesResponse;
-import org.spin.backend.grpc.Value;
+import org.spin.backend.grpc.common.Entity;
+import org.spin.backend.grpc.common.ListEntitiesResponse;
+import org.spin.backend.grpc.common.Value;
 import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
 

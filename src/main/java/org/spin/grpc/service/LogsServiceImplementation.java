@@ -67,31 +67,31 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.base.util.WorkflowUtil;
-import org.spin.backend.grpc.ChangeLog;
-import org.spin.backend.grpc.ChatEntry;
-import org.spin.backend.grpc.EntityChat;
-import org.spin.backend.grpc.EntityChat.ConfidentialType;
-import org.spin.backend.grpc.EntityChat.ModerationType;
-import org.spin.backend.grpc.EntityLog;
-import org.spin.backend.grpc.ListChatEntriesRequest;
-import org.spin.backend.grpc.ListChatEntriesResponse;
-import org.spin.backend.grpc.ListEntityChatsRequest;
-import org.spin.backend.grpc.ListEntityChatsResponse;
-import org.spin.backend.grpc.ListEntityLogsRequest;
-import org.spin.backend.grpc.ListEntityLogsResponse;
-import org.spin.backend.grpc.ListProcessLogsRequest;
-import org.spin.backend.grpc.ListProcessLogsResponse;
-import org.spin.backend.grpc.ListRecentItemsRequest;
-import org.spin.backend.grpc.ListRecentItemsResponse;
-import org.spin.backend.grpc.ListWorkflowLogsRequest;
-import org.spin.backend.grpc.ListWorkflowLogsResponse;
-import org.spin.backend.grpc.LogsGrpc.LogsImplBase;
-import org.spin.backend.grpc.ProcessInfoLog;
-import org.spin.backend.grpc.ProcessLog;
-import org.spin.backend.grpc.RecentItem;
-import org.spin.backend.grpc.ReportOutput;
-import org.spin.backend.grpc.Value;
-import org.spin.backend.grpc.WorkflowProcess;
+import org.spin.backend.grpc.common.ChangeLog;
+import org.spin.backend.grpc.common.ChatEntry;
+import org.spin.backend.grpc.logs.EntityChat;
+import org.spin.backend.grpc.logs.EntityChat.ConfidentialType;
+import org.spin.backend.grpc.logs.EntityChat.ModerationType;
+import org.spin.backend.grpc.common.EntityLog;
+import org.spin.backend.grpc.logs.ListChatEntriesRequest;
+import org.spin.backend.grpc.logs.ListChatEntriesResponse;
+import org.spin.backend.grpc.logs.ListEntityChatsRequest;
+import org.spin.backend.grpc.logs.ListEntityChatsResponse;
+import org.spin.backend.grpc.logs.ListEntityLogsRequest;
+import org.spin.backend.grpc.logs.ListEntityLogsResponse;
+import org.spin.backend.grpc.logs.ListProcessLogsRequest;
+import org.spin.backend.grpc.logs.ListProcessLogsResponse;
+import org.spin.backend.grpc.logs.ListRecentItemsRequest;
+import org.spin.backend.grpc.logs.ListRecentItemsResponse;
+import org.spin.backend.grpc.logs.ListWorkflowLogsRequest;
+import org.spin.backend.grpc.logs.ListWorkflowLogsResponse;
+import org.spin.backend.grpc.logs.LogsGrpc.LogsImplBase;
+import org.spin.backend.grpc.common.ProcessInfoLog;
+import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.logs.RecentItem;
+import org.spin.backend.grpc.common.ReportOutput;
+import org.spin.backend.grpc.common.Value;
+import org.spin.backend.grpc.wf.WorkflowProcess;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -445,11 +445,11 @@ public class LogsServiceImplementation extends LogsImplBase {
 		builder.setTransactionName(ValueUtil.validateNull(recordLog.getTrxName()));
 		builder.setLogDate(recordLog.getCreated().getTime());
 		if(recordLog.getEventChangeLog().endsWith(MChangeLog.EVENTCHANGELOG_Insert)) {
-			builder.setEventType(org.spin.backend.grpc.EntityLog.EventType.INSERT);
+			builder.setEventType(org.spin.backend.grpc.common.EntityLog.EventType.INSERT);
 		} else if(recordLog.getEventChangeLog().endsWith(MChangeLog.EVENTCHANGELOG_Update)) {
-			builder.setEventType(org.spin.backend.grpc.EntityLog.EventType.UPDATE);
+			builder.setEventType(org.spin.backend.grpc.common.EntityLog.EventType.UPDATE);
 		} else if(recordLog.getEventChangeLog().endsWith(MChangeLog.EVENTCHANGELOG_Delete)) {
-			builder.setEventType(org.spin.backend.grpc.EntityLog.EventType.DELETE);
+			builder.setEventType(org.spin.backend.grpc.common.EntityLog.EventType.DELETE);
 		}
 		//	Return
 		return builder;

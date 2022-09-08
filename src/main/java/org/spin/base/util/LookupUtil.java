@@ -16,7 +16,7 @@
 package org.spin.base.util;
 
 import org.compiere.util.Util;
-import org.spin.backend.grpc.LookupItem;
+import org.spin.backend.grpc.common.LookupItem;
 
 /**
  * A helper class for Lookups

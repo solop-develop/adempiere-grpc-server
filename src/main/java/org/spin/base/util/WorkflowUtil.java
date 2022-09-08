@@ -36,18 +36,18 @@ import org.compiere.wf.MWFNodeNext;
 import org.compiere.wf.MWFProcess;
 import org.compiere.wf.MWFResponsible;
 import org.compiere.wf.MWorkflow;
-import org.spin.backend.grpc.WorkflowActivity;
-import org.spin.backend.grpc.WorkflowCondition;
-import org.spin.backend.grpc.WorkflowDefinition;
-import org.spin.backend.grpc.WorkflowEvent;
-import org.spin.backend.grpc.WorkflowNode;
-import org.spin.backend.grpc.WorkflowProcess;
-import org.spin.backend.grpc.WorkflowTransition;
-import org.spin.backend.grpc.WorkflowCondition.ConditionType;
-import org.spin.backend.grpc.WorkflowCondition.Operation;
-import org.spin.backend.grpc.WorkflowDefinition.DurationUnit;
-import org.spin.backend.grpc.WorkflowDefinition.PublishStatus;
-import org.spin.backend.grpc.WorkflowProcess.WorkflowState;
+import org.spin.backend.grpc.wf.WorkflowActivity;
+import org.spin.backend.grpc.wf.WorkflowCondition;
+import org.spin.backend.grpc.wf.WorkflowDefinition;
+import org.spin.backend.grpc.wf.WorkflowEvent;
+import org.spin.backend.grpc.wf.WorkflowNode;
+import org.spin.backend.grpc.wf.WorkflowProcess;
+import org.spin.backend.grpc.wf.WorkflowTransition;
+import org.spin.backend.grpc.wf.WorkflowCondition.ConditionType;
+import org.spin.backend.grpc.wf.WorkflowCondition.Operation;
+import org.spin.backend.grpc.wf.WorkflowDefinition.DurationUnit;
+import org.spin.backend.grpc.wf.WorkflowDefinition.PublishStatus;
+import org.spin.backend.grpc.wf.WorkflowProcess.WorkflowState;
 
 /**
  * Class for handle workflow conversion values
@@ -386,17 +386,17 @@ public class WorkflowUtil {
 		//	State
 		if(!Util.isEmpty(workflowEventAudit.getWFState())) {
 			if(workflowEventAudit.getWFState().equals(MWFProcess.WFSTATE_Running)) {
-				builder.setWorkflowState(org.spin.backend.grpc.WorkflowEvent.WorkflowState.RUNNING);
+				builder.setWorkflowState(org.spin.backend.grpc.wf.WorkflowEvent.WorkflowState.RUNNING);
 			} else if(workflowEventAudit.getWFState().equals(MWFProcess.WFSTATE_Completed)) {
-				builder.setWorkflowState(org.spin.backend.grpc.WorkflowEvent.WorkflowState.COMPLETED);
+				builder.setWorkflowState(org.spin.backend.grpc.wf.WorkflowEvent.WorkflowState.COMPLETED);
 			} else if(workflowEventAudit.getWFState().equals(MWFProcess.WFSTATE_Aborted)) {
-				builder.setWorkflowState(org.spin.backend.grpc.WorkflowEvent.WorkflowState.ABORTED);
+				builder.setWorkflowState(org.spin.backend.grpc.wf.WorkflowEvent.WorkflowState.ABORTED);
 			} else if(workflowEventAudit.getWFState().equals(MWFProcess.WFSTATE_Terminated)) {
-				builder.setWorkflowState(org.spin.backend.grpc.WorkflowEvent.WorkflowState.TERMINATED);
+				builder.setWorkflowState(org.spin.backend.grpc.wf.WorkflowEvent.WorkflowState.TERMINATED);
 			} else if(workflowEventAudit.getWFState().equals(MWFProcess.WFSTATE_Suspended)) {
-				builder.setWorkflowState(org.spin.backend.grpc.WorkflowEvent.WorkflowState.SUSPENDED);
+				builder.setWorkflowState(org.spin.backend.grpc.wf.WorkflowEvent.WorkflowState.SUSPENDED);
 			} else if(workflowEventAudit.getWFState().equals(MWFProcess.WFSTATE_NotStarted)) {
-				builder.setWorkflowState(org.spin.backend.grpc.WorkflowEvent.WorkflowState.NOT_STARTED);
+				builder.setWorkflowState(org.spin.backend.grpc.wf.WorkflowEvent.WorkflowState.NOT_STARTED);
 			}
 		}
 		//	

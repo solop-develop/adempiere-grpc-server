@@ -18,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.spin.backend.grpc.LoginRequest;
-import org.spin.backend.grpc.LogoutRequest;
-import org.spin.backend.grpc.SecurityGrpc;
-import org.spin.backend.grpc.Session;
+import org.spin.backend.grpc.access.LoginRequest;
+import org.spin.backend.grpc.access.LogoutRequest;
+import org.spin.backend.grpc.access.SecurityGrpc;
+import org.spin.backend.grpc.access.Session;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
