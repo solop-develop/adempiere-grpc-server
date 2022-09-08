@@ -18,15 +18,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.spin.grpc.store.Condition.Operator;
-import org.spin.grpc.util.ClientRequest;
-import org.spin.grpc.util.Condition;
-import org.spin.grpc.util.Criteria;
-import org.spin.grpc.util.ListEntitiesResponse;
-import org.spin.grpc.util.ListTabEntitiesRequest;
-import org.spin.grpc.util.UserInterfaceGrpc;
-import org.spin.grpc.util.Value;
-import org.spin.grpc.util.Value.ValueType;
+import org.spin.backend.grpc.Condition.Operator;
+import org.spin.backend.grpc.ClientRequest;
+import org.spin.backend.grpc.Condition;
+import org.spin.backend.grpc.Criteria;
+import org.spin.backend.grpc.ListEntitiesResponse;
+import org.spin.backend.grpc.ListTabEntitiesRequest;
+import org.spin.backend.grpc.UserInterfaceGrpc;
+import org.spin.backend.grpc.Value;
+import org.spin.backend.grpc.Value.ValueType;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

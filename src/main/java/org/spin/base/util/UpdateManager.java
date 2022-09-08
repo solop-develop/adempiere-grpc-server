@@ -18,13 +18,13 @@ package org.spin.base.util;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import org.spin.grpc.util.ListPackagesRequest;
-import org.spin.grpc.util.ListPackagesResponse;
-import org.spin.grpc.util.ListStepsRequest;
-import org.spin.grpc.util.ListStepsResponse;
-import org.spin.grpc.util.ListUpdatesRequest;
-import org.spin.grpc.util.ListUpdatesResponse;
-import org.spin.grpc.util.UpdateCenterGrpc;
+import org.spin.backend.grpc.ListPackagesRequest;
+import org.spin.backend.grpc.ListPackagesResponse;
+import org.spin.backend.grpc.ListStepsRequest;
+import org.spin.backend.grpc.ListStepsResponse;
+import org.spin.backend.grpc.ListUpdatesRequest;
+import org.spin.backend.grpc.ListUpdatesResponse;
+import org.spin.backend.grpc.UpdateCenterGrpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

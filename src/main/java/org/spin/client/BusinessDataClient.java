@@ -18,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.spin.grpc.util.BusinessDataGrpc;
-import org.spin.grpc.util.ClientRequest;
-import org.spin.grpc.util.ProcessLog;
-import org.spin.grpc.util.RunBusinessProcessRequest;
+import org.spin.backend.grpc.BusinessDataGrpc;
+import org.spin.backend.grpc.ClientRequest;
+import org.spin.backend.grpc.ProcessLog;
+import org.spin.backend.grpc.RunBusinessProcessRequest;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

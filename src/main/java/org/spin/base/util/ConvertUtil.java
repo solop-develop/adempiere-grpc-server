@@ -81,44 +81,44 @@ import org.compiere.util.Env;
 import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
-import org.spin.grpc.util.Address;
-import org.spin.grpc.util.Attachment;
-import org.spin.grpc.util.AvailableSeller;
-import org.spin.grpc.util.BankAccount;
-import org.spin.grpc.util.BusinessPartner;
-import org.spin.grpc.util.Charge;
-import org.spin.grpc.util.ChatEntry;
-import org.spin.grpc.util.City;
-import org.spin.grpc.util.ConversionRate;
-import org.spin.grpc.util.Country;
-import org.spin.grpc.util.Currency;
-import org.spin.grpc.util.Customer;
-import org.spin.grpc.util.CustomerBankAccount;
-import org.spin.grpc.util.DocumentAction;
-import org.spin.grpc.util.DocumentStatus;
-import org.spin.grpc.util.DocumentType;
-import org.spin.grpc.util.Entity;
-import org.spin.grpc.util.Key;
-import org.spin.grpc.util.KeyLayout;
-import org.spin.grpc.util.Order;
-import org.spin.grpc.util.OrderLine;
-import org.spin.grpc.util.Organization;
-import org.spin.grpc.util.Payment;
-import org.spin.grpc.util.PaymentMethod;
-import org.spin.grpc.util.PriceList;
-import org.spin.grpc.util.ProcessInfoLog;
-import org.spin.grpc.util.Product;
-import org.spin.grpc.util.ProductConversion;
-import org.spin.grpc.util.Region;
-import org.spin.grpc.util.ResourceReference;
-import org.spin.grpc.util.SalesRepresentative;
-import org.spin.grpc.util.Shipment;
-import org.spin.grpc.util.ShipmentLine;
-import org.spin.grpc.util.TaxRate;
-import org.spin.grpc.util.UnitOfMeasure;
-import org.spin.grpc.util.Value;
-import org.spin.grpc.util.Warehouse;
-import org.spin.grpc.util.ChatEntry.ModeratorStatus;
+import org.spin.backend.grpc.Address;
+import org.spin.backend.grpc.Attachment;
+import org.spin.backend.grpc.AvailableSeller;
+import org.spin.backend.grpc.BankAccount;
+import org.spin.backend.grpc.BusinessPartner;
+import org.spin.backend.grpc.Charge;
+import org.spin.backend.grpc.ChatEntry;
+import org.spin.backend.grpc.City;
+import org.spin.backend.grpc.ConversionRate;
+import org.spin.backend.grpc.Country;
+import org.spin.backend.grpc.Currency;
+import org.spin.backend.grpc.Customer;
+import org.spin.backend.grpc.CustomerBankAccount;
+import org.spin.backend.grpc.DocumentAction;
+import org.spin.backend.grpc.DocumentStatus;
+import org.spin.backend.grpc.DocumentType;
+import org.spin.backend.grpc.Entity;
+import org.spin.backend.grpc.Key;
+import org.spin.backend.grpc.KeyLayout;
+import org.spin.backend.grpc.Order;
+import org.spin.backend.grpc.OrderLine;
+import org.spin.backend.grpc.Organization;
+import org.spin.backend.grpc.Payment;
+import org.spin.backend.grpc.PaymentMethod;
+import org.spin.backend.grpc.PriceList;
+import org.spin.backend.grpc.ProcessInfoLog;
+import org.spin.backend.grpc.Product;
+import org.spin.backend.grpc.ProductConversion;
+import org.spin.backend.grpc.Region;
+import org.spin.backend.grpc.ResourceReference;
+import org.spin.backend.grpc.SalesRepresentative;
+import org.spin.backend.grpc.Shipment;
+import org.spin.backend.grpc.ShipmentLine;
+import org.spin.backend.grpc.TaxRate;
+import org.spin.backend.grpc.UnitOfMeasure;
+import org.spin.backend.grpc.Value;
+import org.spin.backend.grpc.Warehouse;
+import org.spin.backend.grpc.ChatEntry.ModeratorStatus;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MCPaymentMethod;
 import org.spin.util.AttachmentUtil;
@@ -195,11 +195,11 @@ public class ConvertUtil {
 		//	Confidential Type
 		if(!Util.isEmpty(chatEntry.getConfidentialType())) {
 			if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_PublicInformation)) {
-				builder.setConfidentialType(org.spin.grpc.util.ChatEntry.ConfidentialType.PUBLIC);
+				builder.setConfidentialType(org.spin.backend.grpc.ChatEntry.ConfidentialType.PUBLIC);
 			} else if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_PartnerConfidential)) {
-				builder.setConfidentialType(org.spin.grpc.util.ChatEntry.ConfidentialType.PARTER);
+				builder.setConfidentialType(org.spin.backend.grpc.ChatEntry.ConfidentialType.PARTER);
 			} else if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_Internal)) {
-				builder.setConfidentialType(org.spin.grpc.util.ChatEntry.ConfidentialType.INTERNAL);
+				builder.setConfidentialType(org.spin.backend.grpc.ChatEntry.ConfidentialType.INTERNAL);
 			}
 		}
 		//	Moderator Status
@@ -217,11 +217,11 @@ public class ConvertUtil {
 		//	Chat entry type
 		if(!Util.isEmpty(chatEntry.getChatEntryType())) {
 			if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_NoteFlat)) {
-				builder.setChatEntryType(org.spin.grpc.util.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.ChatEntry.ChatEntryType.NOTE_FLAT);
 			} else if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_ForumThreaded)) {
-				builder.setChatEntryType(org.spin.grpc.util.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.ChatEntry.ChatEntryType.NOTE_FLAT);
 			} else if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_Wiki)) {
-				builder.setChatEntryType(org.spin.grpc.util.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.ChatEntry.ChatEntryType.NOTE_FLAT);
 			}
 		}
   		return builder;
@@ -429,9 +429,9 @@ public class ConvertUtil {
 	 * @param language
 	 * @return
 	 */
-	public static org.spin.grpc.util.Language.Builder convertLanguage(MLanguage language) {
+	public static org.spin.backend.grpc.Language.Builder convertLanguage(MLanguage language) {
 		if (language == null) {
-			org.spin.grpc.util.Language.newBuilder();
+			org.spin.backend.grpc.Language.newBuilder();
 		}
 		String datePattern = language.getDatePattern();
 		String timePattern = language.getTimePattern();
@@ -451,7 +451,7 @@ public class ConvertUtil {
 				timePattern = staticLanguage.getTimeFormat().toPattern();
 			}
 		}
-		return org.spin.grpc.util.Language.newBuilder()
+		return org.spin.backend.grpc.Language.newBuilder()
 				.setLanguage(ValueUtil.validateNull(language.getAD_Language()))
 				.setCountryCode(ValueUtil.validateNull(language.getCountryCode()))
 				.setLanguageIso(ValueUtil.validateNull(language.getLanguageISO()))
