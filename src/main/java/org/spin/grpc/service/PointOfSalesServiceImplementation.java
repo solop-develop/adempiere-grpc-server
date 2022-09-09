@@ -3821,7 +3821,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		//	Dynamic where clause
-		MPOS pos = (MPOS) RecordUtil.getEntity(Env.getCtx(), I_C_POS.Table_Name, request.getPosUuid(), 0, null);
+		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 		int posId = pos.getC_POS_ID();
 		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
 		int orgId = pos.getAD_Org_ID();
