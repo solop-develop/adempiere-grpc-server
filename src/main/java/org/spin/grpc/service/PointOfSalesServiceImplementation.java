@@ -3821,9 +3821,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		//	Dynamic where clause
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
+		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+		int posId = pos.getC_POS_ID();
 		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
-		int orgId = Env.getAD_Org_ID(Env.getCtx());
+		int orgId = pos.getAD_Org_ID();
 		MUser salesRepresentative = MUser.get(Env.getCtx(), salesRepresentativeId);
 		boolean isAppliedNewFeaturesPOS = M_Element.get(Env.getCtx(), "IsSharedPOS") != null && M_Element.get(Env.getCtx(), "IsAllowsAllocateSeller") != null;
 		StringBuffer whereClause = new StringBuffer();
@@ -3903,6 +3904,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			whereClause.append(" AND DateOrdered <= ?");
 			parameters.add(TimeUtil.getDay(ValueUtil.convertStringToDate(request.getDateOrderedTo())));
 		}
+		whereClause.append(" AND AD_Org_ID = ? ");
+		parameters.add(orgId);
 		//	Get Product list
 		Query query = new Query(Env.getCtx(), I_C_Order.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters)
