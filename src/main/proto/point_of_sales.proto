@@ -1028,6 +1028,9 @@ message PointOfSales {
 	bool is_allows_create_customer = 43;
 	bool is_allows_print_document = 44;
 	bool is_allows_preview_document = 45;
+	bool is_pos_manager = 46;
+	bool is_allows_modify_discount = 47;
+	bool is_keep_price_from_customer = 48;
 }
 
 // Request for create a order

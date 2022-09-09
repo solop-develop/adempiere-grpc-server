@@ -5073,6 +5073,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setIsAllowsCreateCustomer(getBooleanValueFromPOS(pos, userId, "IsAllowsCreateCustomer"))
 			.setIsAllowsPrintDocument(getBooleanValueFromPOS(pos, userId, "IsAllowsPrintDocument"))
 			.setIsAllowsPreviewDocument(getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument"))
+			.setIsPosManager(getBooleanValueFromPOS(pos, userId, "isPosManager"))
+			.setIsAllowsModifyDiscount(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyDiscount"))
+			.setIsKeepPriceFromCustomer(getBooleanValueFromPOS(pos, userId, "IsKeepPriceFromCustomer"))
 		;
 
 		if(pos.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
