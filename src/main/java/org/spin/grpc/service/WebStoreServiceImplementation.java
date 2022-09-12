@@ -84,74 +84,74 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.eevolution.freight.engine.FreightEngine;
-import org.eevolution.freight.engine.FreightEngineFactory;
-import org.eevolution.freight.engine.FreightInfo;
+import org.eevolution.engine.freight.FreightEngine;
+import org.eevolution.engine.freight.FreightEngineFactory;
+import org.eevolution.engine.freight.FreightInfo;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
-import org.spin.grpc.store.Address;
-import org.spin.grpc.store.AddressRequest;
-import org.spin.grpc.store.Attribute;
-import org.spin.grpc.store.Cart;
-import org.spin.grpc.store.CartItem;
-import org.spin.grpc.store.CartTotals;
-import org.spin.grpc.store.ChangePasswordRequest;
-import org.spin.grpc.store.ChangePasswordResponse;
-import org.spin.grpc.store.City;
-import org.spin.grpc.store.CreateCartRequest;
-import org.spin.grpc.store.CreateCustomerRequest;
-import org.spin.grpc.store.CreateOrderRequest;
-import org.spin.grpc.store.Customer;
-import org.spin.grpc.store.DeleteCartItemRequest;
-import org.spin.grpc.store.Empty;
-import org.spin.grpc.store.FormattedPrice;
-import org.spin.grpc.store.GetCartRequest;
-import org.spin.grpc.store.GetCartTotalsRequest;
-import org.spin.grpc.store.GetCustomerRequest;
-import org.spin.grpc.store.GetResourceRequest;
-import org.spin.grpc.store.GetShippingInformationRequest;
-import org.spin.grpc.store.GetStockRequest;
-import org.spin.grpc.store.ListOrdersRequest;
-import org.spin.grpc.store.ListOrdersResponse;
-import org.spin.grpc.store.ListPaymentMethodsRequest;
-import org.spin.grpc.store.ListPaymentMethodsResponse;
-import org.spin.grpc.store.ListProductsRequest;
-import org.spin.grpc.store.ListProductsResponse;
-import org.spin.grpc.store.ListRenderProductsRequest;
-import org.spin.grpc.store.ListRenderProductsResponse;
-import org.spin.grpc.store.ListShippingMethodsRequest;
-import org.spin.grpc.store.ListShippingMethodsResponse;
-import org.spin.grpc.store.ListStocksRequest;
-import org.spin.grpc.store.ListStocksResponse;
-import org.spin.grpc.store.Order;
-import org.spin.grpc.store.OrderLine;
-import org.spin.grpc.store.PaymentMethod;
-import org.spin.grpc.store.PaymentRequest;
-import org.spin.grpc.store.PriceInfo;
-import org.spin.grpc.store.Product;
-import org.spin.grpc.store.ProductOrderLine;
-import org.spin.grpc.store.Region;
-import org.spin.grpc.store.RenderProduct;
-import org.spin.grpc.store.ResetPasswordRequest;
-import org.spin.grpc.store.ResetPasswordResponse;
-import org.spin.grpc.store.ResetPasswordResponse.ResponseType;
-import org.spin.grpc.store.Resource;
-import org.spin.grpc.store.ShippingInformation;
-import org.spin.grpc.store.ShippingMethod;
-import org.spin.grpc.store.Stock;
-import org.spin.grpc.store.TaxAdjustment;
-import org.spin.grpc.store.TotalSegment;
-import org.spin.grpc.store.UpdateCartRequest;
-import org.spin.grpc.store.UpdateCustomerRequest;
-import org.spin.grpc.store.WebStoreGrpc.WebStoreImplBase;
+import org.spin.backend.grpc.store.Address;
+import org.spin.backend.grpc.store.AddressRequest;
+import org.spin.backend.grpc.store.Attribute;
+import org.spin.backend.grpc.store.Cart;
+import org.spin.backend.grpc.store.CartItem;
+import org.spin.backend.grpc.store.CartTotals;
+import org.spin.backend.grpc.store.ChangePasswordRequest;
+import org.spin.backend.grpc.store.ChangePasswordResponse;
+import org.spin.backend.grpc.store.City;
+import org.spin.backend.grpc.store.CreateCartRequest;
+import org.spin.backend.grpc.store.CreateCustomerRequest;
+import org.spin.backend.grpc.store.CreateOrderRequest;
+import org.spin.backend.grpc.store.Customer;
+import org.spin.backend.grpc.store.DeleteCartItemRequest;
+import org.spin.backend.grpc.store.Empty;
+import org.spin.backend.grpc.store.FormattedPrice;
+import org.spin.backend.grpc.store.GetCartRequest;
+import org.spin.backend.grpc.store.GetCartTotalsRequest;
+import org.spin.backend.grpc.store.GetCustomerRequest;
+import org.spin.backend.grpc.store.GetResourceRequest;
+import org.spin.backend.grpc.store.GetShippingInformationRequest;
+import org.spin.backend.grpc.store.GetStockRequest;
+import org.spin.backend.grpc.store.ListOrdersRequest;
+import org.spin.backend.grpc.store.ListOrdersResponse;
+import org.spin.backend.grpc.store.ListPaymentMethodsRequest;
+import org.spin.backend.grpc.store.ListPaymentMethodsResponse;
+import org.spin.backend.grpc.store.ListProductsRequest;
+import org.spin.backend.grpc.store.ListProductsResponse;
+import org.spin.backend.grpc.store.ListRenderProductsRequest;
+import org.spin.backend.grpc.store.ListRenderProductsResponse;
+import org.spin.backend.grpc.store.ListShippingMethodsRequest;
+import org.spin.backend.grpc.store.ListShippingMethodsResponse;
+import org.spin.backend.grpc.store.ListStocksRequest;
+import org.spin.backend.grpc.store.ListStocksResponse;
+import org.spin.backend.grpc.store.Order;
+import org.spin.backend.grpc.store.OrderLine;
+import org.spin.backend.grpc.store.PaymentMethod;
+import org.spin.backend.grpc.store.PaymentRequest;
+import org.spin.backend.grpc.store.PriceInfo;
+import org.spin.backend.grpc.store.Product;
+import org.spin.backend.grpc.store.ProductOrderLine;
+import org.spin.backend.grpc.store.Region;
+import org.spin.backend.grpc.store.RenderProduct;
+import org.spin.backend.grpc.store.ResetPasswordRequest;
+import org.spin.backend.grpc.store.ResetPasswordResponse;
+import org.spin.backend.grpc.store.ResetPasswordResponse.ResponseType;
+import org.spin.backend.grpc.store.Resource;
+import org.spin.backend.grpc.store.ShippingInformation;
+import org.spin.backend.grpc.store.ShippingMethod;
+import org.spin.backend.grpc.store.Stock;
+import org.spin.backend.grpc.store.TaxAdjustment;
+import org.spin.backend.grpc.store.TotalSegment;
+import org.spin.backend.grpc.store.UpdateCartRequest;
+import org.spin.backend.grpc.store.UpdateCustomerRequest;
+import org.spin.backend.grpc.store.WebStoreGrpc.WebStoreImplBase;
 import org.spin.model.I_AD_AttachmentReference;
-import org.spin.store.model.I_C_PaymentMethod;
-import org.spin.store.model.I_W_DeliveryViaRuleAllocation;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
+import org.spin.store.model.I_C_PaymentMethod;
+import org.spin.store.model.I_W_DeliveryViaRuleAllocation;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.model.MWDeliveryViaRuleAllocation;
 import org.spin.util.AttachmentUtil;
@@ -2178,16 +2178,16 @@ public class WebStoreServiceImplementation extends WebStoreImplBase {
 		//	Validate if exist
 		if(user == null
 				|| user.getAD_User_ID()  <= 0) {
-			builder.setResponseType(org.spin.grpc.store.ChangePasswordResponse.ResponseType.USER_NOT_FOUND);
+			builder.setResponseType(org.spin.backend.grpc.store.ChangePasswordResponse.ResponseType.USER_NOT_FOUND);
 			throw new AdempiereException("@UserName@ / @EMail@ @NotFound@");
 		}
 		Login loginTest = new Login(Env.getCtx());
 		if(loginTest.getAuthenticatedUserId(user.getValue(), request.getCurrentPassword()) != -1) {
 			user.setPassword(request.getNewPassword());
 			user.saveEx();
-			builder.setResponseType(org.spin.grpc.store.ChangePasswordResponse.ResponseType.OK);
+			builder.setResponseType(org.spin.backend.grpc.store.ChangePasswordResponse.ResponseType.OK);
 		} else {
-			builder.setResponseType(org.spin.grpc.store.ChangePasswordResponse.ResponseType.USER_NOT_FOUND);
+			builder.setResponseType(org.spin.backend.grpc.store.ChangePasswordResponse.ResponseType.USER_NOT_FOUND);
 			throw new AdempiereException("@UserName@ / @EMail@ @NotFound@");
 		}
 		return builder;
@@ -2320,7 +2320,7 @@ public class WebStoreServiceImplementation extends WebStoreImplBase {
 	 * @return
 	 */
 	private ListProductsResponse.Builder listProducts(ListProductsRequest request) {
-		org.spin.grpc.store.ListProductsResponse.Builder builder = ListProductsResponse.newBuilder();
+		org.spin.backend.grpc.store.ListProductsResponse.Builder builder = ListProductsResponse.newBuilder();
 		if(request.getSkusCount() == 0) {
 			throw new AdempiereException("@SKU@ @IsMandatory@");
 		}
@@ -2601,9 +2601,9 @@ public class WebStoreServiceImplementation extends WebStoreImplBase {
 			.setSku(ValueUtil.validateNull(product.getSKU()))
 			.setName(ValueUtil.validateNull(product.getName()))
 			//	TODO: Add status from product
-			.setStatus(org.spin.grpc.store.Product.Status.ENABLED)
+			.setStatus(org.spin.backend.grpc.store.Product.Status.ENABLED)
 			//	TODO: Add to product
-			.setVisibility(org.spin.grpc.store.Product.Visibility.BOTH)
+			.setVisibility(org.spin.backend.grpc.store.Product.Visibility.BOTH)
 			.setProductGroupId(product.getM_Product_Group_ID())
 			.setCreated(dateConverter.format(product.getCreated()))
 			.setUpdated(dateConverter.format(product.getUpdated()))

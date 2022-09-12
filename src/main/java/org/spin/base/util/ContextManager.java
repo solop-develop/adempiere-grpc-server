@@ -36,8 +36,8 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.spin.grpc.util.ApplicationRequest;
-import org.spin.grpc.util.ClientRequest;
+import org.spin.backend.grpc.client.ClientRequest;
+import org.spin.backend.grpc.dictionary.ApplicationRequest;
 
 /**
  * Class for handle Context
@@ -156,7 +156,7 @@ public class ContextManager {
 		return context;
 	}
 
-	public static Properties setContextWithAttributes(int windowNo, Properties context, java.util.List<org.spin.grpc.util.KeyValue> values) {
+	public static Properties setContextWithAttributes(int windowNo, Properties context, java.util.List<org.spin.backend.grpc.common.KeyValue> values) {
 		Map<String, Object> attributes = ValueUtil.convertValuesToObjects(values);
 		return setContextWithAttributes(windowNo, context, attributes);
 	}

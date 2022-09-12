@@ -122,110 +122,110 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
-import org.spin.grpc.util.AddressRequest;
-import org.spin.grpc.util.AllocateSellerRequest;
-import org.spin.grpc.util.AvailableCash;
-import org.spin.grpc.util.AvailableDocumentType;
-import org.spin.grpc.util.AvailablePaymentMethod;
-import org.spin.grpc.util.AvailablePriceList;
-import org.spin.grpc.util.AvailableRefund;
-import org.spin.grpc.util.AvailableWarehouse;
-import org.spin.grpc.util.CashClosing;
-import org.spin.grpc.util.CashClosingRequest;
-import org.spin.grpc.util.CashOpeningRequest;
-import org.spin.grpc.util.CashWithdrawalRequest;
-import org.spin.grpc.util.CreateCustomerBankAccountRequest;
-import org.spin.grpc.util.CreateCustomerRequest;
-import org.spin.grpc.util.CreateOrderLineRequest;
-import org.spin.grpc.util.CreateOrderRequest;
-import org.spin.grpc.util.CreatePaymentReferenceRequest;
-import org.spin.grpc.util.CreatePaymentRequest;
-import org.spin.grpc.util.CreateShipmentLineRequest;
-import org.spin.grpc.util.CreateShipmentRequest;
-import org.spin.grpc.util.Customer;
-import org.spin.grpc.util.CustomerBankAccount;
-import org.spin.grpc.util.DeallocateSellerRequest;
-import org.spin.grpc.util.DeleteCustomerBankAccountRequest;
-import org.spin.grpc.util.DeleteOrderLineRequest;
-import org.spin.grpc.util.DeleteOrderRequest;
-import org.spin.grpc.util.DeletePaymentReferenceRequest;
-import org.spin.grpc.util.DeletePaymentRequest;
-import org.spin.grpc.util.DeleteShipmentLineRequest;
-import org.spin.grpc.util.Empty;
-import org.spin.grpc.util.GetAvailableRefundRequest;
-import org.spin.grpc.util.GetCustomerBankAccountRequest;
-import org.spin.grpc.util.GetCustomerRequest;
-import org.spin.grpc.util.GetKeyLayoutRequest;
-import org.spin.grpc.util.GetOrderRequest;
-import org.spin.grpc.util.GetProductPriceRequest;
-import org.spin.grpc.util.HoldOrderRequest;
-import org.spin.grpc.util.KeyLayout;
-import org.spin.grpc.util.KeyValue;
-import org.spin.grpc.util.ListAvailableCashRequest;
-import org.spin.grpc.util.ListAvailableCashResponse;
-import org.spin.grpc.util.ListAvailableCurrenciesRequest;
-import org.spin.grpc.util.ListAvailableCurrenciesResponse;
-import org.spin.grpc.util.ListAvailableDocumentTypesRequest;
-import org.spin.grpc.util.ListAvailableDocumentTypesResponse;
-import org.spin.grpc.util.ListAvailablePaymentMethodsRequest;
-import org.spin.grpc.util.ListAvailablePaymentMethodsResponse;
-import org.spin.grpc.util.ListAvailablePriceListRequest;
-import org.spin.grpc.util.ListAvailablePriceListResponse;
-import org.spin.grpc.util.ListAvailableSellersRequest;
-import org.spin.grpc.util.ListAvailableSellersResponse;
-import org.spin.grpc.util.ListAvailableWarehousesRequest;
-import org.spin.grpc.util.ListAvailableWarehousesResponse;
-import org.spin.grpc.util.ListCashMovementsRequest;
-import org.spin.grpc.util.ListCashMovementsResponse;
-import org.spin.grpc.util.ListCashSummaryMovementsRequest;
-import org.spin.grpc.util.ListCashSummaryMovementsResponse;
-import org.spin.grpc.util.ListCustomerBankAccountsRequest;
-import org.spin.grpc.util.ListCustomerBankAccountsResponse;
-import org.spin.grpc.util.ListOrderLinesRequest;
-import org.spin.grpc.util.ListOrderLinesResponse;
-import org.spin.grpc.util.ListOrdersRequest;
-import org.spin.grpc.util.ListOrdersResponse;
-import org.spin.grpc.util.ListPaymentReferencesRequest;
-import org.spin.grpc.util.ListPaymentReferencesResponse;
-import org.spin.grpc.util.ListPaymentsRequest;
-import org.spin.grpc.util.ListPaymentsResponse;
-import org.spin.grpc.util.ListPointOfSalesRequest;
-import org.spin.grpc.util.ListPointOfSalesResponse;
-import org.spin.grpc.util.ListProductPriceRequest;
-import org.spin.grpc.util.ListProductPriceResponse;
-import org.spin.grpc.util.ListShipmentLinesRequest;
-import org.spin.grpc.util.ListShipmentLinesResponse;
-import org.spin.grpc.util.ListStocksRequest;
-import org.spin.grpc.util.ListStocksResponse;
-import org.spin.grpc.util.Order;
-import org.spin.grpc.util.OrderLine;
-import org.spin.grpc.util.Payment;
-import org.spin.grpc.util.PaymentMethod;
-import org.spin.grpc.util.PaymentReference;
-import org.spin.grpc.util.PaymentSummary;
-import org.spin.grpc.util.PointOfSales;
-import org.spin.grpc.util.PointOfSalesRequest;
-import org.spin.grpc.util.PrintPreviewRequest;
-import org.spin.grpc.util.PrintPreviewResponse;
-import org.spin.grpc.util.PrintTicketRequest;
-import org.spin.grpc.util.PrintTicketResponse;
-import org.spin.grpc.util.ProcessLog;
-import org.spin.grpc.util.ProcessOrderRequest;
-import org.spin.grpc.util.ProcessShipmentRequest;
-import org.spin.grpc.util.ProductPrice;
-import org.spin.grpc.util.ReleaseOrderRequest;
-import org.spin.grpc.util.ReverseSalesRequest;
-import org.spin.grpc.util.RunBusinessProcessRequest;
-import org.spin.grpc.util.Shipment;
-import org.spin.grpc.util.ShipmentLine;
-import org.spin.grpc.util.Stock;
-import org.spin.grpc.util.StoreGrpc.StoreImplBase;
-import org.spin.grpc.util.UpdateCustomerBankAccountRequest;
-import org.spin.grpc.util.UpdateCustomerRequest;
-import org.spin.grpc.util.UpdateOrderLineRequest;
-import org.spin.grpc.util.UpdateOrderRequest;
-import org.spin.grpc.util.UpdatePaymentRequest;
-import org.spin.grpc.util.ValidatePINRequest;
+import org.spin.backend.grpc.common.Empty;
+import org.spin.backend.grpc.common.KeyValue;
+import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.common.ProductPrice;
+import org.spin.backend.grpc.common.RunBusinessProcessRequest;
+import org.spin.backend.grpc.pos.AddressRequest;
+import org.spin.backend.grpc.pos.AllocateSellerRequest;
+import org.spin.backend.grpc.pos.AvailableCash;
+import org.spin.backend.grpc.pos.AvailableDocumentType;
+import org.spin.backend.grpc.pos.AvailablePaymentMethod;
+import org.spin.backend.grpc.pos.AvailablePriceList;
+import org.spin.backend.grpc.pos.AvailableRefund;
+import org.spin.backend.grpc.pos.AvailableWarehouse;
+import org.spin.backend.grpc.pos.CashClosing;
+import org.spin.backend.grpc.pos.CashClosingRequest;
+import org.spin.backend.grpc.pos.CashOpeningRequest;
+import org.spin.backend.grpc.pos.CashWithdrawalRequest;
+import org.spin.backend.grpc.pos.CreateCustomerBankAccountRequest;
+import org.spin.backend.grpc.pos.CreateCustomerRequest;
+import org.spin.backend.grpc.pos.CreateOrderLineRequest;
+import org.spin.backend.grpc.pos.CreateOrderRequest;
+import org.spin.backend.grpc.pos.CreatePaymentReferenceRequest;
+import org.spin.backend.grpc.pos.CreatePaymentRequest;
+import org.spin.backend.grpc.pos.CreateShipmentLineRequest;
+import org.spin.backend.grpc.pos.CreateShipmentRequest;
+import org.spin.backend.grpc.pos.Customer;
+import org.spin.backend.grpc.pos.CustomerBankAccount;
+import org.spin.backend.grpc.pos.DeallocateSellerRequest;
+import org.spin.backend.grpc.pos.DeleteCustomerBankAccountRequest;
+import org.spin.backend.grpc.pos.DeleteOrderLineRequest;
+import org.spin.backend.grpc.pos.DeleteOrderRequest;
+import org.spin.backend.grpc.pos.DeletePaymentReferenceRequest;
+import org.spin.backend.grpc.pos.DeletePaymentRequest;
+import org.spin.backend.grpc.pos.DeleteShipmentLineRequest;
+import org.spin.backend.grpc.pos.GetAvailableRefundRequest;
+import org.spin.backend.grpc.pos.GetCustomerBankAccountRequest;
+import org.spin.backend.grpc.pos.GetCustomerRequest;
+import org.spin.backend.grpc.pos.GetKeyLayoutRequest;
+import org.spin.backend.grpc.pos.GetOrderRequest;
+import org.spin.backend.grpc.pos.GetProductPriceRequest;
+import org.spin.backend.grpc.pos.HoldOrderRequest;
+import org.spin.backend.grpc.pos.KeyLayout;
+import org.spin.backend.grpc.pos.ListAvailableCashRequest;
+import org.spin.backend.grpc.pos.ListAvailableCashResponse;
+import org.spin.backend.grpc.pos.ListAvailableCurrenciesRequest;
+import org.spin.backend.grpc.pos.ListAvailableCurrenciesResponse;
+import org.spin.backend.grpc.pos.ListAvailableDocumentTypesRequest;
+import org.spin.backend.grpc.pos.ListAvailableDocumentTypesResponse;
+import org.spin.backend.grpc.pos.ListAvailablePaymentMethodsRequest;
+import org.spin.backend.grpc.pos.ListAvailablePaymentMethodsResponse;
+import org.spin.backend.grpc.pos.ListAvailablePriceListRequest;
+import org.spin.backend.grpc.pos.ListAvailablePriceListResponse;
+import org.spin.backend.grpc.pos.ListAvailableSellersRequest;
+import org.spin.backend.grpc.pos.ListAvailableSellersResponse;
+import org.spin.backend.grpc.pos.ListAvailableWarehousesRequest;
+import org.spin.backend.grpc.pos.ListAvailableWarehousesResponse;
+import org.spin.backend.grpc.pos.ListCashMovementsRequest;
+import org.spin.backend.grpc.pos.ListCashMovementsResponse;
+import org.spin.backend.grpc.pos.ListCashSummaryMovementsRequest;
+import org.spin.backend.grpc.pos.ListCashSummaryMovementsResponse;
+import org.spin.backend.grpc.pos.ListCustomerBankAccountsRequest;
+import org.spin.backend.grpc.pos.ListCustomerBankAccountsResponse;
+import org.spin.backend.grpc.pos.ListOrderLinesRequest;
+import org.spin.backend.grpc.pos.ListOrderLinesResponse;
+import org.spin.backend.grpc.pos.ListOrdersRequest;
+import org.spin.backend.grpc.pos.ListOrdersResponse;
+import org.spin.backend.grpc.pos.ListPaymentReferencesRequest;
+import org.spin.backend.grpc.pos.ListPaymentReferencesResponse;
+import org.spin.backend.grpc.pos.ListPaymentsRequest;
+import org.spin.backend.grpc.pos.ListPaymentsResponse;
+import org.spin.backend.grpc.pos.ListPointOfSalesRequest;
+import org.spin.backend.grpc.pos.ListPointOfSalesResponse;
+import org.spin.backend.grpc.pos.ListProductPriceRequest;
+import org.spin.backend.grpc.pos.ListProductPriceResponse;
+import org.spin.backend.grpc.pos.ListShipmentLinesRequest;
+import org.spin.backend.grpc.pos.ListShipmentLinesResponse;
+import org.spin.backend.grpc.pos.ListStocksRequest;
+import org.spin.backend.grpc.pos.ListStocksResponse;
+import org.spin.backend.grpc.pos.Order;
+import org.spin.backend.grpc.pos.OrderLine;
+import org.spin.backend.grpc.pos.Payment;
+import org.spin.backend.grpc.pos.PaymentMethod;
+import org.spin.backend.grpc.pos.PaymentReference;
+import org.spin.backend.grpc.pos.PaymentSummary;
+import org.spin.backend.grpc.pos.PointOfSales;
+import org.spin.backend.grpc.pos.PointOfSalesRequest;
+import org.spin.backend.grpc.pos.PrintPreviewRequest;
+import org.spin.backend.grpc.pos.PrintPreviewResponse;
+import org.spin.backend.grpc.pos.PrintTicketRequest;
+import org.spin.backend.grpc.pos.PrintTicketResponse;
+import org.spin.backend.grpc.pos.ProcessOrderRequest;
+import org.spin.backend.grpc.pos.ProcessShipmentRequest;
+import org.spin.backend.grpc.pos.ReleaseOrderRequest;
+import org.spin.backend.grpc.pos.ReverseSalesRequest;
+import org.spin.backend.grpc.pos.Shipment;
+import org.spin.backend.grpc.pos.ShipmentLine;
+import org.spin.backend.grpc.pos.Stock;
+import org.spin.backend.grpc.pos.StoreGrpc.StoreImplBase;
+import org.spin.backend.grpc.pos.UpdateCustomerBankAccountRequest;
+import org.spin.backend.grpc.pos.UpdateCustomerRequest;
+import org.spin.backend.grpc.pos.UpdateOrderLineRequest;
+import org.spin.backend.grpc.pos.UpdateOrderRequest;
+import org.spin.backend.grpc.pos.UpdatePaymentRequest;
+import org.spin.backend.grpc.pos.ValidatePINRequest;
 import org.spin.store.model.I_C_PaymentMethod;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
@@ -937,11 +937,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Create customer = " + request);
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			Customer.Builder customer = createCustomer(request);
+			Properties context = ContextManager.getContext(request.getClientRequest());
+			Customer.Builder customer = createCustomer(context, request);
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1967,22 +1964,24 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				refundReferenceToCreate.set_ValueOfColumn("C_BP_BankAccount_ID", RecordUtil.getIdFromUuid(I_C_BP_BankAccount.Table_Name, request.getCustomerBankAccountUuid(), transactionName));
 			}
 			refundReferenceToCreate.set_ValueOfColumn("C_BPartner_ID", RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getCustomerUuid(), transactionName));
-			int id = RecordUtil.getIdFromUuid(I_C_ConversionType.Table_Name, request.getConversionTypeUuid(), transactionName);
-			if(id > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("C_ConversionType_ID", id);
+			int currencyId = RecordUtil.getIdFromUuid(I_C_Currency.Table_Name, request.getCurrencyUuid(), transactionName);
+			if(currencyId > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("C_Currency_ID", currencyId);
 			}
-			id = RecordUtil.getIdFromUuid(I_C_Currency.Table_Name, request.getCurrencyUuid(), transactionName);
-			if(id > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("C_Currency_ID", id);
+			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+			if(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID) > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("C_ConversionType_ID", pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
 			}
-			refundReferenceToCreate.set_ValueOfColumn("C_Order_ID", RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), transactionName));
-			id = RecordUtil.getIdFromUuid(I_C_PaymentMethod.Table_Name, request.getPaymentMethodUuid(), transactionName);
+			MOrder salesOrder = getOrder(request.getOrderUuid(), transactionName);
+			//	Throw if not exist conversion
+			ConvertUtil.validateConversion(salesOrder, currencyId, pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
+			refundReferenceToCreate.set_ValueOfColumn("C_Order_ID", salesOrder.getC_Order_ID());
+			int id = RecordUtil.getIdFromUuid(I_C_PaymentMethod.Table_Name, request.getPaymentMethodUuid(), transactionName);
 			if(id > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_PaymentMethod_ID", id);
 			}
-			id = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), transactionName);
-			if(id > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("C_POS_ID", id);
+			if(pos.getC_POS_ID() > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
 			}
 			id = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), transactionName);
 			if(id > 0) {
@@ -2405,7 +2404,16 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), null);
 			PaymentMethod.Builder paymentMethodBuilder = ConvertUtil.convertPaymentMethod(paymentMethod);
 
-			builder.setAmount(ValueUtil.getDecimalFromBigDecimal((BigDecimal) paymentReference.get_Value("Amount")))
+			int presicion = MCurrency.getStdPrecision(paymentReference.getCtx(), paymentReference.get_ValueAsInt("C_Currency_ID"));
+
+			BigDecimal amount = (BigDecimal) paymentReference.get_Value("Amount");
+			amount.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+
+			MOrder order = new MOrder(Env.getCtx(), paymentReference.get_ValueAsInt("C_Order_ID"), null);
+			BigDecimal convertedAmount = ConvertUtil.getConvetedAmount(order, paymentReference, amount)
+				.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+
+			builder.setAmount(ValueUtil.getDecimalFromBigDecimal(amount))
 			.setDescription(ValueUtil.validateNull(paymentReference.get_ValueAsString("Description")))
 			.setIsPaid(paymentReference.get_ValueAsBoolean("IsPaid"))
 			.setTenderTypeCode(ValueUtil.validateNull(paymentReference.get_ValueAsString("TenderType")))
@@ -2419,8 +2427,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setPaymentMethod(paymentMethodBuilder)
 			.setPaymentDate(ValueUtil.validateNull(ValueUtil.convertDateToString((Timestamp) paymentReference.get_Value("PayDate"))))
 			.setIsAutomatic(paymentReference.get_ValueAsBoolean("IsAutoCreatedReference"))
-			.setIsProcessed(paymentReference.get_ValueAsBoolean("Processed"));
-			
+			.setIsProcessed(paymentReference.get_ValueAsBoolean("Processed"))
+			.setConvertedAmount(ValueUtil.getDecimalFromBigDecimal(convertedAmount))
+			;
 		}
 		//	
 		return builder;
@@ -2738,19 +2747,19 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param request
 	 * @return
 	 */
-	private Customer.Builder createCustomer(CreateCustomerRequest request) {
+	private Customer.Builder createCustomer(Properties context, CreateCustomerRequest request) {
 		//	Validate name
 		if(Util.isEmpty(request.getName())) {
 			throw new AdempiereException("@Name@ @IsMandatory@");
 		}
 		//	POS Uuid
 		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
-		MBPartner businessPartner = MBPartner.getTemplate(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()), pos.getC_POS_ID());
+		MBPartner businessPartner = MBPartner.getTemplate(context, Env.getAD_Client_ID(Env.getCtx()), pos.getC_POS_ID());
 		//	Validate Template
 		if(pos.getC_BPartnerCashTrx_ID() <= 0) {
 			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
 		}
-		MBPartner template = MBPartner.get(Env.getCtx(), pos.getC_BPartnerCashTrx_ID());
+		MBPartner template = MBPartner.get(context, pos.getC_BPartnerCashTrx_ID());
 		Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false)).stream().findFirst();
 		if(!maybeTemplateLocation.isPresent()) {
 			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @C_BPartner_Location_ID@ @NotFound@");
@@ -2799,6 +2808,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			setAdditionalAttributes(businessPartner, request.getAdditionalAttributesList());
 			//	Save it
 			businessPartner.saveEx(transactionName);
+			
+			// clear price list from business partner group
+			if (businessPartner.getM_PriceList_ID() > 0) {
+				businessPartner.setM_PriceList_ID(0);
+				businessPartner.saveEx(transactionName);
+			}
+			
 			//	Location
 			request.getAddressesList().forEach(address -> {
 				createCustomerAddress(businessPartner, address, templateLocation, transactionName);
@@ -3244,9 +3260,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				.setId(availablePaymentMethod.get_ID())
 				.setUuid(ValueUtil.validateNull(availablePaymentMethod.get_UUID()))
 				.setName(
-					!Util.isEmpty(paymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name), true) ?
-						ValueUtil.validateNull(paymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)) : 
-						ValueUtil.validateNull(paymentMethod.getName())
+					Util.isEmpty(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)) ?
+						ValueUtil.validateNull(paymentMethod.getName()) : 
+						ValueUtil.validateNull(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name))
 				)
 				.setPosUuid(ValueUtil.validateNull(request.getPosUuid()))
 					.setIsPosRequiredPin(availablePaymentMethod.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
@@ -3654,14 +3670,15 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		creditMemo.setBPartner((MBPartner) payment.getC_BPartner());
 		creditMemo.setDescription(payment.getDescription());
 		creditMemo.setIsSOTrx(true);
-		creditMemo.setSalesRep_ID(salesOrder.getSalesRep_ID());
-		creditMemo.setAD_Org_ID(salesOrder.getAD_Org_ID());
-		creditMemo.setC_POS_ID(salesOrder.getC_POS_ID());
+		creditMemo.setSalesRep_ID(payment.get_ValueAsInt("CollectingAgent_ID"));
+		creditMemo.setAD_Org_ID(payment.getAD_Org_ID());
+		creditMemo.setC_POS_ID(payment.getC_POS_ID());
 		if(creditMemo.getM_PriceList_ID() <= 0
 				|| creditMemo.getC_Currency_ID() != payment.getC_Currency_ID()) {
-			MPriceList priceList = MPriceList.getDefault(salesOrder.getCtx(), true, MCurrency.getISO_Code(salesOrder.getCtx(), payment.getC_Currency_ID()));
+			String isoCode = MCurrency.getISO_Code(salesOrder.getCtx(), payment.getC_Currency_ID());
+			MPriceList priceList = MPriceList.getDefault(salesOrder.getCtx(), true, isoCode);
 			if(priceList == null) {
-				throw new AdempiereException("@M_PriceList_ID@ @NotFound@");
+				throw new AdempiereException("@M_PriceList_ID@ @NotFound@ (@C_Currency_ID@ " + isoCode + ")");
 			}
 			creditMemo.setM_PriceList_ID(priceList.getM_PriceList_ID());
 		}
@@ -3711,6 +3728,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			log.warning("@ProcessFailed@ :" + creditMemo.getProcessMsg());
 			throw new AdempiereException("@ProcessFailed@ :" + creditMemo.getProcessMsg());
 		}
+		creditMemo.setDocumentNo(payment.getDocumentNo());
 		creditMemo.saveEx(transactionName);
 	}
 	
@@ -3751,7 +3769,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @return
 	 * @return BigDecimal
 	 */
-	private static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
+	public static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
 		if(payment.get_ValueAsInt("C_Currency_ID") == order.getC_Currency_ID()
 				|| amount == null
 				|| amount.compareTo(Env.ZERO) == 0) {
@@ -3803,9 +3821,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		//	Dynamic where clause
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
+		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+		int posId = pos.getC_POS_ID();
 		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
-		int orgId = Env.getAD_Org_ID(Env.getCtx());
+		int orgId = pos.getAD_Org_ID();
 		MUser salesRepresentative = MUser.get(Env.getCtx(), salesRepresentativeId);
 		boolean isAppliedNewFeaturesPOS = M_Element.get(Env.getCtx(), "IsSharedPOS") != null && M_Element.get(Env.getCtx(), "IsAllowsAllocateSeller") != null;
 		StringBuffer whereClause = new StringBuffer();
@@ -3885,6 +3904,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			whereClause.append(" AND DateOrdered <= ?");
 			parameters.add(TimeUtil.getDay(ValueUtil.convertStringToDate(request.getDateOrderedTo())));
 		}
+		whereClause.append(" AND AD_Org_ID = ? ");
+		parameters.add(orgId);
 		//	Get Product list
 		Query query = new Query(Env.getCtx(), I_C_Order.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters)
@@ -4195,7 +4216,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			log.info("CPOS.SetC_BPartner_ID -" + partner);
 			order.setBPartner(partner);
 			AtomicBoolean priceListIsChanged = new AtomicBoolean(false);
-			if(partner.getM_PriceList_ID() > 0) {
+			if(partner.getM_PriceList_ID() > 0 && pos.get_ValueAsBoolean("IsKeepPriceFromCustomer")) {
 				MPriceList businesPartnerPriceList = MPriceList.get(Env.getCtx(), partner.getM_PriceList_ID(), null);
 				MPriceList currentPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
 				if(currentPriceList.getC_Currency_ID() != businesPartnerPriceList.getC_Currency_ID()) {
@@ -4203,6 +4224,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				} else if(currentPriceList.getM_PriceList_ID() != partner.getM_PriceList_ID()) {
 					priceListIsChanged.set(true);
 				}
+			} else {
+				order.setM_PriceList_ID(pos.getM_PriceList_ID());
 			}
 			//	
 			MBPartnerLocation [] partnerLocations = partner.getLocations(true);
@@ -4512,7 +4535,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				"(EXISTS("
 				+ "		SELECT 1 FROM C_POSSellerAllocation AS seller "
 				+ "		WHERE seller.C_POS_ID = ? AND seller.SalesRep_ID = AD_User.AD_User_ID "
-				+ "		AND seller.IsActive = 'N' AND seller.IsAllowsPOSManager = 'Y' "
+				+ "		AND seller.IsActive = 'Y' AND seller.IsAllowsPOSManager = 'Y' "
 				+ 		whereClause
 				+ ") "
 				+ "OR IsPOSManager = 'Y') "
@@ -4763,16 +4786,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					.findFirst();
 			if(maybeOrderLine.isPresent()) {
 				MOrderLine orderLine = maybeOrderLine.get();
-				BigDecimal currentPrice = orderLine.getPriceEntered();
 				//	Set Quantity
 				BigDecimal quantityToOrder = quantity;
 				if(quantity == null) {
-					quantityToOrder = orderLine.getQtyOrdered();
+					quantityToOrder = orderLine.getQtyEntered();
 					quantityToOrder = quantityToOrder.add(Env.ONE);
 				}
-				orderLine.setQty(quantityToOrder);
-				orderLine.setPrice(currentPrice); //	sets List/limit
-				orderLine.saveEx(transactionName);
+				updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
 				orderLineReference.set(orderLine);
 			} else {
 				BigDecimal quantityToOrder = quantity;
@@ -4788,6 +4808,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				}
 				orderLine.setQty(quantityToOrder);
 				orderLine.setPrice();
+				orderLine.setTax();
 				//	Save Line
 				orderLine.saveEx(transactionName);
 				//	Apply Discount from order
@@ -4829,6 +4850,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		Trx.run(transactionName -> {
 			MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
 			MOrder order = orderLine.getParent();
+			order.set_TrxName(transactionName);
 			validateOrderReleased(order);
 			setCurrentDate(order);
 			orderLine.setHeaderInfo(order);
@@ -4873,14 +4895,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				orderLine.set_ValueOfColumn("Ref_WarehouseSource_ID", warehouseId);
 			}
 			//	Validate UOM
-			if(unitOfMeasureId > 0 && unitOfMeasureId != orderLine.getC_UOM_ID()) {
-				BigDecimal quantityEntered = orderLine.getQtyEntered();
-				BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), unitOfMeasureId, quantityEntered);
-				BigDecimal convertedPrice = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), unitOfMeasureId, orderLine.getPriceActual());
-				orderLine.setC_UOM_ID(unitOfMeasureId);
-				orderLine.setQtyOrdered(convertedQuantity);
-				orderLine.setPriceEntered(convertedPrice);
-			}
+			updateUomAndQuantity(orderLine, unitOfMeasureId, quantity);
 			//	Set values
 			orderLine.setTax();
 			orderLine.saveEx();
@@ -4890,6 +4905,49 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		});
 		return maybeOrderLine.get();
 	} //	UpdateLine
+	
+	/**
+	 * Set UOM and Quantiry based on unit of measure
+	 * @param orderLine
+	 * @param unitOfMeasureId
+	 * @param quantity
+	 */
+	private void updateUomAndQuantity(MOrderLine orderLine, int unitOfMeasureId, BigDecimal quantity) {
+		if(quantity != null) {
+			orderLine.setQty(quantity);
+		}
+		if(unitOfMeasureId > 0) {
+			orderLine.setC_UOM_ID(unitOfMeasureId);
+		}
+		BigDecimal quantityEntered = orderLine.getQtyEntered();
+		BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), quantityEntered);
+		BigDecimal convertedPrice = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), orderLine.getPriceActual());
+		orderLine.setQtyOrdered(convertedQuantity);
+		orderLine.setPriceEntered(convertedPrice);
+		orderLine.setLineNetAmt();
+		orderLine.saveEx();
+	}
+	
+	
+//	/**
+//	 * Get converted price and quantity on product UOM
+//	 * @param context
+//	 * @param product
+//	 * @param quantityEntered
+//	 * @return
+//	 */
+//	private BigDecimal convertQuantityToProductUom(Properties context, MProduct product, int uomToId, BigDecimal quantityEntered) {
+//		BigDecimal conversionRate = MUOMConversion.getProductRateFrom(context, product.getM_Product_ID(), uomToId);
+//		if (conversionRate != null) {
+//			if (Env.ONE.compareTo(conversionRate) == 0)
+//				return quantityEntered;
+//			MUOM uom = MUOM.get (context, product.getC_UOM_ID());
+//			if (uom != null)
+//				return uom.round(conversionRate.multiply(quantityEntered), true);
+//			return conversionRate.multiply(quantityEntered);
+//		}
+//		return null;
+//	}
 	
 	/**
 	 * Get list from user
@@ -5018,6 +5076,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setIsAllowsCreateCustomer(getBooleanValueFromPOS(pos, userId, "IsAllowsCreateCustomer"))
 			.setIsAllowsPrintDocument(getBooleanValueFromPOS(pos, userId, "IsAllowsPrintDocument"))
 			.setIsAllowsPreviewDocument(getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument"))
+			.setIsPosManager(getBooleanValueFromPOS(pos, userId, "IsPosManager"))
+			.setIsAllowsModifyDiscount(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyDiscount"))
+			.setIsKeepPriceFromCustomer(getBooleanValueFromPOS(pos, userId, "IsKeepPriceFromCustomer"))
 		;
 
 		if(pos.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
@@ -5412,6 +5473,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(currencyId <= 0) {
 			currencyId = salesOrder.getC_Currency_ID();
 		}
+		//	Throw if not exist conversion
+		ConvertUtil.validateConversion(salesOrder, currencyId, pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
 		//	
 		MPayment payment = new MPayment(Env.getCtx(), 0, transactionName);
 		payment.setC_BankAccount_ID(pointOfSalesDefinition.getC_BankAccount_ID());

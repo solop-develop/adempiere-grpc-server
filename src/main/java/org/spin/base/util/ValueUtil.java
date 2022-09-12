@@ -38,12 +38,12 @@ import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
-import org.spin.grpc.util.Criteria;
-import org.spin.grpc.util.Decimal;
-import org.spin.grpc.util.KeyValue;
-import org.spin.grpc.util.Value;
-import org.spin.grpc.util.Condition.Operator;
-import org.spin.grpc.util.Value.ValueType;
+import org.spin.backend.grpc.common.Criteria;
+import org.spin.backend.grpc.common.Decimal;
+import org.spin.backend.grpc.common.KeyValue;
+import org.spin.backend.grpc.common.Value;
+import org.spin.backend.grpc.common.Condition.Operator;
+import org.spin.backend.grpc.common.Value.ValueType;
 
 /**
  * Class for handle Values from and to client
