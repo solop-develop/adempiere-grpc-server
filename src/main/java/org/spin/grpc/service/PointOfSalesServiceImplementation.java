@@ -4141,7 +4141,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				}
 				//	Warehouse
 				int warehouseId = 0;
-				int priceListId = 0;
 				int campaignId = RecordUtil.getIdFromUuid(I_C_Campaign.Table_Name, request.getCampaignUuid(), transactionName);
 				if(campaignId > 0 && campaignId != salesOrder.getC_Campaign_ID()) {
 					salesOrder.setC_Campaign_ID(campaignId);
@@ -4150,6 +4149,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), transactionName);
 				}
 				//	Price List
+				int priceListId = 0;
 				if(!Util.isEmpty(request.getPriceListUuid())) {
 					priceListId = RecordUtil.getIdFromUuid(I_M_PriceList.Table_Name, request.getPriceListUuid(), transactionName);
 				}
@@ -5193,7 +5193,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			salesOrder.setC_POS_ID(pos.getC_POS_ID());
 			//	Warehouse
 			int warehouseId = pos.getM_Warehouse_ID();
-			int priceListId = pos.getM_PriceList_ID();
 			if(!Util.isEmpty(request.getWarehouseUuid())) {
 				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), transactionName);
 			}
@@ -5202,12 +5201,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				warehouseId = pos.getM_Warehouse_ID();
 			}
 			//	Price List
+			int priceListId = pos.getM_PriceList_ID();
 			if(!Util.isEmpty(request.getPriceListUuid())) {
 				priceListId = RecordUtil.getIdFromUuid(I_M_PriceList.Table_Name, request.getPriceListUuid(), transactionName);
 			}
-			//	From POS
+			//	Price List From POS
 			if(priceListId < 0) {
-				priceListId = pos.getM_Warehouse_ID();
+				priceListId = pos.getM_PriceList_ID();
 			}
 			salesOrder.setM_PriceList_ID(priceListId);
 			salesOrder.setM_Warehouse_ID(warehouseId);
@@ -5312,7 +5312,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		log.fine( "CPOS.setC_BPartner_ID=" + businessPartner.getC_BPartner_ID());
 		businessPartner.set_TrxName(transactionName);
 		salesOrder.setBPartner(businessPartner);
-		if(businessPartner.getM_PriceList_ID() > 0) {
+		boolean isKeepPriceListCustomer = getBooleanValueFromPOS(pos, businessPartnerId, "IsKeepPriceFromCustomer");
+		if(!isKeepPriceListCustomer && businessPartner.getM_PriceList_ID() > 0) {
 			MPriceList businesPartnerPriceList = MPriceList.get(salesOrder.getCtx(), businessPartner.getM_PriceList_ID(), transactionName);
 			MPriceList currentPriceList = MPriceList.get(salesOrder.getCtx(), pos.getM_PriceList_ID(), transactionName);
 			if(currentPriceList.getC_Currency_ID() != businesPartnerPriceList.getC_Currency_ID()) {
