@@ -450,7 +450,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
+			ContextManager.getContext(request.getClientRequest());
 			DefaultValue.Builder defaultValue = getInfoFromDefaultValueRequest(request);
 			responseObserver.onNext(defaultValue.build());
 			responseObserver.onCompleted();
@@ -2422,92 +2422,96 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 */
 	private DefaultValue.Builder getDefaultKeyAndValue(List<KeyValue> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
 		DefaultValue.Builder builder = DefaultValue.newBuilder();
-		if(!Util.isEmpty(defaultValue)) {
-			Object defaultValueAsObject = null;
+		if(Util.isEmpty(defaultValue)) {
+			return builder;
+		}
+		Object defaultValueAsObject = null;
 
-			// Fill context
-			Properties context = Env.getCtx();
-			int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-			context = ContextManager.setContextWithAttributes(windowNo, context, contextAttributes);
+		// Fill context
+		Properties context = Env.getCtx();
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		context = ContextManager.setContextWithAttributes(windowNo, context, contextAttributes);
 
-			if(defaultValue.trim().startsWith("@SQL=")) {
-				defaultValue = defaultValue.replace("@SQL=", "");
-				defaultValue = Env.parseContext(context, windowNo, defaultValue, false);
-				defaultValueAsObject = convertDefaultValue(defaultValue);
-			} else {
-				defaultValueAsObject = Env.parseContext(context, windowNo, defaultValue, false);
+		if(defaultValue.trim().startsWith("@SQL=")) {
+			defaultValue = defaultValue.replace("@SQL=", "");
+			defaultValue = Env.parseContext(context, windowNo, defaultValue, false);
+			defaultValueAsObject = convertDefaultValue(defaultValue);
+		} else {
+			defaultValueAsObject = Env.parseContext(context, windowNo, defaultValue, false);
+		}
+		//	 For lookups
+		if(defaultValueAsObject == null) {
+			return builder;
+		}
+
+		//	Convert value from type
+		if(DisplayType.isID(referenceId)
+				|| referenceId == DisplayType.Integer) {
+			try {
+				defaultValueAsObject = Integer.parseInt(String.valueOf(defaultValueAsObject));
+			} catch (Exception e) {
+				log.warning(e.getLocalizedMessage());
 			}
-			//	 For lookups
-			if(defaultValueAsObject != null) {
-				//	Convert value from type
-				if(DisplayType.isID(referenceId)
-						|| referenceId == DisplayType.Integer) {
-					try {
-						defaultValueAsObject = Integer.parseInt(String.valueOf(defaultValueAsObject));
-					} catch (Exception e) {
-						log.warning(e.getLocalizedMessage());
-					}
-				} else if(DisplayType.isNumeric(validationRuleId)) {
-					try {
-						defaultValueAsObject = new BigDecimal(String.valueOf(defaultValueAsObject));
-					} catch (Exception e) {
-						log.warning(e.getLocalizedMessage());
-					}
-				}
-				if(DisplayType.isLookup(referenceId)) {
-					if(referenceId == DisplayType.List) {
-						MRefList referenceList = MRefList.get(Env.getCtx(), referenceValueId, String.valueOf(defaultValueAsObject), null);
-						builder = convertDefaultValueFromResult(referenceList.getValue(), referenceList.getUUID(), referenceList.getValue(), referenceList.get_Translation(MRefList.COLUMNNAME_Name));
-					} else {
-						MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
-						if(!Util.isEmpty(lookupInfo.QueryDirect)) {
-							String sql = MRole.getDefault(Env.getCtx(), false).addAccessSQL(lookupInfo.QueryDirect,
-									lookupInfo.TableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
-							PreparedStatement pstmt = null;
-							ResultSet rs = null;
-							try {
-								//	SELECT Key, Value, Name FROM ...
-								pstmt = DB.prepareStatement(sql.toString(), null);
-								ValueUtil.setParameterFromObject(pstmt, defaultValueAsObject, 1);
-								//	Get from Query
-								rs = pstmt.executeQuery();
-								if (rs.next()) {
-									//	1 = Key Column
-									//	2 = Optional Value
-									//	3 = Display Value
-									ResultSetMetaData metaData = rs.getMetaData();
-									int keyValueType = metaData.getColumnType(1);
-									Object keyValue = null;
-									if(keyValueType == Types.VARCHAR
-											|| keyValueType == Types.NVARCHAR
-											|| keyValueType == Types.CHAR
-											|| keyValueType == Types.NCHAR) {
-										keyValue = rs.getString(2);
-									} else {
-										keyValue = rs.getInt(1);
-									}
-									String uuid = null;
-									//	Validate if exist UUID
-									int uuidIndex = getColumnIndex(metaData, I_AD_Element.COLUMNNAME_UUID);
-									if(uuidIndex != -1) {
-										uuid = rs.getString(uuidIndex);
-									}
-									//	
-									builder = convertDefaultValueFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
-								}
-							} catch (Exception e) {
-								log.severe(e.getLocalizedMessage());
-								throw new AdempiereException(e);
-							} finally {
-								DB.close(rs, pstmt);
-							}
-						}
-					}
-				} else {
-					builder.putValues(columnName, ValueUtil.getValueFromObject(defaultValueAsObject).build());
-				}
+		} else if(DisplayType.isNumeric(validationRuleId)) {
+			try {
+				defaultValueAsObject = new BigDecimal(String.valueOf(defaultValueAsObject));
+			} catch (Exception e) {
+				log.warning(e.getLocalizedMessage());
 			}
 		}
+		if(DisplayType.isLookup(referenceId)) {
+			if(referenceId == DisplayType.List) {
+				MRefList referenceList = MRefList.get(Env.getCtx(), referenceValueId, String.valueOf(defaultValueAsObject), null);
+				builder = convertDefaultValueFromResult(referenceList.getValue(), referenceList.getUUID(), referenceList.getValue(), referenceList.get_Translation(MRefList.COLUMNNAME_Name));
+			} else {
+				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
+				if(!Util.isEmpty(lookupInfo.QueryDirect)) {
+					String sql = MRole.getDefault(Env.getCtx(), false).addAccessSQL(lookupInfo.QueryDirect,
+							lookupInfo.TableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+					PreparedStatement pstmt = null;
+					ResultSet rs = null;
+					try {
+						//	SELECT Key, Value, Name FROM ...
+						pstmt = DB.prepareStatement(sql.toString(), null);
+						ValueUtil.setParameterFromObject(pstmt, defaultValueAsObject, 1);
+						//	Get from Query
+						rs = pstmt.executeQuery();
+						if (rs.next()) {
+							//	1 = Key Column
+							//	2 = Optional Value
+							//	3 = Display Value
+							ResultSetMetaData metaData = rs.getMetaData();
+							int keyValueType = metaData.getColumnType(1);
+							Object keyValue = null;
+							if(keyValueType == Types.VARCHAR
+									|| keyValueType == Types.NVARCHAR
+									|| keyValueType == Types.CHAR
+									|| keyValueType == Types.NCHAR) {
+								keyValue = rs.getString(2);
+							} else {
+								keyValue = rs.getInt(1);
+							}
+							String uuid = null;
+							//	Validate if exist UUID
+							int uuidIndex = getColumnIndex(metaData, I_AD_Element.COLUMNNAME_UUID);
+							if(uuidIndex != -1) {
+								uuid = rs.getString(uuidIndex);
+							}
+							//	
+							builder = convertDefaultValueFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
+						}
+					} catch (Exception e) {
+						log.severe(e.getLocalizedMessage());
+						throw new AdempiereException(e);
+					} finally {
+						DB.close(rs, pstmt);
+					}
+				}
+			}
+		} else {
+			builder.putValues(columnName, ValueUtil.getValueFromObject(defaultValueAsObject).build());
+		}
+
 		return builder;
 	}
 	
@@ -3305,8 +3309,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if(keyValue == null) {
 			return builder;
 		}
-		builder.setUuid(ValueUtil.validateNull(uuidValue));
-		
+
+		// Key Column
 		if(keyValue instanceof Integer) {
 			builder.setId((Integer) keyValue);
 			builder.putValues(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build());
@@ -3321,7 +3325,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if(!Util.isEmpty(displayValue)) {
 			builder.putValues(LookupUtil.DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build());
 		}
-		//	
+		// UUID Value
+		builder.setUuid(ValueUtil.validateNull(uuidValue));
+		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
+
 		return builder;
 	}
 }

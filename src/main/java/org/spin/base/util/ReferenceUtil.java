@@ -152,8 +152,11 @@ public class ReferenceUtil {
 		String queryForLookup = lookupInformation.Query;
 		//	Add support to UUID
 		queryForLookup = getQueryWithUuid(lookupInformation.TableName, queryForLookup);
+		String directQuery = getQueryWithUuid(lookupInformation.TableName, lookupInformation.QueryDirect);
+
 		// set new query
 		lookupInformation.Query = queryForLookup;
+		lookupInformation.QueryDirect = directQuery;
 
 		MValRule validationRule = null;
 		//	For validation rule
