@@ -592,7 +592,9 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		if(value == null) {
 			String sessionTimeoutAsString = MSysConfig.getValue("WEBUI_DEFAULT_TIMEOUT", Env.getAD_Client_ID(Env.getCtx()), 0);
 			try {
-				sessionTimeout = Long.parseLong(sessionTimeoutAsString);
+				if (!Util.isEmpty(sessionTimeoutAsString, true)) {
+					sessionTimeout = Long.parseLong(sessionTimeoutAsString);
+				}
 			} catch (Exception e) {
 				log.severe(e.getLocalizedMessage());
 			}
