@@ -994,22 +994,26 @@ public class ConvertUtil {
 		BigDecimal totalBaseAmountWithTax = totalBaseAmount.add(totalTaxAmount);
 		BigDecimal totalAmountWithTax = totalAmount.add(totalTaxAmount);
 
-		MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
-		List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
-		MUOMConversion uom = productsConversion.stream()
-			.filter(productConversion -> {
-				return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
-			})
-			.findFirst()
-			.get();
-
-		MUOMConversion productUom = productsConversion.stream()
-			.filter(productConversion -> {
-				return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
-			})
-			.findFirst()
-			.get();
+		MUOMConversion uom = null;
+		MUOMConversion productUom = null;
+		if (orderLine.getM_Product_ID() > 0) {
+			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
+			List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
+			uom = productsConversion.stream()
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+				})
+				.findFirst()
+				.get();
 	
+			productUom = productsConversion.stream()
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+				})
+				.findFirst()
+				.get();
+		}
+
 		int standardPrecision = priceList.getStandardPrecision();
 		BigDecimal availableQuantity = MStorage.getQtyAvailable(orderLine.getM_Warehouse_ID(), 0, orderLine.getM_Product_ID(), orderLine.getM_AttributeSetInstance_ID(), null);
 		//	Convert
