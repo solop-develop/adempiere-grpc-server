@@ -1,0 +1,64 @@
+/************************************************************************************
+ * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.general_ledger";
+option java_outer_classname = "ADempiereGeneralLedger";
+
+import "base_data_type.proto";
+import "client.proto";
+import "business.proto";
+
+package general_ledger;
+
+// The General Ledger service definition.
+service GeneralLedger {
+	// Load Accounting Combination
+	rpc getAccountingCombination(GetAccountingCombinationRequest) returns (data.Entity) {}
+	// List Accounting Combinations
+	rpc ListAccountingCombinations(ListAccountingCombinationsRequest) returns (data.ListEntitiesResponse) {}
+	// Save Accounting Combination
+	rpc SaveAccountingCombination(SaveAccountingCombinationRequest) returns (data.Entity) {}
+}
+
+// Get Accounting Combination Request
+message GetAccountingCombinationRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
+	string value = 4;
+}
+
+// List Accounting Combination Request
+message ListAccountingCombinationsRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	// filters
+	string search_value = 4;
+	repeated data.KeyValue context_attributes = 5;
+	data.Criteria filters = 6;
+}
+
+// Save Accounting Combination Request
+message SaveAccountingCombinationRequest {
+	data.ClientRequest client_request = 1;
+	repeated data.KeyValue context_attributes = 2;
+	string uuid = 3;
+	int32 id = 4;
+	repeated data.KeyValue attributes = 5;
+}

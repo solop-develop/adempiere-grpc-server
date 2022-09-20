@@ -9,6 +9,7 @@ server:
        - ui
        - dashboarding
        - workflow
+       - general_ledger
        - log
        - store
        - pos

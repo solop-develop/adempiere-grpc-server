@@ -27,6 +27,7 @@ public enum Services {
     UI("ui"),
     DASHBOARDING("dashboarding"),
     WORKFLOW("workflow"),
+    GENERAL_LEDGER("general_ledger"),
     LOG("log"),
     STORE("store"),
     POS("pos"),

@@ -27,6 +27,7 @@ import org.spin.grpc.service.CoreFunctionalityImplementation;
 import org.spin.grpc.service.DashboardingServiceImplementation;
 import org.spin.grpc.service.DictionaryServiceImplementation;
 import org.spin.grpc.service.EnrollmentServiceImplementation;
+import org.spin.grpc.service.GeneralLedgerServiceImplementation;
 import org.spin.grpc.service.InOutServiceImplementation;
 import org.spin.grpc.service.InvoiceServiceImplementation;
 import org.spin.grpc.service.LogsServiceImplementation;
@@ -105,6 +106,11 @@ public class AllInOneServices {
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.WORKFLOW.getServiceName())) {
 			  serverBuilder.addService(new WorkflowServiceImplementation());
 			  logger.info("Service " + Services.WORKFLOW.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		  }
+		  //	General Ledger
+		  if(SetupLoader.getInstance().getServer().isValidService(Services.GENERAL_LEDGER.getServiceName())) {
+			  serverBuilder.addService(new GeneralLedgerServiceImplementation());
+			  logger.info("Service " + Services.GENERAL_LEDGER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		  }
 		  //	Log
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.LOG.getServiceName())) {

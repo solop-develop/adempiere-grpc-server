@@ -14,7 +14,7 @@ services:
     image: solopcloud/adempiere-backend
     restart: always
     environment:
-      - SERVICES_ENABLED=access; business; core; dashboarding; dictionary; enrollment; log; ui; workflow; store; pos; business_partner; in_out; invoice; order; payment; payroll_action_notice; product;
+      - SERVICES_ENABLED=access; business; core; dashboarding; dictionary; enrollment; general_ledger; log; ui; workflow; store; pos; business_partner; in_out; invoice; order; payment; payroll_action_notice; product;
       - DB_HOST=database
     ports:
       - 50059:50059
