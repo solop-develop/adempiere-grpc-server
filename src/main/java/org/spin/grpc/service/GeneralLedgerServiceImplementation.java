@@ -238,7 +238,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		int accoutingSchemaId = (int) contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID);
 		MAcctSchema accoutingSchema = MAcctSchema.get(context, accoutingSchemaId, null);
 
-		String accountingCombinationAlias = (String) contextAttributesList.get(MAccount.COLUMNNAME_Alias);
+		String accountingCombinationAlias = ValueUtil.validateNull((String) contextAttributesList.get(MAccount.COLUMNNAME_Alias));
 		
 		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accoutingSchema.getAcctSchemaElements());
 
@@ -248,7 +248,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		int clientId = Env.getContextAsInt(context, windowNo, MAccount.COLUMNNAME_AD_Client_ID);
 
 		int accountingCombinationId = 0;
-		String accountingAlias = null;
+		String accountingAlias = "";
 		try {
 			PreparedStatement pstmt = DB.prepareStatement(sql.toString(), null);
 			pstmt.setInt(1, clientId);
@@ -256,7 +256,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
 				accountingCombinationId = rs.getInt(1);
-				accountingAlias = rs.getString(2);
+				accountingAlias = ValueUtil.validateNull(rs.getString(2));
 			}
 			rs.close();
 			pstmt.close();
@@ -264,9 +264,6 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		catch (SQLException e) {
 			log.log(Level.SEVERE, sql.toString(), e);
 			accountingCombinationId = 0;
-		}
-		if (accountingAlias == null) {
-			accountingAlias = "";
 		}
 
 		//	We have an account like this already - check alias
@@ -281,8 +278,11 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 				sql.append(" WHERE C_ValidCombination_ID=").append(accountingCombinationId);
 				int rowChanges = 0;
 				try {
-					PreparedStatement stmt = DB.prepareStatement(sql.toString(),
-							ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, null
+					PreparedStatement stmt = DB.prepareStatement(
+						sql.toString(),
+						ResultSet.TYPE_FORWARD_ONLY,
+						ResultSet.CONCUR_UPDATABLE,
+						null
 					);
 					rowChanges = stmt.executeUpdate();
 					stmt.close();
@@ -309,14 +309,6 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 	}
 	
 	private MAccount setAccoutingCombinationByAttributes(int clientId, int organizationId, int accoutingSchemaId, int accountId, Map<String, Object> attributesList) {
-//		int clientId = 0;
-//		if (attributesList.get(MAccount.COLUMNNAME_AD_Client_ID) != null) {
-//			clientId = (int) attributesList.get(MAccount.COLUMNNAME_AD_Client_ID);
-//		}
-//		int organizationId = 0;
-//		if (attributesList.get(MAccount.COLUMNNAME_AD_Org_ID) != null) {
-//			organizationId = (int) attributesList.get(MAccount.COLUMNNAME_AD_Org_ID);
-//		}
 		String accoutingAlias = null;
 		if (attributesList.get(MAccount.COLUMNNAME_Alias) != null) {
 			accoutingAlias = (String) attributesList.get(MAccount.COLUMNNAME_Alias);
