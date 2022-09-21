@@ -1146,10 +1146,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				MRole.SQL_RO);
 		String orderByClause = criteria.getOrderByClause();
 		if(Util.isEmpty(orderByClause)) {
-			// First Tab Level is not a detail 
-			if (tab.getTabLevel() == 0) {
-				
-			}
 			orderByClause = "";
 		} else {
 			orderByClause = " ORDER BY " + orderByClause;

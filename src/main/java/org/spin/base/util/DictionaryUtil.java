@@ -72,7 +72,7 @@ public class DictionaryUtil {
 			if(displayTypeId == 0) {
 				displayTypeId = column.getAD_Reference_ID();
 			}
-			if(DisplayType.isLookup(displayTypeId)) {
+			if (DisplayType.isLookup(displayTypeId) || DisplayType.Account == displayTypeId) {
 				//	Reference Value
 				int referenceValueId = field.getAD_Reference_Value_ID();
 				if(referenceValueId == 0) {
@@ -118,7 +118,7 @@ public class DictionaryUtil {
 		for (MColumn column : columnsList) {
 			int displayTypeId = column.getAD_Reference_ID();
 
-			if (DisplayType.isLookup(displayTypeId)) {
+			if (DisplayType.isLookup(displayTypeId) || DisplayType.Account == displayTypeId) {
 				//	Reference Value
 				int referenceValueId = column.getAD_Reference_Value_ID();
 

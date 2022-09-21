@@ -22,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.compiere.model.I_AD_Reference;
+import org.compiere.model.I_C_ValidCombination;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MTable;
@@ -69,7 +70,7 @@ public class ReferenceUtil {
 	 * @return
 	 */
 	public static boolean validateReference(int referenceId) {
-		if(!DisplayType.isLookup(referenceId)) {
+		if(!DisplayType.isLookup(referenceId) && DisplayType.Account != referenceId) {
 			return false;
 		}
 		return true;
@@ -91,7 +92,15 @@ public class ReferenceUtil {
 		ReferenceInfo referenceInfo = referenceInfoMap.get(key);
 		Language languageValue = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
 		if(referenceInfo == null) {
-			if(DisplayType.TableDir == referenceId
+			if (DisplayType.Account == referenceId) {
+				//	Add Display
+				referenceInfo = new ReferenceInfo();
+				referenceInfo.setColumnName(columnName);
+				referenceInfo.setTableName(I_C_ValidCombination.Table_Name);
+				referenceInfo.setDisplayColumnValue(I_C_ValidCombination.COLUMNNAME_Combination);
+				referenceInfo.setTableAlias(I_C_ValidCombination.Table_Name + "_" + columnName);
+				referenceInfo.setJoinColumnName(I_C_ValidCombination.COLUMNNAME_C_ValidCombination_ID);
+			} else if(DisplayType.TableDir == referenceId
 					|| referenceValueId == 0) {
 				//	Add Display
 				referenceInfo = new ReferenceInfo();
