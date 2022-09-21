@@ -1012,6 +1012,13 @@ public class ConvertUtil {
 				})
 				.findFirst()
 				.get();
+		} else {
+			uom = new MUOMConversion(Env.getCtx(), 0, null);
+			uom.setC_UOM_ID(orderLine.getC_UOM_ID());
+			uom.setC_UOM_To_ID(orderLine.getC_UOM_ID());
+			uom.setMultiplyRate(Env.ONE);
+			uom.setDivideRate(Env.ONE);
+			productUom = uom;
 		}
 
 		int standardPrecision = priceList.getStandardPrecision();
