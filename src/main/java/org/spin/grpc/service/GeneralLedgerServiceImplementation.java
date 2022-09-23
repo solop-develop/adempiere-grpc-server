@@ -72,7 +72,6 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -80,7 +79,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 	private Entity.Builder convertAccountingCombination(GetAccountingCombinationRequest request) {
 		// Validate ID
-		if(request.getId() == 0 && Util.isEmpty(request.getUuid())) {
+		if(request.getId() == 0 && Util.isEmpty(request.getUuid()) && Util.isEmpty(request.getValue())) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		Properties context = ContextManager.getContext(request.getClientRequest());
@@ -98,9 +97,19 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 				)
 				.setParameters(request.getUuid())
 				.firstOnly();
+		} else if (!Util.isEmpty(request.getValue(), true)) {
+			// Value as combination
+			accoutingCombination = new Query(
+					context,
+					tableName,
+					MAccount.COLUMNNAME_Combination + " = ? ",
+					null
+				)
+				.setParameters(request.getValue())
+				.firstOnly();
 		}
 		if(accoutingCombination == null) {
-			throw new AdempiereException("@Error@ PO is null");
+			throw new AdempiereException("@Error@ @AccountCombination@ @not.found@");
 		}
 
 		Entity.Builder entityBuilder = ConvertUtil.convertEntity(accoutingCombination);
@@ -122,7 +131,6 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -207,7 +215,6 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
