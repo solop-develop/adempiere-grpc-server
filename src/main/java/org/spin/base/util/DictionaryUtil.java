@@ -36,7 +36,6 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
-import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
@@ -72,7 +71,7 @@ public class DictionaryUtil {
 			if(displayTypeId == 0) {
 				displayTypeId = column.getAD_Reference_ID();
 			}
-			if (ValueUtil.isLookup(displayTypeId)) {
+			if (ReferenceUtil.validateReference(displayTypeId)) {
 				//	Reference Value
 				int referenceValueId = field.getAD_Reference_Value_ID();
 				if(referenceValueId == 0) {
@@ -81,7 +80,6 @@ public class DictionaryUtil {
 				//	Validation Code
 				String columnName = column.getColumnName();
 				String tableName = table.getTableName();
-				queryToAdd.append(", ");
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
 					Env.getCtx()).getReferenceInfo(displayTypeId,
 					referenceValueId,
@@ -90,6 +88,7 @@ public class DictionaryUtil {
 					tableName
 				);
 				if(referenceInfo != null) {
+					queryToAdd.append(", ");
 					String displayedColumn = referenceInfo.getDisplayValue(columnName);
 					queryToAdd.append(displayedColumn);
 					String joinClause = referenceInfo.getJoinValue(columnName, tableName);
@@ -118,13 +117,12 @@ public class DictionaryUtil {
 		for (MColumn column : columnsList) {
 			int displayTypeId = column.getAD_Reference_ID();
 
-			if (ValueUtil.isLookup(displayTypeId)) {
+			if (ReferenceUtil.validateReference(displayTypeId)) {
 				//	Reference Value
 				int referenceValueId = column.getAD_Reference_Value_ID();
 
 				String columnName = column.getColumnName();
 				String tableName = table.getTableName();
-				queryToAdd.append(", ");
 
 				//	Validation Code
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
@@ -132,6 +130,7 @@ public class DictionaryUtil {
 					tableName
 				);
 				if(referenceInfo != null) {
+					queryToAdd.append(", ");
 					queryToAdd.append(referenceInfo.getDisplayValue(columnName));
 					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableName));
 				}
@@ -361,7 +360,7 @@ public class DictionaryUtil {
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 		for (MBrowseField browseField : ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID())) {
 			int displayTypeId = browseField.getAD_Reference_ID();
-			if(ValueUtil.isLookup(displayTypeId)) {
+			if (ReferenceUtil.validateReference(displayTypeId)) {
 				//	Reference Value
 				int referenceValueId = browseField.getAD_Reference_Value_ID();
 				//	Validation Code
@@ -375,9 +374,9 @@ public class DictionaryUtil {
 					MColumn column = MColumn.get(Env.getCtx(), viewColumn.getAD_Column_ID());
 					columnName = column.getColumnName();
 				}
-				queryToAdd.append(", ");
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx()).getReferenceInfo(displayTypeId, referenceValueId, columnName, Env.getAD_Language(Env.getCtx()), tableName);
 				if(referenceInfo != null) {
+					queryToAdd.append(", ");
 					queryToAdd.append(referenceInfo.getDisplayValue(viewColumn.getColumnName()));
 					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableName));
 				}
