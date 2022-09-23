@@ -72,7 +72,7 @@ public class DictionaryUtil {
 			if(displayTypeId == 0) {
 				displayTypeId = column.getAD_Reference_ID();
 			}
-			if (DisplayType.isLookup(displayTypeId) || DisplayType.Account == displayTypeId) {
+			if (ValueUtil.isLookup(displayTypeId)) {
 				//	Reference Value
 				int referenceValueId = field.getAD_Reference_Value_ID();
 				if(referenceValueId == 0) {
@@ -118,7 +118,7 @@ public class DictionaryUtil {
 		for (MColumn column : columnsList) {
 			int displayTypeId = column.getAD_Reference_ID();
 
-			if (DisplayType.isLookup(displayTypeId) || DisplayType.Account == displayTypeId) {
+			if (ValueUtil.isLookup(displayTypeId)) {
 				//	Reference Value
 				int referenceValueId = column.getAD_Reference_Value_ID();
 
@@ -361,7 +361,7 @@ public class DictionaryUtil {
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 		for (MBrowseField browseField : ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID())) {
 			int displayTypeId = browseField.getAD_Reference_ID();
-			if(DisplayType.isLookup(displayTypeId)) {
+			if(ValueUtil.isLookup(displayTypeId)) {
 				//	Reference Value
 				int referenceValueId = browseField.getAD_Reference_Value_ID();
 				//	Validation Code

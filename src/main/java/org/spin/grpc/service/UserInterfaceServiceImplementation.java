@@ -2455,7 +2455,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				log.warning(e.getLocalizedMessage());
 			}
 		}
-		if(DisplayType.isLookup(referenceId)) {
+		if(ValueUtil.isLookup(referenceId)) {
 			if(referenceId == DisplayType.List) {
 				MRefList referenceList = MRefList.get(Env.getCtx(), referenceValueId, String.valueOf(defaultValueAsObject), null);
 				builder = convertDefaultValueFromResult(referenceList.getValue(), referenceList.getUUID(), referenceList.getValue(), referenceList.get_Translation(MRefList.COLUMNNAME_Name));

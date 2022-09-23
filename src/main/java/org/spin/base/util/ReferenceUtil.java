@@ -70,10 +70,10 @@ public class ReferenceUtil {
 	 * @return
 	 */
 	public static boolean validateReference(int referenceId) {
-		if(!DisplayType.isLookup(referenceId) && DisplayType.Account != referenceId) {
-			return false;
+		if(DisplayType.isLookup(referenceId) || DisplayType.Account == referenceId) {
+			return true;
 		}
-		return true;
+		return false;
 	}
 	
 	/**
@@ -143,6 +143,9 @@ public class ReferenceUtil {
 			return null;
 		}
 		MLookupInfo lookupInformation = null;
+		if (DisplayType.Account == referenceId) {
+			columnName = I_C_ValidCombination.COLUMNNAME_C_ValidCombination_ID;
+		}
 		if(DisplayType.TableDir == referenceId
 				|| referenceValueId <= 0) {
 			//	Add Display
