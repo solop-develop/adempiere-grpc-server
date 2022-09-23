@@ -402,8 +402,13 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 				throw new AdempiereException("@" + columnName + "@ @IsMandatory@");
 			}
 
+			// The alias does not affect the query criteria
+			if (columnName == MAccount.COLUMNNAME_Alias) {
+				return;
+			}
+
 			sql.append(" AND ").append(columnName);
-			if (value == null) {
+			if (value == null || (value instanceof String && Util.isEmpty((String) value))) {
 				sql.append(" IS NULL ");
 			} else {
 				sql.append(" = ").append(value);
