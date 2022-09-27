@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 import org.compiere.model.I_AD_Reference;
 import org.compiere.model.I_C_ValidCombination;
+import org.compiere.model.MColumn;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MTable;
@@ -113,7 +114,11 @@ public class ReferenceUtil {
 				if(lookupInfo != null) {
 					referenceInfo = new ReferenceInfo();
 					referenceInfo.setColumnName(columnName);
-					referenceInfo.setDisplayColumnValue((lookupInfo.DisplayColumn == null? "": lookupInfo.DisplayColumn).replace(lookupInfo.TableName + ".", ""));
+					String displayColumn = "";
+					if (!Util.isEmpty(lookupInfo.DisplayColumn, true)) {
+						displayColumn = (lookupInfo.DisplayColumn).replace(lookupInfo.TableName + ".", "");
+					}
+					referenceInfo.setDisplayColumnValue(displayColumn);
 					referenceInfo.setJoinColumnName((lookupInfo.KeyColumn == null? "": lookupInfo.KeyColumn).replace(lookupInfo.TableName + ".", ""));
 					referenceInfo.setTableName(lookupInfo.TableName);
 					if(DisplayType.List == referenceId
@@ -122,7 +127,11 @@ public class ReferenceUtil {
 					}
 					//	Translate
 					if(MTable.hasTranslation(lookupInfo.TableName)) {
-						referenceInfo.setLanguage(language);
+						// display column exists on translation table
+						int columnId = MColumn.getColumn_ID(lookupInfo.TableName + DictionaryUtil.TRANSLATION_SUFFIX, displayColumn);
+						if (columnId > 0) {
+							referenceInfo.setLanguage(language);
+						}
 					}
 				}
 			}

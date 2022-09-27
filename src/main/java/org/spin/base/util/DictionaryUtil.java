@@ -50,6 +50,8 @@ public class DictionaryUtil {
 	
 	public static String ID_PREFIX = "_ID";
 	
+	public static String TRANSLATION_SUFFIX = "_Trl";
+	
 	/**
 	 * Add references to original query from tab
 	 * @param originalQuery
