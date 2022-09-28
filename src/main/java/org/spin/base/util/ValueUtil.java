@@ -123,6 +123,16 @@ public class ValueUtil {
 	public static Value.Builder getValueFromBoolean(Boolean value) {
 		return Value.newBuilder().setBooleanValue(value.booleanValue()).setValueType(ValueType.BOOLEAN);
 	}
+	/**
+	 * Get value from a String Boolean value
+	 * @param value
+	 * @return
+	 */
+	public static Value.Builder getValueFromBoolean(String value) {
+		return Value.newBuilder()
+			.setBooleanValue(stringToBoolean(value))
+			.setValueType(ValueType.BOOLEAN);
+	}
 
 	/**
 	 * Get value from a date

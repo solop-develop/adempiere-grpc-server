@@ -55,6 +55,7 @@ import org.adempiere.model.MViewColumn;
 import org.adempiere.model.MViewDefinition;
 import org.adempiere.model.ZoomInfoFactory;
 import org.compiere.model.Callout;
+import org.compiere.model.CalloutOrder;
 import org.compiere.model.GridField;
 import org.compiere.model.GridFieldVO;
 import org.compiere.model.GridTab;
@@ -3150,11 +3151,74 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				gridField.setValue(ValueUtil.getObjectFromValue(request.getValue()), false);
 				//	Run it
 				String result = processCallout(windowNo, gridTab, gridField);
-				Arrays.asList(gridTab.getFields()).stream().filter(fieldValue -> isValidChange(fieldValue))
-				.forEach(fieldValue -> calloutBuilder.putValues(fieldValue.getColumnName(), ValueUtil.getValueFromObject(fieldValue.getValue()).build()));
+				Arrays.asList(gridTab.getFields()).stream()
+					.filter(fieldValue -> isValidChange(fieldValue))
+					.forEach(fieldValue -> {
+						Value.Builder valueBuilder = ValueUtil.getValueFromReference(fieldValue.getValue(), fieldValue.getDisplayType());
+						calloutBuilder.putValues(fieldValue.getColumnName(), valueBuilder.build());
+					});
 				calloutBuilder.setResult(ValueUtil.validateNull(result));
+				
+				setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
 			}
 		});
+		return calloutBuilder;
+	}
+
+	/**
+	 * Set additonal context used by callouts
+	 * TODO: Remove this method on future
+	 * @param calloutClass
+	 * @param windowNo
+	 * @param calloutBuilder
+	 * @return
+	 */
+	private org.spin.backend.grpc.common.Callout.Builder setAdditionalContext(String calloutClass, int windowNo,
+		org.spin.backend.grpc.common.Callout.Builder calloutBuilder) {
+		Class<CalloutOrder> clazz = org.compiere.model.CalloutOrder.class;
+		String className = clazz.getName();
+
+		if (calloutClass.startsWith(className)) {
+			if (calloutClass.equals("org.compiere.model.CalloutOrder.docType")) {
+				// - OrderType
+				String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
+				calloutBuilder.putValues("OrderType", ValueUtil.getValueFromString(docSubTypeSO).build());
+
+				// - HasCharges
+				String hasCharges =  Env.getContext(Env.getCtx(), windowNo, "HasCharges");
+				calloutBuilder.putValues("HasCharges", ValueUtil.getValueFromBoolean(hasCharges).build());
+			}
+			else if (calloutClass.equals("org.compiere.model.CalloutOrder.priceList")) {
+				// - M_PriceList_Version_ID
+				int priceListVersionId =  Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
+				calloutBuilder.putValues("M_PriceList_Version_ID", ValueUtil.getValueFromInteger(priceListVersionId).build());
+			}
+			else if (calloutClass.equals("org.compiere.model.CalloutOrder.product")) {
+				// - M_PriceList_Version_ID
+				int priceListVersionId =  Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
+				calloutBuilder.putValues("M_PriceList_Version_ID", ValueUtil.getValueFromInteger(priceListVersionId).build());
+				
+				// - DiscountSchema
+				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
+				calloutBuilder.putValues("DiscountSchema", ValueUtil.getValueFromBoolean(isDiscountSchema).build());
+			}
+			else if (calloutClass.equals("org.compiere.model.CalloutOrder.charge")) {
+				// - DiscountSchema
+				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
+				calloutBuilder.putValues("DiscountSchema", ValueUtil.getValueFromBoolean(isDiscountSchema).build());
+			}
+			else if (calloutClass.equals("org.compiere.model.CalloutOrder.amt")) {
+				// - DiscountSchema
+				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
+				calloutBuilder.putValues("DiscountSchema", ValueUtil.getValueFromBoolean(isDiscountSchema).build());
+			}
+			else if (calloutClass.equals("org.compiere.model.CalloutOrder.qty")) {
+				// - UOMConversion
+				String isConversion = Env.getContext(Env.getCtx(), "UOMConversion");
+				calloutBuilder.putValues("UOMConversion", ValueUtil.getValueFromBoolean(isConversion).build());
+			}
+		}
+
 		return calloutBuilder;
 	}
 	
