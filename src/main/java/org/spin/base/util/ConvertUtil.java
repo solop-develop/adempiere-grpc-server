@@ -1035,7 +1035,7 @@ public class ConvertUtil {
 				.setWarehouse(convertWarehouse(orderLine.getM_Warehouse_ID()))
 				.setQuantity(ValueUtil.getDecimalFromBigDecimal(quantityEntered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setQuantityOrdered(ValueUtil.getDecimalFromBigDecimal(quantityOrdered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
-				.setAvailableQuantity(ValueUtil.getDecimalFromBigDecimal(availableQuantity.setScale(standardPrecision)))
+				.setAvailableQuantity(ValueUtil.getDecimalFromBigDecimal(availableQuantity.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP)))
 				//	Prices
 				.setPriceList(ValueUtil.getDecimalFromBigDecimal(priceListAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
