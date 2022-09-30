@@ -37,7 +37,7 @@ import io.grpc.stub.StreamObserver;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service for Paryroll Action Notice Form
+ * Service for Material Management
  */
 public class MaterialManagementServiceImplementation extends MaterialManagementImplBase {
 	/**	Logger			*/

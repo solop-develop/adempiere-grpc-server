@@ -6,6 +6,7 @@ server:
        - dictionary
        - business
        - core
+       - material_management
        - ui
        - dashboarding
        - workflow
