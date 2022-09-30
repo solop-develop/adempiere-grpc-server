@@ -31,6 +31,7 @@ import org.spin.grpc.service.GeneralLedgerServiceImplementation;
 import org.spin.grpc.service.InOutServiceImplementation;
 import org.spin.grpc.service.InvoiceServiceImplementation;
 import org.spin.grpc.service.LogsServiceImplementation;
+import org.spin.grpc.service.MaterialManagementServiceImplementation;
 import org.spin.grpc.service.OrderServiceImplementation;
 import org.spin.grpc.service.PaymentServiceImplementation;
 import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
@@ -117,6 +118,11 @@ public class AllInOneServices {
 			  serverBuilder.addService(new LogsServiceImplementation());
 			  logger.info("Service " + Services.LOG.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		  }
+          //    Material Management
+          if(SetupLoader.getInstance().getServer().isValidService(Services.MATERIAL_MANAGEMENT.getServiceName())) {
+              serverBuilder.addService(new MaterialManagementServiceImplementation());
+              logger.info("Service " + Services.MATERIAL_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+          }
 		  //	Store
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.STORE.getServiceName())) {
 			  serverBuilder.addService(new WebStoreServiceImplementation());

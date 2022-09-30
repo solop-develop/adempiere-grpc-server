@@ -7,7 +7,7 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
@@ -21,17 +21,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.I_AD_Table;
+import org.compiere.model.I_Fact_Acct;
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
+import org.compiere.process.DocumentEngine;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -41,12 +45,18 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
+
+import org.spin.backend.grpc.common.Condition;
+import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.general_ledger.GeneralLedgerGrpc.GeneralLedgerImplBase;
 import org.spin.backend.grpc.general_ledger.GetAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingCombinationsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccoutingFactsRequest;
 import org.spin.backend.grpc.general_ledger.SaveAccountingCombinationRequest;
+import org.spin.backend.grpc.general_ledger.StartRePostRequest;
+import org.spin.backend.grpc.general_ledger.StartRePostResponse;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -474,6 +484,169 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 				break;
 		}
 		return columnName;
+	}
+
+
+	@Override
+	public void startRePost(StartRePostRequest request, StreamObserver<StartRePostResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			StartRePostResponse.Builder builder = convertStartRePost(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+	
+	private StartRePostResponse.Builder convertStartRePost(StartRePostRequest request) {
+		String tableName = ValueUtil.validateNull(request.getTableName());
+		if (Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		// Validate ID
+		if (request.getRecordId() <= 0 && Util.isEmpty(request.getRecordUuid())) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		int recordId = request.getRecordId();
+		if (recordId <= 0) {
+			String recordUuid = ValueUtil.validateNull(request.getRecordUuid());
+			recordId = RecordUtil.getIdFromUuid(tableName, recordUuid, null);
+		}
+
+		StartRePostResponse.Builder rePostBuilder = StartRePostResponse.newBuilder();
+
+		int clientId = Env.getAD_Client_ID(Env.getCtx());
+		int tableId = MTable.getTable_ID(request.getTableName());
+
+		String errorMessage = DocumentEngine.postImmediate(
+			Env.getCtx(), clientId,
+			tableId,
+			recordId,
+			request.getIsForce(),
+			null
+		);
+		if (!Util.isEmpty(errorMessage, true)) {
+			rePostBuilder.setErrorMsg(errorMessage);
+		}
+		
+		return rePostBuilder;
+	}
+
+	@Override
+	public void listAccoutingFacts(ListAccoutingFactsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListEntitiesResponse.Builder entitiesList = convertListAccountingFacts(request);
+			responseObserver.onNext(entitiesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+	
+	ListEntitiesResponse.Builder convertListAccountingFacts(ListAccoutingFactsRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		ArrayList<Condition> conditionsList = new ArrayList<Condition>(request.getFilters().getConditionsList());
+		Optional<Condition> maybeAccoutingSchemaId  = conditionsList.stream()
+			.filter(condition -> {
+				return condition.getColumnName().equals(I_Fact_Acct.COLUMNNAME_C_AcctSchema_ID);
+			})
+			.findFirst();
+		if (maybeAccoutingSchemaId.isEmpty()) {
+			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+		}
+
+		String tableName = request.getTableName();
+		int tableId = -1;
+		if (!Util.isEmpty(tableName, true)) {
+			tableId = MTable.getTable_ID(tableName);
+			if (tableId > 0) {
+				org.spin.backend.grpc.common.Value.Builder tableIdValue = ValueUtil.getValueFromInt(tableId);
+				Condition.Builder tableCondition = Condition.newBuilder()
+					.setColumnName(I_Fact_Acct.COLUMNNAME_AD_Table_ID)
+					.setValue(tableIdValue);
+				conditionsList.add(0, tableCondition.build());
+
+				// record
+				int recordId = request.getRecordId();
+				if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid())) {
+					recordId = RecordUtil.getIdFromUuid(tableName, request.getRecordUuid(), null);
+				}
+				if (recordId > 0) {
+					org.spin.backend.grpc.common.Value.Builder recordIdValue = ValueUtil.getValueFromInt(recordId);
+					Condition.Builder recordCondition = Condition.newBuilder()
+						.setColumnName(I_Fact_Acct.COLUMNNAME_Record_ID)
+						.setValue(recordIdValue);
+					conditionsList.add(0, recordCondition.build());
+				}
+			}
+		}
+		
+		Criteria.Builder filter = Criteria.newBuilder();
+		filter.addAllConditions(conditionsList);
+
+		//
+		MTable table = MTable.get(context, I_Fact_Acct.Table_Name);
+
+		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
+		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
+
+		// For dynamic condition
+		List<Object> params = new ArrayList<>(); // includes on filters criteria
+		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(filter.build(), table.getTableName(), params);
+		if (!Util.isEmpty(dynamicWhere, true)) {
+			//  Add includes first AND
+			whereClause.append(" AND ")
+				.append(dynamicWhere);
+		}
+		sql.append(whereClause);
+
+		// add where with access restriction
+		String parsedSQL = MRole.getDefault(context, false)
+			.addAccessSQL(sql.toString(),
+				null,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
+
+		//  Get page and count
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int count = 0;
+ 
+		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
+
+		//  Count records
+		count = RecordUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, params);
+		//  Add Row Number
+		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
+		builder = RecordUtil.convertListEntitiesResult(MTable.get(context, I_Fact_Acct.Table_Name), parsedSQL, params);
+		//
+		builder.setRecordCount(count);
+		//  Set page token
+		String nexPageToken = null;
+		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		//  Set next page
+		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+
+		return builder;
 	}
 
 }

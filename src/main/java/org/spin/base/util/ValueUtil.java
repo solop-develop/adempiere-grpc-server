@@ -97,6 +97,17 @@ public class ValueUtil {
 		//	default
 		return convertedValue;
 	}
+    /**
+     * Get value from Int
+     * @param value
+     * @return
+     */
+    public static Value.Builder getValueFromInt(int value) {
+        Value.Builder convertedValue = Value.newBuilder().setValueType(ValueType.INTEGER);
+        convertedValue.setIntValue(Integer.valueOf(value));
+        //  default
+        return convertedValue;
+    }
 	
 	/**
 	 * Get value from a string

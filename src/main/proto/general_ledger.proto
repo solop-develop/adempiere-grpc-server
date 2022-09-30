@@ -33,6 +33,10 @@ service GeneralLedger {
 	rpc ListAccountingCombinations(ListAccountingCombinationsRequest) returns (data.ListEntitiesResponse) {}
 	// Save Accounting Combination
 	rpc SaveAccountingCombination(SaveAccountingCombinationRequest) returns (data.Entity) {}
+	// List Accouting Facts
+	rpc ListAccoutingFacts(ListAccoutingFactsRequest) returns (data.ListEntitiesResponse) {}
+	// Start Re-Post
+	rpc StartRePost(StartRePostRequest) returns (StartRePostResponse) {}
 }
 
 // Get Accounting Combination Request
@@ -61,4 +65,30 @@ message SaveAccountingCombinationRequest {
 	string uuid = 3;
 	int32 id = 4;
 	repeated data.KeyValue attributes = 5;
+}
+
+// List Accouting Facts Request
+message ListAccoutingFactsRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	// filters
+	string table_name = 4;
+	int32 record_id = 5;
+	string record_uuid = 6;
+	data.Criteria filters = 7;
+}
+
+// Start Re-Post Request
+message StartRePostRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	int32 record_id = 3;
+	string record_uuid = 4;
+	bool is_force = 5;
+}
+
+// Start Re-Post Response
+message StartRePostResponse {
+	string error_msg = 4;
 }

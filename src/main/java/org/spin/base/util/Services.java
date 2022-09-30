@@ -24,6 +24,7 @@ public enum Services {
     DICTIONARY("dictionary"),
     BUSINESS("business"),
     CORE("core"),
+    MATERIAL_MANAGEMENT("materia_management"),
     UI("ui"),
     DASHBOARDING("dashboarding"),
     WORKFLOW("workflow"),

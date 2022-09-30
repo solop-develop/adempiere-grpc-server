@@ -23,7 +23,7 @@ services:
     ports:
       - "50059:50059"
     environment:
-      - SERVICES_ENABLED=access; business; core; dashboarding; dictionary; enrollment; general_ledger; log; ui; workflow; store; pos; business_partner; in_out; invoice; order; payment; payroll_action_notice; product;
+      - SERVICES_ENABLED=access; business; core; dashboarding; dictionary; enrollment; general_ledger; log; ui; workflow; store; pos; business_partner; in_out; invoice; material_management; order; payment; payroll_action_notice; product;
       - DB_HOST=adempiere.db
     depends_on:
       - adempiere.db
