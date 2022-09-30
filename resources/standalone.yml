@@ -21,6 +21,7 @@ server:
        - payment
        - product
        - payroll_action_notice
+       - time_control
     log_level: WARNING
 database:
     host: localhost

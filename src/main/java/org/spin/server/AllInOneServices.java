@@ -37,6 +37,7 @@ import org.spin.grpc.service.PaymentServiceImplementation;
 import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
 import org.spin.grpc.service.PointOfSalesServiceImplementation;
 import org.spin.grpc.service.ProductServiceImplementation;
+import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.grpc.service.UpdateImplementation;
 import org.spin.grpc.service.UserInterfaceServiceImplementation;
 import org.spin.grpc.service.WebStoreServiceImplementation;
@@ -173,6 +174,11 @@ public class AllInOneServices {
 			serverBuilder.addService(new PayrollActionNoticeServiceImplementation());
 			logger.info("Service " + Services.PAYROLL_ACTION_NOTICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
+        //  Time Control
+        if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {
+            serverBuilder.addService(new TimeControlServiceImplementation());
+            logger.info("Service " + Services.TIME_CONTROL.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+        }
 
 		  //	Add services
 		  if(SetupLoader.getInstance().getServer().isTlsEnabled()) {

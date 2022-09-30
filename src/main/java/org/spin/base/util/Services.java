@@ -27,7 +27,6 @@ public enum Services {
     MATERIAL_MANAGEMENT("material_management"),
     UI("ui"),
     DASHBOARDING("dashboarding"),
-    WORKFLOW("workflow"),
     GENERAL_LEDGER("general_ledger"),
     LOG("log"),
     STORE("store"),
@@ -40,7 +39,9 @@ public enum Services {
     ORDER("order"),
     PAYMENT("payment"),
     PAYROLL_ACTION_NOTICE("payroll_action_notice"),
-    PRODUCT("product");
+    PRODUCT("product"),
+    TIME_CONTROL("time_control"),
+    WORKFLOW("workflow");
 
 	/**	Service Name	*/
     private final String serviceName;
