@@ -304,11 +304,16 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		int roleId = -1;
 		int organizationId = -1;
 		int warehouseId = -1;
+		if (request.getRoleId() >= 0) {
+			roleId = request.getRoleId();
+		}
 		if(!Util.isEmpty(request.getToken())) {
 			MADToken token = SessionManager.getSessionFromToken(request.getToken());
 			if(Optional.ofNullable(token).isPresent()) {
 				userId = token.getAD_User_ID();
-				roleId = token.getAD_Role_ID();
+				if (roleId < 0) {
+					roleId = token.getAD_Role_ID();
+				}
 				organizationId = token.getAD_Org_ID();
 			}
 		} else {
