@@ -97,6 +97,17 @@ public class ValueUtil {
 		//	default
 		return convertedValue;
 	}
+	/**
+	 * Get value from Int
+	 * @param value
+	 * @return
+	 */
+	public static Value.Builder getValueFromInt(int value) {
+		Value.Builder convertedValue = Value.newBuilder().setValueType(ValueType.INTEGER);
+		convertedValue.setIntValue(Integer.valueOf(value));
+		// default
+		return convertedValue;
+	}
 	
 	/**
 	 * Get value from a string
@@ -122,6 +133,16 @@ public class ValueUtil {
 	 */
 	public static Value.Builder getValueFromBoolean(Boolean value) {
 		return Value.newBuilder().setBooleanValue(value.booleanValue()).setValueType(ValueType.BOOLEAN);
+	}
+	/**
+	 * Get value from a String Boolean value
+	 * @param value
+	 * @return
+	 */
+	public static Value.Builder getValueFromBoolean(String value) {
+		return Value.newBuilder()
+			.setBooleanValue(stringToBoolean(value))
+			.setValueType(ValueType.BOOLEAN);
 	}
 
 	/**

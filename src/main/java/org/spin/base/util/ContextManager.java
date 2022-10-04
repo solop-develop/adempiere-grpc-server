@@ -36,8 +36,8 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.dictionary.ApplicationRequest;
 import org.spin.backend.grpc.client.ClientRequest;
+import org.spin.backend.grpc.dictionary.ApplicationRequest;
 
 /**
  * Class for handle Context

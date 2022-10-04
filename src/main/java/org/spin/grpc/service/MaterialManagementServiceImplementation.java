@@ -10,131 +10,105 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.I_M_InOut;
-import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.util.CLogger;
-import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ValueUtil;
+
 import org.spin.backend.grpc.common.ListEntitiesResponse;
-import org.spin.backend.grpc.inout.InOutGrpc.InOutImplBase;
-import org.spin.backend.grpc.inout.ListInOutInfoRequest;
+import org.spin.backend.grpc.material_management.ListProductStorageRequest;
+import org.spin.backend.grpc.material_management.MaterialManagementGrpc.MaterialManagementImplBase;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service for backend of Update Center
+ * Service for Material Management
  */
-public class InOutServiceImplementation extends InOutImplBase {
+public class MaterialManagementServiceImplementation extends MaterialManagementImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(InOutServiceImplementation.class);
-	
-	public String tableName = I_M_InOut.Table_Name;
+	private CLogger log = CLogger.getCLogger(MaterialManagementServiceImplementation.class);
 
+	
 	@Override
-	public void listInOutInfo(ListInOutInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+	public void listProductStorage(ListProductStorageRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getClientRequest());
-			ListEntitiesResponse.Builder entityValueList = convertEntitiesListFronGeneralInfo(context, request);
-			responseObserver.onNext(entityValueList.build());
+			ListEntitiesResponse.Builder entitiesList = convertListAccountingCombinations(request);
+			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
 	}
-	
-	/**
-	 * Get default value base on field, process parameter, browse field or column
-	 * @param request
-	 * @return
-	 */
-	private ListEntitiesResponse.Builder convertEntitiesListFronGeneralInfo(Properties context, ListInOutInfoRequest request) {		
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			request.getReferenceUuid(),
-			request.getFieldUuid(),
-			request.getProcessParameterUuid(),
-			request.getBrowseFieldUuid(),
-			request.getColumnUuid(),
-			request.getColumnName(),
-			this.tableName
-		);
-		
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
+	private ListEntitiesResponse.Builder convertListAccountingCombinations(ListProductStorageRequest request) {
 		//
-		MTable table = MTable.get(context, this.tableName);
+		String tableName = "RV_Storage";
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		MTable table = MTable.get(context, tableName);
 		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
 		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
-		// validation code of field
-		String parsedValidationCode = Env.parseContext(context, windowNo, reference.ValidationCode, false);
-		if (!Util.isEmpty(reference.ValidationCode)) {
-			if (Util.isEmpty(parsedValidationCode)) {
-				throw new AdempiereException("@WhereClause@ @Unparseable@");
-			}
-			whereClause.append(" AND ").append(parsedValidationCode);
-		}
-
 		//	For dynamic condition
 		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
-		if (!Util.isEmpty(dynamicWhere, true)) {
+		if (!Util.isEmpty(request.getTableName(), true)) {
+		    int recordId = request.getRecordId();
+		    if (recordId <= 0) {
+		        if (Util.isEmpty(request.getRecordUuid())) {
+		            
+		        }
+		        recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+		    }
 			//	Add includes first AND
 			whereClause.append(" AND ")
-				.append("(")
-				.append(dynamicWhere)
-				.append(")");
+				.append(" EXISTS(SELECT 1 FROM " + request.getTableName())
+				.append(" WHERE RV_Storage.M_Product_ID = ")
+				.append(request.getTableName() + ".M_Product_ID)");
 		}
-		
 		sql.append(whereClause); 
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sql.toString(), this.tableName, request.getSearchValue(), params);
 
 		// add where with access restriction
-		parsedSQL = MRole.getDefault(context, false)
-			.addAccessSQL(parsedSQL,
+		String parsedSQL = MRole.getDefault(context, false)
+			.addAccessSQL(sql.toString(),
 				null,
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
 			);
-		
+
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int count = 0;
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
-		
+
 		//	Count records
-		count = RecordUtil.countRecords(parsedSQL, this.tableName, params);
+		count = RecordUtil.countRecords(parsedSQL, tableName, params);
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(context, this.tableName), parsedSQL, params);
+		builder = RecordUtil.convertListEntitiesResult(MTable.get(context, tableName), parsedSQL, params);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -144,7 +118,7 @@ public class InOutServiceImplementation extends InOutImplBase {
 		}
 		//	Set next page
 		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
-		
+
 		return builder;
 	}
 

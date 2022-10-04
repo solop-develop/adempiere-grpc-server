@@ -22,6 +22,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.compiere.model.I_AD_Reference;
+import org.compiere.model.I_C_ValidCombination;
+import org.compiere.model.MColumn;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MTable;
@@ -69,10 +71,10 @@ public class ReferenceUtil {
 	 * @return
 	 */
 	public static boolean validateReference(int referenceId) {
-		if(!DisplayType.isLookup(referenceId)) {
-			return false;
+		if(DisplayType.isLookup(referenceId) || DisplayType.Account == referenceId) {
+			return true;
 		}
-		return true;
+		return false;
 	}
 	
 	/**
@@ -91,7 +93,15 @@ public class ReferenceUtil {
 		ReferenceInfo referenceInfo = referenceInfoMap.get(key);
 		Language languageValue = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
 		if(referenceInfo == null) {
-			if(DisplayType.TableDir == referenceId
+			if (DisplayType.Account == referenceId) {
+				//	Add Display
+				referenceInfo = new ReferenceInfo();
+				referenceInfo.setColumnName(columnName);
+				referenceInfo.setTableName(I_C_ValidCombination.Table_Name);
+				referenceInfo.setDisplayColumnValue(I_C_ValidCombination.COLUMNNAME_Combination);
+				referenceInfo.setTableAlias(I_C_ValidCombination.Table_Name + "_" + columnName);
+				referenceInfo.setJoinColumnName(I_C_ValidCombination.COLUMNNAME_C_ValidCombination_ID);
+			} else if(DisplayType.TableDir == referenceId
 					|| referenceValueId == 0) {
 				//	Add Display
 				referenceInfo = new ReferenceInfo();
@@ -104,7 +114,11 @@ public class ReferenceUtil {
 				if(lookupInfo != null) {
 					referenceInfo = new ReferenceInfo();
 					referenceInfo.setColumnName(columnName);
-					referenceInfo.setDisplayColumnValue((lookupInfo.DisplayColumn == null? "": lookupInfo.DisplayColumn).replace(lookupInfo.TableName + ".", ""));
+					String displayColumn = "";
+					if (!Util.isEmpty(lookupInfo.DisplayColumn, true)) {
+						displayColumn = (lookupInfo.DisplayColumn).replace(lookupInfo.TableName + ".", "");
+					}
+					referenceInfo.setDisplayColumnValue(displayColumn);
 					referenceInfo.setJoinColumnName((lookupInfo.KeyColumn == null? "": lookupInfo.KeyColumn).replace(lookupInfo.TableName + ".", ""));
 					referenceInfo.setTableName(lookupInfo.TableName);
 					if(DisplayType.List == referenceId
@@ -113,7 +127,11 @@ public class ReferenceUtil {
 					}
 					//	Translate
 					if(MTable.hasTranslation(lookupInfo.TableName)) {
-						referenceInfo.setLanguage(language);
+						// display column exists on translation table
+						int columnId = MColumn.getColumn_ID(lookupInfo.TableName + DictionaryUtil.TRANSLATION_SUFFIX, displayColumn);
+						if (columnId > 0) {
+							referenceInfo.setLanguage(language);
+						}
 					}
 				}
 			}
@@ -134,6 +152,9 @@ public class ReferenceUtil {
 			return null;
 		}
 		MLookupInfo lookupInformation = null;
+		if (DisplayType.Account == referenceId) {
+			columnName = I_C_ValidCombination.COLUMNNAME_C_ValidCombination_ID;
+		}
 		if(DisplayType.TableDir == referenceId
 				|| referenceValueId <= 0) {
 			//	Add Display
@@ -152,8 +173,11 @@ public class ReferenceUtil {
 		String queryForLookup = lookupInformation.Query;
 		//	Add support to UUID
 		queryForLookup = getQueryWithUuid(lookupInformation.TableName, queryForLookup);
+		String directQuery = getQueryWithUuid(lookupInformation.TableName, lookupInformation.QueryDirect);
+
 		// set new query
 		lookupInformation.Query = queryForLookup;
+		lookupInformation.QueryDirect = directQuery;
 
 		MValRule validationRule = null;
 		//	For validation rule

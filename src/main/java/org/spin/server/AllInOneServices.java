@@ -27,14 +27,17 @@ import org.spin.grpc.service.CoreFunctionalityImplementation;
 import org.spin.grpc.service.DashboardingServiceImplementation;
 import org.spin.grpc.service.DictionaryServiceImplementation;
 import org.spin.grpc.service.EnrollmentServiceImplementation;
+import org.spin.grpc.service.GeneralLedgerServiceImplementation;
 import org.spin.grpc.service.InOutServiceImplementation;
 import org.spin.grpc.service.InvoiceServiceImplementation;
 import org.spin.grpc.service.LogsServiceImplementation;
+import org.spin.grpc.service.MaterialManagementServiceImplementation;
 import org.spin.grpc.service.OrderServiceImplementation;
 import org.spin.grpc.service.PaymentServiceImplementation;
 import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
 import org.spin.grpc.service.PointOfSalesServiceImplementation;
 import org.spin.grpc.service.ProductServiceImplementation;
+import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.grpc.service.UpdateImplementation;
 import org.spin.grpc.service.UserInterfaceServiceImplementation;
 import org.spin.grpc.service.WebStoreServiceImplementation;
@@ -106,11 +109,21 @@ public class AllInOneServices {
 			  serverBuilder.addService(new WorkflowServiceImplementation());
 			  logger.info("Service " + Services.WORKFLOW.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		  }
+		//	General Ledger
+		if(SetupLoader.getInstance().getServer().isValidService(Services.GENERAL_LEDGER.getServiceName())) {
+			serverBuilder.addService(new GeneralLedgerServiceImplementation());
+			logger.info("Service " + Services.GENERAL_LEDGER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		  //	Log
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.LOG.getServiceName())) {
 			  serverBuilder.addService(new LogsServiceImplementation());
 			  logger.info("Service " + Services.LOG.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		  }
+		//	Material Management
+		if(SetupLoader.getInstance().getServer().isValidService(Services.MATERIAL_MANAGEMENT.getServiceName())) {
+			serverBuilder.addService(new MaterialManagementServiceImplementation());
+			logger.info("Service " + Services.MATERIAL_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		  //	Store
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.STORE.getServiceName())) {
 			  serverBuilder.addService(new WebStoreServiceImplementation());
@@ -160,6 +173,11 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.PAYROLL_ACTION_NOTICE.getServiceName())) {
 			serverBuilder.addService(new PayrollActionNoticeServiceImplementation());
 			logger.info("Service " + Services.PAYROLL_ACTION_NOTICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Time Control
+		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {
+			serverBuilder.addService(new TimeControlServiceImplementation());
+			logger.info("Service " + Services.TIME_CONTROL.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 
 		  //	Add services

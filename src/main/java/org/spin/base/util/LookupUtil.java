@@ -55,8 +55,8 @@ public class LookupUtil {
 		if(keyValue == null) {
 			return builder;
 		}
-		builder.setUuid(ValueUtil.validateNull(uuidValue));
-	
+
+		// Key Column
 		if(keyValue instanceof Integer) {
 			builder.setId((Integer) keyValue);
 			builder.putValues(KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build());
@@ -71,7 +71,10 @@ public class LookupUtil {
 		if(!Util.isEmpty(displayValue)) {
 			builder.putValues(DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build());
 		}
-		//
+		// UUID Value
+		builder.setUuid(ValueUtil.validateNull(uuidValue));
+		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
+
 		return builder;
 	}
 
