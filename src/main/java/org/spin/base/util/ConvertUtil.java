@@ -119,6 +119,7 @@ import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.Shipment;
 import org.spin.backend.grpc.pos.ShipmentLine;
+import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.util.AttachmentUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MCPaymentMethod;
@@ -1061,6 +1062,7 @@ public class ConvertUtil {
 				.setTotalAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalAmountWithTax.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setUom(ConvertUtil.convertProductConversion(uom))
 			.setProductUom(ConvertUtil.convertProductConversion(productUom))
+			.setResourceAssignment(TimeControlServiceImplementation.convertResourceAssignment(orderLine.getS_ResourceAssignment_ID()))
 		;
 	}
 	
