@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.spin.backend.grpc.common.Condition.Operator;
 import org.spin.backend.grpc.client.ClientRequest;
+import org.spin.backend.grpc.common.Condition.Operator;
 import org.spin.backend.grpc.common.Condition;
 import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.ListEntitiesResponse;

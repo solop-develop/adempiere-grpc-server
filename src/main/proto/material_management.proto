@@ -1,0 +1,42 @@
+/************************************************************************************
+ * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.material_management";
+option java_outer_classname = "ADempiereMaterialManagement";
+
+import "client.proto";
+import "business.proto";
+
+package material_management;
+
+// The Material Management service definition.
+service MaterialManagement {
+	// List Product Storage
+	rpc ListProductStorage(ListProductStorageRequest) returns (data.ListEntitiesResponse) {}
+}
+
+// Get Accounting Combination Request
+message ListProductStorageRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	// filters
+	string table_name = 4;
+	int32 record_id = 5;
+	string record_uuid = 6;
+}
