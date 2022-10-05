@@ -25,6 +25,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MResource;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MResourceType;
+import org.compiere.model.MUOM;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -430,9 +431,15 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 			
 			long differenceTime = resourceAssignment.getAssignDateTo().getTime() - resourceAssignment.getAssignDateFrom().getTime();
 			long minutesDiff = TimeUnit.MILLISECONDS.toMinutes(differenceTime);
-	
-			BigDecimal quantity = BigDecimal.valueOf(minutesDiff).setScale(2);
-			quantity = quantity.divide(BigDecimal.valueOf(60).setScale(2), BigDecimal.ROUND_UP);
+
+			// get standard precision by unit of measure
+			MResource resource = new MResource(Env.getCtx(), resourceAssignment.getS_Resource_ID(), transactionName);
+			MResourceType resourceType = new MResourceType(Env.getCtx(), resource.getS_ResourceType_ID(), transactionName);
+			MUOM uom = MUOM.get(Env.getCtx(), resourceType.getC_UOM_ID());
+			int standardPrecision = uom.getStdPrecision();
+
+			BigDecimal quantity = BigDecimal.valueOf(minutesDiff).setScale(standardPrecision);
+			quantity = quantity.divide(BigDecimal.valueOf(60).setScale(standardPrecision), BigDecimal.ROUND_UP);
 			
 			resourceAssignment.setQty(quantity);
 			resourceAssignment.saveEx();
