@@ -16,12 +16,15 @@ package org.spin.grpc.service;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.I_S_ResourceType;
 import org.compiere.model.MResource;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MResourceType;
@@ -43,6 +46,7 @@ import org.spin.backend.grpc.time_control.ResourceType;
 import org.spin.backend.grpc.time_control.TimeControlGrpc.TimeControlImplBase;
 import org.spin.backend.grpc.time_control.UpdateResourceAssignmentRequest;
 import org.spin.base.util.ContextManager;
+import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 
@@ -72,6 +76,10 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 		builder.setValue(ValueUtil.validateNull(resourceType.getValue()));
 		builder.setName(ValueUtil.validateNull(resourceType.getName()));
 		builder.setDescription(ValueUtil.validateNull(resourceType.getDescription()));
+		
+		MUOM unitOfMeasure = MUOM.get(Env.getCtx(), resourceType.getC_UOM_ID());
+		builder.setUnitOfMeasure(ConvertUtil.convertUnitOfMeasure(unitOfMeasure));
+		
 		return builder;
 	}
 
@@ -242,12 +250,52 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 
-		String whereClause = "";
+		List<Object> parametersList = new ArrayList<>();
+		String whereClause = " 1=1 ";
+		// filter by resource type
+		if (request.getResourceTypeId() > 0 || !Util.isEmpty(request.getResourceTypeUuid(), true)) {
+			int resourceTypeId = request.getResourceTypeId();
+			if (resourceTypeId <= 0) {
+				resourceTypeId = RecordUtil.getIdFromUuid(I_S_ResourceType.Table_Name, request.getResourceTypeUuid(), null);
+			}
+			parametersList.add(resourceTypeId);
+			whereClause += " AND NOT EXISTS("
+				+ " SELECT 1 FROM S_Resource "
+				+ " WHERE S_Resource.S_Resource_ID = S_ResourceAssignment.S_Resource_ID "
+				+ " AND S_Resource.S_ResourceType_ID = ? "
+				+ ") ";
+		}
+		// filter by is name
+		if (!Util.isEmpty(request.getName(), true)) {
+			parametersList.add(request.getName());
+			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+		}
+		// filter by is description
+		if (!Util.isEmpty(request.getDescription(), true)) {
+			parametersList.add(request.getDescription());
+			whereClause += " AND UPPER(Description) LIKE '%' || UPPER(?) || '%' ";
+		}
+		// filter by is confirmed
+		if (request.getIsOnlyConfirmed()) {
+			whereClause += " AND IsConfirmed = ? ";
+			parametersList.add(true);
+		}
+		// filter not in orders line
 		if (request.getIsWaitingForOrdered()) {
-			whereClause = " NOT EXISTS("
+			whereClause += " AND NOT EXISTS("
 				+ " SELECT 1 FROM C_OrderLine "
 				+ " WHERE C_OrderLine.S_ResourceAssignment_ID = S_ResourceAssignment.S_ResourceAssignment_ID "
 				+ ") ";
+		}
+		if (!Objects.isNull(request.getDateFrom()) && request.getDateFrom() > 0) {
+			Timestamp dateFrom = new Timestamp(request.getDateFrom());
+			parametersList.add(dateFrom);
+			whereClause += " AND AssignDateFrom = ? ";
+		}
+		if (!Objects.isNull(request.getDateTo()) && request.getDateTo() > 0) {
+			Timestamp dateTo = new Timestamp(request.getDateTo());
+			parametersList.add(dateTo);
+			whereClause += " AND AssignDateTo = ? ";
 		}
 
 		ContextManager.getContext(request.getClientRequest());
@@ -259,6 +307,7 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 		)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
+			.setParameters(parametersList)
 			.setOrderBy(MResourceAssignment.COLUMNNAME_Created);
 
 		int count = query.count();
