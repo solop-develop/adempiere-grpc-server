@@ -323,7 +323,6 @@ public class AccessServiceImplementation extends SecurityImplBase {
 				roleId = DB.getSQLValue(null, "SELECT ur.AD_Role_ID "
 						+ "FROM AD_User_Roles ur "
 						+ "WHERE ur.AD_User_ID = ? AND ur.IsActive = 'Y' "
-					+ "AND EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro WHERE ro.AD_Role_ID = ur.AD_Role_ID) "
 						+ "ORDER BY COALESCE(ur.IsDefault,'N') DESC", userId);
 			}
 			//	Organization
