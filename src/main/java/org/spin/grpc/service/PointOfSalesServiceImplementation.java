@@ -67,6 +67,7 @@ import org.compiere.model.I_M_PriceList;
 import org.compiere.model.I_M_Product;
 import org.compiere.model.I_M_Storage;
 import org.compiere.model.I_M_Warehouse;
+import org.compiere.model.I_S_ResourceAssignment;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
 import org.compiere.model.MAttributeSetInstance;
@@ -95,6 +96,8 @@ import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductPrice;
 import org.compiere.model.MProductPricing;
+import org.compiere.model.MResource;
+import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
@@ -220,6 +223,7 @@ import org.spin.backend.grpc.pos.Shipment;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.backend.grpc.pos.Stock;
 import org.spin.backend.grpc.pos.StoreGrpc.StoreImplBase;
+import org.spin.backend.grpc.time_control.ResourceAssignment;
 import org.spin.backend.grpc.pos.UpdateCustomerBankAccountRequest;
 import org.spin.backend.grpc.pos.UpdateCustomerRequest;
 import org.spin.backend.grpc.pos.UpdateOrderLineRequest;
@@ -357,7 +361,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -4740,20 +4743,114 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		//	Validate Product and charge
 		if(Util.isEmpty(request.getProductUuid())
-				&& Util.isEmpty(request.getChargeUuid())) {
-			throw new AdempiereException("@M_Product_ID@ / @C_Charge_ID@ @NotFound@");
+				&& Util.isEmpty(request.getChargeUuid())
+				&& Util.isEmpty(request.getResourceAssignmentUuid(), true)) {
+			throw new AdempiereException("@M_Product_ID@ / @C_Charge_ID@ / @S_ResourceAssignment_ID@ @NotFound@");
 		}
 		int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
 		if(orderId <= 0) {
 			return OrderLine.newBuilder();
 		}
+		
+		MOrderLine orderLine = null;
+		if (!Util.isEmpty(request.getResourceAssignmentUuid(), true)) {
+			orderLine = addOrderLineFromResourceAssigment(
+				orderId,
+				RecordUtil.getIdFromUuid(I_S_ResourceAssignment.Table_Name, request.getResourceAssignmentUuid(), null),
+				RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null)
+			);
+		} else {
+			orderLine = addOrderLine(
+				orderId,
+				RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), null),
+				RecordUtil.getIdFromUuid(I_C_Charge.Table_Name, request.getChargeUuid(), null),
+				RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null),
+				ValueUtil.getBigDecimalFromDecimal(request.getQuantity())
+			);
+		}
 		//	Quantity
-		return ConvertUtil.convertOrderLine(
-				addOrderLine(orderId, 
-						RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), null), 
-						RecordUtil.getIdFromUuid(I_C_Charge.Table_Name, request.getChargeUuid(), null), 
-						RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null), 
-						ValueUtil.getBigDecimalFromDecimal(request.getQuantity())));
+		return ConvertUtil.convertOrderLine(orderLine);
+	}
+	
+	private MOrderLine addOrderLineFromResourceAssigment(int orderId, int resourceAssignmentId, int warehouseId) {
+		if(orderId <= 0) {
+			return null;
+		}
+		//	
+		AtomicReference<MOrderLine> orderLineReference = new AtomicReference<MOrderLine>();
+		Trx.run(transactionName -> {
+			MOrder order = new MOrder(Env.getCtx(), orderId, transactionName);
+			//	Valid Complete
+			if (!DocumentUtil.isDrafted(order)) {
+				throw new AdempiereException("@C_Order_ID@ @Processed@");
+			}
+			setCurrentDate(order);
+			// catch Exceptions at order.getLines()
+			Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines(true, "Line"))
+				.stream()
+				.filter(orderLine -> {
+					return resourceAssignmentId != 0 &&
+						resourceAssignmentId == orderLine.getS_ResourceAssignment_ID();
+				})
+				.findFirst();
+
+			MResourceAssignment resourceAssigment = new MResourceAssignment(Env.getCtx(), resourceAssignmentId, transactionName);
+			if (!resourceAssigment.isConfirmed()) {
+				resourceAssigment = TimeControlServiceImplementation.confirmResourceAssignment(resourceAssignmentId, resourceAssigment.getUUID());
+			}
+			BigDecimal quantity = resourceAssigment.getQty();
+
+			if(maybeOrderLine.isPresent()) {
+				MOrderLine orderLine = maybeOrderLine.get();
+				//	Set Quantity
+				BigDecimal quantityToOrder = quantity;
+				if(quantity == null) {
+					quantityToOrder = orderLine.getQtyEntered();
+					quantityToOrder = quantityToOrder.add(Env.ONE);
+				}
+				orderLine.setS_ResourceAssignment_ID(resourceAssignmentId);
+
+				updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
+				orderLineReference.set(orderLine);
+			} else {
+				BigDecimal quantityToOrder = quantity;
+				if(quantity == null) {
+					quantityToOrder = Env.ONE;
+				}
+				//create new line
+				MOrderLine orderLine = new MOrderLine(order);
+
+				MProduct product = new Query(
+					Env.getCtx(),
+					MProduct.Table_Name,
+					" S_Resource_ID = ? ",
+					null
+				)
+					.setParameters(resourceAssigment.getS_Resource_ID())
+					.first();
+				if (product != null && product.getM_Product_ID() > 0) {
+					orderLine.setProduct(MProduct.get(order.getCtx(), product.getM_Product_ID()));
+					orderLine.setC_UOM_ID(product.getC_UOM_ID());
+				}
+				orderLine.setS_ResourceAssignment_ID(resourceAssignmentId);
+
+				orderLine.setQty(quantityToOrder);
+				orderLine.setPrice();
+				orderLine.setTax();
+				String description = ValueUtil.validateNull(resourceAssigment.getName());
+				if (!Util.isEmpty(resourceAssigment.getDescription())) {
+					description += " (" + resourceAssigment.getDescription() + ") ";
+				}
+				orderLine.setDescription(description);
+
+				//	Save Line
+				orderLine.saveEx(transactionName);
+				//	Apply Discount from order
+				configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
+				orderLineReference.set(orderLine);
+			}
+		});
+		return orderLineReference.get();
 	}
 	
 	/***

@@ -22,6 +22,7 @@ option objc_class_prefix = "HLW";
 import "core_functionality.proto";
 import "base_data_type.proto";
 import "client.proto";
+import "time_control.proto";
 
 package data;
 
@@ -1201,6 +1202,7 @@ message CreateOrderLineRequest {
 	Decimal discount_rate = 8;
 	string warehouse_uuid = 9;
 	string pos_uuid = 10;
+	string resource_assignment_uuid = 11;
 }
 
 // Request for update a order
@@ -1309,6 +1311,7 @@ message OrderLine {
 	int32 line = 29;
 	ProductConversion uom = 30;
 	ProductConversion product_uom = 31;
+	time_control.ResourceAssignment resource_assignment = 32;
 }
 
 // Request Product Price
