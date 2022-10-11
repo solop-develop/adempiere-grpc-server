@@ -276,9 +276,9 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 			whereClause += " AND UPPER(Description) LIKE '%' || UPPER(?) || '%' ";
 		}
 		// filter by is confirmed
-		if (request.getIsOnlyConfirmed()) {
+        if (!Util.isEmpty(request.getConfirmed(), true)) {
+			parametersList.add(request.getConfirmed());
 			whereClause += " AND IsConfirmed = ? ";
-			parametersList.add(true);
 		}
 		// filter not in orders line
 		if (request.getIsWaitingForOrdered()) {
