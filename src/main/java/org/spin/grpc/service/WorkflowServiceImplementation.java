@@ -746,7 +746,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			.process(process.getAD_Process_ID())
 			.withRecordId(tableId, recordId)
 			.withoutPrintPreview()
-			.withoutBatchMode()
 			.withWindowNo(0)
 			.withTitle(process.getName())
 			.withParameter(table.getTableName() + DictionaryUtil.ID_PREFIX, recordId)
@@ -756,13 +755,12 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		if(!Util.isEmpty(documentAction) && process.getAD_Workflow_ID() != 0 && entity != null && DocAction.class.isAssignableFrom(entity.getClass())) {
 			entity.set_ValueOfColumn(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
 			entity.saveEx();
-			builder.withoutTransactionClose();
 		}
 
 		//	Execute Process
 		ProcessInfo result = null;
 		try {
-			result = builder.execute();
+			result = builder.execute(null);
 		} catch (Exception e) {
 			result = builder.getProcessInfo();
 			//	Set error message
