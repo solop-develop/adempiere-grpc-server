@@ -246,9 +246,6 @@ public class ConvertUtil {
 			String columnName = poInfo.getColumnName(index);
 			int referenceId = poInfo.getColumnDisplayType(index);
 			Object value = entity.get_Value(index);
-			if(value == null) {
-				continue;
-			}
 			Value.Builder builderValue = ValueUtil.getValueFromReference(value, referenceId);
 			if(builderValue == null) {
 				continue;

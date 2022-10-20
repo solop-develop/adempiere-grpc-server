@@ -188,6 +188,12 @@ public class ValueUtil {
 	 */
 	public static BigDecimal getDecimalFromValue(Value value) {
 		if(Util.isEmpty(value.getDecimalValue().getDecimalValue())) {
+			if (value.getValueType() == Value.ValueType.INTEGER) {
+				return BigDecimal.valueOf(value.getIntValue());
+			}
+			if (value.getValueType() == Value.ValueType.STRING) {
+				return new BigDecimal(value.getStringValue());
+			}
 			return null;
 		}
 		return new BigDecimal(value.getDecimalValue().getDecimalValue());
@@ -228,7 +234,7 @@ public class ValueUtil {
 	public static String getStringFromValue(Value value, boolean uppercase) {
 		String stringValue = value.getStringValue();
 		if(Util.isEmpty(stringValue)) {
-			stringValue = null;
+			return null;
 		}
 		//	To Upper case
 		if(uppercase) {
