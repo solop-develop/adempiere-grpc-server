@@ -308,25 +308,31 @@ public class RecordUtil {
 	 * @param parameters
 	 * @return
 	 */
-	public static String addSearchValueAndGet(String sql, String tableName, String tableAlias, String searchValue, List<Object> parameters) {
+	public static String addSearchValueAndGet(String sql, String table_Name, String tableAlias, String searchValue, List<Object> parameters) {
 		if(Util.isEmpty(searchValue)) {
 			return sql;
 		}
-		MTable table = MTable.get(Env.getCtx(), tableName);
+		MTable table = MTable.get(Env.getCtx(), table_Name);
 		if(table == null) {
 			return sql;
 		}
-		StringBuffer whereClause = new StringBuffer();
+		String lang = Env.getAD_Language(Env.getCtx());
+		// search on trl table
+        final MTable tableTranslation = org.compiere.util.Language.isBaseLanguage(lang) ? null : MTable.get(Env.getCtx(), table_Name + "_Trl");
+        final String tableName = tableTranslation != null ? tableTranslation.getTableName() : table_Name;
+
+		StringBuffer where = new StringBuffer();
 		table.getColumnsAsList().stream()
 			.filter(column -> {
 				return (column.isIdentifier() || column.isSelectionColumn())
-					&& Util.isEmpty(column.getColumnSQL()) && DisplayType.isText(column.getAD_Reference_ID());
+					&& Util.isEmpty(column.getColumnSQL()) && DisplayType.isText(column.getAD_Reference_ID())
+					&& (tableTranslation == null || (tableTranslation != null && column.isTranslated()));
 			})
 			.forEach(column -> {
-				if(whereClause.length() > 0) {
-					whereClause.append(" OR ");
+				if(where.length() > 0) {
+				    where.append(" OR ");
 				}
-				whereClause.append("UPPER(")
+				where.append("UPPER(")
 					.append(tableName).append(".")
 					.append(column.getColumnName())
 					.append(")")
@@ -334,6 +340,17 @@ public class RecordUtil {
 					.append("'%'|| UPPER(?) || '%'");
 				parameters.add(searchValue);
 			});
+
+		// Add language clause
+		StringBuffer whereClause = where;
+		if (tableTranslation != null) {
+			whereClause = new StringBuffer("(")
+				.append(whereClause)
+				.append(") AND ")
+				.append(tableName + ".AD_Language = ? ")
+			;
+			parameters.add(lang);
+		}
 		//	Order by
 		//	Validate and return
 		if(whereClause.length() > 0) {
