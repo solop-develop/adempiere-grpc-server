@@ -58,7 +58,7 @@ message ListResourcesAssignmentRequest {
 	string resource_type_uuid = 5;
 	string name = 6;
 	string description = 7;
-	bool is_only_confirmed = 8;
+	string confirmed = 8;
 	bool is_waiting_for_ordered = 9;
 	int64 date_from = 10;
 	int64 date_to = 11;
