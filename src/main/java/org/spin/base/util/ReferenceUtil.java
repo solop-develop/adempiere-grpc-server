@@ -155,7 +155,7 @@ public class ReferenceUtil {
 	
 	
 	public static String getColunsOrderLocation(String displaySequence, boolean isAddressReverse) {
-		StringBuffer cityPostalRegion = new StringBuffer(" '' ");
+		StringBuffer cityPostalRegion = new StringBuffer();
 
 		String inStr = displaySequence.replace(",", "|| ', ' ");
 		String token;
@@ -178,12 +178,12 @@ public class ReferenceUtil {
 					.append("C_City.C_City_ID = C_Location.C_City_ID")
 					.append("), '') ");
 			} else if (token.equals("R")) {
-				String regionName = "";
+				// String regionName = "";
 				//  local region name
 				// if (!Util.isEmpty(country.getRegionName(), true)) {
 				//     regionName = " || ' " + country.getRegionName() + "'";
 				// }
-				cityPostalRegion.append("|| NVL((SELECT NVL(C_Region.Name" + regionName + ", '') FROM C_Region ")
+				cityPostalRegion.append("|| NVL((SELECT NVL(C_Region.Name, '') FROM C_Region ")
 					.append("WHERE C_Region.C_Region_ID = C_Location.C_Region_ID")
 					.append("), '') ");
 			} else if (token.equals("P")) {
@@ -199,8 +199,10 @@ public class ReferenceUtil {
 		}
 		cityPostalRegion.append(inStr); // add the rest of the string 
 
+		StringBuffer query = new StringBuffer();
 		if (isAddressReverse) {
-			cityPostalRegion
+			query.append("'' ")
+				.append(cityPostalRegion)
 				.append("|| ', ' ")
 				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address4 + " || ', ' , '') ")
 				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address3 + " || ', ' , '') ")
@@ -208,7 +210,7 @@ public class ReferenceUtil {
 				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address1 + ", '')")
 			;
 		} else {
-			cityPostalRegion = new StringBuffer()
+			query.append("'' ")
 				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address1 + " || ', ' , '') ")
 				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address2 + " || ', ' , '')  ")
 				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address3 + " || ', ' , '')  ")
@@ -217,7 +219,7 @@ public class ReferenceUtil {
 			;
 		}
 
-		return cityPostalRegion.toString();
+		return query.toString();
 	}
 
 	public static String getDisplayColumnSQLLocation(String tableName, String columnName) {
