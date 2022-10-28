@@ -24,7 +24,7 @@ repositories {
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-def libraryVersion = '1.4.3'
+def libraryVersion = '1.4.4'
 // IMPORTANT: You probably want the non-SNAPSHOT version of gRPC. Make sure you
 // are looking at a tagged version of the example and not "master"!
 
@@ -121,7 +121,7 @@ task createRelease(type: Copy) {
 publishing {
     repositories {
         maven {
-            url = "https://maven.pkg.github.com/erpcya/Repository"
+            url = "https://maven.pkg.github.com/erpya/Repository"
             credentials {
                 username = System.properties['deploy.user'] ?: System.getenv("GITHUB_DEPLOY_USER")
                 password = System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_TOKEN")
