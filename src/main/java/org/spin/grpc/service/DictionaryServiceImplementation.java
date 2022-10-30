@@ -1631,6 +1631,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			})
 			.forEach(tab -> {
 				List<MField> fieldsList = ASPUtil.getInstance().getWindowFields(tab.getAD_Tab_ID());
+				if (fieldsList == null) {
+					return;
+				}
 
 				fieldsList.stream()
 					.filter(currentField -> {
