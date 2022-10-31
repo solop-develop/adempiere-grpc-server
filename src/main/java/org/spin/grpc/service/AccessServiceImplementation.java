@@ -127,7 +127,6 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -148,7 +147,6 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -169,7 +167,6 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -190,7 +187,6 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -214,7 +210,6 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -234,7 +229,6 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -317,13 +311,20 @@ public class AccessServiceImplementation extends SecurityImplBase {
 				throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 			}
 		}
+
+		final String sqlRole = "SELECT ur.AD_Role_ID "
+			+ "FROM AD_User_Roles ur "
+			+ "INNER JOIN AD_Role AS r ON ur.AD_Role_ID = r.AD_Role_ID "
+			+ "WHERE ur.AD_User_ID = ? AND ur.IsActive = 'Y' "
+			+ "AND r.IsActive = 'Y' "
+			+ "AND (r.IsAccessAllOrgs = 'Y' "
+			+ "OR (r.IsUseUserOrgAccess = 'N' AND EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro WHERE ro.AD_Role_ID = ur.AD_Role_ID AND ro.IsActive = 'Y') ) "
+			+ "OR (r.IsUseUserOrgAccess = 'Y' AND EXISTS(SELECT 1 FROM AD_User_OrgAccess AS uo WHERE uo.AD_User_ID = ur.AD_User_ID AND uo.IsActive = 'Y') )) "
+			+ "ORDER BY COALESCE(ur.IsDefault,'N') DESC";
 		if(isDefaultRole
 				&& Util.isEmpty(request.getRoleUuid())) {
 			if(roleId <= 0) {
-				roleId = DB.getSQLValue(null, "SELECT ur.AD_Role_ID "
-						+ "FROM AD_User_Roles ur "
-						+ "WHERE ur.AD_User_ID = ? AND ur.IsActive = 'Y' "
-						+ "ORDER BY COALESCE(ur.IsDefault,'N') DESC", userId);
+				roleId = DB.getSQLValue(null, sqlRole, userId);
 			}
 			//	Organization
 			if(organizationId < 0) {
@@ -332,22 +333,27 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			warehouseId = DB.getSQLValue(null, "SELECT M_Warehouse_ID FROM M_Warehouse WHERE IsActive = 'Y' AND AD_Org_ID = ?", organizationId);
 		} else {
 			if(roleId <= 0) {
-				roleId = RecordUtil.getIdFromUuid(I_AD_Role.Table_Name, request.getRoleUuid(), null);
-				MRole role = MRole.get(context, roleId);
-				if(role != null
-						&& !Optional.ofNullable(role.getUUID()).orElse("").equals(Optional.ofNullable(request.getRoleUuid()).orElse(""))) {
-					roleId = DB.getSQLValue(null, "SELECT ur.AD_Role_ID "
-							+ "FROM AD_User_Roles ur "
-							+ "WHERE ur.AD_User_ID = ? AND ur.IsActive = 'Y' "
-							+ "ORDER BY COALESCE(ur.IsDefault,'N') DESC", userId);
-					//	Organization
-					if(organizationId < 0) {
-						organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
-					}
+				MRole role = new Query(
+					Env.getCtx(),
+					I_AD_Role.Table_Name,
+					"UUID = ?",
+					null
+				)
+					.setParameters(request.getRoleUuid())
+					.first();
+				if (role == null) {
+					// get default role
+					roleId = DB.getSQLValue(null, sqlRole, userId);
+				} else {
+					roleId = role.getAD_Role_ID();
+				}
+				//	Organization
+				if(organizationId < 0) {
+					organizationId = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
 				}
 			}
 			if(organizationId < 0) {
-				organizationId = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
+				organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
 			}
 			warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
 		}
@@ -586,7 +592,11 @@ public class AccessServiceImplementation extends SecurityImplBase {
 				userInfo.setImage(ValueUtil.validateNull(attachmentReference.getValidFileName()));
 			}
 		}
-		Object value = user.get_Value("ConnectionTimeout");
+		Object value = null;
+		// checks if the column exists in the database
+		if (user.get_ColumnIndex("ConnectionTimeout") >= 0) {
+			value = user.get_Value("ConnectionTimeout");
+		}
 		long sessionTimeout = 0;
 		if(value == null) {
 			String sessionTimeoutAsString = MSysConfig.getValue("WEBUI_DEFAULT_TIMEOUT", Env.getAD_Client_ID(Env.getCtx()), 0);

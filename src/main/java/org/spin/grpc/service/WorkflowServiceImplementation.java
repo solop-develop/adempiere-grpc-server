@@ -109,7 +109,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -176,7 +175,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -198,7 +196,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -220,7 +217,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -242,7 +238,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -359,6 +354,8 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 				|| documentStatus.equals(DocumentEngine.STATUS_Reversed)
 				|| documentStatus.equals(DocumentEngine.STATUS_Unknown)
 				|| documentStatus.equals(DocumentEngine.STATUS_Closed)) {
+			/** Drafted = DR */
+			statusesList.add(DocumentEngine.STATUS_Drafted);
 			/** In Progress = IP */
 			statusesList.add(DocumentEngine.STATUS_InProgress);
 			/** Approved = AP */
@@ -687,7 +684,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException()
 			);

@@ -144,7 +144,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -170,7 +169,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -196,7 +194,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -222,7 +219,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -248,7 +244,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -274,7 +269,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -304,7 +298,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -335,7 +328,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -821,7 +813,27 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}
 		//	For parameters
 		if(withParams) {
+			String language = context.getProperty(Env.LANGUAGE);
 			for(MProcessPara parameter : ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID())) {
+				// TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
+				if(!Language.isBaseLanguage(language)) {
+					//	Name
+					String value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Name, language);
+					if(!Util.isEmpty(value)) {
+						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Name, value);
+					}
+					//	Description
+					value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Description, language);
+					if(!Util.isEmpty(value)) {
+						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Description, value);
+					}
+					//	Help
+					value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Help, language);
+					if(!Util.isEmpty(value)) {
+						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Help, value);
+					}
+				}
+				
 				Field.Builder fieldBuilder = convertProcessParameter(context, parameter);
 				builder.addParameters(fieldBuilder.build());
 			}
@@ -1615,10 +1627,14 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 
 		tabsList.stream()
 			.filter(currentTab -> {
-				return currentTab.isActive();
+				// transaltion tab is not rendering on client
+				return currentTab.isActive() && !currentTab.isTranslationTab();
 			})
 			.forEach(tab -> {
 				List<MField> fieldsList = ASPUtil.getInstance().getWindowFields(tab.getAD_Tab_ID());
+				if (fieldsList == null) {
+					return;
+				}
 
 				fieldsList.stream()
 					.filter(currentField -> {
@@ -1906,7 +1922,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -2013,7 +2028,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}

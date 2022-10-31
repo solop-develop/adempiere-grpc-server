@@ -22,8 +22,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.compiere.model.I_AD_Reference;
+import org.compiere.model.I_C_Location;
 import org.compiere.model.I_C_ValidCombination;
+import org.compiere.model.I_M_AttributeSetInstance;
 import org.compiere.model.MColumn;
+import org.compiere.model.MCountry;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MTable;
@@ -71,7 +74,8 @@ public class ReferenceUtil {
 	 * @return
 	 */
 	public static boolean validateReference(int referenceId) {
-		if(DisplayType.isLookup(referenceId) || DisplayType.Account == referenceId) {
+		if (DisplayType.isLookup(referenceId) || DisplayType.Account == referenceId 
+			|| DisplayType.Location == referenceId || DisplayType.PAttribute == referenceId) {
 			return true;
 		}
 		return false;
@@ -79,6 +83,7 @@ public class ReferenceUtil {
 	
 	/**
 	 * Get Reference information, can return null if reference is invalid or not exists
+	 * TODO: Add support to ID references to get display column
 	 * @param referenceId
 	 * @param referenceValueId
 	 * @param columnName
@@ -101,6 +106,22 @@ public class ReferenceUtil {
 				referenceInfo.setDisplayColumnValue(I_C_ValidCombination.COLUMNNAME_Combination);
 				referenceInfo.setTableAlias(I_C_ValidCombination.Table_Name + "_" + columnName);
 				referenceInfo.setJoinColumnName(I_C_ValidCombination.COLUMNNAME_C_ValidCombination_ID);
+			} else if (DisplayType.PAttribute == referenceId) {
+				//  Add Display
+				referenceInfo = new ReferenceInfo();
+				referenceInfo.setColumnName(columnName);
+				referenceInfo.setTableName(I_M_AttributeSetInstance.Table_Name);
+				referenceInfo.setDisplayColumnValue(I_M_AttributeSetInstance.COLUMNNAME_Description);
+				referenceInfo.setTableAlias(I_M_AttributeSetInstance.Table_Name + "_" + columnName);
+				referenceInfo.setJoinColumnName(I_M_AttributeSetInstance.COLUMNNAME_M_AttributeSetInstance_ID);
+			} else if (DisplayType.Location == referenceId) {
+				//  Add Display
+				referenceInfo = new ReferenceInfo();
+				referenceInfo.setColumnName(columnName);
+				referenceInfo.setTableName(I_C_Location.Table_Name);
+				String displaColumn = getDisplayColumnSQLLocation(tableName, columnName);
+				referenceInfo.setDisplayColumnValue("(" + displaColumn + ")");
+				referenceInfo.setHasJoinValue(false);
 			} else if(DisplayType.TableDir == referenceId
 					|| referenceValueId == 0) {
 				//	Add Display
@@ -118,7 +139,9 @@ public class ReferenceUtil {
 					if (!Util.isEmpty(lookupInfo.DisplayColumn, true)) {
 						displayColumn = (lookupInfo.DisplayColumn).replace(lookupInfo.TableName + ".", "");
 					}
-					referenceInfo.setDisplayColumnValue(displayColumn);
+					if (!Util.isEmpty(displayColumn)) {
+						referenceInfo.setDisplayColumnValue(displayColumn);
+					}
 					referenceInfo.setJoinColumnName((lookupInfo.KeyColumn == null? "": lookupInfo.KeyColumn).replace(lookupInfo.TableName + ".", ""));
 					referenceInfo.setTableName(lookupInfo.TableName);
 					if(DisplayType.List == referenceId
@@ -126,7 +149,7 @@ public class ReferenceUtil {
 						referenceInfo.setReferenceId(referenceValueId);
 					}
 					//	Translate
-					if(MTable.hasTranslation(lookupInfo.TableName)) {
+					if (!Util.isEmpty(displayColumn, true) && MTable.hasTranslation(lookupInfo.TableName)) {
 						// display column exists on translation table
 						int columnId = MColumn.getColumn_ID(lookupInfo.TableName + DictionaryUtil.TRANSLATION_SUFFIX, displayColumn);
 						if (columnId > 0) {
@@ -137,6 +160,118 @@ public class ReferenceUtil {
 			}
 		}
 		return referenceInfo;
+	}
+	
+	
+	public static String getColunsOrderLocation(String displaySequence, boolean isAddressReverse) {
+		StringBuffer cityPostalRegion = new StringBuffer();
+
+		String inStr = displaySequence.replace(",", "|| ', ' ");
+		String token;
+		int index = inStr.indexOf('@');
+		while (index != -1) {
+			cityPostalRegion.append(inStr.substring(0, index));          // up to @
+			inStr = inStr.substring(index + 1, inStr.length());   // from first @
+
+			int endIndex = inStr.indexOf('@');                     // next @
+			if (endIndex < 0) {
+				token = "";                                 //  no second tag
+				endIndex = index + 1;
+			} else {
+				token = inStr.substring(0, endIndex);
+			}
+			//  Tokens
+			if (token.equals("C")) {
+				cityPostalRegion.append("|| NVL(C_Location.City, ")
+					.append("(SELECT NVL(C_City.Name, '') FROM C_City WHERE ")
+					.append("C_City.C_City_ID = C_Location.C_City_ID")
+					.append("), '') ");
+			} else if (token.equals("R")) {
+				// String regionName = "";
+				//  local region name
+				// if (!Util.isEmpty(country.getRegionName(), true)) {
+				//     regionName = " || ' " + country.getRegionName() + "'";
+				// }
+				cityPostalRegion.append("|| NVL((SELECT NVL(C_Region.Name, '') FROM C_Region ")
+					.append("WHERE C_Region.C_Region_ID = C_Location.C_Region_ID")
+					.append("), '') ");
+			} else if (token.equals("P")) {
+				cityPostalRegion.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Postal + ", '') ");
+			} else if (token.equals("A")) {
+				cityPostalRegion.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Postal_Add + ", '') ");
+			} else {
+				cityPostalRegion.append("@").append(token).append("@");
+			}
+
+			inStr = inStr.substring(endIndex + 1, inStr.length());   // from second @
+			index = inStr.indexOf('@');
+		}
+		cityPostalRegion.append(inStr); // add the rest of the string 
+
+		StringBuffer query = new StringBuffer();
+		if (isAddressReverse) {
+			query.append("'' ")
+				.append(cityPostalRegion)
+				.append("|| ', ' ")
+				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address4 + " || ', ' , '') ")
+				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address3 + " || ', ' , '') ")
+				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address2 + " || ', ' , '') ")
+				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address1 + ", '')")
+			;
+		} else {
+			query.append("'' ")
+				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address1 + " || ', ' , '') ")
+				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address2 + " || ', ' , '')  ")
+				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address3 + " || ', ' , '')  ")
+				.append("|| NVL(" + I_C_Location.Table_Name + "." + I_C_Location.COLUMNNAME_Address4 + " || ', ' , '') ")
+				.append(cityPostalRegion)
+			;
+		}
+
+		return query.toString();
+	}
+
+	public static String getDisplayColumnSQLLocation(String tableName, String columnName) {
+		MCountry country = MCountry.getDefault(Env.getCtx());
+		boolean isAddressReverse = country.isAddressLinesLocalReverse() || country.isAddressLinesReverse();
+		String displaySequence = country.getDisplaySequenceLocal();
+		String columnsOrder = getColunsOrderLocation(displaySequence, isAddressReverse);
+
+		StringBuffer query = new StringBuffer()
+			.append("SELECT ")
+			.append("NVL(" + columnsOrder + ", '') ")
+			.append("FROM C_Location ")
+			.append("WHERE C_Location.C_Location_ID = ")
+			.append(tableName + "." + columnName)
+		;
+
+		return query.toString();
+	}
+
+	public static String getQueryLocation() {
+		MCountry country = MCountry.getDefault(Env.getCtx());
+		boolean isAddressReverse = country.isAddressLinesLocalReverse() || country.isAddressLinesReverse();
+		String displaySequence = country.getDisplaySequenceLocal();
+		String columnsOrder = getColunsOrderLocation(displaySequence, isAddressReverse);
+
+		StringBuffer query = new StringBuffer()
+			.append("SELECT ")
+	        .append("C_Location.C_Location_ID, NULL, ")
+			.append("NVL(" + columnsOrder + ", '-1'), ")
+			.append("C_Location.IsActive ")
+			.append("FROM C_Location ")
+		;
+
+		return query.toString();
+	}
+	
+	public static String getDirectQueryLocation() {
+		String query = getQueryLocation();
+		StringBuffer directQuery = new StringBuffer()
+			.append(query)
+			.append("WHERE C_Location.C_Location_ID = ? ");
+
+		return directQuery.toString();
 	}
 	
 	/**
@@ -155,7 +290,22 @@ public class ReferenceUtil {
 		if (DisplayType.Account == referenceId) {
 			columnName = I_C_ValidCombination.COLUMNNAME_C_ValidCombination_ID;
 		}
-		if(DisplayType.TableDir == referenceId
+
+		if (DisplayType.Location == referenceId) {
+			columnName = I_C_Location.COLUMNNAME_C_Location_ID;
+			lookupInformation = getLookupInfoFromColumnName(columnName);
+			lookupInformation.Query = getQueryLocation();
+			lookupInformation.QueryDirect = getDirectQueryLocation();
+		} else if (DisplayType.PAttribute == referenceId) {
+			columnName = I_M_AttributeSetInstance.COLUMNNAME_M_AttributeSetInstance_ID;
+			lookupInformation = getLookupInfoFromColumnName(columnName);
+			lookupInformation.DisplayType = referenceId;
+			lookupInformation.Query = "SELECT M_AttributeSetInstance.M_AttributeSetInstance_ID, "
+				+ "NULL,  M_AttributeSetInstance.Description, M_AttributeSetInstance.IsActive "
+				+ "FROM M_AttributeSetInstance ";
+			lookupInformation.QueryDirect = lookupInformation.Query
+				+ "WHERE M_AttributeSetInstance.M_AttributeSetInstance_ID = ? ";
+		} else if(DisplayType.TableDir == referenceId
 				|| referenceValueId <= 0) {
 			//	Add Display
 			lookupInformation = getLookupInfoFromColumnName(columnName);
@@ -185,7 +335,10 @@ public class ReferenceUtil {
 			validationRule = MValRule.get(Env.getCtx(), validationRuleId);
 			if (validationRule != null) {
 				if (!Util.isEmpty(validationRule.getCode())) {
-					String dynamicValidation = "(" + validationRule.getCode() + ")";
+					String dynamicValidation =  validationRule.getCode();
+					if (!validationRule.getCode().startsWith("(")) {
+						dynamicValidation = "(" + validationRule.getCode() + ")";
+					}
 					// table validation
 					if (!Util.isEmpty(lookupInformation.ValidationCode)) {
 						dynamicValidation += " AND (" + lookupInformation.ValidationCode + ")";

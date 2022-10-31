@@ -234,7 +234,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -259,7 +258,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -283,7 +281,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -303,7 +300,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -328,7 +324,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -352,7 +347,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -439,7 +433,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -495,7 +488,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -532,7 +524,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -570,7 +561,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -590,7 +580,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -610,7 +599,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -630,7 +618,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -642,7 +629,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
+			Properties context = ContextManager.getContext(request.getClientRequest());
 			ListReportViewsResponse.Builder reportViewsList = convertReportViewsList(context, request);
 			responseObserver.onNext(reportViewsList.build());
 			responseObserver.onCompleted();
@@ -650,7 +637,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -673,7 +659,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -696,7 +681,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -716,7 +700,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -741,7 +724,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -814,7 +796,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -837,7 +818,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -867,7 +847,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -896,7 +875,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -920,7 +898,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -944,7 +921,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -965,7 +941,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -1182,7 +1157,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -1221,9 +1195,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
 		// validation code of field
-		String parsedValidationCode = Env.parseContext(context, windowNo, reference.ValidationCode, false);
-		if (!Util.isEmpty(reference.ValidationCode)) {
-			if (Util.isEmpty(parsedValidationCode)) {
+		String validationCode = DictionaryUtil.getValidationCodeWithAlias(tableName, reference.ValidationCode);
+		String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+		if (!Util.isEmpty(reference.ValidationCode, true)) {
+			if (Util.isEmpty(parsedValidationCode, true)) {
 				throw new AdempiereException("@WhereClause@ @Unparseable@");
 			}
 			whereClause.append(" AND ").append(parsedValidationCode);
@@ -1872,6 +1847,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			whereClause = "EXISTS(SELECT 1 FROM AD_Process p WHERE p.UUID = ? AND p.AD_ReportView_ID = AD_ReportView.AD_ReportView_ID)";
 			parameters.add(request.getProcessUuid());
 		}
+
+		String language = context.getProperty(Env.LANGUAGE);
 		//	Get List
 		new Query(context, I_AD_ReportView.Table_Name, whereClause, null)
 			.setParameters(parameters)
@@ -1880,7 +1857,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				ReportView.Builder reportViewBuilder = ReportView.newBuilder();
 				String name = reportViewReference.getName();
 				String description = reportViewReference.getDescription();
-				if(!Env.isBaseLanguage(context, "")) {
+				
+				// add translation
+				if(!Util.isEmpty(language) && !Env.isBaseLanguage(context, "")) {
+					/*
 					String translation = reportViewReference.get_Translation("Name");
 					if(!Util.isEmpty(translation)) {
 						name = translation;
@@ -1889,7 +1869,32 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					if(!Util.isEmpty(translation)) {
 						description = translation;
 					}
+					*/
+
+					// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/31
+					PO translation = new Query(
+							context, 
+							I_AD_ReportView.Table_Name + "_Trl",
+							I_AD_ReportView.COLUMNNAME_AD_ReportView_ID + " = ? AND " +
+							"IsTranslated = ? AND AD_Language = ?",
+							null
+						)
+						.setParameters(reportViewReference.get_ID(), "Y", language)
+						.setOnlyActiveRecords(true)
+						.first();
+
+					if (translation != null) {
+						String nameTranslated = translation.get_ValueAsString(I_AD_ReportView.COLUMNNAME_Name);
+						if(!Util.isEmpty(nameTranslated)) {
+							name = nameTranslated;
+						}
+						String desciptionTranslated = translation.get_ValueAsString(I_AD_ReportView.COLUMNNAME_Description);
+						if(!Util.isEmpty(desciptionTranslated)) {
+							description = desciptionTranslated;
+						}
+					}
 				}
+
 				reportViewBuilder.setUuid(ValueUtil.validateNull(reportViewReference.getUUID()));
 				reportViewBuilder.setName(ValueUtil.validateNull(name));
 				reportViewBuilder.setDescription(ValueUtil.validateNull(description));

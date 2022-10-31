@@ -14,12 +14,12 @@
  ************************************************************************************/
 syntax = "proto3";
 
-
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.material_management";
 option java_outer_classname = "ADempiereMaterialManagement";
 
 import "client.proto";
+import "base_data_type.proto";
 import "business.proto";
 
 package material_management;
@@ -28,6 +28,18 @@ package material_management;
 service MaterialManagement {
 	// List Product Storage
 	rpc ListProductStorage(ListProductStorageRequest) returns (data.ListEntitiesResponse) {}
+	// List Product Attribute Values
+	rpc ListProductAttributeValues(ListProductAttributeValuesRequest) returns (data.ListEntitiesResponse) {}
+	// List Product Attributes
+	rpc ListProductAttributes(ListProductAttributesRequest) returns (data.ListEntitiesResponse) {}
+	// Get Product Attribute Set
+	rpc GetProductAttributeSet(GetProductAttributeSetRequest) returns (ProductAttributeSet) {}
+	// Get Product Set Attribute
+	rpc GetProductAttributeSetInstance(GetProductAttributeSetInstanceRequest) returns (ProductAttributeSetInstance) {}
+	// List Product Atribute Set Instance
+	rpc ListProductAttributeSetInstances(ListProductAttributeSetInstancesRequest) returns (ListProductAttributeSetInstancesResponse) {}
+	// Create/Update Product Set Attribute
+	rpc SaveProductAttributeSetInstance(SaveProductAttributeSetInstanceRequest) returns (ProductAttributeSetInstance) {}
 }
 
 // Get Accounting Combination Request
@@ -39,4 +51,131 @@ message ListProductStorageRequest {
 	string table_name = 4;
 	int32 record_id = 5;
 	string record_uuid = 6;
+}
+
+message ProductAttributeValue {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+}
+
+message ProductAttribute {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string value_type = 5;
+	bool is_mandatory = 6;
+	bool is_instance_attribute = 7;
+	int32 sequence = 8;
+	repeated ProductAttributeValue product_attribute_values = 9;
+}
+
+message ProductAttributeSet {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	bool is_instance_attribute = 5;
+	// Lot Attributes
+	bool is_lot = 6;
+	bool is_lot_mandatory = 7;
+	int32 lot_control_id = 8;
+	string lot_char_start_overwrite = 9;
+	string lot_char_end_overwrite = 10;
+	// Serial Attributes
+	bool is_serial = 11;
+	bool is_serial_mandatory = 12;
+	int32 serial_control_id = 13;
+	string serial_char_start_overwrite = 14;
+	string serial_char_end_overwrite = 15;
+	// Guarantee Date Attributes
+	bool is_guarantee_date = 16;
+	bool is_guarantee_date_mandatory = 17;
+	int32 guarantee_days = 18;
+	string mandatory_type = 19;
+	repeated ProductAttribute product_attributes = 20;
+}
+
+message ProductAttributeSetInstance {
+	int32 id = 1;
+	string uuid = 2;
+	string description = 3;
+	int64 guarantee_date = 4;
+	string lot = 5;
+	int32 lot_id = 6;
+	string serial = 7;
+	ProductAttributeSet product_attribute_set = 8;
+}
+
+message GetProductAttributeSetRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
+	int32 product_id = 4;
+	string product_uuid = 5;
+	int32 product_attribute_set_instance_id = 6;
+	string product_attribute_set_instance_uuid = 7;
+}
+
+message ListProductAttributesRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	int32 product_id = 4;
+	string product_uuid = 5;
+	int32 product_attribute_set_instance_id = 6;
+	string product_attribute_set_instance_uuid = 7;
+	data.Criteria filters = 8;
+}
+
+message ListProductAttributeValuesRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	int32 product_attribute_id = 4;
+	string product_attribute_uuid = 5;
+	data.Criteria filters = 6;
+}
+
+message GetProductAttributeSetInstanceRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
+	int32 product_id = 4;
+	string product_uuid = 5;
+}
+
+message ListProductAttributeSetInstancesRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	int32 product_id = 4;
+	string product_uuid = 5;
+	int32 product_attribute_set_id = 6;
+	string product_attribute_set_uuid = 7;
+	data.Criteria filters = 8;
+}
+
+// List List Product AttributeSetInstances Response
+message ListProductAttributeSetInstancesResponse {
+	int64 record_count = 1;
+	repeated ProductAttributeSetInstance records = 2;
+	string next_page_token = 3;
+}
+
+message SaveProductAttributeSetInstanceRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
+	string description = 4;
+	int64 guarantee_date = 5;
+	string lot = 6;
+	int32 lot_id = 7;
+	string serial = 8;
+	int32 product_attribute_set_id = 9;
+	string product_attribute_set_uuid = 10;
+	map<string, data.Value> attributes = 11;
 }
