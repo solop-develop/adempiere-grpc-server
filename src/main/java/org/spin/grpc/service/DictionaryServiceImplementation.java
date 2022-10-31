@@ -1627,6 +1627,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 
 		tabsList.stream()
 			.filter(currentTab -> {
+				// transaltion tab is not rendering on client
 				return currentTab.isActive() && !currentTab.isTranslationTab();
 			})
 			.forEach(tab -> {
