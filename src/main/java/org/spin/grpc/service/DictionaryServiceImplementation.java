@@ -1627,7 +1627,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 
 		tabsList.stream()
 			.filter(currentTab -> {
-				return currentTab.isActive();
+				return currentTab.isActive() && !currentTab.isTranslationTab();
 			})
 			.forEach(tab -> {
 				List<MField> fieldsList = ASPUtil.getInstance().getWindowFields(tab.getAD_Tab_ID());
