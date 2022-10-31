@@ -18,6 +18,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -914,11 +915,14 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private List<MProcess> getProcessActionFromTab(Properties context, MTab tab) {
+		// to prevent duplicity of associated processes in different locations (table, column and tab).
+		HashMap<Integer, MProcess> processList = new HashMap<>();
+
 		//	First Process Tab
-		List<MProcess> processList = new ArrayList<>();
 		if(tab.getAD_Process_ID() > 0) {
-			processList.add(MProcess.get(context, tab.getAD_Process_ID()));
+			processList.put(tab.getAD_Process_ID(), MProcess.get(context, tab.getAD_Process_ID()));
 		}
+
 		//	Process from tab
 		List<MProcess> processFromTabList = new Query(tab.getCtx(), I_AD_Process.Table_Name, "EXISTS(SELECT 1 FROM AD_Field f "
 				+ "INNER JOIN AD_Column c ON(c.AD_Column_ID = f.AD_Column_ID) "
@@ -929,8 +933,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setOnlyActiveRecords(true)
 				.<MProcess>list();
 		for(MProcess process : processFromTabList) {
-			processList.add(process);
+			processList.put(process.getAD_Process_ID(), process);
 		}
+
 		//	Process from table
 		List<MProcess> processFromTableList = new Query(tab.getCtx(), I_AD_Process.Table_Name, 
 				"EXISTS(SELECT 1 FROM AD_Table_Process WHERE AD_Process_ID = AD_Process.AD_Process_ID AND AD_Table_ID = ?)", null)
@@ -938,9 +943,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setOnlyActiveRecords(true)
 				.<MProcess>list();
 		for(MProcess process : processFromTableList) {
-			processList.add(process);
+			processList.put(process.getAD_Process_ID(), process);
 		}
-		return processList;
+
+		return new ArrayList<MProcess>(processList.values());
 	}
 	
 	/**
