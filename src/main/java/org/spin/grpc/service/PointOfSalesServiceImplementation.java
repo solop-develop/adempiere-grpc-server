@@ -2028,7 +2028,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				int cashClosingDocumentTypeId = pos.get_ValueAsInt("POSCashClosingDocumentType_ID");
 				//	Create Cash closing
 				if(cashClosingDocumentTypeId > 0) {
-					createBankStatement(payment, cashClosingDocumentTypeId);
+					createBankStatement(pos, payment, cashClosingDocumentTypeId);
 				}
 				//	
 				processPayment(pos, payment, transactionName);
@@ -2039,10 +2039,11 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	
 	/**
 	 * Create BankStatement based on default document type of point of sales
+	 * @param pos
 	 * @param payment
 	 * @param documentTypeId
 	 */
-	private void createBankStatement(MPayment payment, int documentTypeId) {
+	private void createBankStatement(MPOS pos, MPayment payment, int documentTypeId) {
 		StringBuilder whereClause = new StringBuilder();
 		whereClause.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND ")
 				.append("TRUNC(").append(MBankStatement.COLUMNNAME_StatementDate).append(",'DD') = ? AND ")
@@ -2057,12 +2058,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			bankStatement.setC_BankAccount_ID(payment.getC_BankAccount_ID());
 			bankStatement.setStatementDate(payment.getDateAcct());
 			bankStatement.setC_DocType_ID(documentTypeId);
-			if(payment.getDescription() != null) {
-				bankStatement.setName(payment.getDescription());
-			} else {
-				SimpleDateFormat format = DisplayType.getDateFormat(DisplayType.Date);
-				bankStatement.setName(Msg.parseTranslation(payment.getCtx(), "@Generate@: ") + format.format(payment.getDateAcct()));
-			}
+			bankStatement.setAD_Org_ID(pos.getAD_Org_ID());
+			bankStatement.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
+			SimpleDateFormat format = DisplayType.getDateFormat(DisplayType.Date);
+			bankStatement.setName(Msg.parseTranslation(payment.getCtx(), "@C_POS_ID@: " + pos.getName() + " @DateDoc@: " + format.format(System.currentTimeMillis())));
 			bankStatement.saveEx();
 		}
 	}
@@ -2113,11 +2112,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 */
 	private MBankStatement getCurrentCashclosing(int posId, String transactionName) {
 		return new Query(Env.getCtx(), I_C_BankStatement.Table_Name, "Processed = 'N' "
-				+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl "
-				+ "INNER JOIN C_Payment p ON(p.C_Payment_ID = bsl.C_Payment_ID) "
-				+ "WHERE bsl.C_BankStatement_ID = C_BankStatement.C_BankStatement_ID "
-				+ "AND p.DocStatus IN('CO', 'CL') "
-				+ "AND p.C_POS_ID = ?)", transactionName)
+				+ "AND C_POS_ID = ? ", transactionName)
 				.setParameters(posId)
 				.first();
 	}
