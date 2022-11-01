@@ -4178,6 +4178,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				} else if(discountAmountOff != null) {
 					configureDiscountAmountOff(salesOrder, discountAmountOff, transactionName);
 				}
+
+				// Sales Representative
+				if (!Util.isEmpty(request.getSalesRepresentativeUuid(), true)) {
+					int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), transactionName);
+					salesOrder.setSalesRep_ID(salesRepresentativeId);
+				}
+
 				//	Save
 				salesOrder.saveEx(transactionName);
 				orderReference.set(salesOrder);

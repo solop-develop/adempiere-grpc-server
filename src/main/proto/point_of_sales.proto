@@ -1219,6 +1219,7 @@ message UpdateOrderRequest {
 	Decimal discount_rate = 10;
 	Decimal discount_rate_off = 11;
 	Decimal discount_amount_off = 12;
+	string sales_representative_uuid = 13;
 }
 
 // Request for update a order line
