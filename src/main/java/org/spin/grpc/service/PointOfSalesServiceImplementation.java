@@ -4322,7 +4322,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			throw new AdempiereException("@DefaultDiscountCharge_ID@ @NotFound@");
 		}
 		//	Validate Discount
-		validateDiscount(pos, discountRateOff);
+		validateDocumentDiscount(pos, discountRateOff);
 		Optional<BigDecimal> baseAmount = Arrays.asList(order.getLines()).stream()
 				.filter(ordeLine -> ordeLine.getC_Charge_ID() != pos.get_ValueAsInt("DefaultDiscountCharge_ID"))
 				.map(ordeLine -> ordeLine.getLineNetAmt())
@@ -4979,7 +4979,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					discountRateToOrder = discountRate;
 					priceToOrder = getFinalPrice(orderLine.getPriceList(), discountRate, precision);
 				}
-				validateDiscount(pos, discountRateToOrder);
+				validateLineDiscount(pos, discountRateToOrder);
 				orderLine.setDiscount(discountRateToOrder);
 				orderLine.setPrice(priceToOrder); //	sets List/limit
 			}
@@ -5000,12 +5000,33 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		return maybeOrderLine.get();
 	} //	UpdateLine
 	
-	private void validateDiscount(MPOS pos, BigDecimal discountRateOff) {
+	/**
+	 * Validate Document Discount
+	 * @param pos
+	 * @param discountRateOff
+	 */
+	private void validateDocumentDiscount(MPOS pos, BigDecimal discountRateOff) {
 		boolean isAllowsApplyDiscount = getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "IsAllowsApplyDiscount");
 		if(!isAllowsApplyDiscount) {
 			throw new AdempiereException("@POS.ApplyDiscountNotAllowed@");
 		}
 		BigDecimal maximumDiscountAllowed = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "MaximumDiscountAllowed");
+		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
+			throw new AdempiereException("@POS.MaximumDiscountAllowedExceeded@");
+		}
+	}
+	
+	/**
+	 * Validate discount of line
+	 * @param pos
+	 * @param discountRateOff
+	 */
+	private void validateLineDiscount(MPOS pos, BigDecimal discountRateOff) {
+		boolean isAllowsApplyDiscount = getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "IsAllowsModifyDiscount");
+		if(!isAllowsApplyDiscount) {
+			throw new AdempiereException("@POS.ModifyDiscountAllowed@");
+		}
+		BigDecimal maximumDiscountAllowed = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "MaximumLineDiscountAllowed");
 		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
 			throw new AdempiereException("@POS.MaximumDiscountAllowedExceeded@");
 		}
