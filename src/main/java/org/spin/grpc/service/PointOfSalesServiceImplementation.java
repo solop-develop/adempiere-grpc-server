@@ -2969,6 +2969,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(businessPartner == null) {
 				throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 			}
+			if(businessPartner.getC_BPartner_ID() == pos.getC_BPartnerCashTrx_ID()) {
+				throw new AdempiereException("@POS.ModifyTemplateCustomerNotAllowed@");
+			}
 			businessPartner.set_TrxName(transactionName);
 			//	Set Value
 			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));			
