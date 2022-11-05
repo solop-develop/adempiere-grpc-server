@@ -4876,7 +4876,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				MOrderLine orderLine = new MOrderLine(order);
 
 				MProduct product = new Query(
-					Env.getCtx(),
+					order.getCtx(),
 					MProduct.Table_Name,
 					" S_Resource_ID = ? ",
 					null
@@ -4884,7 +4884,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					.setParameters(resourceAssigment.getS_Resource_ID())
 					.first();
 				if (product != null && product.getM_Product_ID() > 0) {
-					orderLine.setProduct(MProduct.get(order.getCtx(), product.getM_Product_ID()));
+					orderLine.setProduct(product);
 					orderLine.setC_UOM_ID(product.getC_UOM_ID());
 				}
 				orderLine.setS_ResourceAssignment_ID(resourceAssignmentId);
@@ -4892,11 +4892,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				orderLine.setQty(quantityToOrder);
 				orderLine.setPrice();
 				orderLine.setTax();
-				String description = ValueUtil.validateNull(resourceAssigment.getName());
+				StringBuffer description = new StringBuffer(ValueUtil.validateNull(resourceAssigment.getName()));
 				if (!Util.isEmpty(resourceAssigment.getDescription())) {
-					description += " (" + resourceAssigment.getDescription() + ") ";
+					description.append(" (" + resourceAssigment.getDescription() + ")");
 				}
-				orderLine.setDescription(description);
+				description.append(": ").append(DisplayType.getDateFormat(DisplayType.DateTime).format(resourceAssigment.getAssignDateFrom()));
+				description.append(" ~ ").append(DisplayType.getDateFormat(DisplayType.DateTime).format(resourceAssigment.getAssignDateTo()));
+				orderLine.setDescription(description.toString());
 
 				//	Save Line
 				orderLine.saveEx(transactionName);
