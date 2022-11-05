@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 syntax = "proto3";
 
@@ -98,6 +98,10 @@ service UserInterface {
 	rpc DeletePreference(DeletePreferenceRequest) returns (Empty) {}
 	//	List General Info
 	rpc ListGeneralInfo(ListGeneralInfoRequest) returns (ListEntitiesResponse) {}
+	//	List Tab Sequences
+	rpc ListTabSequences(ListTabSequencesRequest) returns (ListEntitiesResponse) {}
+	//	Save Tab Sequences
+	rpc SaveTabSequences(SaveTabSequencesRequest) returns (ListEntitiesResponse) {}
 }
 
 //	All related to dashboarding
@@ -763,4 +767,22 @@ message ListGeneralInfoRequest {
 	string column_uuid = 11;
 	string table_name = 12;
 	string column_name = 13;
+}
+
+message ListTabSequencesRequest {
+	ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	string window_uuid = 4;
+	string tab_uuid = 5;
+	// filters
+	repeated KeyValue context_attributes = 6;
+}
+
+message SaveTabSequencesRequest {
+	ClientRequest client_request = 1;
+	string window_uuid = 2;
+	string tab_uuid = 3;
+	repeated KeyValue context_attributes = 4;
+	repeated KeyValue attributes = 5;
 }

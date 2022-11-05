@@ -162,6 +162,7 @@ import org.spin.backend.grpc.common.ListReferencesResponse;
 import org.spin.backend.grpc.common.ListReportViewsRequest;
 import org.spin.backend.grpc.common.ListReportViewsResponse;
 import org.spin.backend.grpc.common.ListTabEntitiesRequest;
+import org.spin.backend.grpc.common.ListTabSequencesRequest;
 import org.spin.backend.grpc.common.ListTranslationsRequest;
 import org.spin.backend.grpc.common.ListTranslationsResponse;
 import org.spin.backend.grpc.common.LockPrivateAccessRequest;
@@ -3394,4 +3395,133 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		return builder;
 	}
+
+	@Override
+	public void listTabSequences(ListTabSequencesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListEntitiesResponse.Builder recordsListBuilder = listTabSequences(request);
+			responseObserver.onNext(recordsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+
+	private ListEntitiesResponse.Builder listTabSequences(ListTabSequencesRequest request) {
+		if (Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+
+		//  Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		
+		MTab tab = new Query(
+				context,
+				I_AD_Tab.Table_Name,
+				"UUID = ?",
+				null
+			)
+			.setParameters(request.getTabUuid())
+			.first()
+		;
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+		if (!tab.isSortTab()) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+		String sortColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortOrder_ID());
+		String includedColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortYesNo_ID());
+
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		List<MColumn> columnsList = table.getColumnsAsList();
+		MColumn keyColumn = columnsList.stream()
+			.filter(column -> {
+				return column.isKey();
+			})
+			.findFirst()
+			.orElse(null);
+
+		MColumn parentColumn = columnsList.stream()
+			.filter(column -> {
+				return column.isParent();
+			})
+			.findFirst()
+			.orElse(null);
+
+		int parentRecordId = Env.getContextAsInt(context, windowNo, parentColumn.getColumnName());
+
+		Query query = new Query(
+				context,
+				table.getTableName(),
+				parentColumn.getColumnName() + " = ?",
+				null
+			)
+			.setParameters(parentRecordId)
+			.setOrderBy(sortColumnName + " ASC")
+		;
+
+		int count = query.count();
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+
+		List<PO> sequencesList = query.setLimit(limit, offset).list();
+		ListEntitiesResponse.Builder builderList = ListEntitiesResponse.newBuilder()
+			.setRecordCount(count);
+
+		sequencesList.forEach(entity -> {
+			Entity.Builder entityBuilder = Entity.newBuilder()
+				.setTableName(table.getTableName())
+				.setUuid(entity.get_UUID())
+				.setId(entity.get_ID())
+			;
+
+			// set attributes
+			entityBuilder.putValues(
+				keyColumn.getColumnName(),
+				ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
+			);
+			entityBuilder.putValues(
+				LookupUtil.UUID_COLUMN_KEY,
+				ValueUtil.getValueFromString(entity.get_UUID()).build()
+			);
+			entityBuilder.putValues(
+				LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueUtil.getValueFromString(entity.getDisplayValue()).build()
+			);
+			entityBuilder.putValues(
+				sortColumnName,
+				ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
+			);
+			entityBuilder.putValues(
+				includedColumnName,
+				ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
+			);
+
+			builderList.addRecords(entityBuilder);
+		});
+
+		// Set page token
+		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		//  Set next page
+		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		
+		return builderList;
+	}
+
 }
