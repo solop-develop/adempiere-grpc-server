@@ -781,8 +781,7 @@ message ListTabSequencesRequest {
 
 message SaveTabSequencesRequest {
 	ClientRequest client_request = 1;
-	string window_uuid = 2;
-	string tab_uuid = 3;
-	repeated KeyValue context_attributes = 4;
-	repeated KeyValue attributes = 5;
+	string tab_uuid = 2;
+	repeated KeyValue context_attributes = 3;
+	repeated KeyValueSelection entities = 4;
 }
