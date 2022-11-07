@@ -4581,7 +4581,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				&& requestedAmount.compareTo(Env.ZERO) != 0) {
 			String requestedAmountColumnName = getAmountAccessColumnName(requestedAccess);
 			if(requestedAmountColumnName != null) {
-				whereClause.append(" AND (").append("seller.").append(requestedAmountColumnName).append(" <= ? OR ").append(requestedAmountColumnName).append(" = 0").append(")");
+				whereClause.append(" AND (").append("seller.").append(requestedAmountColumnName).append(" >= ? OR ").append("seller.").append(requestedAmountColumnName).append(" = 0").append(")");
 				parameters.add(requestedAmount);
 			}
 		}
@@ -5230,11 +5230,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setIsAllowsCashWithdrawal(getBooleanValueFromPOS(pos, userId, "IsAllowsCashWithdrawal"))
 			.setIsAllowsApplyDiscount(getBooleanValueFromPOS(pos, userId, "IsAllowsApplyDiscount"))
 			.setIsAllowsCreateCustomer(getBooleanValueFromPOS(pos, userId, "IsAllowsCreateCustomer"))
+			.setIsAllowsModifyCustomer(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyCustomer"))
 			.setIsAllowsPrintDocument(getBooleanValueFromPOS(pos, userId, "IsAllowsPrintDocument"))
 			.setIsAllowsPreviewDocument(getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument"))
 			.setIsPosManager(getBooleanValueFromPOS(pos, userId, "IsPosManager"))
 			.setIsAllowsModifyDiscount(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyDiscount"))
-			.setIsKeepPriceFromCustomer(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyCustomer"))
+			.setIsKeepPriceFromCustomer(getBooleanValueFromPOS(pos, userId, "IsKeepPriceFromCustomer"))
+			
 		;
 
 		if(pos.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
