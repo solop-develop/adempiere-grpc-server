@@ -137,16 +137,16 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 					|| Util.isEmpty(applicationInfo.getSessionUuid())) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getApplicationRequest().getSessionUuid(), request.getApplicationRequest().getLanguage());
-			Field.Builder fieldBuilder = convertField(context, request);
+			Field.Builder fieldBuilder = getField(request);
 			responseObserver.onNext(fieldBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	
@@ -1240,7 +1240,8 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param request
 	 * @return
 	 */
-	private Field.Builder convertField(Properties context, FieldRequest request) {
+	private Field.Builder getField(FieldRequest request) {
+		Properties context = ContextManager.getContext(request.getApplicationRequest());
 		Field.Builder builder = Field.newBuilder();
 		//	For UUID
 		if(!Util.isEmpty(request.getFieldUuid())) {
@@ -1498,7 +1499,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if (field == null) {
 			return Field.newBuilder();
 		}
-		//`Column reference
+		// Column reference
 		MColumn column = MColumn.get(context, field.getAD_Column_ID());
 		M_Element element = new M_Element(context, column.getAD_Element_ID(), null);
 		String defaultValue = field.getDefaultValue();
@@ -1630,7 +1631,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 
 		MTab parentTab = MTab.get(Env.getCtx(), field.getAD_Tab_ID());
 		List<MTab> tabsList = ASPUtil.getInstance(Env.getCtx()).getWindowTabs(parentTab.getAD_Window_ID());
-
+		if (tabsList == null) {
+			return depenentFieldsList;
+		}
 		tabsList.stream()
 			.filter(currentTab -> {
 				// transaltion tab is not rendering on client
