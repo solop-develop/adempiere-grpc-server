@@ -2048,10 +2048,11 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		whereClause.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND ")
 				.append("TRUNC(").append(MBankStatement.COLUMNNAME_StatementDate).append(",'DD') = ? AND ")
 				.append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
-				.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?");
+				.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
+				.append(" AND ").append("C_POS_ID = ?");
 		MBankStatement bankStatement = new Query(payment.getCtx() , MBankStatement.Table_Name , whereClause.toString(), payment.get_TrxName())
 				.setClient_ID()
-				.setParameters(payment.getC_BankAccount_ID(), TimeUtil.getDay(payment.getDateTrx()), false, documentTypeId)
+				.setParameters(payment.getC_BankAccount_ID(), TimeUtil.getDay(payment.getDateTrx()), false, documentTypeId, pos.getC_POS_ID())
 				.first();
 		if (bankStatement == null || bankStatement.get_ID() <= 0) {
 			bankStatement = new MBankStatement(payment.getCtx() , 0 , payment.get_TrxName());
