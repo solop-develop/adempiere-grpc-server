@@ -34,7 +34,7 @@ service MaterialManagement {
 	rpc ListProductAttributes(ListProductAttributesRequest) returns (data.ListEntitiesResponse) {}
 	// Get Product Attribute Set
 	rpc GetProductAttributeSet(GetProductAttributeSetRequest) returns (ProductAttributeSet) {}
-	// Get Product Set Attribute
+	// Get Product Set Attribute Instance
 	rpc GetProductAttributeSetInstance(GetProductAttributeSetInstanceRequest) returns (ProductAttributeSetInstance) {}
 	// List Product Atribute Set Instance
 	rpc ListProductAttributeSetInstances(ListProductAttributeSetInstancesRequest) returns (ListProductAttributeSetInstancesResponse) {}
