@@ -109,7 +109,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -132,7 +131,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -156,7 +154,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -204,7 +201,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -229,7 +225,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -254,7 +249,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -278,7 +272,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -329,7 +322,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException()
 			);
@@ -797,18 +789,26 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		}
 		//	get from role access
 		if(role != null) {
-			if(role.isUseUserOrgAccess()) {
-				whereClause = "EXISTS(SELECT 1 FROM AD_User_OrgAccess ua "
+			if (role.isAccessAllOrgs()) {
+				whereClause = " EXISTS(SELECT 1 FROM AD_Role r "
+					+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
+					+ "AND r.AD_Role_ID = ? "
+					+ "AND r.IsActive = 'Y')";
+				parameters.add(role.getAD_Role_ID());
+			} else {
+				if(role.isUseUserOrgAccess()) {
+					whereClause = "EXISTS(SELECT 1 FROM AD_User_OrgAccess ua "
 						+ "WHERE ua.AD_Org_ID = AD_Org.AD_Org_ID "
 						+ "AND ua.AD_User_ID = ? "
 						+ "AND ua.IsActive = 'Y')";
-				parameters.add(Env.getAD_User_ID(Env.getCtx()));
-			} else {
-				whereClause = "EXISTS(SELECT 1 FROM AD_Role_OrgAccess ra "
+					parameters.add(Env.getAD_User_ID(Env.getCtx()));
+				} else {
+					whereClause = "EXISTS(SELECT 1 FROM AD_Role_OrgAccess ra "
 						+ "WHERE ra.AD_Org_ID = AD_Org.AD_Org_ID "
 						+ "AND ra.AD_Role_ID = ? "
 						+ "AND ra.IsActive = 'Y')";
-				parameters.add(role.getAD_Role_ID());
+					parameters.add(role.getAD_Role_ID());
+				}
 			}
 		}
 		//	Get page and count

@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="AllInOneServices" type="Application" factoryName="Application" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="org.spin.server.AllInOneServices" />
+    <module name="backend.main" />
+    <option name="PROGRAM_PARAMETERS" value="resources/standalone.yml" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="org.spin.server.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

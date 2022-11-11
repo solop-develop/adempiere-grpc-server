@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 syntax = "proto3";
 
@@ -26,10 +26,11 @@ message Empty {
 	
 }
 
-//	BusinessProcess Selections
+//	Entities Selections
 message KeyValueSelection {
 	int32 selection_id = 1;
-	repeated KeyValue values = 2;
+	string selection_uuid = 2;
+	repeated KeyValue values = 3;
 }
 
 // Key and Value pairs

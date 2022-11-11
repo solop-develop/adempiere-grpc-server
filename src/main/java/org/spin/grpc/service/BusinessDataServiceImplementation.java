@@ -116,7 +116,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -136,7 +135,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -156,7 +154,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -177,7 +174,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -197,7 +193,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -219,7 +214,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -248,8 +242,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		int recordId = request.getId();
 		if(!Util.isEmpty(request.getTableName())) {
 			MTable table = MTable.get(context, request.getTableName());
-			if(table != null
-					&& table.getAD_Table_ID() != 0) {
+			if(table != null && table.getAD_Table_ID() > 0) {
 				tableId = table.getAD_Table_ID();
 			}
 		}
