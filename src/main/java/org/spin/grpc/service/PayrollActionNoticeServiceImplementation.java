@@ -87,7 +87,6 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -178,7 +177,6 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -304,7 +302,6 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -450,7 +447,6 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -471,6 +467,9 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 				)
 				.setParameters(request.getUuid())
 				.first();
+		}
+		if (conceptDefinition == null) {
+			throw new AdempiereException("@HR_Concept_ID@ Null");
 		}
 
 		Entity.Builder entityBuilder = Entity.newBuilder();
@@ -528,7 +527,6 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -687,7 +685,6 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -989,7 +986,6 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}

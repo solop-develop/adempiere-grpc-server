@@ -138,7 +138,6 @@ public class LogsServiceImplementation extends LogsImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -162,7 +161,6 @@ public class LogsServiceImplementation extends LogsImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -186,7 +184,6 @@ public class LogsServiceImplementation extends LogsImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -211,7 +208,6 @@ public class LogsServiceImplementation extends LogsImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -236,7 +232,6 @@ public class LogsServiceImplementation extends LogsImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -261,7 +256,6 @@ public class LogsServiceImplementation extends LogsImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}

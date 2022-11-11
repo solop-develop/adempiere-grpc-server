@@ -263,8 +263,11 @@ public class ReferenceInfo {
 		int referenceId = 0;
 		int referenceValueId = 0;
 		int validationRuleId = 0;
-		if(!Util.isEmpty(fieldUuid)) {
-			MField field = (MField) RecordUtil.getEntity(Env.getCtx(), I_AD_Field.Table_Name, fieldUuid, 0, null);
+		MField field = null;
+		if (!Util.isEmpty(fieldUuid)) {
+			field = (MField) RecordUtil.getEntity(Env.getCtx(), I_AD_Field.Table_Name, fieldUuid, 0, null);
+		}
+		if(field != null) {
 			int fieldId = field.getAD_Field_ID();
 			List<MField> customFields = ASPUtil.getInstance(Env.getCtx()).getWindowFields(field.getAD_Tab_ID());
 			if(customFields != null) {

@@ -18,6 +18,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -136,17 +137,16 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 					|| Util.isEmpty(applicationInfo.getSessionUuid())) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getApplicationRequest().getSessionUuid(), request.getApplicationRequest().getLanguage());
-			Field.Builder fieldBuilder = convertField(context, request);
+			Field.Builder fieldBuilder = getField(request);
 			responseObserver.onNext(fieldBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	
@@ -170,7 +170,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -196,7 +195,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -222,7 +220,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -248,7 +245,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -274,7 +270,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -304,7 +299,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -335,7 +329,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -821,7 +814,27 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}
 		//	For parameters
 		if(withParams) {
+			String language = context.getProperty(Env.LANGUAGE);
 			for(MProcessPara parameter : ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID())) {
+				// TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
+				if(!Language.isBaseLanguage(language)) {
+					//	Name
+					String value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Name, language);
+					if(!Util.isEmpty(value)) {
+						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Name, value);
+					}
+					//	Description
+					value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Description, language);
+					if(!Util.isEmpty(value)) {
+						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Description, value);
+					}
+					//	Help
+					value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Help, language);
+					if(!Util.isEmpty(value)) {
+						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Help, value);
+					}
+				}
+				
 				Field.Builder fieldBuilder = convertProcessParameter(context, parameter);
 				builder.addParameters(fieldBuilder.build());
 			}
@@ -902,11 +915,14 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @return
 	 */
 	private List<MProcess> getProcessActionFromTab(Properties context, MTab tab) {
+		// to prevent duplicity of associated processes in different locations (table, column and tab).
+		HashMap<Integer, MProcess> processList = new HashMap<>();
+
 		//	First Process Tab
-		List<MProcess> processList = new ArrayList<>();
 		if(tab.getAD_Process_ID() > 0) {
-			processList.add(MProcess.get(context, tab.getAD_Process_ID()));
+			processList.put(tab.getAD_Process_ID(), MProcess.get(context, tab.getAD_Process_ID()));
 		}
+
 		//	Process from tab
 		List<MProcess> processFromTabList = new Query(tab.getCtx(), I_AD_Process.Table_Name, "EXISTS(SELECT 1 FROM AD_Field f "
 				+ "INNER JOIN AD_Column c ON(c.AD_Column_ID = f.AD_Column_ID) "
@@ -917,8 +933,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setOnlyActiveRecords(true)
 				.<MProcess>list();
 		for(MProcess process : processFromTabList) {
-			processList.add(process);
+			processList.put(process.getAD_Process_ID(), process);
 		}
+
 		//	Process from table
 		List<MProcess> processFromTableList = new Query(tab.getCtx(), I_AD_Process.Table_Name, 
 				"EXISTS(SELECT 1 FROM AD_Table_Process WHERE AD_Process_ID = AD_Process.AD_Process_ID AND AD_Table_ID = ?)", null)
@@ -926,9 +943,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setOnlyActiveRecords(true)
 				.<MProcess>list();
 		for(MProcess process : processFromTableList) {
-			processList.add(process);
+			processList.put(process.getAD_Process_ID(), process);
 		}
-		return processList;
+
+		return new ArrayList<MProcess>(processList.values());
 	}
 	
 	/**
@@ -1222,7 +1240,8 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param request
 	 * @return
 	 */
-	private Field.Builder convertField(Properties context, FieldRequest request) {
+	private Field.Builder getField(FieldRequest request) {
+		Properties context = ContextManager.getContext(request.getApplicationRequest());
 		Field.Builder builder = Field.newBuilder();
 		//	For UUID
 		if(!Util.isEmpty(request.getFieldUuid())) {
@@ -1480,7 +1499,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if (field == null) {
 			return Field.newBuilder();
 		}
-		//`Column reference
+		// Column reference
 		MColumn column = MColumn.get(context, field.getAD_Column_ID());
 		M_Element element = new M_Element(context, column.getAD_Element_ID(), null);
 		String defaultValue = field.getDefaultValue();
@@ -1612,13 +1631,19 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 
 		MTab parentTab = MTab.get(Env.getCtx(), field.getAD_Tab_ID());
 		List<MTab> tabsList = ASPUtil.getInstance(Env.getCtx()).getWindowTabs(parentTab.getAD_Window_ID());
-
+		if (tabsList == null) {
+			return depenentFieldsList;
+		}
 		tabsList.stream()
 			.filter(currentTab -> {
-				return currentTab.isActive();
+				// transaltion tab is not rendering on client
+				return currentTab.isActive() && !currentTab.isTranslationTab();
 			})
 			.forEach(tab -> {
 				List<MField> fieldsList = ASPUtil.getInstance().getWindowFields(tab.getAD_Tab_ID());
+				if (fieldsList == null) {
+					return;
+				}
 
 				fieldsList.stream()
 					.filter(currentField -> {
@@ -1906,7 +1931,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -2013,7 +2037,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}

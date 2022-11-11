@@ -94,7 +94,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -114,7 +113,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -134,7 +132,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -154,7 +151,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}

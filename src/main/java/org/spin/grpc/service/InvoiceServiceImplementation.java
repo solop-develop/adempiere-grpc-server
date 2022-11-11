@@ -62,7 +62,6 @@ public class InvoiceServiceImplementation extends InvoiceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -93,9 +92,10 @@ public class InvoiceServiceImplementation extends InvoiceImplBase {
 		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
 		// validation code of field
-		String parsedValidationCode = Env.parseContext(context, windowNo, reference.ValidationCode, false);
-		if (!Util.isEmpty(reference.ValidationCode)) {
-			if (Util.isEmpty(parsedValidationCode)) {
+		String validationCode = DictionaryUtil.getValidationCodeWithAlias(tableName, reference.ValidationCode);
+		String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+		if (!Util.isEmpty(reference.ValidationCode, true)) {
+			if (Util.isEmpty(parsedValidationCode, true)) {
 				throw new AdempiereException("@WhereClause@ @Unparseable@");
 			}
 			whereClause.append(" AND ").append(parsedValidationCode);

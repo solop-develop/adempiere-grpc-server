@@ -127,10 +127,14 @@ public class DictionaryUtil {
 				String tableName = table.getTableName();
 
 				//	Validation Code
-				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
-					Env.getCtx()).getReferenceInfo(displayTypeId, referenceValueId, columnName, language.getAD_Language(),
-					tableName
-				);
+				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
+					.getReferenceInfo(
+						displayTypeId,
+						referenceValueId,
+						columnName,
+						language.getAD_Language(),
+						tableName
+					);
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
 					queryToAdd.append(referenceInfo.getDisplayValue(columnName));
@@ -193,6 +197,26 @@ public class DictionaryUtil {
 		boolean isUsedParentColumn = matcher.find();
 
 		return isUsedParentColumn;
+	}
+
+	/**
+	 * Add and get talbe alias to columns in validation code sql
+	 * @param tableAlias
+	 * @param dynamicValidation
+	 * @return {String}
+	 */
+	public static String getValidationCodeWithAlias(String tableAlias, String dynamicValidation) {
+		String validationCode = dynamicValidation;
+
+		Matcher matcherTableAliases = Pattern.compile("" + tableAlias + ".", Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+			.matcher(dynamicValidation);
+		if (!matcherTableAliases.find()) {
+			Pattern patternColumnName = Pattern.compile("(\\w+)(\\s+){0,1}=", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+			Matcher matchColumnName = patternColumnName.matcher(validationCode);
+			validationCode = matchColumnName.replaceAll(tableAlias + ".$1="); // $&
+		}
+
+		return validationCode;
 	}
 
 	/**

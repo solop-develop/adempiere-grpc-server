@@ -147,7 +147,7 @@ public class ContextManager {
 			} else if(attribute.getValue() instanceof Timestamp) {
 				Env.setContext(context, windowNo, attribute.getKey(), (Timestamp) attribute.getValue());
 			} else if(attribute.getValue() instanceof Boolean) {
-				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
+				Env.setContext(context, windowNo, attribute.getKey(), (Boolean) attribute.getValue());
 			} else if(attribute.getValue() instanceof String) {
 				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
 			}

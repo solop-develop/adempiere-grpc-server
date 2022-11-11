@@ -247,9 +247,6 @@ public class ConvertUtil {
 			String columnName = poInfo.getColumnName(index);
 			int referenceId = poInfo.getColumnDisplayType(index);
 			Object value = entity.get_Value(index);
-			if(value == null) {
-				continue;
-			}
 			Value.Builder builderValue = ValueUtil.getValueFromReference(value, referenceId);
 			if(builderValue == null) {
 				continue;
@@ -296,8 +293,9 @@ public class ConvertUtil {
 	 */
 	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
 		if (documentType == null) {
-			DocumentType.newBuilder();
+			return DocumentType.newBuilder();
 		}
+
 		return DocumentType.newBuilder()
 				.setUuid(ValueUtil.validateNull(documentType.getUUID()))
 				.setId(documentType.getC_DocType_ID())
@@ -432,8 +430,9 @@ public class ConvertUtil {
 	 */
 	public static org.spin.backend.grpc.common.Language.Builder convertLanguage(MLanguage language) {
 		if (language == null) {
-			org.spin.backend.grpc.common.Language.newBuilder();
+			return org.spin.backend.grpc.common.Language.newBuilder();
 		}
+
 		String datePattern = language.getDatePattern();
 		String timePattern = language.getTimePattern();
 		if(Util.isEmpty(datePattern)) {

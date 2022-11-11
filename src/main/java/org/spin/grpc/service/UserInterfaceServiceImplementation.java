@@ -162,6 +162,7 @@ import org.spin.backend.grpc.common.ListReferencesResponse;
 import org.spin.backend.grpc.common.ListReportViewsRequest;
 import org.spin.backend.grpc.common.ListReportViewsResponse;
 import org.spin.backend.grpc.common.ListTabEntitiesRequest;
+import org.spin.backend.grpc.common.ListTabSequencesRequest;
 import org.spin.backend.grpc.common.ListTranslationsRequest;
 import org.spin.backend.grpc.common.ListTranslationsResponse;
 import org.spin.backend.grpc.common.LockPrivateAccessRequest;
@@ -178,6 +179,7 @@ import org.spin.backend.grpc.common.Resource;
 import org.spin.backend.grpc.common.ResourceReference;
 import org.spin.backend.grpc.common.RollbackEntityRequest;
 import org.spin.backend.grpc.common.RunCalloutRequest;
+import org.spin.backend.grpc.common.SaveTabSequencesRequest;
 import org.spin.backend.grpc.common.SetPreferenceRequest;
 import org.spin.backend.grpc.common.SetRecordAccessRequest;
 import org.spin.backend.grpc.common.Translation;
@@ -234,7 +236,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -259,7 +260,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -283,7 +283,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -303,7 +302,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -328,7 +326,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -352,7 +349,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -439,7 +435,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -495,7 +490,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -532,7 +526,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -570,7 +563,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -590,7 +582,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -610,7 +601,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -630,7 +620,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -642,7 +631,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
+			Properties context = ContextManager.getContext(request.getClientRequest());
 			ListReportViewsResponse.Builder reportViewsList = convertReportViewsList(context, request);
 			responseObserver.onNext(reportViewsList.build());
 			responseObserver.onCompleted();
@@ -650,7 +639,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -673,7 +661,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -696,7 +683,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -716,7 +702,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -741,7 +726,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -814,7 +798,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -837,7 +820,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -867,7 +849,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -896,7 +877,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -920,7 +900,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -944,7 +923,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
-					.augmentDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
 		}
@@ -965,7 +943,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -1182,7 +1159,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
-				.augmentDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
@@ -1221,9 +1197,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
 		// validation code of field
-		String parsedValidationCode = Env.parseContext(context, windowNo, reference.ValidationCode, false);
-		if (!Util.isEmpty(reference.ValidationCode)) {
-			if (Util.isEmpty(parsedValidationCode)) {
+		String validationCode = DictionaryUtil.getValidationCodeWithAlias(tableName, reference.ValidationCode);
+		String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+		if (!Util.isEmpty(reference.ValidationCode, true)) {
+			if (Util.isEmpty(parsedValidationCode, true)) {
 				throw new AdempiereException("@WhereClause@ @Unparseable@");
 			}
 			whereClause.append(" AND ").append(parsedValidationCode);
@@ -1872,6 +1849,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			whereClause = "EXISTS(SELECT 1 FROM AD_Process p WHERE p.UUID = ? AND p.AD_ReportView_ID = AD_ReportView.AD_ReportView_ID)";
 			parameters.add(request.getProcessUuid());
 		}
+
+		String language = context.getProperty(Env.LANGUAGE);
 		//	Get List
 		new Query(context, I_AD_ReportView.Table_Name, whereClause, null)
 			.setParameters(parameters)
@@ -1880,7 +1859,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				ReportView.Builder reportViewBuilder = ReportView.newBuilder();
 				String name = reportViewReference.getName();
 				String description = reportViewReference.getDescription();
-				if(!Env.isBaseLanguage(context, "")) {
+				
+				// add translation
+				if(!Util.isEmpty(language) && !Env.isBaseLanguage(context, "")) {
+					/*
 					String translation = reportViewReference.get_Translation("Name");
 					if(!Util.isEmpty(translation)) {
 						name = translation;
@@ -1889,7 +1871,32 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					if(!Util.isEmpty(translation)) {
 						description = translation;
 					}
+					*/
+
+					// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/31
+					PO translation = new Query(
+							context, 
+							I_AD_ReportView.Table_Name + "_Trl",
+							I_AD_ReportView.COLUMNNAME_AD_ReportView_ID + " = ? AND " +
+							"IsTranslated = ? AND AD_Language = ?",
+							null
+						)
+						.setParameters(reportViewReference.get_ID(), "Y", language)
+						.setOnlyActiveRecords(true)
+						.first();
+
+					if (translation != null) {
+						String nameTranslated = translation.get_ValueAsString(I_AD_ReportView.COLUMNNAME_Name);
+						if(!Util.isEmpty(nameTranslated)) {
+							name = nameTranslated;
+						}
+						String desciptionTranslated = translation.get_ValueAsString(I_AD_ReportView.COLUMNNAME_Description);
+						if(!Util.isEmpty(desciptionTranslated)) {
+							description = desciptionTranslated;
+						}
+					}
 				}
+
 				reportViewBuilder.setUuid(ValueUtil.validateNull(reportViewReference.getUUID()));
 				reportViewBuilder.setName(ValueUtil.validateNull(name));
 				reportViewBuilder.setDescription(ValueUtil.validateNull(description));
@@ -3389,4 +3396,247 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		return builder;
 	}
+
+	@Override
+	public void listTabSequences(ListTabSequencesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListEntitiesResponse.Builder recordsListBuilder = listTabSequences(request);
+			responseObserver.onNext(recordsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+
+	private ListEntitiesResponse.Builder listTabSequences(ListTabSequencesRequest request) {
+		if (Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+
+		//  Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		
+		MTab tab = new Query(
+				context,
+				I_AD_Tab.Table_Name,
+				"UUID = ?",
+				null
+			)
+			.setParameters(request.getTabUuid())
+			.first()
+		;
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+		if (!tab.isSortTab()) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+		String sortColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortOrder_ID());
+		String includedColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortYesNo_ID());
+
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		List<MColumn> columnsList = table.getColumnsAsList();
+		MColumn keyColumn = columnsList.stream()
+			.filter(column -> {
+				return column.isKey();
+			})
+			.findFirst()
+			.orElse(null);
+
+		MColumn parentColumn = columnsList.stream()
+			.filter(column -> {
+				return column.isParent();
+			})
+			.findFirst()
+			.orElse(null);
+
+		int parentRecordId = Env.getContextAsInt(context, windowNo, parentColumn.getColumnName());
+
+		Query query = new Query(
+				context,
+				table.getTableName(),
+				parentColumn.getColumnName() + " = ?",
+				null
+			)
+			.setParameters(parentRecordId)
+			.setOrderBy(sortColumnName + " ASC")
+		;
+
+		int count = query.count();
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+
+		List<PO> sequencesList = query.setLimit(limit, offset).list();
+		ListEntitiesResponse.Builder builderList = ListEntitiesResponse.newBuilder()
+			.setRecordCount(count);
+
+		sequencesList.forEach(entity -> {
+			Entity.Builder entityBuilder = Entity.newBuilder()
+				.setTableName(table.getTableName())
+				.setUuid(entity.get_UUID())
+				.setId(entity.get_ID())
+			;
+
+			// set attributes
+			entityBuilder.putValues(
+				keyColumn.getColumnName(),
+				ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
+			);
+			entityBuilder.putValues(
+				LookupUtil.UUID_COLUMN_KEY,
+				ValueUtil.getValueFromString(entity.get_UUID()).build()
+			);
+			entityBuilder.putValues(
+				LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueUtil.getValueFromString(entity.getDisplayValue()).build()
+			);
+			entityBuilder.putValues(
+				sortColumnName,
+				ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
+			);
+			entityBuilder.putValues(
+				includedColumnName,
+				ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
+			);
+
+			builderList.addRecords(entityBuilder);
+		});
+
+		// Set page token
+		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		//  Set next page
+		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		
+		return builderList;
+	}
+
+
+	@Override
+	public void saveTabSequences(SaveTabSequencesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListEntitiesResponse.Builder recordsListBuilder = saveTabSequences(request);
+			responseObserver.onNext(recordsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+
+	private ListEntitiesResponse.Builder saveTabSequences(SaveTabSequencesRequest request) {
+		if (Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+
+		//  Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		
+		MTab tab = new Query(
+				context,
+				I_AD_Tab.Table_Name,
+				"UUID = ?",
+				null
+			)
+			.setParameters(request.getTabUuid())
+			.first()
+		;
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+		if (!tab.isSortTab()) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		List<MColumn> columnsList = table.getColumnsAsList();
+		MColumn keyColumn = columnsList.stream()
+			.filter(column -> {
+				return column.isKey();
+			})
+			.findFirst()
+			.orElse(null);
+		String sortColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortOrder_ID());
+		String includedColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortYesNo_ID());
+
+		ListEntitiesResponse.Builder builderList = ListEntitiesResponse.newBuilder()
+			.setRecordCount(request.getEntitiesList().size());
+
+		Trx.run(transacctionName -> {
+			request.getEntitiesList().stream().forEach(entitySelection -> {
+				PO entity = RecordUtil.getEntity(
+					Env.getCtx(), table.getTableName(),
+					entitySelection.getSelectionUuid(),
+					entitySelection.getSelectionId(),
+					transacctionName
+				);
+				if (entity == null || entity.get_ID() <= 0) {
+					return;
+				}
+				// set new values
+				entitySelection.getValuesList().stream().forEach(attribute -> {
+					Object value = ValueUtil.getObjectFromValue(attribute.getValue());
+					entity.set_ValueOfColumn(attribute.getKey(), value);
+
+				});
+				entity.saveEx(transacctionName);
+
+				Entity.Builder entityBuilder = Entity.newBuilder()
+					.setTableName(table.getTableName())
+					.setUuid(entity.get_UUID())
+					.setId(entity.get_ID())
+				;
+
+				// set attributes
+				entityBuilder.putValues(
+					keyColumn.getColumnName(),
+					ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
+				);
+				entityBuilder.putValues(
+					LookupUtil.UUID_COLUMN_KEY,
+					ValueUtil.getValueFromString(entity.get_UUID()).build()
+				);
+				entityBuilder.putValues(
+					LookupUtil.DISPLAY_COLUMN_KEY,
+					ValueUtil.getValueFromString(entity.getDisplayValue()).build()
+				);
+				entityBuilder.putValues(
+					sortColumnName,
+					ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
+				);
+				entityBuilder.putValues(
+					includedColumnName,
+					ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
+				);
+
+				builderList.addRecords(entityBuilder);
+			});
+		});
+
+		return builderList;
+	}
+
 }
