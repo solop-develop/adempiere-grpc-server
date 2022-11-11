@@ -67,6 +67,7 @@ import org.compiere.model.I_M_PriceList;
 import org.compiere.model.I_M_Product;
 import org.compiere.model.I_M_Storage;
 import org.compiere.model.I_M_Warehouse;
+import org.compiere.model.I_S_ResourceAssignment;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
 import org.compiere.model.MAttributeSetInstance;
@@ -95,6 +96,7 @@ import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductPrice;
 import org.compiere.model.MProductPricing;
+import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
@@ -1973,7 +1975,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				int cashClosingDocumentTypeId = pos.get_ValueAsInt("POSCashClosingDocumentType_ID");
 				//	Create Cash closing
 				if(cashClosingDocumentTypeId > 0) {
-					createBankStatement(payment, cashClosingDocumentTypeId);
+					createBankStatement(pos, payment, cashClosingDocumentTypeId);
 				}
 				//	
 				processPayment(pos, payment, transactionName);
@@ -1984,30 +1986,30 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	
 	/**
 	 * Create BankStatement based on default document type of point of sales
+	 * @param pos
 	 * @param payment
 	 * @param documentTypeId
 	 */
-	private void createBankStatement(MPayment payment, int documentTypeId) {
+	private void createBankStatement(MPOS pos, MPayment payment, int documentTypeId) {
 		StringBuilder whereClause = new StringBuilder();
 		whereClause.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND ")
 				.append("TRUNC(").append(MBankStatement.COLUMNNAME_StatementDate).append(",'DD') = ? AND ")
 				.append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
-				.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?");
+				.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
+				.append(" AND ").append("C_POS_ID = ?");
 		MBankStatement bankStatement = new Query(payment.getCtx() , MBankStatement.Table_Name , whereClause.toString(), payment.get_TrxName())
 				.setClient_ID()
-				.setParameters(payment.getC_BankAccount_ID(), TimeUtil.getDay(payment.getDateTrx()), false, documentTypeId)
+				.setParameters(payment.getC_BankAccount_ID(), TimeUtil.getDay(payment.getDateTrx()), false, documentTypeId, pos.getC_POS_ID())
 				.first();
 		if (bankStatement == null || bankStatement.get_ID() <= 0) {
 			bankStatement = new MBankStatement(payment.getCtx() , 0 , payment.get_TrxName());
 			bankStatement.setC_BankAccount_ID(payment.getC_BankAccount_ID());
 			bankStatement.setStatementDate(payment.getDateAcct());
 			bankStatement.setC_DocType_ID(documentTypeId);
-			if(payment.getDescription() != null) {
-				bankStatement.setName(payment.getDescription());
-			} else {
-				SimpleDateFormat format = DisplayType.getDateFormat(DisplayType.Date);
-				bankStatement.setName(Msg.parseTranslation(payment.getCtx(), "@Generate@: ") + format.format(payment.getDateAcct()));
-			}
+			bankStatement.setAD_Org_ID(pos.getAD_Org_ID());
+			bankStatement.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
+			SimpleDateFormat format = DisplayType.getDateFormat(DisplayType.Date);
+			bankStatement.setName(Msg.parseTranslation(payment.getCtx(), "@C_POS_ID@: " + pos.getName() + " @DateDoc@: " + format.format(System.currentTimeMillis())));
 			bankStatement.saveEx();
 		}
 	}
@@ -2058,11 +2060,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 */
 	private MBankStatement getCurrentCashclosing(int posId, String transactionName) {
 		return new Query(Env.getCtx(), I_C_BankStatement.Table_Name, "Processed = 'N' "
-				+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl "
-				+ "INNER JOIN C_Payment p ON(p.C_Payment_ID = bsl.C_Payment_ID) "
-				+ "WHERE bsl.C_BankStatement_ID = C_BankStatement.C_BankStatement_ID "
-				+ "AND p.DocStatus IN('CO', 'CL') "
-				+ "AND p.C_POS_ID = ?)", transactionName)
+				+ "AND C_POS_ID = ? ", transactionName)
 				.setParameters(posId)
 				.first();
 	}
@@ -2903,6 +2901,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @return
 	 */
 	private Customer.Builder updateCustomer(UpdateCustomerRequest request) {
+		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+		if(!getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "IsAllowsModifyCustomer")) {
+			throw new AdempiereException("@POS.ModifyCustomerNotAllowed@");
+		}
 		//	Customer Uuid
 		if(Util.isEmpty(request.getUuid())) {
 			throw new AdempiereException("@C_BPartner_ID@ @IsMandatory@");
@@ -2914,6 +2916,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			MBPartner businessPartner = MBPartner.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getUuid(), transactionName));
 			if(businessPartner == null) {
 				throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
+			}
+			if(businessPartner.getC_BPartner_ID() == pos.getC_BPartnerCashTrx_ID()) {
+				throw new AdempiereException("@POS.ModifyTemplateCustomerNotAllowed@");
 			}
 			businessPartner.set_TrxName(transactionName);
 			//	Set Value
@@ -3443,12 +3448,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @return
 	 */
 	private BigDecimal getBigDecimalValueFromPOS(MPOS pos, int userId, String columnName) {
-		if (pos.get_ValueAsBoolean("IsAllowsAllocateSeller")) {
-			PO userAllocated = getUserAllowed(Env.getCtx(), pos.getC_POS_ID(), userId, null);
-			if (userAllocated != null) {
-				if (userAllocated.get_ColumnIndex(columnName) >= 0) {
-					return Optional.ofNullable((BigDecimal) userAllocated.get_Value(columnName)).orElse(BigDecimal.ZERO);
-				}
+		PO userAllocated = getUserAllowed(Env.getCtx(), pos.getC_POS_ID(), userId, null);
+		if (userAllocated != null) {
+			if (userAllocated.get_ColumnIndex(columnName) >= 0) {
+				return Optional.ofNullable((BigDecimal) userAllocated.get_Value(columnName)).orElse(BigDecimal.ZERO);
 			}
 		}
 		if (pos.get_ColumnIndex(columnName) >= 0) {
@@ -3505,7 +3508,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		});
 		//	Validate Write Off Amount
 		if(!isOpenRefund) {
-			BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, salesOrder.getSalesRep_ID(), "WriteOffAmtTolerance");
+			BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
 			if(writeOffAmtTolerance.compareTo(Env.ZERO) > 0 && openAmount.get().abs().compareTo(writeOffAmtTolerance) > 0) {
 				throw new AdempiereException("@POS.WriteOffAmtToleranceExceeded@");
 			}
@@ -3772,16 +3775,18 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
 		int orgId = pos.getAD_Org_ID();
 		MUser salesRepresentative = MUser.get(Env.getCtx(), salesRepresentativeId);
-		boolean isAppliedNewFeaturesPOS = M_Element.get(Env.getCtx(), "IsSharedPOS") != null && M_Element.get(Env.getCtx(), "IsAllowsAllocateSeller") != null;
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<Object>();
 		whereClause.append("(C_Order.AD_Org_ID = ? OR C_Order.C_POS_ID = ?)");
 		parameters.add(orgId);
 		parameters.add(posId);
 		if(!salesRepresentative.get_ValueAsBoolean("IsPOSManager")) {
-			//	New features
-			if(isAppliedNewFeaturesPOS) {
-				//	Shared POS
+			if(pos.get_ValueAsBoolean("IsConfidentialInfo")) {
+				whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR C_Order.AssignedSalesRep_ID = ?) AND C_Order.C_POS_ID = ?)");
+				parameters.add(salesRepresentativeId);
+				parameters.add(salesRepresentativeId);
+				parameters.add(posId);
+			} else {
 				if(request.getIsOnlyAisleSeller()) {
 					whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?) AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsAisleSeller = 'Y'))");
 					parameters.add(salesRepresentativeId);
@@ -3792,10 +3797,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					parameters.add(salesRepresentativeId);
 					parameters.add(salesRepresentativeId);
 					parameters.add(salesRepresentativeId);
-				}	
-			} else {
-				whereClause.append(" AND C_Order.C_POS_ID = ?");
-				parameters.add(posId);
+				}
 			}
 		}
 		//	Document No
@@ -4122,6 +4124,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				} else if(discountAmountOff != null) {
 					configureDiscountAmountOff(salesOrder, discountAmountOff, transactionName);
 				}
+
+				// Sales Representative
+				if (!Util.isEmpty(request.getSalesRepresentativeUuid(), true)) {
+					int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), transactionName);
+					salesOrder.setSalesRep_ID(salesRepresentativeId);
+				}
+
 				//	Save
 				salesOrder.saveEx(transactionName);
 				orderReference.set(salesOrder);
@@ -4263,14 +4272,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(pos.get_ValueAsInt("DefaultDiscountCharge_ID") <= 0) {
 			throw new AdempiereException("@DefaultDiscountCharge_ID@ @NotFound@");
 		}
-		boolean isAllowsApplyDiscount = getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "IsAllowsApplyDiscount");
-		if(!isAllowsApplyDiscount) {
-			throw new AdempiereException("@POS.ApplyDiscountNotAllowed@");
-		}
-		BigDecimal maximumDiscountAllowed = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "MaximumDiscountAllowed");
-		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
-			throw new AdempiereException("@POS.MaximumDiscountAllowedExceeded@");
-		}
+		//	Validate Discount
+//		validateDocumentDiscount(pos, discountRateOff);
 		Optional<BigDecimal> baseAmount = Arrays.asList(order.getLines()).stream()
 				.filter(ordeLine -> ordeLine.getC_Charge_ID() != pos.get_ValueAsInt("DefaultDiscountCharge_ID"))
 				.map(ordeLine -> ordeLine.getLineNetAmt())
@@ -4432,7 +4435,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			throw new AdempiereException("@UserPIN@ @IsMandatory@");
 		}
 
-		if (validatePINSupervisor(pos.getC_POS_ID(), Env.getAD_User_ID(Env.getCtx()), request.getPin(), request.getRequestedAccess())) {
+		if (validatePINSupervisor(pos.getC_POS_ID(), Env.getAD_User_ID(Env.getCtx()), request.getPin(), request.getRequestedAccess(), ValueUtil.getBigDecimalFromDecimal(request.getRequestedAmount()))) {
 			return Empty.newBuilder();
 		}
 
@@ -4465,16 +4468,72 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		return Empty.newBuilder();
 	}
 	
-	private boolean validatePINSupervisor(int posId, int userId, String pin, String requestedAccess) {
+//	/**
+//	 * Validate Document Discount
+//	 * @param pos
+//	 * @param discountRateOff
+//	 */
+//	private void validateDocumentDiscount(MPOS pos, BigDecimal discountRateOff) {
+//		boolean isAllowsApplyDiscount = getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "IsAllowsApplyDiscount");
+//		if(!isAllowsApplyDiscount) {
+//			throw new AdempiereException("@POS.ApplyDiscountNotAllowed@");
+//		}
+//		BigDecimal maximumDiscountAllowed = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "MaximumDiscountAllowed");
+//		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
+//			throw new AdempiereException("@POS.MaximumDiscountAllowedExceeded@");
+//		}
+//	}
+//	
+//	/**
+//	 * Validate discount of line
+//	 * @param pos
+//	 * @param discountRateOff
+//	 */
+//	private void validateLineDiscount(MPOS pos, BigDecimal discountRateOff) {
+//		boolean isAllowsApplyDiscount = getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "IsAllowsModifyDiscount");
+//		if(!isAllowsApplyDiscount) {
+//			throw new AdempiereException("@POS.ModifyDiscountAllowed@");
+//		}
+//		BigDecimal maximumDiscountAllowed = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "MaximumLineDiscountAllowed");
+//		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
+//			throw new AdempiereException("@POS.MaximumDiscountAllowedExceeded@");
+//		}
+//	}
+	
+	private String getAmountAccessColumnName(String requestedAccess) {
+		if(requestedAccess == null) {
+			return null;
+		}
+		if(requestedAccess.equals("IsAllowsModifyDiscount")) {
+			return "MaximumLineDiscountAllowed";
+		}
+		if(requestedAccess.equals("IsAllowsApplyDiscount")) {
+			return "MaximumDiscountAllowed";
+		}
+		return null;
+	}
+	
+	private boolean validatePINSupervisor(int posId, int userId, String pin, String requestedAccess, BigDecimal requestedAmount) {
 		if (Util.isEmpty(requestedAccess)) {
 			return false;
 		}
 
 		StringBuffer whereClause = new StringBuffer();
+		List<Object> parameters = new ArrayList<>();
+		parameters.add(posId);
 		MTable table = MTable.get(Env.getCtx(), "C_POSSellerAllocation");
 		if (table != null && table.getColumn(requestedAccess) != null) {
 			whereClause.append(" AND seller.").append(requestedAccess).append("= 'Y'");
 		}
+		if(requestedAmount != null
+				&& requestedAmount.compareTo(Env.ZERO) != 0) {
+			String requestedAmountColumnName = getAmountAccessColumnName(requestedAccess);
+			if(requestedAmountColumnName != null) {
+				whereClause.append(" AND (").append("seller.").append(requestedAmountColumnName).append(" >= ? OR ").append("seller.").append(requestedAmountColumnName).append(" = 0").append(")");
+				parameters.add(requestedAmount);
+			}
+		}
+		parameters.add(pin);
 		int supervisorId = new Query(
 				Env.getCtx(),
 				I_AD_User.Table_Name,
@@ -4490,7 +4549,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				null
 			)
 			.setOnlyActiveRecords(true)
-			.setParameters(posId, pin)
+			.setParameters(parameters)
 			.firstId()
 		;
 
@@ -4663,9 +4722,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(orderLineId <= 0) {
 			return OrderLine.newBuilder();
 		}
+		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 		//	Quantity
 		return ConvertUtil.convertOrderLine(
-				updateOrderLine(orderLineId, 
+				updateOrderLine(pos, orderLineId, 
 						ValueUtil.getBigDecimalFromDecimal(request.getQuantity()), 
 						ValueUtil.getBigDecimalFromDecimal(request.getPrice()), 
 						ValueUtil.getBigDecimalFromDecimal(request.getDiscountRate()),
@@ -4686,20 +4746,116 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		//	Validate Product and charge
 		if(Util.isEmpty(request.getProductUuid())
-				&& Util.isEmpty(request.getChargeUuid())) {
-			throw new AdempiereException("@M_Product_ID@ / @C_Charge_ID@ @NotFound@");
+				&& Util.isEmpty(request.getChargeUuid())
+				&& Util.isEmpty(request.getResourceAssignmentUuid(), true)) {
+			throw new AdempiereException("@M_Product_ID@ / @C_Charge_ID@ / @S_ResourceAssignment_ID@ @NotFound@");
 		}
 		int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
 		if(orderId <= 0) {
 			return OrderLine.newBuilder();
 		}
+		
+		MOrderLine orderLine = null;
+		if (!Util.isEmpty(request.getResourceAssignmentUuid(), true)) {
+			orderLine = addOrderLineFromResourceAssigment(
+				orderId,
+				RecordUtil.getIdFromUuid(I_S_ResourceAssignment.Table_Name, request.getResourceAssignmentUuid(), null),
+				RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null)
+			);
+		} else {
+			orderLine = addOrderLine(
+				orderId,
+				RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), null),
+				RecordUtil.getIdFromUuid(I_C_Charge.Table_Name, request.getChargeUuid(), null),
+				RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null),
+				ValueUtil.getBigDecimalFromDecimal(request.getQuantity())
+			);
+		}
 		//	Quantity
-		return ConvertUtil.convertOrderLine(
-				addOrderLine(orderId, 
-						RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), null), 
-						RecordUtil.getIdFromUuid(I_C_Charge.Table_Name, request.getChargeUuid(), null), 
-						RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null), 
-						ValueUtil.getBigDecimalFromDecimal(request.getQuantity())));
+		return ConvertUtil.convertOrderLine(orderLine);
+	}
+	
+	private MOrderLine addOrderLineFromResourceAssigment(int orderId, int resourceAssignmentId, int warehouseId) {
+		if(orderId <= 0) {
+			return null;
+		}
+		//	
+		AtomicReference<MOrderLine> orderLineReference = new AtomicReference<MOrderLine>();
+		Trx.run(transactionName -> {
+			MOrder order = new MOrder(Env.getCtx(), orderId, transactionName);
+			//	Valid Complete
+			if (!DocumentUtil.isDrafted(order)) {
+				throw new AdempiereException("@C_Order_ID@ @Processed@");
+			}
+			setCurrentDate(order);
+			// catch Exceptions at order.getLines()
+			Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines(true, "Line"))
+				.stream()
+				.filter(orderLine -> {
+					return resourceAssignmentId != 0 &&
+						resourceAssignmentId == orderLine.getS_ResourceAssignment_ID();
+				})
+				.findFirst();
+
+			MResourceAssignment resourceAssigment = new MResourceAssignment(Env.getCtx(), resourceAssignmentId, transactionName);
+			if (!resourceAssigment.isConfirmed()) {
+				resourceAssigment = TimeControlServiceImplementation.confirmResourceAssignment(resourceAssignmentId, resourceAssigment.getUUID());
+			}
+			BigDecimal quantity = resourceAssigment.getQty();
+
+			if(maybeOrderLine.isPresent()) {
+				MOrderLine orderLine = maybeOrderLine.get();
+				//	Set Quantity
+				BigDecimal quantityToOrder = quantity;
+				if(quantity == null) {
+					quantityToOrder = orderLine.getQtyEntered();
+					quantityToOrder = quantityToOrder.add(Env.ONE);
+				}
+				orderLine.setS_ResourceAssignment_ID(resourceAssignmentId);
+
+				updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
+				orderLineReference.set(orderLine);
+			} else {
+				BigDecimal quantityToOrder = quantity;
+				if(quantity == null) {
+					quantityToOrder = Env.ONE;
+				}
+				//create new line
+				MOrderLine orderLine = new MOrderLine(order);
+
+				MProduct product = new Query(
+					order.getCtx(),
+					MProduct.Table_Name,
+					" S_Resource_ID = ? ",
+					null
+				)
+					.setParameters(resourceAssigment.getS_Resource_ID())
+					.first();
+				if (product != null && product.getM_Product_ID() > 0) {
+					orderLine.setProduct(product);
+					orderLine.setC_UOM_ID(product.getC_UOM_ID());
+				}
+				orderLine.setS_ResourceAssignment_ID(resourceAssignmentId);
+
+				orderLine.setQty(quantityToOrder);
+				orderLine.setPrice();
+				orderLine.setTax();
+				StringBuffer description = new StringBuffer(ValueUtil.validateNull(resourceAssigment.getName()));
+				if (!Util.isEmpty(resourceAssigment.getDescription())) {
+					description.append(" (" + resourceAssigment.getDescription() + ")");
+				}
+				description.append(": ").append(DisplayType.getDateFormat(DisplayType.DateTime).format(resourceAssigment.getAssignDateFrom()));
+				description.append(" ~ ").append(DisplayType.getDateFormat(DisplayType.DateTime).format(resourceAssigment.getAssignDateTo()));
+				orderLine.setDescription(description.toString());
+
+				//	Save Line
+				orderLine.saveEx(transactionName);
+				//	Apply Discount from order
+				configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
+				orderLineReference.set(orderLine);
+			}
+		});
+		return orderLineReference.get();
 	}
 	
 	/***
@@ -4788,7 +4944,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param warehouseId
 	 * @return
 	 */
-	private MOrderLine updateOrderLine(int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId, int unitOfMeasureId) {
+	private MOrderLine updateOrderLine(MPOS pos, int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId, int unitOfMeasureId) {
 		if(orderLineId <= 0) {
 			return null;
 		}
@@ -4832,6 +4988,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					discountRateToOrder = discountRate;
 					priceToOrder = getFinalPrice(orderLine.getPriceList(), discountRate, precision);
 				}
+//				validateLineDiscount(pos, discountRateToOrder);
 				orderLine.setDiscount(discountRateToOrder);
 				orderLine.setPrice(priceToOrder); //	sets List/limit
 			}
@@ -5002,6 +5159,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setMaximumRefundAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumRefundAllowed")))
 			.setMaximumDailyRefundAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumDailyRefundAllowed")))
 			.setMaximumDiscountAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumDiscountAllowed")))
+			.setMaximumLineDiscountAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumLineDiscountAllowed")))
 			.setWriteOffAmountTolerance(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "WriteOffAmtTolerance")))
 		;
 		builder
@@ -5020,11 +5178,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setIsAllowsCashWithdrawal(getBooleanValueFromPOS(pos, userId, "IsAllowsCashWithdrawal"))
 			.setIsAllowsApplyDiscount(getBooleanValueFromPOS(pos, userId, "IsAllowsApplyDiscount"))
 			.setIsAllowsCreateCustomer(getBooleanValueFromPOS(pos, userId, "IsAllowsCreateCustomer"))
+			.setIsAllowsModifyCustomer(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyCustomer"))
 			.setIsAllowsPrintDocument(getBooleanValueFromPOS(pos, userId, "IsAllowsPrintDocument"))
 			.setIsAllowsPreviewDocument(getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument"))
 			.setIsPosManager(getBooleanValueFromPOS(pos, userId, "IsPosManager"))
 			.setIsAllowsModifyDiscount(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyDiscount"))
 			.setIsKeepPriceFromCustomer(getBooleanValueFromPOS(pos, userId, "IsKeepPriceFromCustomer"))
+			
 		;
 
 		if(pos.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {

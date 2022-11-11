@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.I_AD_Browse;
@@ -241,8 +242,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		int recordId = request.getId();
 		if(!Util.isEmpty(request.getTableName())) {
 			MTable table = MTable.get(context, request.getTableName());
-			if(table != null
-					&& table.getAD_Table_ID() != 0) {
+			if(table != null && table.getAD_Table_ID() > 0) {
 				tableId = table.getAD_Table_ID();
 			}
 		}
@@ -302,10 +302,17 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		String documentAction = null;
 		//	Parameters
 		if(request.getParametersCount() > 0) {
-			for(KeyValue parameter : parametersList) {
+			for(KeyValue parameter : parametersList.stream().filter(parameterValue -> !parameterValue.getKey().endsWith("_To")).collect(Collectors.toList())) {
 				Object value = ValueUtil.getObjectFromValue(parameter.getValue());
+				Optional<KeyValue> maybeToParameter = parametersList.stream().filter(parameterValue -> parameterValue.getKey().equals(parameter.getKey() + "_To")).findFirst();
 				if(value != null) {
-					builder.withParameter(parameter.getKey(), value);
+					if(maybeToParameter.isPresent()) {
+						Object valueTo = ValueUtil.getObjectFromValue(maybeToParameter.get().getValue());
+						builder.withParameter(parameter.getKey(), value, valueTo);
+					} else {
+						builder.withParameter(parameter.getKey(), value);
+					}
+					//	For Document Action
 					if(parameter.getKey().equals(I_C_Order.COLUMNNAME_DocAction)) {
 						documentAction = (String) value;
 					}

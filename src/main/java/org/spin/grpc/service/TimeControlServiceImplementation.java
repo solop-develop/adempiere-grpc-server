@@ -16,17 +16,23 @@ package org.spin.grpc.service;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.I_S_ResourceType;
 import org.compiere.model.MResource;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MResourceType;
+import org.compiere.model.MUOM;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.time_control.ConfirmResourceAssignmentRequest;
@@ -40,6 +46,7 @@ import org.spin.backend.grpc.time_control.ResourceType;
 import org.spin.backend.grpc.time_control.TimeControlGrpc.TimeControlImplBase;
 import org.spin.backend.grpc.time_control.UpdateResourceAssignmentRequest;
 import org.spin.base.util.ContextManager;
+import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 
@@ -69,6 +76,10 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 		builder.setValue(ValueUtil.validateNull(resourceType.getValue()));
 		builder.setName(ValueUtil.validateNull(resourceType.getName()));
 		builder.setDescription(ValueUtil.validateNull(resourceType.getDescription()));
+		
+		MUOM unitOfMeasure = MUOM.get(Env.getCtx(), resourceType.getC_UOM_ID());
+		builder.setUnitOfMeasure(ConvertUtil.convertUnitOfMeasure(unitOfMeasure));
+		
 		return builder;
 	}
 
@@ -90,6 +101,15 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 		ResourceType.Builder resourceTypeBuilder = convertResourceType(resourceType);
 		builder.setResourceType(resourceTypeBuilder);
 		
+		return builder;
+	}
+
+	public static ResourceAssignment.Builder convertResourceAssignment(int resourceAssignmentId) {
+		ResourceAssignment.Builder builder = ResourceAssignment.newBuilder();
+		if (resourceAssignmentId > 0) {
+			MResourceAssignment resourceAssigment = new MResourceAssignment(Env.getCtx(), resourceAssignmentId, null);
+			return convertResourceAssignment(resourceAssigment);
+		}
 		return builder;
 	}
 
@@ -126,7 +146,26 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 		
 		return builder;
 	}
+
+	public static ResourceAssignment.Builder convertResourceAssignmentByResource(int resourceId) {
+		ResourceAssignment.Builder builder = ResourceAssignment.newBuilder();
+		MResource resource = new MResource(Env.getCtx(), resourceId, null);
 	
+		if (resource == null || resource.getS_Resource_ID() <= 0) {
+			return builder;
+		}
+		MResourceAssignment resourceAssignment = new Query(
+			Env.getCtx(),
+				MResourceAssignment.Table_Name,
+				" S_Resource_ID = ? ",
+				null
+			)
+				.setParameters(resource.getS_Resource_ID())
+				.first();
+	
+		return convertResourceAssignment(resourceAssignment);
+	}
+
 	@Override
 	public void createResourceAssignment(CreateResourceAssignmentRequest request, StreamObserver<ResourceAssignment> responseObserver) {
 		try {
@@ -211,14 +250,64 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 
+		List<Object> parametersList = new ArrayList<>();
+		String whereClause = " 1=1 ";
+		// filter by resource type
+		if (request.getResourceTypeId() > 0 || !Util.isEmpty(request.getResourceTypeUuid(), true)) {
+			int resourceTypeId = request.getResourceTypeId();
+			if (resourceTypeId <= 0) {
+				resourceTypeId = RecordUtil.getIdFromUuid(I_S_ResourceType.Table_Name, request.getResourceTypeUuid(), null);
+			}
+			parametersList.add(resourceTypeId);
+			whereClause += " AND NOT EXISTS("
+				+ " SELECT 1 FROM S_Resource "
+				+ " WHERE S_Resource.S_Resource_ID = S_ResourceAssignment.S_Resource_ID "
+				+ " AND S_Resource.S_ResourceType_ID = ? "
+				+ ") ";
+		}
+		// filter by is name
+		if (!Util.isEmpty(request.getName(), true)) {
+			parametersList.add(request.getName());
+			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+		}
+		// filter by is description
+		if (!Util.isEmpty(request.getDescription(), true)) {
+			parametersList.add(request.getDescription());
+			whereClause += " AND UPPER(Description) LIKE '%' || UPPER(?) || '%' ";
+		}
+		// filter by is confirmed
+		if (!Util.isEmpty(request.getConfirmed(), true)) {
+			parametersList.add(request.getConfirmed());
+			whereClause += " AND IsConfirmed = ? ";
+		}
+		// filter not in orders line
+		if (request.getIsWaitingForOrdered()) {
+			whereClause += " AND NOT EXISTS("
+				+ " SELECT 1 FROM C_OrderLine "
+				+ " WHERE C_OrderLine.S_ResourceAssignment_ID = S_ResourceAssignment.S_ResourceAssignment_ID "
+				+ ") ";
+		}
+		if (!Objects.isNull(request.getDateFrom()) && request.getDateFrom() > 0) {
+			Timestamp dateFrom = new Timestamp(request.getDateFrom());
+			parametersList.add(dateFrom);
+			whereClause += " AND AssignDateFrom = ? ";
+		}
+		if (!Objects.isNull(request.getDateTo()) && request.getDateTo() > 0) {
+			Timestamp dateTo = new Timestamp(request.getDateTo());
+			parametersList.add(dateTo);
+			whereClause += " AND AssignDateTo = ? ";
+		}
+
+		ContextManager.getContext(request.getClientRequest());
 		Query query =  new Query(
 			Env.getCtx(),
 			MResourceAssignment.Table_Name,
-			null,
+			whereClause,
 			null
 		)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
+			.setParameters(parametersList)
 			.setOrderBy(MResourceAssignment.COLUMNNAME_Created);
 
 		int count = query.count();
@@ -357,29 +446,57 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 			}
 		}
 
-		MResourceAssignment resourceAssignment = new MResourceAssignment(Env.getCtx(), resourceAssignmentId, null);
-		if (resourceAssignment.getS_ResourceAssignment_ID() <= 0) {
-			throw new AdempiereException("@S_ResourceAssignment_ID@ @NotFound@");
-		}
-		if (resourceAssignment.isConfirmed()) {
-			throw new AdempiereException("@IsConfirmed@");
-		}
-
-		resourceAssignment.setIsConfirmed(true);
-		resourceAssignment.setAssignDateTo(new Timestamp(System.currentTimeMillis()));
-		
-		long differenceTime = resourceAssignment.getAssignDateTo().getTime() - resourceAssignment.getAssignDateFrom().getTime();
-		long minutesDiff = TimeUnit.MILLISECONDS.toMinutes(differenceTime);
-
-		BigDecimal quantity = BigDecimal.valueOf(minutesDiff).setScale(2);
-		quantity = quantity.divide(BigDecimal.valueOf(60).setScale(2), BigDecimal.ROUND_UP);
-		
-		resourceAssignment.setQty(quantity);
-		resourceAssignment.saveEx();
+		MResourceAssignment resourceAssignment = confirmResourceAssignment(request.getId(), request.getUuid());
 
 		ResourceAssignment.Builder builder = convertResourceAssignment(resourceAssignment);
 		
 		return builder;
+	}
+	
+	public static MResourceAssignment confirmResourceAssignment(int resourceAssignmentId, String resourceAssignmentUuid) {
+
+		AtomicReference<MResourceAssignment> resourceAssignmentReference = new AtomicReference<MResourceAssignment>();
+
+		Trx.run(transactionName -> {
+			int recordId = resourceAssignmentId;
+			// Validate ID
+			if (recordId <= 0) {
+				recordId = RecordUtil.getIdFromUuid(MResourceAssignment.Table_Name, resourceAssignmentUuid, transactionName);
+			}
+			if (recordId <= 0) {
+				throw new AdempiereException("@Record_ID@ @NotFound@");
+			}
+
+			MResourceAssignment resourceAssignment = new MResourceAssignment(Env.getCtx(), recordId, transactionName);
+			if (resourceAssignment.getS_ResourceAssignment_ID() <= 0) {
+				throw new AdempiereException("@S_ResourceAssignment_ID@ @NotFound@");
+			}
+			if (resourceAssignment.isConfirmed()) {
+				throw new AdempiereException("@IsConfirmed@");
+			}
+	
+			resourceAssignment.setIsConfirmed(true);
+			resourceAssignment.setAssignDateTo(new Timestamp(System.currentTimeMillis()));
+			
+			long differenceTime = resourceAssignment.getAssignDateTo().getTime() - resourceAssignment.getAssignDateFrom().getTime();
+			long minutesDiff = TimeUnit.MILLISECONDS.toMinutes(differenceTime);
+
+			// get standard precision by unit of measure
+			MResource resource = new MResource(Env.getCtx(), resourceAssignment.getS_Resource_ID(), transactionName);
+			MResourceType resourceType = new MResourceType(Env.getCtx(), resource.getS_ResourceType_ID(), transactionName);
+			MUOM uom = MUOM.get(Env.getCtx(), resourceType.getC_UOM_ID());
+			int standardPrecision = uom.getStdPrecision();
+
+			BigDecimal quantity = BigDecimal.valueOf(minutesDiff).setScale(standardPrecision);
+			quantity = quantity.divide(BigDecimal.valueOf(60).setScale(standardPrecision), BigDecimal.ROUND_UP);
+			
+			resourceAssignment.setQty(quantity);
+			resourceAssignment.saveEx();
+			
+			resourceAssignmentReference.set(resourceAssignment);
+		});
+
+		return resourceAssignmentReference.get();
 	}
 
 }

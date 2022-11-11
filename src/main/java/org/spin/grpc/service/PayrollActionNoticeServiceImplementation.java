@@ -468,6 +468,9 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 				.setParameters(request.getUuid())
 				.first();
 		}
+		if (conceptDefinition == null) {
+			throw new AdempiereException("@HR_Concept_ID@ Null");
+		}
 
 		Entity.Builder entityBuilder = Entity.newBuilder();
 		

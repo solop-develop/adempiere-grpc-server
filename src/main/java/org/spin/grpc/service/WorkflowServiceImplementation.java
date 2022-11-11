@@ -708,10 +708,9 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		}
 		String documentAction = request.getDocumentAction();
 
-		int tableId = 0;
 		MTable table = MTable.get(context, request.getTableName());
-		if(table != null && table.getAD_Table_ID() > 0) {
-			tableId = table.getAD_Table_ID();
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 
 		int recordId = request.getId();
@@ -731,6 +730,9 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			)
 			.setParameters(table.getAD_Table_ID(), I_AD_WF_Node.COLUMNNAME_DocAction)
 			.first();
+		if (docActionColumn == null || docActionColumn.getAD_Column_ID() <= 0) {
+			throw new AdempiereException("@AD_Column_ID@ @NotFound@");
+		}
 
 		MProcess process = MProcess.get(context, docActionColumn.getAD_Process_ID());
 		if (process == null || process.getAD_Process_ID() <= 0) {
@@ -740,25 +742,23 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		//	Call process builder
 		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
 			.process(process.getAD_Process_ID())
-			.withRecordId(tableId, recordId)
+			.withRecordId(table.getAD_Table_ID(), recordId)
 			.withoutPrintPreview()
-			.withoutBatchMode()
 			.withWindowNo(0)
 			.withTitle(process.getName())
 			.withParameter(table.getTableName() + DictionaryUtil.ID_PREFIX, recordId)
 			.withParameter(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
 	
 		//	For Document
-		if(!Util.isEmpty(documentAction) && process.getAD_Workflow_ID() != 0 && entity != null && DocAction.class.isAssignableFrom(entity.getClass())) {
+		if(!Util.isEmpty(documentAction) && process.getAD_Workflow_ID() > 0 && entity != null && DocAction.class.isAssignableFrom(entity.getClass())) {
 			entity.set_ValueOfColumn(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
 			entity.saveEx();
-			builder.withoutTransactionClose();
 		}
 
 		//	Execute Process
 		ProcessInfo result = null;
 		try {
-			result = builder.execute();
+			result = builder.execute(null);
 		} catch (Exception e) {
 			result = builder.getProcessInfo();
 			//	Set error message

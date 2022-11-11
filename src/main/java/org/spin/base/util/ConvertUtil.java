@@ -119,6 +119,7 @@ import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.Shipment;
 import org.spin.backend.grpc.pos.ShipmentLine;
+import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.util.AttachmentUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.store.model.MCPaymentMethod;
@@ -292,8 +293,9 @@ public class ConvertUtil {
 	 */
 	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
 		if (documentType == null) {
-			DocumentType.newBuilder();
+			return DocumentType.newBuilder();
 		}
+
 		return DocumentType.newBuilder()
 				.setUuid(ValueUtil.validateNull(documentType.getUUID()))
 				.setId(documentType.getC_DocType_ID())
@@ -428,8 +430,9 @@ public class ConvertUtil {
 	 */
 	public static org.spin.backend.grpc.common.Language.Builder convertLanguage(MLanguage language) {
 		if (language == null) {
-			org.spin.backend.grpc.common.Language.newBuilder();
+			return org.spin.backend.grpc.common.Language.newBuilder();
 		}
+
 		String datePattern = language.getDatePattern();
 		String timePattern = language.getTimePattern();
 		if(Util.isEmpty(datePattern)) {
@@ -991,22 +994,33 @@ public class ConvertUtil {
 		BigDecimal totalBaseAmountWithTax = totalBaseAmount.add(totalTaxAmount);
 		BigDecimal totalAmountWithTax = totalAmount.add(totalTaxAmount);
 
-		MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
-		List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
-		MUOMConversion uom = productsConversion.stream()
-			.filter(productConversion -> {
-				return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
-			})
-			.findFirst()
-			.get();
-
-		MUOMConversion productUom = productsConversion.stream()
-			.filter(productConversion -> {
-				return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
-			})
-			.findFirst()
-			.get();
+		MUOMConversion uom = null;
+		MUOMConversion productUom = null;
+		if (orderLine.getM_Product_ID() > 0) {
+			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
+			List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
+			uom = productsConversion.stream()
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+				})
+				.findFirst()
+				.get();
 	
+			productUom = productsConversion.stream()
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+				})
+				.findFirst()
+				.get();
+		} else {
+			uom = new MUOMConversion(Env.getCtx(), 0, null);
+			uom.setC_UOM_ID(orderLine.getC_UOM_ID());
+			uom.setC_UOM_To_ID(orderLine.getC_UOM_ID());
+			uom.setMultiplyRate(Env.ONE);
+			uom.setDivideRate(Env.ONE);
+			productUom = uom;
+		}
+
 		int standardPrecision = priceList.getStandardPrecision();
 		BigDecimal availableQuantity = MStorage.getQtyAvailable(orderLine.getM_Warehouse_ID(), 0, orderLine.getM_Product_ID(), orderLine.getM_AttributeSetInstance_ID(), null);
 		//	Convert
@@ -1021,7 +1035,7 @@ public class ConvertUtil {
 				.setWarehouse(convertWarehouse(orderLine.getM_Warehouse_ID()))
 				.setQuantity(ValueUtil.getDecimalFromBigDecimal(quantityEntered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setQuantityOrdered(ValueUtil.getDecimalFromBigDecimal(quantityOrdered.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
-				.setAvailableQuantity(ValueUtil.getDecimalFromBigDecimal(availableQuantity.setScale(standardPrecision)))
+				.setAvailableQuantity(ValueUtil.getDecimalFromBigDecimal(availableQuantity.setScale(standardPrecision, BigDecimal.ROUND_HALF_UP)))
 				//	Prices
 				.setPriceList(ValueUtil.getDecimalFromBigDecimal(priceListAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceAmount.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
@@ -1047,6 +1061,7 @@ public class ConvertUtil {
 				.setTotalAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalAmountWithTax.setScale(priceList.getStandardPrecision(), BigDecimal.ROUND_HALF_UP)))
 			.setUom(ConvertUtil.convertProductConversion(uom))
 			.setProductUom(ConvertUtil.convertProductConversion(productUom))
+			.setResourceAssignment(TimeControlServiceImplementation.convertResourceAssignment(orderLine.getS_ResourceAssignment_ID()))
 		;
 	}
 	
