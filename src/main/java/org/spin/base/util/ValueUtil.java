@@ -731,6 +731,9 @@ public class ValueUtil {
 		if(!Util.isEmpty(criteria.getWhereClause())) {
 			whereClause.append("(").append(criteria.getWhereClause()).append(")");
 		}
+		if (Util.isEmpty(tableName, true)) {
+			tableName = criteria.getTableName();
+		}
 		final MTable table = MTable.get(Env.getCtx(), tableName);
 		//	Validate
 		if (table == null || table.getAD_Table_ID() <= 0) {
