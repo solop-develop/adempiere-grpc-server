@@ -3116,57 +3116,59 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		org.spin.backend.grpc.common.Callout.Builder calloutBuilder = org.spin.backend.grpc.common.Callout.newBuilder();
 		Trx.run(transactionName -> {
 			MTab tab = tabRequested.get(request.getTabUuid());
-			if(tab == null) {
+			if (tab == null) {
 				tab = MTab.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), transactionName));
 			}
-			if(tab != null) {
-				MField field = null;
-				if(tab != null) {
-					Optional<MField> searchedValue = Arrays.asList(tab.getFields(false, null)).stream().filter(searchField -> searchField.getAD_Column().getColumnName().equals(request.getColumnName())).findFirst();
-					if(searchedValue.isPresent()) {
-						field = searchedValue.get();
-					}
-				}
-				int tabNo = (tab.getSeqNo() / 10) - 1;
-				if(tabNo < 0) {
-					tabNo = 0;
-				}
-				//	window
-				int windowNo = request.getWindowNo();
-				if(windowNo <= 0) {
-					windowNo = windowNoEmulation.getAndIncrement();
-				}
-				//	Initial load for callout wrapper
-				GridWindowVO gridWindowVo = GridWindowVO.create(Env.getCtx(), windowNo, tab.getAD_Window_ID());
-				GridWindow gridWindow = new GridWindow(gridWindowVo, true);
-				GridTabVO gridTabVo = GridTabVO.create(gridWindowVo, tabNo, tab, false, true);
-				GridFieldVO gridFieldVo = GridFieldVO.create(Env.getCtx(), windowNo, tabNo, tab.getAD_Window_ID(), tab.getAD_Tab_ID(), false, field);
-				GridField gridField = new GridField(gridFieldVo);
-				GridTab gridTab = new GridTab(gridTabVo, gridWindow, true);
-				//	Init tab
-				gridTab.query(false);
-				gridTab.clearSelection();
-				gridTab.dataNew(false);
-				//	load values
-				Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-				for(Entry<String, Object> attribute : attributes.entrySet()) {
-					gridTab.setValue(attribute.getKey(), attribute.getValue());
-				}
-				//	Load value for field
-				gridField.setValue(ValueUtil.getObjectFromValue(request.getOldValue()), false);
-				gridField.setValue(ValueUtil.getObjectFromValue(request.getValue()), false);
-				//	Run it
-				String result = processCallout(windowNo, gridTab, gridField);
-				Arrays.asList(gridTab.getFields()).stream()
-					.filter(fieldValue -> isValidChange(fieldValue))
-					.forEach(fieldValue -> {
-						Value.Builder valueBuilder = ValueUtil.getValueFromReference(fieldValue.getValue(), fieldValue.getDisplayType());
-						calloutBuilder.putValues(fieldValue.getColumnName(), valueBuilder.build());
-					});
-				calloutBuilder.setResult(ValueUtil.validateNull(result));
-				
-				setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
+			if (tab == null || tab.getAD_Tab_ID() <= 0) {
+				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 			}
+
+			MField field = null;
+			Optional<MField> searchedValue = Arrays.asList(tab.getFields(false, null)).stream()
+				.filter(searchField -> searchField.getAD_Column().getColumnName().equals(request.getColumnName()))
+				.findFirst();
+			if(searchedValue.isPresent()) {
+				field = searchedValue.get();
+			}
+			int tabNo = (tab.getSeqNo() / 10) - 1;
+			if(tabNo < 0) {
+				tabNo = 0;
+			}
+			//	window
+			int windowNo = request.getWindowNo();
+			if(windowNo <= 0) {
+				windowNo = windowNoEmulation.getAndIncrement();
+			}
+			//	Initial load for callout wrapper
+			GridWindowVO gridWindowVo = GridWindowVO.create(Env.getCtx(), windowNo, tab.getAD_Window_ID());
+			GridWindow gridWindow = new GridWindow(gridWindowVo, true);
+			GridTabVO gridTabVo = GridTabVO.create(gridWindowVo, tabNo, tab, false, true);
+			GridFieldVO gridFieldVo = GridFieldVO.create(Env.getCtx(), windowNo, tabNo, tab.getAD_Window_ID(), tab.getAD_Tab_ID(), false, field);
+			GridField gridField = new GridField(gridFieldVo);
+			GridTab gridTab = new GridTab(gridTabVo, gridWindow, true);
+			//	Init tab
+			gridTab.query(false);
+			gridTab.clearSelection();
+			gridTab.dataNew(false);
+			//	load values
+			Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+			for(Entry<String, Object> attribute : attributes.entrySet()) {
+				gridTab.setValue(attribute.getKey(), attribute.getValue());
+			}
+			//	Load value for field
+			gridField.setValue(ValueUtil.getObjectFromValue(request.getOldValue()), false);
+			gridField.setValue(ValueUtil.getObjectFromValue(request.getValue()), false);
+			//	Run it
+			String result = processCallout(windowNo, gridTab, gridField);
+			Arrays.asList(gridTab.getFields()).stream()
+				.filter(fieldValue -> isValidChange(fieldValue))
+				.forEach(fieldValue -> {
+					Value.Builder valueBuilder = ValueUtil.getValueFromReference(fieldValue.getValue(), fieldValue.getDisplayType());
+					calloutBuilder.putValues(fieldValue.getColumnName(), valueBuilder.build());
+				});
+			calloutBuilder.setResult(ValueUtil.validateNull(result));
+			
+			setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
 		});
 		return calloutBuilder;
 	}
