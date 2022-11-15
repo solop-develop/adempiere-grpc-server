@@ -58,7 +58,7 @@ public class RecordUtil {
 	private static CLogger log = CLogger.getCLogger(RecordUtil.class);
 	
 	/**	Page Size	*/
-	public static final int PAGE_SIZE = 15;
+	public static final int PAGE_SIZE = 50;
 	
 	/**
 	 * Get Page Size from client, else from default
@@ -66,7 +66,7 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static int getPageSize(int pageSize) {
-		return pageSize > 0? pageSize: PAGE_SIZE;
+		return pageSize > 0 ? pageSize : PAGE_SIZE;
 	}
 	
 	/**
@@ -142,7 +142,7 @@ public class RecordUtil {
 	 */
 	public static PO getEntity(Properties context, String tableName, String uuid, int recordId, String transactionName) {
 		//	Validate ID
-		if(recordId == 0
+		if(recordId <= 0
 				&& Util.isEmpty(uuid)) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}

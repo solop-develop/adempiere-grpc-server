@@ -162,6 +162,7 @@ import org.spin.backend.grpc.common.ListReferencesResponse;
 import org.spin.backend.grpc.common.ListReportViewsRequest;
 import org.spin.backend.grpc.common.ListReportViewsResponse;
 import org.spin.backend.grpc.common.ListTabEntitiesRequest;
+import org.spin.backend.grpc.common.ListTabSequencesRequest;
 import org.spin.backend.grpc.common.ListTranslationsRequest;
 import org.spin.backend.grpc.common.ListTranslationsResponse;
 import org.spin.backend.grpc.common.LockPrivateAccessRequest;
@@ -178,6 +179,7 @@ import org.spin.backend.grpc.common.Resource;
 import org.spin.backend.grpc.common.ResourceReference;
 import org.spin.backend.grpc.common.RollbackEntityRequest;
 import org.spin.backend.grpc.common.RunCalloutRequest;
+import org.spin.backend.grpc.common.SaveTabSequencesRequest;
 import org.spin.backend.grpc.common.SetPreferenceRequest;
 import org.spin.backend.grpc.common.SetRecordAccessRequest;
 import org.spin.backend.grpc.common.Translation;
@@ -3114,57 +3116,59 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		org.spin.backend.grpc.common.Callout.Builder calloutBuilder = org.spin.backend.grpc.common.Callout.newBuilder();
 		Trx.run(transactionName -> {
 			MTab tab = tabRequested.get(request.getTabUuid());
-			if(tab == null) {
+			if (tab == null) {
 				tab = MTab.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), transactionName));
 			}
-			if(tab != null) {
-				MField field = null;
-				if(tab != null) {
-					Optional<MField> searchedValue = Arrays.asList(tab.getFields(false, null)).stream().filter(searchField -> searchField.getAD_Column().getColumnName().equals(request.getColumnName())).findFirst();
-					if(searchedValue.isPresent()) {
-						field = searchedValue.get();
-					}
-				}
-				int tabNo = (tab.getSeqNo() / 10) - 1;
-				if(tabNo < 0) {
-					tabNo = 0;
-				}
-				//	window
-				int windowNo = request.getWindowNo();
-				if(windowNo <= 0) {
-					windowNo = windowNoEmulation.getAndIncrement();
-				}
-				//	Initial load for callout wrapper
-				GridWindowVO gridWindowVo = GridWindowVO.create(Env.getCtx(), windowNo, tab.getAD_Window_ID());
-				GridWindow gridWindow = new GridWindow(gridWindowVo, true);
-				GridTabVO gridTabVo = GridTabVO.create(gridWindowVo, tabNo, tab, false, true);
-				GridFieldVO gridFieldVo = GridFieldVO.create(Env.getCtx(), windowNo, tabNo, tab.getAD_Window_ID(), tab.getAD_Tab_ID(), false, field);
-				GridField gridField = new GridField(gridFieldVo);
-				GridTab gridTab = new GridTab(gridTabVo, gridWindow, true);
-				//	Init tab
-				gridTab.query(false);
-				gridTab.clearSelection();
-				gridTab.dataNew(false);
-				//	load values
-				Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-				for(Entry<String, Object> attribute : attributes.entrySet()) {
-					gridTab.setValue(attribute.getKey(), attribute.getValue());
-				}
-				//	Load value for field
-				gridField.setValue(ValueUtil.getObjectFromValue(request.getOldValue()), false);
-				gridField.setValue(ValueUtil.getObjectFromValue(request.getValue()), false);
-				//	Run it
-				String result = processCallout(windowNo, gridTab, gridField);
-				Arrays.asList(gridTab.getFields()).stream()
-					.filter(fieldValue -> isValidChange(fieldValue))
-					.forEach(fieldValue -> {
-						Value.Builder valueBuilder = ValueUtil.getValueFromReference(fieldValue.getValue(), fieldValue.getDisplayType());
-						calloutBuilder.putValues(fieldValue.getColumnName(), valueBuilder.build());
-					});
-				calloutBuilder.setResult(ValueUtil.validateNull(result));
-				
-				setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
+			if (tab == null || tab.getAD_Tab_ID() <= 0) {
+				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 			}
+
+			MField field = null;
+			Optional<MField> searchedValue = Arrays.asList(tab.getFields(false, null)).stream()
+				.filter(searchField -> searchField.getAD_Column().getColumnName().equals(request.getColumnName()))
+				.findFirst();
+			if(searchedValue.isPresent()) {
+				field = searchedValue.get();
+			}
+			int tabNo = (tab.getSeqNo() / 10) - 1;
+			if(tabNo < 0) {
+				tabNo = 0;
+			}
+			//	window
+			int windowNo = request.getWindowNo();
+			if(windowNo <= 0) {
+				windowNo = windowNoEmulation.getAndIncrement();
+			}
+			//	Initial load for callout wrapper
+			GridWindowVO gridWindowVo = GridWindowVO.create(Env.getCtx(), windowNo, tab.getAD_Window_ID());
+			GridWindow gridWindow = new GridWindow(gridWindowVo, true);
+			GridTabVO gridTabVo = GridTabVO.create(gridWindowVo, tabNo, tab, false, true);
+			GridFieldVO gridFieldVo = GridFieldVO.create(Env.getCtx(), windowNo, tabNo, tab.getAD_Window_ID(), tab.getAD_Tab_ID(), false, field);
+			GridField gridField = new GridField(gridFieldVo);
+			GridTab gridTab = new GridTab(gridTabVo, gridWindow, true);
+			//	Init tab
+			gridTab.query(false);
+			gridTab.clearSelection();
+			gridTab.dataNew(false);
+			//	load values
+			Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+			for(Entry<String, Object> attribute : attributes.entrySet()) {
+				gridTab.setValue(attribute.getKey(), attribute.getValue());
+			}
+			//	Load value for field
+			gridField.setValue(ValueUtil.getObjectFromValue(request.getOldValue()), false);
+			gridField.setValue(ValueUtil.getObjectFromValue(request.getValue()), false);
+			//	Run it
+			String result = processCallout(windowNo, gridTab, gridField);
+			Arrays.asList(gridTab.getFields()).stream()
+				.filter(fieldValue -> isValidChange(fieldValue))
+				.forEach(fieldValue -> {
+					Value.Builder valueBuilder = ValueUtil.getValueFromReference(fieldValue.getValue(), fieldValue.getDisplayType());
+					calloutBuilder.putValues(fieldValue.getColumnName(), valueBuilder.build());
+				});
+			calloutBuilder.setResult(ValueUtil.validateNull(result));
+			
+			setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
 		});
 		return calloutBuilder;
 	}
@@ -3394,4 +3398,247 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		return builder;
 	}
+
+	@Override
+	public void listTabSequences(ListTabSequencesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListEntitiesResponse.Builder recordsListBuilder = listTabSequences(request);
+			responseObserver.onNext(recordsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+
+	private ListEntitiesResponse.Builder listTabSequences(ListTabSequencesRequest request) {
+		if (Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+
+		//  Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		
+		MTab tab = new Query(
+				context,
+				I_AD_Tab.Table_Name,
+				"UUID = ?",
+				null
+			)
+			.setParameters(request.getTabUuid())
+			.first()
+		;
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+		if (!tab.isSortTab()) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+		String sortColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortOrder_ID());
+		String includedColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortYesNo_ID());
+
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		List<MColumn> columnsList = table.getColumnsAsList();
+		MColumn keyColumn = columnsList.stream()
+			.filter(column -> {
+				return column.isKey();
+			})
+			.findFirst()
+			.orElse(null);
+
+		MColumn parentColumn = columnsList.stream()
+			.filter(column -> {
+				return column.isParent();
+			})
+			.findFirst()
+			.orElse(null);
+
+		int parentRecordId = Env.getContextAsInt(context, windowNo, parentColumn.getColumnName());
+
+		Query query = new Query(
+				context,
+				table.getTableName(),
+				parentColumn.getColumnName() + " = ?",
+				null
+			)
+			.setParameters(parentRecordId)
+			.setOrderBy(sortColumnName + " ASC")
+		;
+
+		int count = query.count();
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+
+		List<PO> sequencesList = query.setLimit(limit, offset).list();
+		ListEntitiesResponse.Builder builderList = ListEntitiesResponse.newBuilder()
+			.setRecordCount(count);
+
+		sequencesList.forEach(entity -> {
+			Entity.Builder entityBuilder = Entity.newBuilder()
+				.setTableName(table.getTableName())
+				.setUuid(entity.get_UUID())
+				.setId(entity.get_ID())
+			;
+
+			// set attributes
+			entityBuilder.putValues(
+				keyColumn.getColumnName(),
+				ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
+			);
+			entityBuilder.putValues(
+				LookupUtil.UUID_COLUMN_KEY,
+				ValueUtil.getValueFromString(entity.get_UUID()).build()
+			);
+			entityBuilder.putValues(
+				LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueUtil.getValueFromString(entity.getDisplayValue()).build()
+			);
+			entityBuilder.putValues(
+				sortColumnName,
+				ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
+			);
+			entityBuilder.putValues(
+				includedColumnName,
+				ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
+			);
+
+			builderList.addRecords(entityBuilder);
+		});
+
+		// Set page token
+		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		//  Set next page
+		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		
+		return builderList;
+	}
+
+
+	@Override
+	public void saveTabSequences(SaveTabSequencesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListEntitiesResponse.Builder recordsListBuilder = saveTabSequences(request);
+			responseObserver.onNext(recordsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+
+	private ListEntitiesResponse.Builder saveTabSequences(SaveTabSequencesRequest request) {
+		if (Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+
+		//  Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		
+		MTab tab = new Query(
+				context,
+				I_AD_Tab.Table_Name,
+				"UUID = ?",
+				null
+			)
+			.setParameters(request.getTabUuid())
+			.first()
+		;
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+		if (!tab.isSortTab()) {
+			throw new AdempiereException("@AD_Tab_ID@ @No@ @Sequence@");
+		}
+
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		List<MColumn> columnsList = table.getColumnsAsList();
+		MColumn keyColumn = columnsList.stream()
+			.filter(column -> {
+				return column.isKey();
+			})
+			.findFirst()
+			.orElse(null);
+		String sortColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortOrder_ID());
+		String includedColumnName = MColumn.getColumnName(context, tab.getAD_ColumnSortYesNo_ID());
+
+		ListEntitiesResponse.Builder builderList = ListEntitiesResponse.newBuilder()
+			.setRecordCount(request.getEntitiesList().size());
+
+		Trx.run(transacctionName -> {
+			request.getEntitiesList().stream().forEach(entitySelection -> {
+				PO entity = RecordUtil.getEntity(
+					Env.getCtx(), table.getTableName(),
+					entitySelection.getSelectionUuid(),
+					entitySelection.getSelectionId(),
+					transacctionName
+				);
+				if (entity == null || entity.get_ID() <= 0) {
+					return;
+				}
+				// set new values
+				entitySelection.getValuesList().stream().forEach(attribute -> {
+					Object value = ValueUtil.getObjectFromValue(attribute.getValue());
+					entity.set_ValueOfColumn(attribute.getKey(), value);
+
+				});
+				entity.saveEx(transacctionName);
+
+				Entity.Builder entityBuilder = Entity.newBuilder()
+					.setTableName(table.getTableName())
+					.setUuid(entity.get_UUID())
+					.setId(entity.get_ID())
+				;
+
+				// set attributes
+				entityBuilder.putValues(
+					keyColumn.getColumnName(),
+					ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
+				);
+				entityBuilder.putValues(
+					LookupUtil.UUID_COLUMN_KEY,
+					ValueUtil.getValueFromString(entity.get_UUID()).build()
+				);
+				entityBuilder.putValues(
+					LookupUtil.DISPLAY_COLUMN_KEY,
+					ValueUtil.getValueFromString(entity.getDisplayValue()).build()
+				);
+				entityBuilder.putValues(
+					sortColumnName,
+					ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
+				);
+				entityBuilder.putValues(
+					includedColumnName,
+					ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
+				);
+
+				builderList.addRecords(entityBuilder);
+			});
+		});
+
+		return builderList;
+	}
+
 }

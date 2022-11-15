@@ -333,19 +333,27 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			warehouseId = DB.getSQLValue(null, "SELECT M_Warehouse_ID FROM M_Warehouse WHERE IsActive = 'Y' AND AD_Org_ID = ?", organizationId);
 		} else {
 			if(roleId <= 0) {
-				roleId = RecordUtil.getIdFromUuid(I_AD_Role.Table_Name, request.getRoleUuid(), null);
-				MRole role = MRole.get(context, roleId);
-				if(role != null
-						&& !Optional.ofNullable(role.getUUID()).orElse("").equals(Optional.ofNullable(request.getRoleUuid()).orElse(""))) {
+				MRole role = new Query(
+					Env.getCtx(),
+					I_AD_Role.Table_Name,
+					"UUID = ?",
+					null
+				)
+					.setParameters(request.getRoleUuid())
+					.first();
+				if (role == null) {
+					// get default role
 					roleId = DB.getSQLValue(null, sqlRole, userId);
-					//	Organization
-					if(organizationId < 0) {
-						organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
-					}
+				} else {
+					roleId = role.getAD_Role_ID();
+				}
+				//	Organization
+				if(organizationId < 0) {
+					organizationId = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
 				}
 			}
 			if(organizationId < 0) {
-				organizationId = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
+				organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
 			}
 			warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
 		}
@@ -584,7 +592,11 @@ public class AccessServiceImplementation extends SecurityImplBase {
 				userInfo.setImage(ValueUtil.validateNull(attachmentReference.getValidFileName()));
 			}
 		}
-		Object value = user.get_Value("ConnectionTimeout");
+		Object value = null;
+		// checks if the column exists in the database
+		if (user.get_ColumnIndex("ConnectionTimeout") >= 0) {
+			value = user.get_Value("ConnectionTimeout");
+		}
 		long sessionTimeout = 0;
 		if(value == null) {
 			String sessionTimeoutAsString = MSysConfig.getValue("WEBUI_DEFAULT_TIMEOUT", Env.getAD_Client_ID(Env.getCtx()), 0);

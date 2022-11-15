@@ -24,10 +24,10 @@ public enum Services {
     DICTIONARY("dictionary"),
     BUSINESS("business"),
     CORE("core"),
-    MATERIAL_MANAGEMENT("material_management"),
+	MATERIAL_MANAGEMENT("material_management"),
     UI("ui"),
     DASHBOARDING("dashboarding"),
-    GENERAL_LEDGER("general_ledger"),
+	GENERAL_LEDGER("general_ledger"),
     LOG("log"),
     STORE("store"),
     POS("pos"),
@@ -39,9 +39,9 @@ public enum Services {
     ORDER("order"),
     PAYMENT("payment"),
     PAYROLL_ACTION_NOTICE("payroll_action_notice"),
-    PRODUCT("product"),
-    TIME_CONTROL("time_control"),
-    WORKFLOW("workflow");
+	PRODUCT("product"),
+	TIME_CONTROL("time_control"),
+	WORKFLOW("workflow");
 
 	/**	Service Name	*/
     private final String serviceName;

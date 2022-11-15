@@ -22,6 +22,7 @@ option objc_class_prefix = "HLW";
 import "core_functionality.proto";
 import "base_data_type.proto";
 import "client.proto";
+import "time_control.proto";
 
 package data;
 
@@ -1031,6 +1032,8 @@ message PointOfSales {
 	bool is_pos_manager = 46;
 	bool is_allows_modify_discount = 47;
 	bool is_keep_price_from_customer = 48;
+	Decimal maximum_line_discount_allowed = 59;
+	bool is_allows_modify_customer = 50;
 }
 
 // Request for create a order
@@ -1136,6 +1139,7 @@ message ValidatePINRequest {
 	string pos_uuid = 2;
 	string pin = 3;
 	string requested_access = 4;
+	Decimal requested_amount = 5;
 }
 
 //	List Payments Response
@@ -1201,6 +1205,7 @@ message CreateOrderLineRequest {
 	Decimal discount_rate = 8;
 	string warehouse_uuid = 9;
 	string pos_uuid = 10;
+	string resource_assignment_uuid = 11;
 }
 
 // Request for update a order
@@ -1217,6 +1222,7 @@ message UpdateOrderRequest {
 	Decimal discount_rate = 10;
 	Decimal discount_rate_off = 11;
 	Decimal discount_amount_off = 12;
+	string sales_representative_uuid = 13;
 }
 
 // Request for update a order line
@@ -1309,6 +1315,7 @@ message OrderLine {
 	int32 line = 29;
 	ProductConversion uom = 30;
 	ProductConversion product_uom = 31;
+	time_control.ResourceAssignment resource_assignment = 32;
 }
 
 // Request Product Price

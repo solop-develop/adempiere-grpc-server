@@ -127,10 +127,14 @@ public class DictionaryUtil {
 				String tableName = table.getTableName();
 
 				//	Validation Code
-				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
-					Env.getCtx()).getReferenceInfo(displayTypeId, referenceValueId, columnName, language.getAD_Language(),
-					tableName
-				);
+				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
+					.getReferenceInfo(
+						displayTypeId,
+						referenceValueId,
+						columnName,
+						language.getAD_Language(),
+						tableName
+					);
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
 					queryToAdd.append(referenceInfo.getDisplayValue(columnName));

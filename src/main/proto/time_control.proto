@@ -21,6 +21,7 @@ option java_outer_classname = "ADempiereTimeControl";
 
 import "client.proto";
 import "base_data_type.proto";
+import "core_functionality.proto";
 
 package time_control;
 
@@ -42,7 +43,7 @@ service TimeControl {
 message CreateResourceAssignmentRequest {
 	data.ClientRequest client_request = 1;
 	int32 resource_type_id = 2;
-	string resource_type_uuid = 3; 
+	string resource_type_uuid = 3;
 	string name = 4;
 	string description = 5;
 }
@@ -57,6 +58,10 @@ message ListResourcesAssignmentRequest {
 	string resource_type_uuid = 5;
 	string name = 6;
 	string description = 7;
+	string confirmed = 8;
+	bool is_waiting_for_ordered = 9;
+	int64 date_from = 10;
+	int64 date_to = 11;
 }
 
 // Update Time Control Request
@@ -78,9 +83,10 @@ message DeleteResourceAssignmentRequest {
 message ResourceType {
 	int32 id = 1;
 	string uuid = 2;
-	string value = 4;
-	string name = 5;
-	string description = 6;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	data.UnitOfMeasure unit_of_measure = 6;
 }
 
 message Resource {
