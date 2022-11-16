@@ -1115,11 +1115,16 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if (!Util.isEmpty(whereClause.toString(), true)) {
 			sql.append(" WHERE ").append(whereClause); // includes first AND
 		}
-		//	
+		//
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sql.toString(), tableName, request.getSearchValue(), params);
-		parsedSQL = MRole.getDefault().addAccessSQL(parsedSQL,
-				null, MRole.SQL_FULLYQUALIFIED,
-				MRole.SQL_RO);
+		// parsedSQL = MRole.getDefault()
+		// 	.addAccessSQL(
+		// 		parsedSQL,
+		// 		null,
+		// 		MRole.SQL_FULLYQUALIFIED,
+		// 		MRole.SQL_RO
+		// 	);
+
 		String orderByClause = criteria.getOrderByClause();
 		if(Util.isEmpty(orderByClause)) {
 			orderByClause = "";

@@ -27,6 +27,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pipo.IDFinder;
@@ -308,32 +309,38 @@ public class RecordUtil {
 	 * @param parameters
 	 * @return
 	 */
-	public static String addSearchValueAndGet(String sql, String table_Name, String tableAlias, String searchValue, List<Object> parameters) {
+	public static String addSearchValueAndGet(String sql, String table_name, String table_alias, String searchValue, List<Object> parameters) {
 		if(Util.isEmpty(searchValue)) {
 			return sql;
 		}
-		MTable table = MTable.get(Env.getCtx(), table_Name);
-		if(table == null) {
+		MTable table = MTable.get(Env.getCtx(), table_name);
+		if(table == null || table.getAD_Table_ID() <= 0) {
 			return sql;
 		}
 		String lang = Env.getAD_Language(Env.getCtx());
 		// search on trl table
-        final MTable tableTranslation = org.compiere.util.Language.isBaseLanguage(lang) ? null : MTable.get(Env.getCtx(), table_Name + "_Trl");
-        final String tableName = tableTranslation != null ? tableTranslation.getTableName() : table_Name;
+		final MTable tableTranslation = org.compiere.util.Language.isBaseLanguage(lang) ? null : MTable.get(Env.getCtx(), table_name + DictionaryUtil.TRANSLATION_SUFFIX);
+		final String tableAlias = Util.isEmpty(table_alias) ? table.getTableName() : table_alias;
 
 		StringBuffer where = new StringBuffer();
-		table.getColumnsAsList().stream()
+		List<MColumn> selectionColums = table.getColumnsAsList().stream()
 			.filter(column -> {
 				return (column.isIdentifier() || column.isSelectionColumn())
-					&& Util.isEmpty(column.getColumnSQL()) && DisplayType.isText(column.getAD_Reference_ID())
-					&& (tableTranslation == null || (tableTranslation != null && column.isTranslated()));
+					&& Util.isEmpty(column.getColumnSQL()) && DisplayType.isText(column.getAD_Reference_ID());
+			})
+			.collect(Collectors.toList());
+
+		selectionColums.stream()
+			.filter(column -> {
+				// "Value" is not translated for example
+				return (tableTranslation == null || (tableTranslation != null && !column.isTranslated()));
 			})
 			.forEach(column -> {
 				if(where.length() > 0) {
 				    where.append(" OR ");
 				}
 				where.append("UPPER(")
-					.append(tableName).append(".")
+					.append(tableAlias).append(".")
 					.append(column.getColumnName())
 					.append(")")
 					.append(" LIKE ")
@@ -343,40 +350,89 @@ public class RecordUtil {
 
 		// Add language clause
 		StringBuffer whereClause = where;
+		String joinTranslation = "";
 		if (tableTranslation != null) {
-			whereClause = new StringBuffer("(")
-				.append(whereClause)
-				.append(") AND ")
-				.append(tableName + ".AD_Language = ? ")
-			;
-			parameters.add(lang);
+			StringBuffer whereTranslation = new StringBuffer();
+			
+			selectionColums.stream()
+				.filter(column -> {
+					// Name is translated for example
+					return tableTranslation != null && column.isTranslated();
+				})
+				.forEach(column -> {
+					if(whereTranslation.length() > 0) {
+						whereTranslation.append(" OR ");
+					}
+					whereTranslation.append("UPPER(")
+						.append("NVL(")
+						.append(tableTranslation.getTableName()).append(".")
+						.append(column.getColumnName())
+						.append(", ")
+						.append(tableAlias).append(".")
+						.append(column.getColumnName())
+						.append("))")
+						.append(" LIKE ")
+						.append("'%'|| UPPER(?) || '%'");
+					parameters.add(searchValue);
+				});
+
+			if (!Util.isEmpty(whereTranslation.toString())) {
+				if (!Util.isEmpty(where.toString())) {
+					whereClause.append(" OR ");
+				}
+				whereClause
+					.append("((")
+					.append(whereTranslation)
+					.append(") AND ")
+					.append(tableTranslation.getTableName() + ".AD_Language = ? ")
+					.append(" AND ")
+					.append(tableTranslation.getTableName() + ".IsTranslated = 'Y' )")
+				;
+				parameters.add(lang);
+	
+				Matcher matcherJoinTranslated = Pattern.compile(
+					"JOIN(\\s+)" + tableTranslation.getTableName() + "(\\w|\\s)*(\\s+(\\w|\\.|\\s|=|\\')*)",
+					Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+				).matcher(sql);
+				// Add tranlated join
+				if (!matcherJoinTranslated.find()) {
+					String keyColumn = table.getTableName() + "_ID ";
+					joinTranslation = " LEFT JOIN " + tableTranslation.getTableName()
+						+ " ON " + tableTranslation.getTableName() + "." + keyColumn + " = " + tableAlias + "." + keyColumn + " "
+					;
+				}
+			}
 		}
+		
 		//	Order by
 		//	Validate and return
 		if(whereClause.length() > 0) {
 			String patternAlias = "";
 			if (!Util.isEmpty(tableAlias, true)) {
-				patternAlias = "\\s+(" + tableAlias + "){0,1}";
+				patternAlias = "\\s+((" + tableAlias + ")|(AS\\s+" + tableAlias + ")){0,1}";
 			}
 			Matcher matcher = Pattern.compile(
-					"\\s+(FROM)\\s+(" + tableName + ")" + patternAlias + "\\s+(WHERE)",
-					Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-				)
-				.matcher(sql);
-			Matcher matcherJoin = Pattern.compile("JOIN(\\w|\\s)*(\\((\\w|\\.|\\s|=|\\')*\\))(\\s*)(WHERE)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
-			Matcher matcherOrderBy = Pattern.compile("\\s+(ORDER BY)\\s+", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
+				"\\s+(FROM)\\s+(" + table.getTableName() + ")" + patternAlias + "\\s+(WHERE)",
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			)
+			.matcher(sql);
+			// Matcher matcherJoin = Pattern.compile("JOIN(\\w|\\s)*(\\((\\w|\\.|\\s|=|\\')*\\))(\\s*)(WHERE)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
+			Matcher matcherOrderBy = Pattern.compile(
+				"\\s+(ORDER BY)\\s+",
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			).matcher(sql);
 			int positionFrom = -1;
 			if(matcherOrderBy.find()) {
 				positionFrom = matcherOrderBy.start();
 			}
 			String conditional = " WHERE ";
-			if (matcher.find() || matcherJoin.find()) {
+			if (matcher.find()) {
 				conditional = " AND ";
 			}
 			if(positionFrom > 0) {
-				sql = sql.substring(0, positionFrom) + conditional + "(" + whereClause + ")" + sql.substring(positionFrom);
+				sql = sql.substring(0, positionFrom) + joinTranslation + conditional + "(" + whereClause + ")" + sql.substring(positionFrom);
 			} else {
-				sql = sql + conditional + "(" + whereClause + ")";
+				sql = sql + joinTranslation +  conditional + "(" + whereClause + ")";
 			}
 		}
 		return sql;
@@ -402,10 +458,11 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static int countRecords(String sql, String tableName, String tableNameAlias, List<Object> parameters) {
-		String tableWithAliases = tableName;
+		// only table, tableName tableName, tableName AS tableName
+		String tableWithAliases = tableName + "|" + tableName + "\\s+" + tableName + "|" + tableName + "\\s+AS\\s+" + tableName + "";
 		if (!Util.isEmpty(tableNameAlias)) {
-			// tableName tableAlias | tableName AS tableAlias | tableName
-			tableWithAliases = tableName + " " + tableNameAlias + "|" + tableName + " AS " + tableNameAlias; // + "|" + tableName;
+			// tableName tableAlias, tableName AS tableAlias
+			tableWithAliases = tableWithAliases + "|" + tableName + "\\s+" + tableNameAlias + "|" + tableName + "\\s+AS\\s+" + tableNameAlias;
 		}
 		Matcher matcher = Pattern.compile(
 				"\\s+(FROM)\\s+(" + tableWithAliases + ")(\\s+)",

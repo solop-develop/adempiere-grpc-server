@@ -59,14 +59,19 @@ public class DictionaryUtil {
 	 */
 	public static String getQueryWithReferencesFromTab(MTab tab) {
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
-		String originalQuery = "SELECT " + table.getTableName() + ".* FROM " + table.getTableName() + " AS " + table.getTableName() + " ";
+		final String tableName = table.getTableName();
+
+		String originalQuery = "SELECT " + tableName + ".* FROM " + tableName + " AS " + tableName + " ";
 		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 		Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
 		for (MField field : tab.getFields(false, null)) {
 			if(!field.isDisplayed()) {
-				continue;
+				// key column on table
+				if (!field.getAD_Column().isKey()) {
+					continue;
+				}
 			}
 			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
 			int displayTypeId = field.getAD_Reference_ID();
@@ -79,9 +84,10 @@ public class DictionaryUtil {
 				if(referenceValueId == 0) {
 					referenceValueId = column.getAD_Reference_Value_ID();
 				}
-				//	Validation Code
+
 				String columnName = column.getColumnName();
-				String tableName = table.getTableName();
+
+				//	Validation Code
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
 					Env.getCtx()).getReferenceInfo(displayTypeId,
 					referenceValueId,
@@ -109,7 +115,9 @@ public class DictionaryUtil {
 	 * @return
 	 */
 	public static String getQueryWithReferencesFromColumns(MTable table) {
-		String originalQuery = "SELECT " + table.getTableName() + ".* FROM " + table.getTableName() + " AS " + table.getTableName() + " ";
+		final String tableName = table.getTableName();
+
+		String originalQuery = "SELECT " + tableName + ".* FROM " + tableName + " AS " + tableName + " ";
 		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
@@ -124,7 +132,6 @@ public class DictionaryUtil {
 				int referenceValueId = column.getAD_Reference_Value_ID();
 
 				String columnName = column.getColumnName();
-				String tableName = table.getTableName();
 
 				//	Validation Code
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
