@@ -16,10 +16,13 @@
 package org.spin.base.util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.compiere.model.I_AD_Reference;
 import org.compiere.model.I_C_Location;
@@ -405,13 +408,23 @@ public class ReferenceUtil {
 	 * @return
 	 */
 	private static String getQueryWithUuid(String tableName, String query) {
-		Matcher matcher = Pattern.compile("\\s+(FROM)\\s+(" + tableName + ")", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(query);
-		int positionFrom = -1;
-		if(matcher.find()) {
-			positionFrom = matcher.start();
-			query = query.substring(0, positionFrom) + ", " + tableName + ".UUID" + query.substring(positionFrom);
+		Matcher matcherFrom = Pattern.compile(
+			"\\s+(FROM)\\s+(" + tableName + ")",
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		).matcher(query);
+
+		List<MatchResult> fromWhereParts = matcherFrom.results()
+				.collect(Collectors.toList());
+
+		String queryWithUuid = query;
+		if (fromWhereParts != null && fromWhereParts.size() > 0) {
+			MatchResult lastFrom = fromWhereParts.get(fromWhereParts.size() - 1);
+			queryWithUuid = query.substring(0, lastFrom.start());
+			queryWithUuid += ", " + tableName + ".UUID";
+			queryWithUuid += query.substring(lastFrom.start());
 		}
-		return query;
+
+		return queryWithUuid;
 	}
 	
 	/**

@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -294,8 +294,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Lookup Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getClientRequest());
-			ListLookupItemsResponse.Builder entityValueList = convertLookupItemsList(context, request);
+
+			ListLookupItemsResponse.Builder entityValueList = listLookupItems(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1042,8 +1042,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
-			ListEntitiesResponse.Builder entityValueList = convertEntitiesList(context, request);
+			ListEntitiesResponse.Builder entityValueList = listTabEntities(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1060,7 +1059,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListEntitiesResponse.Builder convertEntitiesList(Properties context, ListTabEntitiesRequest request) {
+	private ListEntitiesResponse.Builder listTabEntities(ListTabEntitiesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
 		int tabId = RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), null);
 		if(tabId <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
@@ -1112,18 +1112,19 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		//	
 		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromTab(tab));
+		String sqlWithRoleAccess = MRole.getDefault()
+			.addAccessSQL(
+					sql.toString(),
+					tableName,
+					MRole.SQL_FULLYQUALIFIED,
+					MRole.SQL_RO
+				);
 		if (!Util.isEmpty(whereClause.toString(), true)) {
-			sql.append(" WHERE ").append(whereClause); // includes first AND
+			// includes first AND
+			sqlWithRoleAccess += " AND " + whereClause; 
 		}
 		//
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sql.toString(), tableName, request.getSearchValue(), params);
-		// parsedSQL = MRole.getDefault()
-		// 	.addAccessSQL(
-		// 		parsedSQL,
-		// 		null,
-		// 		MRole.SQL_FULLYQUALIFIED,
-		// 		MRole.SQL_RO
-		// 	);
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), params);
 
 		String orderByClause = criteria.getOrderByClause();
 		if(Util.isEmpty(orderByClause)) {
@@ -1156,8 +1157,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getClientRequest());
-			ListEntitiesResponse.Builder entityValueList = convertEntitiesListFronGeneralInfo(context, request);
+			ListEntitiesResponse.Builder entityValueList = listGeneralInfo(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1174,7 +1174,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListEntitiesResponse.Builder convertEntitiesListFronGeneralInfo(Properties context, ListGeneralInfoRequest request) {
+	private ListEntitiesResponse.Builder listGeneralInfo(ListGeneralInfoRequest request) {
 		String tableName = request.getTableName();
 		if (Util.isEmpty(tableName, true)) {
 			tableName = request.getFilters().getTableName();
@@ -1182,7 +1182,13 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if (Util.isEmpty(tableName, true)) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
-		
+
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		MTable table = MTable.get(context, tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceUuid(),
 			request.getFieldUuid(),
@@ -1192,14 +1198,23 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			request.getColumnName(),
 			tableName
 		);
-		
+
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
 		//
-		MTable table = MTable.get(context, tableName);
 		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
-		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
+
+		// add where with access restriction
+		String sqlWithRoleAccess = MRole.getDefault(context, false)
+			.addAccessSQL(
+				sql.toString(),
+				null,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
+
+		StringBuffer whereClause = new StringBuffer();
 
 		// validation code of field
 		String validationCode = DictionaryUtil.getValidationCodeWithAlias(tableName, reference.ValidationCode);
@@ -1221,18 +1236,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				.append(dynamicWhere)
 				.append(")");
 		}
-		
-		sql.append(whereClause); 
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sql.toString(), tableName, request.getSearchValue(), params);
 
-		// add where with access restriction
-		parsedSQL = MRole.getDefault(context, false)
-			.addAccessSQL(parsedSQL,
-				null,
-				MRole.SQL_FULLYQUALIFIED,
-				MRole.SQL_RO
-			);
-		
+		sqlWithRoleAccess += whereClause;
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), params);
+
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
@@ -2668,7 +2675,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListLookupItemsResponse.Builder convertLookupItemsList(Properties context, ListLookupItemsRequest request) {
+	private ListLookupItemsResponse.Builder listLookupItems(ListLookupItemsRequest request) {
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceUuid(),
 			request.getFieldUuid(),
@@ -2683,6 +2690,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 
 		//	Fill context
+		Properties context = ContextManager.getContext(request.getClientRequest());
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
@@ -2692,15 +2700,16 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				&& !Util.isEmpty(reference.Query)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
 		}
-		List<Object> parameters = new ArrayList<>();
-		sql = RecordUtil.addSearchValueAndGet(sql, reference.TableName, request.getSearchValue(), parameters);
-		sql = MRole.getDefault(context, false)
+		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
 				sql,
 				reference.TableName,
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
 			);
+		
+		List<Object> parameters = new ArrayList<>();
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, reference.TableName, request.getSearchValue(), parameters);
 
 		//	Get page and count
 		String nexPageToken = null;
@@ -2709,15 +2718,15 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int count = 0;
 		//	Count records
-		count = RecordUtil.countRecords(sql, reference.TableName, parameters);
+		count = RecordUtil.countRecords(parsedSQL, reference.TableName, parameters);
 		//	Add Row Number
-		sql = RecordUtil.getQueryWithLimit(sql, limit, offset);
+		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		ListLookupItemsResponse.Builder builder = ListLookupItemsResponse.newBuilder();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
 			//	SELECT Key, Value, Name FROM ...
-			pstmt = DB.prepareStatement(sql, null);
+			pstmt = DB.prepareStatement(parsedSQL, null);
 			AtomicInteger parameterIndex = new AtomicInteger(1);
 			for(Object value : parameters) {
 				ValueUtil.setParameterFromObject(pstmt, value, parameterIndex.getAndIncrement());

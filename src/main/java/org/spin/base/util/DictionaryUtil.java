@@ -282,7 +282,7 @@ public class DictionaryUtil {
 				if(tab.getAD_Column_ID() != 0) {
 					childColumn = MColumn.getColumnName(context, tab.getAD_Column_ID());
 				}
-				//	
+				// TODO: Fix childColumn on 'System Translation Check' window > 'Element Translation' tab
 				whereClause.append(table.getTableName()).append(".").append(childColumn)
 					.append(" = ").append("@").append(mainColumnName).append("@");
 				if(optionalTab.isPresent()) {
