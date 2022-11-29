@@ -35,7 +35,6 @@ import org.compiere.model.I_C_ConversionType;
 import org.compiere.model.I_C_Order;
 import org.compiere.model.I_C_POSKeyLayout;
 import org.compiere.model.I_C_UOM;
-import org.compiere.model.MAttachment;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
@@ -78,10 +77,8 @@ import org.compiere.model.PO;
 import org.compiere.model.POInfo;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
-import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Attachment;
 import org.spin.backend.grpc.common.BankAccount;
 import org.spin.backend.grpc.common.BusinessPartner;
 import org.spin.backend.grpc.common.Charge;
@@ -98,7 +95,6 @@ import org.spin.backend.grpc.common.PriceList;
 import org.spin.backend.grpc.common.ProcessInfoLog;
 import org.spin.backend.grpc.common.Product;
 import org.spin.backend.grpc.common.ProductConversion;
-import org.spin.backend.grpc.common.ResourceReference;
 import org.spin.backend.grpc.common.SalesRepresentative;
 import org.spin.backend.grpc.common.TaxRate;
 import org.spin.backend.grpc.common.UnitOfMeasure;
@@ -119,6 +115,7 @@ import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.Shipment;
 import org.spin.backend.grpc.pos.ShipmentLine;
+import org.spin.grpc.service.FileManagementServiceImplementation;
 import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.util.AttachmentUtil;
 import org.spin.model.MADAttachmentReference;
@@ -1188,7 +1185,7 @@ public class ConvertUtil {
 				.setSubKeyLayoutUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_POSKeyLayout.Table_Name, key.getSubKeyLayout_ID())))
 				.setQuantity(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(key.getQty()).orElse(Env.ZERO)))
 				.setProductValue(ValueUtil.validateNull(productValue))
-				.setResourceReference(ConvertUtil.convertResourceReference(RecordUtil.getResourceFromImageId(key.getAD_Image_ID())));
+				.setResourceReference(FileManagementServiceImplementation.convertResourceReference(RecordUtil.getResourceFromImageId(key.getAD_Image_ID())));
 	}
 	
 	/**
@@ -1445,47 +1442,7 @@ public class ConvertUtil {
 			.setProductUom(convertUnitOfMeasure(productUom))
 		;
 	}
-	
-	/**
-	 * Convert resource
-	 * @param reference
-	 * @return
-	 */
-	public static ResourceReference.Builder convertResourceReference(MADAttachmentReference reference) {
-		if(reference == null) {
-			return ResourceReference.newBuilder();
-		}
-		return ResourceReference.newBuilder()
-				.setResourceUuid(ValueUtil.validateNull(reference.getUUID()))
-				.setFileName(ValueUtil.validateNull(reference.getValidFileName()))
-				.setDescription(ValueUtil.validateNull(reference.getDescription()))
-				.setTextMsg(ValueUtil.validateNull(reference.getTextMsg()))
-				.setContentType(ValueUtil.validateNull(MimeType.getMimeType(reference.getFileName())))
-				.setFileSize(ValueUtil.getDecimalFromBigDecimal(reference.getFileSize()));
-		
-	}
-	
-	/**
-	 * Convert Attachment to gRPC
-	 * @param attachment
-	 * @return
-	 */
-	public static Attachment.Builder convertAttachment(MAttachment attachment) {
-		if(attachment == null) {
-			return Attachment.newBuilder();
-		}
-		Attachment.Builder builder = Attachment.newBuilder()
-				.setAttachmentUuid(ValueUtil.validateNull(attachment.getUUID()))
-				.setTitle(ValueUtil.validateNull(attachment.getTitle()))
-				.setTextMsg(ValueUtil.validateNull(attachment.getTextMsg()));
-		MClientInfo clientInfo = MClientInfo.get(attachment.getCtx());
-		if(clientInfo.getFileHandler_ID() != 0) {
-			MADAttachmentReference.getListByAttachmentId(attachment.getCtx(), clientInfo.getFileHandler_ID(), attachment.getAD_Attachment_ID(), attachment.get_TrxName())
-				.forEach(attachmentReference -> builder.addResourceReferences(convertResourceReference(attachmentReference)));
-		}
-		return builder;
-	}
-	
+
 	/**
 	 * Convert tax to gRPC
 	 * @param tax

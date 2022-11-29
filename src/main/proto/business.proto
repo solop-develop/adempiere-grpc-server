@@ -17,7 +17,6 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.common";
 option java_outer_classname = "ADempiereData";
-option objc_class_prefix = "HLW";
 
 import "base_data_type.proto";
 import "client.proto";
@@ -86,12 +85,6 @@ service UserInterface {
 	rpc GetReportOutput(GetReportOutputRequest) returns (ReportOutput) {}
 	// Add Chat Entry
 	rpc CreateChatEntry(CreateChatEntryRequest) returns (ChatEntry) {}
-	//	Service for get a resource from resource uuid
-	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
-	//	Service for get a resource reference from image, attachment or archive
-	rpc GetResourceReference(GetResourceReferenceRequest) returns (ResourceReference) {}
-	//	Service for get a attachment from table and record uuid
-	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {}
 	//	Set Preference from field
 	rpc SetPreference(SetPreferenceRequest) returns (Preference) {}
 	//	Delete Preference from field
@@ -153,14 +146,6 @@ message RecordAccessRole {
 	bool is_dependent_entities = 7;
 }
 
-// Request attachment from table and record uuid
-message GetAttachmentRequest {
-	ClientRequest client_request = 1;
-	string table_name = 2;
-	int32 id = 3;
-	string uuid = 4;
-}
-
 // Request for set preference
 message SetPreferenceRequest {
 	ClientRequest client_request = 1;
@@ -212,29 +197,6 @@ message Preference {
 	string organization_uuid = 8;
 }
 
-// Request for download resource
-message GetResourceRequest {
-	ClientRequest client_request = 1;
-	string resource_uuid = 2;
-	string resource_name = 3;
-	int64 width = 4;
-	int64 height = 5;
-	enum Operation {
-		RESIZE = 0;
-		CROP = 1;
-		FIX = 2;
-		IDENTIFY = 3;
-	}
-	//	Operation
-	Operation operation = 6;
-}
-
-// Request for download resource reference
-message GetResourceReferenceRequest {
-	ClientRequest client_request = 1;
-	int32 image_id = 2;
-}
-
 // Get Entity Request
 message GetReportOutputRequest {
 	string print_format_uuid = 1;
@@ -246,6 +208,7 @@ message GetReportOutputRequest {
 	// Query
 	Criteria criteria = 8;
 }
+
 // Create Entity Request
 message CreateEntityRequest {
 	ClientRequest client_request = 1;

@@ -17,7 +17,6 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.common";
 option java_outer_classname = "ADempiereBase";
-option objc_class_prefix = "HLW";
 
 package data;
 
@@ -61,29 +60,6 @@ message Value {
 message Decimal {
 	string decimal_value = 1;
 	int32 scale = 2;
-}
-
-// Resource Chunk
-message Resource {
-    bytes data = 1;
-}
-
-// Attachment
-message Attachment {
-	string attachment_uuid = 1;
-	string title = 2;
-	string text_msg = 3;
-	repeated ResourceReference resource_references = 4;
-}
-
-//	Resource reference
-message ResourceReference {
-	string resource_uuid = 1;
-	string file_name = 2;
-	Decimal file_size = 3;
-	string description = 4;
-	string text_msg = 5;
-	string content_type = 6;
 }
 
 // Query for Request Object

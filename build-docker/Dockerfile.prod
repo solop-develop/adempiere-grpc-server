@@ -7,7 +7,7 @@ LABEL	maintainer="ysenih@erpya.com; EdwinBetanc0urt@outlook.com" \
 # Init ENV with default values
 ENV \
 	SERVER_PORT="50059" \
-	SERVICES_ENABLED="access; business; core; dashboarding; dictionary; enrollment; general_ledger; log; material_management; ui; workflow; store; pos; business_partner; in_out; invoice; order; payment; payroll_action_notice; product; time_control;" \
+	SERVICES_ENABLED="access; business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; log; material_management; order; payment; payroll_action_notice; pos; product; store; time_control; ui; workflow;" \
 	SERVER_LOG_LEVEL="WARNING" \
 	DB_HOST="localhost" \
 	DB_PORT="5432" \

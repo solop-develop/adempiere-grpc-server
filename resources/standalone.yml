@@ -2,26 +2,27 @@ server:
     port: 50059
     services:
        - access
-       - enrollment
-       - dictionary
        - business
+       - business_partner
        - core
-       - material_management
-       - ui
        - dashboarding
-       - workflow
+       - dictionary
+       - enrollment
+       - file_management
        - general_ledger
        - log
-       - store
-       - pos
-       - business_partner
        - in_out
        - invoice
+       - material_management
        - order
        - payment
-       - product
        - payroll_action_notice
+       - pos
+       - product
+       - store
        - time_control
+       - ui
+       - workflow
     log_level: WARNING
 database:
     host: localhost

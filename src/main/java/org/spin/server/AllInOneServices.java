@@ -27,6 +27,7 @@ import org.spin.grpc.service.CoreFunctionalityImplementation;
 import org.spin.grpc.service.DashboardingServiceImplementation;
 import org.spin.grpc.service.DictionaryServiceImplementation;
 import org.spin.grpc.service.EnrollmentServiceImplementation;
+import org.spin.grpc.service.FileManagementServiceImplementation;
 import org.spin.grpc.service.GeneralLedgerServiceImplementation;
 import org.spin.grpc.service.InOutServiceImplementation;
 import org.spin.grpc.service.InvoiceServiceImplementation;
@@ -74,16 +75,6 @@ public class AllInOneServices {
 			  serverBuilder.addService(new AccessServiceImplementation());
 			  logger.info("Service " + Services.ACCESS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		  }
-		  //	Enrollment
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.ENROLLMENT.getServiceName())) {
-			  serverBuilder.addService(new EnrollmentServiceImplementation());
-			  logger.info("Service " + Services.ENROLLMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
-		  //	Dictionary
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.DICTIONARY.getServiceName())) {
-			  serverBuilder.addService(new DictionaryServiceImplementation());
-			  logger.info("Service " + Services.DICTIONARY.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
 		  //	Business Logic
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS.getServiceName())) {
 			  serverBuilder.addService(new BusinessDataServiceImplementation());
@@ -94,6 +85,21 @@ public class AllInOneServices {
 			  serverBuilder.addService(new CoreFunctionalityImplementation());
 			  logger.info("Service " + Services.CORE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		  }
+		//	Dictionary
+		if(SetupLoader.getInstance().getServer().isValidService(Services.DICTIONARY.getServiceName())) {
+			serverBuilder.addService(new DictionaryServiceImplementation());
+			logger.info("Service " + Services.DICTIONARY.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Enrollment
+		if(SetupLoader.getInstance().getServer().isValidService(Services.ENROLLMENT.getServiceName())) {
+			serverBuilder.addService(new EnrollmentServiceImplementation());
+			logger.info("Service " + Services.ENROLLMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	File Management
+		if(SetupLoader.getInstance().getServer().isValidService(Services.FILE_MANAGEMENT.getServiceName())) {
+			serverBuilder.addService(new FileManagementServiceImplementation());
+			logger.info("Service " + Services.FILE_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		  //	User Interface
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.UI.getServiceName())) {
 			  serverBuilder.addService(new UserInterfaceServiceImplementation());
