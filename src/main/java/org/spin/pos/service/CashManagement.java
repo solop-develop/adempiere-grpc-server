@@ -52,10 +52,10 @@ public class CashManagement {
 				&& bankStatementLine.getC_BankStatement_ID() > 0) {
 			return;
 		}
-		//	Validate vrevious cash closing
+		//	Validate previous cash closing
 		validatePreviousCashclosing(pos, payment.getDateTrx(), payment.get_TrxName());
 		//	Add
-		MBankStatement bankStatement = getCurrentCashclosing(pos, payment.getDateTrx(), payment.get_TrxName());
+		MBankStatement bankStatement = getCurrentCashclosing(pos, payment.getDateTrx(), true, payment.get_TrxName());
 		if(bankStatement != null) {
 			bankStatementLine = new MBankStatementLine(bankStatement);
 			bankStatementLine.setPayment(payment);
@@ -103,12 +103,14 @@ public class CashManagement {
 	
 	/**
 	 * Get Current bank statement
-	 * @param posId
+	 * @param pos
+	 * @param validDate
+	 * @param validate
 	 * @param transactionName
 	 * @return
 	 * @return MBankStatement
 	 */
-	public static MBankStatement getCurrentCashclosing(MPOS pos, Timestamp validDate, String transactionName) {
+	public static MBankStatement getCurrentCashclosing(MPOS pos, Timestamp validDate, boolean validate, String transactionName) {
 		//	validate document type
 		int cashClosingDocumentTypeId = pos.get_ValueAsInt("POSCashClosingDocumentType_ID");
 		//	Create Cash closing
@@ -129,7 +131,7 @@ public class CashManagement {
 				.setParameters(pos.getC_BankAccount_ID(), TimeUtil.getDay(validDate), false, cashClosingDocumentTypeId, pos.getC_POS_ID())
 				.first();
 		if (bankStatement == null || bankStatement.get_ID() <= 0) {
-			if(pos.get_ValueAsBoolean("IsValidatePOSCashOpening")) {
+			if(pos.get_ValueAsBoolean("IsValidatePOSCashOpening") && validate) {
 				throw new AdempiereException("@POS.CashClosingNotFound@");
 			}
 		}
@@ -149,7 +151,7 @@ public class CashManagement {
 		if(cashClosingDocumentTypeId <= 0) {
 			throw new AdempiereException("@POSCashClosingDocumentType_ID@ @IsMandatory@");
 		}
-		MBankStatement bankStatement = getCurrentCashclosing(pos, payment.getDateTrx(), payment.get_TrxName());
+		MBankStatement bankStatement = getCurrentCashclosing(pos, payment.getDateTrx(), false, payment.get_TrxName());
 		if (bankStatement == null || bankStatement.get_ID() <= 0) {
 			bankStatement = new MBankStatement(payment.getCtx() , 0 , payment.get_TrxName());
 			bankStatement.setC_BankAccount_ID(payment.getC_BankAccount_ID());
