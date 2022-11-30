@@ -1124,7 +1124,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			sqlWithRoleAccess += " AND " + whereClause; 
 		}
 		//
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), params);
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), false, params);
 
 		String orderByClause = criteria.getOrderByClause();
 		if(Util.isEmpty(orderByClause)) {
