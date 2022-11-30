@@ -1238,7 +1238,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 
 		sqlWithRoleAccess += whereClause;
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), params);
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), false, params);
 
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
