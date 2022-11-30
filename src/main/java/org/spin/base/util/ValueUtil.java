@@ -1,17 +1,17 @@
 /*************************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it    		 *
+ * This program is free software; you can redistribute it and/or modify it           *
  * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope   		 *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 		 *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           		 *
- * See the GNU General Public License for more details.                       		 *
- * You should have received a copy of the GNU General Public License along    		 *
- * with this program; if not, write to the Free Software Foundation, Inc.,    		 *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
- * For the text or an alternative of this public license, you may reach us    		 *
+ * by the Free Software Foundation. This program is distributed in the hope          *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
+ * See the GNU General Public License for more details.                              *
+ * You should have received a copy of the GNU General Public License along           *
+ * with this program; if not, write to the Free Software Foundation, Inc.,           *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
+ * For the text or an alternative of this public license, you may reach us           *
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
 
@@ -166,10 +166,11 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromDecimal(BigDecimal value) {
-		if (value == null) {
-			return Value.newBuilder().setValueType(ValueType.DECIMAL);
-		}
-		return Value.newBuilder().setDecimalValue(Decimal.newBuilder().setDecimalValue(value.toPlainString()).setScale(value.scale())).setValueType(ValueType.DECIMAL);
+		return Value.newBuilder()
+			.setValueType(ValueType.DECIMAL)
+			.setDecimalValue(
+				getDecimalFromBigDecimal(value)
+			);
 	}
 	
 	/**
@@ -178,10 +179,12 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Decimal.Builder getDecimalFromBigDecimal(BigDecimal value) {
-		if(value == null) {
+		if (value == null) {
 			return Decimal.newBuilder();
 		}
-		return Decimal.newBuilder().setDecimalValue(value.toPlainString()).setScale(value.scale());
+		return Decimal.newBuilder()
+			.setDecimalValue(value.toPlainString())
+			.setScale(value.scale());
 	}
 	
 	/**
@@ -190,16 +193,17 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static BigDecimal getDecimalFromValue(Value value) {
-		if(Util.isEmpty(value.getDecimalValue().getDecimalValue())) {
+		if (Util.isEmpty(value.getDecimalValue().getDecimalValue(), true)) {
 			if (value.getValueType() == Value.ValueType.INTEGER) {
 				return BigDecimal.valueOf(value.getIntValue());
 			}
 			if (value.getValueType() == Value.ValueType.STRING) {
-				return new BigDecimal(value.getStringValue());
+				return getBigDecimalFromString(value.getStringValue());
 			}
 			return null;
 		}
-		return new BigDecimal(value.getDecimalValue().getDecimalValue());
+		// Value.Decimal.DecimalValue
+		return getBigDecimalFromDecimal(value.getDecimalValue());
 	}
 	
 	/**
@@ -208,8 +212,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static BigDecimal getBigDecimalFromDecimal(Decimal decimalValue) {
-		if(decimalValue == null 
-				|| Util.isEmpty(decimalValue.getDecimalValue())) {
+		if (decimalValue == null || Util.isEmpty(decimalValue.getDecimalValue(), true)) {
 			return null;
 		}
 		return new BigDecimal(decimalValue.getDecimalValue())
@@ -236,7 +239,7 @@ public class ValueUtil {
 	 */
 	public static String getStringFromValue(Value value, boolean uppercase) {
 		String stringValue = value.getStringValue();
-		if(Util.isEmpty(stringValue)) {
+		if(Util.isEmpty(stringValue, true)) {
 			return null;
 		}
 		//	To Upper case
@@ -270,7 +273,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static boolean getBooleanFromValue(Value value) {
-		if (!Util.isEmpty(value.getStringValue())) {
+		if (!Util.isEmpty(value.getStringValue(), true)) {
 			return "Y".equals(value.getStringValue())
 				|| "Yes".equals(value.getStringValue())
 				|| "true".equals(value.getStringValue());
@@ -305,9 +308,8 @@ public class ValueUtil {
 		} else if(DisplayType.isNumeric(referenceId)) {
 			return getValueFromDecimal((BigDecimal) value);
 		} else if(DisplayType.YesNo == referenceId) {
-			if(value instanceof String) {
-				String stringValue = (String) value;
-				value = !Util.isEmpty((String) stringValue) && stringValue.equals("Y");
+			if (value instanceof String) {
+				return getValueFromBoolean((String) value);
 			}
 			return getValueFromBoolean((Boolean) value);
 		} else if(DisplayType.isDate(referenceId)) {
@@ -322,6 +324,7 @@ public class ValueUtil {
 			} else if (value instanceof String) {
 				return getValueFromString((String) value);
 			}
+			return getValueFromObject(value); 
 		}
 		//
 		return builderValue;
@@ -334,6 +337,9 @@ public class ValueUtil {
 	 */
 	public static Map<String, Object> convertValuesToObjects(List<KeyValue> values) {
 		Map<String, Object> convertedValues = new HashMap<>();
+		if (values == null || values.size() <= 0) {
+			return convertedValues;
+		}
 		for(KeyValue value : values) {
 			convertedValues.put(value.getKey(), getObjectFromValue(value.getValue()));
 		}
@@ -449,7 +455,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static boolean isNumeric(String value) {
-		if(Util.isEmpty(value)) {
+		if(Util.isEmpty(value, true)) {
 			return false;
 		}
 		//	
@@ -481,7 +487,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static boolean isBoolean(String value) {
-		if(Util.isEmpty(value)) {
+		if (Util.isEmpty(value, true)) {
 			return false;
 		}
 		//	
@@ -519,7 +525,7 @@ public class ValueUtil {
 	 */
 	public static BigDecimal getBigDecimalFromString(String value) {
 		BigDecimal numberValue = null;
-		if(Util.isEmpty(value)) {
+		if (Util.isEmpty(value, true)) {
 			return null;
 		}
 		//	
@@ -821,7 +827,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Timestamp convertStringToDate(String date) {
-		if(Util.isEmpty(date)) {
+		if (Util.isEmpty(date, true)) {
 			return null;
 		}
 		String format = DATE_FORMAT;
