@@ -128,105 +128,8 @@ import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ProductPrice;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
-import org.spin.backend.grpc.pos.AddressRequest;
-import org.spin.backend.grpc.pos.AllocateSellerRequest;
-import org.spin.backend.grpc.pos.AvailableCash;
-import org.spin.backend.grpc.pos.AvailableDocumentType;
-import org.spin.backend.grpc.pos.AvailablePaymentMethod;
-import org.spin.backend.grpc.pos.AvailablePriceList;
-import org.spin.backend.grpc.pos.AvailableRefund;
-import org.spin.backend.grpc.pos.AvailableWarehouse;
-import org.spin.backend.grpc.pos.CashClosing;
-import org.spin.backend.grpc.pos.CashClosingRequest;
-import org.spin.backend.grpc.pos.CashOpeningRequest;
-import org.spin.backend.grpc.pos.CashWithdrawalRequest;
-import org.spin.backend.grpc.pos.CreateCustomerBankAccountRequest;
-import org.spin.backend.grpc.pos.CreateCustomerRequest;
-import org.spin.backend.grpc.pos.CreateOrderLineRequest;
-import org.spin.backend.grpc.pos.CreateOrderRequest;
-import org.spin.backend.grpc.pos.CreatePaymentReferenceRequest;
-import org.spin.backend.grpc.pos.CreatePaymentRequest;
-import org.spin.backend.grpc.pos.CreateShipmentLineRequest;
-import org.spin.backend.grpc.pos.CreateShipmentRequest;
-import org.spin.backend.grpc.pos.Customer;
-import org.spin.backend.grpc.pos.CustomerBankAccount;
-import org.spin.backend.grpc.pos.DeallocateSellerRequest;
-import org.spin.backend.grpc.pos.DeleteCustomerBankAccountRequest;
-import org.spin.backend.grpc.pos.DeleteOrderLineRequest;
-import org.spin.backend.grpc.pos.DeleteOrderRequest;
-import org.spin.backend.grpc.pos.DeletePaymentReferenceRequest;
-import org.spin.backend.grpc.pos.DeletePaymentRequest;
-import org.spin.backend.grpc.pos.DeleteShipmentLineRequest;
-import org.spin.backend.grpc.pos.GetAvailableRefundRequest;
-import org.spin.backend.grpc.pos.GetCustomerBankAccountRequest;
-import org.spin.backend.grpc.pos.GetCustomerRequest;
-import org.spin.backend.grpc.pos.GetKeyLayoutRequest;
-import org.spin.backend.grpc.pos.GetOrderRequest;
-import org.spin.backend.grpc.pos.GetProductPriceRequest;
-import org.spin.backend.grpc.pos.HoldOrderRequest;
-import org.spin.backend.grpc.pos.KeyLayout;
-import org.spin.backend.grpc.pos.ListAvailableCashRequest;
-import org.spin.backend.grpc.pos.ListAvailableCashResponse;
-import org.spin.backend.grpc.pos.ListAvailableCurrenciesRequest;
-import org.spin.backend.grpc.pos.ListAvailableCurrenciesResponse;
-import org.spin.backend.grpc.pos.ListAvailableDocumentTypesRequest;
-import org.spin.backend.grpc.pos.ListAvailableDocumentTypesResponse;
-import org.spin.backend.grpc.pos.ListAvailablePaymentMethodsRequest;
-import org.spin.backend.grpc.pos.ListAvailablePaymentMethodsResponse;
-import org.spin.backend.grpc.pos.ListAvailablePriceListRequest;
-import org.spin.backend.grpc.pos.ListAvailablePriceListResponse;
-import org.spin.backend.grpc.pos.ListAvailableSellersRequest;
-import org.spin.backend.grpc.pos.ListAvailableSellersResponse;
-import org.spin.backend.grpc.pos.ListAvailableWarehousesRequest;
-import org.spin.backend.grpc.pos.ListAvailableWarehousesResponse;
-import org.spin.backend.grpc.pos.ListCashMovementsRequest;
-import org.spin.backend.grpc.pos.ListCashMovementsResponse;
-import org.spin.backend.grpc.pos.ListCashSummaryMovementsRequest;
-import org.spin.backend.grpc.pos.ListCashSummaryMovementsResponse;
-import org.spin.backend.grpc.pos.ListCustomerBankAccountsRequest;
-import org.spin.backend.grpc.pos.ListCustomerBankAccountsResponse;
-import org.spin.backend.grpc.pos.ListOrderLinesRequest;
-import org.spin.backend.grpc.pos.ListOrderLinesResponse;
-import org.spin.backend.grpc.pos.ListOrdersRequest;
-import org.spin.backend.grpc.pos.ListOrdersResponse;
-import org.spin.backend.grpc.pos.ListPaymentReferencesRequest;
-import org.spin.backend.grpc.pos.ListPaymentReferencesResponse;
-import org.spin.backend.grpc.pos.ListPaymentsRequest;
-import org.spin.backend.grpc.pos.ListPaymentsResponse;
-import org.spin.backend.grpc.pos.ListPointOfSalesRequest;
-import org.spin.backend.grpc.pos.ListPointOfSalesResponse;
-import org.spin.backend.grpc.pos.ListProductPriceRequest;
-import org.spin.backend.grpc.pos.ListProductPriceResponse;
-import org.spin.backend.grpc.pos.ListShipmentLinesRequest;
-import org.spin.backend.grpc.pos.ListShipmentLinesResponse;
-import org.spin.backend.grpc.pos.ListStocksRequest;
-import org.spin.backend.grpc.pos.ListStocksResponse;
-import org.spin.backend.grpc.pos.Order;
-import org.spin.backend.grpc.pos.OrderLine;
-import org.spin.backend.grpc.pos.Payment;
-import org.spin.backend.grpc.pos.PaymentMethod;
-import org.spin.backend.grpc.pos.PaymentReference;
-import org.spin.backend.grpc.pos.PaymentSummary;
-import org.spin.backend.grpc.pos.PointOfSales;
-import org.spin.backend.grpc.pos.PointOfSalesRequest;
-import org.spin.backend.grpc.pos.PrintPreviewRequest;
-import org.spin.backend.grpc.pos.PrintPreviewResponse;
-import org.spin.backend.grpc.pos.PrintTicketRequest;
-import org.spin.backend.grpc.pos.PrintTicketResponse;
-import org.spin.backend.grpc.pos.ProcessOrderRequest;
-import org.spin.backend.grpc.pos.ProcessShipmentRequest;
-import org.spin.backend.grpc.pos.ReleaseOrderRequest;
-import org.spin.backend.grpc.pos.ReverseSalesRequest;
-import org.spin.backend.grpc.pos.Shipment;
-import org.spin.backend.grpc.pos.ShipmentLine;
-import org.spin.backend.grpc.pos.Stock;
+import org.spin.backend.grpc.pos.*;
 import org.spin.backend.grpc.pos.StoreGrpc.StoreImplBase;
-import org.spin.backend.grpc.pos.UpdateCustomerBankAccountRequest;
-import org.spin.backend.grpc.pos.UpdateCustomerRequest;
-import org.spin.backend.grpc.pos.UpdateOrderLineRequest;
-import org.spin.backend.grpc.pos.UpdateOrderRequest;
-import org.spin.backend.grpc.pos.UpdatePaymentRequest;
-import org.spin.backend.grpc.pos.ValidatePINRequest;
 import org.spin.model.I_C_PaymentMethod;
 import org.spin.model.MCPaymentMethod;
 import org.spin.pos.service.CashManagement;
@@ -1049,6 +952,59 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
 				.setTableName(tableName)
 				.setId(recordId)
+				.setProcessUuid(processUuid)
+				.setReportType(reportType)
+			;
+
+			ProcessLog.Builder processLog = BusinessDataServiceImplementation.runProcess(context, processRequest.build());
+			
+			// preview document
+			ticket.setProcessLog(processLog.build());
+
+			responseObserver.onNext(ticket.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+	
+	@Override
+	public void printShipmentPreview(PrintShipmentPreviewRequest request, StreamObserver<PrintShipmentPreviewResponse> responseObserver) {
+		try {
+			if(Util.isEmpty(request.getShipmentUuid())) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
+			log.fine("Print Ticket = " + request);
+			Properties context = ContextManager.getContext(request.getClientRequest());
+
+			//	
+			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+			int userId = Env.getAD_User_ID(pos.getCtx());
+			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument")) {
+				throw new AdempiereException("@POS.PreviewDocumentNotAllowed@");
+			}
+
+			int shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), null);
+			
+			PrintShipmentPreviewResponse.Builder ticket = PrintShipmentPreviewResponse.newBuilder()
+				.setResult("Ok");
+			
+			// Rpt M_InOut
+			int processId = 117;
+			String processUuid = RecordUtil.getUuidFromId(I_AD_Process.Table_Name, processId, null);
+			String reportType = "pdf";
+			if (!Util.isEmpty(request.getReportType(), true)) {
+				reportType = request.getReportType();
+			}
+			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+				.setTableName(I_M_InOut.Table_Name)
+				.setId(shipmentId)
 				.setProcessUuid(processUuid)
 				.setReportType(reportType)
 			;
@@ -2413,7 +2369,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered()).compareTo(quantityToOrder) < 0) {
 				throw new AdempiereException("@QtyInsufficient@");
 			}
-			shipmentLine.setQty(quantityToOrder);
+			//	Update movement quantity
+			updateUomAndQuantityForShipment(shipmentLine, salesOrderLine.getC_UOM_ID(), quantityToOrder);
 			shipmentLine.saveEx();
 			shipmentLineReference.set(shipmentLine);
 		} else {
@@ -2425,13 +2382,32 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	        //create new line
 			shipmentLine.setOrderLine(salesOrderLine, 0, quantityToOrder);
 			Optional.ofNullable(request.getDescription()).ifPresent(description -> shipmentLine.setDescription(description));
-			shipmentLine.setQty(quantityToOrder);
+			//	Update movement quantity
+			updateUomAndQuantityForShipment(shipmentLine, salesOrderLine.getC_UOM_ID(), quantityToOrder);
 			//	Save Line
 			shipmentLine.saveEx();
 			shipmentLineReference.set(shipmentLine);
 		}
 		//	Convert Line
 		return ConvertUtil.convertShipmentLine(shipmentLineReference.get());
+	}
+	
+	/**
+	 * Set UOM and Quantity based on unit of measure
+	 * @param inOutLine
+	 * @param unitOfMeasureId
+	 * @param quantity
+	 */
+	private void updateUomAndQuantityForShipment(MInOutLine inOutLine, int unitOfMeasureId, BigDecimal quantity) {
+		if(quantity != null) {
+			inOutLine.setQty(quantity);
+		}
+		if(unitOfMeasureId > 0) {
+			inOutLine.setC_UOM_ID(unitOfMeasureId);
+		}
+		BigDecimal quantityEntered = inOutLine.getQtyEntered();
+		BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(inOutLine.getCtx(), inOutLine.getM_Product_ID(), inOutLine.getC_UOM_ID(), quantityEntered);
+		inOutLine.setMovementQty(convertedQuantity);
 	}
 	
 	/**
@@ -2524,7 +2500,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				if(salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered()).compareTo(quantityToOrder) < 0) {
 					throw new AdempiereException("@QtyInsufficient@");
 				}
-				shipmentLine.setQty(quantityToOrder);
+				//	Update movement quantity
+				updateUomAndQuantityForShipment(shipmentLine, salesOrderLine.getC_UOM_ID(), quantityToOrder);
 				shipmentLine.saveEx();
 				shipmentLineReference.set(shipmentLine);
 			} else {
@@ -2536,7 +2513,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				//create new line
 				shipmentLine.setOrderLine(salesOrderLine, 0, quantityToOrder);
 				Optional.ofNullable(salesOrderLine.getDescription()).ifPresent(description -> shipmentLine.setDescription(description));
-				shipmentLine.setQty(quantityToOrder);
+				//	Update movement quantity
+				updateUomAndQuantityForShipment(shipmentLine, salesOrderLine.getC_UOM_ID(), quantityToOrder);
 				//	Save Line
 				shipmentLine.saveEx();
 				shipmentLineReference.set(shipmentLine);
