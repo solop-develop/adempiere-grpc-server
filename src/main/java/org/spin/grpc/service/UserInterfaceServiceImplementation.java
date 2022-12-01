@@ -240,31 +240,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void runCallout(RunCalloutRequest request, StreamObserver<org.spin.backend.grpc.common.Callout> responseObserver) {
-		try {
-			if(request == null
-					|| Util.isEmpty(request.getCallout())) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Callout Requested = " + request.getCallout());
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			org.spin.backend.grpc.common.Callout.Builder calloutResponse = runcallout(request);
-			responseObserver.onNext(calloutResponse.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
 	@Override
 	public void getLookupItem(GetLookupItemRequest request, StreamObserver<LookupItem> responseObserver) {
 		try {
@@ -3120,7 +3096,29 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	
 		return browser;
 	}
-	
+
+	@Override
+	public void runCallout(RunCalloutRequest request, StreamObserver<org.spin.backend.grpc.common.Callout> responseObserver) {
+		try {
+			if(request == null
+					|| Util.isEmpty(request.getCallout())) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Callout Requested = " + request.getCallout());
+			ContextManager.getContext(request.getClientRequest());
+			org.spin.backend.grpc.common.Callout.Builder calloutResponse = runcallout(request);
+			responseObserver.onNext(calloutResponse.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Run callout with data from server
 	 * @param request
@@ -3153,6 +3151,11 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(windowNo <= 0) {
 				windowNo = windowNoEmulation.getAndIncrement();
 			}
+
+			// set values on context
+			Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+			ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), attributes);
+
 			//	Initial load for callout wrapper
 			GridWindowVO gridWindowVo = GridWindowVO.create(Env.getCtx(), windowNo, tab.getAD_Window_ID());
 			GridWindow gridWindow = new GridWindow(gridWindowVo, true);
@@ -3164,11 +3167,12 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			gridTab.query(false);
 			gridTab.clearSelection();
 			gridTab.dataNew(false);
+
 			//	load values
-			Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-			for(Entry<String, Object> attribute : attributes.entrySet()) {
+			for (Entry<String, Object> attribute : attributes.entrySet()) {
 				gridTab.setValue(attribute.getKey(), attribute.getValue());
 			}
+
 			//	Load value for field
 			gridField.setValue(ValueUtil.getObjectFromValue(request.getOldValue()), false);
 			gridField.setValue(ValueUtil.getObjectFromValue(request.getValue()), false);
