@@ -19,7 +19,6 @@ import java.math.MathContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -129,107 +128,11 @@ import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ProductPrice;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
-import org.spin.backend.grpc.pos.AddressRequest;
-import org.spin.backend.grpc.pos.AllocateSellerRequest;
-import org.spin.backend.grpc.pos.AvailableCash;
-import org.spin.backend.grpc.pos.AvailableDocumentType;
-import org.spin.backend.grpc.pos.AvailablePaymentMethod;
-import org.spin.backend.grpc.pos.AvailablePriceList;
-import org.spin.backend.grpc.pos.AvailableRefund;
-import org.spin.backend.grpc.pos.AvailableWarehouse;
-import org.spin.backend.grpc.pos.CashClosing;
-import org.spin.backend.grpc.pos.CashClosingRequest;
-import org.spin.backend.grpc.pos.CashOpeningRequest;
-import org.spin.backend.grpc.pos.CashWithdrawalRequest;
-import org.spin.backend.grpc.pos.CreateCustomerBankAccountRequest;
-import org.spin.backend.grpc.pos.CreateCustomerRequest;
-import org.spin.backend.grpc.pos.CreateOrderLineRequest;
-import org.spin.backend.grpc.pos.CreateOrderRequest;
-import org.spin.backend.grpc.pos.CreatePaymentReferenceRequest;
-import org.spin.backend.grpc.pos.CreatePaymentRequest;
-import org.spin.backend.grpc.pos.CreateShipmentLineRequest;
-import org.spin.backend.grpc.pos.CreateShipmentRequest;
-import org.spin.backend.grpc.pos.Customer;
-import org.spin.backend.grpc.pos.CustomerBankAccount;
-import org.spin.backend.grpc.pos.DeallocateSellerRequest;
-import org.spin.backend.grpc.pos.DeleteCustomerBankAccountRequest;
-import org.spin.backend.grpc.pos.DeleteOrderLineRequest;
-import org.spin.backend.grpc.pos.DeleteOrderRequest;
-import org.spin.backend.grpc.pos.DeletePaymentReferenceRequest;
-import org.spin.backend.grpc.pos.DeletePaymentRequest;
-import org.spin.backend.grpc.pos.DeleteShipmentLineRequest;
-import org.spin.backend.grpc.pos.GetAvailableRefundRequest;
-import org.spin.backend.grpc.pos.GetCustomerBankAccountRequest;
-import org.spin.backend.grpc.pos.GetCustomerRequest;
-import org.spin.backend.grpc.pos.GetKeyLayoutRequest;
-import org.spin.backend.grpc.pos.GetOrderRequest;
-import org.spin.backend.grpc.pos.GetProductPriceRequest;
-import org.spin.backend.grpc.pos.HoldOrderRequest;
-import org.spin.backend.grpc.pos.KeyLayout;
-import org.spin.backend.grpc.pos.ListAvailableCashRequest;
-import org.spin.backend.grpc.pos.ListAvailableCashResponse;
-import org.spin.backend.grpc.pos.ListAvailableCurrenciesRequest;
-import org.spin.backend.grpc.pos.ListAvailableCurrenciesResponse;
-import org.spin.backend.grpc.pos.ListAvailableDocumentTypesRequest;
-import org.spin.backend.grpc.pos.ListAvailableDocumentTypesResponse;
-import org.spin.backend.grpc.pos.ListAvailablePaymentMethodsRequest;
-import org.spin.backend.grpc.pos.ListAvailablePaymentMethodsResponse;
-import org.spin.backend.grpc.pos.ListAvailablePriceListRequest;
-import org.spin.backend.grpc.pos.ListAvailablePriceListResponse;
-import org.spin.backend.grpc.pos.ListAvailableSellersRequest;
-import org.spin.backend.grpc.pos.ListAvailableSellersResponse;
-import org.spin.backend.grpc.pos.ListAvailableWarehousesRequest;
-import org.spin.backend.grpc.pos.ListAvailableWarehousesResponse;
-import org.spin.backend.grpc.pos.ListCashMovementsRequest;
-import org.spin.backend.grpc.pos.ListCashMovementsResponse;
-import org.spin.backend.grpc.pos.ListCashSummaryMovementsRequest;
-import org.spin.backend.grpc.pos.ListCashSummaryMovementsResponse;
-import org.spin.backend.grpc.pos.ListCustomerBankAccountsRequest;
-import org.spin.backend.grpc.pos.ListCustomerBankAccountsResponse;
-import org.spin.backend.grpc.pos.ListOrderLinesRequest;
-import org.spin.backend.grpc.pos.ListOrderLinesResponse;
-import org.spin.backend.grpc.pos.ListOrdersRequest;
-import org.spin.backend.grpc.pos.ListOrdersResponse;
-import org.spin.backend.grpc.pos.ListPaymentReferencesRequest;
-import org.spin.backend.grpc.pos.ListPaymentReferencesResponse;
-import org.spin.backend.grpc.pos.ListPaymentsRequest;
-import org.spin.backend.grpc.pos.ListPaymentsResponse;
-import org.spin.backend.grpc.pos.ListPointOfSalesRequest;
-import org.spin.backend.grpc.pos.ListPointOfSalesResponse;
-import org.spin.backend.grpc.pos.ListProductPriceRequest;
-import org.spin.backend.grpc.pos.ListProductPriceResponse;
-import org.spin.backend.grpc.pos.ListShipmentLinesRequest;
-import org.spin.backend.grpc.pos.ListShipmentLinesResponse;
-import org.spin.backend.grpc.pos.ListStocksRequest;
-import org.spin.backend.grpc.pos.ListStocksResponse;
-import org.spin.backend.grpc.pos.Order;
-import org.spin.backend.grpc.pos.OrderLine;
-import org.spin.backend.grpc.pos.Payment;
-import org.spin.backend.grpc.pos.PaymentMethod;
-import org.spin.backend.grpc.pos.PaymentReference;
-import org.spin.backend.grpc.pos.PaymentSummary;
-import org.spin.backend.grpc.pos.PointOfSales;
-import org.spin.backend.grpc.pos.PointOfSalesRequest;
-import org.spin.backend.grpc.pos.PrintPreviewRequest;
-import org.spin.backend.grpc.pos.PrintPreviewResponse;
-import org.spin.backend.grpc.pos.PrintTicketRequest;
-import org.spin.backend.grpc.pos.PrintTicketResponse;
-import org.spin.backend.grpc.pos.ProcessOrderRequest;
-import org.spin.backend.grpc.pos.ProcessShipmentRequest;
-import org.spin.backend.grpc.pos.ReleaseOrderRequest;
-import org.spin.backend.grpc.pos.ReverseSalesRequest;
-import org.spin.backend.grpc.pos.Shipment;
-import org.spin.backend.grpc.pos.ShipmentLine;
-import org.spin.backend.grpc.pos.Stock;
+import org.spin.backend.grpc.pos.*;
 import org.spin.backend.grpc.pos.StoreGrpc.StoreImplBase;
-import org.spin.backend.grpc.pos.UpdateCustomerBankAccountRequest;
-import org.spin.backend.grpc.pos.UpdateCustomerRequest;
-import org.spin.backend.grpc.pos.UpdateOrderLineRequest;
-import org.spin.backend.grpc.pos.UpdateOrderRequest;
-import org.spin.backend.grpc.pos.UpdatePaymentRequest;
-import org.spin.backend.grpc.pos.ValidatePINRequest;
 import org.spin.store.model.I_C_PaymentMethod;
 import org.spin.store.model.MCPaymentMethod;
+import org.spin.pos.service.CashManagement;
 import org.spin.store.util.VueStoreFrontUtil;
 
 import io.grpc.Status;
@@ -1070,6 +973,59 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			);
 		}
 	}
+	
+	@Override
+	public void printShipmentPreview(PrintShipmentPreviewRequest request, StreamObserver<PrintShipmentPreviewResponse> responseObserver) {
+		try {
+			if(Util.isEmpty(request.getShipmentUuid())) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
+			log.fine("Print Ticket = " + request);
+			Properties context = ContextManager.getContext(request.getClientRequest());
+
+			//	
+			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+			int userId = Env.getAD_User_ID(pos.getCtx());
+			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument")) {
+				throw new AdempiereException("@POS.PreviewDocumentNotAllowed@");
+			}
+
+			int shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), null);
+			
+			PrintShipmentPreviewResponse.Builder ticket = PrintShipmentPreviewResponse.newBuilder()
+				.setResult("Ok");
+			
+			// Rpt M_InOut
+			int processId = 117;
+			String processUuid = RecordUtil.getUuidFromId(I_AD_Process.Table_Name, processId, null);
+			String reportType = "pdf";
+			if (!Util.isEmpty(request.getReportType(), true)) {
+				reportType = request.getReportType();
+			}
+			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+				.setTableName(I_M_InOut.Table_Name)
+				.setId(shipmentId)
+				.setProcessUuid(processUuid)
+				.setReportType(reportType)
+			;
+
+			ProcessLog.Builder processLog = BusinessDataServiceImplementation.runProcess(context, processRequest.build());
+			
+			// preview document
+			ticket.setProcessLog(processLog.build());
+
+			responseObserver.onNext(ticket.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
 
 	@Override
 	public void createCustomerBankAccount(CreateCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
@@ -1816,8 +1772,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(Util.isEmpty(request.getPosUuid())) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
-		MBankStatement cashClosing = getCurrentCashclosing(posId, null);
+		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+		MBankStatement cashClosing = CashManagement.getCurrentCashclosing(pos, RecordUtil.getDate(), true, null);
 		if(cashClosing == null
 				|| cashClosing.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
@@ -1841,11 +1797,11 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					+ "GROUP BY pm.UUID, pm.Name, pm.TenderType, p.C_Currency_ID, p.IsReceipt";
 			//	Count records
 			List<Object> parameters = new ArrayList<Object>();
-			parameters.add(posId);
+			parameters.add(pos.getC_POS_ID());
 			parameters.add(cashClosing.getC_BankStatement_ID());
 			count = RecordUtil.countRecords(sql, "C_Payment p", parameters);
 			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, posId);
+			pstmt.setInt(1, pos.getC_POS_ID());
 			pstmt.setInt(2, cashClosing.getC_BankStatement_ID());
 			//	Get from Query
 			rs = pstmt.executeQuery();
@@ -1971,12 +1927,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			request.getPaymentsList().forEach(paymentRequest -> {
 				MPayment payment = createPaymentFromCharge(cashAccount.get_ValueAsInt("DefaultOpeningCharge_ID"), paymentRequest, pos, transactionName);
-				//	validate document type
-				int cashClosingDocumentTypeId = pos.get_ValueAsInt("POSCashClosingDocumentType_ID");
-				//	Create Cash closing
-				if(cashClosingDocumentTypeId > 0) {
-					createBankStatement(pos, payment, cashClosingDocumentTypeId);
-				}
+				//	Add bank statement
+				CashManagement.createCashClosing(pos, payment);
 				//	
 				processPayment(pos, payment, transactionName);
 			});
@@ -1984,57 +1936,29 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		return Empty.newBuilder();
 	}
 	
-	/**
-	 * Create BankStatement based on default document type of point of sales
-	 * @param pos
-	 * @param payment
-	 * @param documentTypeId
-	 */
-	private void createBankStatement(MPOS pos, MPayment payment, int documentTypeId) {
-		StringBuilder whereClause = new StringBuilder();
-		whereClause.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND ")
-				.append("TRUNC(").append(MBankStatement.COLUMNNAME_StatementDate).append(",'DD') = ? AND ")
-				.append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
-				.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
-				.append(" AND ").append("C_POS_ID = ?");
-		MBankStatement bankStatement = new Query(payment.getCtx() , MBankStatement.Table_Name , whereClause.toString(), payment.get_TrxName())
-				.setClient_ID()
-				.setParameters(payment.getC_BankAccount_ID(), TimeUtil.getDay(payment.getDateTrx()), false, documentTypeId, pos.getC_POS_ID())
-				.first();
-		if (bankStatement == null || bankStatement.get_ID() <= 0) {
-			bankStatement = new MBankStatement(payment.getCtx() , 0 , payment.get_TrxName());
-			bankStatement.setC_BankAccount_ID(payment.getC_BankAccount_ID());
-			bankStatement.setStatementDate(payment.getDateAcct());
-			bankStatement.setC_DocType_ID(documentTypeId);
-			bankStatement.setAD_Org_ID(pos.getAD_Org_ID());
-			bankStatement.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
-			SimpleDateFormat format = DisplayType.getDateFormat(DisplayType.Date);
-			bankStatement.setName(Msg.parseTranslation(payment.getCtx(), "@C_POS_ID@: " + pos.getName() + " @DateDoc@: " + format.format(System.currentTimeMillis())));
-			bankStatement.saveEx();
-		}
-	}
 	
 	/**
 	 * Process Payment
-	 * @param pointOfSalesDefinition
+	 * @param pos
 	 * @param payment
 	 * @param transactionName
 	 */
-	private void processPayment(MPOS pointOfSalesDefinition, MPayment payment, String transactionName) {
+	private void processPayment(MPOS pos, MPayment payment, String transactionName) {
 		//	Create bank transfer
-		MPayment relatedPayment = createRelatedPayment(pointOfSalesDefinition, payment, transactionName);
+		MPayment relatedPayment = createRelatedPayment(pos, payment, transactionName);
 		if(relatedPayment != null) {
-			completePayment(relatedPayment);
+			completePayment(pos, relatedPayment);
 		}
-		completePayment(payment);
+		completePayment(pos, payment);
 	}
 	
 	/**
 	 * Process or complete payment and add to bank statement
+	 * @param pos
 	 * @param payment
 	 * @return void
 	 */
-	private void completePayment(MPayment payment) {
+	private void completePayment(MPOS pos, MPayment payment) {
 		//	Process It
 		if(!payment.isProcessed()) {
 			payment.setDocStatus(MPayment.DOCSTATUS_Drafted);
@@ -2048,21 +1972,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			payment.saveEx();
 		}
-		MBankStatement.addPayment(payment);
-	}
-	
-	/**
-	 * Get Current bank statement
-	 * @param posId
-	 * @param transactionName
-	 * @return
-	 * @return MBankStatement
-	 */
-	private MBankStatement getCurrentCashclosing(int posId, String transactionName) {
-		return new Query(Env.getCtx(), I_C_BankStatement.Table_Name, "Processed = 'N' "
-				+ "AND C_POS_ID = ? ", transactionName)
-				.setParameters(posId)
-				.first();
+		CashManagement.addPaymentToCash(pos, payment);
 	}
 	
 	/**
@@ -2459,7 +2369,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered()).compareTo(quantityToOrder) < 0) {
 				throw new AdempiereException("@QtyInsufficient@");
 			}
-			shipmentLine.setQty(quantityToOrder);
+			//	Update movement quantity
+			updateUomAndQuantityForShipment(shipmentLine, salesOrderLine.getC_UOM_ID(), quantityToOrder);
 			shipmentLine.saveEx();
 			shipmentLineReference.set(shipmentLine);
 		} else {
@@ -2471,13 +2382,32 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	        //create new line
 			shipmentLine.setOrderLine(salesOrderLine, 0, quantityToOrder);
 			Optional.ofNullable(request.getDescription()).ifPresent(description -> shipmentLine.setDescription(description));
-			shipmentLine.setQty(quantityToOrder);
+			//	Update movement quantity
+			updateUomAndQuantityForShipment(shipmentLine, salesOrderLine.getC_UOM_ID(), quantityToOrder);
 			//	Save Line
 			shipmentLine.saveEx();
 			shipmentLineReference.set(shipmentLine);
 		}
 		//	Convert Line
 		return ConvertUtil.convertShipmentLine(shipmentLineReference.get());
+	}
+	
+	/**
+	 * Set UOM and Quantity based on unit of measure
+	 * @param inOutLine
+	 * @param unitOfMeasureId
+	 * @param quantity
+	 */
+	private void updateUomAndQuantityForShipment(MInOutLine inOutLine, int unitOfMeasureId, BigDecimal quantity) {
+		if(quantity != null) {
+			inOutLine.setQty(quantity);
+		}
+		if(unitOfMeasureId > 0) {
+			inOutLine.setC_UOM_ID(unitOfMeasureId);
+		}
+		BigDecimal quantityEntered = inOutLine.getQtyEntered();
+		BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(inOutLine.getCtx(), inOutLine.getM_Product_ID(), inOutLine.getC_UOM_ID(), quantityEntered);
+		inOutLine.setMovementQty(convertedQuantity);
 	}
 	
 	/**
@@ -2570,7 +2500,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				if(salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered()).compareTo(quantityToOrder) < 0) {
 					throw new AdempiereException("@QtyInsufficient@");
 				}
-				shipmentLine.setQty(quantityToOrder);
+				//	Update movement quantity
+				updateUomAndQuantityForShipment(shipmentLine, salesOrderLine.getC_UOM_ID(), quantityToOrder);
 				shipmentLine.saveEx();
 				shipmentLineReference.set(shipmentLine);
 			} else {
@@ -2582,7 +2513,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				//create new line
 				shipmentLine.setOrderLine(salesOrderLine, 0, quantityToOrder);
 				Optional.ofNullable(salesOrderLine.getDescription()).ifPresent(description -> shipmentLine.setDescription(description));
-				shipmentLine.setQty(quantityToOrder);
+				//	Update movement quantity
+				updateUomAndQuantityForShipment(shipmentLine, salesOrderLine.getC_UOM_ID(), quantityToOrder);
 				//	Save Line
 				shipmentLine.saveEx();
 				shipmentLineReference.set(shipmentLine);
@@ -3461,6 +3393,26 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	}
 	
 	/**
+	 * Get Integer value from pos
+	 * @param pos
+	 * @param userId
+	 * @param columnName
+	 * @return
+	 */
+	private int getIntegerValueFromPOS(MPOS pos, int userId, String columnName) {
+		PO userAllocated = getUserAllowed(Env.getCtx(), pos.getC_POS_ID(), userId, null);
+		if (userAllocated != null) {
+			if (userAllocated.get_ColumnIndex(columnName) >= 0) {
+				return userAllocated.get_ValueAsInt(columnName);
+			}
+		}
+		if (pos.get_ColumnIndex(columnName) >= 0) {
+			return pos.get_ValueAsInt(columnName);
+		}
+		return -1;
+	}
+	
+	/**
 	 * Process payment of Order
 	 * @param salesOrder
 	 * @param pos
@@ -3504,11 +3456,15 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				paymentsIds.add(payment.getC_Payment_ID());
 				salesOrder.saveEx(transactionName);
 			}
-			MBankStatement.addPayment(payment);
+			CashManagement.addPaymentToCash(pos, payment);
 		});
 		//	Validate Write Off Amount
 		if(!isOpenRefund) {
 			BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
+			int currencyId = getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
+			if(currencyId > 0) {
+				writeOffAmtTolerance = getConvetedAmount(salesOrder, currencyId, writeOffAmtTolerance);
+			}
 			if(writeOffAmtTolerance.compareTo(Env.ZERO) > 0 && openAmount.get().abs().compareTo(writeOffAmtTolerance) > 0) {
 				throw new AdempiereException("@POS.WriteOffAmtToleranceExceeded@");
 			}
@@ -3709,6 +3665,24 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			return paymentReferenceAmount.get();
 		}
 		return Env.ZERO;
+	}
+	
+	/**
+	 * Get Converted Amount based on Order currency and optional currency id
+	 * @param order
+	 * @param payment
+	 * @return
+	 * @return BigDecimal
+	 */
+	public static BigDecimal getConvetedAmount(MOrder order, int fromCurrencyId, BigDecimal amount) {
+		if(fromCurrencyId == order.getC_Currency_ID()
+				|| amount == null
+				|| amount.compareTo(Env.ZERO) == 0) {
+			return amount;
+		}
+		BigDecimal convertedAmount = MConversionRate.convert(order.getCtx(), amount, fromCurrencyId, order.getC_Currency_ID(), order.getDateAcct(), order.get_ValueAsInt("C_ConversionType_ID"), order.getAD_Client_ID(), order.getAD_Org_ID());
+		//	
+		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
 	}
 	
 	/**
@@ -5159,7 +5133,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setMaximumRefundAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumRefundAllowed")))
 			.setMaximumDailyRefundAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumDailyRefundAllowed")))
 			.setMaximumDiscountAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumDiscountAllowed")))
-			.setMaximumLineDiscountAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumLineDiscountAllowed")))
 			.setWriteOffAmountTolerance(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "WriteOffAmtTolerance")))
 		;
 		builder
@@ -5363,6 +5336,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @return void
 	 */
 	private void setCurrentDate(MOrder salesOrder) {
+		//	Ignore if the document is processed
+		if(salesOrder.isProcessed() || salesOrder.isProcessing()) {
+			return;
+		}
 		if(!salesOrder.getDateOrdered().equals(RecordUtil.getDate())
 				|| !salesOrder.getDateAcct().equals(RecordUtil.getDate())) {
 			salesOrder.setDateOrdered(RecordUtil.getDate());
@@ -5377,6 +5354,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @return void
 	 */
 	private void setCurrentDate(MPayment payment) {
+		//	Ignore if the document is processed
+		if(payment.isProcessed() || payment.isProcessing()) {
+			return;
+		}
 		if(!payment.getDateTrx().equals(RecordUtil.getDate())) {
 			payment.setDateTrx(RecordUtil.getDate());
 			payment.saveEx();

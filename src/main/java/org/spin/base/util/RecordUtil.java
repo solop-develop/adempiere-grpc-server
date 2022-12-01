@@ -299,9 +299,9 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static String addSearchValueAndGet(String sql, String tableName, String searchValue, List<Object> parameters) {
-		return addSearchValueAndGet(sql, tableName, null, searchValue, parameters);
+		return addSearchValueAndGet(sql, tableName, null, searchValue, true, parameters);
 	}
-	
+
 	/**
 	 * Add where clause with search value and return the new complete SQL
 	 * @param sql
@@ -310,7 +310,34 @@ public class RecordUtil {
 	 * @param parameters
 	 * @return
 	 */
-	public static String addSearchValueAndGet(String sql, String table_name, String table_alias, String searchValue, List<Object> parameters) {
+	public static String addSearchValueAndGet(String sql, String tableName, String tableAlias, String searchValue, List<Object> parameters) {
+		return addSearchValueAndGet(sql, tableName, tableAlias, searchValue, true, parameters);
+	}
+
+	/**
+	 * Add where clause with search value and return the new complete SQL
+	 * @param sql
+	 * @param tableName
+	 * @param searchValue
+	 * @param isTranslated
+	 * @param parameters
+	 * @return
+	 */
+	public static String addSearchValueAndGet(String sql, String tableName, String searchValue, boolean isTranslated, List<Object> parameters) {
+		return addSearchValueAndGet(sql, tableName, null, searchValue, isTranslated, parameters);
+	}
+
+	/**
+	 * Add where clause with search value and return the new complete SQL
+	 * @param sql
+	 * @param tableName
+	 * @param tableAlias
+	 * @param searchValue
+	 * @param isTranslated
+	 * @param parameters
+	 * @return
+	 */
+	public static String addSearchValueAndGet(String sql, String table_name, String table_alias, String searchValue, boolean isTranslated, List<Object> parameters) {
 		if(Util.isEmpty(searchValue, true)) {
 			return sql;
 		}
@@ -321,7 +348,8 @@ public class RecordUtil {
 
 		String lang = Env.getAD_Language(Env.getCtx());
 		// search on trl table
-		final MTable tableTranslation = org.compiere.util.Language.isBaseLanguage(lang) ? null : MTable.get(Env.getCtx(), table_name + DictionaryUtil.TRANSLATION_SUFFIX);
+		final MTable tableTranslation = org.compiere.util.Language.isBaseLanguage(lang) || !isTranslated ?
+			null : MTable.get(Env.getCtx(), table_name + DictionaryUtil.TRANSLATION_SUFFIX);
 		final String tableAlias = Util.isEmpty(table_alias, true) ? table.getTableName() : table_alias;
 
 		StringBuffer where = new StringBuffer();

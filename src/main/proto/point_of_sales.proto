@@ -100,6 +100,8 @@ service Store {
 	rpc PrintTicket(PrintTicketRequest) returns (PrintTicketResponse) {}
 	//	Print Preview
 	rpc PrintPreview(PrintPreviewRequest) returns (PrintPreviewResponse) {}
+	//	Print Preview for Shipment
+	rpc PrintShipmentPreview(PrintShipmentPreviewRequest) returns (PrintShipmentPreviewResponse) {}
 	//	Create Customer Account
 	rpc CreateCustomerBankAccount(CreateCustomerBankAccountRequest) returns (CustomerBankAccount) {}
 	//	Update Customer Account
@@ -587,6 +589,20 @@ message PrintPreviewRequest {
 
 //	Response after preview
 message PrintPreviewResponse {
+	string result = 1;
+	ProcessLog process_log = 2;
+}
+
+//	Print Preview Ticket for Shipment
+message PrintShipmentPreviewRequest {
+	ClientRequest client_request = 1;
+	string pos_uuid = 2;
+	string shipment_uuid = 3;
+	string report_type = 4;
+}
+
+//	Response after preview
+message PrintShipmentPreviewResponse {
 	string result = 1;
 	ProcessLog process_log = 2;
 }
