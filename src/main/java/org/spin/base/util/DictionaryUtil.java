@@ -215,12 +215,21 @@ public class DictionaryUtil {
 	public static String getValidationCodeWithAlias(String tableAlias, String dynamicValidation) {
 		String validationCode = dynamicValidation;
 
-		Matcher matcherTableAliases = Pattern.compile("" + tableAlias + ".", Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+		Matcher matcherTableAliases = Pattern.compile(
+				tableAlias + "\\.",
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			)
 			.matcher(dynamicValidation);
+
 		if (!matcherTableAliases.find()) {
-			Pattern patternColumnName = Pattern.compile("(\\w+)(\\s+){0,1}=", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+			String sqlOperators = "(<>|<=|>=|!=|<|=|>|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)";
+			// columnName = value
+			Pattern patternColumnName = Pattern.compile(
+				"(\\w+)(\\s+){0,1}" + sqlOperators,
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			);
 			Matcher matchColumnName = patternColumnName.matcher(validationCode);
-			validationCode = matchColumnName.replaceAll(tableAlias + ".$1="); // $&
+			validationCode = matchColumnName.replaceAll(tableAlias + ".$1$2$3"); // $&
 		}
 
 		return validationCode;
