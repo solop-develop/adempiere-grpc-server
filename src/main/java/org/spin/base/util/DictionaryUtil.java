@@ -1,17 +1,17 @@
 /*************************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it    		 *
+ * This program is free software; you can redistribute it and/or modify it           *
  * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope   		 *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 		 *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           		 *
- * See the GNU General Public License for more details.                       		 *
- * You should have received a copy of the GNU General Public License along    		 *
- * with this program; if not, write to the Free Software Foundation, Inc.,    		 *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
- * For the text or an alternative of this public license, you may reach us    		 *
+ * by the Free Software Foundation. This program is distributed in the hope          *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
+ * See the GNU General Public License for more details.                              *
+ * You should have received a copy of the GNU General Public License along           *
+ * with this program; if not, write to the Free Software Foundation, Inc.,           *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
+ * For the text or an alternative of this public license, you may reach us           *
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
 
@@ -59,14 +59,19 @@ public class DictionaryUtil {
 	 */
 	public static String getQueryWithReferencesFromTab(MTab tab) {
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
-		String originalQuery = "SELECT " + table.getTableName() + ".* FROM " + table.getTableName() + " AS " + table.getTableName() + " ";
+		final String tableName = table.getTableName();
+
+		String originalQuery = "SELECT " + tableName + ".* FROM " + tableName + " AS " + tableName + " ";
 		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 		Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
 		for (MField field : tab.getFields(false, null)) {
 			if(!field.isDisplayed()) {
-				continue;
+				// key column on table
+				if (!field.getAD_Column().isKey()) {
+					continue;
+				}
 			}
 			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
 			int displayTypeId = field.getAD_Reference_ID();
@@ -79,9 +84,10 @@ public class DictionaryUtil {
 				if(referenceValueId == 0) {
 					referenceValueId = column.getAD_Reference_Value_ID();
 				}
-				//	Validation Code
+
 				String columnName = column.getColumnName();
-				String tableName = table.getTableName();
+
+				//	Validation Code
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
 					Env.getCtx()).getReferenceInfo(displayTypeId,
 					referenceValueId,
@@ -109,7 +115,9 @@ public class DictionaryUtil {
 	 * @return
 	 */
 	public static String getQueryWithReferencesFromColumns(MTable table) {
-		String originalQuery = "SELECT " + table.getTableName() + ".* FROM " + table.getTableName() + " AS " + table.getTableName() + " ";
+		final String tableName = table.getTableName();
+
+		String originalQuery = "SELECT " + tableName + ".* FROM " + tableName + " AS " + tableName + " ";
 		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
@@ -124,7 +132,6 @@ public class DictionaryUtil {
 				int referenceValueId = column.getAD_Reference_Value_ID();
 
 				String columnName = column.getColumnName();
-				String tableName = table.getTableName();
 
 				//	Validation Code
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
@@ -206,14 +213,26 @@ public class DictionaryUtil {
 	 * @return {String}
 	 */
 	public static String getValidationCodeWithAlias(String tableAlias, String dynamicValidation) {
-		String validationCode = dynamicValidation;
+		if (Util.isEmpty(dynamicValidation, true)) {
+			return "";
+		}
 
-		Matcher matcherTableAliases = Pattern.compile("" + tableAlias + ".", Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+		Matcher matcherTableAliases = Pattern.compile(
+				tableAlias + "\\.",
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			)
 			.matcher(dynamicValidation);
+
+		String validationCode = dynamicValidation;
 		if (!matcherTableAliases.find()) {
-			Pattern patternColumnName = Pattern.compile("(\\w+)(\\s+){0,1}=", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+			String sqlOperators = "(<>|<=|>=|!=|<|=|>|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)";
+			// columnName = value
+			Pattern patternColumnName = Pattern.compile(
+				"(\\w+)(\\s+){0,1}" + sqlOperators,
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			);
 			Matcher matchColumnName = patternColumnName.matcher(validationCode);
-			validationCode = matchColumnName.replaceAll(tableAlias + ".$1="); // $&
+			validationCode = matchColumnName.replaceAll(tableAlias + ".$1$2$3"); // $&
 		}
 
 		return validationCode;
@@ -275,7 +294,7 @@ public class DictionaryUtil {
 				if(tab.getAD_Column_ID() != 0) {
 					childColumn = MColumn.getColumnName(context, tab.getAD_Column_ID());
 				}
-				//	
+				// TODO: Fix childColumn on 'System Translation Check' window > 'Element Translation' tab
 				whereClause.append(table.getTableName()).append(".").append(childColumn)
 					.append(" = ").append("@").append(mainColumnName).append("@");
 				if(optionalTab.isPresent()) {

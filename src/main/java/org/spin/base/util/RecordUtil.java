@@ -25,8 +25,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pipo.IDFinder;
@@ -297,9 +299,9 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static String addSearchValueAndGet(String sql, String tableName, String searchValue, List<Object> parameters) {
-		return addSearchValueAndGet(sql, tableName, null, searchValue, parameters);
+		return addSearchValueAndGet(sql, tableName, null, searchValue, true, parameters);
 	}
-	
+
 	/**
 	 * Add where clause with search value and return the new complete SQL
 	 * @param sql
@@ -309,58 +311,207 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static String addSearchValueAndGet(String sql, String tableName, String tableAlias, String searchValue, List<Object> parameters) {
-		if(Util.isEmpty(searchValue)) {
+		return addSearchValueAndGet(sql, tableName, tableAlias, searchValue, true, parameters);
+	}
+
+	/**
+	 * Add where clause with search value and return the new complete SQL
+	 * @param sql
+	 * @param tableName
+	 * @param searchValue
+	 * @param isTranslated
+	 * @param parameters
+	 * @return
+	 */
+	public static String addSearchValueAndGet(String sql, String tableName, String searchValue, boolean isTranslated, List<Object> parameters) {
+		return addSearchValueAndGet(sql, tableName, null, searchValue, isTranslated, parameters);
+	}
+
+	/**
+	 * Add where clause with search value and return the new complete SQL
+	 * @param sql
+	 * @param tableName
+	 * @param tableAlias
+	 * @param searchValue
+	 * @param isTranslated
+	 * @param parameters
+	 * @return
+	 */
+	public static String addSearchValueAndGet(String sql, String table_name, String table_alias, String searchValue, boolean isTranslated, List<Object> parameters) {
+		if(Util.isEmpty(searchValue, true)) {
 			return sql;
 		}
-		MTable table = MTable.get(Env.getCtx(), tableName);
-		if(table == null) {
+		MTable table = MTable.get(Env.getCtx(), table_name);
+		if(table == null || table.getAD_Table_ID() <= 0) {
 			return sql;
 		}
-		StringBuffer whereClause = new StringBuffer();
-		table.getColumnsAsList().stream()
+
+		String lang = Env.getAD_Language(Env.getCtx());
+		// search on trl table
+		final MTable tableTranslation = org.compiere.util.Language.isBaseLanguage(lang) || !isTranslated ?
+			null : MTable.get(Env.getCtx(), table_name + DictionaryUtil.TRANSLATION_SUFFIX);
+		final String tableAlias = Util.isEmpty(table_alias, true) ? table.getTableName() : table_alias;
+
+		StringBuffer where = new StringBuffer();
+		List<MColumn> selectionColums = table.getColumnsAsList().stream()
 			.filter(column -> {
 				return (column.isIdentifier() || column.isSelectionColumn())
-					&& Util.isEmpty(column.getColumnSQL()) && DisplayType.isText(column.getAD_Reference_ID());
+					&& Util.isEmpty(column.getColumnSQL(), true) && DisplayType.isText(column.getAD_Reference_ID());
+			})
+			.collect(Collectors.toList());
+
+		selectionColums.stream()
+			.filter(column -> {
+				// "Value" is not translated for example
+				return (tableTranslation == null || (tableTranslation != null && !column.isTranslated()));
 			})
 			.forEach(column -> {
-				if(whereClause.length() > 0) {
-					whereClause.append(" OR ");
+				if(where.length() > 0) {
+				    where.append(" OR ");
 				}
-				whereClause.append("UPPER(")
-					.append(tableName).append(".")
+				where.append("UPPER(")
+					.append(tableAlias).append(".")
 					.append(column.getColumnName())
 					.append(")")
 					.append(" LIKE ")
 					.append("'%'|| UPPER(?) || '%'");
 				parameters.add(searchValue);
 			});
-		//	Order by
+
+		// Add language clause
+		StringBuffer whereClause = where;
+		String joinTranslation = "";
+		if (tableTranslation != null) {
+			StringBuffer whereTranslation = new StringBuffer();
+			
+			selectionColums.stream()
+				.filter(column -> {
+					// Name is translated for example
+					return tableTranslation != null && column.isTranslated();
+				})
+				.forEach(column -> {
+					if(whereTranslation.length() > 0) {
+						whereTranslation.append(" OR ");
+					}
+					whereTranslation.append("UPPER(")
+						.append("NVL(")
+						.append(tableTranslation.getTableName()).append(".")
+						.append(column.getColumnName())
+						.append(", ")
+						.append(tableAlias).append(".")
+						.append(column.getColumnName())
+						.append("))")
+						.append(" LIKE ")
+						.append("'%'|| UPPER(?) || '%'");
+					parameters.add(searchValue);
+				});
+
+			if (!Util.isEmpty(whereTranslation.toString(), true)) {
+				if (!Util.isEmpty(where.toString(), true)) {
+					whereClause.append(" OR ");
+				}
+				whereClause
+					.append("((")
+					.append(whereTranslation)
+					.append(") AND ")
+					.append(tableTranslation.getTableName() + ".AD_Language = ? ")
+					// .append(" AND ")
+					// .append(tableTranslation.getTableName() + ".IsTranslated = 'Y' ")
+					.append(")")
+				;
+				parameters.add(lang);
+	
+				String keyColumn = table.getTableName() + "_ID";
+				String translationTableName = tableTranslation.getTableName();
+				// only table, tableName tableName, tableName AS tableName
+				String tableWithAliases = translationTableName + "|" 
+					+ translationTableName + "\\s+" + translationTableName + "|"
+					+ translationTableName + "\\s+AS\\s+" + translationTableName;
+
+				String joinPattern = "JOIN(\\s+)" 
+					+ "(" + tableWithAliases + ")"
+					+ "(\\s+ON(\\s*\\(){0,1})\\s*"
+					// base_table.table_id = translation_table.table_id
+					+ "((\\w+." + keyColumn + "\\s*=\\s*" + translationTableName + "." + keyColumn + ")"
+					// translation_table.table_id = base_table.table_id
+					+ "|(" + translationTableName + "." + keyColumn + "\\s*=\\s*\\w+." + keyColumn +"))"
+					;
+				Matcher matcherJoinTranslated = Pattern.compile(
+					joinPattern,
+					Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.MULTILINE
+				).matcher(sql);
+				// Add tranlated join
+				if (!matcherJoinTranslated.find()) {
+					joinTranslation = " LEFT JOIN " + translationTableName + " AS " + translationTableName
+						+ " ON " + translationTableName + "." + keyColumn + " = " + tableAlias + "." + keyColumn + " "
+					;
+				}
+			}
+		}
+		
 		//	Validate and return
 		if(whereClause.length() > 0) {
-			String patternAlias = "";
-			if (!Util.isEmpty(tableAlias, true)) {
-				patternAlias = "\\s+(" + tableAlias + "){0,1}";
+			//	Order by
+			Matcher matcherOrderBy = Pattern.compile(
+				"\\s+(ORDER BY)\\s+",
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			).matcher(sql);
+			int positionOrderBy = -1;
+			String orderByClause = "";
+			String queryWithoutOrderBy = sql;
+			if (matcherOrderBy.find()) {
+				positionOrderBy = matcherOrderBy.start();
+				orderByClause = sql.substring(positionOrderBy);
+				// remove order By
+				queryWithoutOrderBy = sql.substring(0, positionOrderBy);
 			}
+
+			// tableName tableName, tableName AS tableName
+			String patternAlias = table.getTableName() + "\\s+" + table.getTableName() + "|" + table.getTableName() + "\\s+AS\\s+" + table.getTableName();
+			if (!Util.isEmpty(tableAlias, true) && !table.getTableName().equals(tableAlias)) {
+				// tableName tableAlias, tableName AS tableAlias
+				patternAlias += "|" + table.getTableName() + "\\s+" + tableAlias + "|" + table.getTableName() + "\\s+AS\\s+" + tableAlias;
+			}
+			// only table on last position
+			patternAlias += "|" + table.getTableName();
+
+			String fromWherePattern = "\\s+(FROM)\\s+(" + patternAlias + ")" + "\\s+(WHERE)";
 			Matcher matcher = Pattern.compile(
-					"\\s+(FROM)\\s+(" + tableName + ")" + patternAlias + "\\s+(WHERE)",
-					Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-				)
-				.matcher(sql);
-			Matcher matcherJoin = Pattern.compile("JOIN(\\w|\\s)*(\\((\\w|\\.|\\s|=|\\')*\\))(\\s*)(WHERE)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
-			Matcher matcherOrderBy = Pattern.compile("\\s+(ORDER BY)\\s+", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(sql);
-			int positionFrom = -1;
-			if(matcherOrderBy.find()) {
-				positionFrom = matcherOrderBy.start();
-			}
+				fromWherePattern,
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			)
+			.matcher(queryWithoutOrderBy);
+			Matcher matcherJoin = Pattern.compile(
+				"JOIN(\\w|\\s)*(\\((\\w|\\.|\\s|=|\\')*\\))(\\s*)(WHERE)",
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			).matcher(queryWithoutOrderBy);
+
 			String conditional = " WHERE ";
-			if (matcher.find() || matcherJoin.find()) {
-				conditional = " AND ";
+			List<MatchResult> fromWhereParts = matcher.results()
+					.collect(Collectors.toList());
+			List<MatchResult> joinWhereParts = matcherJoin.results()
+					.collect(Collectors.toList());
+			
+			String onlyQuery = queryWithoutOrderBy;
+			if (joinWhereParts != null && joinWhereParts.size() > 0) {
+				MatchResult lastJoinWhere = joinWhereParts.get(joinWhereParts.size() - 1);
+				onlyQuery = queryWithoutOrderBy.substring(0, lastJoinWhere.end());
+
+				int lastWhere = onlyQuery.lastIndexOf("WHERE");
+				onlyQuery = onlyQuery.substring(0, lastWhere);
+
+				conditional = queryWithoutOrderBy.substring(lastWhere, queryWithoutOrderBy.length()) + " AND ";
+			} else if (fromWhereParts != null && fromWhereParts.size() > 0) {
+				MatchResult lastJoinWhere = fromWhereParts.get(fromWhereParts.size() - 1);
+				onlyQuery = queryWithoutOrderBy.substring(0, lastJoinWhere.end());
+
+				int lastWhere = onlyQuery.lastIndexOf("WHERE");
+				onlyQuery = onlyQuery.substring(0, lastWhere);
+				
+				conditional = queryWithoutOrderBy.substring(lastWhere, queryWithoutOrderBy.length()) + " AND ";
 			}
-			if(positionFrom > 0) {
-				sql = sql.substring(0, positionFrom) + conditional + "(" + whereClause + ")" + sql.substring(positionFrom);
-			} else {
-				sql = sql + conditional + "(" + whereClause + ")";
-			}
+
+			sql = onlyQuery + joinTranslation + conditional + "(" + whereClause + ")" + orderByClause;
 		}
 		return sql;
 	}
@@ -385,35 +536,50 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static int countRecords(String sql, String tableName, String tableNameAlias, List<Object> parameters) {
-		String tableWithAliases = tableName;
-		if (!Util.isEmpty(tableNameAlias)) {
-			// tableName tableAlias | tableName AS tableAlias | tableName
-			tableWithAliases = tableName + " " + tableNameAlias + "|" + tableName + " AS " + tableNameAlias; // + "|" + tableName;
+		// tableName tableName, tableName AS tableName
+		String tableWithAliases = tableName + "\\s+" + tableName + "|" + tableName + "\\s+AS\\s+" + tableName;
+		if (!Util.isEmpty(tableNameAlias, true) && !tableName.equals(tableNameAlias)) {
+			// tableName tableAlias, tableName AS tableAlias
+			tableWithAliases += "|" + tableName + "\\s+" + tableNameAlias + "|" + tableName + "\\s+AS\\s+" + tableNameAlias;
 		}
-		Matcher matcher = Pattern.compile(
-				"\\s+(FROM)\\s+(" + tableWithAliases + ")(\\s+)",
-				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-			)
-			.matcher(sql);
+		// only table on last position
+		tableWithAliases += "|" + tableName;
+
+		Matcher matcherFrom = Pattern.compile(
+			"\\s+(FROM)\\s+(" + tableWithAliases + ")\\s+",
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		)
+		.matcher(sql);
+
+		List<MatchResult> fromWhereParts = matcherFrom.results()
+			.collect(Collectors.toList());
 		int positionFrom = -1;
-		if(matcher.find()) {
-			positionFrom = matcher.start();
+		if (fromWhereParts != null && fromWhereParts.size() > 0) {
+			MatchResult lastFrom = fromWhereParts.get(fromWhereParts.size() - 1);
+			positionFrom = lastFrom.start();
 		} else {
 			return 0;
 		}
+
 		String queryCount = "SELECT COUNT(*) " + sql.substring(positionFrom, sql.length());
-		matcher = Pattern.compile("\\s+(ORDER BY)\\s+", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(queryCount);
-		if(matcher.find()) {
-			positionFrom = matcher.start();
-			queryCount = queryCount.substring(0, positionFrom);
+
+		// remove order by clause
+		Matcher matcherOrderBy = Pattern.compile(
+			"\\s+(ORDER BY)\\s+",
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		).matcher(queryCount);
+		if(matcherOrderBy.find()) {
+			int positionOrderBy = matcherOrderBy.start();
+			queryCount = queryCount.substring(0, positionOrderBy);
 		}
-		if(parameters == null
-				|| parameters.size() == 0) {
-			return DB.getSQLValueEx(null, queryCount);
+
+		if (parameters == null) {
+			parameters = new ArrayList<Object>();
 		}
+
 		return DB.getSQLValueEx(null, queryCount, parameters);
 	}
-	
+
 	/**
 	 * Get Query with limit
 	 * @param query

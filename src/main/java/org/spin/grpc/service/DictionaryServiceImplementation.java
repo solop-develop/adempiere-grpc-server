@@ -1291,6 +1291,26 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			Optional<MField> maybeField = customFields.stream().filter(customField -> customField.getAD_Field_ID() == fieldId).findFirst();
 			if(maybeField.isPresent()) {
 				field = maybeField.get();
+
+				// TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
+				String language = context.getProperty(Env.LANGUAGE);
+				if(!Language.isBaseLanguage(language)) {
+					//	Name
+					String value = field.get_Translation(I_AD_Field.COLUMNNAME_Name, language);
+					if (!Util.isEmpty(value, true)) {
+						field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Name, value);
+					}
+					//	Description
+					value = field.get_Translation(I_AD_Field.COLUMNNAME_Description, language);
+					if (!Util.isEmpty(value, true)) {
+						field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Description, value);
+					}
+					//	Help
+					value = field.get_Translation(I_AD_Tab.COLUMNNAME_Help, language);
+					if (!Util.isEmpty(value, true)) {
+						field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Help, value);
+					}
+				}
 			}
 		}
 		//	Convert
