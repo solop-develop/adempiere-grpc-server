@@ -1,17 +1,17 @@
 /*************************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it    		 *
+ * This program is free software; you can redistribute it and/or modify it           *
  * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope   		 *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 		 *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           		 *
- * See the GNU General Public License for more details.                       		 *
- * You should have received a copy of the GNU General Public License along    		 *
- * with this program; if not, write to the Free Software Foundation, Inc.,    		 *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
- * For the text or an alternative of this public license, you may reach us    		 *
+ * by the Free Software Foundation. This program is distributed in the hope          *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
+ * See the GNU General Public License for more details.                              *
+ * You should have received a copy of the GNU General Public License along           *
+ * with this program; if not, write to the Free Software Foundation, Inc.,           *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
+ * For the text or an alternative of this public license, you may reach us           *
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
 
@@ -27,11 +27,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.I_AD_Column;
+import org.compiere.model.MColumn;
 import org.compiere.model.MQuery;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
@@ -163,10 +166,11 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromDecimal(BigDecimal value) {
-		if (value == null) {
-			return Value.newBuilder().setValueType(ValueType.DECIMAL);
-		}
-		return Value.newBuilder().setDecimalValue(Decimal.newBuilder().setDecimalValue(value.toPlainString()).setScale(value.scale())).setValueType(ValueType.DECIMAL);
+		return Value.newBuilder()
+			.setValueType(ValueType.DECIMAL)
+			.setDecimalValue(
+				getDecimalFromBigDecimal(value)
+			);
 	}
 	
 	/**
@@ -175,10 +179,12 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Decimal.Builder getDecimalFromBigDecimal(BigDecimal value) {
-		if(value == null) {
+		if (value == null) {
 			return Decimal.newBuilder();
 		}
-		return Decimal.newBuilder().setDecimalValue(value.toPlainString()).setScale(value.scale());
+		return Decimal.newBuilder()
+			.setDecimalValue(value.toPlainString())
+			.setScale(value.scale());
 	}
 	
 	/**
@@ -187,16 +193,17 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static BigDecimal getDecimalFromValue(Value value) {
-		if(Util.isEmpty(value.getDecimalValue().getDecimalValue())) {
+		if (Util.isEmpty(value.getDecimalValue().getDecimalValue(), true)) {
 			if (value.getValueType() == Value.ValueType.INTEGER) {
 				return BigDecimal.valueOf(value.getIntValue());
 			}
 			if (value.getValueType() == Value.ValueType.STRING) {
-				return new BigDecimal(value.getStringValue());
+				return getBigDecimalFromString(value.getStringValue());
 			}
 			return null;
 		}
-		return new BigDecimal(value.getDecimalValue().getDecimalValue());
+		// Value.Decimal.DecimalValue
+		return getBigDecimalFromDecimal(value.getDecimalValue());
 	}
 	
 	/**
@@ -205,8 +212,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static BigDecimal getBigDecimalFromDecimal(Decimal decimalValue) {
-		if(decimalValue == null 
-				|| Util.isEmpty(decimalValue.getDecimalValue())) {
+		if (decimalValue == null || Util.isEmpty(decimalValue.getDecimalValue(), true)) {
 			return null;
 		}
 		return new BigDecimal(decimalValue.getDecimalValue())
@@ -233,7 +239,7 @@ public class ValueUtil {
 	 */
 	public static String getStringFromValue(Value value, boolean uppercase) {
 		String stringValue = value.getStringValue();
-		if(Util.isEmpty(stringValue)) {
+		if(Util.isEmpty(stringValue, true)) {
 			return null;
 		}
 		//	To Upper case
@@ -267,7 +273,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static boolean getBooleanFromValue(Value value) {
-		if (!Util.isEmpty(value.getStringValue())) {
+		if (!Util.isEmpty(value.getStringValue(), true)) {
 			return "Y".equals(value.getStringValue())
 				|| "Yes".equals(value.getStringValue())
 				|| "true".equals(value.getStringValue());
@@ -302,9 +308,8 @@ public class ValueUtil {
 		} else if(DisplayType.isNumeric(referenceId)) {
 			return getValueFromDecimal((BigDecimal) value);
 		} else if(DisplayType.YesNo == referenceId) {
-			if(value instanceof String) {
-				String stringValue = (String) value;
-				value = !Util.isEmpty((String) stringValue) && stringValue.equals("Y");
+			if (value instanceof String) {
+				return getValueFromBoolean((String) value);
 			}
 			return getValueFromBoolean((Boolean) value);
 		} else if(DisplayType.isDate(referenceId)) {
@@ -319,6 +324,7 @@ public class ValueUtil {
 			} else if (value instanceof String) {
 				return getValueFromString((String) value);
 			}
+			return getValueFromObject(value); 
 		}
 		//
 		return builderValue;
@@ -331,6 +337,9 @@ public class ValueUtil {
 	 */
 	public static Map<String, Object> convertValuesToObjects(List<KeyValue> values) {
 		Map<String, Object> convertedValues = new HashMap<>();
+		if (values == null || values.size() <= 0) {
+			return convertedValues;
+		}
 		for(KeyValue value : values) {
 			convertedValues.put(value.getKey(), getObjectFromValue(value.getValue()));
 		}
@@ -446,7 +455,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static boolean isNumeric(String value) {
-		if(Util.isEmpty(value)) {
+		if(Util.isEmpty(value, true)) {
 			return false;
 		}
 		//	
@@ -478,7 +487,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static boolean isBoolean(String value) {
-		if(Util.isEmpty(value)) {
+		if (Util.isEmpty(value, true)) {
 			return false;
 		}
 		//	
@@ -516,7 +525,7 @@ public class ValueUtil {
 	 */
 	public static BigDecimal getBigDecimalFromString(String value) {
 		BigDecimal numberValue = null;
-		if(Util.isEmpty(value)) {
+		if (Util.isEmpty(value, true)) {
 			return null;
 		}
 		//	
@@ -603,6 +612,31 @@ public class ValueUtil {
 		return operator;
 	}
 	
+	/**
+	 * Get default operator by display type
+	 * @param displayTypeId
+	 * @return
+	 */
+	public static int getDefaultOperatorByDisplayType(int displayTypeId) {
+		int operator = Operator.EQUAL_VALUE;
+		switch (displayTypeId) {
+			case DisplayType.String:
+			case DisplayType.Text:
+			case DisplayType.TextLong:
+			case DisplayType.Memo:
+			case DisplayType.FilePath:
+			case DisplayType.FileName:
+			case DisplayType.FilePathOrName:
+			case DisplayType.URL:
+			case DisplayType.PrinterName:
+				operator = Operator.LIKE_VALUE;
+				break;
+			default:
+				break;
+			}
+		return operator;
+	}
+
 	public static void setParametersFromObjectsList(PreparedStatement pstmt, List<Object> parameters) {
 		try {
 			AtomicInteger parameterIndex = new AtomicInteger(1);
@@ -703,32 +737,50 @@ public class ValueUtil {
 		if(!Util.isEmpty(criteria.getWhereClause())) {
 			whereClause.append("(").append(criteria.getWhereClause()).append(")");
 		}
-		AtomicReference<String> tableNameFromReference = new AtomicReference<String>(tableName);
-		if(Util.isEmpty(tableNameFromReference.get())) {
-			tableNameFromReference.set(criteria.getTableName());
+		if (Util.isEmpty(tableName, true)) {
+			tableName = criteria.getTableName();
 		}
+		final MTable table = MTable.get(Env.getCtx(), tableName);
 		//	Validate
-		if(Util.isEmpty(tableNameFromReference.get())) {
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 		criteria.getConditionsList().stream()
 			.filter(condition -> !Util.isEmpty(condition.getColumnName()))
 			.forEach(condition -> {
+				int operatorValue = condition.getOperatorValue();
 				if(whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
-				String colummName = tableNameFromReference.get() + "." + condition.getColumnName(); 
+				String colummName = table.getTableName() + "." + condition.getColumnName();
+				if (operatorValue == Operator.VOID_VALUE) {
+					MColumn column =  new Query(
+						Env.getCtx(),
+						I_AD_Column.Table_Name,
+						"AD_Table_ID = ? AND ColumnName = ? ",
+						null
+					)
+						.setParameters(table.getAD_Table_ID(), condition.getColumnName())
+						.first();
+					if (column != null) {
+						operatorValue = getDefaultOperatorByDisplayType(column.getAD_Reference_ID());
+					} else {
+						// no valid column set default operator
+						operatorValue = Operator.EQUAL_VALUE;
+					}
+				}
+
 				//	Open
 				whereClause.append("(");
-				if(condition.getOperatorValue() == Operator.LIKE_VALUE
-						|| condition.getOperatorValue() == Operator.NOT_LIKE_VALUE) {
+				if (operatorValue == Operator.LIKE_VALUE
+						|| operatorValue == Operator.NOT_LIKE_VALUE) {
 					colummName = "UPPER(" + colummName + ")";
 				}
 				//	Add operator
-				whereClause.append(colummName).append(convertOperator(condition.getOperatorValue()));
+				whereClause.append(colummName).append(convertOperator(operatorValue));
 				//	For in or not in
-				if(condition.getOperatorValue() == Operator.IN_VALUE
-						|| condition.getOperatorValue() == Operator.NOT_IN_VALUE) {
+				if(operatorValue == Operator.IN_VALUE
+						|| operatorValue == Operator.NOT_IN_VALUE) {
 					StringBuffer parameter = new StringBuffer();
 					condition.getValuesList().forEach(value -> {
 						if(parameter.length() > 0) {
@@ -738,16 +790,27 @@ public class ValueUtil {
 						params.add(ValueUtil.getObjectFromValue(value));
 					});
 					whereClause.append("(").append(parameter).append(")");
-				} else if(condition.getOperatorValue() == Operator.BETWEEN_VALUE) {
+				} else if(operatorValue == Operator.BETWEEN_VALUE) {
 					whereClause.append(" ? ").append(" AND ").append(" ?");
 					params.add(ValueUtil.getObjectFromValue(condition.getValue()));
 					params.add(ValueUtil.getObjectFromValue(condition.getValueTo()));
-				} else if(condition.getOperatorValue() == Operator.LIKE_VALUE
-						|| condition.getOperatorValue() == Operator.NOT_LIKE_VALUE) {
+				} else if(operatorValue == Operator.LIKE_VALUE
+						|| operatorValue == Operator.NOT_LIKE_VALUE) {
 					whereClause.append("?");
-					params.add(ValueUtil.getObjectFromValue(condition.getValue(), true));
-				} else if(condition.getOperatorValue() != Operator.NULL_VALUE
-						&& condition.getOperatorValue() != Operator.NOT_NULL_VALUE) {
+					String value = ValueUtil.validateNull(
+						(String) ValueUtil.getObjectFromValue(condition.getValue(), true)
+					);
+					if (!Util.isEmpty(value, true)) {
+						if (!value.startsWith("%")) {
+							value = "%" + value;
+						}
+						if (!value.endsWith("%")) {
+							value += "%"; 
+						}
+					}
+					params.add(value);
+				} else if(operatorValue != Operator.NULL_VALUE
+						&& operatorValue != Operator.NOT_NULL_VALUE) {
 					whereClause.append("?");
 					params.add(ValueUtil.getObjectFromValue(condition.getValue()));
 				}
@@ -764,7 +827,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Timestamp convertStringToDate(String date) {
-		if(Util.isEmpty(date)) {
+		if (Util.isEmpty(date, true)) {
 			return null;
 		}
 		String format = DATE_FORMAT;

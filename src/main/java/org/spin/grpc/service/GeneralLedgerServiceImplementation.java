@@ -68,13 +68,15 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(GeneralLedgerServiceImplementation.class);
 
+	private String tableName = MAccount.Table_Name;
+
 	@Override
 	public void getAccountingCombination(GetAccountingCombinationRequest request, StreamObserver<Entity> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Entity.Builder accountingCombination = convertAccountingCombination(request);
+			Entity.Builder accountingCombination = getAccountingCombination(request);
 			responseObserver.onNext(accountingCombination.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -86,13 +88,12 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		}
 	}
 
-	private Entity.Builder convertAccountingCombination(GetAccountingCombinationRequest request) {
+	private Entity.Builder getAccountingCombination(GetAccountingCombinationRequest request) {
 		// Validate ID
 		if(request.getId() == 0 && Util.isEmpty(request.getUuid()) && Util.isEmpty(request.getValue())) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		Properties context = ContextManager.getContext(request.getClientRequest());
-		String tableName = MAccount.Table_Name;
 
 		MAccount accoutingCombination = null;
 		if(request.getId() > 0) {
@@ -100,7 +101,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		} else if(!Util.isEmpty(request.getUuid(), true)) {
 			accoutingCombination = new Query(
 					context,
-					tableName,
+					this.tableName,
 					MAccount.COLUMNNAME_UUID + " = ? ",
 					null
 				)
@@ -110,7 +111,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			// Value as combination
 			accoutingCombination = new Query(
 					context,
-					tableName,
+					this.tableName,
 					MAccount.COLUMNNAME_Combination + " = ? ",
 					null
 				)
@@ -133,7 +134,8 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListEntitiesResponse.Builder entitiesList = convertListAccountingCombinations(request);
+
+			ListEntitiesResponse.Builder entitiesList = listAccountingCombinations(request);
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -145,7 +147,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		}
 	}
 
-	private ListEntitiesResponse.Builder convertListAccountingCombinations(ListAccountingCombinationsRequest request) {
+	private ListEntitiesResponse.Builder listAccountingCombinations(ListAccountingCombinationsRequest request) {
 		Map<String, Object> contextAttributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
 		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
@@ -158,33 +160,32 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		}
 
 		//
-		String tableName = MAccount.Table_Name;
 		Properties context = ContextManager.getContext(request.getClientRequest());
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
-		MTable table = MTable.get(context, tableName);
-		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
-		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
-		//	For dynamic condition
-		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
-		if (!Util.isEmpty(dynamicWhere, true)) {
-			//	Add includes first AND
-			whereClause.append(" AND ")
-				.append(dynamicWhere);
-		}
-		sql.append(whereClause); 
-		// add where with search value
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sql.toString(), tableName, request.getSearchValue(), params);
+		MTable table = MTable.get(context, this.tableName);
+		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
 
 		// add where with access restriction
-		parsedSQL = MRole.getDefault(context, false)
-			.addAccessSQL(parsedSQL,
+		String sqlWithRoleAccess = MRole.getDefault()
+			.addAccessSQL(
+				sql.toString(),
 				null,
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
 			);
+
+		//	For dynamic condition
+		List<Object> params = new ArrayList<>(); // includes on filters criteria
+		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
+		if (!Util.isEmpty(dynamicWhere, true)) {
+			// includes first AND
+			sqlWithRoleAccess += " AND " + dynamicWhere; 
+		}
+
+		// add where with search value
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, this.tableName, request.getSearchValue(), params);
 
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
@@ -194,10 +195,10 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
 		//	Count records
-		count = RecordUtil.countRecords(parsedSQL, tableName, params);
+		count = RecordUtil.countRecords(parsedSQL, this.tableName, params);
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(context, tableName), parsedSQL, params);
+		builder = RecordUtil.convertListEntitiesResult(MTable.get(context, this.tableName), parsedSQL, params);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token

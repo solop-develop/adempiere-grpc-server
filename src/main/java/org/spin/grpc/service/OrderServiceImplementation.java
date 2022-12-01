@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 import java.util.ArrayList;
@@ -54,8 +54,8 @@ public class OrderServiceImplementation extends OrderImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getClientRequest());
-			ListEntitiesResponse.Builder entityValueList = convertEntitiesListFronGeneralInfo(context, request);
+
+			ListEntitiesResponse.Builder entityValueList = listOrderInfo(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -72,7 +72,7 @@ public class OrderServiceImplementation extends OrderImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListEntitiesResponse.Builder convertEntitiesListFronGeneralInfo(Properties context, ListOrderInfoRequest request) {		
+	private ListEntitiesResponse.Builder listOrderInfo(ListOrderInfoRequest request) {
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceUuid(),
 			request.getFieldUuid(),
@@ -82,14 +82,25 @@ public class OrderServiceImplementation extends OrderImplBase {
 			request.getColumnName(),
 			this.tableName
 		);
-		
+
+		Properties context = ContextManager.getContext(request.getClientRequest());
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
 		//
 		MTable table = MTable.get(context, this.tableName);
 		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
-		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
+
+		// add where with access restriction
+		String sqlWithRoleAccess = MRole.getDefault()
+			.addAccessSQL(
+				sql.toString(),
+				null,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
+
+		StringBuffer whereClause = new StringBuffer();
 
 		// validation code of field
 		String validationCode = DictionaryUtil.getValidationCodeWithAlias(tableName, reference.ValidationCode);
@@ -111,18 +122,10 @@ public class OrderServiceImplementation extends OrderImplBase {
 				.append(dynamicWhere)
 				.append(")");
 		}
-		
-		sql.append(whereClause); 
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sql.toString(), this.tableName, request.getSearchValue(), params);
 
-		// add where with access restriction
-		parsedSQL = MRole.getDefault(context, false)
-			.addAccessSQL(parsedSQL,
-				null,
-				MRole.SQL_FULLYQUALIFIED,
-				MRole.SQL_RO
-			);
-		
+		sqlWithRoleAccess += whereClause;
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, this.tableName, request.getSearchValue(), params);
+
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
