@@ -124,7 +124,7 @@ public class PaymentServiceImplementation extends PaymentImplBase {
 		}
 		
 		sqlWithRoleAccess += whereClause;
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sql.toString(), this.tableName, request.getSearchValue(), params);
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, this.tableName, request.getSearchValue(), params);
 
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
