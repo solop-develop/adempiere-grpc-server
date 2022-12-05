@@ -487,10 +487,19 @@ public class RecordUtil {
 			).matcher(queryWithoutOrderBy);
 
 			String conditional = " WHERE ";
-			List<MatchResult> fromWhereParts = matcher.results()
-					.collect(Collectors.toList());
-			List<MatchResult> joinWhereParts = matcherJoin.results()
-					.collect(Collectors.toList());
+			// List<MatchResult> fromWhereParts = matcher.results()
+			// 	.collect(Collectors.toList());
+			List<MatchResult> fromWhereParts = new ArrayList<MatchResult>();
+			for (Matcher m = matcher; m.find(); ) {
+				fromWhereParts.add(m.toMatchResult());
+			}
+
+			// List<MatchResult> joinWhereParts = matcherJoin.results()
+			// 	.collect(Collectors.toList());
+			List<MatchResult> joinWhereParts = new ArrayList<MatchResult>();
+			for (Matcher m = matcherJoin; m.find(); ) {
+				joinWhereParts.add(m.toMatchResult());
+			}
 			
 			String onlyQuery = queryWithoutOrderBy;
 			if (joinWhereParts != null && joinWhereParts.size() > 0) {
@@ -551,8 +560,12 @@ public class RecordUtil {
 		)
 		.matcher(sql);
 
-		List<MatchResult> fromWhereParts = matcherFrom.results()
-			.collect(Collectors.toList());
+		// List<MatchResult> fromWhereParts = matcherFrom.results()
+		// 	.collect(Collectors.toList());
+		List<MatchResult> fromWhereParts = new ArrayList<MatchResult>();
+		for (Matcher m = matcherFrom; m.find(); ) {
+			fromWhereParts.add(m.toMatchResult());
+		}
 		int positionFrom = -1;
 		if (fromWhereParts != null && fromWhereParts.size() > 0) {
 			MatchResult lastFrom = fromWhereParts.get(fromWhereParts.size() - 1);
