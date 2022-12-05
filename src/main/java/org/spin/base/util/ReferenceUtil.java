@@ -15,6 +15,7 @@
  *************************************************************************************/
 package org.spin.base.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -413,8 +414,12 @@ public class ReferenceUtil {
 			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
 		).matcher(query);
 
-		List<MatchResult> fromWhereParts = matcherFrom.results()
-				.collect(Collectors.toList());
+		// List<MatchResult> fromWhereParts = matcherFrom.results()
+		//	.collect(Collectors.toList());
+		List<MatchResult> fromWhereParts = new ArrayList<MatchResult>();
+		for (Matcher m = matcherFrom; m.find(); ) {
+			fromWhereParts.add(m.toMatchResult());
+		}
 
 		String queryWithUuid = query;
 		if (fromWhereParts != null && fromWhereParts.size() > 0) {
