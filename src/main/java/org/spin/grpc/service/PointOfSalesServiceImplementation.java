@@ -1746,10 +1746,11 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				seller.set_ValueOfColumn("IsAllowsCashClosing", pointOfSales.get_ValueAsBoolean("IsAllowsCashClosing"));
 				seller.set_ValueOfColumn("IsAllowsCashWithdrawal", pointOfSales.get_ValueAsBoolean("IsAllowsCashWithdrawal"));
 				seller.set_ValueOfColumn("IsAllowsApplyDiscount", pointOfSales.get_ValueAsBoolean("IsAllowsApplyDiscount"));
-				seller.set_ValueOfColumn("MaximumRefundAllowed", pointOfSales.get_ValueAsBoolean("MaximumRefundAllowed"));
-				seller.set_ValueOfColumn("MaximumDailyRefundAllowed", pointOfSales.get_ValueAsBoolean("MaximumDailyRefundAllowed"));
-				seller.set_ValueOfColumn("MaximumDiscountAllowed", pointOfSales.get_ValueAsBoolean("MaximumDiscountAllowed"));
-				seller.set_ValueOfColumn("WriteOffAmtTolerance", pointOfSales.get_ValueAsBoolean("WriteOffAmtTolerance"));
+				seller.set_ValueOfColumn("MaximumRefundAllowed", pointOfSales.get_Value("MaximumRefundAllowed"));
+				seller.set_ValueOfColumn("MaximumDailyRefundAllowed", pointOfSales.get_Value("MaximumDailyRefundAllowed"));
+				seller.set_ValueOfColumn("MaximumDiscountAllowed", pointOfSales.get_Value("MaximumDiscountAllowed"));
+				seller.set_ValueOfColumn("WriteOffAmtTolerance", pointOfSales.get_Value("WriteOffAmtTolerance"));
+				seller.set_ValueOfColumn("WriteOffAmtCurrency_ID", pointOfSales.get_Value("WriteOffAmtCurrency_ID"));
 				seller.set_ValueOfColumn("IsAllowsCreateCustomer", pointOfSales.get_ValueAsBoolean("IsAllowsCreateCustomer"));
 				seller.set_ValueOfColumn("IsAllowsPrintDocument", pointOfSales.get_ValueAsBoolean("IsAllowsPrintDocument"));
 				seller.set_ValueOfColumn("IsAllowsPreviewDocument", pointOfSales.get_ValueAsBoolean("IsAllowsPreviewDocument"));
@@ -2444,6 +2445,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			//	Validate
 			if(shipment == null) {
 				shipment = new MInOut(salesOrder, 0, RecordUtil.getDate());
+				shipment.setMovementType(MInOut.MOVEMENTTYPE_CustomerShipment);
 			} else {
 				shipment.setDateOrdered(RecordUtil.getDate());
 				shipment.setDateAcct(RecordUtil.getDate());
@@ -3460,11 +3462,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		});
 		//	Validate Write Off Amount
 		if(!isOpenRefund) {
-			BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
-			int currencyId = getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
-			if(currencyId > 0) {
-				writeOffAmtTolerance = getConvetedAmount(salesOrder, currencyId, writeOffAmtTolerance);
-			}
+			BigDecimal writeOffAmtTolerance = getWriteOffAmtTolerance(pos, salesOrder);
 			if(writeOffAmtTolerance.compareTo(Env.ZERO) > 0 && openAmount.get().abs().compareTo(writeOffAmtTolerance) > 0) {
 				throw new AdempiereException("@POS.WriteOffAmtToleranceExceeded@");
 			}
@@ -3545,6 +3543,35 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				payment.saveEx();
 			});
 		}
+	}
+	
+	/**
+	 * Get Write off amount tolerance from order and POS
+	 * @param pos
+	 * @param salesOrder
+	 * @return
+	 */
+	private BigDecimal getWriteOffAmtTolerance(MPOS pos, MOrder salesOrder) {
+		BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
+		int currencyId = getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
+		if(currencyId > 0) {
+			writeOffAmtTolerance = getConvetedAmount(salesOrder, currencyId, writeOffAmtTolerance);
+		}
+		return writeOffAmtTolerance;
+	}
+	
+	/**
+	 * Get write off amount tolerance
+	 * @param pos
+	 * @return
+	 */
+	private BigDecimal getWriteOffAmtTolerance(MPOS pos) {
+		BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
+		int currencyId = getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
+		if(currencyId > 0) {
+			writeOffAmtTolerance = getConvetedAmount(pos, currencyId, writeOffAmtTolerance);
+		}
+		return writeOffAmtTolerance;
 	}
 	
 	/**
@@ -3665,6 +3692,25 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			return paymentReferenceAmount.get();
 		}
 		return Env.ZERO;
+	}
+	
+	/**
+	 * Get converted Amount from POS
+	 * @param pos
+	 * @param fromCurrencyId
+	 * @param amount
+	 * @return
+	 */
+	public static BigDecimal getConvetedAmount(MPOS pos, int fromCurrencyId, BigDecimal amount) {
+		int toCurrencyId = pos.getM_PriceList().getC_Currency_ID();
+		if(fromCurrencyId == toCurrencyId
+				|| amount == null
+				|| amount.compareTo(Env.ZERO) == 0) {
+			return amount;
+		}
+		BigDecimal convertedAmount = MConversionRate.convert(pos.getCtx(), amount, fromCurrencyId, toCurrencyId, TimeUtil.getDay(System.currentTimeMillis()), pos.get_ValueAsInt("C_ConversionType_ID"), pos.getAD_Client_ID(), pos.getAD_Org_ID());
+		//	
+		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
 	}
 	
 	/**
@@ -5118,7 +5164,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				.setName(ValueUtil.validateNull(pos.getName()))
 				.setDescription(ValueUtil.validateNull(pos.getDescription()))
 				.setHelp(ValueUtil.validateNull(pos.getHelp()))
-				.setIsModifyPrice(pos.isModifyPrice())
 				.setIsPosRequiredPin(pos.isPOSRequiredPIN())
 				.setSalesRepresentative(ConvertUtil.convertSalesRepresentative(MUser.get(pos.getCtx(), pos.getSalesRep_ID())))
 				.setTemplateCustomer(ConvertUtil.convertCustomer(pos.getBPartner()))
@@ -5134,7 +5179,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setMaximumDailyRefundAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumDailyRefundAllowed")))
 			.setMaximumDiscountAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumDiscountAllowed")))
 			.setMaximumLineDiscountAllowed(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "MaximumLineDiscountAllowed")))
-			.setWriteOffAmountTolerance(ValueUtil.getDecimalFromBigDecimal(getBigDecimalValueFromPOS(pos, userId, "WriteOffAmtTolerance")))
+			.setWriteOffAmountTolerance(ValueUtil.getDecimalFromBigDecimal(getWriteOffAmtTolerance(pos)))
 		;
 		builder
 			.setIsAllowsModifyQuantity(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyQuantity"))
@@ -5158,6 +5203,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			.setIsPosManager(getBooleanValueFromPOS(pos, userId, "IsPosManager"))
 			.setIsAllowsModifyDiscount(getBooleanValueFromPOS(pos, userId, "IsAllowsModifyDiscount"))
 			.setIsKeepPriceFromCustomer(getBooleanValueFromPOS(pos, userId, "IsKeepPriceFromCustomer"))
+			.setIsModifyPrice(getBooleanValueFromPOS(pos, userId, "IsModifyPrice"))
 			
 		;
 
