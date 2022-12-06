@@ -30,6 +30,8 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.file_management.Attachment;
 import org.spin.backend.grpc.file_management.DeleteResourceReferenceRequest;
+import org.spin.backend.grpc.file_management.ExistsAttachmentRequest;
+import org.spin.backend.grpc.file_management.ExistsAttachmentResponse;
 import org.spin.backend.grpc.file_management.FileManagementGrpc.FileManagementImplBase;
 import org.spin.backend.grpc.file_management.GetAttachmentRequest;
 import org.spin.backend.grpc.file_management.GetResourceReferenceRequest;
@@ -406,4 +408,66 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 		return Empty.newBuilder();
 	}
+
+	@Override
+	public void existsAttachment(ExistsAttachmentRequest request, StreamObserver<ExistsAttachmentResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ExistsAttachmentResponse.Builder resourceReference = existsAttachment(request);
+			responseObserver.onNext(resourceReference.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private ExistsAttachmentResponse.Builder existsAttachment(ExistsAttachmentRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		ExistsAttachmentResponse.Builder builder = ExistsAttachmentResponse.newBuilder();
+
+		// validate table
+		int tableId = 0;
+		if (!Util.isEmpty(request.getTableName(), true)) {
+			tableId = MTable.getTable_ID(request.getTableName());
+		}
+		if (tableId <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		// validate record
+		int recordId = request.getRecordId();
+		if (recordId <= 0) {
+			if (Util.isEmpty(request.getRecordUuid(), true)) {
+				recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+			}
+			if (recordId <= 0) {
+				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			}
+		}
+
+		MAttachment attachment = MAttachment.get(context, tableId, recordId);
+		if (attachment == null || attachment.getAD_Attachment_ID() <= 0) {
+			// without attachment
+			return builder;
+		}
+
+		int recordCount = new Query(
+				context,
+				I_AD_AttachmentReference.Table_Name,
+				"AD_Attachment_ID = ?",
+				null
+			).setParameters(attachment.getAD_Attachment_ID())
+			.count();
+
+		return builder
+			.setRecordCount(recordCount);
+	}
+
 }
