@@ -99,8 +99,8 @@ message SetResourceReferenceRequest {
 	string table_name = 2;
 	int32 record_id = 3;
 	string record_uuid = 4;
-	string text_msg = 5;
-	string content_type = 6;
+	string text_message = 5;
+	string file_name = 6;
 	int32 file_size = 7;
 }
 

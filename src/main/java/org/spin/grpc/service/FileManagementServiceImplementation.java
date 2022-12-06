@@ -27,6 +27,16 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.MimeType;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.common.Empty;
+import org.spin.backend.grpc.file_management.Attachment;
+import org.spin.backend.grpc.file_management.DeleteResourceReferenceRequest;
+import org.spin.backend.grpc.file_management.FileManagementGrpc.FileManagementImplBase;
+import org.spin.backend.grpc.file_management.GetAttachmentRequest;
+import org.spin.backend.grpc.file_management.GetResourceReferenceRequest;
+import org.spin.backend.grpc.file_management.GetResourceRequest;
+import org.spin.backend.grpc.file_management.Resource;
+import org.spin.backend.grpc.file_management.ResourceReference;
+import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
@@ -35,16 +45,6 @@ import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.ByteString;
-
-import org.spin.backend.grpc.common.Empty;
-import org.spin.backend.grpc.file_management.Attachment;
-import org.spin.backend.grpc.file_management.DeleteResourceReferenceRequest;
-import org.spin.backend.grpc.file_management.GetAttachmentRequest;
-import org.spin.backend.grpc.file_management.GetResourceReferenceRequest;
-import org.spin.backend.grpc.file_management.GetResourceRequest;
-import org.spin.backend.grpc.file_management.Resource;
-import org.spin.backend.grpc.file_management.ResourceReference;
-import org.spin.backend.grpc.file_management.FileManagementGrpc.FileManagementImplBase;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -274,6 +274,85 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 
 	@Override
+	public void setResourceReference(SetResourceReferenceRequest request, StreamObserver<ResourceReference> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ResourceReference.Builder resourceReference = setResourceReference(request);
+			responseObserver.onNext(resourceReference.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+	
+	private ResourceReference.Builder setResourceReference(SetResourceReferenceRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		MClientInfo clientInfo = MClientInfo.get(context);
+		if (clientInfo == null || clientInfo.getFileHandler_ID() <= 0) {
+			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
+		}
+
+		String fileName = request.getFileName();
+		if (Util.isEmpty(fileName, true)) {
+			throw new AdempiereException("@Name@ @Attachment@ @NotFound@");
+		}
+		if (!MimeType.isValidMimeType(fileName)) {
+			throw new AdempiereException("@Error@ @FileInvalidExtension@");
+		}
+
+		int tableId = 0;
+		if (!Util.isEmpty(request.getTableName(), true)) {
+			MTable table = MTable.get(context, request.getTableName());
+			if (table != null && table.getAD_Table_ID() > 0) {
+				tableId = table.getAD_Table_ID();
+			}
+		}
+		if (tableId <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		int recordId = request.getRecordId();
+		if (recordId <= 0) {
+			if (Util.isEmpty(request.getRecordUuid(), true)) {
+				recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+			}
+			if (recordId <= 0) {
+				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			}
+		}
+
+		MAttachment attachment = new MAttachment(context, tableId, recordId, null);
+		if (attachment.getAD_Attachment_ID() <= 0) {
+			attachment.saveEx();
+		}
+		MADAttachmentReference attachmentReference = new MADAttachmentReference(context, 0, null);
+		attachmentReference.setFileHandler_ID(clientInfo.getFileHandler_ID());
+		attachmentReference.setAD_Attachment_ID(attachment.getAD_Attachment_ID());
+		attachmentReference.setTextMsg(
+			ValueUtil.validateNull(request.getTextMessage())
+		);
+		attachmentReference.setFileName(fileName);
+		// attachmentReference.setFileSize(
+		// 	BigDecimal.valueOf(request.getFileSize())
+		// );
+		attachmentReference.saveEx();
+		//	Remove from cache
+		MADAttachmentReference.resetAttachmentCacheFromId(clientInfo.getFileHandler_ID(), attachment.getAD_Attachment_ID());
+
+		ResourceReference.Builder builder = convertResourceReference(attachmentReference);
+
+		return builder;
+	}
+
+	@Override
 	public void deleteResourceReference(DeleteResourceReferenceRequest request, StreamObserver<Empty> responseObserver) {
 		try {
 			if (request == null) {
@@ -315,7 +394,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 		MClientInfo clientInfo = MClientInfo.get(context);
 		if (clientInfo == null || clientInfo.getFileHandler_ID() <= 0) {
-			throw new AdempiereException("@FileHandler@ @NotFound@");
+			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
 		}
 		AttachmentUtil.getInstance()
 			.clear()
