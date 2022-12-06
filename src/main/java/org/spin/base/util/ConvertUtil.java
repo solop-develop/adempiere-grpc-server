@@ -123,6 +123,7 @@ import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.util.AttachmentUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MCPaymentMethod;
+import org.spin.pos.service.order.OrderUtil;
 import org.spin.util.VueStoreFrontUtil;
 
 /**
@@ -577,7 +578,7 @@ public class ConvertUtil {
 			})
 			.map(paymentReference -> {
 				BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
-				return getConvetedAmount(order, paymentReference, amount);
+				return OrderUtil.getConvetedAmount(order, paymentReference, amount);
 			})
 			.collect(Collectors.reducing(BigDecimal::add));
 	}
@@ -629,7 +630,7 @@ public class ConvertUtil {
 			if(!payment.isReceipt()) {
 				paymentAmount = payment.getPayAmt().negate();
 			}
-			return getConvetedAmount(order, payment, paymentAmount);
+			return OrderUtil.getConvetedAmount(order, payment, paymentAmount);
 		}).collect(Collectors.reducing(BigDecimal::add));
 
 		List<PO> paymentReferencesList = getPaymentReferencesList(order);
@@ -639,7 +640,7 @@ public class ConvertUtil {
 			if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
 				amount = amount.negate();
 			}
-			return getConvetedAmount(order, paymentReference, amount);
+			return OrderUtil.getConvetedAmount(order, paymentReference, amount);
 		}).collect(Collectors.reducing(BigDecimal::add));
 		BigDecimal grandTotal = order.getGrandTotal();
 		BigDecimal paymentAmount = Env.ZERO;
@@ -700,42 +701,6 @@ public class ConvertUtil {
 			.setChargeAmount(ValueUtil.getDecimalFromBigDecimal(chargeAmt))
 			.setCreditAmount(ValueUtil.getDecimalFromBigDecimal(creditAmt))
 		;
-	}
-	
-	/**
-	 * Get Converted Amount based on Order currency
-	 * @param order
-	 * @param payment
-	 * @return
-	 * @return BigDecimal
-	 */
-	public static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
-		if(payment.get_ValueAsInt("C_Currency_ID") == order.getC_Currency_ID()
-				|| amount == null
-				|| amount.compareTo(Env.ZERO) == 0) {
-			return amount;
-		}
-		BigDecimal convertedAmount = MConversionRate.convert(payment.getCtx(), amount, payment.get_ValueAsInt("C_Currency_ID"), order.getC_Currency_ID(), order.getDateAcct(), payment.get_ValueAsInt("C_ConversionType_ID"), payment.getAD_Client_ID(), payment.getAD_Org_ID());
-		//	
-		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
-	}
-	
-	/**
-	 * Get Converted Amount based on Order currency
-	 * @param order
-	 * @param payment
-	 * @return
-	 * @return BigDecimal
-	 */
-	private static BigDecimal getConvetedAmount(MOrder order, MPayment payment, BigDecimal amount) {
-		if(payment.getC_Currency_ID() == order.getC_Currency_ID()
-				|| amount == null
-				|| amount.compareTo(Env.ZERO) == 0) {
-			return amount;
-		}
-		BigDecimal convertedAmount = MConversionRate.convert(payment.getCtx(), amount, payment.getC_Currency_ID(), order.getC_Currency_ID(), payment.getDateAcct(), payment.getC_ConversionType_ID(), payment.getAD_Client_ID(), payment.getAD_Org_ID());
-		//	
-		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
 	}
 	
 	/**
@@ -802,7 +767,7 @@ public class ConvertUtil {
 		MCurrency currency = MCurrency.get(Env.getCtx(), payment.getC_Currency_ID());
 		Currency.Builder currencyBuilder = convertCurrency(currency);
 		MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
-		BigDecimal convertedAmount = getConvetedAmount(order, payment, paymentAmount)
+		BigDecimal convertedAmount = OrderUtil.getConvetedAmount(order, payment, paymentAmount)
 			.setScale(presicion, BigDecimal.ROUND_HALF_UP);
 		
 		//	Convert

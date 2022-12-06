@@ -21,7 +21,6 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -32,7 +31,6 @@ import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.GenericPO;
-import org.adempiere.pos.process.ReverseTheSalesTransaction;
 import org.adempiere.pos.service.CPOS;
 import org.adempiere.pos.util.POSTicketHandler;
 import org.compiere.model.I_AD_PrintFormatItem;
@@ -67,8 +65,6 @@ import org.compiere.model.I_M_Product;
 import org.compiere.model.I_M_Storage;
 import org.compiere.model.I_M_Warehouse;
 import org.compiere.model.I_S_ResourceAssignment;
-import org.compiere.model.MAllocationHdr;
-import org.compiere.model.MAllocationLine;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
@@ -76,7 +72,6 @@ import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatement;
-import org.compiere.model.MCharge;
 import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCurrency;
@@ -84,7 +79,6 @@ import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MInvoice;
-import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MLocation;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
@@ -107,7 +101,6 @@ import org.compiere.model.M_Element;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
-import org.compiere.process.ProcessInfo;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -117,12 +110,6 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.eevolution.service.dsl.ProcessBuilder;
-import org.spin.base.util.ContextManager;
-import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.DocumentUtil;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.ProcessLog;
@@ -130,9 +117,18 @@ import org.spin.backend.grpc.common.ProductPrice;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.pos.*;
 import org.spin.backend.grpc.pos.StoreGrpc.StoreImplBase;
+import org.spin.base.util.ContextManager;
+import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.DocumentUtil;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ValueUtil;
 import org.spin.model.I_C_PaymentMethod;
 import org.spin.model.MCPaymentMethod;
-import org.spin.pos.service.CashManagement;
+import org.spin.pos.service.cash.CashManagement;
+import org.spin.pos.service.cash.CashUtil;
+import org.spin.pos.service.order.OrderManagement;
+import org.spin.pos.service.order.OrderUtil;
+import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.util.VueStoreFrontUtil;
 
 import io.grpc.Status;
@@ -2061,62 +2057,11 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(Util.isEmpty(request.getOrderUuid())) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
-		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
-		Trx.run(transactionName -> {
-			int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
-			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), transactionName);
-			MOrder order = new MOrder(Env.getCtx(), orderId, transactionName);
-			ProcessInfo infoProcess = ProcessBuilder
-				.create(Env.getCtx())
-				.process(ReverseTheSalesTransaction.getProcessId())
-				.withoutTransactionClose()
-				.withRecordId(MOrder.Table_ID, orderId)
-		        .withParameter("C_Order_ID", orderId)
-		        .withParameter("Bill_BPartner_ID", order.getC_BPartner_ID())
-		        .withParameter("IsCancelled", true)
-		        .withParameter("C_DocTypeRMA_ID", getReturnDocumentTypeId(order.getC_POS_ID(), posId, order.getC_DocTypeTarget_ID()))
-				.execute(transactionName);
-			MOrder returnOrder = new MOrder(Env.getCtx(), infoProcess.getRecord_ID(), transactionName);
-			if(!Util.isEmpty(request.getDescription())) {
-				returnOrder.setDescription(request.getDescription());
-				returnOrder.saveEx();
-			}
-			returnOrderReference.set(returnOrder);
-		});
+		int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
+		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+		MOrder returnOrder = ReverseSalesTransaction.returnCompleteOrder(pos, orderId, request.getDescription());
 		//	Default
-		return ConvertUtil.convertOrder(returnOrderReference.get());
-	}
-	
-	/**
-	 * Get Default document Type
-	 * @param pointOfSales
-	 * @param salesOrderDocumentTypeId
-	 * @return
-	 */
-	private int getReturnDocumentTypeId(int posId, int sessionPosId, int salesOrderDocumentTypeId) {
-		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
-		final String TABLE_NAME = "C_POSDocumentTypeAllocation";
-		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
-			return pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
-		}
-		//	Get from current sales order document type
-		PO documentTypeAllocation = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID IN(?, ?) AND C_DocType_ID = ?", null)
-			.setParameters(pointOfSales.getC_POS_ID(), sessionPosId, salesOrderDocumentTypeId)
-			.setClient_ID()
-			.setOnlyActiveRecords(true)
-			.first();
-		int returnDocumentTypeId = 0;
-		if(documentTypeAllocation == null 
-				|| documentTypeAllocation.get_ID() <= 0) {
-			returnDocumentTypeId = pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
-		} else {
-			returnDocumentTypeId = documentTypeAllocation.get_ValueAsInt("POSReturnDocumentType_ID");
-		}
-		if(returnDocumentTypeId <= 0) {
-			throw new AdempiereException("@C_DocTypeRMA_ID@ @NotFound@");
-		}
-		//	
-		return returnDocumentTypeId;
+		return ConvertUtil.convertOrder(returnOrder);
 	}
 	
 	/**
@@ -2265,7 +2210,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			amount.setScale(presicion, BigDecimal.ROUND_HALF_UP);
 
 			MOrder order = new MOrder(Env.getCtx(), paymentReference.get_ValueAsInt("C_Order_ID"), null);
-			BigDecimal convertedAmount = ConvertUtil.getConvetedAmount(order, paymentReference, amount)
+			BigDecimal convertedAmount = OrderUtil.getConvetedAmount(order, paymentReference, amount)
 				.setScale(presicion, BigDecimal.ROUND_HALF_UP);
 
 			builder.setAmount(ValueUtil.getDecimalFromBigDecimal(amount))
@@ -3275,82 +3220,12 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @return
 	 */
 	private MOrder processOrder(ProcessOrderRequest request) {
-		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
 		if(!Util.isEmpty(request.getOrderUuid())) {
-			Trx.run(transactionName -> {
-				MOrder salesOrder = getOrder(request.getOrderUuid(), transactionName);
-				if(salesOrder == null) {
-					throw new AdempiereException("@C_Order_ID@ @NotFound@");
-				}
-				MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
-				List<PO> paymentReferences = getPaymentReferences(salesOrder);
-				if(DocumentUtil.isDrafted(salesOrder)) {
-					// In case the Order is Invalid, set to In Progress; otherwise it will not be completed
-					if (salesOrder.getDocStatus().equalsIgnoreCase(MOrder.STATUS_Invalid))  {
-						salesOrder.setDocStatus(MOrder.STATUS_InProgress);
-					}
-					boolean isOpenRefund = request.getIsOpenRefund();
-					if(getPaymentReferenceAmount(salesOrder, paymentReferences).compareTo(Env.ZERO) != 0) {
-						isOpenRefund = true;
-					}
-					//	Set default values
-					salesOrder.setDocAction(DocAction.ACTION_Complete);
-					setCurrentDate(salesOrder);
-					salesOrder.saveEx();
-					//	Update Process if exists
-					if (!salesOrder.processIt(MOrder.DOCACTION_Complete)) {
-						log.warning("@ProcessFailed@ :" + salesOrder.getProcessMsg());
-						throw new AdempiereException("@ProcessFailed@ :" + salesOrder.getProcessMsg());
-					}
-					//	Release Order
-					salesOrder.set_ValueOfColumn("AssignedSalesRep_ID", null);
-					salesOrder.saveEx();
-					//	Create or process payments
-					if(request.getCreatePayments()) {
-						if(request.getPaymentsList().size() == 0) {
-							throw new AdempiereException("@C_Payment_ID@ @NotFound@");
-						}
-						//	Create
-						request.getPaymentsList().forEach(paymentRequest -> createPaymentFromOrder(salesOrder, paymentRequest, pos, transactionName));
-					}
-					processPayments(salesOrder, pos, isOpenRefund, transactionName);
-				} else {
-					boolean isOpenRefund = request.getIsOpenRefund();
-					if(getPaymentReferenceAmount(salesOrder, paymentReferences).compareTo(Env.ZERO) != 0) {
-						isOpenRefund = true;
-					}
-					processPayments(salesOrder, pos, isOpenRefund, transactionName);
-				}
-				//	Process all references
-				processPaymentReferences(salesOrder, pos, paymentReferences, transactionName);
-				//	Create
-				orderReference.set(salesOrder);
-			});
-			//	Allocate All payments
-			
+			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
+			OrderManagement.processOrder(pos, orderId, request.getIsOpenRefund());
 		}
-		//	Return order
-		return orderReference.get();
-	}
-	
-	/**
-	 * Process Payment references
-	 * @param salesOrder
-	 * @param pos
-	 * @param paymentReferences
-	 * @param transactionName
-	 */
-	private void processPaymentReferences(MOrder salesOrder, MPOS pos, List<PO> paymentReferences, String transactionName) {
-		paymentReferences.stream().filter(paymentReference -> {
-			PO paymentMethodAlocation = getPaymentMethodAllocation(paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), paymentReference.get_ValueAsInt("C_POS_ID"), paymentReference.get_TrxName());
-			if(paymentMethodAlocation == null) {
-				return false;
-			}
-			return paymentMethodAlocation.get_ValueAsBoolean("IsPaymentReference") && !paymentReference.get_ValueAsBoolean("IsAutoCreatedReference");
-		}).forEach(paymentReference -> {
-			paymentReference.set_ValueOfColumn("Processed", true);
-			paymentReference.saveEx();
-		});
+		return null;
 	}
 	
 	/**
@@ -3415,152 +3290,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	}
 	
 	/**
-	 * Process payment of Order
-	 * @param salesOrder
-	 * @param pos
-	 * @param isOpenRefund
-	 * @param transactionName
-	 * @return void
-	 */
-	private void processPayments(MOrder salesOrder, MPOS pos, boolean isOpenRefund, String transactionName) {
-		//	Get invoice if exists
-		int invoiceId = salesOrder.getC_Invoice_ID();
-		AtomicReference<BigDecimal> openAmount = new AtomicReference<BigDecimal>(salesOrder.getGrandTotal());
-		AtomicReference<BigDecimal> currentAmount = new AtomicReference<BigDecimal>(salesOrder.getGrandTotal());
-		List<Integer> paymentsIds = new ArrayList<Integer>();
-		//	Complete Payments
-		List<MPayment> payments = MPayment.getOfOrder(salesOrder);
-		payments.stream().sorted(Comparator.comparing(MPayment::getCreated)).forEach(payment -> {
-			BigDecimal convertedAmount = getConvetedAmount(salesOrder, payment, payment.getPayAmt());
-			//	Get current open amount
-			AtomicReference<BigDecimal> multiplier = new AtomicReference<BigDecimal>(Env.ONE);
-			if(!payment.isReceipt()) {
-				multiplier.set(Env.ONE.negate());
-			}
-			openAmount.updateAndGet(amount -> amount.subtract(convertedAmount.multiply(multiplier.get())));
-			if(payment.isAllocated()) {
-				currentAmount.updateAndGet(amount -> amount.subtract(convertedAmount.multiply(multiplier.get())));
-			}
-			if(DocumentUtil.isDrafted(payment)) {
-				payment.setIsPrepayment(true);
-				payment.setOverUnderAmt(Env.ZERO);
-				if(payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
-					createCreditMemo(salesOrder, payment, transactionName);
-				}
-				payment.setDocAction(MPayment.DOCACTION_Complete);
-				setCurrentDate(payment);
-				payment.saveEx(transactionName);
-				if (!payment.processIt(MPayment.DOCACTION_Complete)) {
-					log.warning("@ProcessFailed@ :" + payment.getProcessMsg());
-					throw new AdempiereException("@ProcessFailed@ :" + payment.getProcessMsg());
-				}
-				payment.saveEx(transactionName);
-				paymentsIds.add(payment.getC_Payment_ID());
-				salesOrder.saveEx(transactionName);
-			}
-			CashManagement.addPaymentToCash(pos, payment);
-		});
-		//	Validate Write Off Amount
-		if(!isOpenRefund) {
-			BigDecimal writeOffAmtTolerance = getWriteOffAmtTolerance(pos, salesOrder);
-			if(writeOffAmtTolerance.compareTo(Env.ZERO) > 0 && openAmount.get().abs().compareTo(writeOffAmtTolerance) > 0) {
-				throw new AdempiereException("@POS.WriteOffAmtToleranceExceeded@");
-			}
-		}
-		//	Allocate all payments
-		if(paymentsIds.size() > 0) {
-			String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
-			//	
-			MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, RecordUtil.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
-			paymentAllocation.setAD_Org_ID(salesOrder.getAD_Org_ID());
-			//	Set Description
-			paymentAllocation.saveEx();
-			AtomicBoolean isAllocationLineCreated = new AtomicBoolean(false);
-			//	Add lines
-			paymentsIds.stream().map(paymentId -> new MPayment(Env.getCtx(), paymentId, transactionName))
-			.filter(payment -> payment.getC_POS_ID() != 0 && !payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo))
-			.forEach(payment -> {
-				BigDecimal multiplier = Env.ONE;
-				if(!payment.isReceipt()) {
-					multiplier = Env.ONE.negate();
-				}
-				BigDecimal paymentAmount = getConvetedAmount(salesOrder, payment, payment.getPayAmt());
-				BigDecimal discountAmount = getConvetedAmount(salesOrder, payment, payment.getDiscountAmt());
-				BigDecimal overUnderAmount = getConvetedAmount(salesOrder, payment, payment.getOverUnderAmt());
-				BigDecimal writeOffAmount = getConvetedAmount(salesOrder, payment, payment.getWriteOffAmt());
-				if (overUnderAmount.signum() < 0 && paymentAmount.signum() > 0) {
-					paymentAmount = paymentAmount.add(overUnderAmount);
-				}
-				MAllocationLine paymentAllocationLine = new MAllocationLine (paymentAllocation, paymentAmount.multiply(multiplier), discountAmount.multiply(multiplier), writeOffAmount.multiply(multiplier), overUnderAmount.multiply(multiplier));
-				paymentAllocationLine.setDocInfo(salesOrder.getC_BPartner_ID(), salesOrder.getC_Order_ID(), invoiceId);
-				paymentAllocationLine.setPaymentInfo(payment.getC_Payment_ID(), 0);
-				paymentAllocationLine.saveEx();
-				isAllocationLineCreated.set(true);
-			});
-			//	Allocate all Credit Memo
-			paymentsIds.stream().map(paymentId -> new MPayment(Env.getCtx(), paymentId, transactionName))
-			.filter(payment -> payment.getC_POS_ID() != 0 && payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo))
-			.forEach(payment -> {
-				//	Create new Line
-				if(!isAllocationLineCreated.get()) {
-					BigDecimal discountAmount = Env.ZERO;
-					BigDecimal overUnderAmount = Env.ZERO;
-					BigDecimal writeOffAmount = Env.ZERO;
-					MAllocationLine paymentAllocationLine = new MAllocationLine (paymentAllocation, currentAmount.get(), discountAmount, writeOffAmount, overUnderAmount);
-					paymentAllocationLine.setDocInfo(salesOrder.getC_BPartner_ID(), salesOrder.getC_Order_ID(), invoiceId);
-					paymentAllocationLine.saveEx();
-				}
-				BigDecimal multiplier = Env.ONE.negate();
-				MInvoice creditMemo = new Query(payment.getCtx(), MInvoice.Table_Name, "C_Payment_ID = ?", payment.get_TrxName()).setParameters(payment.getC_Payment_ID()).first();
-				BigDecimal paymentAmount = getConvetedAmount(salesOrder, payment, creditMemo.getGrandTotal());
-				BigDecimal discountAmount = Env.ZERO;
-				BigDecimal overUnderAmount = Env.ZERO;
-				BigDecimal writeOffAmount = Env.ZERO;
-				if (overUnderAmount.signum() < 0 && paymentAmount.signum() > 0) {
-					paymentAmount = paymentAmount.add(overUnderAmount);
-				}
-				MAllocationLine paymentAllocationLine = new MAllocationLine (paymentAllocation, paymentAmount.multiply(multiplier), discountAmount.multiply(multiplier), writeOffAmount.multiply(multiplier), overUnderAmount.multiply(multiplier));
-				paymentAllocationLine.setDocInfo(salesOrder.getC_BPartner_ID(), salesOrder.getC_Order_ID(), creditMemo.getC_Invoice_ID());
-				paymentAllocationLine.saveEx();
-			});
-			//	Add write off
-			if(!isOpenRefund) {
-				if(openAmount.get().compareTo(Env.ZERO) != 0) {
-					MAllocationLine paymentAllocationLine = new MAllocationLine (paymentAllocation, Env.ZERO, Env.ZERO, openAmount.get(), Env.ZERO);
-					paymentAllocationLine.setDocInfo(salesOrder.getC_BPartner_ID(), salesOrder.getC_Order_ID(), invoiceId);
-					paymentAllocationLine.saveEx();
-				}
-			}
-			//	Complete
-			if (!paymentAllocation.processIt(MAllocationHdr.DOCACTION_Complete)) {
-				log.warning("@ProcessFailed@ :" + paymentAllocation.getProcessMsg());
-				throw new AdempiereException("@ProcessFailed@ :" + paymentAllocation.getProcessMsg());
-			}
-			paymentAllocation.saveEx();
-			//	Test allocation
-			paymentsIds.stream().map(paymentId -> new MPayment(Env.getCtx(), paymentId, transactionName)).forEach(payment -> {
-				payment.setIsAllocated(true);
-				payment.saveEx();
-			});
-		}
-	}
-	
-	/**
-	 * Get Write off amount tolerance from order and POS
-	 * @param pos
-	 * @param salesOrder
-	 * @return
-	 */
-	private BigDecimal getWriteOffAmtTolerance(MPOS pos, MOrder salesOrder) {
-		BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
-		int currencyId = getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
-		if(currencyId > 0) {
-			writeOffAmtTolerance = getConvetedAmount(salesOrder, currencyId, writeOffAmtTolerance);
-		}
-		return writeOffAmtTolerance;
-	}
-	
-	/**
 	 * Get write off amount tolerance
 	 * @param pos
 	 * @return
@@ -3569,206 +3298,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
 		int currencyId = getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
 		if(currencyId > 0) {
-			writeOffAmtTolerance = getConvetedAmount(pos, currencyId, writeOffAmtTolerance);
+			writeOffAmtTolerance = OrderUtil.getConvetedAmount(pos, currencyId, writeOffAmtTolerance);
 		}
 		return writeOffAmtTolerance;
-	}
-	
-	/**
-	 * Get Payment Method allocation from payment
-	 * @param payment
-	 * @return
-	 * @return PO
-	 */
-	private PO getPaymentMethodAllocation(int paymentMethodId, int posId, String transactionName) {
-		if(MTable.get(Env.getCtx(), "C_POSPaymentTypeAllocation") == null) {
-			return null;
-		}
-		return new Query(Env.getCtx(), "C_POSPaymentTypeAllocation", "C_POS_ID = ? AND C_PaymentMethod_ID = ?", transactionName)
-				.setParameters(posId, paymentMethodId)
-				.setOnlyActiveRecords(true)
-				.first();
-	}
-	
-	/**
-	 * Create Credit Memo from payment
-	 * @param salesOrder
-	 * @param payment
-	 * @param transactionName
-	 * @return void
-	 */
-	private void createCreditMemo(MOrder salesOrder, MPayment payment, String transactionName) {
-		MInvoice creditMemo = new MInvoice(salesOrder.getCtx(), 0, transactionName);
-		creditMemo.setBPartner((MBPartner) payment.getC_BPartner());
-		creditMemo.setDescription(payment.getDescription());
-		creditMemo.setIsSOTrx(true);
-		creditMemo.setSalesRep_ID(payment.get_ValueAsInt("CollectingAgent_ID"));
-		creditMemo.setAD_Org_ID(payment.getAD_Org_ID());
-		creditMemo.setC_POS_ID(payment.getC_POS_ID());
-		if(creditMemo.getM_PriceList_ID() <= 0
-				|| creditMemo.getC_Currency_ID() != payment.getC_Currency_ID()) {
-			String isoCode = MCurrency.getISO_Code(salesOrder.getCtx(), payment.getC_Currency_ID());
-			MPriceList priceList = MPriceList.getDefault(salesOrder.getCtx(), true, isoCode);
-			if(priceList == null) {
-				throw new AdempiereException("@M_PriceList_ID@ @NotFound@ (@C_Currency_ID@ " + isoCode + ")");
-			}
-			creditMemo.setM_PriceList_ID(priceList.getM_PriceList_ID());
-		}
-		PO paymentTypeAllocation = getPaymentMethodAllocation(payment.get_ValueAsInt("C_PaymentMethod_ID"), payment.getC_POS_ID(), payment.get_TrxName());
-		int chargeId = 0;
-		if(paymentTypeAllocation != null) {
-			chargeId = paymentTypeAllocation.get_ValueAsInt("C_Charge_ID");
-			if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeCreditMemo_ID") > 0) {
-				creditMemo.setC_DocTypeTarget_ID(paymentTypeAllocation.get_ValueAsInt("C_DocTypeCreditMemo_ID"));
-			}
-		}
-		//	Set if not exist
-		if(creditMemo.getC_DocTypeTarget_ID() <= 0) {
-			creditMemo.setC_DocTypeTarget_ID(MDocType.DOCBASETYPE_ARCreditMemo);
-		}
-		creditMemo.setDocumentNo(payment.getDocumentNo());
-		creditMemo.setC_ConversionType_ID(payment.getC_ConversionType_ID());
-		creditMemo.setC_Order_ID(salesOrder.getC_Order_ID());
-		creditMemo.setC_Payment_ID(payment.getC_Payment_ID());
-		creditMemo.saveEx(transactionName);
-		//	Add line
-		MInvoiceLine creditMemoLine = new MInvoiceLine(creditMemo);
-		if(chargeId <= 0) {
-			chargeId = new Query(salesOrder.getCtx(), MCharge.Table_Name, null, transactionName).setClient_ID().firstId();
-		}
-		MCharge charge = MCharge.get(payment.getCtx(), chargeId);
-		Optional<MTax> optionalTax = Arrays.asList(MTax.getAll(Env.getCtx()))
-				.stream()
-				.filter(tax -> tax.getC_TaxCategory_ID() == charge.getC_TaxCategory_ID() 
-									&& (tax.isSalesTax() 
-											|| (!Util.isEmpty(tax.getSOPOType()) 
-													&& (tax.getSOPOType().equals(MTax.SOPOTYPE_Both) 
-															|| tax.getSOPOType().equals(MTax.SOPOTYPE_SalesTax)))))
-				.findFirst();
-		creditMemoLine.setC_Charge_ID(chargeId);
-		creditMemoLine.setC_Tax_ID(optionalTax.get().getC_Tax_ID());
-		creditMemoLine.setQty(Env.ONE);
-		creditMemoLine.setPrice(payment.getPayAmt());
-		creditMemoLine.setDescription(payment.getDescription());
-		creditMemoLine.saveEx(transactionName);
-		//	change payment
-		payment.setC_Invoice_ID(-1);
-		payment.setPayAmt(Env.ZERO);
-		payment.saveEx(transactionName);
-		//	Process credit Memo
-		if (!creditMemo.processIt(MInvoice.DOCACTION_Complete)) {
-			log.warning("@ProcessFailed@ :" + creditMemo.getProcessMsg());
-			throw new AdempiereException("@ProcessFailed@ :" + creditMemo.getProcessMsg());
-		}
-		creditMemo.setDocumentNo(payment.getDocumentNo());
-		creditMemo.saveEx(transactionName);
-	}
-	
-	/**
-	 * Get Refund references from order
-	 * @param order
-	 * @return
-	 * @return List<PO>
-	 */
-	private static List<PO> getPaymentReferences(MOrder order) {
-		if(MTable.get(Env.getCtx(), "C_POSPaymentReference") == null) {
-			return new ArrayList<PO>();
-		}
-		//	
-		return new Query(order.getCtx(), "C_POSPaymentReference", "C_Order_ID = ? AND IsPaid = 'N' AND Processed = 'N'", order.get_TrxName()).setParameters(order.getC_Order_ID()).list();
-	}
-	
-	/**
-	 * Get Refund Reference Amount
-	 * @param order
-	 * @return
-	 * @return BigDecimal
-	 */
-	private static BigDecimal getPaymentReferenceAmount(MOrder order, List<PO> paymentReferences) {
-		Optional<BigDecimal> paymentReferenceAmount = paymentReferences.stream().map(refundReference -> {
-			return getConvetedAmount(order, refundReference, ((BigDecimal) refundReference.get_Value("Amount")));
-		}).collect(Collectors.reducing(BigDecimal::add));
-		if(paymentReferenceAmount.isPresent()) {
-			return paymentReferenceAmount.get();
-		}
-		return Env.ZERO;
-	}
-	
-	/**
-	 * Get converted Amount from POS
-	 * @param pos
-	 * @param fromCurrencyId
-	 * @param amount
-	 * @return
-	 */
-	public static BigDecimal getConvetedAmount(MPOS pos, int fromCurrencyId, BigDecimal amount) {
-		int toCurrencyId = pos.getM_PriceList().getC_Currency_ID();
-		if(fromCurrencyId == toCurrencyId
-				|| amount == null
-				|| amount.compareTo(Env.ZERO) == 0) {
-			return amount;
-		}
-		BigDecimal convertedAmount = MConversionRate.convert(pos.getCtx(), amount, fromCurrencyId, toCurrencyId, TimeUtil.getDay(System.currentTimeMillis()), pos.get_ValueAsInt("C_ConversionType_ID"), pos.getAD_Client_ID(), pos.getAD_Org_ID());
-		//	
-		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
-	}
-	
-	/**
-	 * Get Converted Amount based on Order currency and optional currency id
-	 * @param order
-	 * @param payment
-	 * @return
-	 * @return BigDecimal
-	 */
-	public static BigDecimal getConvetedAmount(MOrder order, int fromCurrencyId, BigDecimal amount) {
-		if(fromCurrencyId == order.getC_Currency_ID()
-				|| amount == null
-				|| amount.compareTo(Env.ZERO) == 0) {
-			return amount;
-		}
-		BigDecimal convertedAmount = MConversionRate.convert(order.getCtx(), amount, fromCurrencyId, order.getC_Currency_ID(), order.getDateAcct(), order.get_ValueAsInt("C_ConversionType_ID"), order.getAD_Client_ID(), order.getAD_Org_ID());
-		//	
-		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
-	}
-	
-	/**
-	 * Get Converted Amount based on Order currency
-	 * @param order
-	 * @param payment
-	 * @return
-	 * @return BigDecimal
-	 */
-	public static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
-		if(payment.get_ValueAsInt("C_Currency_ID") == order.getC_Currency_ID()
-				|| amount == null
-				|| amount.compareTo(Env.ZERO) == 0) {
-			return amount;
-		}
-		BigDecimal convertedAmount = MConversionRate.convert(payment.getCtx(), amount, payment.get_ValueAsInt("C_Currency_ID"), order.getC_Currency_ID(), order.getDateAcct(), payment.get_ValueAsInt("C_ConversionType_ID"), payment.getAD_Client_ID(), payment.getAD_Org_ID());
-		//	
-		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
-	}
-	
-	/**
-	 * Get Converted Amount based on Order currency
-	 * @param order
-	 * @param payment
-	 * @return
-	 * @return BigDecimal
-	 */
-	private BigDecimal getConvetedAmount(MOrder order, MPayment payment, BigDecimal amount) {
-		if(payment.getC_Currency_ID() == order.getC_Currency_ID()
-				|| amount == null
-				|| amount.compareTo(Env.ZERO) == 0) {
-			return amount;
-		}
-		BigDecimal convertedAmount = MConversionRate.convert(payment.getCtx(), amount, payment.getC_Currency_ID(), order.getC_Currency_ID(), payment.getDateAcct(), payment.getC_ConversionType_ID(), payment.getAD_Client_ID(), payment.getAD_Org_ID());
-		if(convertedAmount == null
-				|| convertedAmount.compareTo(Env.ZERO) == 0) {
-			throw new AdempiereException(MConversionRate.getErrorMessage(payment.getCtx(), "ErrorConvertingDocumentCurrencyToBaseCurrency", payment.getC_Currency_ID(), order.getC_Currency_ID(), payment.getC_ConversionType_ID(), payment.getDateAcct(), payment.get_TrxName()));
-		}
-		//	
-		return convertedAmount;
 	}
 	
 	/**
@@ -4807,7 +4339,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if (!DocumentUtil.isDrafted(order)) {
 				throw new AdempiereException("@C_Order_ID@ @Processed@");
 			}
-			setCurrentDate(order);
+			OrderUtil.setCurrentDate(order);
 			// catch Exceptions at order.getLines()
 			Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines(true, "Line"))
 				.stream()
@@ -4899,7 +4431,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if (!DocumentUtil.isDrafted(order)) {
 				throw new AdempiereException("@C_Order_ID@ @Processed@");
 			}
-			setCurrentDate(order);
+			OrderUtil.setCurrentDate(order);
 			// catch Exceptions at order.getLines()
 			Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines(true, "Line"))
 					.stream()
@@ -4974,7 +4506,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			MOrder order = orderLine.getParent();
 			order.set_TrxName(transactionName);
 			validateOrderReleased(order);
-			setCurrentDate(order);
+			OrderUtil.setCurrentDate(order);
 			orderLine.setHeaderInfo(order);
 			//	Valid Complete
 			if (!DocumentUtil.isDrafted(order)) {
@@ -5378,40 +4910,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	}
 	
 	/**
-	 * Set current date to order
-	 * @param salesOrder
-	 * @return void
-	 */
-	private void setCurrentDate(MOrder salesOrder) {
-		//	Ignore if the document is processed
-		if(salesOrder.isProcessed() || salesOrder.isProcessing()) {
-			return;
-		}
-		if(!salesOrder.getDateOrdered().equals(RecordUtil.getDate())
-				|| !salesOrder.getDateAcct().equals(RecordUtil.getDate())) {
-			salesOrder.setDateOrdered(RecordUtil.getDate());
-			salesOrder.setDateAcct(RecordUtil.getDate());
-			salesOrder.saveEx();
-		}
-	}
-	
-	/**
-	 * Set current date to order
-	 * @param payment
-	 * @return void
-	 */
-	private void setCurrentDate(MPayment payment) {
-		//	Ignore if the document is processed
-		if(payment.isProcessed() || payment.isProcessing()) {
-			return;
-		}
-		if(!payment.getDateTrx().equals(RecordUtil.getDate())) {
-			payment.setDateTrx(RecordUtil.getDate());
-			payment.saveEx();
-		}
-	}
-	
-	/**
 	 * Set business partner from uuid
 	 * @param pos
 	 * @param salesOrder
@@ -5490,7 +4988,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				salesOrder.set_ValueOfColumn("AssignedSalesRep_ID", salesRepresentativeId);
 			}
 		}
-		setCurrentDate(salesOrder);
+		OrderUtil.setCurrentDate(salesOrder);
 		//	Save Header
 		salesOrder.saveEx();
 		//	Load Price List Version
@@ -5575,7 +5073,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	        BigDecimal paymentAmount = ValueUtil.getBigDecimalFromDecimal(request.getAmount());
 	        payment.setPayAmt(paymentAmount);
 	        payment.setOverUnderAmt(Env.ZERO);
-	        setCurrentDate(payment);
+	        CashUtil.setCurrentDate(payment);
 			payment.saveEx(transactionName);
 			maybePayment.set(payment);
 		});
@@ -5592,7 +5090,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 */
 	private MPayment createPaymentFromOrder(MOrder salesOrder, CreatePaymentRequest request, MPOS pointOfSalesDefinition, String transactionName) {
 		validateOrderReleased(salesOrder);
-		setCurrentDate(salesOrder);
+		OrderUtil.setCurrentDate(salesOrder);
 		String tenderType = request.getTenderTypeCode();
 		if(Util.isEmpty(tenderType)) {
 			tenderType = MPayment.TENDERTYPE_Cash;
@@ -5711,7 +5209,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			payment.setDocumentNo(request.getReferenceNo());
 			payment.addDescription(request.getReferenceNo());
 		}
-		setCurrentDate(payment);
+		CashUtil.setCurrentDate(payment);
 		//	
 		payment.saveEx(transactionName);
 		return payment;
@@ -5871,7 +5369,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				payment.setDocumentNo(request.getReferenceNo());
 				payment.addDescription(request.getReferenceNo());
 			}
-			setCurrentDate(payment);
+			CashUtil.setCurrentDate(payment);
 			int referenceBankAccountId = RecordUtil.getIdFromUuid(I_C_BankAccount.Table_Name, request.getReferenceBankAccountUuid(), transactionName);
 			if(referenceBankAccountId > 0) {
 				payment.set_ValueOfColumn("POSReferenceBankAccount_ID", referenceBankAccountId);

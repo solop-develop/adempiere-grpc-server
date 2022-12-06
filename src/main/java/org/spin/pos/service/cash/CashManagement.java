@@ -13,7 +13,7 @@
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
  * Contributor(s): Yamel Senih www.erpya.com				  		                 *
  *************************************************************************************/
-package org.spin.pos.service;
+package org.spin.pos.service.cash;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
