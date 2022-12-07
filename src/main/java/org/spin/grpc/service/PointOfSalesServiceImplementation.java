@@ -1770,7 +1770,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
 		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
-		MBankStatement cashClosing = CashManagement.getCurrentCashclosing(pos, RecordUtil.getDate(), true, null);
+		MBankStatement cashClosing = CashManagement.getOpenCashClosing(pos, RecordUtil.getDate(), true, null);
 		if(cashClosing == null
 				|| cashClosing.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
