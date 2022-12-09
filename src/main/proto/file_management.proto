@@ -28,14 +28,14 @@ package file_management;
 service FileManagement {
 	//	Service for get a resource from resource uuid
 	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
+	//	Service for set a resource with resource uuid
+	rpc LoadResource(stream LoadResourceRequest) returns (ResourceReference) {}
 	//	Service for get a resource reference from image, attachment or archive
 	rpc GetResourceReference(GetResourceReferenceRequest) returns (ResourceReference) {}
 	//	Service for get a attachment from table and record uuid
 	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {}
 	//	Service for set a resource reference from image, attachment or archive
 	rpc SetResourceReference(SetResourceReferenceRequest) returns (ResourceReference) {}
-	//	Service for set a resource
-	rpc LoadResource(stream LoadResourceRequest) returns (ResourceReference) {}
 	// Delete resource reference
 	rpc DeleteResourceReference(DeleteResourceReferenceRequest) returns (data.Empty) {}
 	// Exists Attachment on Record
@@ -63,6 +63,14 @@ message ResourceReference {
 	string description = 4;
 	string text_msg = 5;
 	string content_type = 6;
+}
+
+// Request for upload resource
+message LoadResourceRequest {
+	data.ClientRequest client_request = 1;
+	string resource_uuid = 2;
+	string file_name = 3;
+	Resource resource = 4;
 }
 
 // Request for download resource
@@ -104,11 +112,6 @@ message SetResourceReferenceRequest {
 	string text_message = 5;
 	string file_name = 6;
 	int32 file_size = 7;
-}
-
-message LoadResourceRequest {
-	data.ClientRequest client_request = 1;
-	string resource_uuid = 2;
 }
 
 message DeleteResourceReferenceRequest {
