@@ -97,18 +97,6 @@ service UserInterface {
 	rpc SaveTabSequences(SaveTabSequencesRequest) returns (ListEntitiesResponse) {}
 }
 
-//	All related to dashboarding
-service Dashboarding {
-	//	Request Dashboards Content Edit
-	rpc ListDashboards(ListDashboardsRequest) returns (ListDashboardsResponse) {}
-	//	Request Favorites
-	rpc ListFavorites(ListFavoritesRequest) returns (ListFavoritesResponse) {}
-	//	Request Document Statuses
-	rpc ListPendingDocuments(ListPendingDocumentsRequest) returns (ListPendingDocumentsResponse) {}
-	//	Get Chart
-	rpc GetChart(GetChartRequest) returns (Chart) {}
-}
-
 //	Role Access Request
 message GetRecordAccessRequest {
 	ClientRequest client_request = 1;
@@ -479,31 +467,6 @@ message RunBusinessProcessRequest {
 	repeated KeyValueSelection selections = 12;
 }
 
-// Favorites Items Request
-message ListFavoritesRequest {
-	ClientRequest client_request = 1;
-	string user_uuid = 2;
-	int32 user_id = 3;
-	int32 page_size = 4;
-	string page_token = 5;
-}
-
-// Recent Item
-message Favorite {
-	string menu_uuid = 1;
-	string menu_name = 2;
-	string menu_description = 3;
-	string reference_uuid = 4;
-	string action = 5;
-}
-
-//	Recent Items List
-message ListFavoritesResponse {
-	int64 record_count = 1;
-	repeated Favorite favorites = 2;
-	string next_page_token = 3;
-}
-
 // Translations Request
 message ListTranslationsRequest {
 	ClientRequest client_request = 1;
@@ -519,91 +482,6 @@ message ListTranslationsRequest {
 message ListTranslationsResponse {
 	int64 record_count = 1;
 	repeated Translation translations = 2;
-	string next_page_token = 3;
-}
-
-// Document Statuses Request
-message ListPendingDocumentsRequest {
-	ClientRequest client_request = 1;
-	string user_uuid = 2;
-	int32 user_id = 3;
-	string role_uuid = 4;
-	int32 role_id = 5;
-	int32 page_size = 6;
-	string page_token = 7;
-}
-
-// Recent Item
-message PendingDocument {
-	string window_uuid = 1;
-	string form_uuid = 2;
-	string document_name = 3;
-	string document_description = 4;
-	int32 sequence = 5;
-	int64 record_count = 6;
-	// Query
-	Criteria criteria = 7;
-}
-
-//	Recent Items List
-message ListPendingDocumentsResponse {
-	int64 record_count = 1;
-	repeated PendingDocument pending_documents = 2;
-	string next_page_token = 3;
-}
-
-// Chart Request
-message GetChartRequest {
-	ClientRequest client_request = 1;
-	string uuid = 2;
-	int32 id = 3;
-}
-
-// Chart
-message Chart {	
-	string uuid = 1;
-	int32 id = 2;
-	string name = 3;
-	string description = 4;
-	string x_axis_label = 5;
-	string y_axis_label = 6;
-	Decimal measure_target = 7;
-	repeated ColorSchema color_schemas = 8;
-	repeated ChartSerie series = 9;
-}
-
-//	Serie
-message ChartSerie {
-	string name = 1;
-	repeated ChartData data_set = 2;
-}
-
-//	Data of Chart
-message ChartData {
-	string name = 1;
-	Decimal value = 2;
-}
-
-//	Color Schema
-message ColorSchema {
-	string name = 1;
-	string color = 2;
-	Decimal percent = 3;
-}
-
-// Dashboards Request
-message ListDashboardsRequest {
-	ClientRequest client_request = 1;
-	string role_uuid = 2;
-	int32 role_id = 3;
-	int32 page_size = 4;
-	string page_token = 5;
-}
-
-//	Dashboards List
-message ListDashboardsResponse {
-	int64 record_count = 1;
-	repeated Dashboard dashboards = 2;
 	string next_page_token = 3;
 }
 

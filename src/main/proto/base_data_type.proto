@@ -174,25 +174,6 @@ message Translation {
 	map<string, Value> values = 3;
 }
 
-// Dashboard
-message Dashboard {
-	string window_uuid = 1;
-	string browser_uuid = 2;
-	string name = 3;
-	string description = 4;
-	string html = 5;
-	int32 column_no = 6;
-	int32 line_no = 7;
-	bool is_collapsible = 8;
-	bool is_open_by_default = 9;
-	bool is_event_required = 10;
-	string file_name = 11;
-	string dashboard_type = 12;
-	string chart_type = 13;
-	int32 id = 14;
-	string uuid = 15;
-}
-
 // Print Format
 message PrintFormat {
 	string uuid = 1;
