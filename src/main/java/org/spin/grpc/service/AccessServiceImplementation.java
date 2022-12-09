@@ -21,11 +21,11 @@ import java.util.Properties;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
-import org.compiere.model.I_AD_Menu;
-import org.compiere.model.I_AD_Org;
-import org.compiere.model.I_AD_Role;
-import org.compiere.model.I_AD_Session;
-import org.compiere.model.I_M_Warehouse;
+import org.adempiere.core.domains.models.I_AD_Menu;
+import org.adempiere.core.domains.models.I_AD_Org;
+import org.adempiere.core.domains.models.I_AD_Role;
+import org.adempiere.core.domains.models.I_AD_Session;
+import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.compiere.model.MClient;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MCountry;

@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.I_C_Invoice;
+import org.adempiere.core.domains.models.I_C_Invoice;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MTable;
@@ -42,7 +42,7 @@ import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
-import org.spin.model.I_AD_AttachmentReference;
+import org.adempiere.core.domains.models.I_AD_AttachmentReference;
 import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
 

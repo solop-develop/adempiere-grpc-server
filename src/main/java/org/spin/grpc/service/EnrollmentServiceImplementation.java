@@ -15,7 +15,7 @@
 package org.spin.grpc.service;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.I_AD_User;
+import org.adempiere.core.domains.models.I_AD_User;
 import org.compiere.model.MClient;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MMailText;
@@ -35,7 +35,7 @@ import org.spin.backend.grpc.enrollment.ResetPasswordTokenRequest;
 import org.spin.backend.grpc.enrollment.User;
 import org.spin.backend.grpc.enrollment.RegisterGrpc.RegisterImplBase;
 import org.spin.backend.grpc.enrollment.ResetPasswordResponse.ResponseType;
-import org.spin.model.I_AD_Token;
+import org.adempiere.core.domains.models.I_AD_Token;
 import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
 import org.spin.util.TokenGeneratorHandler;

@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pipo.IDFinder;
-import org.compiere.model.I_AD_Element;
+import org.adempiere.core.domains.models.I_AD_Element;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;

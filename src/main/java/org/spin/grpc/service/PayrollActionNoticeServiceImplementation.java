@@ -24,29 +24,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_C_BPartner;
+import org.adempiere.core.domains.models.X_AD_Reference;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.I_C_BPartner;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
-import org.compiere.model.X_AD_Reference;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.eevolution.model.I_HR_Period;
-import org.eevolution.model.MHRConcept;
-import org.eevolution.model.MHREmployee;
-import org.eevolution.model.MHRMovement;
-import org.eevolution.model.MHRPayroll;
-import org.eevolution.model.MHRProcess;
-import org.spin.base.util.ContextManager;
-import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ValueUtil;
+import org.eevolution.hr.model.MHRConcept;
+import org.eevolution.hr.model.MHRDepartment;
+import org.eevolution.hr.model.MHREmployee;
+import org.eevolution.hr.model.MHRMovement;
+import org.eevolution.hr.model.MHRPayroll;
+import org.eevolution.hr.model.MHRPeriod;
+import org.eevolution.hr.model.MHRProcess;
 import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
@@ -61,6 +58,10 @@ import org.spin.backend.grpc.form.ListPayrollMovementsRequest;
 import org.spin.backend.grpc.form.ListPayrollProcessRequest;
 import org.spin.backend.grpc.form.PayrollActionNoticeGrpc.PayrollActionNoticeImplBase;
 import org.spin.backend.grpc.form.SavePayrollMovementRequest;
+import org.spin.base.util.ContextManager;
+import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ValueUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -808,14 +809,10 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 
 		// payroll period
 		movement.setPeriodNo(0);
-		I_HR_Period payrollPeriod = payrollProcess.getHR_Period();
-		Optional.ofNullable(payrollPeriod)
-			.ifPresent(period -> {
-				if (period.getHR_Period_ID() > 0) {
-					movement.setPeriodNo(period.getPeriodNo());
-				}
-			});
-
+		if (payrollProcess.getHR_Period_ID() > 0) {
+			MHRPeriod period = MHRPeriod.getById(context, payrollProcess.getHR_Period_ID(), null);
+			movement.setPeriodNo(period.getPeriodNo());
+		}
 		// Valid From
 		movement.setValidFrom(null);
 		Optional.ofNullable(attributesList.get(MHRMovement.COLUMNNAME_ValidFrom))
@@ -838,8 +835,8 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			movement.setHR_Department_ID(employee.getHR_Department_ID());
 			movement.setHR_Job_ID(employee.getHR_Job_ID());
 			movement.setHR_SkillType_ID(employee.getHR_SkillType_ID());
-
-			int activityId = employee.getC_Activity_ID() > 0 ? employee.getC_Activity_ID() : employee.getHR_Department().getC_Activity_ID();
+			MHRDepartment department = MHRDepartment.getById(context, employee.getHR_Department_ID(), null);
+			int activityId = employee.getC_Activity_ID() > 0 ? employee.getC_Activity_ID() : department.getC_Activity_ID();
 			movement.setC_Activity_ID(activityId);
 
 			movement.setHR_Payroll_ID(payroll.getHR_Payroll_ID());

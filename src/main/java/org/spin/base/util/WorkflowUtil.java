@@ -17,10 +17,10 @@ package org.spin.base.util;
 
 import java.util.List;
 
-import org.compiere.model.I_AD_WF_EventAudit;
-import org.compiere.model.I_AD_WF_NextCondition;
-import org.compiere.model.I_AD_WF_Node;
-import org.compiere.model.I_AD_WF_NodeNext;
+import org.adempiere.core.domains.models.I_AD_WF_EventAudit;
+import org.adempiere.core.domains.models.I_AD_WF_NextCondition;
+import org.adempiere.core.domains.models.I_AD_WF_Node;
+import org.adempiere.core.domains.models.I_AD_WF_NodeNext;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;

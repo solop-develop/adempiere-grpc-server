@@ -19,13 +19,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.model.I_AD_Browse_Field;
+import org.adempiere.core.domains.models.I_AD_Browse_Field;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MViewColumn;
-import org.compiere.model.I_AD_Column;
-import org.compiere.model.I_AD_Field;
-import org.compiere.model.I_AD_Process_Para;
-import org.compiere.model.I_AD_Reference;
+import org.adempiere.core.domains.models.I_AD_Column;
+import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_AD_Process_Para;
+import org.adempiere.core.domains.models.I_AD_Reference;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;

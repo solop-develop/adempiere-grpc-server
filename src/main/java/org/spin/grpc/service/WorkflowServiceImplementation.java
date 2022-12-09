@@ -26,24 +26,19 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.I_AD_PInstance;
-import org.compiere.model.I_AD_User;
-import org.compiere.model.I_AD_WF_Activity;
-import org.compiere.model.I_AD_WF_Node;
-import org.compiere.model.I_AD_Workflow;
-import org.compiere.model.I_C_Order;
-import org.compiere.model.MColumn;
+import org.adempiere.core.domains.models.I_AD_User;
+import org.adempiere.core.domains.models.I_AD_WF_Activity;
+import org.adempiere.core.domains.models.I_AD_WF_Node;
+import org.adempiere.core.domains.models.I_AD_Workflow;
+import org.adempiere.core.domains.models.I_C_Order;
 import org.compiere.model.MDocType;
 import org.compiere.model.MOrder;
-import org.compiere.model.MPInstance;
-import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
 import org.compiere.process.DocOptions;
 import org.compiere.process.DocumentEngine;
-import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -51,16 +46,8 @@ import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.compiere.wf.MWFActivity;
 import org.compiere.wf.MWorkflow;
-import org.eevolution.service.dsl.ProcessBuilder;
-import org.spin.base.util.ContextManager;
-import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.DictionaryUtil;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ValueUtil;
-import org.spin.base.util.WorkflowUtil;
 import org.spin.backend.grpc.client.ClientRequest;
 import org.spin.backend.grpc.common.DocumentStatus;
-import org.spin.backend.grpc.common.ProcessInfoLog;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.wf.ListDocumentActionsRequest;
 import org.spin.backend.grpc.wf.ListDocumentActionsResponse;
@@ -75,6 +62,11 @@ import org.spin.backend.grpc.wf.WorkflowActivity;
 import org.spin.backend.grpc.wf.WorkflowDefinition;
 import org.spin.backend.grpc.wf.WorkflowDefinitionRequest;
 import org.spin.backend.grpc.wf.WorkflowGrpc.WorkflowImplBase;
+import org.spin.base.util.ContextManager;
+import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ValueUtil;
+import org.spin.base.util.WorkflowUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -721,81 +713,27 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		if (entity != null) {
 			recordId = entity.get_ID();
 		}
-
-		MColumn docActionColumn = new Query(
-				context,
-				MColumn.Table_Name,
-				MColumn.COLUMNNAME_AD_Table_ID + " = ? AND " + MColumn.COLUMNNAME_ColumnName + " = ? ",
-				null
-			)
-			.setParameters(table.getAD_Table_ID(), I_AD_WF_Node.COLUMNNAME_DocAction)
-			.first();
-		if (docActionColumn == null || docActionColumn.getAD_Column_ID() <= 0) {
-			throw new AdempiereException("@AD_Column_ID@ @NotFound@");
+		//	Validate as document
+		if(!DocAction.class.isAssignableFrom(entity.getClass())) {
+			throw new AdempiereException("@Invalid@ @Document@");
 		}
-
-		MProcess process = MProcess.get(context, docActionColumn.getAD_Process_ID());
-		if (process == null || process.getAD_Process_ID() <= 0) {
-			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
-		}
-
-		//	Call process builder
-		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
-			.process(process.getAD_Process_ID())
-			.withRecordId(table.getAD_Table_ID(), recordId)
-			.withoutPrintPreview()
-			.withWindowNo(0)
-			.withTitle(process.getName())
-			.withParameter(table.getTableName() + DictionaryUtil.ID_PREFIX, recordId)
-			.withParameter(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
-	
-		//	For Document
-		if(!Util.isEmpty(documentAction) && process.getAD_Workflow_ID() > 0 && entity != null && DocAction.class.isAssignableFrom(entity.getClass())) {
-			entity.set_ValueOfColumn(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
-			entity.saveEx();
-		}
-
-		//	Execute Process
-		ProcessInfo result = null;
-		try {
-			result = builder.execute(null);
-		} catch (Exception e) {
-			result = builder.getProcessInfo();
-			//	Set error message
-			if(Util.isEmpty(result.getSummary())) {
-				result.setSummary(e.getLocalizedMessage());
-			}
-		}
-
+		//	
 		ProcessLog.Builder response = ProcessLog.newBuilder();
-		//	Get process instance from identifier
-		if(result.getAD_PInstance_ID() != 0) {
-			MPInstance instance = new Query(
-					context,
-					I_AD_PInstance.Table_Name,
-					I_AD_PInstance.COLUMNNAME_AD_PInstance_ID + " = ?",
-					null
-				)
-				.setParameters(result.getAD_PInstance_ID())
-				.first();
-			response.setInstanceUuid(ValueUtil.validateNull(instance.getUUID()));
-			response.setLastRun(instance.getUpdated().getTime());
-		}
-		//
-		response.setIsError(result.isError());
-		if(!Util.isEmpty(result.getSummary())) {
-			response.setSummary(Msg.parseTranslation(context, result.getSummary()));
-		}
-		//
-		response.setResultTableName(ValueUtil.validateNull(result.getResultTableName()));
-		//	Convert Log
-		if(result.getLogList() != null) {
-			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
-				ProcessInfoLog.Builder infoLogBuilder = ConvertUtil.convertProcessInfoLog(log);
-				response.addLogs(infoLogBuilder.build());
+		//	Process
+		entity.set_ValueOfColumn(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
+		entity.saveEx();
+		DocAction document = (DocAction) entity;
+		try {
+			if(!document.processIt(documentAction)) {
+				response.setSummary(Msg.parseTranslation(context, document.getProcessMsg()));
+				response.setIsError(true);
 			}
+		} catch (Exception e) {
+			response.setSummary(Msg.parseTranslation(context, document.getProcessMsg()));
+			response.setIsError(true);
 		}
-
+		response.setResultTableName(ValueUtil.validateNull(table.getTableName()));
+		document.saveEx();
 		return response;
 	}
 
