@@ -15,33 +15,33 @@
  *************************************************************************************/
 package org.spin.pos.service.order;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_C_InvoiceLine;
-import org.compiere.model.I_C_Order;
 import org.compiere.model.I_C_OrderLine;
 import org.compiere.model.I_M_InOutLine;
 import org.compiere.model.MDocType;
+import org.compiere.model.MInOut;
+import org.compiere.model.MInOutLine;
+import org.compiere.model.MInvoice;
+import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MTable;
+import org.compiere.model.MUOM;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
-import org.compiere.process.InOutGenerate;
-import org.compiere.process.InvoiceGenerate;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.eevolution.service.dsl.ProcessBuilder;
 
 /**
  * This class was created for Reverse Sales Transaction
@@ -196,29 +196,78 @@ public class ReverseSalesTransaction {
         	throw new AdempiereException(returnOrder.getProcessMsg());
         }
         //	Generate Return
-        ProcessBuilder
-	    	.create(sourceOrder.getCtx())
-	    	.process(InOutGenerate.getProcessId())
-	    	.withTitle(InOutGenerate.getProcessName())
-	    	.withParameter(InOutGenerate.M_WAREHOUSE_ID, sourceOrder.getM_Warehouse_ID())
-	    	.withParameter(InOutGenerate.DOCACTION, DocAction.ACTION_Complete)
-	    	.withSelectedRecordsIds(I_C_Order.Table_ID, Arrays.asList(returnOrder.getC_Order_ID()))
-	    	.withoutTransactionClose()
-	    	.execute(transactionName);
+        generateReturnFromRMA(returnOrder, transactionName);
         //	Generate Credit Memo
-        ProcessBuilder
-	    	.create(sourceOrder.getCtx())
-	    	.process(InvoiceGenerate.getProcessId())
-	    	.withTitle(InvoiceGenerate.getProcessName())
-	    	.withParameter(InvoiceGenerate.AD_ORG_ID, sourceOrder.getAD_Org_ID())
-	    	.withParameter(InvoiceGenerate.C_ORDER_ID, returnOrder.getC_Order_ID())
-	    	.withParameter(InvoiceGenerate.DOCACTION, DocAction.ACTION_Complete)
-	    	.withSelectedRecordsIds(I_C_Order.Table_ID, Arrays.asList(returnOrder.getC_Order_ID()))
-	    	.withoutTransactionClose()
-	    	.execute(transactionName);
+        generateCreditMemoFromRMA(returnOrder, transactionName);
         //	Return all payments
         createReversedPayments(pos, sourceOrder, returnOrder, transactionName);
 		return returnOrder;
+    }
+    
+    /**
+     * Generate Credit Memo from Return Order
+     * @param returnOrder
+     * @param transactionName
+     */
+    private static void generateCreditMemoFromRMA(MOrder returnOrder, String transactionName) {
+    	MInvoice invoice = new MInvoice (returnOrder, 0, getToday());
+		invoice.saveEx();
+    	//	Convert Lines
+		new Query(returnOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
+			.setParameters(returnOrder.getC_Order_ID())
+			.setClient_ID()
+			.getIDsAsList()
+			.forEach(returnOrderLineId -> {
+				MOrderLine returnOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLineId, transactionName);
+				MOrderLine sourcerOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLine.getRef_OrderLine_ID(), transactionName);
+				MInvoiceLine line = new MInvoiceLine (invoice);
+				line.setOrderLine(returnOrderLine);
+				BigDecimal toReturn = sourcerOrderLine.getQtyInvoiced();
+				line.setQtyInvoiced(toReturn);
+				line.setQtyEntered(toReturn);
+				line.setQtyEntered(toReturn
+						.multiply(returnOrderLine.getQtyEntered())
+						.divide(returnOrderLine.getQtyOrdered(), MUOM.getPrecision(returnOrder.getCtx(), returnOrderLine.getC_UOM_ID()), BigDecimal.ROUND_HALF_UP));	
+				line.setLine(returnOrderLine.getLine());
+				line.saveEx();
+		});
+		if(!invoice.processIt(MOrder.DOCACTION_Complete)) {
+        	throw new AdempiereException(invoice.getProcessMsg());
+        }
+		invoice.saveEx();
+    }
+    
+    /**
+     * Generate Return from Return Order
+     * @param returnOrder
+     * @param transactionName
+     */
+    private static void generateReturnFromRMA(MOrder returnOrder, String transactionName) {
+    	MInOut shipment = new MInOut (returnOrder, 0, getToday());
+		shipment.setM_Warehouse_ID(returnOrder.getM_Warehouse_ID());	//	sets Org too
+		shipment.saveEx();
+		//	Convert Lines
+		new Query(returnOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
+			.setParameters(returnOrder.getC_Order_ID())
+			.setClient_ID()
+			.getIDsAsList()
+			.forEach(returnOrderLineId -> {
+				MOrderLine returnOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLineId, transactionName);
+				MOrderLine sourcerOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLine.getRef_OrderLine_ID(), transactionName);
+				MInOutLine line = new MInOutLine (shipment);
+				BigDecimal toReturn = sourcerOrderLine.getQtyDelivered();
+				line.setOrderLine(returnOrderLine, 0, Env.ZERO);
+				line.setQty(toReturn);
+				line.setQtyEntered(toReturn
+						.multiply(returnOrderLine.getQtyEntered())
+						.divide(returnOrderLine.getQtyOrdered(), MUOM.getPrecision(returnOrder.getCtx(), returnOrderLine.getC_UOM_ID()), BigDecimal.ROUND_HALF_UP));	
+				line.setLine(returnOrderLine.getLine());
+				line.saveEx();
+		});
+		if(!shipment.processIt(MOrder.DOCACTION_Complete)) {
+        	throw new AdempiereException(shipment.getProcessMsg());
+        }
+		shipment.saveEx();
     }
     
     /**
@@ -234,45 +283,39 @@ public class ReverseSalesTransaction {
     		.getIDsAsList()
     		.forEach(sourceOrderLineId -> {
     			MOrderLine sourcerOrderLine = new MOrderLine(sourceOrder.getCtx(), sourceOrderLineId, transactionName);
-			//	Create new Invoice Line
-			MOrderLine returnOrderLine = new MOrderLine(returnOrder);
-			if (sourcerOrderLine.getM_Product_ID() > 0) {
-				returnOrderLine.setM_Product_ID(sourcerOrderLine.getM_Product_ID());
-				if(sourcerOrderLine.getM_AttributeSetInstance_ID() > 0) {
-					returnOrderLine.setM_AttributeSetInstance_ID(sourcerOrderLine.getM_AttributeSetInstance_ID());
+				//	Create new Invoice Line
+				MOrderLine returnOrderLine = new MOrderLine(returnOrder);
+				if (sourcerOrderLine.getM_Product_ID() > 0) {
+					returnOrderLine.setM_Product_ID(sourcerOrderLine.getM_Product_ID());
+					if(sourcerOrderLine.getM_AttributeSetInstance_ID() > 0) {
+						returnOrderLine.setM_AttributeSetInstance_ID(sourcerOrderLine.getM_AttributeSetInstance_ID());
+					}
+				} else if(sourcerOrderLine.getC_Charge_ID() != 0) {
+					returnOrderLine.setC_Charge_ID(sourcerOrderLine.getC_Charge_ID());
 				}
-			} else if(sourcerOrderLine.getC_Charge_ID() != 0) {
-				returnOrderLine.setC_Charge_ID(sourcerOrderLine.getC_Charge_ID());
-			}
-			//	
-			copyAccountDimensions(sourcerOrderLine, returnOrderLine);
-			//	Set quantity
-			returnOrderLine.setQty(sourcerOrderLine.getQtyEntered());
-			returnOrderLine.setQtyOrdered(sourcerOrderLine.getQtyOrdered());
-			returnOrderLine.setC_UOM_ID(sourcerOrderLine.getC_UOM_ID());
-			returnOrderLine.setPriceList(sourcerOrderLine.getPriceList());
-			returnOrderLine.setPriceEntered(sourcerOrderLine.getPriceEntered());
-			returnOrderLine.setPriceActual(sourcerOrderLine.getPriceActual());
-			returnOrderLine.setC_Tax_ID(sourcerOrderLine.getC_Tax_ID());
-			returnOrderLine.setRef_OrderLine_ID(sourceOrderLineId);
-			//	Foreign references
-			int invoioceLineId = getInvoiceLineReferenceId(sourcerOrderLine, transactionName);
-			if(invoioceLineId > 0) {
-				returnOrderLine.setRef_InvoiceLine_ID(invoioceLineId);
-			}
-			int shipmentLineId = getShipmentLineReferenceId(sourcerOrderLine, transactionName);
-			if(shipmentLineId > 0) {
-				returnOrderLine.setRef_InOutLine_ID(shipmentLineId);
-			}
-			if(Optional.ofNullable(sourcerOrderLine.getQtyDelivered()).orElse(Env.ZERO).compareTo(Env.ZERO) != 0) {
-				returnOrderLine.setQtyDelivered(sourcerOrderLine.getQtyOrdered().subtract(sourcerOrderLine.getQtyDelivered()));
-			}
-			if(Optional.ofNullable(sourcerOrderLine.getQtyInvoiced()).orElse(Env.ZERO).compareTo(Env.ZERO) != 0) {
-				returnOrderLine.setQtyInvoiced(sourcerOrderLine.getQtyOrdered().subtract(sourcerOrderLine.getQtyInvoiced()));
-			}
-			//	Save
-			returnOrderLine.saveEx(transactionName);
-		});
+				//	
+				copyAccountDimensions(sourcerOrderLine, returnOrderLine);
+				//	Set quantity
+				returnOrderLine.setQty(sourcerOrderLine.getQtyEntered());
+				returnOrderLine.setQtyOrdered(sourcerOrderLine.getQtyOrdered());
+				returnOrderLine.setC_UOM_ID(sourcerOrderLine.getC_UOM_ID());
+				returnOrderLine.setPriceList(sourcerOrderLine.getPriceList());
+				returnOrderLine.setPriceEntered(sourcerOrderLine.getPriceEntered());
+				returnOrderLine.setPriceActual(sourcerOrderLine.getPriceActual());
+				returnOrderLine.setC_Tax_ID(sourcerOrderLine.getC_Tax_ID());
+				returnOrderLine.setRef_OrderLine_ID(sourceOrderLineId);
+				//	Foreign references
+				int invoioceLineId = getInvoiceLineReferenceId(sourcerOrderLine, transactionName);
+				if(invoioceLineId > 0) {
+					returnOrderLine.setRef_InvoiceLine_ID(invoioceLineId);
+				}
+				int shipmentLineId = getShipmentLineReferenceId(sourcerOrderLine, transactionName);
+				if(shipmentLineId > 0) {
+					returnOrderLine.setRef_InOutLine_ID(shipmentLineId);
+				}
+				//	Save
+				returnOrderLine.saveEx(transactionName);
+    		});
     }
     
     /**

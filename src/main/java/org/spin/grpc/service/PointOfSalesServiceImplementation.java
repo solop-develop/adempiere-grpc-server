@@ -2308,7 +2308,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			//	Set Quantity
 			BigDecimal quantityToOrder = quantity;
 			if(quantity == null) {
-				quantityToOrder = shipmentLine.getMovementQty();
+				quantityToOrder = shipmentLine.getQtyEntered();
 				quantityToOrder = quantityToOrder.add(Env.ONE);
 			}
 			//	Validate available

@@ -14,12 +14,10 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -80,11 +78,9 @@ import org.compiere.model.I_AD_Tab;
 import org.compiere.model.I_AD_User;
 import org.compiere.model.I_AD_Window;
 import org.compiere.model.I_CM_Chat;
-import org.compiere.model.MAttachment;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
-import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
@@ -117,15 +113,6 @@ import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.base.util.ContextManager;
-import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.DictionaryUtil;
-import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ReferenceInfo;
-import org.spin.base.util.ReferenceUtil;
-import org.spin.base.util.ValueUtil;
-import org.spin.backend.grpc.common.Attachment;
 import org.spin.backend.grpc.common.ChatEntry;
 import org.spin.backend.grpc.common.Condition.Operator;
 import org.spin.backend.grpc.common.ContextInfoValue;
@@ -136,15 +123,12 @@ import org.spin.backend.grpc.common.DeletePreferenceRequest;
 import org.spin.backend.grpc.common.DrillTable;
 import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.Entity;
-import org.spin.backend.grpc.common.GetAttachmentRequest;
 import org.spin.backend.grpc.common.GetContextInfoValueRequest;
 import org.spin.backend.grpc.common.GetDefaultValueRequest;
 import org.spin.backend.grpc.common.GetLookupItemRequest;
 import org.spin.backend.grpc.common.GetPrivateAccessRequest;
 import org.spin.backend.grpc.common.GetRecordAccessRequest;
 import org.spin.backend.grpc.common.GetReportOutputRequest;
-import org.spin.backend.grpc.common.GetResourceReferenceRequest;
-import org.spin.backend.grpc.common.GetResourceRequest;
 import org.spin.backend.grpc.common.GetTabEntityRequest;
 import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.ListBrowserItemsRequest;
@@ -175,8 +159,6 @@ import org.spin.backend.grpc.common.RecordAccessRole;
 import org.spin.backend.grpc.common.RecordReferenceInfo;
 import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.common.ReportView;
-import org.spin.backend.grpc.common.Resource;
-import org.spin.backend.grpc.common.ResourceReference;
 import org.spin.backend.grpc.common.RollbackEntityRequest;
 import org.spin.backend.grpc.common.RunCalloutRequest;
 import org.spin.backend.grpc.common.SaveTabSequencesRequest;
@@ -187,13 +169,18 @@ import org.spin.backend.grpc.common.UnlockPrivateAccessRequest;
 import org.spin.backend.grpc.common.UpdateBrowserEntityRequest;
 import org.spin.backend.grpc.common.UserInterfaceGrpc.UserInterfaceImplBase;
 import org.spin.backend.grpc.common.Value;
-import org.spin.model.I_AD_AttachmentReference;
+import org.spin.base.util.ContextManager;
+import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.DictionaryUtil;
+import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ReferenceInfo;
+import org.spin.base.util.ReferenceUtil;
+import org.spin.base.util.ValueUtil;
 import org.spin.model.I_AD_ContextInfo;
-import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADContextInfo;
 import org.spin.util.ASPUtil;
 import org.spin.util.AbstractExportFormat;
-import org.spin.util.AttachmentUtil;
 import org.spin.util.ReportExportHandler;
 
 import com.google.protobuf.ByteString;
@@ -673,124 +660,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
 			ChatEntry.Builder chatEntryValue = addChatEntry(context, request);
 			responseObserver.onNext(chatEntryValue.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void getResource(GetResourceRequest request, StreamObserver<Resource> responseObserver) {
-		try {
-			if(request == null
-					|| (Util.isEmpty(request.getResourceUuid()) 
-							&& Util.isEmpty(request.getResourceName()))) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Download Requested = " + request.getResourceUuid());
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			//	Get resource
-			getResource(request.getResourceUuid(), request.getResourceName(), responseObserver);
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	/**
-	 * Get File from fileName
-	 * @param resourceUuid
-	 * @param responseObserver
-	 * @throws Exception 
-	 */
-	private void getResource(String resourceUuid, String resourceName, StreamObserver<Resource> responseObserver) throws Exception {
-		if(!AttachmentUtil.getInstance().isValidForClient(Env.getAD_Client_ID(Env.getCtx()))) {
-			responseObserver.onError(new AdempiereException("@NotFound@"));
-			return;
-		}
-		//	Validate by name
-		if(!Util.isEmpty(resourceName)) {
-			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
-			MADAttachmentReference reference = new Query(Env.getCtx(), I_AD_AttachmentReference.Table_Name, "(UUID || '-' || FileName) = ? AND FileHandler_ID = ?", null)
-					.setOrderBy(I_AD_AttachmentReference.COLUMNNAME_AD_Attachment_ID + " DESC")
-					.setParameters(resourceName, clientInfo.getFileHandler_ID())
-					.first();
-			if(reference == null
-					|| reference.getAD_AttachmentReference_ID() <= 0) {
-				responseObserver.onError(new AdempiereException("@NotFound@"));
-				return;
-			}
-			resourceUuid = reference.getUUID();
-		} else if(Util.isEmpty(resourceUuid)) {
-			responseObserver.onError(new AdempiereException("@NotFound@"));
-			return;
-		}
-		byte[] data = AttachmentUtil.getInstance()
-			.withClientId(Env.getAD_Client_ID(Env.getCtx()))
-			.withAttachmentReferenceId(RecordUtil.getIdFromUuid(I_AD_AttachmentReference.Table_Name, resourceUuid, null))
-			.getAttachment();
-		if(data == null) {
-			responseObserver.onError(new AdempiereException("@NotFound@"));
-			return;
-		}
-		//	For all
-		int bufferSize = 256 * 1024;// 256k
-        byte[] buffer = new byte[bufferSize];
-        int length;
-        InputStream is = new ByteArrayInputStream(data);
-        while ((length = is.read(buffer, 0, bufferSize)) != -1) {
-          responseObserver.onNext(
-        		  Resource.newBuilder().setData(ByteString.copyFrom(buffer, 0, length)).build()
-          );
-        }
-        //	Completed
-        responseObserver.onCompleted();
-	}
-	
-	@Override
-	public void getResourceReference(GetResourceReferenceRequest request, StreamObserver<ResourceReference> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			ResourceReference.Builder resourceReference = getResourceReferenceFromImageId(request.getImageId());
-			responseObserver.onNext(resourceReference.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void getAttachment(GetAttachmentRequest request, StreamObserver<Attachment> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			Attachment.Builder attachment = getAttachmentFromEntity(request);
-			responseObserver.onNext(attachment.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -1493,40 +1362,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		//	
 		return null;
-	}
-	
-	/**
-	 * Get Attachment related to entity
-	 * @param request
-	 * @return
-	 */
-	private Attachment.Builder getAttachmentFromEntity(GetAttachmentRequest request) {
-		int tableId = 0;
-		if(!Util.isEmpty(request.getTableName())) {
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if(table != null
-					&& table.getAD_Table_ID() != 0) {
-				tableId = table.getAD_Table_ID();
-			}
-		}
-		int recordId = request.getId();
-		if(recordId <= 0) {
-			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getUuid(), null);
-		}
-		if(tableId != 0
-				&& recordId !=  0) {
-			return ConvertUtil.convertAttachment(MAttachment.get(Env.getCtx(), tableId, recordId));
-		}
-		return Attachment.newBuilder();
-	}
-	
-	/**
-	 * Get resource from Image Id
-	 * @param imageId
-	 * @return
-	 */
-	private ResourceReference.Builder getResourceReferenceFromImageId(int imageId) {
-		return ConvertUtil.convertResourceReference(RecordUtil.getResourceFromImageId(imageId));
 	}
 	
 	/**
