@@ -22,6 +22,7 @@ option objc_class_prefix = "HLW";
 import "core_functionality.proto";
 import "base_data_type.proto";
 import "client.proto";
+import "file_management.proto";
 import "time_control.proto";
 
 package data;
@@ -1374,7 +1375,7 @@ message Key {
 	int32 span_y = 9;
 	string product_value = 10;
 	Decimal quantity = 11;
-	ResourceReference resource_reference = 12;
+	file_management.ResourceReference resource_reference = 12;
 }
 
 //	Stock

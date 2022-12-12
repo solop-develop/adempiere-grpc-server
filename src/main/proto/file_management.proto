@@ -1,0 +1,130 @@
+/************************************************************************************
+ * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.file_management";
+option java_outer_classname = "ADempiereFileManagement";
+
+import "base_data_type.proto";
+import "client.proto";
+
+package file_management;
+
+// The File Management service definition.
+service FileManagement {
+	//	Service for get a resource from resource uuid
+	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
+	//	Service for get a resource reference from image, attachment or archive
+	rpc GetResourceReference(GetResourceReferenceRequest) returns (ResourceReference) {}
+	//	Service for get a attachment from table and record uuid
+	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {}
+	//	Service for set a resource reference from image, attachment or archive
+	rpc SetResourceReference(SetResourceReferenceRequest) returns (ResourceReference) {}
+	//	Service for set a resource
+	rpc LoadResource(stream LoadResourceRequest) returns (ResourceReference) {}
+	// Delete resource reference
+	rpc DeleteResourceReference(DeleteResourceReferenceRequest) returns (data.Empty) {}
+	// Exists Attachment on Record
+	rpc ExistsAttachment(ExistsAttachmentRequest) returns (ExistsAttachmentResponse) {}
+}
+
+// Resource Chunk
+message Resource {
+	bytes data = 1;
+}
+
+// Attachment
+message Attachment {
+	string attachment_uuid = 1;
+	string title = 2;
+	string text_msg = 3;
+	repeated ResourceReference resource_references = 4;
+}
+
+//	Resource reference
+message ResourceReference {
+	string resource_uuid = 1;
+	string file_name = 2;
+	data.Decimal file_size = 3;
+	string description = 4;
+	string text_msg = 5;
+	string content_type = 6;
+}
+
+// Request for download resource
+message GetResourceRequest {
+	data.ClientRequest client_request = 1;
+	string resource_uuid = 2;
+	string resource_name = 3;
+	int64 width = 4;
+	int64 height = 5;
+	enum Operation {
+		RESIZE = 0;
+		CROP = 1;
+		FIX = 2;
+		IDENTIFY = 3;
+	}
+	//	Operation
+	Operation operation = 6;
+}
+
+// Request for download resource reference
+message GetResourceReferenceRequest {
+	data.ClientRequest client_request = 1;
+	int32 image_id = 2;
+}
+
+// Request attachment from table and record uuid
+message GetAttachmentRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	int32 id = 3;
+	string uuid = 4;
+}
+
+message SetResourceReferenceRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	int32 record_id = 3;
+	string record_uuid = 4;
+	string text_message = 5;
+	string file_name = 6;
+	int32 file_size = 7;
+}
+
+message LoadResourceRequest {
+	data.ClientRequest client_request = 1;
+	string resource_uuid = 2;
+}
+
+message DeleteResourceReferenceRequest {
+	data.ClientRequest client_request = 1;
+	int32 resource_id = 2;
+	string resource_uuid = 3;
+	string resource_name = 4;
+}
+
+message ExistsAttachmentRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	int32 record_id = 3;
+	string record_uuid = 4;
+}
+
+message ExistsAttachmentResponse {
+	int32 record_count = 1;
+}
