@@ -15,7 +15,8 @@ ENV \
 	DB_USER="adempiere" \
 	DB_PASSWORD="adempiere" \
 	DB_TYPE="PostgreSQL" \
-	ADEMPIERE_APPS_TYPE="wildfly"
+	ADEMPIERE_APPS_TYPE="wildfly" \
+	TZ="America/Caracas"
 
 WORKDIR /opt/Apps/backend/bin/
 
@@ -26,7 +27,7 @@ ADD dist/backend /opt/Apps/backend/
 ADD "build-docker/all_in_one_connection.yaml" "build-docker/start.sh" "/opt/Apps/backend/bin/"
 
 RUN addgroup adempiere && \
-	adduser --disabled-password --gecos ""  --ingroup adempiere --no-create-home adempiere && \
+	adduser --disabled-password --gecos "" --ingroup adempiere --no-create-home adempiere && \
 	chown -R adempiere /opt/Apps/backend/ && \
 	chmod +x start.sh
 

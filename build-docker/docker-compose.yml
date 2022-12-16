@@ -25,6 +25,7 @@ services:
     environment:
       - SERVICES_ENABLED=access; business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; log; material_management; order; payment; payroll_action_notice; pos; product; store; time_control; ui; workflow;
       - DB_HOST=adempiere.db
+      - TZ="America/Caracas"
     depends_on:
       - adempiere.db
     networks:

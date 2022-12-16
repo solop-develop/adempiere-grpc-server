@@ -18,16 +18,15 @@ In the build.gradle you need to include in the next sections the references to j
 
 * In the repository section as flatDir
 Example:
-  ```
-  flatDir {
-        dirs $ad_path + '/lib'
-  }
-  ```
-* In de dependencie section,
-  Example
-    ```
-    implementation fileTree(dir: $ad_path + '/lib', include: '*.jar')
-    ```
+```
+flatDir {
+  dirs $ad_path + '/lib'
+}
+```
+* In de dependencies section, Example
+```
+implementation fileTree(dir: $ad_path + '/lib', include: '*.jar')
+```
 
 ## Init project
 ``` bash
@@ -53,133 +52,69 @@ Don't forgive that for run server you need set yaml file line is /resources fold
 - go to bin folder
 - run it
 
-```Shell
+```bash
 ./adempiere-all-in-one-server "/tmp/dictionary_connection.yaml"
 ```
 
-## Client Test
-The client for testing was writed for java and is located on **org.spin.grpc.util.DictionaryClient**
-Just run it and see terminal
 
-## Output
-A output generated from client request is the follow:
-The source code for generate output is here:
-<pre>
-public static void main(String[] args) throws Exception {
-	DictionaryClient client = new DictionaryClient("localhost", 50051);
-	try {
-		logger.info("####################### Menu Only #####################");
-	    client.requestMenu(false);
-	    logger.info("####################### Menu + Child #####################");
-	    client.requestMenu(true);
-	    logger.info("####################### Window Only #####################");
-	    client.requestWindow(false);
-	    logger.info("####################### Window + Tabs #####################");
-	    client.requestWindow(true);
-	    logger.info("####################### Tab Only #####################");
-	    client.requestTab(false);
-	    logger.info("####################### Tab + Fields #####################");
-	    client.requestTab(true);
-	    logger.info("####################### Field Only #####################");
-	    client.requestField();
-	} finally {
-		client.shutdown();
-	}
-}
-</pre>
-A output from terminal
-- Request Menu
-<pre>
-INFORMACIÓN: ####################### Menu Only #####################
-ene 24, 2019 5:06:05 PM org.spin.grpc.util.DictionaryClient requestMenu
-INFORMACIÓN: Menu: uuid: "8e4fd396-fb40-11e8-a479-7a0060f0aa01"
-name: "Recursos Humanos"
-isSummary: true
-</pre>
-- Request Menu with child (Sub-Menu)
-<pre>
-INFORMACIÓN: ####################### Menu + Child #####################
-ene 24, 2019 5:07:02 PM org.spin.grpc.util.DictionaryClient requestMenu
-INFORMACIÓN: Menu Child: uuid: "8e51156c-fb40-11e8-a479-7a0060f0aa01"
-name: "Departamento"
-description: "Mantenimiento de departamentos de n\303\263mina"
-action: "W"
-windowUuid: "a521ec30-fb40-11e8-a479-7a0060f0aa01"
+### For all enviroment you should run the follow images:
+- ADempiere Backend: https://hub.docker.com/r/solopcloud/adempiere-backend
+```shell
+docker pull solop/adempiere-backend:experimental
+```
+- ADempiere Proxy: https://hub.docker.com/r/solopcloud/adempiere-proxy
+```shell
+docker pull solop/adempiere-proxy:experimental
+```
+- Frontend-Core: https://hub.docker.com/r/solopcloud/adempiere-vue
+```shell
+docker pull solop/adempiere-vue:experimental
+```
 
-ene 24, 2019 5:07:02 PM org.spin.grpc.util.DictionaryClient requestMenu
-INFORMACIÓN: Menu Child: uuid: "8e50122a-fb40-11e8-a479-7a0060f0aa01"
-name: "Recruitment Management"
-description: "Recruitment Management"
-isSummary: true
+## Run docker container:
 
-ene 24, 2019 5:07:02 PM org.spin.grpc.util.DictionaryClient requestMenu
-INFORMACIÓN: Menu Child: uuid: "8e5115bc-fb40-11e8-a479-7a0060f0aa01"
-name: "Puesto"
-description: "Mantenimiento de puestos de n\303\263mina"
-action: "W"
-windowUuid: "a521bf80-fb40-11e8-a479-7a0060f0aa01"
+### Minimal Docker Requirements
 
-ene 24, 2019 5:07:02 PM org.spin.grpc.util.DictionaryClient requestMenu
-INFORMACIÓN: Menu Child: uuid: "8e5114c2-fb40-11e8-a479-7a0060f0aa01"
-name: "Contrato"
-description: "Mantenimiento de contratos de n\303\263mina"
-action: "W"
-windowUuid: "a521be7c-fb40-11e8-a479-7a0060f0aa01"
+To use this Docker image you must have your Docker engine release number greater
+than or equal to 3.0.
 
-ene 24, 2019 5:07:02 PM org.spin.grpc.util.DictionaryClient requestMenu
-INFORMACIÓN: Menu Child: uuid: "8e51151c-fb40-11e8-a479-7a0060f0aa01"
-name: "Empleado"
-description: "Mantenimiento de empleados de n\303\263mina"
-action: "W"
-windowUuid: "a521befe-fb40-11e8-a479-7a0060f0aa01"
+Build docker image (for development only):
+```shell
+docker build -t solop/adempiere-backend:dev -f ./build-docker/develop.Dockerfile .
+```
 
-ene 24, 2019 5:07:02 PM org.spin.grpc.util.DictionaryClient requestMenu
-INFORMACIÓN: Menu Child: uuid: "8e500fbe-fb40-11e8-a479-7a0060f0aa01"
-name: "Employee Setup"
-description: "Employee Setup"
-isSummary: true
+Download docker image:
+```shell
+docker pull solop/adempiere-backend:experimental
+```
 
-ene 24, 2019 5:07:02 PM org.spin.grpc.util.DictionaryClient requestMenu
-INFORMACIÓN: Menu: uuid: "8e4fd396-fb40-11e8-a479-7a0060f0aa01"
-name: "Recursos Humanos"
-isSummary: true
-childs {
-  uuid: "8e51156c-fb40-11e8-a479-7a0060f0aa01"
-  name: "Departamento"
-  description: "Mantenimiento de departamentos de n\303\263mina"
-  action: "W"
-  windowUuid: "a521ec30-fb40-11e8-a479-7a0060f0aa01"
-}
-childs {
-  uuid: "8e50122a-fb40-11e8-a479-7a0060f0aa01"
-  name: "Recruitment Management"
-  description: "Recruitment Management"
-  isSummary: true
-}
-childs {
-  uuid: "8e5115bc-fb40-11e8-a479-7a0060f0aa01"
-  name: "Puesto"
-  description: "Mantenimiento de puestos de n\303\263mina"
-  action: "W"
-  windowUuid: "a521bf80-fb40-11e8-a479-7a0060f0aa01"
-}
-childs {
-  uuid: "8e5114c2-fb40-11e8-a479-7a0060f0aa01"
-  name: "Contrato"
-  description: "Mantenimiento de contratos de n\303\263mina"
-  action: "W"
-  windowUuid: "a521be7c-fb40-11e8-a479-7a0060f0aa01"
-}
-childs {
-  uuid: "8e51151c-fb40-11e8-a479-7a0060f0aa01"
-  name: "Empleado"
-  description: "Mantenimiento de empleados de n\303\263mina"
-  action: "W"
-  windowUuid: "a521befe-fb40-11e8-a479-7a0060f0aa01"
-}
-childs {
-  uuid: "8e500fbe-fb40-11e8-a479-7a0060f0aa01"
-  name: "Employee Setup"
-  description: "Employee Setup"
-  isSummary: true
-}
+Run container container:
+```shell
+docker run -it -d \
+	--name adempiere-backend \
+	-p 50059:50059 \
+	-e DB_HOST="your-db-host" \
+	-e DB_PORT="5432" \
+	-e DB_NAME=\"1204\" \
+	-e DB_PASSWORD="adempiere" \
+	-e TZ="America/Caracas" \
+	solopcloud/adempiere-backend:experimental
+```
+
+Or easy run container using `docker-compose` with follow command:
+```shell
+docker-compose up
+```
+
+### Environment variables
+ * `DB_TYPE`: Database Type (Supported Oracle, PostgreSQL and MariaDB). Default `PostgreSQL`
+ * `DB_HOST`: Hostname for data base server. Default: `localhost`
+ * `DB_PORT`: Port used by data base server. Default: `5432`
+ * `DB_NAME`: Database name that Adempiere-Backend will use to connect with the database. Default: `adempiere`
+ * `DB_USER`: Database user that Adempiere-Backend will use to connect with the database. Default: `adempiere`
+ * `DB_PASSWORD`: Database password that Adempiere-Backend will use to connect with the database. Default: `adempiere`
+ * `ADEMPIERE_APPS_TYPE`: Application Type for Database Management Connection. Default: `wildfly`
+ * `SERVER_PORT`: Port to access Adempiere-Backend from outside of the container. Default: `50059`
+ * `SERVICES_ENABLED`: Services enabled. Default: `access; business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; store; time_control; ui; workflow;`
+ * `SERVER_LOG_LEVEL`: Log Level. Default: `WARNING`
+ * `TZ`: (Time Zone) Indicates the time zone to set in the nginx-based container, the default value is `America/Caracas` (UTC -4:00).
