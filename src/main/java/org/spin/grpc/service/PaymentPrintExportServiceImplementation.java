@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_BankAccount;
 import org.adempiere.core.domains.models.I_C_BankAccountDoc;
 import org.adempiere.core.domains.models.I_C_PaySelection;
 import org.adempiere.core.domains.models.I_C_PaySelectionCheck;
@@ -68,6 +69,7 @@ import io.grpc.stub.StreamObserver;
  * Service for backend of Update Center
  */
 public class PaymentPrintExportServiceImplementation extends PaymentPrintExportImplBase {
+
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(PaymentPrintExportServiceImplementation.class);
 	
@@ -241,6 +243,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		builder.setId(bankAccount.getC_BankAccount_ID())
 			.setUuid(ValueUtil.validateNull(bankAccount.getUUID()))
 			.setAccountNo(ValueUtil.validateNull(bankAccount.getAccountNo()))
+			.setAccountName(ValueUtil.validateNull(bankAccount.getName()))
 			.setBban(ValueUtil.validateNull(bankAccount.getBBAN()))
 			.setIban(ValueUtil.validateNull(bankAccount.getIBAN()))
 			.setDescription(ValueUtil.validateNull(bankAccount.getDescription()))
@@ -296,16 +299,14 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			+ "		WHERE psc.C_PaySelection_ID = C_PaySelection.C_PaySelection_ID "
 			+ "		AND (psc.C_Payment_ID IS NULL OR p.DocStatus NOT IN('CO', 'CL'))"
 			+ ")";
-
 		Query query = new Query(
 			context,
 			I_C_PaySelection.Table_Name,
 			validationCode,
 			null
 		);
-		
-		int count = query.count();
 
+		int count = query.count();
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder()
 			.setRecordCount(count);
 		
@@ -338,7 +339,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = ListLookupItemsResponse.newBuilder();
+			ListLookupItemsResponse.Builder builder = listPaymentRules(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -349,6 +350,62 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				.asRuntimeException()
 			);
 		}
+	}
+
+	private ListLookupItemsResponse.Builder listPaymentRules(ListPaymentRulesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		int paymentSelectionId = request.getPaymentSelectionId();
+		if (paymentSelectionId <= 0) {
+			if (!Util.isEmpty(request.getPaymentSelectionUuid(), true)) {
+				paymentSelectionId = RecordUtil.getIdFromUuid(I_C_PaySelection.Table_Name, request.getPaymentSelectionUuid(), null);
+			}
+			if (paymentSelectionId <= 0) {
+				throw new AdempiereException("@FillMandatory@ @C_PaySelection_ID@");
+			}
+		}
+		MPaySelection paymentSelection = new Query(
+			context,
+			I_C_PaySelection.Table_Name,
+			" C_PaySelection_ID = ? ",
+			null
+		)
+			.setParameters(paymentSelectionId)
+			.first();
+		if (paymentSelection == null || paymentSelection.getC_PaySelection_ID() <= 0) {
+			throw new AdempiereException("@C_PaySelection_ID@ @NotFound@");
+		}
+
+		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
+		final String whereClause = "EXISTS ("
+			+ "	SELECT 1 FROM C_PaySelectionLine "
+			+ "	WHERE "
+			+ "	AD_Ref_List.Value = C_PaySelectionLine.PaymentRule"
+			+ "	AND C_PaySelectionLine.C_PaySelection_ID = ?"
+			+ "	AND AD_Ref_List.AD_Reference_ID = ?"
+			+ ")"
+		;
+		List<MRefList> paymemntRulesList = new Query(
+			Env.getCtx(),
+			I_AD_Ref_List.Table_Name,
+			whereClause,
+			null
+		).setParameters(paymentSelection.getC_PaySelection_ID(), X_C_PaySelectionLine.PAYMENTRULE_AD_Reference_ID)
+		.list(MRefList.class);
+
+		paymemntRulesList.stream().forEach(paymentRule -> {			
+			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
+				paymentSelection.getC_PaySelection_ID(), paymentSelection.getUUID(), null, paymentRule.getName()
+			);
+
+			builderItem.setTableName(I_C_PaySelection.Table_Name);
+			builderItem.setId(paymentSelection.getC_PaySelection_ID());
+			builderItem.setUuid(ValueUtil.validateNull(paymentSelection.getUUID()));
+
+			builderList.addRecords(builderItem.build());
+		});
+		
+		return builderList;
 	}
 
 
@@ -370,10 +427,54 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			);
 		}
 	}
-	
+
 	private GetDocumentNoResponse.Builder getDocumentNo(GetDocumentNoRequest request) {
-		int paymentRule = 0;
-		int bankAccountId = 0;
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		// Bank Account
+		int bankAccountId = request.getBankAccountId();
+		if (bankAccountId <= 0) {
+			if (!Util.isEmpty(request.getBankAccountUuid(), true)) {
+				bankAccountId = RecordUtil.getIdFromUuid(I_C_BankAccount.Table_Name, request.getBankAccountUuid(), null);
+			}
+			if (bankAccountId <= 0) {
+				throw new AdempiereException("@FillMandatory@ @C_BankAccount_ID@");
+			}
+		}
+		MBankAccount bankAccount = new Query(
+			context,
+			I_C_BankAccount.Table_Name,
+			" C_BankAccount_ID = ? ",
+			null
+		)
+			.setParameters(bankAccountId)
+			.first();
+		if (bankAccount == null || bankAccount.getC_BankAccount_ID() <= 0) {
+			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
+		}
+
+		// Payment Rule
+		int paymentRuleId = request.getPaymentRuleId();
+		if (paymentRuleId <= 0) {
+			if (!Util.isEmpty(request.getPaymentRuleUuid(), true)) {
+				paymentRuleId = RecordUtil.getIdFromUuid(I_AD_Ref_List.Table_Name, request.getPaymentRuleUuid(), null);
+			}
+			if (paymentRuleId <= 0) {
+				throw new AdempiereException("@FillMandatory@ @PaymentRule@");
+			}
+		}
+		MRefList paymentRule = new Query(
+			context,
+			I_AD_Ref_List.Table_Name,
+			" AD_Ref_List_ID = ? ",
+			null
+		)
+			.setParameters(paymentRuleId)
+			.first();
+		if (paymentRule == null || paymentRule.getAD_Ref_List_ID() <= 0) {
+			throw new AdempiereException("@PaymentRule@ @NotFound@");
+		}
+		
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ")
 			.append(I_C_BankAccountDoc.COLUMNNAME_CurrentNext)
@@ -385,11 +486,11 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			.append(I_C_BankAccountDoc.COLUMNNAME_IsActive).append("=?");
 
 		List<Object> parameters =  new ArrayList<>();
-		parameters.add(bankAccountId);
-		parameters.add(paymentRule);
+		parameters.add(bankAccount.getC_BankAccount_ID());
+		parameters.add(paymentRule.getValue());
 		parameters.add(true);
 
-		int documentNo = DB.getSQLValueEx(null , sql.toString() , parameters.toArray());
+		int documentNo = DB.getSQLValueEx(null , sql.toString(), parameters.toArray());
 		return GetDocumentNoResponse.newBuilder()
 			.setDocumentNo(String.valueOf(documentNo));
 	}
