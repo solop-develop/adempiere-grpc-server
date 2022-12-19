@@ -1,0 +1,189 @@
+/************************************************************************************
+ * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.payment_print_export";
+option java_outer_classname = "ADempierePaymentPrintExport";
+
+import "base_data_type.proto";
+import "business.proto";
+import "client.proto";
+import "core_functionality.proto";
+
+package payment_print_export;
+
+// The Payment Print/Export form service definition.
+// - org.compiere.apps.form.PayPrint
+// - org.compiere.apps.form.VPayPrint
+// - org.adempiere.webui.apps.form.WPayPrint
+service PaymentPrintExport {
+	// List Payment Selection
+	rpc ListPaymentSelection(ListPaymentSelectionRequest) returns (data.ListLookupItemsResponse) {}
+	// Get a Payment Selection info
+	rpc GetPaymentSelection(GetPaymentSelectionRequest) returns (PaymentSelection) {}
+	// List Payment Rules
+	rpc ListPaymentRules(ListPaymentRulesRequest) returns (data.ListLookupItemsResponse) {}
+	// Get Document No
+	rpc GetDocumentNo(GetDocumentNoRequest) returns (GetDocumentNoResponse) {}
+	// Create EFT Payment
+	rpc CreateEFTPayment(CreateEFTPaymentRequest) returns (PaymentSelection) {}
+	// Export Payments
+	rpc ExportPayments(ExportPaymentsRequest) returns (data.ProcessLog) {}
+	// Print Payments
+	rpc PrintPayments(PrintPaymentsRequest) returns (data.ProcessLog) {}
+	// Confirm Payment
+	rpc ConfirmPrint(ConfirmPrintRequest) returns (PaymentSelection) {}
+	// Print Remittance
+	rpc PrintRemittance(PrintRemittanceRequest) returns (data.ProcessLog) {}
+}
+
+// Bank Account Type
+message BankAccountType {
+	string uuid = 1;
+	int32 id = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+}
+
+//	Bank Account
+message BankAccount {
+	string uuid = 1;
+	int32 id = 2;
+	string account_no = 3;
+	string account_name = 4;
+	string bban = 5;
+	string iban = 6;
+	string description = 7;
+	bool is_default = 8;
+	data.Currency currency = 9;
+	BankAccountType bank_account_type = 10;
+	data.Decimal credit_limit = 11;
+	data.Decimal current_balance = 12;
+	bool is_sales_transaction = 13;
+	data.BusinessPartner business_partner = 14;
+}
+
+// Payment Rule
+message PaymentRule {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+}
+
+// Payment Selection
+message PaymentSelection {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	BankAccount bank_account = 4;
+	repeated PaymentRule payment_rules = 5;
+	int32 number_payments = 6;
+}
+
+// List Payment Selection Request
+message ListPaymentSelectionRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	// filters
+	string search_value = 4;
+	repeated data.KeyValue context_attributes = 5;
+}
+
+// Get Payment Selection Request
+message GetPaymentSelectionRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
+}
+
+// List Payment Rules Request
+message ListPaymentRulesRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	// filters
+	string search_value = 4;
+	int32 payment_selection_id = 5;
+	string payment_selection_uuid = 6;
+}
+
+// Get Document No Request
+message GetDocumentNoRequest {
+	data.ClientRequest client_request = 1;
+	int32 payment_selection_id = 2;
+	string payment_selection_uuid = 3;
+	int32 payment_rule_id  = 4;
+	string payment_rule_uuid = 5;
+}
+
+// Get Document No Response
+message GetDocumentNoResponse {
+	string document_no = 1;
+}
+
+// Create EFT Payment Request
+message CreateEFTPaymentRequest {
+	data.ClientRequest client_request = 1;
+	int32 payment_selection_id = 2;
+	string payment_selection_uuid = 3;
+	int32 payment_rule_id  = 4;
+	string payment_rule_uuid = 5;
+	string document_no = 6;
+}
+
+// Export Payment Request
+message ExportPaymentsRequest {
+	data.ClientRequest client_request = 1;
+	int32 payment_selection_id = 2;
+	string payment_selection_uuid = 3;
+	int32 payment_rule_id = 4;
+	string payment_rule_uuid = 5;
+	string document_no = 6;
+}
+
+// Print Payment Request
+message PrintPaymentsRequest {
+	data.ClientRequest client_request = 1;
+	int32 payment_selection_id = 2;
+	string payment_selection_uuid = 3;
+	int32 payment_rule_id = 4;
+	string payment_rule_uuid = 5;
+	string document_no = 6;
+}
+
+// Confirm Print Request
+message ConfirmPrintRequest {
+	data.ClientRequest client_request = 1;
+	int32 payment_selection_id = 2;
+	string payment_selection_uuid = 3;
+	int32 payment_rule_id = 4;
+	string payment_rule_uuid = 5;
+	string document_no = 6;
+}
+
+// Print Remittance Request
+message PrintRemittanceRequest {
+	data.ClientRequest client_request = 1;
+	int32 payment_selection_id = 2;
+	string payment_selection_uuid = 3;
+	int32 payment_rule_id = 4;
+	string payment_rule_uuid = 5;
+	string document_no = 6;
+}

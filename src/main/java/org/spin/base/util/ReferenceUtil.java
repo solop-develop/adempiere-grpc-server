@@ -375,7 +375,7 @@ public class ReferenceUtil {
 			queryWithoutOrder += " WHERE ";
 		}
 		queryWithoutOrder += " " + lookupInformation.ValidationCode;
-		
+
 		// Add new query with where clause and order By
 		queryForLookup = queryWithoutOrder + orderByQuery;
 
@@ -384,7 +384,7 @@ public class ReferenceUtil {
 
 		return lookupInformation;
 	}
-	
+
 	/**
 	 * Get Lookup info from reference
 	 * @param referenceId
@@ -407,7 +407,7 @@ public class ReferenceUtil {
 	 * @param query
 	 * @return
 	 */
-	private static String getQueryWithUuid(String tableName, String query) {
+	public static String getQueryWithUuid(String tableName, String query) {
 		Matcher matcherFrom = Pattern.compile(
 			"\\s+(FROM)\\s+(" + tableName + ")",
 			Pattern.CASE_INSENSITIVE | Pattern.DOTALL

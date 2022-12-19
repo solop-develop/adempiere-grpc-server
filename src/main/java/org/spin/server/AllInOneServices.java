@@ -34,6 +34,7 @@ import org.spin.grpc.service.InvoiceServiceImplementation;
 import org.spin.grpc.service.LogsServiceImplementation;
 import org.spin.grpc.service.MaterialManagementServiceImplementation;
 import org.spin.grpc.service.OrderServiceImplementation;
+import org.spin.grpc.service.PaymentPrintExportServiceImplementation;
 import org.spin.grpc.service.PaymentServiceImplementation;
 import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
 import org.spin.grpc.service.PointOfSalesServiceImplementation;
@@ -174,6 +175,11 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.PRODUCT.getServiceName())) {
 			serverBuilder.addService(new ProductServiceImplementation());
 			logger.info("Service " + Services.PRODUCT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Payment Print/Export
+		if(SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT_PTINT_EXPORT.getServiceName())) {
+			serverBuilder.addService(new PaymentPrintExportServiceImplementation());
+			logger.info("Service " + Services.PAYMENT_PTINT_EXPORT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payroll Action Notice
 		if(SetupLoader.getInstance().getServer().isValidService(Services.PAYROLL_ACTION_NOTICE.getServiceName())) {

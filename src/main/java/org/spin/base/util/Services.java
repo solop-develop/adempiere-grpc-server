@@ -35,6 +35,7 @@ public enum Services {
 	MATERIAL_MANAGEMENT("material_management"),
     ORDER("order"),
     PAYMENT("payment"),
+	PAYMENT_PTINT_EXPORT("payment_print_export"),
     PAYROLL_ACTION_NOTICE("payroll_action_notice"),
 	POS("pos"),
 	PRODUCT("product"),
@@ -46,7 +47,7 @@ public enum Services {
 
 	/**	Service Name	*/
     private final String serviceName;
-    
+
     Services(String serviceName) {
         this.serviceName = serviceName;
     }
