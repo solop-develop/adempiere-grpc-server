@@ -14,10 +14,12 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_BankAccountDoc;
 import org.adempiere.core.domains.models.I_C_PaySelection;
 import org.adempiere.core.domains.models.I_C_PaySelectionCheck;
 import org.adempiere.core.domains.models.X_C_PaySelectionLine;
@@ -29,6 +31,7 @@ import org.compiere.model.MPaySelection;
 import org.compiere.model.MRefList;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.BusinessPartner;
@@ -355,7 +358,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			GetDocumentNoResponse.Builder builder = GetDocumentNoResponse.newBuilder();
+			GetDocumentNoResponse.Builder builder = getDocumentNo(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -367,7 +370,29 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			);
 		}
 	}
+	
+	private GetDocumentNoResponse.Builder getDocumentNo(GetDocumentNoRequest request) {
+		int paymentRule = 0;
+		int bankAccountId = 0;
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT ")
+			.append(I_C_BankAccountDoc.COLUMNNAME_CurrentNext)
+			.append(" FROM ")
+			.append(I_C_BankAccountDoc.Table_Name)
+			.append(" WHERE ")
+			.append(I_C_BankAccountDoc.COLUMNNAME_C_BankAccount_ID).append("=? AND ")
+			.append(I_C_BankAccountDoc.COLUMNNAME_PaymentRule).append("=? AND ")
+			.append(I_C_BankAccountDoc.COLUMNNAME_IsActive).append("=?");
 
+		List<Object> parameters =  new ArrayList<>();
+		parameters.add(bankAccountId);
+		parameters.add(paymentRule);
+		parameters.add(true);
+
+		int documentNo = DB.getSQLValueEx(null , sql.toString() , parameters.toArray());
+		return GetDocumentNoResponse.newBuilder()
+			.setDocumentNo(String.valueOf(documentNo));
+	}
 
 	@Override
 	public void createEFTPayment(CreateEFTPaymentRequest request, StreamObserver<PaymentSelection> responseObserver) {

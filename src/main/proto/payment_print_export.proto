@@ -127,9 +127,9 @@ message ListPaymentRulesRequest {
 // Get Document No Request
 message GetDocumentNoRequest {
 	data.ClientRequest client_request = 1;
-	int32 payment_selection_id = 2;
-	string payment_selection_uuid = 3;
-	int32 payment_rule_id  = 4;
+	int32 bank_account_id = 2;
+	string bank_account_uuid = 3;
+	int32 payment_rule_id = 4;
 	string payment_rule_uuid = 5;
 }
 
@@ -143,7 +143,7 @@ message CreateEFTPaymentRequest {
 	data.ClientRequest client_request = 1;
 	int32 payment_selection_id = 2;
 	string payment_selection_uuid = 3;
-	int32 payment_rule_id  = 4;
+	int32 payment_rule_id = 4;
 	string payment_rule_uuid = 5;
 	string document_no = 6;
 }
