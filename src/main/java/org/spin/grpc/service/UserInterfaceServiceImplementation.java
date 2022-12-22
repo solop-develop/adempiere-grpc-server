@@ -40,6 +40,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
 
@@ -131,6 +132,8 @@ import org.spin.backend.grpc.common.DeletePreferenceRequest;
 import org.spin.backend.grpc.common.DrillTable;
 import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.Entity;
+import org.spin.backend.grpc.common.ExistsReferencesRequest;
+import org.spin.backend.grpc.common.ExistsReferencesResponse;
 import org.spin.backend.grpc.common.GetContextInfoValueRequest;
 import org.spin.backend.grpc.common.GetDefaultValueRequest;
 import org.spin.backend.grpc.common.GetLookupItemRequest;
@@ -402,7 +405,69 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+
+	@Override
+	public void existsReferences(ExistsReferencesRequest request, StreamObserver<ExistsReferencesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Process Activity Requested is Null");
+			}
+			log.fine("References Info Requested = " + request);
+			ExistsReferencesResponse.Builder entityValueList = existsReferences(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+
+	private ExistsReferencesResponse.Builder existsReferences(ExistsReferencesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		// validate tab		
+		if (request.getTabId() <= 0 && Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@AD_Tab_ID@ @Mandatory@");
+		}
+		MTab tab = (MTab) RecordUtil.getEntity(context, I_AD_Tab.Table_Name, request.getTabUuid(), request.getTabId(), null);
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+		String tableName = MTable.getTableName(context, tab.getAD_Table_ID());
+
+		// validate record
+		if(request.getRecordId() <= 0 && Util.isEmpty(request.getRecordUuid())) {
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+		}
+		PO entity = RecordUtil.getEntity(context, tableName, request.getRecordUuid(), request.getRecordId(), null);
+		// if (entity == null) {
+		// 	throw new AdempiereException("@Record_ID@ @NotFound@");
+		// }
+
+		ExistsReferencesResponse.Builder builder = ExistsReferencesResponse.newBuilder();
+
+		int recordCount = 0;
+		if (entity != null && entity.get_ID() >= 0) {
+			List<ZoomInfoFactory.ZoomInfo> zoomInfos = ZoomInfoFactory.retrieveZoomInfos(entity, tab.getAD_Window_ID())
+				.stream()
+				.filter(zoomInfo -> {
+					return zoomInfo.query.getRecordCount() > 0;
+				})
+				.collect(Collectors.toList());
+			if (zoomInfos != null && zoomInfos.size() > 0) {
+				recordCount = zoomInfos.size();
+			}
+		}
+
+		//	Return
+		return builder.setRecordCount(recordCount);
+	}
+
+
 	@Override
 	public void getDefaultValue(GetDefaultValueRequest request, StreamObserver<DefaultValue> responseObserver) {
 		try {

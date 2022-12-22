@@ -61,6 +61,8 @@ service UserInterface {
 	rpc ListBrowserItems(ListBrowserItemsRequest) returns (ListBrowserItemsResponse) {}
 	// Update Browser Entity
 	rpc UpdateBrowserEntity(UpdateBrowserEntityRequest) returns (Entity) {}
+	// Exists References on Record
+	rpc ExistsReferences(ExistsReferencesRequest) returns (ExistsReferencesResponse) {}
 	// List a References
 	rpc ListReferences(ListReferencesRequest) returns (ListReferencesResponse) {}
 	// Get context Info
@@ -571,6 +573,20 @@ message ListDrillTablesResponse {
 	int64 record_count = 1;
 	repeated DrillTable drill_tables = 2;
 	string next_page_token = 3;
+}
+
+// Exists References Request
+message ExistsReferencesRequest {
+	ClientRequest client_request = 1;
+	int32 tab_id = 2;
+	string tab_uuid = 3;
+	int32 record_id = 4;
+	string record_uuid = 5;
+}
+
+// References Count
+message ExistsReferencesResponse {
+	int32 record_count = 1;
 }
 
 // List References
