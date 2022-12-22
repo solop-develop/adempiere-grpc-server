@@ -437,18 +437,24 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}
-		String tableName = MTable.getTableName(context, tab.getAD_Table_ID());
+
+		// builder
+		ExistsReferencesResponse.Builder builder = ExistsReferencesResponse.newBuilder();
+
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		// validate multiple keys as accounting tables and translation tables
+		if (!table.isSingleKey()) {
+			return builder;
+		}
 
 		// validate record
 		if(request.getRecordId() <= 0 && Util.isEmpty(request.getRecordUuid())) {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
-		PO entity = RecordUtil.getEntity(context, tableName, request.getRecordUuid(), request.getRecordId(), null);
+		PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getRecordUuid(), request.getRecordId(), null);
 		// if (entity == null) {
 		// 	throw new AdempiereException("@Record_ID@ @NotFound@");
 		// }
-
-		ExistsReferencesResponse.Builder builder = ExistsReferencesResponse.newBuilder();
 
 		int recordCount = 0;
 		if (entity != null && entity.get_ID() >= 0) {
@@ -1611,19 +1617,27 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if(Util.isEmpty(request.getTableName())) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
-		String tableName = request.getTableName();
+		MTable table = MTable.get(context, request.getTableName());
+		if (table == null || table.getAD_Table_ID() < 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		// validate multiple keys as accounting tables and translation tables
+		if (!table.isSingleKey()) {
+			return builder;
+		}
+
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> params = new ArrayList<>();
 		if(!Util.isEmpty(request.getUuid())) {
 			whereClause.append(I_AD_Element.COLUMNNAME_UUID + " = ?");
 			params.add(request.getUuid());
 		} else if(request.getId() > 0) {
-			whereClause.append(tableName + "_ID = ?");
+			whereClause.append(table.getTableName() + "_ID = ?");
 			params.add(request.getId());
 		} else {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
-		PO entity = new Query(context, tableName, whereClause.toString(), null)
+		PO entity = new Query(context, table.getTableName(), whereClause.toString(), null)
 				.setParameters(params)
 				.first();
 		if(entity != null
