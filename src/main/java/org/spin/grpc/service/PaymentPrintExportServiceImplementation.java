@@ -14,6 +14,7 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -429,24 +430,44 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		if (paySelectionLine == null || paySelectionLine.getC_PaySelectionLine_ID() <= 0) {
 			return builder;
 		}
+
 		String documentNo = "";
+		BigDecimal grandTotal = BigDecimal.ZERO;
 		if (paySelectionLine.getC_Invoice_ID() > 0) {
 			MInvoice invoice = MInvoice.get(Env.getCtx(), paySelectionLine.getC_Invoice_ID());
 			documentNo = invoice.getDocumentNo();
+			grandTotal = invoice.getGrandTotal();
 		} else if (paySelectionLine.getC_Order_ID() > 0) {
 			MOrder order = new MOrder(Env.getCtx(), paySelectionLine.getC_Order_ID(), null);
 			documentNo = order.getDocumentNo();
+			grandTotal = order.getGrandTotal();
 		}
-		
+
+		BigDecimal openAmount = paySelectionLine.getOpenAmt();
+		BigDecimal paymentAmount = paySelectionLine.getPayAmt();
+		BigDecimal overUnderAmount = grandTotal.subtract(openAmount);
+
 		MBPartner vendor = MBPartner.get(Env.getCtx(), paySelectionLine.getC_BPartner_ID());
-		
+
 		builder.setDocumentNo(documentNo)
 			.setVendorId(vendor.getC_BPartner_ID())
 			.setVendorTaxId(ValueUtil.validateNull(vendor.getUUID()))
 			.setVendorTaxId(ValueUtil.validateNull(vendor.getTaxID()))
 			.setVendorName(ValueUtil.validateNull(vendor.getName()))
+			.setGrandTotal(
+				ValueUtil.getDecimalFromBigDecimal(grandTotal)
+			)
+			.setPaymentAmount(
+				ValueUtil.getDecimalFromBigDecimal(paymentAmount)
+			)
+			.setOpenAmount(
+				ValueUtil.getDecimalFromBigDecimal(openAmount)
+			)
+			.setOverUnderAmount(
+				ValueUtil.getDecimalFromBigDecimal(overUnderAmount)
+			)
 		;
-		
+
 		return builder;
 	}
 
@@ -564,7 +585,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ExportResponse.Builder builder = ExportResponse.newBuilder();
+			ExportResponse.Builder builder = export(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -575,6 +596,13 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				.asRuntimeException()
 			);
 		}
+	}
+
+	// TODO: To Be Defined
+	private ExportResponse.Builder export(ExportRequest request) {
+		ContextManager.getContext(request.getClientRequest());
+
+		return ExportResponse.newBuilder();
 	}
 
 
@@ -584,7 +612,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			PrintResponse.Builder builder = PrintResponse.newBuilder();
+			PrintResponse.Builder builder = print(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -595,6 +623,13 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				.asRuntimeException()
 			);
 		}
+	}
+
+	// TODO: To Be Defined
+	private PrintResponse.Builder print(PrintRequest request) {
+		ContextManager.getContext(request.getClientRequest());
+
+		return PrintResponse.newBuilder();
 	}
 
 
@@ -604,7 +639,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ConfirmPrintResponse.Builder builder = ConfirmPrintResponse.newBuilder();
+			ConfirmPrintResponse.Builder builder = print(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -617,6 +652,13 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		}
 	}
 
+	// TODO: To Be Defined
+	private ConfirmPrintResponse.Builder print(ConfirmPrintRequest request) {
+		ContextManager.getContext(request.getClientRequest());
+
+		return ConfirmPrintResponse.newBuilder();
+	}
+
 
 	@Override
 	public void printRemittance(PrintRemittanceRequest request, StreamObserver<PrintRemittanceResponse> responseObserver) {
@@ -624,7 +666,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			PrintRemittanceResponse.Builder builder = PrintRemittanceResponse.newBuilder();
+			PrintRemittanceResponse.Builder builder = printRemittance(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -635,6 +677,13 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				.asRuntimeException()
 			);
 		}
+	}
+
+	// TODO: To Be Defined
+	private PrintRemittanceResponse.Builder printRemittance(PrintRemittanceRequest request) {
+		ContextManager.getContext(request.getClientRequest());
+
+		return PrintRemittanceResponse.newBuilder();
 	}
 
 }
