@@ -30,33 +30,26 @@ package payment_print_export;
 // - org.compiere.apps.form.VPayPrint
 // - org.adempiere.webui.apps.form.WPayPrint
 service PaymentPrintExport {
-	// List Payment Selection
-	rpc ListPaymentSelection(ListPaymentSelectionRequest) returns (data.ListLookupItemsResponse) {}
+	// List Payment Selections
+	rpc ListPaymentSelections(ListPaymentSelectionsRequest) returns (data.ListLookupItemsResponse) {}
 	// Get a Payment Selection info
 	rpc GetPaymentSelection(GetPaymentSelectionRequest) returns (PaymentSelection) {}
 	// List Payment Rules
 	rpc ListPaymentRules(ListPaymentRulesRequest) returns (data.ListLookupItemsResponse) {}
 	// Get Document No
 	rpc GetDocumentNo(GetDocumentNoRequest) returns (GetDocumentNoResponse) {}
-	// Create EFT Payment
-	rpc CreateEFTPayment(CreateEFTPaymentRequest) returns (PaymentSelection) {}
+	// List Payments Check
+	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {}
+	// Process and Create EFT Payment
+	rpc Process(ProcessRequest) returns (ProcessResponse) {}
 	// Export Payments
-	rpc ExportPayments(ExportPaymentsRequest) returns (data.ProcessLog) {}
+	rpc Export(ExportRequest) returns (ExportResponse) {}
 	// Print Payments
-	rpc PrintPayments(PrintPaymentsRequest) returns (data.ProcessLog) {}
+	rpc Print(PrintRequest) returns (PrintResponse) {}
 	// Confirm Payment
-	rpc ConfirmPrint(ConfirmPrintRequest) returns (PaymentSelection) {}
+	rpc ConfirmPrint(ConfirmPrintRequest) returns (ConfirmPrintResponse) {}
 	// Print Remittance
-	rpc PrintRemittance(PrintRemittanceRequest) returns (data.ProcessLog) {}
-}
-
-// Bank Account Type
-message BankAccountType {
-	string uuid = 1;
-	int32 id = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	rpc PrintRemittance(PrintRemittanceRequest) returns (PrintRemittanceResponse) {}
 }
 
 //	Bank Account
@@ -65,25 +58,8 @@ message BankAccount {
 	int32 id = 2;
 	string account_no = 3;
 	string account_name = 4;
-	string bban = 5;
-	string iban = 6;
-	string description = 7;
-	bool is_default = 8;
-	data.Currency currency = 9;
-	BankAccountType bank_account_type = 10;
-	data.Decimal credit_limit = 11;
-	data.Decimal current_balance = 12;
-	bool is_sales_transaction = 13;
-	data.BusinessPartner business_partner = 14;
-}
-
-// Payment Rule
-message PaymentRule {
-	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string bank_name = 5;
+	data.Decimal current_balance = 6;
 }
 
 // Payment Selection
@@ -92,18 +68,18 @@ message PaymentSelection {
 	string uuid = 2;
 	string document_no = 3;
 	BankAccount bank_account = 4;
-	repeated PaymentRule payment_rules = 5;
-	int32 number_payments = 6;
+	data.Decimal payment_amount = 5;
+	int32 payment_quantity = 6;
+	data.Currency currency = 7;
 }
 
-// List Payment Selection Request
-message ListPaymentSelectionRequest {
+// List Payment Selections Request
+message ListPaymentSelectionsRequest {
 	data.ClientRequest client_request = 1;
 	int32 page_size = 2;
 	string page_token = 3;
 	// filters
 	string search_value = 4;
-	repeated data.KeyValue context_attributes = 5;
 }
 
 // Get Payment Selection Request
@@ -138,18 +114,52 @@ message GetDocumentNoResponse {
 	string document_no = 1;
 }
 
-// Create EFT Payment Request
-message CreateEFTPaymentRequest {
+message ListPaymentsRequest {
 	data.ClientRequest client_request = 1;
-	int32 payment_selection_id = 2;
-	string payment_selection_uuid = 3;
+	int32 page_size = 2;
+	string page_token = 3;
+	// filters
+	string search_value = 4;
+	int32 payment_selection_id = 5;
+	string payment_selection_uuid = 6;
+}
+
+message Payment {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3; //
+	int32 vendor_id = 4;
+	string vendor_uuid = 5;
+	string vendor_tax_id = 6;
+	string vendor_name = 7;
+	data.Decimal grand_total = 8;
+	data.Decimal over_under_amount = 9;
+	data.Decimal payment_amount = 10;
+	data.Decimal open_amount = 11;
+}
+
+message ListPaymentsResponse {
+	int64 record_count = 1;
+	repeated Payment records = 2;
+	string next_page_token = 3;
+}
+
+// Process and Create EFT Payment Request
+message ProcessRequest {
+	data.ClientRequest client_request = 1;
+	int32 bank_account_id = 2;
+	string bank_account_uuid = 3;
 	int32 payment_rule_id = 4;
 	string payment_rule_uuid = 5;
 	string document_no = 6;
+}
+
+message ProcessResponse {
+	data.ReportOutput report_output = 1;
 }
 
 // Export Payment Request
-message ExportPaymentsRequest {
+message ExportRequest {
 	data.ClientRequest client_request = 1;
 	int32 payment_selection_id = 2;
 	string payment_selection_uuid = 3;
@@ -158,14 +168,22 @@ message ExportPaymentsRequest {
 	string document_no = 6;
 }
 
+message ExportResponse {
+	data.ReportOutput report_output = 1;
+}
+
 // Print Payment Request
-message PrintPaymentsRequest {
+message PrintRequest {
 	data.ClientRequest client_request = 1;
 	int32 payment_selection_id = 2;
 	string payment_selection_uuid = 3;
 	int32 payment_rule_id = 4;
 	string payment_rule_uuid = 5;
 	string document_no = 6;
+}
+
+message PrintResponse {
+	data.ReportOutput report_output = 1;
 }
 
 // Confirm Print Request
@@ -178,6 +196,10 @@ message ConfirmPrintRequest {
 	string document_no = 6;
 }
 
+message ConfirmPrintResponse {
+	int32 last_document_no = 1;
+}
+
 // Print Remittance Request
 message PrintRemittanceRequest {
 	data.ClientRequest client_request = 1;
@@ -186,4 +208,8 @@ message PrintRemittanceRequest {
 	int32 payment_rule_id = 4;
 	string payment_rule_uuid = 5;
 	string document_no = 6;
+}
+
+message PrintRemittanceResponse {
+	data.ReportOutput report_output = 1;
 }
