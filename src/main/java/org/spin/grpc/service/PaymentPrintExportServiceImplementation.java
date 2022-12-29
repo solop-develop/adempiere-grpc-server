@@ -448,20 +448,19 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		}
 
 		String documentNo = "";
-		BigDecimal grandTotal = BigDecimal.ZERO;
 		if (paySelectionLine.getC_Invoice_ID() > 0) {
 			MInvoice invoice = MInvoice.get(Env.getCtx(), paySelectionLine.getC_Invoice_ID());
 			documentNo = invoice.getDocumentNo();
-			grandTotal = invoice.getGrandTotal();
 		} else if (paySelectionLine.getC_Order_ID() > 0) {
 			MOrder order = new MOrder(Env.getCtx(), paySelectionLine.getC_Order_ID(), null);
 			documentNo = order.getDocumentNo();
-			grandTotal = order.getGrandTotal();
 		}
 
+		BigDecimal grandTotal = paySelectionLine.getAmtSource();
 		BigDecimal openAmount = paySelectionLine.getOpenAmt();
 		BigDecimal paymentAmount = paySelectionLine.getPayAmt();
 		BigDecimal overUnderAmount = grandTotal.subtract(openAmount);
+		BigDecimal finalBalance = paySelectionLine.getOpenAmt().subtract(paymentAmount);
 
 		MBPartner vendor = MBPartner.get(Env.getCtx(), paySelectionLine.getC_BPartner_ID());
 
@@ -481,6 +480,9 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			)
 			.setOverUnderAmount(
 				ValueUtil.getDecimalFromBigDecimal(overUnderAmount)
+			)
+			.setFinalBalance(
+				ValueUtil.getDecimalFromBigDecimal(finalBalance)
 			)
 		;
 

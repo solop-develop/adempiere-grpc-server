@@ -138,6 +138,7 @@ message Payment {
 	data.Decimal over_under_amount = 9;
 	data.Decimal payment_amount = 10;
 	data.Decimal open_amount = 11;
+	data.Decimal final_balance = 12;
 }
 
 message ListPaymentsResponse {
