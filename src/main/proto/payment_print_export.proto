@@ -122,6 +122,8 @@ message ListPaymentsRequest {
 	string search_value = 4;
 	int32 payment_selection_id = 5;
 	string payment_selection_uuid = 6;
+	int32 payment_rule_id = 7;
+	string payment_rule_uuid = 8;
 }
 
 message Payment {
@@ -147,8 +149,8 @@ message ListPaymentsResponse {
 // Process and Create EFT Payment Request
 message ProcessRequest {
 	data.ClientRequest client_request = 1;
-	int32 bank_account_id = 2;
-	string bank_account_uuid = 3;
+	int32 payment_selection_id = 2;
+	string payment_selection_uuid = 3;
 	int32 payment_rule_id = 4;
 	string payment_rule_uuid = 5;
 	string document_no = 6;

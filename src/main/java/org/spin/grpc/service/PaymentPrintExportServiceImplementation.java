@@ -39,6 +39,7 @@ import org.compiere.model.MRefList;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Currency;
@@ -151,9 +152,9 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			)
 		;
 		Integer paymentCount  = new Query(Env.getCtx(), I_C_PaySelectionCheck.Table_Name, I_C_PaySelectionCheck.COLUMNNAME_C_PaySelection_ID + "=?" , null)
-				.setClient_ID()
-				.setParameters(paymentSelection.getC_PaySelection_ID())
-				.count();
+			.setClient_ID()
+			.setParameters(paymentSelection.getC_PaySelection_ID())
+			.count();
 		builder.setPaymentQuantity(paymentCount);
 
 		return builder;
@@ -181,9 +182,17 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		}
 		
 		MBank bank = MBank.get(Env.getCtx(), bankAccount.getC_Bank_ID());
+
+		String accountNo = ValueUtil.validateNull(bankAccount.getAccountNo());
+		int accountNoLength = accountNo.length();
+		if (accountNoLength > 4) {
+			accountNo = accountNo.substring(accountNoLength - 4);
+		}
+		accountNo = String.format("%1$" + 20 + "s", accountNo).replace(" ", "*");
+
 		builder.setId(bankAccount.getC_BankAccount_ID())
 			.setUuid(ValueUtil.validateNull(bankAccount.getUUID()))
-			.setAccountNo(ValueUtil.validateNull(bankAccount.getAccountNo()))
+			.setAccountNo(accountNo)
 			.setAccountName(ValueUtil.validateNull(bankAccount.getName()))
 			.setBankName(
 				ValueUtil.validateNull(bank.getName())
@@ -241,11 +250,18 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		
 		List<MPaySelection> paymentSelectionChekList = query.list();
 		paymentSelectionChekList.stream().forEach(paymentSelection -> {
+			BigDecimal totalAmount = Env.ZERO;
+			if (paymentSelection.getTotalAmt() != null) {
+				totalAmount = paymentSelection.getTotalAmt();
+			}
+
 			//	Display column
 			String displayedValue = new StringBuffer()
 				.append(Util.isEmpty(paymentSelection.getDocumentNo(), true) ? "-1" : paymentSelection.getDocumentNo())
 				.append("_")
-				.append(paymentSelection.getTotalAmt() == null ? "-1" : paymentSelection.getTotalAmt())
+				.append(MCurrency.getISO_Code(Env.getCtx(), paymentSelection.getC_Currency_ID()))
+				.append("_")
+				.append(DisplayType.getNumberFormat(DisplayType.Amount).format(totalAmount))
 				.toString();
 	
 			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
@@ -325,12 +341,12 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 
 		paymemntRulesList.stream().forEach(paymentRule -> {			
 			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
-				paymentSelection.getC_PaySelection_ID(), paymentSelection.getUUID(), null, paymentRule.getName()
+				paymentRule.getAD_Ref_List_ID(), paymentRule.getUUID(), paymentRule.getValue(), paymentRule.getName()
 			);
 
-			builderItem.setTableName(I_C_PaySelection.Table_Name);
-			builderItem.setId(paymentSelection.getC_PaySelection_ID());
-			builderItem.setUuid(ValueUtil.validateNull(paymentSelection.getUUID()));
+			builderItem.setTableName(I_AD_Ref_List.Table_Name);
+			builderItem.setId(paymentRule.getAD_Ref_List_ID());
+			builderItem.setUuid(ValueUtil.validateNull(paymentRule.getUUID()));
 
 			builderList.addRecords(builderItem.build());
 		});
@@ -493,6 +509,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 	private ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
+		// validate payment selection
 		int paymentSelectionId = request.getPaymentSelectionId();
 		if (paymentSelectionId <= 0) {
 			if (!Util.isEmpty(request.getPaymentSelectionUuid(), true)) {
@@ -514,6 +531,28 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			throw new AdempiereException("@C_PaySelection_ID@ @NotFound@");
 		}
 
+		// validate payment rule
+		int paymentRuleId = request.getPaymentRuleId();
+		if (paymentRuleId <= 0) {
+			if (!Util.isEmpty(request.getPaymentRuleUuid(), true)) {
+				paymentRuleId = RecordUtil.getIdFromUuid(I_AD_Ref_List.Table_Name, request.getPaymentRuleUuid(), null);
+			}
+			if (paymentRuleId <= 0) {
+				throw new AdempiereException("@FillMandatory@ @PaymentRule@");
+			}
+		}
+		MRefList paymentRule = new Query(
+			context,
+			I_AD_Ref_List.Table_Name,
+			" AD_Ref_List_ID = ? ",
+			null
+		)
+			.setParameters(paymentRuleId)
+			.first();
+		if (paymentRule == null || paymentRule.getAD_Ref_List_ID() <= 0) {
+			throw new AdempiereException("@PaymentRule@ @NotFound@");
+		}
+
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
@@ -521,21 +560,20 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 
 		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder();
 		final String whereClause = " C_PaySelectionLine.C_PaySelection_ID = ?" 
+			+ " AND C_PaySelectionLine.PaymentRule = ? "
 			+ "	AND EXISTS ("
 			+ "	SELECT 1 FROM C_PaySelectionCheck "
-			+ " INNER JOIN C_PaySelection ON C_PaySelection_ID = C_PaySelectionLine.C_PaySelection_ID"
+			+ " INNER JOIN C_PaySelection ON C_PaySelection.C_PaySelection_ID = C_PaySelectionLine.C_PaySelection_ID"
 			+ "	WHERE "
-			+ " C_PaySelection."
 			+ "	C_PaySelectionCheck.C_PaySelectionCheck_ID = C_PaySelectionLine.C_PaySelectionCheck_ID"
-			+ "	AND C_PaySelectionLine.C_PaySelection_ID = ?"
 			+ ")"
 		;
 		Query paymentSelectionLine = new Query(
-				Env.getCtx(),
-				I_C_PaySelectionLine.Table_Name,
-				whereClause,
-				null
-			).setParameters(paymentSelection.getC_PaySelection_ID());
+			Env.getCtx(),
+			I_C_PaySelectionLine.Table_Name,
+			whereClause,
+			null
+		).setParameters(paymentSelection.getC_PaySelection_ID(), paymentRule.getValue());
 
 		int count = paymentSelectionLine.count();
 
@@ -553,7 +591,9 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(nexPageToken);
+		builderList.setNextPageToken(
+			ValueUtil.validateNull(nexPageToken)
+		);
 	
 		return builderList;
 	}
@@ -565,7 +605,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ProcessResponse.Builder builder = ProcessResponse.newBuilder();
+			ProcessResponse.Builder builder = process(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -576,6 +616,13 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				.asRuntimeException()
 			);
 		}
+	}
+
+	// TODO: To Be Defined
+	private ProcessResponse.Builder process(ProcessRequest request) {
+		ContextManager.getContext(request.getClientRequest());
+
+		return ProcessResponse.newBuilder();
 	}
 
 
