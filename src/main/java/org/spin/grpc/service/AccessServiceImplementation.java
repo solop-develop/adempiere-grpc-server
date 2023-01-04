@@ -241,10 +241,7 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 */
 	private ListRolesResponse.Builder listRoles(ListRolesRequest request) {
 		Properties context = ContextManager.getContext(request.getSessionUuid(), request.getLanguage());
-		MSession session = MSession.get(context, false, false);
-		if(session == null) {
-			throw new AdempiereException("@AD_Session_ID@ @IsMandatory@");
-		}
+		int userId = Env.getAD_User_ID(context);
 
 		//	Get page and count
 		String nexPageToken = null;
@@ -258,13 +255,13 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			+ ")"
 			+ "AND ("
 			+ "IsAccessAllOrgs = 'Y' "
-			+ "OR (IsUseUserOrgAccess = 'N' and EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro WHERE ro.AD_Role_ID = ad_role.AD_Role_ID AND ro.IsActive = 'Y'))"
-			+ "OR (IsUseUserOrgAccess = 'Y' AND EXISTS(SELECT 1 FROM AD_User_OrgAccess AS uo WHERE uo.AD_User_ID = 101 AND uo.IsActive = 'Y'))"
+			+ "OR (IsUseUserOrgAccess = 'N' and EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro WHERE ro.AD_Role_ID = AD_Role.AD_Role_ID AND ro.IsActive = 'Y'))"
+			+ "OR (IsUseUserOrgAccess = 'Y' AND EXISTS(SELECT 1 FROM AD_User_OrgAccess AS uo WHERE uo.AD_User_ID = ? AND uo.IsActive = 'Y'))"
 			+ ")"
 		;
 		Query query = new Query(context, I_AD_Role.Table_Name, 
 			whereClause, null)
-			.setParameters(session.getCreatedBy())
+			.setParameters(userId, userId)
 			.setOnlyActiveRecords(true)
 		;
 		int count = query.count();
