@@ -242,7 +242,8 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 */
 	private ListRolesResponse.Builder convertRolesList(ListRolesRequest request) {
 		ListRolesResponse.Builder builder = ListRolesResponse.newBuilder();
-		MSession session = MSession.get(Env.getCtx(), false, false);
+		Properties context = ContextManager.getContext(request.getSessionUuid(), request.getLanguage());	
+		MSession session = MSession.get(context, false, false);
 		if(session == null) {
 			throw new AdempiereException("@AD_Session_ID@ @IsMandatory@");
 		}
@@ -534,6 +535,8 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		MSession session = getSessionFromUUid(request.getSessionUuid());
 		//	Logout
 		session.logout();
+		ContextManager.removeSession(session.getUUID());
+
 		//	Session values
 		builder.setId(session.getAD_Session_ID());
 		builder.setUuid(ValueUtil.validateNull(session.getUUID()));

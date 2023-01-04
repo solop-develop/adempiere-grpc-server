@@ -109,9 +109,12 @@ public class ContextManager {
 		}
 		context = (Properties) Env.getCtx().clone();
 		DB.validateSupportedUUIDFromDB();
-		MSession session = new Query(context, I_AD_Session.Table_Name, I_AD_Session.COLUMNNAME_UUID + " = ?", null)
-				.setParameters(sessionUuid)
-				.first();
+
+		final String whereClause = I_AD_Session.COLUMNNAME_UUID + " = ? AND "
+			+ I_AD_Session.COLUMNNAME_Processed + " = ? ";
+		MSession session = new Query(context, I_AD_Session.Table_Name, whereClause, null)
+			.setParameters(sessionUuid, false)
+			.first();
 		if(session == null
 				|| session.getAD_Session_ID() <= 0) {
 			throw new AdempiereException("@AD_Session_ID@ @NotFound@");
@@ -128,7 +131,11 @@ public class ContextManager {
 		Env.setCtx((Properties) context.clone());
 		return context;
 	}
-	
+
+	public static void removeSession(String sessionUuid) {
+		sessionsContext.remove(sessionUuid);
+	}
+
 	/**
 	 * Set context with attributes
 	 * @param windowNo
