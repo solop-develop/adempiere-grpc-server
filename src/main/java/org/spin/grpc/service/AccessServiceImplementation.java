@@ -549,6 +549,8 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		MSession session = getSessionFromUUid(request.getSessionUuid());
 		//	Logout
 		session.logout();
+		ContextManager.removeSession(session.getUUID());
+
 		//	Session values
 		builder.setId(session.getAD_Session_ID());
 		builder.setUuid(ValueUtil.validateNull(session.getUUID()));

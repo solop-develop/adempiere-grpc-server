@@ -98,10 +98,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
 			ListOrganizationsResponse.Builder organizationsList = convertOrganizationsList(request);
 			responseObserver.onNext(organizationsList.build());
 			responseObserver.onCompleted();
@@ -775,53 +771,60 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 	 * @return
 	 */
 	private ListOrganizationsResponse.Builder convertOrganizationsList(ListOrganizationsRequest request) {
-		ListOrganizationsResponse.Builder builder = ListOrganizationsResponse.newBuilder();
-		List<Object> parameters = new ArrayList<Object>();
-		String whereClause = "AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx());
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
 		MRole role = null;
 		if(request.getRoleId() != 0) {
-			role = MRole.get(Env.getCtx(), request.getRoleId());
+			role = MRole.get(context, request.getRoleId());
 		} else if(!Util.isEmpty(request.getRoleUuid())) {
-			role = new Query(Env.getCtx(), I_AD_Role.Table_Name, I_AD_Role.COLUMNNAME_UUID + " = ?", null)
-					.setParameters(request.getRoleUuid())
-					.setOnlyActiveRecords(true)
-					.first();
+			role = new Query(context, I_AD_Role.Table_Name, I_AD_Role.COLUMNNAME_UUID + " = ?", null)
+				.setParameters(request.getRoleUuid())
+				.setOnlyActiveRecords(true)
+				.first();
 		}
 		//	get from role access
-		if(role != null) {
-			if (role.isAccessAllOrgs()) {
-				whereClause = " EXISTS(SELECT 1 FROM AD_Role r "
-					+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
-					+ "AND r.AD_Role_ID = ? "
-					+ "AND r.IsActive = 'Y')";
-				parameters.add(role.getAD_Role_ID());
+		if (role == null || !role.isActive()) {
+			throw new AdempiereException("@AD_Role_ID@ @NotFound@");
+		}
+
+		List<Object> parameters = new ArrayList<Object>();
+		String whereClause = "1 = 2";
+		//	get from role access
+		if (role.isAccessAllOrgs()) {
+			whereClause = " EXISTS(SELECT 1 FROM AD_Role r "
+				+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
+				+ "AND r.AD_Role_ID = ? "
+				+ "AND r.IsActive = 'Y')";
+			parameters.add(role.getAD_Role_ID());
+		} else {
+			if(role.isUseUserOrgAccess()) {
+				whereClause = "EXISTS(SELECT 1 FROM AD_User_OrgAccess ua "
+					+ "WHERE ua.AD_Org_ID = AD_Org.AD_Org_ID "
+					+ "AND ua.AD_User_ID = ? "
+					+ "AND ua.IsActive = 'Y')";
+				parameters.add(Env.getAD_User_ID(Env.getCtx()));
 			} else {
-				if(role.isUseUserOrgAccess()) {
-					whereClause = "EXISTS(SELECT 1 FROM AD_User_OrgAccess ua "
-						+ "WHERE ua.AD_Org_ID = AD_Org.AD_Org_ID "
-						+ "AND ua.AD_User_ID = ? "
-						+ "AND ua.IsActive = 'Y')";
-					parameters.add(Env.getAD_User_ID(Env.getCtx()));
-				} else {
-					whereClause = "EXISTS(SELECT 1 FROM AD_Role_OrgAccess ra "
-						+ "WHERE ra.AD_Org_ID = AD_Org.AD_Org_ID "
-						+ "AND ra.AD_Role_ID = ? "
-						+ "AND ra.IsActive = 'Y')";
-					parameters.add(role.getAD_Role_ID());
-				}
+				whereClause = "EXISTS(SELECT 1 FROM AD_Role_OrgAccess ra "
+					+ "WHERE ra.AD_Org_ID = AD_Org.AD_Org_ID "
+					+ "AND ra.AD_Role_ID = ? "
+					+ "AND ra.IsActive = 'Y')";
+				parameters.add(role.getAD_Role_ID());
 			}
 		}
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		Query query = new Query(Env.getCtx(), I_AD_Org.Table_Name, whereClause, null)
-				.setParameters(parameters)
-				.setOnlyActiveRecords(true)
-				.setLimit(limit, offset);
+			.setParameters(parameters)
+			.setOnlyActiveRecords(true)
+			.setLimit(limit, offset);
 		//	Count
 		int count = query.count();
+
+		ListOrganizationsResponse.Builder builder = ListOrganizationsResponse.newBuilder();
 		//	Get List
 		query.<MOrg>list()
 			.forEach(organization -> {
