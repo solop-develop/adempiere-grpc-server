@@ -240,10 +240,12 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private ListRolesResponse.Builder listRoles(ListRolesRequest request) {
-		MSession session = MSession.get(Env.getCtx(), false, false);
+		Properties context = ContextManager.getContext(request.getSessionUuid(), request.getLanguage());
+		MSession session = MSession.get(context, false, false);
 		if(session == null) {
 			throw new AdempiereException("@AD_Session_ID@ @IsMandatory@");
 		}
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getSessionUuid(), request.getPageToken());
