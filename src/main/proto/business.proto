@@ -43,6 +43,10 @@ service BusinessData {
 service UserInterface {
 	// Get a Tab Entity
 	rpc GetTabEntity(GetTabEntityRequest) returns (Entity) {}
+	// Create Tab Entity
+	rpc CreateTabEntity(CreateTabEntityRequest) returns (Entity) {}
+	// Update Tab Entity
+	rpc UpdateTabEntity(UpdateTabEntityRequest) returns (Entity) {}
 	//	List tab Entities
 	rpc ListTabEntities(ListTabEntitiesRequest) returns (ListEntitiesResponse) {}
 	//	Rollback Entity Request
@@ -392,6 +396,26 @@ message GetTabEntityRequest {
 	repeated KeyValue context_attributes = 5;
 	string uuid = 6;
 	int32 id = 7;
+}
+
+// Create Tab Entity Request
+message CreateTabEntityRequest {
+	ClientRequest client_request = 1;
+	string window_uuid = 2;
+	string tab_uuid = 3;
+	int32 window_no = 4;
+	repeated KeyValue attributes = 5;
+}
+
+// Update Tab Entity Request
+message UpdateTabEntityRequest {
+	ClientRequest client_request = 1;
+	string window_uuid = 2;
+	string tab_uuid = 3;
+	int32 window_no = 4;
+	string uuid = 5;
+	int32 id = 6;
+	repeated KeyValue attributes = 7;
 }
 
 // List Tab Entities Request

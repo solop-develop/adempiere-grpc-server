@@ -7,7 +7,7 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
@@ -126,6 +126,7 @@ import org.spin.backend.grpc.common.ChatEntry;
 import org.spin.backend.grpc.common.Condition.Operator;
 import org.spin.backend.grpc.common.ContextInfoValue;
 import org.spin.backend.grpc.common.CreateChatEntryRequest;
+import org.spin.backend.grpc.common.CreateTabEntityRequest;
 import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.DefaultValue;
 import org.spin.backend.grpc.common.DeletePreferenceRequest;
@@ -178,6 +179,7 @@ import org.spin.backend.grpc.common.SetRecordAccessRequest;
 import org.spin.backend.grpc.common.Translation;
 import org.spin.backend.grpc.common.UnlockPrivateAccessRequest;
 import org.spin.backend.grpc.common.UpdateBrowserEntityRequest;
+import org.spin.backend.grpc.common.UpdateTabEntityRequest;
 import org.spin.backend.grpc.common.UserInterfaceGrpc.UserInterfaceImplBase;
 import org.spin.backend.grpc.common.Value;
 import org.adempiere.core.domains.models.I_AD_ContextInfo;
@@ -852,8 +854,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Object Requested = " + request.getUuid());
-			Properties context = ContextManager.getContext(request.getClientRequest());
-			Entity.Builder entityValue = getEntity(context, request);
+			Entity.Builder entityValue = getEntity(request);
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -869,13 +870,25 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private Entity.Builder getEntity(Properties context, GetTabEntityRequest request) {
-		MTab tab = new Query(context, MTab.Table_Name, MTab.COLUMNNAME_UUID + " = ? ", null)
-			.setParameters(request.getTabUuid())
-			.first();
+	private Entity.Builder getEntity(GetTabEntityRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		if (Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
+		}
+		MTab tab = new Query(
+			context,
+			MTab.Table_Name,
+			MTab.COLUMNNAME_UUID + " = ? ",
+			null
+		)
+		.setParameters(request.getTabUuid())
+		.first();
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
 		String tableName = table.getTableName();
-		
+
 		String sql = DictionaryUtil.getQueryWithReferencesFromTab(tab);
 		// add filter
 		StringBuffer whereClause = new StringBuffer()
@@ -913,7 +926,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
 						String columnName = metaData.getColumnName (index);
-						if (columnName.toUpperCase().equals("UUID")) {
+						if (columnName.toUpperCase().equals(I_AD_Element.COLUMNNAME_UUID)) {
 							valueObjectBuilder.setUuid(rs.getString(index));
 						}
 						MColumn field = columnsMap.get(columnName.toUpperCase());
@@ -1067,6 +1080,141 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Return
 		return builder;
 	}
+
+	
+	@Override
+	public void createTabEntity(CreateTabEntityRequest request, StreamObserver<Entity> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			Entity.Builder entityValue = createTabEntity(request);
+			responseObserver.onNext(entityValue.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+	private Entity.Builder createTabEntity(CreateTabEntityRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		if (Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
+		}
+
+		MTab tab = new Query(
+			context,
+			I_AD_Tab.Table_Name,
+			"UUID = ?",
+			null
+		).setParameters(request.getTabUuid())
+		.first();
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		PO entity = table.getPO(0, null);
+		if (entity == null) {
+			throw new AdempiereException("@Error@ PO is null");
+		}
+		request.getAttributesList().forEach(attribute -> {
+			int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+			Object value = null;
+			if (referenceId > 0) {
+				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
+			} 
+			if (value == null) {
+				value = ValueUtil.getObjectFromValue(attribute.getValue());
+			}
+			entity.set_ValueOfColumn(attribute.getKey(), value);
+		});
+		//	Save entity
+		entity.saveEx();
+		
+		
+		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
+			.setClientRequest(request.getClientRequest())
+			.setTabUuid(request.getTabUuid())
+			.setId(entity.get_ID())
+			.setUuid(entity.get_UUID())
+		;
+
+		Entity.Builder builder = getEntity(getEntityBuilder.build());
+		return builder;
+	}
+
+
+	@Override
+	public void updateTabEntity(UpdateTabEntityRequest request, StreamObserver<Entity> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			Entity.Builder entityValue = updateTabEntity(request);
+			responseObserver.onNext(entityValue.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+	private Entity.Builder updateTabEntity(UpdateTabEntityRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		if (Util.isEmpty(request.getTabUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
+		}
+
+		MTab tab = new Query(
+			context,
+			I_AD_Tab.Table_Name,
+			"UUID = ?",
+			null
+		).setParameters(request.getTabUuid())
+		.first();
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+		PO entity = table.getPO(0, null);
+		if (entity != null && entity.get_ID() >= 0) {
+			request.getAttributesList().forEach(attribute -> {
+				int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+				Object value = null;
+				if (referenceId > 0) {
+					value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
+				} 
+				if (value == null) {
+					value = ValueUtil.getObjectFromValue(attribute.getValue());
+				}
+				entity.set_ValueOfColumn(attribute.getKey(), value);
+			});
+			//	Save entity
+			entity.saveEx();
+		}
+
+		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
+			.setClientRequest(request.getClientRequest())
+			.setTabUuid(request.getTabUuid())
+			.setId(entity.get_ID())
+			.setUuid(entity.get_UUID())
+		;
+
+		Entity.Builder builder = getEntity(getEntityBuilder.build());
+		return builder;
+	}
+
 
 	@Override
 	public void listGeneralInfo(ListGeneralInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
