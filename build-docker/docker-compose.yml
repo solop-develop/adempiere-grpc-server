@@ -17,7 +17,7 @@ services:
       - ADEMPIERE_PASSWORD=adempiere
     networks:
       - adempiere-backend
-      
+
   adempiere.backend:
     image: solopcloud/adempiere-backend
     ports:

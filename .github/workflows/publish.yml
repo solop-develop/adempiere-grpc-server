@@ -95,11 +95,81 @@ jobs:
           args: backend.tar.MD5/backend.tar.MD5
 
 
-  # Publish docker image in Docker Hub registry to application
+  # Check secrets to push image in docker hub registry
+  check-docker-secrets:
+    name: Check if docker hub registry information was set on secrets
+    needs:
+      - build-app
+    runs-on: ubuntu-latest
+    outputs:
+      is_have_secrets: ${{ steps.check_secret_job.outputs.is_have_secrets }}
+    steps:
+      - id: check_secret_job
+        run: |
+          if [[ "${{ secrets.DOCKER_REPO_BACKEND }}" != "" && \
+                "${{ secrets.DOCKER_USERNAME }}" != "" && \
+                "${{ secrets.DOCKER_TOKEN }}" != "" ]]; \
+          then
+            echo "Secrets to use a container registry are configured in the repo"
+            echo "is_have_secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "Secrets to use a container registry were not configured in the repo"
+            echo "is_have_secrets=false" >> $GITHUB_OUTPUT
+          fi
+
+
+  # TODO: Download .tar and add docker image without uncompress
+  # Publish docker alpine image in Docker Hub Registry to application
+  push-alpine-imame-dhr:
+    name: Push docker alpine image to Docker Hub
+    needs:
+      - check-docker-secrets
+    # Skip step based on secret
+    if: needs.check-docker-secrets.outputs.is_have_secrets == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Download build dist app
+        uses: actions/download-artifact@v3
+        with:
+          name: backend.zip
+          path: dist
+
+      - name: Unzip dist file
+        run: |
+          cd dist
+          unzip -o backend.zip
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          # CONFIGURE DOCKER SECRETS INTO REPOSITORY
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Push alpine image in Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: build-docker/Dockerfile.alpine
+          push: true
+          tags: | 
+            ${{ secrets.DOCKER_REPO_BACKEND }}:alpine-${{ github.event.release.tag_name }}
+            ${{ secrets.DOCKER_REPO_BACKEND }}:alpine
+          build-args: |
+            JDK_RELEASE=11-jdk-alpine
+
+
+  # TODO: Download .tar and add docker image without uncompress
+  # Publish docker image in Docker Hub Registry to application
   push-imame-dhr:
     name: Push Docker image to Docker Hub
     needs:
-      - build-app
+      - check-docker-secrets
+    # Skip step based on secret
+    if: needs.check-docker-secrets.outputs.is_have_secrets == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -127,30 +197,10 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./build-docker/Dockerfile.prod
+          file: ./build-docker/production.Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_REPO_BACKEND }}:latest
             ${{ secrets.DOCKER_REPO_BACKEND }}:${{ github.event.release.tag_name }}
           build-args: |
             JDK_RELEASE=11-jdk
-            
-            
-      # Setting Dockerfile for Alpine Image      
-      - name: Set Alpine Dockerfile 
-        run: |
-          cp build-docker/Dockerfile.prod build-docker/Dockerfile.alpine
-          sed -i "s|RUN|RUN $(cat build-docker/alpine-adds-on.txt)|g" build-docker/Dockerfile.alpine
-
-      #Build Alpine Adempiere Based Tomcat Image
-      - name: Build and push Alpine Docker image for Adempiere Backend
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: build-docker/Dockerfile.alpine
-          push: true
-          tags: | 
-            ${{ secrets.DOCKER_REPO_BACKEND }}:alpine-${{ github.event.release.tag_name }}
-            ${{ secrets.DOCKER_REPO_BACKEND }}:alpine
-          build-args: |
-            JDK_RELEASE=11-jdk-alpine
