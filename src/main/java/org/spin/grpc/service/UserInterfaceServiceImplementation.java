@@ -1195,7 +1195,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
-		PO entity = table.getPO(0, null);
+		PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getUuid(), request.getId(), null);
 		if (entity != null && entity.get_ID() >= 0) {
 			request.getAttributesList().forEach(attribute -> {
 				int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
