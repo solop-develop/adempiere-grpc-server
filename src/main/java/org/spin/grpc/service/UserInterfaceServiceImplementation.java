@@ -739,8 +739,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
-			ChatEntry.Builder chatEntryValue = addChatEntry(context, request);
+			ChatEntry.Builder chatEntryValue = addChatEntry(request);
 			responseObserver.onNext(chatEntryValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2283,14 +2282,19 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ChatEntry.Builder addChatEntry(Properties context, CreateChatEntryRequest request) {
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+	private ChatEntry.Builder addChatEntry(CreateChatEntryRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		if (Util.isEmpty(request.getTableName())) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 		AtomicReference<MChatEntry> entryReference = new AtomicReference<>();
 		Trx.run(transactionName -> {
 			String tableName = request.getTableName();
 			MTable table = MTable.get(context, tableName);
+			if (table == null || table.getAD_Table_ID() <= 0) {
+				throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+			}
 			PO entity = RecordUtil.getEntity(context, tableName, request.getUuid(), request.getId(), transactionName);
 			//	
 			StringBuffer whereClause = new StringBuffer();
@@ -2315,6 +2319,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			}
 			//	Add entry PO
 			MChatEntry entry = new MChatEntry(chat, request.getComment());
+			entry.setAD_User_ID(Env.getAD_User_ID(context));
 			entry.saveEx(transactionName);
 			entryReference.set(entry);
 		});

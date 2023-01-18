@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -77,6 +78,8 @@ import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.logs.EntityChat;
 import org.spin.backend.grpc.logs.EntityChat.ConfidentialType;
 import org.spin.backend.grpc.logs.EntityChat.ModerationType;
+import org.spin.backend.grpc.logs.ExistsChatEntriesRequest;
+import org.spin.backend.grpc.logs.ExistsChatEntriesResponse;
 import org.spin.backend.grpc.logs.ListChatEntriesRequest;
 import org.spin.backend.grpc.logs.ListChatEntriesResponse;
 import org.spin.backend.grpc.logs.ListEntityChatsRequest;
@@ -172,20 +175,16 @@ public class LogsServiceImplementation extends LogsImplBase {
 			if(request == null) {
 				throw new AdempiereException("Record Logs Requested is Null");
 			}
-			log.fine("Object List Requested = " + request);
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
 			ListEntityLogsResponse.Builder entityValueList = convertEntityLogs(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	
@@ -220,20 +219,16 @@ public class LogsServiceImplementation extends LogsImplBase {
 			if(request == null) {
 				throw new AdempiereException("Record Chats Requested is Null");
 			}
-			log.fine("Object List Requested = " + request);
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
 			ListEntityChatsResponse.Builder entityValueList = convertEntityChats(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	
@@ -897,6 +892,7 @@ public class LogsServiceImplementation extends LogsImplBase {
 	 * @return
 	 */
 	private ListEntityChatsResponse.Builder convertEntityChats(ListEntityChatsRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<>();
 		if(Util.isEmpty(request.getTableName())) {
@@ -924,7 +920,7 @@ public class LogsServiceImplementation extends LogsImplBase {
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
-		Query query = new Query(Env.getCtx(), I_CM_Chat.Table_Name, whereClause.toString(), null)
+		Query query = new Query(context, I_CM_Chat.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters);
 		int count = query.count();
 		List<MChat> chatList = query
@@ -967,6 +963,14 @@ public class LogsServiceImplementation extends LogsImplBase {
 		builder.setUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(table.getTableName(), recordChat.getRecord_ID())));
 		builder.setDescription(ValueUtil.validateNull(recordChat.getDescription()));
 		builder.setLogDate(recordChat.getCreated().getTime());
+
+		if (recordChat.getCreatedBy() > 0) {
+			MUser user = MUser.get(recordChat.getCtx(), recordChat.getCreatedBy());
+			builder.setUserId(recordChat.getCreatedBy());
+			builder.setUserUuid(ValueUtil.validateNull(user.getUUID()));
+			builder.setUserName(ValueUtil.validateNull(user.getName()));
+		}
+
 		//	Confidential Type
 		if(!Util.isEmpty(recordChat.getConfidentialType())) {
 			if(recordChat.getConfidentialType().equals(MChat.CONFIDENTIALTYPE_PublicInformation)) {
@@ -988,5 +992,69 @@ public class LogsServiceImplementation extends LogsImplBase {
 			}
 		}
   		return builder;
+	}
+
+
+	@Override
+	public void existsChatEntries(ExistsChatEntriesRequest request, StreamObserver<ExistsChatEntriesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Exists Chat Entries Requested is Null");
+			}
+			ExistsChatEntriesResponse.Builder builder = existsChatEntries(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+	
+	private ExistsChatEntriesResponse.Builder existsChatEntries(ExistsChatEntriesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		if (Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+
+		MTable table = MTable.get(context, request.getTableName());
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		// validate record
+		int recordId = request.getRecordId();
+		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
+			if (recordId < 0) {
+				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			}
+		}
+
+		final String whereClause = "EXISTS("
+			+ "SELECT 1 FROM CM_Chat "
+			+ "WHERE CM_Chat.CM_Chat_Id = CM_ChatEntry.CM_Chat_Id "
+			+ "AND CM_Chat.Record_ID = ? "
+			+ "AND CM_Chat.AD_Table_ID = ? "
+			+ ")"
+		;
+		int recordCount = new Query(
+			context,
+			I_CM_ChatEntry.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(recordId, table.getAD_Table_ID())
+			.count()
+		;
+		
+		ExistsChatEntriesResponse.Builder builder = ExistsChatEntriesResponse.newBuilder()
+			.setRecordCount(recordCount);
+
+		return builder;
 	}
 }

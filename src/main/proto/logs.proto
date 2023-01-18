@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 syntax = "proto3";
 
@@ -18,7 +18,6 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.logs";
 option java_outer_classname = "ADempiereLogs";
-option objc_class_prefix = "HLW";
 
 import "base_data_type.proto";
 import "client.proto";
@@ -36,6 +35,8 @@ service Logs {
 	rpc ListEntityLogs(ListEntityLogsRequest) returns (ListEntityLogsResponse) {}
 	//	Request Record Chat List
 	rpc ListEntityChats(ListEntityChatsRequest) returns (ListEntityChatsResponse) {}
+	//	Exists Chat Entries
+	rpc ExistsChatEntries(ExistsChatEntriesRequest) returns (ExistsChatEntriesResponse) {}
 	//	Request Chat Entries List
 	rpc ListChatEntries(ListChatEntriesRequest) returns (ListChatEntriesResponse) {}
 	//	List workflow processes
@@ -80,6 +81,18 @@ message ListEntityLogsResponse {
 	string next_page_token = 3;
 }
 
+// Exists References Request
+message ExistsChatEntriesRequest {
+	data.ClientRequest client_request = 1;
+	string table_name = 2;
+	int32 record_id = 4;
+	string record_uuid = 5;
+}
+
+// Entity Chats Count
+message ExistsChatEntriesResponse {
+	int32 record_count = 1;
+}
 
 // Record Chat Request
 message ListEntityChatsRequest {
@@ -119,6 +132,9 @@ message EntityChat {
 	ConfidentialType confidential_type = 7;
 	ModerationType moderation_type = 8;
 	int64 log_date = 9;
+	int32 user_id = 10;
+	string user_uuid = 11;
+	string user_name = 12;
 }
 
 // Record Chat Entry Request

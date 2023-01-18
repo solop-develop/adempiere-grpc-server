@@ -184,11 +184,13 @@ public class ConvertUtil {
 		builder.setChatUuid(ValueUtil.validateNull(chatEntry.getCM_Chat().getUUID()));
 		builder.setSubject(ValueUtil.validateNull(chatEntry.getSubject()));
 		builder.setCharacterData(ValueUtil.validateNull(chatEntry.getCharacterData()));
-		if(chatEntry.getAD_User_ID() != 0) {
+
+		if (chatEntry.getAD_User_ID() > 0) {
 			MUser user = MUser.get(chatEntry.getCtx(), chatEntry.getAD_User_ID());
 			builder.setUserUuid(ValueUtil.validateNull(user.getUUID()));
 			builder.setUserName(ValueUtil.validateNull(user.getName()));
 		}
+
 		builder.setLogDate(chatEntry.getCreated().getTime());
 		//	Confidential Type
 		if(!Util.isEmpty(chatEntry.getConfidentialType())) {
