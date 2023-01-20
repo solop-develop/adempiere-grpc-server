@@ -7,7 +7,7 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
@@ -31,6 +31,7 @@ public enum Services {
 	GENERAL_LEDGER("general_ledger"),
 	IN_OUT("in_out"),
 	INVOICE("invoice"),
+	ISSUE_MANAGEMENT("issue_management"),
 	LOG("log"),
 	MATERIAL_MANAGEMENT("material_management"),
     ORDER("order"),

@@ -157,7 +157,11 @@ public class ValueUtil {
 		if (value == null) {
 			return Value.newBuilder().setValueType(ValueType.DATE);
 		}
-		return Value.newBuilder().setLongValue(value.getTime()).setValueType(ValueType.DATE);
+		return Value.newBuilder()
+			.setLongValue(
+				getLongFromTimestamp(value)
+			)
+			.setValueType(ValueType.DATE);
 	}
 	
 	/**
@@ -558,7 +562,19 @@ public class ValueUtil {
 		}
 		return null;
 	}
-	
+
+	/**
+	 * Get long from Timestamp
+	 * @param value
+	 * @return
+	 */
+	public static long getLongFromTimestamp(Timestamp value) {
+		if (value == null) {
+			return 0L;
+		}
+		return value.getTime();
+	}
+
 	/**
 	 * Convert operator from gRPC to SQL
 	 * @param gRpcOperator

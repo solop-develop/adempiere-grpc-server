@@ -13,6 +13,7 @@ server:
        - log
        - in_out
        - invoice
+       - issue_management
        - material_management
        - order
        - payment
