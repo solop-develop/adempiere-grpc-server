@@ -30,6 +30,10 @@ service IssueManagement {
 	rpc ListRequestTypes(ListRequestTypesRequest) returns (ListRequestTypesResponse) {}
 	// Sales Representative
 	rpc ListSalesRepresentatives(ListSalesRepresentativesRequest) returns (ListSalesRepresentativesResponse) {}
+	// Priority
+	rpc ListPriorities(ListPrioritiesRequest) returns (ListPrioritiesResponse) {}
+	// Status
+	rpc ListStatuses(ListStatusesRequest) returns (ListStatusesResponse) {}
 	// Issue
 	rpc ExistsIssues(ExistsIssuesRequest) returns (ExistsIssuesResponse) {}
 	rpc ListIssues(ListIssuesRequest) returns (ListIssuesReponse) {}
@@ -83,6 +87,49 @@ message ListSalesRepresentativesResponse {
 	string next_page_token = 3;
 }
 
+// Priority
+message Priority {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+}
+
+message ListPrioritiesRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+}
+
+message ListPrioritiesResponse {
+	int64 record_count = 1;
+	repeated Priority records = 2;
+	string next_page_token = 3;
+}
+
+// Status
+message Status {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+}
+
+message ListStatusesRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	int32 request_type_id = 4;
+	string request_type_uuid = 5;
+}
+
+message ListStatusesResponse {
+	int64 record_count = 1;
+	repeated Status records = 2;
+	string next_page_token = 3;
+}
+
 // Issue Definition
 message Issue {
 	int32 id = 1;
@@ -97,6 +144,8 @@ message Issue {
 	string user_uuid = 10;
 	string user_name = 11;
 	SalesRepresentative sales_representative = 12;
+	Status status = 13;
+	Priority priority = 14;
 }
 
 message ExistsIssuesRequest {
@@ -133,9 +182,12 @@ message CreateIssueRequest {
 	string subject = 5;
 	string summary = 6;
 	int32 request_type_id = 7;
-	int32 request_type_uuid = 8;
+	string request_type_uuid = 8;
 	int32 sales_representative_id = 9;
 	string sales_representative_uuid = 10;
+	int32 status_id = 11;
+	string status_uuid = 12;
+	string priority_value = 13;
 }
 
 message UpdateIssueRequest {
@@ -145,9 +197,12 @@ message UpdateIssueRequest {
 	string subject = 5;
 	string summary = 6;
 	int32 request_type_id = 7;
-	int32 request_type_uuid = 8;
+	string request_type_uuid = 8;
 	int32 sales_representative_id = 9;
 	string sales_representative_uuid = 10;
+	int32 status_id = 11;
+	string status_uuid = 12;
+	string priority_value = 13;
 }
 
 message DeleteIssueRequest {

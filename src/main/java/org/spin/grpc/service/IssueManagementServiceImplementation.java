@@ -20,10 +20,13 @@ import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_R_Request;
 import org.adempiere.core.domains.models.I_R_RequestType;
 import org.adempiere.core.domains.models.I_R_RequestUpdate;
+import org.adempiere.core.domains.models.I_R_Status;
 import org.adempiere.core.domains.models.X_R_RequestUpdate;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MRefList;
 import org.compiere.model.MRequest;
 import org.compiere.model.MRequestType;
+import org.compiere.model.MStatus;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.Query;
@@ -40,14 +43,19 @@ import org.spin.backend.grpc.issue_management.ExistsIssuesResponse;
 import org.spin.backend.grpc.issue_management.Issue;
 import org.spin.backend.grpc.issue_management.IssueComment;
 import org.spin.backend.grpc.issue_management.IssueManagementGrpc.IssueManagementImplBase;
+import org.spin.backend.grpc.issue_management.Priority;
 import org.spin.backend.grpc.issue_management.ListIssueCommentsReponse;
 import org.spin.backend.grpc.issue_management.ListIssueCommentsRequest;
 import org.spin.backend.grpc.issue_management.ListIssuesReponse;
 import org.spin.backend.grpc.issue_management.ListIssuesRequest;
+import org.spin.backend.grpc.issue_management.ListPrioritiesResponse;
+import org.spin.backend.grpc.issue_management.ListPrioritiesRequest;
 import org.spin.backend.grpc.issue_management.ListRequestTypesRequest;
 import org.spin.backend.grpc.issue_management.ListRequestTypesResponse;
 import org.spin.backend.grpc.issue_management.ListSalesRepresentativesRequest;
 import org.spin.backend.grpc.issue_management.ListSalesRepresentativesResponse;
+import org.spin.backend.grpc.issue_management.ListStatusesRequest;
+import org.spin.backend.grpc.issue_management.ListStatusesResponse;
 import org.spin.backend.grpc.issue_management.RequestType;
 import org.spin.backend.grpc.issue_management.SalesRepresentative;
 import org.spin.backend.grpc.issue_management.UpdateIssueCommentRequest;
@@ -90,7 +98,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	private ListRequestTypesResponse.Builder listRequestTypes(ListRequestTypesRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
-		Query queryRequestTypes =  new Query(
+		Query queryRequestTypes = new Query(
 			context,
 			I_R_RequestType.Table_Name,
 			null,
@@ -107,9 +115,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 
-		//  Set page token
+		// Set page token
 		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
 		}
@@ -120,19 +128,28 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			.setLimit(limit, offset)
 			.list(MRequestType.class)
 			.forEach(requestType -> {
-			    RequestType.Builder builder = convertRequestType(requestType);
-			    builderList.addRecords(builder);
+				RequestType.Builder builder = convertRequestType(requestType);
+				builderList.addRecords(builder);
 			});
 
 		return builderList;
 	}
 
+	private RequestType.Builder convertRequestType(int requestTypeId) {
+		RequestType.Builder builder = RequestType.newBuilder();
+		if (requestTypeId <= 0) {
+			return builder;
+		}
+
+		MRequestType requestType = MRequestType.get(Env.getCtx(), requestTypeId);
+		return convertRequestType(requestType);
+	}
 	private RequestType.Builder convertRequestType(MRequestType requestType) {
 		RequestType.Builder builder = RequestType.newBuilder();
 		if (requestType == null) {
 			return builder;
 		}
-		
+
 		builder.setId(requestType.getR_RequestType_ID())
 			.setUuid(ValueUtil.validateNull(requestType.getUUID()))
 			.setName(ValueUtil.validateNull(requestType.getName()))
@@ -170,7 +187,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			+ "AD_User.C_BPartner_ID=bp.C_BPartner_ID "
 			+ "AND (bp.IsEmployee='Y' OR bp.IsSalesRep='Y'))"
 		;
-		Query querySaleRepresentatives =  new Query(
+		Query querySaleRepresentatives = new Query(
 			context,
 			I_AD_User.Table_Name,
 			whereClause,
@@ -187,9 +204,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 
-		//  Set page token
+		// Set page token
 		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
 		}
@@ -200,7 +217,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			.list(MUser.class)
 			.forEach(requestType -> {
 				SalesRepresentative.Builder builder = convertSalesRepresentative(requestType);
-			    builderList.addRecords(builder);
+				builderList.addRecords(builder);
 			});
 
 		return builderList;
@@ -226,6 +243,182 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		}
 		MUser salesRepresentative = MUser.get(Env.getCtx(), salesRepresentativeId);
 		return convertSalesRepresentative(salesRepresentative);
+	}
+
+
+	@Override
+	public void listPriorities(ListPrioritiesRequest request, StreamObserver<ListPrioritiesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Requested is Null");
+			}
+			ListPrioritiesResponse.Builder entityValueList = listPriorities(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private ListPrioritiesResponse.Builder listPriorities(ListPrioritiesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		final String whereClause = "AD_Reference_ID = ?";
+		Query queryRequests = new Query(
+			context,
+			MRefList.Table_Name,
+			whereClause,
+			null
+		)
+			// .setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setParameters(MRequest.PRIORITY_AD_Reference_ID)
+		;
+
+		int recordCount = queryRequests.count();
+
+		ListPrioritiesResponse.Builder builderList = ListPrioritiesResponse.newBuilder();
+		builderList.setRecordCount(recordCount);
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		// Set page token
+		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+
+		queryRequests
+			.setLimit(limit, offset)
+			.list(MRefList.class)
+			.forEach(priority -> {
+				Priority.Builder builder = convertPriority(priority);
+				builderList.addRecords(builder);
+			});
+
+		return builderList;
+	}
+
+	private Priority.Builder convertPriority(String value) {
+		Priority.Builder builder = Priority.newBuilder();
+		if (Util.isEmpty(value, true)) {
+			return builder;
+		}
+		MRefList priority = MRefList.get(Env.getCtx(), MRequest.PRIORITY_AD_Reference_ID, value, null);
+		return convertPriority(priority);
+	}
+
+	private Priority.Builder convertPriority(MRefList priority) {
+		Priority.Builder builder = Priority.newBuilder();
+		if (priority == null || priority.getAD_Ref_List_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(priority.getAD_Ref_List_ID())
+			.setUuid(ValueUtil.validateNull(priority.getUUID()))
+			.setValue(ValueUtil.validateNull(priority.getValue()))
+			.setName(ValueUtil.validateNull(priority.getName()))
+			.setDescription(ValueUtil.validateNull(priority.getDescription()))
+		;
+
+		return builder;
+	}
+
+
+	@Override
+	public void listStatuses(ListStatusesRequest request, StreamObserver<ListStatusesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Requested is Null");
+			}
+			ListStatusesResponse.Builder entityValueList = listStatuses(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private ListStatusesResponse.Builder listStatuses(ListStatusesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		int requestTypeId = request.getRequestTypeId();
+		if (requestTypeId <= 0 && !Util.isEmpty(request.getRequestTypeUuid(), true)) {
+			requestTypeId = RecordUtil.getIdFromUuid(MRequestType.Table_Name, request.getRequestTypeUuid(), null);
+		}
+		if (requestTypeId <= 0) {
+			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
+		}
+
+		final String whereClause = "EXISTS (SELECT * FROM R_RequestType rt "
+			+ "INNER JOIN R_StatusCategory sc ON (rt.R_StatusCategory_ID=sc.R_StatusCategory_ID) "
+			+ "WHERE R_Status.R_StatusCategory_ID = sc.R_StatusCategory_ID "
+			+ "AND rt.R_RequestType_ID = ?)"
+		;
+		Query queryRequests = new Query(
+			context,
+			I_R_Status.Table_Name,
+			whereClause,
+			null
+		)
+			// .setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setParameters(requestTypeId)
+		;
+
+		int recordCount = queryRequests.count();
+
+		ListStatusesResponse.Builder builderList = ListStatusesResponse.newBuilder();
+		builderList.setRecordCount(recordCount);
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		// Set page token
+		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+
+		queryRequests
+			.setLimit(limit, offset)
+			.list(MStatus.class)
+			.forEach(requestRecord -> {
+				org.spin.backend.grpc.issue_management.Status.Builder builder = convertStatus(requestRecord);
+				builderList.addRecords(builder);
+			});
+
+		return builderList;
+	}
+
+	private org.spin.backend.grpc.issue_management.Status.Builder convertStatus(MStatus status) {
+		org.spin.backend.grpc.issue_management.Status.Builder builder = org.spin.backend.grpc.issue_management.Status.newBuilder();
+		if (status == null || status.getR_Status_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(status.getR_Status_ID())
+			.setUuid(ValueUtil.validateNull(status.getUUID()))
+			.setName(ValueUtil.validateNull(status.getName()))
+			.setDescription(ValueUtil.validateNull(status.getDescription()))
+		;
+
+		return builder;
 	}
 
 
@@ -351,9 +544,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 
-		//  Set page token
+		// Set page token
 		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
 		}
@@ -364,7 +557,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			.list(MRequest.class)
 			.forEach(requestRecord -> {
 				Issue.Builder builder = convertRequest(requestRecord);
-			    builderList.addRecords(builder);
+				builderList.addRecords(builder);
 			});
 
 		return builderList;
@@ -388,6 +581,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 				ValueUtil.getLongFromTimestamp(request.getUpdated())
 			)
 		;
+		builder.setRequestType(
+			convertRequestType(request.getR_RequestType_ID())
+		);
 		builder.setSalesRepresentative(
 			convertSalesRepresentative(request.getSalesRep_ID())
 		);
@@ -400,6 +596,11 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 				;
 			}
 		}
+		if (!Util.isEmpty(request.getPriority(), true)) {
+			builder.setPriority(
+				convertPriority(request.getPriority())
+			);
+		}
 
 		return builder;
 	}
@@ -411,7 +612,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			Issue.Builder builder = Issue.newBuilder();
+			Issue.Builder builder = createIssue(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -424,6 +625,63 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		}
 	}
 
+	private Issue.Builder createIssue(CreateIssueRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		if (Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+
+		MTable table = MTable.get(context, request.getTableName());
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		// validate record
+		int recordId = request.getRecordId();
+		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
+		}
+		if (recordId <= 0) {
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+		}
+		if (Util.isEmpty(request.getSubject(), true)) {
+			throw new AdempiereException("@FillMandatory@ @Subject@");
+		}
+
+		if (Util.isEmpty(request.getSummary(), true)) {
+			throw new AdempiereException("@FillMandatory@ @Summary@");
+		}
+
+		int requestTypeId = request.getRequestTypeId();
+		if (requestTypeId <= 0 && !Util.isEmpty(request.getRequestTypeUuid(), true)) {
+			requestTypeId = RecordUtil.getIdFromUuid(MRequestType.Table_Name, request.getRequestTypeUuid(), null);
+		}
+		if (requestTypeId <= 0) {
+			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
+		}
+
+		int salesRepresentativeId = request.getSalesRepresentativeId();
+		if (salesRepresentativeId <= 0 && !Util.isEmpty(request.getSalesRepresentativeUuid(), true)) {
+			salesRepresentativeId = RecordUtil.getIdFromUuid(MUser.Table_Name, request.getSalesRepresentativeUuid(), null);
+		}
+		if (salesRepresentativeId <= 0) {
+			throw new AdempiereException("@SalesRep_ID@ @NotFound@");
+		}
+
+		MRequest requestRecord = new MRequest(context, 0, null);
+		requestRecord.setRecord_ID(recordId);
+		requestRecord.setAD_Table_ID(table.getAD_Table_ID());
+		requestRecord.setR_RequestType_ID(requestTypeId);
+		requestRecord.setSubject(request.getSubject());
+		requestRecord.setSummary(request.getSummary());
+		requestRecord.setSalesRep_ID(salesRepresentativeId);
+		requestRecord.saveEx();
+
+		Issue.Builder builder = convertRequest(requestRecord);
+
+		return builder;
+	}
 
 
 	@Override
@@ -432,7 +690,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			Issue.Builder builder = Issue.newBuilder();
+			Issue.Builder builder = updateIssue(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -443,6 +701,55 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 				.asRuntimeException()
 			);
 		}
+	}
+
+	private Issue.Builder updateIssue(UpdateIssueRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		// validate record
+		int recordId = request.getId();
+		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(MRequest.Table_Name, request.getUuid(), null);
+		}
+		if (recordId <= 0) {
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+		}
+		if (Util.isEmpty(request.getSubject(), true)) {
+			throw new AdempiereException("@FillMandatory@ @Subject@");
+		}
+
+		if (Util.isEmpty(request.getSummary(), true)) {
+			throw new AdempiereException("@FillMandatory@ @Summary@");
+		}
+
+		int requestTypeId = request.getRequestTypeId();
+		if (requestTypeId <= 0 && !Util.isEmpty(request.getRequestTypeUuid(), true)) {
+			requestTypeId = RecordUtil.getIdFromUuid(MRequestType.Table_Name, request.getRequestTypeUuid(), null);
+		}
+		if (requestTypeId <= 0) {
+			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
+		}
+
+		int salesRepresentativeId = request.getSalesRepresentativeId();
+		if (salesRepresentativeId <= 0 && !Util.isEmpty(request.getSalesRepresentativeUuid(), true)) {
+			salesRepresentativeId = RecordUtil.getIdFromUuid(MUser.Table_Name, request.getSalesRepresentativeUuid(), null);
+		}
+		if (salesRepresentativeId <= 0) {
+			throw new AdempiereException("@SalesRep_ID@ @NotFound@");
+		}
+
+		MRequest requestRecord = new MRequest(context, recordId, null);
+		if (requestRecord == null || requestRecord.getR_Request_ID() <= 0) {
+			throw new AdempiereException("@R_Request_ID@ @NotFound@");
+		}
+		requestRecord.setR_RequestType_ID(requestTypeId);
+		requestRecord.setSubject(request.getSubject());
+		requestRecord.setSummary(request.getSummary());
+		requestRecord.setSalesRep_ID(salesRepresentativeId);
+		requestRecord.saveEx();
+
+		Issue.Builder builder = convertRequest(requestRecord);
+		return builder;
 	}
 
 
@@ -539,9 +846,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 
-		//  Set page token
+		// Set page token
 		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
 		}
@@ -552,7 +859,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			.list(X_R_RequestUpdate.class)
 			.forEach(requestRecord -> {
 				IssueComment.Builder builder = convertRequestUpdate(requestRecord);
-			    builderList.addRecords(builder);
+				builderList.addRecords(builder);
 			});
 
 		return builderList;
@@ -592,7 +899,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			IssueComment.Builder builder = IssueComment.newBuilder();
+			IssueComment.Builder builder = createIssueComment(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -603,6 +910,26 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 				.asRuntimeException()
 			);
 		}
+	}
+
+	private IssueComment.Builder createIssueComment(CreateIssueCommentRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		// validate parent record
+		int recordId = request.getIssueId();
+		if (recordId <= 0 && !Util.isEmpty(request.getIssueUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(I_R_Request.COLUMNNAME_R_Request_ID, request.getIssueUuid(), null);
+			if (recordId < 0) {
+				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			}
+		}
+		MRequest requestRecord = new MRequest(context, recordId, null);
+		requestRecord.setResult(
+			ValueUtil.validateNull(request.getResult())
+		);
+		requestRecord.saveEx();
+
+		return IssueComment.newBuilder();
 	}
 
 
