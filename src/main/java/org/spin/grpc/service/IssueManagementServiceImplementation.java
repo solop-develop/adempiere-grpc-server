@@ -20,6 +20,7 @@ import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_R_Request;
 import org.adempiere.core.domains.models.I_R_RequestType;
 import org.adempiere.core.domains.models.I_R_RequestUpdate;
+import org.adempiere.core.domains.models.X_R_RequestUpdate;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRequest;
 import org.compiere.model.MRequestType;
@@ -493,7 +494,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListIssueCommentsReponse.Builder builder = ListIssueCommentsReponse.newBuilder();
+			ListIssueCommentsReponse.Builder builder = listIssueComments(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -509,41 +510,30 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	private ListIssueCommentsReponse.Builder listIssueComments(ListIssueCommentsRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-
-		MTable table = MTable.get(context, request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-
-		// validate record
-		int recordId = request.getRecordId();
-		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
+		// validate parent record
+		int recordId = request.getIssueId();
+		if (recordId <= 0 && !Util.isEmpty(request.getIssueUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(I_R_Request.COLUMNNAME_R_Request_ID, request.getIssueUuid(), null);
 			if (recordId < 0) {
 				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 			}
 		}
 
-		final String whereClause = "Record_ID = ? "
-			+ "AND AD_Table_ID = ? "
-		;
+		final String whereClause = "R_Request_ID = ? ";
 		Query queryRequests = new Query(
 			context,
-			I_R_Request.Table_Name,
+			I_R_RequestUpdate.Table_Name,
 			whereClause,
 			null
 		)
 			// .setClient_ID()
 			.setOnlyActiveRecords(true)
-			.setParameters(recordId, table.getAD_Table_ID())
+			.setParameters(recordId)
 		;
 
 		int recordCount = queryRequests.count();
 
-		ListIssuesReponse.Builder builderList = ListIssuesReponse.newBuilder();
+		ListIssueCommentsReponse.Builder builderList = ListIssueCommentsReponse.newBuilder();
 		builderList.setRecordCount(recordCount);
 
 		String nexPageToken = null;
@@ -559,13 +549,40 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 
 		queryRequests
 			.setLimit(limit, offset)
-			.list(MRequest.class)
+			.list(X_R_RequestUpdate.class)
 			.forEach(requestRecord -> {
-				Issue.Builder builder = convertRequest(requestRecord);
+				IssueComment.Builder builder = convertRequestUpdate(requestRecord);
 			    builderList.addRecords(builder);
 			});
 
 		return builderList;
+	}
+
+	private IssueComment.Builder convertRequestUpdate(X_R_RequestUpdate requestUpdate) {
+		IssueComment.Builder builder = IssueComment.newBuilder();
+		if (requestUpdate == null || requestUpdate.getR_RequestUpdate_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(requestUpdate.getR_RequestUpdate_ID())
+			.setUuid(ValueUtil.validateNull(requestUpdate.getUUID()))
+			.setCreated(
+				ValueUtil.getLongFromTimestamp(requestUpdate.getCreated())
+			)
+			.setResult(
+				ValueUtil.validateNull(requestUpdate.getResult())
+			)
+		;
+		MUser user = MUser.get(Env.getCtx(), requestUpdate.getCreatedBy());
+		builder.setUserId(user.getAD_User_ID())
+			.setUserUuid(
+				ValueUtil.validateNull(user.getUUID())
+			)
+			.setUserName(
+				ValueUtil.validateNull(user.getName())
+			)
+		;
+
+		return builder;
 	}
 
 
