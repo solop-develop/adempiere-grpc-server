@@ -406,6 +406,15 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		return builderList;
 	}
 
+	private org.spin.backend.grpc.issue_management.Status.Builder convertStatus(int statusId) {
+		org.spin.backend.grpc.issue_management.Status.Builder builder = org.spin.backend.grpc.issue_management.Status.newBuilder();
+		if (statusId <= 0) {
+			return builder;
+		}
+
+		MStatus requestType = MStatus.get(Env.getCtx(), statusId);
+		return convertStatus(requestType);
+	}
 	private org.spin.backend.grpc.issue_management.Status.Builder convertStatus(MStatus status) {
 		org.spin.backend.grpc.issue_management.Status.Builder builder = org.spin.backend.grpc.issue_management.Status.newBuilder();
 		if (status == null || status.getR_Status_ID() <= 0) {
@@ -586,6 +595,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		);
 		builder.setSalesRepresentative(
 			convertSalesRepresentative(request.getSalesRep_ID())
+		);
+		builder.setStatus(
+			convertStatus(request.getR_Status_ID())
 		);
 		if (request.getCreatedBy() > 0) {
 			MUser user = MUser.get(Env.getCtx(), request.getCreatedBy());
