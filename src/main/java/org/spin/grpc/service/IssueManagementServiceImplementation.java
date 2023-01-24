@@ -26,6 +26,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRequest;
 import org.compiere.model.MRequestType;
+import org.compiere.model.MRequestUpdate;
 import org.compiere.model.MStatus;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
@@ -688,6 +689,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		requestRecord.setSubject(request.getSubject());
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
+		requestRecord.setPriority(
+			ValueUtil.validateNull(request.getPriorityValue())
+		);
 		requestRecord.saveEx();
 
 		Issue.Builder builder = convertRequest(requestRecord);
@@ -758,6 +762,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		requestRecord.setSubject(request.getSubject());
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
+		requestRecord.setPriority(
+			ValueUtil.validateNull(request.getPriorityValue())
+		);
 		requestRecord.saveEx();
 
 		Issue.Builder builder = convertRequest(requestRecord);
@@ -951,7 +958,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			IssueComment.Builder builder = IssueComment.newBuilder();
+			IssueComment.Builder builder = updateIssueComment(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -962,6 +969,29 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 				.asRuntimeException()
 			);
 		}
+	}
+
+	private IssueComment.Builder updateIssueComment(UpdateIssueCommentRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		// validate parent record
+		int recordId = request.getId();
+		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(I_R_Request.COLUMNNAME_R_Request_ID, request.getUuid(), null);
+			if (recordId <= 0) {
+				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			}
+		}
+		MRequestUpdate requestUpdate = new MRequestUpdate(context, recordId, null);
+		if (requestUpdate == null || requestUpdate.getR_Request_ID() <= 0) {
+			throw new AdempiereException("@R_RequestUpdate_ID@ @NotFound@");
+		}
+		requestUpdate.setResult(
+			ValueUtil.validateNull(request.getResult())
+		);
+		requestUpdate.saveEx();
+
+		return convertRequestUpdate(requestUpdate);
 	}
 
 
@@ -996,12 +1026,12 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			}
 		}
 
-		MRequest requestRecord = new MRequest(context, recordId, null);
-		if (requestRecord == null || requestRecord.getR_Request_ID() <= 0) {
+		MRequestUpdate requestUpdate = new MRequestUpdate(context, recordId, null);
+		if (requestUpdate == null || requestUpdate.getR_Request_ID() <= 0) {
 			throw new AdempiereException("@R_RequestUpdate_ID@ @NotFound@");
 		}
 
-		requestRecord.deleteEx(true);
+		requestUpdate.deleteEx(true);
 
 		return Empty.newBuilder();
 	}
