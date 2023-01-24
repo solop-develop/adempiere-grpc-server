@@ -623,10 +623,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			null
 		).first();
 
-		builder.setActionUuid(
-			ValueUtil.validateNull(menu.getUUID())
-		);
-
 		String name = menu.get_Translation(I_AD_Menu.COLUMNNAME_Name);
 		if (Util.isEmpty(name, true)) {
 			name = menu.getName();
@@ -640,6 +636,17 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 		builder.setDescription(
 			ValueUtil.validateNull(description)
+		);
+
+		String actionUuid = "";
+		if (menu.getAction().equals(MMenu.ACTION_Window)) {
+			if (menu.getAD_Window_ID() > 0) {
+				MWindow window = new MWindow(Env.getCtx(), menu.getAD_Window_ID(), null);
+				actionUuid = window.getUUID();
+			}
+		}
+		builder.setActionUuid(
+			ValueUtil.validateNull(actionUuid)
 		);
 
 		return builder;
@@ -679,10 +686,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			null
 		).first();
 
-		builder.setActionUuid(
-			ValueUtil.validateNull(menu.getUUID())
-		);
-
 		String name = menu.get_Translation(I_AD_Menu.COLUMNNAME_Name);
 		if (Util.isEmpty(name, true)) {
 			name = menu.getName();
@@ -696,6 +699,17 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 		builder.setDescription(
 			ValueUtil.validateNull(description)
+		);
+
+		String actionUuid = "";
+		if (menu.getAction().equals(MMenu.ACTION_Window)) {
+			if (menu.getAD_Window_ID() > 0) {
+				MWindow window = new MWindow(Env.getCtx(), menu.getAD_Window_ID(), null);
+				actionUuid = window.getUUID();
+			}
+		}
+		builder.setActionUuid(
+			ValueUtil.validateNull(actionUuid)
 		);
 
 		return builder;
@@ -751,10 +765,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			null
 		).first();
 
-		builder.setActionUuid(
-			ValueUtil.validateNull(menu.getUUID())
-		);
-
 		String name = menu.get_Translation(I_AD_Menu.COLUMNNAME_Name);
 		if (Util.isEmpty(name, true)) {
 			name = menu.getName();
@@ -768,6 +778,17 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 		builder.setDescription(
 			ValueUtil.validateNull(description)
+		);
+
+		String actionUuid = "";
+		if (menu.getAction().equals(MMenu.ACTION_Form)) {
+			if (menu.getAD_Form_ID() > 0) {
+				MForm form = new MForm(Env.getCtx(), menu.getAD_Form_ID(), null);
+				actionUuid = form.getUUID();
+			}
+		}
+		builder.setActionUuid(
+			ValueUtil.validateNull(actionUuid)
 		);
 
 		return builder;
