@@ -14,10 +14,12 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_R_Request;
+import org.adempiere.core.domains.models.I_R_RequestAction;
 import org.adempiere.core.domains.models.I_R_RequestType;
 import org.adempiere.core.domains.models.I_R_RequestUpdate;
 import org.adempiere.core.domains.models.I_R_Status;
@@ -25,6 +27,7 @@ import org.adempiere.core.domains.models.X_R_RequestUpdate;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRequest;
+import org.compiere.model.MRequestAction;
 import org.compiere.model.MRequestType;
 import org.compiere.model.MRequestUpdate;
 import org.compiere.model.MStatus;
@@ -33,6 +36,7 @@ import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.issue_management.CreateIssueCommentRequest;
@@ -793,22 +797,53 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 
 	private Empty.Builder deleteIssue(DeleteIssueRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
-		
-		// validate record
-		int recordId = request.getId();
-		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(I_R_Request.Table_Name, request.getUuid(), null);
-			if (recordId < 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+
+		Trx.run(transactionName -> {
+			// validate record
+			int recordId = request.getId();
+			if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+				recordId = RecordUtil.getIdFromUuid(I_R_Request.Table_Name, request.getUuid(), transactionName);
+				if (recordId < 0) {
+					throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+				}
 			}
-		}
 
-		MRequest requestRecord = new MRequest(context, recordId, null);
-		if (requestRecord == null || requestRecord.getR_Request_ID() <= 0) {
-			throw new AdempiereException("@R_Request_ID@ @NotFound@");
-		}
+			MRequest requestRecord = new MRequest(context, recordId, transactionName);
+			if (requestRecord == null || requestRecord.getR_Request_ID() <= 0) {
+				throw new AdempiereException("@R_Request_ID@ @NotFound@");
+			}
 
-		requestRecord.deleteEx(true);
+			final String whereClause = "R_Request_ID = ?";
+
+			// delete actions
+			List<MRequestAction> requestActionsList = new Query(
+				context,
+				I_R_RequestAction.Table_Name,
+				whereClause,
+				transactionName
+			)
+				.setParameters(requestRecord.getR_Request_ID())
+				.list(MRequestAction.class);
+			requestActionsList.forEach(requestAction -> {
+				requestAction.deleteEx(true);
+			});
+
+			// delete updates
+			List<MRequestUpdate> requestUpdatesList = new Query(
+				context,
+				I_R_RequestUpdate.Table_Name,
+				whereClause,
+				transactionName
+			)
+				.setParameters(requestRecord.getR_Request_ID())
+				.list(MRequestUpdate.class);
+			requestUpdatesList.forEach(requestUpdate -> {
+				requestUpdate.deleteEx(true);
+			});
+
+			// delete header
+			requestRecord.deleteEx(true);
+		});
 
 		return Empty.newBuilder();
 	}
