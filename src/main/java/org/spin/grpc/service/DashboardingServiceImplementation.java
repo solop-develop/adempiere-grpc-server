@@ -27,11 +27,15 @@ import org.adempiere.apps.graph.GraphColumn;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MDocumentStatus;
+import org.adempiere.core.domains.models.I_AD_Menu;
+import org.adempiere.core.domains.models.I_AD_Note;
 import org.adempiere.core.domains.models.I_AD_Role;
 import org.adempiere.core.domains.models.I_AD_TreeNodeMM;
 import org.adempiere.core.domains.models.I_AD_User;
+import org.adempiere.core.domains.models.I_AD_WF_Activity;
 import org.adempiere.core.domains.models.I_PA_DashboardContent;
 import org.adempiere.core.domains.models.I_PA_Goal;
+import org.adempiere.core.domains.models.I_R_Request;
 import org.compiere.model.MChart;
 import org.compiere.model.MColorSchema;
 import org.compiere.model.MDashboardContent;
@@ -52,6 +56,7 @@ import org.jfree.data.category.CategoryDataset;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
+import org.spin.backend.grpc.dashboarding.Action;
 import org.spin.backend.grpc.dashboarding.Chart;
 import org.spin.backend.grpc.dashboarding.ChartData;
 import org.spin.backend.grpc.dashboarding.ChartSerie;
@@ -65,8 +70,11 @@ import org.spin.backend.grpc.dashboarding.ListDashboardsRequest;
 import org.spin.backend.grpc.dashboarding.ListDashboardsResponse;
 import org.spin.backend.grpc.dashboarding.ListFavoritesRequest;
 import org.spin.backend.grpc.dashboarding.ListFavoritesResponse;
+import org.spin.backend.grpc.dashboarding.ListNotificationsRequest;
+import org.spin.backend.grpc.dashboarding.ListNotificationsResponse;
 import org.spin.backend.grpc.dashboarding.ListPendingDocumentsRequest;
 import org.spin.backend.grpc.dashboarding.ListPendingDocumentsResponse;
+import org.spin.backend.grpc.dashboarding.Notification;
 import org.spin.backend.grpc.dashboarding.PendingDocument;
 
 import io.grpc.Status;
@@ -551,5 +559,218 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+	@Override
+	public void listNotifications(ListNotificationsRequest request, StreamObserver<ListNotificationsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListNotificationsResponse.Builder favoritesList = listNotifications(request);
+			responseObserver.onNext(favoritesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private ListNotificationsResponse.Builder listNotifications(ListNotificationsRequest request) {
+		ContextManager.getContext(request.getClientRequest());
+
+		ListNotificationsResponse.Builder builderList = ListNotificationsResponse.newBuilder();
+
+		builderList.addNotifications(getNotificationNotice());
+		builderList.addNotifications(getNoticeRequest());
+		builderList.addNotifications(getNotificationWorkflowActivities());
+
+		return builderList;
+	}
+
+	private Notification.Builder getNotificationNotice() {
+		Notification.Builder builder = Notification.newBuilder();
+
+		final String whereClause = "AD_Client_ID = ? "
+			+ "AND AD_User_ID IN (0, ?) "
+			+ "AND Processed = 'N'"
+		;
+		int clientId = Env.getAD_Client_ID(Env.getCtx());
+		int userId = Env.getAD_User_ID(Env.getCtx());
+
+		int quantity = new Query(
+			Env.getCtx(),
+			I_AD_Note.Table_Name,
+			whereClause,
+			null
+		)
+		.setParameters(clientId, userId)
+		.count();
+		builder.setQuantity(quantity);
+
+		builder.setAction(Action.WINDOW);
+
+		final String whereClauseMenu = "Name = 'Notice' AND IsSummary = 'N'";
+		MMenu menu = new Query(
+			Env.getCtx(),
+			I_AD_Menu.Table_Name,
+			whereClauseMenu,
+			null
+		).first();
+
+		builder.setActionUuid(
+			ValueUtil.validateNull(menu.getUUID())
+		);
+
+		String name = menu.get_Translation(I_AD_Menu.COLUMNNAME_Name);
+		if (Util.isEmpty(name, true)) {
+			name = menu.getName();
+		}
+		builder.setName(
+			ValueUtil.validateNull(name)
+		);
+		String description = menu.get_Translation(I_AD_Menu.COLUMNNAME_Description);
+		if (Util.isEmpty(description, true)) {
+			description = menu.getDescription();
+		}
+		builder.setDescription(
+			ValueUtil.validateNull(description)
+		);
+
+		return builder;
+	}
+
+	private Notification.Builder getNoticeRequest() {
+		Notification.Builder builder = Notification.newBuilder();
+
+		final String whereClause = "Processed='N' "
+			+ "AND (SalesRep_ID=? OR AD_Role_ID = ?) "
+			+ "AND (DateNextAction IS NULL "
+			+ "OR TRUNC(DateNextAction, 'DD') <= TRUNC(SysDate, 'DD'))"
+			+ "AND (R_Status_ID IS NULL "
+			+ "OR R_Status_ID IN (SELECT R_Status_ID FROM R_Status WHERE IsClosed='N'))"
+		;
+
+		int userId = Env.getAD_User_ID(Env.getCtx());
+		int roleId = Env.getAD_Role_ID(Env.getCtx());
+
+		int quantity = new Query(
+			Env.getCtx(),
+			I_R_Request.Table_Name,
+			whereClause,
+			null
+		)
+		.setParameters(userId, roleId)
+		.count();
+		builder.setQuantity(quantity);
+
+		builder.setAction(Action.WINDOW);
+
+		final String whereClauseMenu = "Name = 'Request' AND IsSummary = 'N'";
+		MMenu menu = new Query(
+			Env.getCtx(),
+			I_AD_Menu.Table_Name,
+			whereClauseMenu,
+			null
+		).first();
+
+		builder.setActionUuid(
+			ValueUtil.validateNull(menu.getUUID())
+		);
+
+		String name = menu.get_Translation(I_AD_Menu.COLUMNNAME_Name);
+		if (Util.isEmpty(name, true)) {
+			name = menu.getName();
+		}
+		builder.setName(
+			ValueUtil.validateNull(name)
+		);
+		String description = menu.get_Translation(I_AD_Menu.COLUMNNAME_Description);
+		if (Util.isEmpty(description, true)) {
+			description = menu.getDescription();
+		}
+		builder.setDescription(
+			ValueUtil.validateNull(description)
+		);
+
+		return builder;
+	}
+
+	private Notification.Builder getNotificationWorkflowActivities() {
+		Notification.Builder builder = Notification.newBuilder();
+
+		final String whereClause = "Processed='N' AND WFState='OS' AND ("
+			// Owner of Activity
+			+ " AD_User_ID = ? " // #1
+			// Invoker (if no invoker = all)
+			+ "OR EXISTS ( "
+			+ "SELECT * FROM AD_WF_Responsible r "
+			+ "WHERE AD_WF_Activity.AD_WF_Responsible_ID = r.AD_WF_Responsible_ID "
+			+ "AND COALESCE(r.AD_User_ID,0) = 0 "
+			+ "AND COALESCE(r.AD_Role_ID,0) = 0 "
+			+ "AND (AD_WF_Activity.AD_User_ID = ? OR AD_WF_Activity.AD_User_ID IS NULL) " // #2
+			+ ") "
+			// Responsible User
+			+ "OR EXISTS ( "
+			+ "SELECT * FROM AD_WF_Responsible r "
+			+ "WHERE r.AD_User_ID = ? " // #3
+			+ "AND AD_WF_Activity.AD_WF_Responsible_ID = r.AD_WF_Responsible_ID "
+			+ ") "
+			// Responsible Role
+			+ "OR EXISTS ( "
+			+ "SELECT * FROM AD_WF_Responsible r "
+			+ "INNER JOIN AD_User_Roles ur ON (r.AD_Role_ID = ur.AD_Role_ID) "
+			+ "WHERE ur.AD_User_ID = ? " // #4
+			+ "AND AD_WF_Activity.AD_WF_Responsible_ID = r.AD_WF_Responsible_ID) "
+			+ ")"
+		;
+		int userId = Env.getAD_User_ID(Env.getCtx());
+
+		int quantity = new Query(
+			Env.getCtx(),
+			I_AD_WF_Activity.Table_Name,
+			whereClause,
+			null
+		)
+		.setParameters(userId, userId, userId, userId)
+		.count();
+		builder.setQuantity(quantity);
+
+		builder.setAction(Action.FORM);
+
+		final String whereClauseMenu = "Name = 'Workflow Activities' AND IsSummary = 'N'";
+		MMenu menu = new Query(
+			Env.getCtx(),
+			I_AD_Menu.Table_Name,
+			whereClauseMenu,
+			null
+		).first();
+
+		builder.setActionUuid(
+			ValueUtil.validateNull(menu.getUUID())
+		);
+
+		String name = menu.get_Translation(I_AD_Menu.COLUMNNAME_Name);
+		if (Util.isEmpty(name, true)) {
+			name = menu.getName();
+		}
+		builder.setName(
+			ValueUtil.validateNull(name)
+		);
+		String description = menu.get_Translation(I_AD_Menu.COLUMNNAME_Description);
+		if (Util.isEmpty(description, true)) {
+			description = menu.getDescription();
+		}
+		builder.setDescription(
+			ValueUtil.validateNull(description)
+		);
+
+		return builder;
+	}
+
 }

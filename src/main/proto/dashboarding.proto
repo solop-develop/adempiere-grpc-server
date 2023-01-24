@@ -7,7 +7,7 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
@@ -33,6 +33,8 @@ service Dashboarding {
 	rpc ListPendingDocuments(ListPendingDocumentsRequest) returns (ListPendingDocumentsResponse) {}
 	//	Get Chart
 	rpc GetChart(GetChartRequest) returns (Chart) {}
+	// Notification
+	rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {}
 }
 
 // Dashboard
@@ -133,7 +135,7 @@ message GetChartRequest {
 }
 
 // Chart
-message Chart {	
+message Chart {
 	string uuid = 1;
 	int32 id = 2;
 	string name = 3;
@@ -162,4 +164,34 @@ message ColorSchema {
 	string name = 1;
 	string color = 2;
 	data.Decimal percent = 3;
+}
+
+enum Action {
+	WINDOW = 0;
+	PROCESS = 1;
+	REPORT = 2;
+	BROWSER = 3;
+	FORM = 4;
+	WORKFLOW = 5;
+}
+
+message Notification {
+	string name = 1;
+	string description = 2;
+	int32 quantity = 3;
+	Action action = 4;
+	string action_uuid = 5;
+}
+
+message ListNotificationsRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	string search_value = 4;
+}
+
+message ListNotificationsResponse {
+	int64 record_count = 1;
+	repeated Notification notifications = 2;
+	string next_page_token = 3;
 }
