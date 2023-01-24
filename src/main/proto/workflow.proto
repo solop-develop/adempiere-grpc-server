@@ -18,7 +18,6 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.wf";
 option java_outer_classname = "ADempiereWorkflow";
-option objc_class_prefix = "HLW";
 
 import "base_data_type.proto";
 import "client.proto";
@@ -35,8 +34,10 @@ service Workflow {
 	rpc ListDocumentActions(ListDocumentActionsRequest) returns (ListDocumentActionsResponse) {}
 	//	List Document Statuses
 	rpc ListDocumentStatuses(ListDocumentStatusesRequest) returns (ListDocumentStatusesResponse) {}
-	//	List Workflow Activities
+	//	Workflow Activities
 	rpc ListWorkflowActivities(ListWorkflowActivitiesRequest) returns (ListWorkflowActivitiesResponse) {}
+	rpc Process(ProcessRequest) returns (data.Empty) {}
+	rpc Forward(ForwardRequest) returns (data.Empty) {}
 	//	Run a Document Action
 	rpc RunDocumentAction(RunDocumentActionRequest) returns (data.ProcessLog) {}
 }
@@ -63,6 +64,22 @@ message ListWorkflowsResponse {
 	string next_page_token = 3;
 }
 
+enum DurationUnit {
+	DAY = 0;
+	HOUR = 1;
+	MINUTE = 2;
+	MONTH = 3;
+	SECOND = 4;
+	YEAR = 5;
+}
+
+enum PublishStatus {
+	RELEASED = 0;
+	TEST = 1;
+	UNDER_REVISION = 2;
+	VOID = 3;
+}
+
 // Workflow Definition
 message WorkflowDefinition {
 	int32 id = 1;
@@ -79,24 +96,26 @@ message WorkflowDefinition {
 	int64 valid_from = 12;
 	bool is_default = 13;
 	bool is_valid = 14;
-	enum DurationUnit {
-		DAY = 0;
-		HOUR = 1;
-		MINUTE = 2;
-		MONTH = 3;
-		SECOND = 4;
-		YEAR = 5;
-	}
-	enum PublishStatus {
-		RELEASED = 0;
-		TEST = 1;
-		UNDER_REVISION = 2;
-		VOID = 3;
-	}
 	PublishStatus publish_status = 15;
 	DurationUnit duration_unit = 16;
 	WorkflowNode start_node = 17;
 	repeated WorkflowNode workflow_nodes = 18;
+}
+
+enum Action {
+	USER_CHOICE = 0;
+	DOCUMENT_ACTION = 1;
+	SUB_WORKFLOW = 2;
+	EMAIL = 3;
+	APPS_PROCESS = 4;
+	SMART_VIEW = 5;
+	APPS_REPORT = 6;
+	SMART_BROWSE = 7;
+	APPS_TASK = 8;
+	SET_VARIABLE = 9;
+	USER_WINDOW = 10;
+	USER_FORM = 11;
+	WAIT_SLEEP = 12;
 }
 
 // Workflow Node
@@ -113,22 +132,6 @@ message WorkflowNode {
 	string document_action_value = 10;
 	string document_action_name = 11;
 	int32 priority = 12;
-
-	enum Action {
-		USER_CHOICE = 0;
-		DOCUMENT_ACTION = 1;
-		SUB_WORKFLOW = 2;
-		EMAIL = 3;
-		APPS_PROCESS = 4;
-		SMART_VIEW = 5;
-		APPS_REPORT = 6;
-		SMART_BROWSE = 7;
-		APPS_TASK = 8;
-		SET_VARIABLE = 9;
-		USER_WINDOW = 10;
-		USER_FORM = 11;
-		WAIT_SLEEP = 12;
-	}
 	Action action = 13;
 	repeated WorkflowTransition transitions = 14;
 }
@@ -146,6 +149,23 @@ message WorkflowTransition {
 	repeated WorkflowCondition workflow_conditions = 9;
 }
 
+enum ConditionType {
+	AND = 0;
+	OR = 1;
+}
+
+enum Operation {
+	EQUAL = 0;
+	NOT_EQUAL = 1;
+	LIKE = 2;
+	GREATER = 4;
+	GREATER_EQUAL = 5;
+	LESS = 6;
+	LESS_EQUAL = 7;
+	BETWEEN = 8;
+	SQL = 9;
+}
+
 //	Condition for transition
 message WorkflowCondition {
 	int32 id = 1;
@@ -153,22 +173,6 @@ message WorkflowCondition {
 	int32 sequence = 3;
 	string column_name = 4;
 	string value = 5;
-	enum ConditionType {
-		AND = 0;
-		OR = 1;
-	}
-	enum Operation {
-		EQUAL = 0;
-		NOT_EQUAL = 1;
-		LIKE = 2;
-		GREATER = 4;
-		GREATER_EQUAL = 5;
-		LESS = 6;
-		LESS_EQUAL = 7;
-		BETWEEN = 8;
-		SQL = 9;
-	}
-
 	ConditionType condition_type = 6;
 	Operation operation = 7;
 }
@@ -248,6 +252,23 @@ message WorkflowActivity {
 	WorkflowNode node = 17;
 }
 
+enum WorkflowState {
+	RUNNING = 0;
+	COMPLETED = 1;
+	ABORTED = 2;
+	TERMINATED = 3;
+	SUSPENDED = 4;
+	NOT_STARTED = 5;
+}
+
+enum Priority {
+	URGENT = 0;
+	HIGH = 1;
+	MEDIUM = 2;
+	LOW = 3;
+	MINOR = 4;
+}
+
 // Workflow Process
 message WorkflowProcess {
 	string process_uuid = 1;
@@ -263,26 +284,16 @@ message WorkflowProcess {
 	string responsible_name = 11;
 	string text_message = 12;
 	bool processed = 13;
-	enum WorkflowState {
-		RUNNING = 0;
-		COMPLETED = 1;
-		ABORTED = 2;
-		TERMINATED = 3;
-		SUSPENDED = 4;
-		NOT_STARTED = 5;
-
-	}
-	enum Priority {
-		URGENT = 0;
-		HIGH = 1;
-		MEDIUM = 2;
-		LOW = 3;
-		MINOR = 4;
-	}
 	WorkflowState workflow_state = 14;
 	Priority priority = 15;
 	repeated WorkflowEvent workflow_events = 16;
 	int64 log_date = 17;
+}
+
+enum EventType {
+	PROCESS_CREATED = 0;
+	PROCESS_COMPLETED = 1;
+	STATE_CHANGED = 2;
 }
 
 // Workflow Event Audit
@@ -302,20 +313,6 @@ message WorkflowEvent {
 	string attribute_name = 13;
 	string old_value = 14;
 	string new_value = 15;
-	enum WorkflowState {
-		RUNNING = 0;
-		COMPLETED = 1;
-		ABORTED = 2;
-		TERMINATED = 3;
-		SUSPENDED = 4;
-		NOT_STARTED = 5;
-
-	}
-	enum EventType {
-		PROCESS_CREATED = 0;
-		PROCESS_COMPLETED = 1;
-		STATE_CHANGED = 2;
-	}
 	WorkflowState workflow_state = 16;
 	EventType event_type = 17;
 	int64 log_date = 18;
@@ -328,4 +325,21 @@ message RunDocumentActionRequest {
 	string uuid = 3;
 	int32 id = 4;
 	string document_action = 5;
+}
+
+message ProcessRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
+	string message = 4;
+	bool is_approved = 5;
+}
+
+message ForwardRequest {
+	data.ClientRequest client_request = 1;
+	int32 id = 2;
+	string uuid = 3;
+	string message = 4;
+	int32 user_id = 5;
+	string user_uuid = 6;
 }

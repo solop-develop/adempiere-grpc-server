@@ -31,9 +31,11 @@ import org.adempiere.core.domains.models.I_AD_WF_Activity;
 import org.adempiere.core.domains.models.I_AD_WF_Node;
 import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.adempiere.core.domains.models.I_C_Order;
+import org.compiere.model.MColumn;
 import org.compiere.model.MDocType;
 import org.compiere.model.MOrder;
 import org.compiere.model.MTable;
+import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
@@ -45,10 +47,13 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.compiere.wf.MWFActivity;
+import org.compiere.wf.MWFNode;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.client.ClientRequest;
 import org.spin.backend.grpc.common.DocumentStatus;
+import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.wf.ForwardRequest;
 import org.spin.backend.grpc.wf.ListDocumentActionsRequest;
 import org.spin.backend.grpc.wf.ListDocumentActionsResponse;
 import org.spin.backend.grpc.wf.ListDocumentStatusesRequest;
@@ -57,6 +62,7 @@ import org.spin.backend.grpc.wf.ListWorkflowActivitiesRequest;
 import org.spin.backend.grpc.wf.ListWorkflowActivitiesResponse;
 import org.spin.backend.grpc.wf.ListWorkflowsRequest;
 import org.spin.backend.grpc.wf.ListWorkflowsResponse;
+import org.spin.backend.grpc.wf.ProcessRequest;
 import org.spin.backend.grpc.wf.RunDocumentActionRequest;
 import org.spin.backend.grpc.wf.WorkflowActivity;
 import org.spin.backend.grpc.wf.WorkflowDefinition;
@@ -710,8 +716,8 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
 		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), recordId, null);
-		if (entity != null) {
-			recordId = entity.get_ID();
+		if (entity == null) {
+			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
 		//	Validate as document
 		if(!DocAction.class.isAssignableFrom(entity.getClass())) {
@@ -737,4 +743,127 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		return response;
 	}
 
+
+	@Override
+	public void process(ProcessRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			Empty.Builder processReponse = process(request);
+			responseObserver.onNext(processReponse.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private Empty.Builder process(ProcessRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		// validate workflow activity
+		int workflowActivityId = request.getId();
+		if (workflowActivityId <= 0) {
+			if (!Util.isEmpty(request.getUuid(), true)) {
+				workflowActivityId = RecordUtil.getIdFromUuid(MWFActivity.Table_Name, request.getUuid(), null);
+			}
+			if (workflowActivityId <= 0) {
+				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			}
+		}
+		MWFActivity workActivity = new MWFActivity(context, workflowActivityId, null);
+		if (workActivity == null || workActivity.getAD_WF_Activity_ID() <= 0) {
+			throw new AdempiereException("@AD_WF_Activity_ID@ @NotFound@");
+		}
+
+		String message = ValueUtil.validateNull(request.getMessage());
+		String isApproved = ValueUtil.booleanToString(request.getIsApproved());
+		int userId = Env.getAD_User_ID(context);
+
+
+		MWFNode node = workActivity.getNode();
+		MColumn column = MColumn.get(context, node.getAD_Column_ID());
+		int displayTypeId = column.getAD_Reference_ID();
+
+		try {
+			workActivity.setUserChoice(userId, isApproved, displayTypeId, message);
+		}
+		catch (Exception e) {
+			throw new AdempiereException(e.getLocalizedMessage());
+		}
+
+		return Empty.newBuilder();
+	}
+
+
+
+	@Override
+	public void forward(ForwardRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			Empty.Builder processReponse = forward(request);
+			responseObserver.onNext(processReponse.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private Empty.Builder forward(ForwardRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		// validate workflow activity
+		int workflowActivityId = request.getId();
+		if (workflowActivityId <= 0) {
+			if (!Util.isEmpty(request.getUuid(), true)) {
+				workflowActivityId = RecordUtil.getIdFromUuid(MWFActivity.Table_Name, request.getUuid(), null);
+			}
+			if (workflowActivityId <= 0) {
+				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			}
+		}
+		MWFActivity workActivity = new MWFActivity(context, workflowActivityId, null);
+		if (workActivity == null || workActivity.getAD_WF_Activity_ID() <= 0) {
+			throw new AdempiereException("@AD_WF_Activity_ID@ @NotFound@");
+		}
+
+		// validate user
+		int userId = request.getUserId();
+		if (userId <= 0) {
+			if (!Util.isEmpty(request.getUuid(), true)) {
+				workflowActivityId = RecordUtil.getIdFromUuid(MUser.Table_Name, request.getUserUuid(), null);
+			}
+			if (userId <= 0) {
+				throw new AdempiereException("@AD_User_ID@ @NotFound@");
+			}
+		}
+		MUser user = MUser.get(context, userId);
+		if (user == null || user.getAD_User_ID() <= 0) {
+			throw new AdempiereException("@AD_User_ID@ @NotFound@");
+		}
+
+		String message = ValueUtil.validateNull(request.getMessage());
+		boolean isSuccefully = workActivity.forwardTo(user.getAD_User_ID(), message);
+		if (!isSuccefully) {
+			throw new AdempiereException("@CannotForward@");
+		}
+
+		return Empty.newBuilder();
+	}
 }
