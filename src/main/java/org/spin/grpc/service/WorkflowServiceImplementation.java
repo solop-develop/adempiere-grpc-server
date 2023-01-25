@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -45,6 +45,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.compiere.wf.MWFActivity;
 import org.compiere.wf.MWFNode;
@@ -768,36 +769,48 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 	private Empty.Builder process(ProcessRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
-		// validate workflow activity
-		int workflowActivityId = request.getId();
-		if (workflowActivityId <= 0) {
-			if (!Util.isEmpty(request.getUuid(), true)) {
-				workflowActivityId = RecordUtil.getIdFromUuid(MWFActivity.Table_Name, request.getUuid(), null);
-			}
+		Trx.run(transactionName -> {
+			// validate workflow activity
+			int workflowActivityId = request.getId();
 			if (workflowActivityId <= 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+				if (!Util.isEmpty(request.getUuid(), true)) {
+					workflowActivityId = RecordUtil.getIdFromUuid(MWFActivity.Table_Name, request.getUuid(), transactionName);
+				}
+				if (workflowActivityId <= 0) {
+					throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+				}
 			}
-		}
-		MWFActivity workActivity = new MWFActivity(context, workflowActivityId, null);
-		if (workActivity == null || workActivity.getAD_WF_Activity_ID() <= 0) {
-			throw new AdempiereException("@AD_WF_Activity_ID@ @NotFound@");
-		}
 
-		String message = ValueUtil.validateNull(request.getMessage());
-		String isApproved = ValueUtil.booleanToString(request.getIsApproved());
-		int userId = Env.getAD_User_ID(context);
+			MWFActivity workActivity = new MWFActivity(context, workflowActivityId, transactionName);
+			if (workActivity == null || workActivity.getAD_WF_Activity_ID() <= 0) {
+				throw new AdempiereException("@AD_WF_Activity_ID@ @NotFound@");
+			}
 
+			String message = ValueUtil.validateNull(request.getMessage());
+			int userId = Env.getAD_User_ID(context);
 
-		MWFNode node = workActivity.getNode();
-		MColumn column = MColumn.get(context, node.getAD_Column_ID());
-		int displayTypeId = column.getAD_Reference_ID();
+			MWFNode node = workActivity.getNode();
 
-		try {
-			workActivity.setUserChoice(userId, isApproved, displayTypeId, message);
-		}
-		catch (Exception e) {
-			throw new AdempiereException(e.getLocalizedMessage());
-		}
+			// User Choice - Answer
+			if (MWFNode.ACTION_UserChoice.equals(node.getAction())) {
+				MColumn column = MColumn.get(context, node.getAD_Column_ID());
+				int displayTypeId = column.getAD_Reference_ID();
+				String isApproved = ValueUtil.booleanToString(request.getIsApproved());
+				try {
+					workActivity.setUserChoice(userId, isApproved, displayTypeId, message);
+				} catch (Exception e) {
+					throw new AdempiereException(e.getLocalizedMessage());
+				}
+			}
+			// User Action
+			else {
+				try {
+					workActivity.setUserConfirmation(userId, message);
+				} catch (Exception e) {
+					throw new AdempiereException(e.getLocalizedMessage());
+				}
+			}
+		});
 
 		return Empty.newBuilder();
 	}

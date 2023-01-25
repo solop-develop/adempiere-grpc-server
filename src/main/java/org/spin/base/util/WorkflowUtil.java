@@ -36,6 +36,7 @@ import org.compiere.wf.MWFNodeNext;
 import org.compiere.wf.MWFProcess;
 import org.compiere.wf.MWFResponsible;
 import org.compiere.wf.MWorkflow;
+import org.spin.backend.grpc.wf.Action;
 import org.spin.backend.grpc.wf.ConditionType;
 import org.spin.backend.grpc.wf.DurationUnit;
 import org.spin.backend.grpc.wf.Operation;
@@ -248,6 +249,51 @@ public class WorkflowUtil {
 			builder.setResponsibleName(ValueUtil.validateNull(responsible.getName()));
 		}
 		builder.setPriority(node.getPriority());
+
+		// set action node
+		switch (node.getAction()) {
+			case MWFNode.ACTION_UserChoice:
+				builder.setAction(Action.USER_CHOICE);
+				break;
+			case MWFNode.ACTION_DocumentAction:
+				builder.setAction(Action.DOCUMENT_ACTION);
+				break;
+			case MWFNode.ACTION_SubWorkflow:
+				builder.setAction(Action.SUB_WORKFLOW);
+				break;
+			case MWFNode.ACTION_EMail:
+				builder.setAction(Action.EMAIL);
+				break;
+			case MWFNode.ACTION_AppsProcess:
+				builder.setAction(Action.APPS_PROCESS);
+				break;
+			case MWFNode.ACTION_SmartView:
+				builder.setAction(Action.SMART_VIEW);
+				break;
+			case MWFNode.ACTION_AppsReport:
+				builder.setAction(Action.APPS_REPORT);
+				break;
+			case MWFNode.ACTION_SmartBrowse:
+				builder.setAction(Action.SMART_BROWSE);
+				break;
+			case MWFNode.ACTION_AppsTask:
+				builder.setAction(Action.APPS_TASK);
+				break;
+			case MWFNode.ACTION_SetVariable:
+				builder.setAction(Action.SET_VARIABLE);
+				break;
+			case MWFNode.ACTION_UserWindow:
+				builder.setAction(Action.USER_WINDOW);
+				break;
+			case MWFNode.ACTION_UserForm:
+				builder.setAction(Action.USER_FORM);
+				break;
+			case MWFNode.ACTION_WaitSleep:
+			default:
+				builder.setAction(Action.WAIT_SLEEP);
+				break;
+		}
+
 		//	Get Events
 		List<MWFNodeNext> workflowNodeTransitionList = new Query(
 				node.getCtx(),
