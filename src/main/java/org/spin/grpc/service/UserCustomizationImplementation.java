@@ -28,7 +28,6 @@ import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_AD_View_Column;
 import org.adempiere.core.domains.models.I_ASP_Level;
-import org.adempiere.core.domains.models.I_ASP_Module;
 import org.adempiere.core.domains.models.X_ASP_Level;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
@@ -299,7 +298,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		List<Object> parameters = new ArrayList<>();
 		String whereClause = "";
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			whereClause = RecordUtil.addSearchValueAndGet("", I_ASP_Module.Table_Name, request.getSearchValue(), parameters);
+			whereClause = RecordUtil.addSearchValueAndGet("", I_ASP_Level.Table_Name, request.getSearchValue(), parameters);
 
 			if (!Util.isEmpty(whereClause, true)) {
 				whereClause = whereClause.replace(" WHERE ", "");
@@ -308,7 +307,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 
 		Query query = new Query(
 			context,
-			I_ASP_Module.Table_Name,
+			I_ASP_Level.Table_Name,
 			null,
 			null
 		)
@@ -364,6 +363,29 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		;
 
 		return builder;
+	}
+
+
+	private PO getEntityToCustomizationType(int levelType, int levelId, String levelUuid) {
+		String tableName = null;
+		if (Level.CLIENT_VALUE == levelType) {
+			tableName = I_ASP_Level.Table_Name;
+		} else if (Level.ROLE_VALUE == levelType) {
+			tableName = I_AD_Role.Table_Name;
+		} else if (Level.USER_VALUE == levelType) {
+			tableName = I_AD_User.Table_Name;
+		} else {
+			throw new AdempiereException("@LevelType@ @NotFound@");
+		}
+
+		PO entityType = RecordUtil.getEntity(Env.getCtx(), tableName, levelUuid, levelId, null);
+		if (entityType == null) {
+			throw new AdempiereException(
+				"@" + tableName + "_ID@ @NotFound@"
+			);
+		}
+
+		return entityType;
 	}
 
 
@@ -496,27 +518,6 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		return builder;
 	}
 
-	private PO getEntityToCustomizationType(int levelType, int levelId, String levelUuid) {
-		String tableName = null;
-		if (Level.CLIENT_VALUE == levelType) {
-			tableName = I_ASP_Level.Table_Name;
-		} else if (Level.ROLE_VALUE == levelType) {
-			tableName = I_AD_Role.Table_Name;
-		} else if (Level.USER_VALUE == levelType) {
-			tableName = I_AD_User.Table_Name;
-		} else {
-			throw new AdempiereException("@LevelType@ @NotFound@");
-		}
-
-		PO entityType = RecordUtil.getEntity(Env.getCtx(), tableName, levelUuid, levelId, null);
-		if (entityType == null) {
-			throw new AdempiereException(
-				"@" + tableName + "_ID@ @NotFound@"
-			);
-		}
-
-		return entityType;
-	}
 
 	@Override
 	public void saveBrowseCustomization(SaveBrowseCustomizationRequest request, StreamObserver<Empty> responseObserver) {
