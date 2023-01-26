@@ -42,6 +42,7 @@ import org.spin.grpc.service.PointOfSalesServiceImplementation;
 import org.spin.grpc.service.ProductServiceImplementation;
 import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.grpc.service.UpdateImplementation;
+import org.spin.grpc.service.UserCustomizationImplementation;
 import org.spin.grpc.service.UserInterfaceServiceImplementation;
 import org.spin.grpc.service.WebStoreServiceImplementation;
 import org.spin.grpc.service.WorkflowServiceImplementation;
@@ -102,11 +103,6 @@ public class AllInOneServices {
 			serverBuilder.addService(new FileManagementServiceImplementation());
 			logger.info("Service " + Services.FILE_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
-		  //	User Interface
-		  if(SetupLoader.getInstance().getServer().isValidService(Services.UI.getServiceName())) {
-			  serverBuilder.addService(new UserInterfaceServiceImplementation());
-			  logger.info("Service " + Services.UI.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		  }
 		  //	Dashboarding
 		  if(SetupLoader.getInstance().getServer().isValidService(Services.DASHBOARDING.getServiceName())) {
 			  serverBuilder.addService(new DashboardingServiceImplementation());
@@ -196,6 +192,16 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {
 			serverBuilder.addService(new TimeControlServiceImplementation());
 			logger.info("Service " + Services.TIME_CONTROL.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	User Customization
+		if(SetupLoader.getInstance().getServer().isValidService(Services.USER_CUSTOMIZATION.getServiceName())) {
+			serverBuilder.addService(new UserCustomizationImplementation());
+			logger.info("Service " + Services.USER_CUSTOMIZATION.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	User Interface
+		if(SetupLoader.getInstance().getServer().isValidService(Services.UI.getServiceName())) {
+			serverBuilder.addService(new UserInterfaceServiceImplementation());
+			logger.info("Service " + Services.UI.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 
 		  //	Add services
