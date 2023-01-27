@@ -33,6 +33,7 @@ import org.compiere.model.MRequestUpdate;
 import org.compiere.model.MStatus;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -655,13 +656,14 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		}
 
 		// validate record
-		int recordId = request.getRecordId();
-		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
-		}
-		if (recordId <= 0) {
+		if (request.getRecordId() < 0 && Util.isEmpty(request.getRecordUuid(), true)) {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
+		PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getRecordUuid(), request.getRecordId(), null);
+		if (entity == null) {
+			throw new AdempiereException("@PO@ @NotFound@");
+		}
+
 		if (Util.isEmpty(request.getSubject(), true)) {
 			throw new AdempiereException("@FillMandatory@ @Subject@");
 		}
@@ -687,7 +689,15 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		}
 
 		MRequest requestRecord = new MRequest(context, 0, null);
-		requestRecord.setRecord_ID(recordId);
+		PO.copyValues(entity, requestRecord, true);
+
+		// validate if entity key column exists on request to set
+		String keyColumn = entity.get_TableName() + "_ID";
+		if (requestRecord.get_ColumnIndex(keyColumn) >= 0) {
+			requestRecord.set_ValueOfColumn(keyColumn, entity.get_ID());
+		}
+
+		requestRecord.setRecord_ID(entity.get_ID());
 		requestRecord.setAD_Table_ID(table.getAD_Table_ID());
 		requestRecord.setR_RequestType_ID(requestTypeId);
 		requestRecord.setSubject(request.getSubject());
