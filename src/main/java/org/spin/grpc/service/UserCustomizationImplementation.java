@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Browse;
+import org.adempiere.core.domains.models.I_AD_Browse_Field;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
@@ -485,13 +486,19 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 				MField field = new Query(
 					context,
 					I_AD_Field.Table_Name,
-					I_AD_Field.COLUMNNAME_AD_Column_ID + " = ?",
+					I_AD_Field.COLUMNNAME_AD_Column_ID + " = ? AND " + I_AD_Field.COLUMNNAME_AD_Tab_ID + " = ?",
 					null
 				)
-					.setParameters(columnId)
+					.setParameters(columnId, tab.getAD_Tab_ID())
 					.setOnlyActiveRecords(true)
 					.first()
 				;
+				if (field == null || field.getAD_Field_ID() <= 0) {
+					log.warning(
+						Msg.getMsg(context, "@AD_Field_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
+					);
+					return;
+				}
 
 				// instance custom field
 				MFieldCustom customField = customFieldsList.stream()
@@ -502,7 +509,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 					.orElse(null)
 				;
 
-				customField.setSeqNo(fieldAttributes.getSequence());
+				customField.setSeqNoGrid(fieldAttributes.getSequence());
 				// checks if the column exists in the database
 				if (customField.get_ColumnIndex(IS_DISPLAYED_COLUMN_NAME) >= 0) {
 					customField.set_ValueOfColumn(
@@ -572,7 +579,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 			customBrowse.setHierarchyType(MBrowseCustom.HIERARCHYTYPE_Overwrite);
 			customBrowse.saveEx();
 		} else {
-			customBrowse = new MBrowseCustom(context, browseId, null);
+			customBrowse = new MBrowseCustom(context, customBrowseId, null);
 		}
 		List<MBrowseFieldCustom> customBrowseFieldList = customBrowse.getFields();
 		request.getFieldAttributesList().forEach(fieldAttributes -> {
@@ -583,6 +590,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 				return;
 			}
 
+			// instance view column
 			MViewColumn viewColumn = new Query(
 				context,
 				I_AD_View_Column.Table_Name,
@@ -600,9 +608,10 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 				return;
 			}
 
+			// instance browse field
 			MBrowseField browseField = new Query(
 				context,
-				I_AD_Process_Para.Table_Name,
+				I_AD_Browse_Field.Table_Name,
 				"AD_Browse_ID = ? AND AD_View_Column_ID = ?",
 				null
 			)
@@ -617,7 +626,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 				return;
 			}
 
-			// instance field
+			// instance browse field custom
 			MBrowseFieldCustom customBrowseField = customBrowseFieldList.stream()
 				.filter(browseFieldItem -> {
 					return browseFieldItem.getAD_Browse_Field_ID() == browseField.getAD_Browse_Field_ID();
