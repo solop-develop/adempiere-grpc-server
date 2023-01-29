@@ -1032,7 +1032,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		}
 
 		String columnModified = null;
-		if (Util.isEmpty(requestAction.getNullColumns(), true)) {
+		if (!Util.isEmpty(requestAction.getNullColumns(), true)) {
 			columnModified = requestAction.getNullColumns();
 		} else {
 			if (requestAction.getR_RequestType_ID() > 0) {
