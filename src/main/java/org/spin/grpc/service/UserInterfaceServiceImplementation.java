@@ -1195,7 +1195,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
 		PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getUuid(), request.getId(), null);
-		if (entity != null && entity.get_ID() >= 0) {
+		if (entity == null) {
+			throw new AdempiereException("@Error@ @PO@ @NotFound@");
+		}
+		if (entity.get_ID() >= 0) {
 			request.getAttributesList().forEach(attribute -> {
 				int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 				Object value = null;
@@ -2511,18 +2514,17 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 
 		//	Convert value from type
-		if(DisplayType.isID(referenceId)
-				|| referenceId == DisplayType.Integer) {
+		if (DisplayType.isID(referenceId) || referenceId == DisplayType.Integer) {
 			try {
 				defaultValueAsObject = Integer.parseInt(String.valueOf(defaultValueAsObject));
 			} catch (Exception e) {
-				log.warning(e.getLocalizedMessage());
+				// log.warning(e.getLocalizedMessage());
 			}
-		} else if(DisplayType.isNumeric(validationRuleId)) {
+		} else if (DisplayType.isNumeric(referenceId)) {
 			try {
 				defaultValueAsObject = new BigDecimal(String.valueOf(defaultValueAsObject));
 			} catch (Exception e) {
-				log.warning(e.getLocalizedMessage());
+				// log.warning(e.getLocalizedMessage());
 			}
 		}
 		if (ReferenceUtil.validateReference(referenceId)) {
