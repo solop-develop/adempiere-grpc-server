@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,7 +31,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_AD_Column;
+import org.adempiere.core.domains.models.I_C_Order;
 import org.compiere.model.MColumn;
+import org.compiere.model.MLookup;
+import org.compiere.model.MLookupFactory;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MQuery;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
@@ -40,6 +45,8 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Msg;
+import org.compiere.util.NamePair;
+import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.Decimal;
@@ -333,7 +340,65 @@ public class ValueUtil {
 		//
 		return builderValue;
 	}
-	
+
+	public static String getDisplayedValueFromReference(Object value, String columnName, int displayTypeId, int referenceValueId) {
+		String displayedValue = null;
+
+		if (value == null) {
+			return displayedValue;
+		}
+		if (DisplayType.isText (displayTypeId)) {
+			;
+		} else if (displayTypeId == DisplayType.YesNo) {
+			displayedValue = booleanToString(value.toString(), true);
+		} else if (displayTypeId == DisplayType.Amount) {
+			DecimalFormat amountFormat = DisplayType.getNumberFormat(DisplayType.Amount, Env.getLanguage(Env.getCtx()));
+			displayedValue = amountFormat.format (new BigDecimal(value.toString()));
+		} else if (displayTypeId == DisplayType.Integer) {
+			DecimalFormat intFormat = DisplayType.getNumberFormat(DisplayType.Integer, Env.getLanguage(Env.getCtx()));
+			displayedValue = intFormat.format(Integer.valueOf(value.toString()));
+		} else if (DisplayType.isNumeric(displayTypeId)) {
+			DecimalFormat numberFormat = DisplayType.getNumberFormat(DisplayType.Number, Env.getLanguage(Env.getCtx()));
+			if (I_C_Order.COLUMNNAME_ProcessedOn.equals(columnName)) {
+				if (value.toString().indexOf(".") > 0) {
+					value = value.toString().substring(0, value.toString().indexOf("."));
+				}
+				displayedValue = TimeUtil.formatElapsed(System.currentTimeMillis() - new BigDecimal(value.toString()).longValue());
+			} else {
+				displayedValue = numberFormat.format(new BigDecimal(value.toString()));
+			}
+		} else if (displayTypeId == DisplayType.Date) {
+			SimpleDateFormat dateFormat = DisplayType.getDateFormat(DisplayType.DateTime, Env.getLanguage(Env.getCtx()));
+			displayedValue = dateFormat.format(Timestamp.valueOf(value.toString()));
+		} else if (displayTypeId == DisplayType.DateTime) {
+			SimpleDateFormat dateTimeFormat = DisplayType.getDateFormat(DisplayType.DateTime, Env.getLanguage(Env.getCtx()));
+			displayedValue = dateTimeFormat.format (Timestamp.valueOf(value.toString()));
+		} else if (DisplayType.isLookup(displayTypeId) && displayTypeId != DisplayType.Button && displayTypeId != DisplayType.List) {
+			Language language = Env.getLanguage(Env.getCtx());
+			MLookupInfo lookupInfo = MLookupFactory.getLookupInfo(Env.getCtx(), 0, 0, displayTypeId, language, columnName, referenceValueId, false, null, false);
+			MLookup lookup = new MLookup(lookupInfo, 0);
+			NamePair pp = lookup.get(value);
+			if (pp != null) {
+				displayedValue = pp.getName();
+			}
+		} else if((DisplayType.Button == displayTypeId || DisplayType.List == displayTypeId) && referenceValueId != 0) {
+			MLookupInfo lookupInfo = MLookupFactory.getLookup_List(Env.getLanguage(Env.getCtx()), referenceValueId);
+
+			MLookup lookup = new MLookup(lookupInfo, 0);
+			if (value != null) {
+				Object key = value; 
+				NamePair pp = lookup.get(key);
+				if (pp != null) {
+					displayedValue = pp.getName();
+				}
+			}
+		} else if (DisplayType.isLOB(displayTypeId)) {
+			;
+		}
+		return displayedValue;
+	}
+
+
 	/**
 	 * Convert Selection values from gRPC to ADempiere values
 	 * @param values

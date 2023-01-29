@@ -211,6 +211,11 @@ message DeleteIssueRequest {
 	string uuid = 3;
 }
 
+enum IssueCommentType {
+	COMMENT = 0;
+	LOG = 1;
+}
+
 // Issue Comment Definition
 message IssueComment {
 	int32 id = 1;
@@ -221,6 +226,11 @@ message IssueComment {
 	int32 user_id = 6;
 	string user_uuid = 7;
 	string user_name = 8;
+	IssueCommentType issue_comment_type = 9;
+	// log fields
+	string label = 10;
+	data.Value new_value = 11;
+	string displayed_value = 12;
 }
 
 message ListIssueCommentsRequest {
