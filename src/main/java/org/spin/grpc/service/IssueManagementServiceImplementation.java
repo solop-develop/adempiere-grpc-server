@@ -546,12 +546,20 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 				}
 			}
 
-			parametersList.add(table.getAD_Table_ID(), recordId);
+			parametersList.add(table.getAD_Table_ID());
+			parametersList.add(recordId);
 			whereClause = "AD_Table_ID = ? AND Record_ID = ? ";
 		} else {
-			int userId = Env.getAD_Client_ID(context);
-			parametersList.add(userId, userId);
-			whereClause = "AD_User_ID = ? OR AD_User_ID = ?";
+			int userId = Env.getAD_User_ID(context);
+			int roleId = Env.getAD_Role_ID(context);
+
+			parametersList.add(userId);
+			parametersList.add(roleId);
+			whereClause = "Processed='N' "
+				+ "AND (SalesRep_ID=? OR AD_Role_ID = ?) "
+				+ "AND (DateNextAction IS NULL OR TRUNC(DateNextAction, 'DD') <= TRUNC(SysDate, 'DD'))"
+				+ "AND (R_Status_ID IS NULL OR R_Status_ID IN (SELECT R_Status_ID FROM R_Status WHERE IsClosed='N'))"
+			;
 		}
 
 		Query queryRequests = new Query(
