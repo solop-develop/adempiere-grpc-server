@@ -103,6 +103,8 @@ service UserInterface {
 	rpc SaveTabSequences(SaveTabSequencesRequest) returns (ListEntitiesResponse) {}
 	// List Tree Nodes Request
 	rpc ListTreeNodes(ListTreeNodesRequest) returns (ListTreeNodesResponse) {}
+	// List Mail Templates
+	rpc ListMailTemplates(ListMailTemplatesRequest) returns (ListMailTemplatesResponse) {}
 }
 
 //	Role Access Request
@@ -700,5 +702,26 @@ message TreeNode {
 message ListTreeNodesResponse {
 	int64 record_count = 1;
 	repeated TreeNode records = 2;
+	string next_page_token = 3;
+}
+
+message MailTemplate {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string subject = 4;
+	string mail_text = 5;
+}
+
+message ListMailTemplatesRequest {
+	ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	string search_value = 4;
+}
+
+message ListMailTemplatesResponse {
+	int64 record_count = 1;
+	repeated MailTemplate records = 2;
 	string next_page_token = 3;
 }

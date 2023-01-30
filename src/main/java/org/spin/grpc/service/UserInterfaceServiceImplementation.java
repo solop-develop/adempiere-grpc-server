@@ -82,12 +82,14 @@ import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_C_Element;
+import org.adempiere.core.domains.models.I_R_MailText;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MMailText;
 import org.compiere.model.MMessage;
 import org.compiere.model.MPreference;
 import org.compiere.model.MPrivateAccess;
@@ -156,6 +158,8 @@ import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListGeneralInfoRequest;
 import org.spin.backend.grpc.common.ListLookupItemsRequest;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.common.ListMailTemplatesRequest;
+import org.spin.backend.grpc.common.ListMailTemplatesResponse;
 import org.spin.backend.grpc.common.ListPrintFormatsRequest;
 import org.spin.backend.grpc.common.ListPrintFormatsResponse;
 import org.spin.backend.grpc.common.ListReferencesRequest;
@@ -170,6 +174,7 @@ import org.spin.backend.grpc.common.ListTreeNodesRequest;
 import org.spin.backend.grpc.common.ListTreeNodesResponse;
 import org.spin.backend.grpc.common.LockPrivateAccessRequest;
 import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.common.MailTemplate;
 import org.spin.backend.grpc.common.Preference;
 import org.spin.backend.grpc.common.PrintFormat;
 import org.spin.backend.grpc.common.PrivateAccess;
@@ -3883,6 +3888,94 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		//	Default Return
 		return treeId;
+	}
+
+
+	@Override
+	public void listMailTemplates(ListMailTemplatesRequest request, StreamObserver<ListMailTemplatesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListMailTemplatesResponse.Builder recordsListBuilder = listMailTemplates(request);
+			responseObserver.onNext(recordsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private ListMailTemplatesResponse.Builder listMailTemplates(ListMailTemplatesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		
+		Query query = new Query(
+				context,
+				I_R_MailText.Table_Name,
+				null,
+				null
+			)
+			.setOnlyActiveRecords(true)
+		;
+
+		int recordCount = query.count();
+		ListMailTemplatesResponse.Builder builderList = ListMailTemplatesResponse.newBuilder();
+		builderList.setRecordCount(recordCount);
+		builderList.setRecordCount(recordCount);
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		// Set page token
+		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+
+		query
+			.setLimit(limit, offset)
+			.list(MMailText.class)
+			.forEach(requestRecord -> {
+				MailTemplate.Builder builder = convertMailTemplate(requestRecord);
+				builderList.addRecords(builder);
+			});
+
+		return builderList;
+	}
+
+	private MailTemplate.Builder convertMailTemplate(MMailText mailTemplate) {
+		MailTemplate.Builder builder = MailTemplate.newBuilder();
+		if (mailTemplate == null || mailTemplate.getR_MailText_ID() <= 0) {
+			return builder;
+		}
+
+		String mailText = ValueUtil.validateNull(mailTemplate.getMailText())
+			+ ValueUtil.validateNull(mailTemplate.getMailText2())
+			+ ValueUtil.validateNull(mailTemplate.getMailText3())
+		;
+		builder.setId(mailTemplate.getR_MailText_ID())
+			.setUuid(
+				ValueUtil.validateNull(mailTemplate.getUUID())
+			)
+			.setName(
+				ValueUtil.validateNull(mailTemplate.getName())
+			)
+			.setSubject(
+				ValueUtil.validateNull(mailTemplate.getMailHeader())
+			)
+			.setMailText(
+				ValueUtil.validateNull(mailText)
+			)
+		;
+
+		return builder;
 	}
 
 }
