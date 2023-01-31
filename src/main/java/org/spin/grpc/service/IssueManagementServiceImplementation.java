@@ -1114,7 +1114,14 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 				.first();
 
 			if (column != null) {
-				builder.setLabel(column.getName());
+				String label = column.getName();
+				if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+					label = column.get_Translation(I_AD_Column.COLUMNNAME_Name);
+				}
+				builder.setLabel(
+					ValueUtil.validateNull(label)
+				);
+
 				Object value = requestAction.get_Value(columnModified);
 				builder.setNewValue(
 					ValueUtil.getValueFromReference(value, column.getAD_Reference_ID())
