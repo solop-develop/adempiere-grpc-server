@@ -42,6 +42,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
@@ -2534,7 +2536,16 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		if (ReferenceUtil.validateReference(referenceId)) {
 			if(referenceId == DisplayType.List) {
-				MRefList referenceList = MRefList.get(Env.getCtx(), referenceValueId, String.valueOf(defaultValueAsObject), null);
+				String singleQuotesPattern = "('|\")(\\w+)('|\")";
+				Matcher matcherSingleQuotes = Pattern.compile(
+					singleQuotesPattern,
+					Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+				)
+				.matcher(String.valueOf(defaultValueAsObject));
+				// remove single quotation mark 'DR' -> DR
+				String defaultValueList = matcherSingleQuotes.replaceAll("$2");
+
+				MRefList referenceList = MRefList.get(Env.getCtx(), referenceValueId, defaultValueList, null);
 				builder = convertDefaultValueFromResult(referenceList.getValue(), referenceList.getUUID(), referenceList.getValue(), referenceList.get_Translation(MRefList.COLUMNNAME_Name));
 			} else {
 				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
