@@ -1207,10 +1207,20 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 			}
 		}
+
+		// validate entity
 		MRequestUpdate requestUpdate = new MRequestUpdate(context, recordId, null);
 		if (requestUpdate == null || requestUpdate.getR_Request_ID() <= 0) {
 			throw new AdempiereException("@R_RequestUpdate_ID@ @NotFound@");
 		}
+		int userId = Env.getAD_User_ID(context);
+		if (requestUpdate.getCreatedBy() != userId) {
+			throw new AdempiereException("@ActionNotAllowedHere@");
+		}
+		if (Util.isEmpty(request.getResult(), true)) {
+			throw new AdempiereException("@Result@ @NotFound@");
+		}
+
 		requestUpdate.setResult(
 			ValueUtil.validateNull(request.getResult())
 		);
@@ -1251,9 +1261,14 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			}
 		}
 
+		// validate entity
 		MRequestUpdate requestUpdate = new MRequestUpdate(context, recordId, null);
 		if (requestUpdate == null || requestUpdate.getR_Request_ID() <= 0) {
 			throw new AdempiereException("@R_RequestUpdate_ID@ @NotFound@");
+		}
+		int userId = Env.getAD_User_ID(context);
+		if (requestUpdate.getCreatedBy() != userId) {
+			throw new AdempiereException("@ActionNotAllowedHere@");
 		}
 
 		requestUpdate.deleteEx(true);
