@@ -2536,13 +2536,14 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		if (ReferenceUtil.validateReference(referenceId)) {
 			if(referenceId == DisplayType.List) {
-				String singleQuotesPattern = "('|\")(\\w+)('|\")";
+				// (') (text) (') or (") (text) (")
+				String singleQuotesPattern = "('|\")(\\w+)(\\1)";
 				Matcher matcherSingleQuotes = Pattern.compile(
 					singleQuotesPattern,
 					Pattern.CASE_INSENSITIVE | Pattern.DOTALL
 				)
 				.matcher(String.valueOf(defaultValueAsObject));
-				// remove single quotation mark 'DR' -> DR
+				// remove single quotation mark 'DR' -> DR, "DR" -> DR
 				String defaultValueList = matcherSingleQuotes.replaceAll("$2");
 
 				MRefList referenceList = MRefList.get(Env.getCtx(), referenceValueId, defaultValueList, null);
