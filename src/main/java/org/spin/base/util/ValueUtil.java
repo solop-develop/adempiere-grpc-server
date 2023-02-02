@@ -628,6 +628,13 @@ public class ValueUtil {
 		return null;
 	}
 
+	public static Timestamp getTimestampFromLong(long value) {
+		if (value > 0) {
+			return new Timestamp(value);
+		}
+		return null;
+	}
+
 	/**
 	 * Get long from Timestamp
 	 * @param value

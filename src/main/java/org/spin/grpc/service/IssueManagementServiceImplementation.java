@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Column;
+import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_R_Request;
 import org.adempiere.core.domains.models.I_R_RequestAction;
@@ -48,6 +49,7 @@ import org.spin.backend.grpc.issue_management.CreateIssueCommentRequest;
 import org.spin.backend.grpc.issue_management.CreateIssueRequest;
 import org.spin.backend.grpc.issue_management.DeleteIssueCommentRequest;
 import org.spin.backend.grpc.issue_management.DeleteIssueRequest;
+import org.spin.backend.grpc.issue_management.DueType;
 import org.spin.backend.grpc.issue_management.ExistsIssuesRequest;
 import org.spin.backend.grpc.issue_management.ExistsIssuesResponse;
 import org.spin.backend.grpc.issue_management.Issue;
@@ -165,6 +167,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			.setUuid(ValueUtil.validateNull(requestType.getUUID()))
 			.setName(ValueUtil.validateNull(requestType.getName()))
 			.setDescription(ValueUtil.validateNull(requestType.getDescription()))
+			.setDueDateTolerance(requestType.getDueDateTolerance())
 		;
 
 		return builder;
@@ -333,11 +336,24 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			return builder;
 		}
 
+		String name = priority.getName();
+		String description = priority.getDescription();
+
+		// set translated values
+		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+			name = priority.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
+			description = priority.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
+		}
+
 		builder.setId(priority.getAD_Ref_List_ID())
 			.setUuid(ValueUtil.validateNull(priority.getUUID()))
 			.setValue(ValueUtil.validateNull(priority.getValue()))
-			.setName(ValueUtil.validateNull(priority.getName()))
-			.setDescription(ValueUtil.validateNull(priority.getDescription()))
+			.setName(
+				ValueUtil.validateNull(name)
+			)
+			.setDescription(
+				ValueUtil.validateNull(description)
+			)
 		;
 
 		return builder;
@@ -436,6 +452,45 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			.setUuid(ValueUtil.validateNull(status.getUUID()))
 			.setName(ValueUtil.validateNull(status.getName()))
 			.setDescription(ValueUtil.validateNull(status.getDescription()))
+		;
+
+		return builder;
+	}
+
+
+
+	private DueType.Builder convertDueType(String value) {
+		DueType.Builder builder = DueType.newBuilder();
+		if (Util.isEmpty(value, true)) {
+			return builder;
+		}
+		MRefList priority = MRefList.get(Env.getCtx(), MRequest.DUETYPE_AD_Reference_ID, value, null);
+		return convertDueType(priority);
+	}
+	private DueType.Builder convertDueType(MRefList dueType) {
+		DueType.Builder builder = DueType.newBuilder();
+		if (dueType == null || dueType.getAD_Ref_List_ID() <= 0) {
+			return builder;
+		}
+
+		String name = dueType.getName();
+		String description = dueType.getDescription();
+
+		// set translated values
+		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+			name = dueType.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
+			description = dueType.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
+		}
+
+		builder.setId(dueType.getAD_Ref_List_ID())
+			.setUuid(ValueUtil.validateNull(dueType.getUUID()))
+			.setValue(ValueUtil.validateNull(dueType.getValue()))
+			.setName(
+				ValueUtil.validateNull(name)
+			)
+			.setDescription(
+				ValueUtil.validateNull(description)
+			)
 		;
 
 		return builder;
@@ -617,6 +672,12 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			.setLastUpdated(
 				ValueUtil.getLongFromTimestamp(request.getUpdated())
 			)
+			.setDateNextAction(
+				ValueUtil.getLongFromTimestamp(request.getDateNextAction())
+			)
+			.setDueType(
+				convertDueType(request.getDueType())
+			)
 		;
 		builder.setRequestType(
 			convertRequestType(request.getR_RequestType_ID())
@@ -733,6 +794,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		requestRecord.setPriority(
 			ValueUtil.validateNull(request.getPriorityValue())
 		);
+		requestRecord.setDateNextAction(
+			ValueUtil.getTimestampFromLong(request.getDateNextAction())
+		);
 		requestRecord.saveEx();
 
 		Issue.Builder builder = convertRequest(requestRecord);
@@ -805,6 +869,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
 		requestRecord.setPriority(
 			ValueUtil.validateNull(request.getPriorityValue())
+		);
+		requestRecord.setDateNextAction(
+			ValueUtil.getTimestampFromLong(request.getDateNextAction())
 		);
 		requestRecord.saveEx();
 
