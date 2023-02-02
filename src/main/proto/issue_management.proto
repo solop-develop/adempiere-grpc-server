@@ -53,6 +53,7 @@ message RequestType {
 	string uuid = 2;
 	string name = 3;
 	string description = 4;
+	int32 due_date_tolerance = 5;
 }
 
 message ListRequestTypesRequest {
@@ -130,6 +131,14 @@ message ListStatusesResponse {
 	string next_page_token = 3;
 }
 
+message DueType {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+}
+
 // Issue Definition
 message Issue {
 	int32 id = 1;
@@ -146,6 +155,8 @@ message Issue {
 	SalesRepresentative sales_representative = 12;
 	Status status = 13;
 	Priority priority = 14;
+	int64 date_next_action = 15;
+	DueType due_type = 16;
 }
 
 message ExistsIssuesRequest {
@@ -188,6 +199,7 @@ message CreateIssueRequest {
 	int32 status_id = 11;
 	string status_uuid = 12;
 	string priority_value = 13;
+	int64 date_next_action = 14;
 }
 
 message UpdateIssueRequest {
@@ -203,6 +215,7 @@ message UpdateIssueRequest {
 	int32 status_id = 11;
 	string status_uuid = 12;
 	string priority_value = 13;
+	int64 date_next_action = 14;
 }
 
 message DeleteIssueRequest {
@@ -222,15 +235,14 @@ message IssueComment {
 	string uuid = 2;
 	string result = 3;
 	int64 created = 4;
-	int64 date_next_action = 5;
-	int32 user_id = 6;
-	string user_uuid = 7;
-	string user_name = 8;
-	IssueCommentType issue_comment_type = 9;
+	int32 user_id = 5;
+	string user_uuid = 6;
+	string user_name = 7;
+	IssueCommentType issue_comment_type = 8;
 	// log fields
-	string label = 10;
-	data.Value new_value = 11;
-	string displayed_value = 12;
+	string label = 9;
+	data.Value new_value = 10;
+	string displayed_value = 11;
 }
 
 message ListIssueCommentsRequest {
@@ -252,7 +264,6 @@ message CreateIssueCommentRequest {
 	int32 issue_id = 2;
 	string issue_uuid = 3;
 	string result = 4;
-	int64 date_next_action = 5;
 }
 
 message UpdateIssueCommentRequest {
@@ -260,7 +271,6 @@ message UpdateIssueCommentRequest {
 	int32 id = 2;
 	string uuid = 3;
 	string result = 4;
-	int64 date_next_action = 5;
 }
 
 message DeleteIssueCommentRequest {
