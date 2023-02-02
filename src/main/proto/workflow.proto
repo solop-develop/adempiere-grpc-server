@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 syntax = "proto3";
 
@@ -231,25 +231,37 @@ message ListWorkflowActivitiesResponse {
 	string next_page_token = 3;
 }
 
+// Zoom Window
+message ZoomWindow {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	bool is_sales_transaction = 5;
+	bool is_active = 6;
+}
+
 //	Workflow Activity
 message WorkflowActivity {
 	int32 id = 1;
 	string uuid = 2;
 	string table_name = 3;
-	string record_uuid = 4;
-	string user_uuid = 5;
-	string user_name = 6;
-	int32 responsible_id = 7;
-	string responsible_uuid = 8;
-	string responsible_name = 9;
-	string text_message = 10;
-	bool processed = 11;
-	int32 priority = 12;
-	int64 created = 13;
-	int64 last_alert = 14;
-	WorkflowProcess workflow_process = 15;
-	WorkflowDefinition workflow = 16;
-	WorkflowNode node = 17;
+	int32 record_id = 4;
+	string record_uuid = 5;
+	string user_uuid = 6;
+	string user_name = 7;
+	int32 responsible_id = 8;
+	string responsible_uuid = 9;
+	string responsible_name = 10;
+	string text_message = 11;
+	bool processed = 12;
+	int32 priority = 13;
+	int64 created = 14;
+	int64 last_alert = 15;
+	WorkflowProcess workflow_process = 16;
+	WorkflowDefinition workflow = 17;
+	WorkflowNode node = 18;
+	repeated ZoomWindow zoom_windows = 19;
 }
 
 enum WorkflowState {

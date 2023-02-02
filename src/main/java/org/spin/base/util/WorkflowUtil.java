@@ -21,9 +21,11 @@ import org.adempiere.core.domains.models.I_AD_WF_EventAudit;
 import org.adempiere.core.domains.models.I_AD_WF_NextCondition;
 import org.adempiere.core.domains.models.I_AD_WF_Node;
 import org.adempiere.core.domains.models.I_AD_WF_NodeNext;
+import org.adempiere.core.domains.models.I_AD_Window;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
+import org.compiere.model.MWindow;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -49,6 +51,8 @@ import org.spin.backend.grpc.wf.WorkflowNode;
 import org.spin.backend.grpc.wf.WorkflowProcess;
 import org.spin.backend.grpc.wf.WorkflowState;
 import org.spin.backend.grpc.wf.WorkflowTransition;
+import org.spin.backend.grpc.wf.ZoomWindow;
+import org.spin.util.ASPUtil;
 
 /**
  * Class for handle workflow conversion values
@@ -480,8 +484,22 @@ public class WorkflowUtil {
 		}
 		builder.setId(workflowActivity.getAD_WF_Activity_ID());
 		builder.setUuid(ValueUtil.validateNull(workflowActivity.getUUID()));
+		
+		// record values
+		builder.setRecordId(workflowActivity.getRecord_ID());
 		builder.setRecordUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(table.getTableName(), workflowActivity.getRecord_ID())));
 		builder.setTableName(ValueUtil.validateNull(table.getTableName()));
+
+		if (table.getAD_Window_ID() > 0) {
+			ZoomWindow.Builder builderZoom = convertZoomWindow(table.getAD_Window_ID());
+			builder.addZoomWindows(builderZoom);
+		}
+		// Purchase Window
+		if (table.getPO_Window_ID() > 0) {
+			ZoomWindow.Builder builderZoom = convertZoomWindow(table.getPO_Window_ID());
+			builder.addZoomWindows(builderZoom);
+		}
+
 		builder.setTextMessage(ValueUtil.validateNull(Msg.parseTranslation(workflowActivity.getCtx(), workflowActivity.getTextMsg())));
 		builder.setProcessed(workflowActivity.isProcessed());
 		builder.setCreated(workflowActivity.getCreated().getTime());
@@ -490,5 +508,33 @@ public class WorkflowUtil {
 		}
 		//	
   		return builder;
+	}
+
+
+	public static ZoomWindow.Builder convertZoomWindow(int windowId) {
+		MWindow window = ASPUtil.getInstance(Env.getCtx()).getWindow(windowId); // new MWindow(context, windowId, null);
+
+		//	Get translation
+		String name = null;
+		String description = null;
+		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+			name = window.get_Translation(I_AD_Window.COLUMNNAME_Name);
+			description = window.get_Translation(I_AD_Window.COLUMNNAME_Description);
+		}
+		//	Validate for default
+		if (Util.isEmpty(name)) {
+			name = window.getName();
+		}
+		if (Util.isEmpty(description)) {
+			description = window.getDescription();
+		}
+		//	Return
+		return ZoomWindow.newBuilder()
+			.setId(window.getAD_Window_ID())
+			.setUuid(ValueUtil.validateNull(window.getUUID()))
+			.setName(ValueUtil.validateNull(name))
+			.setDescription(ValueUtil.validateNull(description))
+			.setIsSalesTransaction(window.isSOTrx())
+		;
 	}
 }
