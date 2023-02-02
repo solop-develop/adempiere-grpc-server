@@ -873,6 +873,15 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		requestRecord.setDateNextAction(
 			ValueUtil.getTimestampFromLong(request.getDateNextAction())
 		);
+		
+		if (!Util.isEmpty(request.getStatusUuid(), true) || request.getStatusId() > 0) {
+			int statusId = request.getStatusId();
+			if (statusId <= 0) {
+				statusId = RecordUtil.getIdFromUuid(I_R_Status.Table_Name, request.getStatusUuid(), null);
+			}
+			requestRecord.setR_Status_ID(statusId);
+		}
+
 		requestRecord.saveEx();
 
 		Issue.Builder builder = convertRequest(requestRecord);
