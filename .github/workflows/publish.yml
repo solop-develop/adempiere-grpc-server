@@ -155,7 +155,7 @@ jobs:
           context: .
           file: build-docker/production-alpine.Dockerfile
           push: true
-          tags: | 
+          tags: |
             ${{ secrets.DOCKER_REPO_BACKEND }}:alpine-${{ github.event.release.tag_name }}
             ${{ secrets.DOCKER_REPO_BACKEND }}:alpine
           build-args: |

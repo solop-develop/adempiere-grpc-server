@@ -1,8 +1,20 @@
-ARG JDK_RELEASE $JDK_RELEASE
-FROM eclipse-temurin:$JDK_RELEASE
+FROM adoptopenjdk/openjdk8:jre8u275-b01-alpine
+
 
 LABEL	maintainer="ysenih@erpya.com; EdwinBetanc0urt@outlook.com" \
 	description="ADempiere gRPC All In One Server used as ADempiere backend"
+
+
+# Add operative system dependencies
+#RUN apk add --no-cache libc6-compat fontconfig ttf-dejavu
+RUN	rm -rf /var/cache/apk/* && \
+    rm /usr/glibc-compat/lib/ld-linux-x86-64.so.2 && /usr/glibc-compat/sbin/ldconfig && \
+	apk update && \
+	apk add \
+		bash \
+	 	fontconfig \
+		ttf-dejavu
+
 
 # Init ENV with default values
 ENV \
@@ -18,15 +30,17 @@ ENV \
 	ADEMPIERE_APPS_TYPE="wildfly" \
 	TZ="America/Caracas"
 
-WORKDIR /opt/Apps/backend/bin/
 
 EXPOSE ${SERVER_PORT}
 
+WORKDIR /opt/Apps/backend/bin/
+
 # Add connection template and start script files
-ADD dist/backend /opt/Apps/backend/
+ADD build/tmp /opt/Apps/backend/
 ADD "build-docker/all_in_one_connection.yaml" "build-docker/start.sh" "/opt/Apps/backend/bin/"
 
-RUN addgroup adempiere && \
+RUN apk add --no-cache bash fontconfig ttf-dejavu && \
+	addgroup adempiere && \
 	adduser --disabled-password --gecos "" --ingroup adempiere --no-create-home adempiere && \
 	chown -R adempiere /opt/Apps/backend/ && \
 	chmod +x start.sh
