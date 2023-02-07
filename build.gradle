@@ -24,6 +24,7 @@ repositories {
 
 ext {
     adempiereVersion = '3.9.4-rc-1.0.6'
+	javaMainClass = "org.spin.server.AllInOneServices"
 }
 
 //sourceCompatibility = 1.8
@@ -129,13 +130,38 @@ sourceSets {
 // Generate IntelliJ IDEA's .idea & .iml project files
 apply plugin: 'idea'
 
+// Generate Visual Studio Code .vscode & .json project files
+apply plugin: "visual-studio"
+
 // Provide convenience executables for trying out the examples.
 apply plugin: 'application'
 
 startScripts.enabled = false
 
+run {
+	doFirst {
+		// Set environment variables
+		environment 'ADEMPIERE_APPS_TYPE', 'wildfly'
+	}
+	args = [
+		"resources/standalone.yaml"
+	]
+}
+
+application {
+	// mainClass = javaMainClass
+	mainClass.set(javaMainClass)
+}
+jar {
+	manifest {
+		attributes(
+			'Main-Class': javaMainClass
+		)
+	}
+}
+
 task ADempiereAllInOne(type: CreateStartScripts) {
-    mainClassName = 'org.spin.server.AllInOneServices'
+	mainClass = javaMainClass
     applicationName = 'adempiere-all-in-one-server'
     defaultJvmOpts = Arrays.asList("-DPropertyFile=Adempiere.properties", "-Dorg.adempiere.server.embedded=true")
     outputDir = new File(project.buildDir, 'tmp')

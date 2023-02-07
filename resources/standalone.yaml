@@ -23,8 +23,8 @@ server:
        - product
        - store
        - time_control
-       - user_customization
        - ui
+       - user_customization
        - workflow
     log_level: WARNING
 database:

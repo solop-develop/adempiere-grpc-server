@@ -13,13 +13,7 @@
             "env": {
               "ADEMPIERE_APPS_TYPE": "wildfly"
             },
-            "args": "'resources/standalone.yml'"
-        },
-        {
-            "type": "java",
-            "name": "Launch Current File",
-            "request": "launch",
-            "mainClass": "${file}"
+            "args": "'resources/standalone.yaml'"
         }
     ]
 }
