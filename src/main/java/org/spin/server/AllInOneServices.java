@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.server;
 
@@ -246,13 +246,13 @@ public class AllInOneServices {
 	 * @throws Exception 
 	   */
 	  public static void main(String[] args) throws Exception {
-		  if(args == null) {
-			  throw new Exception("Arguments Not Found");
-		  }
-		  //	
-		  if(args == null || args.length == 0) {
-			  throw new Exception("Arguments Must Be: [property file name]");
-		  }
+		if (args == null) {
+			throw new Exception("Arguments Not Found");
+		}
+		//
+		if (args.length == 0) {
+			throw new Exception("Arguments Must Be: [property file name]");
+		}
 		  String setupFileName = args[0];
 		  if(setupFileName == null || setupFileName.trim().length() == 0) {
 			  throw new Exception("Setup File not found");

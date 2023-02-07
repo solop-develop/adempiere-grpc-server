@@ -8,15 +8,17 @@
  * (at your option) any later version.                                               *
  * This program is distributed in the hope that it will be useful,                   *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                    *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                      *
  * GNU General Public License for more details.                                      *
  * You should have received a copy of the GNU General Public License                 *
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.             *
  ************************************************************************************/
 package org.spin.base.setup;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.compiere.db.CConnection;
@@ -37,6 +39,14 @@ public class SetupLoader {
 	private static SetupLoader instance;
 	/**	Setup	*/
 	private SetupWrapper setup;
+
+	/** Supported Databases */
+	private static List<String> SUPPORTED_DATABSASES = Arrays.asList(
+		org.compiere.db.Database.DB_POSTGRESQL,
+		org.compiere.db.Database.DB_ORACLE
+	);
+
+
 	/**
 	 * Private constructor
 	 * @param filePath
@@ -59,36 +69,42 @@ public class SetupLoader {
 		if(setup == null) {
 			throw new Exception("Setup not found");
 		}
+		if (setup.getDatabase() == null) {
+			throw new Exception("Setup Database not found");
+		}
+
+		Database dataBase = setup.getDatabase();
 		//	Type
-		if(setup.getDatabase().getType() == null) {
+		if (dataBase.getType() == null) {
 			throw new Exception("Database Type Not Found");
 		}
 		//	Validate only valid type
-		if(!setup.getDatabase().getType().equals(org.compiere.db.Database.DB_POSTGRESQL)
-				&& !setup.getDatabase().getType().equals(org.compiere.db.Database.DB_ORACLE)) {
+		if (!SUPPORTED_DATABSASES.contains(dataBase.getType())) {
 			throw new Exception("Database Type Unsupported");
 		}
 		//	Host
-		if(setup.getDatabase().getHost() == null) {
+		if (dataBase.getHost() == null) {
 			throw new Exception("Database Host Not Found");
 		}
 		//	Port
-		if(setup.getDatabase().getPort() == 0) {
+		if (dataBase.getPort() == 0) {
 			throw new Exception("Database Port Not Found");
 		}
 		//	Name
-		if(setup.getDatabase().getName() == null) {
+		if (dataBase.getName() == null) {
 			throw new Exception("Database Name Not Found");
 		}
 		//	Password
-		if(setup.getDatabase().getPassword() == null) {
+		if (dataBase.getPassword() == null) {
 			throw new Exception("Database Password Not Found");
 		}
-		CConnection connection = CConnection.get(setup.getDatabase().getType(),
-				setup.getDatabase().getHost(), setup.getDatabase().getPort(), setup.getDatabase().getName(),
-				setup.getDatabase().getUser(), setup.getDatabase().getPassword());
-			connection.setAppsHost("MyAppsServer");
-			connection.setAppsPort(0);
+		CConnection connection = CConnection.get(
+			dataBase.getType(),
+			dataBase.getHost(), dataBase.getPort(), dataBase.getName(),
+			dataBase.getUser(), dataBase.getPassword()
+		);
+		connection.setAppsHost("MyAppsServer");
+		connection.setAppsPort(0);
 		//	Set default init
 		Ini.setProperty(Ini.P_CONNECTION, connection.toStringLong());
 		Ini.setClient(false);
