@@ -21,6 +21,7 @@
   </a>
 </p>
 
+English | [Spanish](./README.es.md)
 
 This is a project to publish ADempiere, over gRPC service, decoupling in modules such as Access, Application Dictionary, Business, Point Of Sales, Workflow, Dashboarding, File Management, Logs, Requests (as Issue Management), User Customization, etc.
 
@@ -45,19 +46,19 @@ gradle clean
 gradle run
 ```
 
-### Execute server with cutom conection file
+### Execute server with custom conection file
 ``` bash
-gradle run --args="'resources/standalone.yml'"
+gradle run --args="'resources/standalone.yaml'"
 ```
 
 ## Runing Server
 The server can be running as java class. See it: **org.spin.server.AllInOneServices**
-Don't forgive that for run server you need set yaml file line is /resources folder.
+Don't forgive that for run server you need set `yaml` file line is `/resources` folder.
 
 - Use latest [release](https://github.com/solop-develop/backend/releases)
 - Unzip binary
-- go to bin folder
-- run it
+- Go to bin folder
+- Run it
 
 ```bash
 ./adempiere-all-in-one-server "./resources/standalone.yaml"
@@ -65,28 +66,34 @@ Don't forgive that for run server you need set yaml file line is /resources fold
 
 
 ### For all enviroment you should run the follow images:
+
+- ADempiere Postgres: https://hub.docker.com/r/solopcloud/adempiere-postgres
+```shell
+docker pull solopcloud/adempiere-postgres
+```
+
 - ADempiere Backend: https://hub.docker.com/r/solopcloud/adempiere-backend
 ```shell
-docker pull solop/adempiere-backend:experimental
+docker pull solopcloud/adempiere-backend:experimental
 ```
+
 - ADempiere Proxy: https://hub.docker.com/r/solopcloud/adempiere-proxy
 ```shell
-docker pull solop/adempiere-proxy:experimental
+docker pull solopcloud/adempiere-proxy:experimental
 ```
+
 - Frontend-Core: https://hub.docker.com/r/solopcloud/adempiere-vue
 ```shell
-docker pull solop/adempiere-vue:experimental
+docker pull solopcloud/adempiere-vue:experimental
 ```
 
 ## Run docker container:
 
 ### Minimal Docker Requirements
-
-To use this Docker image you must have your Docker engine release number greater
-than or equal to 3.0.
+To use this Docker image you must have your Docker engine  version greater than or equal to 3.0.
 
 ### Environment variables
- * `DB_TYPE`: Database Type (Supported Oracle, PostgreSQL and MariaDB). Default `PostgreSQL`
+ * `DB_TYPE`: Database Type (Supported `Oracle` and `PostgreSQL`). Default `PostgreSQL`
  * `DB_HOST`: Hostname for data base server. Default: `localhost`
  * `DB_PORT`: Port used by data base server. Default: `5432`
  * `DB_NAME`: Database name that Adempiere-Backend will use to connect with the database. Default: `adempiere`
