@@ -117,12 +117,12 @@ gradle build
 
 Construir imagen docker
 ```shell
-docker build -t solop/adempiere-backend:dev -f ./build-docker/development.Dockerfile .
+docker build -t solopcloud/adempiere-backend:dev -f ./build-docker/development.Dockerfile .
 ```
 
 ### Descargar imagen docker:
 ```shell
-docker pull solop/adempiere-backend:experimental
+docker pull solopcloud/adempiere-backend:experimental
 ```
 
 ### Ejecutar contenedor contenedor:
