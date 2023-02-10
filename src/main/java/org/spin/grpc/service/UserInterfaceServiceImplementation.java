@@ -298,19 +298,16 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				throw new AdempiereException("Browser Requested is Null");
 			}
 			log.fine("Object List Requested = " + request);
-			ContextManager.getContext(request.getClientRequest().getSessionUuid(), 
-					request.getClientRequest().getLanguage(), 
-					request.getClientRequest().getOrganizationUuid(), 
-					request.getClientRequest().getWarehouseUuid());
-			ListBrowserItemsResponse.Builder entityValueList = convertBrowserList(request);
+			ListBrowserItemsResponse.Builder entityValueList = listBrowserItems(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 
@@ -3036,24 +3033,33 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListBrowserItemsResponse.Builder convertBrowserList(ListBrowserItemsRequest request) {
+	private ListBrowserItemsResponse.Builder listBrowserItems(ListBrowserItemsRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
 		ListBrowserItemsResponse.Builder builder = ListBrowserItemsResponse.newBuilder();
 		MBrowse browser = getBrowser(request.getUuid());
-		if(browser == null) {
+		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			return builder;
 		}
 		Criteria criteria = request.getCriteria();
 		HashMap<String, Object> parameterMap = new HashMap<>();
 		//	Populate map
-		criteria.getConditionsList().forEach(condition -> parameterMap.put(condition.getColumnName(), ValueUtil.getObjectFromValue(condition.getValue())));
+		criteria.getConditionsList().forEach(condition -> {
+			parameterMap.put(condition.getColumnName(), ValueUtil.getObjectFromValue(condition.getValue()));
+		});
+
+		//	Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		context = ContextManager.setContextWithAttributes(windowNo, context, parameterMap);
+
 		List<Object> values = new ArrayList<Object>();
 		String whereClause = getBrowserWhereClause(browser, browser.getWhereClause(), request.getContextAttributesList(), parameterMap, values);
-		//	Page prefix
-		int page = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+
 		String query = DictionaryUtil.addQueryReferencesFromBrowser(browser);
 		String orderByClause = DictionaryUtil.getSQLOrderBy(browser);
 		StringBuilder sql = new StringBuilder(query);
 		if (!Util.isEmpty(whereClause)) {
+			whereClause = Env.parseContext(context, windowNo, whereClause, false);
 			sql.append(" WHERE ").append(whereClause); // includes first AND
 		} else {
 			sql.append(" WHERE 1=1");
@@ -3074,16 +3080,14 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		} else {
 			orderByClause = " ORDER BY " + orderByClause;
 		}
+
 		//	Get page and count
 		int count = RecordUtil.countRecords(parsedSQL, tableName, tableNameAlias, values);
 		String nexPageToken = null;
-		int pageMultiplier = page == 0? 1: page;
-		if(count > (RecordUtil.getPageSize(request.getPageSize()) * pageMultiplier)) {
-			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (page + 1);
-		}
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
