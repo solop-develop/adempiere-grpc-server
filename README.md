@@ -37,7 +37,7 @@ After installed it just go to source code folder an run it:
 
 ## Runing as development
 ### Clean
-``` bash
+```shell
 gradle clean
 ```
 
@@ -47,7 +47,7 @@ gradle run
 ```
 
 ### Execute server with custom conection file
-``` bash
+```shell
 gradle run --args="'resources/standalone.yaml'"
 ```
 
@@ -60,7 +60,7 @@ Don't forgive that for run server you need set `yaml` file line is `/resources` 
 - Go to bin folder
 - Run it
 
-```bash
+```shell
 ./adempiere-all-in-one-server "./resources/standalone.yaml"
 ```
 

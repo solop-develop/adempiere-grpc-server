@@ -107,7 +107,7 @@ Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igu
 
 ### Construir imagen docker (sólo para desarrollo):
 Primero compile los archivos de salida.
-``` bash
+```shell
 # Monta los resultados de este proyecto.
 gradle assemble
 
