@@ -506,26 +506,26 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		ExistsAttachmentResponse.Builder builder = ExistsAttachmentResponse.newBuilder();
 
 		// validate table
-		int tableId = 0;
-		if (!Util.isEmpty(request.getTableName(), true)) {
-			tableId = MTable.getTable_ID(request.getTableName());
+		if (Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
-		if (tableId <= 0) {
+		MTable table = MTable.get(context, request.getTableName());
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 
 		// validate record
 		int recordId = request.getRecordId();
 		if (recordId <= 0) {
-			if (Util.isEmpty(request.getRecordUuid(), true)) {
-				recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+			if (!Util.isEmpty(request.getRecordUuid(), true)) {
+				recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
 			}
-			if (recordId <= 0) {
+			if (!RecordUtil.ALLOW_ZERO_ID.contains(table.getAccessLevel()) && recordId <= 0) {
 				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 			}
 		}
 
-		MAttachment attachment = MAttachment.get(context, tableId, recordId);
+		MAttachment attachment = MAttachment.get(context, table.getAD_Table_ID(), recordId);
 		if (attachment == null || attachment.getAD_Attachment_ID() <= 0) {
 			// without attachment
 			return builder;
