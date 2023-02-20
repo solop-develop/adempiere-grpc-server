@@ -7,7 +7,7 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_C_Invoice;
@@ -52,6 +53,7 @@ import org.compiere.model.Query;
 import org.adempiere.core.domains.models.X_M_Attribute;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
@@ -137,7 +139,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		int count = 0;
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
@@ -428,7 +430,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 
 		Query query =  new Query(
 			context,
@@ -484,7 +486,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		if (attributeSetInstance.getGuaranteeDate() != null) {
 			builder.setGuaranteeDate(attributeSetInstance.getGuaranteeDate().getTime());
 		}
-		
+
 		final String whereClause = I_M_AttributeInstance.COLUMNNAME_M_AttributeSetInstance_ID + " = ? ";
 		List<MAttributeInstance> attributeInstancesList = new Query(
 			Env.getCtx(),
@@ -492,8 +494,8 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			whereClause,
 			null
 		)
-		.setParameters(attributeSetInstance.getM_AttributeSetInstance_ID())
-		.list();
+			.setParameters(attributeSetInstance.getM_AttributeSetInstance_ID())
+			.list();
 		if (attributeInstancesList != null) {
 			attributeInstancesList.forEach(attributeInstance -> {
 				ProductAttributeInstance.Builder attributeInstanceBuilder = convertProductAttributeInstance(
@@ -502,7 +504,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 				builder.addProductAttributeInstances(attributeInstanceBuilder);
 			});
 		}
-		
+
 		return builder;
 	}
 
@@ -654,81 +656,85 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 	}
 
 	private ProductAttributeSetInstance.Builder saveProductAttributeSetInstance(SaveProductAttributeSetInstanceRequest request) {
-		ProductAttributeSetInstance.Builder builder = ProductAttributeSetInstance.newBuilder();
-
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
-		int attributeSetInstanceId = request.getId();
-		if (attributeSetInstanceId <= 0) {
-			attributeSetInstanceId = RecordUtil.getIdFromUuid(I_M_AttributeSetInstance.Table_Name, request.getUuid(), null);
-		}
+		AtomicReference<MAttributeSetInstance> attributeSetInstaceAtomic = new AtomicReference<MAttributeSetInstance>();
 
-		MProduct product = (MProduct) RecordUtil.getEntity(context, I_M_Product.Table_Name, request.getProductUuid(), request.getProductId(), null);
-		if (product.getM_AttributeSet_ID() < 1) {
-			throw new AdempiereException("@PAttributeNoAttributeSet@");
-		}
-		boolean isProductASI = product.getM_AttributeSetInstance_ID() > 0;
-		
-		MAttributeSetInstance attributeSetInstace = MAttributeSetInstance.get(context, attributeSetInstanceId, product.getM_Product_ID());
-
-		MAttributeSet atttibuteSet = MAttributeSet.get(context, product.getM_AttributeSet_ID());
-		attributeSetInstace.setM_AttributeSet_ID(product.getM_AttributeSet_ID());
-		attributeSetInstace.saveEx();
-
-		Map<String, Object> attributesValues = ValueUtil.convertValuesToObjects(request.getAttributesList());
-		List<MAttribute> attributes = Arrays.asList(atttibuteSet.getMAttributes(isProductASI));
-
-		//  Save Instance Attributes
-		attributes.stream().forEach(attribute -> {
-			attribute.set_TrxName(null); // with transaction name dont save instance attributes
-
-			Object currentValue = attributesValues.get(attribute.getUUID());
-			if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attribute.getAttributeValueType())) {
-				int attributeId = 0;
-				if (currentValue != null) {
-					attributeId = (Integer) currentValue;
-				}
-				MAttributeValue attributeValue = new MAttributeValue(context, attributeId, null);
-				if (attribute.isMandatory() && (attributeValue == null || attributeValue.getM_AttributeValue_ID() <= 0)) {
-					throw new AdempiereException("@M_Attribute_ID@: " + attribute.getName() + " @IsMandatory@");
-				}
-					attribute.setMAttributeInstance(attributeSetInstace.getM_AttributeSetInstance_ID(), attributeValue);
+		Trx.run(transactionName -> {
+			int attributeSetInstanceId = request.getId();
+			if (attributeSetInstanceId <= 0) {
+				attributeSetInstanceId = RecordUtil.getIdFromUuid(I_M_AttributeSetInstance.Table_Name, request.getUuid(), transactionName);
 			}
-			else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attribute.getAttributeValueType())) {
-				BigDecimal value = null;
-				if (currentValue != null) {
-					if (currentValue instanceof Integer) {
-						value = BigDecimal.valueOf((Integer) currentValue);
-					} else {
-						value = (BigDecimal) currentValue;
+
+			MProduct product = (MProduct) RecordUtil.getEntity(context, I_M_Product.Table_Name, request.getProductUuid(), request.getProductId(), transactionName);
+			if (product.getM_AttributeSet_ID() < 1) {
+				throw new AdempiereException("@PAttributeNoAttributeSet@");
+			}
+			boolean isProductASI = product.getM_AttributeSetInstance_ID() > 0;
+
+			MAttributeSetInstance attributeSetInstace = MAttributeSetInstance.get(context, attributeSetInstanceId, product.getM_Product_ID());
+
+			MAttributeSet atttibuteSet = MAttributeSet.get(context, product.getM_AttributeSet_ID());
+			attributeSetInstace.setM_AttributeSet_ID(product.getM_AttributeSet_ID());
+			attributeSetInstace.saveEx();
+
+			Map<String, Object> attributesValues = ValueUtil.convertValuesToObjects(request.getAttributesList());
+			List<MAttribute> attributes = Arrays.asList(atttibuteSet.getMAttributes(isProductASI));
+			if (attributes == null || attributes.size() <= 0) {
+				attributes = Arrays.asList(atttibuteSet.getMAttributes(!isProductASI));
+			}
+
+			// Save Instance Attributes
+			attributes.stream().forEach(attribute -> {
+				Object currentValue = attributesValues.get(attribute.getUUID());
+				if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attribute.getAttributeValueType())) {
+					int attributeId = 0;
+					if (currentValue != null) {
+						attributeId = (Integer) currentValue;
 					}
+					MAttributeValue attributeValue = new MAttributeValue(context, attributeId, transactionName);
+					if (attribute.isMandatory() && (attributeValue == null || attributeValue.getM_AttributeValue_ID() <= 0)) {
+						throw new AdempiereException("@M_Attribute_ID@: " + attribute.getName() + " @IsMandatory@");
+					}
+					attribute.setMAttributeInstance(attributeSetInstace.getM_AttributeSetInstance_ID(), attributeValue);
 				}
-				if (attribute.isMandatory() && value == null) {
-					throw new AdempiereException("@M_Attribute_ID@: " + attribute.getName() + " @IsMandatory@");
+				else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attribute.getAttributeValueType())) {
+					BigDecimal value = null;
+					if (currentValue != null) {
+						if (currentValue instanceof Integer) {
+							value = BigDecimal.valueOf((Integer) currentValue);
+						} else {
+							value = (BigDecimal) currentValue;
+						}
+					}
+					if (attribute.isMandatory() && value == null) {
+						throw new AdempiereException("@M_Attribute_ID@: " + attribute.getName() + " @IsMandatory@");
+					}
+					// setMAttributeInstance doesn't work without decimal point
+					if (value != null && value.scale() == 0) {
+						value = value.setScale(1, RoundingMode.HALF_UP);
+					}
+					attribute.setMAttributeInstance(attributeSetInstace.getM_AttributeSetInstance_ID(), value);
 				}
-				// setMAttributeInstance doesn't work without decimal point
-				if (value != null && value.scale() == 0) {
-					value = value.setScale(1, RoundingMode.HALF_UP);
+				else {
+					String value = null;
+					if (currentValue != null) {
+						value = currentValue.toString();
+					}
+					if (attribute.isMandatory() && Util.isEmpty(value, true)) {
+						throw new AdempiereException("@M_Attribute_ID@: " + attribute.getName() + " @IsMandatory@");
+					}
+					attribute.setMAttributeInstance(attributeSetInstace.getM_AttributeSetInstance_ID(), value);
 				}
-				attribute.setMAttributeInstance(attributeSetInstace.getM_AttributeSetInstance_ID(), value);
-			}
-			else {
-				String value = null;
-				if (currentValue != null) {
-					value = currentValue.toString();
-				}
-				if (attribute.isMandatory() && Util.isEmpty(value, true)) {
-					throw new AdempiereException("@M_Attribute_ID@: " + attribute.getName() + " @IsMandatory@");
-				}
-				attribute.setMAttributeInstance(attributeSetInstace.getM_AttributeSetInstance_ID(), value);
-			}
+			});
+
+			attributeSetInstace.setDescription();
+			attributeSetInstace.saveEx();
+			attributeSetInstaceAtomic.set(attributeSetInstace);
 		});
-		
-		attributeSetInstace.setDescription();
-		attributeSetInstace.saveEx();
-		
-		builder = convertProductAttributeSetInstance(attributeSetInstace);
-		
+
+		ProductAttributeSetInstance.Builder builder = convertProductAttributeSetInstance(attributeSetInstaceAtomic.get());
+
 		return builder;
 	}
 }
