@@ -2,6 +2,15 @@ apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'maven-publish'
 
+// Generate IntelliJ IDEA's .idea & .iml project files
+apply plugin: 'idea'
+
+// Generate Visual Studio Code .vscode & .json project files
+apply plugin: "visual-studio"
+
+// Provide convenience executables for trying out the examples.
+apply plugin: 'application'
+
 buildscript {
     repositories {
         maven { // The google mirror is less flaky than mavenCentral()
@@ -126,15 +135,6 @@ sourceSets {
         }
     }
 }
-
-// Generate IntelliJ IDEA's .idea & .iml project files
-apply plugin: 'idea'
-
-// Generate Visual Studio Code .vscode & .json project files
-apply plugin: "visual-studio"
-
-// Provide convenience executables for trying out the examples.
-apply plugin: 'application'
 
 startScripts.enabled = false
 
