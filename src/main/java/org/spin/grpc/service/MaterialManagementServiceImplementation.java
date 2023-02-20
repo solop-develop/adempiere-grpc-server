@@ -658,7 +658,6 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 	private ProductAttributeSetInstance.Builder saveProductAttributeSetInstance(SaveProductAttributeSetInstanceRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
-		ProductAttributeSetInstance.Builder builder = ProductAttributeSetInstance.newBuilder();
 		AtomicReference<MAttributeSetInstance> attributeSetInstaceAtomic = new AtomicReference<MAttributeSetInstance>();
 
 		Trx.run(transactionName -> {
@@ -734,7 +733,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			attributeSetInstaceAtomic.set(attributeSetInstace);
 		});
 
-		builder = convertProductAttributeSetInstance(attributeSetInstaceAtomic.get());
+		ProductAttributeSetInstance.Builder builder = convertProductAttributeSetInstance(attributeSetInstaceAtomic.get());
 
 		return builder;
 	}
