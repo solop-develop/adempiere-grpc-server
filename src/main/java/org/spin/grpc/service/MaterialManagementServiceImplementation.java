@@ -486,7 +486,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		if (attributeSetInstance.getGuaranteeDate() != null) {
 			builder.setGuaranteeDate(attributeSetInstance.getGuaranteeDate().getTime());
 		}
-		
+
 		final String whereClause = I_M_AttributeInstance.COLUMNNAME_M_AttributeSetInstance_ID + " = ? ";
 		List<MAttributeInstance> attributeInstancesList = new Query(
 			Env.getCtx(),
@@ -696,7 +696,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 					if (attribute.isMandatory() && (attributeValue == null || attributeValue.getM_AttributeValue_ID() <= 0)) {
 						throw new AdempiereException("@M_Attribute_ID@: " + attribute.getName() + " @IsMandatory@");
 					}
-						attribute.setMAttributeInstance(attributeSetInstace.getM_AttributeSetInstance_ID(), attributeValue);
+					attribute.setMAttributeInstance(attributeSetInstace.getM_AttributeSetInstance_ID(), attributeValue);
 				}
 				else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attribute.getAttributeValueType())) {
 					BigDecimal value = null;
