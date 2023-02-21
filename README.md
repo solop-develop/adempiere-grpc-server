@@ -90,7 +90,7 @@ docker pull solopcloud/adempiere-vue:experimental
 ## Run docker container:
 
 ### Minimal Docker Requirements
-To use this Docker image you must have your Docker engine  version greater than or equal to 3.0.
+To use this Docker image you must have your Docker engine version greater than or equal to 3.0.
 
 ### Environment variables
  * `DB_TYPE`: Database Type (Supported `Oracle` and `PostgreSQL`). Default `PostgreSQL`
