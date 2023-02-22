@@ -1,17 +1,17 @@
 /*************************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it    		 *
+ * This program is free software; you can redistribute it and/or modify it           *
  * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope   		 *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 		 *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           		 *
- * See the GNU General Public License for more details.                       		 *
- * You should have received a copy of the GNU General Public License along    		 *
- * with this program; if not, write to the Free Software Foundation, Inc.,    		 *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
- * For the text or an alternative of this public license, you may reach us    		 *
+ * by the Free Software Foundation. This program is distributed in the hope          *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
+ * See the GNU General Public License for more details.                              *
+ * You should have received a copy of the GNU General Public License along           *
+ * with this program; if not, write to the Free Software Foundation, Inc.,           *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
+ * For the text or an alternative of this public license, you may reach us           *
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
 
@@ -77,8 +77,9 @@ public class ReferenceUtil {
 	 * @return
 	 */
 	public static boolean validateReference(int referenceId) {
-		if (DisplayType.isLookup(referenceId) || DisplayType.Account == referenceId 
-			|| DisplayType.Location == referenceId || DisplayType.PAttribute == referenceId) {
+		if (DisplayType.isLookup(referenceId) || DisplayType.Account == referenceId
+			|| DisplayType.Location == referenceId || DisplayType.PAttribute == referenceId
+			|| DisplayType.Locator == referenceId) {
 			return true;
 		}
 		return false;
@@ -173,9 +174,8 @@ public class ReferenceUtil {
 
 		return referenceInfo;
 	}
-	
-	
-	public static String getColunsOrderLocation(String displaySequence, boolean isAddressReverse) {
+
+	public static String getColumnsOrderLocation(String displaySequence, boolean isAddressReverse) {
 		StringBuffer cityPostalRegion = new StringBuffer();
 
 		String inStr = displaySequence.replace(",", "|| ', ' ");
@@ -247,7 +247,7 @@ public class ReferenceUtil {
 		MCountry country = MCountry.getDefault(Env.getCtx());
 		boolean isAddressReverse = country.isAddressLinesLocalReverse() || country.isAddressLinesReverse();
 		String displaySequence = country.getDisplaySequenceLocal();
-		String columnsOrder = getColunsOrderLocation(displaySequence, isAddressReverse);
+		String columnsOrder = getColumnsOrderLocation(displaySequence, isAddressReverse);
 
 		StringBuffer query = new StringBuffer()
 			.append("SELECT ")
@@ -264,11 +264,11 @@ public class ReferenceUtil {
 		MCountry country = MCountry.getDefault(Env.getCtx());
 		boolean isAddressReverse = country.isAddressLinesLocalReverse() || country.isAddressLinesReverse();
 		String displaySequence = country.getDisplaySequenceLocal();
-		String columnsOrder = getColunsOrderLocation(displaySequence, isAddressReverse);
+		String columnsOrder = getColumnsOrderLocation(displaySequence, isAddressReverse);
 
 		StringBuffer query = new StringBuffer()
 			.append("SELECT ")
-	        .append("C_Location.C_Location_ID, NULL, ")
+			.append("C_Location.C_Location_ID, NULL, ")
 			.append("NVL(" + columnsOrder + ", '-1'), ")
 			.append("C_Location.IsActive ")
 			.append("FROM C_Location ")
@@ -276,7 +276,7 @@ public class ReferenceUtil {
 
 		return query.toString();
 	}
-	
+
 	public static String getDirectQueryLocation() {
 		String query = getQueryLocation();
 		StringBuffer directQuery = new StringBuffer()
@@ -285,7 +285,7 @@ public class ReferenceUtil {
 
 		return directQuery.toString();
 	}
-	
+
 	/**
 	 * Get Reference information, can return null if reference is invalid or not exists
 	 * @param referenceId
