@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -72,6 +72,7 @@ import org.compiere.wf.MWorkflow;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.dictionary.ApplicationRequest;
 import org.spin.backend.grpc.dictionary.Browser;
@@ -987,23 +988,20 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				);
 		//	
 		int displayTypeId = processParameter.getAD_Reference_ID();
-		if(DisplayType.isLookup(displayTypeId)) {
+		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = processParameter.getAD_Reference_Value_ID();
 			//	Validation Code
 			int validationRuleId = processParameter.getAD_Val_Rule_ID();
-			//	Set Validation Code
-			String validationCode = null;
-			if(validationRuleId > 0) {
-				MValRule validationRule = MValRule.get(context, validationRuleId);
-				validationCode = validationRule.getCode();
-			}
+
 			String columnName = processParameter.getColumnName();
-			if(processParameter.getAD_Element_ID() > 0) {
+			if (processParameter.getAD_Element_ID() > 0) {
 				columnName = processParameter.getAD_Element().getColumnName();
 			}
 
-			MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, 0, displayTypeId, Language.getLanguage(Env.getAD_Language(context)), columnName, referenceValueId, false, validationCode, false);
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, columnName, validationRuleId
+			);
 			if (info != null) {
 				Reference.Builder referenceBuilder = convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
@@ -1128,27 +1126,23 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 
 		//	
 		int displayTypeId = browseField.getAD_Reference_ID();
-		if(DisplayType.isLookup(displayTypeId)) {
+		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = browseField.getAD_Reference_Value_ID();
 			//	Validation Code
 			int validationRuleId = browseField.getAD_Val_Rule_ID();
-			//	Set Validation Code
-			String validationCode = null;
-			if(validationRuleId > 0) {
-				MValRule validationRule = MValRule.get(context, validationRuleId);
-				validationCode = validationRule.getCode();
-			}
 
 			// TODO: Verify this conditional with "elementName" variable
 			String columnName = browseField.getAD_Element().getColumnName();
-			if(viewColumn.getAD_Column_ID() > 0) {
+			if (viewColumn.getAD_Column_ID() > 0) {
 				MColumn column = MColumn.get(context, viewColumn.getAD_Column_ID());
 				columnName = column.getColumnName();
 			}
 
-			MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, 0, displayTypeId, Language.getLanguage(Env.getAD_Language(context)), columnName, referenceValueId, false, validationCode, false);
-			if(info != null) {
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, columnName, validationRuleId
+			);
+			if (info != null) {
 				Reference.Builder referenceBuilder = convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			} else {
@@ -1383,20 +1377,17 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			builder.setProcess(processBuilder.build());
 		}
 		//	
-		if(DisplayType.isLookup(displayTypeId)) {
+		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = column.getAD_Reference_Value_ID();
 
 			//	Validation Code
 			int validationRuleId = column.getAD_Val_Rule_ID();
-			//	Set Validation Code
-			String validationCode = null;
-			if(validationRuleId > 0) {
-				MValRule validationRule = MValRule.get(context, validationRuleId);
-				validationCode = validationRule.getCode();
-			}
-			MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, column.getAD_Column_ID(), displayTypeId, Language.getLanguage(Env.getAD_Language(context)), column.getColumnName(), referenceValueId, false, validationCode, false);
-			if(info != null) {
+
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, column.getColumnName(), validationRuleId
+			);
+			if (info != null) {
 				Reference.Builder referenceBuilder = convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			} else {
@@ -1492,14 +1483,17 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setFieldLength(element.getFieldLength())
 				.setIsActive(element.isActive());
 		//	
-		if(DisplayType.isLookup(displayTypeId)) {
+		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = element.getAD_Reference_Value_ID();
 			if(element.getAD_Reference_Value_ID() > 0) {
 				referenceValueId = element.getAD_Reference_Value_ID();
 			}
-			MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, element.getAD_Element_ID(), displayTypeId, Language.getLanguage(Env.getAD_Language(context)), element.getColumnName(), referenceValueId, false, null, false);
-			if(info != null) {
+
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, element.getColumnName(), 0
+			);
+			if (info != null) {
 				Reference.Builder referenceBuilder = convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			} else {
@@ -1596,8 +1590,8 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			Process.Builder processBuilder = convertProcess(context, process, false);
 			builder.setProcess(processBuilder.build());
 		}
-		//	
-		if(DisplayType.isLookup(displayTypeId)) {
+		//
+		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = column.getAD_Reference_Value_ID();
 			if(field.getAD_Reference_Value_ID() > 0) {
@@ -1608,14 +1602,11 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			if(field.getAD_Val_Rule_ID() > 0) {
 				validationRuleId = field.getAD_Val_Rule_ID();
 			}
-			//	Set Validation Code
-			String validationCode = null;
-			if(validationRuleId > 0) {
-				MValRule validationRule = MValRule.get(context, validationRuleId);
-				validationCode = validationRule.getCode();
-			}
-			MLookupInfo info = MLookupFactory.getLookupInfo(context, 0, column.getAD_Column_ID(), displayTypeId, Language.getLanguage(Env.getAD_Language(context)), column.getColumnName(), referenceValueId, false, validationCode, false);
-			if(info != null) {
+
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, column.getColumnName(), validationRuleId
+			);
+			if (info != null) {
 				Reference.Builder referenceBuilder = convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			} else {

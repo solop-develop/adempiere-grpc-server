@@ -68,9 +68,11 @@ public class ReferenceUtil {
 		this.context = context;
 		referenceInfoMap = new HashMap<String, ReferenceInfo>();
 	}
-	
+
 	/**
 	 * Validate reference
+	 * TODO: Add support to ID reference to get display column
+	 * TODO: Add support to Resource Assigment reference to get display column
 	 * @param referenceId
 	 * @param referenceValueId
 	 * @param columnName
@@ -84,10 +86,9 @@ public class ReferenceUtil {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Get Reference information, can return null if reference is invalid or not exists
-	 * TODO: Add support to ID references to get display column
 	 * @param referenceId
 	 * @param referenceValueId
 	 * @param columnName
