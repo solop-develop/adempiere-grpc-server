@@ -237,9 +237,19 @@ message ListLocatorsRequest {
 	data.ClientRequest client_request = 1;
 	int32 page_size = 2;
 	string page_token = 3;
+	// filters
 	string search_value = 4;
 	int32 warehouse_id = 5;
 	string warehouse_uuid = 6;
+	repeated data.KeyValue context_attributes = 7;
+	// references
+	string process_parameter_uuid = 8;
+	string field_uuid = 9;
+	string browse_field_uuid = 10;
+	string reference_uuid = 11;
+	string column_uuid = 12;
+	string table_name = 13;
+	string column_name = 14;
 }
 
 message ListLocatorsResponse {

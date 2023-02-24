@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -47,6 +48,7 @@ import org.compiere.model.MAttributeUse;
 import org.compiere.model.MAttributeValue;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MLocator;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MProduct;
 import org.compiere.model.MRequisitionLine;
@@ -62,6 +64,7 @@ import org.compiere.util.Util;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ValueUtil;
 
 import org.spin.backend.grpc.common.ListEntitiesResponse;
@@ -816,6 +819,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 
 		List<MWarehouse> warehousesList = query
 			.setOrderBy("M_Warehouse_ID, Value")
+			.setLimit(limit, offset)
 			.<MWarehouse>list()
 		;
 		if (warehousesList != null) {
@@ -889,8 +893,13 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 	private ListLocatorsResponse.Builder listLocators(ListLocatorsRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
+		// Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+
 		String whereClause = "";
 		List<Object> parameters = new ArrayList<Object>();
+
 		// Add warehouse to filter
 		if (!Util.isEmpty(request.getWarehouseUuid(), true) || request.getWarehouseId() > 0) {
 			whereClause = "M_Warehouse_ID = ?";
@@ -900,6 +909,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			}
 			parameters.add(warehouseId);
 		}
+
 		// Add search value to filter
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
 			if (!Util.isEmpty(whereClause, true)) {
@@ -907,6 +917,31 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			}
 			whereClause += "(UPPER(Value) LIKE '%'|| UPPER(?) || '%')";
 			parameters.add(request.getSearchValue());
+		}
+
+		// Add dynamic validation to filter
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			request.getReferenceUuid(),
+			request.getFieldUuid(),
+			request.getProcessParameterUuid(),
+			request.getBrowseFieldUuid(),
+			request.getColumnUuid(),
+			request.getColumnName(),
+			I_M_Locator.Table_Name
+		);
+		if (reference != null) {
+			// validation code of field
+			String validationCode = DictionaryUtil.getValidationCodeWithAlias(I_M_Locator.Table_Name, reference.ValidationCode);
+			String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+			if (!Util.isEmpty(reference.ValidationCode, true)) {
+				if (Util.isEmpty(parsedValidationCode, true)) {
+					throw new AdempiereException("@WhereClause@ @Unparseable@");
+				}
+				if (!Util.isEmpty(whereClause, true)) {
+					whereClause += " AND ";
+				}
+				whereClause += parsedValidationCode;
+			}
 		}
 
 		Query query = new Query(
@@ -929,6 +964,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 
 		List<MLocator> locatorsList = query
 			.setOrderBy("M_Warehouse_ID, Value")
+			.setLimit(limit, offset)
 			.<MLocator>list()
 		;
 		if (locatorsList != null) {
