@@ -773,26 +773,25 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 	private ListAvailableWarehousesResponse.Builder listAvailableWarehouses(ListAvailableWarehousesRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
-		String whereClause = "";
+		String whereClause = "1 = 1";
 		List<Object> parameters = new ArrayList<Object>();
+
 		// Add warehouse to filter
 		if (!Util.isEmpty(request.getWarehouseUuid(), true) || request.getWarehouseId() > 0) {
-			whereClause = "M_Warehouse_ID = ?";
+			whereClause = " AND M_Warehouse_ID = ?";
 			int warehouseId = request.getWarehouseId();
 			if (!Util.isEmpty(request.getWarehouseUuid())) {
 				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
 			}
 			parameters.add(warehouseId);
 		}
+
 		// Add search value to filter
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			if (!Util.isEmpty(whereClause, true)) {
-				whereClause += " AND ";
-			}
-			whereClause += "("
-				+ "UPPER(Value) LIKE '%'|| UPPER(?) || '%'"
-				+ "OR UPPER(Name) LIKE '%'|| UPPER(?) || '%' "
-				+ "OR UPPER(Description) LIKE '%'|| UPPER(?) || '%' "
+			whereClause += " AND ("
+				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%'"
+				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%' "
 			+ ")";
 			parameters.add(request.getSearchValue());
 			parameters.add(request.getSearchValue());
@@ -806,6 +805,8 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			null
 		)
 			.setParameters(parameters)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(true)
 		;
 
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
@@ -897,12 +898,12 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		context = ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
-		String whereClause = "";
+		String whereClause = "1 = 1";
 		List<Object> parameters = new ArrayList<Object>();
 
 		// Add warehouse to filter
 		if (!Util.isEmpty(request.getWarehouseUuid(), true) || request.getWarehouseId() > 0) {
-			whereClause = "M_Warehouse_ID = ?";
+			whereClause = " AND M_Warehouse_ID = ?";
 			int warehouseId = request.getWarehouseId();
 			if (!Util.isEmpty(request.getWarehouseUuid())) {
 				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
@@ -912,10 +913,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 
 		// Add search value to filter
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			if (!Util.isEmpty(whereClause, true)) {
-				whereClause += " AND ";
-			}
-			whereClause += "(UPPER(Value) LIKE '%'|| UPPER(?) || '%')";
+			whereClause += " AND (UPPER(Value) LIKE '%' || UPPER(?) || '%')";
 			parameters.add(request.getSearchValue());
 		}
 
@@ -951,6 +949,8 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			null
 		)
 			.setParameters(parameters)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(true)
 		;
 
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
