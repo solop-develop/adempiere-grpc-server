@@ -137,20 +137,26 @@ message ListProductAttributesRequest {
 	data.ClientRequest client_request = 1;
 	int32 page_size = 2;
 	string page_token = 3;
-	int32 product_id = 4;
-	string product_uuid = 5;
-	int32 product_attribute_set_instance_id = 6;
-	string product_attribute_set_instance_uuid = 7;
-	data.Criteria filters = 8;
+	// filters
+	string search_value = 4;
+	data.Criteria filters = 5;
+	//
+	int32 product_id = 6;
+	string product_uuid = 7;
+	int32 product_attribute_set_instance_id = 8;
+	string product_attribute_set_instance_uuid = 9;
 }
 
 message ListProductAttributeValuesRequest {
 	data.ClientRequest client_request = 1;
 	int32 page_size = 2;
 	string page_token = 3;
-	int32 product_attribute_id = 4;
-	string product_attribute_uuid = 5;
-	data.Criteria filters = 6;
+	// filters
+	string search_value = 4;
+	data.Criteria filters = 5;
+	//
+	int32 product_attribute_id = 6;
+	string product_attribute_uuid = 7;
 }
 
 message GetProductAttributeSetInstanceRequest {
@@ -165,11 +171,14 @@ message ListProductAttributeSetInstancesRequest {
 	data.ClientRequest client_request = 1;
 	int32 page_size = 2;
 	string page_token = 3;
-	int32 product_id = 4;
-	string product_uuid = 5;
-	int32 product_attribute_set_id = 6;
-	string product_attribute_set_uuid = 7;
-	data.Criteria filters = 8;
+	// filters
+	string search_value = 4;
+	data.Criteria filters = 5;
+	//
+	int32 product_id = 6;
+	string product_uuid = 7;
+	int32 product_attribute_set_id = 8;
+	string product_attribute_set_uuid = 9;
 }
 
 // List List Product Attribute Set Instances Response
@@ -230,7 +239,7 @@ message Locator {
 	string aisle = 5; // (X)
 	string bin = 6; // (Y)
 	string level = 7; // (Z)
-	Warehouse warehouse = 9;
+	Warehouse warehouse = 8;
 }
 
 message ListLocatorsRequest {
@@ -239,9 +248,9 @@ message ListLocatorsRequest {
 	string page_token = 3;
 	// filters
 	string search_value = 4;
-	int32 warehouse_id = 5;
-	string warehouse_uuid = 6;
-	repeated data.KeyValue context_attributes = 7;
+	repeated data.KeyValue context_attributes = 5;
+	int32 warehouse_id = 6;
+	string warehouse_uuid = 7;
 	// references
 	string process_parameter_uuid = 8;
 	string field_uuid = 9;

@@ -440,24 +440,39 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			throw new AdempiereException("@M_AttributeSet_ID@ @NotFound@");
 		}
 
+		String whereClause = "M_AttributeSet_ID = ?";
+		List<Object> parameters = new ArrayList<Object>();
+		parameters.add(productAttributeSetId);
+
+		// Add search value to filter
+		if (!Util.isEmpty(request.getSearchValue(), true)) {
+			whereClause += " AND (UPPER(Description) LIKE '%' || UPPER(?) || '%')";
+			parameters.add(request.getSearchValue());
+		}
+
+		Query query =  new Query(
+			context,
+			I_M_AttributeSetInstance.Table_Name,
+			whereClause,
+			null
+		)
+			.setClient_ID()
+			.setParameters(parameters)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(true)
+		;
+
+		int count = query.count();
+
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		Query query =  new Query(
-			context,
-			I_M_AttributeSetInstance.Table_Name,
-			"M_AttributeSet_ID = ?",
-			null
-		)
-			.setClient_ID()
-			.setParameters(productAttributeSetId)
-			.setOnlyActiveRecords(true);
-
-		int count = query.count();
-
-		List<MAttributeSetInstance> productAttributeSetInstancesList = query.setLimit(limit, offset).list();
+		List<MAttributeSetInstance> productAttributeSetInstancesList = query
+			.setOrderBy("M_AttributeSet_ID, UPPER(Description) ASC")
+			.setLimit(limit, offset)
+			.<MAttributeSetInstance>list();
 		ListProductAttributeSetInstancesResponse.Builder builderList = ListProductAttributeSetInstancesResponse.newBuilder()
 			.setRecordCount(count);
 
@@ -778,7 +793,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 
 		// Add warehouse to filter
 		if (!Util.isEmpty(request.getWarehouseUuid(), true) || request.getWarehouseId() > 0) {
-			whereClause = " AND M_Warehouse_ID = ?";
+			whereClause += " AND M_Warehouse_ID = ?";
 			int warehouseId = request.getWarehouseId();
 			if (!Util.isEmpty(request.getWarehouseUuid())) {
 				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
@@ -819,7 +834,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		;
 
 		List<MWarehouse> warehousesList = query
-			.setOrderBy("M_Warehouse_ID, Value")
+			.setOrderBy("M_Warehouse_ID, UPPER(Value)")
 			.setLimit(limit, offset)
 			.<MWarehouse>list()
 		;
@@ -903,7 +918,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 
 		// Add warehouse to filter
 		if (!Util.isEmpty(request.getWarehouseUuid(), true) || request.getWarehouseId() > 0) {
-			whereClause = " AND M_Warehouse_ID = ?";
+			whereClause += " AND M_Warehouse_ID = ?";
 			int warehouseId = request.getWarehouseId();
 			if (!Util.isEmpty(request.getWarehouseUuid())) {
 				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
@@ -963,7 +978,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		;
 
 		List<MLocator> locatorsList = query
-			.setOrderBy("M_Warehouse_ID, Value")
+			.setOrderBy("M_Warehouse_ID, UPPER(Value)")
 			.setLimit(limit, offset)
 			.<MLocator>list()
 		;
