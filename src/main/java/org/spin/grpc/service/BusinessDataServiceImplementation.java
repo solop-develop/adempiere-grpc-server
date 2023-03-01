@@ -326,8 +326,9 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 				&& DocAction.class.isAssignableFrom(entity.getClass())) {
 			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_DocAction, documentAction);
 			entity.saveEx();
-			builder.withoutTransactionClose();
 		}
+		builder.withoutTransactionClose();
+
 		//	Execute Process
 		ProcessInfo result = null;
 		try {
