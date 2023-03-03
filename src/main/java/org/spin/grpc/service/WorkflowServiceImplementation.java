@@ -334,9 +334,11 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 					orderType = documentType.getDocBaseType();
 				}
 			}
-			isSOTrx = ValueUtil.booleanToString(
-				entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)
-			);
+			if (entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
+				isSOTrx = ValueUtil.booleanToString(
+					entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)
+				);
+			}
 			recordId = entity.get_ID();
 		}
 		if (documentStatus == null) {
@@ -583,7 +585,14 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 				orderType = documentType.getDocBaseType();
 			}
 		}
-		String isSOTrx = entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)? "Y": "N";
+
+		String isSOTrx = "Y";
+		if (entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
+			isSOTrx = ValueUtil.booleanToString(
+				entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)
+			);
+		}
+
 		//	
 		if (documentStatus == null) {
 			throw new AdempiereException("@DocStatus@ @NotFound@");
