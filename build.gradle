@@ -90,6 +90,10 @@ sourceSets {
             srcDirs 'build/generated/source/proto/main/java'
             srcDirs 'src/main/proto'
         }
+        resources {
+    		srcDirs 'src'
+        	include 'org/adempiere/legacy/apache/ecs/ecs.properties'
+    	}
     }
 }
 
