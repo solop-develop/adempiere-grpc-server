@@ -294,7 +294,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 				.withoutBatchMode()
 				.withWindowNo(0)
 				.withTitle(process.getName())
-			.withoutTransactionClose();
+			.withoutTransactionClose()
 		;
 		//	Set Report Export Type
 		if(process.isReport()) {
