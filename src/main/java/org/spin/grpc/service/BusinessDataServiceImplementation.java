@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -201,32 +201,44 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	@Override
 	public void runBusinessProcess(RunBusinessProcessRequest request, StreamObserver<ProcessLog> responseObserver) {
 		try {
-			if(request == null
-					|| Util.isEmpty(request.getProcessUuid())) {
+			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			log.fine("Lookup List Requested = " + request.getUuid());
-			Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
-			ProcessLog.Builder processReponse = runProcess(context, request);
+
+			ProcessLog.Builder processReponse = runBusinessProcess(request);
 			responseObserver.onNext(processReponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	
 	/**
 	 * Run a process from request
+	 * @deprecated Use {@link #runBusinessProcess(RunBusinessProcessRequest)} instead.
 	 * @param context
+	 * @param request
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public static ProcessLog.Builder runProcess(Properties context, RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
+		return runBusinessProcess(request);
+	}
+	/**
+	 * Run a process from request
 	 * @param request
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 */
-	public static ProcessLog.Builder runProcess(Properties context, RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
+	public static ProcessLog.Builder runBusinessProcess(RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
+		Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
+
 		//	Get Process definition
 		MProcess process = MProcess.get(context, RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getProcessUuid(), null));
 		if(process == null
@@ -281,7 +293,9 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 				.withoutPrintPreview()
 				.withoutBatchMode()
 				.withWindowNo(0)
-				.withTitle(process.getName());
+				.withTitle(process.getName())
+			.withoutTransactionClose();
+		;
 		//	Set Report Export Type
 		if(process.isReport()) {
 			builder.withReportExportFormat(request.getReportType());
@@ -326,8 +340,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 				&& DocAction.class.isAssignableFrom(entity.getClass())) {
 			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_DocAction, documentAction);
 			entity.saveEx();
-			builder.withoutTransactionClose();
 		}
+
 		//	Execute Process
 		ProcessInfo result = null;
 		try {
