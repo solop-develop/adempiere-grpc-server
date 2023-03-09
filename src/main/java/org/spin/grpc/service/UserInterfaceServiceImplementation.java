@@ -486,20 +486,33 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				.collect(Collectors.toList());
 
 			zoomInfos.stream().forEach(zoomInfo -> {
-				MWindow referenceWindow = MWindow.get(context, zoomInfo.windowId);
+				MQuery zoomQuery = zoomInfo.query;
 				//
 				RecordReferenceInfo.Builder recordReferenceBuilder = RecordReferenceInfo.newBuilder();
 
-				MQuery zoomQuery = zoomInfo.query;
-				recordReferenceBuilder.setDisplayName(zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")");
-				recordReferenceBuilder.setRecordCount(zoomQuery.getRecordCount());
+				MWindow referenceWindow = MWindow.get(context, zoomInfo.windowId);
+				MTab tab = Arrays.stream(referenceWindow.getTabs(false, null))
+					.filter(tabItem -> {
+						return zoomQuery.getZoomTableName().equals(tabItem.getAD_Table().getTableName());
+					})
+					.findFirst()
+					.orElse(null)
+				;
 				recordReferenceBuilder.setWindowUuid(ValueUtil.validateNull(referenceWindow.get_UUID()));
+				if (tab != null && tab.getAD_Tab_ID() > 0) {
+					recordReferenceBuilder.setTabUuid(
+						ValueUtil.validateNull(tab.getUUID())
+					);
+				}
 				recordReferenceBuilder.setTableName(ValueUtil.validateNull(zoomQuery.getZoomTableName()));
 				recordReferenceBuilder.setWhereClause(ValueUtil.validateNull(zoomQuery.getWhereClause()));
-
 				String uuid = UUID.randomUUID().toString();
 				recordReferenceBuilder.setUuid(uuid);
 				referenceWhereClauseCache.put(uuid, zoomQuery.getWhereClause());
+
+				recordReferenceBuilder.setRecordCount(zoomQuery.getRecordCount());
+
+				recordReferenceBuilder.setDisplayName(zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")");
 				recordReferenceBuilder.setColumnName(ValueUtil.validateNull(zoomQuery.getZoomColumnName()));
 				recordReferenceBuilder.setValue(
 					ValueUtil.getValueFromObject(zoomQuery.getZoomValue())
