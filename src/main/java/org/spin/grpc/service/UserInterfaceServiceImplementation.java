@@ -407,8 +407,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				throw new AdempiereException("Process Activity Requested is Null");
 			}
 			log.fine("References Info Requested = " + request);
-			Properties context = ContextManager.getContext(request.getClientRequest().getSessionUuid(), request.getClientRequest().getLanguage(), request.getClientRequest().getOrganizationUuid(), request.getClientRequest().getWarehouseUuid());
-			ListReferencesResponse.Builder entityValueList = convertRecordReferences(context, request);
+			ListReferencesResponse.Builder entityValueList = listReferences(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -418,6 +417,101 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					.withCause(e)
 					.asRuntimeException());
 		}
+	}
+
+	/**
+	 * Convert references to gRPC
+	 * @param context
+	 * @param request
+	 * @return
+	 */
+	private ListReferencesResponse.Builder listReferences(ListReferencesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+		ListReferencesResponse.Builder builder = ListReferencesResponse.newBuilder();
+		//	Get entity
+		if (request.getId() <= 0 && Util.isEmpty(request.getUuid())) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+
+		if(Util.isEmpty(request.getTableName())) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		MTable table = MTable.get(context, request.getTableName());
+		if (table == null || table.getAD_Table_ID() < 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		// validate multiple keys as accounting tables and translation tables
+		if (!table.isSingleKey()) {
+			return builder;
+		}
+
+		StringBuffer whereClause = new StringBuffer();
+		List<Object> params = new ArrayList<>();
+		if(!Util.isEmpty(request.getUuid())) {
+			whereClause.append(I_AD_Element.COLUMNNAME_UUID + " = ?");
+			params.add(request.getUuid());
+		} else if(request.getId() > 0) {
+			whereClause.append(table.getTableName() + "_ID = ?");
+			params.add(request.getId());
+		} else {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		PO entity = new Query(
+			context,
+			table.getTableName(),
+			whereClause.toString(),
+			null
+		)
+			.setParameters(params)
+			.first();
+		if (entity == null || entity.get_ID() < 0) {
+			return builder;
+		}
+
+		MWindow window = new Query(
+			context,
+			I_AD_Window.Table_Name,
+			I_AD_Window.COLUMNNAME_UUID + " = ?",
+			null
+		)
+			.setParameters(request.getWindowUuid())
+			.setOnlyActiveRecords(true)
+			.first();
+		if (window != null && window.get_ID() > 0) {
+			List<ZoomInfoFactory.ZoomInfo> zoomInfos = ZoomInfoFactory.retrieveZoomInfos(entity, window.getAD_Window_ID())
+				.stream()
+				.filter(zoomInfo -> {
+					return zoomInfo.query.getRecordCount() > 0;
+				})
+				.collect(Collectors.toList());
+
+			zoomInfos.stream().forEach(zoomInfo -> {
+				MWindow referenceWindow = MWindow.get(context, zoomInfo.windowId);
+				//
+				RecordReferenceInfo.Builder recordReferenceBuilder = RecordReferenceInfo.newBuilder();
+
+				MQuery zoomQuery = zoomInfo.query;
+				recordReferenceBuilder.setDisplayName(zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")");
+				recordReferenceBuilder.setRecordCount(zoomQuery.getRecordCount());
+				recordReferenceBuilder.setWindowUuid(ValueUtil.validateNull(referenceWindow.get_UUID()));
+				recordReferenceBuilder.setTableName(ValueUtil.validateNull(zoomQuery.getZoomTableName()));
+				recordReferenceBuilder.setWhereClause(ValueUtil.validateNull(zoomQuery.getWhereClause()));
+
+				String uuid = UUID.randomUUID().toString();
+				recordReferenceBuilder.setUuid(uuid);
+				referenceWhereClauseCache.put(uuid, zoomQuery.getWhereClause());
+				recordReferenceBuilder.setColumnName(ValueUtil.validateNull(zoomQuery.getZoomColumnName()));
+				recordReferenceBuilder.setValue(
+					ValueUtil.getValueFromObject(zoomQuery.getZoomValue())
+				);
+
+				//	Add to list
+				builder.addReferences(recordReferenceBuilder.build());
+			});
+			builder.setRecordCount(zoomInfos.size());
+		}
+		//	Return
+		return builder;
 	}
 
 
@@ -444,7 +538,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	private ExistsReferencesResponse.Builder existsReferences(ExistsReferencesRequest request) {
 		Properties context = ContextManager.getContext(request.getClientRequest());
 
-		// validate tab		
+		// validate tab
 		if (request.getTabId() <= 0 && Util.isEmpty(request.getTabUuid(), true)) {
 			throw new AdempiereException("@AD_Tab_ID@ @Mandatory@");
 		}
@@ -1738,7 +1832,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			.setParameters(tableName, recordId, userId)
 			.first();
 	}
-	
+
+
 	/**
 	 * Lock and unlock private access
 	 * @param context
@@ -1762,80 +1857,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Convert Private Access
 		return convertPrivateAccess(context, privateAccess);
 	}
-	
-	/**
-	 * Convert references to gRPC
-	 * @param context
-	 * @param request
-	 * @return
-	 */
-	private ListReferencesResponse.Builder convertRecordReferences(Properties context, ListReferencesRequest request) {
-		ListReferencesResponse.Builder builder = ListReferencesResponse.newBuilder();
-		//	Get entity
-		if(request.getId() == 0
-				&& Util.isEmpty(request.getUuid())) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-		
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		MTable table = MTable.get(context, request.getTableName());
-		if (table == null || table.getAD_Table_ID() < 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		// validate multiple keys as accounting tables and translation tables
-		if (!table.isSingleKey()) {
-			return builder;
-		}
 
-		StringBuffer whereClause = new StringBuffer();
-		List<Object> params = new ArrayList<>();
-		if(!Util.isEmpty(request.getUuid())) {
-			whereClause.append(I_AD_Element.COLUMNNAME_UUID + " = ?");
-			params.add(request.getUuid());
-		} else if(request.getId() > 0) {
-			whereClause.append(table.getTableName() + "_ID = ?");
-			params.add(request.getId());
-		} else {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-		PO entity = new Query(context, table.getTableName(), whereClause.toString(), null)
-				.setParameters(params)
-				.first();
-		if(entity != null
-				&& entity.get_ID() >= 0) {
-			MWindow window = new Query(context, I_AD_Window.Table_Name, I_AD_Window.COLUMNNAME_UUID + " = ?", null)
-					.setParameters(request.getWindowUuid())
-					.setOnlyActiveRecords(true)
-					.first();
-			if(window != null
-					&& window.get_ID() > 0) {
-				for (ZoomInfoFactory.ZoomInfo zoomInfo : ZoomInfoFactory.retrieveZoomInfos(entity, window.getAD_Window_ID())) {
-					if (zoomInfo.query.getRecordCount() == 0) {
-						continue;
-					}
-					MWindow referenceWindow = MWindow.get(context, zoomInfo.windowId);
-					//	
-					String uuid = UUID.randomUUID().toString();
-					RecordReferenceInfo.Builder recordReferenceBuilder = RecordReferenceInfo.newBuilder();
-					recordReferenceBuilder.setDisplayName(zoomInfo.destinationDisplay + " (#" + zoomInfo.query.getRecordCount() + ")");
-					recordReferenceBuilder.setRecordCount(zoomInfo.query.getRecordCount());
-					recordReferenceBuilder.setWindowUuid(ValueUtil.validateNull(referenceWindow.get_UUID()));
-					recordReferenceBuilder.setTableName(ValueUtil.validateNull(zoomInfo.query.getZoomTableName()));
-					recordReferenceBuilder.setWhereClause(ValueUtil.validateNull(zoomInfo.query.getWhereClause()));
-					recordReferenceBuilder.setUuid(uuid);
-					referenceWhereClauseCache.put(uuid, zoomInfo.query.getWhereClause());
-					//	Add to list
-					builder.addReferences(recordReferenceBuilder.build());
-				}
-			}
-		}
-		//	Return
-		return builder;
-	}
-	
-	
+
 	/**
 	 * Convert languages to gRPC
 	 * @param context
