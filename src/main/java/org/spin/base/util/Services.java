@@ -42,6 +42,7 @@ public enum Services {
 	PRODUCT("product"),
 	STORE("store"),
 	TIME_CONTROL("time_control"),
+	TIME_RECORD("time_record"),
 	USER_CUSTOMIZATION("user_customization"),
 	UI("ui"),
 	UPDATER("updater"),

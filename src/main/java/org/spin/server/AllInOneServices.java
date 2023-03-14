@@ -40,6 +40,7 @@ import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
 import org.spin.grpc.service.PointOfSalesServiceImplementation;
 import org.spin.grpc.service.ProductServiceImplementation;
 import org.spin.grpc.service.TimeControlServiceImplementation;
+import org.spin.grpc.service.TimeRecordServiceImplementation;
 import org.spin.grpc.service.UpdateImplementation;
 import org.spin.grpc.service.UserCustomizationImplementation;
 import org.spin.grpc.service.UserInterfaceServiceImplementation;
@@ -198,6 +199,11 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {
 			serverBuilder.addService(new TimeControlServiceImplementation());
 			logger.info("Service " + Services.TIME_CONTROL.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Time Record
+		if (SetupLoader.getInstance().getServer().isValidService(Services.TIME_RECORD.getServiceName())) {
+			serverBuilder.addService(new TimeRecordServiceImplementation());
+			logger.info("Service " + Services.TIME_RECORD.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	User Customization
 		if(SetupLoader.getInstance().getServer().isValidService(Services.USER_CUSTOMIZATION.getServiceName())) {
