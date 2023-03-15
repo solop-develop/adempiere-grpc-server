@@ -24,6 +24,8 @@ import java.util.Properties;
 import org.adempiere.core.domains.models.I_C_Project;
 import org.adempiere.core.domains.models.I_R_Request;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MProject;
+import org.compiere.model.MRequest;
 import org.compiere.model.MResource;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MResourceType;
@@ -34,8 +36,14 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.form.time_record.CreateTimeRecordRequest;
+import org.spin.backend.grpc.form.time_record.Issue;
+import org.spin.backend.grpc.form.time_record.ListIssuesRequest;
+import org.spin.backend.grpc.form.time_record.ListIssuesResponse;
+import org.spin.backend.grpc.form.time_record.ListProjectsRequest;
+import org.spin.backend.grpc.form.time_record.ListProjectsResponse;
 import org.spin.backend.grpc.form.time_record.ListTimeRecordRequest;
 import org.spin.backend.grpc.form.time_record.ListTimeRecordResponse;
+import org.spin.backend.grpc.form.time_record.Project;
 import org.spin.backend.grpc.form.time_record.Resource;
 import org.spin.backend.grpc.form.time_record.ResourceAssignment;
 import org.spin.backend.grpc.form.time_record.ResourceType;
@@ -56,6 +64,186 @@ import io.grpc.stub.StreamObserver;
 public class TimeRecordServiceImplementation extends TimeRecordImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(TimeRecordServiceImplementation.class);
+
+	/**
+	 * Convert MRequest to gRPC
+	 * @param resourceType
+	 * @return
+	 */
+	public static Issue.Builder convertRequest(org.compiere.model.MRequest request) {
+		Issue.Builder builder = Issue.newBuilder();
+		if (request == null) {
+			return builder;
+		}
+		builder.setId(request.getR_Request_ID());
+		builder.setUuid(ValueUtil.validateNull(request.getUUID()));
+		builder.setDocumentNo(ValueUtil.validateNull(request.getDocumentNo()));
+		builder.setSubject(ValueUtil.validateNull(request.getSubject()));
+		builder.setSummary(ValueUtil.validateNull(request.getSummary()));
+
+		return builder;
+	}
+
+	@Override
+	public void listIssues(ListIssuesRequest request, StreamObserver<ListIssuesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListIssuesResponse.Builder recordsList = listIssues(request);
+			responseObserver.onNext(recordsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	ListIssuesResponse.Builder listIssues(ListIssuesRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		List<Object> parametersList = new ArrayList<>();
+		int userId = Env.getAD_User_ID(context);
+		parametersList.add(userId);
+
+		int roleId = Env.getAD_Role_ID(context);
+		parametersList.add(roleId);
+
+		final String whereClause = "Processed='N' "
+			+ "AND (SalesRep_ID=? OR AD_Role_ID = ?) "
+			+ "AND (DateNextAction IS NULL OR TRUNC(DateNextAction, 'DD') <= TRUNC(SysDate, 'DD'))"
+			+ "AND (R_Status_ID IS NULL OR R_Status_ID IN (SELECT R_Status_ID FROM R_Status WHERE IsClosed='N'))"
+		;
+
+		Query queryRequests = new Query(
+			context,
+			I_R_Request.Table_Name,
+			whereClause,
+			null
+		)
+			// .setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setParameters(parametersList)
+			.setApplyAccessFilter(true)
+			.setOrderBy(I_R_Request.COLUMNNAME_Created)
+		;
+
+		int recordCount = queryRequests.count();
+
+		ListIssuesResponse.Builder builderList = ListIssuesResponse.newBuilder();
+		builderList.setRecordCount(recordCount);
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		// Set page token
+		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+
+		queryRequests
+			.setLimit(limit, offset)
+			.list(MRequest.class)
+			.forEach(requestRecord -> {
+				Issue.Builder builder = convertRequest(requestRecord);
+				builderList.addRecords(builder);
+			});
+
+		return builderList;
+	}
+
+
+
+	/**
+	 * Convert MProject to gRPC
+	 * @param project
+	 * @return
+	 */
+	public static Project.Builder convertProject(org.compiere.model.MProject project) {
+		Project.Builder builder = Project.newBuilder();
+		if (project == null) {
+			return builder;
+		}
+		builder.setId(project.getC_Project_ID());
+		builder.setUuid(ValueUtil.validateNull(project.getUUID()));
+		builder.setValue(ValueUtil.validateNull(project.getValue()));
+		builder.setName(ValueUtil.validateNull(project.getName()));
+
+		return builder;
+	}
+
+	@Override
+	public void listProjects(ListProjectsRequest request, StreamObserver<ListProjectsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListProjectsResponse.Builder recordsList = listProjects(request);
+			responseObserver.onNext(recordsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private ListProjectsResponse.Builder listProjects(ListProjectsRequest request) {
+		Properties context = ContextManager.getContext(request.getClientRequest());
+
+		List<Object> parametersList = new ArrayList<>();
+		parametersList.add(false); // N
+
+		final String whereClause = "Processed = ?";
+
+		Query queryRequests = new Query(
+			context,
+			I_C_Project.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(parametersList)
+			.setApplyAccessFilter(true)
+			.setOnlyActiveRecords(true)
+			.setOrderBy(I_C_Project.COLUMNNAME_Created)
+		;
+
+		int recordCount = queryRequests.count();
+
+		ListProjectsResponse.Builder builderList = ListProjectsResponse.newBuilder();
+		builderList.setRecordCount(recordCount);
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(request.getClientRequest().getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		// Set page token
+		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(request.getClientRequest().getSessionUuid()) + (pageNumber + 1);
+		}
+		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+
+		queryRequests
+			.setLimit(limit, offset)
+			.list(MProject.class)
+			.forEach(projectRecord -> {
+				Project.Builder builder = convertProject(projectRecord);
+				builderList.addRecords(builder);
+			});
+
+		return builderList;
+	}
 
 	/**
 	 * Convert MResourceType to gRPC
@@ -359,9 +547,9 @@ public class TimeRecordServiceImplementation extends TimeRecordImplBase {
 			whereClause,
 			null
 		)
-			.setClient_ID()
-			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(true)
 			.setParameters(parametersList)
+			.setOnlyActiveRecords(true)
 			.setOrderBy(MResourceAssignment.COLUMNNAME_Created)
 		;
 

@@ -28,10 +28,59 @@ package time_record;
 
 // The Time Record service definition
 service TimeRecord {
+	rpc ListIssues(ListIssuesRequest) returns (ListIssuesResponse) {}
+	rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {}
+	// Resource Assigment
 	rpc CreateTimeRecord(CreateTimeRecordRequest) returns (ResourceAssignment) {}
 	rpc ListTimeRecord(ListTimeRecordRequest) returns (ListTimeRecordResponse) {}
 }
 
+// Issue (Request)
+message Issue {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	string subject = 4;
+	string summary = 5;
+}
+
+message ListIssuesRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	string search_value = 4;
+}
+
+message ListIssuesResponse {
+	int64 record_count = 1;
+	repeated Issue records = 2;
+	string next_page_token = 3;
+}
+
+
+// Project
+message Project {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+}
+
+message ListProjectsRequest {
+	data.ClientRequest client_request = 1;
+	int32 page_size = 2;
+	string page_token = 3;
+	string search_value = 4;
+}
+
+message ListProjectsResponse {
+	int64 record_count = 1;
+	repeated Project records = 2;
+	string next_page_token = 3;
+}
+
+
+// Resource Assigment
 message ResourceType {
 	int32 id = 1;
 	string uuid = 2;
