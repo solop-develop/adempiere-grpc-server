@@ -53,6 +53,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
+import org.spin.authentication.Constants;
 import org.spin.backend.grpc.access.ChangeRoleRequest;
 import org.spin.backend.grpc.access.ContextValue;
 import org.spin.backend.grpc.access.ListRolesRequest;
@@ -138,17 +139,16 @@ public class AccessServiceImplementation extends SecurityImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			log.fine("Session Requested = " + request.getSessionUuid());
-			ContextManager.getContext(request.getSessionUuid(), request.getLanguage());
 			Session.Builder sessionBuilder = getSessionInfo(request);
 			responseObserver.onNext(sessionBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	
@@ -227,9 +227,10 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	
@@ -563,13 +564,16 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private Session.Builder getSessionInfo(SessionRequest request) {
+		Properties context = ContextManager.getContext(request.getSessionUuid(), request.getLanguage());
+
 		Session.Builder builder = Session.newBuilder();
 		//	Get Session
-		if(Util.isEmpty(request.getSessionUuid())) {
+		if (Util.isEmpty(request.getSessionUuid(), true)) {
 			throw new AdempiereException("@AD_Session_ID@ @NotFound@");
 		}
-		Properties context = Env.getCtx();
-		MSession session = getSessionFromUUid(request.getSessionUuid());
+
+		String sessionUuid = request.getSessionUuid().substring(Constants.BEARER_TYPE.length()).trim();
+		MSession session = getSessionFromUUid(sessionUuid);
 		//	Load default preference values
 		SessionManager.loadDefaultSessionValues(context, null);
 		//	Session values

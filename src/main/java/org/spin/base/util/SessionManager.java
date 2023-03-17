@@ -1,17 +1,17 @@
 /*************************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it    		 *
+ * This program is free software; you can redistribute it and/or modify it           *
  * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope   		 *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 		 *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           		 *
- * See the GNU General Public License for more details.                       		 *
- * You should have received a copy of the GNU General Public License along    		 *
- * with this program; if not, write to the Free Software Foundation, Inc.,    		 *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
- * For the text or an alternative of this public license, you may reach us    		 *
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * by the Free Software Foundation. This program is distributed in the hope          *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
+ * See the GNU General Public License for more details.                              *
+ * You should have received a copy of the GNU General Public License along           *
+ * with this program; if not, write to the Free Software Foundation, Inc.,           *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
+ * For the text or an alternative of this public license, you may reach us           *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
 
@@ -37,6 +37,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
 import org.compiere.util.Util;
+import org.spin.authentication.Constants;
 import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
 import org.spin.util.IThirdPartyAccessGenerator;
@@ -63,6 +64,9 @@ public class SessionManager {
 		int roleId = -1;
 		int organizationId = -1;
 		int warehouseId = -1;
+		if (tokenValue.startsWith(Constants.BEARER_TYPE)) {
+			tokenValue = tokenValue.substring(Constants.BEARER_TYPE.length()).trim();
+		}
 		MADToken token = getSessionFromToken(tokenValue);
 		if(Optional.ofNullable(token).isPresent()) {
 			userId = token.getAD_User_ID();
@@ -124,6 +128,9 @@ public class SessionManager {
 	public static MADToken getSessionFromToken(String tokenValue) {
 		if(Util.isEmpty(tokenValue)) {
 			throw new AdempiereException("@AD_Token_ID@ @NotFound@");
+		}
+		if (tokenValue.startsWith(Constants.BEARER_TYPE)) {
+			tokenValue = tokenValue.substring(Constants.BEARER_TYPE.length()).trim();
 		}
 		//	
 		try {

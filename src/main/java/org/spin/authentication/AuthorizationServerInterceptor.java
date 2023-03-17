@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -28,8 +28,11 @@ public class AuthorizationServerInterceptor implements ServerInterceptor {
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
         String value = metadata.get(Constants.AUTHORIZATION_METADATA_KEY);
 
+		// if ("access.Security/RunLogin".contains(serverCall.getMethodDescriptor().getFullMethodName())) {
+		// 	return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
+		// }
         Status status;
-        if (value == null) {
+		if (value == null || value.trim().length() <= 0) {
             status = Status.UNAUTHENTICATED.withDescription("Authorization token is missing");
         } else if (!value.startsWith(Constants.BEARER_TYPE)) {
             status = Status.UNAUTHENTICATED.withDescription("Unknown authorization type");
@@ -38,7 +41,7 @@ public class AuthorizationServerInterceptor implements ServerInterceptor {
                 String token = value.substring(Constants.BEARER_TYPE.length()).trim();
                 //	Create ADempiere session, throw a error if it not exists
                 System.out.println("Token: " + token);
-//                Context ctx = Context.current().withValue(Constants.CLIENT_ID_CONTEXT_KEY, claims.getBody().getSubject());
+				// Context ctx = Context.current().withValue(Constants.CLIENT_ID_CONTEXT_KEY, claims.getBody().getSubject());
                 return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
             } catch (Exception e) {
                 status = Status.UNAUTHENTICATED.withDescription(e.getMessage()).withCause(e);

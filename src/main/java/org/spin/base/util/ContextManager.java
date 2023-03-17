@@ -10,7 +10,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,           *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
  * For the text or an alternative of this public license, you may reach us           *
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
  * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
@@ -36,6 +36,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.authentication.Constants;
 import org.spin.backend.grpc.client.ClientRequest;
 import org.spin.backend.grpc.dictionary.ApplicationRequest;
 
@@ -99,6 +100,10 @@ public class ContextManager {
 	 * @return
 	 */
 	public static Properties getContext(String sessionUuid, String language, String organizationUuid, String warehouseUuid) {
+		if (sessionUuid.startsWith(Constants.BEARER_TYPE)) {
+			sessionUuid = sessionUuid.substring(Constants.BEARER_TYPE.length()).trim();
+		}
+
 		Properties context = sessionsContext.get(sessionUuid);
 		if(context != null
 				&& context.size() > 0) {
