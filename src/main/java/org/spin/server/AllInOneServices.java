@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -82,8 +82,10 @@ public class AllInOneServices {
 		} else {
 			serverBuilder = ServerBuilder.forPort(SetupLoader.getInstance().getServer().getPort());
 		}
-		//	
-//		serverBuilder.intercept(new AuthorizationServerInterceptor());
+
+		// Validate JWT on all requests
+		serverBuilder.intercept(new AuthorizationServerInterceptor());
+
 		//	For Access
 		if(SetupLoader.getInstance().getServer().isValidService(Services.ACCESS.getServiceName())) {
 			serverBuilder.addService(new AccessServiceImplementation());

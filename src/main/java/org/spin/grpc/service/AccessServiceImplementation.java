@@ -538,18 +538,18 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private Session.Builder logoutSession(LogoutRequest request) {
-		Session.Builder builder = Session.newBuilder();
+		Properties context = ContextManager.getContext(request.getSessionUuid(), request.getLanguage());
 		//	Get Session
-		if(Util.isEmpty(request.getSessionUuid())) {
+		if (Util.isEmpty(request.getSessionUuid(), true)) {
 			throw new AdempiereException("@AD_Session_ID@ @NotFound@");
 		}
-		Properties context = Env.getCtx();
 		MSession session = getSessionFromUUid(request.getSessionUuid());
 		//	Logout
 		session.logout();
 		ContextManager.removeSession(session.getUUID());
 
 		//	Session values
+		Session.Builder builder = Session.newBuilder();
 		builder.setId(session.getAD_Session_ID());
 		builder.setUuid(ValueUtil.validateNull(session.getUUID()));
 		builder.setName(ValueUtil.validateNull(session.getDescription()));
@@ -557,7 +557,7 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		//	Return session
 		return builder;
 	}
-	
+
 	/**
 	 * Logout session
 	 * @param request
