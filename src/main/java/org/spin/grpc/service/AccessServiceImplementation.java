@@ -159,8 +159,7 @@ public class AccessServiceImplementation extends SecurityImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("User Info Requested = " + request.getClientVersion());
-			ContextManager.getContext(request.getSessionUuid(), request.getLanguage());
-			UserInfo.Builder UserInfo = convertUserInfo(request);
+			UserInfo.Builder UserInfo = getUserInfo(request);
 			responseObserver.onNext(UserInfo.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -666,15 +665,17 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	}
 	
 	/**
-	 * Convert User Roles
+	 * Get User Info
 	 * @param request
 	 * @return
 	 */
-	private UserInfo.Builder convertUserInfo(UserInfoRequest request) {
+	private UserInfo.Builder getUserInfo(UserInfoRequest request) {
 		String sessionUuid = BearerToken.getTokenWithoutType(request.getSessionUuid());
 		if (Util.isEmpty(sessionUuid, true)) {
 			throw new AdempiereException("@AD_Session_ID@ @NotFound@");
 		}
+		ContextManager.getContext(sessionUuid, request.getLanguage());
+
 		MSession session = getSessionFromUUid(sessionUuid);
 		List<MRole> roleList = new Query(Env.getCtx(), I_AD_Role.Table_Name, 
 				"EXISTS(SELECT 1 FROM AD_User_Roles ur "
