@@ -48,7 +48,7 @@ public class AuthorizationServerInterceptor implements ServerInterceptor {
             status = Status.UNAUTHENTICATED.withDescription("Unknown authorization type");
         } else {
             try {
-				// String token = value.substring(Constants.BEARER_TYPE.length()).trim();
+				// String token = BearerToken.getTokenWithoutType(value);
 				// System.out.println("Token: " + token);
 
 				// Create ADempiere session, throw a error if it not exists

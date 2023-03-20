@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -21,6 +21,8 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 
 public class BearerToken extends CallCredentials {
+
+	public static final String BEARER_TYPE = "Bearer";
 
     private String value;
 
@@ -45,4 +47,11 @@ public class BearerToken extends CallCredentials {
     public void thisUsesUnstableApi() {
         // noop
     }
+
+	public static String getTokenWithoutType(String token) {
+		if (token == null || token.trim().length() == 0) {
+			return "";
+		}
+		return token.substring(Constants.BEARER_TYPE.length()).trim();
+	}
 }

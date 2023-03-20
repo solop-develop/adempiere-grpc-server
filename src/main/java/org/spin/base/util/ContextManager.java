@@ -36,6 +36,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.authentication.BearerToken;
 import org.spin.authentication.Constants;
 import org.spin.backend.grpc.client.ClientRequest;
 import org.spin.backend.grpc.dictionary.ApplicationRequest;
@@ -101,7 +102,7 @@ public class ContextManager {
 	 */
 	public static Properties getContext(String sessionUuid, String language, String organizationUuid, String warehouseUuid) {
 		if (sessionUuid.startsWith(Constants.BEARER_TYPE)) {
-			sessionUuid = sessionUuid.substring(Constants.BEARER_TYPE.length()).trim();
+			sessionUuid = BearerToken.getTokenWithoutType(sessionUuid);
 		}
 
 		Properties context = sessionsContext.get(sessionUuid);

@@ -37,6 +37,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
 import org.compiere.util.Util;
+import org.spin.authentication.BearerToken;
 import org.spin.authentication.Constants;
 import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
@@ -65,7 +66,7 @@ public class SessionManager {
 		int organizationId = -1;
 		int warehouseId = -1;
 		if (tokenValue.startsWith(Constants.BEARER_TYPE)) {
-			tokenValue = tokenValue.substring(Constants.BEARER_TYPE.length()).trim();
+			tokenValue = BearerToken.getTokenWithoutType(tokenValue);
 		}
 		MADToken token = getSessionFromToken(tokenValue);
 		if(Optional.ofNullable(token).isPresent()) {
@@ -130,7 +131,7 @@ public class SessionManager {
 			throw new AdempiereException("@AD_Token_ID@ @NotFound@");
 		}
 		if (tokenValue.startsWith(Constants.BEARER_TYPE)) {
-			tokenValue = tokenValue.substring(Constants.BEARER_TYPE.length()).trim();
+			tokenValue = BearerToken.getTokenWithoutType(tokenValue);
 		}
 		//	
 		try {

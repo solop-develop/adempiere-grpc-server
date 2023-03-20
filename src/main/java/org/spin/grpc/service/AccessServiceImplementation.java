@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -53,7 +53,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
-import org.spin.authentication.Constants;
+import org.spin.authentication.BearerToken;
 import org.spin.backend.grpc.access.ChangeRoleRequest;
 import org.spin.backend.grpc.access.ContextValue;
 import org.spin.backend.grpc.access.ListRolesRequest;
@@ -199,10 +199,6 @@ public class AccessServiceImplementation extends SecurityImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Change Role Requested = " + request.getRoleUuid());
-			ContextManager.getContext(request.getSessionUuid(), 
-					request.getLanguage(), 
-					request.getOrganizationUuid(), 
-					request.getWarehouseUuid());
 			Session.Builder sessionBuilder = changeRole(request);
 			responseObserver.onNext(sessionBuilder.build());
 			responseObserver.onCompleted();
@@ -448,14 +444,22 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private Session.Builder changeRole(ChangeRoleRequest request) {
+		String sessionUuid = BearerToken.getTokenWithoutType(request.getSessionUuid());
+		Properties context = ContextManager.getContext(
+			sessionUuid,
+			request.getLanguage(),
+			request.getOrganizationUuid(),
+			request.getWarehouseUuid()
+		);
+
 		Session.Builder builder = Session.newBuilder();
 		DB.validateSupportedUUIDFromDB();
 		//	Get / Validate Session
-		MSession currentSession = MSession.get(Env.getCtx(), false, false);
+		MSession currentSession = MSession.get(context, false, false);
 		int userId = currentSession.getCreatedBy();
 		int roleId = DB.getSQLValue(null, "SELECT AD_Role_ID FROM AD_Role WHERE UUID = ?", request.getRoleUuid());
 		int organizationId = DB.getSQLValue(null, "SELECT AD_Org_ID FROM AD_Org WHERE UUID = ?", request.getOrganizationUuid());
-		if(organizationId < 0) {
+		if (organizationId < 0) {
 			organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
 		}
 		if(organizationId < 0) {
@@ -469,37 +473,39 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		if(roleId < 0) {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 		}
-		MRole role = MRole.get(Env.getCtx(), roleId);
-		Env.setContext (Env.getCtx(), "#AD_Session_ID", 0);
-		Env.setContext (Env.getCtx(), "#Session_UUID", "");
-		Env.setContext(Env.getCtx(), "#AD_User_ID", userId);
-		Env.setContext(Env.getCtx(), "#AD_Role_ID", roleId);
-		Env.setContext(Env.getCtx(), "#AD_Client_ID", role.getAD_Client_ID());
-		Env.setContext(Env.getCtx(), "#AD_Org_ID", organizationId);
-		MSession session = MSession.get(Env.getCtx(), true);
+		MRole role = MRole.get(context, roleId);
+		Env.setContext(context, "#AD_Session_ID", 0);
+		Env.setContext(context, "#Session_UUID", "");
+		Env.setContext(context, "#AD_User_ID", userId);
+		Env.setContext(context, "#AD_Role_ID", roleId);
+		Env.setContext(context, "#AD_Client_ID", role.getAD_Client_ID());
+		Env.setContext(context, "#AD_Org_ID", organizationId);
+		MSession session = MSession.get(context, true);
 		if(!Util.isEmpty(request.getClientVersion())) {
 			session.setWebSession(request.getClientVersion());
 		}
 		//	Warehouse / Org
-		Env.setContext (Env.getCtx(), "#M_Warehouse_ID", warehouseId);
-		Env.setContext (Env.getCtx(), "#AD_Session_ID", session.getAD_Session_ID());
+		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
+		Env.setContext(context, "#AD_Session_ID", session.getAD_Session_ID());
 		//	Default preference values
-		SessionManager.loadDefaultSessionValues(Env.getCtx(), request.getLanguage());
+		SessionManager.loadDefaultSessionValues(context, request.getLanguage());
 		//	Session values
 		builder.setId(session.getAD_Session_ID());
 		builder.setUuid(ValueUtil.validateNull(session.getUUID()));
 		builder.setName(ValueUtil.validateNull(session.getDescription()));
-		builder.setUserInfo(convertUserInfo(MUser.get(Env.getCtx(), userId)).build());
+		builder.setUserInfo(
+			convertUserInfo(MUser.get(context, userId))
+		);
 		populateDefaultPreferences(builder);
 		//	Set role
 		Role.Builder roleBuilder = convertRole(role, false);
 		builder.setRole(roleBuilder.build());
 		//	Logout
 		LogoutRequest logoutRequest = LogoutRequest.newBuilder()
-				.setSessionUuid(request.getSessionUuid())
-				.setClientVersion(request.getClientVersion())
-				.setLanguage(request.getLanguage())
-				.build();
+			.setSessionUuid(sessionUuid)
+			.setClientVersion(request.getClientVersion())
+			.setLanguage(request.getLanguage())
+			.build();
 		logoutSession(logoutRequest);
 		//	Return session
 		return builder;
@@ -564,19 +570,18 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private Session.Builder getSessionInfo(SessionRequest request) {
-		Properties context = ContextManager.getContext(request.getSessionUuid(), request.getLanguage());
-
-		Session.Builder builder = Session.newBuilder();
+		String sessionUuid = BearerToken.getTokenWithoutType(request.getSessionUuid());
 		//	Get Session
-		if (Util.isEmpty(request.getSessionUuid(), true)) {
+		if (Util.isEmpty(sessionUuid, true)) {
 			throw new AdempiereException("@AD_Session_ID@ @NotFound@");
 		}
+		Properties context = ContextManager.getContext(request.getSessionUuid(), request.getLanguage());
 
-		String sessionUuid = request.getSessionUuid().substring(Constants.BEARER_TYPE.length()).trim();
 		MSession session = getSessionFromUUid(sessionUuid);
 		//	Load default preference values
 		SessionManager.loadDefaultSessionValues(context, null);
 		//	Session values
+		Session.Builder builder = Session.newBuilder();
 		builder.setId(session.getAD_Session_ID());
 		builder.setUuid(ValueUtil.validateNull(session.getUUID()));
 		builder.setName(ValueUtil.validateNull(session.getDescription()));
@@ -642,6 +647,9 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private MSession getSessionFromUUid(String sessionUuid) {
+		if (sessionUuid.startsWith(BearerToken.BEARER_TYPE)) {
+			sessionUuid = BearerToken.getTokenWithoutType(sessionUuid);
+		}
 		MSession session = new Query(Env.getCtx(), I_AD_Session.Table_Name, I_AD_Session.COLUMNNAME_UUID + " = ?", null)
 				.setParameters(sessionUuid)
 				.first();
@@ -663,10 +671,11 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private UserInfo.Builder convertUserInfo(UserInfoRequest request) {
-		if(Util.isEmpty(request.getSessionUuid())) {
+		String sessionUuid = BearerToken.getTokenWithoutType(request.getSessionUuid());
+		if (Util.isEmpty(sessionUuid, true)) {
 			throw new AdempiereException("@AD_Session_ID@ @NotFound@");
 		}
-		MSession session = getSessionFromUUid(request.getSessionUuid());
+		MSession session = getSessionFromUUid(sessionUuid);
 		List<MRole> roleList = new Query(Env.getCtx(), I_AD_Role.Table_Name, 
 				"EXISTS(SELECT 1 FROM AD_User_Roles ur "
 				+ "WHERE ur.AD_Role_ID = AD_Role.AD_Role_ID "
