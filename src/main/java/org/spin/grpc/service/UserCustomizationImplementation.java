@@ -636,7 +636,8 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 				.orElse(null)
 			;
 
-			customBrowseField.setSeqNo(fieldAttributes.getSequence());
+			// Query Criteria sequence
+			customBrowseField.setSeqNoGrid(fieldAttributes.getSequence());
 			// checks if the column exists in the database
 			if (customBrowseField.get_ColumnIndex(IS_DISPLAYED_COLUMN_NAME) >= 0) {
 				customBrowseField.set_ValueOfColumn(
