@@ -7,7 +7,7 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
@@ -444,7 +444,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 				customWindow.setAD_Window_ID(tab.getAD_Window_ID());
 				customWindow.setHierarchyType(MWindowCustom.HIERARCHYTYPE_Overwrite);
 				customWindow.saveEx();
-				customWindowId = customWindow.getAD_WindowCustom_ID();
+				// customWindowId = customWindow.getAD_WindowCustom_ID();
 			} else {
 				customWindow = new MWindowCustom(context, customWindowId, transactionName);
 			}
@@ -487,7 +487,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 					context,
 					I_AD_Field.Table_Name,
 					I_AD_Field.COLUMNNAME_AD_Column_ID + " = ? AND " + I_AD_Field.COLUMNNAME_AD_Tab_ID + " = ?",
-					null
+					transactionName
 				)
 					.setParameters(columnId, tab.getAD_Tab_ID())
 					.setOnlyActiveRecords(true)
@@ -509,7 +509,8 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 					.orElse(null)
 				;
 
-				customField.setSeqNoGrid(fieldAttributes.getSequence());
+				// Panel sequence
+				customField.setSeqNo(fieldAttributes.getSequence());
 				// checks if the column exists in the database
 				if (customField.get_ColumnIndex(IS_DISPLAYED_COLUMN_NAME) >= 0) {
 					customField.set_ValueOfColumn(
