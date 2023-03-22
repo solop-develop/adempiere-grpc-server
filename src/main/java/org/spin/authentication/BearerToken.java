@@ -52,6 +52,9 @@ public class BearerToken extends CallCredentials {
 		if (token == null || token.trim().length() == 0) {
 			return "";
 		}
-		return token.substring(Constants.BEARER_TYPE.length()).trim();
+		if (token.startsWith(Constants.BEARER_TYPE)) {
+			return token.substring(Constants.BEARER_TYPE.length()).trim();
+		}
+		return token;
 	}
 }
