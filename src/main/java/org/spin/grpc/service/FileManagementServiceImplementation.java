@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -7,12 +7,13 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -129,9 +130,10 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 				return;
 			}
 		}
+		int attachmentReferenceId = RecordUtil.getIdFromUuid(I_AD_AttachmentReference.Table_Name, resourceUuid, null);
 		byte[] data = AttachmentUtil.getInstance()
 			.withClientId(Env.getAD_Client_ID(Env.getCtx()))
-			.withAttachmentReferenceId(RecordUtil.getIdFromUuid(I_AD_AttachmentReference.Table_Name, resourceUuid, null))
+			.withAttachmentReferenceId(attachmentReferenceId)
 			.getAttachment();
 		if (data == null) {
 			responseObserver.onError(new AdempiereException("@NotFound@"));
@@ -139,18 +141,20 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		}
 		//	For all
 		int bufferSize = 256 * 1024; // 256k
-        byte[] buffer = new byte[bufferSize];
-        int length;
-        InputStream is = new ByteArrayInputStream(data);
-        while ((length = is.read(buffer, 0, bufferSize)) != -1) {
-          responseObserver.onNext(
-    		  Resource.newBuilder()
-    		  	.setData(ByteString.copyFrom(buffer, 0, length))
-    		  	.build()
-          );
-        }
-        //	Completed
-        responseObserver.onCompleted();
+		byte[] buffer = new byte[bufferSize];
+		int length;
+		InputStream is = new ByteArrayInputStream(data);
+		while ((length = is.read(buffer, 0, bufferSize)) != -1) {
+			Resource builder = Resource.newBuilder()
+				.setData(ByteString.copyFrom(buffer, 0, length))
+				.build()
+			;
+			responseObserver.onNext(
+				builder
+			);
+		}
+		//	Completed
+		responseObserver.onCompleted();
 	}
 
 
@@ -194,13 +198,15 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 					if(resourceUuid.get() == null) {
 						resourceUuid.set(fileUploadRequest.getResourceUuid());
 						BigDecimal size = ValueUtil.getBigDecimalFromDecimal(fileUploadRequest.getFileSize());
-						if(size != null
-							&& fileUploadRequest.getData() != null) {
-							buffer.set(ByteBuffer.wrap(new byte[size.intValue()]));
-							buffer.set(buffer.get().put(fileUploadRequest.getData().toByteArray()));
+						if (size != null && fileUploadRequest.getData() != null) {
+							byte[] initByte = new byte[size.intValue()];
+							buffer.set(ByteBuffer.wrap(initByte));
+							byte[] bytes = fileUploadRequest.getData().toByteArray();
+							buffer.set(buffer.get().put(bytes));
 						}
-					} else if(buffer.get() != null){
-						buffer.set(buffer.get().put(fileUploadRequest.getData().toByteArray()));
+					} else if (buffer.get() != null){
+						byte[] bytes = fileUploadRequest.getData().toByteArray();
+						buffer.set(buffer.get().put(bytes));
 					}
 				} catch (Exception e){
 					this.onError(e);
@@ -209,7 +215,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 			@Override
 			public void onError(Throwable throwable) {
-				
+				responseObserver.onError(throwable);
 			}
 
 			@Override
@@ -221,7 +227,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 					}
 					if(resourceUuid.get() != null && buffer.get() != null) {
 						MADAttachmentReference resourceReference = (MADAttachmentReference) RecordUtil.getEntity(Env.getCtx(), I_AD_AttachmentReference.Table_Name, resourceUuid.get(), -1, null);
-						if(resourceReference != null) {
+						if (resourceReference != null) {
 							byte[] data = buffer.get().array();
 							AttachmentUtil.getInstance()
 								.clear()
@@ -471,12 +477,16 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		if (clientInfo == null || clientInfo.getFileHandler_ID() <= 0) {
 			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
 		}
+		// delete file on cloud (s3, nexcloud)
 		AttachmentUtil.getInstance()
 			.clear()
 			.withAttachmentId(resourceReference.getAD_Attachment_ID())
 			.withFileName(resourceReference.getFileName())
 			.withClientId(clientInfo.getAD_Client_ID())
 			.deleteAttachment();
+		// delete record from database
+		resourceReference.delete(true);
+		// reset cache
 		MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
 
 		return Empty.newBuilder();
