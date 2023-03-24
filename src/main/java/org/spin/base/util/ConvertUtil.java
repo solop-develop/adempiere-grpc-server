@@ -763,9 +763,16 @@ public class ConvertUtil {
 		
 		MCurrency currency = MCurrency.get(Env.getCtx(), payment.getC_Currency_ID());
 		Currency.Builder currencyBuilder = convertCurrency(currency);
-		MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
-		BigDecimal convertedAmount = OrderUtil.getConvetedAmount(order, payment, paymentAmount)
-			.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+		BigDecimal convertedAmount = Env.ZERO;
+		if(payment.getC_Order_ID() > 0) {
+			MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
+			convertedAmount = OrderUtil.getConvetedAmount(order, payment, paymentAmount)
+				.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+		} else {
+			MPOS pos = new MPOS(payment.getCtx(), payment.getC_POS_ID(), null);
+			convertedAmount = OrderUtil.getConvetedAmount(pos, payment, paymentAmount)
+					.setScale(presicion, BigDecimal.ROUND_HALF_UP);
+		}
 		
 		//	Convert
 		builder

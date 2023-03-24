@@ -128,4 +128,27 @@ public class OrderUtil {
 		//	
 		return convertedAmount;
 	}
+	
+	/**
+	 * Get Converted Amount based on Order currency
+	 * @param order
+	 * @param payment
+	 * @return
+	 * @return BigDecimal
+	 */
+	public static BigDecimal getConvetedAmount(MPOS pos, MPayment payment, BigDecimal amount) {
+		int toCurrencyId = pos.getM_PriceList().getC_Currency_ID();
+		if(payment.getC_Currency_ID() == toCurrencyId
+				|| amount == null
+				|| amount.compareTo(Env.ZERO) == 0) {
+			return amount;
+		}
+		BigDecimal convertedAmount = MConversionRate.convert(payment.getCtx(), amount, payment.getC_Currency_ID(), toCurrencyId, payment.getDateAcct(), payment.getC_ConversionType_ID(), payment.getAD_Client_ID(), payment.getAD_Org_ID());
+		if(convertedAmount == null
+				|| convertedAmount.compareTo(Env.ZERO) == 0) {
+			throw new AdempiereException(MConversionRate.getErrorMessage(payment.getCtx(), "ErrorConvertingDocumentCurrencyToBaseCurrency", payment.getC_Currency_ID(), toCurrencyId, payment.getC_ConversionType_ID(), payment.getDateAcct(), payment.get_TrxName()));
+		}
+		//	
+		return convertedAmount;
+	}
 }
