@@ -1,5 +1,5 @@
 /*************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                      *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                      *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                      *
  * This program is free software: you can redistribute it and/or modify              *
  * it under the terms of the GNU General Public License as published by              *
@@ -15,35 +15,36 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.access";
-option java_outer_classname = "ADempiereAccess";
+option java_package = "org.spin.backend.grpc.security";
+option java_outer_classname = "ADempiereSecurity";
 
-package access;
+package security;
 
 // The greeting service definition.
 service Security {
-  // Request login from user
-  rpc RunLogin(LoginRequest) returns (Session) {}
-  // Request a Role from uuid
-  rpc RunLogout(LogoutRequest) returns (Session) {}
-  // Request user roles from SessionInfo
-  rpc GetUserInfo(UserInfoRequest) returns (UserInfo) {}
-  // Request Menu from Parent UUID
-  rpc GetMenu(MenuRequest) returns (Menu) {}
-  // Request change role
-  rpc RunChangeRole(ChangeRoleRequest) returns (SessionInfo) {}
-  // Request session
-  rpc GetSessionInfo(SessionInfoRequest) returns (SessionInfo) {}
-  // List Roles
-  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {}
+	// Request login from user
+	rpc RunLogin(LoginRequest) returns (Session) {}
+	// Request a Role from uuid
+	rpc RunLogout(LogoutRequest) returns (Session) {}
+	// Request user roles from SessionInfo
+	rpc GetUserInfo(UserInfoRequest) returns (UserInfo) {}
+	// Request Menu from Parent UUID
+	rpc GetMenu(MenuRequest) returns (Menu) {}
+	// Request change role
+	rpc RunChangeRole(ChangeRoleRequest) returns (Session) {}
+	// Request session
+	rpc GetSessionInfo(SessionInfoRequest) returns (SessionInfo) {}
+	// List Roles
+	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {}
 }
+
 
 //	Token after session
 message Session {
 	string token = 1;
 }
 
-// Translations Request
+// List Roles Request
 message ListRolesRequest {
 	int32 page_size = 1;
 	string page_token = 2;
@@ -60,22 +61,20 @@ message ListRolesResponse {
 message LoginRequest {
 	string user_name = 1;
 	string user_pass = 2;
-	string role_uuid = 3;
-	string organization_uuid = 4;
-	string warehouse_uuid = 5;
-	string client_version = 6;
+	string token = 3;
+	string role_uuid = 4;
+	string organization_uuid = 5;
+	string warehouse_uuid = 6;
 	string language = 7;
-	string token = 8;
+	string client_version = 8;
 }
 
 // Request a Logout
 message LogoutRequest {
-	
 }
 
 // Request a SessionInfo
 message SessionInfoRequest {
-	
 }
 
 // Request a Change Role
@@ -88,12 +87,10 @@ message ChangeRoleRequest {
 
 // Request User Info
 message UserInfoRequest {
-	
 }
 
 // Request Menu
 message MenuRequest {
-	
 }
 
 // User information
@@ -129,6 +126,16 @@ message SessionInfo {
 	map<string, ContextValue> default_context = 17;
 }
 
+enum ValueType {
+	NULL = 0;
+	INTEGER = 1;
+	LONG = 2;
+	DOUBLE = 3;
+	BOOLEAN = 4;
+	STRING = 5;
+	DATE = 6;
+}
+
 // Define value for object
 message ContextValue {
 	int32 int_value = 1;
@@ -136,15 +143,6 @@ message ContextValue {
 	double double_value = 3;
 	bool boolean_value = 4;
 	string string_value = 5;
-	enum ValueType {
-		NULL = 0;
-		INTEGER = 1;
-		LONG = 2;
-		DOUBLE = 3;
-		BOOLEAN = 4;
-		STRING = 5;
-		DATE = 6;
-	}
 	ValueType value_type = 6;
 }
 
@@ -181,15 +179,16 @@ message Role {
 message Menu {
 	int32 id = 1;
 	string uuid = 2;
-	string parent_uuid = 4;
-	string name = 5;
-	string description = 6;
-	string sequence = 7;
-	bool is_read_only = 8;
-	bool is_summary = 9;
-	bool is_s_o_trx = 10;
-	string action = 11;
+	string parent_uuid = 3;
+	string name = 4;
+	string description = 5;
+	string sequence = 6;
+	bool is_read_only = 7;
+	bool is_summary = 8;
+	bool is_s_o_trx = 9;
+	string action = 10;
 	// Supported References
+	int32 reference_id = 11;
 	string reference_uuid = 12;
 	repeated Menu childs = 13;
 	bool is_active = 14;

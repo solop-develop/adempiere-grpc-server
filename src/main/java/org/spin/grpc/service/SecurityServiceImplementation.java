@@ -54,21 +54,22 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
-import org.spin.backend.grpc.access.ChangeRoleRequest;
-import org.spin.backend.grpc.access.ContextValue;
-import org.spin.backend.grpc.access.ListRolesRequest;
-import org.spin.backend.grpc.access.ListRolesResponse;
-import org.spin.backend.grpc.access.LoginRequest;
-import org.spin.backend.grpc.access.LogoutRequest;
-import org.spin.backend.grpc.access.Menu;
-import org.spin.backend.grpc.access.MenuRequest;
-import org.spin.backend.grpc.access.Role;
-import org.spin.backend.grpc.access.SecurityGrpc.SecurityImplBase;
-import org.spin.backend.grpc.access.Session;
-import org.spin.backend.grpc.access.SessionInfo;
-import org.spin.backend.grpc.access.SessionInfoRequest;
-import org.spin.backend.grpc.access.UserInfo;
-import org.spin.backend.grpc.access.UserInfoRequest;
+import org.spin.backend.grpc.security.ChangeRoleRequest;
+import org.spin.backend.grpc.security.ContextValue;
+import org.spin.backend.grpc.security.ListRolesRequest;
+import org.spin.backend.grpc.security.ListRolesResponse;
+import org.spin.backend.grpc.security.LoginRequest;
+import org.spin.backend.grpc.security.LogoutRequest;
+import org.spin.backend.grpc.security.Menu;
+import org.spin.backend.grpc.security.MenuRequest;
+import org.spin.backend.grpc.security.Role;
+import org.spin.backend.grpc.security.SecurityGrpc.SecurityImplBase;
+import org.spin.backend.grpc.security.Session;
+import org.spin.backend.grpc.security.SessionInfo;
+import org.spin.backend.grpc.security.SessionInfoRequest;
+import org.spin.backend.grpc.security.UserInfo;
+import org.spin.backend.grpc.security.UserInfoRequest;
+import org.spin.backend.grpc.security.ValueType;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.util.AttachmentUtil;
@@ -84,21 +85,21 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 /**
  * @author Yamel Senih, ysenih@erpya.com, ERPCyA http://www.erpya.com
- * Access service
+ * Security service
  */
-public class AccessServiceImplementation extends SecurityImplBase {
+public class SecurityServiceImplementation extends SecurityImplBase {
 	
 	/**
 	 * Load Validators
 	 */
-	public AccessServiceImplementation() {
+	public SecurityServiceImplementation() {
 		super();
 		DB.validateSupportedUUIDFromDB();
 		MCountry.getCountries(Env.getCtx());
 	}
 	
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(AccessServiceImplementation.class);
+	private CLogger log = CLogger.getCLogger(SecurityServiceImplementation.class);
 	/**	Menu */
 	private static CCache<String, Menu.Builder> menuCache = new CCache<String, Menu.Builder>("Menu_for_User", 30, 0);
 	
@@ -193,26 +194,8 @@ public class AccessServiceImplementation extends SecurityImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void runChangeRole(ChangeRoleRequest request, StreamObserver<SessionInfo> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Change Role Requested = " + request.getRoleUuid());
-			SessionInfo.Builder sessionBuilder = changeRole(request);
-			responseObserver.onNext(sessionBuilder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
 	@Override
 	public void listRoles(ListRolesRequest request, StreamObserver<ListRolesResponse> responseObserver) {
 		try {
@@ -392,19 +375,21 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		//	
 		Env.setContext(context, "#Date", new Timestamp(System.currentTimeMillis()));
 		MSession session = MSession.get(context, true);
-		if(!Util.isEmpty(request.getClientVersion())) {
-			session.setWebSession(request.getClientVersion());
-		}
+		// if(!Util.isEmpty(request.getClientVersion())) {
+		// 	session.setWebSession(request.getClientVersion());
+		// }
 		Env.setContext (context, "#AD_Session_ID", session.getAD_Session_ID());
 		Env.setContext (context, "#Session_UUID", session.getUUID());
 		//	Load preferences
 		SessionManager.loadDefaultSessionValues(context, request.getLanguage());
 		//	Session values
-		builder.setToken(createBearerToken(session, warehouseId, Env.getAD_Language(Env.getCtx())));
+		final String bearerToken = createBearerToken(session, warehouseId, Env.getAD_Language(context));
+		builder.setToken(bearerToken);
 		//	Return session
 		return builder;
 	}
-	
+
+
 	/**
 	 * Create token as bearer
 	 * @param session
@@ -433,7 +418,8 @@ public class AccessServiceImplementation extends SecurityImplBase {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 	}
-	
+
+
 	/**
 	 * Convert Values from Context
 	 * @param value
@@ -441,33 +427,53 @@ public class AccessServiceImplementation extends SecurityImplBase {
 	 */
 	private ContextValue.Builder convertObjectFromContext(String value) {
 		ContextValue.Builder builder = ContextValue.newBuilder();
-		if(Util.isEmpty(value)) {
+		if (Util.isEmpty(value)) {
 			return builder;
 		}
-		if(ValueUtil.isNumeric(value)) {
-			builder.setValueType(ContextValue.ValueType.INTEGER);
+		if (ValueUtil.isNumeric(value)) {
+			builder.setValueType(ValueType.INTEGER);
 			builder.setIntValue(ValueUtil.getIntegerFromString(value));
-		} else if(ValueUtil.isBoolean(value)) {
-			builder.setValueType(ContextValue.ValueType.BOOLEAN);
-			builder.setBooleanValue(value.trim().equals("Y") || value.trim().equals("true"));
-		} else if(ValueUtil.isDate(value)) {
-			builder.setValueType(ContextValue.ValueType.DATE);
+		} else if (ValueUtil.isBoolean(value)) {
+			builder.setValueType(ValueType.BOOLEAN);
+			boolean booleanValue = ValueUtil.stringToBoolean(value.trim());
+			builder.setBooleanValue(booleanValue);
+		} else if (ValueUtil.isDate(value)) {
+			builder.setValueType(ValueType.DATE);
 			builder.setLongValue(ValueUtil.getDateFromString(value).getTime());
 		} else {
-			builder.setValueType(ContextValue.ValueType.STRING);
+			builder.setValueType(ValueType.STRING);
 			builder.setStringValue(ValueUtil.validateNull(value));
 		}
 		//	
 		return builder;
 	}
-	
+
+
+	@Override
+	public void runChangeRole(ChangeRoleRequest request, StreamObserver<Session> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			Session.Builder sessionBuilder = runChangeRole(request);
+			responseObserver.onNext(sessionBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Change current role
 	 * @param request
 	 * @return
 	 */
-	private SessionInfo.Builder changeRole(ChangeRoleRequest request) {
-		SessionInfo.Builder builder = SessionInfo.newBuilder();
+	private Session.Builder runChangeRole(ChangeRoleRequest request) {
 		DB.validateSupportedUUIDFromDB();
 		Properties context = Env.getCtx();
 		//	Get / Validate Session
@@ -497,29 +503,25 @@ public class AccessServiceImplementation extends SecurityImplBase {
 		Env.setContext(context, "#AD_Client_ID", role.getAD_Client_ID());
 		Env.setContext(context, "#AD_Org_ID", organizationId);
 		MSession session = MSession.get(context, true);
-		//	Warehouse / Org
+		// Warehouse / Org
 		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
 		Env.setContext(context, "#AD_Session_ID", session.getAD_Session_ID());
-		//	Default preference values
+		// Default preference values
 		SessionManager.loadDefaultSessionValues(context, request.getLanguage());
-		//	Session values
-		builder.setId(session.getAD_Session_ID());
-		builder.setUuid(createBearerToken(session, warehouseId, Env.getAD_Language(Env.getCtx())));
-		builder.setName(ValueUtil.validateNull(session.getDescription()));
-		builder.setUserInfo(
-			convertUserInfo(MUser.get(context, userId))
-		);
-		populateDefaultPreferences(builder);
-		//	Set role
-		Role.Builder roleBuilder = convertRole(role, false);
-		builder.setRole(roleBuilder.build());
-		//	Logout
-		logoutSession(LogoutRequest.newBuilder()
-				.build());
-		//	Return session
+
+		// Session values
+		Session.Builder builder = Session.newBuilder();
+		final String bearerToken = createBearerToken(session, warehouseId, Env.getAD_Language(context));
+		builder.setToken(bearerToken);
+
+		// Logout
+		logoutSession(LogoutRequest.newBuilder().build());
+
+		// Return session
 		return builder;
 	}
-	
+
+
 	/**
 	 * Populate default values and preferences for session
 	 * @param session
@@ -960,35 +962,45 @@ public class AccessServiceImplementation extends SecurityImplBase {
 				.setParentUuid(ValueUtil.validateNull(parentUuid));
 		//	Supported actions
 		if(!Util.isEmpty(menu.getAction())) {
+			int referenceId = 0;
 			String referenceUuid = null;
 			if(menu.getAction().equals(MMenu.ACTION_Form)) {
 				if(menu.getAD_Form_ID() > 0) {
 					MForm form = new MForm(context, menu.getAD_Form_ID(), null);
+					referenceId = menu.getAD_Form_ID();
 					referenceUuid = form.getUUID();
 				}
 			} else if(menu.getAction().equals(MMenu.ACTION_Window)) {
 				if(menu.getAD_Window_ID() > 0) {
 					MWindow window = new MWindow(context, menu.getAD_Window_ID(), null);
+					referenceId = menu.getAD_Window_ID();
 					referenceUuid = window.getUUID();
 				}
 			} else if(menu.getAction().equals(MMenu.ACTION_Process)
 				|| menu.getAction().equals(MMenu.ACTION_Report)) {
 				if(menu.getAD_Process_ID() > 0) {
 					MProcess process = MProcess.get(context, menu.getAD_Process_ID());
+					referenceId = menu.getAD_Process_ID();
 					referenceUuid = process.getUUID();
 				}
 			} else if(menu.getAction().equals(MMenu.ACTION_SmartBrowse)) {
 				if(menu.getAD_Browse_ID() > 0) {
 					MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
+					referenceId = menu.getAD_Browse_ID();
 					referenceUuid = smartBrowser.getUUID();
 				}
 			} else if(menu.getAction().equals(MMenu.ACTION_WorkFlow)) {
 				if(menu.getAD_Workflow_ID() > 0) {
 					MWorkflow workflow = MWorkflow.get(context, menu.getAD_Workflow_ID());
+					referenceId = menu.getAD_Workflow_ID();
 					referenceUuid = workflow.getUUID();
 				}
 			}
-			builder.setReferenceUuid(ValueUtil.validateNull(referenceUuid));
+			builder.setReferenceId(referenceId)
+				.setReferenceUuid(
+					ValueUtil.validateNull(referenceUuid)
+				)
+			;
 		}
 		return builder;
 	}

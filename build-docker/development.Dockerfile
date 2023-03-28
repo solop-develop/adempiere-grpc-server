@@ -19,7 +19,7 @@ RUN	rm -rf /var/cache/apk/* && \
 # Init ENV with default values
 ENV \
 	SERVER_PORT="50059" \
-	SERVICES_ENABLED="access; business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; store; time_control; time_record; ui; user_customization; workflow;" \
+	SERVICES_ENABLED="business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; security; store; time_control; time_record; ui; user_customization; workflow;" \
 	SERVER_LOG_LEVEL="WARNING" \
 	DB_HOST="localhost" \
 	DB_PORT="5432" \

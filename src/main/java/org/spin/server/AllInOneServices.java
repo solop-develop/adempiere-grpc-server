@@ -21,7 +21,6 @@ import java.util.logging.Logger;
 import org.spin.authentication.AuthorizationServerInterceptor;
 import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.Services;
-import org.spin.grpc.service.AccessServiceImplementation;
 import org.spin.grpc.service.BusinessDataServiceImplementation;
 import org.spin.grpc.service.BusinessPartnerServiceImplementation;
 import org.spin.grpc.service.CoreFunctionalityImplementation;
@@ -41,6 +40,7 @@ import org.spin.grpc.service.PaymentServiceImplementation;
 import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
 import org.spin.grpc.service.PointOfSalesServiceImplementation;
 import org.spin.grpc.service.ProductServiceImplementation;
+import org.spin.grpc.service.SecurityServiceImplementation;
 import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.grpc.service.TimeRecordServiceImplementation;
 import org.spin.grpc.service.UpdateImplementation;
@@ -86,15 +86,15 @@ public class AllInOneServices {
 		// Validate JWT on all requests
 		serverBuilder.intercept(new AuthorizationServerInterceptor());
 
-		//	For Access
-		if(SetupLoader.getInstance().getServer().isValidService(Services.ACCESS.getServiceName())) {
-			serverBuilder.addService(new AccessServiceImplementation());
-			logger.info("Service " + Services.ACCESS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
 		//	Business Logic
 		if(SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS.getServiceName())) {
 			serverBuilder.addService(new BusinessDataServiceImplementation());
 			logger.info("Service " + Services.BUSINESS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Business Partner
+		if (SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS_PARTNER.getServiceName())) {
+			serverBuilder.addService(new BusinessPartnerServiceImplementation());
+			logger.info("Service " + Services.BUSINESS_PARTNER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Core Implementation
 		if(SetupLoader.getInstance().getServer().isValidService(Services.CORE.getServiceName())) {
@@ -141,6 +141,11 @@ public class AllInOneServices {
 			serverBuilder.addService(new MaterialManagementServiceImplementation());
 			logger.info("Service " + Services.MATERIAL_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
+		//	For Security
+		if (SetupLoader.getInstance().getServer().isValidService(Services.SECURITY.getServiceName())) {
+			serverBuilder.addService(new SecurityServiceImplementation());
+			logger.info("Service " + Services.SECURITY.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		//	Store
 		if(SetupLoader.getInstance().getServer().isValidService(Services.STORE.getServiceName())) {
 			serverBuilder.addService(new WebStoreServiceImplementation());
@@ -155,11 +160,6 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
 			serverBuilder.addService(new UpdateImplementation());
 			logger.info("Service " + Services.UPDATER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
-		//	Business Partner
-		if(SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS_PARTNER.getServiceName())) {
-			serverBuilder.addService(new BusinessPartnerServiceImplementation());
-			logger.info("Service " + Services.BUSINESS_PARTNER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	In-Out
 		if(SetupLoader.getInstance().getServer().isValidService(Services.IN_OUT.getServiceName())) {

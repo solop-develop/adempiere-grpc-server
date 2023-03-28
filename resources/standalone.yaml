@@ -1,7 +1,6 @@
 server:
     port: 50059
     services:
-       - access
        - business
        - business_partner
        - core
@@ -21,6 +20,7 @@ server:
        - payroll_action_notice
        - pos
        - product
+       - security
        - store
        - time_control
        - time_record

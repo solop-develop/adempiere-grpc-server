@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -19,8 +19,7 @@ package org.spin.base.util;
  * @author Yamel Senih
  */
 public enum Services {
-    ACCESS("access"),
-    BUSINESS("business"),
+	BUSINESS("business"),
 	BUSINESS_PARTNER("business_partner"),
     CORE("core"),
     DASHBOARDING("dashboarding"),
@@ -40,6 +39,7 @@ public enum Services {
     PAYROLL_ACTION_NOTICE("payroll_action_notice"),
 	POS("pos"),
 	PRODUCT("product"),
+	SECURITY("security"),
 	STORE("store"),
 	TIME_CONTROL("time_control"),
 	TIME_RECORD("time_record"),
