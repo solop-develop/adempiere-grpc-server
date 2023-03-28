@@ -375,9 +375,9 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		//	
 		Env.setContext(context, "#Date", new Timestamp(System.currentTimeMillis()));
 		MSession session = MSession.get(context, true);
-		// if(!Util.isEmpty(request.getClientVersion())) {
-		// 	session.setWebSession(request.getClientVersion());
-		// }
+		if (!Util.isEmpty(request.getClientVersion(), true)) {
+			session.setWebSession(request.getClientVersion());
+		}
 		Env.setContext (context, "#AD_Session_ID", session.getAD_Session_ID());
 		Env.setContext (context, "#Session_UUID", session.getUUID());
 		//	Load preferences
