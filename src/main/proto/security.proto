@@ -148,8 +148,9 @@ message ContextValue {
 }
 
 message SetSessionAttributeRequest {
-	string key = 1;
-	ContextValue value = 2;
+	string language = 1;
+	int32 warehouse_id = 2;
+	string warehouse_uuid = 3;
 }
 
 // Role Definition

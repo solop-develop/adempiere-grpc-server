@@ -187,36 +187,22 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 	}
 
 	private Session.Builder setSessionAttribute(SetSessionAttributeRequest request) {
-		Object value = getObjectFromContextValue(request.getValue());
-
 		Properties context = Env.getCtx();
 
-		String key = request.getKey();
-		if (key.equals("#AD_Language")) {
-			value = ContextManager.getDefaultLanguage(value.toString());
-		}
-		if (value != null) {
-			if (value instanceof Timestamp) {
-				Env.setContext(context, key, (Timestamp) value);
-			} else if (value instanceof Integer) {
-				Env.setContext(context, key, (Integer) value);
-			} else if (value instanceof Boolean) {
-				Env.setContext(context, key, (Boolean) value);
-			} else {
-				Env.setContext(context, key, value.toString());
-			}
-		} else {
-			Env.setContext(context, key, "");
+		String language = Env.getAD_Language(context);
+		if (!Util.isEmpty(request.getLanguage())) {
+			language = ContextManager.getDefaultLanguage(request.getLanguage());
+			Env.setContext(context, "#AD_Language", language);
 		}
 
-		// fill context values
-		Env.setContext(context, "#AD_Session_ID", 0);
-		Env.setContext(context, "#Session_UUID", "");
-		MSession session = MSession.get(context, true);
-		// Warehouse / Org
-		Env.setContext(context, "#AD_Session_ID", session.getAD_Session_ID());
+		int warehouseId = request.getWarehouseId();
+		if (!Util.isEmpty(request.getWarehouseUuid(), true)) {
+			warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
+		}
+		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
+
+		MSession session = MSession.get(context, false);
 		// Default preference values
-		String language = Env.getAD_Language(context);
 		SessionManager.loadDefaultSessionValues(context, language);
 
 		// Session values
@@ -227,10 +213,6 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			language
 		);
 		builder.setToken(bearerToken);
-
-		// Logout
-		logoutSession(LogoutRequest.newBuilder().build());
-
 		return builder;
 	}
 
