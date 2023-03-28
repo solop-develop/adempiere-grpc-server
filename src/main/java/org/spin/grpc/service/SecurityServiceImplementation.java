@@ -479,23 +479,48 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		//	Get / Validate Session
 		MSession currentSession = MSession.get(context, false, false);
 		int userId = currentSession.getCreatedBy();
-		int roleId = DB.getSQLValue(null, "SELECT AD_Role_ID FROM AD_Role WHERE UUID = ?", request.getRoleUuid());
-		int organizationId = DB.getSQLValue(null, "SELECT AD_Org_ID FROM AD_Org WHERE UUID = ?", request.getOrganizationUuid());
-		if (organizationId < 0) {
-			organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
-		}
-		if(organizationId < 0) {
-			organizationId = 0;
-		}
-		int warehouseId = DB.getSQLValue(null, "SELECT M_Warehouse_ID FROM M_Warehouse WHERE UUID = ? AND AD_Org_ID = ?", request.getWarehouseUuid(), organizationId);
-		if(warehouseId < 0) {
-			warehouseId = 0;
-		}
 		//	Get Values from role
-		if(roleId < 0) {
+		int roleId = DB.getSQLValue(null, "SELECT AD_Role_ID FROM AD_Role WHERE UUID = ?", request.getRoleUuid());
+		if (roleId < 0) {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 		}
 		MRole role = MRole.get(context, roleId);
+
+		// Get organization
+		int organizationId = -1;
+		if (!Util.isEmpty(request.getOrganizationUuid(), true)) {
+			organizationId = DB.getSQLValue(
+				null,
+				"SELECT AD_Org_ID FROM AD_Org WHERE UUID = ?",
+				request.getOrganizationUuid()
+			);
+			if (!role.isOrgAccess(organizationId, true)) {
+				// invlaid organization from role
+				organizationId = -1;
+			}
+		}
+		if (organizationId < 0) {
+			organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
+			if (organizationId < 0) {
+				organizationId = 0;
+			}
+		}
+
+		// Get warehouse
+		int warehouseId = -1;
+		if (!Util.isEmpty(request.getWarehouseUuid(), true)) {
+			warehouseId = DB.getSQLValue(
+				null,
+				"SELECT M_Warehouse_ID FROM M_Warehouse WHERE UUID = ? AND AD_Org_ID = ?",
+				request.getWarehouseUuid(),
+				organizationId
+			);
+		}
+		if (warehouseId < 0) {
+			warehouseId = 0;
+		}
+
+		// fill context values
 		Env.setContext(context, "#AD_Session_ID", 0);
 		Env.setContext(context, "#Session_UUID", "");
 		Env.setContext(context, "#AD_User_ID", userId);
