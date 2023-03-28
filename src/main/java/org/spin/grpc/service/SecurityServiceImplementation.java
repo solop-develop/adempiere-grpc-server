@@ -67,6 +67,7 @@ import org.spin.backend.grpc.security.SecurityGrpc.SecurityImplBase;
 import org.spin.backend.grpc.security.Session;
 import org.spin.backend.grpc.security.SessionInfo;
 import org.spin.backend.grpc.security.SessionInfoRequest;
+import org.spin.backend.grpc.security.SetSessionAttributeRequest;
 import org.spin.backend.grpc.security.UserInfo;
 import org.spin.backend.grpc.security.UserInfoRequest;
 import org.spin.backend.grpc.security.ValueType;
@@ -102,7 +103,13 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 	private CLogger log = CLogger.getCLogger(SecurityServiceImplementation.class);
 	/**	Menu */
 	private static CCache<String, Menu.Builder> menuCache = new CCache<String, Menu.Builder>("Menu_for_User", 30, 0);
-	
+
+
+	boolean isSessionContext(String contextKey) {
+		return contextKey.startsWith("#") || contextKey.startsWith("$");
+	}
+
+
 	@Override
 	public void runLogin(LoginRequest request, StreamObserver<Session> responseObserver) {
 		try {
@@ -158,7 +165,76 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			);
 		}
 	}
-	
+
+
+	@Override
+	public void setSessionAttribute(SetSessionAttributeRequest request, StreamObserver<Session> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			Session.Builder sessionBuilder = setSessionAttribute(request);
+			responseObserver.onNext(sessionBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private Session.Builder setSessionAttribute(SetSessionAttributeRequest request) {
+		Object value = getObjectFromContextValue(request.getValue());
+
+		Properties context = Env.getCtx();
+
+		String key = request.getKey();
+		if (key.equals("#AD_Language")) {
+			value = ContextManager.getDefaultLanguage(value.toString());
+		}
+		if (value != null) {
+			if (value instanceof Timestamp) {
+				Env.setContext(context, key, (Timestamp) value);
+			} else if (value instanceof Integer) {
+				Env.setContext(context, key, (Integer) value);
+			} else if (value instanceof Boolean) {
+				Env.setContext(context, key, (Boolean) value);
+			} else {
+				Env.setContext(context, key, value.toString());
+			}
+		} else {
+			Env.setContext(context, key, "");
+		}
+
+		// fill context values
+		Env.setContext(context, "#AD_Session_ID", 0);
+		Env.setContext(context, "#Session_UUID", "");
+		MSession session = MSession.get(context, true);
+		// Warehouse / Org
+		Env.setContext(context, "#AD_Session_ID", session.getAD_Session_ID());
+		// Default preference values
+		String language = Env.getAD_Language(context);
+		SessionManager.loadDefaultSessionValues(context, language);
+
+		// Session values
+		Session.Builder builder = Session.newBuilder();
+		final String bearerToken = createBearerToken(
+			session,
+			Env.getContextAsInt(context, "#M_Warehouse_ID"),
+			language
+		);
+		builder.setToken(bearerToken);
+
+		// Logout
+		logoutSession(LogoutRequest.newBuilder().build());
+
+		return builder;
+	}
+
+
 	@Override
 	public void getUserInfo(UserInfoRequest request, StreamObserver<UserInfo> responseObserver) {
 		try {
@@ -228,8 +304,8 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
-		
+		int offset = (pageNumber - 1) * limit;
+
 		final String whereClause = "EXISTS("
 			+ "SELECT 1 FROM AD_User_Roles ur "
 			+ "WHERE ur.AD_Role_ID = AD_Role.AD_Role_ID AND ur.AD_User_ID = ?"
@@ -449,6 +525,28 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 	}
 
 
+	/**
+	 * Get Object from ContextValue
+	 * @param contextValue
+	 * @return
+	 */
+	public Object getObjectFromContextValue(ContextValue contextValue) {
+		ValueType valueType = contextValue.getValueType();
+		if (valueType.equals(ValueType.BOOLEAN)) {
+			return contextValue.getBooleanValue();
+		} else if (valueType.equals(ValueType.DOUBLE)) {
+			return contextValue.getDoubleValue();
+		} else if (valueType.equals(ValueType.INTEGER)) {
+			return contextValue.getIntValue();
+		} else if (valueType.equals(ValueType.STRING)) {
+			return contextValue.getStringValue();
+		} else if (valueType.equals(ValueType.LONG) || valueType.equals(ValueType.DATE)) {
+			return ValueUtil.getTimestampFromLong(contextValue.getLongValue());
+		}
+		return null;
+	}
+
+
 	@Override
 	public void runChangeRole(ChangeRoleRequest request, StreamObserver<Session> responseObserver) {
 		try {
@@ -567,7 +665,7 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		session.setLanguage(ValueUtil.validateNull(ContextManager.getDefaultLanguage(Env.getAD_Language(Env.getCtx()))));
 		//	Set default context
 		Env.getCtx().entrySet().stream()
-			.filter(keyValue -> String.valueOf(keyValue.getKey()).startsWith("#") || String.valueOf(keyValue.getKey()).startsWith("$"))
+			.filter(keyValue -> isSessionContext(String.valueOf(keyValue.getKey())))
 			.forEach(contextKeyValue -> {
 				session.putDefaultContext(contextKeyValue.getKey().toString(), convertObjectFromContext((String)contextKeyValue.getValue()).build());
 			});

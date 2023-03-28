@@ -34,6 +34,7 @@ service Security {
 	rpc RunChangeRole(ChangeRoleRequest) returns (Session) {}
 	// Request session
 	rpc GetSessionInfo(SessionInfoRequest) returns (SessionInfo) {}
+	rpc SetSessionAttribute(SetSessionAttributeRequest) returns (Session) {}
 	// List Roles
 	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {}
 }
@@ -144,6 +145,11 @@ message ContextValue {
 	bool boolean_value = 4;
 	string string_value = 5;
 	ValueType value_type = 6;
+}
+
+message SetSessionAttributeRequest {
+	string key = 1;
+	ContextValue value = 2;
 }
 
 // Role Definition
