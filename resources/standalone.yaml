@@ -28,7 +28,7 @@ server:
        - user_customization
        - workflow
     log_level: WARNING
-    secret_key: fill_secret_key
+    secret_key: 58270DD5D28E9945DD24907ADD498276EBEF01C1385618362054B2E65E582230
     # Default 24 hours
     expiration: 86400000
 database:

@@ -93,16 +93,17 @@ docker pull solopcloud/adempiere-vue:experimental
 Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igual a 3.0.
 
 ### Variables de entorno
- * `DB_TYPE`: Tipo de base de datos (compatible con `Oracle` y `PostgreSQL`). Por defecto `PostgreSQL`
- * `DB_HOST`: Nombre de host para el servidor de la base de datos. Predeterminado: `localhost`
- * `DB_PORT`: Puerto utilizado por el servidor de base de datos. Predeterminado: `5432`
- * `DB_NAME`: Nombre de la base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`
- * `DB_USER`: Usuario de base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`
- * `DB_PASSWORD`: Contraseña de la base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`
- * `ADEMPIERE_APPS_TYPE`: Tipo de aplicación para la conexión de gestión de bases de datos. Por defecto: `wildfly`
- * `SERVER_PORT`: Puerto para acceder a Adempiere-Backend desde fuera del contenedor. Por defecto: `50059`
- * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `access; business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; store; time_control; ui; user_customization; workflow;`
- * `SERVER_LOG_LEVEL`: Nivel de Bitácora. Por defecto: `WARNING`
+ * `DB_TYPE`: Tipo de base de datos (compatible con `Oracle` y `PostgreSQL`). Por defecto `PostgreSQL`.
+ * `DB_HOST`: Nombre de host para el servidor de la base de datos. Predeterminado: `localhost`.
+ * `DB_PORT`: Puerto utilizado por el servidor de base de datos. Predeterminado: `5432`.
+ * `DB_NAME`: Nombre de la base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
+ * `DB_USER`: Usuario de base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
+ * `DB_PASSWORD`: Contraseña de la base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
+ * `SECRET_KEY`: Clave secreta, para el hash de encriptado del Json Web Token, el valor por defecto es `98D8032045502303C1F97FE5A5D40750A6D16D97C20A7BD9C757D2E957F2CA6E` esta debe ser cambiada obligatoriamente por seguridad.
+ * `ADEMPIERE_APPS_TYPE`: Tipo de aplicación para la conexión de gestión de bases de datos. Por defecto: `wildfly`.
+ * `SERVER_PORT`: Puerto para acceder a Adempiere-Backend desde fuera del contenedor. Por defecto: `50059`.
+ * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; security: store; time_control; ui; user_customization; workflow;`.
+ * `SERVER_LOG_LEVEL`: Nivel de Bitácora. Por defecto: `WARNING`.
  * `TZ`: (Time Zone) Indica la zona horaria a establecer en el contenedor basado en nginx, el valor por defecto es `America/Caracas` (UTC -4:00).
 
 ### Construir imagen docker (sólo para desarrollo):

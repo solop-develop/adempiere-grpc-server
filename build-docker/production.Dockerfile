@@ -9,6 +9,7 @@ ENV \
 	SERVER_PORT="50059" \
 	SERVICES_ENABLED="business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; security; store; time_control; time_record; ui; user_customization; workflow;" \
 	SERVER_LOG_LEVEL="WARNING" \
+	SECRET_KEY="98D8032045502303C1F97FE5A5D40750A6D16D97C20A7BD9C757D2E957F2CA6E" \
 	DB_HOST="localhost" \
 	DB_PORT="5432" \
 	DB_NAME="adempiere" \

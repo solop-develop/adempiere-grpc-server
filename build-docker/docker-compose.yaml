@@ -22,10 +22,8 @@ services:
     image: solopcloud/adempiere-backend
     ports:
       - "50059:50059"
-    environment:
-      - SERVICES_ENABLED=business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; security; store; time_control; ui; user_customization; workflow;
-      - DB_HOST=adempiere.db
-      - TZ="America/Caracas"
+    env_file:
+      - ./backend.env
     depends_on:
       - adempiere.db
     networks:

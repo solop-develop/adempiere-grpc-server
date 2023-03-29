@@ -93,16 +93,17 @@ docker pull solopcloud/adempiere-vue:experimental
 To use this Docker image you must have your Docker engine version greater than or equal to 3.0.
 
 ### Environment variables
- * `DB_TYPE`: Database Type (Supported `Oracle` and `PostgreSQL`). Default `PostgreSQL`
- * `DB_HOST`: Hostname for data base server. Default: `localhost`
- * `DB_PORT`: Port used by data base server. Default: `5432`
- * `DB_NAME`: Database name that Adempiere-Backend will use to connect with the database. Default: `adempiere`
- * `DB_USER`: Database user that Adempiere-Backend will use to connect with the database. Default: `adempiere`
- * `DB_PASSWORD`: Database password that Adempiere-Backend will use to connect with the database. Default: `adempiere`
- * `ADEMPIERE_APPS_TYPE`: Application Type for Database Management Connection. Default: `wildfly`
- * `SERVER_PORT`: Port to access Adempiere-Backend from outside of the container. Default: `50059`
- * `SERVICES_ENABLED`: Services enabled. Default: `access; business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; store; time_control; ui; user_customization; workflow;`
- * `SERVER_LOG_LEVEL`: Log Level. Default: `WARNING`
+ * `DB_TYPE`: Database Type (Supported `Oracle` and `PostgreSQL`). Default `PostgreSQL`.
+ * `DB_HOST`: Hostname for data base server. Default: `localhost`.
+ * `DB_PORT`: Port used by data base server. Default: `5432`.
+ * `DB_NAME`: Database name that Adempiere-Backend will use to connect with the database. Default: `adempiere`.
+ * `DB_USER`: Database user that Adempiere-Backend will use to connect with the database. Default: `adempiere`.
+ * `DB_PASSWORD`: Database password that Adempiere-Backend will use to connect with the database. Default: `adempiere`.
+ * `SECRET_KEY`: Secret key, for the encryption hash of the Json Web Token, the default value is `98D8032045502303C1F97FE5A5D40750A6D16D97C20A7BD9C757D2E957F2CA6E` this must be changed for security reasons.
+ * `ADEMPIERE_APPS_TYPE`: Application Type for Database Management Connection. Default: `wildfly`.
+ * `SERVER_PORT`: Port to access Adempiere-Backend from outside of the container. Default: `50059`.
+ * `SERVICES_ENABLED`: Services enabled. Default: `business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; security; store; time_control; ui; user_customization; workflow;`.
+ * `SERVER_LOG_LEVEL`: Log Level. Default: `WARNING`.
  * `TZ`: (Time Zone) Indicates the time zone to set in the nginx-based container, the default value is `America/Caracas` (UTC -4:00).
 
 ### Build docker image (for development only):

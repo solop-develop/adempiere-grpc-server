@@ -4,6 +4,7 @@
 # Set server values
 sed -i "s|50059|$SERVER_PORT|g" all_in_one_connection.yaml
 sed -i "s|WARNING|$SERVER_LOG_LEVEL|g" all_in_one_connection.yaml
+sed -i "s|fill_secret_key|$SECRET_KEY|g" all_in_one_connection.yaml
 
 
 # create array to iterate
