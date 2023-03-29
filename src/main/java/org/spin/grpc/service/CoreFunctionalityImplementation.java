@@ -321,8 +321,9 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		ListBusinessPartnersResponse.Builder builder = ListBusinessPartnersResponse.newBuilder();
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Get business partner list
 		//	Dynamic where clause
 		StringBuffer whereClause = new StringBuffer();
@@ -781,18 +782,19 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		Query query = new Query(Env.getCtx(), I_AD_Org.Table_Name, whereClause, null)
 			.setParameters(parameters)
 			.setOnlyActiveRecords(true)
-			.setLimit(limit, offset);
+		;
 		//	Count
 		int count = query.count();
 
 		ListOrganizationsResponse.Builder builder = ListOrganizationsResponse.newBuilder();
 		//	Get List
-		query.<MOrg>list()
+		query.setLimit(limit, offset)
+			.<MOrg>list()
 			.forEach(organization -> {
 				builder.addOrganizations(ConvertUtil.convertOrganization(organization));
 			});
@@ -817,8 +819,9 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		int id = request.getOrganizationId();
 		if(id <= 0) {
 			id = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
@@ -826,11 +829,12 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		Query query = new Query(Env.getCtx(), I_M_Warehouse.Table_Name, "AD_Org_ID = ?", null)
 				.setOnlyActiveRecords(true)
 				.setParameters(id)
-				.setLimit(limit, offset);
+		;
 		//	Count
 		int count = query.count();
 		//	Get List
-		query.<MWarehouse>list()
+		query.setLimit(limit, offset)
+			.<MWarehouse>list()
 			.forEach(warehouse -> {
 				builder.addWarehouses(ConvertUtil.convertWarehouse(warehouse));
 			});

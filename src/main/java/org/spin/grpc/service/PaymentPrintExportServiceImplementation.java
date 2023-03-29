@@ -547,7 +547,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 
 		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder();
 		final String whereClause = " C_PaySelectionLine.C_PaySelection_ID = ?" 

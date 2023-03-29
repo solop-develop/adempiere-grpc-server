@@ -246,7 +246,7 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = " 1=1 ";

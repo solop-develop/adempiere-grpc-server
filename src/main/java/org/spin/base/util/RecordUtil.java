@@ -79,7 +79,7 @@ public class RecordUtil {
 	public static int getPageSize(int pageSize) {
 		return pageSize > 0 ? pageSize : PAGE_SIZE;
 	}
-	
+
 	/**
 	 * Get Page Number
 	 * @param sessionUuid
@@ -99,12 +99,21 @@ public class RecordUtil {
 				} catch (Exception e) {
 					//	
 				}
+			} else {
+				try {
+					page = Integer.parseInt(pageToken);
+					if (page < 1) {
+						page = 1;
+					}
+				} catch (Exception e) {
+					//	
+				}
 			}
 		}
 		//	
 		return page;
 	}
-	
+
 	/**
 	 * Get Page Prefix
 	 * @param sessionUuid

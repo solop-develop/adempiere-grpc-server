@@ -188,8 +188,9 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		int count = 0;
+
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
 		//	Count records
@@ -621,7 +622,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		//  Get page and count
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		int count = 0;
  
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();

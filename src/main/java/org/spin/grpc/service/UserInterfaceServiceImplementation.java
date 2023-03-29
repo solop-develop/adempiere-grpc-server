@@ -1105,8 +1105,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		int count = 0;
+
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		//	
 		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromTab(tab));
@@ -1377,8 +1378,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Get page and count
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		int count = 0;
+
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		
 		//	Count records
@@ -2767,10 +2769,11 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		int count = 0;
 		//	Count records
 		count = RecordUtil.countRecords(parsedSQL, reference.TableName, parameters);
+
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		ListLookupItemsResponse.Builder builder = ListLookupItemsResponse.newBuilder();
@@ -3579,7 +3582,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 
 		List<PO> sequencesList = query.setLimit(limit, offset).list();
 		ListEntitiesResponse.Builder builderList = ListEntitiesResponse.newBuilder()

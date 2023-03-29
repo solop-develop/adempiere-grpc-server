@@ -1059,7 +1059,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			String nexPageToken = null;
 			int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 			int limit = RecordUtil.getPageSize(request.getPageSize());
-			int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+			int offset = (pageNumber - 1) * limit;
+
 			//	Dynamic where clause
 			//	Get Product list
 			Query query = new Query(Env.getCtx(), I_C_BP_BankAccount.Table_Name, I_C_BP_BankAccount.COLUMNNAME_C_BPartner_ID + " = ?", null)
@@ -1414,7 +1415,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
 		//	
 		StringBuffer whereClause = new StringBuffer();
@@ -1567,7 +1569,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		int count = 0;
 		try {
 			//	Get Bank statement
@@ -1950,7 +1953,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		int shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), null);
 		//	Get Product list
 		Query query = new Query(Env.getCtx(), I_M_InOutLine.Table_Name, I_M_InOutLine.COLUMNNAME_M_InOut_ID + " = ?", null)
@@ -1992,7 +1996,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		List<Object> parameters = new ArrayList<Object>();
 		StringBuffer whereClause = new StringBuffer("IsPaid = 'N' AND Processed = 'N'");
 		if(!Util.isEmpty(request.getOrderUuid())) {
@@ -2793,7 +2798,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Aisle Seller
 		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
 		//	Get Product list
@@ -2843,7 +2849,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Dynamic where clause
 		//	Aisle Seller
 		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
@@ -2900,7 +2907,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Dynamic where clause
 		//	Aisle Seller
 		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
@@ -2976,7 +2984,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Dynamic where clause
 		//	Aisle Seller
 		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
@@ -3021,7 +3030,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Dynamic where clause
 		String whereClause = "EXISTS(SELECT 1 FROM C_Conversion_Rate cr "
 				+ "WHERE (cr.C_Currency_ID = C_Currency.C_Currency_ID  OR cr.C_Currency_ID_To = C_Currency.C_Currency_ID) "
@@ -3525,7 +3535,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Dynamic where clause
 		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
 		int posId = pos.getC_POS_ID();
@@ -3648,7 +3659,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Dynamic where clause
 		StringBuffer whereClause = new StringBuffer();
 		//	Parameters
@@ -3715,7 +3727,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		StringBuffer whereClause = new StringBuffer(I_C_OrderLine.COLUMNNAME_C_Order_ID + " = ?");
 		List<Object> parameters = new ArrayList<>();
 		parameters.add(orderId);
@@ -4827,7 +4840,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Get POS List
 		boolean isAppliedNewFeaturesPOS = M_Element.get(Env.getCtx(), "IsSharedPOS") != null && M_Element.get(Env.getCtx(), "IsAllowsAllocateSeller") != null;
 		StringBuffer whereClause = new StringBuffer("SalesRep_ID = ? OR EXISTS(SELECT 1 FROM AD_User u WHERE u.AD_User_ID = ? AND IsPOSManager = 'Y')");
@@ -5678,7 +5692,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Dynamic where clause
 		StringBuffer whereClause = new StringBuffer();
 		//	Parameters
@@ -6161,7 +6176,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
 		//	Aisle Seller
 		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosUuid(), null);
 		//	Get Product list
