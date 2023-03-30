@@ -17,22 +17,22 @@ package org.spin.grpc.service;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.bank_statement_match.ListImportedBankMovementsRequest;
-import org.spin.backend.grpc.bank_statement_match.ListImportedBankMovementsResponse;
-import org.spin.backend.grpc.bank_statement_match.ListMatchingMovementsRequest;
-import org.spin.backend.grpc.bank_statement_match.ListMatchingMovementsResponse;
-import org.spin.backend.grpc.bank_statement_match.ListPaymentsRequest;
-import org.spin.backend.grpc.bank_statement_match.ListPaymentsResponse;
-import org.spin.backend.grpc.bank_statement_match.ProcessMovementsRequest;
-import org.spin.backend.grpc.bank_statement_match.ProcessMovementsResponse;
-import org.spin.backend.grpc.bank_statement_match.BankStatementMatchGrpc.BankStatementMatchImplBase;
+import org.spin.backend.grpc.form.bank_statement_match.ListImportedBankMovementsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListImportedBankMovementsResponse;
+import org.spin.backend.grpc.form.bank_statement_match.ListMatchingMovementsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListMatchingMovementsResponse;
+import org.spin.backend.grpc.form.bank_statement_match.ListPaymentsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListPaymentsResponse;
+import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
+import org.spin.backend.grpc.form.bank_statement_match.BankStatementMatchGrpc.BankStatementMatchImplBase;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service for backend of Update Center
+ * Service for backend of Bank Statement Match form
  */
 public class BankStatementMatchServiceImplementation extends BankStatementMatchImplBase {
 

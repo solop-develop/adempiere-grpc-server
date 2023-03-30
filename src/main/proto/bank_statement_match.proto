@@ -15,7 +15,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.bank_statement_match";
+option java_package = "org.spin.backend.grpc.form.bank_statement_match";
 option java_outer_classname = "ADempierePaymentPrintExport";
 
 import "base_data_type.proto";
