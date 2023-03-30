@@ -25,7 +25,7 @@ public enum Services {
     DASHBOARDING("dashboarding"),
 	DICTIONARY("dictionary"),
 	ENROLLMENT("enrollment"),
-	EXTENSION("extension"),
+	EXPRESS_SHIPMENT("express_shipment"),
 	FILE_MANAGEMENT("file_management"),
 	GENERAL_LEDGER("general_ledger"),
 	IN_OUT("in_out"),
