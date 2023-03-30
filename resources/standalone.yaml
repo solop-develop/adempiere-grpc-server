@@ -1,6 +1,7 @@
 server:
     port: 50059
     services:
+       - bank_statement_match
        - business
        - business_partner
        - core

@@ -19,6 +19,7 @@ package org.spin.base.util;
  * @author Yamel Senih
  */
 public enum Services {
+	BANK_STATEMENT_MATCH("bank_statement_match"),
 	BUSINESS("business"),
 	BUSINESS_PARTNER("business_partner"),
     CORE("core"),

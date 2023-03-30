@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 import org.spin.authentication.AuthorizationServerInterceptor;
 import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.Services;
+import org.spin.grpc.service.BankStatementMatchServiceImplementation;
 import org.spin.grpc.service.BusinessDataServiceImplementation;
 import org.spin.grpc.service.BusinessPartnerServiceImplementation;
 import org.spin.grpc.service.CoreFunctionalityImplementation;
@@ -86,6 +87,11 @@ public class AllInOneServices {
 		// Validate JWT on all requests
 		serverBuilder.intercept(new AuthorizationServerInterceptor());
 
+		//	Bank Statement Match
+		if (SetupLoader.getInstance().getServer().isValidService(Services.BANK_STATEMENT_MATCH.getServiceName())) {
+			serverBuilder.addService(new BankStatementMatchServiceImplementation());
+			logger.info("Service " + Services.BANK_STATEMENT_MATCH.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		//	Business Logic
 		if(SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS.getServiceName())) {
 			serverBuilder.addService(new BusinessDataServiceImplementation());
