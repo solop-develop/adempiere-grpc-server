@@ -288,7 +288,7 @@ jobs:
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 600
       - name: Build image
-        run: docker build -t ${{ github.event.repository.name }} --build-arg GITHUB_DEPLOY_USER="${{ github.actor }}" --build-arg GITHUB_DEPLOY_TOKEN="${{ secrets.DEPLOY_TOKEN }}" -f docker/Dockerfile .
+        run: docker build -t ${{ github.event.repository.name }} --build-arg GITHUB_DEPLOY_USER="${{ github.actor }}" --build-arg GITHUB_DEPLOY_TOKEN="${{ secrets.DEPLOY_TOKEN }}" -f build-docker/production.Dockerfile .
       - name: Tag image
         run: docker tag ${{ github.event.repository.name }} registry.digitalocean.com/${{ secrets.DIGITALOCEAN_ORGANIZATION }}/${{ github.event.repository.name }}:${{ github.event.release.tag_name }}
       - name: Push image to DO Container Registry
