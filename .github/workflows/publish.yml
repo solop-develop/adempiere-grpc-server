@@ -11,9 +11,9 @@ on:
 
 jobs:
 
-  # Build dist application backend
+  # Build dist application adempiere-grpc-server
   build-app:
-    name: Build dist ADempiere gRPC Backend
+    name: Build dist ADempiere gRPC Server
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -39,28 +39,28 @@ jobs:
       - name: Upload dist app zip artifact
         uses: actions/upload-artifact@v3
         with:
-          name: backend.zip
-          path: build/release/backend.zip
+          name: adempiere-grpc-server.zip
+          path: build/release/adempiere-grpc-server.zip
 
       - name: Upload dist app zip.MD5 artifact
         uses: actions/upload-artifact@v3
         with:
-          name: backend.zip.MD5
-          path: build/release/backend.zip.MD5
+          name: adempiere-grpc-server.zip.MD5
+          path: build/release/adempiere-grpc-server.zip.MD5
 
       - name: Upload dist app tar artifact
         uses: actions/upload-artifact@v3
         with:
-          name: backend.tar
-          path: build/release/backend.tar
+          name: adempiere-grpc-server.tar
+          path: build/release/adempiere-grpc-server.tar
 
       - name: Upload dist app tar.MD5 artifact
         uses: actions/upload-artifact@v3
         with:
-          name: backend.tar.MD5
-          path: build/release/backend.tar.MD5
+          name: adempiere-grpc-server.tar.MD5
+          path: build/release/adempiere-grpc-server.tar.MD5
 
-  # Build dist application backend
+  # Build dist application adempiere-grpc-server
   publish-to-maven:
     name: Publish to Maven Repository
     runs-on: ubuntu-latest
@@ -88,7 +88,7 @@ jobs:
           GITHUB_PACKAGES_URL: https://maven.pkg.github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}
 
   publish-binaries:
-    name: Upload Binaries backend
+    name: Upload Binaries adempiere-grpc-server
     needs: build-app
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -103,28 +103,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: backend.zip/backend.zip
+          args: adempiere-grpc-server.zip/adempiere-grpc-server.zip
 
       - name: Upload zip.MD5
         uses: skx/github-action-publish-binaries@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: backend.zip.MD5/backend.zip.MD5
+          args: adempiere-grpc-server.zip.MD5/adempiere-grpc-server.zip.MD5
 
       - name: Upload tar
         uses: skx/github-action-publish-binaries@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: backend.tar/backend.tar
+          args: adempiere-grpc-server.tar/adempiere-grpc-server.tar
 
       - name: Upload tar.MD5
         uses: skx/github-action-publish-binaries@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: backend.tar.MD5/backend.tar.MD5
+          args: adempiere-grpc-server.tar.MD5/adempiere-grpc-server.tar.MD5
 
 
   # Check secrets to push image in docker hub registry
