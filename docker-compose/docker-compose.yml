@@ -23,7 +23,7 @@ services:
       - adempiere_network
             
   adempiere-grpc-server:
-    image: openls/adempiere-grpc-server:alpine-rs-1.1.9
+    image: solopcloud/adempiere-backend:alpine-experimental-1.8.1
     container_name: ${ADEMPIERE_GRPC_SERVER_HOST}
     restart: ${GENERIC_RESTART}
     ports:
