@@ -13,7 +13,7 @@ jobs:
 
   # Build dist application backend
   build-app:
-    name: Build dist Middleware
+    name: Build dist ADempiere gRPC Backend
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -30,7 +30,7 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 8.0.1
+          gradle-version: 8.0.2
           arguments: createRelease
         env:
           GITHUB_DEPLOY_USER: ${{ github.actor }}
@@ -287,9 +287,9 @@ jobs:
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 600
       - name: Build image
-        run: docker build -t backend --build-arg GITHUB_DEPLOY_USER="${{ github.actor }}" --build-arg GITHUB_DEPLOY_TOKEN="${{ secrets.DEPLOY_TOKEN }}" -f docker/Dockerfile .
+        run: docker build -t ${{ github.event.repository.name }} --build-arg GITHUB_DEPLOY_USER="${{ github.actor }}" --build-arg GITHUB_DEPLOY_TOKEN="${{ secrets.DEPLOY_TOKEN }}" -f docker/Dockerfile .
       - name: Tag image
-        run: docker tag backend registry.digitalocean.com/${{ secrets.DIGITALOCEAN_ORGANIZATION }}/backend:${{ github.event.release.tag_name }}
+        run: docker tag ${{ github.event.repository.name }} registry.digitalocean.com/${{ secrets.DIGITALOCEAN_ORGANIZATION }}/${{ github.event.repository.name }}:${{ github.event.release.tag_name }}
       - name: Push image to DO Container Registry
-        run: docker push registry.digitalocean.com/${{ secrets.DIGITALOCEAN_ORGANIZATION }}/backend:${{ github.event.release.tag_name }}
+        run: docker push registry.digitalocean.com/${{ secrets.DIGITALOCEAN_ORGANIZATION }}/${{ github.event.repository.name }}:${{ github.event.release.tag_name }}
             
