@@ -170,6 +170,9 @@ jobs:
 
       - name: Push alpine image in Docker Hub
         uses: docker/build-push-action@v2
+        env:
+          GITHUB_DEPLOY_USER: "${{ github.actor }}"
+          GITHUB_DEPLOY_TOKEN: "${{ secrets.DEPLOY_TOKEN }}"
         with:
           context: .
           file: docker/Dockerfile
