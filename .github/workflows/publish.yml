@@ -161,18 +161,6 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
-
-      - name: Download build dist app
-        uses: actions/download-artifact@v3
-        with:
-          name: adempiere-middleware.zip
-          path: dist
-
-      - name: Unzip dist file
-        run: |
-          cd dist
-          unzip -o adempiere-middleware.zip
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -219,20 +207,6 @@ jobs:
     if: needs.check-digital-ocean-secrets.outputs.is_have_secrets == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-
-      - name: Download build dist app
-        uses: actions/download-artifact@v3
-        with:
-          name: backend.zip
-          path: dist
-
-      - name: Unzip dist file
-        run: |
-          cd dist
-          unzip -o backend.zip
-
       - uses: actions/checkout@v3
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
