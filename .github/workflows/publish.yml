@@ -178,8 +178,9 @@ jobs:
           file: docker/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:alpine-${{ github.event.release.tag_name }}
+            ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:${{ github.event.release.tag_name }}
             ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:alpine
+            ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:alpine-${{ github.event.release.tag_name }}
 
   # Check secrets to push image in docker hub registry
   check-digital-ocean-secrets:
@@ -223,4 +224,3 @@ jobs:
         run: docker tag ${{ github.event.repository.name }} registry.digitalocean.com/${{ secrets.DIGITALOCEAN_ORGANIZATION }}/${{ github.event.repository.name }}:${{ github.event.release.tag_name }}
       - name: Push image to DO Container Registry
         run: docker push registry.digitalocean.com/${{ secrets.DIGITALOCEAN_ORGANIZATION }}/${{ github.event.repository.name }}:${{ github.event.release.tag_name }}
-            
