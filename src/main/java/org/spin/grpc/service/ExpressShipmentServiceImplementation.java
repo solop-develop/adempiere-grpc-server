@@ -16,21 +16,27 @@ package org.spin.grpc.service;
 
 import org.adempiere.exceptions.AdempiereException;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_C_Order;
+import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_M_InOut;
 import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.core.domains.models.I_M_Product;
+import org.adempiere.core.domains.models.X_M_InOut;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
+import org.compiere.model.MOrderLine;
 import org.compiere.model.MProduct;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.form.express_shipment.CreateShipmentLineRequest;
@@ -50,6 +56,7 @@ import org.spin.backend.grpc.form.express_shipment.Shipment;
 import org.spin.backend.grpc.form.express_shipment.ShipmentLine;
 import org.spin.backend.grpc.form.express_shipment.UpdateShipmentLineRequest;
 import org.spin.backend.grpc.form.express_shipment.ExpressShipmentGrpc.ExpressShipmentImplBase;
+import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
@@ -86,7 +93,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			);
 		}
 	}
-	
+
 	/**
 	 * Get default value base on field, process parameter, browse field or column
 	 * @param request
@@ -244,6 +251,14 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		return builderList;
 	}
 
+	Product.Builder convertProduct(int productId) {
+		Product.Builder builder = Product.newBuilder();
+		if (productId <= 0) {
+			return builder;
+		}
+		MProduct product = MProduct.get(Env.getCtx(), productId);
+		return convertProduct(product);
+	}
 	Product.Builder convertProduct(MProduct product) {
 		Product.Builder builder = Product.newBuilder();
 		if (product == null) {
@@ -271,6 +286,30 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 
+	Shipment.Builder convertShipment(MInOut shipment) {
+		Shipment.Builder builder = Shipment.newBuilder();
+		if (shipment == null) {
+			return builder;
+		}
+		
+		builder.setId(shipment.getM_InOut_ID())
+			.setUuid(
+				ValueUtil.validateNull(shipment.getUUID())
+			)
+			.setDocumentNo(
+				ValueUtil.validateNull(shipment.getDocumentNo())
+			)
+			.setDateOrdered(
+				ValueUtil.getLongFromTimestamp(shipment.getDateOrdered())
+			)
+			.setMovementDate(
+				ValueUtil.getLongFromTimestamp(shipment.getMovementDate())
+			)
+		;
+
+		return builder;
+	}
+
 
 	@Override
 	public void createShipment(CreateShipmentRequest request, StreamObserver<Shipment> responseObserver) {
@@ -293,7 +332,58 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 	private Shipment.Builder createShipment(CreateShipmentRequest request) {
-		Shipment.Builder builder = Shipment.newBuilder();
+		if (request.getOrderId() <= 0 && Util.isEmpty(request.getOrderUuid(), true)) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
+
+		AtomicReference<MInOut> maybeShipment = new AtomicReference<MInOut>();
+		Trx.run(transactionName -> {
+			int orderId = request.getOrderId();
+			if (orderId <= 0 && !Util.isEmpty(request.getOrderUuid(), true)) {
+				orderId = RecordUtil.getIdFromUuid(this.tableName, request.getOrderUuid(), null);
+			}
+			if (orderId <= 0) {
+				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			}
+			MOrder salesOrder = new MOrder(Env.getCtx(), orderId, transactionName);
+			if (salesOrder == null || salesOrder.getC_Order_ID() <= 0) {
+				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			}
+			if (salesOrder.isDelivered()) {
+				throw new AdempiereException("@C_Order_ID@ @IsDelivered@");
+			}
+			// Valid if has a Order
+			if (!DocumentUtil.isCompleted(salesOrder)) {
+				throw new AdempiereException("@Invalid@ @C_Order_ID@ " + salesOrder.getDocumentNo());
+			}
+
+			final String whereClause = "DocStatus = 'DR' AND IsSOTrx='Y' AND C_Order_ID = ? ";
+
+			MInOut shipment = new Query(
+				Env.getCtx(),
+				I_M_InOut.Table_Name,
+				whereClause,
+				transactionName
+			)
+				.setParameters(salesOrder.getC_Order_ID())
+				.first();
+
+			// Validate
+			if (shipment == null) {
+				shipment = new MInOut(salesOrder, 0, RecordUtil.getDate());
+			} else {
+				shipment.setDateOrdered(RecordUtil.getDate());
+				shipment.setDateAcct(RecordUtil.getDate());
+				shipment.setDateReceived(RecordUtil.getDate());
+				shipment.setMovementDate(RecordUtil.getDate());
+			}
+			shipment.setC_Order_ID(orderId);
+			shipment.saveEx(transactionName);
+
+			maybeShipment.set(shipment);
+		});
+
+		Shipment.Builder builder = convertShipment(maybeShipment.get());
 
 		return builder;
 	}
@@ -321,20 +411,29 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 	private Empty.Builder deleteShipment(DeleteShipmentRequest request) {
-		int shipmentId = request.getId();
-		if (shipmentId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-			shipmentId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), null);
-		}
-		if (shipmentId <= 0) {
+		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
+		Trx.run(transactionName -> {
+			int shipmentId = request.getId();
+			if (shipmentId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+				shipmentId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
+			}
+			if (shipmentId <= 0) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
 
-		MInOut shipment = new MInOut(Env.getCtx(), shipmentId, null);
-		shipment.deleteEx(true);
+			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, transactionName);
+			if (shipment == null || shipment.getM_InOut_ID() <= 0) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
+			if (!DocumentUtil.isDrafted(shipment)) {
+				throw new AdempiereException("@Invalid@ @M_InOut_ID@ " + shipment.getDocumentNo());
+			}
+			shipment.deleteEx(true);
+		});
 
-		Empty.Builder builder = Empty.newBuilder();
-
-		return builder;
+		return Empty.newBuilder();
 	}
 
 
@@ -360,7 +459,33 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 	private Shipment.Builder processShipment(ProcessShipmentRequest request) {
-		Shipment.Builder builder = Shipment.newBuilder();
+		AtomicReference<MInOut> shipmentReference = new AtomicReference<MInOut>();
+
+		Trx.run(transactionName -> {
+			int shipmentId = request.getId();
+			if (shipmentId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+				shipmentId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
+			}
+			if (shipmentId <= 0) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
+
+			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, transactionName);
+			if (shipment == null || shipmentId <= 0) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
+			if (shipment.isProcessed()) {
+				throw new AdempiereException("@M_InOut_ID@ @Processed@");
+			}
+			if (!shipment.processIt(X_M_InOut.DOCACTION_Complete)) {
+				log.warning("@ProcessFailed@ :" + shipment.getProcessMsg());
+				throw new AdempiereException("@ProcessFailed@ :" + shipment.getProcessMsg());
+			}
+			shipment.saveEx(transactionName);
+			shipmentReference.set(shipment);
+		});
+
+		Shipment.Builder builder = convertShipment(shipmentReference.get());
 
 		return builder;
 	}
@@ -388,7 +513,66 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 	private ShipmentLine.Builder createShipmentLine(CreateShipmentLineRequest request) {
-		ShipmentLine.Builder builder = ShipmentLine.newBuilder();
+		if (request.getShipmentId() <= 0 && Util.isEmpty(request.getShipmentUuid(), true)) {
+			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+		}
+		if (request.getProductId() <= 0 && Util.isEmpty(request.getProductUuid(), true)) {
+			throw new AdempiereException("@M_Product_ID@ @NotFound@");
+		}
+
+		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
+
+		Trx.run(transactionName -> {
+			int shipmentId = request.getShipmentId();
+			if (shipmentId <= 0) {
+				shipmentId = RecordUtil.getIdFromUuid(this.tableName, request.getShipmentUuid(), transactionName);
+				if (shipmentId <= 0) {
+					throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+				}
+			}
+
+			int productId = request.getProductId();
+			if (productId <= 0) {
+				productId = RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), transactionName);
+				if (productId <= 0) {
+					throw new AdempiereException("@M_Product_ID@ @NotFound@");
+				}
+			}
+
+			final String whereClause = "M_Product_ID = ? "
+				+ "AND EXISTS(SELECT 1 FROM M_InOut "
+				+ "WHERE M_InOut.C_Order_ID = C_OrderLine_ID.C_Order_ID "
+				+ "AND M_InOut.M_InOut_ID = ?)"
+			;
+			MOrderLine orderLine = new Query(
+				Env.getCtx(),
+				I_C_OrderLine.Table_Name,
+				whereClause,
+				transactionName
+			)
+				.setParameters(productId, shipmentId)
+				.first();
+	
+
+			BigDecimal quantity = BigDecimal.ONE;
+			if (request.getQuantity() != null) {
+				quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+					quantity = BigDecimal.ONE;
+				}
+			}
+
+			MInOutLine shipmentLine = new MInOutLine(Env.getCtx(), 0, transactionName);
+			shipmentLine.setOrderLine(orderLine, productId, null);
+			shipmentLine.setQty(quantity);
+			shipmentLine.saveEx(transactionName);
+
+			shipmentLineReference.set(shipmentLine);
+		});
+
+		ShipmentLine.Builder builder = convertShipmentLine(
+			shipmentLineReference.get()
+		);
 
 		return builder;
 	}
@@ -416,20 +600,31 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 	private Empty.Builder deleteShipmentLine(DeleteShipmentLineRequest request) {
-		int shipmentLineId = request.getId();
-		if (shipmentLineId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-			shipmentLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), null);
-		}
-		if (shipmentLineId <= 0) {
+		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 
-		MInOutLine shipmentLine = new MInOutLine(Env.getCtx(), shipmentLineId, null);
-		shipmentLine.deleteEx(true);
+		Trx.run(transactionName -> {
+			int shipmentLineId = request.getId();
+			if (shipmentLineId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+				shipmentLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), transactionName);
+			}
+			if (shipmentLineId <= 0) {
+				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
+			}
 
-		Empty.Builder builder = Empty.newBuilder();
+			MInOutLine shipmentLine = new MInOutLine(Env.getCtx(), shipmentLineId, transactionName);
+			if (shipmentLine == null || shipmentLine.getM_InOutLine_ID() <= 0) {
+				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
+			}
+			// Validate processed
+			if (shipmentLine.isProcessed()) {
+				throw new AdempiereException("@M_InOutLine_ID@ @Processed@");
+			}
+			shipmentLine.deleteEx(true);
+		});
 
-		return builder;
+		return Empty.newBuilder();
 	}
 
 
@@ -455,6 +650,35 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 	private ShipmentLine.Builder updateShipmentLine(UpdateShipmentLineRequest request) {
+		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
+		}
+
+		Trx.run(transactionName -> {
+			int shipmentLineId = request.getId();
+			if (shipmentLineId <= 0) {
+				shipmentLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), transactionName);
+				if (shipmentLineId <= 0) {
+					throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
+				}
+			}
+
+			MInOutLine shipmentLine = new MInOutLine(Env.getCtx(), shipmentLineId, transactionName);
+			if (shipmentLine == null || shipmentLine.getM_InOutLine_ID() <= 0) {
+				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
+			}
+			// Validate processed
+			if (shipmentLine.isProcessed()) {
+				throw new AdempiereException("@M_InOutLine_ID@ @Processed@");
+			}
+
+			BigDecimal quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+			shipmentLine.setQty(quantity);
+			shipmentLine.setDescription(
+				ValueUtil.validateNull(request.getDescription())
+			);
+			shipmentLine.saveEx(transactionName);
+		});
 		ShipmentLine.Builder builder = ShipmentLine.newBuilder();
 
 		return builder;
@@ -482,8 +706,86 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 	}
 
+	ShipmentLine.Builder convertShipmentLine(MInOutLine shipmentLine) {
+		ShipmentLine.Builder builder = ShipmentLine.newBuilder();
+		if (shipmentLine == null || shipmentLine.getM_InOutLine_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(shipmentLine.getM_InOutLine_ID())
+			.setUuid(
+				ValueUtil.validateNull(shipmentLine.getUUID())
+			)
+			.setProduct(
+				convertProduct(shipmentLine.getM_Product_ID())
+			)
+			.setDescription(
+				ValueUtil.validateNull(shipmentLine.getDescription())
+			)
+			.setQuantity(
+				ValueUtil.getDecimalFromBigDecimal(shipmentLine.getQtyEntered())
+			)
+			.setLine(shipmentLine.getLine())
+		;
+		MOrderLine orderLine = new MOrderLine(Env.getCtx(), shipmentLine.getC_OrderLine_ID(), null);
+		if (orderLine != null && orderLine.getC_OrderLine_ID() > 0) {
+			builder.setOrderLineId(orderLine.getC_OrderLine_ID())
+				.setOrderLineUuid(
+					ValueUtil.validateNull(orderLine.getUUID())
+				)
+			;
+		}
+
+		return builder;
+	}
+
 	private ListShipmentLinesResponse.Builder listShipmentLines(ListShipmentLinesRequest request) {
-		ListShipmentLinesResponse.Builder builderList = ListShipmentLinesResponse.newBuilder();
+		if (request.getShipmentId() <= 0 && Util.isEmpty(request.getShipmentUuid(), true)) {
+			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+		}
+		int shipmentId = request.getShipmentId();
+		if (shipmentId <= 0) {
+			shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), null);
+			if (shipmentId <= 0) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
+		}
+
+		Query query = new Query(
+			Env.getCtx(),
+			I_M_InOutLine.Table_Name,
+			I_M_InOutLine.COLUMNNAME_M_InOut_ID + " = ?",
+			null
+		)
+			.setParameters(shipmentId)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+		;
+
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		int count = query.count();
+		//	Set page token
+		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListShipmentLinesResponse.Builder builderList = ListShipmentLinesResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				ValueUtil.validateNull(nexPageToken)
+			)
+		;
+
+		query.setLimit(limit, offset)
+			.list(MInOutLine.class)
+			.forEach(shipmentLine -> {
+				ShipmentLine.Builder builder = convertShipmentLine(shipmentLine);
+				builderList.addRecords(builder);
+			});
+		;
 
 		return builderList;
 	}
