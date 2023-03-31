@@ -11,9 +11,18 @@ sourceCompatibility = 1.11
 def grpcVersion = '1.53.0'
 def baseVersion = '3.9.4'
 def baseGroupId = 'io.github.adempiere'
+def customBaseVersion = ""
 def javaMainClass = "org.spin.server.AllInOneServices"
 repositories {
     mavenCentral()
+    mavenLocal()
+    maven {
+    	url = System.getenv("GITHUB_DEPLOY_REPOSITORY") ?: System.properties['deploy.repository'] ?: 'https://maven.pkg.github.com'
+        credentials {
+        	username = System.getenv("GITHUB_DEPLOY_USER") ?: System.properties['deploy.user']
+            password = System.getenv("GITHUB_DEPLOY_TOKEN") ?: System.properties['deploy.token'] 
+		}
+	}
 }
 dependencies {
     implementation fileTree(
