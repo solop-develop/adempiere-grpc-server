@@ -579,11 +579,6 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 					quantity = BigDecimal.ONE;
 				}
 			}
-			// Validate available
-			BigDecimal orderQuantityDelivered = purchaseOrderLine.getQtyOrdered().subtract(purchaseOrderLine.getQtyDelivered());
-			if (orderQuantityDelivered.compareTo(quantity) < 0) {
-				throw new AdempiereException("@QtyInsufficient@");
-			}
 
 			Optional<MInOutLine> maybeReceiptLine = Arrays.asList(receipt.getLines(true))
 				.stream()
@@ -722,11 +717,6 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
-			}
-			// Validate available
-			BigDecimal orderQuantityDelivered = purchaseOrderLine.getQtyOrdered().subtract(purchaseOrderLine.getQtyDelivered());
-			if (orderQuantityDelivered.compareTo(quantity) < 0) {
-				throw new AdempiereException("@QtyInsufficient@");
 			}
 
 			receiptLine.setQty(quantity);
