@@ -105,10 +105,15 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 		Properties context = Env.getCtx();
 
 		final String whereClause = "IsSOTrx='N' "
-			+ "AND C_Order.DocStatus IN ('CL','CO')"
+			+ "AND DocStatus IN ('CL','CO')"
 			+ "AND EXISTS(SELECT 1 FROM C_OrderLine ol "
-			+ "WHERE ol.C_Order_ID = C_Order.C_Order_ID "
-			+ "AND COALESCE(ol.QtyOrdered, 0) - COALESCE(ol.QtyDelivered, 0) > 0)"
+			+ "LEFT JOIN M_InOutLine il ON (ol.C_OrderLine_ID = il.C_OrderLine_ID) "
+			+ "WHERE C_Order.C_Order_ID = ol.C_Order_ID "
+			+ "GROUP BY ol.C_OrderLine_ID, ol.QtyOrdered "
+			+ "HAVING (ol.QtyOrdered <> SUM(COALESCE(il.MovementQty, 0)) AND ol.C_OrderLine_ID IS NOT NULL) "
+			+ "OR ol.C_OrderLine_ID IS NULL) "
+			+ "AND EXISTS(SELECT 1 FROM C_DocType dt "
+			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID AND dt.DocBaseType IN('SOO', 'POO') AND dt.DocSubTypeSO = 'RM')"
 		;
 		Query query = new Query(
 			context,
