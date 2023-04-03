@@ -102,6 +102,9 @@ message Shipment {
 	string document_no = 3;
 	int64 date_ordered = 4;
 	int64 movement_date = 5;
+	int32 order_id = 6;
+	string order_uuid = 7;
+	bool is_completed = 8;
 }
 
 message DeleteShipmentRequest {

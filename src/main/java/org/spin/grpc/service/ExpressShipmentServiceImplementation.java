@@ -115,13 +115,14 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			I_C_Order.Table_Name,
 			whereClause,
 			null
-		);
+		).setClient_ID();
 
+		int count = query.count();
 		String nexPageToken = "";
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = query.count();
+
 		//	Set page token
 		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
@@ -223,13 +224,14 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			whereClause.toString(),
 			null
 		)
+			.setClient_ID()
 			.setParameters(parameters);
 
+		int count = query.count();
 		String nexPageToken = "";
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = query.count();
 		//	Set page token
 		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
@@ -293,7 +295,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		if (shipment == null) {
 			return builder;
 		}
-		
+
 		builder.setId(shipment.getM_InOut_ID())
 			.setUuid(
 				ValueUtil.validateNull(shipment.getUUID())
@@ -307,7 +309,16 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			.setMovementDate(
 				ValueUtil.getLongFromTimestamp(shipment.getMovementDate())
 			)
+			.setIsCompleted(
+				DocumentUtil.isCompleted(shipment)
+			)
 		;
+		MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), shipment.getC_Order_ID(), null);
+		if (salesOrderLine != null && salesOrderLine.getC_OrderLine_ID() > 0) {
+			builder.setOrderId(salesOrderLine.getC_OrderLine_ID())
+				.setOrderUuid(salesOrderLine.getUUID())
+			;
+		}
 
 		return builder;
 	}
@@ -368,6 +379,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				transactionName
 			)
 				.setParameters(salesOrder.getC_Order_ID())
+				.setClient_ID()
 				.first();
 
 			// Validate
@@ -547,15 +559,16 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				+ "WHERE M_InOut.C_Order_ID = C_OrderLine.C_Order_ID "
 				+ "AND M_InOut.M_InOut_ID = ?)"
 			;
-			MOrderLine orderLine = new Query(
+			MOrderLine salesOrderLine = new Query(
 				Env.getCtx(),
 				I_C_OrderLine.Table_Name,
 				whereClause,
 				transactionName
 			)
 				.setParameters(productId, shipmentId)
+				.setClient_ID()
 				.first();
-			if (orderLine == null || orderLine.getC_OrderLine_ID() <= 0) {
+			if (salesOrderLine == null || salesOrderLine.getC_OrderLine_ID() <= 0) {
 				throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 			}
 
@@ -566,22 +579,29 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 					quantity = BigDecimal.ONE;
 				}
 			}
-			Optional<MInOutLine> maybeOrderLine = Arrays.asList(shipment.getLines(true))
+			// Validate available
+			BigDecimal orderQuantityDelivered = salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered());
+			if (orderQuantityDelivered.compareTo(quantity) < 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
+
+			Optional<MInOutLine> maybeShipmentLine = Arrays.asList(shipment.getLines(true))
 				.stream()
 				.filter(shipmentLineTofind -> {
-					return shipmentLineTofind.getC_OrderLine_ID() == orderLine.getC_OrderLine_ID();
+					return shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
 				})
 				.findFirst();
 
+
 			MInOutLine shipmentLine = null;
-			if (maybeOrderLine.isPresent()) {
-				shipmentLine = maybeOrderLine.get();
+			if (maybeShipmentLine.isPresent()) {
+				shipmentLine = maybeShipmentLine.get();
 				BigDecimal orderQuantity = shipmentLine.getQtyEntered();
 				orderQuantity = orderQuantity.add(quantity);
 				shipmentLine.setQty(orderQuantity);
 			} else {
 				shipmentLine = new MInOutLine(shipment);
-				shipmentLine.setOrderLine(orderLine, 0, quantity);
+				shipmentLine.setOrderLine(salesOrderLine, 0, quantity);
 				shipmentLine.setM_InOut_ID(shipmentId);
 			}
 			shipmentLine.saveEx(transactionName);
@@ -691,7 +711,24 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				throw new AdempiereException("@M_InOutLine_ID@ @Processed@");
 			}
 
-			BigDecimal quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+			MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), shipmentLine.getC_OrderLine_ID(), transactionName);
+			if (salesOrderLine == null || salesOrderLine.getC_OrderLine_ID() <= 0) {
+				throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
+			}
+
+			BigDecimal quantity = BigDecimal.ONE;
+			if (request.getQuantity() != null) {
+				quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+					quantity = BigDecimal.ONE;
+				}
+			}
+			// Validate available
+			BigDecimal orderQuantityDelivered = salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered());
+			if (orderQuantityDelivered.compareTo(quantity) < 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
+
 			shipmentLine.setQty(quantity);
 			shipmentLine.setDescription(
 				ValueUtil.validateNull(request.getDescription())
@@ -781,11 +818,11 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			.setOnlyActiveRecords(true)
 		;
 
+		int count = query.count();
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = query.count();
 		//	Set page token
 		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
