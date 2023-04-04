@@ -104,16 +104,12 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 	private ListPurchaseOrdersResponse.Builder listPurchaseOrders(ListPurchaseOrdersRequest request) {
 		Properties context = Env.getCtx();
 
+		// See dynamic validation 52464
 		final String whereClause = "IsSOTrx='N' "
-			+ "AND DocStatus IN ('CL','CO')"
+			+ "AND DocStatus IN ('CL','CO') "
 			+ "AND EXISTS(SELECT 1 FROM C_OrderLine ol "
-			+ "LEFT JOIN M_InOutLine il ON (ol.C_OrderLine_ID = il.C_OrderLine_ID) "
-			+ "WHERE C_Order.C_Order_ID = ol.C_Order_ID "
-			+ "GROUP BY ol.C_OrderLine_ID, ol.QtyOrdered "
-			+ "HAVING (ol.QtyOrdered <> SUM(COALESCE(il.MovementQty, 0)) AND ol.C_OrderLine_ID IS NOT NULL) "
-			+ "OR ol.C_OrderLine_ID IS NULL) "
-			+ "AND EXISTS(SELECT 1 FROM C_DocType dt "
-			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID AND dt.DocBaseType IN('SOO', 'POO') AND dt.DocSubTypeSO = 'RM')"
+			+ "WHERE ol.C_Order_ID = C_Order.C_Order_ID "
+			+ "AND ol.QtyOrdered - ol.QtyDelivered > 0)"
 		;
 		Query query = new Query(
 			context,
@@ -375,8 +371,11 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 				throw new AdempiereException("@Invalid@ @C_Order_ID@ " + purchaseOrder.getDocumentNo());
 			}
 
-			final String whereClause = "DocStatus = 'DR' AND IsSOTrx='N' AND C_Order_ID = ? ";
-
+			final String whereClause = "IsSOTrx='N' "
+				+ "AND MovementType IN ('V+') "
+				+ "AND DocStatus = 'DR' "
+				+ "AND C_Order_ID = ? "
+			;
 			MInOut receipt = new Query(
 				Env.getCtx(),
 				I_M_InOut.Table_Name,

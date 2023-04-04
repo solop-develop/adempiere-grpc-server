@@ -370,7 +370,11 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				throw new AdempiereException("@Invalid@ @C_Order_ID@ " + salesOrder.getDocumentNo());
 			}
 
-			final String whereClause = "DocStatus = 'DR' AND IsSOTrx='Y' AND C_Order_ID = ? ";
+			final String whereClause = "IsSOTrx='Y' "
+				+ "AND MovementType IN ('V-') "
+				+ "AND DocStatus = 'DR' "
+				+ "AND C_Order_ID = ? "
+			;
 
 			MInOut shipment = new Query(
 				Env.getCtx(),
