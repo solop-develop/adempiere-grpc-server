@@ -22,7 +22,7 @@ RUN gradle build && \
 	mv docker/env.yaml /opt/apps/adempiere-grpc-server && \
 	mv docker/start.sh /opt/apps/adempiere-grpc-server
 
-FROM eclipse-temurin:11-jdk-alpine
+FROM eclipse-temurin:11-jdk-focal
 
 # Init ENV with default values
 ENV \
@@ -42,17 +42,13 @@ ENV \
 WORKDIR /opt/apps/server
 
 # Add operative system dependencies
-RUN	rm -rf /var/cache/apk/* && \
-	rm -rf /tmp/* && \
-	apk update && \
-	apk add --no-cache \
+RUN	apt-get update && apt-get install -y tzdata \
 		bash \
 	 	fontconfig \
 		ttf-dejavu && \
+		rm -rf /var/lib/apt/lists/* \
 		echo "Set Timezone..." && \
-	 	echo $TZ > /etc/timezone && \
-                apk add --no-cache \
-		tzdata
+	 	echo $TZ > /etc/timezone
 
 
 COPY --from=builder /opt/apps/adempiere-grpc-server/ /opt/apps/server/
