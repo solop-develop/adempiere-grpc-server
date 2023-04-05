@@ -390,6 +390,9 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			if (shipment == null) {
 				shipment = new MInOut(salesOrder, 0, RecordUtil.getDate());
 			} else {
+				if(!DocumentUtil.isDrafted(shipment)) {
+					throw new AdempiereException("@M_InOut_ID@ @Processed@");
+				}
 				shipment.setDateOrdered(RecordUtil.getDate());
 				shipment.setDateAcct(RecordUtil.getDate());
 				shipment.setDateReceived(RecordUtil.getDate());
@@ -399,6 +402,41 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			shipment.saveEx(transactionName);
 
 			maybeShipment.set(shipment);
+
+			if (request.getIsCreateLinesFromOrder()) {
+				List<MOrderLine> orderLines = Arrays.asList(salesOrder.getLines());
+				orderLines.stream().forEach(salesOrderLine -> {
+					Optional<MInOutLine> maybeShipmentLine = Arrays.asList(maybeShipment.get().getLines(true))
+						.stream()
+						.filter(shipmentLineTofind -> {
+							return shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
+						})
+						.findFirst();
+
+					if (maybeShipmentLine.isPresent()) {
+						MInOutLine shipmentLine = maybeShipmentLine.get();
+
+						BigDecimal quantity = salesOrderLine.getQtyEntered();
+						if (quantity == null) {
+							quantity = shipmentLine.getMovementQty().add(Env.ONE);
+						}
+
+						// Validate available
+						BigDecimal orderQuantityDelivered = salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered());
+						if (orderQuantityDelivered.compareTo(quantity) < 0) {
+							throw new AdempiereException("@QtyInsufficient@");
+						}
+						shipmentLine.setQty(quantity);
+						shipmentLine.saveEx();
+					} else {
+						MInOutLine shipmentLine = new MInOutLine(maybeShipment.get());
+
+						BigDecimal quantity = salesOrderLine.getQtyReserved();
+						shipmentLine.setOrderLine(salesOrderLine, 0, quantity);
+						shipmentLine.saveEx(transactionName);
+					}
+				});
+			}
 		});
 
 		Shipment.Builder builder = convertShipment(maybeShipment.get());

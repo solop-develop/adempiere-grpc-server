@@ -94,6 +94,7 @@ message ListProductsResponse {
 message CreateReceiptRequest {
 	int32 order_id = 1;
 	string order_uuid = 2;
+	bool is_create_lines_from_order = 3;
 }
 
 message Receipt {
@@ -127,6 +128,7 @@ message CreateReceiptLineRequest {
 	int32 product_id = 4;
 	string product_uuid = 5;
 	data.Decimal quantity = 6;
+	bool is_quantity_from_order_line = 7;
 }
 
 message ReceiptLine {

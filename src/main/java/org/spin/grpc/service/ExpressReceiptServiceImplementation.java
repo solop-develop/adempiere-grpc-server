@@ -35,6 +35,7 @@ import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MProduct;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -390,6 +391,9 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 			if (receipt == null) {
 				receipt = new MInOut(purchaseOrder, 0, RecordUtil.getDate());
 			} else {
+				if(!DocumentUtil.isDrafted(receipt)) {
+					throw new AdempiereException("@M_InOut_ID@ @Processed@");
+				}
 				receipt.setDateOrdered(RecordUtil.getDate());
 				receipt.setDateAcct(RecordUtil.getDate());
 				receipt.setDateReceived(RecordUtil.getDate());
@@ -399,6 +403,45 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 			receipt.saveEx(transactionName);
 
 			maybeReceipt.set(receipt);
+
+			if (request.getIsCreateLinesFromOrder()) {
+				boolean validateOrderedQty = MSysConfig.getBooleanValue("VALIDATE_MATCHING_TO_ORDERED_QTY", true, Env.getAD_Client_ID(Env.getCtx()));
+
+				List<MOrderLine> orderLines = Arrays.asList(purchaseOrder.getLines());
+				orderLines.stream().forEach(purchaseOrderLine -> {
+					Optional<MInOutLine> maybeReceiptLine = Arrays.asList(maybeReceipt.get().getLines(true))
+						.stream()
+						.filter(shipmentLineTofind -> {
+							return shipmentLineTofind.getC_OrderLine_ID() == purchaseOrderLine.getC_OrderLine_ID();
+						})
+						.findFirst();
+
+					if (maybeReceiptLine.isPresent()) {
+						MInOutLine receiptLine = maybeReceiptLine.get();
+
+						BigDecimal quantity = purchaseOrderLine.getQtyEntered();
+						if (quantity == null) {
+							quantity = receiptLine.getMovementQty().add(Env.ONE);
+						}
+
+						// Validate available
+						if (validateOrderedQty) {
+							BigDecimal orderQuantityDelivered = purchaseOrderLine.getQtyOrdered().subtract(purchaseOrderLine.getQtyDelivered());
+							if (orderQuantityDelivered.compareTo(quantity) < 0) {
+								throw new AdempiereException("@QtyInsufficient@");
+							}
+						}
+						receiptLine.setQty(quantity);
+						receiptLine.saveEx();
+					} else {
+						MInOutLine receiptLine = new MInOutLine(maybeReceipt.get());
+
+						BigDecimal quantity = purchaseOrderLine.getQtyReserved();
+						receiptLine.setOrderLine(purchaseOrderLine, 0, quantity);
+						receiptLine.saveEx(transactionName);
+					}
+				});
+			}
 		});
 
 		Receipt.Builder builder = convertReceipt(maybeReceipt.get());
@@ -583,6 +626,9 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 					quantity = BigDecimal.ONE;
 				}
 			}
+			if (request.getIsQuantityFromOrderLine()) {
+				quantity = purchaseOrderLine.getQtyReserved();
+			}
 
 			Optional<MInOutLine> maybeReceiptLine = Arrays.asList(receipt.getLines(true))
 				.stream()
@@ -720,6 +766,15 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 				quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
+				}
+			}
+
+			boolean validateOrderedQty = MSysConfig.getBooleanValue("VALIDATE_MATCHING_TO_ORDERED_QTY", true, Env.getAD_Client_ID(Env.getCtx()));
+			// Validate available
+			if (validateOrderedQty) {
+				BigDecimal orderQuantityDelivered = purchaseOrderLine.getQtyOrdered().subtract(purchaseOrderLine.getQtyDelivered());
+				if (orderQuantityDelivered.compareTo(quantity) < 0) {
+					throw new AdempiereException("@QtyInsufficient@");
 				}
 			}
 
