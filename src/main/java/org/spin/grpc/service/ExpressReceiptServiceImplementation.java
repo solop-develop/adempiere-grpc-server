@@ -37,32 +37,33 @@ import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MProduct;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Empty;
-import org.spin.backend.grpc.form.express_shipment.BusinessPartner;
-import org.spin.backend.grpc.form.express_shipment.CreateShipmentLineRequest;
-import org.spin.backend.grpc.form.express_shipment.CreateShipmentRequest;
-import org.spin.backend.grpc.form.express_shipment.DeleteShipmentLineRequest;
-import org.spin.backend.grpc.form.express_shipment.DeleteShipmentRequest;
-import org.spin.backend.grpc.form.express_shipment.ListBusinessPartnersRequest;
-import org.spin.backend.grpc.form.express_shipment.ListBusinessPartnersResponse;
-import org.spin.backend.grpc.form.express_shipment.ListProductsRequest;
-import org.spin.backend.grpc.form.express_shipment.ListProductsResponse;
-import org.spin.backend.grpc.form.express_shipment.ListSalesOrdersRequest;
-import org.spin.backend.grpc.form.express_shipment.ListSalesOrdersResponse;
-import org.spin.backend.grpc.form.express_shipment.ListShipmentLinesRequest;
-import org.spin.backend.grpc.form.express_shipment.ListShipmentLinesResponse;
-import org.spin.backend.grpc.form.express_shipment.ProcessShipmentRequest;
-import org.spin.backend.grpc.form.express_shipment.Product;
-import org.spin.backend.grpc.form.express_shipment.SalesOrder;
-import org.spin.backend.grpc.form.express_shipment.Shipment;
-import org.spin.backend.grpc.form.express_shipment.ShipmentLine;
-import org.spin.backend.grpc.form.express_shipment.UpdateShipmentLineRequest;
-import org.spin.backend.grpc.form.express_shipment.ExpressShipmentGrpc.ExpressShipmentImplBase;
+import org.spin.backend.grpc.form.express_receipt.BusinessPartner;
+import org.spin.backend.grpc.form.express_receipt.CreateReceiptLineRequest;
+import org.spin.backend.grpc.form.express_receipt.CreateReceiptRequest;
+import org.spin.backend.grpc.form.express_receipt.DeleteReceiptLineRequest;
+import org.spin.backend.grpc.form.express_receipt.DeleteReceiptRequest;
+import org.spin.backend.grpc.form.express_receipt.ListBusinessPartnersRequest;
+import org.spin.backend.grpc.form.express_receipt.ListBusinessPartnersResponse;
+import org.spin.backend.grpc.form.express_receipt.ListProductsRequest;
+import org.spin.backend.grpc.form.express_receipt.ListProductsResponse;
+import org.spin.backend.grpc.form.express_receipt.ListPurchaseOrdersRequest;
+import org.spin.backend.grpc.form.express_receipt.ListPurchaseOrdersResponse;
+import org.spin.backend.grpc.form.express_receipt.ListReceiptLinesRequest;
+import org.spin.backend.grpc.form.express_receipt.ListReceiptLinesResponse;
+import org.spin.backend.grpc.form.express_receipt.ProcessReceiptRequest;
+import org.spin.backend.grpc.form.express_receipt.Product;
+import org.spin.backend.grpc.form.express_receipt.PurchaseOrder;
+import org.spin.backend.grpc.form.express_receipt.Receipt;
+import org.spin.backend.grpc.form.express_receipt.ReceiptLine;
+import org.spin.backend.grpc.form.express_receipt.UpdateReceiptLineRequest;
+import org.spin.backend.grpc.form.express_receipt.ExpressReceiptGrpc.ExpressReceiptImplBase;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -73,11 +74,11 @@ import io.grpc.stub.StreamObserver;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service for backend of Express Shipment
+ * Service for backend of Express Receipt
  */
-public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBase {
+public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(ExpressShipmentServiceImplementation.class);
+	private CLogger log = CLogger.getCLogger(ExpressReceiptServiceImplementation.class);
 	
 	public String tableName = I_M_InOut.Table_Name;
 
@@ -103,7 +104,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 	ListBusinessPartnersResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
-		final String whereClause = "IsCustomer='Y' ";
+		final String whereClause = "IsVendor='Y' ";
 		Query query = new Query(
 			Env.getCtx(),
 			I_C_BPartner.Table_Name,
@@ -166,13 +167,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 
 	@Override
-	public void listSalesOrders(ListSalesOrdersRequest request, StreamObserver<ListSalesOrdersResponse> responseObserver) {
+	public void listPurchaseOrders(ListPurchaseOrdersRequest request, StreamObserver<ListPurchaseOrdersResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListSalesOrdersResponse.Builder builderList = listSalesOrders(request);
+			ListPurchaseOrdersResponse.Builder builderList = listPurchaseOrders(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -190,7 +191,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	 * @param request
 	 * @return
 	 */
-	private ListSalesOrdersResponse.Builder listSalesOrders(ListSalesOrdersRequest request) {
+	private ListPurchaseOrdersResponse.Builder listPurchaseOrders(ListPurchaseOrdersRequest request) {
 		Properties context = Env.getCtx();
 
 		int businessPartnerId = request.getBusinessPartnerId();
@@ -201,12 +202,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 		}
 
-		final String whereClause = "IsSOTrx='Y' "
+		// See dynamic validation 52464
+		final String whereClause = "IsSOTrx='N' "
 			+ "AND C_BPartner_ID = ? "
-			+ "AND DocStatus IN ('CL','CO')"
+			+ "AND DocStatus IN ('CL','CO') "
 			+ "AND EXISTS(SELECT 1 FROM C_OrderLine ol "
 			+ "WHERE ol.C_Order_ID = C_Order.C_Order_ID "
-			+ "AND COALESCE(ol.QtyOrdered, 0) - COALESCE(ol.QtyDelivered, 0) > 0)"
+			+ "AND ol.QtyOrdered - ol.QtyDelivered > 0)"
 		;
 		Query query = new Query(
 			context,
@@ -228,37 +230,37 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
-		ListSalesOrdersResponse.Builder builderList = ListSalesOrdersResponse.newBuilder()
+		ListPurchaseOrdersResponse.Builder builderList = ListPurchaseOrdersResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(nexPageToken)
 		;
 
 		query.setLimit(limit, offset)
 			.list(MOrder.class)
-			.forEach(salesOrder -> {
-				SalesOrder.Builder builder = convertSalesOrder(salesOrder);
+			.forEach(purchase -> {
+				PurchaseOrder.Builder builder = convertPurchaseOrder(purchase);
 				builderList.addRecords(builder);
-			});
+			})
 		;
 
 		return builderList;
 	}
 
-	SalesOrder.Builder convertSalesOrder(MOrder salesOrder) {
-		SalesOrder.Builder builder = SalesOrder.newBuilder();
-		if (salesOrder == null) {
+	PurchaseOrder.Builder convertPurchaseOrder(MOrder purchaseOrder) {
+		PurchaseOrder.Builder builder = PurchaseOrder.newBuilder();
+		if (purchaseOrder == null) {
 			return builder;
 		}
 
-		builder.setId(salesOrder.getC_Order_ID())
+		builder.setId(purchaseOrder.getC_Order_ID())
 			.setUuid(
-				ValueUtil.validateNull(salesOrder.getUUID())
+				ValueUtil.validateNull(purchaseOrder.getUUID())
 			)
 			.setDateOrdered(
-				ValueUtil.getLongFromTimestamp(salesOrder.getDateOrdered())
+				ValueUtil.getLongFromTimestamp(purchaseOrder.getDateOrdered())
 			)
 			.setDocumentNo(
-				ValueUtil.validateNull(salesOrder.getDocumentNo())
+				ValueUtil.validateNull(purchaseOrder.getDocumentNo())
 			)
 		;
 
@@ -393,33 +395,33 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	}
 
 
-	Shipment.Builder convertShipment(MInOut shipment) {
-		Shipment.Builder builder = Shipment.newBuilder();
-		if (shipment == null) {
+	Receipt.Builder convertReceipt(MInOut receipt) {
+		Receipt.Builder builder = Receipt.newBuilder();
+		if (receipt == null) {
 			return builder;
 		}
 
-		builder.setId(shipment.getM_InOut_ID())
+		builder.setId(receipt.getM_InOut_ID())
 			.setUuid(
-				ValueUtil.validateNull(shipment.getUUID())
+				ValueUtil.validateNull(receipt.getUUID())
 			)
 			.setDocumentNo(
-				ValueUtil.validateNull(shipment.getDocumentNo())
+				ValueUtil.validateNull(receipt.getDocumentNo())
 			)
 			.setDateOrdered(
-				ValueUtil.getLongFromTimestamp(shipment.getDateOrdered())
+				ValueUtil.getLongFromTimestamp(receipt.getDateOrdered())
 			)
 			.setMovementDate(
-				ValueUtil.getLongFromTimestamp(shipment.getMovementDate())
+				ValueUtil.getLongFromTimestamp(receipt.getMovementDate())
 			)
 			.setIsCompleted(
-				DocumentUtil.isCompleted(shipment)
+				DocumentUtil.isCompleted(receipt)
 			)
 		;
-		MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), shipment.getC_Order_ID(), null);
-		if (salesOrderLine != null && salesOrderLine.getC_OrderLine_ID() > 0) {
-			builder.setOrderId(salesOrderLine.getC_OrderLine_ID())
-				.setOrderUuid(salesOrderLine.getUUID())
+		MOrderLine purchaseOrderLine = new MOrderLine(Env.getCtx(), receipt.getC_Order_ID(), null);
+		if (purchaseOrderLine != null && purchaseOrderLine.getC_OrderLine_ID() > 0) {
+			builder.setOrderId(purchaseOrderLine.getC_OrderLine_ID())
+				.setOrderUuid(purchaseOrderLine.getUUID())
 			;
 		}
 
@@ -428,13 +430,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 
 	@Override
-	public void createShipment(CreateShipmentRequest request, StreamObserver<Shipment> responseObserver) {
+	public void createReceipt(CreateReceiptRequest request, StreamObserver<Receipt> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			Shipment.Builder builder = createShipment(request);
+			Receipt.Builder builder = createReceipt(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -447,12 +449,12 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 	}
 
-	private Shipment.Builder createShipment(CreateShipmentRequest request) {
+	private Receipt.Builder createReceipt(CreateReceiptRequest request) {
 		if (request.getOrderId() <= 0 && Util.isEmpty(request.getOrderUuid(), true)) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 
-		AtomicReference<MInOut> maybeShipment = new AtomicReference<MInOut>();
+		AtomicReference<MInOut> maybeReceipt = new AtomicReference<MInOut>();
 		Trx.run(transactionName -> {
 			int orderId = request.getOrderId();
 			if (orderId <= 0 && !Util.isEmpty(request.getOrderUuid(), true)) {
@@ -461,88 +463,91 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			if (orderId <= 0) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
-			MOrder salesOrder = new MOrder(Env.getCtx(), orderId, transactionName);
-			if (salesOrder == null || salesOrder.getC_Order_ID() <= 0) {
+			MOrder purchaseOrder = new MOrder(Env.getCtx(), orderId, transactionName);
+			if (purchaseOrder == null || purchaseOrder.getC_Order_ID() <= 0) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
-			// if (salesOrder.isDelivered()) {
+			// if (purchaseOrder.isDelivered()) {
 			// 	throw new AdempiereException("@C_Order_ID@ @IsDelivered@");
 			// }
 			// Valid if has a Order
-			if (!DocumentUtil.isCompleted(salesOrder)) {
-				throw new AdempiereException("@Invalid@ @C_Order_ID@ " + salesOrder.getDocumentNo());
+			if (!DocumentUtil.isCompleted(purchaseOrder)) {
+				throw new AdempiereException("@Invalid@ @C_Order_ID@ " + purchaseOrder.getDocumentNo());
 			}
 
-			final String whereClause = "IsSOTrx='Y' "
-				+ "AND MovementType IN ('V-') "
+			final String whereClause = "IsSOTrx='N' "
+				+ "AND MovementType IN ('V+') "
 				+ "AND DocStatus = 'DR' "
 				+ "AND C_Order_ID = ? "
 			;
-
-			MInOut shipment = new Query(
+			MInOut receipt = new Query(
 				Env.getCtx(),
 				I_M_InOut.Table_Name,
 				whereClause,
 				transactionName
 			)
-				.setParameters(salesOrder.getC_Order_ID())
+				.setParameters(purchaseOrder.getC_Order_ID())
 				.setClient_ID()
 				.first();
 
 			// Validate
-			if (shipment == null) {
-				shipment = new MInOut(salesOrder, 0, RecordUtil.getDate());
+			if (receipt == null) {
+				receipt = new MInOut(purchaseOrder, 0, RecordUtil.getDate());
 			} else {
-				if(!DocumentUtil.isDrafted(shipment)) {
+				if(!DocumentUtil.isDrafted(receipt)) {
 					throw new AdempiereException("@M_InOut_ID@ @Processed@");
 				}
-				shipment.setDateOrdered(RecordUtil.getDate());
-				shipment.setDateAcct(RecordUtil.getDate());
-				shipment.setDateReceived(RecordUtil.getDate());
-				shipment.setMovementDate(RecordUtil.getDate());
+				receipt.setDateOrdered(RecordUtil.getDate());
+				receipt.setDateAcct(RecordUtil.getDate());
+				receipt.setDateReceived(RecordUtil.getDate());
+				receipt.setMovementDate(RecordUtil.getDate());
 			}
-			shipment.setC_Order_ID(orderId);
-			shipment.saveEx(transactionName);
+			receipt.setC_Order_ID(orderId);
+			receipt.saveEx(transactionName);
 
-			maybeShipment.set(shipment);
+			maybeReceipt.set(receipt);
 
 			if (request.getIsCreateLinesFromOrder()) {
-				List<MOrderLine> orderLines = Arrays.asList(salesOrder.getLines());
-				orderLines.stream().forEach(salesOrderLine -> {
-					Optional<MInOutLine> maybeShipmentLine = Arrays.asList(maybeShipment.get().getLines(true))
+				boolean validateOrderedQty = MSysConfig.getBooleanValue("VALIDATE_MATCHING_TO_ORDERED_QTY", true, Env.getAD_Client_ID(Env.getCtx()));
+
+				List<MOrderLine> orderLines = Arrays.asList(purchaseOrder.getLines());
+				orderLines.stream().forEach(purchaseOrderLine -> {
+					Optional<MInOutLine> maybeReceiptLine = Arrays.asList(maybeReceipt.get().getLines(true))
 						.stream()
 						.filter(shipmentLineTofind -> {
-							return shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
+							return shipmentLineTofind.getC_OrderLine_ID() == purchaseOrderLine.getC_OrderLine_ID();
 						})
 						.findFirst();
 
-					if (maybeShipmentLine.isPresent()) {
-						MInOutLine shipmentLine = maybeShipmentLine.get();
+					if (maybeReceiptLine.isPresent()) {
+						MInOutLine receiptLine = maybeReceiptLine.get();
 
-						BigDecimal quantity = salesOrderLine.getQtyEntered();
+						BigDecimal quantity = purchaseOrderLine.getQtyEntered();
 						if (quantity == null) {
-							quantity = shipmentLine.getMovementQty().add(Env.ONE);
+							quantity = receiptLine.getMovementQty().add(Env.ONE);
 						}
 
 						// Validate available
-						BigDecimal orderQuantityDelivered = salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered());
-						if (orderQuantityDelivered.compareTo(quantity) < 0) {
-							throw new AdempiereException("@QtyInsufficient@");
+						if (validateOrderedQty) {
+							BigDecimal orderQuantityDelivered = purchaseOrderLine.getQtyOrdered().subtract(purchaseOrderLine.getQtyDelivered());
+							if (orderQuantityDelivered.compareTo(quantity) < 0) {
+								throw new AdempiereException("@QtyInsufficient@");
+							}
 						}
-						shipmentLine.setQty(quantity);
-						shipmentLine.saveEx();
+						receiptLine.setQty(quantity);
+						receiptLine.saveEx();
 					} else {
-						MInOutLine shipmentLine = new MInOutLine(maybeShipment.get());
+						MInOutLine receiptLine = new MInOutLine(maybeReceipt.get());
 
-						BigDecimal quantity = salesOrderLine.getQtyReserved();
-						shipmentLine.setOrderLine(salesOrderLine, 0, quantity);
-						shipmentLine.saveEx(transactionName);
+						BigDecimal quantity = purchaseOrderLine.getQtyReserved();
+						receiptLine.setOrderLine(purchaseOrderLine, 0, quantity);
+						receiptLine.saveEx(transactionName);
 					}
 				});
 			}
 		});
 
-		Shipment.Builder builder = convertShipment(maybeShipment.get());
+		Receipt.Builder builder = convertReceipt(maybeReceipt.get());
 
 		return builder;
 	}
@@ -550,13 +555,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 
 	@Override
-	public void deleteShipment(DeleteShipmentRequest request, StreamObserver<Empty> responseObserver) {
+	public void deleteReceipt(DeleteReceiptRequest request, StreamObserver<Empty> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			Empty.Builder builder = deleteShipment(request);
+			Empty.Builder builder = deleteReceipt(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -569,27 +574,27 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 	}
 
-	private Empty.Builder deleteShipment(DeleteShipmentRequest request) {
+	private Empty.Builder deleteReceipt(DeleteReceiptRequest request) {
 		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
-			int shipmentId = request.getId();
-			if (shipmentId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				shipmentId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
+			int receiptId = request.getId();
+			if (receiptId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+				receiptId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
 			}
-			if (shipmentId <= 0) {
+			if (receiptId <= 0) {
 				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 			}
 
-			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, transactionName);
-			if (shipment == null || shipment.getM_InOut_ID() <= 0) {
+			MInOut receipt = new MInOut(Env.getCtx(), receiptId, transactionName);
+			if (receipt == null || receipt.getM_InOut_ID() <= 0) {
 				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 			}
-			if (!DocumentUtil.isDrafted(shipment)) {
-				throw new AdempiereException("@Invalid@ @M_InOut_ID@ " + shipment.getDocumentNo());
+			if (!DocumentUtil.isDrafted(receipt)) {
+				throw new AdempiereException("@Invalid@ @M_InOut_ID@ " + receipt.getDocumentNo());
 			}
-			shipment.deleteEx(true);
+			receipt.deleteEx(true);
 		});
 
 		return Empty.newBuilder();
@@ -598,13 +603,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 
 	@Override
-	public void processShipment(ProcessShipmentRequest request, StreamObserver<Shipment> responseObserver) {
+	public void processReceipt(ProcessReceiptRequest request, StreamObserver<Receipt> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			Shipment.Builder builder = processShipment(request);
+			Receipt.Builder builder = processReceipt(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -617,34 +622,34 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 	}
 
-	private Shipment.Builder processShipment(ProcessShipmentRequest request) {
-		AtomicReference<MInOut> shipmentReference = new AtomicReference<MInOut>();
+	private Receipt.Builder processReceipt(ProcessReceiptRequest request) {
+		AtomicReference<MInOut> receiptReference = new AtomicReference<MInOut>();
 
 		Trx.run(transactionName -> {
-			int shipmentId = request.getId();
-			if (shipmentId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				shipmentId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
+			int receiptId = request.getId();
+			if (receiptId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+				receiptId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
 			}
-			if (shipmentId <= 0) {
+			if (receiptId <= 0) {
 				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 			}
 
-			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, transactionName);
-			if (shipment == null || shipmentId <= 0) {
+			MInOut receipt = new MInOut(Env.getCtx(), receiptId, transactionName);
+			if (receipt == null || receiptId <= 0) {
 				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 			}
-			if (shipment.isProcessed()) {
+			if (receipt.isProcessed()) {
 				throw new AdempiereException("@M_InOut_ID@ @Processed@");
 			}
-			if (!shipment.processIt(X_M_InOut.DOCACTION_Complete)) {
-				log.warning("@ProcessFailed@ :" + shipment.getProcessMsg());
-				throw new AdempiereException("@ProcessFailed@ :" + shipment.getProcessMsg());
+			if (!receipt.processIt(X_M_InOut.DOCACTION_Complete)) {
+				log.warning("@ProcessFailed@ :" + receipt.getProcessMsg());
+				throw new AdempiereException("@ProcessFailed@ :" + receipt.getProcessMsg());
 			}
-			shipment.saveEx(transactionName);
-			shipmentReference.set(shipment);
+			receipt.saveEx(transactionName);
+			receiptReference.set(receipt);
 		});
 
-		Shipment.Builder builder = convertShipment(shipmentReference.get());
+		Receipt.Builder builder = convertReceipt(receiptReference.get());
 
 		return builder;
 	}
@@ -652,13 +657,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 
 	@Override
-	public void createShipmentLine(CreateShipmentLineRequest request, StreamObserver<ShipmentLine> responseObserver) {
+	public void createReceiptLine(CreateReceiptLineRequest request, StreamObserver<ReceiptLine> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ShipmentLine.Builder builder = createShipmentLine(request);
+			ReceiptLine.Builder builder = createReceiptLine(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -671,25 +676,25 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 	}
 
-	private ShipmentLine.Builder createShipmentLine(CreateShipmentLineRequest request) {
-		if (request.getShipmentId() <= 0 && Util.isEmpty(request.getShipmentUuid(), true)) {
+	private ReceiptLine.Builder createReceiptLine(CreateReceiptLineRequest request) {
+		if (request.getReceiptId() <= 0 && Util.isEmpty(request.getReceiptUuid(), true)) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 		if (request.getProductId() <= 0 && Util.isEmpty(request.getProductUuid(), true)) {
 			throw new AdempiereException("@M_Product_ID@ @NotFound@");
 		}
 
-		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
+		AtomicReference<MInOutLine> receiptLineReference = new AtomicReference<MInOutLine>();
 
 		Trx.run(transactionName -> {
-			int shipmentId = request.getShipmentId();
-			if (shipmentId <= 0) {
-				shipmentId = RecordUtil.getIdFromUuid(this.tableName, request.getShipmentUuid(), transactionName);
-				if (shipmentId <= 0) {
+			int receiptId = request.getReceiptId();
+			if (receiptId <= 0) {
+				receiptId = RecordUtil.getIdFromUuid(this.tableName, request.getReceiptUuid(), transactionName);
+				if (receiptId <= 0) {
 					throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 				}
 			}
-			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, transactionName);
+			MInOut receipt = new MInOut(Env.getCtx(), receiptId, transactionName);
 
 			int productId = request.getProductId();
 			if (productId <= 0) {
@@ -704,16 +709,16 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				+ "WHERE M_InOut.C_Order_ID = C_OrderLine.C_Order_ID "
 				+ "AND M_InOut.M_InOut_ID = ?)"
 			;
-			MOrderLine salesOrderLine = new Query(
+			MOrderLine purchaseOrderLine = new Query(
 				Env.getCtx(),
 				I_C_OrderLine.Table_Name,
 				whereClause,
 				transactionName
 			)
-				.setParameters(productId, shipmentId)
+				.setParameters(productId, receiptId)
 				.setClient_ID()
 				.first();
-			if (salesOrderLine == null || salesOrderLine.getC_OrderLine_ID() <= 0) {
+			if (purchaseOrderLine == null || purchaseOrderLine.getC_OrderLine_ID() <= 0) {
 				throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 			}
 
@@ -725,40 +730,35 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				}
 			}
 			if (request.getIsQuantityFromOrderLine()) {
-				quantity = salesOrderLine.getQtyReserved();
-			}
-			// Validate available
-			BigDecimal orderQuantityDelivered = salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered());
-			if (orderQuantityDelivered.compareTo(quantity) < 0) {
-				throw new AdempiereException("@QtyInsufficient@");
+				quantity = purchaseOrderLine.getQtyReserved();
 			}
 
-			Optional<MInOutLine> maybeShipmentLine = Arrays.asList(shipment.getLines(true))
+			Optional<MInOutLine> maybeReceiptLine = Arrays.asList(receipt.getLines(true))
 				.stream()
-				.filter(shipmentLineTofind -> {
-					return shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
+				.filter(receiptLineTofind -> {
+					return receiptLineTofind.getC_OrderLine_ID() == purchaseOrderLine.getC_OrderLine_ID();
 				})
 				.findFirst();
 
 
-			MInOutLine shipmentLine = null;
-			if (maybeShipmentLine.isPresent()) {
-				shipmentLine = maybeShipmentLine.get();
-				BigDecimal orderQuantity = shipmentLine.getQtyEntered();
+			MInOutLine receiptLine = null;
+			if (maybeReceiptLine.isPresent()) {
+				receiptLine = maybeReceiptLine.get();
+				BigDecimal orderQuantity = receiptLine.getQtyEntered();
 				orderQuantity = orderQuantity.add(quantity);
-				shipmentLine.setQty(orderQuantity);
+				receiptLine.setQty(orderQuantity);
 			} else {
-				shipmentLine = new MInOutLine(shipment);
-				shipmentLine.setOrderLine(salesOrderLine, 0, quantity);
-				shipmentLine.setQty(quantity);
+				receiptLine = new MInOutLine(receipt);
+				receiptLine.setOrderLine(purchaseOrderLine, 0, quantity);
+				receiptLine.setQty(quantity);
 			}
-			shipmentLine.saveEx(transactionName);
+			receiptLine.saveEx(transactionName);
 
-			shipmentLineReference.set(shipmentLine);
+			receiptLineReference.set(receiptLine);
 		});
 
-		ShipmentLine.Builder builder = convertShipmentLine(
-			shipmentLineReference.get()
+		ReceiptLine.Builder builder = convertReceiptLine(
+			receiptLineReference.get()
 		);
 
 		return builder;
@@ -767,13 +767,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 
 	@Override
-	public void deleteShipmentLine(DeleteShipmentLineRequest request, StreamObserver<Empty> responseObserver) {
+	public void deleteReceiptLine(DeleteReceiptLineRequest request, StreamObserver<Empty> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			Empty.Builder builder = deleteShipmentLine(request);
+			Empty.Builder builder = deleteReceiptLine(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -786,29 +786,29 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 	}
 
-	private Empty.Builder deleteShipmentLine(DeleteShipmentLineRequest request) {
+	private Empty.Builder deleteReceiptLine(DeleteReceiptLineRequest request) {
 		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 
 		Trx.run(transactionName -> {
-			int shipmentLineId = request.getId();
-			if (shipmentLineId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				shipmentLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), transactionName);
+			int receiptLineId = request.getId();
+			if (receiptLineId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
+				receiptLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), transactionName);
 			}
-			if (shipmentLineId <= 0) {
+			if (receiptLineId <= 0) {
 				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 			}
 
-			MInOutLine shipmentLine = new MInOutLine(Env.getCtx(), shipmentLineId, transactionName);
-			if (shipmentLine == null || shipmentLine.getM_InOutLine_ID() <= 0) {
+			MInOutLine receiptLine = new MInOutLine(Env.getCtx(), receiptLineId, transactionName);
+			if (receiptLine == null || receiptLine.getM_InOutLine_ID() <= 0) {
 				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 			}
 			// Validate processed
-			if (shipmentLine.isProcessed()) {
+			if (receiptLine.isProcessed()) {
 				throw new AdempiereException("@M_InOutLine_ID@ @Processed@");
 			}
-			shipmentLine.deleteEx(true);
+			receiptLine.deleteEx(true);
 		});
 
 		return Empty.newBuilder();
@@ -817,13 +817,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 
 	@Override
-	public void updateShipmentLine(UpdateShipmentLineRequest request, StreamObserver<ShipmentLine> responseObserver) {
+	public void updateReceiptLine(UpdateReceiptLineRequest request, StreamObserver<ReceiptLine> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ShipmentLine.Builder builder = updateShipmentLine(request);
+			ReceiptLine.Builder builder = updateReceiptLine(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -836,31 +836,31 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 	}
 
-	private ShipmentLine.Builder updateShipmentLine(UpdateShipmentLineRequest request) {
+	private ReceiptLine.Builder updateReceiptLine(UpdateReceiptLineRequest request) {
 		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 
 		Trx.run(transactionName -> {
-			int shipmentLineId = request.getId();
-			if (shipmentLineId <= 0) {
-				shipmentLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), transactionName);
-				if (shipmentLineId <= 0) {
+			int receiptLineId = request.getId();
+			if (receiptLineId <= 0) {
+				receiptLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), transactionName);
+				if (receiptLineId <= 0) {
 					throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 				}
 			}
 
-			MInOutLine shipmentLine = new MInOutLine(Env.getCtx(), shipmentLineId, transactionName);
-			if (shipmentLine == null || shipmentLine.getM_InOutLine_ID() <= 0) {
+			MInOutLine receiptLine = new MInOutLine(Env.getCtx(), receiptLineId, transactionName);
+			if (receiptLine == null || receiptLine.getM_InOutLine_ID() <= 0) {
 				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 			}
 			// Validate processed
-			if (shipmentLine.isProcessed()) {
+			if (receiptLine.isProcessed()) {
 				throw new AdempiereException("@M_InOutLine_ID@ @Processed@");
 			}
 
-			MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), shipmentLine.getC_OrderLine_ID(), transactionName);
-			if (salesOrderLine == null || salesOrderLine.getC_OrderLine_ID() <= 0) {
+			MOrderLine purchaseOrderLine = new MOrderLine(Env.getCtx(), receiptLine.getC_OrderLine_ID(), transactionName);
+			if (purchaseOrderLine == null || purchaseOrderLine.getC_OrderLine_ID() <= 0) {
 				throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 			}
 
@@ -871,19 +871,23 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 					quantity = BigDecimal.ONE;
 				}
 			}
+
+			boolean validateOrderedQty = MSysConfig.getBooleanValue("VALIDATE_MATCHING_TO_ORDERED_QTY", true, Env.getAD_Client_ID(Env.getCtx()));
 			// Validate available
-			BigDecimal orderQuantityDelivered = salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered());
-			if (orderQuantityDelivered.compareTo(quantity) < 0) {
-				throw new AdempiereException("@QtyInsufficient@");
+			if (validateOrderedQty) {
+				BigDecimal orderQuantityDelivered = purchaseOrderLine.getQtyOrdered().subtract(purchaseOrderLine.getQtyDelivered());
+				if (orderQuantityDelivered.compareTo(quantity) < 0) {
+					throw new AdempiereException("@QtyInsufficient@");
+				}
 			}
 
-			shipmentLine.setQty(quantity);
-			shipmentLine.setDescription(
+			receiptLine.setQty(quantity);
+			receiptLine.setDescription(
 				ValueUtil.validateNull(request.getDescription())
 			);
-			shipmentLine.saveEx(transactionName);
+			receiptLine.saveEx(transactionName);
 		});
-		ShipmentLine.Builder builder = ShipmentLine.newBuilder();
+		ReceiptLine.Builder builder = ReceiptLine.newBuilder();
 
 		return builder;
 	}
@@ -891,13 +895,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 
 	@Override
-	public void listShipmentLines(ListShipmentLinesRequest request, StreamObserver<ListShipmentLinesResponse> responseObserver) {
+	public void listReceiptLines(ListReceiptLinesRequest request, StreamObserver<ListReceiptLinesResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListShipmentLinesResponse.Builder builderList = listShipmentLines(request);
+			ListReceiptLinesResponse.Builder builderList = listReceiptLines(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -910,28 +914,28 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 	}
 
-	ShipmentLine.Builder convertShipmentLine(MInOutLine shipmentLine) {
-		ShipmentLine.Builder builder = ShipmentLine.newBuilder();
-		if (shipmentLine == null || shipmentLine.getM_InOutLine_ID() <= 0) {
+	ReceiptLine.Builder convertReceiptLine(MInOutLine receiptLine) {
+		ReceiptLine.Builder builder = ReceiptLine.newBuilder();
+		if (receiptLine == null || receiptLine.getM_InOutLine_ID() <= 0) {
 			return builder;
 		}
 
-		builder.setId(shipmentLine.getM_InOutLine_ID())
+		builder.setId(receiptLine.getM_InOutLine_ID())
 			.setUuid(
-				ValueUtil.validateNull(shipmentLine.getUUID())
+				ValueUtil.validateNull(receiptLine.getUUID())
 			)
 			.setProduct(
-				convertProduct(shipmentLine.getM_Product_ID())
+				convertProduct(receiptLine.getM_Product_ID())
 			)
 			.setDescription(
-				ValueUtil.validateNull(shipmentLine.getDescription())
+				ValueUtil.validateNull(receiptLine.getDescription())
 			)
 			.setQuantity(
-				ValueUtil.getDecimalFromBigDecimal(shipmentLine.getQtyEntered())
+				ValueUtil.getDecimalFromBigDecimal(receiptLine.getQtyEntered())
 			)
-			.setLine(shipmentLine.getLine())
+			.setLine(receiptLine.getLine())
 		;
-		MOrderLine orderLine = new MOrderLine(Env.getCtx(), shipmentLine.getC_OrderLine_ID(), null);
+		MOrderLine orderLine = new MOrderLine(Env.getCtx(), receiptLine.getC_OrderLine_ID(), null);
 		if (orderLine != null && orderLine.getC_OrderLine_ID() > 0) {
 			builder.setOrderLineId(orderLine.getC_OrderLine_ID())
 				.setOrderLineUuid(
@@ -943,14 +947,14 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		return builder;
 	}
 
-	private ListShipmentLinesResponse.Builder listShipmentLines(ListShipmentLinesRequest request) {
-		if (request.getShipmentId() <= 0 && Util.isEmpty(request.getShipmentUuid(), true)) {
+	private ListReceiptLinesResponse.Builder listReceiptLines(ListReceiptLinesRequest request) {
+		if (request.getReceiptId() <= 0 && Util.isEmpty(request.getReceiptUuid(), true)) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
-		int shipmentId = request.getShipmentId();
-		if (shipmentId <= 0) {
-			shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), null);
-			if (shipmentId <= 0) {
+		int receiptId = request.getReceiptId();
+		if (receiptId <= 0) {
+			receiptId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getReceiptUuid(), null);
+			if (receiptId <= 0) {
 				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 			}
 		}
@@ -961,7 +965,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			I_M_InOutLine.COLUMNNAME_M_InOut_ID + " = ?",
 			null
 		)
-			.setParameters(shipmentId)
+			.setParameters(receiptId)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
 		;
@@ -976,7 +980,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
-		ListShipmentLinesResponse.Builder builderList = ListShipmentLinesResponse.newBuilder()
+		ListReceiptLinesResponse.Builder builderList = ListReceiptLinesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
 				ValueUtil.validateNull(nexPageToken)
@@ -985,8 +989,8 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 		query.setLimit(limit, offset)
 			.list(MInOutLine.class)
-			.forEach(shipmentLine -> {
-				ShipmentLine.Builder builder = convertShipmentLine(shipmentLine);
+			.forEach(receiptLine -> {
+				ReceiptLine.Builder builder = convertReceiptLine(receiptLine);
 				builderList.addRecords(builder);
 			});
 		;

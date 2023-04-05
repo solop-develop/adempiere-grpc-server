@@ -15,28 +15,28 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.form.express_shipment";
-option java_outer_classname = "ADempiereExpressShipment";
+option java_package = "org.spin.backend.grpc.form.express_receipt";
+option java_outer_classname = "ADempiereExpressReceipt";
 
 import "base_data_type.proto";
 import "business.proto";
 import "core_functionality.proto";
 
-package express_shipment;
+package express_receipt;
 
-service ExpressShipment {
+service ExpressReceipt {
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {}
-	rpc ListSalesOrders(ListSalesOrdersRequest) returns (ListSalesOrdersResponse) {}
+	rpc ListPurchaseOrders(ListPurchaseOrdersRequest) returns (ListPurchaseOrdersResponse) {}
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
-	// Shipment
-	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {}
-	rpc DeleteShipment(DeleteShipmentRequest) returns (data.Empty) {}
-	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {}
-	//	Shipment Line
-	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {}
-	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (data.Empty) {}
-	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {}
-	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {}
+	// Receipt
+	rpc CreateReceipt(CreateReceiptRequest) returns (Receipt) {}
+	rpc DeleteReceipt(DeleteReceiptRequest) returns (data.Empty) {}
+	rpc ProcessReceipt(ProcessReceiptRequest) returns (Receipt) {}
+	//	Receipt Line
+	rpc CreateReceiptLine(CreateReceiptLineRequest) returns (ReceiptLine) {}
+	rpc DeleteReceiptLine(DeleteReceiptLineRequest) returns (data.Empty) {}
+	rpc UpdateReceiptLine(UpdateReceiptLineRequest) returns (ReceiptLine) {}
+	rpc ListReceiptLines(ListReceiptLinesRequest) returns (ListReceiptLinesResponse) {}
 }
 
 
@@ -64,7 +64,7 @@ message ListBusinessPartnersResponse {
 
 
 // Orders
-message ListSalesOrdersRequest {
+message ListPurchaseOrdersRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	string search_value = 3;
@@ -72,16 +72,16 @@ message ListSalesOrdersRequest {
 	string business_partner_uuid = 5;
 }
 
-message SalesOrder {
+message PurchaseOrder {
 	int32 id = 1;
 	string uuid = 2;
 	string document_no = 3;
 	int64 date_ordered = 4;
 }
 
-message ListSalesOrdersResponse {
+message ListPurchaseOrdersResponse {
 	int64 record_count = 1;
-	repeated SalesOrder records = 2;
+	repeated PurchaseOrder records = 2;
 	string next_page_token = 3;
 }
 
@@ -116,14 +116,14 @@ message ListProductsResponse {
 }
 
 
-// Shipment
-message CreateShipmentRequest {
+// Receipt
+message CreateReceiptRequest {
 	int32 order_id = 1;
 	string order_uuid = 2;
 	bool is_create_lines_from_order = 3;
 }
 
-message Shipment {
+message Receipt {
 	int32 id = 1;
 	string uuid = 2;
 	string document_no = 3;
@@ -134,22 +134,22 @@ message Shipment {
 	bool is_completed = 8;
 }
 
-message DeleteShipmentRequest {
+message DeleteReceiptRequest {
 	int32 id = 1;
 	string uuid = 2;
 }
 
-message ProcessShipmentRequest {
+message ProcessReceiptRequest {
 	int32 id = 1;
 	string uuid = 2;
 	string description = 3;
 }
 
 
-// Shipment Line
-message CreateShipmentLineRequest {
-	int32 shipment_id = 1;
-	string shipment_uuid = 2;
+// Receipt Line
+message CreateReceiptLineRequest {
+	int32 receipt_id = 1;
+	string receipt_uuid = 2;
 	string description = 3;
 	int32 product_id = 4;
 	string product_uuid = 5;
@@ -157,7 +157,7 @@ message CreateShipmentLineRequest {
 	bool is_quantity_from_order_line = 7;
 }
 
-message ShipmentLine {
+message ReceiptLine {
 	int32 id = 1;
 	string uuid = 2;
 	int32 order_line_id = 3;
@@ -168,26 +168,26 @@ message ShipmentLine {
 	int32 line = 8;
 }
 
-message ListShipmentLinesRequest {
+message ListReceiptLinesRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	string search_value = 3;
-	int32 shipment_id = 4;
-	string shipment_uuid = 5;
+	int32 receipt_id = 4;
+	string receipt_uuid = 5;
 }
 
-message ListShipmentLinesResponse {
+message ListReceiptLinesResponse {
 	int64 record_count = 1;
-	repeated ShipmentLine records = 2;
+	repeated ReceiptLine records = 2;
 	string next_page_token = 3;
 }
 
-message DeleteShipmentLineRequest {
+message DeleteReceiptLineRequest {
 	int32 id = 1;
 	string uuid = 2;
 }
 
-message UpdateShipmentLineRequest {
+message UpdateReceiptLineRequest {
 	int32 id = 1;
 	string uuid = 2;
 	string description = 3;

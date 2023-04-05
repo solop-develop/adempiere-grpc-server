@@ -155,6 +155,10 @@ service Store {
 	rpc ListStocks(ListStocksRequest) returns (ListStocksResponse) {}
 	//  List Available Cash 
 	rpc ListAvailableCash(ListAvailableCashRequest) returns (ListAvailableCashResponse) {}
+	// Command Shortcut
+	rpc SaveCommandShortcut(SaveCommandShortcutRequest) returns (CommandShortcut) {}
+	rpc ListCommandShortcuts(ListCommandShortcutsRequest) returns (ListCommandShortcutsResponse) {}
+	rpc DeleteCommandShortcut(DeleteCommandShortcutRequest) returns (Empty) {}
 }
 
 //	Delete Refund reference request
@@ -1384,4 +1388,39 @@ message AvailableCash {
 	string name = 5;
 	bool is_pos_required_pin = 6;
 	BankAccount bank_account = 7;
+}
+
+// Mnemonic Commands
+message CommandShortcut {
+	int32 id = 1;
+	string uuid = 2;
+	int32 pos_id = 3;
+	string pos_uuid = 4;
+	string command = 5;
+	string shortcut = 6;
+}
+
+message SaveCommandShortcutRequest {
+	string pos_uuid = 1;
+	string command = 2;
+	string shortcut = 3;
+}
+
+message DeleteCommandShortcutRequest {
+	string pos_uuid = 1;
+	int32 id = 2;
+	string uuid = 3;
+}
+
+message ListCommandShortcutsRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	string search_value = 3;
+	string pos_uuid = 4;
+}
+
+message ListCommandShortcutsResponse {
+	int64 record_count = 1;
+	repeated CommandShortcut records = 2;
+	string next_page_token = 3;
 }

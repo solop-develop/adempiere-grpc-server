@@ -75,6 +75,9 @@ dependencies {
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 	// ADempiere External Libraries
 	implementation 'com.github.jjYBdx4IL:ecs:1.4.2.1'
+
+	// Point Of Sales Improvements
+	implementation 'io.github.adempiere:adempiere-pos-improvements:1.0.0'
 }
 
 configurations.all {
@@ -109,7 +112,7 @@ sourceSets {
             srcDirs 'src/main/proto'
         }
         resources {
-    		srcDirs 'src'
+    		srcDirs 'src/main/java'
         	include 'org/adempiere/legacy/apache/ecs/ecs.properties'
     	}
     }

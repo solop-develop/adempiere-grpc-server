@@ -15,6 +15,6 @@
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.spin.server.AllInOneServices"/>
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="backend"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="&quot;/opt/Development/ADempiere_Properties/ADEMPIERE.yml&quot;"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="&quot;resources/standalone.yaml&quot;"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="adempiere-grpc-server"/>
 </launchConfiguration>

@@ -1,6 +1,6 @@
 /*************************************************************************************
- * Product: ADempiere Bot                                                            *
- * Copyright (C) 2012-2019 E.R.P. Consultores y Asociados, C.A.                      *
+ * Product: ADempiere Setup Loader                                                   *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                      *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                      *
  * This program is free software: you can redistribute it and/or modify              *
  * it under the terms of the GNU General Public License as published by              *
@@ -54,12 +54,16 @@ public class SetupLoader {
 	 * @throws JsonMappingException 
 	 * @throws JsonParseException 
 	 */
-	private SetupLoader(String filePath) throws JsonParseException, JsonMappingException, IOException {
+	private SetupLoader(String filePath) throws Exception, JsonParseException, JsonMappingException, IOException {
 		File setupFile = new File(filePath);
+		if (setupFile == null || !setupFile.exists() || setupFile.isDirectory()) {
+			throw new Exception("Setup File not found");
+		}
 		ObjectMapper fileMapper = new ObjectMapper(new YAMLFactory());
 		setup = fileMapper.readValue(setupFile, SetupWrapper.class);
 	}
-	
+
+
 	/**
 	 * Verify if is loaded else throw a exception
 	 * @return
@@ -147,7 +151,8 @@ public class SetupLoader {
 	 * @throws JsonMappingException 
 	 * @throws JsonParseException 
 	 */
-	public static void loadSetup(String filePath) throws JsonParseException, JsonMappingException, IOException {
+	public static void loadSetup(String filePath) throws Exception, JsonParseException, JsonMappingException, IOException {
 		instance = new SetupLoader(filePath);
 	}
+
 }
