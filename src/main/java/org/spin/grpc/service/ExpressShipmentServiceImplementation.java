@@ -24,12 +24,14 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_M_InOut;
 import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.core.domains.models.I_M_Product;
 import org.adempiere.core.domains.models.X_M_InOut;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
@@ -41,10 +43,13 @@ import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Empty;
+import org.spin.backend.grpc.form.express_shipment.BusinessPartner;
 import org.spin.backend.grpc.form.express_shipment.CreateShipmentLineRequest;
 import org.spin.backend.grpc.form.express_shipment.CreateShipmentRequest;
 import org.spin.backend.grpc.form.express_shipment.DeleteShipmentLineRequest;
 import org.spin.backend.grpc.form.express_shipment.DeleteShipmentRequest;
+import org.spin.backend.grpc.form.express_shipment.ListBusinessPartnersRequest;
+import org.spin.backend.grpc.form.express_shipment.ListBusinessPartnersResponse;
 import org.spin.backend.grpc.form.express_shipment.ListProductsRequest;
 import org.spin.backend.grpc.form.express_shipment.ListProductsResponse;
 import org.spin.backend.grpc.form.express_shipment.ListSalesOrdersRequest;
@@ -76,6 +81,90 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	
 	public String tableName = I_M_InOut.Table_Name;
 
+
+	@Override
+	public void listBusinessPartners(ListBusinessPartnersRequest request, StreamObserver<ListBusinessPartnersResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListBusinessPartnersResponse.Builder builderList = listBusinessPartners(request);
+			responseObserver.onNext(builderList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	ListBusinessPartnersResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
+		final String whereClause = "IsCustomer='Y' ";
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_BPartner.Table_Name,
+			whereClause,
+			null
+		).setClient_ID();
+
+		int count = query.count();
+		String nexPageToken = "";
+		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		//	Set page token
+		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListBusinessPartnersResponse.Builder builderList = ListBusinessPartnersResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(nexPageToken)
+		;
+
+		query.setLimit(limit, offset)
+			.list(MBPartner.class)
+			.forEach(businessPartner -> {
+				BusinessPartner.Builder builder = convertBusinessPartner(businessPartner);
+				builderList.addRecords(builder);
+			})
+		;
+
+		return builderList;
+	}
+
+	BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
+		BusinessPartner.Builder builder = BusinessPartner.newBuilder();
+		if (builder == null) {
+			return builder;
+		}
+
+		builder.setId(businessPartner.getC_BPartner_ID())
+			.setUuid(
+				ValueUtil.validateNull(businessPartner.getUUID())
+			)
+			.setValue(
+				ValueUtil.validateNull(businessPartner.getName())
+			)
+			.setTaxId(
+				ValueUtil.validateNull(businessPartner.getTaxID())
+			)
+			.setName(
+				ValueUtil.validateNull(businessPartner.getName())
+			)
+			.setDescription(
+				ValueUtil.validateNull(businessPartner.getDescription())
+			)
+		;
+
+		return builder;
+	}
+
+
 	@Override
 	public void listSalesOrders(ListSalesOrdersRequest request, StreamObserver<ListSalesOrdersResponse> responseObserver) {
 		try {
@@ -104,8 +193,17 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 	private ListSalesOrdersResponse.Builder listSalesOrders(ListSalesOrdersRequest request) {
 		Properties context = Env.getCtx();
 
+		int businessPartnerId = request.getBusinessPartnerId();
+		if (businessPartnerId <= 0 && !Util.isEmpty(request.getBusinessPartnerUuid(), true)) {
+			businessPartnerId = RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getBusinessPartnerUuid(), null);
+		}
+		if (businessPartnerId <= 0) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
+		}
+
 		final String whereClause = "IsSOTrx='Y' "
-			+ "AND C_Order.DocStatus IN ('CL','CO')"
+			+ "AND C_BPartner_ID = ? "
+			+ "AND DocStatus IN ('CL','CO')"
 			+ "AND EXISTS(SELECT 1 FROM C_OrderLine ol "
 			+ "WHERE ol.C_Order_ID = C_Order.C_Order_ID "
 			+ "AND COALESCE(ol.QtyOrdered, 0) - COALESCE(ol.QtyDelivered, 0) > 0)"

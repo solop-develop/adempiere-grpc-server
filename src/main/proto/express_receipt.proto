@@ -25,6 +25,7 @@ import "core_functionality.proto";
 package express_receipt;
 
 service ExpressReceipt {
+	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {}
 	rpc ListPurchaseOrders(ListPurchaseOrdersRequest) returns (ListPurchaseOrdersResponse) {}
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
 	// Receipt
@@ -39,11 +40,36 @@ service ExpressReceipt {
 }
 
 
+// Business Partner
+message BusinessPartner {
+	string uuid = 1;
+	int32 id = 2;
+	string value = 3;
+	string tax_id = 4;
+	string name = 5;
+	string description = 6;
+}
+
+message ListBusinessPartnersRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	string search_value = 3;
+}
+
+message ListBusinessPartnersResponse {
+	int64 record_count = 1;
+	repeated BusinessPartner records = 2;
+	string next_page_token = 3;
+}
+
+
 // Orders
 message ListPurchaseOrdersRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	string search_value = 3;
+	int32 business_partner_id = 4;
+	string business_partner_uuid = 5;
 }
 
 message PurchaseOrder {
