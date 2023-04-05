@@ -256,6 +256,9 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 			.setUuid(
 				ValueUtil.validateNull(purchaseOrder.getUUID())
 			)
+			.setDateOrdered(
+				ValueUtil.getLongFromTimestamp(purchaseOrder.getDateOrdered())
+			)
 			.setDocumentNo(
 				ValueUtil.validateNull(purchaseOrder.getDocumentNo())
 			)
@@ -747,7 +750,7 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 			} else {
 				receiptLine = new MInOutLine(receipt);
 				receiptLine.setOrderLine(purchaseOrderLine, 0, quantity);
-				receiptLine.setM_InOut_ID(receiptId);
+				receiptLine.setQty(quantity);
 			}
 			receiptLine.saveEx(transactionName);
 

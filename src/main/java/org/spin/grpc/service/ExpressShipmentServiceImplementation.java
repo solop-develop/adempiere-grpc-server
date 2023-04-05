@@ -213,14 +213,16 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			I_C_Order.Table_Name,
 			whereClause,
 			null
-		).setClient_ID();
+		)
+			.setParameters(businessPartnerId)
+			.setClient_ID()
+		;
 
 		int count = query.count();
 		String nexPageToken = "";
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-
 		//	Set page token
 		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
@@ -251,6 +253,9 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		builder.setId(salesOrder.getC_Order_ID())
 			.setUuid(
 				ValueUtil.validateNull(salesOrder.getUUID())
+			)
+			.setDateOrdered(
+				ValueUtil.getLongFromTimestamp(salesOrder.getDateOrdered())
 			)
 			.setDocumentNo(
 				ValueUtil.validateNull(salesOrder.getDocumentNo())
@@ -719,6 +724,9 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 					quantity = BigDecimal.ONE;
 				}
 			}
+			if (request.getIsQuantityFromOrderLine()) {
+				quantity = salesOrderLine.getQtyReserved();
+			}
 			// Validate available
 			BigDecimal orderQuantityDelivered = salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered());
 			if (orderQuantityDelivered.compareTo(quantity) < 0) {
@@ -742,7 +750,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			} else {
 				shipmentLine = new MInOutLine(shipment);
 				shipmentLine.setOrderLine(salesOrderLine, 0, quantity);
-				shipmentLine.setM_InOut_ID(shipmentId);
+				shipmentLine.setQty(quantity);
 			}
 			shipmentLine.saveEx(transactionName);
 
