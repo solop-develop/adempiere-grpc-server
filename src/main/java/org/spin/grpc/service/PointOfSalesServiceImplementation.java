@@ -4226,9 +4226,22 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(!request.getPin().equals(supervisor.getUserPIN())) {
 				throw new AdempiereException("@Invalid@ @UserPIN@");
 			}
-		} else {	//	Find a supervisor for POS
-			boolean match = new Query(Env.getCtx(), I_AD_User.Table_Name, "IsPOSManager = 'Y' AND UserPIN = ?", null)
-					.setParameters(String.valueOf(request.getPin()))
+		} else {
+			//	Find a supervisor for POS
+			final String whereClause = "UserPIN = ? AND "
+				+ "EXISTS(SELECT 1 FROM C_POSSellerAllocation seller "
+				+ "WHERE seller.C_POS_ID = ? "
+				+ "AND seller.SalesRep_ID = AD_User.AD_User_ID "
+				+ "AND seller.IsActive = 'Y' "
+				+ "AND seller.IsAllowsPOSManager = 'Y')"
+			;
+			boolean match = new Query(
+				Env.getCtx(),
+				I_AD_User.Table_Name,
+				whereClause,
+				null
+			)
+				.setParameters(String.valueOf(request.getPin()), pos.getC_POS_ID())
 					.setClient_ID()
 					.setOnlyActiveRecords(true)
 					.match();
@@ -4315,7 +4328,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				+ "		AND seller.IsActive = 'Y' AND seller.IsAllowsPOSManager = 'Y' "
 				+ 		whereClause
 				+ ") "
-				+ "OR IsPOSManager = 'Y') "
 				+ "AND UserPIN = ? "
 				,
 				null
@@ -4845,12 +4857,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 		//	Get POS List
 		boolean isAppliedNewFeaturesPOS = M_Element.get(Env.getCtx(), "IsSharedPOS") != null && M_Element.get(Env.getCtx(), "IsAllowsAllocateSeller") != null;
-		StringBuffer whereClause = new StringBuffer(
-			"SalesRep_ID = ? "
-			// + "OR EXISTS(SELECT 1 FROM AD_User u WHERE u.AD_User_ID = ? AND IsPOSManager = 'Y')"
-		);
+		StringBuffer whereClause = new StringBuffer("SalesRep_ID = ? ");
 		List<Object> parameters = new ArrayList<>();
-		// parameters.add(salesRepresentativeId);
 		parameters.add(salesRepresentativeId);
 		//	applies for Shared pos
 		if(isAppliedNewFeaturesPOS) {
@@ -5229,9 +5237,18 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, salesRepresentativeUuid, transactionName);
 		if(salesRepresentativeId <= 0) {
 			MUser currentUser = MUser.get(salesOrder.getCtx());
-			if(pos.get_ValueAsBoolean("IsSharedPOS")
-					|| currentUser.get_ValueAsBoolean("IsPOSManager")) {
+			PO sellerSupervisor = new Query(
+				Env.getCtx(),
+				"C_POSSellerAllocation",
+				"C_POS_ID = ? AND SalesRep_ID = ? AND IsAllowsPOSManager='Y'",
+				transactionName
+			).setParameters(pos.getC_POS_ID(), currentUser.getAD_User_ID())
+			.first();
+
+			if (pos.get_ValueAsBoolean("IsSharedPOS")) {
 				salesRepresentativeId = currentUser.getAD_User_ID();
+			} else if (sellerSupervisor != null) {
+				salesRepresentativeId = sellerSupervisor.get_ValueAsInt("SalesRep_ID");
 			} else if (businessPartner.getSalesRep_ID() != 0) {
 				salesRepresentativeId = salesOrder.getC_BPartner().getSalesRep_ID();
 			} else {
