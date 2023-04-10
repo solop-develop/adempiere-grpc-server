@@ -22,12 +22,13 @@ EXPOSE ${SERVER_PORT}
 
 
 # Add operative system dependencies
-RUN apt-get update && apt-get install -y \
+RUN rm -rf /var/lib/apt/lists/* && \
+	rm -rf /tmp/* && \
+	apt-get update && apt-get install -y \
 		tzdata \
 		bash \
 		fontconfig \
 		ttf-dejavu && \
-	rm -rf /var/lib/apt/lists/* \
 	echo "Set Timezone..." && \
 	echo $TZ > /etc/timezone
 

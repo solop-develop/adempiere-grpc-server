@@ -22,8 +22,7 @@ EXPOSE ${SERVER_PORT}
 
 
 # Add operative system dependencies
-RUN rm -rf /var/cache/apk/* && \
-	rm -rf /tmp/* && \
+RUN rm -rf /tmp/* && \
 	apk update && apk add --no-cache \
 		tzdata \
 		bash \
