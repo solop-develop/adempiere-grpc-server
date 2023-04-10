@@ -181,7 +181,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: docker/Dockerfile.alpine
+          file: docker/alpine.Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:alpine
@@ -221,7 +221,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: docker/Dockerfile
+          file: docker/focal.Dockerfile
           platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true
           tags: |
