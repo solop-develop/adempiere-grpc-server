@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -148,7 +148,7 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				ValueUtil.validateNull(businessPartner.getUUID())
 			)
 			.setValue(
-				ValueUtil.validateNull(businessPartner.getName())
+				ValueUtil.validateNull(businessPartner.getValue())
 			)
 			.setTaxId(
 				ValueUtil.validateNull(businessPartner.getTaxID())
@@ -297,9 +297,9 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 		}
 
 		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer("IsSold = 'Y' ")
-			.append("AND EXISTS(SELECT 1 FROM C_OrderLine AS OL ")
-			.append("WHERE OL.C_Order_ID = ? AND OL.M_Product_ID = M_Product.M_Product_ID) ")
+		String whereClause = "IsSold = 'Y' AND IsSummary = 'N' "
+			+ "AND EXISTS(SELECT 1 FROM C_OrderLine AS OL "
+			+ "WHERE OL.C_Order_ID = ? AND OL.M_Product_ID = M_Product.M_Product_ID) "
 		;
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
@@ -307,13 +307,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 
 		//	For search value
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			whereClause.append(" AND ("
+			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(UPC) = UPPER(?) "
 				+ "OR UPPER(SKU) = UPPER(?) "
 				+ ")"
-			);
+			;
 			//	Add parameters
 			parameters.add(request.getSearchValue());
 			parameters.add(request.getSearchValue());
@@ -690,6 +690,12 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				}
 			}
 			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, transactionName);
+			if (shipment == null || shipment.getM_InOut_ID() <= 0) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
+			if (shipment.isProcessed()) {
+				throw new AdempiereException("@M_InOut_ID@ @Processed@");
+			}
 
 			int productId = request.getProductId();
 			if (productId <= 0) {
@@ -841,6 +847,8 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 
+		AtomicReference<MInOutLine> maybeShipmentLine = new AtomicReference<MInOutLine>();
+
 		Trx.run(transactionName -> {
 			int shipmentLineId = request.getId();
 			if (shipmentLineId <= 0) {
@@ -882,8 +890,13 @@ public class ExpressShipmentServiceImplementation extends ExpressShipmentImplBas
 				ValueUtil.validateNull(request.getDescription())
 			);
 			shipmentLine.saveEx(transactionName);
+
+			maybeShipmentLine.set(shipmentLine);
 		});
-		ShipmentLine.Builder builder = ShipmentLine.newBuilder();
+
+		ShipmentLine.Builder builder = convertShipmentLine(
+			maybeShipmentLine.get()
+		);
 
 		return builder;
 	}
