@@ -27,6 +27,7 @@ import org.spin.grpc.service.CoreFunctionalityImplementation;
 import org.spin.grpc.service.DashboardingServiceImplementation;
 import org.spin.grpc.service.DictionaryServiceImplementation;
 import org.spin.grpc.service.EnrollmentServiceImplementation;
+import org.spin.grpc.service.ExpressMovementServiceImplementation;
 import org.spin.grpc.service.ExpressReceiptServiceImplementation;
 import org.spin.grpc.service.ExpressShipmentServiceImplementation;
 import org.spin.grpc.service.FileManagementServiceImplementation;
@@ -115,6 +116,11 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.ENROLLMENT.getServiceName())) {
 			serverBuilder.addService(new EnrollmentServiceImplementation());
 			logger.info("Service " + Services.ENROLLMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		// Express Movement
+		if (SetupLoader.getInstance().getServer().isValidService(Services.EXPRESS_MOVEMENT.getServiceName())) {
+			serverBuilder.addService(new ExpressMovementServiceImplementation());
+			logger.info("Service " + Services.EXPRESS_MOVEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		// Express Receipt
 		if (SetupLoader.getInstance().getServer().isValidService(Services.EXPRESS_RECEIPT.getServiceName())) {
