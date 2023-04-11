@@ -5269,7 +5269,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		MPriceList priceList = MPriceList.get(Env.getCtx(), salesOrder.getM_PriceList_ID(), transactionName);
 		//
 		MPriceListVersion priceListVersion = priceList.getPriceListVersion (RecordUtil.getDate());
-		List<MProductPrice> productPrices = Arrays.asList(priceListVersion.getProductPrice("AND EXISTS("
+		List<MProductPrice> productPrices = Arrays.asList(priceListVersion.getProductPrice(" AND EXISTS("
 				+ "SELECT 1 "
 				+ "FROM C_OrderLine ol "
 				+ "WHERE ol.C_Order_ID = " + salesOrder.getC_Order_ID() + " "
