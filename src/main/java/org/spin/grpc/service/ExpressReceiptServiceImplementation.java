@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -149,7 +149,7 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 				ValueUtil.validateNull(businessPartner.getUUID())
 			)
 			.setValue(
-				ValueUtil.validateNull(businessPartner.getName())
+				ValueUtil.validateNull(businessPartner.getValue())
 			)
 			.setTaxId(
 				ValueUtil.validateNull(businessPartner.getTaxID())
@@ -299,9 +299,9 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 		}
 
 		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer("IsSold = 'Y' ")
-			.append("AND EXISTS(SELECT 1 FROM C_OrderLine AS OL ")
-			.append("WHERE OL.C_Order_ID = ? AND OL.M_Product_ID = M_Product.M_Product_ID) ")
+		String whereClause = "IsPurchased = 'Y' AND IsSummary = 'N' "
+			+ "AND EXISTS(SELECT 1 FROM C_OrderLine AS OL "
+			+ "WHERE OL.C_Order_ID = ? AND OL.M_Product_ID = M_Product.M_Product_ID) "
 		;
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
@@ -309,13 +309,13 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 
 		//	For search value
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			whereClause.append(" AND ("
+			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(UPC) = UPPER(?) "
 				+ "OR UPPER(SKU) = UPPER(?) "
 				+ ")"
-			);
+			;
 			//	Add parameters
 			parameters.add(request.getSearchValue());
 			parameters.add(request.getSearchValue());
@@ -695,6 +695,12 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 				}
 			}
 			MInOut receipt = new MInOut(Env.getCtx(), receiptId, transactionName);
+			if (receipt == null || receipt.getM_InOut_ID() <= 0) {
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			}
+			if (receipt.isProcessed()) {
+				throw new AdempiereException("@M_InOut_ID@ @Processed@");
+			}
 
 			int productId = request.getProductId();
 			if (productId <= 0) {
@@ -841,6 +847,8 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 
+		AtomicReference<MInOutLine> maybeReceiptLine = new AtomicReference<MInOutLine>();
+
 		Trx.run(transactionName -> {
 			int receiptLineId = request.getId();
 			if (receiptLineId <= 0) {
@@ -886,8 +894,13 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 				ValueUtil.validateNull(request.getDescription())
 			);
 			receiptLine.saveEx(transactionName);
+
+			maybeReceiptLine.set(receiptLine);
 		});
-		ReceiptLine.Builder builder = ReceiptLine.newBuilder();
+
+		ReceiptLine.Builder builder = convertReceiptLine(
+			maybeReceiptLine.get()
+		);
 
 		return builder;
 	}
