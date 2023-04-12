@@ -38,6 +38,7 @@ import org.spin.grpc.service.IssueManagementServiceImplementation;
 import org.spin.grpc.service.LogsServiceImplementation;
 import org.spin.grpc.service.MaterialManagementServiceImplementation;
 import org.spin.grpc.service.OrderServiceImplementation;
+import org.spin.grpc.service.PaymentAllocationServiceImplementation;
 import org.spin.grpc.service.PaymentPrintExportServiceImplementation;
 import org.spin.grpc.service.PaymentServiceImplementation;
 import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
@@ -203,24 +204,29 @@ public class AllInOneServices {
 			logger.info("Service " + Services.ORDER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payment
-		if(SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT.getServiceName())) {
+		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT.getServiceName())) {
 			serverBuilder.addService(new PaymentServiceImplementation());
 			logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
-		//	Product
-		if(SetupLoader.getInstance().getServer().isValidService(Services.PRODUCT.getServiceName())) {
-			serverBuilder.addService(new ProductServiceImplementation());
-			logger.info("Service " + Services.PRODUCT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Payment
+		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT_ALLOCATION.getServiceName())) {
+			serverBuilder.addService(new PaymentAllocationServiceImplementation());
+			logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payment Print/Export
-		if(SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT_PTINT_EXPORT.getServiceName())) {
+		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT_PTINT_EXPORT.getServiceName())) {
 			serverBuilder.addService(new PaymentPrintExportServiceImplementation());
 			logger.info("Service " + Services.PAYMENT_PTINT_EXPORT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payroll Action Notice
-		if(SetupLoader.getInstance().getServer().isValidService(Services.PAYROLL_ACTION_NOTICE.getServiceName())) {
+		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYROLL_ACTION_NOTICE.getServiceName())) {
 			serverBuilder.addService(new PayrollActionNoticeServiceImplementation());
 			logger.info("Service " + Services.PAYROLL_ACTION_NOTICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Product
+		if (SetupLoader.getInstance().getServer().isValidService(Services.PRODUCT.getServiceName())) {
+			serverBuilder.addService(new ProductServiceImplementation());
+			logger.info("Service " + Services.PRODUCT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Time Control
 		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {

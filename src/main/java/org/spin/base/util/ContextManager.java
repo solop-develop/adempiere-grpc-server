@@ -47,6 +47,10 @@ public class ContextManager {
 	 */
 	public static Properties setContextWithAttributes(int windowNo, Properties context, Map<String, Object> attributes) {
 		Env.clearWinContext(windowNo);
+		if (attributes == null || attributes.size() <= 0) {
+			return context;
+		}
+
 		//	Fill context
 		attributes.entrySet().forEach(attribute -> {
 			if(attribute.getValue() instanceof Integer) {

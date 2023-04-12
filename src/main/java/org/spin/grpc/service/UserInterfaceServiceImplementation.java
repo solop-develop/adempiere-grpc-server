@@ -2723,9 +2723,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Return values
 		return builder;
 	}
-	
+
 	/**
-	 * Convert Object to list
+	 * Convert Object Request to list
 	 * @param request
 	 * @return
 	 */
@@ -2739,14 +2739,40 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			request.getColumnName(),
 			request.getTableName()
 		);
-		if(reference == null) {
+		if (reference == null) {
+			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
+		}
+
+		Map<String, Object> contextAttributes = ValueUtil.convertValuesToObjects(
+			request.getContextAttributesList()
+		);
+
+		return listLookupItems(
+			reference,
+			contextAttributes,
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue()
+		);
+	}
+
+	/**
+	 * Convert Object to list
+	 * @param MLookupInfo reference
+	 * @param Map<String, Object> contextAttributes
+	 * @param int pageSize
+	 * @param String pageToken
+	 * @param String searchValue
+	 * @return
+	 */
+	public static ListLookupItemsResponse.Builder listLookupItems(MLookupInfo reference, Map<String, Object> contextAttributes, int pageSize, String pageToken, String searchValue) {
+		if (reference == null) {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
 
 		//	Fill Env.getCtx()
-		
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), contextAttributes);
 
 		String sql = reference.Query;
 		sql = Env.parseContext(Env.getCtx(), windowNo, sql, false);
@@ -2763,16 +2789,18 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			);
 		
 		List<Object> parameters = new ArrayList<>();
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, reference.TableName, request.getSearchValue(), parameters);
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, reference.TableName, searchValue, parameters);
 
 		//	Get page and count
+		int count = RecordUtil.countRecords(parsedSQL, reference.TableName, parameters);
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), pageToken);
+		int limit = RecordUtil.getPageSize(pageSize);
 		int offset = (pageNumber - 1) * limit;
-		int count = 0;
-		//	Count records
-		count = RecordUtil.countRecords(parsedSQL, reference.TableName, parameters);
+		//	Set page token
+		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
 
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
@@ -2816,23 +2844,21 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				builder.addRecords(valueObject.build());
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			// log.severe(e.getLocalizedMessage());
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
 		}
 		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setRecordCount(count)
+			.setNextPageToken(
+				ValueUtil.validateNull(nexPageToken)
+			)
+		;
 		//	Return
 		return builder;
 	}
-	
+
 	/**
 	 * Verify if exist a column
 	 * @param metaData
@@ -2840,7 +2866,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @return
 	 * @throws SQLException 
 	 */
-	private int getColumnIndex(ResultSetMetaData metaData, String columnName) throws SQLException {
+	public static int getColumnIndex(ResultSetMetaData metaData, String columnName) throws SQLException {
 		for(int columnIndex = 1; columnIndex <= metaData.getColumnCount(); columnIndex++) {
 			if(metaData.getColumnName(columnIndex).toLowerCase().equals(columnName.toLowerCase())) {
 				return columnIndex;
