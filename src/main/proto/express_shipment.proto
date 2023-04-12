@@ -19,8 +19,6 @@ option java_package = "org.spin.backend.grpc.form.express_shipment";
 option java_outer_classname = "ADempiereExpressShipment";
 
 import "base_data_type.proto";
-import "business.proto";
-import "core_functionality.proto";
 
 package express_shipment;
 
