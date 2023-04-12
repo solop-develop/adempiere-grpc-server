@@ -22,8 +22,8 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.payment_allocation.BusinessPartner;
-import org.spin.backend.grpc.form.payment_allocation.CalculateDifferenceRequest;
-import org.spin.backend.grpc.form.payment_allocation.CalculateDifferenceResponse;
+import org.spin.backend.grpc.form.payment_allocation.GetDifferenceRequest;
+import org.spin.backend.grpc.form.payment_allocation.GetDifferenceResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListChargesRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListCurrenciesRequest;
@@ -394,13 +394,13 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 
 
 	@Override
-	public void calculateDifference(CalculateDifferenceRequest request, StreamObserver<CalculateDifferenceResponse> responseObserver) {
+	public void getDifference(GetDifferenceRequest request, StreamObserver<GetDifferenceResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			CalculateDifferenceResponse.Builder builder = CalculateDifferenceResponse.newBuilder();
+			GetDifferenceResponse.Builder builder = GetDifferenceResponse.newBuilder();
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

@@ -39,7 +39,7 @@ service PaymentAllocation {
 	// process
 	rpc ListCharges(ListChargesRequest) returns (data.ListLookupItemsResponse) {}
 	rpc ListTransactionOrganizations(ListTransactionOrganizationsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc CalculateDifference(CalculateDifferenceRequest) returns (CalculateDifferenceResponse) {}
+	rpc GetDifference(GetDifferenceRequest) returns (GetDifferenceResponse) {}
 	rpc Process(ProcessRequest) returns (ProcessResponse) {}
 }
 
@@ -194,6 +194,16 @@ message ListInvoicesRequest {
 	string page_token = 2;
 	// filters
 	string search_value = 3;
+	int32 business_partner_id = 4;
+	string business_partner_uuid = 5;
+	int64 date = 6;
+	int32 organization_id = 7;
+	string organization_uuid = 8;
+	int32 currency_id = 9;
+	string currency_uuid = 10;
+	bool is_multi_currency = 11;
+	string transaction_type = 12; // AP-AR
+	bool is_automatic_write_off = 13;
 }
 
 message ListInvoicesResponse {
@@ -246,26 +256,30 @@ message ListTransactionOrganizationsResponse {
 }
 
 // Difference
-message CalculateDifferenceRequest {
+message GetDifferenceRequest {
 	repeated data.KeyValueSelection payments_selections = 1;
 	repeated data.KeyValueSelection invoices_selections = 2;
 }
 
-message CalculateDifferenceResponse {
+message GetDifferenceResponse {
 	data.Decimal difference = 1;
 }
 
 
 // Process
 message ProcessRequest {
-	int32 bank_account_id = 1;
-	string bank_account_uuid = 2;
-	int32 business_partner_id = 3;
-	string business_partner_uuid = 4;
-	data.Decimal payment_amount_from = 5;
-	data.Decimal payment_amount_to = 6;
-	int64 transaction_date_from = 7;
-	int64 transaction_date_to = 8;
+	int32 business_partner_id = 1;
+	string business_partner_uuid = 2;
+	int32 currency_id = 3;
+	string currency_uuid = 4;
+	int32 charge_id = 5;
+	string charge_uuid = 6;
+	int32 transaction_organization_id = 7;
+	string transaction_organization_uuid = 8;
+	int64 date_trx = 9;
+	string description = 10;
+	repeated data.KeyValueSelection payments_selections = 11;
+	repeated data.KeyValueSelection invoices_selections = 12;
 }
 
 message ProcessResponse {
