@@ -145,7 +145,7 @@ message TenderType {
 message Payment {
 	int32 id = 1;
 	string uuid = 2;
-	int64 date_trx = 3;
+	int64 transaction_date = 3;
 	string document_no = 4;
 	string transaction_type = 5; // AP-AR
 	Organization organization = 6;
@@ -236,13 +236,6 @@ message ListChargesResponse {
 
 
 // Transaction Organization
-message TransactionOrganization {
-	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-}
-
 message ListTransactionOrganizationsRequest {
 	int32 page_size = 1;
 	string page_token = 2;
@@ -251,14 +244,15 @@ message ListTransactionOrganizationsRequest {
 
 message ListTransactionOrganizationsResponse {
 	int64 record_count = 1;
-	repeated TransactionOrganization records = 2;
+	repeated Organization records = 2;
 	string next_page_token = 3;
 }
 
+
 // Difference
 message GetDifferenceRequest {
-	repeated data.KeyValueSelection payments_selections = 1;
-	repeated data.KeyValueSelection invoices_selections = 2;
+	repeated data.KeyValueSelection payments = 1;
+	repeated data.KeyValueSelection invoices = 2;
 }
 
 message GetDifferenceResponse {
@@ -276,10 +270,10 @@ message ProcessRequest {
 	string charge_uuid = 6;
 	int32 transaction_organization_id = 7;
 	string transaction_organization_uuid = 8;
-	int64 date_trx = 9;
+	int64 date = 9;
 	string description = 10;
-	repeated data.KeyValueSelection payments_selections = 11;
-	repeated data.KeyValueSelection invoices_selections = 12;
+	repeated data.KeyValueSelection payments = 11;
+	repeated data.KeyValueSelection invoices = 12;
 }
 
 message ProcessResponse {

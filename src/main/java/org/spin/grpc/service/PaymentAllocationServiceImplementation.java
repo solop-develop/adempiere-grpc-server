@@ -17,11 +17,19 @@ package org.spin.grpc.service;
 import org.adempiere.exceptions.AdempiereException;
 
 import org.adempiere.core.domains.models.I_AD_Column;
+import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MCharge;
+import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MOrg;
+import org.compiere.model.MRefList;
 import org.compiere.util.CLogger;
+import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.payment_allocation.BusinessPartner;
+import org.spin.backend.grpc.form.payment_allocation.Charge;
+import org.spin.backend.grpc.form.payment_allocation.Currency;
 import org.spin.backend.grpc.form.payment_allocation.GetDifferenceRequest;
 import org.spin.backend.grpc.form.payment_allocation.GetDifferenceResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListBusinessPartnersRequest;
@@ -34,8 +42,10 @@ import org.spin.backend.grpc.form.payment_allocation.ListPaymentsRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListPaymentsResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListTransactionOrganizationsRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListTransactionTypesRequest;
+import org.spin.backend.grpc.form.payment_allocation.Organization;
 import org.spin.backend.grpc.form.payment_allocation.ProcessRequest;
 import org.spin.backend.grpc.form.payment_allocation.ProcessResponse;
+import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.PaymentAllocationImplBase;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
@@ -96,7 +106,7 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		return builderList;
 	}
 
-	BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
+	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
 		BusinessPartner.Builder builder = BusinessPartner.newBuilder();
 		if (builder == null) {
 			return builder;
@@ -107,17 +117,17 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 				ValueUtil.validateNull(businessPartner.getUUID())
 			)
 			.setValue(
-				ValueUtil.validateNull(businessPartner.getName())
+				ValueUtil.validateNull(businessPartner.getValue())
 			)
-			// .setTaxId(
-			// 	ValueUtil.validateNull(businessPartner.getTaxID())
-			// )
+			.setTaxId(
+				ValueUtil.validateNull(businessPartner.getTaxID())
+			)
 			.setName(
 				ValueUtil.validateNull(businessPartner.getName())
 			)
-			// .setDescription(
-			// 	ValueUtil.validateNull(businessPartner.getDescription())
-			// )
+			.setDescription(
+				ValueUtil.validateNull(businessPartner.getDescription())
+			)
 		;
 
 		return builder;
@@ -171,6 +181,27 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		return builderList;
 	}
 
+	public static Organization.Builder convertOrganization(MOrg organization) {
+		Organization.Builder builder = Organization.newBuilder();
+		if (builder == null) {
+			return builder;
+		}
+
+		builder.setId(organization.getAD_Org_ID())
+			.setUuid(
+				ValueUtil.validateNull(organization.getUUID())
+			)
+			.setValue(
+				ValueUtil.validateNull(organization.getName())
+			)
+			.setName(
+				ValueUtil.validateNull(organization.getName())
+			)
+		;
+
+		return builder;
+	}
+
 
 
 	@Override
@@ -213,6 +244,27 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		);
 
 		return builderList;
+	}
+
+	public static Currency.Builder convertCurrency(MCurrency currency) {
+		Currency.Builder builder = Currency.newBuilder();
+		if (builder == null) {
+			return builder;
+		}
+
+		builder.setId(currency.getC_Currency_ID())
+			.setUuid(
+				ValueUtil.validateNull(currency.getUUID())
+			)
+			.setIsoCode(
+				ValueUtil.validateNull(currency.getISO_Code())
+			)
+			.setDescription(
+				ValueUtil.validateNull(currency.getDescription())
+			)
+		;
+
+		return builder;
 	}
 
 
@@ -259,6 +311,35 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		return builderList;
 	}
 
+
+	public static TransactionType.Builder convertTransactionType(MRefList transactionType) {
+		TransactionType.Builder builder = TransactionType.newBuilder();
+		if (transactionType == null || transactionType.getAD_Ref_List_ID() <= 0) {
+			return builder;
+		}
+
+		String name = transactionType.getName();
+		String description = transactionType.getDescription();
+
+		// set translated values
+		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+			name = transactionType.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
+			description = transactionType.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
+		}
+
+		builder.setId(transactionType.getAD_Ref_List_ID())
+			.setUuid(ValueUtil.validateNull(transactionType.getUUID()))
+			.setValue(ValueUtil.validateNull(transactionType.getValue()))
+			.setName(
+				ValueUtil.validateNull(name)
+			)
+			.setDescription(
+				ValueUtil.validateNull(description)
+			)
+		;
+
+		return builder;
+	}
 
 
 	@Override
@@ -345,6 +426,30 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		);
 
 		return builderList;
+	}
+	
+	public static Charge.Builder convertCharge(MCharge charge) {
+		Charge.Builder builder = Charge.newBuilder();
+		if (builder == null) {
+			return builder;
+		}
+
+		builder.setId(charge.getC_Charge_ID())
+			.setUuid(
+				ValueUtil.validateNull(charge.getUUID())
+			)
+			.setName(
+				ValueUtil.validateNull(charge.getName())
+			)
+			.setDescription(
+				ValueUtil.validateNull(charge.getDescription())
+			)
+			.setAmount(
+				ValueUtil.getDecimalFromBigDecimal(charge.getChargeAmt())
+			)
+		;
+
+		return builder;
 	}
 
 
