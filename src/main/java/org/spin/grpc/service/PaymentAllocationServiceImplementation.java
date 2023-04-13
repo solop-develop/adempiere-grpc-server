@@ -28,10 +28,10 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.payment_allocation.BusinessPartner;
+import org.spin.backend.grpc.form.payment_allocation.CalculateDifferenceRequest;
+import org.spin.backend.grpc.form.payment_allocation.CalculateDifferenceResponse;
 import org.spin.backend.grpc.form.payment_allocation.Charge;
 import org.spin.backend.grpc.form.payment_allocation.Currency;
-import org.spin.backend.grpc.form.payment_allocation.GetDifferenceRequest;
-import org.spin.backend.grpc.form.payment_allocation.GetDifferenceResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListChargesRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListCurrenciesRequest;
@@ -500,13 +500,13 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 
 
 	@Override
-	public void getDifference(GetDifferenceRequest request, StreamObserver<GetDifferenceResponse> responseObserver) {
+	public void calculateDifference(CalculateDifferenceRequest request, StreamObserver<CalculateDifferenceResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			GetDifferenceResponse.Builder builder = GetDifferenceResponse.newBuilder();
+			CalculateDifferenceResponse.Builder builder = CalculateDifferenceResponse.newBuilder();
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
