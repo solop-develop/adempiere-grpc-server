@@ -45,7 +45,6 @@ import org.spin.backend.grpc.form.payment_allocation.ListTransactionTypesRequest
 import org.spin.backend.grpc.form.payment_allocation.Organization;
 import org.spin.backend.grpc.form.payment_allocation.ProcessRequest;
 import org.spin.backend.grpc.form.payment_allocation.ProcessResponse;
-import org.spin.backend.grpc.form.payment_allocation.TenderType;
 import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.PaymentAllocationImplBase;
 import org.spin.base.util.RecordUtil;
@@ -343,35 +342,6 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 	}
 
 
-
-	public static TenderType.Builder convertTenderType(MRefList tenderType) {
-		TenderType.Builder builder = TenderType.newBuilder();
-		if (tenderType == null || tenderType.getAD_Ref_List_ID() <= 0) {
-			return builder;
-		}
-
-		String name = tenderType.getName();
-		String description = tenderType.getDescription();
-
-		// set translated values
-		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
-			name = tenderType.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
-			description = tenderType.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
-		}
-
-		builder.setId(tenderType.getAD_Ref_List_ID())
-			.setUuid(ValueUtil.validateNull(tenderType.getUUID()))
-			.setValue(ValueUtil.validateNull(tenderType.getValue()))
-			.setName(
-				ValueUtil.validateNull(name)
-			)
-			.setDescription(
-				ValueUtil.validateNull(description)
-			)
-		;
-
-		return builder;
-	}
 
 	@Override
 	public void listPayments(ListPaymentsRequest request, StreamObserver<ListPaymentsResponse> responseObserver) {

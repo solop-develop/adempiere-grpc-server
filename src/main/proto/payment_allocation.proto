@@ -131,29 +131,21 @@ message ListTransactionTypesResponse {
 }
 
 
-// Tender Type
-message TenderType {
-	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
-}
-
-
 // Payments Movements
 message Payment {
 	int32 id = 1;
 	string uuid = 2;
 	int64 transaction_date = 3;
-	string document_no = 4;
-	string transaction_type = 5; // AP-AR
-	Organization organization = 6;
-	BusinessPartner business_partner = 7;
-	TenderType tender_type = 8;
-	Currency currency = 9;
-	data.Decimal amount = 10;
-	string description = 11;
+	bool is_receipt = 4;
+	string document_no = 5;
+	TransactionType transaction_type = 6; // AP-AR
+	Organization organization = 7;
+	BusinessPartner business_partner = 8;
+	string description = 9;
+	Currency currency = 10;
+	data.Decimal payment_amount = 11;
+	data.Decimal converted_amount = 12;
+	data.Decimal open_amount = 13;
 }
 
 message ListPaymentsRequest {
@@ -184,9 +176,18 @@ message ListPaymentsResponse {
 message Invoice {
 	int32 id = 1;
 	string uuid = 2;
-	string document_no = 3;
-	int64 date = 4;
-	string description = 5;
+	int64 date_invoiced = 3;
+	bool is_sales_transaction = 4;
+	string document_no = 5;
+	TransactionType transaction_type = 6; // AP-AR
+	Organization organization = 7;
+	BusinessPartner business_partner = 8;
+	string description = 9;
+	Currency currency = 10;
+	data.Decimal original_amount = 11;
+	data.Decimal converted_amount = 12;
+	data.Decimal open_amount = 13;
+	data.Decimal discount_amount = 14;
 }
 
 message ListInvoicesRequest {
