@@ -9,7 +9,7 @@
             "name": "ADempiere Backend",
             "request": "launch",
             "mainClass": "org.spin.server.AllInOneServices",
-            "projectName": "backend",
+            "projectName": "adempiere-grpc-server",
             "env": {
               "ADEMPIERE_APPS_TYPE": "wildfly"
             },

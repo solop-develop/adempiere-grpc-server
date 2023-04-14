@@ -102,7 +102,7 @@ Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igu
  * `SECRET_KEY`: Clave secreta, para el hash de encriptado del Json Web Token, el valor por defecto es `98D8032045502303C1F97FE5A5D40750A6D16D97C20A7BD9C757D2E957F2CA6E` esta debe ser cambiada obligatoriamente por seguridad.
  * `ADEMPIERE_APPS_TYPE`: Tipo de aplicación para la conexión de gestión de bases de datos. Por defecto: `wildfly`.
  * `SERVER_PORT`: Puerto para acceder a Adempiere-Backend desde fuera del contenedor. Por defecto: `50059`.
- * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `business; business_partner; core; dashboarding; dictionary; enrollment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_print_export; payroll_action_notice; pos; product; security: store; time_control; ui; user_customization; workflow;`.
+ * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; security; store; time_control; ui; user_customization; workflow;`.
  * `SERVER_LOG_LEVEL`: Nivel de Bitácora. Por defecto: `WARNING`.
  * `TZ`: (Time Zone) Indica la zona horaria a establecer en el contenedor basado en nginx, el valor por defecto es `America/Caracas` (UTC -4:00).
 
@@ -123,7 +123,7 @@ docker build -t solopcloud/adempiere-backend:dev -f ./build-docker/development.D
 
 ### Descargar imagen docker:
 ```shell
-docker pull solopcloud/adempiere-backend:experimental
+docker pull solopcloud/adempiere-backend:alpine
 ```
 
 ### Ejecutar contenedor contenedor:
@@ -133,10 +133,10 @@ docker run -it -d \
 	-p 50059:50059 \
 	-e DB_HOST="your-db-host" \
 	-e DB_PORT="5432" \
-	-e DB_NAME=\"1204\" \
+	-e DB_NAME=\"adempiere\" \
 	-e DB_PASSWORD="adempiere" \
 	-e TZ="America/Caracas" \
-	solopcloud/adempiere-backend:experimental
+	solopcloud/adempiere-backend:alpine
 ```
 
 ### Ejecutar con Docker-Compose

@@ -8,6 +8,9 @@ server:
        - dashboarding
        - dictionary
        - enrollment
+       - express_movement
+       - express_receipt
+       - express_shipment
        - file_management
        - general_ledger
        - log
@@ -17,6 +20,7 @@ server:
        - material_management
        - order
        - payment
+       - payment_allocation
        - payment_print_export
        - payroll_action_notice
        - pos
