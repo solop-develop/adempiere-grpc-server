@@ -102,7 +102,7 @@ Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igu
  * `SECRET_KEY`: Clave secreta, para el hash de encriptado del Json Web Token, el valor por defecto es `98D8032045502303C1F97FE5A5D40750A6D16D97C20A7BD9C757D2E957F2CA6E` esta debe ser cambiada obligatoriamente por seguridad.
  * `ADEMPIERE_APPS_TYPE`: Tipo de aplicación para la conexión de gestión de bases de datos. Por defecto: `wildfly`.
  * `SERVER_PORT`: Puerto para acceder a Adempiere-Backend desde fuera del contenedor. Por defecto: `50059`.
- * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; security; store; time_control; ui; user_customization; workflow;`.
+ * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `bank_statement_match; business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; in_out; invoice; issue_management; log; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; security; store; time_control; ui; user_customization; workflow;`.
  * `SERVER_LOG_LEVEL`: Nivel de Bitácora. Por defecto: `WARNING`.
  * `TZ`: (Time Zone) Indica la zona horaria a establecer en el contenedor basado en nginx, el valor por defecto es `America/Caracas` (UTC -4:00).
 
