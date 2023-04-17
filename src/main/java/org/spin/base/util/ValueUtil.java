@@ -197,7 +197,14 @@ public class ValueUtil {
 			.setDecimalValue(value.toPlainString())
 			.setScale(value.scale());
 	}
-	
+
+	public static Decimal.Builder getDecimalFromInt(int value) {
+		return getDecimalFromBigDecimal(
+			new BigDecimal(value)
+		);
+	}
+
+
 	/**
 	 * Get Decimal from Value
 	 * @param value

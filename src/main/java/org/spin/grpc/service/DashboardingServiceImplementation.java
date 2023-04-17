@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.apps.graph.GraphColumn;
 import org.adempiere.exceptions.AdempiereException;
@@ -44,6 +45,7 @@ import org.compiere.model.MGoal;
 import org.compiere.model.MMeasure;
 import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
+// import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.Query;
@@ -53,6 +55,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.jfree.data.category.CategoryDataset;
+import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.dashboarding.Action;
@@ -65,6 +68,7 @@ import org.spin.backend.grpc.dashboarding.Dashboard;
 import org.spin.backend.grpc.dashboarding.DashboardingGrpc.DashboardingImplBase;
 import org.spin.backend.grpc.dashboarding.Favorite;
 import org.spin.backend.grpc.dashboarding.GetChartRequest;
+import org.spin.backend.grpc.dashboarding.GetWindowMetricsRequest;
 import org.spin.backend.grpc.dashboarding.ListDashboardsRequest;
 import org.spin.backend.grpc.dashboarding.ListDashboardsResponse;
 import org.spin.backend.grpc.dashboarding.ListFavoritesRequest;
@@ -73,8 +77,13 @@ import org.spin.backend.grpc.dashboarding.ListNotificationsRequest;
 import org.spin.backend.grpc.dashboarding.ListNotificationsResponse;
 import org.spin.backend.grpc.dashboarding.ListPendingDocumentsRequest;
 import org.spin.backend.grpc.dashboarding.ListPendingDocumentsResponse;
+import org.spin.backend.grpc.dashboarding.ListWindowChartsRequest;
+import org.spin.backend.grpc.dashboarding.ListWindowChartsResponse;
 import org.spin.backend.grpc.dashboarding.Notification;
 import org.spin.backend.grpc.dashboarding.PendingDocument;
+import org.spin.backend.grpc.dashboarding.WindowChart;
+import org.spin.backend.grpc.dashboarding.WindowMetrics;
+import org.spin.dashboarding.DashboardingConvertUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -785,6 +794,190 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		builder.setActionUuid(
 			ValueUtil.validateNull(actionUuid)
 		);
+
+		return builder;
+	}
+
+
+	@Override
+	public void listWindowCharts(ListWindowChartsRequest request, StreamObserver<ListWindowChartsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			
+			ListWindowChartsResponse.Builder chartsList = listWindowCharts(request);
+			responseObserver.onNext(chartsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	ListWindowChartsResponse.Builder listWindowCharts(ListWindowChartsRequest request) {
+		// MWindow window = MWindow.get(Env.getCtx(), request.getWindowId());
+		// MTab tab = MTab.get(Env.getCtx(), request.getTabId());
+
+		ListWindowChartsResponse.Builder builderList = ListWindowChartsResponse.newBuilder();
+
+		// Get role
+		int roleId = Env.getAD_Role_ID(Env.getCtx());
+
+		final String whereClause = "(AD_User_ID IS NULL AND AD_Role_ID IS NULL) "
+			+ "OR AD_Role_ID = ? "	//	#1
+			+ "OR EXISTS(SELECT 1 FROM AD_User_Roles ur "
+			+ "WHERE ur.AD_User_ID=PA_Goal.AD_User_ID "
+			+ "AND ur.AD_Role_ID = ? "	//	#2
+			+ "AND ur.IsActive='Y')"
+		;
+		//	Get from Charts
+		new Query(
+			Env.getCtx(),
+			I_PA_Goal.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(roleId, roleId)
+			.setOnlyActiveRecords(true)
+			.setClient_ID()
+			.setOrderBy(I_PA_Goal.COLUMNNAME_SeqNo)
+			.<MGoal>list()
+			.forEach(chartDefinition -> {
+				WindowChart.Builder chartBuilder = DashboardingConvertUtil.convertWindowChart(chartDefinition);
+				//	Add to builder
+				builderList.addRecords(chartBuilder);
+			});
+
+		return builderList;
+	}
+	
+	@Override
+	public void getWindowMetrics(GetWindowMetricsRequest request, StreamObserver<WindowMetrics> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			
+			WindowMetrics.Builder chart = getWindowMetrics(request);
+			responseObserver.onNext(chart.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	WindowMetrics.Builder getWindowMetrics(GetWindowMetricsRequest request) {
+		WindowMetrics.Builder builder = WindowMetrics.newBuilder();
+		MGoal goal = (MGoal) RecordUtil.getEntity(Env.getCtx(), I_PA_Goal.Table_Name, request.getUuid(), request.getId(), null);
+		if (goal == null) {
+			throw new AdempiereException("@PA_Goal_ID@ @NotFound@");
+		}
+
+		if (Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		int recordId = request.getRecordId();
+		if (recordId <= 0) {
+			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+		}
+		if (recordId <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+
+		// fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+
+		//	Load
+		Map<String, List<ChartData>> chartSeries = new HashMap<String, List<ChartData>>();
+		if (goal.get_ValueAsInt("AD_Chart_ID") > 0) {
+			MChart chart = new MChart(Env.getCtx(), goal.get_ValueAsInt("AD_Chart_ID"), null);
+			CategoryDataset dataSet = chart.getCategoryDataset();
+
+			dataSet.getColumnKeys().forEach(column -> {
+				dataSet.getRowKeys().forEach(row -> {
+					//	Get from map
+					List<ChartData> serie = chartSeries.get(row);
+					if (serie == null) {
+						serie = new ArrayList<ChartData>();
+					}
+					//	Add
+					Number value = dataSet.getValue((Comparable<?>)row, (Comparable<?>)column);
+					BigDecimal numberValue = (value != null? new BigDecimal(value.doubleValue()): Env.ZERO);
+					ChartData.Builder chartDataBuilder = ChartData.newBuilder()
+						.setName(column.toString())
+						.setValue(
+							ValueUtil.getDecimalFromBigDecimal(numberValue)
+						)
+					;
+					serie.add(
+						chartDataBuilder.build()
+					);
+					chartSeries.put(row.toString(), serie);
+				});
+			});
+		} else {
+			//	Set values
+			builder.setName(ValueUtil.validateNull(goal.getName()));
+			builder.setDescription(ValueUtil.validateNull(goal.getDescription()));
+			builder.setId(goal.getPA_Goal_ID());
+			builder.setUuid(ValueUtil.validateNull(goal.getUUID()));
+			builder.setXAxisLabel(ValueUtil.validateNull(goal.getXAxisText()));
+			builder.setYAxisLabel(ValueUtil.validateNull(goal.getName()));
+
+			MMeasure measure = goal.getMeasure();
+			List<GraphColumn> chartData = measure.getGraphColumnList(goal);
+			chartData.forEach(data -> {
+				String key = "";
+				if (data.getDate() != null) {
+					Calendar cal = Calendar.getInstance();
+					cal.setTime(data.getDate());
+					key = Integer.toString(cal.get(Calendar.YEAR));
+				}
+				//	Get from map
+				List<ChartData> serie = chartSeries.get(key);
+				if (serie == null) {
+					serie = new ArrayList<ChartData>();
+				}
+				//	Add
+				serie.add(
+					DashboardingConvertUtil.convertChartData(data).build()
+				);
+				chartSeries.put(key, serie);
+			});
+		}
+
+		builder.setMeasureTarget(
+			ValueUtil.getDecimalFromBigDecimal(goal.getMeasureTarget())
+		);
+
+		//	Add measure color
+		MColorSchema colorSchema = goal.getColorSchema();
+		builder.addAllColorSchemas(
+			DashboardingConvertUtil.convertColorSchemasList(colorSchema)
+		);
+
+		//	Add all
+		chartSeries.keySet().stream().sorted().forEach(serieKey -> {
+			ChartSerie.Builder chartSerieBuilder = ChartSerie.newBuilder()
+				.setName(serieKey)
+				.addAllDataSet(
+					chartSeries.get(serieKey)
+				)
+			;
+			builder.addSeries(chartSerieBuilder);
+		});
 
 		return builder;
 	}
