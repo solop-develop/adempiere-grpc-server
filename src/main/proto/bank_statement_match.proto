@@ -20,7 +20,6 @@ option java_outer_classname = "ADempiereBankStatementMatch";
 
 import "base_data_type.proto";
 import "business.proto";
-import "core_functionality.proto";
 
 package bank_statement_match;
 
