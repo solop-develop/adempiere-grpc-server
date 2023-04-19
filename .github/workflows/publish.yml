@@ -76,10 +76,10 @@ jobs:
           if [[ "${{ secrets.DEPLOY_TOKEN }}" != "" && \
                 "${{ secrets.DEPLOY_REPOSITORY }}" != "" ]]; \
           then
-            echo "Secrets to use a container registry are configured in the repo"
+            echo "Secrets to use a maven registry are configured in the repo"
             echo "is_have_secrets=true" >> $GITHUB_OUTPUT
           else
-            echo "Secrets to use a container registry were not configured in the repo"
+            echo "Secrets to use a maven registry were not configured in the repo"
             echo "is_have_secrets=false" >> $GITHUB_OUTPUT
           fi
 
