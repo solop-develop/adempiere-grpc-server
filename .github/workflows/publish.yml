@@ -61,9 +61,35 @@ jobs:
           name: adempiere-grpc-server.tar.MD5
           path: build/release/adempiere-grpc-server.tar.MD5
 
+
+  # Check secrets to push artifact in maven registry
+  check-maven-secrets:
+    name: Check if maven registry information was set on secrets
+    needs:
+      - build-app
+    runs-on: ubuntu-latest
+    outputs:
+      is_have_secrets: ${{ steps.check_maven_secrets_job.outputs.is_have_secrets }}
+    steps:
+      - id: check_maven_secrets_job
+        run: |
+          if [[ "${{ secrets.DEPLOY_TOKEN }}" != "" && \
+                "${{ secrets.DEPLOY_REPOSITORY }}" != "" ]]; \
+          then
+            echo "Secrets to use a container registry are configured in the repo"
+            echo "is_have_secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "Secrets to use a container registry were not configured in the repo"
+            echo "is_have_secrets=false" >> $GITHUB_OUTPUT
+          fi
+
   # Build dist application adempiere-grpc-server
   publish-to-maven:
     name: Publish to Maven Repository
+    needs:
+      - check-docker-secrets
+    # Skip step based on secret
+    if: needs.check-maven-secrets.outputs.is_have_secrets == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -136,9 +162,9 @@ jobs:
       - build-app
     runs-on: ubuntu-latest
     outputs:
-      is_have_secrets: ${{ steps.check_secret_job.outputs.is_have_secrets }}
+      is_have_secrets: ${{ steps.check_docker_hub_secrets_job.outputs.is_have_secrets }}
     steps:
-      - id: check_secret_job
+      - id: check_docker_hub_secrets_job
         run: |
           if [[ "${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}" != "" && \
                 "${{ secrets.DOCKER_USERNAME }}" != "" && \
