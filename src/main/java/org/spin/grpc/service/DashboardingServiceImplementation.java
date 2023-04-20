@@ -58,6 +58,7 @@ import org.compiere.util.Util;
 import org.jfree.data.category.CategoryDataset;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
+import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.dashboarding.Action;
 import org.spin.backend.grpc.dashboarding.Chart;
@@ -891,8 +892,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}
 
-		ListWindowChartsResponse.Builder builderList = ListWindowChartsResponse.newBuilder();
-
 		// Get role
 		int roleId = Env.getAD_Role_ID(Env.getCtx());
 
@@ -904,7 +903,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			+ "AND ur.IsActive='Y')"
 		;
 		//	Get from Charts
-		new Query(
+		Query query = new Query(
 			Env.getCtx(),
 			I_PA_Goal.Table_Name,
 			whereClause,
@@ -913,6 +912,26 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			.setParameters(roleId, roleId)
 			.setOnlyActiveRecords(true)
 			.setClient_ID()
+		;
+
+		int count = query.count();
+		String nexPageToken = null;
+		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		//	Set page token
+		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListWindowChartsResponse.Builder builderList = ListWindowChartsResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				ValueUtil.validateNull(nexPageToken)
+			)
+		;
+
+		query
 			.setOrderBy(I_PA_Goal.COLUMNNAME_SeqNo)
 			.<MGoal>list()
 			.forEach(chartDefinition -> {
@@ -952,6 +971,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			throw new AdempiereException("@PA_Goal_ID@ @NotFound@");
 		}
 
+		// validate record
 		// if (Util.isEmpty(request.getTableName(), true)) {
 		// 	throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		// }
