@@ -87,7 +87,7 @@ jobs:
   publish-to-maven:
     name: Publish to Maven Repository
     needs:
-      - check-docker-secrets
+      - check-maven-secrets
     # Skip step based on secret
     if: needs.check-maven-secrets.outputs.is_have_secrets == 'true'
     runs-on: ubuntu-latest
