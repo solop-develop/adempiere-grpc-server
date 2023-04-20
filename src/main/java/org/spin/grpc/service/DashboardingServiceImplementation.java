@@ -133,26 +133,9 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void listDashboards(ListDashboardsRequest request, StreamObserver<ListDashboardsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			
-			ListDashboardsResponse.Builder dashboardsList = convertDashboarsList(Env.getCtx(), request);
-			responseObserver.onNext(dashboardsList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
+
 	@Override
 	public void getChart(GetChartRequest request, StreamObserver<Chart> responseObserver) {
 		try {
@@ -315,34 +298,70 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listDashboards(ListDashboardsRequest request, StreamObserver<ListDashboardsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListDashboardsResponse.Builder dashboardsList = listDashboards(request);
+			responseObserver.onNext(dashboardsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert dashboards to gRPC
-	 * @param context
 	 * @param request
 	 * @return
 	 */
-	private ListDashboardsResponse.Builder convertDashboarsList(Properties context, ListDashboardsRequest request) {
-		ListDashboardsResponse.Builder builder = ListDashboardsResponse.newBuilder();
+	private ListDashboardsResponse.Builder listDashboards(ListDashboardsRequest request) {
+		Properties context = Env.getCtx();
 		//	Get entity
 		if(request.getRoleId() <= 0
 				&& Util.isEmpty(request.getRoleUuid())) {
 			throw new AdempiereException("@AD_Role_ID@ @NotFound@");
 		}
+
 		//	Get role
 		int roleId = request.getRoleId();
 		if(roleId <= 0) {
 			roleId = RecordUtil.getIdFromUuid(I_AD_Role.Table_Name, request.getRoleUuid(), null);
 		}
+
+		ListDashboardsResponse.Builder builder = ListDashboardsResponse.newBuilder();
+		int recordCount = 0;
+
 		//	Get from Charts
-		new Query(Env.getCtx(), I_PA_Goal.Table_Name, 
-				"((AD_User_ID IS NULL AND AD_Role_ID IS NULL)"
-						+ " OR AD_Role_ID=?"	//	#2
-						+ " OR EXISTS (SELECT 1 FROM AD_User_Roles ur "
-							+ "WHERE ur.AD_User_ID=PA_Goal.AD_User_ID AND ur.AD_Role_ID = ? AND ur.IsActive='Y')) ", null)
+		final String whereClauseChart = "((AD_User_ID IS NULL AND AD_Role_ID IS NULL)"
+			+ " OR AD_Role_ID=?"	//	#2
+			+ " OR EXISTS (SELECT 1 FROM AD_User_Roles ur "
+			+ "WHERE ur.AD_User_ID=PA_Goal.AD_User_ID "
+			+ "AND ur.AD_Role_ID = ? "
+			+ "AND ur.IsActive='Y')) "
+		;
+		Query queryCharts = new Query(
+			context,
+			I_PA_Goal.Table_Name,
+			whereClauseChart,
+			null
+		)
 			.setParameters(roleId, roleId)
 			.setOnlyActiveRecords(true)
 			.setClient_ID()
+		;
+		recordCount += queryCharts.count();
+		queryCharts
 			.setOrderBy(I_PA_Goal.COLUMNNAME_SeqNo)
 			.<MGoal>list()
 			.forEach(chartDefinition -> {
@@ -358,12 +377,28 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 				//	Add to builder
 				builder.addDashboards(dashboardBuilder);
 			});
-		//	Get from activity
-		new Query(context, I_PA_DashboardContent.Table_Name, 
-				"EXISTS(SELECT 1 FROM AD_Dashboard_Access da WHERE da.PA_DashboardContent_ID = PA_DashboardContent.PA_DashboardContent_ID AND da.AD_Role_ID = ?)", null)
+
+		//	Get from dashboard
+		final String whereClauseDashboard = "EXISTS(SELECT 1 FROM AD_Dashboard_Access da WHERE "
+			+ "da.PA_DashboardContent_ID = PA_DashboardContent.PA_DashboardContent_ID "
+			+ "AND da.IsActive = 'Y' "
+			+ "AND da.AD_Role_ID = ?)"
+		;
+		Query queryDashboard = new Query(
+			context,
+			I_PA_DashboardContent.Table_Name,
+			whereClauseDashboard,
+			null
+		)
 			.setParameters(roleId)
 			.setOnlyActiveRecords(true)
-			.setOrderBy(I_PA_DashboardContent.COLUMNNAME_ColumnNo + "," + I_PA_DashboardContent.COLUMNNAME_AD_Client_ID + "," + I_PA_DashboardContent.COLUMNNAME_Line)
+		;
+		recordCount += queryDashboard.count();
+		queryDashboard
+			.setOrderBy(
+				I_PA_DashboardContent.COLUMNNAME_ColumnNo + ","
+				+ I_PA_DashboardContent.COLUMNNAME_AD_Client_ID + "," 
+				+ I_PA_DashboardContent.COLUMNNAME_Line)
 			.<MDashboardContent>list()
 			.forEach(dashboard -> {
 				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder();
@@ -406,6 +441,9 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 				}
 				builder.addDashboards(dashboardBuilder);
 			});
+
+		builder.setRecordCount(recordCount);
+
 		//	Return
 		return builder;
 	}
