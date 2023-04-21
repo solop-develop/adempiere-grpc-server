@@ -30,13 +30,13 @@ service Dashboarding {
 	rpc ListFavorites(ListFavoritesRequest) returns (ListFavoritesResponse) {}
 	//	Request Document Statuses
 	rpc ListPendingDocuments(ListPendingDocumentsRequest) returns (ListPendingDocumentsResponse) {}
-	//	Get Chart
-	rpc GetChart(GetChartRequest) returns (Chart) {}
-	// Notification
+	//	Get Metrics
+	rpc GetMetrics(GetMetricsRequest) returns (Metrics) {}
+	// NotificationWindowChart
 	rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {}
-	// Custom Window Charts
-	rpc ExistsWindowCharts(ExistsWindowChartsRequest) returns (ExistsWindowChartsResponse) {}
-	rpc ListWindowCharts(ListWindowChartsRequest) returns (ListWindowChartsResponse) {}
+	// Custom Window Metrics
+	rpc ExistsWindowDashboards(ExistsWindowDashboardsRequest) returns (ExistsWindowDashboardsResponse) {}
+	rpc ListWindowDashboards(ListWindowDashboardsRequest) returns (ListWindowDashboardsResponse) {}
 	rpc GetWindowMetrics(GetWindowMetricsRequest) returns (WindowMetrics) {}
 }
 
@@ -127,14 +127,14 @@ message PendingDocument {
 	data.Criteria criteria = 7;
 }
 
-// Chart Request
-message GetChartRequest {
+// Metrics Request
+message GetMetricsRequest {
 	string uuid = 2;
 	int32 id = 3;
 }
 
-// Chart
-message Chart {
+// Metrics
+message Metrics {
 	string uuid = 1;
 	int32 id = 2;
 	string name = 3;
@@ -197,18 +197,18 @@ message ListNotificationsResponse {
 
 
 // Window Chart
-message ExistsWindowChartsRequest {
+message ExistsWindowDashboardsRequest {
 	int32 window_id = 1;
 	string window_uuid = 2;
 	int32 tab_id = 3;
 	string tab_uuid = 4;
 }
 
-message ExistsWindowChartsResponse {
+message ExistsWindowDashboardsResponse {
 	int32 record_count = 1;
 }
 
-message WindowChart {
+message WindowDashboard {
 	int32 id = 1;
 	string uuid = 2;
 	string name = 3;
@@ -222,7 +222,7 @@ message WindowChart {
 	string transformation_script = 11;
 }
 
-message ListWindowChartsRequest {
+message ListWindowDashboardsRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	string search_value = 3;
@@ -232,9 +232,9 @@ message ListWindowChartsRequest {
 	string tab_uuid = 7;
 }
 
-message ListWindowChartsResponse {
+message ListWindowDashboardsResponse {
 	int64 record_count = 1;
-	repeated WindowChart records = 2;
+	repeated WindowDashboard records = 2;
 	string next_page_token = 3;
 }
 

@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -64,16 +64,15 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.dashboarding.Action;
-import org.spin.backend.grpc.dashboarding.Chart;
 import org.spin.backend.grpc.dashboarding.ChartData;
 import org.spin.backend.grpc.dashboarding.ChartSerie;
 import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.dashboarding.Dashboard;
-import org.spin.backend.grpc.dashboarding.ExistsWindowChartsRequest;
-import org.spin.backend.grpc.dashboarding.ExistsWindowChartsResponse;
+import org.spin.backend.grpc.dashboarding.ExistsWindowDashboardsRequest;
+import org.spin.backend.grpc.dashboarding.ExistsWindowDashboardsResponse;
 import org.spin.backend.grpc.dashboarding.DashboardingGrpc.DashboardingImplBase;
 import org.spin.backend.grpc.dashboarding.Favorite;
-import org.spin.backend.grpc.dashboarding.GetChartRequest;
+import org.spin.backend.grpc.dashboarding.GetMetricsRequest;
 import org.spin.backend.grpc.dashboarding.GetWindowMetricsRequest;
 import org.spin.backend.grpc.dashboarding.ListDashboardsRequest;
 import org.spin.backend.grpc.dashboarding.ListDashboardsResponse;
@@ -83,11 +82,12 @@ import org.spin.backend.grpc.dashboarding.ListNotificationsRequest;
 import org.spin.backend.grpc.dashboarding.ListNotificationsResponse;
 import org.spin.backend.grpc.dashboarding.ListPendingDocumentsRequest;
 import org.spin.backend.grpc.dashboarding.ListPendingDocumentsResponse;
-import org.spin.backend.grpc.dashboarding.ListWindowChartsRequest;
-import org.spin.backend.grpc.dashboarding.ListWindowChartsResponse;
+import org.spin.backend.grpc.dashboarding.ListWindowDashboardsRequest;
+import org.spin.backend.grpc.dashboarding.ListWindowDashboardsResponse;
+import org.spin.backend.grpc.dashboarding.Metrics;
 import org.spin.backend.grpc.dashboarding.Notification;
 import org.spin.backend.grpc.dashboarding.PendingDocument;
-import org.spin.backend.grpc.dashboarding.WindowChart;
+import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowMetrics;
 import org.spin.dashboarding.DashboardingConvertUtil;
 
@@ -141,32 +141,32 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 
 
 	@Override
-	public void getChart(GetChartRequest request, StreamObserver<Chart> responseObserver) {
+	public void getMetrics(GetMetricsRequest request, StreamObserver<Metrics> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			
-			Chart.Builder chart = convertChart(request);
+			Metrics.Builder chart = getMetrics(request);
 			responseObserver.onNext(chart.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
-	
+
 	/**
 	 * Convert chart and data
 	 * @param request
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Chart.Builder convertChart(GetChartRequest request) {
-		Chart.Builder builder = Chart.newBuilder();
+	private Metrics.Builder getMetrics(GetMetricsRequest request) {
+		Metrics.Builder builder = Metrics.newBuilder();
 		MGoal goal = (MGoal) RecordUtil.getEntity(Env.getCtx(), I_PA_Goal.Table_Name, request.getUuid(), request.getId(), null);
 		if(goal == null) {
 			throw new AdempiereException("@PA_Goal_ID@ @NotFound@");
@@ -837,12 +837,12 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 	;
 
 	@Override
-	public void existsWindowCharts(ExistsWindowChartsRequest request, StreamObserver<ExistsWindowChartsResponse> responseObserver) {
+	public void existsWindowDashboards(ExistsWindowDashboardsRequest request, StreamObserver<ExistsWindowDashboardsResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ExistsWindowChartsResponse.Builder resourceReference = existsWindowCharts(request);
+			ExistsWindowDashboardsResponse.Builder resourceReference = existsWindowDashboards(request);
 			responseObserver.onNext(resourceReference.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -855,7 +855,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 	}
 
-	private ExistsWindowChartsResponse.Builder existsWindowCharts(ExistsWindowChartsRequest request) {
+	private ExistsWindowDashboardsResponse.Builder existsWindowDashboards(ExistsWindowDashboardsRequest request) {
 		// validate window
 		if (request.getWindowId() <= 0 && Util.isEmpty(request.getWindowUuid(), true)) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
@@ -886,20 +886,20 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			.count()
 		;
 
-		return ExistsWindowChartsResponse.newBuilder()
+		return ExistsWindowDashboardsResponse.newBuilder()
 			.setRecordCount(recordCount)
 		;
 	}
 
 
 	@Override
-	public void listWindowCharts(ListWindowChartsRequest request, StreamObserver<ListWindowChartsResponse> responseObserver) {
+	public void listWindowDashboards(ListWindowDashboardsRequest request, StreamObserver<ListWindowDashboardsResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 			
-			ListWindowChartsResponse.Builder chartsList = listWindowCharts(request);
+			ListWindowDashboardsResponse.Builder chartsList = listWindowDashboards(request);
 			responseObserver.onNext(chartsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -912,7 +912,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 	}
 
-	ListWindowChartsResponse.Builder listWindowCharts(ListWindowChartsRequest request) {
+	ListWindowDashboardsResponse.Builder listWindowDashboards(ListWindowDashboardsRequest request) {
 		// validate window
 		if (request.getWindowId() <= 0 && Util.isEmpty(request.getWindowUuid(), true)) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
@@ -952,7 +952,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
-		ListWindowChartsResponse.Builder builderList = ListWindowChartsResponse.newBuilder()
+		ListWindowDashboardsResponse.Builder builderList = ListWindowDashboardsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
 				ValueUtil.validateNull(nexPageToken)
@@ -967,7 +967,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 					windowChartAllocation.get_ValueAsInt(I_AD_Chart.COLUMNNAME_AD_Chart_ID),
 					null
 				);
-				WindowChart.Builder chartBuilder = DashboardingConvertUtil.convertWindowChart(chartDefinition);
+				WindowDashboard.Builder chartBuilder = DashboardingConvertUtil.convertWindowDashboard(chartDefinition);
 				// TODO: Add sequence on ECA50_WindowChart table
 				chartBuilder.setSequence(windowChartAllocation.get_ID());
 

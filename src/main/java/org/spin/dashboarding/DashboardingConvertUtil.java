@@ -24,7 +24,6 @@ import org.adempiere.apps.graph.GraphColumn;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.compiere.model.MChart;
 import org.compiere.model.MColorSchema;
-import org.compiere.model.MGoal;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.print.MPrintColor;
@@ -32,7 +31,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.dashboarding.ChartData;
 import org.spin.backend.grpc.dashboarding.ColorSchema;
-import org.spin.backend.grpc.dashboarding.WindowChart;
+import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.base.util.ValueUtil;
 
 /**
@@ -199,42 +198,13 @@ public class DashboardingConvertUtil {
 
 
 
-	public static WindowChart.Builder convertWindowChart(MGoal chartDefinition) {
-		WindowChart.Builder builder = WindowChart.newBuilder();
-		if (chartDefinition == null || chartDefinition.getPA_Goal_ID() <= 0) {
-			return builder;
-		}
-
-		builder = WindowChart.newBuilder()
-			.setId(chartDefinition.getPA_Goal_ID())
-			.setUuid(
-				ValueUtil.validateNull(chartDefinition.getUUID())
-			)
-			.setName(
-				ValueUtil.validateNull(chartDefinition.getName())
-			)
-			.setDescription(
-				ValueUtil.validateNull(chartDefinition.getDescription())
-			)
-			.setSequence(chartDefinition.getSeqNo())
-			.setDashboardType("chart")
-			.setChartType(
-				ValueUtil.validateNull(chartDefinition.getChartType())
-			)
-			.setIsCollapsible(true)
-			.setIsOpenByDefault(true)
-		;
-
-		return builder;
-	}
-
-	public static WindowChart.Builder convertWindowChart(MChart chartDefinition) {
-		WindowChart.Builder builder = WindowChart.newBuilder();
+	public static WindowDashboard.Builder convertWindowDashboard(MChart chartDefinition) {
+		WindowDashboard.Builder builder = WindowDashboard.newBuilder();
 		if (chartDefinition == null || chartDefinition.getAD_Chart_ID() <= 0) {
 			return builder;
 		}
 
-		builder = WindowChart.newBuilder()
+		builder = WindowDashboard.newBuilder()
 			.setId(chartDefinition.getAD_Chart_ID())
 			.setUuid(
 				ValueUtil.validateNull(chartDefinition.getUUID())
