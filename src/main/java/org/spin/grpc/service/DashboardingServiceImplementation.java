@@ -835,6 +835,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		+ "AND wca.AD_Role_ID = ? "	//	#4
 		+ "AND wca.IsActive='Y')"
 	;
+
 	@Override
 	public void existsWindowCharts(ExistsWindowChartsRequest request, StreamObserver<ExistsWindowChartsResponse> responseObserver) {
 		try {
