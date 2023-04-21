@@ -204,7 +204,7 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Push alpine image in Docker Hub
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: docker/alpine.Dockerfile
