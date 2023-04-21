@@ -962,21 +962,21 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 	@SuppressWarnings("unchecked")
 	WindowMetrics.Builder getWindowMetrics(GetWindowMetricsRequest request) {
 		WindowMetrics.Builder builder = WindowMetrics.newBuilder();
-		MGoal goal = (MGoal) RecordUtil.getEntity(Env.getCtx(), I_PA_Goal.Table_Name, request.getUuid(), request.getId(), null);
-		if (goal == null) {
-			throw new AdempiereException("@PA_Goal_ID@ @NotFound@");
+		MChart chart = (MChart) RecordUtil.getEntity(Env.getCtx(), I_AD_Chart.Table_Name, request.getUuid(), request.getId(), null);
+		if (chart == null || chart.getAD_Chart_ID() <= 0) {
+			throw new AdempiereException("@AD_Chart_ID@ @NotFound@");
 		}
 
-		// if (Util.isEmpty(request.getTableName(), true)) {
-		// 	throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		// }
-		// int recordId = request.getRecordId();
-		// if (recordId <= 0) {
-		// 	recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
-		// }
-		// if (recordId <= 0) {
-		// 	throw new AdempiereException("@Record_ID@ @NotFound@");
-		// }
+		if (Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		int recordId = request.getRecordId();
+		if (recordId <= 0) {
+			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+		}
+		if (recordId <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
 
 		// fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
@@ -984,72 +984,40 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 
 		//	Load
 		Map<String, List<ChartData>> chartSeries = new HashMap<String, List<ChartData>>();
-		if (goal.get_ValueAsInt("AD_Chart_ID") > 0) {
-			MChart chart = new MChart(Env.getCtx(), goal.get_ValueAsInt("AD_Chart_ID"), null);
-			CategoryDataset dataSet = chart.getCategoryDataset();
+		CategoryDataset dataSet = chart.getCategoryDataset();
 
-			dataSet.getColumnKeys().forEach(column -> {
-				dataSet.getRowKeys().forEach(row -> {
-					//	Get from map
-					List<ChartData> serie = chartSeries.get(row);
-					if (serie == null) {
-						serie = new ArrayList<ChartData>();
-					}
-					//	Add
-					Number value = dataSet.getValue((Comparable<?>)row, (Comparable<?>)column);
-					BigDecimal numberValue = (value != null? new BigDecimal(value.doubleValue()): Env.ZERO);
-					ChartData.Builder chartDataBuilder = ChartData.newBuilder()
-						.setName(column.toString())
-						.setValue(
-							ValueUtil.getDecimalFromBigDecimal(numberValue)
-						)
-					;
-					serie.add(
-						chartDataBuilder.build()
-					);
-					chartSeries.put(row.toString(), serie);
-				});
-			});
-		} else {
-			//	Set values
-			builder.setName(ValueUtil.validateNull(goal.getName()));
-			builder.setDescription(ValueUtil.validateNull(goal.getDescription()));
-			builder.setId(goal.getPA_Goal_ID());
-			builder.setUuid(ValueUtil.validateNull(goal.getUUID()));
-			builder.setXAxisLabel(ValueUtil.validateNull(goal.getXAxisText()));
-			builder.setYAxisLabel(ValueUtil.validateNull(goal.getName()));
-
-			MMeasure measure = goal.getMeasure();
-			List<GraphColumn> chartData = measure.getGraphColumnList(goal);
-			chartData.forEach(data -> {
-				String key = "";
-				if (data.getDate() != null) {
-					Calendar cal = Calendar.getInstance();
-					cal.setTime(data.getDate());
-					key = Integer.toString(cal.get(Calendar.YEAR));
-				}
+		dataSet.getColumnKeys().forEach(column -> {
+			dataSet.getRowKeys().forEach(row -> {
 				//	Get from map
-				List<ChartData> serie = chartSeries.get(key);
+				List<ChartData> serie = chartSeries.get(row);
 				if (serie == null) {
 					serie = new ArrayList<ChartData>();
 				}
 				//	Add
+				Number value = dataSet.getValue((Comparable<?>)row, (Comparable<?>)column);
+				BigDecimal numberValue = (value != null? new BigDecimal(value.doubleValue()): Env.ZERO);
+				ChartData.Builder chartDataBuilder = ChartData.newBuilder()
+					.setName(column.toString())
+					.setValue(
+						ValueUtil.getDecimalFromBigDecimal(numberValue)
+					)
+				;
 				serie.add(
-					DashboardingConvertUtil.convertChartData(data).build()
+					chartDataBuilder.build()
 				);
-				chartSeries.put(key, serie);
+				chartSeries.put(row.toString(), serie);
 			});
-		}
+		});
 
-		builder.setMeasureTarget(
-			ValueUtil.getDecimalFromBigDecimal(goal.getMeasureTarget())
-		);
+		// builder.setMeasureTarget(
+		// 	ValueUtil.getDecimalFromBigDecimal(goal.getMeasureTarget())
+		// );
 
 		//	Add measure color
-		MColorSchema colorSchema = goal.getColorSchema();
-		builder.addAllColorSchemas(
-			DashboardingConvertUtil.convertColorSchemasList(colorSchema)
-		);
+		// MColorSchema colorSchema = goal.getColorSchema();
+		// builder.addAllColorSchemas(
+		// 	DashboardingConvertUtil.convertColorSchemasList(colorSchema)
+		// );
 
 		//	Add all
 		chartSeries.keySet().stream().sorted().forEach(serieKey -> {
