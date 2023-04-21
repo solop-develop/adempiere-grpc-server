@@ -21,8 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.adempiere.apps.graph.GraphColumn;
+import org.adempiere.core.domains.models.I_AD_Column;
+import org.compiere.model.MChart;
 import org.compiere.model.MColorSchema;
 import org.compiere.model.MGoal;
+import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.print.MPrintColor;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -222,6 +226,57 @@ public class DashboardingConvertUtil {
 		;
 
 		return builder;
+	}
+
+	public static WindowChart.Builder convertWindowChart(MChart chartDefinition) {
+		WindowChart.Builder builder = WindowChart.newBuilder();
+		if (chartDefinition == null || chartDefinition.getAD_Chart_ID() <= 0) {
+			return builder;
+		}
+
+		builder = WindowChart.newBuilder()
+			.setId(chartDefinition.getAD_Chart_ID())
+			.setUuid(
+				ValueUtil.validateNull(chartDefinition.getUUID())
+			)
+			.setName(
+				ValueUtil.validateNull(chartDefinition.getName())
+			)
+			.setDescription(
+				ValueUtil.validateNull(chartDefinition.getDescription())
+			)
+			.setDashboardType("chart")
+			.setChartType(
+				ValueUtil.validateNull(chartDefinition.getChartType())
+			)
+			.setIsCollapsible(true)
+			.setIsOpenByDefault(true)
+		;
+
+		return builder;
+	}
+
+	public static List<String> getContextColumnsByWindowChart(int windowChartAllocationId) {
+		List<String> contextColumnsList = new ArrayList<String>();
+
+		new Query(
+				Env.getCtx(),
+				"ECA50_WindowChartParameter",
+				"ECA50_WindowChart_ID = ?",
+				null
+			)
+			.setParameters(windowChartAllocationId)
+			.setOnlyActiveRecords(true)
+			.<PO>list()
+			.forEach(windowChartParameter -> {
+				String contextColumn = ValueUtil.validateNull(
+					windowChartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnName)
+				);
+				contextColumnsList.add(contextColumn);
+			})
+		;
+
+		return contextColumnsList;
 	}
 
 }

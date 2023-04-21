@@ -28,9 +28,11 @@ import org.adempiere.apps.graph.GraphColumn;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MDocumentStatus;
+import org.adempiere.core.domains.models.I_AD_Chart;
 import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Note;
 import org.adempiere.core.domains.models.I_AD_Role;
+import org.adempiere.core.domains.models.I_AD_Rule;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_TreeNodeMM;
 import org.adempiere.core.domains.models.I_AD_User;
@@ -47,9 +49,10 @@ import org.compiere.model.MGoal;
 import org.compiere.model.MMeasure;
 import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
-import org.compiere.model.MTab;
+import org.compiere.model.MRule;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.adempiere.core.domains.models.X_AD_TreeNodeMM;
 import org.compiere.util.CLogger;
@@ -784,6 +787,15 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 	}
 
 
+	private final String whereClauseWindowChart = "AD_Window_ID = ? "	//	#1
+		+ "AND (COALESCE(AD_Tab_ID, 0) = ? "	//	#2
+		+ "OR COALESCE(AD_Tab_ID, 0) = 0) "	//	#2
+		// validate access
+		+ "AND EXISTS(SELECT 1 FROM ECA50_WindowChartAccess wca "
+		+ "WHERE wca.AD_Chart_ID=ECA50_WindowChart.AD_Chart_ID "
+		+ "AND wca.AD_Role_ID = ? "	//	#1
+		+ "AND wca.IsActive='Y')"
+	;
 	@Override
 	public void existsWindowCharts(ExistsWindowChartsRequest request, StreamObserver<ExistsWindowChartsResponse> responseObserver) {
 		try {
@@ -814,35 +826,23 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 
 		// validate tab
-		if (request.getTabId() <= 0 && Util.isEmpty(request.getTabUuid(), true)) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
-		}
-		MTab tab = (MTab) RecordUtil.getEntity(Env.getCtx(), I_AD_Tab.Table_Name, request.getTabUuid(), request.getTabId(), null);
-		if (tab == null || tab.getAD_Window_ID() <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		int tabId = request.getTabId();
+		if (tabId <= 0 && !Util.isEmpty(request.getTabUuid(), true)) {
+			tabId = RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), null);
 		}
 
 		// Get role
 		int roleId = Env.getAD_Role_ID(Env.getCtx());
 
-		// TODO: Add tab and window restriction
-		final String whereClause = "(AD_User_ID IS NULL AND AD_Role_ID IS NULL) "
-			+ "OR AD_Role_ID = ? "	//	#1
-			+ "OR EXISTS(SELECT 1 FROM AD_User_Roles ur "
-			+ "WHERE ur.AD_User_ID=PA_Goal.AD_User_ID "
-			+ "AND ur.AD_Role_ID = ? "	//	#2
-			+ "AND ur.IsActive='Y')"
-		;
 		//	Get from Charts
 		int recordCount = new Query(
 			Env.getCtx(),
-			I_PA_Goal.Table_Name,
-			whereClause,
+			"ECA50_WindowChart",
+			this.whereClauseWindowChart,
 			null
 		)
-			.setParameters(roleId, roleId)
+			.setParameters(window.getAD_Window_ID(), tabId, roleId)
 			.setOnlyActiveRecords(true)
-			.setClient_ID()
 			.count()
 		;
 
@@ -883,12 +883,9 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 
 		// validate tab
-		if (request.getTabId() <= 0 && Util.isEmpty(request.getTabUuid(), true)) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
-		}
-		MTab tab = (MTab) RecordUtil.getEntity(Env.getCtx(), I_AD_Tab.Table_Name, request.getTabUuid(), request.getTabId(), null);
-		if (tab == null || tab.getAD_Window_ID() <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		int tabId = request.getTabId();
+		if (tabId <= 0 && !Util.isEmpty(request.getTabUuid(), true)) {
+			tabId = RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), null);
 		}
 
 		ListWindowChartsResponse.Builder builderList = ListWindowChartsResponse.newBuilder();
@@ -896,34 +893,52 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		// Get role
 		int roleId = Env.getAD_Role_ID(Env.getCtx());
 
-		final String whereClause = "(AD_User_ID IS NULL AND AD_Role_ID IS NULL) "
-			+ "OR AD_Role_ID = ? "	//	#1
-			+ "OR EXISTS(SELECT 1 FROM AD_User_Roles ur "
-			+ "WHERE ur.AD_User_ID=PA_Goal.AD_User_ID "
-			+ "AND ur.AD_Role_ID = ? "	//	#2
-			+ "AND ur.IsActive='Y')"
-		;
 		//	Get from Charts
-		new Query(
+		Query query = new Query(
 			Env.getCtx(),
-			I_PA_Goal.Table_Name,
-			whereClause,
+			"ECA50_WindowChart",
+			this.whereClauseWindowChart,
 			null
 		)
-			.setParameters(roleId, roleId)
+			.setParameters(window.getAD_Window_ID(), tabId, roleId)
 			.setOnlyActiveRecords(true)
-			.setClient_ID()
-			.setOrderBy(I_PA_Goal.COLUMNNAME_SeqNo)
-			.<MGoal>list()
-			.forEach(chartDefinition -> {
+		;
+
+		int recordCount = query.count();
+		builderList.setRecordCount(recordCount);
+
+		query
+			.<PO>list()
+			.forEach(windowChartAllocation -> {
+				MChart chartDefinition = new MChart(
+					Env.getCtx(),
+					windowChartAllocation.get_ValueAsInt(I_AD_Chart.COLUMNNAME_AD_Chart_ID),
+					null
+				);
 				WindowChart.Builder chartBuilder = DashboardingConvertUtil.convertWindowChart(chartDefinition);
+				// TODO: Add sequence on ECA50_WindowChart table
+				chartBuilder.setSequence(windowChartAllocation.get_ID());
+
+				List<String> contextColumnsList = DashboardingConvertUtil.getContextColumnsByWindowChart(windowChartAllocation.get_ID());
+				chartBuilder.addAllContextColumnNames(contextColumnsList);
+
+				int ruleId = windowChartAllocation.get_ValueAsInt(I_AD_Rule.COLUMNNAME_AD_Rule_ID);
+				if (ruleId > 0) {
+					MRule rule = MRule.get(Env.getCtx(), ruleId);
+					chartBuilder.setTransformationScript(
+						ValueUtil.validateNull(rule.getScript())
+					);
+				}
+
 				//	Add to builder
 				builderList.addRecords(chartBuilder);
 			});
 
 		return builderList;
 	}
-	
+
+
+
 	@Override
 	public void getWindowMetrics(GetWindowMetricsRequest request, StreamObserver<WindowMetrics> responseObserver) {
 		try {
