@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -27,6 +27,7 @@ import org.adempiere.apps.graph.GraphColumn;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MDocumentStatus;
+import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Chart;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Menu;
@@ -34,6 +35,7 @@ import org.adempiere.core.domains.models.I_AD_Note;
 import org.adempiere.core.domains.models.I_AD_Role;
 import org.adempiere.core.domains.models.I_AD_Rule;
 import org.adempiere.core.domains.models.I_AD_Tab;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_AD_TreeNodeMM;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_AD_WF_Activity;
@@ -1011,6 +1013,11 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 
 	WindowMetrics.Builder getWindowMetrics(GetWindowMetricsRequest request) {
 		Properties context = Env.getCtx();
+		// fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		Map<String, Object> attributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+		ContextManager.setContextWithAttributes(windowNo, context, attributesList);
+
 		PO windowChart = RecordUtil.getEntity(context, "ECA50_WindowChart", request.getUuid(), request.getId(), null);
 		if (windowChart == null || windowChart.get_ID() <= 0) {
 			throw new AdempiereException("@ECA50_WindowChart_ID@ @NotFound@");
@@ -1020,22 +1027,19 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			throw new AdempiereException("@AD_Chart_ID@ @NotFound@");
 		}
 
-		// // validate record
-		// if (Util.isEmpty(request.getTableName(), true)) {
-		// 	throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		// }
-		// int recordId = request.getRecordId();
-		// if (recordId <= 0) {
-		// 	recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
-		// }
-		// if (recordId <= 0) {
-		// 	throw new AdempiereException("@Record_ID@ @NotFound@");
-		// }
-
-		// fill context
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		Map<String, Object> attributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-		ContextManager.setContextWithAttributes(windowNo, context, attributesList);
+		// validate record
+		if (Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		int recordId = request.getRecordId();
+		if (recordId <= 0) {
+			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+		}
+		if (recordId <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		Env.setContext(context, windowNo, I_AD_ChangeLog.COLUMNNAME_Record_ID, recordId);
+		Env.setContext(context, windowNo, I_AD_Table.COLUMNNAME_TableName, request.getTableName());
 
 		Map<String, Object> filtersList = new HashMap<String, Object>();
 
