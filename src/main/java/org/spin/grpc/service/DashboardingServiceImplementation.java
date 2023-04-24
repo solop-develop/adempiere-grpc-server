@@ -1012,8 +1012,8 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 	}
 
 	WindowMetrics.Builder getWindowMetrics(GetWindowMetricsRequest request) {
-		Properties context = Env.getCtx();
 		// fill context
+		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		Map<String, Object> attributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
 		ContextManager.setContextWithAttributes(windowNo, context, attributesList);
@@ -1062,22 +1062,20 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 				}
 			});
 
-
 		//	Load
 		Map<String, List<ChartData>> chartSeries = new HashMap<String, List<ChartData>>();
 
 		ChartValue chartData = ChartBuilder.getChartData(chart.getAD_Chart_ID(), filtersList);
-
 		if (chartData.getSeries().size() > 0) {
 			chartData.getSeries().forEach(serie -> {
 				List<ChartData> serieStub = new ArrayList<ChartData>();
 				serie.getDataSet().forEach(dataSet -> {
 					ChartData.Builder chartDataBuilder = ChartData.newBuilder()
-							.setName(dataSet.getName())
-							.setValue(
-								ValueUtil.getDecimalFromBigDecimal(dataSet.getAmount())
-							)
-						;
+						.setName(dataSet.getName())
+						.setValue(
+							ValueUtil.getDecimalFromBigDecimal(dataSet.getAmount())
+						)
+					;
 					serieStub.add(chartDataBuilder.build());
 				});
 				chartSeries.put(serie.getName(), serieStub);
