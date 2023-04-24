@@ -14,7 +14,6 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -29,6 +28,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MDocumentStatus;
 import org.adempiere.core.domains.models.I_AD_Chart;
+import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Note;
 import org.adempiere.core.domains.models.I_AD_Role;
@@ -58,7 +58,6 @@ import org.adempiere.core.domains.models.X_AD_TreeNodeMM;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.jfree.data.category.CategoryDataset;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -952,6 +951,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		;
 
 		query
+			.setOrderBy(I_PA_Goal.COLUMNNAME_SeqNo)
 			.<PO>list()
 			.forEach(windowChartAllocation -> {
 				MChart chartDefinition = new MChart(
@@ -960,8 +960,14 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 					null
 				);
 				WindowDashboard.Builder chartBuilder = DashboardingConvertUtil.convertWindowDashboard(chartDefinition);
-				// TODO: Add sequence on ECA50_WindowChart table
-				chartBuilder.setSequence(windowChartAllocation.get_ID());
+				chartBuilder.setId(windowChartAllocation.get_ID())
+					.setUuid(
+						ValueUtil.validateNull(windowChartAllocation.get_UUID())
+					)
+					.setSequence(
+						windowChartAllocation.get_ValueAsInt(I_PA_Goal.COLUMNNAME_SeqNo)
+					)
+				;
 
 				List<String> contextColumnsList = DashboardingConvertUtil.getContextColumnsByWindowChart(windowChartAllocation.get_ID());
 				chartBuilder.addAllContextColumnNames(contextColumnsList);
@@ -1003,68 +1009,79 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	WindowMetrics.Builder getWindowMetrics(GetWindowMetricsRequest request) {
-		WindowMetrics.Builder builder = WindowMetrics.newBuilder();
-		MChart chart = (MChart) RecordUtil.getEntity(Env.getCtx(), I_AD_Chart.Table_Name, request.getUuid(), request.getId(), null);
+		Properties context = Env.getCtx();
+		PO windowChart = RecordUtil.getEntity(context, "ECA50_WindowChart", request.getUuid(), request.getId(), null);
+		if (windowChart == null || windowChart.get_ID() <= 0) {
+			throw new AdempiereException("@ECA50_WindowChart_ID@ @NotFound@");
+		}
+		MChart chart = new MChart(context, windowChart.get_ValueAsInt(I_AD_Chart.COLUMNNAME_AD_Chart_ID), null);
 		if (chart == null || chart.getAD_Chart_ID() <= 0) {
 			throw new AdempiereException("@AD_Chart_ID@ @NotFound@");
 		}
 
-		// validate record
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		int recordId = request.getRecordId();
-		if (recordId <= 0) {
-			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
-		}
-		if (recordId <= 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
+		// // validate record
+		// if (Util.isEmpty(request.getTableName(), true)) {
+		// 	throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		// }
+		// int recordId = request.getRecordId();
+		// if (recordId <= 0) {
+		// 	recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+		// }
+		// if (recordId <= 0) {
+		// 	throw new AdempiereException("@Record_ID@ @NotFound@");
+		// }
 
 		// fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		Map<String, Object> attributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+		ContextManager.setContextWithAttributes(windowNo, context, attributesList);
+
+		Map<String, Object> filtersList = new HashMap<String, Object>();
+
+		attributesList.entrySet().stream()
+			.forEach(entry -> {
+				PO chartParameter = new Query(
+						context,
+						"ECA50_WindowChartParameter",
+						"ColumnName = ? AND ECA50_WindowChart_ID = ?",
+						null
+					)
+					.setParameters(entry.getKey(), windowChart.get_ID())
+					.first()
+				;
+				if (chartParameter != null) {
+					filtersList.put(
+						chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL),
+						entry.getValue()
+					);
+				}
+			});
+
 
 		//	Load
 		Map<String, List<ChartData>> chartSeries = new HashMap<String, List<ChartData>>();
-		CategoryDataset dataSet = chart.getCategoryDataset();
 
-		dataSet.getColumnKeys().forEach(column -> {
-			dataSet.getRowKeys().forEach(row -> {
-				//	Get from map
-				List<ChartData> serie = chartSeries.get(row);
-				if (serie == null) {
-					serie = new ArrayList<ChartData>();
-				}
-				//	Add
-				Number value = dataSet.getValue((Comparable<?>)row, (Comparable<?>)column);
-				BigDecimal numberValue = (value != null? new BigDecimal(value.doubleValue()): Env.ZERO);
-				ChartData.Builder chartDataBuilder = ChartData.newBuilder()
-					.setName(column.toString())
-					.setValue(
-						ValueUtil.getDecimalFromBigDecimal(numberValue)
-					)
-				;
-				serie.add(
-					chartDataBuilder.build()
-				);
-				chartSeries.put(row.toString(), serie);
+		ChartValue chartData = ChartBuilder.getChartData(chart.getAD_Chart_ID(), filtersList);
+
+		if (chartData.getSeries().size() > 0) {
+			chartData.getSeries().forEach(serie -> {
+				List<ChartData> serieStub = new ArrayList<ChartData>();
+				serie.getDataSet().forEach(dataSet -> {
+					ChartData.Builder chartDataBuilder = ChartData.newBuilder()
+							.setName(dataSet.getName())
+							.setValue(
+								ValueUtil.getDecimalFromBigDecimal(dataSet.getAmount())
+							)
+						;
+					serieStub.add(chartDataBuilder.build());
+				});
+				chartSeries.put(serie.getName(), serieStub);
 			});
-		});
-
-		// builder.setMeasureTarget(
-		// 	ValueUtil.getDecimalFromBigDecimal(goal.getMeasureTarget())
-		// );
-
-		//	Add measure color
-		// MColorSchema colorSchema = goal.getColorSchema();
-		// builder.addAllColorSchemas(
-		// 	DashboardingConvertUtil.convertColorSchemasList(colorSchema)
-		// );
+		}
 
 		//	Add all
+		WindowMetrics.Builder builder = WindowMetrics.newBuilder();
 		chartSeries.keySet().stream().sorted().forEach(serieKey -> {
 			ChartSerie.Builder chartSerieBuilder = ChartSerie.newBuilder()
 				.setName(serieKey)

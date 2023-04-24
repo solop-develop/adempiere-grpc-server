@@ -232,7 +232,7 @@ public class DashboardingConvertUtil {
 		new Query(
 				Env.getCtx(),
 				"ECA50_WindowChartParameter",
-				"ECA50_WindowChart_ID = ?",
+				"ECA50_WindowChart_ID = ? AND ECA50_IsEnableSelection = 'N'",
 				null
 			)
 			.setParameters(windowChartAllocationId)
