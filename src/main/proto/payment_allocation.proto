@@ -277,8 +277,6 @@ message ProcessRequest {
 	string transaction_organization_uuid = 8;
 	int64 date = 9;
 	string description = 10;
-	// repeated data.KeyValueSelection payments = 11;
-	// repeated data.KeyValueSelection invoices = 12;
 	repeated PaymentSelection payment_selections = 11;
 	repeated InvoiceSelection invoice_selections = 12;
 }
