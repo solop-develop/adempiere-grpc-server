@@ -435,7 +435,6 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		 *    1-TrxDate, 2-DocumentNo, (3-Currency, 4-PayAmt,)
 		 *    5-ConvAmt, 6-ConvOpen, 7-Allocated
 		 */
-		// Vector<Vector<Object>> data = new Vector<Vector<Object>>();
 		StringBuffer sql = new StringBuffer("SELECT p.DateTrx, p.DocumentNo, p.C_Payment_ID,"	//	1..3
 			+ "c.ISO_Code, p.PayAmt,"			//	4..5
 			+ "currencyConvert(p.PayAmt, p.C_Currency_ID, ?, ?, p.C_ConversionType_ID, p.AD_Client_ID, p.AD_Org_ID) AS ConvertedAmt,"//		#1, #2
@@ -596,6 +595,11 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 			request.getDate()
 		);
 
+		/**
+		 *  Load unpaid Invoices
+		 *    1-TrxDate, 2-Value, (3-Currency, 4-InvAmt,)
+		 *    5-ConvAmt, 6-ConvOpen, 7-ConvDisc, 8-WriteOff, 9-Applied
+		 */
 		StringBuffer sql = new StringBuffer(
 			"SELECT i.DateInvoiced, i.DocumentNo, i.Description, i.C_Invoice_ID, "		//	1..3
 			+ "c.ISO_Code, (i.GrandTotal * i.MultiplierAP) AS OriginalAmt, "		//  4..5	Orig Currency
