@@ -139,12 +139,11 @@ message Payment {
 	string document_no = 5;
 	TransactionType transaction_type = 6; // AP-AR
 	Organization organization = 7;
-	BusinessPartner business_partner = 8;
-	string description = 9;
-	Currency currency = 10;
-	data.Decimal payment_amount = 11;
-	data.Decimal converted_amount = 12;
-	data.Decimal open_amount = 13;
+	string description = 8;
+	Currency currency = 9;
+	data.Decimal payment_amount = 10;
+	data.Decimal converted_amount = 11;
+	data.Decimal open_amount = 12;
 }
 
 message ListPaymentsRequest {
@@ -180,13 +179,12 @@ message Invoice {
 	string document_no = 5;
 	TransactionType transaction_type = 6; // AP-AR
 	Organization organization = 7;
-	BusinessPartner business_partner = 8;
-	string description = 9;
-	Currency currency = 10;
-	data.Decimal original_amount = 11;
-	data.Decimal converted_amount = 12;
-	data.Decimal open_amount = 13;
-	data.Decimal discount_amount = 14;
+	string description = 8;
+	Currency currency = 9;
+	data.Decimal original_amount = 10;
+	data.Decimal converted_amount = 11;
+	data.Decimal open_amount = 12;
+	data.Decimal discount_amount = 13;
 }
 
 message ListInvoicesRequest {

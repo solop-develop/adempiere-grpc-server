@@ -29,11 +29,11 @@ import java.util.logging.Level;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
 import org.compiere.model.MAllocationHdr;
-import org.compiere.model.MBPartner;
 import org.compiere.model.MCharge;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
@@ -48,7 +48,6 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
-import org.spin.backend.grpc.form.payment_allocation.BusinessPartner;
 import org.spin.backend.grpc.form.payment_allocation.Charge;
 import org.spin.backend.grpc.form.payment_allocation.Currency;
 import org.spin.backend.grpc.form.payment_allocation.Invoice;
@@ -127,41 +126,6 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		);
 
 		return builderList;
-	}
-
-
-	public static BusinessPartner.Builder convertBusinessPartner(int businessPartnerId) {
-		if (businessPartnerId <= 0) {
-			return BusinessPartner.newBuilder();
-		}
-		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
-		return convertBusinessPartner(businessPartner);
-	}
-	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
-		BusinessPartner.Builder builder = BusinessPartner.newBuilder();
-		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
-			return builder;
-		}
-
-		builder.setId(businessPartner.getC_BPartner_ID())
-			.setUuid(
-				ValueUtil.validateNull(businessPartner.getUUID())
-			)
-			.setValue(
-				ValueUtil.validateNull(businessPartner.getValue())
-			)
-			.setTaxId(
-				ValueUtil.validateNull(businessPartner.getTaxID())
-			)
-			.setName(
-				ValueUtil.validateNull(businessPartner.getName())
-			)
-			.setDescription(
-				ValueUtil.validateNull(businessPartner.getDescription())
-			)
-		;
-
-		return builder;
 	}
 
 
@@ -492,15 +456,11 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 				recordCount++;
 
 				Organization.Builder organizationBuilder = convertOrganization(
-					rs.getInt("AD_Org_ID")
+					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
 				);
 
-				// BusinessPartner businessPartnerBuilder = convertBusinessPartner(
-				// 	businessPartnerId
-				// );
-
 				Currency.Builder currencyBuilder = convertCurrency(
-					rs.getString("ISO_Code")
+					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
 				boolean isReceipt = rs.getBoolean("IsReceipt");
@@ -518,19 +478,23 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 					)
 					.setTransactionDate(
 						ValueUtil.getLongFromTimestamp(
-							rs.getTimestamp("DateTrx")
+							rs.getTimestamp(I_C_Payment.COLUMNNAME_DateTrx)
 						)
 					)
 					.setIsReceipt(isReceipt)
 					.setDocumentNo(
-						ValueUtil.validateNull(rs.getString("DocumentNo"))
+						ValueUtil.validateNull(
+							rs.getString(I_C_Payment.COLUMNNAME_DocumentNo)
+						)
 					)
 					.setDescription(
-						ValueUtil.validateNull(rs.getString("Description"))
+						ValueUtil.validateNull(
+							rs.getString(I_C_Payment.COLUMNNAME_Description)
+						)
 					)
 					.setPaymentAmount(
 						ValueUtil.getDecimalFromBigDecimal(
-							rs.getBigDecimal("PayAmt")
+							rs.getBigDecimal(I_C_Payment.COLUMNNAME_PayAmt)
 						)
 					)
 					.setConvertedAmount(
@@ -625,7 +589,7 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 			String isReceipt = ValueUtil.booleanToString(
 				transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesOnly)
 			);
-			sql.append(" AND p.IsSOTrx= '" + isReceipt +"'" );
+			sql.append(" AND i.IsSOTrx= '" + isReceipt +"'" );
 		}
 		sql.append(" ORDER BY i.DateInvoiced, i.DocumentNo");
 
@@ -661,15 +625,11 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 				recordCount++;
 
 				Organization.Builder organizationBuilder = convertOrganization(
-					rs.getInt("AD_Org_ID")
+					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
 				);
 
-				// BusinessPartner businessPartnerBuilder = convertBusinessPartner(
-				// 	businessPartnerId
-				// );
-
 				Currency.Builder currencyBuilder = convertCurrency(
-					rs.getString("ISO_Code")
+					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
 				boolean isSalesTransaction = rs.getBoolean("IsSOTrx");
@@ -677,7 +637,7 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 					isSalesTransaction ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
 				);
 
-				int invoiceId = rs.getInt("C_Invoice_ID");
+				int invoiceId = rs.getInt(I_C_Invoice.COLUMNNAME_C_Invoice_ID);
 				String invoiceUuid = RecordUtil.getUuidFromId(I_C_Invoice.Table_Name, invoiceId, null);
 				Invoice.Builder invoiceBuilder = Invoice.newBuilder()
 					.setId(invoiceId)
@@ -686,15 +646,19 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 					)
 					.setDateInvoiced(
 						ValueUtil.getLongFromTimestamp(
-							rs.getTimestamp("DateInvoiced")
+							rs.getTimestamp(I_C_Invoice.COLUMNNAME_DateInvoiced)
 						)
 					)
 					.setIsSalesTransaction(isSalesTransaction)
 					.setDocumentNo(
-						ValueUtil.validateNull(rs.getString("DocumentNo"))
+						ValueUtil.validateNull(
+							rs.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
+						)
 					)
 					.setDescription(
-						ValueUtil.validateNull(rs.getString("Description"))
+						ValueUtil.validateNull(
+							rs.getString(I_C_Invoice.COLUMNNAME_Description)
+						)
 					)
 					.setOriginalAmount(
 						ValueUtil.getDecimalFromBigDecimal(
