@@ -39,7 +39,6 @@ service PaymentAllocation {
 	// process
 	rpc ListCharges(ListChargesRequest) returns (data.ListLookupItemsResponse) {}
 	rpc ListTransactionOrganizations(ListTransactionOrganizationsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc CalculateDifference(CalculateDifferenceRequest) returns (CalculateDifferenceResponse) {}
 	rpc Process(ProcessRequest) returns (ProcessResponse) {}
 }
 
@@ -249,17 +248,22 @@ message ListTransactionOrganizationsResponse {
 	string next_page_token = 3;
 }
 
-
-// Difference
-message CalculateDifferenceRequest {
-	repeated data.KeyValueSelection payments = 1;
-	repeated data.KeyValueSelection invoices = 2;
+message PaymentSelection {
+	int32 id = 1;
+	string uuid = 2;
+	int64 transaction_date = 3;
+	data.Decimal applied_amount = 4;
 }
 
-message CalculateDifferenceResponse {
-	data.Decimal difference = 1;
+message InvoiceSelection {
+	int32 id = 1;
+	string uuid = 2;
+	int64 date_invoiced = 3;
+	data.Decimal applied_amount = 4;
+	data.Decimal discount_amount = 5;
+	data.Decimal write_off_amount = 6;
+	data.Decimal open_amount = 7;
 }
-
 
 // Process
 message ProcessRequest {
@@ -273,8 +277,10 @@ message ProcessRequest {
 	string transaction_organization_uuid = 8;
 	int64 date = 9;
 	string description = 10;
-	repeated data.KeyValueSelection payments = 11;
-	repeated data.KeyValueSelection invoices = 12;
+	// repeated data.KeyValueSelection payments = 11;
+	// repeated data.KeyValueSelection invoices = 12;
+	repeated PaymentSelection payment_selections = 11;
+	repeated InvoiceSelection invoice_selections = 12;
 }
 
 message ProcessResponse {
