@@ -557,7 +557,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		}
 
 		Properties context = Env.getCtx();
-		// final String languageValue = Env.getAD_Language(context);
 
 		//	Dynamic where clause
 		List<Object> parameters = new ArrayList<Object>();
@@ -611,8 +610,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			null
 		)
 			.setParameters(parameters)
-			// .setClient_ID()
-			// .setOnlyActiveRecords(true)
+			.setClient_ID()
 		;
 
 		int count = query.count();
