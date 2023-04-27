@@ -7,21 +7,39 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.logging.Level;
+
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_Currency;
+import org.adempiere.core.domains.models.I_C_Payment;
+import org.adempiere.core.domains.models.I_I_BankStatement;
+import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
+import org.compiere.model.MRole;
+import org.compiere.model.Query;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
@@ -29,6 +47,7 @@ import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.form.bank_statement_match.BusinessPartner;
 import org.spin.backend.grpc.form.bank_statement_match.Currency;
+import org.spin.backend.grpc.form.bank_statement_match.ImportedBankMovement;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankAccountsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListImportedBankMovementsRequest;
@@ -39,6 +58,7 @@ import org.spin.backend.grpc.form.bank_statement_match.ListPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListPaymentsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListSearchModesRequest;
 import org.spin.backend.grpc.form.bank_statement_match.MatchMode;
+import org.spin.backend.grpc.form.bank_statement_match.Payment;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.TenderType;
@@ -46,6 +66,7 @@ import org.spin.backend.grpc.form.bank_statement_match.BankStatementMatchGrpc.Ba
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
+import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 
 import io.grpc.Status;
@@ -148,9 +169,17 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		return builderList;
 	}
 
+
+	public static BusinessPartner.Builder convertBusinessPartner(int businessPartnerId) {
+		if (businessPartnerId <= 0) {
+			return BusinessPartner.newBuilder();
+		}
+		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
+		return convertBusinessPartner(businessPartner);
+	}
 	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
 		BusinessPartner.Builder builder = BusinessPartner.newBuilder();
-		if (builder == null) {
+		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
 			return builder;
 		}
 
@@ -210,7 +239,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			.putValues(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueUtil.getValueFromString(
-					Msg.translate(Env.getCtx(), "BankStatementMatch.UnMatched")
+					Msg.translate(Env.getCtx(), "NotMatched")
 				).build())
 		;
 		builderList.addRecords(lookupMatched);
@@ -225,7 +254,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			.putValues(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueUtil.getValueFromString(
-					Msg.translate(Env.getCtx(), "BankStatementMatch.Matched")
+					Msg.translate(Env.getCtx(), "Matched")
 				).build())
 		;
 		builderList.addRecords(lookupUnMatched);
@@ -235,9 +264,23 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 
 
 
+	public static Currency.Builder convertCurrency(String isoCode) {
+		if (Util.isEmpty(isoCode, true)) {
+			return Currency.newBuilder();
+		}
+		MCurrency currency = MCurrency.get(Env.getCtx(), isoCode);
+		return convertCurrency(currency);
+	}
+	public static Currency.Builder convertCurrency(int currencyId) {
+		if (currencyId <= 0) {
+			return Currency.newBuilder();
+		}
+		MCurrency currency = MCurrency.get(Env.getCtx(), currencyId);
+		return convertCurrency(currency);
+	}
 	public static Currency.Builder convertCurrency(MCurrency currency) {
 		Currency.Builder builder = Currency.newBuilder();
-		if (builder == null) {
+		if (currency == null || currency.getC_Currency_ID() <= 0) {
 			return builder;
 		}
 
@@ -258,6 +301,14 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 
 
 
+	public static TenderType.Builder convertTenderType(String value) {
+		if (Util.isEmpty(value, false)) {
+			return TenderType.newBuilder();
+		}
+
+		MRefList tenderType = MRefList.get(Env.getCtx(), X_C_Payment.TENDERTYPE_AD_Reference_ID, value, null);
+		return convertTenderType(tenderType);
+	}
 	public static TenderType.Builder convertTenderType(MRefList tenderType) {
 		TenderType.Builder builder = TenderType.newBuilder();
 		if (tenderType == null || tenderType.getAD_Ref_List_ID() <= 0) {
@@ -314,7 +365,168 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
 		}
 
+		Properties context = Env.getCtx();
+
+		StringBuffer sql = new StringBuffer(
+			"SELECT p.I_BankStatement_ID, p.UUID, p.StatementLineDate, "
+			+ "(CASE WHEN p.TrxAmt < 0 THEN 'N' ELSE 'Y' END) AS IsReceipt, "
+			+ "p.ReferenceNo, p.C_BPartner_ID, "
+			+ "(CASE WHEN p.C_BPartner_ID IS NULL THEN BPartnerValue ELSE bp.Name END) BPName, "
+			+ "COALESCE(p.ISO_Code, c.ISO_Code) AS ISO_Code, p.TrxAmt, p.Memo "
+			+ "FROM I_BankStatement p "
+			+ "LEFT JOIN C_BPartner bp ON(bp.C_BPartner_ID = p.C_BPartner_ID) "
+			+ "LEFT JOIN C_Currency c ON(c.C_Currency_ID = p.C_Currency_ID) "
+		);
+		//	Where Clause
+		sql.append("WHERE p.C_BankAccount_ID = ? ");
+
+		//	Match
+		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
+		if (isMatchedMode) {
+			sql.append(
+				"AND (p.C_Payment_ID IS NOT NULL "
+				+ "OR p.C_BPartner_ID IS NOT NULL "
+				+ "OR p.C_Invoice_ID IS NOT NULL) "
+			);
+		} else {
+			sql.append(
+				"AND (p.C_Payment_ID IS NULL "
+				+ "AND p.C_BPartner_ID IS NULL "
+				+ "AND p.C_Invoice_ID IS NULL) "
+			);
+		}
+
+		//	For parameters
+		//	Date Trx
+		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
+			request.getTransactionDateFrom()
+		);
+		if (dateFrom != null) {
+			sql.append("AND p.StatementLineDate >= ? ");
+		}
+		Timestamp dateTo = ValueUtil.getTimestampFromLong(
+			request.getTransactionDateTo()
+		);
+		if (dateTo != null) {
+			sql.append("AND p.StatementLineDate <= ? ");
+		}
+		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
+			request.getPaymentAmountFrom()
+		);
+		//	Amount
+		if (paymentAmountFrom != null) {
+			sql.append("AND p.TrxAmt >= ? ");
+		}
+		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
+			request.getPaymentAmountTo()
+		);
+		if (paymentAmountTo != null) {
+			sql.append("AND p.TrxAmt <= ? ");
+		}
+		// role security
+		sql = new StringBuffer(
+			MRole.getDefault(context, false).addAccessSQL(
+				sql.toString(),
+				"p",
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			)
+		);
+
+		//	Order by
+		sql.append("ORDER BY p.StatementLineDate");
+
 		ListImportedBankMovementsResponse.Builder builderList = ListImportedBankMovementsResponse.newBuilder();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sql.toString(), null);
+
+			int argumentPosition = 1;
+			pstmt.setInt(argumentPosition++, request.getBankAccountId());
+			if (dateFrom != null) {
+				pstmt.setTimestamp(argumentPosition++, dateFrom);
+			}
+			if (dateTo != null) {
+				pstmt.setTimestamp(argumentPosition++, dateTo);
+			}
+			if (paymentAmountFrom != null) {
+				pstmt.setBigDecimal(argumentPosition++, paymentAmountFrom);
+			}
+			if (paymentAmountTo != null) {
+				pstmt.setBigDecimal(argumentPosition++, paymentAmountTo);
+			}
+			rs = pstmt.executeQuery();
+			int recordCount = 0;
+			while (rs.next()) {
+				recordCount++;
+
+				int businessPartnerId = rs.getInt(I_I_BankStatement.COLUMNNAME_C_BPartner_ID);
+				BusinessPartner.Builder businessPartnerBuilder = convertBusinessPartner(
+					businessPartnerId
+				);
+				if (businessPartnerId <= 0) {
+					businessPartnerBuilder.setName(
+						ValueUtil.validateNull(
+							rs.getString("BPName")
+						)
+					);
+				}
+
+				Currency.Builder currencyBuilder = convertCurrency(
+					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
+				);
+
+				ImportedBankMovement.Builder importedBuilder = ImportedBankMovement.newBuilder()
+					.setId(
+						rs.getInt(I_I_BankStatement.COLUMNNAME_C_BankStatement_ID)
+					)
+					.setUuid(
+						ValueUtil.validateNull(
+							rs.getString(I_I_BankStatement.COLUMNNAME_UUID)
+						)
+					)
+					.setTransactionDate(
+						ValueUtil.getLongFromTimestamp(
+							rs.getTimestamp(I_I_BankStatement.COLUMNNAME_StatementLineDate)
+						)
+					)
+					.setIsReceipt(
+						ValueUtil.stringToBoolean(
+							rs.getString("IsReceipt")
+						)
+					)
+					.setReferenceNo(
+						ValueUtil.validateNull(
+							rs.getString(I_I_BankStatement.COLUMNNAME_ReferenceNo)
+						)
+					)
+					.setAmount(
+						ValueUtil.getDecimalFromBigDecimal(
+							rs.getBigDecimal(I_I_BankStatement.COLUMNNAME_TrxAmt)
+						)
+					)
+					.setMemo(
+						ValueUtil.validateNull(
+							rs.getString(I_I_BankStatement.COLUMNNAME_Memo)
+						)
+					)
+					.setBusinessPartner(businessPartnerBuilder)
+					.setCurrency(currencyBuilder)
+				;
+				builderList.addRecords(importedBuilder);
+			}
+			builderList.setRecordCount(recordCount);
+
+		}
+		catch (SQLException e) {
+			log.log(Level.SEVERE, sql.toString(), e);
+		}
+		finally {
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
 
 		return builderList;
 	}
@@ -344,7 +556,140 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
 		}
 
-		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder();
+		Properties context = Env.getCtx();
+		// final String languageValue = Env.getAD_Language(context);
+
+		//	Dynamic where clause
+		List<Object> parameters = new ArrayList<Object>();
+		String whereClause = "C_BankAccount_ID = ? "
+			+ " AND DocStatus NOT IN('IP', 'DR') "
+			+ " AND IsReconciled = 'N' "
+		;
+		parameters.add(request.getBankAccountId());
+
+		//	Date Trx
+		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
+			request.getTransactionDateFrom()
+		);
+		if (dateFrom != null) {
+			whereClause += "AND DateTrx >= ? ";
+			parameters.add(dateFrom);
+		}
+		Timestamp dateTo = ValueUtil.getTimestampFromLong(
+			request.getTransactionDateTo()
+		);
+		if (dateTo != null) {
+			whereClause += "AND DateTrx <= ? ";
+			parameters.add(dateTo);
+		}
+		//	Amount
+		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
+			request.getPaymentAmountFrom()
+		);
+		if (paymentAmountFrom != null) {
+			whereClause += "AND PayAmt >= ? ";
+			parameters.add(paymentAmountFrom);
+		}
+		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
+			request.getPaymentAmountTo()
+		);
+		if (paymentAmountTo != null) {
+			whereClause += "AND PayAmt <= ? ";
+			parameters.add(paymentAmountTo);
+		}
+		//	for BP
+		int businessPartnerIdQuery = request.getBusinessPartnerId();
+		if (businessPartnerIdQuery > 0) {
+			whereClause += "AND C_BPartner_ID = ? ";
+			parameters.add(businessPartnerIdQuery);
+		}
+
+		Query query = new Query(
+			context,
+			I_C_Payment.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(parameters)
+			// .setClient_ID()
+			// .setOnlyActiveRecords(true)
+		;
+
+		int count = query.count();
+		String nexPageToken = "";
+		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		//	Set page token
+		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				ValueUtil.validateNull(nexPageToken)
+			)
+		;
+
+		query.setLimit(limit, offset)
+			.list(MPayment.class)
+			.forEach(payment -> {
+				BusinessPartner.Builder businessPartnerBuilder = convertBusinessPartner(
+					payment.getC_BPartner_ID()
+				);
+
+				Currency.Builder currencyBuilder = convertCurrency(
+					payment.getC_Currency_ID()
+				);
+
+				TenderType.Builder tenderTypeBuilder = convertTenderType(
+					payment.getTenderType()
+				);
+				boolean isReceipt = payment.isReceipt();
+				BigDecimal paymentAmount = payment.getPayAmt();
+				if (!isReceipt) {
+					paymentAmount = paymentAmount.negate();
+				}
+
+				Payment.Builder paymentBuilder = Payment.newBuilder()
+					.setId(
+						payment.getC_Payment_ID()
+					)
+					.setUuid(
+						ValueUtil.validateNull(
+							payment.getUUID()
+						)
+					)
+					.setTransactionDate(
+						ValueUtil.getLongFromTimestamp(
+							payment.getDateTrx()
+						)
+					)
+					.setIsReceipt(isReceipt)
+					.setDocumentNo(
+						ValueUtil.validateNull(
+							payment.getDocumentNo()
+						)
+					)
+					.setDescription(
+						ValueUtil.validateNull(
+							payment.getDescription()
+						)
+					)
+					.setAmount(
+						ValueUtil.getDecimalFromBigDecimal(
+							paymentAmount
+						)
+					)
+					.setBusinessPartner(businessPartnerBuilder)
+					.setTenderType(tenderTypeBuilder)
+					.setCurrency(currencyBuilder)
+				;
+
+				builderList.addRecords(paymentBuilder);
+			});
+		;
 
 		return builderList;
 	}
