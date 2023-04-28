@@ -110,24 +110,6 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 					.asRuntimeException());
 		}
 	}
-
-	@Override
-	public void listWarehouses(ListWarehousesRequest request, StreamObserver<ListWarehousesResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListWarehousesResponse.Builder organizationsList = convertWarehousesList(request);
-			responseObserver.onNext(organizationsList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
 	
 	@Override
 	public void getCountry(GetCountryRequest request, StreamObserver<Country> responseObserver) {
@@ -808,13 +790,34 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listWarehouses(ListWarehousesRequest request, StreamObserver<ListWarehousesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListWarehousesResponse.Builder organizationsList = listWarehouses(request);
+			responseObserver.onNext(organizationsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert warehouses list
 	 * @param request
 	 * @return
 	 */
-	private ListWarehousesResponse.Builder convertWarehousesList(ListWarehousesRequest request) {
+	private ListWarehousesResponse.Builder listWarehouses(ListWarehousesRequest request) {
 		ListWarehousesResponse.Builder builder = ListWarehousesResponse.newBuilder();
 		//	Get page and count
 		String nexPageToken = null;
@@ -822,13 +825,20 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		int limit = RecordUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		int id = request.getOrganizationId();
-		if(id <= 0) {
-			id = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
+		int organizationId = request.getOrganizationId();
+		if (organizationId <= 0) {
+			organizationId = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
 		}
-		Query query = new Query(Env.getCtx(), I_M_Warehouse.Table_Name, "AD_Org_ID = ?", null)
-				.setOnlyActiveRecords(true)
-				.setParameters(id)
+
+		final String whereClause = "AD_Org_ID = ? AND IsInTransit = ? ";
+		Query query = new Query(
+			Env.getCtx(),
+			I_M_Warehouse.Table_Name,
+			whereClause,
+			null
+		)
+			.setOnlyActiveRecords(true)
+			.setParameters(organizationId, false)
 		;
 		//	Count
 		int count = query.count();
