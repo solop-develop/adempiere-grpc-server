@@ -722,7 +722,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 	public void listOrganizations(ListOrganizationsRequest request,
 			StreamObserver<ListOrganizationsResponse> responseObserver) {
 		try {
-			if(request == null) {
+			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 			ListOrganizationsResponse.Builder organizationsList = listOrganizations(request);
