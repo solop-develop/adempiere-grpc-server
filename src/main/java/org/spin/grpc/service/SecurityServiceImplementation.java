@@ -289,17 +289,28 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		int offset = (pageNumber - 1) * limit;
 
 		final String whereClause = "EXISTS("
-			+ "SELECT 1 FROM AD_User_Roles ur "
-			+ "WHERE ur.AD_Role_ID = AD_Role.AD_Role_ID AND ur.AD_User_ID = ?"
+				+ "SELECT 1 FROM AD_User_Roles ur "
+				+ "WHERE ur.AD_Role_ID = AD_Role.AD_Role_ID AND ur.AD_User_ID = ?"
 			+ ")"
 			+ "AND ("
+			// TODO: Validate IsAccessAllOrgs with Org.isSummary
 			+ "IsAccessAllOrgs = 'Y' "
-			+ "OR (IsUseUserOrgAccess = 'N' and EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro WHERE ro.AD_Role_ID = AD_Role.AD_Role_ID AND ro.IsActive = 'Y'))"
-			+ "OR (IsUseUserOrgAccess = 'Y' AND EXISTS(SELECT 1 FROM AD_User_OrgAccess AS uo WHERE uo.AD_User_ID = ? AND uo.IsActive = 'Y'))"
+			+ "OR ("
+				+ "IsUseUserOrgAccess = 'N' AND EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro "
+				+ "INNER JOIN AD_Org AS o ON o.AD_Org_ID = ro.AD_Org_ID AND o.IsSummary = 'N' "
+				+ "WHERE ro.AD_Role_ID = AD_Role.AD_Role_ID AND ro.IsActive = 'Y')) "
+			+ "OR ("
+				+ "IsUseUserOrgAccess = 'Y' AND EXISTS(SELECT 1 FROM AD_User_OrgAccess AS uo "
+				+ "INNER JOIN AD_Org AS o ON o.AD_Org_ID = uo.AD_Org_ID AND o.IsSummary = 'N' "
+				+ "WHERE uo.AD_User_ID = ? AND uo.IsActive = 'Y')) "
 			+ ")"
 		;
-		Query query = new Query(Env.getCtx(), I_AD_Role.Table_Name, 
-			whereClause, null)
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_Role.Table_Name,
+			whereClause,
+			null
+		)
 			.setParameters(userId, userId)
 			.setOnlyActiveRecords(true)
 		;
