@@ -91,25 +91,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 	private CLogger log = CLogger.getCLogger(CoreFunctionalityImplementation.class);
 	/**	Country */
 	private static CCache<String, MCountry> countryCache = new CCache<String, MCountry>(I_C_Country.Table_Name + "_UUID", 30, 0);	//	no time-out
-	
-	@Override
-	public void listOrganizations(ListOrganizationsRequest request,
-			StreamObserver<ListOrganizationsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListOrganizationsResponse.Builder organizationsList = convertOrganizationsList(request);
-			responseObserver.onNext(organizationsList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
+
 
 	@Override
 	public void listWarehouses(ListWarehousesRequest request, StreamObserver<ListWarehousesResponse> responseObserver) {
@@ -733,13 +715,35 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listOrganizations(ListOrganizationsRequest request,
+			StreamObserver<ListOrganizationsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListOrganizationsResponse.Builder organizationsList = listOrganizations(request);
+			responseObserver.onNext(organizationsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert Organization to list
 	 * @param request
 	 * @return
 	 */
-	private ListOrganizationsResponse.Builder convertOrganizationsList(ListOrganizationsRequest request) {
+	private ListOrganizationsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
 		MRole role = null;
 		if(request.getRoleId() != 0) {
 			role = MRole.get(Env.getCtx(), request.getRoleId());
@@ -761,7 +765,9 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			whereClause = " EXISTS(SELECT 1 FROM AD_Role r "
 				+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
 				+ "AND r.AD_Role_ID = ? "
-				+ "AND r.IsActive = 'Y')";
+				+ "AND r.IsActive = 'Y')"
+				+ "OR AD_Org_ID = 0"
+			;
 			parameters.add(role.getAD_Role_ID());
 		} else {
 			if(role.isUseUserOrgAccess()) {
@@ -778,6 +784,8 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 				parameters.add(role.getAD_Role_ID());
 			}
 		}
+		whereClause += " AND IsSummary = ? ";
+		parameters.add(false);
 
 		//	Get page and count
 		String nexPageToken = null;
