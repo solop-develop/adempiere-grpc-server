@@ -208,6 +208,28 @@ message ExistsWindowDashboardsResponse {
 	int32 record_count = 1;
 }
 
+message WindowDashboardParameter {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string help = 5;
+	int32 sequence = 6;
+	string column_name = 7;
+	string column_sql = 8;
+	int32 element_id = 9;
+	int32 field_id = 10;
+	bool is_mandatory = 11;
+	bool is_range = 12;
+	string default_value = 13;
+	int32 display_type = 14;
+	string v_format = 15;
+	string value_min = 16;
+	string value_max = 17;
+	string display_logic = 18;
+	string read_only_logic = 19;
+}
+
 message WindowDashboard {
 	int32 id = 1;
 	string uuid = 2;
@@ -220,6 +242,7 @@ message WindowDashboard {
 	string chart_type = 9;
 	repeated string context_column_names = 10;
 	string transformation_script = 11;
+	repeated WindowDashboardParameter parameters = 12;
 }
 
 message ListWindowDashboardsRequest {
@@ -258,4 +281,5 @@ message GetWindowMetricsRequest {
 	int32 record_id = 4;
 	string record_uuid = 5;
 	repeated data.KeyValue context_attributes = 6;
+	repeated data.KeyValue filters = 7;
 }

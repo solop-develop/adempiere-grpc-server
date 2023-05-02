@@ -109,7 +109,7 @@ public class SessionManager {
 					throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 				}
 				Env.setContext (context, "#Date", TimeUtil.getDay(System.currentTimeMillis()));
-				Env.setContext(Env.getCtx(), "#AD_Session_ID", Integer.parseInt(claims.getBody().getId()));
+				Env.setContext(context, "#AD_Session_ID", Integer.parseInt(claims.getBody().getId()));
 				MRole role = MRole.get(context, roleId);
 				//	Warehouse / Org
 				Env.setContext (context, "#M_Warehouse_ID", warehouseId);
