@@ -293,8 +293,9 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 				+ "WHERE ur.AD_Role_ID = AD_Role.AD_Role_ID AND ur.AD_User_ID = ?"
 			+ ")"
 			+ "AND ("
-			// TODO: Validate IsAccessAllOrgs with Org.isSummary
-			+ "IsAccessAllOrgs = 'Y' "
+				+ "(IsAccessAllOrgs = 'Y' AND EXISTS(SELECT 1 FROM AD_Org AS o "
+				+ "WHERE (o.AD_Client_ID = AD_Client_ID OR o.AD_Org_ID = 0) "
+				+ "AND o.IsActive = 'Y' AND o.IsSummary = 'N'))"
 			+ "OR ("
 				+ "IsUseUserOrgAccess = 'N' AND EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro "
 				+ "INNER JOIN AD_Org AS o ON o.AD_Org_ID = ro.AD_Org_ID AND o.IsSummary = 'N' "
@@ -379,7 +380,7 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			+ "INNER JOIN AD_Role AS r ON ur.AD_Role_ID = r.AD_Role_ID "
 			+ "WHERE ur.AD_User_ID = ? AND ur.IsActive = 'Y' "
 			+ "AND r.IsActive = 'Y' "
-			+ "AND (r.IsAccessAllOrgs = 'Y' "
+			+ "AND ((r.IsAccessAllOrgs = 'Y' AND EXISTS(SELECT 1 FROM AD_Org AS o WHERE (o.AD_Client_ID = r.AD_Client_ID OR o.AD_Org_ID = 0) AND o.IsActive = 'Y' AND o.IsSummary = 'N') ) "
 			+ "OR (r.IsUseUserOrgAccess = 'N' AND EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro WHERE ro.AD_Role_ID = ur.AD_Role_ID AND ro.IsActive = 'Y') ) "
 			+ "OR (r.IsUseUserOrgAccess = 'Y' AND EXISTS(SELECT 1 FROM AD_User_OrgAccess AS uo WHERE uo.AD_User_ID = ur.AD_User_ID AND uo.IsActive = 'Y') )) "
 			+ "ORDER BY COALESCE(ur.IsDefault,'N') DESC";

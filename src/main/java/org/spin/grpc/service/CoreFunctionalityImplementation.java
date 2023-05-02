@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -762,11 +762,11 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		String whereClause = "1 = 2";
 		//	get from role access
 		if (role.isAccessAllOrgs()) {
-			whereClause = " EXISTS(SELECT 1 FROM AD_Role r "
+			whereClause = "(EXISTS(SELECT 1 FROM AD_Role r "
 				+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
 				+ "AND r.AD_Role_ID = ? "
-				+ "AND r.IsActive = 'Y')"
-				+ "OR AD_Org_ID = 0"
+				+ "AND r.IsActive = 'Y') "
+				+ "OR AD_Org_ID = 0) "
 			;
 			parameters.add(role.getAD_Role_ID());
 		} else {
