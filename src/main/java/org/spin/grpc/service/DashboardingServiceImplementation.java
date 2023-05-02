@@ -89,6 +89,7 @@ import org.spin.backend.grpc.dashboarding.Metrics;
 import org.spin.backend.grpc.dashboarding.Notification;
 import org.spin.backend.grpc.dashboarding.PendingDocument;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
+import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dashboarding.WindowMetrics;
 import org.spin.dashboarding.DashboardingConvertUtil;
 import org.spin.eca50.controller.ChartBuilder;
@@ -906,11 +907,12 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 	}
 
 	ListWindowDashboardsResponse.Builder listWindowDashboards(ListWindowDashboardsRequest request) {
+		Properties context = Env.getCtx();
 		// validate window
 		if (request.getWindowId() <= 0 && Util.isEmpty(request.getWindowUuid(), true)) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
 		}
-		MWindow window = (MWindow) RecordUtil.getEntity(Env.getCtx(), I_AD_Window.Table_Name, request.getWindowUuid(), request.getWindowId(), null);
+		MWindow window = (MWindow) RecordUtil.getEntity(context, I_AD_Window.Table_Name, request.getWindowUuid(), request.getWindowId(), null);
 		if (window == null || window.getAD_Window_ID() <= 0) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
 		}
@@ -922,11 +924,11 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		}
 
 		// Get role
-		int roleId = Env.getAD_Role_ID(Env.getCtx());
+		int roleId = Env.getAD_Role_ID(context);
 
 		//	Get from Charts
 		Query query = new Query(
-			Env.getCtx(),
+			context,
 			"ECA50_WindowChart",
 			this.whereClauseWindowChart,
 			null
@@ -957,7 +959,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			.<PO>list()
 			.forEach(windowChartAllocation -> {
 				MChart chartDefinition = new MChart(
-					Env.getCtx(),
+					context,
 					windowChartAllocation.get_ValueAsInt(I_AD_Chart.COLUMNNAME_AD_Chart_ID),
 					null
 				);
@@ -981,6 +983,22 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 						ValueUtil.validateNull(rule.getScript())
 					);
 				}
+
+				new Query(
+						context,
+						"ECA50_WindowChartParameter",
+						"ECA50_WindowChart_ID = ? AND ECA50_IsEnableSelection = 'Y' ",
+						null
+					)
+					.setParameters(windowChartAllocation.get_ValueAsInt("ECA50_WindowChart_ID"))
+					.list()
+					.forEach(windowChartParameter -> {
+						WindowDashboardParameter.Builder windowChartParameterBuilder = DashboardingConvertUtil.convertWindowDashboardParameter(
+							windowChartParameter
+						);
+						chartBuilder.addParameters(windowChartParameterBuilder);
+					});
+				;
 
 				//	Add to builder
 				builderList.addRecords(chartBuilder);
@@ -1044,6 +1062,27 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		Map<String, Object> filtersList = new HashMap<String, Object>();
 
 		attributesList.entrySet().stream()
+			.forEach(entry -> {
+				PO chartParameter = new Query(
+						context,
+						"ECA50_WindowChartParameter",
+						"ColumnName = ? AND ECA50_WindowChart_ID = ?",
+						null
+					)
+					.setParameters(entry.getKey(), windowChart.get_ID())
+					.first()
+				;
+				if (chartParameter != null) {
+					filtersList.put(
+						chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL),
+						entry.getValue()
+					);
+				}
+			});
+
+		// prameters as client filters
+		Map<String, Object> clientFiltersList = ValueUtil.convertValuesToObjects(request.getFiltersList());
+		clientFiltersList.entrySet().stream()
 			.forEach(entry -> {
 				PO chartParameter = new Query(
 						context,

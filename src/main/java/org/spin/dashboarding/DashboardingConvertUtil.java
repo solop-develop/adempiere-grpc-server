@@ -22,6 +22,8 @@ import java.util.List;
 
 import org.adempiere.apps.graph.GraphColumn;
 import org.adempiere.core.domains.models.I_AD_Column;
+import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.compiere.model.MChart;
 import org.compiere.model.MColorSchema;
 import org.compiere.model.PO;
@@ -32,6 +34,7 @@ import org.compiere.util.Env;
 import org.spin.backend.grpc.dashboarding.ChartData;
 import org.spin.backend.grpc.dashboarding.ColorSchema;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
+import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.base.util.ValueUtil;
 
 /**
@@ -196,6 +199,92 @@ public class DashboardingConvertUtil {
 		return builder;
 	}
 
+
+	public static WindowDashboardParameter.Builder convertWindowDashboardParameter(PO chartParameter) {
+		WindowDashboardParameter.Builder builder = WindowDashboardParameter.newBuilder();
+		if (chartParameter == null || chartParameter.get_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(chartParameter.get_ID())
+			.setUuid(
+				ValueUtil.validateNull(chartParameter.get_UUID())
+			)
+			.setName(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Name)
+				)
+			)
+			.setDescription(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Description)
+				)
+			)
+			.setHelp(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Help)
+				)
+			)
+			.setSequence(
+				chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_SeqNo)
+			)
+			.setColumnName(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ColumnName)
+				)
+			)
+			.setColumnSql(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString("ColumnSQL")
+				)
+			)
+			.setElementId(
+				chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Element_ID)
+			)
+			.setFieldId(
+				chartParameter.get_ValueAsInt(I_AD_Field.COLUMNNAME_AD_Field_ID)
+			)
+			.setIsMandatory(
+				chartParameter.get_ValueAsBoolean(I_AD_Process_Para.COLUMNNAME_IsMandatory)
+			)
+			.setIsRange(
+				chartParameter.get_ValueAsBoolean(I_AD_Process_Para.COLUMNNAME_IsRange)
+			)
+			.setDefaultValue(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_DefaultValue)
+				)
+			)
+			.setDisplayType(
+				chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Reference_ID)
+			)
+			.setVFormat(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_VFormat)
+				)
+			)
+			.setValueMax(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ValueMax)
+				)
+			)
+			.setValueMin(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ValueMin)
+				)
+			)
+			.setDisplayLogic(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_DisplayLogic)
+				)
+			)
+			.setReadOnlyLogic(
+				ValueUtil.validateNull(
+					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ReadOnlyLogic)
+				)
+			)
+		;
+		return builder;
+	}
 
 
 	public static WindowDashboard.Builder convertWindowDashboard(MChart chartDefinition) {
