@@ -1081,7 +1081,9 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			});
 
 		// prameters as client filters
-		Map<String, Object> clientFiltersList = ValueUtil.convertValuesToObjects(request.getFiltersList());
+		Map<String, Object> clientFiltersList = DashboardingConvertUtil.convertFilterValuesToObjects(
+			request.getFiltersList()
+		);
 		clientFiltersList.entrySet().stream()
 			.forEach(entry -> {
 				PO chartParameter = new Query(
@@ -1094,9 +1096,10 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 					.first()
 				;
 				if (chartParameter != null) {
+					Object value = entry.getValue();
 					filtersList.put(
 						chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL),
-						entry.getValue()
+						value
 					);
 				}
 			});

@@ -18,7 +18,10 @@ package org.spin.dashboarding;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.adempiere.apps.graph.GraphColumn;
 import org.adempiere.core.domains.models.I_AD_Column;
@@ -33,6 +36,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.dashboarding.ChartData;
 import org.spin.backend.grpc.dashboarding.ColorSchema;
+import org.spin.backend.grpc.dashboarding.Filter;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.base.util.ValueUtil;
@@ -70,6 +74,67 @@ public class DashboardingConvertUtil {
 		);
 	}
 
+	/**
+	 * Convert Filter Values from gRPC to ADempiere object values
+	 * @param values
+	 * @return
+	 */
+	public static Map<String, Object> convertFilterValuesToObjects(List<Filter> filtersList) {
+		Map<String, Object> convertedValues = new HashMap<>();
+		if (filtersList == null || filtersList.size() <= 0) {
+			return convertedValues;
+		}
+		for (Filter filter : filtersList) {
+			Object value = null;
+			// to IN or NOT IN clause
+			if (filter.getValuesList() != null && filter.getValuesList().size() > 0) {
+				List<Object> values = new ArrayList<Object>();
+				filter.getValuesList().forEach(valueBuilder -> {
+					Object currentValue = ValueUtil.getObjectFromValue(
+						valueBuilder
+					);
+					values.add(currentValue);
+				});
+				value = values;
+			}
+			else {
+				value = ValueUtil.getObjectFromValue(filter.getValue());
+				// to BETWEEN clause
+				if (filter.hasValueTo()) {
+					Object currentValue = value;
+					List<Object> values = new ArrayList<Object>();
+					values.add(currentValue);
+					values.add(
+						ValueUtil.getObjectFromValue(
+							filter.getValueTo()
+						)
+					);
+					value = values;
+				}
+			}
+			convertedValues.put(
+				filter.getColumnName(),
+				value
+			);
+		}
+		//
+		return convertedValues;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void addCollectionParameters(Object objectColelction, List<Object> parameters) {
+		if (objectColelction instanceof Collection) {
+			try {
+				Collection<Object> collection = (Collection<Object>) objectColelction;
+				// for-each loop
+				for (Object rangeValue : collection) {
+					parameters.add(rangeValue);
+				}
+			}
+			catch (Exception e) {
+			}
+		}
+	}
 
 	public static ColorSchema.Builder convertColorSchema1(MColorSchema colorSchema) {
 		ColorSchema.Builder builder = ColorSchema.newBuilder();
