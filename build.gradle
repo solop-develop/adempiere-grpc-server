@@ -75,7 +75,10 @@ dependencies {
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 	// ADempiere External Libraries
 	implementation 'com.github.jjYBdx4IL:ecs:1.4.2.1'
-	implementation 'io.github.adempiere:adempiere-dashboard-improvements:1.0.1'
+
+	// ADempiere Projects with additional features
+	// Dashboard Improvements
+	implementation 'io.github.adempiere:adempiere-dashboard-improvements:1.0.2'
 	// Point Of Sales Improvements
 	implementation 'io.github.adempiere:adempiere-pos-improvements:1.0.0'
 }
