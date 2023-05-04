@@ -78,7 +78,7 @@ dependencies {
 
 	// ADempiere Projects with additional features
 	// Dashboard Improvements
-	implementation 'io.github.adempiere:adempiere-dashboard-improvements:1.0.2'
+	implementation 'io.github.adempiere:adempiere-dashboard-improvements:1.0.3'
 	// Point Of Sales Improvements
 	implementation 'io.github.adempiere:adempiere-pos-improvements:1.0.0'
 }
