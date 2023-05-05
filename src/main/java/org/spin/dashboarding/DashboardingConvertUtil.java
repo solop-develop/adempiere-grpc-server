@@ -22,20 +22,29 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.adempiere.apps.graph.GraphColumn;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
+import org.adempiere.core.domains.models.X_AD_TreeNodeMM;
+import org.adempiere.model.MBrowse;
 import org.compiere.model.MChart;
 import org.compiere.model.MColorSchema;
+import org.compiere.model.MForm;
+import org.compiere.model.MMenu;
+import org.compiere.model.MProcess;
+import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.print.MPrintColor;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.dashboarding.ChartData;
 import org.spin.backend.grpc.dashboarding.ColorSchema;
+import org.spin.backend.grpc.dashboarding.Favorite;
 import org.spin.backend.grpc.dashboarding.Filter;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
@@ -135,6 +144,117 @@ public class DashboardingConvertUtil {
 			}
 		}
 	}
+
+
+	public static Favorite.Builder convertFavourite(X_AD_TreeNodeMM treeNodeMenu) {
+		Favorite.Builder builder = Favorite.newBuilder();
+		if (treeNodeMenu == null || treeNodeMenu.getNode_ID() <= 0) {
+			return builder;
+		}
+		Properties context = Env.getCtx();
+
+		String menuName = "";
+		String menuDescription = "";
+		MMenu menu = MMenu.getFromId(context, treeNodeMenu.getNode_ID());
+		builder.setMenuUuid(ValueUtil.validateNull(menu.getUUID()));
+		String action = MMenu.ACTION_Window;
+		if (!menu.isCentrallyMaintained()) {
+			menuName = menu.getName();
+			menuDescription = menu.getDescription();
+			if (!Env.isBaseLanguage(context, "")) {
+				String translation = menu.get_Translation("Name");
+				if (!Util.isEmpty(translation, true)) {
+					menuName = translation;
+				}
+				translation = menu.get_Translation("Description");
+				if (!Util.isEmpty(translation, true)) {
+					menuDescription = translation;
+				}
+			}
+		}
+		//	Supported actions
+		if (!Util.isEmpty(menu.getAction(), true)) {
+			action = menu.getAction();
+			String referenceUuid = null;
+			if (menu.getAction().equals(MMenu.ACTION_Form) && menu.getAD_Form_ID() > 0) {
+				MForm form = new MForm(context, menu.getAD_Form_ID(), null);
+				referenceUuid = form.getUUID();
+				if (menu.isCentrallyMaintained()) {
+					menuName = form.getName();
+					menuDescription = form.getDescription();
+					if (!Env.isBaseLanguage(context, "")) {
+						String translation = form.get_Translation("Name");
+						if (!Util.isEmpty(translation, true)) {
+							menuName = translation;
+						}
+						translation = form.get_Translation("Description");
+						if (!Util.isEmpty(translation, true)) {
+							menuDescription = translation;
+						}
+					}
+				}
+			} else if (menu.getAction().equals(MMenu.ACTION_Window) && menu.getAD_Window_ID() > 0) {
+				MWindow window = new MWindow(context, menu.getAD_Window_ID(), null);
+				referenceUuid = window.getUUID();
+				if (menu.isCentrallyMaintained()) {
+					menuName = window.getName();
+					menuDescription = window.getDescription();
+					if (!Env.isBaseLanguage(context, "")) {
+						String translation = window.get_Translation("Name");
+						if (!Util.isEmpty(translation, true)) {
+							menuName = translation;
+						}
+						translation = window.get_Translation("Description");
+						if (!Util.isEmpty(translation, true)) {
+							menuDescription = translation;
+						}
+					}
+				}
+			} else if ((menu.getAction().equals(MMenu.ACTION_Process)
+				|| menu.getAction().equals(MMenu.ACTION_Report)) && menu.getAD_Process_ID() > 0) {
+				MProcess process = MProcess.get(context, menu.getAD_Process_ID());
+				referenceUuid = process.getUUID();
+				if (menu.isCentrallyMaintained()) {
+					menuName = process.getName();
+					menuDescription = process.getDescription();
+					if (!Env.isBaseLanguage(context, "")) {
+						String translation = process.get_Translation("Name");
+						if (!Util.isEmpty(translation, true)) {
+							menuName = translation;
+						}
+						translation = process.get_Translation("Description");
+						if (!Util.isEmpty(translation, true)) {
+							menuDescription = translation;
+						}
+					}
+				}
+			} else if (menu.getAction().equals(MMenu.ACTION_SmartBrowse) && menu.getAD_Browse_ID() > 0) {
+				MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
+				referenceUuid = smartBrowser.getUUID();
+				if (menu.isCentrallyMaintained()) {
+					menuName = smartBrowser.getName();
+					menuDescription = smartBrowser.getDescription();
+					if (!Env.isBaseLanguage(context, "")) {
+						String translation = smartBrowser.get_Translation("Name");
+						if (!Util.isEmpty(translation, true)) {
+							menuName = translation;
+						}
+						translation = smartBrowser.get_Translation("Description");
+						if (!Util.isEmpty(translation, true)) {
+							menuDescription = translation;
+						}
+					}
+				}
+			}
+			builder.setReferenceUuid(ValueUtil.validateNull(referenceUuid));
+			builder.setAction(ValueUtil.validateNull(action));
+		}
+		//	Set name and description
+		builder.setMenuName(ValueUtil.validateNull(menuName));
+		builder.setMenuDescription(ValueUtil.validateNull(menuDescription));
+		return builder;
+	}
+
 
 	public static ColorSchema.Builder convertColorSchema1(MColorSchema colorSchema) {
 		ColorSchema.Builder builder = ColorSchema.newBuilder();

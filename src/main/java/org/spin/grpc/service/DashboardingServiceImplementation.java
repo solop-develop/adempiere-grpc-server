@@ -50,7 +50,6 @@ import org.compiere.model.MForm;
 import org.compiere.model.MGoal;
 import org.compiere.model.MMeasure;
 import org.compiere.model.MMenu;
-import org.compiere.model.MProcess;
 import org.compiere.model.MRule;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
@@ -114,24 +113,6 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 			}
 			ListPendingDocumentsResponse.Builder pendingDocumentsList = convertPendingDocumentList(Env.getCtx(), request);
 			responseObserver.onNext(pendingDocumentsList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void listFavorites(ListFavoritesRequest request, StreamObserver<ListFavoritesResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListFavoritesResponse.Builder favoritesList = convertFavoritesList(Env.getCtx(), request);
-			responseObserver.onNext(favoritesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -445,142 +426,61 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listFavorites(ListFavoritesRequest request, StreamObserver<ListFavoritesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListFavoritesResponse.Builder favoritesList = listFavorites(request);
+			responseObserver.onNext(favoritesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert favorites to gRPC
 	 * @param context
 	 * @param request
 	 * @return
 	 */
-	private ListFavoritesResponse.Builder convertFavoritesList(Properties context, ListFavoritesRequest request) {
-		ListFavoritesResponse.Builder builder = ListFavoritesResponse.newBuilder();
-		//	Get entity
-		if(request.getUserId() <= 0
-				&& Util.isEmpty(request.getUserUuid())) {
-			throw new AdempiereException("@AD_User_ID@ @NotFound@");
-		}
+	private ListFavoritesResponse.Builder listFavorites(ListFavoritesRequest request) {
+		Properties context = Env.getCtx();
 		//	Get user
-		int userId = request.getUserId();
-		if(userId <= 0) {
-			userId = RecordUtil.getIdFromUuid(I_AD_Role.Table_Name, request.getUserUuid(), null);
-		}
+		int userId = Env.getAD_User_ID(context);
+
 		//	TODO: add tree criteria
-		new Query(context, I_AD_TreeNodeMM.Table_Name, "EXISTS(SELECT 1 "
-				+ "FROM AD_TreeBar tb "
-				+ "WHERE tb.AD_Tree_ID = AD_TreeNodeMM.AD_Tree_ID "
-				+ "AND tb.Node_ID = AD_TreeNodeMM.Node_ID "
-				+ "AND tb.AD_User_ID = ?)", null)
+		final String whereClause = "EXISTS(SELECT 1 "
+			+ "FROM AD_TreeBar tb "
+			+ "WHERE tb.AD_Tree_ID = AD_TreeNodeMM.AD_Tree_ID "
+			+ "AND tb.Node_ID = AD_TreeNodeMM.Node_ID "
+			+ "AND tb.AD_User_ID = ?)"
+		;
+		Query query = new Query(
+			context,
+			I_AD_TreeNodeMM.Table_Name,
+			whereClause,
+			null
+		)
 			.setParameters(userId)
-			.setClient_ID()
+			// .setClient_ID()
+		;
+		ListFavoritesResponse.Builder builder = ListFavoritesResponse.newBuilder();
+		builder.setRecordCount(query.count());
+
+		query
 			.<X_AD_TreeNodeMM>list().forEach(treeNodeMenu -> {
-				Favorite.Builder favorite = Favorite.newBuilder();
-				String menuName = "";
-				String menuDescription = "";
-				MMenu menu = MMenu.getFromId(context, treeNodeMenu.getNode_ID());
-				favorite.setMenuUuid(ValueUtil.validateNull(menu.getUUID()));
-				String action = MMenu.ACTION_Window;
-				if(!menu.isCentrallyMaintained()) {
-					menuName = menu.getName();
-					menuDescription = menu.getDescription();
-					if(!Env.isBaseLanguage(context, "")) {
-						String translation = menu.get_Translation("Name");
-						if(!Util.isEmpty(translation)) {
-							menuName = translation;
-						}
-						translation = menu.get_Translation("Description");
-						if(!Util.isEmpty(translation)) {
-							menuDescription = translation;
-						}
-					}
-				}
-				//	Supported actions
-				if(!Util.isEmpty(menu.getAction())) {
-					action = menu.getAction();
-					String referenceUuid = null;
-					if(menu.getAction().equals(MMenu.ACTION_Form)) {
-						if(menu.getAD_Form_ID() > 0) {
-							MForm form = new MForm(context, menu.getAD_Form_ID(), null);
-							referenceUuid = form.getUUID();
-							if(menu.isCentrallyMaintained()) {
-								menuName = form.getName();
-								menuDescription = form.getDescription();
-								if(!Env.isBaseLanguage(context, "")) {
-									String translation = form.get_Translation("Name");
-									if(!Util.isEmpty(translation)) {
-										menuName = translation;
-									}
-									translation = form.get_Translation("Description");
-									if(!Util.isEmpty(translation)) {
-										menuDescription = translation;
-									}
-								}
-							}
-						}
-					} else if(menu.getAction().equals(MMenu.ACTION_Window)) {
-						if(menu.getAD_Window_ID() > 0) {
-							MWindow window = new MWindow(context, menu.getAD_Window_ID(), null);
-							referenceUuid = window.getUUID();
-							if(menu.isCentrallyMaintained()) {
-								menuName = window.getName();
-								menuDescription = window.getDescription();
-								if(!Env.isBaseLanguage(context, "")) {
-									String translation = window.get_Translation("Name");
-									if(!Util.isEmpty(translation)) {
-										menuName = translation;
-									}
-									translation = window.get_Translation("Description");
-									if(!Util.isEmpty(translation)) {
-										menuDescription = translation;
-									}
-								}
-							}
-						}
-					} else if(menu.getAction().equals(MMenu.ACTION_Process)
-						|| menu.getAction().equals(MMenu.ACTION_Report)) {
-						if(menu.getAD_Process_ID() > 0) {
-							MProcess process = MProcess.get(context, menu.getAD_Process_ID());
-							referenceUuid = process.getUUID();
-							if(menu.isCentrallyMaintained()) {
-								menuName = process.getName();
-								menuDescription = process.getDescription();
-								if(!Env.isBaseLanguage(context, "")) {
-									String translation = process.get_Translation("Name");
-									if(!Util.isEmpty(translation)) {
-										menuName = translation;
-									}
-									translation = process.get_Translation("Description");
-									if(!Util.isEmpty(translation)) {
-										menuDescription = translation;
-									}
-								}
-							}
-						}
-					} else if(menu.getAction().equals(MMenu.ACTION_SmartBrowse)) {
-						if(menu.getAD_Browse_ID() > 0) {
-							MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
-							referenceUuid = smartBrowser.getUUID();
-							if(menu.isCentrallyMaintained()) {
-								menuName = smartBrowser.getName();
-								menuDescription = smartBrowser.getDescription();
-								if(!Env.isBaseLanguage(context, "")) {
-									String translation = smartBrowser.get_Translation("Name");
-									if(!Util.isEmpty(translation)) {
-										menuName = translation;
-									}
-									translation = smartBrowser.get_Translation("Description");
-									if(!Util.isEmpty(translation)) {
-										menuDescription = translation;
-									}
-								}
-							}
-						}
-					}
-					favorite.setReferenceUuid(ValueUtil.validateNull(referenceUuid));
-					favorite.setAction(ValueUtil.validateNull(action));
-				}
-				//	Set name and description
-				favorite.setMenuName(ValueUtil.validateNull(menuName));
-				favorite.setMenuDescription(ValueUtil.validateNull(menuDescription));
+				Favorite.Builder favorite = DashboardingConvertUtil.convertFavourite(treeNodeMenu);
 				builder.addFavorites(favorite);
 			});
 		//	Return
