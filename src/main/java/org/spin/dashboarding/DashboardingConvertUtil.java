@@ -146,7 +146,7 @@ public class DashboardingConvertUtil {
 	}
 
 
-	public static Favorite.Builder convertFavourite(X_AD_TreeNodeMM treeNodeMenu) {
+	public static Favorite.Builder convertFavorite(X_AD_TreeNodeMM treeNodeMenu) {
 		Favorite.Builder builder = Favorite.newBuilder();
 		if (treeNodeMenu == null || treeNodeMenu.getNode_ID() <= 0) {
 			return builder;

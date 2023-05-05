@@ -480,7 +480,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 
 		query
 			.<X_AD_TreeNodeMM>list().forEach(treeNodeMenu -> {
-				Favorite.Builder favorite = DashboardingConvertUtil.convertFavourite(treeNodeMenu);
+				Favorite.Builder favorite = DashboardingConvertUtil.convertFavorite(treeNodeMenu);
 				builder.addFavorites(favorite);
 			});
 		//	Return
