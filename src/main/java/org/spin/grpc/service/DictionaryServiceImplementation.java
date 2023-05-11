@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -546,9 +547,34 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if (tab == null) {
 			return Tab.newBuilder();
 		}
-		String parentTabUuid = null;
+
 		int tabId = tab.getAD_Tab_ID();
 		tab = ASPUtil.getInstance(context).getWindowTab(tab.getAD_Window_ID(), tabId);
+
+		final int tabLevel = tab.getTabLevel();
+		final int tabSequence = tab.getSeqNo();
+		String parentTabUuid = null;
+		// root tab has no parent
+		if (tabLevel > 0) {
+			AtomicReference<Integer> parentTabSequence = new AtomicReference<Integer>(-1);
+			AtomicReference<MTab> parentTabRefecence = new AtomicReference<MTab>();
+			List<MTab> tabsList = ASPUtil.getInstance(context).getWindowTabs(tab.getAD_Window_ID());
+			tabsList.forEach(tabItem -> {
+				if (tabItem.getTabLevel() >= tabLevel || tabItem.getSeqNo() >= tabSequence) {
+					// it is child tab
+					return;
+				}
+
+				// current tab is more down that tab list
+				if (parentTabSequence.get() == -1 || tabItem.getSeqNo() > parentTabSequence.get()) {
+					parentTabSequence.set(tabItem.getSeqNo());
+					parentTabRefecence.set(tabItem);
+				}
+			});
+			if (parentTabRefecence.get() != null) {
+				parentTabUuid = parentTabRefecence.get().getUUID();
+			}
+		}
 
 		//	Get table attributes
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
@@ -586,7 +612,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setIsView(table.isView())
 				.setTabLevel(tab.getTabLevel())
 				.setTableName(ValueUtil.validateNull(table.getTableName()))
-				.setParentTabUuid(ValueUtil.validateNull(parentTabUuid))
+			.setParentTabUuid(
+				ValueUtil.validateNull(parentTabUuid)
+			)
 				.setIsChangeLog(table.isChangeLog())
 				.setIsActive(tab.isActive())
 				.addAllContextColumnNames(
