@@ -35,6 +35,7 @@ public enum Services {
 	INVOICE("invoice"),
 	ISSUE_MANAGEMENT("issue_management"),
 	LOG("log"),
+	MATCH_PO_RECEIPT_INVOICE("match_po_receipt_invoice"),
 	MATERIAL_MANAGEMENT("material_management"),
 	ORDER("order"),
 	PAYMENT("payment"),

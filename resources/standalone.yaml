@@ -17,6 +17,7 @@ server:
        - in_out
        - invoice
        - issue_management
+       - match_po_receipt_invoice
        - material_management
        - order
        - payment
