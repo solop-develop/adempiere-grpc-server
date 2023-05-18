@@ -33,7 +33,7 @@ service MatchPORReceiptInvoice {
 	rpc ListMatchesTypesTo(ListMatchesTypesToRequest) returns (data.ListLookupItemsResponse) {}
 	rpc ListSearchModes(ListSearchModesRequest) returns (data.ListLookupItemsResponse) {}
 	rpc ListVendors(ListVendorsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListProducts(ListProductsRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
 	// list result
 	rpc ListMatchedFrom(ListMatchedFromRequest) returns (ListMatchedFromResponse) {}
 	rpc ListMatchedTo(ListMatchedToRequest) returns (ListMatchedToResponse) {}
@@ -59,6 +59,7 @@ message ListMatchesTypesToRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	string search_value = 3;
+	MatchType match_from_type = 4;
 }
 
 
@@ -93,6 +94,12 @@ message ListVendorsRequest {
 
 
 // Product
+message ListProductsRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	string search_value = 3;
+}
+
 message Product {
 	string uuid = 1;
 	int32 id = 2;
@@ -103,10 +110,10 @@ message Product {
 	string description = 7;
 }
 
-message ListProductsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+message ListProductsResponse {
+	int64 record_count = 1;
+	repeated Product records = 2;
+	string next_page_token = 3;
 }
 
 
@@ -114,12 +121,15 @@ message ListProductsRequest {
 message Matched {
 	int32 id = 1;
 	string uuid = 2;
-	string document_no = 3;
-	int64 date = 4;
-	Vendor vendor = 5;
-	int32 line_no = 6;
-	Product product = 7;
-	int32 quantity = 8;
+	int32 header_id = 3;
+	string header_uuid = 4;
+	string document_no = 5;
+	int64 date = 6;
+	Vendor vendor = 7;
+	int32 line_no = 8;
+	Product product = 9;
+	data.Decimal quantity = 10;
+	MatchType match_type = 11;
 }
 
 message ListMatchedFromRequest {
@@ -128,10 +138,11 @@ message ListMatchedFromRequest {
 	string search_value = 3;
 	MatchMode match_mode = 4;
 	MatchType match_from_type = 5;
-	int32 vendor_id = 8;
-	int32 product_id = 9;
-	int64 date_from = 10;
-	int64 date_to = 11;
+	MatchType match_to_type = 6;
+	int32 vendor_id = 7;
+	int32 product_id = 8;
+	int64 date_from = 9;
+	int64 date_to = 10;
 }
 
 message ListMatchedFromResponse {
@@ -149,7 +160,7 @@ message ListMatchedToRequest {
 	MatchMode match_mode = 4;
 	MatchType match_from_type = 5;
 	MatchType match_to_type = 6;
-	Matched match_from_selected = 7;
+	int32 match_from_selected_id = 7;
 	bool is_same_vendor = 8;
 	bool is_same_quantity = 9;
 }
@@ -166,7 +177,7 @@ message ProcessRequest {
 	MatchMode match_mode = 1;
 	MatchType match_from_type = 2;
 	MatchType match_to_type = 3;
-	Matched match_from_selected = 4;
+	int32 match_from_selected_id = 4;
 	repeated Matched matched_to_selections = 5;
 	data.Decimal quantity = 6;
 }

@@ -37,6 +37,7 @@ import org.spin.grpc.service.InOutServiceImplementation;
 import org.spin.grpc.service.InvoiceServiceImplementation;
 import org.spin.grpc.service.IssueManagementServiceImplementation;
 import org.spin.grpc.service.LogsServiceImplementation;
+import org.spin.grpc.service.MatchPOReceiptInvoiceServiceImplementation;
 import org.spin.grpc.service.MaterialManagementServiceImplementation;
 import org.spin.grpc.service.OrderServiceImplementation;
 import org.spin.grpc.service.PaymentAllocationServiceImplementation;
@@ -163,6 +164,11 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.LOG.getServiceName())) {
 			serverBuilder.addService(new LogsServiceImplementation());
 			logger.info("Service " + Services.LOG.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Match PO-Receipt-Invocie
+		if (SetupLoader.getInstance().getServer().isValidService(Services.MATCH_PO_RECEIPT_INVOICE.getServiceName())) {
+			serverBuilder.addService(new MatchPOReceiptInvoiceServiceImplementation());
+			logger.info("Service " + Services.MATCH_PO_RECEIPT_INVOICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Material Management
 		if(SetupLoader.getInstance().getServer().isValidService(Services.MATERIAL_MANAGEMENT.getServiceName())) {
