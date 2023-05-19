@@ -319,36 +319,38 @@ public class Util {
 
 
 	/**
-	 *  Create Matching Record
-	 *  @param invoice true if matching invoice false if matching PO
-	 *  @param M_InOutLine_ID shipment line
-	 *  @param Line_ID C_InvoiceLine_ID or C_OrderLine_ID
-	 *  @param qty quantity
-	 *  @param trxName 
-	 *  @return true if created
+	 * Create Matching Record
+	 * @param invoice true if matching invoice false if matching PO
+	 * @param M_InOutLine_ID shipment line
+	 * @param Line_ID C_InvoiceLine_ID or C_OrderLine_ID
+	 * @param qty quantity
+	 * @param trxName 
+	 * @return true if created
 	 */
-	public static boolean createMatchRecord (boolean invoice, int M_InOutLine_ID, int Line_ID,
-		BigDecimal qty, String trxName)
-	{
-		if (qty.compareTo(Env.ZERO) == 0)
+	public static boolean createMatchRecord(
+		boolean invoice, int M_InOutLine_ID, int Line_ID,
+		BigDecimal qty, String trxName
+	) {
+		if (qty.compareTo(Env.ZERO) == 0) {
 			return true;
+		}
 		log.fine("IsInvoice=" + invoice
 			+ ", M_InOutLine_ID=" + M_InOutLine_ID + ", Line_ID=" + Line_ID
 			+ ", Qty=" + qty);
 		//
 		boolean success = false;
 		MInOutLine sLine = new MInOutLine (Env.getCtx(), M_InOutLine_ID, trxName);
-		if (invoice)	//	Shipment - Invoice
-		{
+		//	Shipment - Invoice
+		if (invoice) {
 			//	Update Invoice Line
 			MInvoiceLine iLine = new MInvoiceLine (Env.getCtx(), Line_ID, trxName);
 			iLine.setM_InOutLine_ID(M_InOutLine_ID);
-			if (sLine.getC_OrderLine_ID() != 0)
+			if (sLine.getC_OrderLine_ID() != 0) {
 				iLine.setC_OrderLine_ID(sLine.getC_OrderLine_ID());
+			}
 			iLine.saveEx();
 			//	Create Shipment - Invoice Link
-			if (iLine.getM_Product_ID() != 0)
-			{
+			if (iLine.getM_Product_ID() != 0) {
 				Boolean useReceiptDateAcct = MSysConfig.getBooleanValue(
 					"MATCHINV_USE_DATEACCT_FROM_RECEIPT",
 					false,
@@ -384,63 +386,73 @@ public class Util {
 				if (match.save()) {
 					success = true;
 				}
-				else
+				else {
 					log.log(Level.SEVERE, "Inv Match not created: " + match);
-
+				}
 				if (match.getC_InvoiceLine().getC_Invoice().getDocStatus().equals("VO") ||
 						match.getC_InvoiceLine().getC_Invoice().getDocStatus().equals("RE") ||
 						match.getM_InOutLine().getM_InOut().getDocStatus().equals("VO") ||
-						match.getM_InOutLine().getM_InOut().getDocStatus().equals("RE"))
+						match.getM_InOutLine().getM_InOut().getDocStatus().equals("RE")) {
 					match.reverseIt(match.getDateAcct());
+				}
 			}
-			else
+			else {
 				success = true;
+			}
 			//	Create PO - Invoice Link = corrects PO
-			if (iLine.getC_OrderLine_ID() != 0 && iLine.getM_Product_ID() != 0)
-			{
+			if (iLine.getC_OrderLine_ID() != 0 && iLine.getM_Product_ID() != 0) {
 				MMatchPO matchPO = new MMatchPO(iLine, iLine.getParent().getDateAcct() , qty);
 				matchPO.setC_InvoiceLine_ID(iLine);
-				if (!matchPO.save())
+				if (!matchPO.save()) {
 					log.log(Level.SEVERE, "PO(Inv) Match not created: " + matchPO);
+				}
 				if (MClient.isClientAccountingImmediate()) {
 					String ignoreError = DocumentEngine.postImmediate(matchPO.getCtx(), matchPO.getAD_Client_ID(), matchPO.get_Table_ID(), matchPO.get_ID(), true, matchPO.get_TrxName());						
 				}
 			}
 		}
-		else	//	Shipment - Order
-		{
+		//	Shipment - Order
+		else {
 			//	Update Shipment Line
 			sLine.setC_OrderLine_ID(Line_ID);
 			sLine.saveEx();
 			//	Update Order Line
 			MOrderLine oLine = new MOrderLine(Env.getCtx(), Line_ID, trxName);
-			if (oLine.get_ID() != 0)	//	other in MInOut.completeIt
-			{
+			//	other in MInOut.completeIt
+			if (oLine.get_ID() != 0) {
 				oLine.setQtyReserved(oLine.getQtyReserved().subtract(qty));
-				if (!oLine.save())
+				if (!oLine.save()) {
 					log.severe("QtyReserved not updated - C_OrderLine_ID=" + Line_ID);
+				}
 			}
 
 			//	Create PO - Shipment Link
-			if (sLine.getM_Product_ID() != 0)
-			{
+			if (sLine.getM_Product_ID() != 0) {
 				MMatchPO match = new MMatchPO (sLine, null, qty);
-				if (!match.save())
+				if (!match.save()) {
 					log.log(Level.SEVERE, "PO Match not created: " + match);
-				else
-				{
+				}
+				else {
 					success = true;
 					//	Correct Ordered Qty for Stocked Products (see MOrder.reserveStock / MInOut.processIt)
-					if (sLine.getProduct() != null && sLine.getProduct().isStocked())
-						success = MStorage.add (Env.getCtx(), sLine.getM_Warehouse_ID(), 
-							sLine.getM_Locator_ID(), 
-							sLine.getM_Product_ID(), 
-							sLine.getM_AttributeSetInstance_ID(), oLine.getM_AttributeSetInstance_ID(), 
-							null, null, qty.negate(), trxName);
+					if (sLine.getProduct() != null && sLine.getProduct().isStocked()) {
+						success = MStorage.add(
+							Env.getCtx(), sLine.getM_Warehouse_ID(),
+							sLine.getM_Locator_ID(),
+							sLine.getM_Product_ID(),
+							sLine.getM_AttributeSetInstance_ID(),
+							oLine.getM_AttributeSetInstance_ID(),
+							null,
+							null,
+							qty.negate(),
+							trxName
+						);
+					}
 				}
 			}
-			else
+			else {
 				success = true;
+			}
 		}
 		return success;
 	}   //  createMatchRecord
