@@ -131,7 +131,8 @@ message Matched {
 	int32 product_id = 10;
 	string product_name = 11;
 	data.Decimal quantity = 12;
-	MatchType match_type = 13;
+	data.Decimal matched_quantity = 13;
+	MatchType match_type = 14;
 }
 
 message ListMatchedFromRequest {

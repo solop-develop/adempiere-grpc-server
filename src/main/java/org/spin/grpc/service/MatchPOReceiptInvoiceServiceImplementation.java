@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -675,7 +676,70 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 		AtomicReference<String> atomicStatus = new AtomicReference<String>();
 
 		Trx.run(transactionName -> {
-			Properties context = Env.getCtx();
+			boolean isMatchMode = MatchMode.MODE_MATCHED == request.getMatchMode();
+			final BigDecimal quantity = ValueUtil.getBigDecimalFromDecimal(
+				request.getQuantity()
+			);
+			boolean isMatchFromOder = MatchType.PURCHASE_ORDER == request.getMatchFromType();
+			boolean isMatchFromReceipt = MatchType.RECEIPT == request.getMatchFromType();
+
+			boolean isMatchToOrder = MatchType.PURCHASE_ORDER == request.getMatchToType();
+
+			Matched.Builder matchedFromSelected = org.spin.form.match_po_receipt_invoice.Util.getMatchedSelectedFrom(
+				request.getMatchFromSelectedId(),
+				isMatchMode,
+				request.getMatchFromType().getNumber(),
+				request.getMatchToType().getNumber()
+			);
+
+			request.getMatchedToSelectionsList().forEach(lineMatchedTo -> {
+				BigDecimal mathcedQuantity = ValueUtil.getBigDecimalFromDecimal(lineMatchedTo.getMatchedQuantity());
+				BigDecimal documentQuantity = ValueUtil.getBigDecimalFromDecimal(lineMatchedTo.getQuantity());
+
+				Optional<BigDecimal> qty = Optional.empty();
+				Optional<BigDecimal> docQty = Optional.ofNullable((BigDecimal) documentQuantity);
+				Optional<BigDecimal> matchedQty = Optional.ofNullable((BigDecimal) mathcedQuantity);
+				Optional<BigDecimal> totalQty = Optional.ofNullable(
+					quantity
+				);
+				
+				if (!isMatchMode) {
+					qty = docQty; //  doc
+				}
+
+				qty = Optional.ofNullable(qty.orElse(Env.ZERO).subtract(matchedQty.orElse(Env.ZERO)));
+				if (qty.isPresent() && qty.get().compareTo(totalQty.orElse(Env.ZERO)) > 0) {
+					qty = totalQty;
+				}
+				if (totalQty.isPresent()) {
+					totalQty = Optional.ofNullable(totalQty.get().subtract(qty.orElse(Env.ZERO)));
+				}
+
+				//  Invoice or PO
+				boolean invoice = true;
+				if (isMatchFromOder || isMatchToOrder) {
+					invoice = false;
+				}
+				//  Get Shipment_ID
+				int M_InOutLine_ID = 0;
+				int Line_ID = 0;
+				if (isMatchFromReceipt) {
+					M_InOutLine_ID = matchedFromSelected.getId();      //  upper table
+					Line_ID = lineMatchedTo.getId();
+				}
+				else {
+					M_InOutLine_ID = lineMatchedTo.getId();    //  lower table
+					Line_ID = matchedFromSelected.getId();
+				}
+
+				org.spin.form.match_po_receipt_invoice.Util.createMatchRecord(
+					invoice,
+					M_InOutLine_ID,
+					Line_ID,
+					qty.orElse(Env.ZERO),
+					transactionName
+				);
+			});
 
 			atomicStatus.set("");
 		});
