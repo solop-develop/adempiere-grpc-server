@@ -16,6 +16,7 @@ package org.spin.grpc.service;
 
 import org.adempiere.exceptions.AdempiereException;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -523,8 +524,10 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 		if (matchTypeFrom == MatchType.INVOICE_VALUE) {
 			sql = "SELECT lin.C_InvoiceLine_ID AS ID, lin.UUID AS UUID, "
 				+ " hdr.C_Invoice_ID AS Header_ID, hrd.Header_UUID, hdr.DateInvoiced AS Date,"
-				+ " hdr.C_Invoice_ID, hdr.DocumentNo, hdr.DateInvoiced, bp.Name, hdr.C_BPartner_ID,"
-				+ " lin.Line, lin.C_InvoiceLine_ID, p.Name, lin.M_Product_ID,"
+				+ " hdr.C_Invoice_ID, hdr.DocumentNo, hdr.DateInvoiced, "
+				+ " bp.Name AS C_BPartner_Name, hdr.C_BPartner_ID, "
+				+ " lin.Line, lin.C_InvoiceLine_ID, "
+				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
 				+ " lin.QtyInvoiced, SUM(COALESCE(mi.Qty, 0)), org.Name, hdr.AD_Org_ID "
 				+ "FROM C_Invoice hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
@@ -541,8 +544,10 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 
 			sql = "SELECT lin.C_OrderLine_ID AS ID, lin.UUID AS UUID, "
 				+ " hdr.C_Order_ID AS Header_ID, hrd.Header_UUID, hdr.DateOrdered AS Date,"
-				+ " hdr.C_Order_ID, hdr.DocumentNo, hdr.DateOrdered, bp.Name, hdr.C_BPartner_ID,"
-				+ " lin.Line, lin.C_OrderLine_ID, p.Name, lin.M_Product_ID,"
+				+ " hdr.C_Order_ID, hdr.DocumentNo, hdr.DateOrdered, "
+				+ " bp.Name AS C_BPartner_Name, hdr.C_BPartner_ID, "
+				+ " lin.Line, lin.C_OrderLine_ID, "
+				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
 				+ " lin.QtyOrdered, SUM(COALESCE(mo.Qty, 0)), org.Name, hdr.AD_Org_ID "
 				+ "FROM C_Order hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
@@ -572,8 +577,10 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 		else {
 			sql = "SELECT lin.M_InOutLine_ID AS ID, lin.UUID AS UUID, "
 				+ " hdr.M_InOut_ID AS Header_ID, hrd.Header_UUID, hdr.MovementDate AS Date,"
-				+ " hdr.M_InOut_ID, hdr.DocumentNo, hdr.MovementDate, bp.Name,hdr.C_BPartner_ID,"
-				+ " lin.Line, lin.M_InOutLine_ID, p.Name, lin.M_Product_ID,"
+				+ " hdr.M_InOut_ID, hdr.DocumentNo, hdr.MovementDate, "
+				+ " bp.Name AS C_BPartner_Name, hdr.C_BPartner_ID, "
+				+ " lin.Line, lin.M_InOutLine_ID, "
+				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
 				+ " lin.MovementQty, SUM(COALESCE(m.Qty, 0)), org.Name, hdr.AD_Org_ID "
 				+ "FROM M_InOut hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
@@ -655,14 +662,20 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 					resultSet.getBigDecimal("Quantity")
 				)
 			)
-			.setProduct(
-				convertProduct(
-					resultSet.getInt(I_C_InvoiceLine.COLUMNNAME_M_Product_ID)
+			.setProductId(
+				resultSet.getInt(I_C_InvoiceLine.COLUMNNAME_M_Product_ID)
+			)
+			.setProductName(
+				ValueUtil.validateNull(
+					resultSet.getString("M_Product_Name")
 				)
 			)
-			.setVendor(
-				convertVendor(
-					resultSet.getInt(I_C_Invoice.COLUMNNAME_C_BPartner_ID)
+			.setVendorId(
+				resultSet.getInt(I_C_Invoice.COLUMNNAME_C_BPartner_ID)
+			)
+			.setVendorName(
+				ValueUtil.validateNull(
+					resultSet.getString("C_BPartner_Name")
 				)
 			)
 		;
@@ -730,6 +743,7 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 			MRole.SQL_RO
 		) + groupBy;
 
+		ListMatchedFromResponse.Builder builderList = ListMatchedFromResponse.newBuilder();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
@@ -738,6 +752,9 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 
 			while (rs.next()) {
 				recordCount++;
+
+				Matched.Builder matchedBuilder = convertMatched(rs);
+				builderList.addRecords(matchedBuilder);
 			}
 		}
 		catch (SQLException e) {
@@ -749,9 +766,7 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 			pstmt = null;
 		}
 
-		ListMatchedFromResponse.Builder builderList = ListMatchedFromResponse.newBuilder()
-			.setRecordCount(recordCount)
-		;
+		builderList.setRecordCount(recordCount);
 
 		return builderList;
 	}
@@ -765,7 +780,7 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListMatchedToResponse.Builder builder = ListMatchedToResponse.newBuilder();
+			ListMatchedToResponse.Builder builder = listMatchedTo(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -778,6 +793,125 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 		}
 	}
 
+	private ListMatchedToResponse.Builder listMatchedTo(ListMatchedToRequest request) {
+		boolean isMatched = request.getMatchMode() == MatchMode.MODE_MATCHED;
+		int matchFromType = request.getMatchFromTypeValue();
+		int matchToType = request.getMatchToTypeValue();
+		int matchFromSelectedId = request.getMatchFromSelectedId();
+
+		final String dateColumn = getDateColumn(matchFromType);
+		// final String quantityColumn = getQuantityColumn(matchFromType);
+		final String sql = getSQL(isMatched, matchFromType, matchToType);
+		final String groupBy = getGroupBy(isMatched, matchFromType);
+
+		String whereClause = "";
+		if (request.getProductId() > 0) {
+			whereClause += " AND lin.M_Product_ID = " + request.getProductId();
+		}
+		if (request.getVendorId() > 0) {
+			whereClause += " AND hdr.C_BPartner_ID = " + request.getVendorId();
+		}
+
+		// Date filter
+		Timestamp dateFrom = ValueUtil.getTimestampFromLong(request.getDateFrom());
+		Timestamp dateTo = ValueUtil.getTimestampFromLong(request.getDateTo());
+		if (dateFrom != null && dateTo != null) {
+			whereClause += " AND " + dateColumn + " BETWEEN " + DB.TO_DATE(dateFrom)
+				+ " AND " + DB.TO_DATE(dateTo)
+			;
+		} else if (dateFrom != null) {
+			whereClause += " AND " + dateColumn + " >= " + DB.TO_DATE(dateFrom);
+		} else if (dateTo != null) {
+			whereClause += " AND " + dateColumn + " <= " + DB.TO_DATE(dateTo);
+		}
+
+		if (request.getIsSameQuantity()) {
+			final String quantityColumn = getQuantityColumn(matchFromType);
+			Matched.Builder matchedFromSelected = getMatchedSelectedFrom(matchFromSelectedId, isMatched, matchFromType, matchToType);
+			BigDecimal quantity = ValueUtil.getBigDecimalFromDecimal(
+				matchedFromSelected.getQuantity()
+			);
+			whereClause += " AND " + quantityColumn + " = " + quantity;
+		}
+
+		int recordCount = 0;
+
+		final String sqlWithAccess = MRole.getDefault().addAccessSQL(
+			sql + whereClause,
+			"hdr",
+			MRole.SQL_FULLYQUALIFIED,
+			MRole.SQL_RO
+		) + groupBy;
+
+		ListMatchedToResponse.Builder builderList = ListMatchedToResponse.newBuilder();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sqlWithAccess, null);
+			rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				recordCount++;
+
+				Matched.Builder matchedBuilder = convertMatched(rs);
+				builderList.addRecords(matchedBuilder);
+			}
+		}
+		catch (SQLException e) {
+			log.log(Level.SEVERE, sql, e);
+		}
+		finally {
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+
+		builderList.setRecordCount(recordCount);
+
+		return builderList;
+	}
+
+	public Matched.Builder getMatchedSelectedFrom(int matchFromSelectedId, boolean isMatched, int matchTypeFrom, int matchTypeTo) {
+		Matched.Builder builder = Matched.newBuilder();
+		if (matchFromSelectedId <= 0) {
+			return builder;
+		}
+
+		// Receipt
+		String whereClause = " AND lin.M_InOutLine_ID = ";
+		if (matchTypeFrom == MatchType.INVOICE_VALUE) {
+			whereClause = " AND lin.C_InvoiceLine_ID = ";
+		}
+		else if (matchTypeFrom == MatchType.PURCHASE_ORDER_VALUE) {
+			whereClause = " AND lin.C_OrderLine_ID = ";
+		}
+		whereClause += matchFromSelectedId;
+
+		final String sql = getSQL(isMatched, matchTypeFrom, matchTypeTo);
+		final String groupBy = getGroupBy(isMatched, matchTypeFrom);
+
+		final String sqlWithAccess = MRole.getDefault().addAccessSQL(
+			sql + whereClause,
+			"hdr",
+			MRole.SQL_FULLYQUALIFIED,
+			MRole.SQL_RO
+		) + groupBy;
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sqlWithAccess, null);
+			rs = pstmt.executeQuery();
+
+			if (rs.next()) {
+				builder = convertMatched(rs);
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+
+		return builder;
+	}
 
 	@Override
 	public void process(ProcessRequest request, StreamObserver<ProcessResponse> responseObserver) {
