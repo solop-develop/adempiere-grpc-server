@@ -109,7 +109,7 @@ public class Util {
 			)
 			.setDate(
 				ValueUtil.getLongFromTimestamp(
-					resultSet.getTimestamp("Date")
+					resultSet.getTimestamp(5) // Date
 				)
 			)
 			.setDocumentNo(
@@ -173,12 +173,14 @@ public class Util {
 		String sql = "";
 		if (matchTypeFrom == MatchType.INVOICE_VALUE) {
 			sql = "SELECT lin.C_InvoiceLine_ID AS ID, lin.UUID AS UUID, "
-				+ " hdr.C_Invoice_ID AS Header_ID, hrd.Header_UUID, hdr.DateInvoiced AS Date,"
+				+ " hdr.C_Invoice_ID AS Header_ID, hdr.UUID AS Header_UUID, hdr.DateInvoiced AS Date,"
 				+ " hdr.C_Invoice_ID, hdr.DocumentNo, hdr.DateInvoiced, "
 				+ " bp.Name AS C_BPartner_Name, hdr.C_BPartner_ID, "
 				+ " lin.Line, lin.C_InvoiceLine_ID, "
 				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
-				+ " lin.QtyInvoiced, SUM(COALESCE(mi.Qty, 0)), org.Name, hdr.AD_Org_ID "
+				+ " lin.QtyInvoiced, "
+				+ " lin.QtyInvoiced AS Quantity, SUM(COALESCE(mi.Qty, 0)) AS Assigned, "
+				+ " org.Name, hdr.AD_Org_ID "
 				+ "FROM C_Invoice hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
 				+ " INNER JOIN C_BPartner bp ON (hdr.C_BPartner_ID = bp.C_BPartner_ID)"
@@ -193,12 +195,14 @@ public class Util {
 			String lineType = matchTypeTo == MatchType.RECEIPT_VALUE ? "M_InOutLine_ID" : "C_InvoiceLine_ID";
 
 			sql = "SELECT lin.C_OrderLine_ID AS ID, lin.UUID AS UUID, "
-				+ " hdr.C_Order_ID AS Header_ID, hrd.Header_UUID, hdr.DateOrdered AS Date,"
+				+ " hdr.C_Order_ID AS Header_ID, hdr.UUID AS Header_UUID, hdr.DateOrdered AS Date,"
 				+ " hdr.C_Order_ID, hdr.DocumentNo, hdr.DateOrdered, "
 				+ " bp.Name AS C_BPartner_Name, hdr.C_BPartner_ID, "
 				+ " lin.Line, lin.C_OrderLine_ID, "
 				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
-				+ " lin.QtyOrdered, SUM(COALESCE(mo.Qty, 0)), org.Name, hdr.AD_Org_ID "
+				+ " lin.QtyOrdered, "
+				+ " lin.QtyOrdered AS Quantity, SUM(COALESCE(mo.Qty, 0)) AS Assigned, "
+				+ " org.Name, hdr.AD_Org_ID "
 				+ "FROM C_Order hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
 				+ " INNER JOIN C_BPartner bp ON (hdr.C_BPartner_ID = bp.C_BPartner_ID)"
@@ -226,12 +230,14 @@ public class Util {
 		// Receipt
 		else {
 			sql = "SELECT lin.M_InOutLine_ID AS ID, lin.UUID AS UUID, "
-				+ " hdr.M_InOut_ID AS Header_ID, hrd.Header_UUID, hdr.MovementDate AS Date,"
+				+ " hdr.M_InOut_ID AS Header_ID, hdr.UUID AS Header_UUID, hdr.MovementDate AS Date,"
 				+ " hdr.M_InOut_ID, hdr.DocumentNo, hdr.MovementDate, "
 				+ " bp.Name AS C_BPartner_Name, hdr.C_BPartner_ID, "
 				+ " lin.Line, lin.M_InOutLine_ID, "
 				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
-				+ " lin.MovementQty, SUM(COALESCE(m.Qty, 0)), org.Name, hdr.AD_Org_ID "
+				+ " lin.MovementQty, "
+				+ " lin.MovementQty AS Quantity, SUM(COALESCE(m.Qty, 0)) AS Assigned, "
+				+ " org.Name, hdr.AD_Org_ID "
 				+ "FROM M_InOut hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
 				+ " INNER JOIN C_BPartner bp ON (hdr.C_BPartner_ID = bp.C_BPartner_ID)"
