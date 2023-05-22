@@ -463,12 +463,14 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
-				boolean isReceipt = rs.getBoolean("IsReceipt");
+				boolean isReceipt = ValueUtil.stringToBoolean(
+					rs.getString("IsReceipt")
+				);
 				TransactionType.Builder transactionTypeBuilder = convertTransactionType(
 					isReceipt ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
 				);
 
-				int paymentId =rs.getInt("C_Payment_ID");
+				int paymentId = rs.getInt(I_C_Payment.COLUMNNAME_C_Payment_ID);
 				String paymentUuid = RecordUtil.getUuidFromId(I_C_Payment.Table_Name, paymentId, null);
 
 				Payment.Builder paymentBuilder = Payment.newBuilder()
@@ -606,8 +608,7 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		ListInvoicesResponse.Builder builderList = ListInvoicesResponse.newBuilder();
-		try
-		{
+		try {
 			pstmt = DB.prepareStatement(sql.toString(), null);
 			pstmt.setInt(1, currencyId);
 			pstmt.setTimestamp(2, date);
@@ -632,7 +633,9 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
-				boolean isSalesTransaction = rs.getBoolean("IsSOTrx");
+				boolean isSalesTransaction = ValueUtil.stringToBoolean(
+					rs.getString(I_C_Invoice.COLUMNNAME_IsSOTrx)
+				);
 				TransactionType.Builder transactionTypeBuilder = convertTransactionType(
 					isSalesTransaction ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
 				);
@@ -701,6 +704,8 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 
 		return builderList;
 	}
+
+
 
 	@Override
 	public void listCharges(ListChargesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
