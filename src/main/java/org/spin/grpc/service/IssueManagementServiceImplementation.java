@@ -169,7 +169,8 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 
 		return builder;
 	}
-	
+
+
 
 	@Override
 	public void listSalesRepresentatives(ListSalesRepresentativesRequest request, StreamObserver<ListSalesRepresentativesResponse> responseObserver) {
@@ -191,8 +192,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 	
 	private ListSalesRepresentativesResponse.Builder listSalesRepresentatives(ListSalesRepresentativesRequest request) {
-		
-
 		final String whereClause = "EXISTS("
 			+ "SELECT * FROM C_BPartner bp WHERE "
 			+ "AD_User.C_BPartner_ID=bp.C_BPartner_ID "
@@ -257,6 +256,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void listPriorities(ListPrioritiesRequest request, StreamObserver<ListPrioritiesResponse> responseObserver) {
 		try {
@@ -277,8 +277,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private ListPrioritiesResponse.Builder listPriorities(ListPrioritiesRequest request) {
-		
-
 		final String whereClause = "AD_Reference_ID = ?";
 		Query queryRequests = new Query(
 			Env.getCtx(),
@@ -357,6 +355,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void listStatuses(ListStatusesRequest request, StreamObserver<ListStatusesResponse> responseObserver) {
 		try {
@@ -377,8 +376,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private ListStatusesResponse.Builder listStatuses(ListStatusesRequest request) {
-		
-
 		int requestTypeId = request.getRequestTypeId();
 		if (requestTypeId <= 0 && !Util.isEmpty(request.getRequestTypeUuid(), true)) {
 			requestTypeId = RecordUtil.getIdFromUuid(MRequestType.Table_Name, request.getRequestTypeUuid(), null);
@@ -388,7 +385,8 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		}
 
 		final String whereClause = "EXISTS (SELECT * FROM R_RequestType rt "
-			+ "INNER JOIN R_StatusCategory sc ON (rt.R_StatusCategory_ID=sc.R_StatusCategory_ID) "
+			+ "INNER JOIN R_StatusCategory sc "
+			+ "ON (rt.R_StatusCategory_ID = sc.R_StatusCategory_ID) "
 			+ "WHERE R_Status.R_StatusCategory_ID = sc.R_StatusCategory_ID "
 			+ "AND rt.R_RequestType_ID = ?)"
 		;
@@ -494,6 +492,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void existsIssues(ExistsIssuesRequest request, StreamObserver<ExistsIssuesResponse> responseObserver) {
 		try {
@@ -514,8 +513,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 	
 	private ExistsIssuesResponse.Builder existsIssues(ExistsIssuesRequest request) {
-		
-
 		if (Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
@@ -554,6 +551,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void listIssues(ListIssuesRequest request, StreamObserver<ListIssuesReponse> responseObserver) {
 		try {
@@ -574,8 +572,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private ListIssuesReponse.Builder listIssues(ListIssuesRequest request) {
-		
-
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = "";
 
@@ -651,7 +647,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 
 		return builderList;
 	}
-	
+
 	private Issue.Builder convertRequest(MRequest request) {
 		Issue.Builder builder = Issue.newBuilder();
 		if (request == null) {
@@ -704,6 +700,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void createIssue(CreateIssueRequest request, StreamObserver<Issue> responseObserver) {
 		try {
@@ -724,8 +721,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private Issue.Builder createIssue(CreateIssueRequest request) {
-		
-
 		MRequest requestRecord = new MRequest(Env.getCtx(), 0, null);
 
 		// create issue with record on window
@@ -802,6 +797,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void updateIssue(UpdateIssueRequest request, StreamObserver<Issue> responseObserver) {
 		try {
@@ -822,8 +818,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private Issue.Builder updateIssue(UpdateIssueRequest request) {
-		
-
 		// validate record
 		int recordId = request.getId();
 		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
@@ -886,6 +880,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void deleteIssue(DeleteIssueRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -906,8 +901,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private Empty.Builder deleteIssue(DeleteIssueRequest request) {
-		
-
 		Trx.run(transactionName -> {
 			// validate record
 			int recordId = request.getId();
@@ -959,6 +952,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void listIssueComments(ListIssueCommentsRequest request, StreamObserver<ListIssueCommentsReponse> responseObserver) {
 		try {
@@ -979,8 +973,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private ListIssueCommentsReponse.Builder listIssueComments(ListIssueCommentsRequest request) {
-		
-
 		// validate parent record
 		int recordId = request.getIssueId();
 		if (recordId <= 0 && !Util.isEmpty(request.getIssueUuid(), true)) {
@@ -1210,6 +1202,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void createIssueComment(CreateIssueCommentRequest request, StreamObserver<IssueComment> responseObserver) {
 		try {
@@ -1230,8 +1223,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private IssueComment.Builder createIssueComment(CreateIssueCommentRequest request) {
-		
-
 		// validate parent record
 		int recordId = request.getIssueId();
 		if (recordId <= 0 && !Util.isEmpty(request.getIssueUuid(), true)) {
@@ -1248,6 +1239,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 
 		return IssueComment.newBuilder();
 	}
+
 
 
 	@Override
@@ -1270,8 +1262,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private IssueComment.Builder updateIssueComment(UpdateIssueCommentRequest request) {
-		
-
 		// validate parent record
 		int recordId = request.getId();
 		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
@@ -1303,6 +1293,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 
+
 	@Override
 	public void deleteIssueComment(DeleteIssueCommentRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -1323,8 +1314,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private Empty.Builder deleteIssueComment(DeleteIssueCommentRequest request) {
-		
-		
 		// validate record
 		int recordId = request.getId();
 		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
