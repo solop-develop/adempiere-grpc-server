@@ -586,12 +586,15 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 		final String groupBy = org.spin.form.match_po_receipt_invoice.Util.getGroupBy(isMatched, matchFromType);
 
 		String whereClause = "";
-		if (request.getProductId() > 0) {
-			whereClause += " AND lin.M_Product_ID = " + request.getProductId();
+		if (request.getProductId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Product_ID@");
 		}
-		if (request.getVendorId() > 0) {
-			whereClause += " AND hdr.C_BPartner_ID = " + request.getVendorId();
+		whereClause += " AND lin.M_Product_ID = " + request.getProductId();
+
+		if (request.getVendorId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
 		}
+		whereClause += " AND hdr.C_BPartner_ID = " + request.getVendorId();
 
 		// Date filter
 		Timestamp dateFrom = ValueUtil.getTimestampFromLong(request.getDateFrom());
