@@ -127,7 +127,7 @@ public class Util {
 			)
 			.setMatchedQuantity(
 				ValueUtil.getDecimalFromBigDecimal(
-					resultSet.getBigDecimal("Assigned")
+					resultSet.getBigDecimal("MatchedQuantity")
 				)
 			)
 			.setProductId(
@@ -184,7 +184,7 @@ public class Util {
 				+ " lin.Line, lin.C_InvoiceLine_ID, "
 				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
 				+ " lin.QtyInvoiced, "
-				+ " lin.QtyInvoiced AS Quantity, SUM(COALESCE(mi.Qty, 0)) AS Assigned, "
+				+ " lin.QtyInvoiced AS Quantity, SUM(COALESCE(mi.Qty, 0)) AS MatchedQuantity, "
 				+ " org.Name, hdr.AD_Org_ID "
 				+ "FROM C_Invoice hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
@@ -206,7 +206,7 @@ public class Util {
 				+ " lin.Line, lin.C_OrderLine_ID, "
 				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
 				+ " lin.QtyOrdered, "
-				+ " lin.QtyOrdered AS Quantity, SUM(COALESCE(mo.Qty, 0)) AS Assigned, "
+				+ " lin.QtyOrdered AS Quantity, SUM(COALESCE(mo.Qty, 0)) AS MatchedQuantity, "
 				+ " org.Name, hdr.AD_Org_ID "
 				+ "FROM C_Order hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
@@ -241,7 +241,7 @@ public class Util {
 				+ " lin.Line, lin.M_InOutLine_ID, "
 				+ " p.Name AS M_Product_Name, lin.M_Product_ID, "
 				+ " lin.MovementQty, "
-				+ " lin.MovementQty AS Quantity, SUM(COALESCE(m.Qty, 0)) AS Assigned, "
+				+ " lin.MovementQty AS Quantity, SUM(COALESCE(m.Qty, 0)) AS MatchedQuantity, "
 				+ " org.Name, hdr.AD_Org_ID "
 				+ "FROM M_InOut hdr"
 				+ " INNER JOIN AD_Org org ON (hdr.AD_Org_ID = org.AD_Org_ID)"
@@ -418,7 +418,8 @@ public class Util {
 					log.log(Level.SEVERE, "PO(Inv) Match not created: " + matchPO);
 				}
 				if (MClient.isClientAccountingImmediate()) {
-					String mesageError = DocumentEngine.postImmediate(
+					// String mesageError = 
+					DocumentEngine.postImmediate(
 						matchPO.getCtx(),
 						matchPO.getAD_Client_ID(),
 						matchPO.get_Table_ID(),
