@@ -93,20 +93,17 @@ message ListPaymentRulesRequest {
 	// filters
 	string search_value = 4;
 	int32 payment_selection_id = 5;
-	string payment_selection_uuid = 6;
 }
 
 // Get Document No Request
 message GetDocumentNoRequest {
-	int32 bank_account_id = 2;
-	string bank_account_uuid = 3;
-	int32 payment_rule_id = 4;
-	string payment_rule_uuid = 5;
+	int32 bank_account_id = 1;
+	string payment_rule = 2;
 }
 
 // Get Document No Response
 message GetDocumentNoResponse {
-	string document_no = 1;
+	int32 document_no = 1;
 }
 
 message ListPaymentsRequest {
@@ -115,9 +112,7 @@ message ListPaymentsRequest {
 	// filters
 	string search_value = 4;
 	int32 payment_selection_id = 5;
-	string payment_selection_uuid = 6;
-	int32 payment_rule_id = 7;
-	string payment_rule_uuid = 8;
+	string payment_rule = 6;
 }
 
 message Payment {
@@ -143,11 +138,10 @@ message ListPaymentsResponse {
 
 // Process and Create EFT Payment Request
 message ProcessRequest {
-	int32 payment_selection_id = 2;
-	string payment_selection_uuid = 3;
-	int32 payment_rule_id = 4;
-	string payment_rule_uuid = 5;
-	string document_no = 6;
+	int32 payment_selection_id = 1;
+	string payment_rule = 2;
+	int32 bank_account_id = 3;
+	int32 document_no = 4;
 }
 
 message ProcessResponse {
@@ -156,11 +150,10 @@ message ProcessResponse {
 
 // Export Payment Request
 message ExportRequest {
-	int32 payment_selection_id = 2;
-	string payment_selection_uuid = 3;
-	int32 payment_rule_id = 4;
-	string payment_rule_uuid = 5;
-	string document_no = 6;
+	int32 payment_selection_id = 1;
+	string payment_rule = 2;
+	int32 bank_account_id = 3;
+	int32 document_no = 4;
 }
 
 message ExportResponse {
@@ -169,11 +162,10 @@ message ExportResponse {
 
 // Print Payment Request
 message PrintRequest {
-	int32 payment_selection_id = 2;
-	string payment_selection_uuid = 3;
-	int32 payment_rule_id = 4;
-	string payment_rule_uuid = 5;
-	string document_no = 6;
+	int32 payment_selection_id = 1;
+	string payment_rule = 2;
+	int32 bank_account_id = 3;
+	int32 document_no = 4;
 }
 
 message PrintResponse {
@@ -182,11 +174,10 @@ message PrintResponse {
 
 // Confirm Print Request
 message ConfirmPrintRequest {
-	int32 payment_selection_id = 2;
-	string payment_selection_uuid = 3;
-	int32 payment_rule_id = 4;
-	string payment_rule_uuid = 5;
-	string document_no = 6;
+	int32 payment_selection_id = 1;
+	string payment_rule = 2;
+	int32 bank_account_id = 3;
+	int32 document_no = 4;
 }
 
 message ConfirmPrintResponse {
@@ -195,11 +186,9 @@ message ConfirmPrintResponse {
 
 // Print Remittance Request
 message PrintRemittanceRequest {
-	int32 payment_selection_id = 2;
-	string payment_selection_uuid = 3;
-	int32 payment_rule_id = 4;
-	string payment_rule_uuid = 5;
-	string document_no = 6;
+	int32 payment_selection_id = 1;
+	string payment_rule = 2;
+	int32 document_no = 3;
 }
 
 message PrintRemittanceResponse {

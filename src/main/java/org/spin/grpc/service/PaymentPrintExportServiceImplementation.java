@@ -14,9 +14,12 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_C_BankAccount;
@@ -26,24 +29,33 @@ import org.adempiere.core.domains.models.I_C_PaySelectionCheck;
 import org.adempiere.core.domains.models.I_C_PaySelectionLine;
 import org.adempiere.core.domains.models.X_C_PaySelectionLine;
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.pdf.IText7Document;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MCurrency;
+import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.model.MPaySelection;
+import org.compiere.model.MPaySelectionCheck;
 import org.compiere.model.MPaySelectionLine;
+import org.compiere.model.MPaymentBatch;
 import org.compiere.model.MRefList;
 import org.compiere.model.Query;
+import org.compiere.print.ReportEngine;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.MimeType;
+import org.compiere.util.PaymentExport;
+import org.compiere.util.PaymentExportList;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Currency;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.payment_print_export.BankAccount;
 import org.spin.backend.grpc.payment_print_export.ConfirmPrintRequest;
 import org.spin.backend.grpc.payment_print_export.ConfirmPrintResponse;
@@ -70,6 +82,8 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
+
+import com.google.protobuf.ByteString;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -157,6 +171,27 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		return builder;
 	}
 
+	public static MPaySelection validateAndGetPaySelection(int paymentSelectionId) {
+		// validate payment selection
+		if (paymentSelectionId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_PaySelection_ID@");
+		}
+		MPaySelection paymentSelection = new Query(
+			Env.getCtx(),
+			I_C_PaySelection.Table_Name,
+			" C_PaySelection_ID = ? ",
+			null
+		)
+			.setParameters(paymentSelectionId)
+			.first();
+		if (paymentSelection == null || paymentSelection.getC_PaySelection_ID() <= 0) {
+			throw new AdempiereException("@C_PaySelection_ID@ @NotFound@");
+		}
+		return paymentSelection;
+	}
+
+
+
 	private Currency.Builder convertCurrency(int currencyId) {
 		if (currencyId > 0) {
 			MCurrency currency = MCurrency.get(Env.getCtx(), currencyId);
@@ -201,6 +236,25 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 
 		return builder;
 	}
+
+	public static MBankAccount validateAndGetBankAccount(int bankAccountId) {
+		if (bankAccountId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BankAccount_ID@");
+		}
+		MBankAccount bankAccount = new Query(
+			Env.getCtx(),
+			I_C_BankAccount.Table_Name,
+			" C_BankAccount_ID = ? ",
+			null
+		)
+			.setParameters(bankAccountId)
+			.first();
+		if (bankAccount == null || bankAccount.getC_BankAccount_ID() <= 0) {
+			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
+		}
+		return bankAccount;
+	}
+
 
 
 	@Override
@@ -294,26 +348,8 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 	}
 
 	private ListLookupItemsResponse.Builder listPaymentRules(ListPaymentRulesRequest request) {
-		int paymentSelectionId = request.getPaymentSelectionId();
-		if (paymentSelectionId <= 0) {
-			if (!Util.isEmpty(request.getPaymentSelectionUuid(), true)) {
-				paymentSelectionId = RecordUtil.getIdFromUuid(I_C_PaySelection.Table_Name, request.getPaymentSelectionUuid(), null);
-			}
-			if (paymentSelectionId <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_PaySelection_ID@");
-			}
-		}
-		MPaySelection paymentSelection = new Query(
-			Env.getCtx(),
-			I_C_PaySelection.Table_Name,
-			" C_PaySelection_ID = ? ",
-			null
-		)
-			.setParameters(paymentSelectionId)
-			.first();
-		if (paymentSelection == null || paymentSelection.getC_PaySelection_ID() <= 0) {
-			throw new AdempiereException("@C_PaySelection_ID@ @NotFound@");
-		}
+		// validate and get Pay Selection
+		MPaySelection paymentSelection = validateAndGetPaySelection(request.getPaymentSelectionId());
 
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
 		final String whereClause = "EXISTS ("
@@ -332,7 +368,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		).setParameters(paymentSelection.getC_PaySelection_ID(), X_C_PaySelectionLine.PAYMENTRULE_AD_Reference_ID)
 		.list(MRefList.class);
 
-		paymemntRulesList.stream().forEach(paymentRule -> {			
+		paymemntRulesList.stream().forEach(paymentRule -> {
 			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
 				paymentRule.getAD_Ref_List_ID(), paymentRule.getUUID(), paymentRule.getValue(), paymentRule.getName()
 			);
@@ -346,6 +382,23 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		
 		return builderList;
 	}
+
+	public static MRefList validateAndGetPaymentRule(String value) {
+		if (Util.isEmpty(value, true)) {
+			throw new AdempiereException("@FillMandatory@ @PaymentRule@");
+		}
+		MRefList paymentRule = MRefList.get(
+			Env.getCtx(),
+			X_C_PaySelectionLine.PAYMENTRULE_AD_Reference_ID,
+			value,
+			null
+		);
+		if (paymentRule == null || paymentRule.getAD_Ref_List_ID() <= 0) {
+			throw new AdempiereException("@PaymentRule@ @NotFound@");
+		}
+		return paymentRule;
+	}
+
 
 
 	@Override
@@ -368,50 +421,12 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 	}
 
 	private GetDocumentNoResponse.Builder getDocumentNo(GetDocumentNoRequest request) {
-		// Bank Account
-		int bankAccountId = request.getBankAccountId();
-		if (bankAccountId <= 0) {
-			if (!Util.isEmpty(request.getBankAccountUuid(), true)) {
-				bankAccountId = RecordUtil.getIdFromUuid(I_C_BankAccount.Table_Name, request.getBankAccountUuid(), null);
-			}
-			if (bankAccountId <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_BankAccount_ID@");
-			}
-		}
-		MBankAccount bankAccount = new Query(
-			Env.getCtx(),
-			I_C_BankAccount.Table_Name,
-			" C_BankAccount_ID = ? ",
-			null
-		)
-			.setParameters(bankAccountId)
-			.first();
-		if (bankAccount == null || bankAccount.getC_BankAccount_ID() <= 0) {
-			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
-		}
+		// validate and get Bank Account
+		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
 
-		// Payment Rule
-		int paymentRuleId = request.getPaymentRuleId();
-		if (paymentRuleId <= 0) {
-			if (!Util.isEmpty(request.getPaymentRuleUuid(), true)) {
-				paymentRuleId = RecordUtil.getIdFromUuid(I_AD_Ref_List.Table_Name, request.getPaymentRuleUuid(), null);
-			}
-			if (paymentRuleId <= 0) {
-				throw new AdempiereException("@FillMandatory@ @PaymentRule@");
-			}
-		}
-		MRefList paymentRule = new Query(
-			Env.getCtx(),
-			I_AD_Ref_List.Table_Name,
-			" AD_Ref_List_ID = ? ",
-			null
-		)
-			.setParameters(paymentRuleId)
-			.first();
-		if (paymentRule == null || paymentRule.getAD_Ref_List_ID() <= 0) {
-			throw new AdempiereException("@PaymentRule@ @NotFound@");
-		}
-		
+		// validate and Payment Rule
+		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
+
 		StringBuilder sql = new StringBuilder();
 		sql.append("SELECT ")
 			.append(I_C_BankAccountDoc.COLUMNNAME_CurrentNext)
@@ -420,7 +435,8 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			.append(" WHERE ")
 			.append(I_C_BankAccountDoc.COLUMNNAME_C_BankAccount_ID).append("=? AND ")
 			.append(I_C_BankAccountDoc.COLUMNNAME_PaymentRule).append("=? AND ")
-			.append(I_C_BankAccountDoc.COLUMNNAME_IsActive).append("=?");
+			.append(I_C_BankAccountDoc.COLUMNNAME_IsActive).append("=?")
+		;
 
 		List<Object> parameters =  new ArrayList<>();
 		parameters.add(bankAccount.getC_BankAccount_ID());
@@ -429,7 +445,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 
 		int documentNo = DB.getSQLValueEx(null , sql.toString(), parameters.toArray());
 		return GetDocumentNoResponse.newBuilder()
-			.setDocumentNo(String.valueOf(documentNo));
+			.setDocumentNo(documentNo);
 	}
 
 	private Payment.Builder convertPayment(MPaySelectionLine paySelectionLine) {
@@ -500,49 +516,11 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 	}
 
 	private ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
-		// validate payment selection
-		int paymentSelectionId = request.getPaymentSelectionId();
-		if (paymentSelectionId <= 0) {
-			if (!Util.isEmpty(request.getPaymentSelectionUuid(), true)) {
-				paymentSelectionId = RecordUtil.getIdFromUuid(I_C_PaySelection.Table_Name, request.getPaymentSelectionUuid(), null);
-			}
-			if (paymentSelectionId <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_PaySelection_ID@");
-			}
-		}
-		MPaySelection paymentSelection = new Query(
-			Env.getCtx(),
-			I_C_PaySelection.Table_Name,
-			" C_PaySelection_ID = ? ",
-			null
-		)
-			.setParameters(paymentSelectionId)
-			.first();
-		if (paymentSelection == null || paymentSelection.getC_PaySelection_ID() <= 0) {
-			throw new AdempiereException("@C_PaySelection_ID@ @NotFound@");
-		}
+		// validate and get Pay Selection
+		MPaySelection paymentSelection = validateAndGetPaySelection(request.getPaymentSelectionId());
 
 		// validate payment rule
-		int paymentRuleId = request.getPaymentRuleId();
-		if (paymentRuleId <= 0) {
-			if (!Util.isEmpty(request.getPaymentRuleUuid(), true)) {
-				paymentRuleId = RecordUtil.getIdFromUuid(I_AD_Ref_List.Table_Name, request.getPaymentRuleUuid(), null);
-			}
-			if (paymentRuleId <= 0) {
-				throw new AdempiereException("@FillMandatory@ @PaymentRule@");
-			}
-		}
-		MRefList paymentRule = new Query(
-			Env.getCtx(),
-			I_AD_Ref_List.Table_Name,
-			" AD_Ref_List_ID = ? ",
-			null
-		)
-			.setParameters(paymentRuleId)
-			.first();
-		if (paymentRule == null || paymentRule.getAD_Ref_List_ID() <= 0) {
-			throw new AdempiereException("@PaymentRule@ @NotFound@");
-		}
+		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
 
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -609,10 +587,53 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		}
 	}
 
-	// TODO: To Be Defined
 	private ProcessResponse.Builder process(ProcessRequest request) {
+		createEFT(
+			request.getPaymentSelectionId(),
+			request.getPaymentRule(),
+			request.getBankAccountId(),
+			request.getDocumentNo()
+		);
+		//	document No not updated
 		return ProcessResponse.newBuilder();
 	}
+
+
+	public static boolean createEFT(int paySelectiontId, String paymentRuleValue, int bankAccountId, int documentNo) {
+		// validate and get Pay Selection
+		MPaySelection paymentSelection = validateAndGetPaySelection(paySelectiontId);
+
+		// validate and get Payment Rule
+		MRefList paymentRule = validateAndGetPaymentRule(paymentRuleValue);
+
+		// validate and get Bank Account
+		MBankAccount bankAccount = validateAndGetBankAccount(bankAccountId);
+
+		//	get Selections
+		List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+			paymentSelection.getC_PaySelection_ID(),
+			paymentRule.getValue(),
+			documentNo,
+			null
+		);
+		if (paySelectionChecks == null || paySelectionChecks.size() <= 0) {
+			throw new AdempiereException("@C_PaySelectionCheck_ID@ @NotFound@/@NoLines@");
+		}
+
+		MPaymentBatch paymentBatch = MPaymentBatch.getForPaySelection(
+			Env.getCtx(),
+			paymentSelection.getC_PaySelection_ID(),
+			null
+		);
+
+		int lastDocumentNo = MPaySelectionCheck.confirmPrint(paySelectionChecks, paymentBatch);
+		if (lastDocumentNo != 0) {
+			setBankAccountNextSequence(bankAccount.getC_BankAccount_ID(), paymentRule.getValue(), ++lastDocumentNo);
+		}
+
+		return true;
+	}
+
 
 
 	@Override
@@ -634,10 +655,79 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		}
 	}
 
-	// TODO: To Be Defined
 	private ExportResponse.Builder export(ExportRequest request) {
+		// validate and get Pay Selection
+		MPaySelection paymentSelection = validateAndGetPaySelection(request.getPaymentSelectionId());
+		MDocType doctType = MDocType.get(null, paymentSelection.getC_DocType_ID());
+
+		// Payment Rule
+		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
+
+		// validate and get Bank Account
+		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
+		String paymentExportClass = bankAccount.getPaymentExportClass();
+		if (doctType.isPayrollPayment()) {
+			paymentExportClass = bankAccount.getPayrollPaymentExportClass();
+		}
+		if (Util.isEmpty(paymentExportClass, true)) {
+			paymentExportClass = "org.compiere.util.GenericPaymentExport";
+		}
+
+		int startDocumentNo = request.getDocumentNo();
+
+		try {
+			// Get File Info
+			File tempFile = File.createTempFile("paymentExport", ".txt");
+	
+			// get Selections
+			List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+				paymentSelection.getC_PaySelection_ID(),
+				paymentRule.getValue(),
+				startDocumentNo,
+				null
+			);
+
+			// Create File
+			int no = 0;
+			StringBuffer error = new StringBuffer("");
+			//	Get Payment Export Class
+			try {
+				Class<?> clazz = Class.forName(paymentExportClass);
+				if (PaymentExportList.class.isAssignableFrom(clazz)) {
+					PaymentExportList custom = (PaymentExportList) clazz.newInstance();
+					no = custom.exportToFile(paySelectionChecks, tempFile, error);
+					if(custom.getFile() != null) {
+						tempFile = custom.getFile();
+					}
+				}
+				else if (PaymentExport.class.isAssignableFrom(clazz)) {
+					PaymentExport custom = (PaymentExport) clazz.newInstance();
+					no = custom.exportToFile(paySelectionChecks.toArray(new MPaySelectionCheck[paySelectionChecks.size()]), tempFile, error);
+				}
+			}
+			catch (ClassNotFoundException e) {
+				no = -1;
+				error.append("No custom PaymentExport class " + paymentExportClass + " - " + e.toString());
+				log.log(Level.SEVERE, error.toString(), e);
+			}
+			catch (Exception e) {
+				no = -1;
+				error.append("Error in " + paymentExportClass + " check log, " + e.toString());
+				log.log(Level.SEVERE, error.toString(), e);
+			}
+			if (no >= 0) {
+				// confirm print
+			} else {
+				throw new Exception(error.toString());
+			}
+		}
+		catch (Exception e) {
+			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+		}
+
 		return ExportResponse.newBuilder();
 	}
+
 
 
 	@Override
@@ -671,7 +761,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ConfirmPrintResponse.Builder builder = print(request);
+			ConfirmPrintResponse.Builder builder = confirmPrint(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -684,10 +774,51 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		}
 	}
 
-	// TODO: To Be Defined
-	private ConfirmPrintResponse.Builder print(ConfirmPrintRequest request) {
+	private ConfirmPrintResponse.Builder confirmPrint(ConfirmPrintRequest request) {
+		// validate and get Pay Selection
+		MPaySelection paymentSelection = validateAndGetPaySelection(request.getPaymentSelectionId());
+
+		// validate and get Payment Rule
+		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
+
+		// validate and get Bank Account
+		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
+
+		//	get Selections
+		List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+			request.getPaymentSelectionId(),
+			paymentRule.getValue(),
+			request.getDocumentNo(),
+			null
+		);
+
+		MPaymentBatch paymentBatch = MPaymentBatch.getForPaySelection(
+			Env.getCtx(),
+			paymentSelection.getC_PaySelection_ID(),
+			null
+		);
+
+		int lastDocumentNo = MPaySelectionCheck.confirmPrint(paySelectionChecks, paymentBatch);
+		if (lastDocumentNo != 0) {
+			setBankAccountNextSequence(bankAccount.getC_BankAccount_ID(), paymentRule.getValue(), ++lastDocumentNo);
+		}
+		//	document No not updated
 		return ConfirmPrintResponse.newBuilder();
 	}
+
+	/**
+	 * Set Next Sequence for Bank Account Document 
+	 * @param bankAccountId
+	 * @param paymentRule
+	 * @param lastDocumentNo
+	 */
+	public static void setBankAccountNextSequence(int bankAccountId, String paymentRule, int lastDocumentNo) {
+		if (bankAccountId > 0) {
+			MBankAccount bankAccount = MBankAccount.get(Env.getCtx(), bankAccountId);
+			bankAccount.setDocumentCurrentNext(paymentRule, lastDocumentNo);
+		}
+	}
+
 
 
 	@Override
@@ -709,9 +840,65 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		}
 	}
 
-	// TODO: To Be Defined
 	private PrintRemittanceResponse.Builder printRemittance(PrintRemittanceRequest request) {
-		return PrintRemittanceResponse.newBuilder();
+		// validate and get Pay Selection
+		MPaySelection paymentSelection = validateAndGetPaySelection(request.getPaymentSelectionId());
+
+		// validate and get Payment Rule
+		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
+
+		//	get Selections
+		List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+			paymentSelection.getC_PaySelection_ID(),
+			paymentRule.getValue(),
+			request.getDocumentNo(),
+			null
+		);
+		PrintRemittanceResponse.Builder builder = PrintRemittanceResponse.newBuilder();
+		List<File> pdfList = new ArrayList<>();
+		paySelectionChecks.stream()
+			.filter(paySelectionCheck -> paySelectionCheck != null)
+			.forEach(paySelectionCheck -> {
+				ReportEngine reportEngine = ReportEngine.get(Env.getCtx(), ReportEngine.REMITTANCE, paySelectionCheck.get_ID());
+				try {
+					File file = File.createTempFile("WPayPrint", null);
+					File pdfFile = reportEngine.getPDF(file);
+					pdfList.add(pdfFile);
+				}
+				catch (Exception e) {
+					log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+				}
+			});
+
+		ReportOutput.Builder reportOutputBuilder = ReportOutput.newBuilder();
+		reportOutputBuilder.setReportType(
+			"pdf"
+		);
+
+		try {
+			File outFile = File.createTempFile("WPayPrint", null);
+			String validFileName = ValueUtil.validateNull(outFile.getName());
+			reportOutputBuilder.setName(
+				validFileName
+			);
+			reportOutputBuilder.setMimeType(
+				ValueUtil.validateNull(
+					MimeType.getMimeType(validFileName)
+				)
+			);
+
+			ByteString resultFile = ByteString.readFrom(new FileInputStream(outFile));
+			reportOutputBuilder.setOutputStream(resultFile);
+
+			IText7Document.mergePdf(pdfList, outFile);
+
+			builder.setReportOutput(reportOutputBuilder);
+		}
+		catch (Exception e) {
+			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+		}
+
+		return builder;
 	}
 
 }
