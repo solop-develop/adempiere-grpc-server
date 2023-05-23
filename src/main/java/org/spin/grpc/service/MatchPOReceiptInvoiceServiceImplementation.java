@@ -722,26 +722,26 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 				}
 
 				//  Invoice or PO
-				boolean invoice = true;
+				boolean isInvoice = true;
 				if (isMatchFromOder || isMatchToOrder) {
-					invoice = false;
+					isInvoice = false;
 				}
 				//  Get Shipment_ID
-				int M_InOutLine_ID = 0;
-				int Line_ID = 0;
+				int inOutLineId = 0;
+				int lineId = 0;
 				if (isMatchFromReceipt) {
-					M_InOutLine_ID = matchedFromSelected.getId();      //  upper table
-					Line_ID = lineMatchedTo.getId();
+					inOutLineId = matchedFromSelected.getId();      //  upper table
+					lineId = lineMatchedTo.getId();
 				}
 				else {
-					M_InOutLine_ID = lineMatchedTo.getId();    //  lower table
-					Line_ID = matchedFromSelected.getId();
+					inOutLineId = lineMatchedTo.getId();    //  lower table
+					lineId = matchedFromSelected.getId();
 				}
 
 				org.spin.form.match_po_receipt_invoice.Util.createMatchRecord(
-					invoice,
-					M_InOutLine_ID,
-					Line_ID,
+					isInvoice,
+					inOutLineId,
+					lineId,
 					qty.orElse(Env.ZERO),
 					transactionName
 				);
