@@ -6,6 +6,7 @@ plugins {
     id 'visual-studio'
     id 'maven-publish'
 }
+
 group 'com.nikhilm'
 sourceCompatibility = 1.11
 def grpcVersion = '1.53.0'
@@ -75,6 +76,9 @@ dependencies {
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 	// ADempiere External Libraries
 	implementation 'com.github.jjYBdx4IL:ecs:1.4.2.1'
+	implementation 'com.itextpdf:itextpdf:5.5.13.3' // used by org.adempiere.pdf.iText7Document
+	implementation 'io.konik:konik:1.3.2' // used by org.adempiere.pdf.iText7Document
+
 
 	// ADempiere Projects with additional features
 	// Dashboard Improvements

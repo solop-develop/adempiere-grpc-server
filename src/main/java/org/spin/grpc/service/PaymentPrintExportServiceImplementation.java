@@ -675,6 +675,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 
 		int startDocumentNo = request.getDocumentNo();
 
+		ExportResponse.Builder builder = ExportResponse.newBuilder();
 		try {
 			// Get File Info
 			File tempFile = File.createTempFile("paymentExport", ".txt");
@@ -720,12 +721,20 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			} else {
 				throw new Exception(error.toString());
 			}
+
+			ByteString resultFile = ByteString.readFrom(new FileInputStream(tempFile));
+			ReportOutput.Builder output = ReportOutput.newBuilder()
+				.setOutputStream(resultFile)
+				.setOutputBytes(resultFile)
+			;
+
+			builder.setReportOutput(output);
 		}
 		catch (Exception e) {
 			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
 		}
 
-		return ExportResponse.newBuilder();
+		return builder;
 	}
 
 
@@ -751,7 +760,85 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 
 	// TODO: To Be Defined
 	private PrintResponse.Builder print(PrintRequest request) {
-		return PrintResponse.newBuilder();
+		// validate and get Pay Selection
+		MPaySelection paymentSelection = validateAndGetPaySelection(request.getPaymentSelectionId());
+
+		// validate and get Payment Rule
+		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
+
+		// validate and get Bank Account
+		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
+
+		//	get Selections
+		List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+			paymentSelection.getC_PaySelection_ID(),
+			paymentRule.getValue(),
+			request.getDocumentNo(),
+			null
+		);
+		if (paySelectionChecks == null || paySelectionChecks.size() <= 0) {
+			throw new AdempiereException("@C_PaySelectionCheck_ID@ @NotFound@/@NoLines@");
+		}
+
+		MPaymentBatch paymentBatch = MPaymentBatch.getForPaySelection(
+			Env.getCtx(),
+			paymentSelection.getC_PaySelection_ID(),
+			null
+		);
+
+		//	for all checks
+		List<File> pdfList = new ArrayList<>();
+		paySelectionChecks.stream()
+			.filter(paySelectionCheck -> paySelectionCheck != null)
+			.forEach(paySelectionCheck -> {
+				//	ReportCtrl will check BankAccountDoc for PrintFormat
+				ReportEngine reportEngine = ReportEngine.get(Env.getCtx(), ReportEngine.CHECK, paySelectionCheck.get_ID());
+				try {
+					File file = File.createTempFile("WPayPrint", null);
+					File pdfFile = reportEngine.getPDF(file);
+					pdfList.add(pdfFile);
+				}
+				catch (Exception e) {
+					log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+					return;
+				}
+			});
+
+		PrintResponse.Builder builder = PrintResponse.newBuilder();
+		ReportOutput.Builder reportOutputBuilder = ReportOutput.newBuilder();
+		reportOutputBuilder.setReportType(
+			"pdf"
+		);
+		try {
+			File outFile = File.createTempFile("WPayPrint", null);
+			String validFileName = ValueUtil.validateNull(outFile.getName());
+			reportOutputBuilder.setName(
+				validFileName
+			);
+			reportOutputBuilder.setMimeType(
+				ValueUtil.validateNull(
+					MimeType.getMimeType(validFileName)
+				)
+			);
+
+			IText7Document.mergePdf(pdfList, outFile);
+			ByteString resultFile = ByteString.readFrom(new FileInputStream(outFile));
+			reportOutputBuilder.setOutputStream(resultFile);
+
+			builder.setReportOutput(reportOutputBuilder);
+		}
+		catch (Exception e) {
+			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+			throw new AdempiereException(e.getLocalizedMessage());
+		}
+
+		//	Update BankAccountDoc
+		int lastDocumentNo = MPaySelectionCheck.confirmPrint(paySelectionChecks, paymentBatch);
+		if (lastDocumentNo != 0) {
+			setBankAccountNextSequence(bankAccount.getC_BankAccount_ID(), paymentRule.getValue(), ++lastDocumentNo);
+		}
+
+		return builder;
 	}
 
 
@@ -854,7 +941,6 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			request.getDocumentNo(),
 			null
 		);
-		PrintRemittanceResponse.Builder builder = PrintRemittanceResponse.newBuilder();
 		List<File> pdfList = new ArrayList<>();
 		paySelectionChecks.stream()
 			.filter(paySelectionCheck -> paySelectionCheck != null)
@@ -870,6 +956,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				}
 			});
 
+		PrintRemittanceResponse.Builder builder = PrintRemittanceResponse.newBuilder();
 		ReportOutput.Builder reportOutputBuilder = ReportOutput.newBuilder();
 		reportOutputBuilder.setReportType(
 			"pdf"
@@ -887,10 +974,9 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				)
 			);
 
+			IText7Document.mergePdf(pdfList, outFile);
 			ByteString resultFile = ByteString.readFrom(new FileInputStream(outFile));
 			reportOutputBuilder.setOutputStream(resultFile);
-
-			IText7Document.mergePdf(pdfList, outFile);
 
 			builder.setReportOutput(reportOutputBuilder);
 		}
