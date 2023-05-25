@@ -590,7 +590,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		)
 			.stream()
 			.filter(paySelectionCheck -> {
-				return paySelectionCheck != null && 
+				return paySelectionCheck != null &&
 					paymentRuleValue.equals(paySelectionCheck.getPaymentRule());
 			})
 			.collect(Collectors.toList())
