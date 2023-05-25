@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -74,25 +74,25 @@ message PaymentSelection {
 
 // List Payment Selections Request
 message ListPaymentSelectionsRequest {
-	int32 page_size = 2;
-	string page_token = 3;
+	int32 page_size = 1;
+	string page_token = 2;
 	// filters
-	string search_value = 4;
+	string search_value = 3;
 }
 
 // Get Payment Selection Request
 message GetPaymentSelectionRequest {
-	int32 id = 2;
-	string uuid = 3;
+	int32 id = 1;
+	string uuid = 2;
 }
 
 // List Payment Rules Request
 message ListPaymentRulesRequest {
-	int32 page_size = 2;
-	string page_token = 3;
+	int32 page_size = 1;
+	string page_token = 2;
 	// filters
-	string search_value = 4;
-	int32 payment_selection_id = 5;
+	string search_value = 3;
+	int32 payment_selection_id = 4;
 }
 
 // Get Document No Request
@@ -107,12 +107,12 @@ message GetDocumentNoResponse {
 }
 
 message ListPaymentsRequest {
-	int32 page_size = 2;
-	string page_token = 3;
+	int32 page_size = 1;
+	string page_token = 2;
 	// filters
-	string search_value = 4;
-	int32 payment_selection_id = 5;
-	string payment_rule = 6;
+	string search_value = 3;
+	int32 payment_selection_id = 4;
+	string payment_rule = 5;
 }
 
 message Payment {
@@ -164,8 +164,7 @@ message ExportResponse {
 message PrintRequest {
 	int32 payment_selection_id = 1;
 	string payment_rule = 2;
-	int32 bank_account_id = 3;
-	int32 document_no = 4;
+	int32 document_no = 3;
 }
 
 message PrintResponse {

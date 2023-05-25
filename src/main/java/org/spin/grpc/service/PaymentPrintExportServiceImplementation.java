@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -7,7 +7,7 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_C_BankAccount;
@@ -162,10 +163,16 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				convertBankAccount(paymentSelection.getC_BankAccount_ID())
 			)
 		;
-		Integer paymentCount  = new Query(Env.getCtx(), I_C_PaySelectionCheck.Table_Name, I_C_PaySelectionCheck.COLUMNNAME_C_PaySelection_ID + "=?" , null)
+		Integer paymentCount = new Query(
+			Env.getCtx(),
+			I_C_PaySelectionCheck.Table_Name,
+			I_C_PaySelectionCheck.COLUMNNAME_C_PaySelection_ID + "=?",
+			null
+		)
 			.setClient_ID()
 			.setParameters(paymentSelection.getC_PaySelection_ID())
-			.count();
+			.count()
+		;
 		builder.setPaymentQuantity(paymentCount);
 
 		return builder;
@@ -248,6 +255,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			null
 		)
 			.setParameters(bankAccountId)
+			.setClient_ID()
 			.first();
 		if (bankAccount == null || bankAccount.getC_BankAccount_ID() <= 0) {
 			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
@@ -296,7 +304,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		int count = query.count();
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder()
 			.setRecordCount(count);
-		
+
 		List<MPaySelection> paymentSelectionChekList = query.list();
 		paymentSelectionChekList.stream().forEach(paymentSelection -> {
 			BigDecimal totalAmount = Env.ZERO;
@@ -438,7 +446,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			.append(I_C_BankAccountDoc.COLUMNNAME_IsActive).append("=?")
 		;
 
-		List<Object> parameters =  new ArrayList<>();
+		List<Object> parameters = new ArrayList<>();
 		parameters.add(bankAccount.getC_BankAccount_ID());
 		parameters.add(paymentRule.getValue());
 		parameters.add(true);
@@ -496,6 +504,8 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		return builder;
 	}
 
+
+
 	@Override
 	public void listPayments(ListPaymentsRequest request, StreamObserver<ListPaymentsResponse> responseObserver) {
 		try {
@@ -535,6 +545,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			+ " INNER JOIN C_PaySelection ON C_PaySelection.C_PaySelection_ID = C_PaySelectionLine.C_PaySelection_ID"
 			+ "	WHERE "
 			+ "	C_PaySelectionCheck.C_PaySelectionCheck_ID = C_PaySelectionLine.C_PaySelectionCheck_ID"
+			+ " AND C_PaySelectionCheck.IsPrinted = 'N' "
 			+ ")"
 		;
 		Query paymentSelectionLine = new Query(
@@ -565,6 +576,29 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		);
 	
 		return builderList;
+	}
+
+
+
+	public static List<MPaySelectionCheck> validateAndListPaySelectionCheck(int paymentSelectionId, String paymentRuleValue, int documentNo) {
+		//	get list Pay Selections Check
+		List<MPaySelectionCheck> paySelectionChecksList = MPaySelectionCheck.get(
+			paymentSelectionId,
+			paymentRuleValue,
+			documentNo,
+			null
+		)
+			.stream()
+			.filter(paySelectionCheck -> {
+				return paySelectionCheck != null && 
+					paymentRuleValue.equals(paySelectionCheck.getPaymentRule());
+			})
+			.collect(Collectors.toList())
+		;
+		if (paySelectionChecksList == null || paySelectionChecksList.size() <= 0) {
+			throw new AdempiereException("@VPayPrintNoRecords@");
+		}
+		return paySelectionChecksList;
 	}
 
 
@@ -609,16 +643,12 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		// validate and get Bank Account
 		MBankAccount bankAccount = validateAndGetBankAccount(bankAccountId);
 
-		//	get Selections
-		List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+		// validate and get list Pay Selections Check
+		List<MPaySelectionCheck> paySelectionChecks = validateAndListPaySelectionCheck(
 			paymentSelection.getC_PaySelection_ID(),
 			paymentRule.getValue(),
-			documentNo,
-			null
+			documentNo
 		);
-		if (paySelectionChecks == null || paySelectionChecks.size() <= 0) {
-			throw new AdempiereException("@C_PaySelectionCheck_ID@ @NotFound@/@NoLines@");
-		}
 
 		MPaymentBatch paymentBatch = MPaymentBatch.getForPaySelection(
 			Env.getCtx(),
@@ -658,13 +688,14 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 	private ExportResponse.Builder export(ExportRequest request) {
 		// validate and get Pay Selection
 		MPaySelection paymentSelection = validateAndGetPaySelection(request.getPaymentSelectionId());
-		MDocType doctType = MDocType.get(null, paymentSelection.getC_DocType_ID());
+		MDocType doctType = MDocType.get(Env.getCtx(), paymentSelection.getC_DocType_ID());
 
 		// Payment Rule
 		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
 
 		// validate and get Bank Account
 		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
+
 		String paymentExportClass = bankAccount.getPaymentExportClass();
 		if (doctType.isPayrollPayment()) {
 			paymentExportClass = bankAccount.getPayrollPaymentExportClass();
@@ -679,13 +710,12 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		try {
 			// Get File Info
 			File tempFile = File.createTempFile("paymentExport", ".txt");
-	
-			// get Selections
-			List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+
+			// validate and get list Pay Selections Check
+			List<MPaySelectionCheck> paySelectionChecks = validateAndListPaySelectionCheck(
 				paymentSelection.getC_PaySelection_ID(),
 				paymentRule.getValue(),
-				startDocumentNo,
-				null
+				startDocumentNo
 			);
 
 			// Create File
@@ -731,7 +761,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			builder.setReportOutput(output);
 		}
 		catch (Exception e) {
-			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+			throw new AdempiereException(e.getLocalizedMessage());
 		}
 
 		return builder;
@@ -758,41 +788,49 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		}
 	}
 
-	// TODO: To Be Defined
+
+
+	public static void validatePrintFormatByCheck(int paySelectionCheckId) {
+		String sql = "SELECT bad.Check_PrintFormat_ID " //	1
+			+ "FROM C_PaySelectionCheck d"
+			+ " INNER JOIN C_PaySelection ps ON (d.C_PaySelection_ID = ps.C_PaySelection_ID)"
+			+ " INNER JOIN C_BankAccountDoc bad ON (ps.C_BankAccount_ID = bad.C_BankAccount_ID AND d.PaymentRule = bad.PaymentRule)"
+			+ "WHERE d.C_PaySelectionCheck_ID = ?"
+		; //	info from BankAccount
+		int value = DB.getSQLValue(null, sql, paySelectionCheckId);
+		if (value <= 0) {
+			throw new AdempiereException("@NoDocPrintFormat@ @C_PaySelectionCheck_ID@=" + paySelectionCheckId);
+		}
+	}
+
 	private PrintResponse.Builder print(PrintRequest request) {
 		// validate and get Pay Selection
 		MPaySelection paymentSelection = validateAndGetPaySelection(request.getPaymentSelectionId());
 
 		// validate and get Payment Rule
-		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
+		final MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
 
-		// validate and get Bank Account
-		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
-
-		//	get Selections
-		List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+		// validate and get list Pay Selections Check
+		List<MPaySelectionCheck> paySelectionChecks = validateAndListPaySelectionCheck(
 			paymentSelection.getC_PaySelection_ID(),
 			paymentRule.getValue(),
-			request.getDocumentNo(),
-			null
-		);
-		if (paySelectionChecks == null || paySelectionChecks.size() <= 0) {
-			throw new AdempiereException("@C_PaySelectionCheck_ID@ @NotFound@/@NoLines@");
-		}
-
-		MPaymentBatch paymentBatch = MPaymentBatch.getForPaySelection(
-			Env.getCtx(),
-			paymentSelection.getC_PaySelection_ID(),
-			null
+			request.getDocumentNo()
 		);
 
 		//	for all checks
 		List<File> pdfList = new ArrayList<>();
 		paySelectionChecks.stream()
-			.filter(paySelectionCheck -> paySelectionCheck != null)
 			.forEach(paySelectionCheck -> {
 				//	ReportCtrl will check BankAccountDoc for PrintFormat
-				ReportEngine reportEngine = ReportEngine.get(Env.getCtx(), ReportEngine.CHECK, paySelectionCheck.get_ID());
+				ReportEngine reportEngine = ReportEngine.get(
+					Env.getCtx(),
+					ReportEngine.CHECK,
+					paySelectionCheck.get_ID()
+				);
+				if (reportEngine == null) {
+					validatePrintFormatByCheck(paySelectionCheck.get_ID());
+					return;
+				}
 				try {
 					File file = File.createTempFile("WPayPrint", null);
 					File pdfFile = reportEngine.getPDF(file);
@@ -815,11 +853,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			reportOutputBuilder.setName(
 				validFileName
 			);
-			reportOutputBuilder.setMimeType(
-				ValueUtil.validateNull(
-					MimeType.getMimeType(validFileName)
-				)
-			);
+			reportOutputBuilder.setMimeType("application/pdf");
 
 			IText7Document.mergePdf(pdfList, outFile);
 			ByteString resultFile = ByteString.readFrom(new FileInputStream(outFile));
@@ -830,12 +864,6 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		catch (Exception e) {
 			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
 			throw new AdempiereException(e.getLocalizedMessage());
-		}
-
-		//	Update BankAccountDoc
-		int lastDocumentNo = MPaySelectionCheck.confirmPrint(paySelectionChecks, paymentBatch);
-		if (lastDocumentNo != 0) {
-			setBankAccountNextSequence(bankAccount.getC_BankAccount_ID(), paymentRule.getValue(), ++lastDocumentNo);
 		}
 
 		return builder;
@@ -871,12 +899,11 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		// validate and get Bank Account
 		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
 
-		//	get Selections
-		List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
-			request.getPaymentSelectionId(),
+		// validate and get list Pay Selections Check
+		List<MPaySelectionCheck> paySelectionChecks = validateAndListPaySelectionCheck(
+			paymentSelection.getC_PaySelection_ID(),
 			paymentRule.getValue(),
-			request.getDocumentNo(),
-			null
+			request.getDocumentNo()
 		);
 
 		MPaymentBatch paymentBatch = MPaymentBatch.getForPaySelection(
@@ -908,6 +935,22 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 
 
 
+	public static void validatePrintFormatByRemittance(int paySelectionCheckId) {
+		final String sql = "pf.Remittance_PrintFormat_ID " //	1
+			+ "FROM C_PaySelectionCheck d"
+			+ " INNER JOIN AD_PrintForm pf ON (d.AD_Client_ID=pf.AD_Client_ID)"
+			+ "WHERE d.C_PaySelectionCheck_ID = ?"
+			+ " AND pf.AD_Org_ID IN (0, d.AD_Org_ID) "
+			+ " ORDER BY pf.AD_Org_ID DESC"
+		; //	info from BankAccount
+		int value = DB.getSQLValue(null, sql, paySelectionCheckId);
+		if (value <= 0) {
+			throw new AdempiereException("@NoDocPrintFormat@ @C_PaySelectionCheck_ID@=" + paySelectionCheckId);
+		}
+	}
+
+
+
 	@Override
 	public void printRemittance(PrintRemittanceRequest request, StreamObserver<PrintRemittanceResponse> responseObserver) {
 		try {
@@ -934,18 +977,25 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		// validate and get Payment Rule
 		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
 
-		//	get Selections
-		List<MPaySelectionCheck> paySelectionChecks = MPaySelectionCheck.get(
+		// validate and get list Pay Selections Check
+		List<MPaySelectionCheck> paySelectionChecks = validateAndListPaySelectionCheck(
 			paymentSelection.getC_PaySelection_ID(),
 			paymentRule.getValue(),
-			request.getDocumentNo(),
-			null
+			request.getDocumentNo()
 		);
+
 		List<File> pdfList = new ArrayList<>();
 		paySelectionChecks.stream()
-			.filter(paySelectionCheck -> paySelectionCheck != null)
 			.forEach(paySelectionCheck -> {
-				ReportEngine reportEngine = ReportEngine.get(Env.getCtx(), ReportEngine.REMITTANCE, paySelectionCheck.get_ID());
+				ReportEngine reportEngine = ReportEngine.get(
+					Env.getCtx(),
+					ReportEngine.REMITTANCE,
+					paySelectionCheck.get_ID()
+				);
+				if (reportEngine == null ) {
+					validatePrintFormatByRemittance(paySelectionCheck.get_ID());
+					return;
+				}
 				try {
 					File file = File.createTempFile("WPayPrint", null);
 					File pdfFile = reportEngine.getPDF(file);
