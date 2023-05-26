@@ -891,6 +891,7 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 						null
 					)
 					.setParameters(windowChartAllocation.get_ValueAsInt("ECA50_WindowChart_ID"))
+					.setOnlyActiveRecords(true)
 					.list()
 					.forEach(windowChartParameter -> {
 						WindowDashboardParameter.Builder windowChartParameterBuilder = DashboardingConvertUtil.convertWindowDashboardParameter(
