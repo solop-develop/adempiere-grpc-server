@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -26,12 +26,14 @@ import java.util.logging.Level;
 
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_BankAccount;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.I_I_BankStatement;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MBankAccount;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MPayment;
@@ -123,6 +125,25 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		);
 
 		return builderList;
+	}
+
+	public static MBankAccount validateAndGetBankAccount(int bankAccountId) {
+		if (bankAccountId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BankAccount_ID@");
+		}
+		MBankAccount bankAccount = new Query(
+			Env.getCtx(),
+			I_C_BankAccount.Table_Name,
+			" C_BankAccount_ID = ? ",
+			null
+		)
+			.setParameters(bankAccountId)
+			.setClient_ID()
+			.first();
+		if (bankAccount == null || bankAccount.getC_BankAccount_ID() <= 0) {
+			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
+		}
+		return bankAccount;
 	}
 
 
@@ -360,12 +381,10 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 	}
 
 	private ListImportedBankMovementsResponse.Builder listImportedBankMovements(ListImportedBankMovementsRequest request) {
-		// validate key values
-		if (request.getBankAccountId() == 0 && Util.isEmpty(request.getBankAccountUuid(), true)) {
-			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
-		}
-
 		Properties context = Env.getCtx();
+
+		// validate and get Bank Account
+		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
 
 		StringBuffer sql = new StringBuffer(
 			"SELECT p.I_BankStatement_ID, p.UUID, p.StatementLineDate, "
@@ -443,7 +462,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			pstmt = DB.prepareStatement(sql.toString(), null);
 
 			int argumentPosition = 1;
-			pstmt.setInt(argumentPosition++, request.getBankAccountId());
+			pstmt.setInt(argumentPosition++, bankAccount.getC_BankAccount_ID());
 			if (dateFrom != null) {
 				pstmt.setTimestamp(argumentPosition++, dateFrom);
 			}
@@ -520,7 +539,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 
 		}
 		catch (SQLException e) {
-			log.log(Level.SEVERE, sql.toString(), e);
+			throw new AdempiereException(e.getLocalizedMessage());
 		}
 		finally {
 			DB.close(rs, pstmt);
@@ -551,10 +570,8 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 	}
 
 	private ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
-		// validate key values
-		if (request.getBankAccountId() == 0 && Util.isEmpty(request.getBankAccountUuid(), true)) {
-			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
-		}
+		// validate and get Bank Account
+		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
 
 		Properties context = Env.getCtx();
 
@@ -564,7 +581,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			+ " AND DocStatus NOT IN('IP', 'DR') "
 			+ " AND IsReconciled = 'N' "
 		;
-		parameters.add(request.getBankAccountId());
+		parameters.add(bankAccount.getC_BankAccount_ID());
 
 		//	Date Trx
 		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
@@ -713,10 +730,8 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 	}
 
 	private ListMatchingMovementsResponse.Builder listMatchingMovements(ListMatchingMovementsRequest request) {
-		// validate key values
-		if (request.getBankAccountId() == 0 && Util.isEmpty(request.getBankAccountUuid(), true)) {
-			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
-		}
+		// validate and get Bank Account
+		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
 
 		ListMatchingMovementsResponse.Builder builderList = ListMatchingMovementsResponse.newBuilder();
 
