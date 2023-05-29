@@ -82,9 +82,11 @@ dependencies {
 
 	// ADempiere Projects with additional features
 	// Dashboard Improvements
-	implementation 'io.github.adempiere:adempiere-dashboard-improvements:1.0.3'
+	implementation 'io.github.adempiere:adempiere-dashboard-improvements:1.0.7'
 	// Point Of Sales Improvements
 	implementation 'io.github.adempiere:adempiere-pos-improvements:1.0.0'
+	// Business Processors (To Task's and Schedulers)
+	implementation 'io.github.adempiere:adempiere-business-processors:1.0.5'
 }
 
 configurations.all {
