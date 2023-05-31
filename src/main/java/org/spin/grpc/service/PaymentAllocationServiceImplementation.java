@@ -128,6 +128,29 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		return builderList;
 	}
 
+	public static MBPartner validateAndGetBusinessPartner(int businessPartnerId) {
+		if (businessPartnerId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
+		}
+		MBPartner businessPartner = new Query(
+			Env.getCtx(),
+			I_C_BPartner.Table_Name,
+			" C_BPartner_ID = ? ",
+			null
+		)
+			.setParameters(businessPartnerId)
+			.setClient_ID()
+			.first()
+		;
+		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
+		}
+		if (!businessPartner.isActive()) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotActive@");
+		}
+		return businessPartner;
+	}
+
 
 
 	@Override
@@ -202,6 +225,29 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		;
 
 		return builder;
+	}
+
+	public static MOrg validateAndGetOrganization(int organizationId) {
+		if (organizationId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Org_ID@");
+		}
+		MOrg organization = new Query(
+			Env.getCtx(),
+			I_AD_Org.Table_Name,
+			" C_Org_ID = ? ",
+			null
+		)
+			.setParameters(organizationId)
+			.setClient_ID()
+			.first()
+		;
+		if (organization == null || organization.getAD_Org_ID() <= 0) {
+			throw new AdempiereException("@C_Org_ID@ @NotFound@");
+		}
+		if (!organization.isActive()) {
+			throw new AdempiereException("@C_Org_ID@ @NotActive@");
+		}
+		return organization;
 	}
 
 
@@ -283,6 +329,27 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		return builder;
 	}
 
+	public static MCurrency validateAndGetCurrency(int currencyId) {
+		if (currencyId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Currency_ID@");
+		}
+		MCurrency currency = new Query(
+			Env.getCtx(),
+			I_C_Currency.Table_Name,
+			" C_Currency_ID = ? ",
+			null
+		)
+			.setParameters(currencyId)
+			.first()
+		;
+		if (currency == null || currency.getC_Currency_ID() <= 0) {
+			throw new AdempiereException("@C_Currency_ID@ @NotFound@");
+		}
+		if (!currency.isActive()) {
+			throw new AdempiereException("@C_Currency_ID@ @NotActive@");
+		}
+		return currency;
+	}
 
 
 	@Override
@@ -840,14 +907,20 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 	}
 
 	private ProcessResponse.Builder process(ProcessRequest request) {
+		// validate and get Organization
+		MOrg organization = validateAndGetOrganization(request.getTransactionOrganizationId());
 		Properties context = Env.getCtx();
-		if (request.getTransactionOrganizationId() <= 0) {
-			throw new AdempiereException("@Org0NotAllowed@");
-		}
 
 		AtomicReference<String> atomicStatus = new AtomicReference<String>();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		Env.setContext(context, windowNo, I_AD_Org.COLUMNNAME_AD_Org_ID, request.getTransactionOrganizationId());
+
+		// validate and get Business Partner
+		MBPartner businessPartner = validateAndGetBusinessPartner(request.getBusinessPartnerId());
+
+		// validate and get Currency
+		MCurrency currency = validateAndGetCurrency(request.getCurrencyId());
+
 
 		Trx.run(transactionName -> {
 			// transaction date
@@ -862,8 +935,10 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 			}
 
 			String status = saveData(
-				windowNo, request.getCurrencyId(), request.getTransactionOrganizationId(), transactionDate,
-				request.getDescription(),
+				windowNo, businessPartner.getC_BPartner_ID(),
+				currency.getC_Currency_ID(), request.getIsMultiCurrency(),
+				organization.getAD_Org_ID(), transactionDate,
+				request.getChargeId(), request.getDescription(),
 				request.getPaymentSelectionsList(),
 				request.getInvoiceSelectionsList(),
 				transactionName

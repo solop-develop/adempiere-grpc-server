@@ -152,15 +152,12 @@ message ListPaymentsRequest {
 	// filters
 	string search_value = 3;
 	int32 business_partner_id = 4;
-	string business_partner_uuid = 5;
-	int64 date = 6;
-	int32 organization_id = 7;
-	string organization_uuid = 8;
-	int32 currency_id = 9;
-	string currency_uuid = 10;
-	bool is_multi_currency = 11;
-	string transaction_type = 12; // AP-AR
-	bool is_automatic_write_off = 13;
+	int64 date = 5;
+	int32 organization_id = 6;
+	int32 currency_id = 7;
+	bool is_multi_currency = 8;
+	string transaction_type = 9; // AP-AR
+	bool is_automatic_write_off = 10;
 }
 
 message ListPaymentsResponse {
@@ -193,15 +190,12 @@ message ListInvoicesRequest {
 	// filters
 	string search_value = 3;
 	int32 business_partner_id = 4;
-	string business_partner_uuid = 5;
-	int64 date = 6;
-	int32 organization_id = 7;
-	string organization_uuid = 8;
-	int32 currency_id = 9;
-	string currency_uuid = 10;
-	bool is_multi_currency = 11;
-	string transaction_type = 12; // AP-AR
-	bool is_automatic_write_off = 13;
+	int64 date = 5;
+	int32 organization_id = 6;
+	int32 currency_id = 7;
+	bool is_multi_currency = 8;
+	string transaction_type = 9; // AP-AR
+	bool is_automatic_write_off = 10;
 }
 
 message ListInvoicesResponse {
@@ -266,15 +260,12 @@ message InvoiceSelection {
 // Process
 message ProcessRequest {
 	int32 business_partner_id = 1;
-	string business_partner_uuid = 2;
-	int32 currency_id = 3;
-	string currency_uuid = 4;
-	int32 charge_id = 5;
-	string charge_uuid = 6;
-	int32 transaction_organization_id = 7;
-	string transaction_organization_uuid = 8;
-	int64 date = 9;
-	string description = 10;
+	int32 currency_id = 2;
+	bool is_multi_currency = 3;
+	int32 charge_id = 4;
+	int32 transaction_organization_id = 5;
+	int64 date = 6;
+	string description = 7;
 	repeated PaymentSelection payment_selections = 11;
 	repeated InvoiceSelection invoice_selections = 12;
 }
