@@ -16,33 +16,40 @@ package org.spin.grpc.service;
 
 import org.adempiere.exceptions.AdempiereException;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_C_BPartner;
+import org.adempiere.core.domains.models.I_C_Charge;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
 import org.compiere.model.MAllocationHdr;
+import org.compiere.model.MAllocationLine;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCharge;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrg;
+import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
+import org.compiere.process.DocAction;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -944,7 +951,6 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		// validate and get Currency
 		MCurrency currency = validateAndGetCurrency(request.getCurrencyId());
 
-
 		Trx.run(transactionName -> {
 			// transaction date
 			Timestamp transactionDate = ValueUtil.getTimestampFromLong(
@@ -957,11 +963,15 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 				);
 			}
 
+			BigDecimal totalDifference = ValueUtil.getBigDecimalFromDecimal(
+				request.getTotalDifference()
+			);
 			String status = saveData(
 				windowNo, businessPartner.getC_BPartner_ID(),
 				currency.getC_Currency_ID(), request.getIsMultiCurrency(),
 				organization.getAD_Org_ID(), transactionDate,
 				request.getChargeId(), request.getDescription(),
+				totalDifference,
 				request.getPaymentSelectionsList(),
 				request.getInvoiceSelectionsList(),
 				transactionName
@@ -981,10 +991,10 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 	private String saveData(
 		int windowNo, int businessPartnerId,
 		int currencyId, boolean isMultiCurrency,
-		int organizationId,
-		Timestamp transactionDate,
-		int chargeId,
-		String description,List<PaymentSelection> paymentSelection,
+		int organizationId, Timestamp transactionDate,
+		int chargeId, String description,
+		BigDecimal totalDifference,
+		List<PaymentSelection> paymentSelection,
 		List<InvoiceSelection> invoiceSelection,
 		String transactionName
 	) {
@@ -992,10 +1002,38 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 			return "";
 		}
 
-		String userName = Env.getContext(Env.getCtx(), "#AD_User_Name");
+		final int orderId = 0;
+		final int cashLineId = 0;
+
+		int pRows = paymentSelection.size();
+		List<Integer> paymentList = paymentSelection.stream()
+			.map(pay -> {
+				return pay.getId();
+			})
+			.collect(Collectors.toList())
+		;
+
+		List<BigDecimal> amountList = new ArrayList<>(pRows);
+
+		// Sum up the payment and applied amounts.
+		BigDecimal paymentAppliedAmt = Env.ZERO;
+		for (PaymentSelection payment : paymentSelection) {
+			BigDecimal paymentAmt = ValueUtil.getBigDecimalFromDecimal(
+				payment.getAppliedAmount()
+			);
+			amountList.add(paymentAmt);
+			paymentAppliedAmt = paymentAppliedAmt.add(paymentAmt);
+		}
+
 		//	Create Allocation manual
+		final String userName = Env.getContext(Env.getCtx(), "#AD_User_Name");
 		MAllocationHdr alloc = new MAllocationHdr(
-			Env.getCtx(), true, transactionDate, currencyId, userName, transactionName
+			Env.getCtx(),
+			true,
+			transactionDate,
+			currencyId,
+			userName,
+			transactionName
 		);
 		alloc.setAD_Org_ID(organizationId);
 		//	Set Description
@@ -1004,8 +1042,181 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		}
 		alloc.saveEx();
 
-		// final int orderId = 0;
-		// final int cashLineId = 0;
+		//  Invoices - Loop and generate allocations
+		BigDecimal unmatchedApplied = Env.ZERO;
+		//	For all invoices
+		for (InvoiceSelection invoice : invoiceSelection) {
+			//  Invoice variables
+			int C_Invoice_ID = invoice.getId();
+			BigDecimal AppliedAmt = ValueUtil.getBigDecimalFromDecimal(
+				invoice.getAppliedAmount()
+			);
+			//  semi-fixed fields (reset after first invoice)
+			BigDecimal DiscountAmt = ValueUtil.getBigDecimalFromDecimal(
+				invoice.getDiscountAmount()
+			);
+			BigDecimal WriteOffAmt = ValueUtil.getBigDecimalFromDecimal(
+				invoice.getWriteOffAmount()
+			);
+			BigDecimal invoiceOpen = ValueUtil.getBigDecimalFromDecimal(
+				invoice.getOpenAmount()
+			);
+			//	OverUnderAmt needs to be in Allocation Currency
+			BigDecimal OverUnderAmt = invoiceOpen.subtract(AppliedAmt)
+				.subtract(DiscountAmt)
+				.subtract(WriteOffAmt)
+			;
+
+			// for (PaymentSelection payment : paymentSelection) {
+			for (int j = 0; j < paymentSelection.size() && AppliedAmt.signum() != 0; j++) {
+				// if (AppliedAmt.signum() == 0) {
+				// 	break;
+				// }
+				PaymentSelection payment = paymentSelection.get(j);
+
+				int paymentId = payment.getId();
+				BigDecimal paymentAmt = ValueUtil.getBigDecimalFromDecimal(
+					payment.getAppliedAmount()
+				);
+
+				// only match same sign (otherwise appliedAmt increases)
+				// and not zero (appliedAmt was checked earlier)
+				if (paymentAmt.signum() == AppliedAmt.signum()) {
+					BigDecimal amount = AppliedAmt;
+
+					// if there's more open on the invoice than left in the payment
+					if (amount.abs().compareTo(paymentAmt.abs()) > 0) {
+						amount = paymentAmt;
+					}
+
+					//	Allocation Line
+					MAllocationLine aLine = new MAllocationLine(
+						alloc, amount,
+						DiscountAmt, WriteOffAmt, OverUnderAmt
+					);
+					aLine.setDocInfo(businessPartnerId, orderId, C_Invoice_ID);
+					aLine.setPaymentInfo(paymentId, cashLineId);
+					aLine.saveEx();
+					
+					// Apply Discounts and WriteOff only first time
+					DiscountAmt = Env.ZERO;
+					WriteOffAmt = Env.ZERO;
+					// subtract amount from Payment/Invoice
+					AppliedAmt = AppliedAmt.subtract(amount);
+					paymentAmt = paymentAmt.subtract(amount);
+					amountList.set(j, paymentAmt); // update
+				} //	for all applied amounts
+			} //	loop through payments for invoice
+
+			if ( AppliedAmt.signum() == 0 && DiscountAmt.signum() == 0 && WriteOffAmt.signum() == 0) {
+				continue;
+			}
+			// remainder will need to match against other invoices
+			else {
+				int C_Payment_ID = 0;
+				
+				//	Allocation Line
+				MAllocationLine aLine = new MAllocationLine(
+					alloc, AppliedAmt,
+					DiscountAmt, WriteOffAmt, OverUnderAmt
+				);
+				aLine.setDocInfo(businessPartnerId, 0, C_Invoice_ID);
+				aLine.setPaymentInfo(C_Payment_ID, 0);
+				aLine.saveEx();
+				log.fine("Allocation Amount=" + AppliedAmt);
+				unmatchedApplied = unmatchedApplied.add(AppliedAmt);
+			}
+		} //	invoice loop
+
+		
+		// check for unapplied payment amounts (eg from payment reversals)
+		for (int i = 0; i < paymentList.size(); i++) {
+			BigDecimal payAmt = (BigDecimal) amountList.get(i);
+			if (payAmt.signum() == 0) {
+				continue;
+			}
+			int paymentId = paymentList.get(i);
+			// log.fine("Payment=" + paymentId + ", Amount=" + payAmt);
+
+			//	Allocation Line
+			MAllocationLine aLine = new MAllocationLine(
+				alloc, payAmt,
+				Env.ZERO, Env.ZERO, Env.ZERO
+			);
+			aLine.setDocInfo(businessPartnerId, 0, 0);
+			aLine.setPaymentInfo(paymentId, 0);
+			aLine.saveEx();
+			unmatchedApplied = unmatchedApplied.subtract(payAmt);
+		}
+
+		// check for charge amount
+		if (chargeId > 0 && unmatchedApplied.compareTo(BigDecimal.ZERO) != 0) {
+			// BigDecimal chargeAmt = totalDiff;
+			BigDecimal chargeAmt = BigDecimal.ZERO;
+		
+			//	Allocation Line
+			MAllocationLine aLine = new MAllocationLine(
+				alloc,
+				chargeAmt.negate(),
+				Env.ZERO, Env.ZERO, Env.ZERO
+			);
+			aLine.set_CustomColumn(I_C_Charge.COLUMNNAME_C_Charge_ID, chargeId);
+			aLine.setC_BPartner_ID(businessPartnerId);
+			aLine.saveEx(transactionName);
+			unmatchedApplied = unmatchedApplied.add(chargeAmt);
+		}
+
+		if (unmatchedApplied.signum() != 0) {
+			log.log(Level.SEVERE, "Allocation not balanced -- out by " + unmatchedApplied);
+		}
+		
+		//	Should start WF
+		if (alloc.get_ID() > 0) {
+			if (!alloc.processIt(DocAction.ACTION_Complete)) {
+				throw new AdempiereException("@ProcessFailed@: " + alloc.getProcessMsg());
+			}
+			alloc.saveEx();
+		}
+
+		//  Test/Set IsPaid for Invoice - requires that allocation is posted
+		for (InvoiceSelection invoice : invoiceSelection) {
+			//  Invoice variables
+			int C_Invoice_ID = invoice.getId();
+			String sql = "SELECT invoiceOpen(C_Invoice_ID, 0) "
+				+ "FROM C_Invoice WHERE C_Invoice_ID = ?"
+			;
+			BigDecimal open = DB.getSQLValueBD(transactionName, sql, C_Invoice_ID);
+			if (open != null && open.signum() == 0) {
+				sql = "UPDATE C_Invoice SET IsPaid='Y' "
+					+ "WHERE C_Invoice_ID=" + C_Invoice_ID;
+				int no = DB.executeUpdate(sql, transactionName);
+				log.config("Invoice #" + C_Invoice_ID + " is paid - updated=" + no);
+			}
+			else {
+				log.config("Invoice #" + C_Invoice_ID + " is not paid - " + open);
+			}
+		}
+		
+		//  Test/Set Payment is fully allocated
+		for (PaymentSelection payment : paymentSelection) {
+		// for (int i = 0; i < paymentList.size(); i++) {
+			int paymentId = payment.getId();
+			MPayment pay = new MPayment(
+				Env.getCtx(),
+				paymentId,
+				transactionName
+			);
+			if (pay.testAllocation()) {
+				pay.saveEx();
+			}
+			log.config(
+				"Payment #" + paymentId +
+				(pay.isAllocated() ? " not" : " is")
+				+ " fully allocated"
+			);
+		}
+		paymentList.clear();
+		amountList.clear();
 
 		return Msg.parseTranslation(Env.getCtx(), "@C_AllocationHdr_ID@ @Created@: " + alloc.getDocumentNo());
 	}

@@ -266,8 +266,9 @@ message ProcessRequest {
 	int32 transaction_organization_id = 5;
 	int64 date = 6;
 	string description = 7;
-	repeated PaymentSelection payment_selections = 11;
-	repeated InvoiceSelection invoice_selections = 12;
+	data.Decimal total_difference = 8;
+	repeated PaymentSelection payment_selections = 9;
+	repeated InvoiceSelection invoice_selections = 10;
 }
 
 message ProcessResponse {
