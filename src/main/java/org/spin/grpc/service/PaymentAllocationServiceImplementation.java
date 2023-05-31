@@ -29,17 +29,20 @@ import java.util.logging.Level;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
 import org.compiere.model.MAllocationHdr;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MCharge;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrg;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
+import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -886,6 +889,26 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 
 
 
+	private Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
+		AtomicReference<Timestamp> transactionDateReference = new AtomicReference<Timestamp>();
+		paymentSelection.forEach(paymentSelected -> {
+			Timestamp paymentDate = ValueUtil.getTimestampFromLong(
+				paymentSelected.getTransactionDate()
+			);
+			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), paymentDate);
+			transactionDateReference.set(transactionDate);
+		});
+		invoiceSelection.forEach(invoiceSelected -> {
+			Timestamp invoiceDate = ValueUtil.getTimestampFromLong(
+				invoiceSelected.getDateInvoiced()
+			);
+			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), invoiceDate);
+			transactionDateReference.set(transactionDate);
+		});
+
+		return transactionDateReference.get();
+	}
+
 	@Override
 	public void process(ProcessRequest request, StreamObserver<ProcessResponse> responseObserver) {
 		try {
@@ -955,30 +978,12 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 		;
 	}
 
-	private Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
-		AtomicReference<Timestamp> transactionDateReference = new AtomicReference<Timestamp>();
-		paymentSelection.forEach(paymentSelected -> {
-			Timestamp paymentDate = ValueUtil.getTimestampFromLong(
-				paymentSelected.getTransactionDate()
-			);
-			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), paymentDate);
-			transactionDateReference.set(transactionDate);
-		});
-		invoiceSelection.forEach(invoiceSelected -> {
-			Timestamp invoiceDate = ValueUtil.getTimestampFromLong(
-				invoiceSelected.getDateInvoiced()
-			);
-			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), invoiceDate);
-			transactionDateReference.set(transactionDate);
-		});
-
-		return transactionDateReference.get();
-	}
-
 	private String saveData(
-		int windowNo, int currencyId,
+		int windowNo, int businessPartnerId,
+		int currencyId, boolean isMultiCurrency,
 		int organizationId,
 		Timestamp transactionDate,
+		int chargeId,
 		String description,List<PaymentSelection> paymentSelection,
 		List<InvoiceSelection> invoiceSelection,
 		String transactionName
