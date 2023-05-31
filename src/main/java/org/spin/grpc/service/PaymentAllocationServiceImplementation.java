@@ -239,12 +239,12 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 
 	public static MOrg validateAndGetOrganization(int organizationId) {
 		if (organizationId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Org_ID@");
+			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
 		}
 		MOrg organization = new Query(
 			Env.getCtx(),
 			I_AD_Org.Table_Name,
-			" C_Org_ID = ? ",
+			" AD_Org_ID = ? ",
 			null
 		)
 			.setParameters(organizationId)
@@ -252,10 +252,10 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 			.first()
 		;
 		if (organization == null || organization.getAD_Org_ID() <= 0) {
-			throw new AdempiereException("@C_Org_ID@ @NotFound@");
+			throw new AdempiereException("@AD_Org_ID@ @NotFound@");
 		}
 		if (!organization.isActive()) {
-			throw new AdempiereException("@C_Org_ID@ @NotActive@");
+			throw new AdempiereException("@AD_Org_ID@ @NotActive@");
 		}
 		return organization;
 	}
@@ -1108,7 +1108,7 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 				} //	for all applied amounts
 			} //	loop through payments for invoice
 
-			if ( AppliedAmt.signum() == 0 && DiscountAmt.signum() == 0 && WriteOffAmt.signum() == 0) {
+			if (AppliedAmt.signum() == 0 && DiscountAmt.signum() == 0 && WriteOffAmt.signum() == 0) {
 				continue;
 			}
 			// remainder will need to match against other invoices
@@ -1136,7 +1136,7 @@ public class PaymentAllocationServiceImplementation extends PaymentAllocationImp
 				continue;
 			}
 			int paymentId = paymentList.get(i);
-			// log.fine("Payment=" + paymentId + ", Amount=" + payAmt);
+			log.fine("Payment=" + paymentId + ", Amount=" + payAmt);
 
 			//	Allocation Line
 			MAllocationLine aLine = new MAllocationLine(
