@@ -220,8 +220,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @throws FileNotFoundException 
 	 */
 	public static ProcessLog.Builder runBusinessProcess(RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
-		
-
 		//	Get Process definition
 		MProcess process = MProcess.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getProcessUuid(), null));
 		if(process == null
@@ -235,20 +233,25 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 
 		int tableId = 0;
 		int recordId = request.getId();
-		if(!Util.isEmpty(request.getTableName())) {
+		if (!Util.isEmpty(request.getTableName(), true)) {
 			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if(table != null && table.getAD_Table_ID() > 0) {
+			if (table != null && table.getAD_Table_ID() > 0) {
 				tableId = table.getAD_Table_ID();
+
+				if (table.getAD_Window_ID() > 0) {
+					//	Add to recent Item
+					addToRecentItem(MMenu.ACTION_Window, table.getAD_Window_ID());
+				}
 			}
 		}
 		PO entity = null;
 		List<KeyValue> parametersList = new ArrayList<KeyValue>();
 		parametersList.addAll(request.getParametersList());
-		if((recordId != 0
-				|| !Util.isEmpty(request.getUuid()))
-				&& !Util.isEmpty(request.getTableName())) {
+		if ((recordId > 0
+				|| !Util.isEmpty(request.getUuid(), true))
+				&& !Util.isEmpty(request.getTableName(), true)) {
 			String uuid = request.getUuid();
-			if(recordId != 0) {
+			if (recordId > 0) {
 				uuid = null;
 			}
 			entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), uuid, recordId, null);
