@@ -618,7 +618,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			// .setClient_ID()
 			.setOnlyActiveRecords(true)
 			.setParameters(parametersList)
-			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction)
 		;
 
 		int recordCount = queryRequests.count();
@@ -639,6 +638,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 
 		queryRequests
 			.setLimit(limit, offset)
+			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction)
 			.list(MRequest.class)
 			.forEach(requestRecord -> {
 				Issue.Builder builder = convertRequest(requestRecord);
