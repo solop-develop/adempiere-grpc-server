@@ -785,7 +785,56 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+
+
+	@Override
+	public void printLocalTicket(PrintLocalTicketRequest request, StreamObserver<PrintLocalTicketResponse> responseObserver) {
+		try {
+			if (Util.isEmpty(request.getOrderUuid(), true)) {
+				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			}
+			log.fine("Print Local Ticket = " + request);
+			// MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+
+			PrintLocalTicketResponse.Builder builder = PrintLocalTicketResponse.newBuilder();
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void printLocalResult(PrintLocalResultRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			if (request.getResponseCode() <= 0) {
+				throw new AdempiereException("@POS.ResponseCode@ @NotFound@");
+			}
+			log.fine("Print Local Ticket Result = " + request);
+
+			Empty.Builder builder = Empty.newBuilder();
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
 	@Override
 	public void printPreview(PrintPreviewRequest request, StreamObserver<PrintPreviewResponse> responseObserver) {
 		try {

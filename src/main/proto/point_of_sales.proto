@@ -99,6 +99,9 @@ service Store {
 	rpc PrintTicket(PrintTicketRequest) returns (PrintTicketResponse) {}
 	//	Print Preview
 	rpc PrintPreview(PrintPreviewRequest) returns (PrintPreviewResponse) {}
+	//	Print Local Ticket
+	rpc PrintLocalTicket(PrintLocalTicketRequest) returns (PrintLocalTicketResponse) {}
+	rpc PrintLocalResult(PrintLocalResultRequest) returns (Empty) {}
 	//	Print Preview for Shipment
 	rpc PrintShipmentPreview(PrintShipmentPreviewRequest) returns (PrintShipmentPreviewResponse) {}
 	//	Create Customer Account
@@ -554,6 +557,34 @@ message PrintTicketRequest {
 message PrintTicketResponse {
 	string result = 1;
 }
+
+
+//	Print Local Ticket
+message PrintLocalTicketRequest {
+	string pos_uuid = 1;
+	string order_uuid = 2;
+}
+
+message PrintLocalTicketResponse {
+	string host_endpoint = 1;
+	string method = 2; // GET-POST-PUT
+	string body = 3;
+	map<string, string> headers = 4;
+	map<string, string> query = 5;
+}
+
+//	Print Local Result
+message KeyValueString {
+	string key = 1;
+	string value = 2;
+}
+
+message PrintLocalResultRequest {
+	int32 response_code = 1;
+	repeated KeyValueString response_values = 2;
+	int64 request_time = 3;
+}
+
 
 //	Print Preview Ticket
 message PrintPreviewRequest {
