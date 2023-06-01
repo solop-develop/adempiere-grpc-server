@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -190,7 +190,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			);
 		}
 	}
-	
+
 	private ListSalesRepresentativesResponse.Builder listSalesRepresentatives(ListSalesRepresentativesRequest request) {
 		final String whereClause = "EXISTS("
 			+ "SELECT * FROM C_BPartner bp WHERE "
@@ -605,7 +605,6 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			parametersList.add(roleId);
 			whereClause = "Processed='N' "
 				+ "AND (SalesRep_ID=? OR AD_Role_ID = ?) "
-				+ "AND (DateNextAction IS NULL OR TRUNC(DateNextAction, 'DD') <= TRUNC(SysDate, 'DD'))"
 				+ "AND (R_Status_ID IS NULL OR R_Status_ID IN (SELECT R_Status_ID FROM R_Status WHERE IsClosed='N'))"
 			;
 		}
@@ -619,6 +618,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			// .setClient_ID()
 			.setOnlyActiveRecords(true)
 			.setParameters(parametersList)
+			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction)
 		;
 
 		int recordCount = queryRequests.count();
