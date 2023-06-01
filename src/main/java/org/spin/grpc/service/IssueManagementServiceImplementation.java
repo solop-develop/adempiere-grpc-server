@@ -638,7 +638,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 
 		queryRequests
 			.setLimit(limit, offset)
-			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction)
+			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction + " NULLS FIRST ")
 			.list(MRequest.class)
 			.forEach(requestRecord -> {
 				Issue.Builder builder = convertRequest(requestRecord);
