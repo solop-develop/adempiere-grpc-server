@@ -67,31 +67,55 @@ public class DictionaryUtil {
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 		Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
 		for (MField field : tab.getFields(false, null)) {
-			if(!field.isDisplayed()) {
+			if (!field.isDisplayed()) {
 				// key column on table
 				if (!field.getAD_Column().isKey()) {
 					continue;
 				}
 			}
 			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+			String columnName = column.getColumnName();
+
+			// Add virutal column
+			String columnSQL = column.getColumnSQL();
+			if (!Util.isEmpty(columnSQL, true)) {
+				queryToAdd.append(", ")
+					.append(columnSQL)
+					.append(" AS ")
+					.append(column.getColumnName())
+				;
+			}
+
 			int displayTypeId = field.getAD_Reference_ID();
-			if(displayTypeId == 0) {
+			if (displayTypeId <= 0) {
 				displayTypeId = column.getAD_Reference_ID();
 			}
 			if (ReferenceUtil.validateReference(displayTypeId)) {
+				if (!Util.isEmpty(columnSQL, true)) {
+					StringBuffer displayColumnSQL = new StringBuffer()
+						.append(", ")
+						.append(columnSQL)
+						.append(LookupUtil.DISPLAY_COLUMN_KEY)
+						.append("_")
+						.append(column.getColumnName())
+					;
+					queryToAdd.append(displayColumnSQL);
+					continue;
+				}
+
 				//	Reference Value
 				int referenceValueId = field.getAD_Reference_Value_ID();
 				if(referenceValueId == 0) {
 					referenceValueId = column.getAD_Reference_Value_ID();
 				}
 
-				String columnName = column.getColumnName();
-
 				//	Validation Code
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
-					Env.getCtx()).getReferenceInfo(displayTypeId,
+					Env.getCtx()
+				).getReferenceInfo(
+					displayTypeId,
 					referenceValueId,
-					columnName, 
+					columnName,
 					language.getAD_Language(),
 					tableName
 				);
