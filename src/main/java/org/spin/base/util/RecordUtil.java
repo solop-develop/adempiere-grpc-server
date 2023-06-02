@@ -442,9 +442,7 @@ public class RecordUtil {
 				String keyColumn = table.getTableName() + "_ID";
 				String translationTableName = tableTranslation.getTableName();
 				// only table, tableName tableName, tableName AS tableName
-				String tableWithAliases = translationTableName + "|" 
-					+ translationTableName + "\\s+" + translationTableName + "|"
-					+ translationTableName + "\\s+AS\\s+" + translationTableName;
+				String tableWithAliases = getPatternTableName(translationTableName, null);
 
 				String joinPattern = "JOIN(\\s+)" 
 					+ "(" + tableWithAliases + ")"
@@ -485,13 +483,7 @@ public class RecordUtil {
 			}
 
 			// tableName tableName, tableName AS tableName
-			String patternAlias = table.getTableName() + "\\s+" + table.getTableName() + "|" + table.getTableName() + "\\s+AS\\s+" + table.getTableName();
-			if (!Util.isEmpty(tableAlias, true) && !table.getTableName().equals(tableAlias)) {
-				// tableName tableAlias, tableName AS tableAlias
-				patternAlias += "|" + table.getTableName() + "\\s+" + tableAlias + "|" + table.getTableName() + "\\s+AS\\s+" + tableAlias;
-			}
-			// only table on last position
-			patternAlias += "|" + table.getTableName();
+			String patternAlias = getPatternTableName(table.getTableName(), tableAlias);
 
 			String fromWherePattern = "\\s+(FROM)\\s+(" + patternAlias + ")" + "\\s+(WHERE)";
 			Matcher matcher = Pattern.compile(
@@ -534,6 +526,26 @@ public class RecordUtil {
 		return sql;
 	}
 
+
+	/**
+	 * Get regex pattern to match with table name and/or table alias
+	 * @param tableName
+	 * @param tableNameAlias
+	 * @return
+	 */
+	public static String getPatternTableName(String tableName, String tableNameAlias) {
+		// tableName tableName, tableName AS tableName
+		String patternTableWithAliases = tableName + "\\s+" + tableName + "|" + tableName + "\\s+AS\\s+" + tableName;
+		if (!Util.isEmpty(tableNameAlias, true) && !tableName.equals(tableNameAlias)) {
+			// tableName tableAlias, tableName AS tableAlias
+			patternTableWithAliases += "|" + tableName + "\\s+" + tableNameAlias + "|" + tableName + "\\s+AS\\s+" + tableNameAlias;
+		}
+		// only table on last position
+		patternTableWithAliases += "|" + tableName;
+
+		return patternTableWithAliases;
+	}
+
 	/**
 	 * Count records
 	 * @param sql
@@ -544,7 +556,7 @@ public class RecordUtil {
 	public static int countRecords(String sql, String tableName, List<Object> parameters) {
 		return countRecords(sql, tableName, null, parameters);
 	}
-	
+
 	/**
 	 * Count records
 	 * @param sql
@@ -555,16 +567,10 @@ public class RecordUtil {
 	 */
 	public static int countRecords(String sql, String tableName, String tableNameAlias, List<Object> parameters) {
 		// tableName tableName, tableName AS tableName
-		String tableWithAliases = tableName + "\\s+" + tableName + "|" + tableName + "\\s+AS\\s+" + tableName;
-		if (!Util.isEmpty(tableNameAlias, true) && !tableName.equals(tableNameAlias)) {
-			// tableName tableAlias, tableName AS tableAlias
-			tableWithAliases += "|" + tableName + "\\s+" + tableNameAlias + "|" + tableName + "\\s+AS\\s+" + tableNameAlias;
-		}
-		// only table on last position
-		tableWithAliases += "|" + tableName;
+		String tableWithAliases = getPatternTableName(tableName, tableNameAlias);
 
 		Matcher matcherFrom = Pattern.compile(
-			"\\s+(FROM)\\s+(" + tableWithAliases + ")\\s+",
+			"\\s+(FROM)\\s+(" + tableWithAliases + ")\\s+(WHERE|(LEFT|INNER|RIGHT)\\s+JOIN)",
 			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
 		)
 		.matcher(sql);
