@@ -374,7 +374,15 @@ public class DictionaryUtil {
 			}
 		}
 
-		StringBuffer where = new StringBuffer(ValueUtil.validateNull(tab.getWhereClause()));
+		StringBuffer where = new StringBuffer();
+		if (!Util.isEmpty(tab.getWhereClause(), true)) {
+			String whereWithAlias = DictionaryUtil.getValidationCodeWithAlias(
+				table.getTableName(),
+				tab.getWhereClause()
+			);
+			where.append(whereWithAlias);
+		}
+
 		//	Set where clause for tab
 		if (Util.isEmpty(where.toString(), true)) {
 			return whereClause.toString();

@@ -1058,13 +1058,16 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private ListEntitiesResponse.Builder listTabEntities(ListTabEntitiesRequest request) {
-		
 		int tabId = RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), null);
-		if(tabId <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		if (tabId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
 		//	
 		MTab tab = MTab.get(Env.getCtx(), tabId);
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+
 		String tableName = MTable.getTableName(Env.getCtx(), tab.getAD_Table_ID());
 
 		//	Fill Env.getCtx()
@@ -1074,14 +1077,13 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		// get where clause including link column and parent column
 		String where = DictionaryUtil.getSQLWhereClauseFromTab(Env.getCtx(), tab, null);
 		String parsedWhereClause = Env.parseContext(Env.getCtx(), windowNo, where, false);
-		
-		if(Util.isEmpty(parsedWhereClause)
-				&& !Util.isEmpty(where)) {
+		if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(where, true)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
 		}
 		Criteria criteria = request.getFilters();
 		StringBuffer whereClause = new StringBuffer(parsedWhereClause);
 		List<Object> params = new ArrayList<>();
+
 		//	For dynamic condition
 		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(criteria, tableName, params);
 		if(!Util.isEmpty(dynamicWhere, true)) {
