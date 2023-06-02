@@ -234,10 +234,14 @@ public class SessionManager {
 		//	Role Info
 		MRole role = MRole.get(context, Env.getContextAsInt(context, "#AD_Role_ID"));
 		Env.setContext(context, "#AD_Role_Name", role.getName());
+		Env.setContext(context, "#SysAdmin", role.getAD_Role_ID() == 0);
+
 		//	User Info
 		MUser user = MUser.get(context, Env.getContextAsInt(context, "#AD_User_ID"));
 		Env.setContext(context, "#AD_User_Name", user.getName());
 		Env.setContext(context, "#AD_User_Description", user.getDescription());
+		Env.setContext(context, "#SalesRep_ID", user.getAD_User_ID());
+
 		//	Load preferences
 		loadPreferences(context);
 	}
