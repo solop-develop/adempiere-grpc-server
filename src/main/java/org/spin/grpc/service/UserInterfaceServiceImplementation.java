@@ -2933,23 +2933,28 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private String getBrowserWhereClause(MBrowse browser, String parsedWhereClause, List<KeyValue> contextAttributes, HashMap<String, Object> parameterMap, List<Object> values) {
-		StringBuilder browserWhereClause = new StringBuilder();
-		List<MBrowseField> fields = ASPUtil.getInstance().getBrowseFields(browser.getAD_Browse_ID());
-		LinkedHashMap<String, MBrowseField> fieldsMap = new LinkedHashMap<>();
 		AtomicReference<String> convertedWhereClause = new AtomicReference<String>(parsedWhereClause);
-		if(parsedWhereClause != null
-				&& contextAttributes != null) {
+		if (!Util.isEmpty(parsedWhereClause, true) && contextAttributes != null && contextAttributes.size() > 0) {
 			contextAttributes.forEach(contextValue -> {
-				convertedWhereClause.set(convertedWhereClause.get().replaceAll("@" + contextValue.getKey() + "@", String.valueOf(ValueUtil.getObjectFromValue(contextValue.getValue()))));
+				String value = String.valueOf(ValueUtil.getObjectFromValue(contextValue.getValue()));
+				String contextKey = "@" + contextValue.getKey() + "@";
+				convertedWhereClause.set(
+					convertedWhereClause.get().replaceAll(contextKey, value)
+				);
 			});
 		}
+
 		//	Add field to map
+		List<MBrowseField> fields = ASPUtil.getInstance().getBrowseFields(browser.getAD_Browse_ID());
+		LinkedHashMap<String, MBrowseField> fieldsMap = new LinkedHashMap<>();
 		for(MBrowseField field: fields) {
 			fieldsMap.put(field.getAD_View_Column().getColumnName(), field);
 		}
+
 		//	
+		StringBuilder browserWhereClause = new StringBuilder();
 		boolean onRange = false;
-		if(parameterMap.size() > 0) {
+		if (parameterMap != null && parameterMap.size() > 0) {
 			for(Entry<String, Object> parameter : parameterMap.entrySet()) {
 				MBrowseField field = fieldsMap.get(parameter.getKey());
 				if(field == null) {
@@ -3030,14 +3035,14 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	
 		String whereClause = null;
 		//	
-		if(!Util.isEmpty(convertedWhereClause.get())) {
+		if(!Util.isEmpty(convertedWhereClause.get(), true)) {
 			whereClause = convertedWhereClause.get();
 		}
 		if(browserWhereClause.length() > 0) {
-			if(Util.isEmpty(whereClause)) {
-				whereClause = browserWhereClause.toString();
+			if (Util.isEmpty(whereClause, true)) {
+				whereClause = " (" + browserWhereClause.toString() + ") ";
 			} else {
-				whereClause = whereClause + " AND (" + browserWhereClause + ")";
+				whereClause = " (" + whereClause + ") AND (" + browserWhereClause + ") ";
 			}
 		}
 		return whereClause;
@@ -3049,8 +3054,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private ListBrowserItemsResponse.Builder listBrowserItems(ListBrowserItemsRequest request) {
-		
-
 		ListBrowserItemsResponse.Builder builder = ListBrowserItemsResponse.newBuilder();
 		MBrowse browser = getBrowser(request.getUuid());
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
@@ -3064,35 +3067,45 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		});
 
 		//	Fill Env.getCtx()
+		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), parameterMap);
+		ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 
-		List<Object> values = new ArrayList<Object>();
-		String whereClause = getBrowserWhereClause(browser, browser.getWhereClause(), request.getContextAttributesList(), parameterMap, values);
-
+		//	get query columns
 		String query = DictionaryUtil.addQueryReferencesFromBrowser(browser);
-		String orderByClause = DictionaryUtil.getSQLOrderBy(browser);
-		StringBuilder sql = new StringBuilder(query);
-		if (!Util.isEmpty(whereClause)) {
-			whereClause = Env.parseContext(Env.getCtx(), windowNo, whereClause, false);
-			sql.append(" WHERE ").append(whereClause); // includes first AND
-		} else {
-			sql.append(" WHERE 1=1");
+		String sql = Env.parseContext(context, windowNo, query, false);
+		if (Util.isEmpty(sql, true)) {
+			throw new AdempiereException("@AD_Browse_ID@ @SQL@ @Unparseable@");
 		}
+
 		MView view = browser.getAD_View();
 		MViewDefinition parentDefinition = view.getParentViewDefinition();
 		String tableNameAlias = parentDefinition.getTableAlias();
 		String tableName = parentDefinition.getAD_Table().getTableName();
-		//	
-		String parsedSQL = MRole.getDefault().addAccessSQL(
-			sql.toString(),
-			tableNameAlias,
-			MRole.SQL_FULLYQUALIFIED,
-			MRole.SQL_RO
-		);
-		if(Util.isEmpty(orderByClause)) {
-			orderByClause = "";
-		} else {
+
+		String parsedSQL = MRole.getDefault(context, false)
+			.addAccessSQL(
+				sql,
+				tableNameAlias,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
+
+		//	get where clause
+		List<Object> values = new ArrayList<Object>();
+		String whereClause = getBrowserWhereClause(browser, browser.getWhereClause(), request.getContextAttributesList(), parameterMap, values);
+		String parsedwhereClause = "";
+		if (!Util.isEmpty(whereClause, true)) {
+			parsedwhereClause = Env.parseContext(context, windowNo, whereClause, false);
+			if (Util.isEmpty(parsedwhereClause, true)) {
+				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
+			}
+			parsedSQL += " AND " + parsedwhereClause;
+		}
+
+		String orderByClause = DictionaryUtil.getSQLOrderBy(browser);
+		if (!Util.isEmpty(orderByClause, true)) {
 			orderByClause = " ORDER BY " + orderByClause;
 		}
 
