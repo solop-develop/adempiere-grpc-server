@@ -3308,7 +3308,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			for (Entry<String, Object> attribute : attributes.entrySet()) {
 				gridTab.setValue(attribute.getKey(), attribute.getValue());
 			}
-			gridTab.setValue(request.getColumnName(), value.toString());
+			gridTab.setValue(request.getColumnName(), value);
 
 			//	Load value for field
 			gridField.setValue(oldValue, false);
