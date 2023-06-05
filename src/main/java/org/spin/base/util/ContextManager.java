@@ -59,21 +59,7 @@ public class ContextManager {
 
 		//	Fill context
 		attributes.entrySet().forEach(attribute -> {
-			if(attribute.getValue() instanceof Integer) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Integer) attribute.getValue());
-			} else if(attribute.getValue() instanceof BigDecimal) {
-				String value = null;
-				if (attribute.getValue() != null) {
-					value = attribute.getValue().toString();
-				}
-				Env.setContext(context, windowNo, attribute.getKey(), value);
-			} else if(attribute.getValue() instanceof Timestamp) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Timestamp) attribute.getValue());
-			} else if(attribute.getValue() instanceof Boolean) {
-				Env.setContext(context, windowNo, attribute.getKey(), (Boolean) attribute.getValue());
-			} else if(attribute.getValue() instanceof String) {
-				Env.setContext(context, windowNo, attribute.getKey(), (String) attribute.getValue());
-			}
+			setWindowContextByObject(context, windowNo, attribute.getKey(), attribute.getValue());
 		});
 		
 		return context;
@@ -86,7 +72,66 @@ public class ContextManager {
 		Map<String, Object> attributes = ValueUtil.convertValuesToObjects(values);
 		return setContextWithAttributes(windowNo, context, attributes, isClearWindow);
 	}
-	
+
+
+	/**
+	 * Set context on window by object value
+	 * @param windowNo
+	 * @param context
+	 * @param windowNo
+	 * @param key
+	 * @param value
+	 * @return {Properties} context with new values
+	 */
+	public static void setWindowContextByObject(Properties context, int windowNo, String key, Object value) {
+		if (value instanceof Integer) {
+			Env.setContext(context, windowNo, key, (Integer) value);
+		} else if(value instanceof BigDecimal) {
+			String currentValue = null;
+			if (value != null) {
+				currentValue = value.toString();
+			}
+			Env.setContext(context, windowNo, key, currentValue);
+		} else if(value instanceof Timestamp) {
+			Env.setContext(context, windowNo, key, (Timestamp) value);
+		} else if(value instanceof Boolean) {
+			Env.setContext(context, windowNo, key, (Boolean) value);
+		} else if(value instanceof String) {
+			Env.setContext(context, windowNo, key, (String) value);
+		}
+	}
+
+	/**
+	 * Set context on tab by object value
+	 * @param windowNo
+	 * @param context
+	 * @param windowNo
+	 * @param tabNo
+	 * @param key
+	 * @param value
+	 * @return {Properties} context with new values
+	 */
+	public static void setTabContextByObject(Properties context, int windowNo, int tabNo, String key, Object value) {
+		if (value instanceof Integer) {
+			Integer currentValue = (Integer) value;
+			Env.setContext(context, windowNo, tabNo, key, currentValue.toString());
+		} else if(value instanceof BigDecimal) {
+			String currentValue = null;
+			if (value != null) {
+				currentValue = value.toString();
+			}
+			Env.setContext(context, windowNo, tabNo, key, currentValue);
+		} else if(value instanceof Timestamp) {
+			Timestamp currentValue = (Timestamp) value;
+			Env.setContext(context, windowNo, tabNo, key, currentValue.toString());
+		} else if(value instanceof Boolean) {
+			Env.setContext(context, windowNo, tabNo, key, (Boolean) value);
+		} else if(value instanceof String) {
+			Env.setContext(context, windowNo, tabNo, key, (String) value);
+		}
+	}
+
+
 	/**
 	 * Get Default Country
 	 * @return

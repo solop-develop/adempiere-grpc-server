@@ -3255,6 +3255,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	private org.spin.backend.grpc.common.Callout.Builder runcallout(RunCalloutRequest request) {
 		org.spin.backend.grpc.common.Callout.Builder calloutBuilder = org.spin.backend.grpc.common.Callout.newBuilder();
 		Trx.run(transactionName -> {
+			if (Util.isEmpty(request.getTabUuid(), true)) {
+				throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
+			}
 			MTab tab = tabRequested.get(request.getTabUuid());
 			if (tab == null) {
 				tab = MTab.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), transactionName));
@@ -3284,6 +3287,11 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
 			ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), attributes);
 
+			//
+			Object oldValue = ValueUtil.getObjectFromValue(request.getOldValue());
+			Object value = ValueUtil.getObjectFromValue(request.getValue());
+			ContextManager.setTabContextByObject(Env.getCtx(), windowNo, tabNo, request.getColumnName(), value);
+
 			//	Initial load for callout wrapper
 			GridWindowVO gridWindowVo = GridWindowVO.create(Env.getCtx(), windowNo, tab.getAD_Window_ID());
 			GridWindow gridWindow = new GridWindow(gridWindowVo, true);
@@ -3300,10 +3308,12 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			for (Entry<String, Object> attribute : attributes.entrySet()) {
 				gridTab.setValue(attribute.getKey(), attribute.getValue());
 			}
+			gridTab.setValue(request.getColumnName(), value.toString());
 
 			//	Load value for field
-			gridField.setValue(ValueUtil.getObjectFromValue(request.getOldValue()), false);
-			gridField.setValue(ValueUtil.getObjectFromValue(request.getValue()), false);
+			gridField.setValue(oldValue, false);
+			gridField.setValue(value, false);
+
 			//	Run it
 			String result = processCallout(windowNo, gridTab, gridField);
 			Arrays.asList(gridTab.getFields()).stream()
@@ -3398,11 +3408,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if(gridField.isKey()) {
 			return false;
 		}
-		//	new value like null
-		if(gridField.getValue() == null
-				&& gridField.getOldValue() == null) {
-			return false;
-		}
+
 		//	validate with old value
 		if(gridField.getOldValue() != null
 				&& gridField.getValue() != null
