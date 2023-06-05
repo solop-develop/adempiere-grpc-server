@@ -61,7 +61,7 @@ public class ContextManager {
 		attributes.entrySet().forEach(attribute -> {
 			setWindowContextByObject(context, windowNo, attribute.getKey(), attribute.getValue());
 		});
-		
+
 		return context;
 	}
 
@@ -86,17 +86,17 @@ public class ContextManager {
 	public static void setWindowContextByObject(Properties context, int windowNo, String key, Object value) {
 		if (value instanceof Integer) {
 			Env.setContext(context, windowNo, key, (Integer) value);
-		} else if(value instanceof BigDecimal) {
+		} else if (value instanceof BigDecimal) {
 			String currentValue = null;
 			if (value != null) {
 				currentValue = value.toString();
 			}
 			Env.setContext(context, windowNo, key, currentValue);
-		} else if(value instanceof Timestamp) {
+		} else if (value instanceof Timestamp) {
 			Env.setContext(context, windowNo, key, (Timestamp) value);
-		} else if(value instanceof Boolean) {
+		} else if (value instanceof Boolean) {
 			Env.setContext(context, windowNo, key, (Boolean) value);
-		} else if(value instanceof String) {
+		} else if (value instanceof String) {
 			Env.setContext(context, windowNo, key, (String) value);
 		}
 	}
@@ -115,18 +115,18 @@ public class ContextManager {
 		if (value instanceof Integer) {
 			Integer currentValue = (Integer) value;
 			Env.setContext(context, windowNo, tabNo, key, currentValue.toString());
-		} else if(value instanceof BigDecimal) {
+		}else if (value instanceof BigDecimal) {
 			String currentValue = null;
 			if (value != null) {
 				currentValue = value.toString();
 			}
 			Env.setContext(context, windowNo, tabNo, key, currentValue);
-		} else if(value instanceof Timestamp) {
+		} else if (value instanceof Timestamp) {
 			Timestamp currentValue = (Timestamp) value;
 			Env.setContext(context, windowNo, tabNo, key, currentValue.toString());
-		} else if(value instanceof Boolean) {
+		} else if (value instanceof Boolean) {
 			Env.setContext(context, windowNo, tabNo, key, (Boolean) value);
-		} else if(value instanceof String) {
+		} else if (value instanceof String) {
 			Env.setContext(context, windowNo, tabNo, key, (String) value);
 		}
 	}
