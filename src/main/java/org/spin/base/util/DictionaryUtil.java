@@ -364,16 +364,21 @@ public class DictionaryUtil {
 
 			//	Validate direct child
 			if (tabList == null || tabList.size() == 0) {
-				if(tab.getParent_Column_ID() != 0) {
+				if (tab.getParent_Column_ID() > 0) {
 					mainColumnName = MColumn.getColumnName(context, tab.getParent_Column_ID());
 				}
 				String childColumn = mainColumnName;
-				if(tab.getAD_Column_ID() != 0) {
+				if (tab.getAD_Column_ID() > 0) {
 					childColumn = MColumn.getColumnName(context, tab.getAD_Column_ID());
+					mainColumnName = childColumn;
 				}
-				// TODO: Fix childColumn on 'System Translation Check' window > 'Element Translation' tab
-				whereClause.append(table.getTableName()).append(".").append(childColumn)
-					.append(" = ").append("@").append(mainColumnName).append("@");
+
+				whereClause.append(table.getTableName()).append(".").append(childColumn);
+				if (mainColumnName != null && mainColumnName.endsWith("_ID")) {
+					whereClause.append(" = ").append("@").append(mainColumnName).append("@");
+				} else {
+					whereClause.append(" = ").append("'@").append(mainColumnName).append("@'");
+				}
 				if(optionalTab.isPresent()) {
 					parentTabUuid = optionalTab.get().getUUID();
 				}
