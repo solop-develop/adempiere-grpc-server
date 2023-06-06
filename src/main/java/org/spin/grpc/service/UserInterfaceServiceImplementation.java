@@ -1070,13 +1070,14 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		String tableName = MTable.getTableName(Env.getCtx(), tab.getAD_Table_ID());
 
-		//	Fill Env.getCtx()
+		//	Fill context
+		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
 		// get where clause including link column and parent column
-		String where = DictionaryUtil.getSQLWhereClauseFromTab(Env.getCtx(), tab, null);
-		String parsedWhereClause = Env.parseContext(Env.getCtx(), windowNo, where, false);
+		String where = DictionaryUtil.getSQLWhereClauseFromTab(context, tab, null);
+		String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
 		if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(where, true)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
 		}

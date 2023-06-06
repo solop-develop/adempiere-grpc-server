@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -551,28 +550,13 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		int tabId = tab.getAD_Tab_ID();
 		tab = ASPUtil.getInstance(context).getWindowTab(tab.getAD_Window_ID(), tabId);
 
-		final int tabLevel = tab.getTabLevel();
-		final int tabSequence = tab.getSeqNo();
 		String parentTabUuid = null;
 		// root tab has no parent
-		if (tabLevel > 0) {
-			AtomicReference<Integer> parentTabSequence = new AtomicReference<Integer>(-1);
-			AtomicReference<MTab> parentTabRefecence = new AtomicReference<MTab>();
-			List<MTab> tabsList = ASPUtil.getInstance(context).getWindowTabs(tab.getAD_Window_ID());
-			tabsList.forEach(tabItem -> {
-				if (tabItem.getTabLevel() >= tabLevel || tabItem.getSeqNo() >= tabSequence) {
-					// it is child tab
-					return;
-				}
-
-				// current tab is more down that tab list
-				if (parentTabSequence.get() == -1 || tabItem.getSeqNo() > parentTabSequence.get()) {
-					parentTabSequence.set(tabItem.getSeqNo());
-					parentTabRefecence.set(tabItem);
-				}
-			});
-			if (parentTabRefecence.get() != null) {
-				parentTabUuid = parentTabRefecence.get().getUUID();
+		if (tab.getTabLevel() > 0) {
+			int parentTabId = DictionaryUtil.getDirectParentTabId(tab.getAD_Window_ID(), tabId);
+			if (parentTabId > 0) {
+				MTable table = MTable.get(context, tab.getAD_Table_ID());
+				parentTabUuid = RecordUtil.getUuidFromId(table.getTableName(), parentTabId, null);
 			}
 		}
 
