@@ -393,32 +393,35 @@ public class DictionaryUtil {
 						String childColumnName = DictionaryServiceImplementation.getParentColumnNameFromTab(childTab);
 						String childLinkColumnName = DictionaryServiceImplementation.getLinkColumnNameFromTab(childTab);
 						//	Get from parent
-						if(Util.isEmpty(childColumnName)) {
+						if (Util.isEmpty(childColumnName, true)) {
 							MTable childTable = MTable.get(context, currentTab.getAD_Table_ID());
 							childColumnName = childTable.getKeyColumns()[0];
 						}
-						if(Util.isEmpty(childLinkColumnName)) {
+						if (Util.isEmpty(childLinkColumnName, true)) {
 							childLinkColumnName = childColumnName;
 						}
 						whereClause.append(" INNER JOIN ").append(currentTable.getTableName()).append(" AS t").append(aliasIndex)
 							.append(" ON(").append("t").append(aliasIndex).append(".").append(childLinkColumnName)
-							.append("=").append("t").append(aliasIndex - 1).append(".").append(childColumnName).append(")");
+							.append("=").append("t").append(aliasIndex - 1).append(".").append(childColumnName).append(")")
+						;
 					}
 					aliasIndex++;
-					if(Util.isEmpty(parentTabUuid)) {
+					if (Util.isEmpty(parentTabUuid, true)) {
 						parentTabUuid = currentTab.getUUID();
 					}
 				}
-				whereClause.append(" WHERE t").append(aliasIndex - 1).append(".").append(mainColumnName).append(" = ").append("@").append(mainColumnName).append("@");
+				whereClause.append(" WHERE t").append(aliasIndex - 1).append(".").append(mainColumnName).append(" = ")
+					.append("@").append(mainColumnName).append("@")
+				;
 				//	Add support to child
 				MTab parentTab = tablesMap.get(aliasIndex -1);
 				String parentColumnName = DictionaryServiceImplementation.getParentColumnNameFromTab(tab);
 				String linkColumnName = DictionaryServiceImplementation.getLinkColumnNameFromTab(tab);
-				if(Util.isEmpty(parentColumnName)) {
+				if (Util.isEmpty(parentColumnName, true)) {
 					MTable parentTable = MTable.get(context, parentTab.getAD_Table_ID());
 					parentColumnName = parentTable.getKeyColumns()[0];
 				}
-				if(Util.isEmpty(linkColumnName)) {
+				if (Util.isEmpty(linkColumnName, true)) {
 					linkColumnName = parentColumnName;
 				}
 				whereClause.append(" AND t").append(0).append(".").append(parentColumnName).append(" = ")
@@ -448,7 +451,8 @@ public class DictionaryUtil {
 		where.append(" AND ").append("(").append(whereClause).append(")");
 		return where.toString();
 	}
-	
+
+
 	/**
 	 * Get SQL from View with a custom column as alias
 	 * @param viewId

@@ -1123,17 +1123,16 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				);
 		if (!Util.isEmpty(whereClause.toString(), true)) {
 			// includes first AND
-			sqlWithRoleAccess += " AND " + whereClause; 
+			sqlWithRoleAccess += " AND " + whereClause;
 		}
 		//
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), false, params);
 
 		String orderByClause = criteria.getOrderByClause();
-		if(Util.isEmpty(orderByClause)) {
-			orderByClause = "";
-		} else {
-			orderByClause = " ORDER BY " + orderByClause;
+		if (!Util.isEmpty(orderByClause, true)) {
+			orderByClause = " ORDER BY " + criteria.getOrderByClause();
 		}
+
 		//	Count records
 		count = RecordUtil.countRecords(parsedSQL, tableName, params);
 		//	Add Row Number
