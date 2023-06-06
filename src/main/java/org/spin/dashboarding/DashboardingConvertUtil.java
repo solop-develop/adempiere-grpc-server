@@ -33,9 +33,11 @@ import org.adempiere.model.MBrowse;
 import org.compiere.model.MChart;
 import org.compiere.model.MColorSchema;
 import org.compiere.model.MForm;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
 import org.compiere.model.MWindow;
+import org.compiere.model.M_Element;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.print.MPrintColor;
@@ -48,6 +50,9 @@ import org.spin.backend.grpc.dashboarding.Favorite;
 import org.spin.backend.grpc.dashboarding.Filter;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
+import org.spin.backend.grpc.dictionary.Reference;
+import org.spin.base.dictionary.DictionaryConvertUtil;
+import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.ValueUtil;
 
 /**
@@ -468,6 +473,33 @@ public class DashboardingConvertUtil {
 				)
 			)
 		;
+
+
+		int displayTypeId = chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Reference_ID);
+		if (ReferenceUtil.validateReference(displayTypeId)) {
+			//	Reference Value
+			int referenceValueId = chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Reference_Value_ID);
+			//	Validation Code
+			int validationRuleId = chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Val_Rule_ID);
+
+			String columnName = chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ColumnName);
+			if (chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Element_ID) > 0) {
+				M_Element element = new M_Element(
+					Env.getCtx(), chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Element_ID), null
+				);
+				if (element != null && element.getAD_Element_ID() > 0) {
+					columnName = element.getColumnName();
+				}
+			}
+
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, columnName, validationRuleId
+			);
+			if (info != null) {
+				Reference.Builder referenceBuilder = DictionaryConvertUtil.convertReference(Env.getCtx(), info);
+				builder.setReference(referenceBuilder.build());
+			}
+		}
 		return builder;
 	}
 

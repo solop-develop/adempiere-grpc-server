@@ -70,6 +70,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
+import org.spin.base.dictionary.DictionaryConvertUtil;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
@@ -95,7 +96,6 @@ import org.spin.backend.grpc.dictionary.ReportExportType;
 import org.spin.backend.grpc.dictionary.Tab;
 import org.spin.backend.grpc.dictionary.ValidationRule;
 import org.spin.backend.grpc.dictionary.Window;
-import org.spin.backend.grpc.dictionary.ZoomWindow;
 import org.spin.model.MADContextInfo;
 import org.spin.model.MADFieldCondition;
 import org.spin.model.MADFieldDefinition;
@@ -982,7 +982,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				displayTypeId, referenceValueId, columnName, validationRuleId
 			);
 			if (info != null) {
-				Reference.Builder referenceBuilder = convertReference(context, info);
+				Reference.Builder referenceBuilder = DictionaryConvertUtil.convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			}
 		}
@@ -1122,7 +1122,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				displayTypeId, referenceValueId, columnName, validationRuleId
 			);
 			if (info != null) {
-				Reference.Builder referenceBuilder = convertReference(context, info);
+				Reference.Builder referenceBuilder = DictionaryConvertUtil.convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			} else {
 				builder.setDisplayType(DisplayType.String);
@@ -1366,7 +1366,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				displayTypeId, referenceValueId, column.getColumnName(), validationRuleId
 			);
 			if (info != null) {
-				Reference.Builder referenceBuilder = convertReference(context, info);
+				Reference.Builder referenceBuilder = DictionaryConvertUtil.convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			} else {
 				builder.setDisplayType(DisplayType.String);
@@ -1472,7 +1472,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				displayTypeId, referenceValueId, element.getColumnName(), 0
 			);
 			if (info != null) {
-				Reference.Builder referenceBuilder = convertReference(context, info);
+				Reference.Builder referenceBuilder = DictionaryConvertUtil.convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			} else {
 				builder.setDisplayType(DisplayType.String);
@@ -1585,7 +1585,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				displayTypeId, referenceValueId, column.getColumnName(), validationRuleId
 			);
 			if (info != null) {
-				Reference.Builder referenceBuilder = convertReference(context, info);
+				Reference.Builder referenceBuilder = DictionaryConvertUtil.convertReference(context, info);
 				builder.setReference(referenceBuilder.build());
 			} else {
 				builder.setDisplayType(DisplayType.String);
@@ -1783,7 +1783,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}
 
 		if (info != null) {
-			builder = convertReference(context, info);
+			builder = DictionaryConvertUtil.convertReference(context, info);
 		}
 
 		return builder;
@@ -1817,42 +1817,6 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				.setType(ValueUtil.validateNull(validationRule.getType()))
 				;
 	}
-	
-	/**
-	 * Convert Reference to builder
-	 * @param info
-	 * @return
-	 */
-	private Reference.Builder convertReference(Properties context, MLookupInfo info) {
-		if (info == null) {
-			return Reference.newBuilder();
-		}
-		Reference.Builder builder = Reference.newBuilder()
-				.setTableName(ValueUtil.validateNull(info.TableName))
-				.setKeyColumnName(ValueUtil.validateNull(info.KeyColumn))
-				.setDisplayColumnName(ValueUtil.validateNull(info.DisplayColumn))
-				.addAllContextColumnNames(
-						DictionaryUtil.getContextColumnNames(Optional.ofNullable(info.QueryDirect).orElse("") + Optional.ofNullable(info.Query).orElse("") + Optional.ofNullable(info.ValidationCode).orElse(""))
-				);
-
-		// reference value
-		if (info.AD_Reference_Value_ID > 0) {
-			builder.setId(info.AD_Reference_Value_ID);
-			String uuid = RecordUtil.getUuidFromId(X_AD_Reference.Table_Name, info.AD_Reference_Value_ID);
-			builder.setUuid(ValueUtil.validateNull(uuid));
-		}
-
-		//	Window Reference
-		if(info.ZoomWindow > 0) {
-			builder.addZoomWindows(convertZoomWindow(context, info.ZoomWindow).build());
-		}
-		// window reference Purchase Order
-		if(info.ZoomWindowPO > 0) {
-			builder.addZoomWindows(convertZoomWindow(context, info.ZoomWindowPO).build());
-		}
-		//	Return
-		return builder;
-	}
 
 	/**
 	 * Get reference from column name and table
@@ -1868,38 +1832,8 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		return column.getAD_Reference_ID();
 	}
 
-	/**
-	 * Convert Zoom Window from ID
-	 * @param windowId
-	 * @return
-	 */
-	private ZoomWindow.Builder convertZoomWindow(Properties context, int windowId) {
-		MWindow window = ASPUtil.getInstance(context).getWindow(windowId); // new MWindow(context, windowId, null);
-		//	Get translation
-		String name = null;
-		String description = null;
-		String language = Env.getAD_Language(context);
-		if(!Util.isEmpty(language)) {
-			name = window.get_Translation(I_AD_Window.COLUMNNAME_Name, language);
-			description = window.get_Translation(I_AD_Window.COLUMNNAME_Description, language);
-		}
-		//	Validate for default
-		if(Util.isEmpty(name)) {
-			name = window.getName();
-		}
-		if(Util.isEmpty(description)) {
-			description = window.getDescription();
-		}
-		//	Return
-		return ZoomWindow.newBuilder()
-				.setId(window.getAD_Window_ID())
-				.setUuid(ValueUtil.validateNull(window.getUUID()))
-				.setName(ValueUtil.validateNull(name))
-				.setDescription(ValueUtil.validateNull(description))
-				.setIsSalesTransaction(window.isSOTrx());
-	}
-	
-	
+
+
 	@Override
 	public void listIdentifiersFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
 		try {

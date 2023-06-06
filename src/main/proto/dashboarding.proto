@@ -19,6 +19,7 @@ option java_package = "org.spin.backend.grpc.dashboarding";
 option java_outer_classname = "ADempiereDashboarding";
 
 import "base_data_type.proto";
+import "dictionary.proto";
 
 package dashboarding;
 
@@ -228,6 +229,8 @@ message WindowDashboardParameter {
 	string value_max = 17;
 	string display_logic = 18;
 	string read_only_logic = 19;
+	// External Info
+	dictionary.Reference reference = 20;
 }
 
 message WindowDashboard {

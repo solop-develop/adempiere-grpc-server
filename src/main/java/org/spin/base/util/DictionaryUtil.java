@@ -184,7 +184,7 @@ public class DictionaryUtil {
 	 * @return List<String>
 	 */
 	public static List<String> getContextColumnNames(String context) {
-		if(context == null) {
+		if (Util.isEmpty(context, true)) {
 			return new ArrayList<String>();
 		}
 		String START = "\\@";  // A literal "(" character in regex
