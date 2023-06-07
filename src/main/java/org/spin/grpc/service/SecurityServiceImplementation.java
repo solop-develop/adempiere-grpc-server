@@ -195,11 +195,10 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			Env.setContext(context, "#AD_Language", language);
 		}
 
-		int warehouseId = request.getWarehouseId();
 		if (!Util.isEmpty(request.getWarehouseUuid(), true)) {
-			warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
+			int warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
+			Env.setContext(context, "#M_Warehouse_ID", warehouseId);
 		}
-		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
 
 		MSession session = MSession.get(context, false);
 		// Default preference values
