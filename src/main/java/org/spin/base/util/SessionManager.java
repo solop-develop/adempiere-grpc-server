@@ -126,7 +126,7 @@ public class SessionManager {
 					throw new AdempiereException("@AD_Session_ID@ @NotFound@");
 				}
 				//	Load preferences
-				loadDefaultSessionValues(context, null);
+				loadDefaultSessionValues(context, language);
 				Env.setContext (context, "#AD_Session_ID", session.getAD_Session_ID());
 				Env.setContext (context, "#Session_UUID", session.getUUID());
 				Env.setContext(context, "#AD_User_ID", session.getCreatedBy());

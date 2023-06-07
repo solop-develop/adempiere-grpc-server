@@ -146,7 +146,8 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+
 	@Override
 	public void getSessionInfo(SessionInfoRequest request, StreamObserver<SessionInfo> responseObserver) {
 		try {
@@ -688,17 +689,18 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private SessionInfo.Builder getSessionInfo(SessionInfoRequest request) {
-		MSession session = MSession.get(Env.getCtx(), false);
+		Properties context = Env.getCtx();
+		MSession session = MSession.get(context, false);
 		//	Load default preference values
-		SessionManager.loadDefaultSessionValues(Env.getCtx(), null);
+		SessionManager.loadDefaultSessionValues(context, Env.getAD_Language(context));
 		//	Session values
 		SessionInfo.Builder builder = SessionInfo.newBuilder();
 		builder.setId(session.getAD_Session_ID());
 		builder.setUuid(ValueUtil.validateNull(session.getUUID()));
 		builder.setName(ValueUtil.validateNull(session.getDescription()));
-		builder.setUserInfo(convertUserInfo(MUser.get(Env.getCtx(), session.getCreatedBy())).build());
+		builder.setUserInfo(convertUserInfo(MUser.get(context, session.getCreatedBy())).build());
 		//	Set role
-		Role.Builder roleBuilder = convertRole(MRole.get(Env.getCtx(), session.getAD_Role_ID()), false);
+		Role.Builder roleBuilder = convertRole(MRole.get(context, session.getAD_Role_ID()), false);
 		builder.setRole(roleBuilder.build());
 		//	Set default context
 		populateDefaultPreferences(builder);
