@@ -371,7 +371,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			}
 			String columnName = MColumn.getColumnName(Env.getCtx(), viewColumn.getAD_Column_ID());
 
-			int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), columnName);
+			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), columnName);
 
 			Object value = null;
 			if (referenceId > 0) {
@@ -1195,7 +1195,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			throw new AdempiereException("@Error@ PO is null");
 		}
 		request.getAttributesList().forEach(attribute -> {
-			int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if (referenceId > 0) {
 				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
@@ -1263,7 +1263,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		if (entity.get_ID() >= 0) {
 			request.getAttributesList().forEach(attribute -> {
-				int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+				int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 				Object value = null;
 				if (referenceId > 0) {
 					value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);

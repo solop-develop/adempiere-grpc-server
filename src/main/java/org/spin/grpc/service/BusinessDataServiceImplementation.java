@@ -61,6 +61,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.eevolution.services.dsl.ProcessBuilder;
+import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -581,7 +582,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			throw new AdempiereException("@Error@ PO is null");
 		}
 		request.getAttributesList().forEach(attribute -> {
-			int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+			int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if(referenceId > 0) {
 				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
@@ -612,7 +613,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		if(entity != null
 				&& entity.get_ID() >= 0) {
 			request.getAttributesList().forEach(attribute -> {
-				int referenceId = DictionaryServiceImplementation.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+				int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 				Object value = null;
 				if(referenceId > 0) {
 					value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
