@@ -35,14 +35,12 @@ import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
 import org.adempiere.core.domains.models.I_AD_Form;
-import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Message;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Val_Rule;
 import org.adempiere.core.domains.models.I_AD_Window;
-import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MForm;
@@ -52,7 +50,6 @@ import org.compiere.model.MMenu;
 import org.compiere.model.MMessage;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
-import org.compiere.model.MRecentItem;
 import org.compiere.model.MReportView;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
@@ -374,7 +371,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			builder.setFileName(ValueUtil.validateNull(fileName.substring(beginIndex, endIndex)));
 		}
 		//	Add to recent Item
-		addToRecentItem(MMenu.ACTION_Form, form.getAD_Form_ID());
+		org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			form.getAD_Form_ID()
+		);
 		//	return
 		return builder;
 	}
@@ -436,39 +436,16 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 //			}
 		}
 		//	Add to recent Item
-		addToRecentItem(MMenu.ACTION_Window, window.getAD_Window_ID());
+		org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Window,
+			window.getAD_Window_ID()
+		);
 		//	return
 		return builder;
 	}
-	
-	/**
-	 * Add element to recent item
-	 * @param action
-	 * @param optionId
-	 */
-	private void addToRecentItem(String action, int optionId) {
-		if(Util.isEmpty(action)) {
-			return;
-		}
-		String whereClause = null;
-		if(action.equals(MMenu.ACTION_Window)) {
-			whereClause = I_AD_Window.COLUMNNAME_AD_Window_ID + " = ?";
-		} else if(action.equals(MMenu.ACTION_Form)) {
-			whereClause = I_AD_Form.COLUMNNAME_AD_Form_ID + " = ?";
-		} else if(action.equals(MMenu.ACTION_Process) || action.equals(MMenu.ACTION_Report)) {
-			whereClause = I_AD_Process.COLUMNNAME_AD_Process_ID + " = ?";
-		} else if(action.equals(MMenu.ACTION_WorkFlow)) {
-			whereClause = I_AD_Workflow.COLUMNNAME_AD_Workflow_ID + " = ?";
-		} else if(action.equals(MMenu.ACTION_SmartBrowse)) {
-			whereClause = I_AD_Browse.COLUMNNAME_AD_Browse_ID + " = ?";
-		}
-		//	Get menu
-		int menuId = new Query(Env.getCtx(), I_AD_Menu.Table_Name, whereClause, null)
-			.setParameters(optionId)
-			.firstId();
-		MRecentItem.addMenuOption(Env.getCtx(), menuId, optionId);
-	}
-	
+
+
+
 //	/**
 //	 * Get Field group from Tab
 //	 * @param tabId
@@ -869,7 +846,10 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			}
 		}
 		//	Add to recent Item
-		addToRecentItem(MMenu.ACTION_SmartBrowse, browser.getAD_Window_ID());
+		org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_SmartBrowse,
+			browser.getAD_Browse_ID()
+		);
 		return builder;
 	}
 	

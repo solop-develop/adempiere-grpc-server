@@ -33,6 +33,7 @@ import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.compiere.model.MColumn;
 import org.compiere.model.MDocType;
+import org.compiere.model.MMenu;
 import org.compiere.model.MOrder;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
@@ -68,6 +69,7 @@ import org.spin.backend.grpc.wf.WorkflowActivity;
 import org.spin.backend.grpc.wf.WorkflowDefinition;
 import org.spin.backend.grpc.wf.WorkflowDefinitionRequest;
 import org.spin.backend.grpc.wf.WorkflowGrpc.WorkflowImplBase;
+import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -135,6 +137,10 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			.setParameters(parameter)
 			.setOnlyActiveRecords(true)
 			.first();
+
+		//	Add to recent Item
+		DictionaryUtil.addToRecentItem(MMenu.ACTION_WorkFlow, workflow.getAD_Workflow_ID());
+
 		return convertWorkflow(context, workflow);
 	}
 
