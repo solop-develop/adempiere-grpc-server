@@ -30,20 +30,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.core.domains.models.I_AD_Browse;
-import org.adempiere.core.domains.models.I_AD_Form;
-import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.adempiere.core.domains.models.I_AD_PrintFormat;
 import org.adempiere.core.domains.models.I_AD_Process;
-import org.adempiere.core.domains.models.I_AD_Window;
-import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.compiere.model.MColumn;
 import org.compiere.model.MMenu;
 import org.compiere.model.MPInstance;
 import org.compiere.model.MProcess;
-import org.compiere.model.MRecentItem;
 import org.compiere.model.MReportView;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
@@ -241,7 +235,10 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 
 				if (table.getAD_Window_ID() > 0) {
 					//	Add to recent Item
-					addToRecentItem(MMenu.ACTION_Window, table.getAD_Window_ID());
+					DictionaryUtil.addToRecentItem(
+						MMenu.ACTION_Window,
+						table.getAD_Window_ID()
+					);
 				}
 			}
 		}
@@ -272,7 +269,10 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		}
 
 		//	Add to recent Item
-		addToRecentItem(MMenu.ACTION_Process, process.getAD_Process_ID());
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Process,
+			process.getAD_Process_ID()
+		);
 		//	Call process builder
 		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
 				.process(process.getAD_Process_ID())
@@ -447,35 +447,9 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		}
 		return response;
 	}
-	
-	/**
-	 * Add element to recent item
-	 * @param action
-	 * @param optionId
-	 */
-	private static void addToRecentItem(String action, int optionId) {
-		if(Util.isEmpty(action)) {
-			return;
-		}
-		String whereClause = null;
-		if(action.equals(MMenu.ACTION_Window)) {
-			whereClause = I_AD_Window.COLUMNNAME_AD_Window_ID + " = ?";
-		} else if(action.equals(MMenu.ACTION_Form)) {
-			whereClause = I_AD_Form.COLUMNNAME_AD_Form_ID + " = ?";
-		} else if(action.equals(MMenu.ACTION_Process) || action.equals(MMenu.ACTION_Report)) {
-			whereClause = I_AD_Process.COLUMNNAME_AD_Process_ID + " = ?";
-		} else if(action.equals(MMenu.ACTION_WorkFlow)) {
-			whereClause = I_AD_Workflow.COLUMNNAME_AD_Workflow_ID + " = ?";
-		} else if(action.equals(MMenu.ACTION_SmartBrowse)) {
-			whereClause = I_AD_Browse.COLUMNNAME_AD_Browse_ID + " = ?";
-		}
-		//	Get menu
-		int menuId = new Query(Env.getCtx(), I_AD_Menu.Table_Name, whereClause, null)
-			.setParameters(optionId)
-			.firstId();
-		MRecentItem.addMenuOption(Env.getCtx(), menuId, 0);
-	}
-	
+
+
+
 	/**
 	 * Convert Name
 	 * @param name
