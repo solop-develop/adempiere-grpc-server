@@ -1917,9 +1917,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if (table == null || table.getAD_Table_ID() < 1) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
-		
+
 		ListFieldsResponse.Builder fieldsListBuilder = ListFieldsResponse.newBuilder();
-		
+
 		final String sql = "SELECT f.AD_Field_ID "
 			// + ", c.ColumnName, c.AD_Reference_ID, c.IsKey, f.IsDisplayed, c.AD_Reference_Value_ID, c.ColumnSql "
 			+ " FROM AD_Column c "
@@ -1931,7 +1931,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				// + " (f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
 				+ " (f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
 			+ "ORDER BY c.IsKey DESC, f.SeqNo";
-		/*
+
 		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
 			while(resultSet.next()) {
 				MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
@@ -1943,36 +1943,35 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}).onFailure(throwable -> {
 			log.log(Level.SEVERE, "loadPreferences", throwable);
 		});
-		*/
 
-		PreparedStatement pstmt = null;
-		ResultSet resultSet = null;
-		try {
-			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, table.getAD_Table_ID());
-			resultSet = pstmt.executeQuery();
-			int recordCount = 0;
-			while (resultSet.next()) {
-				MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
-				if (field != null) {
-					Field.Builder fieldBuilder = convertField(context, field, true);
-					fieldsListBuilder.addFields(fieldBuilder.build());
-				}
-				recordCount++;
-			}
-			fieldsListBuilder.setRecordCount(recordCount);
-			resultSet.close();
-			pstmt.close();
-		}
-		catch (SQLException e) {
-			log.log(Level.SEVERE, sql, e);
-		}
-		finally {
-			DB.close(resultSet, pstmt);
-			resultSet = null;
-			pstmt = null;
-		}
-		
+		// PreparedStatement pstmt = null;
+		// ResultSet resultSet = null;
+		// try {
+		// 	pstmt = DB.prepareStatement(sql, null);
+		// 	pstmt.setInt(1, table.getAD_Table_ID());
+		// 	resultSet = pstmt.executeQuery();
+		// 	int recordCount = 0;
+		// 	while (resultSet.next()) {
+		// 		MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
+		// 		if (field != null) {
+		// 			Field.Builder fieldBuilder = convertField(context, field, true);
+		// 			fieldsListBuilder.addFields(fieldBuilder.build());
+		// 		}
+		// 		recordCount++;
+		// 	}
+		// 	fieldsListBuilder.setRecordCount(recordCount);
+		// 	resultSet.close();
+		// 	pstmt.close();
+		// }
+		// catch (SQLException e) {
+		// 	log.log(Level.SEVERE, sql, e);
+		// }
+		// finally {
+		// 	DB.close(resultSet, pstmt);
+		// 	resultSet = null;
+		// 	pstmt = null;
+		// }
+
 		return fieldsListBuilder;
 	}
 	
