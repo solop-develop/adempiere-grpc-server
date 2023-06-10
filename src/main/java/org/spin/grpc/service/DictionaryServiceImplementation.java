@@ -14,9 +14,6 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1787,40 +1784,53 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	@Override
 	public void listIdentifiersFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
 		try {
-			if(request == null) {
+			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListFieldsResponse.Builder fielsListBuilder = getIdentifierFields(Env.getCtx(), request);
+			ListFieldsResponse.Builder fielsListBuilder = getIdentifierFields(request);
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
-				.asRuntimeException());
+				.asRuntimeException()
+			);
 		}
 	}
-	
-	private ListFieldsResponse.Builder getIdentifierFields(Properties context, ListFieldsRequest request) {
+
+	private ListFieldsResponse.Builder getIdentifierFields(ListFieldsRequest request) {
+		if (request.getTableId() <= 0 ||Util.isEmpty(request.getTableUuid(), true) && Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+
+		Properties context = Env.getCtx();
 		MTable table = null;
 		int tableId = request.getTableId();
 		if (tableId > 0) {
 			table = MTable.get(context, tableId);
 		} else if(!Util.isEmpty(request.getTableUuid(), true)) {
-			table = new Query(context, MTable.Table_Name, MTable.COLUMNNAME_UUID + " = ?", null)
+			table = new Query(
+				context,
+				MTable.Table_Name,
+				MTable.COLUMNNAME_UUID + " = ?",
+				null
+			)
 				.setParameters(request.getTableUuid())
 				.setOnlyActiveRecords(true)
-				.first();
+				.first()
+			;
 		} else if (!Util.isEmpty(request.getTableName(), true)) {
 			table = MTable.get(context, request.getTableName());
-		} 
-		if (table == null) {
+		}
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
-		
+
 		ListFieldsResponse.Builder fieldsListBuilder = ListFieldsResponse.newBuilder();
-		
+
 		final String sql = "SELECT c.AD_Column_ID"
 			// + ", c.ColumnName, t.AD_Table_ID, t.TableName, c.ColumnSql "
 			+ " FROM AD_Table AS t "
@@ -1831,89 +1841,76 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			+ "	AND EXISTS (SELECT * FROM AD_Field AS f "
 			+ "	WHERE f.AD_Column_ID=c.AD_Column_ID "
 			+ " AND f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL) "
-			+ "	ORDER BY c.IsIdentifier DESC, c.SeqNo ";
-		/*
+			+ "	ORDER BY c.IsIdentifier DESC, c.SeqNo "
+		;
+
 		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
+			int recordCount = 0;
 			while(resultSet.next()) {
 				MColumn column = MColumn.get(context, resultSet.getInt(MColumn.COLUMNNAME_AD_Column_ID));
 				if (column != null) {
 					Field.Builder fieldBuilder = convertField(context, column);
 					fieldsListBuilder.addFields(fieldBuilder.build());
 				}
+				recordCount++;
 			}
+			fieldsListBuilder.setRecordCount(recordCount);
 		}).onFailure(throwable -> {
-			log.log(Level.SEVERE, "loadPreferences", throwable);
+			log.log(Level.SEVERE, sql, throwable);
 		});
-		*/
-
-		PreparedStatement pstmt = null;
-		ResultSet resultSet = null;
-		try {
-			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, table.getAD_Table_ID());
-			resultSet = pstmt.executeQuery();
-
-			while (resultSet.next()) {
-				//	Only 4 Query Columns
-				if (fieldsListBuilder.getFieldsList().size() >= 4) {
-					break;
-				}
-				MColumn column = MColumn.get(context, resultSet.getInt(MColumn.COLUMNNAME_AD_Column_ID));
-				if (column != null) {
-					Field.Builder fieldBuilder = convertField(context, column);
-					fieldsListBuilder.addFields(fieldBuilder.build());
-				}
-			}
-			resultSet.close();
-			pstmt.close();
-		}
-		catch (SQLException e) {
-			log.log(Level.SEVERE, sql, e);
-		}
-		finally {
-			DB.close(resultSet, pstmt);
-			resultSet = null;
-			pstmt = null;
-		}
 
 		//	empty general info
 		// if (fieldsListBuilder.getFieldsList().size() == 0) {
 		// }
-		
+
 		return fieldsListBuilder;
 	}
+
+
 
 	@Override
 	public void listTableSearchFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
 		try {
-			if(request == null) {
+			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListFieldsResponse.Builder fielsListBuilder = getTableSearchFields(Env.getCtx(), request);
+			ListFieldsResponse.Builder fielsListBuilder = getTableSearchFields(request);
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
-				.asRuntimeException());
+				.asRuntimeException()
+			);
 		}
 	}
-	
-	private ListFieldsResponse.Builder getTableSearchFields(Properties context, ListFieldsRequest request) {
+
+	private ListFieldsResponse.Builder getTableSearchFields(ListFieldsRequest request) {
+		if (request.getTableId() <= 0 || Util.isEmpty(request.getTableUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+
+		Properties context = Env.getCtx();
 		MTable table = null;
 		int tableId = request.getTableId();
 		if (tableId > 0) {
 			table = MTable.get(context, tableId);
 		} else if(!Util.isEmpty(request.getTableUuid(), true)) {
-			table = new Query(context, MTable.Table_Name, MTable.COLUMNNAME_UUID + " = ?", null)
+			table = new Query(
+				context,
+				MTable.Table_Name,
+				MTable.COLUMNNAME_UUID + " = ?",
+				null
+			)
 				.setParameters(request.getTableUuid())
 				.setOnlyActiveRecords(true)
 				.first();
 		} else if (!Util.isEmpty(request.getTableName(), true)) {
 			table = MTable.get(context, request.getTableName());
-		} 
+		}
 		if (table == null || table.getAD_Table_ID() < 1) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
@@ -1930,49 +1927,25 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			+ " AND (c.IsKey='Y' OR "
 				// + " (f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
 				+ " (f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
-			+ "ORDER BY c.IsKey DESC, f.SeqNo";
+			+ "ORDER BY c.IsKey DESC, f.SeqNo"
+		;
 
 		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
+			int recordCount = 0;
 			while(resultSet.next()) {
 				MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
 				if (field != null) {
 					Field.Builder fieldBuilder = convertField(context, field, true);
 					fieldsListBuilder.addFields(fieldBuilder.build());
 				}
+				recordCount++;
 			}
+			fieldsListBuilder.setRecordCount(recordCount);
 		}).onFailure(throwable -> {
-			log.log(Level.SEVERE, "loadPreferences", throwable);
+			log.log(Level.SEVERE, sql, throwable);
 		});
-
-		// PreparedStatement pstmt = null;
-		// ResultSet resultSet = null;
-		// try {
-		// 	pstmt = DB.prepareStatement(sql, null);
-		// 	pstmt.setInt(1, table.getAD_Table_ID());
-		// 	resultSet = pstmt.executeQuery();
-		// 	int recordCount = 0;
-		// 	while (resultSet.next()) {
-		// 		MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
-		// 		if (field != null) {
-		// 			Field.Builder fieldBuilder = convertField(context, field, true);
-		// 			fieldsListBuilder.addFields(fieldBuilder.build());
-		// 		}
-		// 		recordCount++;
-		// 	}
-		// 	fieldsListBuilder.setRecordCount(recordCount);
-		// 	resultSet.close();
-		// 	pstmt.close();
-		// }
-		// catch (SQLException e) {
-		// 	log.log(Level.SEVERE, sql, e);
-		// }
-		// finally {
-		// 	DB.close(resultSet, pstmt);
-		// 	resultSet = null;
-		// 	pstmt = null;
-		// }
 
 		return fieldsListBuilder;
 	}
-	
+
 }
