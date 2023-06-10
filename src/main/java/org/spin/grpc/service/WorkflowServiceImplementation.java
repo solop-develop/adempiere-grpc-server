@@ -109,12 +109,11 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 			);
 		}
 	}
-	
+
 	/**
 	 * Request Workflow from uuid or id
-	 * @param context
-	 * @param uuid
-	 * @param id
+	 * @param request
+	 * @return builder
 	 */
 	private WorkflowDefinition.Builder getWorkflow(WorkflowDefinitionRequest request) {
 		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
@@ -147,6 +146,8 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 
 		return WorkflowUtil.convertWorkflowDefinition(workflow);
 	}
+
+
 
 	@Override
 	public void listWorkflows(ListWorkflowsRequest request, StreamObserver<ListWorkflowsResponse> responseObserver) {
