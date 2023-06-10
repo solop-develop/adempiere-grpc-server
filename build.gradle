@@ -78,7 +78,7 @@ dependencies {
 	implementation 'com.github.jjYBdx4IL:ecs:1.4.2.1'
 	implementation 'com.itextpdf:itextpdf:5.5.13.3' // used by org.adempiere.pdf.iText7Document
 	implementation 'io.konik:konik:1.3.2' // used by org.adempiere.pdf.iText7Document
-
+	implementation 'io.vavr:vavr:1.0.0-alpha-4' // used by org.compiere.util.DB
 
 	// ADempiere Projects with additional features
 	// Dashboard Improvements
