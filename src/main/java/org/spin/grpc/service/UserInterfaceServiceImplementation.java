@@ -123,6 +123,7 @@ import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DictionaryUtil;
@@ -193,6 +194,7 @@ import org.spin.backend.grpc.common.SetPreferenceRequest;
 import org.spin.backend.grpc.common.SetRecordAccessRequest;
 import org.spin.backend.grpc.common.Translation;
 import org.spin.backend.grpc.common.TreeNode;
+import org.spin.backend.grpc.common.TreeType;
 import org.spin.backend.grpc.common.UnlockPrivateAccessRequest;
 import org.spin.backend.grpc.common.UpdateBrowserEntityRequest;
 import org.spin.backend.grpc.common.UpdateTabEntityRequest;
@@ -3806,6 +3808,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -3813,20 +3816,12 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			);
 		}
 	}
-	
-	private ListTreeNodesResponse.Builder listTreeNodes(ListTreeNodesRequest request) {
-		
 
-		if (Util.isEmpty(request.getTableName(), true)) {
+	private ListTreeNodesResponse.Builder listTreeNodes(ListTreeNodesRequest request) {
+		if (Util.isEmpty(request.getTableName(), true) && request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		if (!MTree.hasTree(table.getAD_Table_ID())) {
-			throw new AdempiereException("@AD_Table_ID@ + @AD_Tree@ @NotFound@");
-		}
+		Properties context = Env.getCtx();
 
 		// get element id
 		int elementId = request.getElementId();
@@ -3834,27 +3829,60 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			elementId = RecordUtil.getIdFromUuid(I_C_Element.Table_Name, request.getElementUuid(), null);
 		}
 
-		int clientId = Env.getAD_Client_ID(Env.getCtx());
-		int treeId = getDefaultTreeIdFromTableName(clientId, table.getTableName(), elementId);
-		MTree tree = new MTree(Env.getCtx(), treeId, false, false, null, null);
+		MTable table = null;
+		// tab where clause
+		String whereClause = null;
+		if (request.getTabId() > 0) {
+			MTab tab = MTab.get(context, request.getTabId());
+			if (tab == null || tab.getAD_Tab_ID() <= 0) {
+				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+			}
 
-		ListTreeNodesResponse.Builder builder = ListTreeNodesResponse.newBuilder();
+			table = MTable.get(context, tab.getAD_Table_ID());
+			final String whereTab = org.spin.base.dictionary.DictionaryUtil.getWhereClauseFromTab(tab.getAD_Tab_ID());
+			//	Fill context
+			int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+			ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+			String parsedWhereClause = Env.parseContext(context, windowNo, whereTab, false);
+			if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(whereTab, true)) {
+				throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
+			}
+			whereClause = parsedWhereClause;
+		} else {
+			table = MTable.get(context, request.getTableName());
+		}
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		if (!MTree.hasTree(table.getAD_Table_ID())) {
+			throw new AdempiereException("@AD_Table_ID@ + @AD_Tree_ID@ @NotFound@");
+		}
+
+		final int clientId = Env.getAD_Client_ID(context);
+		int treeId = getDefaultTreeIdFromTableName(clientId, table.getTableName(), elementId);
+		MTree tree = new MTree(context, treeId, false, true, whereClause, null);
 
 		MTreeNode treeNode = tree.getRoot();
+
 		int treeNodeId = request.getId();
-		if (treeNodeId <= 0 && !Util.isEmpty(request.getUuid())) {
+		if (treeNodeId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
 			treeNodeId = RecordUtil.getIdFromUuid(table.getTableName(), request.getUuid(), null);
 			if (treeNodeId <= 0) {
 				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 			}
 		}
 
+		ListTreeNodesResponse.Builder builder = ListTreeNodesResponse.newBuilder();
+
+		TreeType.Builder treeTypeBuilder = UserInterfaceConvertUtil.convertTreeType(tree.getTreeType());
+		builder.setTreeType(treeTypeBuilder);
+
 		// list child nodes
 		Enumeration<?> childrens = Collections.emptyEnumeration();
 		if (treeNodeId <= 0) {
 			// get root children's
 			childrens = treeNode.children();
-			builder.setRecordCount(tree.getRoot().getChildCount());
+			builder.setRecordCount(treeNode.getChildCount());
 		} else {
 			// get current node
 			MTreeNode currentNode = treeNode.findNode(treeNodeId);
@@ -3871,7 +3899,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			TreeNode.Builder childBuilder = convertTreeNode(table, child, isWhitChilds);
 			builder.addRecords(childBuilder.build());
 		}
-
 
 		return builder;
 	}

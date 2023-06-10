@@ -637,11 +637,13 @@ message SaveTabSequencesRequest {
 
 // List Tree Nodes Request
 message ListTreeNodesRequest {
+	int32 tab_id = 1;
 	string table_name = 2;
 	int32 id = 3;
 	string uuid = 4;
 	int32 element_id = 5;
 	string element_uuid = 6;
+	repeated KeyValue context_attributes = 7;
 }
 
 // Tree Node
@@ -660,11 +662,20 @@ message TreeNode {
 	repeated TreeNode childs = 12;
 }
 
+message TreeType {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+}
+
 // List Tree Nodes Response
 message ListTreeNodesResponse {
 	int64 record_count = 1;
 	repeated TreeNode records = 2;
 	string next_page_token = 3;
+	TreeType tree_type = 4;
 }
 
 message MailTemplate {
