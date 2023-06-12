@@ -101,11 +101,15 @@ public class DictionaryUtil {
 	 */
 	public static String getWhereClauseFromTab(int tabId) {
 		MTab tab = MTab.get(Env.getCtx(), tabId);
-		if (tab == null) {
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
 			return null;
 		}
-		MTab aspTab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(tab.getAD_Window_ID(), tabId);
-		if (aspTab == null) {
+		return getWhereClauseFromTab(tab.getAD_Window_ID(), tabId);
+	}
+
+	public static String getWhereClauseFromTab(int windowId, int tabId) {
+		MTab aspTab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(windowId, tabId);
+		if (aspTab == null || aspTab.getAD_Tab_ID() <= 0) {
 			return null;
 		}
 		return aspTab.getWhereClause();

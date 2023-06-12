@@ -437,10 +437,11 @@ public class DictionaryUtil {
 		}
 
 		StringBuffer where = new StringBuffer();
-		if (!Util.isEmpty(tab.getWhereClause(), true)) {
+		final String whereTab = org.spin.base.dictionary.DictionaryUtil.getWhereClauseFromTab(tab.getAD_Window_ID(), tabId);
+		if (!Util.isEmpty(whereTab, true)) {
 			String whereWithAlias = DictionaryUtil.getValidationCodeWithAlias(
 				table.getTableName(),
-				tab.getWhereClause()
+				whereTab
 			);
 			where.append(whereWithAlias);
 		}
