@@ -38,9 +38,9 @@ service Dictionary {
 	rpc GetBrowser(EntityRequest) returns (Browser) {}
 	// Get Form
 	rpc GetForm(EntityRequest) returns (Form) {}
-	// List Identifiers Fields
+	// List Search Info Fields
+	rpc ListSearchInfoFields(ListFieldsRequest) returns (ListFieldsResponse) {}
 	rpc ListIdentifiersFields(ListFieldsRequest) returns (ListFieldsResponse) {}
-	// List Selections Fields
 	rpc ListTableSearchFields(ListFieldsRequest) returns (ListFieldsResponse) {}
 }
 
@@ -354,11 +354,6 @@ message ListFieldsRequest {
 	string table_uuid = 4;
 	int32 table_id = 5;
 	string table_name = 6;
-	// with tab
-	string window_uuid = 7;
-	int32 window_id = 8;
-	string tab_uuid = 9;
-	string tab_id = 10;
 }
 
 message ListFieldsResponse {

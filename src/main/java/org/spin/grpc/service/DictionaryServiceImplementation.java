@@ -68,6 +68,7 @@ import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.ValueUtil;
+import org.spin.grpc.logic.DictionaryServiceLogic;
 import org.spin.backend.grpc.dictionary.Browser;
 import org.spin.backend.grpc.dictionary.ContextInfo;
 import org.spin.backend.grpc.dictionary.DependentField;
@@ -660,7 +661,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param contextInfoId
 	 * @return
 	 */
-	private ContextInfo.Builder convertContextInfo(Properties context, int contextInfoId) {
+	public static ContextInfo.Builder convertContextInfo(Properties context, int contextInfoId) {
 		ContextInfo.Builder builder = ContextInfo.newBuilder();
 		if(contextInfoId > 0) {
 			MADContextInfo contextInfoValue = MADContextInfo.getById(context, contextInfoId);
@@ -707,7 +708,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param process
 	 * @return
 	 */
-	private Process.Builder convertProcess(Properties context, MProcess process, boolean withParams) {
+	public static Process.Builder convertProcess(Properties context, MProcess process, boolean withParams) {
 		if (process == null) {
 			return Process.newBuilder();
 		}
@@ -895,7 +896,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param processParameter
 	 * @return
 	 */
-	private Field.Builder convertProcessParameter(Properties context, MProcessPara processParameter) {
+	public static Field.Builder convertProcessParameter(Properties context, MProcessPara processParameter) {
 		if (processParameter == null) {
 			return Field.newBuilder();
 		}
@@ -954,7 +955,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		return builder;
 	}
 
-	private List<DependentField> generateDependentProcessParameters(MProcessPara processParameter) {
+	public static List<DependentField> generateDependentProcessParameters(MProcessPara processParameter) {
 		List<DependentField> depenentFieldsList = new ArrayList<>();
 
 		String parentColumnName = processParameter.getColumnName();
@@ -1256,7 +1257,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param language
 	 * @return
 	 */
-	private Field.Builder convertField(Properties context, MColumn column) {
+	public static Field.Builder convertField(Properties context, MColumn column) {
 		if (column == null) {
 			return Field.newBuilder();
 		}
@@ -1340,7 +1341,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		return builder;
 	}
 
-	private List<DependentField> generateDependentColumns(MColumn column) {
+	public static List<DependentField> generateDependentColumns(MColumn column) {
 		List<DependentField> depenentFieldsList = new ArrayList<>();
 		if (column == null) {
 			return depenentFieldsList;
@@ -1448,7 +1449,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param translate
 	 * @return
 	 */
-	private Field.Builder convertField(Properties context, MField field, boolean translate) {
+	public static Field.Builder convertField(Properties context, MField field, boolean translate) {
 		if (field == null) {
 			return Field.newBuilder();
 		}
@@ -1570,7 +1571,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		return builder;
 	}
 
-	private List<DependentField> generateDependentFields(MField field) {
+	public static List<DependentField> generateDependentFields(MField field) {
 		List<DependentField> depenentFieldsList = new ArrayList<>();
 		if (field == null) {
 			return depenentFieldsList;
@@ -1663,7 +1664,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param fieldDefinitionId
 	 * @return
 	 */
-	private FieldDefinition.Builder convertFieldDefinition(Properties context, int fieldDefinitionId) {
+	public static FieldDefinition.Builder convertFieldDefinition(Properties context, int fieldDefinitionId) {
 		FieldDefinition.Builder builder = null;
 		if(fieldDefinitionId > 0) {
 			MADFieldDefinition fieldDefinition  = new MADFieldDefinition(context, fieldDefinitionId, null);
@@ -1696,7 +1697,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	 * @param fieldGroupId
 	 * @return
 	 */
-	private FieldGroup.Builder convertFieldGroup(Properties context, int fieldGroupId) {
+	public static FieldGroup.Builder convertFieldGroup(Properties context, int fieldGroupId) {
 		FieldGroup.Builder builder = FieldGroup.newBuilder();
 		if(fieldGroupId > 0) {
 			X_AD_FieldGroup fieldGroup  = new X_AD_FieldGroup(context, fieldGroupId, null);
@@ -1946,6 +1947,28 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		});
 
 		return fieldsListBuilder;
+	}
+
+
+
+	@Override
+	public void listSearchInfoFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListFieldsResponse.Builder fielsListBuilder = DictionaryServiceLogic.listSearchInfoFields(request);
+			responseObserver.onNext(fielsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
 	}
 
 }
