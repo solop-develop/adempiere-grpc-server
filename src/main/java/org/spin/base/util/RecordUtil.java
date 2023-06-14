@@ -161,25 +161,29 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static PO getEntity(Properties context, String tableName, String uuid, int recordId, String transactionName) {
-		//	Validate ID
-		if(recordId <= 0
-				&& Util.isEmpty(uuid)) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
+		if (Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
-		
-		if(Util.isEmpty(tableName)) {
+		MTable table = MTable.get(context, tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
+		//	Validate ID
+		boolean isAllowZeroId = ALLOW_ZERO_ID.contains(table.getAccessLevel());
+		if (Util.isEmpty(uuid, true) && (recordId < 0 || !isAllowZeroId && recordId < 1)) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@ / @UUID@");
+		}
+
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> params = new ArrayList<>();
-		if(!Util.isEmpty(uuid)) {
+		if (!Util.isEmpty(uuid, true)) {
 			whereClause.append(I_AD_Element.COLUMNNAME_UUID + " = ?");
 			params.add(uuid);
-		} else if(recordId > 0) {
+		} else if (recordId > 0 && (recordId == 0 && isAllowZeroId)) {
 			whereClause.append(tableName + "_ID = ?");
 			params.add(recordId);
 		} else {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
 		//	Default
 		return new Query(context, tableName, whereClause.toString(), transactionName)
@@ -217,7 +221,7 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static int getIdFromUuid(String tableName, String uuid, String transactionName) {
-		if(Util.isEmpty(tableName) || Util.isEmpty(uuid)) {
+		if (Util.isEmpty(tableName, true) || Util.isEmpty(uuid, true)) {
 			return -1;
 		}
 		//	Get
@@ -231,27 +235,36 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static String getUuidFromId(String tableName, int id) {
-		if(Util.isEmpty(tableName) || id <= 0) {
-			return null;
-		}
 		//	Get
-		return IDFinder.getUUIDFromId(tableName, id, Env.getAD_Client_ID(Env.getCtx()), null);
+		return getUuidFromId(tableName, id, null);
 	}
-	
+
 	/**
 	 * Get UUID from record id
 	 * @param tableName
 	 * @param id
+	 * @param transactionName
 	 * @return
 	 */
 	public static String getUuidFromId(String tableName, int id, String transactionName) {
-		if(Util.isEmpty(tableName) || id <= 0) {
+		if (Util.isEmpty(tableName, true)) {
+			return null;
+		}
+		MTable table = MTable.get(Env.getCtx(), tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			return null;
+		}
+
+		//	Validate ID
+		boolean isAllowZeroId = ALLOW_ZERO_ID.contains(table.getAccessLevel());
+		if (id < 0 || (!isAllowZeroId && id < 1)) {
 			return null;
 		}
 		//	Get
 		return IDFinder.getUUIDFromId(tableName, id, Env.getAD_Client_ID(Env.getCtx()), transactionName);
 	}
-	
+
+
 	/**
 	 * Get resource UUID from image id
 	 * @param imageId
