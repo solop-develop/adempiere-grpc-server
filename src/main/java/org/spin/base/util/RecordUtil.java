@@ -169,8 +169,7 @@ public class RecordUtil {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 		//	Validate ID
-		boolean isAllowZeroId = ALLOW_ZERO_ID.contains(table.getAccessLevel());
-		if (Util.isEmpty(uuid, true) && (recordId < 0 || !isAllowZeroId && recordId < 1)) {
+		if (Util.isEmpty(uuid, true) && !isValidId(recordId, table.getAccessLevel())) {
 			throw new AdempiereException("@FillMandatory@ @Record_ID@ / @UUID@");
 		}
 
@@ -179,7 +178,7 @@ public class RecordUtil {
 		if (!Util.isEmpty(uuid, true)) {
 			whereClause.append(I_AD_Element.COLUMNNAME_UUID + " = ?");
 			params.add(uuid);
-		} else if (recordId > 0 && (recordId == 0 && isAllowZeroId)) {
+		} else if (isValidId(recordId, table.getAccessLevel())) {
 			whereClause.append(tableName + "_ID = ?");
 			params.add(recordId);
 		} else {
@@ -227,7 +226,27 @@ public class RecordUtil {
 		//	Get
 		return IDFinder.getIdFromUUID(Env.getCtx(), tableName, uuid, Env.getAD_Client_ID(Env.getCtx()), transactionName);
 	}
-	
+
+
+	/**
+	 * Evaluate if is valid identifier
+	 * @param id
+	 * @param accesLevel
+	 * @return
+	 */
+	public static boolean isValidId(int id, String accesLevel) {
+		if (id < 0) {
+			return false;
+		}
+
+		if (id == 0 && !ALLOW_ZERO_ID.contains(accesLevel)) {
+			return false;
+		}
+
+		return true;
+	}
+
+
 	/**
 	 * Get UUID from record id
 	 * @param tableName
@@ -256,8 +275,7 @@ public class RecordUtil {
 		}
 
 		//	Validate ID
-		boolean isAllowZeroId = ALLOW_ZERO_ID.contains(table.getAccessLevel());
-		if (id < 0 || (!isAllowZeroId && id < 1)) {
+		if (!isValidId(id, table.getAccessLevel())) {
 			return null;
 		}
 		//	Get
