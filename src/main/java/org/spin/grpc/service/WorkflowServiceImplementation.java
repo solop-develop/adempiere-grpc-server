@@ -35,6 +35,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MDocType;
 import org.compiere.model.MMenu;
 import org.compiere.model.MOrder;
+import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
@@ -692,12 +693,12 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 	 * @throws FileNotFoundException 
 	 */
 	private ProcessLog.Builder runDocumentAction(Properties context, RunDocumentActionRequest request) throws FileNotFoundException, IOException {
-		if(Util.isEmpty(request.getTableName())) {
+		if (Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 
 		//	get document action
-		if(Util.isEmpty(request.getDocumentAction())) {
+		if (Util.isEmpty(request.getDocumentAction(), true)) {
 			throw new AdempiereException("@DocAction@ @NotFound@");
 		}
 		String documentAction = request.getDocumentAction();
@@ -706,19 +707,30 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
+		if (!table.isDocument()) {
+			throw new AdempiereException("@NotValid@ @AD_Table_ID@ @IsDocument@@");
+		}
 
 		int recordId = request.getId();
-		if (recordId <= 0 && Util.isEmpty(request.getUuid())) {
+		if (recordId <= 0 && Util.isEmpty(request.getUuid(), true)) {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
 		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), recordId, null);
-		if (entity == null) {
+		if (entity == null || entity.get_ID() <= 0) {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
 		//	Validate as document
-		if(!DocAction.class.isAssignableFrom(entity.getClass())) {
+		if (!DocAction.class.isAssignableFrom(entity.getClass())) {
 			throw new AdempiereException("@Invalid@ @Document@");
 		}
+
+		//	Status Change
+		String documentStatus = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocStatus);
+		boolean isSameValue = org.spin.base.workflow.WorkflowUtil.checkStatus(table.getTableName(), entity.get_ID(), documentStatus);
+		if (!isSameValue) {
+			throw new AdempiereException("@DocumentStatusChanged@" + documentStatus);
+		}
+
 		//	
 		ProcessLog.Builder response = ProcessLog.newBuilder();
 		//	Process
@@ -726,9 +738,25 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		entity.saveEx();
 		DocAction document = (DocAction) entity;
 		try {
-			if(!document.processIt(documentAction)) {
+			if (!document.processIt(documentAction)) {
 				response.setSummary(Msg.parseTranslation(context, document.getProcessMsg()));
 				response.setIsError(true);
+			}
+			else {
+				int columnId = MColumn.getColumn_ID(table.getTableName(), I_C_Order.COLUMNNAME_DocAction);
+				MColumn column = MColumn.get(context, columnId);
+				if (column.getAD_Process_ID() > 0) {
+					MProcess process = MProcess.get(context, column.getAD_Process_ID());
+					if (process.getAD_Workflow_ID() > 0) {
+						org.spin.base.workflow.WorkflowUtil.startWorkflow(
+							process.getAD_Workflow_ID(),
+							process.getAD_Process_ID(),
+							table.getAD_Table_ID(),
+							entity.get_ID(),
+							entity.get_TrxName()
+						);
+					}
+				}
 			}
 		} catch (Exception e) {
 			response.setSummary(Msg.parseTranslation(context, document.getProcessMsg()));
