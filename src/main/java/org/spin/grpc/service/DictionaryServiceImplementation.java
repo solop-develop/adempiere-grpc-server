@@ -1802,7 +1802,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	}
 
 	private ListFieldsResponse.Builder getIdentifierFields(ListFieldsRequest request) {
-		if (request.getTableId() <= 0 ||Util.isEmpty(request.getTableUuid(), true) && Util.isEmpty(request.getTableName(), true)) {
+		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableUuid(), true) && Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 
@@ -1889,7 +1889,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 	}
 
 	private ListFieldsResponse.Builder getTableSearchFields(ListFieldsRequest request) {
-		if (request.getTableId() <= 0 || Util.isEmpty(request.getTableUuid(), true)) {
+		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableUuid(), true) && Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 
