@@ -26,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -55,6 +54,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.eevolution.services.dsl.ProcessBuilder;
+import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.ConvertUtil;
@@ -182,10 +182,12 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	
@@ -711,10 +713,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			}
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(sql, null);
-			AtomicInteger parameterIndex = new AtomicInteger(1);
-			for(Object value : params) {
-				ValueUtil.setParameterFromObject(pstmt, value, parameterIndex.getAndIncrement());
-			} 
+			ParameterUtil.setParametersFromObjectsList(pstmt, params);
+
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
@@ -742,6 +742,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 						}
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
+						e.printStackTrace();
 					}
 				}
 				//	
@@ -750,6 +751,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 		} finally {
 			DB.close(rs, pstmt);
 		}

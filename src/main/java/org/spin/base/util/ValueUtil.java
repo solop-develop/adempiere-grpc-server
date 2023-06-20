@@ -16,8 +16,6 @@
 package org.spin.base.util;
 
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -26,7 +24,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_C_Order;
@@ -34,7 +31,6 @@ import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.PO;
-import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -56,10 +52,8 @@ public class ValueUtil {
 	/**	Date format	*/
 	private static final String TIME_FORMAT = "yyyy-MM-dd hh:mm:ss";
 	private static final String DATE_FORMAT = "yyyy-MM-dd";
-	
-	/**	Logger			*/
-	private static CLogger log = CLogger.getCLogger(ValueUtil.class);
-	
+
+
 	/**
 	 * Get Value 
 	 * @param value
@@ -644,63 +638,6 @@ public class ValueUtil {
 			return 0L;
 		}
 		return value.getTime();
-	}
-
-
-	public static void setParametersFromObjectsList(PreparedStatement pstmt, List<Object> parameters) {
-		try {
-			AtomicInteger parameterIndex = new AtomicInteger(1);
-			for(Object value : parameters) {
-				ValueUtil.setParameterFromObject(pstmt, value, parameterIndex.getAndIncrement());
-			}
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			throw new AdempiereException(e);
-		}
-	}
-	
-	/**
-	 * Set Parameter for Statement from object
-	 * @param pstmt
-	 * @param value
-	 * @param index
-	 * @throws SQLException
-	 */
-	public static void setParameterFromObject(PreparedStatement pstmt, Object value, int index) throws SQLException {
-		if(value instanceof Integer) {
-			pstmt.setInt(index, (Integer) value);
-		} else if(value instanceof Double) {
-			pstmt.setDouble(index, (Double) value);
-		} else if(value instanceof Long) {
-			pstmt.setLong(index, (Long) value);
-		} else if(value instanceof BigDecimal) {
-			pstmt.setBigDecimal(index, (BigDecimal) value);
-		} else if(value instanceof String) {
-			pstmt.setString(index, (String) value);
-		} else if(value instanceof Timestamp) {
-			pstmt.setTimestamp(index, (Timestamp) value);
-		} else if(value instanceof Boolean) {
-			pstmt.setString(index, ((Boolean) value)? "Y": "N");
-		}
-	}
-	
-	/**
-	 * Set Parameter for Statement from value
-	 * @param pstmt
-	 * @param value
-	 * @param index
-	 * @throws SQLException
-	 */
-	public static void setParameterFromValue(PreparedStatement pstmt, Value value, int index) throws SQLException {
-		if(value.getValueType().equals(ValueType.INTEGER)) {
-			pstmt.setInt(index, ValueUtil.getIntegerFromValue(value));
-		} else if(value.getValueType().equals(ValueType.DECIMAL)) {
-			pstmt.setBigDecimal(index, ValueUtil.getDecimalFromValue(value));
-		} else if(value.getValueType().equals(ValueType.STRING)) {
-			pstmt.setString(index, ValueUtil.getStringFromValue(value));
-		} else if(value.getValueType().equals(ValueType.DATE)) {
-			pstmt.setTimestamp(index, ValueUtil.getDateFromValue(value));
-		}
 	}
 
 
