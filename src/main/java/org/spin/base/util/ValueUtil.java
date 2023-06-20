@@ -51,8 +51,8 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.Decimal;
 import org.spin.backend.grpc.common.KeyValue;
+import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Value;
-import org.spin.backend.grpc.common.Condition.Operator;
 import org.spin.backend.grpc.common.Value.ValueType;
 
 /**

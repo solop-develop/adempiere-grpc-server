@@ -26,9 +26,9 @@ import org.adempiere.model.MViewColumn;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Condition.Operator;
 import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.KeyValue;
+import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Value;
 import org.spin.util.ASPUtil;
 
@@ -74,7 +74,7 @@ public class QueryUtil {
 			// 		ValueUtil.getObjectFromValue(value)
 			// 	);
 			// }
-		} else if(operatorValue == Operator.BETWEEN_VALUE) {
+		} else if(operatorValue == Operator.BETWEEN_VALUE || operatorValue == Operator.NOT_BETWEEN_VALUE) {
 			sqlValue = " ? AND ? ";
 			params.add(
 				ValueUtil.getObjectFromValue(value)

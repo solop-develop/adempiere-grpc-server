@@ -17,7 +17,7 @@ package org.spin.base.util;
 import org.compiere.model.MQuery;
 import org.compiere.util.DisplayType;
 import org.spin.backend.grpc.common.Condition;
-import org.spin.backend.grpc.common.Condition.Operator;
+import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Value.ValueType;
 
 /**
@@ -36,6 +36,9 @@ public class OperatorUtil {
 		switch (gRpcOperator) {
 			case Operator.BETWEEN_VALUE:
 				operator = MQuery.BETWEEN;
+				break;
+			case Operator.NOT_BETWEEN_VALUE:
+				operator = " NOT BETWEEN ";
 				break;
 			case Operator.EQUAL_VALUE:
 				operator = MQuery.EQUAL;

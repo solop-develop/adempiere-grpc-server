@@ -135,7 +135,6 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.common.ChatEntry;
-import org.spin.backend.grpc.common.Condition.Operator;
 import org.spin.backend.grpc.common.ContextInfoValue;
 import org.spin.backend.grpc.common.CreateChatEntryRequest;
 import org.spin.backend.grpc.common.CreateTabEntityRequest;
@@ -180,6 +179,7 @@ import org.spin.backend.grpc.common.ListTreeNodesResponse;
 import org.spin.backend.grpc.common.LockPrivateAccessRequest;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.common.MailTemplate;
+import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Preference;
 import org.spin.backend.grpc.common.PrintFormat;
 import org.spin.backend.grpc.common.PrivateAccess;
@@ -299,6 +299,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
