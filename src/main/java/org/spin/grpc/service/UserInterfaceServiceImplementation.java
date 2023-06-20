@@ -124,6 +124,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.base.db.OperatorUtil;
+import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
@@ -919,7 +920,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+
+
 	@Override
 	public void getTabEntity(GetTabEntityRequest request, StreamObserver<Entity> responseObserver) {
 		try {
@@ -932,10 +935,12 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
-				.asRuntimeException());
+				.asRuntimeException()
+			);
 		}
 	}
 	/**
@@ -944,7 +949,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private Entity.Builder getEntity(GetTabEntityRequest request) {
-		
 		if (Util.isEmpty(request.getTabUuid(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
@@ -985,11 +989,11 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(sql, null);
+
 			// add query parameters
-			AtomicInteger parameterIndex = new AtomicInteger(1);
-			ValueUtil.setParameterFromObject(pstmt, request.getUuid(), parameterIndex.getAndIncrement());
+			pstmt.setString(1, request.getUuid());
 			if (request.getId() > 0) {
-				ValueUtil.setParameterFromObject(pstmt, request.getId(), parameterIndex.get());
+				pstmt.setInt(2, request.getId());
 			}
 
 			//	Get from Query
@@ -1024,11 +1028,13 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 						}
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
+						e.printStackTrace();
 					}
 				}
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 		} finally {
 			DB.close(rs, pstmt);
 			rs = null;
@@ -1038,6 +1044,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Return
 		return valueObjectBuilder;
 	}
+
+
 
 	@Override
 	public void listTabEntities(ListTabEntitiesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
@@ -2498,7 +2506,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					try {
 						//	SELECT Key, Value, Name FROM ...
 						pstmt = DB.prepareStatement(sql.toString(), null);
-						ValueUtil.setParameterFromObject(pstmt, defaultValueAsObject, 1);
+						DB.setParameter(pstmt, 1, defaultValueAsObject);
+
 						//	Get from Query
 						rs = pstmt.executeQuery();
 						if (rs.next()) {
@@ -2644,7 +2653,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		try {
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(sql.toString(), null);
-			ValueUtil.setParameterFromObject(pstmt, request.getId(), 1);
+			pstmt.setInt(1, request.getId());
+
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
@@ -2767,10 +2777,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		try {
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(parsedSQL, null);
-			AtomicInteger parameterIndex = new AtomicInteger(1);
-			for(Object value : parameters) {
-				ValueUtil.setParameterFromObject(pstmt, value, parameterIndex.getAndIncrement());
-			} 
+			ParameterUtil.setParametersFromObjectsList(pstmt, parameters);
+
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
@@ -3006,10 +3014,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			}
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(sql, null);
-			AtomicInteger parameterIndex = new AtomicInteger(1);
-			for(Object value : values) {
-				ValueUtil.setParameterFromObject(pstmt, value, parameterIndex.getAndIncrement());
-			} 
+			ParameterUtil.setParametersFromObjectsList(pstmt, values);
+
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
