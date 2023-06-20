@@ -55,6 +55,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.eevolution.services.dsl.ProcessBuilder;
+import org.spin.base.db.CountUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.ConvertUtil;
@@ -673,7 +674,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 				orderByClause = " ORDER BY " + orderByClause;
 			}
 			//	Count records
-			count = RecordUtil.countRecords(parsedSQL, criteria.getTableName(), params);
+			count = CountUtil.countRecords(parsedSQL, criteria.getTableName(), params);
 			//	Add Row Number
 			parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 			//	Add Order By

@@ -123,6 +123,7 @@ import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.base.db.CountUtil;
 import org.spin.base.db.OperatorUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.ui.UserInterfaceConvertUtil;
@@ -1139,7 +1140,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 
 		//	Count records
-		count = RecordUtil.countRecords(parsedSQL, tableName, params);
+		count = CountUtil.countRecords(parsedSQL, tableName, params);
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
@@ -1391,7 +1392,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		
 		//	Count records
-		count = RecordUtil.countRecords(parsedSQL, tableName, params);
+		count = CountUtil.countRecords(parsedSQL, tableName, params);
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), tableName), parsedSQL, params);
@@ -2749,7 +2750,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, reference.TableName, searchValue, parameters);
 
 		//	Get page and count
-		int count = RecordUtil.countRecords(parsedSQL, reference.TableName, parameters);
+		int count = CountUtil.countRecords(parsedSQL, reference.TableName, parameters);
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), pageToken);
 		int limit = RecordUtil.getPageSize(pageSize);
@@ -2966,7 +2967,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 
 		//	Get page and count
-		int count = RecordUtil.countRecords(sqlWithRoleAccess, tableName, tableNameAlias, filterValues);
+		int count = CountUtil.countRecords(sqlWithRoleAccess, tableName, tableNameAlias, filterValues);
 		String nexPageToken = null;
 		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = RecordUtil.getPageSize(request.getPageSize());
