@@ -57,7 +57,7 @@ public class FileUtil {
 		//	Return uuid
 		return reference.getUUID();
 	}
-	
+
 	/**
 	 * Get Attachment reference from image ID
 	 * @param imageId
@@ -77,6 +77,7 @@ public class FileUtil {
 			null
 		);
 	}
+
 
 
 	public static ByteString getByteStringByOutputStream(OutputStream outputStream) {
