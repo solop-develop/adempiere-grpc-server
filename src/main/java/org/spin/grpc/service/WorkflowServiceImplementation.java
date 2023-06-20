@@ -70,6 +70,7 @@ import org.spin.backend.grpc.wf.WorkflowActivity;
 import org.spin.backend.grpc.wf.WorkflowDefinition;
 import org.spin.backend.grpc.wf.WorkflowDefinitionRequest;
 import org.spin.backend.grpc.wf.WorkflowGrpc.WorkflowImplBase;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
@@ -251,8 +252,8 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 				+ ")";
 		//	Get page and count
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		Query query = new Query(Env.getCtx(), I_AD_WF_Activity.Table_Name, whereClause, null)
@@ -272,8 +273,8 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
-		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
 		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
@@ -504,8 +505,8 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		parameters.add(table.getAD_Table_ID());
 		//	Get page and count
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		Query query = new Query(context, I_AD_Workflow.Table_Name, whereClause.toString(), null)
@@ -524,8 +525,8 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
-		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
 		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));

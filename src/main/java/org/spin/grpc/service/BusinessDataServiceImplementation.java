@@ -55,6 +55,7 @@ import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.eevolution.services.dsl.ProcessBuilder;
 import org.spin.base.db.CountUtil;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.dictionary.DictionaryUtil;
@@ -638,8 +639,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		}
 		//	Get page and count
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		int count = 0;
 
@@ -678,7 +679,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			//	Count records
 			count = CountUtil.countRecords(parsedSQL, criteria.getTableName(), params);
 			//	Add Row Number
-			parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
+			parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 			//	Add Order By
 			parsedSQL = parsedSQL + orderByClause;
 			builder = convertListEntitiesResult(MTable.get(context, criteria.getTableName()), parsedSQL, params);
@@ -686,8 +687,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
-		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set netxt page
 		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));

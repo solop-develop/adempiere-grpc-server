@@ -64,6 +64,7 @@ import org.spin.backend.grpc.form.express_receipt.Receipt;
 import org.spin.backend.grpc.form.express_receipt.ReceiptLine;
 import org.spin.backend.grpc.form.express_receipt.UpdateReceiptLineRequest;
 import org.spin.backend.grpc.form.express_receipt.ExpressReceiptGrpc.ExpressReceiptImplBase;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -114,12 +115,12 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 
 		int count = query.count();
 		String nexPageToken = "";
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		//	Set page token
-		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
 		ListBusinessPartnersResponse.Builder builderList = ListBusinessPartnersResponse.newBuilder()
@@ -222,12 +223,12 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 
 		int count = query.count();
 		String nexPageToken = "";
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		//	Set page token
-		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
 		ListPurchaseOrdersResponse.Builder builderList = ListPurchaseOrdersResponse.newBuilder()
@@ -334,12 +335,12 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 
 		int count = query.count();
 		String nexPageToken = "";
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		//	Set page token
-		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
@@ -985,12 +986,12 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 
 		int count = query.count();
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		//	Set page token
-		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
 		ListReceiptLinesResponse.Builder builderList = ListReceiptLinesResponse.newBuilder()

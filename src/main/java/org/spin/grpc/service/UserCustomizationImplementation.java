@@ -71,6 +71,7 @@ import org.spin.backend.grpc.user_customization.SaveProcessCustomizationRequest;
 import org.spin.backend.grpc.user_customization.SaveWindowCustomizationRequest;
 import org.spin.backend.grpc.user_customization.User;
 import org.spin.backend.grpc.user_customization.UserCustomizationGrpc.UserCustomizationImplBase;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
@@ -135,13 +136,13 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		builderList.setRecordCount(recordCount);
 
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		// Set page token
-		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
 
@@ -226,13 +227,13 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		builderList.setRecordCount(recordCount);
 
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		// Set page token
-		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
 
@@ -314,13 +315,13 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		builderList.setRecordCount(recordCount);
 
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		// Set page token
-		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
 

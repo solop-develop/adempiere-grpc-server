@@ -65,6 +65,7 @@ import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.TenderType;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatementMatchGrpc.BankStatementMatchImplBase;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
@@ -632,12 +633,12 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 
 		int count = query.count();
 		String nexPageToken = "";
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		//	Set page token
-		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
 		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder()

@@ -49,6 +49,7 @@ import org.compiere.util.Login;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
@@ -284,8 +285,8 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 
 		//	Get page and count
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		final String whereClause = "EXISTS("
@@ -327,7 +328,7 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		builder.setRecordCount(count);
 		//	Set page token
 		if(count > offset && count > limit) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
 		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));

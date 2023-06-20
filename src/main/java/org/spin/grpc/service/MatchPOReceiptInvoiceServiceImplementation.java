@@ -63,6 +63,7 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.ProcessRequest;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.ProcessResponse;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Product;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchPORReceiptInvoiceGrpc.MatchPORReceiptInvoiceImplBase;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
@@ -404,12 +405,12 @@ public class MatchPOReceiptInvoiceServiceImplementation extends MatchPORReceiptI
 
 		int count = query.count();
 		String nexPageToken = "";
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		//	Set page token
-		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()

@@ -78,6 +78,7 @@ import org.spin.backend.grpc.payment_print_export.PrintRequest;
 import org.spin.backend.grpc.payment_print_export.PrintResponse;
 import org.spin.backend.grpc.payment_print_export.ProcessRequest;
 import org.spin.backend.grpc.payment_print_export.ProcessResponse;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
@@ -533,8 +534,8 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
 
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder();
@@ -568,8 +569,8 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 
 		builderList.setRecordCount(count);
 		//	Set page token
-		if(RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
 			ValueUtil.validateNull(nexPageToken)

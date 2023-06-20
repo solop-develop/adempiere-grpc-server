@@ -48,6 +48,7 @@ import org.spin.backend.grpc.form.time_record.ResourceAssignment;
 import org.spin.backend.grpc.form.time_record.ResourceType;
 import org.spin.backend.grpc.form.time_record.TimeRecordGrpc.TimeRecordImplBase;
 import org.spin.backend.grpc.form.time_record.User;
+import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -135,13 +136,13 @@ public class TimeRecordServiceImplementation extends TimeRecordImplBase {
 		builderList.setRecordCount(recordCount);
 
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		// Set page token
-		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
 
@@ -219,13 +220,13 @@ public class TimeRecordServiceImplementation extends TimeRecordImplBase {
 		builderList.setRecordCount(recordCount);
 
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		// Set page token
-		if (RecordUtil.isValidNextPageToken(recordCount, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
 
@@ -500,8 +501,8 @@ public class TimeRecordServiceImplementation extends TimeRecordImplBase {
 		int userId = Env.getAD_User_ID(Env.getCtx());
 
 		String nexPageToken = null;
-		int pageNumber = RecordUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = RecordUtil.getPageSize(request.getPageSize());
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
 		List<Object> parametersList = new ArrayList<>();
@@ -557,8 +558,8 @@ public class TimeRecordServiceImplementation extends TimeRecordImplBase {
 		});
 		builderList.setRecordCount(count);
 		// Set page token
-		if (RecordUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = RecordUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		// Set next page
 		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
