@@ -35,7 +35,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pipo.IDFinder;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.X_AD_Table;
-import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MTable;
@@ -50,8 +49,6 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.Value;
-import org.spin.model.MADAttachmentReference;
-import org.spin.util.AttachmentUtil;
 
 /**
  * Class for handle records utils values
@@ -283,33 +280,7 @@ public class RecordUtil {
 	}
 
 
-	/**
-	 * Get resource UUID from image id
-	 * @param imageId
-	 * @return
-	 */
-	public static String getResourceUuidFromImageId(int imageId) {
-		MADAttachmentReference reference = getResourceFromImageId(imageId);
-		if(reference == null) {
-			return null;
-		}
-		//	Return uuid
-		return reference.getUUID();
-	}
-	
-	/**
-	 * Get Attachment reference from image ID
-	 * @param imageId
-	 * @return
-	 */
-	public static MADAttachmentReference getResourceFromImageId(int imageId) {
-		if(!AttachmentUtil.getInstance().isValidForClient(Env.getAD_Client_ID(Env.getCtx()))) {
-			return null;
-		}
-		//	
-		return MADAttachmentReference.getByImageId(Env.getCtx(), MClientInfo.get(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx())).getFileHandler_ID(), imageId, null);
-	}
-	
+
 	/**
 	 * Get conversion Rate from ValidFrom, Currency From, Currency To and Conversion Type
 	 * @param request

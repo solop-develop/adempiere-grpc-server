@@ -43,6 +43,7 @@ import org.spin.backend.grpc.file_management.LoadResourceRequest;
 import org.spin.backend.grpc.file_management.Resource;
 import org.spin.backend.grpc.file_management.ResourceReference;
 import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
+import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 import org.adempiere.core.domains.models.I_AD_AttachmentReference;
@@ -180,8 +181,11 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 	 * @return
 	 */
 	private ResourceReference.Builder getResourceReferenceFromImageId(int imageId) {
-		return convertResourceReference(RecordUtil.getResourceFromImageId(imageId));
+		return convertResourceReference(
+			FileUtil.getResourceFromImageId(imageId)
+		);
 	}
+
 
 	@Override
 	public StreamObserver<LoadResourceRequest> loadResource(StreamObserver<ResourceReference> responseObserver) {
