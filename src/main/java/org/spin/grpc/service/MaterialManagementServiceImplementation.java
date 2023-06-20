@@ -79,6 +79,7 @@ import org.spin.backend.grpc.material_management.ProductAttributeSetInstance;
 import org.spin.backend.grpc.material_management.ProductAttributeValue;
 import org.spin.backend.grpc.material_management.SaveProductAttributeSetInstanceRequest;
 import org.spin.backend.grpc.material_management.Warehouse;
+import org.spin.base.db.CountUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
@@ -154,7 +155,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
 		//	Count records
-		count = RecordUtil.countRecords(parsedSQL, tableName, parametersList);
+		count = CountUtil.countRecords(parsedSQL, tableName, parametersList);
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), tableName), parsedSQL, parametersList);

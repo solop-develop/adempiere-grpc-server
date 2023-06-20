@@ -1188,9 +1188,16 @@ public class ConvertUtil {
 				.setSubKeyLayoutUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_POSKeyLayout.Table_Name, key.getSubKeyLayout_ID())))
 				.setQuantity(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(key.getQty()).orElse(Env.ZERO)))
 				.setProductValue(ValueUtil.validateNull(productValue))
-				.setResourceReference(FileManagementServiceImplementation.convertResourceReference(RecordUtil.getResourceFromImageId(key.getAD_Image_ID())));
+			.setResourceReference(
+				FileManagementServiceImplementation.convertResourceReference(
+					FileUtil.getResourceFromImageId(
+						key.getAD_Image_ID())
+					)
+			)
+		;
 	}
-	
+
+
 	/**
 	 * Convert Sales Representative
 	 * @param salesRepresentative

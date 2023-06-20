@@ -38,6 +38,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.base.db.CountUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
@@ -195,7 +196,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
 		//	Count records
-		count = RecordUtil.countRecords(parsedSQL, this.tableName, params);
+		count = CountUtil.countRecords(parsedSQL, this.tableName, params);
 		//	Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), this.tableName), parsedSQL, params);
@@ -629,7 +630,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
 		//  Count records
-		count = RecordUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, params);
+		count = CountUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, params);
 		//  Add Row Number
 		parsedSQL = RecordUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name), parsedSQL, params);

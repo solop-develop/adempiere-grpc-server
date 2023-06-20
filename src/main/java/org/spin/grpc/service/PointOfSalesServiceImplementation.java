@@ -127,6 +127,7 @@ import org.spin.backend.grpc.common.ProductPrice;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.pos.*;
 import org.spin.backend.grpc.pos.StoreGrpc.StoreImplBase;
+import org.spin.base.db.CountUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
@@ -1586,7 +1587,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			List<Object> parameters = new ArrayList<Object>();
 			parameters.add(pos.getC_POS_ID());
 			parameters.add(cashClosing.getC_BankStatement_ID());
-			count = RecordUtil.countRecords(sql, "C_Payment p", parameters);
+			count = CountUtil.countRecords(sql, "C_Payment p", parameters);
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, pos.getC_POS_ID());
 			pstmt.setInt(2, cashClosing.getC_BankStatement_ID());

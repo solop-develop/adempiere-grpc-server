@@ -59,6 +59,7 @@ import org.spin.backend.grpc.form.ListPayrollProcessRequest;
 import org.spin.backend.grpc.form.PayrollActionNoticeGrpc.PayrollActionNoticeImplBase;
 import org.spin.backend.grpc.form.SavePayrollMovementRequest;
 import org.spin.base.db.ParameterUtil;
+import org.spin.base.db.CountUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -153,7 +154,7 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 		}
 		
 		//	Count records
-		int count = RecordUtil.countRecords(sql, MHRProcess.Table_Name, parameters);
+		int count = CountUtil.countRecords(sql, MHRProcess.Table_Name, parameters);
 		lookupsList.setRecordCount(count);
 
 		//	Set page token
@@ -276,7 +277,7 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 		}
 
 		//	Count records
-		int count = RecordUtil.countRecords(sql, MHRProcess.Table_Name, parameters);
+		int count = CountUtil.countRecords(sql, MHRProcess.Table_Name, parameters);
 		lookupsList.setRecordCount(count);
 
 		//	Set page token
@@ -423,7 +424,7 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 		}
 
 		//	Count records
-		int count = RecordUtil.countRecords(sql, MHRProcess.Table_Name, parameters);
+		int count = CountUtil.countRecords(sql, MHRProcess.Table_Name, parameters);
 		listLookups.setRecordCount(count);
 
 		//	Set page token

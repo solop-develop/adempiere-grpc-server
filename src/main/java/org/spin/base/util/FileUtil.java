@@ -26,6 +26,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.compiere.model.MClientInfo;
+import org.compiere.util.Env;
+import org.spin.model.MADAttachmentReference;
+import org.spin.util.AttachmentUtil;
+
 import com.google.protobuf.ByteString;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.pdf.PdfContentByte;
@@ -38,6 +43,42 @@ import com.itextpdf.text.pdf.PdfWriter;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class FileUtil {
+
+	/**
+	 * Get resource UUID from image id
+	 * @param imageId
+	 * @return
+	 */
+	public static String getResourceUuidFromImageId(int imageId) {
+		MADAttachmentReference reference = getResourceFromImageId(imageId);
+		if(reference == null) {
+			return null;
+		}
+		//	Return uuid
+		return reference.getUUID();
+	}
+
+	/**
+	 * Get Attachment reference from image ID
+	 * @param imageId
+	 * @return
+	 */
+	public static MADAttachmentReference getResourceFromImageId(int imageId) {
+		int clientId = Env.getAD_Client_ID(Env.getCtx());
+		if(!AttachmentUtil.getInstance().isValidForClient(clientId)) {
+			return null;
+		}
+		//	
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()));
+		return MADAttachmentReference.getByImageId(
+			Env.getCtx(),
+			clientInfo.getFileHandler_ID(),
+			imageId,
+			null
+		);
+	}
+
+
 
 	public static ByteString getByteStringByOutputStream(OutputStream outputStream) {
 		ByteArrayOutputStream buffer = (ByteArrayOutputStream) outputStream;
