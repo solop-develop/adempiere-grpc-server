@@ -58,9 +58,7 @@ import org.spin.base.db.ParameterUtil;
 public class RecordUtil {
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(RecordUtil.class);
-	
-	/**	Page Size	*/
-	public static final int PAGE_SIZE = 50;
+
 
 	/** Table Allows Records with Zero Identifier */
 	public static List<String> ALLOW_ZERO_ID = Arrays.asList(
@@ -69,69 +67,7 @@ public class RecordUtil {
 		X_AD_Table.ACCESSLEVEL_ClientPlusOrganization
 	);
 
-	/**
-	 * Get Page Size from client, else from default
-	 * @param pageSize
-	 * @return
-	 */
-	public static int getPageSize(int pageSize) {
-		return pageSize > 0 ? pageSize : PAGE_SIZE;
-	}
 
-	/**
-	 * Get Page Number
-	 * @param sessionUuid
-	 * @param pageToken
-	 * @return
-	 */
-	public static int getPageNumber(String sessionUuid, String pageToken) {
-		int page = 1;
-		String pagePrefix = getPagePrefix(sessionUuid);
-		if(!Util.isEmpty(pageToken)) {
-			if(pageToken.startsWith(pagePrefix)) {
-				try {
-					page = Integer.parseInt(pageToken.replace(pagePrefix, ""));
-					if (page < 1) {
-						page = 1;
-					}
-				} catch (Exception e) {
-					//	
-				}
-			} else {
-				try {
-					page = Integer.parseInt(pageToken);
-					if (page < 1) {
-						page = 1;
-					}
-				} catch (Exception e) {
-					//	
-				}
-			}
-		}
-		//	
-		return page;
-	}
-
-	/**
-	 * Get Page Prefix
-	 * @param sessionUuid
-	 * @return
-	 */
-	public static String getPagePrefix(String sessionUuid) {
-		return sessionUuid + "-";
-	}
-	
-	/**
-	 * Validate if can have a next page token
-	 * @param count
-	 * @param offset
-	 * @param limit
-	 * @return
-	 * @return boolean
-	 */
-	public static boolean isValidNextPageToken(int count, int offset, int limit) {
-		return count > (offset + limit) && count > limit;
-	}
 
 	/**
 	 * get Entity from Table ID and (Record UUID / Record ID)
@@ -531,25 +467,6 @@ public class RecordUtil {
 
 
 
-	/**
-	 * Get Query with limit
-	 * @param query
-	 * @param limit
-	 * @param offset
-	 * @return
-	 */
-	public static String getQueryWithLimit(String query, int limit, int offset) {
-		Matcher matcher = Pattern.compile("\\s+(ORDER BY)\\s+", Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(query);
-		int positionFrom = -1;
-		if(matcher.find()) {
-			positionFrom = matcher.start();
-			query = query.substring(0, positionFrom) + " AND ROWNUM >= " + offset + " AND ROWNUM <= " + limit + " " + query.substring(positionFrom);
-		} else {
-			query = query + " AND ROWNUM >= " + offset + " AND ROWNUM <= " + limit;
-		}
-		return query;
-	}
-	
 	/**
 	 * Get Date
 	 * @return
