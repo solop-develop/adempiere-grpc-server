@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.base.util;
+package org.spin.base.db;
 
 import org.compiere.model.MQuery;
 import org.compiere.util.DisplayType;
@@ -21,7 +21,7 @@ import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Value.ValueType;
 
 /**
- * Class for handle Operators
+ * Class for handle SQL Operators
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class OperatorUtil {
@@ -82,7 +82,7 @@ public class OperatorUtil {
 			}
 		return operator;
 	}
-	
+
 	/**
 	 * Get default operator by display type
 	 * @param displayTypeId

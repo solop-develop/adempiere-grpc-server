@@ -55,6 +55,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.eevolution.services.dsl.ProcessBuilder;
+import org.spin.base.db.WhereUtil;
 import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
@@ -497,7 +498,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			entity = RecordUtil.getEntity(Env.getCtx(), tableName, request.getUuid(), request.getId(), null);
 		} else if(request.getCriteria() != null) {
 			List<Object> parameters = new ArrayList<Object>();
-			String whereClause = ValueUtil.getWhereClauseFromCriteria(request.getCriteria(), parameters);
+			String whereClause = WhereUtil.getWhereClauseFromCriteria(request.getCriteria(), parameters);
 			entity = RecordUtil.getEntity(Env.getCtx(), tableName, whereClause, parameters, null);
 		}
 		//	Return
@@ -614,7 +615,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> params = new ArrayList<>();
 		//	For dynamic condition
-		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(criteria, params);
+		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(criteria, params);
 		if(!Util.isEmpty(dynamicWhere)) {
 			if(whereClause.length() > 0) {
 				whereClause.append(" AND ");

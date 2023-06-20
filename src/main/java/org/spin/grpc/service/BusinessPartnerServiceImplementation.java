@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -7,7 +7,7 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
@@ -25,6 +25,7 @@ import org.compiere.model.MTable;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.base.db.WhereUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
@@ -113,7 +114,7 @@ public class BusinessPartnerServiceImplementation extends BusinessPartnerImplBas
 
 		//	For dynamic condition
 		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
+		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
 			whereClause.append(" AND ")

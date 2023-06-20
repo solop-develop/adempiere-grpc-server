@@ -25,6 +25,7 @@ import org.compiere.model.MTable;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.base.db.WhereUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
@@ -60,6 +61,7 @@ public class ProductServiceImplementation extends ProductImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -113,7 +115,7 @@ public class ProductServiceImplementation extends ProductImplBase {
 
 		//	For dynamic condition
 		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
+		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
 			whereClause.append(" AND ")

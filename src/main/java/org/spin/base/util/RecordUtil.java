@@ -423,7 +423,7 @@ public class RecordUtil {
 					.append(column.getColumnName())
 					.append(")")
 					.append(" LIKE ")
-					.append("'%'|| UPPER(?) || '%'");
+					.append("'%' || UPPER(?) || '%'");
 				parameters.add(searchValue);
 			});
 

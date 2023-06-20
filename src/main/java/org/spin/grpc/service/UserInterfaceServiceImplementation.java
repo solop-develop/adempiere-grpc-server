@@ -123,12 +123,13 @@ import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.base.db.OperatorUtil;
+import org.spin.base.db.WhereUtil;
 import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.LookupUtil;
-import org.spin.base.util.QueryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
@@ -1090,7 +1091,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		List<Object> params = new ArrayList<>();
 
 		//	For dynamic condition
-		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(criteria, tableName, params);
+		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(criteria, tableName, params);
 		if(!Util.isEmpty(dynamicWhere, true)) {
 			if(!Util.isEmpty(whereClause.toString(), true)) {
 				whereClause.append(" AND ");
@@ -1369,7 +1370,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		//	For dynamic condition
 		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = ValueUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
+		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
 			whereClause.append(" AND ")
@@ -2096,60 +2097,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		return name.replaceAll("[+^:&áàäéèëíìïóòöúùñÁÀÄÉÈËÍÌÏÓÒÖÚÙÜÑçÇ$()*#/><]", "").replaceAll(" ", "-");
 	}
-	
-	/**
-	 * Convert operator from gRPC to SQL
-	 * @param gRpcOperator
-	 * @return
-	 */
-	private String convertOperator(int gRpcOperator) {
-		String operator = MQuery.EQUAL;
-		switch (gRpcOperator) {
-			case Operator.BETWEEN_VALUE:
-				operator = MQuery.BETWEEN;
-				break;
-			case Operator.EQUAL_VALUE:
-				operator = MQuery.EQUAL;
-				break;
-			case Operator.GREATER_EQUAL_VALUE:
-				operator = MQuery.GREATER_EQUAL;
-				break;
-			case Operator.GREATER_VALUE:
-				operator = MQuery.GREATER;
-				break;
-			case Operator.IN_VALUE:
-				operator = " IN ";
-				break;
-			case Operator.LESS_EQUAL_VALUE:
-				operator = MQuery.LESS_EQUAL;
-				break;
-			case Operator.LESS_VALUE:
-				operator = MQuery.LESS;
-				break;
-			case Operator.LIKE_VALUE:
-				operator = MQuery.LIKE;
-				break;
-			case Operator.NOT_EQUAL_VALUE:
-				operator = MQuery.NOT_EQUAL;
-				break;
-			case Operator.NOT_IN_VALUE:
-				operator = " NOT IN ";
-				break;
-			case Operator.NOT_LIKE_VALUE:
-				operator = MQuery.NOT_LIKE;
-				break;
-			case Operator.NOT_NULL_VALUE:
-				operator = MQuery.NOT_NULL;
-				break;
-			case Operator.NULL_VALUE:
-				operator = MQuery.NULL;
-				break;
-			default:
-				break;
-			}
-		return operator;
-	}
-	
+
+
 	/**
 	 * Rollback entity
 	 * @param request
@@ -2895,7 +2844,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		.filter(condition -> !Util.isEmpty(condition.getColumnName()))
 		.forEach(condition -> {
 			String columnName = condition.getColumnName();
-			String operator = convertOperator(condition.getOperatorValue());
+			String operator = OperatorUtil.convertOperator(condition.getOperatorValue());
 			if(condition.getOperatorValue() == Operator.LIKE_VALUE
 					|| condition.getOperatorValue() == Operator.NOT_LIKE_VALUE) {
 				columnName = "UPPER(" + columnName + ")";
@@ -2905,7 +2854,11 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			if(condition.getOperatorValue() == Operator.IN_VALUE
 					|| condition.getOperatorValue() == Operator.NOT_IN_VALUE) {
 				StringBuffer whereClause = new StringBuffer();
-				whereClause.append(columnName).append(convertOperator(condition.getOperatorValue()));
+				whereClause.append(columnName).append(
+					OperatorUtil.convertOperator(
+						condition.getOperatorValue()
+					)
+				);
 				StringBuffer parameter = new StringBuffer();
 				condition.getValuesList().forEach(value -> {
 					if(parameter.length() > 0) {
@@ -2990,7 +2943,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		//	For dynamic condition
 		List<Object> filterValues = new ArrayList<Object>();
-		String dynamicWhere = QueryUtil.getBrowserWhereClauseFromCriteria(
+		String dynamicWhere = WhereUtil.getBrowserWhereClauseFromCriteria(
 			browser,
 			criteria,
 			filterValues

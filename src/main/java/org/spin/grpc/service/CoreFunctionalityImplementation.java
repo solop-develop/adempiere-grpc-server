@@ -53,6 +53,7 @@ import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.base.db.WhereUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
@@ -374,7 +375,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			parameters.add(request.getPostalCode());
 		}
 		//	
-		String criteriaWhereClause = ValueUtil.getWhereClauseFromCriteria(request.getCriteria(), I_C_BPartner.Table_Name, parameters);
+		String criteriaWhereClause = WhereUtil.getWhereClauseFromCriteria(request.getCriteria(), I_C_BPartner.Table_Name, parameters);
 		if(whereClause.length() > 0
 				&& !Util.isEmpty(criteriaWhereClause)) {
 			whereClause.append(" AND (").append(criteriaWhereClause).append(")");
@@ -631,7 +632,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			parameters.add(request.getPostalCode());
 		}
 		//	
-		String criteriaWhereClause = ValueUtil.getWhereClauseFromCriteria(request.getCriteria(), parameters);
+		String criteriaWhereClause = WhereUtil.getWhereClauseFromCriteria(request.getCriteria(), parameters);
 		if(whereClause.length() > 0
 				&& !Util.isEmpty(criteriaWhereClause)) {
 			whereClause.append(" AND (").append(criteriaWhereClause).append(")");
