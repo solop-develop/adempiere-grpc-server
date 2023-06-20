@@ -355,34 +355,34 @@ public class WhereUtil {
 		}
 
 		criteria.getConditionsList().stream()
-				.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
-				.forEach(condition -> {
-					MBrowseField browseField = browseFields.get(condition.getColumnName());
-					MViewColumn viewColumn = browseField.getAD_View_Column();
+			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
+			.forEach(condition -> {
+				MBrowseField browseField = browseFields.get(condition.getColumnName());
+				MViewColumn viewColumn = browseField.getAD_View_Column();
 
-					int operatorValue = condition.getOperatorValue();
-					if (whereClause.length() > 0) {
-						whereClause.append(" AND ");
-					}
+				int operatorValue = condition.getOperatorValue();
+				if (whereClause.length() > 0) {
+					whereClause.append(" AND ");
+				}
 
-					String columnName = viewColumn.getColumnSQL();
-					if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
-						operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
-							condition
-						);
-					}
-
-					String restriction = WhereUtil.getRestrictionByOperator(
-						columnName,
-						operatorValue,
-						condition.getValue(),
-						condition.getValueTo(),
-						condition.getValuesList(),
-						filterValues
+				String columnName = viewColumn.getColumnSQL();
+				if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
+					operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
+						condition
 					);
+				}
 
-					whereClause.append(restriction);
-				});
+				String restriction = WhereUtil.getRestrictionByOperator(
+					columnName,
+					operatorValue,
+					condition.getValue(),
+					condition.getValueTo(),
+					condition.getValuesList(),
+					filterValues
+				);
+
+				whereClause.append(restriction);
+			});
 
 		return whereClause.toString();
 	}
@@ -440,36 +440,36 @@ public class WhereUtil {
 		}
 
 		criteria.getConditionsList().stream()
-				.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
-				.forEach(condition -> {
-					MViewColumn viewColumn = viewColummns.get(condition.getColumnName());
-					if (viewColumn == null || viewColumn.getAD_View_Column_ID() <= 0) {
-						return;
-					}
+			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
+			.forEach(condition -> {
+				MViewColumn viewColumn = viewColummns.get(condition.getColumnName());
+				if (viewColumn == null || viewColumn.getAD_View_Column_ID() <= 0) {
+					return;
+				}
 
-					int operatorValue = condition.getOperatorValue();
-					if (whereClause.length() > 0) {
-						whereClause.append(" AND ");
-					}
+				int operatorValue = condition.getOperatorValue();
+				if (whereClause.length() > 0) {
+					whereClause.append(" AND ");
+				}
 
-					String columnName = viewColumn.getColumnSQL();
-					if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
-						operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
-							condition
-						);
-					}
-
-					String restriction = WhereUtil.getRestrictionByOperator(
-						columnName,
-						operatorValue,
-						condition.getValue(),
-						condition.getValueTo(),
-						condition.getValuesList(),
-						filterValues
+				String columnName = viewColumn.getColumnSQL();
+				if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
+					operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
+						condition
 					);
+				}
 
-					whereClause.append(restriction);
-				});
+				String restriction = WhereUtil.getRestrictionByOperator(
+					columnName,
+					operatorValue,
+					condition.getValue(),
+					condition.getValueTo(),
+					condition.getValuesList(),
+					filterValues
+				);
+
+				whereClause.append(restriction);
+			});
 
 		return whereClause.toString();
 	}
