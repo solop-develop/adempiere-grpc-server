@@ -28,7 +28,7 @@ public class QueryUtil {
 	 * @param {ArrayList<MColumn>} columns
 	 * @return
 	 */
-	public static String getQueryWithReferencesFromTable(MTable table) {
+	public static String getTableQueryWithReferences(MTable table) {
 		final String tableName = table.getTableName();
 
 		String originalQuery = "SELECT " + tableName + ".* FROM " + tableName + " AS " + tableName + " ";
@@ -74,7 +74,7 @@ public class QueryUtil {
 	 * @param originalQuery
 	 * @return
 	 */
-	public static String getQueryWithReferencesFromTab(MTab tab) {
+	public static String getTabQueryWithReferences(MTab tab) {
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		final String tableName = table.getTableName();
 
@@ -158,7 +158,7 @@ public class QueryUtil {
 	 * @param trxName
 	 * @return
 	 */
-	public static String getSQLFromBrowser(MBrowse browser) {
+	public static String getBrowserQuery(MBrowse browser) {
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT DISTINCT ");
 		AtomicBoolean co = new AtomicBoolean(false);
@@ -186,8 +186,8 @@ public class QueryUtil {
 	 * @param originalQuery
 	 * @return
 	 */
-	public static String addQueryReferencesFromBrowser(MBrowse browser) {
-		String originalQuery = getSQLFromBrowser(browser);
+	public static String getBrowserQueryWithReferences(MBrowse browser) {
+		String originalQuery = getBrowserQuery(browser);
 		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));

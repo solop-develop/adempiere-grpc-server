@@ -970,7 +970,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		String tableName = table.getTableName();
 
-		String sql = QueryUtil.getQueryWithReferencesFromTab(tab);
+		String sql = QueryUtil.getTabQueryWithReferences(tab);
 		// add filter
 		StringBuffer whereClause = new StringBuffer()
 			.append(" WHERE ")
@@ -1130,7 +1130,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		//	
-		StringBuilder sql = new StringBuilder(QueryUtil.getQueryWithReferencesFromTab(tab));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTabQueryWithReferences(tab));
 		String sqlWithRoleAccess = MRole.getDefault()
 			.addAccessSQL(
 					sql.toString(),
@@ -1357,7 +1357,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
 
 		//
-		StringBuilder sql = new StringBuilder(QueryUtil.getQueryWithReferencesFromTable(table));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 
 		// add where with access restriction
 		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
@@ -2922,7 +2922,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 
 		//	get query columns
-		String query = QueryUtil.addQueryReferencesFromBrowser(browser);
+		String query = QueryUtil.getBrowserQueryWithReferences(browser);
 		String sql = Env.parseContext(context, windowNo, query, false);
 		if (Util.isEmpty(sql, true)) {
 			throw new AdempiereException("@AD_Browse_ID@ @SQL@ @Unparseable@");

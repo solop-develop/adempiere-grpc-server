@@ -123,7 +123,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		//
 		String tableName = "RV_Storage";
 		MTable table = MTable.get(Env.getCtx(), tableName);
-		StringBuilder sql = new StringBuilder(QueryUtil.getQueryWithReferencesFromTable(table));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
 		//	For dynamic condition

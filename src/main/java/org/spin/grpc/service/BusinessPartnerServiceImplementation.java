@@ -92,7 +92,7 @@ public class BusinessPartnerServiceImplementation extends BusinessPartnerImplBas
 
 		//
 		MTable table = MTable.get(Env.getCtx(), this.tableName);
-		StringBuilder sql = new StringBuilder(QueryUtil.getQueryWithReferencesFromTable(table));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 
 		// add where with access restriction
 		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)

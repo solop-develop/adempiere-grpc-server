@@ -793,7 +793,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if (browser == null) {
 			return Browser.newBuilder();
 		}
-		String query = QueryUtil.addQueryReferencesFromBrowser(browser);
+		String query = QueryUtil.getBrowserQueryWithReferences(browser);
 		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
 		Browser.Builder builder = Browser.newBuilder()
 				.setId(browser.getAD_Browse_ID())
