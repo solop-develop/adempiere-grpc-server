@@ -197,7 +197,7 @@ import org.spin.base.db.OperatorUtil;
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.QueryUtil;
-import org.spin.base.db.WhereUtil;
+import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
@@ -1092,7 +1092,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
 		// get where clause including link column and parent column
-		String where = WhereUtil.getTabWhereClauseFromParentTabs(context, tab, null);
+		String where = WhereClauseUtil.getTabWhereClauseFromParentTabs(context, tab, null);
 		String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
 		if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(where, true)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
@@ -1102,7 +1102,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		List<Object> params = new ArrayList<>();
 
 		//	For dynamic condition
-		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(criteria, tableName, params);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(criteria, tableName, params);
 		if(!Util.isEmpty(dynamicWhere, true)) {
 			if(!Util.isEmpty(whereClause.toString(), true)) {
 				whereClause.append(" AND ");
@@ -1370,7 +1370,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		StringBuffer whereClause = new StringBuffer();
 
 		// validation code of field
-		String validationCode = WhereUtil.getWhereRestrictionsWithAlias(tableName, reference.ValidationCode);
+		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, reference.ValidationCode);
 		String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
 		if (!Util.isEmpty(reference.ValidationCode, true)) {
 			if (Util.isEmpty(parsedValidationCode, true)) {
@@ -1381,7 +1381,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		//	For dynamic condition
 		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
 			whereClause.append(" AND ")
@@ -2954,7 +2954,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		//	For dynamic condition
 		List<Object> filterValues = new ArrayList<Object>();
-		String dynamicWhere = WhereUtil.getBrowserWhereClauseFromCriteria(
+		String dynamicWhere = WhereClauseUtil.getBrowserWhereClauseFromCriteria(
 			browser,
 			criteria,
 			filterValues
@@ -3700,7 +3700,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			}
 
 			table = MTable.get(context, tab.getAD_Table_ID());
-			final String whereTab = WhereUtil.getWhereClauseFromTab(tab.getAD_Tab_ID());
+			final String whereTab = WhereClauseUtil.getWhereClauseFromTab(tab.getAD_Tab_ID());
 			//	Fill context
 			int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 			ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());

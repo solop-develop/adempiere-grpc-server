@@ -41,7 +41,7 @@ import org.compiere.util.Util;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.QueryUtil;
-import org.spin.base.db.WhereUtil;
+import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
@@ -179,7 +179,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 		//	For dynamic condition
 		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			// includes first AND
 			sqlWithRoleAccess += " AND " + dynamicWhere; 
@@ -606,7 +606,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 		// For dynamic condition
 		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = WhereUtil.getWhereClauseFromCriteria(filter.build(), table.getTableName(), params);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(filter.build(), table.getTableName(), params);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//  Add includes first AND
 			whereClause.append(" AND ")

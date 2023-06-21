@@ -50,7 +50,7 @@ import org.spin.util.ASPUtil;
  * Class for handle SQL Where Clause
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
-public class WhereUtil {
+public class WhereClauseUtil {
 
 	/**
 	 * Add and get talbe alias to columns in validation code sql
@@ -209,7 +209,7 @@ public class WhereUtil {
 					);
 				}
 
-				String restriction = WhereUtil.getRestrictionByOperator(
+				String restriction = WhereClauseUtil.getRestrictionByOperator(
 					columnName,
 					operatorValue,
 					condition.getValue(),
@@ -373,9 +373,9 @@ public class WhereUtil {
 		}
 
 		StringBuffer where = new StringBuffer();
-		final String whereTab = WhereUtil.getWhereClauseFromTab(tab.getAD_Window_ID(), tabId);
+		final String whereTab = WhereClauseUtil.getWhereClauseFromTab(tab.getAD_Window_ID(), tabId);
 		if (!Util.isEmpty(whereTab, true)) {
-			String whereWithAlias = WhereUtil.getWhereRestrictionsWithAlias(
+			String whereWithAlias = WhereClauseUtil.getWhereRestrictionsWithAlias(
 				table.getTableName(),
 				whereTab
 			);
@@ -585,7 +585,7 @@ public class WhereUtil {
 					);
 				}
 
-				String restriction = WhereUtil.getRestrictionByOperator(
+				String restriction = WhereClauseUtil.getRestrictionByOperator(
 					columnName,
 					operatorValue,
 					condition.getValue(),
@@ -672,7 +672,7 @@ public class WhereUtil {
 					);
 				}
 
-				String restriction = WhereUtil.getRestrictionByOperator(
+				String restriction = WhereClauseUtil.getRestrictionByOperator(
 					columnName,
 					operatorValue,
 					condition.getValue(),
