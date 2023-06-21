@@ -533,8 +533,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if (tab.getTabLevel() > 0) {
 			int parentTabId = WindowUtil.getDirectParentTabId(tab.getAD_Window_ID(), tabId);
 			if (parentTabId > 0) {
-				MTable table = MTable.get(context, tab.getAD_Table_ID());
-				parentTabUuid = RecordUtil.getUuidFromId(table.getTableName(), parentTabId, null);
+				parentTabUuid = RecordUtil.getUuidFromId(I_AD_Tab.Table_Name, parentTabId, null);
 			}
 		}
 
