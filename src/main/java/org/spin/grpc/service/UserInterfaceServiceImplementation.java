@@ -48,26 +48,12 @@ import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Browse_Field;
-import org.adempiere.model.MBrowse;
-import org.adempiere.model.MBrowseField;
-import org.adempiere.model.MView;
-import org.adempiere.model.MViewColumn;
-import org.adempiere.model.MViewDefinition;
-import org.adempiere.model.ZoomInfoFactory;
-import org.compiere.model.Callout;
-import org.compiere.model.CalloutOrder;
-import org.compiere.model.GridField;
-import org.compiere.model.GridFieldVO;
-import org.compiere.model.GridTab;
-import org.compiere.model.GridTabVO;
-import org.compiere.model.GridWindow;
-import org.compiere.model.GridWindowVO;
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Client;
 import org.adempiere.core.domains.models.I_AD_Column;
+import org.adempiere.core.domains.models.I_AD_ContextInfo;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Org;
@@ -85,6 +71,21 @@ import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_C_Element;
 import org.adempiere.core.domains.models.I_R_MailText;
+import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.model.MBrowse;
+import org.adempiere.model.MBrowseField;
+import org.adempiere.model.MView;
+import org.adempiere.model.MViewColumn;
+import org.adempiere.model.MViewDefinition;
+import org.adempiere.model.ZoomInfoFactory;
+import org.compiere.model.Callout;
+import org.compiere.model.CalloutOrder;
+import org.compiere.model.GridField;
+import org.compiere.model.GridFieldVO;
+import org.compiere.model.GridTab;
+import org.compiere.model.GridTabVO;
+import org.compiere.model.GridWindow;
+import org.compiere.model.GridWindowVO;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
@@ -123,22 +124,6 @@ import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.base.db.CountUtil;
-import org.spin.base.db.LimitUtil;
-import org.spin.base.db.OperatorUtil;
-import org.spin.base.db.OrderByUtil;
-import org.spin.base.db.ParameterUtil;
-import org.spin.base.db.WhereUtil;
-import org.spin.base.ui.UserInterfaceConvertUtil;
-import org.spin.base.util.ContextManager;
-import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.DictionaryUtil;
-import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ReferenceInfo;
-import org.spin.base.util.ReferenceUtil;
-import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.common.ChatEntry;
 import org.spin.backend.grpc.common.ContextInfoValue;
 import org.spin.backend.grpc.common.CreateChatEntryRequest;
@@ -206,7 +191,23 @@ import org.spin.backend.grpc.common.UpdateBrowserEntityRequest;
 import org.spin.backend.grpc.common.UpdateTabEntityRequest;
 import org.spin.backend.grpc.common.UserInterfaceGrpc.UserInterfaceImplBase;
 import org.spin.backend.grpc.common.Value;
-import org.adempiere.core.domains.models.I_AD_ContextInfo;
+import org.spin.base.db.CountUtil;
+import org.spin.base.db.LimitUtil;
+import org.spin.base.db.OperatorUtil;
+import org.spin.base.db.OrderByUtil;
+import org.spin.base.db.ParameterUtil;
+import org.spin.base.db.QueryUtil;
+import org.spin.base.db.WhereUtil;
+import org.spin.base.ui.UserInterfaceConvertUtil;
+import org.spin.base.util.ContextManager;
+import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.DictionaryUtil;
+import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ReferenceInfo;
+import org.spin.base.util.ReferenceUtil;
+import org.spin.base.util.SessionManager;
+import org.spin.base.util.ValueUtil;
 import org.spin.model.MADContextInfo;
 import org.spin.util.ASPUtil;
 import org.spin.util.AbstractExportFormat;
@@ -969,7 +970,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		String tableName = table.getTableName();
 
-		String sql = DictionaryUtil.getQueryWithReferencesFromTab(tab);
+		String sql = QueryUtil.getTabQueryWithReferences(tab);
 		// add filter
 		StringBuffer whereClause = new StringBuffer()
 			.append(" WHERE ")
@@ -1129,7 +1130,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		//	
-		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromTab(tab));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTabQueryWithReferences(tab));
 		String sqlWithRoleAccess = MRole.getDefault()
 			.addAccessSQL(
 					sql.toString(),
@@ -1356,7 +1357,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
 
 		//
-		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 
 		// add where with access restriction
 		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
@@ -2921,7 +2922,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 
 		//	get query columns
-		String query = DictionaryUtil.addQueryReferencesFromBrowser(browser);
+		String query = QueryUtil.getBrowserQueryWithReferences(browser);
 		String sql = Env.parseContext(context, windowNo, query, false);
 		if (Util.isEmpty(sql, true)) {
 			throw new AdempiereException("@AD_Browse_ID@ @SQL@ @Unparseable@");

@@ -81,6 +81,7 @@ import org.spin.backend.grpc.material_management.SaveProductAttributeSetInstance
 import org.spin.backend.grpc.material_management.Warehouse;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
+import org.spin.base.db.QueryUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
@@ -122,7 +123,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		//
 		String tableName = "RV_Storage";
 		MTable table = MTable.get(Env.getCtx(), tableName);
-		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
 		//	For dynamic condition

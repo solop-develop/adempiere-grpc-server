@@ -40,10 +40,10 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
+import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
@@ -166,7 +166,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
 
 		MTable table = MTable.get(Env.getCtx(), this.tableName);
-		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 
 		// add where with access restriction
 		String sqlWithRoleAccess = MRole.getDefault()
@@ -601,7 +601,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		//
 		MTable table = MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name);
 
-		StringBuilder sql = new StringBuilder(DictionaryUtil.getQueryWithReferencesFromColumns(table));
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
 		// For dynamic condition
