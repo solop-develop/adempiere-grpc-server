@@ -14,16 +14,26 @@
  ************************************************************************************/
 package org.spin.base.db;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MView;
 import org.adempiere.model.MViewColumn;
+import org.compiere.model.MColumn;
+import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
@@ -32,6 +42,7 @@ import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Value;
+import org.spin.base.dictionary.WindowUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.util.ASPUtil;
 
@@ -40,6 +51,37 @@ import org.spin.util.ASPUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class WhereUtil {
+
+	/**
+	 * Add and get talbe alias to columns in validation code sql
+	 * @param tableAlias
+	 * @param dynamicValidation
+	 * @return {String}
+	 */
+	public static String getWhereRestrictionsWithAlias(String tableAlias, String dynamicValidation) {
+		if (Util.isEmpty(dynamicValidation, true)) {
+			return "";
+		}
+
+		Matcher matcherTableAliases = Pattern.compile(
+				tableAlias + "\\.",
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			)
+			.matcher(dynamicValidation);
+
+		String validationCode = dynamicValidation;
+		if (!matcherTableAliases.find()) {
+			// columnName = value
+			Pattern patternColumnName = Pattern.compile(
+				"(\\w+)(\\s+){0,1}" + OperatorUtil.SQL_OPERATORS_REGEX,
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			);
+			Matcher matchColumnName = patternColumnName.matcher(validationCode);
+			validationCode = matchColumnName.replaceAll(tableAlias + ".$1$2$3"); // $&
+		}
+
+		return validationCode;
+	}
 
 	/**
 	 * Get sql restriction by operator
@@ -181,6 +223,177 @@ public class WhereUtil {
 		//	Return where clause
 		return whereClause.toString();
 	}
+
+
+
+	/**
+	 * Get Where Clause from Tab
+	 * @param tabId
+	 * @return
+	 */
+	public static String getWhereClauseFromTab(int tabId) {
+		MTab tab = MTab.get(Env.getCtx(), tabId);
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			return null;
+		}
+		return getWhereClauseFromTab(tab.getAD_Window_ID(), tabId);
+	}
+
+	public static String getWhereClauseFromTab(int windowId, int tabId) {
+		MTab aspTab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(windowId, tabId);
+		if (aspTab == null || aspTab.getAD_Tab_ID() <= 0) {
+			return null;
+		}
+		return aspTab.getWhereClause();
+	}
+
+	/**
+	 * Get SQL Where Clause including link column and parent column
+	 * @param {Properties} context
+	 * @param {MTab} tab
+	 * @param {List<MTab>} tabs
+	 * @return {String}
+	 */
+	public static String getTabWhereClauseFromParentTabs(Properties context, MTab tab, List<MTab> tabs) {
+		if (tabs == null) {
+			tabs = ASPUtil.getInstance(context).getWindowTabs(tab.getAD_Window_ID());
+		}
+
+		StringBuffer whereClause = new StringBuffer();
+		String parentTabUuid = null;
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
+
+		int tabId = tab.getAD_Tab_ID();
+		int seqNo = tab.getSeqNo();
+		int tabLevel = tab.getTabLevel();
+		//	Create where clause for children
+		if (tab.getTabLevel() > 0 && tabs != null) {
+			Optional<MTab> optionalTab = tabs.stream()
+				.filter(parentTab -> {
+					return parentTab.getAD_Tab_ID() != tabId
+						&& parentTab.getTabLevel() == 0;
+				})
+				.findFirst();
+			String mainColumnName = null;
+			MTable mainTable = null;
+			if(optionalTab.isPresent()) {
+				mainTable = MTable.get(context, optionalTab.get().getAD_Table_ID());
+				mainColumnName = mainTable.getKeyColumns()[0];
+			}
+
+			List<MTab> parentTabsList = WindowUtil.getParentTabsList(tab.getAD_Window_ID(), tabId, new ArrayList<MTab>());
+			List<MTab> tabList = parentTabsList.stream()
+				.filter(parentTab -> {
+					return parentTab.getAD_Tab_ID() != tabId
+						&& parentTab.getAD_Tab_ID() != optionalTab.get().getAD_Tab_ID()
+						&& parentTab.getSeqNo() < seqNo
+						&& parentTab.getTabLevel() < tabLevel
+						&& !parentTab.isTranslationTab()
+					;
+				})
+				.sorted(
+					Comparator.comparing(MTab::getSeqNo)
+						.thenComparing(MTab::getTabLevel)
+						.reversed()
+				)
+				.collect(Collectors.toList());
+
+			//	Validate direct child
+			if (tabList == null || tabList.size() == 0) {
+				if (tab.getParent_Column_ID() > 0) {
+					mainColumnName = MColumn.getColumnName(context, tab.getParent_Column_ID());
+				}
+				String childColumn = mainColumnName;
+				if (tab.getAD_Column_ID() > 0) {
+					childColumn = MColumn.getColumnName(context, tab.getAD_Column_ID());
+					mainColumnName = childColumn;
+				}
+
+				whereClause.append(table.getTableName()).append(".").append(childColumn);
+				if (mainColumnName != null && mainColumnName.endsWith("_ID")) {
+					whereClause.append(" = ").append("@").append(mainColumnName).append("@");
+				} else {
+					whereClause.append(" = ").append("'@").append(mainColumnName).append("@'");
+				}
+				if(optionalTab.isPresent()) {
+					parentTabUuid = optionalTab.get().getUUID();
+				}
+			} else {
+				whereClause.append("EXISTS(SELECT 1 FROM");
+				Map<Integer, MTab> tablesMap = new HashMap<>();
+				int aliasIndex = 0;
+				boolean firstResult = true;
+				for(MTab currentTab : tabList) {
+					tablesMap.put(aliasIndex, currentTab);
+					MTable currentTable = MTable.get(context, currentTab.getAD_Table_ID());
+					if(firstResult) {
+						whereClause.append(" ").append(currentTable.getTableName()).append(" AS t").append(aliasIndex);
+						firstResult = false;
+					} else {
+						MTab childTab = tablesMap.get(aliasIndex -1);
+						String childColumnName = WindowUtil.getParentColumnNameFromTab(childTab);
+						String childLinkColumnName = WindowUtil.getLinkColumnNameFromTab(childTab);
+						//	Get from parent
+						if (Util.isEmpty(childColumnName, true)) {
+							MTable childTable = MTable.get(context, currentTab.getAD_Table_ID());
+							childColumnName = childTable.getKeyColumns()[0];
+						}
+						if (Util.isEmpty(childLinkColumnName, true)) {
+							childLinkColumnName = childColumnName;
+						}
+						whereClause.append(" INNER JOIN ").append(currentTable.getTableName()).append(" AS t").append(aliasIndex)
+							.append(" ON(").append("t").append(aliasIndex).append(".").append(childLinkColumnName)
+							.append("=").append("t").append(aliasIndex - 1).append(".").append(childColumnName).append(")")
+						;
+					}
+					aliasIndex++;
+					if (Util.isEmpty(parentTabUuid, true)) {
+						parentTabUuid = currentTab.getUUID();
+					}
+				}
+				whereClause.append(" WHERE t").append(aliasIndex - 1).append(".").append(mainColumnName).append(" = ")
+					.append("@").append(mainColumnName).append("@")
+				;
+				//	Add support to child
+				MTab parentTab = tablesMap.get(aliasIndex -1);
+				String parentColumnName = WindowUtil.getParentColumnNameFromTab(tab);
+				String linkColumnName = WindowUtil.getLinkColumnNameFromTab(tab);
+				if (Util.isEmpty(parentColumnName, true)) {
+					MTable parentTable = MTable.get(context, parentTab.getAD_Table_ID());
+					parentColumnName = parentTable.getKeyColumns()[0];
+				}
+				if (Util.isEmpty(linkColumnName, true)) {
+					linkColumnName = parentColumnName;
+				}
+				whereClause.append(" AND t").append(0).append(".").append(parentColumnName).append(" = ")
+					.append(table.getTableName()).append(".").append(linkColumnName)
+					.append(")")
+				;
+			}
+		}
+
+		StringBuffer where = new StringBuffer();
+		final String whereTab = WhereUtil.getWhereClauseFromTab(tab.getAD_Window_ID(), tabId);
+		if (!Util.isEmpty(whereTab, true)) {
+			String whereWithAlias = WhereUtil.getWhereRestrictionsWithAlias(
+				table.getTableName(),
+				whereTab
+			);
+			where.append(whereWithAlias);
+		}
+
+		//	Set where clause for tab
+		if (Util.isEmpty(where.toString(), true)) {
+			return whereClause.toString();
+		}
+		if (Util.isEmpty(whereClause.toString(), true)) {
+			return where.toString();
+		}
+		// joined tab where clause with generated where clause
+		where.append(" AND ").append("(").append(whereClause).append(")");
+		return where.toString();
+	}
+
 
 
 

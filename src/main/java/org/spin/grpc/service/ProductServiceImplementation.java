@@ -30,7 +30,6 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.util.ContextManager;
-import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
@@ -107,7 +106,7 @@ public class ProductServiceImplementation extends ProductImplBase {
 		StringBuffer whereClause = new StringBuffer();
 
 		// validation code of field
-		String validationCode = DictionaryUtil.getValidationCodeWithAlias(tableName, reference.ValidationCode);
+		String validationCode = WhereUtil.getWhereRestrictionsWithAlias(tableName, reference.ValidationCode);
 		String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
 		if (!Util.isEmpty(reference.ValidationCode, true)) {
 			if (Util.isEmpty(parsedValidationCode, true)) {

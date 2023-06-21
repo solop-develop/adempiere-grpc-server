@@ -64,6 +64,7 @@ import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
+import org.spin.base.db.WhereUtil;
 import org.spin.base.dictionary.DictionaryConvertUtil;
 import org.spin.base.dictionary.WindowUtil;
 import org.spin.base.util.DictionaryUtil;
@@ -546,7 +547,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}
 
 		// get where clause including link column and parent column
-		String whereClause = DictionaryUtil.getSQLWhereClauseFromTab(context, tab, tabs);
+		String whereClause = WhereUtil.getTabWhereClauseFromParentTabs(context, tab, tabs);
 
 		//	create build
 		Tab.Builder builder = Tab.newBuilder()

@@ -26,6 +26,9 @@ import org.spin.backend.grpc.common.Value.ValueType;
  */
 public class OperatorUtil {
 
+	public static final String SQL_OPERATORS_REGEX = "(<>|<=|>=|!=|<|=|>|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)";
+
+
 	/**
 	 * Convert operator from gRPC to SQL
 	 * @param gRpcOperator

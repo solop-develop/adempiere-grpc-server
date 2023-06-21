@@ -24,12 +24,10 @@ import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.compiere.model.MColumn;
 import org.compiere.model.MMenu;
 import org.compiere.model.MRecentItem;
-import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.util.ASPUtil;
 
 /**
  * Class for handle records utils values
@@ -90,29 +88,6 @@ public class DictionaryUtil {
 			return;
 		}
 		MRecentItem.addMenuOption(Env.getCtx(), menuId, optionId);
-	}
-
-
-
-	/**
-	 * Get Where Clause from Tab
-	 * @param tabId
-	 * @return
-	 */
-	public static String getWhereClauseFromTab(int tabId) {
-		MTab tab = MTab.get(Env.getCtx(), tabId);
-		if (tab == null || tab.getAD_Tab_ID() <= 0) {
-			return null;
-		}
-		return getWhereClauseFromTab(tab.getAD_Window_ID(), tabId);
-	}
-
-	public static String getWhereClauseFromTab(int windowId, int tabId) {
-		MTab aspTab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(windowId, tabId);
-		if (aspTab == null || aspTab.getAD_Tab_ID() <= 0) {
-			return null;
-		}
-		return aspTab.getWhereClause();
 	}
 
 }

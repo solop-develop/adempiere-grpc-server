@@ -201,7 +201,6 @@ import org.spin.base.db.WhereUtil;
 import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
@@ -1093,7 +1092,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
 
 		// get where clause including link column and parent column
-		String where = DictionaryUtil.getSQLWhereClauseFromTab(context, tab, null);
+		String where = WhereUtil.getTabWhereClauseFromParentTabs(context, tab, null);
 		String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
 		if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(where, true)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
@@ -1371,7 +1370,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		StringBuffer whereClause = new StringBuffer();
 
 		// validation code of field
-		String validationCode = DictionaryUtil.getValidationCodeWithAlias(tableName, reference.ValidationCode);
+		String validationCode = WhereUtil.getWhereRestrictionsWithAlias(tableName, reference.ValidationCode);
 		String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
 		if (!Util.isEmpty(reference.ValidationCode, true)) {
 			if (Util.isEmpty(parsedValidationCode, true)) {
@@ -3701,7 +3700,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			}
 
 			table = MTable.get(context, tab.getAD_Table_ID());
-			final String whereTab = org.spin.base.dictionary.DictionaryUtil.getWhereClauseFromTab(tab.getAD_Tab_ID());
+			final String whereTab = WhereUtil.getWhereClauseFromTab(tab.getAD_Tab_ID());
 			//	Fill context
 			int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 			ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());

@@ -82,8 +82,8 @@ import org.spin.backend.grpc.material_management.Warehouse;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.QueryUtil;
+import org.spin.base.db.WhereUtil;
 import org.spin.base.util.ContextManager;
-import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
@@ -932,7 +932,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		);
 		if (reference != null) {
 			// validation code of field
-			String validationCode = DictionaryUtil.getValidationCodeWithAlias(I_M_Locator.Table_Name, reference.ValidationCode);
+			String validationCode = WhereUtil.getWhereRestrictionsWithAlias(I_M_Locator.Table_Name, reference.ValidationCode);
 			String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
 				if (Util.isEmpty(parsedValidationCode, true)) {
