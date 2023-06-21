@@ -3,6 +3,7 @@ package org.spin.base.db;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.adempiere.core.domains.models.I_AD_WF_Node;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MView;
@@ -12,6 +13,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
@@ -40,12 +42,16 @@ public class QueryUtil {
 
 		for (MColumn column : columnsList) {
 			int displayTypeId = column.getAD_Reference_ID();
+			String columnName = column.getColumnName();
 
+			if (displayTypeId == DisplayType.Button) {
+				if (columnName.equals(I_AD_WF_Node.COLUMNNAME_DocAction)) {
+					displayTypeId = DisplayType.List;
+				}
+			}
 			if (ReferenceUtil.validateReference(displayTypeId)) {
 				//	Reference Value
 				int referenceValueId = column.getAD_Reference_Value_ID();
-
-				String columnName = column.getColumnName();
 
 				//	Validation Code
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
@@ -106,6 +112,11 @@ public class QueryUtil {
 			int displayTypeId = field.getAD_Reference_ID();
 			if (displayTypeId <= 0) {
 				displayTypeId = column.getAD_Reference_ID();
+			}
+			if (displayTypeId == DisplayType.Button) {
+				if (columnName.equals(I_AD_WF_Node.COLUMNNAME_DocAction)) {
+					displayTypeId = DisplayType.List;
+				}
 			}
 			if (ReferenceUtil.validateReference(displayTypeId)) {
 				if (!Util.isEmpty(columnSQL, true)) {
