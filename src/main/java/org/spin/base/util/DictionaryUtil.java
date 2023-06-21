@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,7 +39,7 @@ import org.compiere.model.MTable;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.spin.grpc.service.DictionaryServiceImplementation;
+import org.spin.base.dictionary.WindowUtil;
 import org.spin.util.ASPUtil;
 
 /**
@@ -264,52 +263,6 @@ public class DictionaryUtil {
 	}
 
 
-	public static int getDirectParentTabId(int windowId, int tabId) {
-		MTab tab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(windowId, tabId);
-
-		final int tabLevel = tab.getTabLevel();
-		final int tabSequence = tab.getSeqNo();
-		int parentTabId = -1;
-		// root tab has no parent
-		if (tabLevel > 0) {
-			AtomicReference<Integer> parentTabSequence = new AtomicReference<Integer>(-1);
-			AtomicReference<MTab> parentTabRefecence = new AtomicReference<MTab>();
-			List<MTab> tabsList = ASPUtil.getInstance(Env.getCtx()).getWindowTabs(tab.getAD_Window_ID());
-			tabsList.forEach(tabItem -> {
-				if (tabItem.getTabLevel() >= tabLevel || tabItem.getSeqNo() >= tabSequence) {
-					// it is child tab
-					return;
-				}
-
-				// current tab is more down that tab list
-				if (parentTabSequence.get() == -1 || tabItem.getSeqNo() > parentTabSequence.get()) {
-					parentTabSequence.set(tabItem.getSeqNo());
-					parentTabRefecence.set(tabItem);
-				}
-			});
-			if (parentTabRefecence.get() != null) {
-				parentTabId = parentTabRefecence.get().getAD_Tab_ID();
-			}
-		}
-		return parentTabId;
-	}
-
-	/**
-	 * Get list of direct parent tabs by current tab id
-	 * @param windowId window of tabs
-	 * @param currentTabId current tab to get parents
-	 * @param tabsList
-	 * @return
-	 */
-	public static List<MTab> getParentTabsList(int windowId, int currentTabId, List<MTab> tabsList) {
-		int parentTabId = getDirectParentTabId(windowId, currentTabId);
-		if (parentTabId > 0) {
-			MTab parentTab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(windowId, parentTabId);
-			tabsList.add(parentTab);
-			getParentTabsList(windowId, parentTabId, tabsList);
-		}
-		return tabsList;
-	}
 
 	/**
 	 * Get SQL Where Clause including link column and parent column
@@ -345,7 +298,7 @@ public class DictionaryUtil {
 				mainColumnName = mainTable.getKeyColumns()[0];
 			}
 
-			List<MTab> parentTabsList = getParentTabsList(tab.getAD_Window_ID(), tabId, new ArrayList<MTab>());
+			List<MTab> parentTabsList = WindowUtil.getParentTabsList(tab.getAD_Window_ID(), tabId, new ArrayList<MTab>());
 			List<MTab> tabList = parentTabsList.stream()
 				.filter(parentTab -> {
 					return parentTab.getAD_Tab_ID() != tabId
@@ -395,8 +348,8 @@ public class DictionaryUtil {
 						firstResult = false;
 					} else {
 						MTab childTab = tablesMap.get(aliasIndex -1);
-						String childColumnName = DictionaryServiceImplementation.getParentColumnNameFromTab(childTab);
-						String childLinkColumnName = DictionaryServiceImplementation.getLinkColumnNameFromTab(childTab);
+						String childColumnName = WindowUtil.getParentColumnNameFromTab(childTab);
+						String childLinkColumnName = WindowUtil.getLinkColumnNameFromTab(childTab);
 						//	Get from parent
 						if (Util.isEmpty(childColumnName, true)) {
 							MTable childTable = MTable.get(context, currentTab.getAD_Table_ID());
@@ -420,8 +373,8 @@ public class DictionaryUtil {
 				;
 				//	Add support to child
 				MTab parentTab = tablesMap.get(aliasIndex -1);
-				String parentColumnName = DictionaryServiceImplementation.getParentColumnNameFromTab(tab);
-				String linkColumnName = DictionaryServiceImplementation.getLinkColumnNameFromTab(tab);
+				String parentColumnName = WindowUtil.getParentColumnNameFromTab(tab);
+				String linkColumnName = WindowUtil.getLinkColumnNameFromTab(tab);
 				if (Util.isEmpty(parentColumnName, true)) {
 					MTable parentTable = MTable.get(context, parentTab.getAD_Table_ID());
 					parentColumnName = parentTable.getKeyColumns()[0];

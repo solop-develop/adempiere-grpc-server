@@ -15,7 +15,6 @@
 package org.spin.grpc.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -65,6 +64,7 @@ import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.dictionary.DictionaryConvertUtil;
+import org.spin.base.dictionary.WindowUtil;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
@@ -529,7 +529,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		String parentTabUuid = null;
 		// root tab has no parent
 		if (tab.getTabLevel() > 0) {
-			int parentTabId = DictionaryUtil.getDirectParentTabId(tab.getAD_Window_ID(), tabId);
+			int parentTabId = WindowUtil.getDirectParentTabId(tab.getAD_Window_ID(), tabId);
 			if (parentTabId > 0) {
 				MTable table = MTable.get(context, tab.getAD_Table_ID());
 				parentTabUuid = RecordUtil.getUuidFromId(table.getTableName(), parentTabId, null);
@@ -612,7 +612,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			}
 		}
 		//	Process
-		List<MProcess> processList = getProcessActionFromTab(context, tab);
+		List<MProcess> processList = WindowUtil.getProcessActionFromTab(context, tab);
 		if(processList != null
 				&& processList.size() > 0) {
 			for(MProcess process : processList) {
@@ -630,33 +630,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		//	
 		return builder;
 	}
-	
-	/**
-	 * Get Parent column name from tab
-	 * @param tab
-	 * @return
-	 */
-	public static String getParentColumnNameFromTab(MTab tab) {
-		String parentColumnName = null;
-		if(tab.getParent_Column_ID() != 0) {
-			parentColumnName = MColumn.getColumnName(tab.getCtx(), tab.getParent_Column_ID());
-		}
-		return parentColumnName;
-	}
-	
-	/**
-	 * Get Link column name from tab
-	 * @param tab
-	 * @return
-	 */
-	public static String getLinkColumnNameFromTab(MTab tab) {
-		String parentColumnName = null;
-		if(tab.getAD_Column_ID() != 0) {
-			parentColumnName = MColumn.getColumnName(tab.getCtx(), tab.getAD_Column_ID());
-		}
-		return parentColumnName;
-	}
-	
+
+
+
 	/**
 	 * Convert Context Info to builder
 	 * @param contextInfoId
@@ -851,47 +827,9 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		);
 		return builder;
 	}
-	
-	/**
-	 * Get process action from tab
-	 * @param tab
-	 * @return
-	 */
-	private List<MProcess> getProcessActionFromTab(Properties context, MTab tab) {
-		// to prevent duplicity of associated processes in different locations (table, column and tab).
-		HashMap<Integer, MProcess> processList = new HashMap<>();
 
-		//	First Process Tab
-		if(tab.getAD_Process_ID() > 0) {
-			processList.put(tab.getAD_Process_ID(), MProcess.get(context, tab.getAD_Process_ID()));
-		}
 
-		//	Process from tab
-		List<MProcess> processFromTabList = new Query(tab.getCtx(), I_AD_Process.Table_Name, "EXISTS(SELECT 1 FROM AD_Field f "
-				+ "INNER JOIN AD_Column c ON(c.AD_Column_ID = f.AD_Column_ID) "
-				+ "WHERE c.AD_Process_ID = AD_Process.AD_Process_ID "
-				+ "AND f.AD_Tab_ID = ? "
-				+ "AND f.IsActive = 'Y')", null)
-				.setParameters(tab.getAD_Tab_ID())
-				.setOnlyActiveRecords(true)
-				.<MProcess>list();
-		for(MProcess process : processFromTabList) {
-			processList.put(process.getAD_Process_ID(), process);
-		}
 
-		//	Process from table
-		List<MProcess> processFromTableList = new Query(tab.getCtx(), I_AD_Process.Table_Name, 
-				"EXISTS(SELECT 1 FROM AD_Table_Process WHERE AD_Process_ID = AD_Process.AD_Process_ID AND AD_Table_ID = ?)", null)
-				.setParameters(tab.getAD_Table_ID())
-				.setOnlyActiveRecords(true)
-				.<MProcess>list();
-		for(MProcess process : processFromTableList) {
-			processList.put(process.getAD_Process_ID(), process);
-		}
-
-		return new ArrayList<MProcess>(processList.values());
-	}
-	
 	/**
 	 * Convert Process Parameter
 	 * @param processParameter
