@@ -294,11 +294,13 @@ public class SessionManager {
 		//	Other
 		Env.setAutoCommit(context, Ini.isPropertyBool(Ini.P_A_COMMIT));
 		Env.setAutoNew(context, Ini.isPropertyBool(Ini.P_A_NEW));
+
+		String isShowAccounting = "N";
 		if (MRole.getDefault(context, false).isShowAcct()) {
-			Env.setContext(context, "#ShowAcct", Ini.getProperty(Ini.P_SHOW_ACCT));
-		} else {
-			Env.setContext(context, "#ShowAcct", "N");
+			isShowAccounting = "Y";
 		}
+		Env.setContext(context, "#ShowAcct", isShowAccounting);
+
 		Env.setContext(context, "#ShowTrl", Ini.getProperty(Ini.P_SHOW_TRL));
 		Env.setContext(context, "#ShowAdvanced", Ini.getProperty(Ini.P_SHOW_ADVANCED));
 
