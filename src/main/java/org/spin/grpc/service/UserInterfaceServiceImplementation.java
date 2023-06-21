@@ -126,6 +126,7 @@ import org.compiere.util.Util;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.OperatorUtil;
+import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereUtil;
 import org.spin.base.ui.UserInterfaceConvertUtil;
@@ -2970,7 +2971,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			sqlWithRoleAccess += whereClause;
 		}
 
-		String orderByClause = DictionaryUtil.getSQLOrderBy(browser);
+		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
 		if (!Util.isEmpty(orderByClause, true)) {
 			orderByClause = " ORDER BY " + orderByClause;
 		}

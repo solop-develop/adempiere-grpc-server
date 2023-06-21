@@ -63,6 +63,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
+import org.spin.base.db.OrderByUtil;
 import org.spin.base.dictionary.DictionaryConvertUtil;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
@@ -792,7 +793,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			return Browser.newBuilder();
 		}
 		String query = DictionaryUtil.addQueryReferencesFromBrowser(browser);
-		String orderByClause = DictionaryUtil.getSQLOrderBy(browser);
+		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
 		Browser.Builder builder = Browser.newBuilder()
 				.setId(browser.getAD_Browse_ID())
 				.setUuid(ValueUtil.validateNull(browser.getUUID()))

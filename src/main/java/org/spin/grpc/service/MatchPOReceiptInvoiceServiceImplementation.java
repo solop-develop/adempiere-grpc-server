@@ -65,7 +65,6 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.Product;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchPORReceiptInvoiceGrpc.MatchPORReceiptInvoiceImplBase;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;

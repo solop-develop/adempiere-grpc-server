@@ -526,39 +526,5 @@ public class DictionaryUtil {
 		queryToAdd.append(joinsToAdd);
 		return queryToAdd.toString();
 	}
-	
-	/**
-	 * Get Order By
-	 * @param browser
-	 * @return
-	 */
-	public static String getSQLOrderBy(MBrowse browser) {
-		StringBuilder sqlOrderBy = new StringBuilder();
-		for (MBrowseField field : ASPUtil.getInstance().getBrowseOrderByFields(browser.getAD_Browse_ID())) {
-			if (sqlOrderBy.length() > 0) {
-				sqlOrderBy.append(",");
-			}
 
-			MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), field.getAD_View_Column_ID(), null);
-			sqlOrderBy.append(viewColumn.getColumnSQL());
-		}
-		return sqlOrderBy.length() > 0 ? sqlOrderBy.toString(): "";
-	}
-	
-	/**
-	 * Get Order By Postirion for SB
-	 * @param BrowserField
-	 * @return
-	 */
-	public static int getOrderByPosition(MBrowse browser, MBrowseField BrowserField) {
-		int colOffset = 1; // columns start with 1
-		int col = 0;
-		for (MBrowseField field : browser.getFields()) {
-			int sortBySqlNo = col + colOffset;
-			if (BrowserField.getAD_Browse_Field_ID() == field.getAD_Browse_Field_ID())
-				return sortBySqlNo;
-			col ++;
-		}
-		return -1;
-	}
 }

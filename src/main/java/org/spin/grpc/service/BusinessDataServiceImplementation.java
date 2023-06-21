@@ -670,12 +670,12 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			String parsedSQL = MRole.getDefault().addAccessSQL(sql.toString(),
 					null, MRole.SQL_FULLYQUALIFIED,
 					MRole.SQL_RO);
+
 			String orderByClause = criteria.getOrderByClause();
-			if(Util.isEmpty(orderByClause)) {
-				orderByClause = "";
-			} else {
+			if (!Util.isEmpty(orderByClause, true)) {
 				orderByClause = " ORDER BY " + orderByClause;
 			}
+
 			//	Count records
 			count = CountUtil.countRecords(parsedSQL, criteria.getTableName(), params);
 			//	Add Row Number
