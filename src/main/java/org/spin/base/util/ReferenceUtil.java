@@ -117,8 +117,10 @@ public class ReferenceUtil {
 			}
 			referenceInfo.setColumnName(columnName);
 			String displayColumn = MLookupFactory.getLookup_TableDirEmbed(languageValue, columnName, tableName);
+			// No Identifier records
 			if (Util.isEmpty(displayColumn, true)) {
-				displayColumn = tableName + "." + columnName;
+				// displayColumn = tableName + "." + columnName;
+				return null;
 			}
 			referenceInfo.setDisplayColumnValue("(" + displayColumn + ")");
 			referenceInfo.setHasJoinValue(false);
