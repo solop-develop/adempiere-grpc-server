@@ -35,6 +35,7 @@ import org.adempiere.core.domains.models.I_AD_Message;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.I_AD_Tab;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_AD_Val_Rule;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.compiere.model.MColumn;
@@ -1492,8 +1493,12 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			} else {
 				builder.setDisplayType(DisplayType.String);
 			}
+		} else if (DisplayType.Button == displayTypeId) {
+			if (column.getColumnName().equals("Record_ID")) {
+				builder.addContextColumnNames(I_AD_Table.COLUMNNAME_AD_Table_ID);
+			}
 		}
-		
+
 		//	Field Definition
 		if(field.getAD_FieldDefinition_ID() > 0) {
 			FieldDefinition.Builder fieldDefinitionBuilder = convertFieldDefinition(context, field.getAD_FieldDefinition_ID());
