@@ -103,7 +103,8 @@ public class LimitUtil {
 	 */
 	public static String getQueryWithLimit(String query, int limit, int offset) {
 		Matcher matcher = Pattern.compile(
-			"\\s+(ORDER BY)\\s+", Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			OrderByUtil.SQL_ORDER_BY_REGEX,
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
 		).matcher(query);
 		int positionFrom = -1;
 		if(matcher.find()) {

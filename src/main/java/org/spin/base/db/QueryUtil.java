@@ -31,9 +31,23 @@ public class QueryUtil {
 	 * @return
 	 */
 	public static String getTableQueryWithReferences(MTable table) {
-		final String tableName = table.getTableName();
+		return getTableQueryWithReferences(table, null);
+	}
 
-		String originalQuery = "SELECT " + tableName + ".* FROM " + tableName + " AS " + tableName + " ";
+	/**
+	 * Add references to original query from columnsList
+	 * @param {MTable} table
+	 * @param {String} tableAlias to reference base table name
+	 * @param {ArrayList<MColumn>} columns
+	 * @return
+	 */
+	public static String getTableQueryWithReferences(MTable table, String tableAlias) {
+		final String tableName = table.getTableName();
+		if (Util.isEmpty(tableAlias, true)) {
+			tableAlias = tableName;
+		}
+
+		String originalQuery = "SELECT " + tableAlias + ".* FROM " + tableName + " AS " + tableAlias + " ";
 		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
@@ -60,43 +74,56 @@ public class QueryUtil {
 						referenceValueId,
 						columnName,
 						language.getAD_Language(),
-						tableName
+						tableAlias
 					);
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
 					queryToAdd.append(referenceInfo.getDisplayValue(columnName));
-					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableName));
+					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableAlias));
 				}
 			}
 		}
+
 		queryToAdd.append(joinsToAdd);
 		return queryToAdd.toString();
 	}
 
 
-
 	/**
 	 * Add references to original query from tab
-	 * @param originalQuery
+	 * @param {MTab} tab
 	 * @return
 	 */
 	public static String getTabQueryWithReferences(MTab tab) {
+		return getTabQueryWithReferences(tab, null);
+	}
+
+	/**
+	 * Add references to original query from tab
+	 * @param {MTab} tab
+	 * @param {String} tableAlias to reference base table name
+	 * @return
+	 */
+	public static String getTabQueryWithReferences(MTab tab, String tableAlias) {
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		final String tableName = table.getTableName();
+		if (Util.isEmpty(tableAlias, true)) {
+			tableAlias = tableName;
+		}
 
-		String originalQuery = "SELECT " + tableName + ".* FROM " + tableName + " AS " + tableName + " ";
+		String originalQuery = "SELECT " + tableAlias + ".* FROM " + tableName + " AS " + tableAlias + " ";
 		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 		Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
 		for (MField field : tab.getFields(false, null)) {
+			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
 			if (!field.isDisplayed()) {
 				// key column on table
-				if (!field.getAD_Column().isKey()) {
+				if (!column.isKey()) {
 					continue;
 				}
 			}
-			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
 			String columnName = column.getColumnName();
 
 			// Add virutal column
@@ -145,13 +172,13 @@ public class QueryUtil {
 					referenceValueId,
 					columnName,
 					language.getAD_Language(),
-					tableName
+					tableAlias
 				);
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
 					String displayedColumn = referenceInfo.getDisplayValue(columnName);
 					queryToAdd.append(displayedColumn);
-					String joinClause = referenceInfo.getJoinValue(columnName, tableName);
+					String joinClause = referenceInfo.getJoinValue(columnName, tableAlias);
 					joinsToAdd.append(joinClause);
 				}
 			}

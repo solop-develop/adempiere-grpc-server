@@ -167,8 +167,8 @@ public class WhereClauseUtil {
 
 	/**
 	 * Get Where Clause from criteria and dynamic condition
-	 * @param criteria
-	 * @param params
+	 * @param {Criteria} criteria
+	 * @param {List<Object>} params
 	 * @return
 	 */
 	public static String getWhereClauseFromCriteria(Criteria criteria, List<Object> params) {
@@ -177,12 +177,24 @@ public class WhereClauseUtil {
 
 	/**
 	 * Get Where Clause from criteria and dynamic condition
-	 * @param criteria
-	 * @param tableName optional table name
-	 * @param params
+	 * @param {Criteria} criteria
+	 * @param {String} tableName
+	 * @param {List<Object>} params
 	 * @return
 	 */
 	public static String getWhereClauseFromCriteria(Criteria criteria, String tableName, List<Object> params) {
+		return getWhereClauseFromCriteria(criteria, tableName, null, params);
+	}
+
+	/**
+	 * Get Where Clause from criteria and dynamic condition
+	 * @param {Criteria} criteria
+	 * @param {String} tableName
+	 * @param {String} tableAlias
+	 * @param {List<Object>} params
+	 * @return
+	 */
+	public static String getWhereClauseFromCriteria(Criteria criteria, String tableName, String tableAlias, List<Object> params) {
 		StringBuffer whereClause = new StringBuffer();
 		if (!Util.isEmpty(criteria.getWhereClause(), true)) {
 			whereClause.append("(").append(criteria.getWhereClause()).append(")");
@@ -195,6 +207,11 @@ public class WhereClauseUtil {
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
+		if (Util.isEmpty(tableAlias, true)) {
+			tableAlias = tableName;
+		}
+		final String tableNameAlias = tableAlias;
+
 		criteria.getConditionsList().stream()
 			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
 			.forEach(condition -> {
@@ -202,7 +219,7 @@ public class WhereClauseUtil {
 				if (whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
-				String columnName = table.getTableName() + "." + condition.getColumnName();
+				String columnName = tableNameAlias + "." + condition.getColumnName();
 				if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
 					operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
 						condition

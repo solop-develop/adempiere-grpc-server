@@ -71,7 +71,7 @@ public class ReferenceUtil {
 
 	/**
 	 * Validate reference
-	 * TODO: Add support to ID reference to get display column
+	 * TODO: Improve support to ID reference to get display column
 	 * TODO: Add support to Resource Assigment reference to get display column
 	 * @param referenceId
 	 * @param referenceValueId
@@ -80,6 +80,7 @@ public class ReferenceUtil {
 	 */
 	public static boolean validateReference(int referenceId) {
 		if (DisplayType.isLookup(referenceId) || DisplayType.Account == referenceId
+			|| DisplayType.ID == referenceId
 			|| DisplayType.Location == referenceId || DisplayType.PAttribute == referenceId
 			|| DisplayType.Locator == referenceId) {
 			return true;
@@ -109,7 +110,19 @@ public class ReferenceUtil {
 
 		// new instance generated
 		referenceInfo = new ReferenceInfo();
-		if (DisplayType.Account == referenceId) {
+		if (DisplayType.ID == referenceId) {
+			// TODO: Improve regex with count records
+			if (columnName.equals(tableName + "_ID")) {
+				return null;
+			}
+			referenceInfo.setColumnName(columnName);
+			String displayColumn = MLookupFactory.getLookup_TableDirEmbed(languageValue, columnName, tableName);
+			if (Util.isEmpty(displayColumn, true)) {
+				displayColumn = tableName + "." + columnName;
+			}
+			referenceInfo.setDisplayColumnValue("(" + displayColumn + ")");
+			referenceInfo.setHasJoinValue(false);
+		} else if (DisplayType.Account == referenceId) {
 			//	Add Display
 			referenceInfo.setColumnName(columnName);
 			referenceInfo.setTableName(I_C_ValidCombination.Table_Name);

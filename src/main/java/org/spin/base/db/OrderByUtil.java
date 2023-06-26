@@ -14,6 +14,9 @@
  ************************************************************************************/
 package org.spin.base.db;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MViewColumn;
@@ -25,6 +28,8 @@ import org.spin.util.ASPUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class OrderByUtil {
+
+	public static String SQL_ORDER_BY_REGEX = "\\s+(ORDER BY)\\s+";
 
 	/**
 	 * Get Order By
@@ -60,6 +65,20 @@ public class OrderByUtil {
 			col ++;
 		}
 		return -1;
+	}
+
+	public static String removeOrderBy(String sql) {
+		String sqlWithoutOrderBy = sql;
+		// remove order by clause
+		Matcher matcherOrderBy = Pattern.compile(
+			SQL_ORDER_BY_REGEX,
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		).matcher(sql);
+		if(matcherOrderBy.find()) {
+			int positionOrderBy = matcherOrderBy.start();
+			sqlWithoutOrderBy = sql.substring(0, positionOrderBy);
+		}
+		return sqlWithoutOrderBy;
 	}
 
 }

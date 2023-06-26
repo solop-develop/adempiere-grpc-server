@@ -72,14 +72,7 @@ public class CountUtil {
 		String queryCount = "SELECT COUNT(*) " + sql.substring(positionFrom, sql.length());
 
 		// remove order by clause
-		Matcher matcherOrderBy = Pattern.compile(
-			"\\s+(ORDER BY)\\s+",
-			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-		).matcher(queryCount);
-		if(matcherOrderBy.find()) {
-			int positionOrderBy = matcherOrderBy.start();
-			queryCount = queryCount.substring(0, positionOrderBy);
-		}
+		queryCount = OrderByUtil.removeOrderBy(queryCount);
 
 		if (parameters == null) {
 			parameters = new ArrayList<Object>();

@@ -29,14 +29,25 @@ public class FromUtil {
 	 * @return
 	 */
 	public static String getPatternTableName(String tableName, String tableNameAlias) {
-		// tableName tableName, tableName AS tableName
-		String patternTableWithAliases = tableName + "\\s+" + tableName + "|" + tableName + "\\s+AS\\s+" + tableName;
+		String patternTableWithAliases = "";
+
+		// tableName tableName, tableName AS tableName, tableName (only table on last position)
+		String patternOnlyTableName = tableName + "\\s+" + tableName + "|" + tableName + "\\s+AS\\s+" + tableName + "|" + tableName;
+		patternTableWithAliases = patternOnlyTableName;
+
+		// tableName tableAlias, tableName AS tableAlias
+		String patternOnlyTableAlias = "";
 		if (!Util.isEmpty(tableNameAlias, true) && !tableName.equals(tableNameAlias)) {
-			// tableName tableAlias, tableName AS tableAlias
-			patternTableWithAliases += "|" + tableName + "\\s+" + tableNameAlias + "|" + tableName + "\\s+AS\\s+" + tableNameAlias;
+			patternOnlyTableAlias = tableName + "\\s+" + tableNameAlias + "|" + tableName + "\\s+AS\\s+" + tableNameAlias;
+			patternTableWithAliases = patternOnlyTableAlias;
 		}
-		// only table on last position
-		patternTableWithAliases += "|" + tableName;
+
+		// if (!Util.isEmpty(patternOnlyTableAlias, false)) {
+		// 	patternTableWithAliases = patternOnlyTableAlias + "|" + patternOnlyTableName;
+		// }
+
+		// end with some patterns
+		patternTableWithAliases = "(" + patternTableWithAliases + ")\\b";
 
 		return patternTableWithAliases;
 	}
