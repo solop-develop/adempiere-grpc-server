@@ -66,6 +66,7 @@ import org.adempiere.core.domains.models.I_AD_Record_Access;
 import org.adempiere.core.domains.models.I_AD_ReportView;
 import org.adempiere.core.domains.models.I_AD_Role;
 import org.adempiere.core.domains.models.I_AD_Tab;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_CM_Chat;
