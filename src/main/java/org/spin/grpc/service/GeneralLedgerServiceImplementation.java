@@ -388,8 +388,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			user4Id = (int) attributesList.get(MAccount.COLUMNNAME_User4_ID);
 		}
 
-
-		MAccount accountCombination = MAccount.get (
+		MAccount accountCombination = MAccount.get(
 			Env.getCtx(), clientId,
 			organizationId,
 			accoutingSchemaId,
@@ -413,7 +412,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 		acctingSchemaElements.forEach(acctingSchemaElement -> {
 			String elementType = acctingSchemaElement.getElementType();
-			String columnName = getColumnNameFromElementType(elementType);
+			String columnName = MAcctSchemaElement.getColumnName(elementType);
 			Object value = attributesList.get(columnName);
 
 			if (acctingSchemaElement.isMandatory() && (value == null || (value instanceof String && Util.isEmpty((String) value, true)))) {
@@ -426,7 +425,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			}
 
 			sql.append(" AND ").append(columnName);
-			if (value == null || (value instanceof String && Util.isEmpty((String) value))) {
+			if (value == null || (value instanceof String && Util.isEmpty((String) value, true))) {
 				sql.append(" IS NULL ");
 			} else {
 				sql.append(" = ").append(value);
@@ -438,54 +437,6 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		return sql;
 	}
 
-	private String getColumnNameFromElementType(String elementType) {
-		String columnName = null;
-		switch (elementType) {
-			case MAcctSchemaElement.ELEMENTTYPE_Organization:
-				columnName = MAccount.COLUMNNAME_AD_Org_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_Account:
-				columnName = MAccount.COLUMNNAME_Account_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_SubAccount:
-				columnName = MAccount.COLUMNNAME_C_SubAcct_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_Product:
-				columnName = MAccount.COLUMNNAME_M_Product_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_BPartner:
-				columnName = MAccount.COLUMNNAME_C_BPartner_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_Campaign:
-				columnName = MAccount.COLUMNNAME_C_Campaign_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_Project:
-				columnName = MAccount.COLUMNNAME_C_Project_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_SalesRegion:
-				columnName = MAccount.COLUMNNAME_C_SalesRegion_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_OrgTrx:
-				columnName = MAccount.COLUMNNAME_AD_OrgTrx_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_Activity:
-				columnName = MAccount.COLUMNNAME_C_Activity_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_UserList1:
-				columnName = MAccount.COLUMNNAME_User1_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_UserList2:
-				columnName = MAccount.COLUMNNAME_User2_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_UserList3:
-				columnName = MAccount.COLUMNNAME_User3_ID;
-				break;
-			case MAcctSchemaElement.ELEMENTTYPE_UserList4:
-				columnName = MAccount.COLUMNNAME_User4_ID;
-				break;
-		}
-		return columnName;
-	}
 
 
 	@Override
