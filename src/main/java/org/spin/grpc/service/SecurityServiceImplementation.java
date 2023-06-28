@@ -625,7 +625,12 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
 		Env.setContext(context, "#AD_Session_ID", session.getAD_Session_ID());
 		// Default preference values
-		SessionManager.loadDefaultSessionValues(context, request.getLanguage());
+		String language = request.getLanguage();
+		if (Util.isEmpty(language, true)) {
+			// set language with current session
+			language = Env.getContext(currentSession.getCtx(), Env.LANGUAGE);
+		}
+		SessionManager.loadDefaultSessionValues(context, language);
 
 		// Session values
 		Session.Builder builder = Session.newBuilder();
