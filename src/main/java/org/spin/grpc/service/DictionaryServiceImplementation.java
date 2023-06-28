@@ -48,6 +48,7 @@ import org.compiere.model.MMessage;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
 import org.compiere.model.MReportView;
+import org.compiere.model.MRole;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MValRule;
@@ -409,10 +410,15 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		}
 		//	With Tabs
 		if(withTabs) {
+			Boolean isShowAcct = MRole.getDefault(context, false).isShowAcct();
 //			List<Tab.Builder> tabListForGroup = new ArrayList<>();
 			List<MTab> tabs = ASPUtil.getInstance(context).getWindowTabs(window.getAD_Window_ID());
 			for(MTab tab : tabs) {
 				if(!tab.isActive()) {
+					continue;
+				}
+				// role without permission to accounting
+				if (tab.isInfoTab() && !isShowAcct) {
 					continue;
 				}
 				Tab.Builder tabBuilder = convertTab(context, tab, tabs, withTabs);
