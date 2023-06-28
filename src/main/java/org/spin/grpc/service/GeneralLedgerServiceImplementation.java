@@ -17,16 +17,17 @@ package org.spin.grpc.service;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_Fact_Acct;
+import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAcctSchemaElement;
@@ -47,15 +48,19 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
-
+import org.spin.grpc.logic.GeneralLedgerServiceLogic;
 import org.spin.backend.grpc.common.Condition;
-import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
+import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.general_ledger.GeneralLedgerGrpc.GeneralLedgerImplBase;
 import org.spin.backend.grpc.general_ledger.GetAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingCombinationsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccoutingDocumentsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccoutingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccoutingFactsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccoutingSchemasRequest;
+import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.backend.grpc.general_ledger.SaveAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostResponse;
@@ -491,13 +496,81 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		return rePostBuilder;
 	}
 
+
+
+	@Override
+	public void listAccoutingSchemas(ListAccoutingSchemasRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListLookupItemsResponse.Builder entitiesList = GeneralLedgerServiceLogic.listAccoutingSchemas(request);
+			responseObserver.onNext(entitiesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listPostingTypes(ListPostingTypesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListLookupItemsResponse.Builder entitiesList = GeneralLedgerServiceLogic.listPostingTypes(request);
+			responseObserver.onNext(entitiesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listAccoutingDocuments(ListAccoutingDocumentsRequest request, StreamObserver<ListAccoutingDocumentsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListAccoutingDocumentsResponse.Builder entitiesList = GeneralLedgerServiceLogic.listAccoutingDocuments(request);
+			responseObserver.onNext(entitiesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
 	@Override
 	public void listAccoutingFacts(ListAccoutingFactsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListEntitiesResponse.Builder entitiesList = convertListAccountingFacts(request);
+			ListEntitiesResponse.Builder entitiesList = listAccoutingFacts(request);
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -509,66 +582,153 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		}
 	}
 	
-	ListEntitiesResponse.Builder convertListAccountingFacts(ListAccoutingFactsRequest request) {
-		ArrayList<Condition> conditionsList = new ArrayList<Condition>(request.getFilters().getConditionsList());
-		Optional<Condition> maybeAccoutingSchemaId  = conditionsList.stream()
-			.filter(condition -> {
-				return condition.getColumnName().equals(I_Fact_Acct.COLUMNNAME_C_AcctSchema_ID);
-			})
-			.findFirst();
-		if (!maybeAccoutingSchemaId.isPresent()) {
+	ListEntitiesResponse.Builder listAccoutingFacts(ListAccoutingFactsRequest request) {
+		int acctSchemaId = request.getAccountingSchemaId();
+		if (acctSchemaId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
 		}
 
-		String tableName = request.getTableName();
-		int tableId = -1;
-		if (!Util.isEmpty(tableName, true)) {
-			tableId = MTable.getTable_ID(tableName);
-			if (tableId > 0) {
-				org.spin.backend.grpc.common.Value.Builder tableIdValue = ValueUtil.getValueFromInt(tableId);
-				Condition.Builder tableCondition = Condition.newBuilder()
-					.setColumnName(I_Fact_Acct.COLUMNNAME_AD_Table_ID)
-					.setValue(tableIdValue);
-				conditionsList.add(0, tableCondition.build());
-
-				// record
-				int recordId = request.getRecordId();
-				if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid())) {
-					recordId = RecordUtil.getIdFromUuid(tableName, request.getRecordUuid(), null);
-				}
-				if (recordId > 0) {
-					org.spin.backend.grpc.common.Value.Builder recordIdValue = ValueUtil.getValueFromInt(recordId);
-					Condition.Builder recordCondition = Condition.newBuilder()
-						.setColumnName(I_Fact_Acct.COLUMNNAME_Record_ID)
-						.setValue(recordIdValue);
-					conditionsList.add(0, recordCondition.build());
-				}
-			}
-		}
-		
-		Criteria.Builder filter = Criteria.newBuilder();
-		filter.addAllConditions(conditionsList);
-
 		//
 		MTable table = MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name);
-
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
-		StringBuffer whereClause = new StringBuffer(" WHERE 1=1 ");
 
-		// For dynamic condition
-		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(filter.build(), table.getTableName(), params);
-		if (!Util.isEmpty(dynamicWhere, true)) {
-			//  Add includes first AND
+		List<Object> filtersList = new ArrayList<>();
+		StringBuilder whereClause = new StringBuilder(" WHERE 1=1 ");
+		whereClause.append(" AND ")
+			.append(table.getTableName())
+			.append(I_Fact_Acct.COLUMNNAME_C_AcctSchema_ID)
+			.append(" = ? ")
+		;
+		filtersList.add(acctSchemaId);
+
+		//	Accounting Elements
+		List<MAcctSchemaElement> acctSchemaElements = new Query(
+			Env.getCtx(),
+			MAcctSchemaElement.Table_Name,
+			" C_AcctSchema_ID = ?" ,
+			null
+		)
+			.setOnlyActiveRecords(true)
+			.setParameters(acctSchemaId)
+			.<MAcctSchemaElement>list()
+		;
+
+		List<Condition> conditionsList = request.getFilters().getConditionsList();
+		acctSchemaElements.forEach(acctSchemaElement -> {
+			if (acctSchemaElement.getElementType().equals(X_C_AcctSchema_Element.ELEMENTTYPE_Organization)) {
+				// Organization filter is inside the request
+				return;
+			}
+
+			String columnName = MAcctSchemaElement.getColumnName(acctSchemaElement.getElementType());
+
+			Condition elementAccount = conditionsList.stream()
+				.filter(condition -> {
+					return condition.getColumnName().equals(columnName);
+				})
+				.findFirst()
+				.orElse(null)
+			;
+			if (elementAccount == null) {
+				return;
+			}
+			Object value = ValueUtil.getObjectFromValue(
+				elementAccount.getValue()
+			);
+			if (value == null) {
+				return;
+			}
 			whereClause.append(" AND ")
-				.append(dynamicWhere);
+				.append(table.getTableName())
+				.append(".")
+				.append(columnName)
+				.append(" = ? ")
+			;
+			filtersList.add(value);
+		});
+
+		// Posting Type
+		if (!Util.isEmpty(request.getPostingType(), true)) {
+			whereClause.append(" AND ")
+				.append(table.getTableName())
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_PostingType)
+				.append(" = ? ")
+			;
+			filtersList.add(request.getPostingType());
 		}
-		sql.append(whereClause);
+
+		// Date
+		Timestamp dateFrom = ValueUtil.getTimestampFromLong(request.getDateFrom());
+		Timestamp dateTo = ValueUtil.getTimestampFromLong(request.getDateTo());
+		if (dateFrom != null || dateTo != null) {
+			whereClause.append(" AND ");
+			if (dateFrom != null && dateTo != null) {
+				whereClause.append("TRUNC(")
+					.append(table.getTableName())
+					.append(".DateAcct, 'DD') BETWEEN ? AND ? ");
+				filtersList.add(dateFrom);
+				filtersList.add(dateTo);
+			}
+			else if (dateFrom != null) {
+				whereClause.append("TRUNC(")
+					.append(table.getTableName())
+					.append(".DateAcct, 'DD') >= ? ");
+				filtersList.add(dateFrom);
+			}
+			else {
+				// DateTo != null
+				whereClause.append("TRUNC(")
+					.append(table.getTableName())
+					.append(".DateAcct, 'DD') <= ? ");
+				filtersList.add(dateTo);
+			}
+		}
+
+		// Document
+		String tableName = request.getTableName();
+		if (!Util.isEmpty(tableName, true) && (request.getRecordId() > 0 || !Util.isEmpty(request.getRecordUuid(), true))) {
+			int tableId = MTable.getTable_ID(tableName);
+			whereClause.append(" AND ")
+				.append(table.getTableName())
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_AD_Table_ID)
+				.append(" = ? ")
+			;
+			filtersList.add(tableId);
+
+			// record
+			int recordId = request.getRecordId();
+			if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid())) {
+				recordId = RecordUtil.getIdFromUuid(tableName, request.getRecordUuid(), null);
+			}
+			if (recordId > 0) {
+				whereClause.append(" AND ")
+					.append(table.getTableName())
+					.append(".")
+					.append(I_Fact_Acct.COLUMNNAME_Record_ID)
+					.append(" = ? ")
+				;
+				filtersList.add(recordId);
+			}
+		}
+
+		// Organization
+		if (request.getOrganizationId() > 0) {
+			whereClause.append(" AND ")
+				.append(table.getTableName())
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_AD_Org_ID)
+				.append(" = ? ")
+			;
+			filtersList.add(request.getOrganizationId());
+		}
 
 		// add where with access restriction
+		String sqlWithRescriction = sql.toString() + whereClause.toString();
 		String parsedSQL = MRole.getDefault(Env.getCtx(), false)
-			.addAccessSQL(sql.toString(),
-				null,
+			.addAccessSQL(sqlWithRescriction,
+				table.getTableName(),
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
 			);
@@ -577,15 +737,14 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = 0;
  
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
 		//  Count records
-		count = CountUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, params);
+		int count = CountUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, filtersList);
 		//  Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name), parsedSQL, params);
+		builder = RecordUtil.convertListEntitiesResult(table, parsedSQL, filtersList);
 		//
 		builder.setRecordCount(count);
 		//  Set page token

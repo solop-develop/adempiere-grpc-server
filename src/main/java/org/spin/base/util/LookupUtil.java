@@ -15,6 +15,9 @@
  *************************************************************************************/
 package org.spin.base.util;
 
+import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.compiere.model.MRefList;
+import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.LookupItem;
 
@@ -74,6 +77,43 @@ public class LookupUtil {
 		// UUID Value
 		builder.setUuid(ValueUtil.validateNull(uuidValue));
 		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
+
+		return builder;
+	}
+
+
+	/**
+	 * Get Lookup Item from Ref List
+	 * @param {MRefList} refList
+	 * @return {LookupItem.Builder} builder
+	 */
+	public static LookupItem.Builder convertLookupItemFromReferenceList(MRefList refList) {
+		LookupItem.Builder builder = LookupItem.newBuilder();
+		if (refList == null || refList.getAD_Ref_List_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(refList.getAD_Ref_List_ID())
+			.setUuid(ValueUtil.validateNull(refList.getUUID()))
+			.setTableName(I_AD_Ref_List.Table_Name)
+		;
+
+		// Key Column
+		builder.putValues(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromString(refList.getValue()).build());
+
+		//	Value
+		builder.putValues(LookupUtil.VALUE_COLUMN_KEY, ValueUtil.getValueFromString(refList.getValue()).build());
+
+		//	Display column
+		String name = refList.getName();
+		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+			// set translated values
+			name = refList.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
+		}
+		builder.putValues(LookupUtil.DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(name).build());
+
+		// UUID Value
+		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(refList.getUUID()).build());
 
 		return builder;
 	}
