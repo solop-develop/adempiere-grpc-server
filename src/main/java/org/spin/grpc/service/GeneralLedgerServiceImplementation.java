@@ -596,6 +596,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		StringBuilder whereClause = new StringBuilder(" WHERE 1=1 ");
 		whereClause.append(" AND ")
 			.append(table.getTableName())
+			.append(".")
 			.append(I_Fact_Acct.COLUMNNAME_C_AcctSchema_ID)
 			.append(" = ? ")
 		;
