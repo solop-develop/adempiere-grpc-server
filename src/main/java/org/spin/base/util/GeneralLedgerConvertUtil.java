@@ -17,7 +17,7 @@ package org.spin.base.util;
 
 import org.compiere.model.MTable;
 import org.compiere.util.Env;
-import org.spin.backend.grpc.general_ledger.AccoutingDocument;
+import org.spin.backend.grpc.general_ledger.AccountingDocument;
 
 /**
  * This class was created for add all convert methods for General Ledger service
@@ -25,21 +25,21 @@ import org.spin.backend.grpc.general_ledger.AccoutingDocument;
  */
 public class GeneralLedgerConvertUtil {
 
-	public static AccoutingDocument.Builder convertAccoutingDocument(int tableId) {
-		AccoutingDocument.Builder builder = AccoutingDocument.newBuilder();
+	public static AccountingDocument.Builder convertAccountingDocument(int tableId) {
+		AccountingDocument.Builder builder = AccountingDocument.newBuilder();
 		if (tableId <= 0) {
 			return builder;
 		}
 		MTable table = MTable.get(Env.getCtx(), tableId);
-		builder = convertAccoutingDocument(table);
+		builder = convertAccountingDocument(table);
 		return builder;
 	}
-	public static AccoutingDocument.Builder convertAccoutingDocument(MTable table) {
-		AccoutingDocument.Builder builder = AccoutingDocument.newBuilder();
+	public static AccountingDocument.Builder convertAccountingDocument(MTable table) {
+		AccountingDocument.Builder builder = AccountingDocument.newBuilder();
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			return builder;
 		}
-		
+
 		builder.setId(table.getAD_Table_ID())
 			.setUuid(
 				ValueUtil.validateNull(

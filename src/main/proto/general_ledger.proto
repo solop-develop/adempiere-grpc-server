@@ -30,12 +30,12 @@ service GeneralLedger {
 	rpc getAccountingCombination(GetAccountingCombinationRequest) returns (data.Entity) {}
 	rpc ListAccountingCombinations(ListAccountingCombinationsRequest) returns (data.ListEntitiesResponse) {}
 	rpc SaveAccountingCombination(SaveAccountingCombinationRequest) returns (data.Entity) {}
-	// Accouting Viewer
-	rpc ListAccoutingSchemas(ListAccoutingSchemasRequest) returns (data.ListLookupItemsResponse) {}
+	// Accounting Viewer
+	rpc ListAccountingSchemas(ListAccountingSchemasRequest) returns (data.ListLookupItemsResponse) {}
 	rpc ListPostingTypes(ListPostingTypesRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListAccoutingDocuments(ListAccoutingDocumentsRequest) returns (ListAccoutingDocumentsResponse) {}
+	rpc ListAccountingDocuments(ListAccountingDocumentsRequest) returns (ListAccountingDocumentsResponse) {}
 	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListAccoutingFacts(ListAccoutingFactsRequest) returns (data.ListEntitiesResponse) {}
+	rpc ListAccountingFacts(ListAccountingFactsRequest) returns (data.ListEntitiesResponse) {}
 	rpc StartRePost(StartRePostRequest) returns (StartRePostResponse) {}
 }
 
@@ -63,8 +63,8 @@ message SaveAccountingCombinationRequest {
 }
 
 
-// Accouting Schema
-message ListAccoutingSchemasRequest {
+// Accounting Schema
+message ListAccountingSchemasRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	string search_value = 3;
@@ -77,23 +77,23 @@ message ListPostingTypesRequest {
 	string search_value = 3;
 }
 
-// Accouting Document
-message ListAccoutingDocumentsRequest {
+// Accounting Document
+message ListAccountingDocumentsRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	string search_value = 3;
 }
 
-message AccoutingDocument {
+message AccountingDocument {
 	int32 id = 1;
 	string uuid = 2;
 	string name = 3;
 	string table_name = 4;
 }
 
-message ListAccoutingDocumentsResponse {
+message ListAccountingDocumentsResponse {
 	int64 record_count = 1;
-	repeated AccoutingDocument records = 2;
+	repeated AccountingDocument records = 2;
 	string next_page_token = 3;
 }
 
@@ -104,8 +104,8 @@ message ListOrganizationsRequest {
 	string search_value = 3;
 }
 
-// Accouting Fact
-message ListAccoutingFactsRequest {
+// Accounting Fact
+message ListAccountingFactsRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	string search_value = 3;

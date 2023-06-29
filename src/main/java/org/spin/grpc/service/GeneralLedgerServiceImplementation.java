@@ -56,10 +56,10 @@ import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.general_ledger.GeneralLedgerGrpc.GeneralLedgerImplBase;
 import org.spin.backend.grpc.general_ledger.GetAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingCombinationsRequest;
-import org.spin.backend.grpc.general_ledger.ListAccoutingDocumentsRequest;
-import org.spin.backend.grpc.general_ledger.ListAccoutingDocumentsResponse;
-import org.spin.backend.grpc.general_ledger.ListAccoutingFactsRequest;
-import org.spin.backend.grpc.general_ledger.ListAccoutingSchemasRequest;
+import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
+import org.spin.backend.grpc.general_ledger.ListAccountingFactsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.backend.grpc.general_ledger.SaveAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostRequest;
@@ -102,11 +102,11 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 
-		MAccount accoutingCombination = null;
+		MAccount accountingCombination = null;
 		if(request.getId() > 0) {
-			accoutingCombination = MAccount.getValidCombination(Env.getCtx(), request.getId(), null);
+			accountingCombination = MAccount.getValidCombination(Env.getCtx(), request.getId(), null);
 		} else if(!Util.isEmpty(request.getUuid(), true)) {
-			accoutingCombination = new Query(
+			accountingCombination = new Query(
 					Env.getCtx(),
 					this.tableName,
 					MAccount.COLUMNNAME_UUID + " = ? ",
@@ -116,7 +116,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 				.firstOnly();
 		} else if (!Util.isEmpty(request.getValue(), true)) {
 			// Value as combination
-			accoutingCombination = new Query(
+			accountingCombination = new Query(
 					Env.getCtx(),
 					this.tableName,
 					MAccount.COLUMNNAME_Combination + " = ? ",
@@ -125,11 +125,11 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 				.setParameters(request.getValue())
 				.firstOnly();
 		}
-		if(accoutingCombination == null) {
+		if(accountingCombination == null) {
 			throw new AdempiereException("@Error@ @AccountCombination@ @not.found@");
 		}
 
-		Entity.Builder entityBuilder = ConvertUtil.convertEntity(accoutingCombination);
+		Entity.Builder entityBuilder = ConvertUtil.convertEntity(accountingCombination);
 
 		return entityBuilder;
 	}
@@ -258,12 +258,12 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		if (contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID) == null || (int) contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID) <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
 		}
-		int accoutingSchemaId = (int) contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID);
-		MAcctSchema accoutingSchema = MAcctSchema.get(Env.getCtx(), accoutingSchemaId, null);
+		int accountingSchemaId = (int) contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID);
+		MAcctSchema accountingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId, null);
 
 		String accountingCombinationAlias = ValueUtil.validateNull((String) contextAttributesList.get(MAccount.COLUMNNAME_Alias));
 		
-		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accoutingSchema.getAcctSchemaElements());
+		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accountingSchema.getAcctSchemaElements());
 
 		Map<String, Object> attributesList = ValueUtil.convertValuesToObjects(request.getAttributesList());
 		StringBuffer sql = generateSQL(acctingSchemaElements, attributesList);
@@ -275,7 +275,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		try {
 			PreparedStatement pstmt = DB.prepareStatement(sql.toString(), null);
 			pstmt.setInt(1, clientId);
-			pstmt.setInt(2, accoutingSchema.getC_AcctSchema_ID());
+			pstmt.setInt(2, accountingSchema.getC_AcctSchema_ID());
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
 				accountingCombinationId = rs.getInt(1);
@@ -291,7 +291,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 		//	We have an account like this already - check alias
 		if (accountingCombinationId != 0) {
-			if (accoutingSchema.isHasAlias() && !accountingCombinationAlias.equals(accountingAlias)) {
+			if (accountingSchema.isHasAlias() && !accountingCombinationAlias.equals(accountingAlias)) {
 				sql = new StringBuffer("UPDATE C_ValidCombination SET Alias = ");
 				if (Util.isEmpty(accountingCombinationAlias, true)) {
 					sql.append("NULL");
@@ -318,23 +318,23 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 				}
 			}
 
-			// loadInfo(accountingCombinationId, accoutingSchema.getC_AcctSchema_ID());
+			// loadInfo(accountingCombinationId, accountingSchema.getC_AcctSchema_ID());
 			// action_Find(false);
 			// return;
 		}
 
 		log.config("New");
-		MAccount accountCombination = setAccoutingCombinationByAttributes(clientId, organizationId, accoutingSchemaId, accountId, attributesList);
+		MAccount accountCombination = setAccountingCombinationByAttributes(clientId, organizationId, accountingSchemaId, accountId, attributesList);
 		
 		Entity.Builder builder = ConvertUtil.convertEntity(accountCombination);
 
 		return builder;
 	}
 	
-	private MAccount setAccoutingCombinationByAttributes(int clientId, int organizationId, int accoutingSchemaId, int accountId, Map<String, Object> attributesList) {
-		String accoutingAlias = null;
+	private MAccount setAccountingCombinationByAttributes(int clientId, int organizationId, int accountingSchemaId, int accountId, Map<String, Object> attributesList) {
+		String accountingAlias = null;
 		if (attributesList.get(MAccount.COLUMNNAME_Alias) != null) {
-			accoutingAlias = (String) attributesList.get(MAccount.COLUMNNAME_Alias);
+			accountingAlias = (String) attributesList.get(MAccount.COLUMNNAME_Alias);
 		}
 		int subAccountId = 0;
 		if (attributesList.get(MAccount.COLUMNNAME_C_SubAcct_ID) != null) {
@@ -396,7 +396,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		MAccount accountCombination = MAccount.get(
 			Env.getCtx(), clientId,
 			organizationId,
-			accoutingSchemaId,
+			accountingSchemaId,
 			accountId, subAccountId,
 			productId, businessPartnerId, organizationTrxId,
 			locationFromId,locationToId, salesRegionId,
@@ -405,8 +405,8 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 			0, 0, null
 		);
 		
-		if (!Util.isEmpty(accoutingAlias, true) && accountCombination != null && accountCombination.getAccount_ID() > 0) {
-			accountCombination.setAlias(accoutingAlias);
+		if (!Util.isEmpty(accountingAlias, true) && accountCombination != null && accountCombination.getAccount_ID() > 0) {
+			accountCombination.setAlias(accountingAlias);
 			accountCombination.saveEx();
 		}
 		return accountCombination;
@@ -499,12 +499,12 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 
 	@Override
-	public void listAccoutingSchemas(ListAccoutingSchemasRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	public void listAccountingSchemas(ListAccountingSchemasRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListLookupItemsResponse.Builder entitiesList = GeneralLedgerServiceLogic.listAccoutingSchemas(request);
+			ListLookupItemsResponse.Builder entitiesList = GeneralLedgerServiceLogic.listAccountingSchemas(request);
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -543,12 +543,12 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 
 	@Override
-	public void listAccoutingDocuments(ListAccoutingDocumentsRequest request, StreamObserver<ListAccoutingDocumentsResponse> responseObserver) {
+	public void listAccountingDocuments(ListAccountingDocumentsRequest request, StreamObserver<ListAccountingDocumentsResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListAccoutingDocumentsResponse.Builder entitiesList = GeneralLedgerServiceLogic.listAccoutingDocuments(request);
+			ListAccountingDocumentsResponse.Builder entitiesList = GeneralLedgerServiceLogic.listAccountingDocuments(request);
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -565,12 +565,12 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 
 	@Override
-	public void listAccoutingFacts(ListAccoutingFactsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+	public void listAccountingFacts(ListAccountingFactsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListEntitiesResponse.Builder entitiesList = listAccoutingFacts(request);
+			ListEntitiesResponse.Builder entitiesList = listAccountingFacts(request);
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -582,7 +582,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		}
 	}
 	
-	ListEntitiesResponse.Builder listAccoutingFacts(ListAccoutingFactsRequest request) {
+	ListEntitiesResponse.Builder listAccountingFacts(ListAccountingFactsRequest request) {
 		int acctSchemaId = request.getAccountingSchemaId();
 		if (acctSchemaId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");

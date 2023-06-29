@@ -32,10 +32,10 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
-import org.spin.backend.grpc.general_ledger.AccoutingDocument;
-import org.spin.backend.grpc.general_ledger.ListAccoutingDocumentsRequest;
-import org.spin.backend.grpc.general_ledger.ListAccoutingDocumentsResponse;
-import org.spin.backend.grpc.general_ledger.ListAccoutingSchemasRequest;
+import org.spin.backend.grpc.general_ledger.AccountingDocument;
+import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
+import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.GeneralLedgerConvertUtil;
@@ -49,23 +49,23 @@ import org.spin.base.util.ValueUtil;
  */
 public class GeneralLedgerServiceLogic {
 
-	public static ListLookupItemsResponse.Builder listAccoutingSchemas(ListAccoutingSchemasRequest request) {
+	public static ListLookupItemsResponse.Builder listAccountingSchemas(ListAccountingSchemasRequest request) {
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
-		List<MAcctSchema> accoutingShemasList = Arrays.asList(
+		List<MAcctSchema> accountingShemasList = Arrays.asList(
 			MAcctSchema.getClientAcctSchema(Env.getCtx(), clientId)
 		);
 
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder()
-			.setRecordCount(accoutingShemasList.size())
+			.setRecordCount(accountingShemasList.size())
 		;
 
-		accoutingShemasList.stream()
-			.forEach(accoutingShema -> {
+		accountingShemasList.stream()
+			.forEach(accountingShema -> {
 				LookupItem.Builder lookupBuilder = LookupUtil.convertObjectFromResult(
-					accoutingShema.getC_AcctSchema_ID(),
-					accoutingShema.getUUID(),
+					accountingShema.getC_AcctSchema_ID(),
+					accountingShema.getUUID(),
 					null,
-					accoutingShema.getName()
+					accountingShema.getName()
 				);
 				builderList.addRecords(lookupBuilder);
 			})
@@ -116,7 +116,7 @@ public class GeneralLedgerServiceLogic {
 	}
 
 
-	public static ListAccoutingDocumentsResponse.Builder listAccoutingDocuments(ListAccoutingDocumentsRequest request) {
+	public static ListAccountingDocumentsResponse.Builder listAccountingDocuments(ListAccountingDocumentsRequest request) {
 		final String whereClause = " IsView='N' "
 			+ " AND EXISTS(SELECT 1 FROM AD_Column c"
 			+ " WHERE AD_Table.AD_Table_ID = c.AD_Table_ID "
@@ -136,7 +136,7 @@ public class GeneralLedgerServiceLogic {
 		int offset = (pageNumber - 1) * limit;
 		int recordCount = query.count();
 
-		ListAccoutingDocumentsResponse.Builder builderList = ListAccoutingDocumentsResponse.newBuilder()
+		ListAccountingDocumentsResponse.Builder builderList = ListAccountingDocumentsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
 				ValueUtil.validateNull(nexPageToken)
@@ -152,15 +152,15 @@ public class GeneralLedgerServiceLogic {
 		// query.setLimit(limit, offset)
 		// 	.<MRefList>list()
 		tableAccountigIds.forEach(tableId -> {
-			AccoutingDocument.Builder accoutingDocument = GeneralLedgerConvertUtil.convertAccoutingDocument(tableId);
-			builderList.addRecords(accoutingDocument);
+			AccountingDocument.Builder accountingDocument = GeneralLedgerConvertUtil.convertAccountingDocument(tableId);
+			builderList.addRecords(accountingDocument);
 		});
 
 		return builderList;
 	}
 
 
-	public static ListLookupItemsResponse.Builder listOrganizations(ListAccoutingSchemasRequest request) {
+	public static ListLookupItemsResponse.Builder listOrganizations(ListAccountingSchemasRequest request) {
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
 		MClient client = MClient.get(Env.getCtx(), clientId);
 
