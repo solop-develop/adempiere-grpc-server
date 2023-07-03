@@ -42,6 +42,7 @@ import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Value;
+import org.spin.backend.grpc.common.Value.ValueType;
 import org.spin.base.dictionary.WindowUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.util.ASPUtil;
@@ -83,6 +84,8 @@ public class WhereClauseUtil {
 		return validationCode;
 	}
 
+
+
 	/**
 	 * Get sql restriction by operator
 	 * @param columnName
@@ -97,29 +100,70 @@ public class WhereClauseUtil {
 		String columnName, int operatorValue,
 		Value value, Value valueTo, List<Value> valuesList, List<Object> params
 	) {
-		String rescriction = "";
+		return getRestrictionByOperator(columnName, 0, operatorValue, value, valueTo, valuesList, params);
+	}
+
+	/**
+	 * Get sql restriction by operator
+	 * @param columnName
+	 * @param operatorValue
+	 * @param value
+	 * @param valueTo
+	 * @param valuesList
+	 * @param params
+	 * @return
+	 */
+	public static String getRestrictionByOperator(
+		String columnName, int displayType, int operatorValue,
+		Value value, Value valueTo, List<Value> valuesList, List<Object> params
+	) {
 		String sqlOperator = OperatorUtil.convertOperator(operatorValue);
 
 		String sqlValue = "";
+		StringBuilder additionalSQL = new StringBuilder();
 		//	For IN or NOT IN
 		if (operatorValue == Operator.IN_VALUE
 				|| operatorValue == Operator.NOT_IN_VALUE) {
-			StringBuffer parameterValues = new StringBuffer();
+			StringBuilder parameterValues = new StringBuilder();
+			final String baseColumnName = columnName;
+			StringBuilder column_name = new StringBuilder(columnName);
+
 			valuesList.forEach(itemValue -> {
+				Object currentValue = ValueUtil.getObjectFromValue(itemValue);
+				boolean isString = DisplayType.isText(displayType) || itemValue.getValueType() == ValueType.STRING || currentValue instanceof String;
+
+				if (currentValue == null || (isString && Util.isEmpty((String) currentValue, true))) {
+					if (Util.isEmpty(additionalSQL.toString(), true)) {
+						additionalSQL.append("(SELECT " + baseColumnName + " WHERE " + baseColumnName + " IS NULL)");
+					}
+					if (isString) {
+						currentValue = "";
+					} else {
+						// does not add the null value to the filters, another restriction is
+						// added only for null values `additionalSQL`.
+						return;
+					}
+				}
 				if (parameterValues.length() > 0) {
 					parameterValues.append(", ");
 				}
-				String sqlItemValue = "?";
-				parameterValues.append(sqlItemValue);
-				params.add(ValueUtil.getObjectFromValue(itemValue));
+				String sqlInValue = "?";
+				if (isString) {
+					column_name.delete(0, column_name.length());
+					column_name.append("UPPER(").append(baseColumnName).append(")");
+					sqlInValue = "UPPER(?)";
+				}
+				parameterValues.append(sqlInValue);
+				params.add(currentValue);
 			});
-			sqlValue = "(" + parameterValues.toString() + ")";
-			// if (valuesList.size() <= 0 && value.getValueType() != ValueType.UNKNOWN) {
-			// 	sqlValue = "(?)";
-			// 	params.add(
-			// 		ValueUtil.getObjectFromValue(value)
-			// 	);
-			// }
+
+			columnName = column_name.toString();
+			if (!Util.isEmpty(parameterValues.toString(), true)) {
+				sqlValue = "(" + parameterValues.toString() + ")";
+				if (!Util.isEmpty(additionalSQL.toString(), true)) {
+					additionalSQL.insert(0, " OR " + columnName + sqlOperator);
+				}
+			}
 		} else if(operatorValue == Operator.BETWEEN_VALUE || operatorValue == Operator.NOT_BETWEEN_VALUE) {
 			sqlValue = " ? AND ? ";
 			params.add(
@@ -146,19 +190,39 @@ public class WhereClauseUtil {
 			params.add(parameterValue);
 		} else if(operatorValue == Operator.NULL_VALUE || operatorValue == Operator.NOT_NULL_VALUE) {
 			;
-		} else {
-			// Equal, Not Equal, Greater, Greater Equal, Less, Less Equal
+		} else if (operatorValue == Operator.EQUAL_VALUE || operatorValue == Operator.NOT_EQUAL_VALUE) {
 			Object parameterValue = ValueUtil.getObjectFromValue(
 				value
 			);
 			sqlValue = " ? ";
-			if (parameterValue instanceof String) {
-				columnName = "UPPER(" + columnName + ")";
-				sqlValue = "UPPER(?)";
+
+			boolean isString = DisplayType.isText(displayType) || value.getValueType() == ValueType.STRING || parameterValue instanceof String;
+			boolean isEmptyString = isString && Util.isEmpty((String) parameterValue, true);
+			if (isString) {
+				if (isEmptyString) {
+					parameterValue = "";
+				} else {
+					columnName = "UPPER(" + columnName + ")";
+					sqlValue = "UPPER(?)";
+				}
+			}
+			if (parameterValue == null || isEmptyString) {
+				additionalSQL.append(" OR ")
+					.append(columnName)
+					.append(" IS NULL ")
+				;
 			}
 			params.add(parameterValue);
+		} else {
+			// Greater, Greater Equal, Less, Less Equal
+			Object parameterValue = ValueUtil.getObjectFromValue(
+				value
+			);
+			sqlValue = " ? ";
+			params.add(parameterValue);
 		}
-		rescriction = "(" + columnName + sqlOperator + sqlValue + ")";
+
+		String rescriction = "(" + columnName + sqlOperator + sqlValue + additionalSQL.toString() + ")";
 
 		return rescriction;
 	}
@@ -225,9 +289,14 @@ public class WhereClauseUtil {
 						condition
 					);
 				}
+				MColumn column = MColumn.get(
+					Env.getCtx(),
+					MColumn.getColumn_ID(table.getTableName(), columnName)
+				);
 
 				String restriction = WhereClauseUtil.getRestrictionByOperator(
 					columnName,
+					column.getAD_Reference_ID(),
 					operatorValue,
 					condition.getValue(),
 					condition.getValueTo(),
@@ -604,6 +673,7 @@ public class WhereClauseUtil {
 
 				String restriction = WhereClauseUtil.getRestrictionByOperator(
 					columnName,
+					browseField.getAD_Reference_ID(),
 					operatorValue,
 					condition.getValue(),
 					condition.getValueTo(),
@@ -691,6 +761,7 @@ public class WhereClauseUtil {
 
 				String restriction = WhereClauseUtil.getRestrictionByOperator(
 					columnName,
+					viewColumn.getAD_Reference_ID(),
 					operatorValue,
 					condition.getValue(),
 					condition.getValueTo(),

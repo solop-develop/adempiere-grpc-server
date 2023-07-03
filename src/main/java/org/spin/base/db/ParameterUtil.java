@@ -76,6 +76,8 @@ public class ParameterUtil {
 			pstmt.setDate(index, (Date) value);
 		} else if(value instanceof Boolean) {
 			pstmt.setString(index, ((Boolean) value) ? "Y" : "N");
+		} else {
+			pstmt.setObject(index, null);
 		}
 	}
 
