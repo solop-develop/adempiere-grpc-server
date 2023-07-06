@@ -690,8 +690,8 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 	 * Run a process from request
 	 * @param context
 	 * @param request
-	 * @throws IOException 
-	 * @throws FileNotFoundException 
+	 * @throws IOException
+	 * @throws FileNotFoundException
 	 */
 	private ProcessLog.Builder runDocumentAction(Properties context, RunDocumentActionRequest request) throws FileNotFoundException, IOException {
 		if (Util.isEmpty(request.getTableName(), true)) {
@@ -760,7 +760,16 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 				}
 			}
 		} catch (Exception e) {
-			response.setSummary(Msg.parseTranslation(context, document.getProcessMsg()));
+			e.printStackTrace();
+			log.severe(e.getLocalizedMessage());
+
+			String summary = Msg.parseTranslation(context, document.getProcessMsg());
+			if (Util.isEmpty(summary, true)) {
+				summary = e.getLocalizedMessage();
+			}
+			response.setSummary(
+				ValueUtil.validateNull(summary)
+			);
 			response.setIsError(true);
 		}
 		response.setResultTableName(ValueUtil.validateNull(table.getTableName()));

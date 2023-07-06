@@ -339,11 +339,18 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		try {
 			result = builder.execute();
 		} catch (Exception e) {
+			e.printStackTrace();
+			// log.severe(e.getLocalizedMessage());
+
 			result = builder.getProcessInfo();
 			//	Set error message
-			if(Util.isEmpty(result.getSummary())) {
-				result.setSummary(e.getLocalizedMessage());
+			String summary = Msg.parseTranslation(Env.getCtx(), result.getSummary());
+			if(Util.isEmpty(summary, true)) {
+				summary = e.getLocalizedMessage();
 			}
+			result.setSummary(
+				ValueUtil.validateNull(summary)
+			);
 		}
 		String reportViewUuid = null;
 		String printFormatUuid = request.getPrintFormatUuid();
@@ -438,7 +445,22 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 					reportType = getExtension(validFileName);
 				}
 				output.setReportType(request.getReportType());
-				ByteString resultFile = ByteString.readFrom(new FileInputStream(reportFile));
+
+				ByteString resultFile = ByteString.empty();
+				try {
+					resultFile = ByteString.readFrom(new FileInputStream(reportFile));
+				} catch (IOException e) {
+					e.printStackTrace();
+					// log.severe(e.getLocalizedMessage());
+
+					if (Util.isEmpty(response.getSummary(), true)) {
+						response.setSummary(
+							ValueUtil.validateNull(
+								e.getLocalizedMessage()
+							)
+						);
+					}
+				}
 				if(reportType.endsWith("html") || reportType.endsWith("txt")) {
 					output.setOutputBytes(resultFile);
 				}
