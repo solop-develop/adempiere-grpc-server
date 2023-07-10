@@ -14,6 +14,7 @@ server:
        - file_management
        - general_ledger
        - log
+       - import_file_loader
        - in_out
        - invoice
        - issue_management

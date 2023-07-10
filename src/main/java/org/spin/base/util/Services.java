@@ -31,6 +31,7 @@ public enum Services {
 	EXPRESS_SHIPMENT("express_shipment"),
 	FILE_MANAGEMENT("file_management"),
 	GENERAL_LEDGER("general_ledger"),
+	IMPORT_FILE_LOADER("import_file_loader"),
 	IN_OUT("in_out"),
 	INVOICE("invoice"),
 	ISSUE_MANAGEMENT("issue_management"),

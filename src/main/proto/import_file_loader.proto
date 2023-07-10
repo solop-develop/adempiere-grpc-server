@@ -1,0 +1,122 @@
+/************************************************************************************
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.form.import_file_loader";
+option java_outer_classname = "ADempiereImportFileLoader";
+
+import "base_data_type.proto";
+import "business.proto";
+
+package import_file_loader;
+
+service ImportFileLoader {
+	rpc ListCharsets(ListCharsetsRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListImportFormats(ListImportFormatsRequest) returns (data.ListLookupItemsResponse) {}
+	rpc GetImportFromat(GetImportFromatRequest) returns (ImportFormat) {}
+	rpc LoadImportFile(stream LoadImportFileRequest) returns (ResourceReference) {}
+	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {}
+	rpc ProcessImport(ProcessImportRequest) returns (ProcessImportResponse) {}
+}
+
+// Charset
+message ListCharsetsRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+}
+
+
+// Import Format
+message ListImportFormatsRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+}
+
+message ImportFormat {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string table_name = 5;
+	string format_type = 6;
+	string separator_character = 7;
+	repeated FormatField format_fields = 8;
+}
+
+message FormatField {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	int32 sequence = 4;
+	string column_name = 5;
+	string data_type = 6;
+	int32 start_no = 7;
+	int32 end_no = 8;
+	string default_value = 9;
+	// number
+	string defimal_point = 10;
+	bool is_divide_by_100 = 11;
+	// date
+	string date_format = 12;
+	// constant
+	string constant_value = 13;
+}
+
+// Format Field
+message GetImportFromatRequest {
+	int32 id = 1;
+}
+
+// Load Import File
+message ResourceReference {
+	int32 resource_id = 1;
+	string resource_uuid = 2;
+	string file_name = 3;
+	data.Decimal file_size = 4;
+	string description = 5;
+	string text_msg = 6;
+	string content_type = 7;
+}
+
+message LoadImportFileRequest {
+	bytes data = 1;
+	string resource_uuid = 2;
+	data.Decimal file_size = 3;
+}
+
+
+// Preview File
+message ListFilePreviewRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+	int32 import_format_id = 4;
+	int32 resource_reference_id = 5;
+}
+
+// Process Import
+message ProcessImportRequest {
+	int32 import_format_id = 1;
+}
+
+message ProcessImportResponse {
+	string message = 1;
+}
