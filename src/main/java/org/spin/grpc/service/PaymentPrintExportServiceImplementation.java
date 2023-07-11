@@ -678,6 +678,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -726,14 +727,14 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			try {
 				Class<?> clazz = Class.forName(paymentExportClass);
 				if (PaymentExportList.class.isAssignableFrom(clazz)) {
-					PaymentExportList custom = (PaymentExportList) clazz.newInstance();
+					PaymentExportList custom = (PaymentExportList) clazz.getDeclaredConstructor().newInstance();
 					no = custom.exportToFile(paySelectionChecks, tempFile, error);
 					if(custom.getFile() != null) {
 						tempFile = custom.getFile();
 					}
 				}
 				else if (PaymentExport.class.isAssignableFrom(clazz)) {
-					PaymentExport custom = (PaymentExport) clazz.newInstance();
+					PaymentExport custom = (PaymentExport) clazz.getDeclaredConstructor().newInstance();
 					no = custom.exportToFile(paySelectionChecks.toArray(new MPaySelectionCheck[paySelectionChecks.size()]), tempFile, error);
 				}
 			}
@@ -741,11 +742,13 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 				no = -1;
 				error.append("No custom PaymentExport class " + paymentExportClass + " - " + e.toString());
 				log.log(Level.SEVERE, error.toString(), e);
+				e.printStackTrace();
 			}
 			catch (Exception e) {
 				no = -1;
 				error.append("Error in " + paymentExportClass + " check log, " + e.toString());
 				log.log(Level.SEVERE, error.toString(), e);
+				e.printStackTrace();
 			}
 			if (no >= 0) {
 				// confirm print
@@ -762,6 +765,7 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			builder.setReportOutput(output);
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 			throw new AdempiereException(e.getLocalizedMessage());
 		}
 

@@ -3117,6 +3117,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -3305,8 +3306,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 */
 	private String processCallout (int windowNo, GridTab gridTab, GridField field) {
 		String callout = field.getCallout();
-		if (callout.length() == 0)
+		if (Util.isEmpty(callout, true)) {
 			return "";
+		}
+
 		//
 		Object value = field.getValue();
 		Object oldValue = field.getOldValue();
@@ -3321,7 +3324,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			// CarlosRuiz - globalqss - implement beanshell callout
 			// Victor Perez  - vpj-cd implement JSR 223 Scripting
 			if (cmd.toLowerCase().startsWith(MRule.SCRIPT_PREFIX)) {
-				
 				MRule rule = MRule.get(Env.getCtx(), cmd.substring(MRule.SCRIPT_PREFIX.length()));
 				if (rule == null) {
 					retValue = "Callout " + cmd + " not found"; 
@@ -3350,10 +3352,11 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				engine.put(MRule.ARGUMENTS_PREFIX + "OldValue", oldValue);
 				engine.put(MRule.ARGUMENTS_PREFIX + "Ctx", Env.getCtx());
 
-				try  {
+				try {
 					retValue = engine.eval(rule.getScript()).toString();
 				} catch (Exception e) {
 					log.log(Level.SEVERE, "", e);
+					e.printStackTrace();
 					retValue = 	"Callout Invalid: " + e.toString();
 					return retValue;
 				}
@@ -3364,21 +3367,24 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				try {
 					if (methodStart != -1) {
 						Class<?> cClass = Class.forName(cmd.substring(0,methodStart));
-						call = (Callout)cClass.newInstance();
+						call = (Callout) cClass.getDeclaredConstructor().newInstance();
 						method = cmd.substring(methodStart+1);
 					}
 				} catch (Exception e) {
 					log.log(Level.SEVERE, "class", e);
+					e.printStackTrace();
 					return "Callout Invalid: " + cmd + " (" + e.toString() + ")";
 				}
 
-				if (call == null || method == null || method.length() == 0)
+				if (call == null || Util.isEmpty(method, true)) {
 					return "Callout Invalid: " + method;
+				}
 
 				try {
 					retValue = call.start(Env.getCtx(), method, windowNo, gridTab, field, value, oldValue);
 				} catch (Exception e) {
 					log.log(Level.SEVERE, "start", e);
+					e.printStackTrace();
 					retValue = 	"Callout Invalid: " + e.toString();
 					return retValue;
 				}
