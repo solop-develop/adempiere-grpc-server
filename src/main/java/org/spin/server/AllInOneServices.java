@@ -33,6 +33,7 @@ import org.spin.grpc.service.ExpressReceiptServiceImplementation;
 import org.spin.grpc.service.ExpressShipmentServiceImplementation;
 import org.spin.grpc.service.FileManagementServiceImplementation;
 import org.spin.grpc.service.GeneralLedgerServiceImplementation;
+import org.spin.grpc.service.ImportFileLoaderServiceImplementation;
 import org.spin.grpc.service.InOutServiceImplementation;
 import org.spin.grpc.service.InvoiceServiceImplementation;
 import org.spin.grpc.service.IssueManagementServiceImplementation;
@@ -159,6 +160,11 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.GENERAL_LEDGER.getServiceName())) {
 			serverBuilder.addService(new GeneralLedgerServiceImplementation());
 			logger.info("Service " + Services.GENERAL_LEDGER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Import File Loader
+		if(SetupLoader.getInstance().getServer().isValidService(Services.IMPORT_FILE_LOADER.getServiceName())) {
+			serverBuilder.addService(new ImportFileLoaderServiceImplementation());
+			logger.info("Service " + Services.IMPORT_FILE_LOADER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Log
 		if(SetupLoader.getInstance().getServer().isValidService(Services.LOG.getServiceName())) {

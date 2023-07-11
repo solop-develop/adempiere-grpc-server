@@ -28,6 +28,8 @@ service ImportFileLoader {
 	rpc ListImportFormats(ListImportFormatsRequest) returns (data.ListLookupItemsResponse) {}
 	rpc GetImportFromat(GetImportFromatRequest) returns (ImportFormat) {}
 	rpc LoadImportFile(stream LoadImportFileRequest) returns (ResourceReference) {}
+	rpc SaveRecords(SaveRecordsRequest) returns (SaveRecordsResponse) {}
+	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
 	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {}
 	rpc ProcessImport(ProcessImportRequest) returns (ProcessImportResponse) {}
 }
@@ -84,6 +86,7 @@ message GetImportFromatRequest {
 	int32 id = 1;
 }
 
+
 // Load Import File
 message ResourceReference {
 	int32 resource_id = 1;
@@ -102,6 +105,17 @@ message LoadImportFileRequest {
 }
 
 
+// download resource
+message GetResourceRequest {
+	int32 resource_id = 1;
+	string resource_uuid = 2;
+	string resource_name = 3;
+}
+
+message Resource {
+	bytes data = 1;
+}
+
 // Preview File
 message ListFilePreviewRequest {
 	int32 page_size = 1;
@@ -109,8 +123,21 @@ message ListFilePreviewRequest {
 	// filters
 	string search_value = 3;
 	int32 import_format_id = 4;
-	int32 resource_reference_id = 5;
+	int32 resource_id = 5;
 }
+
+
+// Save Record
+message SaveRecordsRequest {
+	int32 import_format_id = 1;
+	int32 resource_id = 2;
+}
+
+message SaveRecordsResponse {
+	string message = 1;
+	int32 total = 2;
+}
+
 
 // Process Import
 message ProcessImportRequest {
