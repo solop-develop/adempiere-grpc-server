@@ -240,7 +240,13 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 					ResourceReference.Builder response = ResourceReference.newBuilder();
 					if(resourceUuid.get() != null && buffer.get() != null) {
-						MADAttachmentReference resourceReference = (MADAttachmentReference) RecordUtil.getEntity(Env.getCtx(), I_AD_AttachmentReference.Table_Name, resourceUuid.get(), -1, null);
+						MADAttachmentReference resourceReference = (MADAttachmentReference) RecordUtil.getEntity(
+							Env.getCtx(),
+							I_AD_AttachmentReference.Table_Name,
+							resourceUuid.get(),
+							-1,
+							null
+						);
 						if (resourceReference != null) {
 							byte[] data = buffer.get().array();
 							AttachmentUtil.getInstance()
