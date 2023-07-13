@@ -240,11 +240,9 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 					ResourceReference.Builder response = ResourceReference.newBuilder();
 					if(resourceUuid.get() != null && buffer.get() != null) {
-						MADAttachmentReference resourceReference = (MADAttachmentReference) RecordUtil.getEntity(
+						MADAttachmentReference resourceReference = MADAttachmentReference.getByUuid(
 							Env.getCtx(),
-							I_AD_AttachmentReference.Table_Name,
 							resourceUuid.get(),
-							-1,
 							null
 						);
 						if (resourceReference != null) {
@@ -256,6 +254,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 								.withClientId(clientInfo.getAD_Client_ID())
 								.withData(data)
 								.saveAttachment();
+
 							MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
 							response = convertResourceReference(resourceReference);
 						}
