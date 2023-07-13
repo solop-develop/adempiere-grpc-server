@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -58,13 +58,26 @@ import java.nio.ByteBuffer;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service for backend of Update Center
+ * Service for backend of File Management (Attanchment)
  */
 public class FileManagementServiceImplementation extends FileManagementImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(FileManagementServiceImplementation.class);
 	
 	public String tableName = I_C_Invoice.Table_Name;
+
+
+	/**
+	 * Validate client info exists and with configured file handler.
+	 * @return clientInfo
+	 */
+	private MClientInfo validateAndGetClientInfo() {
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+		if (clientInfo == null || clientInfo.getAD_Client_ID() < 0 || clientInfo.getFileHandler_ID() <= 0) {
+			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
+		}
+		return clientInfo;
+	}
 
 
 	@Override
@@ -209,6 +222,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 						buffer.set(buffer.get().put(bytes));
 					}
 				} catch (Exception e){
+					e.printStackTrace();
 					this.onError(e);
 				}
 			}
@@ -221,10 +235,10 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			@Override
 			public void onCompleted() {
 				try {
-					MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
-					if (clientInfo == null || clientInfo.getFileHandler_ID() <= 0) {
-						throw new AdempiereException("@FileHandler_ID@ @NotFound@");
-					}
+					// validate and get client info with configured file handler
+					MClientInfo clientInfo = validateAndGetClientInfo();
+
+					ResourceReference.Builder response = ResourceReference.newBuilder();
 					if(resourceUuid.get() != null && buffer.get() != null) {
 						MADAttachmentReference resourceReference = (MADAttachmentReference) RecordUtil.getEntity(Env.getCtx(), I_AD_AttachmentReference.Table_Name, resourceUuid.get(), -1, null);
 						if (resourceReference != null) {
@@ -237,14 +251,14 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 								.withData(data)
 								.saveAttachment();
 							MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
+							response = convertResourceReference(resourceReference);
 						}
 					}
-					ResourceReference response = ResourceReference.newBuilder()
-						// .setStatus(status)
-						.build();
-					responseObserver.onNext(response);
+
+					responseObserver.onNext(response.build());
 					responseObserver.onCompleted();
 				} catch (Exception e) {
+					e.printStackTrace();
 					throw new AdempiereException(e);
 				}
 			}
@@ -327,8 +341,10 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 				.setAttachmentUuid(ValueUtil.validateNull(attachment.getUUID()))
 				.setTitle(ValueUtil.validateNull(attachment.getTitle()))
 				.setTextMsg(ValueUtil.validateNull(attachment.getTextMsg()));
+
+		// validate client info with configured file handler
 		MClientInfo clientInfo = MClientInfo.get(attachment.getCtx());
-		if (clientInfo == null || clientInfo.getFileHandler_ID() <= 0) {
+		if (clientInfo == null || clientInfo.getAD_Client_ID() < 0 || clientInfo.getFileHandler_ID() <= 0) {
 			return builder;
 		}
 
@@ -357,6 +373,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -366,11 +383,8 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 	}
 	
 	private ResourceReference.Builder setResourceReference(SetResourceReferenceRequest request) {
-		// validate file handler
-		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
-		if (clientInfo == null || clientInfo.getFileHandler_ID() <= 0) {
-			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
-		}
+		// validate and get client info with configured file handler
+		MClientInfo clientInfo = validateAndGetClientInfo();
 
 		// validate file name
 		final String fileName = request.getFileName();
@@ -469,10 +483,9 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			throw new AdempiereException("@AD_AttachmentReference_ID@ Null");
 		}
 
-		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
-		if (clientInfo == null || clientInfo.getFileHandler_ID() <= 0) {
-			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
-		}
+		// validate and get client info with configured file handler
+		MClientInfo clientInfo = validateAndGetClientInfo();
+
 		// delete file on cloud (s3, nexcloud)
 		AttachmentUtil.getInstance()
 			.clear()
@@ -509,6 +522,12 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 	private ExistsAttachmentResponse.Builder existsAttachment(ExistsAttachmentRequest request) {
 		ExistsAttachmentResponse.Builder builder = ExistsAttachmentResponse.newBuilder();
+
+		// validate client info with configured file handler
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+		if (clientInfo == null || clientInfo.getAD_Client_ID() < 0 || clientInfo.getFileHandler_ID() <= 0) {
+			return builder;
+		}
 
 		// validate table
 		if (Util.isEmpty(request.getTableName(), true)) {
