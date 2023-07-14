@@ -15,6 +15,7 @@
 
 package org.spin.form.import_file_loader;
 
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.compiere.impexp.MImpFormat;
 import org.compiere.impexp.MImpFormatRow;
 import org.compiere.model.MColumn;
@@ -22,9 +23,35 @@ import org.compiere.model.MTable;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.form.import_file_loader.FormatField;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
+import org.spin.backend.grpc.form.import_file_loader.ImportTable;
 import org.spin.base.util.ValueUtil;
 
 public class ImportFileLoaderConvertUtil {
+
+	public static ImportTable.Builder convertImportTable(MTable table) {
+		ImportTable.Builder builder = ImportTable.newBuilder();
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			return builder;
+		}
+		String name = table.getName();
+		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+			// set translated values
+			name = table.get_Translation(I_AD_Table.COLUMNNAME_Name);
+		}
+
+		builder.setId(table.getAD_Table_ID())
+			.setUuid(
+				ValueUtil.validateNull(table.getUUID())
+			)
+			.setName(
+				ValueUtil.validateNull(name)
+			)
+			.setTableName(table.getTableName())
+		;
+
+		return builder;
+	}
+
 
 	public static ImportFormat.Builder convertImportFormat(MImpFormat importFormat) {
 		ImportFormat.Builder builder = ImportFormat.newBuilder();

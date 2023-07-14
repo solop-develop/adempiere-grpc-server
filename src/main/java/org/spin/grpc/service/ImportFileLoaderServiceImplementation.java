@@ -14,32 +14,25 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.math.BigDecimal;
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.adempiere.core.domains.models.I_AD_AttachmentReference;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MClientInfo;
 import org.compiere.util.CLogger;
-import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.import_file_loader.GetImportFromatRequest;
 import org.spin.backend.grpc.form.import_file_loader.ImportFileLoaderGrpc.ImportFileLoaderImplBase;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
 import org.spin.grpc.logic.ImportFileLoaderServiceLogic;
-import org.spin.model.MADAttachmentReference;
-import org.spin.util.AttachmentUtil;
 import org.spin.backend.grpc.form.import_file_loader.ListCharsetsRequest;
+import org.spin.backend.grpc.form.import_file_loader.ListClientImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListFilePreviewRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportFormatsRequest;
-import org.spin.backend.grpc.form.import_file_loader.LoadImportFileRequest;
+import org.spin.backend.grpc.form.import_file_loader.ListImportProcessesRequest;
+import org.spin.backend.grpc.form.import_file_loader.ListImportTablesRequest;
+import org.spin.backend.grpc.form.import_file_loader.ListImportTablesResponse;
 import org.spin.backend.grpc.form.import_file_loader.ProcessImportRequest;
 import org.spin.backend.grpc.form.import_file_loader.ProcessImportResponse;
-import org.spin.backend.grpc.form.import_file_loader.ResourceReference;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ValueUtil;
+import org.spin.backend.grpc.form.import_file_loader.SaveRecordsRequest;
+import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -79,6 +72,29 @@ public class ImportFileLoaderServiceImplementation extends ImportFileLoaderImplB
 
 
 	@Override
+	public void listImportTables(ListImportTablesRequest request, StreamObserver<ListImportTablesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListImportTablesResponse.Builder builderList = ImportFileLoaderServiceLogic.listImportTables(request);
+			responseObserver.onNext(builderList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
 	public void listImportFormats(ListImportFormatsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			if (request == null) {
@@ -86,6 +102,29 @@ public class ImportFileLoaderServiceImplementation extends ImportFileLoaderImplB
 			}
 
 			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listImportFormats(request);
+			responseObserver.onNext(builderList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listClientImportFormats(ListClientImportFormatsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listClientImportFormats(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -125,77 +164,24 @@ public class ImportFileLoaderServiceImplementation extends ImportFileLoaderImplB
 
 
 	@Override
-	public StreamObserver<LoadImportFileRequest> loadImportFile(StreamObserver<ResourceReference> responseObserver) {
-		AtomicReference<String> resourceUuid = new AtomicReference<>();
-		AtomicReference<ByteBuffer> buffer = new AtomicReference<>();
-
-		return new StreamObserver<LoadImportFileRequest>() {
-			@Override
-			public void onNext(LoadImportFileRequest fileUploadRequest) {
-				try {
-					if(resourceUuid.get() == null) {
-						resourceUuid.set(fileUploadRequest.getResourceUuid());
-						BigDecimal size = ValueUtil.getBigDecimalFromDecimal(fileUploadRequest.getFileSize());
-						if (size != null && fileUploadRequest.getData() != null) {
-							byte[] initByte = new byte[size.intValue()];
-							buffer.set(ByteBuffer.wrap(initByte));
-							byte[] bytes = fileUploadRequest.getData().toByteArray();
-							buffer.set(buffer.get().put(bytes));
-						}
-					} else if (buffer.get() != null){
-						byte[] bytes = fileUploadRequest.getData().toByteArray();
-						buffer.set(buffer.get().put(bytes));
-					}
-				} catch (Exception e){
-					e.printStackTrace();
-					this.onError(e);
-				}
+	public void saveRecords(SaveRecordsRequest request, StreamObserver<SaveRecordsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Save Records Request Null");
 			}
 
-			@Override
-			public void onError(Throwable throwable) {
-				responseObserver.onError(throwable);
-			}
-
-			@Override
-			public void onCompleted() {
-				try {
-					MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
-					if (clientInfo == null || clientInfo.getFileHandler_ID() <= 0) {
-						throw new AdempiereException("@FileHandler_ID@ @NotFound@");
-					}
-					if(resourceUuid.get() != null && buffer.get() != null) {
-						MADAttachmentReference resourceReference = (MADAttachmentReference) RecordUtil.getEntity(
-							Env.getCtx(),
-							I_AD_AttachmentReference.Table_Name,
-							resourceUuid.get(),
-							-1,
-							null
-						);
-						if (resourceReference != null) {
-							byte[] data = buffer.get().array();
-							AttachmentUtil.getInstance()
-								.clear()
-								.withAttachmentReferenceId(resourceReference.getAD_AttachmentReference_ID())
-								.withFileName(resourceReference.getFileName())
-								.withClientId(clientInfo.getAD_Client_ID())
-								.withData(data)
-								.saveAttachment()
-							;
-							MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
-						}
-					}
-					ResourceReference response = ResourceReference.newBuilder()
-						// .setStatus(status)
-						.build();
-					responseObserver.onNext(response);
-					responseObserver.onCompleted();
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw new AdempiereException(e);
-				}
-			}
-		};
+			SaveRecordsResponse.Builder builder = ImportFileLoaderServiceLogic.saveRecords(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
 	}
 
 
@@ -208,6 +194,29 @@ public class ImportFileLoaderServiceImplementation extends ImportFileLoaderImplB
 			}
 
 			ListEntitiesResponse.Builder builderList = ImportFileLoaderServiceLogic.listFilePreview(request);
+			responseObserver.onNext(builderList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listImportProcesses(ListImportProcessesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listImportProcesses(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

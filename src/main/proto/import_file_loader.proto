@@ -25,12 +25,15 @@ package import_file_loader;
 
 service ImportFileLoader {
 	rpc ListCharsets(ListCharsetsRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListImportTables(ListImportTablesRequest) returns (ListImportTablesResponse) {}
 	rpc ListImportFormats(ListImportFormatsRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListClientImportFormats(ListClientImportFormatsRequest) returns (data.ListLookupItemsResponse) {}
 	rpc GetImportFromat(GetImportFromatRequest) returns (ImportFormat) {}
-	rpc LoadImportFile(stream LoadImportFileRequest) returns (ResourceReference) {}
+	// Manage File
 	rpc SaveRecords(SaveRecordsRequest) returns (SaveRecordsResponse) {}
-	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
 	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {}
+	// Process
+	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {}
 	rpc ProcessImport(ProcessImportRequest) returns (ProcessImportResponse) {}
 }
 
@@ -43,8 +46,37 @@ message ListCharsetsRequest {
 }
 
 
+// Import Table
+message ListImportTablesRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+}
+
+message ImportTable {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string table_name = 4;
+}
+
+message ListImportTablesResponse {
+	int64 record_count = 1;
+	repeated ImportTable records = 2;
+	string next_page_token = 3;
+}
+
+
 // Import Format
 message ListImportFormatsRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+}
+
+message ListClientImportFormatsRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	// filters
@@ -87,35 +119,6 @@ message GetImportFromatRequest {
 }
 
 
-// Load Import File
-message ResourceReference {
-	int32 resource_id = 1;
-	string resource_uuid = 2;
-	string file_name = 3;
-	data.Decimal file_size = 4;
-	string description = 5;
-	string text_msg = 6;
-	string content_type = 7;
-}
-
-message LoadImportFileRequest {
-	bytes data = 1;
-	string resource_uuid = 2;
-	data.Decimal file_size = 3;
-}
-
-
-// download resource
-message GetResourceRequest {
-	int32 resource_id = 1;
-	string resource_uuid = 2;
-	string resource_name = 3;
-}
-
-message Resource {
-	bytes data = 1;
-}
-
 // Preview File
 message ListFilePreviewRequest {
 	int32 page_size = 1;
@@ -135,15 +138,25 @@ message SaveRecordsRequest {
 
 message SaveRecordsResponse {
 	string message = 1;
-	int32 total = 2;
+	int64 total = 2;
 }
 
 
 // Process Import
+message ListImportProcessesRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+	int32 table_id = 4;
+	string table_name = 5;
+}
+
 message ProcessImportRequest {
 	int32 import_format_id = 1;
 }
 
 message ProcessImportResponse {
 	string message = 1;
+	int64 total = 2;
 }
