@@ -129,41 +129,40 @@ public class WindowUtil {
 
 		//	First Process Tab
 		if(tab.getAD_Process_ID() > 0) {
-			processList.put(tab.getAD_Process_ID(), MProcess.get(context, tab.getAD_Process_ID()));
+			MProcess processTab = ASPUtil.getInstance(tab.getCtx()).getProcess(tab.getAD_Process_ID());
+			processList.put(tab.getAD_Process_ID(), processTab);
 		}
 
-		//	Process from tab
-		List<MProcess> processFromTabList = new Query(
-			tab.getCtx(),
-			I_AD_Process.Table_Name,
-			"EXISTS(SELECT 1 FROM AD_Field f "
-				+ "INNER JOIN AD_Column c ON(c.AD_Column_ID = f.AD_Column_ID) "
-				+ "WHERE c.AD_Process_ID = AD_Process.AD_Process_ID "
-				+ "AND f.AD_Tab_ID = ? "
-				+ "AND f.IsActive = 'Y')",
-				null
-		)
-			.setParameters(tab.getAD_Tab_ID())
-			.setOnlyActiveRecords(true)
-			.<MProcess>list()
+		// exclude first process on tab
+		final String whereClause = "AD_Process_ID <> ? " // #1
+			// process on column
+			+ "AND (EXISTS(SELECT 1 FROM AD_Field f "
+			+ "INNER JOIN AD_Column c ON(c.AD_Column_ID = f.AD_Column_ID) "
+			+ "WHERE c.AD_Process_ID = AD_Process.AD_Process_ID "
+			+ "AND f.IsDisplayed = 'Y' "
+			+ "AND f.AD_Tab_ID = ? " // #2
+			+ "AND f.IsActive = 'Y')"
+			// process on table
+			+ "OR EXISTS(SELECT 1 FROM AD_Table_Process AS tp "
+			+ "WHERE tp.AD_Process_ID = AD_Process.AD_Process_ID "
+			+ "AND tp.AD_Table_ID = ? " // #3
+			+ "AND tp.IsActive = 'Y'))"
 		;
-		for(MProcess process : processFromTabList) {
-			processList.put(process.getAD_Process_ID(), process);
-		}
-
-		//	Process from table
-		List<MProcess> processFromTableList = new Query(
+		//	Process from tab
+		List<Integer> processIdList = new Query(
 			tab.getCtx(),
 			I_AD_Process.Table_Name,
-			"EXISTS(SELECT 1 FROM AD_Table_Process WHERE AD_Process_ID = AD_Process.AD_Process_ID AND AD_Table_ID = ?)",
+			whereClause,
 			null
 		)
-			.setParameters(tab.getAD_Table_ID())
+			.setParameters(tab.getAD_Process_ID(), tab.getAD_Tab_ID(), tab.getAD_Table_ID())
 			.setOnlyActiveRecords(true)
-			.<MProcess>list()
+			.setApplyAccessFilter(true)
+			.getIDsAsList()
 		;
-		for(MProcess process : processFromTableList) {
-			processList.put(process.getAD_Process_ID(), process);
+		for(Integer processId : processIdList) {
+			MProcess process = ASPUtil.getInstance(tab.getCtx()).getProcess(processId);
+			processList.put(processId, process);
 		}
 
 		return new ArrayList<MProcess>(processList.values());
