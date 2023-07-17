@@ -80,6 +80,24 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 	}
 
 
+
+	/**
+	 * Validate table exists.
+	 * @return clientInfo
+	 */
+	private MTable validateAndGetTable(String tableName) {
+		// validate table
+		if (Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+		MTable table = MTable.get(Env.getCtx(), tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		return table;
+	}
+
+
 	@Override
 	public void getResource(GetResourceRequest request, StreamObserver<Resource> responseObserver) {
 		try {
@@ -303,9 +321,9 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 				tableId = table.getAD_Table_ID();
 			}
 		}
-		int recordId = request.getId();
+		int recordId = request.getRecordId();
 		if (recordId <= 0) {
-			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getUuid(), null);
+			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
 		}
 		if (tableId > 0 && recordId > 0) {
 			return convertAttachment(MAttachment.get(Env.getCtx(), tableId, recordId));
@@ -324,7 +342,10 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			return ResourceReference.newBuilder();
 		}
 		return ResourceReference.newBuilder()
-			.setResourceUuid(ValueUtil.validateNull(reference.getUUID()))
+			.setId(reference.getAD_AttachmentReference_ID())
+			.setUuid(
+				ValueUtil.validateNull(reference.getUUID())
+			)
 			.setFileName(ValueUtil.validateNull(reference.getValidFileName()))
 			.setDescription(ValueUtil.validateNull(reference.getDescription()))
 			.setTextMsg(ValueUtil.validateNull(reference.getTextMsg()))
@@ -343,9 +364,13 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			return Attachment.newBuilder();
 		}
 		Attachment.Builder builder = Attachment.newBuilder()
-				.setAttachmentUuid(ValueUtil.validateNull(attachment.getUUID()))
-				.setTitle(ValueUtil.validateNull(attachment.getTitle()))
-				.setTextMsg(ValueUtil.validateNull(attachment.getTextMsg()));
+			.setId(attachment.getAD_Attachment_ID())
+			.setUuid(
+				ValueUtil.validateNull(attachment.getUUID())
+			)
+			.setTitle(ValueUtil.validateNull(attachment.getTitle()))
+			.setTextMsg(ValueUtil.validateNull(attachment.getTextMsg()))
+		;
 
 		// validate client info with configured file handler
 		MClientInfo clientInfo = MClientInfo.get(attachment.getCtx());
@@ -361,7 +386,8 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			attachment.get_TrxName()
 		)
 		.forEach(attachmentReference -> {
-			builder.addResourceReferences(convertResourceReference(attachmentReference));
+			ResourceReference.Builder builderReference = convertResourceReference(attachmentReference);
+			builder.addResourceReferences(builderReference);
 		});
 		return builder;
 	}
@@ -400,14 +426,8 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			throw new AdempiereException("@Error@ @FileInvalidExtension@");
 		}
 
-		// validate table
-		MTable table = null;
-		if (!Util.isEmpty(request.getTableName(), true)) {
-			table = MTable.get(Env.getCtx(), request.getTableName());
-		}
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		MTable table = validateAndGetTable(request.getTableName());
 		final int tableId = table.getAD_Table_ID();
 
 		// validate record
@@ -534,14 +554,8 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			return builder;
 		}
 
-		// validate table
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		MTable table = validateAndGetTable(request.getTableName());
 
 		// validate record
 		int recordId = request.getRecordId();

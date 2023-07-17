@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -48,76 +48,81 @@ message Resource {
 
 // Attachment
 message Attachment {
-	string attachment_uuid = 1;
-	string title = 2;
-	string text_msg = 3;
-	repeated ResourceReference resource_references = 4;
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string text_msg = 4;
+	repeated ResourceReference resource_references = 5;
 }
 
 //	Resource reference
 message ResourceReference {
-	string resource_uuid = 1;
-	string file_name = 2;
-	data.Decimal file_size = 3;
-	string description = 4;
-	string text_msg = 5;
-	string content_type = 6;
+	int32 id = 1;
+	string uuid = 2;
+	string file_name = 3;
+	data.Decimal file_size = 4;
+	string description = 5;
+	string text_msg = 6;
+	string content_type = 7;
 }
 
 // Request for upload resource
 message LoadResourceRequest {
 	bytes data = 1;
-	string resource_uuid = 2;
-	data.Decimal file_size = 3;
+	int32 resource_id = 2;
+	string resource_uuid = 3;
+	data.Decimal file_size = 4;
 }
 
+enum Operation {
+	RESIZE = 0;
+	CROP = 1;
+	FIX = 2;
+	IDENTIFY = 3;
+}
 // Request for download resource
 message GetResourceRequest {
+	int32 resource_id = 1;
 	string resource_uuid = 2;
 	string resource_name = 3;
 	int64 width = 4;
 	int64 height = 5;
-	enum Operation {
-		RESIZE = 0;
-		CROP = 1;
-		FIX = 2;
-		IDENTIFY = 3;
-	}
 	//	Operation
 	Operation operation = 6;
 }
 
 // Request for download resource reference
 message GetResourceReferenceRequest {
-	int32 image_id = 2;
+	int32 image_id = 1;
+	string image_uuid = 2;
 }
 
 // Request attachment from table and record uuid
 message GetAttachmentRequest {
-	string table_name = 2;
-	int32 id = 3;
-	string uuid = 4;
+	string table_name = 1;
+	int32 record_id = 2;
+	string record_uuid = 3;
 }
 
 message SetResourceReferenceRequest {
-	string table_name = 2;
-	int32 record_id = 3;
-	string record_uuid = 4;
-	string text_message = 5;
-	string file_name = 6;
-	int32 file_size = 7;
+	string table_name = 1;
+	int32 record_id = 2;
+	string record_uuid = 3;
+	string text_message = 4;
+	string file_name = 5;
+	int32 file_size = 6;
 }
 
 message DeleteResourceReferenceRequest {
-	int32 resource_id = 2;
-	string resource_uuid = 3;
-	string resource_name = 4;
+	int32 resource_id = 1;
+	string resource_uuid = 2;
+	string resource_name = 3;
 }
 
 message ExistsAttachmentRequest {
-	string table_name = 2;
-	int32 record_id = 3;
-	string record_uuid = 4;
+	string table_name = 1;
+	int32 record_id = 2;
+	string record_uuid = 3;
 }
 
 message ExistsAttachmentResponse {
