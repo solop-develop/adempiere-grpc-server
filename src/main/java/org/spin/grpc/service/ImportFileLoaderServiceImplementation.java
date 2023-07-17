@@ -20,8 +20,8 @@ import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.import_file_loader.GetImportFromatRequest;
 import org.spin.backend.grpc.form.import_file_loader.ImportFileLoaderGrpc.ImportFileLoaderImplBase;
+import org.spin.form.import_file_loader.ImportFileLoaderServiceLogic;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
-import org.spin.grpc.logic.ImportFileLoaderServiceLogic;
 import org.spin.backend.grpc.form.import_file_loader.ListCharsetsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListClientImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListFilePreviewRequest;
@@ -29,8 +29,6 @@ import org.spin.backend.grpc.form.import_file_loader.ListImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportProcessesRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportTablesRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportTablesResponse;
-import org.spin.backend.grpc.form.import_file_loader.ProcessImportRequest;
-import org.spin.backend.grpc.form.import_file_loader.ProcessImportResponse;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsRequest;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 
@@ -217,29 +215,6 @@ public class ImportFileLoaderServiceImplementation extends ImportFileLoaderImplB
 			}
 
 			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listImportProcesses(request);
-			responseObserver.onNext(builderList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-
-
-	@Override
-	public void processImport(ProcessImportRequest request, StreamObserver<ProcessImportResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ProcessImportResponse.Builder builderList = ImportFileLoaderServiceLogic.processImport(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

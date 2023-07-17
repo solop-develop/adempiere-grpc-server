@@ -311,6 +311,25 @@ public class ReferenceUtil {
 	 * @return
 	 */
 	public static MLookupInfo getReferenceLookupInfo(int referenceId, int referenceValueId, String columnName, int validationRuleId) {
+		return getReferenceLookupInfo(
+			referenceId,
+			referenceValueId,
+			columnName,
+			validationRuleId,
+			null
+		);
+	}
+
+	/**
+	 * Get Reference information, can return null if reference is invalid or not exists
+	 * @param referenceId
+	 * @param referenceValueId
+	 * @param columnName
+	 * @param validationRuleId
+	 * @param customRestriction
+	 * @return
+	 */
+	public static MLookupInfo getReferenceLookupInfo(int referenceId, int referenceValueId, String columnName, int validationRuleId, String customRestriction) {
 		if(!validateReference(referenceId)) {
 			return null;
 		}
@@ -375,6 +394,12 @@ public class ReferenceUtil {
 					lookupInformation.ValidationCode = dynamicValidation;
 				}
 			}
+		}
+		if (!Util.isEmpty(customRestriction, true)) {
+			if (!Util.isEmpty(lookupInformation.ValidationCode) && !customRestriction.trim().startsWith("AND")) {
+				lookupInformation.ValidationCode += " AND ";
+			}
+			lookupInformation.ValidationCode += " (" + customRestriction + ")";
 		}
 
 		// return only code without validation rule

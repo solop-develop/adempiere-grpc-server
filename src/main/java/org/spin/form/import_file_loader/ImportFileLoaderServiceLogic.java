@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.logic;
+package org.spin.form.import_file_loader;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_ImpFormat;
 import org.adempiere.core.domains.models.I_AD_Process;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.impexp.MImpFormat;
 import org.compiere.model.MLookupInfo;
@@ -46,14 +47,11 @@ import org.spin.backend.grpc.form.import_file_loader.ListImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportProcessesRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportTablesRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportTablesResponse;
-import org.spin.backend.grpc.form.import_file_loader.ProcessImportRequest;
-import org.spin.backend.grpc.form.import_file_loader.ProcessImportResponse;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsRequest;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.ValueUtil;
-import org.spin.form.import_file_loader.ImportFileLoaderConvertUtil;
 import org.spin.grpc.service.UserInterfaceServiceImplementation;
 
 /**
@@ -79,6 +77,22 @@ public class ImportFileLoaderServiceLogic {
 			throw new AdempiereException("@AD_ImpFormat_ID@ @NotFound@");
 		}
 		return importFormat;
+	}
+
+	public static MTable validateAndGetTable(int tableId, String tableName) {
+		if (tableId <= 0 && Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+		MTable table;
+		if (tableId > 0) {
+			table = MTable.get(Env.getCtx(), tableId);
+		} else {
+			table = MTable.get(Env.getCtx(), tableName);
+		}
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		return table;
 	}
 
 
@@ -127,7 +141,7 @@ public class ImportFileLoaderServiceLogic {
 
 		List<MTable> importTablesList = new Query(
 			Env.getCtx(),
-			I_AD_Process.Table_Name,
+			I_AD_Table.Table_Name,
 			whereClause,
 			null
 		)
@@ -149,8 +163,15 @@ public class ImportFileLoaderServiceLogic {
 
 
 	public static ListLookupItemsResponse.Builder listImportFormats(ListImportFormatsRequest request) {
+		// validate and get table
+		MTable table = validateAndGetTable(request.getTableId(), request.getTableName());
+
 		MLookupInfo reference = ReferenceUtil.getReferenceLookupInfo(
-			DisplayType.TableDir, 0, I_AD_ImpFormat.COLUMNNAME_AD_ImpFormat_ID, 0
+			DisplayType.TableDir,
+			0,
+			I_AD_ImpFormat.COLUMNNAME_AD_ImpFormat_ID,
+			0,
+			"AD_ImpFormat.AD_Table_ID = " + table.getAD_Table_ID()
 		);
 
 		ListLookupItemsResponse.Builder builderList = UserInterfaceServiceImplementation.listLookupItems(
@@ -167,12 +188,15 @@ public class ImportFileLoaderServiceLogic {
 
 
 	public static ListLookupItemsResponse.Builder listClientImportFormats(ListClientImportFormatsRequest request) {
-		int validationClientLogin = 116; // AD_Client Login (Restrict to login client)
+		// validate and get table
+		MTable table = validateAndGetTable(request.getTableId(), request.getTableName());
+
 		MLookupInfo reference = ReferenceUtil.getReferenceLookupInfo(
 			DisplayType.TableDir,
 			0,
 			I_AD_ImpFormat.COLUMNNAME_AD_ImpFormat_ID,
-			validationClientLogin
+			0,
+			"AD_ImpFormat.AD_Client_ID = @#AD_Client_ID@ AND AD_ImpFormat.AD_Table_ID = " + table.getAD_Table_ID()
 		);
 
 		ListLookupItemsResponse.Builder builderList = UserInterfaceServiceImplementation.listLookupItems(
@@ -209,18 +233,8 @@ public class ImportFileLoaderServiceLogic {
 
 
 	public static ListLookupItemsResponse.Builder listImportProcesses(ListImportProcessesRequest request) {
-		if (request.getTableId() <= 0 || Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		MTable table;
-		if (request.getTableId() > 0) {
-			table = MTable.get(Env.getCtx(), request.getTableId());
-		} else {
-			table = MTable.get(Env.getCtx(), request.getTableName());
-		}
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		MTable table = validateAndGetTable(request.getTableId(), request.getTableName());
 
 		List<Object> filtersLit = new ArrayList<Object>();
 		//	Process associated from table or column
@@ -266,13 +280,6 @@ public class ImportFileLoaderServiceLogic {
 		});
 
 		return builderList;
-	}
-
-
-	public static ProcessImportResponse.Builder processImport(ProcessImportRequest request) {
-		// MImpFormat importFormat = validateAndGetImportFormat(request.getImportFormatId());
-
-		return ProcessImportResponse.newBuilder();
 	}
 
 }

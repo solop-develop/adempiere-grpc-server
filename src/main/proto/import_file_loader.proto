@@ -34,7 +34,6 @@ service ImportFileLoader {
 	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {}
 	// Process
 	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ProcessImport(ProcessImportRequest) returns (ProcessImportResponse) {}
 }
 
 // Charset
@@ -74,6 +73,8 @@ message ListImportFormatsRequest {
 	string page_token = 2;
 	// filters
 	string search_value = 3;
+	int32 table_id = 4;
+	string table_name = 5;
 }
 
 message ListClientImportFormatsRequest {
@@ -81,6 +82,8 @@ message ListClientImportFormatsRequest {
 	string page_token = 2;
 	// filters
 	string search_value = 3;
+	int32 table_id = 4;
+	string table_name = 5;
 }
 
 message ImportFormat {
@@ -150,13 +153,4 @@ message ListImportProcessesRequest {
 	string search_value = 3;
 	int32 table_id = 4;
 	string table_name = 5;
-}
-
-message ProcessImportRequest {
-	int32 import_format_id = 1;
-}
-
-message ProcessImportResponse {
-	string message = 1;
-	int64 total = 2;
 }
