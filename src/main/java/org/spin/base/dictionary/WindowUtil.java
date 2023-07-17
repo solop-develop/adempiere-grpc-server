@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.compiere.model.MColumn;
 import org.compiere.model.MProcess;
+import org.compiere.model.MRole;
 import org.compiere.model.MTab;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
@@ -129,8 +130,15 @@ public class WindowUtil {
 
 		//	First Process Tab
 		if(tab.getAD_Process_ID() > 0) {
-			MProcess processTab = ASPUtil.getInstance(tab.getCtx()).getProcess(tab.getAD_Process_ID());
-			processList.put(tab.getAD_Process_ID(), processTab);
+			MRole role = MRole.getDefault(tab.getCtx(), false);
+			Boolean processAccess = role.getProcessAccess(tab.getAD_Process_ID());
+			if (processAccess != null && processAccess.booleanValue()) {
+				boolean isRecordAccess = role.isRecordAccess(I_AD_Process.Table_ID, tab.getAD_Process_ID(), false);
+				if (isRecordAccess) {
+					MProcess processTab = ASPUtil.getInstance(tab.getCtx()).getProcess(tab.getAD_Process_ID());
+					processList.put(tab.getAD_Process_ID(), processTab);
+				}
+			}
 		}
 
 		// exclude first process on tab
