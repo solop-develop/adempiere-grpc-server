@@ -15,6 +15,7 @@
 
 package org.spin.form.import_file_loader;
 
+import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.compiere.impexp.MImpFormat;
 import org.compiere.impexp.MImpFormatRow;
@@ -22,6 +23,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.form.import_file_loader.FormatField;
+import org.spin.backend.grpc.form.import_file_loader.ImportColumn;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
 import org.spin.backend.grpc.form.import_file_loader.ImportTable;
 import org.spin.base.util.ValueUtil;
@@ -34,7 +36,8 @@ public class ImportFileLoaderConvertUtil {
 			return builder;
 		}
 		String name = table.getName();
-		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+		boolean isBaseLanguage = Env.isBaseLanguage(Env.getCtx(), "");
+		if (!isBaseLanguage) {
 			// set translated values
 			name = table.get_Translation(I_AD_Table.COLUMNNAME_Name);
 		}
@@ -48,6 +51,30 @@ public class ImportFileLoaderConvertUtil {
 			)
 			.setTableName(table.getTableName())
 		;
+
+		table.getColumnsAsList().stream().forEach(column -> {
+			String nameOfColumn = column.getName();
+			if (!isBaseLanguage) {
+				// set translated values
+				nameOfColumn = column.get_Translation(I_AD_Column.COLUMNNAME_Name);
+			}
+
+			ImportColumn.Builder columnBuilder = ImportColumn.newBuilder()
+				.setId(column.getAD_Column_ID())
+				.setUuid(
+					ValueUtil.validateNull(column.getUUID())
+				)
+				.setName(
+					ValueUtil.validateNull(nameOfColumn)
+				)
+				.setColumnName(
+					ValueUtil.validateNull(column.getColumnName())
+				)
+				.setDisplayType(column.getAD_Reference_ID())
+			;
+
+			builder.addImportColumns(columnBuilder);
+		});
 
 		return builder;
 	}

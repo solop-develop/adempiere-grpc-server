@@ -14,6 +14,10 @@
  ************************************************************************************/
 package org.spin.form.import_file_loader;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +28,7 @@ import org.adempiere.core.domains.models.I_AD_ImpFormat;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.impexp.ImpFormat;
 import org.compiere.impexp.MImpFormat;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcess;
@@ -32,6 +37,7 @@ import org.compiere.model.Query;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
@@ -53,6 +59,7 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.grpc.service.UserInterfaceServiceImplementation;
+import org.spin.util.AttachmentUtil;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -220,10 +227,70 @@ public class ImportFileLoaderServiceLogic {
 	}
 
 
-	public static SaveRecordsResponse.Builder saveRecords(SaveRecordsRequest request) {
-		// MImpFormat importFormat = validateAndGetImportFormat(request.getImportFormatId());
+	public static SaveRecordsResponse.Builder saveRecords(SaveRecordsRequest request) throws Exception {
+		MImpFormat importFormat = validateAndGetImportFormat(request.getImportFormatId());
 
-		return SaveRecordsResponse.newBuilder();
+		// validate attachment reference
+		int attachmentReferenceId = request.getResourceId();
+		if (attachmentReferenceId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
+		}
+
+		//	Get class from parent
+		ImpFormat format = ImpFormat.load(importFormat.getName());
+		if (format == null) {
+			throw new AdempiereException("@FileImportNoFormat@");
+		}
+		Class<?> clazz = format.getConnectionClass();
+		//	Not yet implemented
+		if (clazz == null) {
+			// log.log(Level.INFO, "Using GenericDeviceHandler");
+			// return;
+		}
+
+		byte[] file = AttachmentUtil.getInstance()
+			.withClientId(Env.getAD_Client_ID(Env.getCtx()))
+			.withAttachmentReferenceId(attachmentReferenceId)
+			.getAttachment();
+		if (file == null) {
+			new AdempiereException("@NotFound@");
+		}
+
+		String charsetValue = request.getCharset();
+		if (Util.isEmpty(charsetValue, true) || !Charset.isSupported(charsetValue)) {
+			charsetValue = Charset.defaultCharset().name();
+		}
+		Charset charset = Charset.forName(charsetValue);
+
+		InputStream inputStream = new ByteArrayInputStream(file);
+		InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
+		BufferedReader in = new BufferedReader(inputStreamReader, 10240);
+
+		//	not safe see p108 Network pgm
+		String s = null;
+		ArrayList<String> data = new ArrayList<String>();
+		while ((s = in.readLine()) != null) {
+			data.add(s);
+		}
+		in.close();
+
+		//	For all rows - update/insert DB table
+		int row = 0;
+		int imported = 0;
+		for(String line : data) {
+			row++;
+			if (format.updateDB(Env.getCtx(), line, null)) {
+				imported++;
+			}
+		}
+		//	Clear
+		data.clear();
+		String message = Msg.parseTranslation(Env.getCtx(), "@FileImportR/I@") + " (" + row + " / " + imported + "#)";
+
+		return SaveRecordsResponse.newBuilder()
+			.setMessage(message)
+			.setTotal(imported)
+		;
 	}
 
 

@@ -53,11 +53,20 @@ message ListImportTablesRequest {
 	string search_value = 3;
 }
 
+message ImportColumn {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string column_name = 4;
+	int32 display_type = 5;
+}
+
 message ImportTable {
 	int32 id = 1;
 	string uuid = 2;
 	string name = 3;
 	string table_name = 4;
+	repeated ImportColumn import_columns = 5;
 }
 
 message ListImportTablesResponse {
@@ -137,6 +146,7 @@ message ListFilePreviewRequest {
 message SaveRecordsRequest {
 	int32 import_format_id = 1;
 	int32 resource_id = 2;
+	string charset = 3;
 }
 
 message SaveRecordsResponse {
