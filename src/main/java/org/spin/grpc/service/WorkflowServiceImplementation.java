@@ -722,7 +722,7 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		// Check Existence of Workflow Activities
 		String workflowStatus = MWFActivity.getActiveInfo(Env.getCtx(), entity.get_Table_ID(), entity.get_ID());
 		if (!Util.isEmpty(workflowStatus, true)) {
-			throw new AdempiereException("@WFActiveForRecord@");
+			throw new AdempiereException("@WFActiveForRecord@ " + workflowStatus);
 		}
 
 		//	Status Change
