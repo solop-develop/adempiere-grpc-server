@@ -42,6 +42,8 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.form.import_file_loader.GetImportFromatRequest;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
@@ -58,6 +60,7 @@ import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.ValueUtil;
+import org.spin.grpc.service.BusinessDataServiceImplementation;
 import org.spin.grpc.service.UserInterfaceServiceImplementation;
 import org.spin.util.AttachmentUtil;
 
@@ -286,11 +289,31 @@ public class ImportFileLoaderServiceLogic {
 		//	Clear
 		data.clear();
 		String message = Msg.parseTranslation(Env.getCtx(), "@FileImportR/I@") + " (" + row + " / " + imported + "#)";
-
-		return SaveRecordsResponse.newBuilder()
+		SaveRecordsResponse.Builder builder = SaveRecordsResponse.newBuilder()
 			.setMessage(message)
 			.setTotal(imported)
 		;
+
+		if (request.getIsProcess()) {
+			if (request.getProcessId() <= 0) {
+				new AdempiereException("@FillMandatory@ @AD_Process_ID@");
+			}
+			MProcess process = MProcess.get(Env.getCtx(), request.getProcessId());
+			if (process == null || process.getAD_Process_ID() <= 0) {
+				new AdempiereException("@AD_Process_ID@ @NotFound@");
+			}
+
+			RunBusinessProcessRequest.Builder runProcessRequest = RunBusinessProcessRequest.newBuilder()
+				.setProcessUuid(process.getUUID())
+				.addAllParameters(request.getParametersList())
+			;
+			ProcessLog.Builder processLog = BusinessDataServiceImplementation.runBusinessProcess(
+				runProcessRequest.build()
+			);
+			builder.setProcessLog(processLog);
+		}
+
+		return builder;
 	}
 
 

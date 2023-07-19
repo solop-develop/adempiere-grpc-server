@@ -147,11 +147,16 @@ message SaveRecordsRequest {
 	int32 import_format_id = 1;
 	int32 resource_id = 2;
 	string charset = 3;
+	// process before save changes
+	bool is_process = 4;
+	int32 process_id = 5;
+	repeated data.KeyValue parameters = 6;
 }
 
 message SaveRecordsResponse {
 	string message = 1;
 	int64 total = 2;
+	data.ProcessLog process_log = 3;
 }
 
 
