@@ -2975,9 +2975,13 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			filterValues
 		);
 		if (!Util.isEmpty(dynamicWhere, true)) {
+			String parsedDynamicWhere = Env.parseContext(context, windowNo, dynamicWhere, false);
+			if (Util.isEmpty(parsedDynamicWhere, true)) {
+				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
+			}
 			//	Add
 			whereClause.append(" AND (")
-				.append(dynamicWhere)
+				.append(parsedDynamicWhere)
 				.append(") ")
 			;
 		}
