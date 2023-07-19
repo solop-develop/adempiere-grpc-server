@@ -25,20 +25,18 @@ package file_management;
 
 // The File Management service definition.
 service FileManagement {
-	//	Service for get a resource from resource uuid
-	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
-	//	Service for set a resource with resource uuid
+	//	Resource/File
 	rpc LoadResource(stream LoadResourceRequest) returns (ResourceReference) {}
-	//	Service for get a resource reference from image, attachment or archive
-	rpc GetResourceReference(GetResourceReferenceRequest) returns (ResourceReference) {}
-	//	Service for get a attachment from table and record uuid
-	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {}
-	//	Service for set a resource reference from image, attachment or archive
-	rpc SetResourceReference(SetResourceReferenceRequest) returns (ResourceReference) {}
-	// Delete resource reference
-	rpc DeleteResourceReference(DeleteResourceReferenceRequest) returns (data.Empty) {}
-	// Exists Attachment on Record
+	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
+	//	Attachment
 	rpc ExistsAttachment(ExistsAttachmentRequest) returns (ExistsAttachmentResponse) {}
+	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {}
+	rpc SetAttachmentDescription(SetAttachmentDescriptionRequest) returns (Attachment) {}
+	//	Resource Reference
+	rpc SetResourceReference(SetResourceReferenceRequest) returns (ResourceReference) {}
+	rpc SetResourceReferenceDescription(SetResourceReferenceDescriptionRequest) returns (ResourceReference) {}
+	rpc GetResourceReference(GetResourceReferenceRequest) returns (ResourceReference) {}
+	rpc DeleteResourceReference(DeleteResourceReferenceRequest) returns (data.Empty) {}
 }
 
 // Resource Chunk
@@ -51,7 +49,7 @@ message Attachment {
 	int32 id = 1;
 	string uuid = 2;
 	string title = 3;
-	string text_msg = 4;
+	string text_message = 4;
 	repeated ResourceReference resource_references = 5;
 }
 
@@ -62,7 +60,7 @@ message ResourceReference {
 	string file_name = 3;
 	data.Decimal file_size = 4;
 	string description = 5;
-	string text_msg = 6;
+	string text_message = 6;
 	string content_type = 7;
 }
 
@@ -104,13 +102,28 @@ message GetAttachmentRequest {
 	string record_uuid = 3;
 }
 
+message SetAttachmentDescriptionRequest {
+	string id = 1;
+	int32 uuid = 2;
+	string text_message = 3;
+}
+
 message SetResourceReferenceRequest {
 	string table_name = 1;
 	int32 record_id = 2;
 	string record_uuid = 3;
-	string text_message = 4;
-	string file_name = 5;
-	int32 file_size = 6;
+	string file_name = 4;
+	int32 file_size = 5;
+	string description = 6;
+	string text_message = 7;
+}
+
+message SetResourceReferenceDescriptionRequest {
+	int32 id = 1;
+	string uuid = 2;
+	string file_name = 3;
+	string description = 4;
+	string text_message = 5;
 }
 
 message DeleteResourceReferenceRequest {

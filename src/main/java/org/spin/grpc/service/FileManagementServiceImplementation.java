@@ -42,6 +42,7 @@ import org.spin.backend.grpc.file_management.GetResourceRequest;
 import org.spin.backend.grpc.file_management.LoadResourceRequest;
 import org.spin.backend.grpc.file_management.Resource;
 import org.spin.backend.grpc.file_management.ResourceReference;
+import org.spin.backend.grpc.file_management.SetResourceReferenceDescriptionRequest;
 import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
@@ -109,6 +110,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			getResource(request.getResourceUuid(), request.getResourceName(), responseObserver);
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -198,6 +200,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -300,6 +303,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -326,7 +330,8 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
 		}
 		if (tableId > 0 && recordId > 0) {
-			return convertAttachment(MAttachment.get(Env.getCtx(), tableId, recordId));
+			MAttachment attachment = MAttachment.get(Env.getCtx(), tableId, recordId);
+			return convertAttachment(attachment);
 		}
 		return Attachment.newBuilder();
 	}
@@ -348,7 +353,9 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			)
 			.setFileName(ValueUtil.validateNull(reference.getValidFileName()))
 			.setDescription(ValueUtil.validateNull(reference.getDescription()))
-			.setTextMsg(ValueUtil.validateNull(reference.getTextMsg()))
+			.setTextMessage(
+				ValueUtil.validateNull(reference.getTextMsg())
+			)
 			.setContentType(ValueUtil.validateNull(MimeType.getMimeType(reference.getFileName())))
 			.setFileSize(ValueUtil.getDecimalFromBigDecimal(reference.getFileSize()))
 		;
@@ -369,7 +376,9 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 				ValueUtil.validateNull(attachment.getUUID())
 			)
 			.setTitle(ValueUtil.validateNull(attachment.getTitle()))
-			.setTextMsg(ValueUtil.validateNull(attachment.getTextMsg()))
+			.setTextMessage(
+				ValueUtil.validateNull(attachment.getTextMsg())
+			)
 		;
 
 		// validate client info with configured file handler
@@ -428,7 +437,6 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 		// validate and get table
 		MTable table = validateAndGetTable(request.getTableName());
-		final int tableId = table.getAD_Table_ID();
 
 		// validate record
 		int recordId = request.getRecordId();
@@ -444,16 +452,15 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 		AtomicReference<MADAttachmentReference> attachmentReferenceAtomic = new AtomicReference<MADAttachmentReference>();
 		Trx.run(transactionName -> {
-			MAttachment attachment = new MAttachment(Env.getCtx(), tableId, recordIdentifier, transactionName);
+			MAttachment attachment = new MAttachment(Env.getCtx(), table.getAD_Table_ID(), recordIdentifier, transactionName);
 			if (attachment.getAD_Attachment_ID() <= 0) {
 				attachment.saveEx();
 			}
 			MADAttachmentReference attachmentReference = new MADAttachmentReference(Env.getCtx(), 0, transactionName);
 			attachmentReference.setFileHandler_ID(clientInfo.getFileHandler_ID());
 			attachmentReference.setAD_Attachment_ID(attachment.getAD_Attachment_ID());
-			attachmentReference.setTextMsg(
-				ValueUtil.validateNull(request.getTextMessage())
-			);
+			attachmentReference.setDescription(request.getDescription());
+			attachmentReference.setTextMsg(request.getTextMessage());
 			attachmentReference.setFileName(fileName);
 			// attachmentReference.setFileSize(
 			// 	BigDecimal.valueOf(request.getFileSize())
@@ -469,6 +476,61 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		return builder;
 	}
 
+
+
+	@Override
+	public void setResourceReferenceDescription(SetResourceReferenceDescriptionRequest request, StreamObserver<ResourceReference> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ResourceReference.Builder resourceReference = setResourceReferenceDescription(request);
+			responseObserver.onNext(resourceReference.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+	
+	ResourceReference.Builder setResourceReferenceDescription(SetResourceReferenceDescriptionRequest request) {
+		// validate and get client info with configured file handler
+		MClientInfo clientInfo = validateAndGetClientInfo();
+
+		MADAttachmentReference resourceReference = null;
+		if (request.getId() > 0) {
+			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
+		}
+		if (resourceReference == null && !Util.isEmpty(request.getUuid(), true)) {
+			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getUuid(), null);
+		}
+		if (resourceReference == null && !Util.isEmpty(request.getFileName(), true)) {
+			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getFileName(), null);
+		}
+
+		if (resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
+			throw new AdempiereException("@AD_AttachmentReference_ID@ Null");
+		}
+		
+		resourceReference.setDescription(request.getDescription());
+		resourceReference.setTextMsg(request.getTextMessage());
+		resourceReference.saveEx();
+
+		// reset cache
+		MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
+
+		ResourceReference.Builder builder = convertResourceReference(resourceReference);
+
+		return builder;
+	}
+
+
+
 	@Override
 	public void deleteResourceReference(DeleteResourceReferenceRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -480,6 +542,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -497,15 +560,19 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
 		}
 
-		MADAttachmentReference resourceReference = (MADAttachmentReference) RecordUtil.getEntity(
-				Env.getCtx(),
-			MADAttachmentReference.Table_Name, 
-			resourceUuid,
-			0,
-			null
-		);
+		MADAttachmentReference resourceReference = null;
+		if (request.getResourceId() > 0) {
+			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getResourceId(), null);
+		}
+		if (resourceReference == null && !Util.isEmpty(request.getResourceUuid(), true)) {
+			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getResourceUuid(), null);
+		}
+		if (resourceReference == null && !Util.isEmpty(request.getResourceName(), true)) {
+			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getResourceName(), null);
+		}
+
 		if (resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
-			throw new AdempiereException("@AD_AttachmentReference_ID@ Null");
+			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
 		}
 
 		// validate and get client info with configured file handler
@@ -518,8 +585,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			.withFileName(resourceReference.getFileName())
 			.withClientId(clientInfo.getAD_Client_ID())
 			.deleteAttachment();
-		// delete record from database
-		resourceReference.delete(true);
+
 		// reset cache
 		MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
 
@@ -537,6 +603,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
