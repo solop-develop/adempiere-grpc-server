@@ -601,14 +601,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		String[] options = new String[valueList.size()];
 		int index = 0;
 
-		/**
-		 * 	Check Existence of Workflow Activities
-		 */
-		String workflowStatus = MWFActivity.getActiveInfo(Env.getCtx(), entity.get_Table_ID(), entity.get_ID()); 
-		if (workflowStatus != null) {
-			throw new AdempiereException("@WFActiveForRecord@");
-		}
-		
 		/*******************
 		 *  General Actions
 		 */
@@ -725,6 +717,12 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		//	Validate as document
 		if (!DocAction.class.isAssignableFrom(entity.getClass())) {
 			throw new AdempiereException("@Invalid@ @Document@");
+		}
+
+		// Check Existence of Workflow Activities
+		String workflowStatus = MWFActivity.getActiveInfo(Env.getCtx(), entity.get_Table_ID(), entity.get_ID());
+		if (!Util.isEmpty(workflowStatus, true)) {
+			throw new AdempiereException("@WFActiveForRecord@");
 		}
 
 		//	Status Change
