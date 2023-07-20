@@ -40,10 +40,11 @@ public class Server {
 	/**	Time expiration	*/
 	private long expiration;
 
+	/**	Is Enabled All Services	*/
 	private boolean is_enabled_all_services;
-
 	/**	Embedded services	*/
 	private List<String> services;
+
 	/**
 	 * Default constructor
 	 * @param host
@@ -129,7 +130,7 @@ public class Server {
 	}
 
 	/**
-	 * Get Services
+	 * Get Is Enabled All Services
 	 * @return
 	 */
 	public final boolean getIs_enabled_all_services() {
