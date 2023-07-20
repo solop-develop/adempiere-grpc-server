@@ -57,11 +57,14 @@ message Attachment {
 message ResourceReference {
 	int32 id = 1;
 	string uuid = 2;
-	string file_name = 3;
-	data.Decimal file_size = 4;
-	string description = 5;
-	string text_message = 6;
-	string content_type = 7;
+	string name = 3;
+	string file_name = 4;
+	data.Decimal file_size = 5;
+	string description = 6;
+	string text_message = 7;
+	string content_type = 8;
+	int64 created = 9;
+	int64 updated = 10;
 }
 
 // Request for upload resource

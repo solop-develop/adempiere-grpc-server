@@ -351,13 +351,32 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			.setUuid(
 				ValueUtil.validateNull(reference.getUUID())
 			)
-			.setFileName(ValueUtil.validateNull(reference.getValidFileName()))
-			.setDescription(ValueUtil.validateNull(reference.getDescription()))
+			.setName(
+				ValueUtil.validateNull(reference.getFileName())
+			)
+			.setFileName(
+				ValueUtil.validateNull(reference.getValidFileName())
+			)
+			.setDescription(
+				ValueUtil.validateNull(reference.getDescription())
+			)
 			.setTextMessage(
 				ValueUtil.validateNull(reference.getTextMsg())
 			)
-			.setContentType(ValueUtil.validateNull(MimeType.getMimeType(reference.getFileName())))
-			.setFileSize(ValueUtil.getDecimalFromBigDecimal(reference.getFileSize()))
+			.setContentType(
+				ValueUtil.validateNull(
+					MimeType.getMimeType(reference.getFileName())
+				)
+			)
+			.setFileSize(ValueUtil.getDecimalFromBigDecimal(
+				reference.getFileSize())
+			)
+			.setCreated(
+				ValueUtil.getLongFromTimestamp(reference.getCreated())
+			)
+			.setUpdated(
+				ValueUtil.getLongFromTimestamp(reference.getUpdated())
+			)
 		;
 	}
 
@@ -455,9 +474,10 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			MAttachment attachment = new MAttachment(Env.getCtx(), table.getAD_Table_ID(), recordIdentifier, transactionName);
 			if (attachment.getAD_Attachment_ID() <= 0) {
 				/**
-				 * TODO: this disables the `MAttachment.afterSave` which calls the `MAttachment.saveLOBData`
-				 * method but generates an error (Null Pointer Exception) since items is initialized to null,
-				 * when it should be initialized with a `items = new ArrayList<MAttachmentEntry>()`.
+				 * TODO: `IsDirectLoad` disables `ModelValidator`, `beforeSave` and the `MAttachment.afterSave`
+				 * which calls the `MAttachment.saveLOBData` method but generates an error
+				 * (Null Pointer Exception) since `items` is initialized to null, when it should
+				 * be initialized with a `new ArrayList<MAttachmentEntry>()`.
 				 */
 				attachment.setIsDirectLoad(true); 
 				attachment.saveEx();
