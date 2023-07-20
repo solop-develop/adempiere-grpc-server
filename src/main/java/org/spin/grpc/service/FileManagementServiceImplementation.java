@@ -454,6 +454,12 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		Trx.run(transactionName -> {
 			MAttachment attachment = new MAttachment(Env.getCtx(), table.getAD_Table_ID(), recordIdentifier, transactionName);
 			if (attachment.getAD_Attachment_ID() <= 0) {
+				/**
+				 * TODO: this disables the `MAttachment.afterSave` which calls the `MAttachment.saveLOBData`
+				 * method but generates an error (Null Pointer Exception) since items is initialized to null,
+				 * when it should be initialized with a `items = new ArrayList<MAttachmentEntry>()`.
+				 */
+				attachment.setIsDirectLoad(true); 
 				attachment.saveEx();
 			}
 			MADAttachmentReference attachmentReference = new MADAttachmentReference(Env.getCtx(), 0, transactionName);
