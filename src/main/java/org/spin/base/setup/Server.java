@@ -166,22 +166,25 @@ public class Server {
 
 	/**
 	 * Validate is a service is enabled
-	 * @param service
+	 * @param serviceName
 	 * @return
 	 */
-	public final boolean isValidService(String service) {
-		if(service == null
-				|| service.trim().length() == 0
-				|| services == null) {
+	public final boolean isValidService(String serviceName) {
+		// validate service name
+		if(serviceName == null || serviceName.trim().length() == 0) {
 			return false;
 		}
+		// overwrite services
 		if (this.is_enabled_all_services) {
-			// overwrite services
 			return true;
+		}
+		// without services
+		if (this.services == null || this.services.size() <= 0) {
+			return false;
 		}
 		return getServices()
 			.stream()
-			.filter(serviceToFind -> serviceToFind != null && serviceToFind.equals(service)).findFirst().isPresent();
+			.filter(serviceToFind -> serviceToFind != null && serviceToFind.equals(serviceName)).findFirst().isPresent();
 	}
 
 	@Override
