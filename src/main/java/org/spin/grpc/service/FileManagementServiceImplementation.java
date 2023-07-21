@@ -626,13 +626,11 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 		// validate record
 		int recordId = request.getRecordId();
-		if (recordId <= 0) {
-			if (!Util.isEmpty(request.getRecordUuid(), true)) {
-				recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
-			}
-			if (RecordUtil.isValidId(recordId, table.getAccessLevel())) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
+		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
+		}
+		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
 
 		MAttachment attachment = MAttachment.get(Env.getCtx(), table.getAD_Table_ID(), recordId);
