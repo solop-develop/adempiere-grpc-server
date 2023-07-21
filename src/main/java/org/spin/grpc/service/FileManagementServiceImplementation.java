@@ -318,6 +318,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 	 * @return
 	 */
 	private Attachment.Builder getAttachmentFromEntity(GetAttachmentRequest request) {
+		// validate and get table
 		MTable table = validateAndGetTable(request.getTableName());
 
 		int recordId = request.getRecordId();
