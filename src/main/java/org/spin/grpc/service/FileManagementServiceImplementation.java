@@ -318,22 +318,18 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 	 * @return
 	 */
 	private Attachment.Builder getAttachmentFromEntity(GetAttachmentRequest request) {
-		int tableId = 0;
-		if (!Util.isEmpty(request.getTableName(), true)) {
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if (table != null && table.getAD_Table_ID() > 0) {
-				tableId = table.getAD_Table_ID();
-			}
-		}
+		MTable table = validateAndGetTable(request.getTableName());
+
 		int recordId = request.getRecordId();
-		if (recordId <= 0) {
-			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
 		}
-		if (tableId > 0 && recordId > 0) {
-			MAttachment attachment = MAttachment.get(Env.getCtx(), tableId, recordId);
-			return convertAttachment(attachment);
+		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+			return Attachment.newBuilder();
 		}
-		return Attachment.newBuilder();
+
+		MAttachment attachment = MAttachment.get(Env.getCtx(), table.getAD_Table_ID(), recordId);
+		return convertAttachment(attachment);
 	}
 
 
@@ -440,13 +436,11 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 
 		// validate record
 		int recordId = request.getRecordId();
-		if (recordId <= 0) {
-			if (Util.isEmpty(request.getRecordUuid(), true)) {
-				recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
-			}
-			if (recordId <= 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
+		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
+			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
+		}
+		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
 		final int recordIdentifier = recordId;
 
@@ -520,7 +514,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		}
 
 		if (resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
-			throw new AdempiereException("@AD_AttachmentReference_ID@ Null");
+			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
 		}
 		
 		resourceReference.setDescription(request.getDescription());
