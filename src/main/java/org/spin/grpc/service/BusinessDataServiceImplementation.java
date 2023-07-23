@@ -274,11 +274,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			parametersList.add(0, recordParameter.build());
 		}
 
-		//	Add to recent Item
-		DictionaryUtil.addToRecentItem(
-			MMenu.ACTION_Process,
-			process.getAD_Process_ID()
-		);
 		//	Call process builder
 		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
 				.process(process.getAD_Process_ID())

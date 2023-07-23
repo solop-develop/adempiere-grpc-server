@@ -87,6 +87,9 @@ public class DictionaryUtil {
 		if (menuId <= 0) {
 			return;
 		}
+		if (!action.equals(MMenu.ACTION_Window)) {
+			optionId = 0;
+		}
 		MRecentItem.addMenuOption(Env.getCtx(), menuId, optionId);
 	}
 

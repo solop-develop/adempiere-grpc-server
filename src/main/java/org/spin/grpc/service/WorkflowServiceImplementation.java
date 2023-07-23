@@ -143,7 +143,10 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		;
 
 		//	Add to recent Item
-		DictionaryUtil.addToRecentItem(MMenu.ACTION_WorkFlow, workflow.getAD_Workflow_ID());
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_WorkFlow,
+			workflow.getAD_Workflow_ID()
+		);
 
 		return WorkflowUtil.convertWorkflowDefinition(workflow);
 	}

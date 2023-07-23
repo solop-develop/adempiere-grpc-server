@@ -763,6 +763,20 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				builder.addParameters(fieldBuilder.build());
 			}
 		}
+
+		//	Add to recent Item
+		if (process.isReport()) {
+			org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+				MMenu.ACTION_Report,
+				process.getAD_Process_ID()
+			);
+		} else {
+			org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+				MMenu.ACTION_Process,
+				process.getAD_Process_ID()
+			);
+		}
+
 		return builder;
 	}
 	
