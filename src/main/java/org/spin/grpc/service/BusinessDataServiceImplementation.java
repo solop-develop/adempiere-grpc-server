@@ -217,8 +217,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	/**
 	 * Run a process from request
 	 * @param request
-	 * @throws IOException 
-	 * @throws FileNotFoundException 
+	 * @throws IOException
+	 * @throws FileNotFoundException
 	 */
 	public static ProcessLog.Builder runBusinessProcess(RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
 		//	Get Process definition
@@ -226,6 +226,12 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		if(process == null
 				|| process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
+		}
+		if(!MRole.getDefault().getProcessAccess(process.getAD_Process_ID())) {
+			if (process.isReport()) {
+				throw new AdempiereException("@AccessCannotReport@");
+			}
+			throw new AdempiereException("@AccessCannotProcess@");
 		}
 
 		ProcessLog.Builder response = ProcessLog.newBuilder()
