@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
-import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
@@ -819,15 +818,14 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				tableName = I_C_Invoice.Table_Name;
 				recordId = invoiceId;
 			}
-			String processUuid = RecordUtil.getUuidFromId(I_AD_Process.Table_Name, processId, null);
 			String reportType = "pdf";
 			if (!Util.isEmpty(request.getReportType(), true)) {
 				reportType = request.getReportType();
 			}
 			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+				.setId(processId)
 				.setTableName(tableName)
-				.setId(recordId)
-				.setProcessUuid(processUuid)
+				.setRecordId(recordId)
 				.setReportType(reportType)
 			;
 
@@ -840,6 +838,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -869,15 +868,14 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			
 			// Rpt M_InOut
 			int processId = 117;
-			String processUuid = RecordUtil.getUuidFromId(I_AD_Process.Table_Name, processId, null);
 			String reportType = "pdf";
 			if (!Util.isEmpty(request.getReportType(), true)) {
 				reportType = request.getReportType();
 			}
 			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+				.setId(processId)
 				.setTableName(I_M_InOut.Table_Name)
-				.setId(shipmentId)
-				.setProcessUuid(processUuid)
+				.setRecordId(shipmentId)
 				.setReportType(reportType)
 			;
 
@@ -890,6 +888,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())

@@ -192,13 +192,17 @@ message Preference {
 
 // Get Entity Request
 message GetReportOutputRequest {
-	string print_format_uuid = 1;
-	string report_view_uuid = 2;
-	bool is_summary = 3;
-	string report_name = 5;
-	string report_type = 6;
+	int32 process_id = 1;
+	string process_uuid = 2;
+	int32 print_format_id = 3;
+	string print_format_uuid = 4;
+	string report_view_id = 5;
+	string report_view_uuid = 6;
+	bool is_summary = 7;
+	string report_name = 8;
+	string report_type = 9;
 	// Query
-	Criteria criteria = 7;
+	Criteria criteria = 10;
 }
 
 // Create Entity Request
@@ -457,17 +461,20 @@ message Callout {
 
 // BusinessProcess Request
 message RunBusinessProcessRequest {
-	string table_name = 2;
-	string process_uuid = 3;
-	string uuid = 4;
-	int32 id = 5;
+	int32 id = 1;
+	string uuid = 2;
+	string table_name = 3;
+	int32 record_id = 4;
+	string record_uuid = 5;
 	int32 table_selected_id = 6;
 	string report_type = 7;
-	string print_format_uuid = 8;
-	string report_view_uuid = 9;
-	bool is_summary = 10;
-	repeated KeyValue parameters = 11;
-	repeated KeyValueSelection selections = 12;
+	int32 print_format_id = 8;
+	string print_format_uuid = 9;
+	int32 report_view_id = 10;
+	string report_view_uuid = 11;
+	bool is_summary = 12;
+	repeated KeyValue parameters = 13;
+	repeated KeyValueSelection selections = 14;
 }
 
 // Translations Request

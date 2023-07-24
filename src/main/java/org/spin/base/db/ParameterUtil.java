@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
+import org.compiere.util.DisplayType;
 import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.common.Value.ValueType;
 import org.spin.base.util.ValueUtil;
@@ -120,6 +122,29 @@ public class ParameterUtil {
 		} else if(value.getValueType().equals(ValueType.DATE)) {
 			pstmt.setTimestamp(index, ValueUtil.getDateFromValue(value));
 		}
+	}
+
+
+	/**
+	 * Get DB Value to match
+	 * @param value
+	 * @param displayType
+	 * @return
+	 */
+	public static String getDBValue(Object value, int displayType) {
+		String sqlValue = "";
+		if(value instanceof BigDecimal) {
+			sqlValue = DB.TO_NUMBER((BigDecimal) value, displayType);
+		} else if (value instanceof Integer) {
+			sqlValue = value.toString();
+		} else if (value instanceof String) {
+			sqlValue = value.toString();
+		} else if (value instanceof Boolean) {
+			sqlValue = " '" + ValueUtil.booleanToString((Boolean) value, false) + "' ";
+		} else if(value instanceof Timestamp) {
+			sqlValue = DB.TO_DATE((Timestamp) value, displayType == DisplayType.Date);
+		}
+		return sqlValue;
 	}
 
 }

@@ -304,7 +304,8 @@ public class ImportFileLoaderServiceLogic {
 			}
 
 			RunBusinessProcessRequest.Builder runProcessRequest = RunBusinessProcessRequest.newBuilder()
-				.setProcessUuid(process.getUUID())
+				.setId(process.getAD_Process_ID())
+				.setUuid(process.getUUID())
 				.addAllParameters(request.getParametersList())
 			;
 			ProcessLog.Builder processLog = BusinessDataServiceImplementation.runBusinessProcess(

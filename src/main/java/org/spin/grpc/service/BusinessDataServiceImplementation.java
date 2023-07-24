@@ -60,6 +60,7 @@ import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
@@ -221,19 +222,31 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 	 * @throws FileNotFoundException 
 	 */
 	public static ProcessLog.Builder runBusinessProcess(RunBusinessProcessRequest request) throws FileNotFoundException, IOException {
+		if(request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
+		}
+		int processId = request.getId();
+		if(processId <= 0) {
+			processId = RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getUuid(), null);
+		}
+
 		//	Get Process definition
-		MProcess process = MProcess.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getProcessUuid(), null));
-		if(process == null
-				|| process.getAD_Process_ID() <= 0) {
+		MProcess process = MProcess.get(
+			Env.getCtx(),
+			processId
+		);
+		if(process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
 
 		ProcessLog.Builder response = ProcessLog.newBuilder()
-			.setUuid(request.getProcessUuid())
-		;
+			.setUuid(
+				ValueUtil.validateNull(
+					process.getUUID()
+				)
+			);
 
 		int tableId = 0;
-		int recordId = request.getId();
 		if (!Util.isEmpty(request.getTableName(), true)) {
 			MTable table = MTable.get(Env.getCtx(), request.getTableName());
 			if (table != null && table.getAD_Table_ID() > 0) {
@@ -251,14 +264,15 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		PO entity = null;
 		List<KeyValue> parametersList = new ArrayList<KeyValue>();
 		parametersList.addAll(request.getParametersList());
+		int recordId = request.getRecordId();
 		if ((recordId > 0
-				|| !Util.isEmpty(request.getUuid(), true))
+				|| !Util.isEmpty(request.getRecordUuid(), true))
 				&& !Util.isEmpty(request.getTableName(), true)) {
-			String uuid = request.getUuid();
+			String recordUuid = request.getRecordUuid();
 			if (recordId > 0) {
-				uuid = null;
+				recordUuid = null;
 			}
-			entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), uuid, recordId, null);
+			entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), recordUuid, recordId, null);
 			if(entity != null) {
 				recordId = entity.get_ID();
 			}
@@ -291,7 +305,11 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		;
 		//	Set Report Export Type
 		if(process.isReport()) {
-			builder.withReportExportFormat(request.getReportType());
+			String reportType = request.getReportType();
+			if(Util.isEmpty(reportType, true)) {
+				reportType = "pdf";
+			}
+			builder.withReportExportFormat(reportType);
 		}
 		//	Selection
 		if(request.getSelectionsCount() > 0) {
@@ -358,9 +376,14 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		String tableName = null;
 		//	Get process instance from identifier
 		if(result.getAD_PInstance_ID() != 0) {
-			MPInstance instance = new Query(Env.getCtx(), I_AD_PInstance.Table_Name, I_AD_PInstance.COLUMNNAME_AD_PInstance_ID + " = ?", null)
-					.setParameters(result.getAD_PInstance_ID())
-					.first();
+			MPInstance instance = new Query(
+				Env.getCtx(),
+				I_AD_PInstance.Table_Name,
+				I_AD_PInstance.COLUMNNAME_AD_PInstance_ID + " = ?",
+				null
+			)
+				.setParameters(result.getAD_PInstance_ID())
+				.first();
 			response.setInstanceUuid(ValueUtil.validateNull(instance.getUUID()));
 			response.setLastRun(instance.getUpdated().getTime());
 			if(process.isReport()) {
@@ -376,9 +399,14 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 				//	Get from report view or print format
 				MPrintFormat printFormat = null;
 				if(!Util.isEmpty(printFormatUuid)) {
-					printFormat = new Query(Env.getCtx(), I_AD_PrintFormat.Table_Name, I_AD_PrintFormat.COLUMNNAME_UUID + " = ?", null)
-							.setParameters(printFormatUuid)
-							.first();
+					printFormat = new Query(
+						Env.getCtx(),
+						I_AD_PrintFormat.Table_Name,
+						I_AD_PrintFormat.COLUMNNAME_UUID + " = ?",
+						null
+					)
+						.setParameters(printFormatUuid)
+						.first();
 					tableName = printFormat.getAD_Table().getTableName();
 					if(printFormat.getAD_ReportView_ID() != 0) {
 						MReportView reportView = MReportView.get(Env.getCtx(), printFormat.getAD_ReportView_ID());
@@ -430,7 +458,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			File reportFile = Optional.ofNullable(result.getReportAsFile()).orElse(result.getPDFReport());
 			if(reportFile != null
 					&& reportFile.exists()) {
-				String validFileName = getValidName(reportFile.getName());
+				String validFileName = FileUtil.getValidFileName(reportFile.getName());
 				ReportOutput.Builder output = ReportOutput.newBuilder();
 				output.setFileName(ValueUtil.validateNull(validFileName));
 				output.setName(result.getTitle());
@@ -478,18 +506,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 
 
 
-	/**
-	 * Convert Name
-	 * @param name
-	 * @return
-	 */
-	private static String getValidName(String fileName) {
-		if(Util.isEmpty(fileName)) {
-			return "";
-		}
-		return fileName.replaceAll("[+^:&áàäéèëíìïóòöúùñÁÀÄÉÈËÍÌÏÓÒÖÚÙÜÑçÇ$()*#/><]", "").replaceAll(" ", "-");
-	}
-	
 	/**
 	 * get file extension
 	 * @param fileName

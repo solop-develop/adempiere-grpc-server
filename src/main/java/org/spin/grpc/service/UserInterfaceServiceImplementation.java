@@ -97,6 +97,7 @@ import org.compiere.model.MMailText;
 import org.compiere.model.MMessage;
 import org.compiere.model.MPreference;
 import org.compiere.model.MPrivateAccess;
+import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
 import org.compiere.model.MQuery;
 import org.compiere.model.MRecordAccess;
@@ -170,7 +171,6 @@ import org.spin.backend.grpc.common.ListTreeNodesResponse;
 import org.spin.backend.grpc.common.LockPrivateAccessRequest;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.common.MailTemplate;
-import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Preference;
 import org.spin.backend.grpc.common.PrintFormat;
 import org.spin.backend.grpc.common.PrivateAccess;
@@ -194,14 +194,15 @@ import org.spin.backend.grpc.common.UserInterfaceGrpc.UserInterfaceImplBase;
 import org.spin.backend.grpc.common.Value;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
-import org.spin.base.db.OperatorUtil;
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.base.dictionary.ReportUtil;
 import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.FileUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
@@ -210,8 +211,6 @@ import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.model.MADContextInfo;
 import org.spin.util.ASPUtil;
-import org.spin.util.AbstractExportFormat;
-import org.spin.util.ReportExportHandler;
 
 import com.google.protobuf.ByteString;
 
@@ -817,10 +816,12 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException())
+			;
 		}
 	}
 	
@@ -1682,25 +1683,36 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @throws FileNotFoundException 
 	 */
 	private ReportOutput.Builder getReportOutput(GetReportOutputRequest request) throws FileNotFoundException, IOException {
-		Criteria criteria = request.getCriteria();
-		if(Util.isEmpty(criteria.getTableName())) {
-			throw new AdempiereException("@TableName@ @NotFound@");
+		if (request.getProcessId() <= 0 && Util.isEmpty(request.getProcessUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
-		//	Validate print format
-		if(Util.isEmpty(request.getPrintFormatUuid())) {
-			throw new AdempiereException("@AD_PrintFormat_ID@ @NotFound@");
+		int processId = request.getProcessId();
+		if (processId <= 0) {
+			processId = RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getProcessUuid(), null);
+		}
+		MProcess process = ASPUtil.getInstance().getProcess(processId);
+		if (process == null || process.getAD_Process_ID() <= 0) {
+			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
+		}
+
+		Criteria criteria = request.getCriteria();
+		if(Util.isEmpty(criteria.getTableName(), true)) {
+			throw new AdempiereException("@FillMandatory@ @TableName@");
 		}
 		MTable table = MTable.get(Env.getCtx(), criteria.getTableName());
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@TableName@ @NotFound@");
+		}
 		//	
 		if(!MRole.getDefault().isCanReport(table.getAD_Table_ID())) {
 			throw new AdempiereException("@AccessCannotReport@");
 		}
-		//	
-		ReportOutput.Builder builder = ReportOutput.newBuilder();
-		MQuery query = getReportQueryFromCriteria(criteria);
-		if(!Util.isEmpty(criteria.getWhereClause())) {
-			query.addRestriction(criteria.getWhereClause());
+
+		//	Validate print format
+		if(Util.isEmpty(request.getPrintFormatUuid(), true) && Util.isEmpty(request.getReportViewUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_PrintFormat_ID@ / @AD_ReportView_ID@");
 		}
+
 		//	
 		PrintInfo printInformation = new PrintInfo(request.getReportName(), table.getAD_Table_ID(), 0, 0);
 		//	Get Print Format
@@ -1726,12 +1738,20 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			printFormat = MPrintFormat.get(Env.getCtx(), reportViewId, table.getAD_Table_ID());
 		}
 		//	Validate print format
-		if(printFormat == null) {
-			throw new AdempiereException("@AD_PrintGormat_ID@ @NotFound@");
+		if(printFormat == null || printFormat.getAD_PrintFont_ID() <= 0) {
+			throw new AdempiereException("@AD_PrintFormat_ID@ @NotFound@");
 		}
 		if(table.getAD_Table_ID() != printFormat.getAD_Table_ID()) {
 			table = MTable.get(Env.getCtx(), printFormat.getAD_Table_ID());
 		}
+
+		//	
+		ReportOutput.Builder builder = ReportOutput.newBuilder();
+		MQuery query = ReportUtil.getReportQueryFromCriteria(process.getAD_Process_ID(), criteria);
+		if(!Util.isEmpty(criteria.getWhereClause(), true)) {
+			query.addRestriction(criteria.getWhereClause());
+		}
+
 		//	Run report engine
 		ReportEngine reportEngine = new ReportEngine(Env.getCtx(), printFormat, query, printInformation);
 		//	Set report view
@@ -1743,10 +1763,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Set Summary
 		reportEngine.setSummary(request.getIsSummary());
 		//	
-		File reportFile = createOutput(reportEngine, request.getReportType());
+		File reportFile = ReportUtil.createOutput(reportEngine, request.getReportType());
 		if(reportFile != null
 				&& reportFile.exists()) {
-			String validFileName = getValidName(reportFile.getName());
+			String validFileName = FileUtil.getValidFileName(reportFile.getName());
 			builder.setFileName(ValueUtil.validateNull(validFileName));
 			builder.setName(ValueUtil.validateNull(reportEngine.getName()));
 			builder.setMimeType(ValueUtil.validateNull(MimeType.getMimeType(validFileName)));
@@ -1775,29 +1795,9 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Return
 		return builder;
 	}
-	
-	/**
-	 * Create output
-	 * @param reportEngine
-	 * @param reportType
-	 */
-	private File createOutput(ReportEngine reportEngine, String reportType) {
-		//	Export
-		File file = null;
-		try {
-			ReportExportHandler exportHandler = new ReportExportHandler(Env.getCtx(), reportEngine);
-			AbstractExportFormat exporter = exportHandler.getExporterFromExtension(reportType);
-			if(exporter != null) {
-				//	Get File
-				file = File.createTempFile(reportEngine.getName() + "_" + System.currentTimeMillis(), "." + exporter.getExtension());
-				exporter.exportTo(file);
-			}	
-		} catch (IOException e) {
-			return null;
-		}
-		return file;
-	}
-	
+
+
+
 	/**
 	 * Get private access from table, record id and user id
 	 * @param Env.getCtx()
@@ -2097,18 +2097,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Return
 		return builder;
 	}
-	
-	/**
-	 * Convert Name
-	 * @param name
-	 * @return
-	 */
-	private String getValidName(String name) {
-		if(Util.isEmpty(name)) {
-			return "";
-		}
-		return name.replaceAll("[+^:&áàäéèëíìïóòöúùñÁÀÄÉÈËÍÌÏÓÒÖÚÙÜÑçÇ$()*#/><]", "").replaceAll(" ", "-");
-	}
+
 
 
 	/**
@@ -2857,58 +2846,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		return -1;
 	}
-	
-	/**
-	 * Get Report Query from Criteria
-	 * @param criteria
-	 * @return
-	 */
-	private MQuery getReportQueryFromCriteria(Criteria criteria) {
-		MTable table = MTable.get(Env.getCtx(), criteria.getTableName());
-		MQuery query = new MQuery(table.getTableName());
-		criteria.getConditionsList().stream()
-		.filter(condition -> !Util.isEmpty(condition.getColumnName()))
-		.forEach(condition -> {
-			String columnName = condition.getColumnName();
-			String operator = OperatorUtil.convertOperator(condition.getOperatorValue());
-			if(condition.getOperatorValue() == Operator.LIKE_VALUE
-					|| condition.getOperatorValue() == Operator.NOT_LIKE_VALUE) {
-				columnName = "UPPER(" + columnName + ")";
-				query.addRestriction(columnName, operator, ValueUtil.getObjectFromValue(condition.getValue(), true));
-			}
-			//	For in or not in
-			if(condition.getOperatorValue() == Operator.IN_VALUE
-					|| condition.getOperatorValue() == Operator.NOT_IN_VALUE) {
-				StringBuffer whereClause = new StringBuffer();
-				whereClause.append(columnName).append(
-					OperatorUtil.convertOperator(
-						condition.getOperatorValue()
-					)
-				);
-				StringBuffer parameter = new StringBuffer();
-				condition.getValuesList().forEach(value -> {
-					if(parameter.length() > 0) {
-						parameter.append(", ");
-					}
-					Object convertedValue = ValueUtil.getObjectFromValue(value);
-					if(convertedValue instanceof String) {
-						convertedValue = "'" + convertedValue + "'";
-					}
-					parameter.append(convertedValue);
-				});
-				whereClause.append("(").append(parameter).append(")");
-				query.addRestriction(whereClause.toString());
-			} else if(condition.getOperatorValue() == Operator.BETWEEN_VALUE) {
-				query.addRangeRestriction(columnName, ValueUtil.getObjectFromValue(condition.getValue()), ValueUtil.getObjectFromValue(condition.getValueTo()));
-			} else if(condition.getOperatorValue() == Operator.NULL_VALUE
-					|| condition.getOperatorValue() == Operator.NOT_NULL_VALUE) {
-				query.addRestriction(columnName, operator, null);
-			} else {
-				query.addRestriction(columnName, operator, ValueUtil.getObjectFromValue(condition.getValue()));
-			}
-		});
-		return query;
-	}
+
 
 
 	/**
