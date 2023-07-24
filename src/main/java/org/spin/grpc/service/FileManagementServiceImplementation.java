@@ -42,11 +42,13 @@ import org.spin.backend.grpc.file_management.GetResourceRequest;
 import org.spin.backend.grpc.file_management.LoadResourceRequest;
 import org.spin.backend.grpc.file_management.Resource;
 import org.spin.backend.grpc.file_management.ResourceReference;
+import org.spin.backend.grpc.file_management.SetAttachmentDescriptionRequest;
 import org.spin.backend.grpc.file_management.SetResourceReferenceDescriptionRequest;
 import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
+import org.adempiere.core.domains.models.I_AD_Attachment;
 import org.adempiere.core.domains.models.I_AD_AttachmentReference;
 import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
@@ -290,6 +292,50 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			}
 		};
 	}
+
+
+
+	@Override
+	public void setAttachmentDescription(SetAttachmentDescriptionRequest request, StreamObserver<Attachment> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			Attachment.Builder attachment = setAttachmentDescription(request);
+			responseObserver.onNext(attachment.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	Attachment.Builder setAttachmentDescription(SetAttachmentDescriptionRequest request) {
+		if(request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Attachment_ID@");
+		}
+		int attachmentId = request.getId();
+		if (attachmentId <= 0) {
+			attachmentId = RecordUtil.getIdFromUuid(I_AD_Attachment.Table_Name, request.getUuid(), null);
+		}
+		MAttachment attachment = new MAttachment(Env.getCtx(), attachmentId, null);
+		if(attachment == null || attachment.getAD_Attachment_ID() <= 0) {
+			throw new AdempiereException("@AD_Attachment_ID@ @NotFound@");
+		}
+
+		attachment.setTextMsg(request.getTextMessage());
+		attachment.saveEx();
+
+		return convertAttachment(attachment);
+	}
+
+
 
 	@Override
 	public void getAttachment(GetAttachmentRequest request, StreamObserver<Attachment> responseObserver) {

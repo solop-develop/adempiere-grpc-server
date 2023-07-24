@@ -29,9 +29,9 @@ service FileManagement {
 	rpc LoadResource(stream LoadResourceRequest) returns (ResourceReference) {}
 	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
 	//	Attachment
+	rpc SetAttachmentDescription(SetAttachmentDescriptionRequest) returns (Attachment) {}
 	rpc ExistsAttachment(ExistsAttachmentRequest) returns (ExistsAttachmentResponse) {}
 	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {}
-	rpc SetAttachmentDescription(SetAttachmentDescriptionRequest) returns (Attachment) {}
 	//	Resource Reference
 	rpc SetResourceReference(SetResourceReferenceRequest) returns (ResourceReference) {}
 	rpc SetResourceReferenceDescription(SetResourceReferenceDescriptionRequest) returns (ResourceReference) {}
@@ -106,8 +106,8 @@ message GetAttachmentRequest {
 }
 
 message SetAttachmentDescriptionRequest {
-	string id = 1;
-	int32 uuid = 2;
+	int32 id = 1;
+	string uuid = 2;
 	string text_message = 3;
 }
 
