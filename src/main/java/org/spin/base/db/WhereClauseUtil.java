@@ -165,13 +165,23 @@ public class WhereClauseUtil {
 				}
 			}
 		} else if(operatorValue == Operator.BETWEEN_VALUE || operatorValue == Operator.NOT_BETWEEN_VALUE) {
-			sqlValue = " ? AND ? ";
-			params.add(
-				ValueUtil.getObjectFromValue(value)
-			);
-			params.add(
-				ValueUtil.getObjectFromValue(valueTo)
-			);
+			Object valueStart = ValueUtil.getObjectFromValue(value);
+			Object valueEnd = ValueUtil.getObjectFromValue(valueTo);
+
+			sqlValue = "";
+			if (valueStart == null) {
+				sqlValue = " ? ";
+				sqlOperator = OperatorUtil.convertOperator(Operator.LESS_EQUAL_VALUE);
+				params.add(valueEnd);
+			} else if (valueEnd == null) {
+				sqlValue = " ? ";
+				sqlOperator = OperatorUtil.convertOperator(Operator.GREATER_EQUAL_VALUE);
+				params.add(valueStart);
+			} else {
+				sqlValue = " ? AND ? ";
+				params.add(valueStart);
+				params.add(valueEnd);
+			}
 		} else if(operatorValue == Operator.LIKE_VALUE || operatorValue == Operator.NOT_LIKE_VALUE) {
 			columnName = "UPPER(" + columnName + ")";
 			String parameterValue = ValueUtil.validateNull(
