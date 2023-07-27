@@ -834,6 +834,27 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 					.setIsAllowInfoResource(role.isAllow_Info_Resource())
 					.setIsAllowInfoSchedule(role.isAllow_Info_Schedule())
 					.setIsAllowXlsView(role.isAllow_XLS_View());
+
+			// Add client logo
+			if (AttachmentUtil.getInstance().isValidForClient(client.getAD_Client_ID())) {
+				MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), client.getAD_Client_ID());
+				if (clientInfo.getLogo_ID() > 0) {
+					MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
+						Env.getCtx(),
+						clientInfo.getFileHandler_ID(),
+						clientInfo.getLogo_ID(),
+						null
+					);
+					if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
+						builder.setClientLogo(
+							ValueUtil.validateNull(
+								attachmentReference.getValidFileName()
+							)
+						);
+					}
+				}
+			}
+
 			//	With Access
 			// TODO: load from other service
 			if(withAccess) {

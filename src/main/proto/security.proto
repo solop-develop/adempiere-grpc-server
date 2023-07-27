@@ -180,6 +180,7 @@ message Role {
 	bool is_allow_info_resource = 23;
 	bool is_allow_info_crp = 24;
 	bool is_allow_xls_view = 25;
+	string client_logo = 26;
 }
 
 // Menu
