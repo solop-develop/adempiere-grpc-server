@@ -17,6 +17,7 @@ package org.spin.base.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.util.Map;
 
 import org.compiere.model.MClientInfo;
 import org.compiere.util.Env;
@@ -31,6 +32,25 @@ import com.google.protobuf.ByteString;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class FileUtil {
+
+	public static Map<String, String> imageMimeType = Map.ofEntries(
+		Map.entry(".bm", "image/bmp"),
+		Map.entry(".bmp", "image/bmp"),
+		Map.entry(".gif", "image/gif"),
+		Map.entry(".ico", "image/x-icon"),
+		Map.entry(".jfif", "image/jpeg"),
+		Map.entry(".jfif-tbnl", "image/jpeg"),
+		Map.entry(".jpe", "image/jpeg"),
+		Map.entry(".jpeg", "image/jpeg"),
+		Map.entry(".jpg", "image/jpeg"),
+		Map.entry(".pbm", "image/x-portable-bitmap"),
+		Map.entry(".png", "image/png"),
+		Map.entry(".rgb", "image/x-rgb"),
+		Map.entry(".svg", "image/svg+xml"),
+		Map.entry(".svgz", "image/svg+xml"),
+		Map.entry(".tif", "image/tiff"),
+		Map.entry(".tiff", "image/tiff")
+	);
 
 	/**
 	 * Convert Name
@@ -89,6 +109,26 @@ public class FileUtil {
 		byte[] bytes = buffer.toByteArray();
 		ByteString resultFile = ByteString.copyFrom(bytes);
 		return resultFile;
+	}
+
+
+
+	/**
+	 * Validate if is valid image mime type with extension from file name
+	 * @param fileName
+	 * @return
+	 */
+	public static boolean isValidImage(String fileName) {
+		if (Util.isEmpty(fileName, true)) {
+			return false;
+		}
+		String extension = fileName.substring(fileName.lastIndexOf('.'));
+		if (Util.isEmpty(extension, true)) {
+			return false;
+		}
+		extension = extension.toLowerCase();
+
+		return imageMimeType.containsKey(extension);
 	}
 
 }
