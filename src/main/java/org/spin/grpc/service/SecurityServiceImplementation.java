@@ -853,6 +853,36 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 						);
 					}
 				}
+				if (clientInfo.getLogoReport_ID() > 0) {
+					MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
+						Env.getCtx(),
+						clientInfo.getFileHandler_ID(),
+						clientInfo.getLogoReport_ID(),
+						null
+					);
+					if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
+						builder.setClientLogo(
+							ValueUtil.validateNull(
+								attachmentReference.getValidFileName()
+							)
+						);
+					}
+				}
+				if (clientInfo.getLogoWeb_ID() > 0) {
+					MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
+						Env.getCtx(),
+						clientInfo.getFileHandler_ID(),
+						clientInfo.getLogoWeb_ID(),
+						null
+					);
+					if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
+						builder.setClientLogo(
+							ValueUtil.validateNull(
+								attachmentReference.getValidFileName()
+							)
+						);
+					}
+				}
 			}
 
 			//	With Access
