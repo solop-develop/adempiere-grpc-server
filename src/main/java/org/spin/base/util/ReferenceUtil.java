@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_Image;
 import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.I_C_Location;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
@@ -39,6 +40,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.util.AttachmentUtil;
 
 
 /**
@@ -85,6 +87,13 @@ public class ReferenceUtil {
 			|| DisplayType.Locator == referenceId) {
 			return true;
 		}
+		if(DisplayType.Image == referenceId) {
+			return AttachmentUtil.getInstance()
+				.isValidForClient(
+					Env.getAD_Client_ID(Env.getCtx())
+				);
+		}
+
 		return false;
 	}
 
@@ -138,6 +147,11 @@ public class ReferenceUtil {
 			referenceInfo.setDisplayColumnValue(I_M_AttributeSetInstance.COLUMNNAME_Description);
 			referenceInfo.setTableAlias(I_M_AttributeSetInstance.Table_Name + "_" + columnName);
 			referenceInfo.setJoinColumnName(I_M_AttributeSetInstance.COLUMNNAME_M_AttributeSetInstance_ID);
+		} else if (DisplayType.Image == referenceId) {
+			referenceInfo.setColumnName(columnName);
+			String displaColumn = getDisplayColumnSQLImage(tableName, columnName);
+			referenceInfo.setDisplayColumnValue("(" + displaColumn + ")");
+			referenceInfo.setHasJoinValue(false);
 		} else if (DisplayType.Location == referenceId) {
 			//  Add Display
 			referenceInfo.setColumnName(columnName);
@@ -190,6 +204,50 @@ public class ReferenceUtil {
 
 		return referenceInfo;
 	}
+
+
+
+	public static String getDisplayColumnSQLImage(String tableName, String columnName) {
+		StringBuffer query = new StringBuffer()
+			.append("SELECT ")
+			.append("NVL(UUID, '')")
+			.append(" || '-' || ")
+			.append("NVL(FileName, '') ")
+			.append("FROM AD_AttachmentReference ")
+			.append("WHERE AD_Image_ID = ")
+			.append(tableName + "." + columnName)
+			// .append(" LIMIT 1")
+			.append(" AND ROWNUM = 1 ")
+		;
+		return query.toString();
+	}
+
+	public static String getQueryColumnSQLImage() {
+		StringBuffer query = new StringBuffer()
+			.append("SELECT ")
+			.append("AD_AttachmentReference.AD_AttachmentReference_ID, NULL, ")
+			.append("NVL(AD_AttachmentReference.UUID, '')")
+			.append(" || '-' || ")
+			.append("NVL(AD_AttachmentReference.FileName, ''), ")
+			.append("NVL(AD_AttachmentReference.UUID, '') AS UUID ")
+			.append("FROM AD_AttachmentReference ")
+			.append("INNER JOIN AD_Image AD_Image ")
+			.append("ON AD_Image.AD_Image_ID = AD_AttachmentReference.AD_Image_ID ")
+		;
+		return query.toString();
+	}
+
+	public static String getDirectQueryColumnSQLImage() {
+		String query = getQueryColumnSQLImage();
+		StringBuffer directQuery = new StringBuffer()
+			.append(query)
+			.append("WHERE AD_AttachmentReference.AD_Image_ID = ? ")
+			.append("AND ROWNUM = 1 ")
+		;
+		return directQuery.toString();
+	}
+
+
 
 	public static String getColumnsOrderLocation(String displaySequence, boolean isAddressReverse) {
 		StringBuffer cityPostalRegion = new StringBuffer();
@@ -297,7 +355,8 @@ public class ReferenceUtil {
 		String query = getQueryLocation();
 		StringBuffer directQuery = new StringBuffer()
 			.append(query)
-			.append("WHERE C_Location.C_Location_ID = ? ");
+			.append("WHERE C_Location.C_Location_ID = ? ")
+		;
 
 		return directQuery.toString();
 	}
@@ -348,10 +407,16 @@ public class ReferenceUtil {
 			lookupInformation = getLookupInfoFromColumnName(columnName);
 			lookupInformation.DisplayType = referenceId;
 			lookupInformation.Query = "SELECT M_AttributeSetInstance.M_AttributeSetInstance_ID, "
-				+ "NULL,  M_AttributeSetInstance.Description, M_AttributeSetInstance.IsActive "
+				+ "NULL, M_AttributeSetInstance.Description, M_AttributeSetInstance.IsActive "
 				+ "FROM M_AttributeSetInstance ";
 			lookupInformation.QueryDirect = lookupInformation.Query
 				+ "WHERE M_AttributeSetInstance.M_AttributeSetInstance_ID = ? ";
+		} else if(DisplayType.Image == referenceId) {
+			columnName = I_AD_Image.COLUMNNAME_AD_Image_ID;
+			lookupInformation = getLookupInfoFromColumnName(columnName);
+			lookupInformation.DisplayType = referenceId;
+			lookupInformation.Query = getQueryColumnSQLImage();
+			lookupInformation.QueryDirect = getDirectQueryColumnSQLImage();
 		} else if(DisplayType.TableDir == referenceId
 				|| referenceValueId <= 0) {
 			//	Add Display
