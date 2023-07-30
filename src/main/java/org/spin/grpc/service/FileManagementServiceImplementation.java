@@ -64,7 +64,7 @@ import java.nio.ByteBuffer;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service for backend of File Management (Attanchment)
+ * Service for backend of File Management (Attanchment/Image/Archive)
  */
 public class FileManagementServiceImplementation extends FileManagementImplBase {
 	/**	Logger			*/
@@ -102,6 +102,28 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		}
 		return table;
 	}
+
+
+
+	/**
+	 * Validate attachment reference exists.
+	 * @return attachment reference
+	 */
+	public static MADAttachmentReference validateAttachmentReferenceByUuid(String uuid) {
+		if(Util.isEmpty(uuid, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
+		}
+		MADAttachmentReference resourceReference = MADAttachmentReference.getByUuid(
+			Env.getCtx(),
+			uuid,
+			null
+		);
+		if(resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
+			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
+		}
+		return resourceReference;
+	}
+
 
 
 	@Override
@@ -236,7 +258,13 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 			public void onNext(LoadResourceRequest fileUploadRequest) {
 				try {
 					if(resourceUuid.get() == null) {
-						resourceUuid.set(fileUploadRequest.getResourceUuid());
+						// validate and get client info with configured file handler
+						validateAndGetClientInfo();
+
+						// validate and get attachment reference by uuid
+						MADAttachmentReference resourceReference = validateAttachmentReferenceByUuid(fileUploadRequest.getResourceUuid());
+
+						resourceUuid.set(resourceReference.getUUID());
 						BigDecimal size = ValueUtil.getBigDecimalFromDecimal(fileUploadRequest.getFileSize());
 						if (size != null && fileUploadRequest.getData() != null) {
 							byte[] initByte = new byte[size.intValue()];
@@ -248,14 +276,15 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 						byte[] bytes = fileUploadRequest.getData().toByteArray();
 						buffer.set(buffer.get().put(bytes));
 					}
-				} catch (Exception e){
-					e.printStackTrace();
+				} catch (Exception e) {
 					this.onError(e);
 				}
 			}
 
 			@Override
 			public void onError(Throwable throwable) {
+				log.severe(throwable.getLocalizedMessage());
+				throwable.printStackTrace();
 				responseObserver.onError(throwable);
 			}
 
@@ -265,33 +294,25 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 					// validate and get client info with configured file handler
 					MClientInfo clientInfo = validateAndGetClientInfo();
 
-					ResourceReference.Builder response = ResourceReference.newBuilder();
-					if(resourceUuid.get() != null && buffer.get() != null) {
-						MADAttachmentReference resourceReference = MADAttachmentReference.getByUuid(
-							Env.getCtx(),
-							resourceUuid.get(),
-							null
-						);
-						if (resourceReference != null) {
-							byte[] data = buffer.get().array();
-							AttachmentUtil.getInstance()
-								.clear()
-								.withAttachmentReferenceId(resourceReference.getAD_AttachmentReference_ID())
-								.withFileName(resourceReference.getFileName())
-								.withClientId(clientInfo.getAD_Client_ID())
-								.withData(data)
-								.saveAttachment();
+					// validate and get attachment reference by uuid
+					MADAttachmentReference resourceReference = validateAttachmentReferenceByUuid(resourceUuid.get());
 
-							MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
-							response = convertResourceReference(resourceReference);
-						}
-					}
+					byte[] data = buffer.get().array();
+					AttachmentUtil.getInstance()
+						.clear()
+						.withAttachmentReferenceId(resourceReference.getAD_AttachmentReference_ID())
+						.withFileName(resourceReference.getFileName())
+						.withClientId(clientInfo.getAD_Client_ID())
+						.withData(data)
+						.saveAttachment();
+
+					MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
+					ResourceReference.Builder response = convertResourceReference(resourceReference);
 
 					responseObserver.onNext(response.build());
 					responseObserver.onCompleted();
 				} catch (Exception e) {
-					e.printStackTrace();
-					throw new AdempiereException(e);
+					this.onError(e);
 				}
 			}
 		};
