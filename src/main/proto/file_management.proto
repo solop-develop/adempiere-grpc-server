@@ -102,8 +102,13 @@ message GetResourceRequest {
 
 // Request for download resource reference
 message GetResourceReferenceRequest {
-	int32 image_id = 1;
-	string image_uuid = 2;
+	int32 id = 1;
+	string uuid = 2;
+	string resource_name = 3;
+	int32 image_id = 4;
+	string image_uuid = 5;
+	int32 archive_id = 6;
+	string archive_uuid = 7;
 }
 
 // Request attachment from table and record uuid
