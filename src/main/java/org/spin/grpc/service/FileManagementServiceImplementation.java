@@ -700,19 +700,19 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		if (Util.isEmpty(resourceUuid, true)) {
 			resourceUuid = getResourceUuidFromName(request.getResourceName());
 		}
-		if (Util.isEmpty(resourceUuid, true)) {
-			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
+		if (request.getResourceId() <= 0 && Util.isEmpty(resourceUuid, true)) {
+			if (!Util.isEmpty(request.getResourceName(), true)) {
+				throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
+			}
+			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
 		}
 
 		MADAttachmentReference resourceReference = null;
 		if (request.getResourceId() > 0) {
 			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getResourceId(), null);
 		}
-		if (resourceReference == null && !Util.isEmpty(request.getResourceUuid(), true)) {
-			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getResourceUuid(), null);
-		}
-		if (resourceReference == null && !Util.isEmpty(request.getResourceName(), true)) {
-			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getResourceName(), null);
+		if ((resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) && !Util.isEmpty(resourceUuid, true)) {
+			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), resourceUuid, null);
 		}
 
 		if (resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
@@ -722,13 +722,29 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 		// validate and get client info with configured file handler
 		MClientInfo clientInfo = validateAndGetClientInfo();
 
+		// when delete attachmet reference, the `resourceReference` is clean values
+		final int imageId = resourceReference.getAD_Image_ID();
+		final int archiveId = resourceReference.getAD_Archive_ID();
+
 		// delete file on cloud (s3, nexcloud)
 		AttachmentUtil.getInstance()
 			.clear()
-			.withAttachmentId(resourceReference.getAD_Attachment_ID())
+			.withAttachmentReferenceId(resourceReference.getAD_AttachmentReference_ID())
 			.withFileName(resourceReference.getFileName())
 			.withClientId(clientInfo.getAD_Client_ID())
 			.deleteAttachment();
+
+		if (imageId > 0) {
+			MImage image = MImage.get(Env.getCtx(), imageId, null);
+			if (image != null && image.getAD_Image_ID() > 0) {
+				image.deleteEx(false);
+			}
+		} else if (archiveId > 0) {
+			MArchive archive = new MArchive(Env.getCtx(), archiveId, null);
+			if (archive != null && archive.getAD_Archive_ID() > 0) {
+				archive.deleteEx(false);
+			}
+		}
 
 		// reset cache
 		MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
