@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2022 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -42,6 +42,8 @@ service Logs {
 	rpc ListWorkflowLogs(ListWorkflowLogsRequest) returns (ListWorkflowLogsResponse) {}
 	//	Request Recent Items
 	rpc ListRecentItems(ListRecentItemsRequest) returns (ListRecentItemsResponse) {}
+	// Request List User Activities
+	rpc ListUserActivites(ListUserActivitesRequest) returns (ListUserActivitesResponse) {}
 }
 
 // BusinessProcess Activity Request
@@ -71,10 +73,40 @@ message ListEntityLogsRequest {
 	string page_token = 6;
 }
 
-//	Record Log List
+// Record Log
+message ChangeLog {
+	string column_name = 4;
+	string display_column_name = 5;
+	string old_value = 10;
+	string old_display_value = 11;
+	string new_value = 12;
+	string new_display_value = 13;
+	string description = 14;
+}
+
+enum EntityEventType {
+	INSERT = 0;
+	UPDATE = 1;
+	DELETE = 2;
+}
+
+message EntityLog {
+	int32 log_id = 1;
+	int32 id = 2;
+	string uuid = 3;
+	string table_name = 4;
+	string session_uuid = 5;
+	string user_uuid = 6;
+	string user_name = 7;
+	string transaction_name = 8;
+	EntityEventType event_type = 9;
+	int64 log_date = 10;
+	repeated ChangeLog change_logs = 11; 
+}
+
 message ListEntityLogsResponse {
 	int64 record_count = 1;
-	repeated data.EntityLog entity_logs = 2;
+	repeated EntityLog entity_logs = 2;
 	string next_page_token = 3;
 }
 
@@ -193,5 +225,32 @@ message ListWorkflowLogsRequest {
 message ListWorkflowLogsResponse {
 	int64 record_count = 1;
 	repeated workflow.WorkflowProcess workflow_logs = 2;
+	string next_page_token = 3;
+}
+
+//	User Activity
+message ListUserActivitesRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+	int64 date = 4;
+}
+
+enum UserActivityType {
+	ENTITY_LOG = 0;
+	PROCESS_LOG = 1;
+}
+
+message UserActivity {
+	UserActivityType user_activity_type = 1;
+	// int64 date = 2;
+	EntityLog entity_log = 2;
+	data.ProcessLog process_log = 3;
+}
+
+message ListUserActivitesResponse {
+	int64 record_count = 1;
+	repeated UserActivity records = 2;
 	string next_page_token = 3;
 }

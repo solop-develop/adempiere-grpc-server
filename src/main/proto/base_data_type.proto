@@ -190,36 +190,6 @@ message PrintFormat {
 	string report_view_uuid = 6;
 }
 
-// Record Log
-message EntityLog {
-	int32 log_id = 1;
-	int32 id = 2;
-	string uuid = 3;
-	string table_name = 4;
-	string session_uuid = 5;
-	string user_uuid = 6;
-	string user_name = 7;
-	string transaction_name = 8;
-	enum EventType {
-		INSERT = 0;
-		UPDATE = 1;
-		DELETE = 2;
-	}
-	EventType event_type = 9;
-	int64 log_date = 10;
-	repeated ChangeLog change_logs = 11; 
-}
-
-// Record Log
-message ChangeLog {
-	string column_name = 4;
-	string display_column_name = 5;
-	string old_value = 10;
-	string old_display_value = 11;
-	string new_value = 12;
-	string new_display_value = 13;
-	string description = 14;
-}
 
 // Report View
 message ReportView {
