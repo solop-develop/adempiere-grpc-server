@@ -139,6 +139,7 @@ message ListFilePreviewRequest {
 	string search_value = 3;
 	int32 import_format_id = 4;
 	int32 resource_id = 5;
+	string charset = 6;
 }
 
 
