@@ -31,9 +31,9 @@ import org.compiere.util.Util;
 public class DictionaryUtil {
 	
 	public static String ID_PREFIX = "_ID";
-	
+
 	public static String TRANSLATION_SUFFIX = "_Trl";
-	
+
 	/**
 	 * Get Context column names from context
 	 * @param context
@@ -75,14 +75,31 @@ public class DictionaryUtil {
 
 		// @ColumnName@ , @#ColumnName@ , @$ColumnName@
 		StringBuffer patternValue = new StringBuffer()
-			.append("(@")
+			.append("@")
 			.append("($|#){0,1}")
 			.append(columnName)
-			.append("@)");
+			.append("(@)")
+		;
 
-		Pattern pattern = Pattern.compile(patternValue.toString(), Pattern.CASE_INSENSITIVE);
+		Pattern pattern = Pattern.compile(
+			patternValue.toString(),
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		);
 		Matcher matcher = pattern.matcher(context);
 		boolean isUsedParentColumn = matcher.find();
+
+		// TODO: Delete this condition when fix evaluator (readonlyLogic on Client Info)
+		// TODO: https://github.com/adempiere/adempiere/pull/4124
+		if (!isUsedParentColumn) {
+			// @ColumnName , @#ColumnName , @$ColumnName
+			patternValue.append("{0,1}");
+			Pattern pattern2 = Pattern.compile(
+				patternValue.toString(),
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			);
+			Matcher matcher2 = pattern2.matcher(context);
+			isUsedParentColumn = matcher2.find();
+		}
 
 		return isUsedParentColumn;
 	}
