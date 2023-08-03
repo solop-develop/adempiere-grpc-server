@@ -288,6 +288,7 @@ public class LogsServiceImplementation extends LogsImplBase {
 		int count = query.count();
 		List<MWFProcess> workflowProcessLogList = query
 				.setLimit(limit, offset)
+				.setOrderBy(I_AD_WF_Process.COLUMNNAME_Updated + " DESC")
 				.<MWFProcess>list();
 		//	
 		ListWorkflowLogsResponse.Builder builder = ListWorkflowLogsResponse.newBuilder();
