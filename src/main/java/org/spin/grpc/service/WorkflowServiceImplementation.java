@@ -25,16 +25,18 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_AD_WF_Activity;
-import org.adempiere.core.domains.models.I_AD_WF_Node;
 import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.adempiere.core.domains.models.I_C_Order;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MDocType;
 import org.compiere.model.MMenu;
 import org.compiere.model.MOrder;
+import org.compiere.model.MPInstance;
+import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
@@ -42,10 +44,10 @@ import org.compiere.model.Query;
 import org.compiere.process.DocAction;
 import org.compiere.process.DocOptions;
 import org.compiere.process.DocumentEngine;
+import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.compiere.wf.MWFActivity;
@@ -691,7 +693,6 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		if (Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
-
 		//	get document action
 		if (Util.isEmpty(request.getDocumentAction(), true)) {
 			throw new AdempiereException("@DocAction@ @NotFound@");
@@ -702,86 +703,87 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
-		if (!table.isDocument()) {
-			throw new AdempiereException("@NotValid@ @AD_Table_ID@ @IsDocument@@");
-		}
-
-		int recordId = request.getId();
-		if (recordId <= 0 && Util.isEmpty(request.getUuid(), true)) {
-			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-		}
-
 		ProcessLog.Builder response = ProcessLog.newBuilder()
-			.setResultTableName(
-				ValueUtil.validateNull(table.getTableName())
-			)
-		;
-
-		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), recordId, null);
-		if (entity == null || entity.get_ID() <= 0) {
-			throw new AdempiereException("@Error@ @PO@ @NotFound@");
-		}
-		//	Validate as document
-		if (!DocAction.class.isAssignableFrom(entity.getClass())) {
-			throw new AdempiereException("@Invalid@ @Document@");
-		}
-
-		// Check Existence of Workflow Activities
-		String workflowStatus = MWFActivity.getActiveInfo(Env.getCtx(), entity.get_Table_ID(), entity.get_ID());
-		if (!Util.isEmpty(workflowStatus, true)) {
-			throw new AdempiereException("@WFActiveForRecord@ " + workflowStatus);
-		}
-
-		//	Status Change
-		String documentStatus = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocStatus);
-		boolean isSameValue = org.spin.base.workflow.WorkflowUtil.checkStatus(table.getTableName(), entity.get_ID(), documentStatus);
-		if (!isSameValue) {
-			throw new AdempiereException("@DocumentStatusChanged@" + documentStatus);
-		}
-
-		//	Process
-		Trx.run(transactionName -> {
-			entity.set_ValueOfColumn(I_AD_WF_Node.COLUMNNAME_DocAction, documentAction);
-			entity.set_TrxName(transactionName);
-			entity.saveEx();
-			DocAction document = (DocAction) entity;
-			try {
-				if (!document.processIt(documentAction)) {
-					response.setSummary(Msg.parseTranslation(context, document.getProcessMsg()));
-					response.setIsError(true);
-				}
-				// else {
-				// 	int columnId = MColumn.getColumn_ID(table.getTableName(), I_C_Order.COLUMNNAME_DocAction);
-				// 	MColumn column = MColumn.get(context, columnId);
-				// 	if (column.getAD_Process_ID() > 0) {
-				// 		MProcess process = MProcess.get(context, column.getAD_Process_ID());
-				// 		if (process.getAD_Workflow_ID() > 0) {
-				// 			org.spin.base.workflow.WorkflowUtil.startWorkflow(
-				// 				process.getAD_Workflow_ID(),
-				// 				process.getAD_Process_ID(),
-				// 				table.getAD_Table_ID(),
-				// 				entity.get_ID(),
-				// 				entity.get_TrxName()
-				// 			);
-				// 		}
-				// 	}
-				// }
-			} catch (Exception e) {
-				e.printStackTrace();
-				log.severe(e.getLocalizedMessage());
-
-				String summary = Msg.parseTranslation(context, document.getProcessMsg());
-				if (Util.isEmpty(summary, true)) {
-					summary = e.getLocalizedMessage();
-				}
-				response.setSummary(
-					ValueUtil.validateNull(summary)
-				);
-				response.setIsError(true);
+				.setResultTableName(
+					ValueUtil.validateNull(table.getTableName())
+				)
+			;
+		try {
+			if (!table.isDocument()) {
+				throw new AdempiereException("@NotValid@ @AD_Table_ID@ @IsDocument@@");
 			}
 
-			document.saveEx();
-		});
+			int recordId = request.getId();
+			if (recordId <= 0 && Util.isEmpty(request.getUuid(), true)) {
+				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			}
+
+			PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), recordId, null);
+			if (entity == null || entity.get_ID() <= 0) {
+				throw new AdempiereException("@Error@ @PO@ @NotFound@");
+			}
+			//	Validate as document
+			if (!DocAction.class.isAssignableFrom(entity.getClass())) {
+				throw new AdempiereException("@Invalid@ @Document@");
+			}
+			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_DocAction, documentAction);
+			entity.saveEx();
+			//	Process It
+			//	Get WF from Table
+			MColumn column = table.getColumn(I_C_Order.COLUMNNAME_DocAction);
+			if(column != null) {
+				MProcess process = MProcess.get(context, column.getAD_Process_ID());
+				if(process.getAD_Workflow_ID() > 0) {
+					MWorkflow workFlow = MWorkflow.get (context, process.getAD_Workflow_ID());
+					String name = process.get_Translation(I_AD_Process.COLUMNNAME_Name);
+					ProcessInfo processInfo = new ProcessInfo(name, process.getAD_Process_ID(), table.getAD_Table_ID(), entity.get_ID());
+					processInfo.setAD_User_ID (Env.getAD_User_ID(context));
+					processInfo.setAD_Client_ID(Env.getAD_Client_ID(context));
+					processInfo.setInterfaceType(ProcessInfo.INTERFACE_TYPE_NOT_SET);
+					if(processInfo.getAD_PInstance_ID() <= 0) {
+						MPInstance instance = null;
+						//	Set to null for reload
+						//	BR [ 380 ]
+						processInfo.setParameter(null);
+						try {
+							instance = new MPInstance(Env.getCtx(), 
+									processInfo.getAD_Process_ID(), processInfo.getRecord_ID());
+							instance.setName(name);
+							instance.saveEx();
+							//	Set Instance
+							processInfo.setAD_PInstance_ID(instance.getAD_PInstance_ID());
+						} catch (Exception e) { 
+							processInfo.setSummary (e.getLocalizedMessage()); 
+							processInfo.setError (true); 
+							log.warning(processInfo.toString()); 
+							processInfo.getSummary();
+							throw new AdempiereException(e);
+						}
+					}
+					if (processInfo.isBatch())
+						workFlow.start(processInfo);		//	may return null
+					else {
+						workFlow.startWait(processInfo);	//	may return null
+					}
+					String summary = processInfo.getSummary();
+					response.setSummary(
+						ValueUtil.validateNull(summary)
+					);
+					response.setIsError(processInfo.isError());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.severe(e.getLocalizedMessage());
+			String summary = e.getLocalizedMessage();
+			if (Util.isEmpty(summary, true)) {
+				summary = e.getLocalizedMessage();
+			}
+			response.setSummary(
+				ValueUtil.validateNull(summary)
+			);
+			response.setIsError(true);
+		}
 		return response;
 	}
 
