@@ -16,7 +16,7 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.record_management";
-option java_outer_classname = "ADempiereRecordManager";
+option java_outer_classname = "ADempiereRecordManagement";
 
 package record_management;
 
