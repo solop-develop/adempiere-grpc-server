@@ -45,6 +45,7 @@ public enum Services {
 	PAYROLL_ACTION_NOTICE("payroll_action_notice"),
 	POS("pos"),
 	PRODUCT("product"),
+	RECORD_MANAGER("record_manager"),
 	SECURITY("security"),
 	STORE("store"),
 	TIME_CONTROL("time_control"),

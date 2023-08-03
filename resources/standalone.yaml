@@ -28,6 +28,7 @@ server:
        - payroll_action_notice
        - pos
        - product
+       - record_manager
        - security
        - store
        - time_control
