@@ -152,6 +152,15 @@ message Entity {
 }
 
 //	Response with log and values from server
+message ProcesInstanceParameter {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string column_name = 4;
+	Value value = 5;
+	Value value_to = 6;
+}
+
 message ProcessLog {
 	string uuid = 1;
 	string name = 2;
@@ -165,6 +174,7 @@ message ProcessLog {
 	repeated ProcessInfoLog logs = 10;
 	map<string, Value> parameters = 11;
 	ReportOutput output = 12;
+	repeated ProcesInstanceParameter process_intance_parameters = 13;
 }
 
 //	BusinessProcess Log result

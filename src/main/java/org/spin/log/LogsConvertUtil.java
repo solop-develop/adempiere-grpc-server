@@ -25,6 +25,9 @@ import java.util.logging.Level;
 
 import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.adempiere.core.domains.models.I_AD_PInstance_Log;
+import org.adempiere.core.domains.models.I_AD_Process_Para;
+import org.adempiere.core.domains.models.I_AD_Table;
+import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.X_AD_PInstance_Log;
 import org.compiere.model.MChangeLog;
@@ -35,8 +38,10 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.model.MPInstance;
 import org.compiere.model.MPInstancePara;
 import org.compiere.model.MProcess;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
+import org.compiere.model.MWindow;
 import org.compiere.model.M_Element;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -46,6 +51,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.NamePair;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.common.ProcesInstanceParameter;
 import org.spin.backend.grpc.common.ProcessInfoLog;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ReportOutput;
@@ -97,6 +103,20 @@ public class LogsConvertUtil {
 		builder.setId(recordLog.getRecord_ID());
 		builder.setUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(table.getTableName(), recordLog.getRecord_ID())));
 		builder.setTableName(ValueUtil.validateNull(table.getTableName()));
+		
+		String displayedName = table.get_Translation(I_AD_Table.COLUMNNAME_Name);
+		if (table.getAD_Window_ID() > 0) {
+			MWindow window = MWindow.get(Env.getCtx(), table.getAD_Window_ID());
+			displayedName = window.get_Translation(I_AD_Window.COLUMNNAME_Name);
+			builder.setWindowId(window.getAD_Window_ID());
+			builder.setWindowUuid(
+				ValueUtil.validateNull(window.getUUID())
+			);
+		}
+		builder.setDisplayedName(
+			ValueUtil.validateNull(displayedName)
+		);
+
 		builder.setSessionUuid(ValueUtil.validateNull(recordLog.getAD_Session().getUUID()));
 		builder.setUserUuid(ValueUtil.validateNull(user.getUUID()));
 		builder.setUserName(ValueUtil.validateNull(user.getName()));
@@ -288,6 +308,10 @@ public class LogsConvertUtil {
 	 */
 	public static ProcessLog.Builder convertProcessLog(MPInstance instance) {
 		ProcessLog.Builder builder = ProcessLog.newBuilder();
+		if (instance == null) {
+			return builder;
+		}
+
 		builder.setInstanceUuid(ValueUtil.validateNull(instance.getUUID()));
 		builder.setIsError(!instance.isOK());
 		builder.setIsProcessing(instance.isProcessing());
@@ -401,7 +425,125 @@ public class LogsConvertUtil {
 			if(hasToParameter) {
 				builder.putParameters(parameterName + "_To", parameterToBuilder.build());
 			}
+
+			ProcesInstanceParameter.Builder instanceParaBuilder = convertProcessInstance(
+				parameter
+			);
+			builder.addProcessIntanceParameters(instanceParaBuilder);
 		}
 		return builder;
 	}
+
+
+	public static ProcesInstanceParameter.Builder convertProcessInstance(MPInstancePara instancePara) {
+		ProcesInstanceParameter.Builder builder = ProcesInstanceParameter.newBuilder();
+		if (instancePara == null) {
+			return builder;
+		}
+
+		builder.setColumnName(
+			ValueUtil.validateNull(
+				instancePara.getParameterName()
+			)
+		);
+
+		MProcessPara processPara = null;
+		MProcess process = (MProcess) instancePara.getAD_PInstance().getAD_Process();
+		MProcessPara[] params = process.getParameters();
+		for(MProcessPara param : params) {
+			if (param.getColumnName().equals(instancePara.getParameterName())) {
+				processPara = param;
+				break;
+			}
+		}
+		if (processPara != null) {
+			builder.setId(processPara.getAD_Process_Para_ID())
+				.setUuid(
+					ValueUtil.validateNull(processPara.getUUID())
+				)
+				.setName(
+					ValueUtil.validateNull(
+						processPara.get_Translation(I_AD_Process_Para.COLUMNNAME_Name)
+					)
+				)
+			;
+		}
+
+		Value.Builder parameterBuilder = Value.newBuilder();
+		Value.Builder parameterToBuilder = Value.newBuilder();
+		boolean hasFromParameter = false;
+		boolean hasToParameter = false;
+		int displayType = instancePara.getDisplayType();
+		if(displayType == -1) {
+			displayType = DisplayType.String;
+		}
+		//	Validate
+		if(DisplayType.isID(displayType)) {
+			BigDecimal number = instancePara.getP_Number();
+			BigDecimal numberTo = instancePara.getP_Number_To();
+			//	Validate
+			if(number != null && !number.equals(Env.ZERO)) {
+				hasFromParameter = true;
+				parameterBuilder = ValueUtil.getValueFromInteger(number.intValue());
+			}
+			if(numberTo != null && !numberTo.equals(Env.ZERO)) {
+				hasToParameter = true;
+				parameterBuilder = ValueUtil.getValueFromInteger(numberTo.intValue());
+			}
+		} else if(DisplayType.isNumeric(displayType)) {
+			BigDecimal number = instancePara.getP_Number();
+			BigDecimal numberTo = instancePara.getP_Number_To();
+			//	Validate
+			if(number != null && !number.equals(Env.ZERO)) {
+				hasFromParameter = true;
+				parameterBuilder = ValueUtil.getValueFromDecimal(number);
+			}
+			if(numberTo != null && !numberTo.equals(Env.ZERO)) {
+				hasToParameter = true;
+				parameterBuilder = ValueUtil.getValueFromDecimal(numberTo);
+			}
+		} else if(DisplayType.isDate(displayType)) {
+			Timestamp date = instancePara.getP_Date();
+			Timestamp dateTo = instancePara.getP_Date_To();
+			//	Validate
+			if(date != null) {
+				hasFromParameter = true;
+				parameterBuilder = ValueUtil.getValueFromDate(date);
+			}
+			if(dateTo != null) {
+				hasToParameter = true;
+				parameterBuilder = ValueUtil.getValueFromDate(dateTo);
+			}
+		} else if(DisplayType.YesNo == displayType) {
+			String value = instancePara.getP_String();
+			if(!Util.isEmpty(value, true)) {
+				hasFromParameter = true;
+				parameterBuilder = ValueUtil.getValueFromBoolean(value);
+			}
+		} else {
+			String value = instancePara.getP_String();
+			String valueTo = instancePara.getP_String_To();
+			//	Validate
+			if(!Util.isEmpty(value)) {
+				hasFromParameter = true;
+				parameterBuilder = ValueUtil.getValueFromString(value);
+			}
+			if(!Util.isEmpty(valueTo)) {
+				hasToParameter = true;
+				parameterBuilder = ValueUtil.getValueFromString(valueTo);
+			}
+		}
+
+		//	For parameter
+		if(hasFromParameter) {
+			builder.setValue(parameterBuilder);
+		}
+		//	For to parameter
+		if(hasToParameter) {
+			builder.setValueTo(parameterToBuilder.build());
+		}
+
+		return builder;
+	}
+
 }

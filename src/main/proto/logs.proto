@@ -94,14 +94,18 @@ message EntityLog {
 	int32 log_id = 1;
 	int32 id = 2;
 	string uuid = 3;
-	string table_name = 4;
-	string session_uuid = 5;
-	string user_uuid = 6;
-	string user_name = 7;
-	string transaction_name = 8;
-	EntityEventType event_type = 9;
-	int64 log_date = 10;
-	repeated ChangeLog change_logs = 11; 
+	string displayed_name = 4;
+	int32 window_id = 5;
+	string window_uuid = 6;
+	string table_name = 7;
+	string session_uuid = 8;
+	int32 user_id = 9;
+	string user_uuid = 10;
+	string user_name = 11;
+	string transaction_name = 12;
+	EntityEventType event_type = 13;
+	int64 log_date = 14;
+	repeated ChangeLog change_logs = 15;
 }
 
 message ListEntityLogsResponse {
