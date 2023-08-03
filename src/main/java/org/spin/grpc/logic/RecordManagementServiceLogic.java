@@ -24,16 +24,16 @@ import org.compiere.model.PO;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.record_manager.ToggleIsActiveRecordsRequest;
-import org.spin.backend.grpc.record_manager.ToggleIsActiveRecordsResponse;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsRequest;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsResponse;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service Logic for backend of Record Manager
+ * Service Logic for backend of Record Management
  */
-public class RecordManagerServiceLogic {
+public class RecordManagementServiceLogic {
 
 	/**
 	 * Validate table exists.

@@ -16,20 +16,20 @@ package org.spin.grpc.service;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
-import org.spin.backend.grpc.record_manager.RecordManagerGrpc.RecordManagerImplBase;
-import org.spin.grpc.logic.RecordManagerServiceLogic;
-import org.spin.backend.grpc.record_manager.ToggleIsActiveRecordsRequest;
-import org.spin.backend.grpc.record_manager.ToggleIsActiveRecordsResponse;
+import org.spin.backend.grpc.record_management.RecordManagementGrpc.RecordManagementImplBase;
+import org.spin.grpc.logic.RecordManagementServiceLogic;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsRequest;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsResponse;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service for backend of Record Manager
+ * Service for backend of Record Management
  */
-public class RecordManagerServiceImplementation extends RecordManagerImplBase {
-	private CLogger log = CLogger.getCLogger(RecordManagerServiceImplementation.class);
+public class RecordManagementServiceImplementation extends RecordManagementImplBase {
+	private CLogger log = CLogger.getCLogger(RecordManagementServiceImplementation.class);
 
 
 	@Override
@@ -39,7 +39,7 @@ public class RecordManagerServiceImplementation extends RecordManagerImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ToggleIsActiveRecordsResponse.Builder builder = RecordManagerServiceLogic.toggleIsActiveRecords(request);
+			ToggleIsActiveRecordsResponse.Builder builder = RecordManagementServiceLogic.toggleIsActiveRecords(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

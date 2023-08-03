@@ -47,7 +47,7 @@ import org.spin.grpc.service.PaymentServiceImplementation;
 import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
 import org.spin.grpc.service.PointOfSalesServiceImplementation;
 import org.spin.grpc.service.ProductServiceImplementation;
-import org.spin.grpc.service.RecordManagerServiceImplementation;
+import org.spin.grpc.service.RecordManagementServiceImplementation;
 import org.spin.grpc.service.SecurityServiceImplementation;
 import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.grpc.service.TimeRecordServiceImplementation;
@@ -247,10 +247,10 @@ public class AllInOneServices {
 			serverBuilder.addService(new ProductServiceImplementation());
 			logger.info("Service " + Services.PRODUCT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
-		//	Record Manager
-		if (SetupLoader.getInstance().getServer().isValidService(Services.RECORD_MANAGER.getServiceName())) {
-			serverBuilder.addService(new RecordManagerServiceImplementation());
-			logger.info("Service " + Services.RECORD_MANAGER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Record Management
+		if (SetupLoader.getInstance().getServer().isValidService(Services.RECORD_MANAGEMENT.getServiceName())) {
+			serverBuilder.addService(new RecordManagementServiceImplementation());
+			logger.info("Service " + Services.RECORD_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Time Control
 		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {

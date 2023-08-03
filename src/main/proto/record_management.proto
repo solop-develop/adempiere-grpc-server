@@ -15,12 +15,12 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.record_manager";
+option java_package = "org.spin.backend.grpc.record_management";
 option java_outer_classname = "ADempiereRecordManager";
 
-package record_manager;
+package record_management;
 
-service RecordManager {
+service RecordManagement {
 	rpc ToggleIsActiveRecords(ToggleIsActiveRecordsRequest) returns (ToggleIsActiveRecordsResponse) {}
 }
 
