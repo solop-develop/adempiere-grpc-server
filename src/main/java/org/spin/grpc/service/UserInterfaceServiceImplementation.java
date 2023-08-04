@@ -2490,6 +2490,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				String defaultValueList = matcherSingleQuotes.replaceAll("$2");
 
 				MRefList referenceList = MRefList.get(Env.getCtx(), referenceValueId, defaultValueList, null);
+				if (referenceList == null) {
+					log.fine(Msg.parseTranslation(Env.getCtx(), "@AD_Ref_List_ID@ @NotFound@"));
+					return builder;
+				}
 				builder = convertDefaultValueFromResult(referenceList.getValue(), referenceList.getUUID(), referenceList.getValue(), referenceList.get_Translation(MRefList.COLUMNNAME_Name));
 			} else {
 				if (DisplayType.Button == referenceId) {
@@ -2507,7 +2511,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				}
 
 				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
-				if(!Util.isEmpty(lookupInfo.QueryDirect)) {
+				if(lookupInfo != null && !Util.isEmpty(lookupInfo.QueryDirect)) {
 					String sql = MRole.getDefault(Env.getCtx(), false).addAccessSQL(lookupInfo.QueryDirect,
 							lookupInfo.TableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 					PreparedStatement pstmt = null;
