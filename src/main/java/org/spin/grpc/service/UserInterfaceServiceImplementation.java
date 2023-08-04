@@ -2439,13 +2439,12 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 */
 	private DefaultValue.Builder getDefaultKeyAndValue(List<KeyValue> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
 		DefaultValue.Builder builder = DefaultValue.newBuilder();
-		if(Util.isEmpty(defaultValue)) {
+		if(Util.isEmpty(defaultValue, true)) {
 			return builder;
 		}
 		Object defaultValueAsObject = null;
 
-		// Fill Env.getCtx()
-		
+		// Fill contex
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), contextAttributes);
 
@@ -2511,7 +2510,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				}
 
 				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
-				if(lookupInfo == null || Util.isEmpty(lookupInfo.QueryDirect)) {
+				if(lookupInfo == null || Util.isEmpty(lookupInfo.QueryDirect, true)) {
 					return builder;
 				}
 				String sql = MRole.getDefault(Env.getCtx(), false).addAccessSQL(
