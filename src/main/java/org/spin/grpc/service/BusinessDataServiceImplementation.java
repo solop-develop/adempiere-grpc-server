@@ -64,6 +64,7 @@ import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
+import org.spin.base.workflow.WorkflowUtil;
 import org.spin.backend.grpc.common.BusinessDataGrpc.BusinessDataImplBase;
 import org.spin.backend.grpc.common.CreateEntityRequest;
 import org.spin.backend.grpc.common.Criteria;
@@ -346,12 +347,14 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			}
 		}
 		//	For Document
-		if(!Util.isEmpty(documentAction)
-				&& process.getAD_Workflow_ID() != 0
-				&& entity != null
-				&& DocAction.class.isAssignableFrom(entity.getClass())) {
-			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_DocAction, documentAction);
-			entity.saveEx();
+		if(process.getAD_Workflow_ID() > 0 && !Util.isEmpty(documentAction, true)
+			&& entity != null && DocAction.class.isAssignableFrom(entity.getClass())) {
+			return WorkflowUtil.startWorkflow(
+				request.getTableName(),
+				entity.get_ID(),
+				entity.get_UUID(),
+				documentAction
+			);
 		}
 
 		//	Execute Process
