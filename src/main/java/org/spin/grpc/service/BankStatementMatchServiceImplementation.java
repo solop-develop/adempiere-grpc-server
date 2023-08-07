@@ -15,37 +15,23 @@
 package org.spin.grpc.service;
 
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Column;
-import org.adempiere.core.domains.models.I_AD_Ref_List;
-import org.adempiere.core.domains.models.I_C_BankAccount;
-import org.adempiere.core.domains.models.I_C_Currency;
-import org.adempiere.core.domains.models.I_C_Payment;
-import org.adempiere.core.domains.models.I_I_BankStatement;
-import org.adempiere.core.domains.models.X_C_Payment;
+import org.adempiere.core.domains.models.X_I_BankStatement;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MBPartner;
 import org.compiere.model.MBankAccount;
-import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MPayment;
-import org.compiere.model.MRefList;
-import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.form.bank_statement_match.BankStatementMatchGrpc.BankStatementMatchImplBase;
 import org.spin.backend.grpc.form.bank_statement_match.BusinessPartner;
 import org.spin.backend.grpc.form.bank_statement_match.Currency;
 import org.spin.backend.grpc.form.bank_statement_match.ImportedBankMovement;
@@ -63,13 +49,15 @@ import org.spin.backend.grpc.form.bank_statement_match.Payment;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.TenderType;
-import org.spin.backend.grpc.form.bank_statement_match.BankStatementMatchGrpc.BankStatementMatchImplBase;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
+import org.spin.form.bank_statement_match.BankStatementMatchConvertUtil;
+import org.spin.form.bank_statement_match.BankStatementMatchServiceLogic;
+import org.spin.form.bank_statement_match.BankStatementMatchUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -127,26 +115,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		return builderList;
 	}
 
-	public static MBankAccount validateAndGetBankAccount(int bankAccountId) {
-		if (bankAccountId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_BankAccount_ID@");
-		}
-		MBankAccount bankAccount = new Query(
-			Env.getCtx(),
-			I_C_BankAccount.Table_Name,
-			" C_BankAccount_ID = ? ",
-			null
-		)
-			.setParameters(bankAccountId)
-			.setClient_ID()
-			.first();
-		if (bankAccount == null || bankAccount.getC_BankAccount_ID() <= 0) {
-			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
-		}
-		return bankAccount;
-	}
-
-
 
 	@Override
 	public void listBusinessPartners(ListBusinessPartnersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
@@ -188,41 +156,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		);
 
 		return builderList;
-	}
-
-
-	public static BusinessPartner.Builder convertBusinessPartner(int businessPartnerId) {
-		if (businessPartnerId <= 0) {
-			return BusinessPartner.newBuilder();
-		}
-		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
-		return convertBusinessPartner(businessPartner);
-	}
-	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
-		BusinessPartner.Builder builder = BusinessPartner.newBuilder();
-		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
-			return builder;
-		}
-
-		builder.setId(businessPartner.getC_BPartner_ID())
-			.setUuid(
-				ValueUtil.validateNull(businessPartner.getUUID())
-			)
-			.setValue(
-				ValueUtil.validateNull(businessPartner.getValue())
-			)
-			.setTaxId(
-				ValueUtil.validateNull(businessPartner.getTaxID())
-			)
-			.setName(
-				ValueUtil.validateNull(businessPartner.getName())
-			)
-			.setDescription(
-				ValueUtil.validateNull(businessPartner.getDescription())
-			)
-		;
-
-		return builder;
 	}
 
 
@@ -285,82 +218,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 
 
 
-	public static Currency.Builder convertCurrency(String isoCode) {
-		if (Util.isEmpty(isoCode, true)) {
-			return Currency.newBuilder();
-		}
-		MCurrency currency = MCurrency.get(Env.getCtx(), isoCode);
-		return convertCurrency(currency);
-	}
-	public static Currency.Builder convertCurrency(int currencyId) {
-		if (currencyId <= 0) {
-			return Currency.newBuilder();
-		}
-		MCurrency currency = MCurrency.get(Env.getCtx(), currencyId);
-		return convertCurrency(currency);
-	}
-	public static Currency.Builder convertCurrency(MCurrency currency) {
-		Currency.Builder builder = Currency.newBuilder();
-		if (currency == null || currency.getC_Currency_ID() <= 0) {
-			return builder;
-		}
-
-		builder.setId(currency.getC_Currency_ID())
-			.setUuid(
-				ValueUtil.validateNull(currency.getUUID())
-			)
-			.setIsoCode(
-				ValueUtil.validateNull(currency.getISO_Code())
-			)
-			.setDescription(
-				ValueUtil.validateNull(currency.getDescription())
-			)
-		;
-
-		return builder;
-	}
-
-
-
-	public static TenderType.Builder convertTenderType(String value) {
-		if (Util.isEmpty(value, false)) {
-			return TenderType.newBuilder();
-		}
-
-		MRefList tenderType = MRefList.get(Env.getCtx(), X_C_Payment.TENDERTYPE_AD_Reference_ID, value, null);
-		return convertTenderType(tenderType);
-	}
-	public static TenderType.Builder convertTenderType(MRefList tenderType) {
-		TenderType.Builder builder = TenderType.newBuilder();
-		if (tenderType == null || tenderType.getAD_Ref_List_ID() <= 0) {
-			return builder;
-		}
-
-		String name = tenderType.getName();
-		String description = tenderType.getDescription();
-
-		// set translated values
-		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
-			name = tenderType.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
-			description = tenderType.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
-		}
-
-		builder.setId(tenderType.getAD_Ref_List_ID())
-			.setUuid(ValueUtil.validateNull(tenderType.getUUID()))
-			.setValue(ValueUtil.validateNull(tenderType.getValue()))
-			.setName(
-				ValueUtil.validateNull(name)
-			)
-			.setDescription(
-				ValueUtil.validateNull(description)
-			)
-		;
-
-		return builder;
-	}
-
-
-
 	@Override
 	public void listImportedBankMovements(ListImportedBankMovementsRequest request, StreamObserver<ListImportedBankMovementsResponse> responseObserver) {
 		try {
@@ -381,171 +238,52 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 	}
 
 	private ListImportedBankMovementsResponse.Builder listImportedBankMovements(ListImportedBankMovementsRequest request) {
-		Properties context = Env.getCtx();
-
 		// validate and get Bank Account
-		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
 
-		StringBuffer sql = new StringBuffer(
-			"SELECT p.I_BankStatement_ID, p.UUID, p.StatementLineDate, "
-			+ "(CASE WHEN p.TrxAmt < 0 THEN 'N' ELSE 'Y' END) AS IsReceipt, "
-			+ "p.ReferenceNo, p.C_BPartner_ID, "
-			+ "(CASE WHEN p.C_BPartner_ID IS NULL THEN BPartnerValue ELSE bp.Name END) BPName, "
-			+ "COALESCE(p.ISO_Code, c.ISO_Code) AS ISO_Code, p.TrxAmt, p.Memo "
-			+ "FROM I_BankStatement p "
-			+ "LEFT JOIN C_BPartner bp ON(bp.C_BPartner_ID = p.C_BPartner_ID) "
-			+ "LEFT JOIN C_Currency c ON(c.C_Currency_ID = p.C_Currency_ID) "
-		);
-		//	Where Clause
-		sql.append("WHERE p.C_BankAccount_ID = ? ");
-
-		//	Match
-		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
-		if (isMatchedMode) {
-			sql.append(
-				"AND (p.C_Payment_ID IS NOT NULL "
-				+ "OR p.C_BPartner_ID IS NOT NULL "
-				+ "OR p.C_Invoice_ID IS NOT NULL) "
-			);
-		} else {
-			sql.append(
-				"AND (p.C_Payment_ID IS NULL "
-				+ "AND p.C_BPartner_ID IS NULL "
-				+ "AND p.C_Invoice_ID IS NULL) "
-			);
-		}
+		ArrayList<Object> filterParameters = new ArrayList<Object>();
+		filterParameters.add(bankAccount.getC_BankAccount_ID());
 
 		//	For parameters
+		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
+
 		//	Date Trx
 		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
 			request.getTransactionDateFrom()
 		);
-		if (dateFrom != null) {
-			sql.append("AND p.StatementLineDate >= ? ");
-		}
 		Timestamp dateTo = ValueUtil.getTimestampFromLong(
 			request.getTransactionDateTo()
 		);
-		if (dateTo != null) {
-			sql.append("AND p.StatementLineDate <= ? ");
-		}
+		//	Amount
 		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
 			request.getPaymentAmountFrom()
 		);
-		//	Amount
-		if (paymentAmountFrom != null) {
-			sql.append("AND p.TrxAmt >= ? ");
-		}
 		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
 			request.getPaymentAmountTo()
 		);
-		if (paymentAmountTo != null) {
-			sql.append("AND p.TrxAmt <= ? ");
-		}
-		// role security
-		sql = new StringBuffer(
-			MRole.getDefault(context, false).addAccessSQL(
-				sql.toString(),
-				"p",
-				MRole.SQL_FULLYQUALIFIED,
-				MRole.SQL_RO
-			)
+
+		Query importMovementsQuery = BankStatementMatchUtil.buildBankMovementQuery(
+			bankAccount.getC_BankAccount_ID(),
+			isMatchedMode,
+			dateFrom,
+			dateTo,
+			paymentAmountFrom,
+			paymentAmountTo
 		);
+		List<Integer> importedBankMovementsId = importMovementsQuery
+			// .setLimit(0, 0)
+			.getIDsAsList()
+		;
 
-		//	Order by
-		sql.append("ORDER BY p.StatementLineDate");
+		ListImportedBankMovementsResponse.Builder builderList = ListImportedBankMovementsResponse.newBuilder()
+			.setRecordCount(importMovementsQuery.count())
+		;
 
-		ListImportedBankMovementsResponse.Builder builderList = ListImportedBankMovementsResponse.newBuilder();
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-			pstmt = DB.prepareStatement(sql.toString(), null);
-
-			int argumentPosition = 1;
-			pstmt.setInt(argumentPosition++, bankAccount.getC_BankAccount_ID());
-			if (dateFrom != null) {
-				pstmt.setTimestamp(argumentPosition++, dateFrom);
-			}
-			if (dateTo != null) {
-				pstmt.setTimestamp(argumentPosition++, dateTo);
-			}
-			if (paymentAmountFrom != null) {
-				pstmt.setBigDecimal(argumentPosition++, paymentAmountFrom);
-			}
-			if (paymentAmountTo != null) {
-				pstmt.setBigDecimal(argumentPosition++, paymentAmountTo);
-			}
-			rs = pstmt.executeQuery();
-			int recordCount = 0;
-			while (rs.next()) {
-				recordCount++;
-
-				int businessPartnerId = rs.getInt(I_I_BankStatement.COLUMNNAME_C_BPartner_ID);
-				BusinessPartner.Builder businessPartnerBuilder = convertBusinessPartner(
-					businessPartnerId
-				);
-				if (businessPartnerId <= 0) {
-					businessPartnerBuilder.setName(
-						ValueUtil.validateNull(
-							rs.getString("BPName")
-						)
-					);
-				}
-
-				Currency.Builder currencyBuilder = convertCurrency(
-					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
-				);
-
-				ImportedBankMovement.Builder importedBuilder = ImportedBankMovement.newBuilder()
-					.setId(
-						rs.getInt(I_I_BankStatement.COLUMNNAME_C_BankStatement_ID)
-					)
-					.setUuid(
-						ValueUtil.validateNull(
-							rs.getString(I_I_BankStatement.COLUMNNAME_UUID)
-						)
-					)
-					.setTransactionDate(
-						ValueUtil.getLongFromTimestamp(
-							rs.getTimestamp(I_I_BankStatement.COLUMNNAME_StatementLineDate)
-						)
-					)
-					.setIsReceipt(
-						ValueUtil.stringToBoolean(
-							rs.getString("IsReceipt")
-						)
-					)
-					.setReferenceNo(
-						ValueUtil.validateNull(
-							rs.getString(I_I_BankStatement.COLUMNNAME_ReferenceNo)
-						)
-					)
-					.setAmount(
-						ValueUtil.getDecimalFromBigDecimal(
-							rs.getBigDecimal(I_I_BankStatement.COLUMNNAME_TrxAmt)
-						)
-					)
-					.setMemo(
-						ValueUtil.validateNull(
-							rs.getString(I_I_BankStatement.COLUMNNAME_Memo)
-						)
-					)
-					.setBusinessPartner(businessPartnerBuilder)
-					.setCurrency(currencyBuilder)
-				;
-				builderList.addRecords(importedBuilder);
-			}
-			builderList.setRecordCount(recordCount);
-
-		}
-		catch (SQLException e) {
-			throw new AdempiereException(e.getLocalizedMessage());
-		}
-		finally {
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
+		importedBankMovementsId.forEach(bankStatementId -> {
+			X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(Env.getCtx(), bankStatementId, null);
+			ImportedBankMovement.Builder importedBuilder = BankStatementMatchConvertUtil.convertImportedBankMovement(currentBankStatementImport);
+			builderList.addRecords(importedBuilder);
+		});
 
 		return builderList;
 	}
@@ -571,64 +309,33 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 
 	private ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
 		// validate and get Bank Account
-		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
 
-		Properties context = Env.getCtx();
-
-		//	Dynamic where clause
-		List<Object> parameters = new ArrayList<Object>();
-		String whereClause = "C_BankAccount_ID = ? "
-			+ " AND DocStatus NOT IN('IP', 'DR') "
-			+ " AND IsReconciled = 'N' "
-		;
-		parameters.add(bankAccount.getC_BankAccount_ID());
-
+		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 		//	Date Trx
 		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
 			request.getTransactionDateFrom()
 		);
-		if (dateFrom != null) {
-			whereClause += "AND DateTrx >= ? ";
-			parameters.add(dateFrom);
-		}
 		Timestamp dateTo = ValueUtil.getTimestampFromLong(
 			request.getTransactionDateTo()
 		);
-		if (dateTo != null) {
-			whereClause += "AND DateTrx <= ? ";
-			parameters.add(dateTo);
-		}
 		//	Amount
 		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
 			request.getPaymentAmountFrom()
 		);
-		if (paymentAmountFrom != null) {
-			whereClause += "AND PayAmt >= ? ";
-			parameters.add(paymentAmountFrom);
-		}
 		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
 			request.getPaymentAmountTo()
 		);
-		if (paymentAmountTo != null) {
-			whereClause += "AND PayAmt <= ? ";
-			parameters.add(paymentAmountTo);
-		}
-		//	for BP
-		int businessPartnerIdQuery = request.getBusinessPartnerId();
-		if (businessPartnerIdQuery > 0) {
-			whereClause += "AND C_BPartner_ID = ? ";
-			parameters.add(businessPartnerIdQuery);
-		}
 
-		Query query = new Query(
-			context,
-			I_C_Payment.Table_Name,
-			whereClause,
-			null
-		)
-			.setParameters(parameters)
-			.setClient_ID()
-		;
+		Query query = BankStatementMatchUtil.buildPaymentQuery(
+			bankAccount.getC_BankAccount_ID(),
+			isMatchedMode,
+			dateFrom,
+			dateTo,
+			paymentAmountFrom,
+			paymentAmountTo,
+			request.getBusinessPartnerId()
+		);
 
 		int count = query.count();
 		String nexPageToken = "";
@@ -648,17 +355,23 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		;
 
 		query.setLimit(limit, offset)
-			.list(MPayment.class)
-			.forEach(payment -> {
-				BusinessPartner.Builder businessPartnerBuilder = convertBusinessPartner(
+			.getIDsAsList()
+			.forEach(paymentId -> {
+				MPayment payment = new MPayment(
+					Env.getCtx(),
+					paymentId,
+					null
+				);
+
+				BusinessPartner.Builder businessPartnerBuilder = BankStatementMatchConvertUtil.convertBusinessPartner(
 					payment.getC_BPartner_ID()
 				);
 
-				Currency.Builder currencyBuilder = convertCurrency(
+				Currency.Builder currencyBuilder = BankStatementMatchConvertUtil.convertCurrency(
 					payment.getC_Currency_ID()
 				);
 
-				TenderType.Builder tenderTypeBuilder = convertTenderType(
+				TenderType.Builder tenderTypeBuilder = BankStatementMatchConvertUtil.convertTenderType(
 					payment.getTenderType()
 				);
 				boolean isReceipt = payment.isReceipt();
@@ -716,11 +429,12 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListMatchingMovementsResponse.Builder builder = listMatchingMovements(request);
+			ListMatchingMovementsResponse.Builder builder = BankStatementMatchServiceLogic.listMatchingMovements(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -729,14 +443,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		}
 	}
 
-	private ListMatchingMovementsResponse.Builder listMatchingMovements(ListMatchingMovementsRequest request) {
-		// validate and get Bank Account
-		MBankAccount bankAccount = validateAndGetBankAccount(request.getBankAccountId());
-
-		ListMatchingMovementsResponse.Builder builderList = ListMatchingMovementsResponse.newBuilder();
-
-		return builderList;
-	}
 
 
 	@Override
@@ -750,6 +456,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)

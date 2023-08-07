@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -189,16 +189,18 @@ message ListMatchingMovementsRequest {
 }
 
 message MatchingMovement {
-	int64 transaction_date = 1;
-	bool is_receipt = 2;
-	string document_no = 3;
-	BusinessPartner business_partner = 4;
-	TenderType tender_type = 5;
-	Currency currency = 6;
-	data.Decimal amount = 7;
-	string description = 8;
-	string reference_no = 9;
-	string memo = 10;
+	int32 id = 1;
+	string uuid = 2;
+	int64 transaction_date = 3;
+	bool is_receipt = 4;
+	string document_no = 5;
+	BusinessPartner business_partner = 6;
+	TenderType tender_type = 7;
+	Currency currency = 8;
+	data.Decimal amount = 9;
+	string description = 10;
+	string reference_no = 11;
+	string memo = 102;
 }
 
 message ListMatchingMovementsResponse {
