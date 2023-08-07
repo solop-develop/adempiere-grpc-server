@@ -38,6 +38,7 @@ import org.compiere.model.MTable;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.common.Condition;
 import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.Operator;
@@ -782,31 +783,91 @@ public class WhereClauseUtil {
 		for (MBrowseField browseField : browseFieldsList) {
 			browseFields.put(browseField.getAD_View_Column().getColumnName(), browseField);
 		}
+		List<Condition> parametersList = criteria.getConditionsList();
+		HashMap<String, String> rangeAdd = new HashMap<>();
+		
 
-		criteria.getConditionsList().stream()
+		parametersList.stream()
 			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
 			.forEach(condition -> {
-				MBrowseField browseField = browseFields.get(condition.getColumnName());
-				MViewColumn viewColumn = browseField.getAD_View_Column();
-
+				String columnName = condition.getColumnName();
 				int operatorValue = condition.getOperatorValue();
-				if (whereClause.length() > 0) {
-					whereClause.append(" AND ");
+				Value value = condition.getValue();
+				Value valueTo = condition.getValueTo();
+
+				MBrowseField browseField = browseFields.get(columnName);
+				if (browseField == null && columnName.endsWith("_To")) {
+					String rangeColumnName = columnName.substring(0, columnName.length() - "_To".length());
+					browseField = browseFields.get(rangeColumnName);
+				}
+				if (browseField == null) {
+					return;
+				}
+				MViewColumn viewColumn = browseField.getAD_View_Column();
+				if (rangeAdd.containsKey(viewColumn.getColumnName())) {
+					return;
+				}
+				if (browseField.isRange()) {
+					final String columnNameParameter = viewColumn.getColumnName();
+					Condition conditionStart = parametersList.stream().filter(parameter -> {
+						return parameter.getColumnName().equals(columnNameParameter);
+					})
+						.findFirst()
+						.orElse(Condition.newBuilder().build())
+					;
+					value = conditionStart.getValue();
+	
+					int operatorTo = operatorValue;
+					if (valueTo == null || valueTo.getValueType() == Value.ValueType.UNKNOWN) {
+						Condition conditionEnd = parametersList.stream().filter(parameter -> {
+							return parameter.getColumnName().equals(columnNameParameter + "_To");
+						})
+							.findFirst()
+							.orElse(Condition.newBuilder().build())
+						;
+						valueTo = conditionEnd.getValue();
+						operatorTo = conditionEnd.getOperatorValue();
+					}
+	
+					columnName = viewColumn.getColumnSQL();
+					if (conditionStart.getOperator() == Operator.GREATER_EQUAL && operatorTo == Operator.LESS_EQUAL_VALUE) {
+						operatorValue = Operator.BETWEEN_VALUE;
+					} else {
+						if (whereClause.length() > 0) {
+							whereClause.append(" AND ");
+						}
+						String restrictionTo = WhereClauseUtil.getRestrictionByOperator(
+							columnName,
+							browseField.getAD_Reference_ID(),
+							operatorTo,
+							valueTo, // as current value
+							null,
+							condition.getValuesList(),
+							filterValues
+						);
+						whereClause.append(restrictionTo);
+						valueTo = null;
+					}
+					rangeAdd.put(columnNameParameter, columnNameParameter);
+				} else {
+					columnName = viewColumn.getColumnSQL();
+					if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
+						operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
+							condition
+						);
+					}
 				}
 
-				String columnName = viewColumn.getColumnSQL();
-				if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
-					operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
-						condition
-					);
+				if (whereClause.length() > 0) {
+					whereClause.append(" AND ");
 				}
 
 				String restriction = WhereClauseUtil.getRestrictionByOperator(
 					columnName,
 					browseField.getAD_Reference_ID(),
 					operatorValue,
-					condition.getValue(),
-					condition.getValueTo(),
+					value,
+					valueTo,
 					condition.getValuesList(),
 					filterValues
 				);
