@@ -905,9 +905,27 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(Util.isEmpty(request.getCustomerUuid())) {
 				throw new AdempiereException("@C_BPartner_ID@ @IsMandatory@");
 			}
+			if(Util.isEmpty(request.getAccountNo())) {
+				throw new AdempiereException("@AccountNo@ @IsMandatory@");
+			}
 			MBPartner businessPartner = MBPartner.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getCustomerUuid(), null));
+			int bankId = 0;
+			if(!Util.isEmpty(request.getBankUuid())) {
+				bankId = RecordUtil.getIdFromUuid(I_C_Bank.Table_Name, request.getBankUuid(), null);
+			}
+			if(bankId <= 0 && request.getIsAch()) {
+				throw new AdempiereException("@C_Bank_ID@ @IsMandatory@");
+			}
+			String accountName = request.getName();
+			if(Util.isEmpty(accountName)) {
+				accountName = businessPartner.getName() + "_" + request.getAccountNo();
+			}
+			int customerBankAccountId = getCustomerBankAccountFromAccount(Env.getCtx(), businessPartner.getC_BPartner_ID(), bankId, request.getAccountNo(), request.getSocialSecurityNumber());
+			if(customerBankAccountId < 0) {
+				customerBankAccountId = 0;
+			}
 			//	For data
-			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), 0, null);
+			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), customerBankAccountId, null);
 			businessPartnerBankAccount.setC_BPartner_ID(businessPartner.getC_BPartner_ID());
 			businessPartnerBankAccount.setIsACH(request.getIsAch());
 			//	Validate all data
@@ -916,13 +934,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			Optional.ofNullable(request.getEmail()).ifPresent(value -> businessPartnerBankAccount.setA_EMail(value));
 			Optional.ofNullable(request.getDriverLicense()).ifPresent(value -> businessPartnerBankAccount.setA_Ident_DL(value));
 			Optional.ofNullable(request.getSocialSecurityNumber()).ifPresent(value -> businessPartnerBankAccount.setA_Ident_SSN(value));
-			Optional.ofNullable(request.getName()).ifPresent(value -> businessPartnerBankAccount.setA_Name(value));
+			Optional.ofNullable(accountName).ifPresent(value -> businessPartnerBankAccount.setA_Name(value));
 			Optional.ofNullable(request.getState()).ifPresent(value -> businessPartnerBankAccount.setA_State(value));
 			Optional.ofNullable(request.getStreet()).ifPresent(value -> businessPartnerBankAccount.setA_Street(value));
 			Optional.ofNullable(request.getZip()).ifPresent(value -> businessPartnerBankAccount.setA_Zip(value));
 			Optional.ofNullable(request.getAccountNo()).ifPresent(value -> businessPartnerBankAccount.setAccountNo(value));
-			if(!Util.isEmpty(request.getBankUuid())) {
-				businessPartnerBankAccount.setC_Bank_ID(RecordUtil.getIdFromUuid(I_C_Bank.Table_Name, request.getBankUuid(), null));
+			if(bankId > 0) {
+				businessPartnerBankAccount.setC_Bank_ID(bankId);
 			}
 			Optional.ofNullable(request.getAddressVerified()).ifPresent(value -> businessPartnerBankAccount.setR_AvsAddr(value));
 			Optional.ofNullable(request.getZipVerified()).ifPresent(value -> businessPartnerBankAccount.setR_AvsZip(value));
@@ -944,6 +962,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					.withCause(e)
 					.asRuntimeException());
 		}
+	}
+	
+	private int getCustomerBankAccountFromAccount(Properties context, int customerId, int bankId, String accountNo, String businessPartnerCode) {
+		return new Query(context, I_C_BP_BankAccount.Table_Name, "C_BPArtner_ID = ? AND C_Bank_ID = ? AND AccountNo = ? AND A_Ident_SSN = ?", null)
+				.setParameters(customerId, bankId, accountNo, businessPartnerCode)
+				.setOnlyActiveRecords(true)
+				.firstId();
 	}
 	
 	@Override
