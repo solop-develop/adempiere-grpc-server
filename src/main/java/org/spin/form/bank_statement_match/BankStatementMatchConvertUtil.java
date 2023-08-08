@@ -21,6 +21,7 @@ import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.core.domains.models.X_I_BankStatement;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCurrency;
+import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -150,7 +151,7 @@ public class BankStatementMatchConvertUtil {
 
 	public static ImportedBankMovement.Builder convertImportedBankMovement(X_I_BankStatement bankStatemet) {
 		ImportedBankMovement.Builder builder = ImportedBankMovement.newBuilder();
-		if (bankStatemet == null || bankStatemet.getC_BankStatement_ID() <= 0) {
+		if (bankStatemet == null || bankStatemet.getI_BankStatement_ID() <= 0) {
 			return builder;
 		}
 
@@ -217,12 +218,18 @@ public class BankStatementMatchConvertUtil {
 
 	public static MatchingMovement.Builder convertMatchMovement(X_I_BankStatement bankStatemet) {
 		MatchingMovement.Builder builder = MatchingMovement.newBuilder();
-		if (bankStatemet == null || bankStatemet.getC_BankStatement_ID() <= 0) {
+		if (bankStatemet == null || bankStatemet.getI_BankStatement_ID() <= 0) {
 			return builder;
 		}
 
-		builder.setReferenceNo(
-			ValueUtil.validateNull(
+		builder.setId(bankStatemet.getI_BankStatement_ID())
+			.setUuid(
+				ValueUtil.validateNull(
+					bankStatemet.getUUID()
+				)
+			)
+			.setReferenceNo(
+				ValueUtil.validateNull(
 					bankStatemet.getReferenceNo()
 				)
 			)
@@ -250,6 +257,30 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 		;
+
+		if (bankStatemet.getC_Payment_ID() > 0) {
+			MPayment payment = new MPayment(Env.getCtx(), bankStatemet.getC_Payment_ID(), null);
+			builder.setDocumentNo(
+				ValueUtil.validateNull(
+					payment.getDocumentNo()
+				)
+			);
+			TenderType.Builder tenderTypeBuilder = convertTenderType(
+				payment.getTenderType()
+			);
+			builder.setTenderType(tenderTypeBuilder);
+
+			if (builder.getBusinessPartner().getId() <= 0) {
+				BusinessPartner.Builder businessPartnerBuilder = convertBusinessPartner(
+					payment.getC_BPartner_ID()
+				);
+				builder.setBusinessPartner(businessPartnerBuilder);
+			}
+			Currency.Builder currencyBuilder = convertCurrency(
+				payment.getC_Currency_ID()
+			);
+			builder.setCurrency(currencyBuilder);
+		}
 
 		return builder;
 	}
