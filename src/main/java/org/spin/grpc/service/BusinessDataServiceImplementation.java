@@ -283,16 +283,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			if(entity != null) {
 				recordId = entity.get_ID();
 			}
-
-			// Add record as parameter
-			Value.Builder value = Value.newBuilder()
-				.setValueType(Value.ValueType.INTEGER)
-				.setIntValue(recordId);
-			KeyValue.Builder recordParameter = KeyValue.newBuilder()
-				.setKey(request.getTableName() + "_ID")
-				.setValue(value);
-			// set as first position
-			parametersList.add(0, recordParameter.build());
 		}
 
 		//	Call process builder
