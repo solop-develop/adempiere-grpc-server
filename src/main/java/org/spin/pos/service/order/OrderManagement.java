@@ -352,21 +352,23 @@ public class OrderManagement {
 			}
 			//	Complete
 			if (!paymentAllocation.processIt(MAllocationHdr.DOCACTION_Complete)) {
-				throw new AdempiereException("@ProcessFailed@ :" + paymentAllocation.getProcessMsg());
+				throw new AdempiereException(paymentAllocation.getProcessMsg());
 			}
 			paymentAllocation.saveEx();
 			//	Test allocation
 			paymentsIds.stream().map(paymentId -> new MPayment(Env.getCtx(), paymentId, transactionName)).forEach(payment -> {
 				payment.setIsAllocated(true);
 				payment.setC_Invoice_ID(invoiceId);
-				payment.setIsApproved(false);
 				payment.saveEx();
-				boolean isOk = payment.processOnline();
-				if(!isOk) {
-					throw new AdempiereException(payment.getErrorMessage());
+				if(payment.setPaymentProcessor()) {
+					payment.setIsApproved(false);
+					boolean isOk = payment.processOnline();
+					if(!isOk) {
+						throw new AdempiereException(payment.getErrorMessage());
+					}
+					payment.setIsApproved(true);
+					payment.saveEx();
 				}
-				payment.setIsApproved(true);
-				payment.saveEx();
 			});
 		}
 	}
