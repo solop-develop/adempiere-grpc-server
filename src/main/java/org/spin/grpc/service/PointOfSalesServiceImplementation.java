@@ -755,7 +755,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	public void printTicket(PrintTicketRequest request, StreamObserver<PrintTicketResponse> responseObserver) {
 		try {
 			if(Util.isEmpty(request.getOrderUuid())) {
-				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+				log.warning("Sales Order Not Found");
+				return;
 			}
 			log.fine("Print Ticket = " + request);
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
@@ -767,7 +768,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			posController.setWindowNo(1);
 			POSTicketHandler handler = POSTicketHandler.getTicketHandler(posController);
 			if(handler == null) {
-				log.fine("Ticket Class Name " + pos.getTicketClassName() + " Not Found");
+				log.warning("Ticket Class Name " + pos.getTicketClassName() + " Not Found");
 			} else {
 				//	Print it
 				handler.printTicket();
@@ -788,7 +789,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	public void printPreview(PrintPreviewRequest request, StreamObserver<PrintPreviewResponse> responseObserver) {
 		try {
 			if(Util.isEmpty(request.getOrderUuid())) {
-				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+				log.warning("Sales Order Not Found");
+				return;
 			}
 			log.fine("Print Ticket = " + request);
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
@@ -849,7 +851,8 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	public void printShipmentPreview(PrintShipmentPreviewRequest request, StreamObserver<PrintShipmentPreviewResponse> responseObserver) {
 		try {
 			if(Util.isEmpty(request.getShipmentUuid())) {
-				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+				log.warning("Shipment Not Found");
+				return;
 			}
 			log.fine("Print Ticket = " + request);
 			MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
