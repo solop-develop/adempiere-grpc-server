@@ -1,9 +1,22 @@
+/************************************************************************************
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
 package org.spin.form.bank_statement_match;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.adempiere.core.domains.models.I_C_BankAccount;
 import org.adempiere.core.domains.models.I_C_Payment;
@@ -36,79 +49,6 @@ public class BankStatementMatchUtil {
 	}
 
 
-	public static String buildSQLImportedMovements(
-		List<Object> filterParameters,
-		boolean isMatchedMode,
-		Timestamp dateFrom,
-		Timestamp dateTo,
-		BigDecimal paymentAmountFrom,
-		BigDecimal paymentAmountTo
-	) {
-		StringBuffer sql = new StringBuffer(
-			"SELECT p.I_BankStatement_ID, p.UUID, p.StatementLineDate, "
-			+ "(CASE WHEN p.TrxAmt < 0 THEN 'N' ELSE 'Y' END) AS IsReceipt, "
-			+ "p.ReferenceNo, p.C_BPartner_ID, "
-			+ "(CASE WHEN p.C_BPartner_ID IS NULL THEN BPartnerValue ELSE bp.Name END) BPName, "
-			+ "COALESCE(p.ISO_Code, c.ISO_Code) AS ISO_Code, p.TrxAmt, p.Memo "
-			+ "FROM I_BankStatement p "
-			+ "LEFT JOIN C_BPartner bp ON(bp.C_BPartner_ID = p.C_BPartner_ID) "
-			+ "LEFT JOIN C_Currency c ON(c.C_Currency_ID = p.C_Currency_ID) "
-		);
-		//	Where Clause
-		sql.append("WHERE p.C_BankAccount_ID = ? ");
-
-		//	Match
-		if (isMatchedMode) {
-			sql.append(
-				"AND (p.C_Payment_ID IS NOT NULL "
-				+ "OR p.C_BPartner_ID IS NOT NULL "
-				+ "OR p.C_Invoice_ID IS NOT NULL) "
-			);
-		} else {
-			sql.append(
-				"AND (p.C_Payment_ID IS NULL "
-				+ "AND p.C_BPartner_ID IS NULL "
-				+ "AND p.C_Invoice_ID IS NULL) "
-			);
-		}
-
-		//	For parameters
-		//	Date Trx
-		if (dateFrom != null) {
-			sql.append("AND p.StatementLineDate >= ? ");
-			filterParameters.add(dateFrom);
-		}
-		if (dateTo != null) {
-			sql.append("AND p.StatementLineDate <= ? ");
-			filterParameters.add(dateTo);
-		}
-
-		//	Amount
-		if (paymentAmountFrom != null) {
-			sql.append("AND p.TrxAmt >= ? ");
-			filterParameters.add(paymentAmountFrom);
-		}
-		if (paymentAmountTo != null) {
-			sql.append("AND p.TrxAmt <= ? ");
-			filterParameters.add(paymentAmountTo);
-		}
-		// role security
-		sql = new StringBuffer(
-			MRole.getDefault(Env.getCtx(), false).addAccessSQL(
-				sql.toString(),
-				"p",
-				MRole.SQL_FULLYQUALIFIED,
-				MRole.SQL_RO
-			)
-		);
-
-		//	Order by
-		sql.append(" ORDER BY p.StatementLineDate");
-
-		return sql.toString();
-	}
-
-
 	public static Query buildPaymentQuery(
 		int bankAccountId,
 		boolean isMatchedMode,
@@ -128,15 +68,15 @@ public class BankStatementMatchUtil {
 		//	Match
 		if(isMatchedMode) {
 			whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement ibs "
-				+ "WHERE ibs.C_Payment_ID = C_Payment_ID.C_Payment_ID) ";
+				+ "WHERE ibs.C_Payment_ID = C_Payment_ID) ";
 		} else {
 			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement ibs "
-				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
+				+ "WHERE ibs.C_Payment_ID = C_Payment_ID) ";
 		}
 
 		//	Date Trx
 		if (dateFrom != null) {
-			whereClasuePayment += "AND p.DateTrx >= ? ";
+			whereClasuePayment += "AND DateTrx >= ? ";
 			paymentFilters.add(dateFrom);
 		}
 		if (dateTo != null) {
@@ -156,7 +96,7 @@ public class BankStatementMatchUtil {
 
 		// Business Partner
 		if (businessPartnerId > 0) {
-			whereClasuePayment += "AND p.C_BPartner_ID = ? ";
+			whereClasuePayment += "AND C_BPartner_ID = ? ";
 			paymentFilters.add(businessPartnerId);
 		}
 
@@ -228,6 +168,7 @@ public class BankStatementMatchUtil {
 		)
 			.setParameters(filterParameters)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.setClient_ID()
 			.setOrderBy(I_I_BankStatement.COLUMNNAME_StatementLineDate)
 		;
 

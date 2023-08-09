@@ -207,9 +207,16 @@ public class BankStatementMatchConvertUtil {
 		}
 		builder.setBusinessPartner(businessPartnerBuilder);
 
-		Currency.Builder currencyBuilder = BankStatementMatchConvertUtil.convertCurrency(
-			bankStatemet.getISO_Code()
-		);
+		Currency.Builder currencyBuilder = Currency.newBuilder();
+		if (bankStatemet.getC_Currency_ID() > 0) {
+			currencyBuilder = BankStatementMatchConvertUtil.convertCurrency(
+				bankStatemet.getC_Currency_ID()
+			);
+		} else {
+ 			currencyBuilder = BankStatementMatchConvertUtil.convertCurrency(
+				bankStatemet.getISO_Code()
+			);
+		}
 		builder.setCurrency(currencyBuilder);
 
 		return builder;
@@ -254,6 +261,11 @@ public class BankStatementMatchConvertUtil {
 			.setBusinessPartner(
 				convertBusinessPartner(
 					bankStatemet.getC_BPartner_ID()
+				)
+			)
+			.setAmount(
+				ValueUtil.getDecimalFromBigDecimal(
+					bankStatemet.getTrxAmt()
 				)
 			)
 		;

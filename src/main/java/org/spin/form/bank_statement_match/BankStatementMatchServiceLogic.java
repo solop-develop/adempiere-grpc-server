@@ -16,6 +16,7 @@ package org.spin.form.bank_statement_match;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,9 @@ import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatementMatcher;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.spin.backend.grpc.form.bank_statement_match.ImportedBankMovement;
+import org.spin.backend.grpc.form.bank_statement_match.ListImportedBankMovementsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListImportedBankMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListMatchingMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListMatchingMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.MatchMode;
@@ -35,6 +39,59 @@ import org.spin.backend.grpc.form.bank_statement_match.MatchingMovement;
 import org.spin.base.util.ValueUtil;
 
 public abstract class BankStatementMatchServiceLogic {
+
+	public static ListImportedBankMovementsResponse.Builder listImportedBankMovements(ListImportedBankMovementsRequest request) {
+		// validate and get Bank Account
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
+
+		ArrayList<Object> filterParameters = new ArrayList<Object>();
+		filterParameters.add(bankAccount.getC_BankAccount_ID());
+
+		//	For parameters
+		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
+
+		//	Date Trx
+		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
+			request.getTransactionDateFrom()
+		);
+		Timestamp dateTo = ValueUtil.getTimestampFromLong(
+			request.getTransactionDateTo()
+		);
+		//	Amount
+		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
+			request.getPaymentAmountFrom()
+		);
+		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
+			request.getPaymentAmountTo()
+		);
+
+		Query importMovementsQuery = BankStatementMatchUtil.buildBankMovementQuery(
+			bankAccount.getC_BankAccount_ID(),
+			isMatchedMode,
+			dateFrom,
+			dateTo,
+			paymentAmountFrom,
+			paymentAmountTo
+		);
+		List<Integer> importedBankMovementsId = importMovementsQuery
+			// .setLimit(0, 0)
+			.getIDsAsList()
+		;
+
+		ListImportedBankMovementsResponse.Builder builderList = ListImportedBankMovementsResponse.newBuilder()
+			.setRecordCount(importMovementsQuery.count())
+		;
+
+		importedBankMovementsId.forEach(bankStatementId -> {
+			X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(Env.getCtx(), bankStatementId, null);
+			ImportedBankMovement.Builder importedBuilder = BankStatementMatchConvertUtil.convertImportedBankMovement(currentBankStatementImport);
+			builderList.addRecords(importedBuilder);
+		});
+
+		return builderList;
+	}
+
+
 
 	public static ListMatchingMovementsResponse.Builder listMatchingMovements(ListMatchingMovementsRequest request) {
 		// validate and get Bank Account
@@ -77,6 +134,9 @@ public abstract class BankStatementMatchServiceLogic {
 			request.getBusinessPartnerId()
 		);
 		List<Integer> paymentsId = paymentQuery.getIDsAsList();
+		if (paymentsId == null || paymentsId.isEmpty()) {
+			return builderList;
+		}
 
 		Query bankMovementQuery = BankStatementMatchUtil.buildBankMovementQuery(
 			bankAccount.getC_BankAccount_ID(),
@@ -87,6 +147,9 @@ public abstract class BankStatementMatchServiceLogic {
 			paymentAmountTo
 		);
 		List<Integer> importedPaymentsId = bankMovementQuery.getIDsAsList();
+		if (importedPaymentsId == null || importedPaymentsId.isEmpty()) {
+			return builderList;
+		}
 
 		Map<Integer, X_I_BankStatement> matchedPaymentHashMap = new HashMap<Integer, X_I_BankStatement>();
 		int matched = 0;
