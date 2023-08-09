@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2022 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -66,12 +66,13 @@ message ListRequestTypesResponse {
 	string next_page_token = 3;
 }
 
-// Sales Representative Definition
-message SalesRepresentative {
-	string uuid = 1;
-	int32 id = 2;
+// User (or Sales Representative) Definition
+message User {
+	int32 id = 1;
+	string uuid = 2;
 	string name = 3;
 	string description = 4;
+	string avatar = 5;
 }
 
 message ListSalesRepresentativesRequest {
@@ -81,7 +82,7 @@ message ListSalesRepresentativesRequest {
 
 message ListSalesRepresentativesResponse {
 	int64 record_count = 1;
-	repeated SalesRepresentative records = 2;
+	repeated User records = 2;
 	string next_page_token = 3;
 }
 
@@ -144,14 +145,12 @@ message Issue {
 	int64 created = 6;
 	int64 last_updated = 7;
 	RequestType request_type = 8;
-	int32 user_id = 9;
-	string user_uuid = 10;
-	string user_name = 11;
-	SalesRepresentative sales_representative = 12;
-	Status status = 13;
-	Priority priority = 14;
-	int64 date_next_action = 15;
-	DueType due_type = 16;
+	User user = 9;
+	User sales_representative = 10;
+	Status status = 11;
+	Priority priority = 12;
+	int64 date_next_action = 13;
+	DueType due_type = 14;
 }
 
 message ExistsIssuesRequest {
@@ -225,14 +224,12 @@ message IssueComment {
 	string uuid = 2;
 	string result = 3;
 	int64 created = 4;
-	int32 user_id = 5;
-	string user_uuid = 6;
-	string user_name = 7;
-	IssueCommentType issue_comment_type = 8;
+	User user = 5;
+	IssueCommentType issue_comment_type = 6;
 	// log fields
-	string label = 9;
-	data.Value new_value = 10;
-	string displayed_value = 11;
+	string label = 7;
+	data.Value new_value = 8;
+	string displayed_value = 9;
 }
 
 message ListIssueCommentsRequest {
