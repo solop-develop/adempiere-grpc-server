@@ -20,11 +20,13 @@ import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.core.domains.models.X_I_BankStatement;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MBankStatement;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
 import org.spin.backend.grpc.form.bank_statement_match.BusinessPartner;
 import org.spin.backend.grpc.form.bank_statement_match.Currency;
 import org.spin.backend.grpc.form.bank_statement_match.ImportedBankMovement;
@@ -37,6 +39,56 @@ import org.spin.base.util.ValueUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class BankStatementMatchConvertUtil {
+
+	public static BankStatement.Builder convertBankStatement(int bankStatementId) {
+		BankStatement.Builder builder = BankStatement.newBuilder();
+		if (bankStatementId <= 0) {
+			return builder;
+		}
+		MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, null);
+		return convertBankStatement(bankStatement);
+	}
+
+	public static BankStatement.Builder convertBankStatement(MBankStatement bankStatement) {
+		BankStatement.Builder builder = BankStatement.newBuilder();
+		if (bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(bankStatement.getC_BankStatement_ID())
+			.setUuid(
+				ValueUtil.validateNull(
+					bankStatement.getUUID()
+				)
+			)
+			.setBankAccountId(bankStatement.getC_BankAccount_ID())
+			.setDocumentNo(
+				ValueUtil.validateNull(
+					bankStatement.getDocumentNo()
+				)
+			)
+			.setDescription(
+				ValueUtil.validateNull(
+					bankStatement.getDescription()
+				)
+			)
+			.setDocumentStatus(
+				ValueUtil.validateNull(
+					bankStatement.getDocStatus()
+				)
+			)
+			.setStatementDate(
+				ValueUtil.getLongFromTimestamp(
+					bankStatement.getStatementDate()
+				)
+			)
+			.setIsManual(bankStatement.isManual())
+			.setIsProcessed(bankStatement.isProcessed())
+		;
+
+		return builder;
+	}
+
+
 
 	public static BusinessPartner.Builder convertBusinessPartner(int businessPartnerId) {
 		if (businessPartnerId <= 0) {
@@ -272,11 +324,13 @@ public class BankStatementMatchConvertUtil {
 
 		if (bankStatemet.getC_Payment_ID() > 0) {
 			MPayment payment = new MPayment(Env.getCtx(), bankStatemet.getC_Payment_ID(), null);
-			builder.setDocumentNo(
-				ValueUtil.validateNull(
-					payment.getDocumentNo()
+			builder.setPaymentId(payment.getC_Payment_ID())
+				.setDocumentNo(
+					ValueUtil.validateNull(
+						payment.getDocumentNo()
+					)
 				)
-			);
+			;
 			TenderType.Builder tenderTypeBuilder = convertTenderType(
 				payment.getTenderType()
 			);

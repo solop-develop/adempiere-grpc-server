@@ -56,12 +56,24 @@ public class BankStatementMatchUtil {
 		Timestamp dateTo,
 		BigDecimal paymentAmountFrom,
 		BigDecimal paymentAmountTo,
-		int businessPartnerId
+		int businessPartnerId,
+		int bankStatementId
 	) {
 		String whereClasuePayment = "C_BankAccount_ID = ? "
 			+ " AND DocStatus NOT IN('IP', 'DR') "
 			+ " AND IsReconciled = 'N' "
 		;
+
+		if(bankStatementId > 0) {
+			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement bs "
+				+ "INNER JOIN C_BankStatementLine bsl "
+				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
+				+ "WHERE bsl.C_Payment_ID = C_Payment_ID "
+				+ "AND bs.DocStatus IN('CO', 'CL') "
+				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId + ") "
+			;
+		}
+
 		ArrayList<Object> paymentFilters = new ArrayList<Object>();
 		paymentFilters.add(bankAccountId);
 

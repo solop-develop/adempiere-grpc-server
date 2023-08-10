@@ -23,22 +23,52 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_C_BankStatement;
 import org.adempiere.core.domains.models.X_I_BankStatement;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.impexp.BankStatementMatchInfo;
 import org.compiere.model.MBankAccount;
+import org.compiere.model.MBankStatement;
 import org.compiere.model.MBankStatementMatcher;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
+import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
+import org.spin.backend.grpc.form.bank_statement_match.GetBankStatementRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ImportedBankMovement;
+import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListImportedBankMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListImportedBankMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListMatchingMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListMatchingMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.MatchMode;
 import org.spin.backend.grpc.form.bank_statement_match.MatchingMovement;
+import org.spin.base.db.LimitUtil;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 
 public abstract class BankStatementMatchServiceLogic {
+
+	public static BankStatement.Builder getBankStatement(GetBankStatementRequest request) {
+		if (request.getId() < 0 && Util.isEmpty(request.getUuid(), true)) {
+			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@/@UUID@");
+		}
+		int recordId = request.getId();
+		if (recordId <= 0) {
+			recordId = RecordUtil.getIdFromUuid(I_C_BankStatement.Table_Name, request.getUuid(), null);
+		}
+		
+		MBankStatement bankStatement = new MBankStatement(Env.getCtx(), recordId, null);
+		if (bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
+			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
+		}
+
+		return BankStatementMatchConvertUtil.convertBankStatement(bankStatement);
+	}
+
+
 
 	public static ListImportedBankMovementsResponse.Builder listImportedBankMovements(ListImportedBankMovementsRequest request) {
 		// validate and get Bank Account
@@ -131,7 +161,8 @@ public abstract class BankStatementMatchServiceLogic {
 			dateTo,
 			paymentAmountFrom,
 			paymentAmountTo,
-			request.getBusinessPartnerId()
+			request.getBusinessPartnerId(),
+			request.getBankStatementId()
 		);
 		List<Integer> paymentsId = paymentQuery.getIDsAsList();
 		if (paymentsId == null || paymentsId.isEmpty()) {
@@ -202,6 +233,48 @@ public abstract class BankStatementMatchServiceLogic {
 			);
 			builderList.addRecords(builder);
 		}
+
+		return builderList;
+	}
+
+
+	public static ListBankStatementsResponse.Builder listBankStatements(ListBankStatementsRequest request) {
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
+
+		final String whereClasue = "C_BankAccount_ID = ?";
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_BankStatement.Table_Name,
+			whereClasue,
+			null
+		)
+			.setParameters(bankAccount.getC_BankAccount_ID())
+		;
+
+		//	Get page and count
+		int recordCount = query.count();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		//	Set page token
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListBankStatementsResponse.Builder builderList = ListBankStatementsResponse.newBuilder()
+			.setRecordCount(recordCount)
+			.setNextPageToken(
+				ValueUtil.validateNull(nexPageToken)
+			)
+		;
+
+		query.setLimit(limit, offset)
+			.getIDsAsList()
+			.forEach(bankStatementId -> {
+				BankStatement.Builder builder = BankStatementMatchConvertUtil.convertBankStatement(bankStatementId);
+				builderList.addRecords(builder);
+			});
 
 		return builderList;
 	}
