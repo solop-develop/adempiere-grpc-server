@@ -68,6 +68,11 @@ public class BankStatementMatchConvertUtil {
 					bankStatement.getDocumentNo()
 				)
 			)
+			.setName(
+				ValueUtil.validateNull(
+					bankStatement.getName()
+				)
+			)
 			.setDescription(
 				ValueUtil.validateNull(
 					bankStatement.getDescription()
