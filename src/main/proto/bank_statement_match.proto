@@ -271,7 +271,6 @@ message ListResultMovementsRequest {
 	string search_value = 3;
 	int32 bank_statement_id = 4;
 	int32 bank_account_id = 5;
-	int32 business_partner_id = 6;
 	data.Decimal payment_amount_from = 7;
 	data.Decimal payment_amount_to = 8;
 	int64 transaction_date_from = 9;
@@ -310,7 +309,6 @@ message UnmatchPaymentsResponse {
 message ProcessMovementsRequest {
 	int32 bank_statement_id = 1;
 	int32 bank_account_id = 2;
-	int32 business_partner_id = 3;
 	data.Decimal payment_amount_from = 5;
 	data.Decimal payment_amount_to = 6;
 	int64 transaction_date_from = 7;
