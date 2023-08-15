@@ -68,7 +68,7 @@ public class BankStatementMatchUtil {
 			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement bs "
 				+ "INNER JOIN C_BankStatementLine bsl "
 				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
-				+ "WHERE bsl.C_Payment_ID = C_Payment_ID "
+				+ "WHERE bsl.C_Payment_ID = C_Payment.C_Payment_ID "
 				+ "AND bs.DocStatus IN('CO', 'CL') "
 				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId + ") "
 			;
@@ -80,10 +80,10 @@ public class BankStatementMatchUtil {
 		//	Match
 		if(isMatchedMode) {
 			whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement ibs "
-				+ "WHERE ibs.C_Payment_ID = C_Payment_ID) ";
+				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
 		} else {
 			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement ibs "
-				+ "WHERE ibs.C_Payment_ID = C_Payment_ID) ";
+				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
 		}
 
 		//	Date Trx
@@ -151,6 +151,65 @@ public class BankStatementMatchUtil {
 				+ "AND C_BPartner_ID IS NULL "
 				+ "AND C_Invoice_ID IS NULL) ";
 		}
+
+		//	Date Trx
+		if (dateFrom != null) {
+			whereClasueBankStatement += "AND StatementLineDate >= ? ";
+			filterParameters.add(dateFrom);
+		}
+		if (dateTo != null) {
+			whereClasueBankStatement += "AND StatementLineDate <= ? ";
+			filterParameters.add(dateTo);
+		}
+
+		//	Amount
+		if (paymentAmountFrom != null) {
+			whereClasueBankStatement += "AND TrxAmt >= ? ";
+			filterParameters.add(paymentAmountFrom);
+		}
+		if (paymentAmountTo != null) {
+			whereClasueBankStatement += "AND TrxAmt <= ? ";
+			filterParameters.add(paymentAmountTo);
+		}
+
+		Query paymentQuery = new Query(
+			Env.getCtx(),
+			I_I_BankStatement.Table_Name,
+			whereClasueBankStatement,
+			null
+		)
+			.setParameters(filterParameters)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.setClient_ID()
+			.setOrderBy(I_I_BankStatement.COLUMNNAME_StatementLineDate)
+		;
+
+		return paymentQuery;
+	}
+
+
+	public static Query buildResultMovementsQuery(
+		int bankStatementId,
+		int bankAccountId,
+		Timestamp dateFrom,
+		Timestamp dateTo,
+		BigDecimal paymentAmountFrom,
+		BigDecimal paymentAmountTo
+	) {
+		String whereClasueBankStatement = "C_BankAccount_ID = ? ";
+
+		if(bankStatementId > 0) {
+			whereClasueBankStatement += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement bs "
+				+ "INNER JOIN C_BankStatementLine bsl "
+				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
+				+ "WHERE bsl.C_Payment_ID = I_BankStatement.C_Payment_ID "
+				+ "AND bs.DocStatus IN('CO', 'CL') "
+				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId + ") "
+			;
+		}
+
+		ArrayList<Object> filterParameters = new ArrayList<Object>();
+		filterParameters.add(bankAccountId);
 
 		//	Date Trx
 		if (dateFrom != null) {

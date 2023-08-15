@@ -14,24 +14,11 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-
-import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MBankAccount;
-import org.compiere.model.MLookupInfo;
-import org.compiere.model.MPayment;
-import org.compiere.model.Query;
 import org.compiere.util.CLogger;
-import org.compiere.util.Env;
-import org.compiere.util.Msg;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
-import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatementMatchGrpc.BankStatementMatchImplBase;
-import org.spin.backend.grpc.form.bank_statement_match.BusinessPartner;
-import org.spin.backend.grpc.form.bank_statement_match.Currency;
 import org.spin.backend.grpc.form.bank_statement_match.GetBankStatementRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankAccountsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementsRequest;
@@ -43,21 +30,16 @@ import org.spin.backend.grpc.form.bank_statement_match.ListMatchingMovementsRequ
 import org.spin.backend.grpc.form.bank_statement_match.ListMatchingMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListPaymentsResponse;
+import org.spin.backend.grpc.form.bank_statement_match.ListResultMovementsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListResultMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListSearchModesRequest;
-import org.spin.backend.grpc.form.bank_statement_match.MatchMode;
-import org.spin.backend.grpc.form.bank_statement_match.Payment;
+import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
-import org.spin.backend.grpc.form.bank_statement_match.TenderType;
-import org.spin.base.db.LimitUtil;
-import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ReferenceInfo;
-import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
-import org.spin.form.bank_statement_match.BankStatementMatchConvertUtil;
+import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsResponse;
 import org.spin.form.bank_statement_match.BankStatementMatchServiceLogic;
-import org.spin.form.bank_statement_match.BankStatementMatchUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -97,13 +79,35 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 
 
 	@Override
+	public void listBankStatements(ListBankStatementsRequest request, StreamObserver<ListBankStatementsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListBankStatementsResponse.Builder builder = BankStatementMatchServiceLogic.listBankStatements(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
 	public void listBankAccounts(ListBankAccountsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = listBankAccounts(request);
+			ListLookupItemsResponse.Builder builderList = BankStatementMatchServiceLogic.listBankAccounts(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -116,27 +120,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		}
 	}
 
-	ListLookupItemsResponse.Builder listBankAccounts(ListBankAccountsRequest request) {
-		// Bank Account
-		int columnId = 4917; // C_BankStatement.C_BankAccount_ID
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
-			null, null
-		);
-
-		ListLookupItemsResponse.Builder builderList = UserInterfaceServiceImplementation.listLookupItems(
-			reference,
-			null,
-			request.getPageSize(),
-			request.getPageToken(),
-			request.getSearchValue()
-		);
-
-		return builderList;
-	}
 
 
 	@Override
@@ -146,7 +129,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = listBusinessPartners(request);
+			ListLookupItemsResponse.Builder builderList = BankStatementMatchServiceLogic.listBusinessPartners(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -157,28 +140,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 				.asRuntimeException()
 			);
 		}
-	}
-
-	ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
-		// Business Partner
-		int columnId = 3499; // C_Invoice.C_BPartner_ID
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
-			null, null
-		);
-
-		ListLookupItemsResponse.Builder builderList = UserInterfaceServiceImplementation.listLookupItems(
-			reference,
-			null,
-			request.getPageSize(),
-			request.getPageToken(),
-			request.getSearchValue()
-		);
-
-		return builderList;
 	}
 
 
@@ -190,7 +151,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = listSearchModes(request);
+			ListLookupItemsResponse.Builder builderList = BankStatementMatchServiceLogic.listSearchModes(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -201,42 +162,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 				.asRuntimeException()
 			);
 		}
-	}
-
-	ListLookupItemsResponse.Builder listSearchModes(ListSearchModesRequest request) {
-		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
-
-		LookupItem.Builder lookupMatched = LookupItem.newBuilder()
-			.putValues(
-				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
-					MatchMode.MODE_NOT_MATCHED_VALUE
-				).build()
-			)
-			.putValues(
-				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
-					Msg.translate(Env.getCtx(), "NotMatched")
-				).build())
-		;
-		builderList.addRecords(lookupMatched);
-
-		LookupItem.Builder lookupUnMatched = LookupItem.newBuilder()
-			.putValues(
-				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
-					MatchMode.MODE_MATCHED_VALUE
-				).build()
-			)
-			.putValues(
-				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
-					Msg.translate(Env.getCtx(), "Matched")
-				).build())
-		;
-		builderList.addRecords(lookupUnMatched);
-
-		return builderList;
 	}
 
 
@@ -260,13 +185,15 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		}
 	}
 
+
+
 	@Override
 	public void listPayments(ListPaymentsRequest request, StreamObserver<ListPaymentsResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListPaymentsResponse.Builder builder = listPayments(request);
+			ListPaymentsResponse.Builder builder = BankStatementMatchServiceLogic.listPayments(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -279,121 +206,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 		}
 	}
 
-	private ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
-		// validate and get Bank Account
-		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
-
-		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
-		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
-			request.getTransactionDateFrom()
-		);
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(
-			request.getTransactionDateTo()
-		);
-		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
-			request.getPaymentAmountFrom()
-		);
-		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
-			request.getPaymentAmountTo()
-		);
-
-		Query query = BankStatementMatchUtil.buildPaymentQuery(
-			bankAccount.getC_BankAccount_ID(),
-			isMatchedMode,
-			dateFrom,
-			dateTo,
-			paymentAmountFrom,
-			paymentAmountTo,
-			request.getBusinessPartnerId(),
-			request.getBankStatementId()
-		);
-
-		int count = query.count();
-		String nexPageToken = "";
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-		//	Set page token
-		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-
-		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder()
-			.setRecordCount(count)
-			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
-			)
-		;
-
-		query.setLimit(limit, offset)
-			.getIDsAsList()
-			.forEach(paymentId -> {
-				MPayment payment = new MPayment(
-					Env.getCtx(),
-					paymentId,
-					null
-				);
-
-				BusinessPartner.Builder businessPartnerBuilder = BankStatementMatchConvertUtil.convertBusinessPartner(
-					payment.getC_BPartner_ID()
-				);
-
-				Currency.Builder currencyBuilder = BankStatementMatchConvertUtil.convertCurrency(
-					payment.getC_Currency_ID()
-				);
-
-				TenderType.Builder tenderTypeBuilder = BankStatementMatchConvertUtil.convertTenderType(
-					payment.getTenderType()
-				);
-				boolean isReceipt = payment.isReceipt();
-				BigDecimal paymentAmount = payment.getPayAmt();
-				if (!isReceipt) {
-					paymentAmount = paymentAmount.negate();
-				}
-
-				Payment.Builder paymentBuilder = Payment.newBuilder()
-					.setId(
-						payment.getC_Payment_ID()
-					)
-					.setUuid(
-						ValueUtil.validateNull(
-							payment.getUUID()
-						)
-					)
-					.setTransactionDate(
-						ValueUtil.getLongFromTimestamp(
-							payment.getDateTrx()
-						)
-					)
-					.setIsReceipt(isReceipt)
-					.setDocumentNo(
-						ValueUtil.validateNull(
-							payment.getDocumentNo()
-						)
-					)
-					.setDescription(
-						ValueUtil.validateNull(
-							payment.getDescription()
-						)
-					)
-					.setAmount(
-						ValueUtil.getDecimalFromBigDecimal(
-							paymentAmount
-						)
-					)
-					.setBusinessPartner(businessPartnerBuilder)
-					.setTenderType(tenderTypeBuilder)
-					.setCurrency(currencyBuilder)
-				;
-
-				builderList.addRecords(paymentBuilder);
-			});
-		;
-
-		return builderList;
-	}
 
 
 	@Override
@@ -419,12 +231,56 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 
 
 	@Override
-	public void listBankStatements(ListBankStatementsRequest request, StreamObserver<ListBankStatementsResponse> responseObserver) {
+	public void listResultMovements(ListResultMovementsRequest request, StreamObserver<ListResultMovementsResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListBankStatementsResponse.Builder builder = BankStatementMatchServiceLogic.listBankStatements(request);
+			ListResultMovementsResponse.Builder builder = BankStatementMatchServiceLogic.listResultMovements(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void matchPayments(MatchPaymentsRequest request, StreamObserver<MatchPaymentsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			MatchPaymentsResponse.Builder builder = BankStatementMatchServiceLogic.matchPayments(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void unmatchPayments(UnmatchPaymentsRequest request, StreamObserver<UnmatchPaymentsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			UnmatchPaymentsResponse.Builder builder = BankStatementMatchServiceLogic.unmatchPayments(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -446,7 +302,7 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ProcessMovementsResponse.Builder builder = processMovements(request);
+			ProcessMovementsResponse.Builder builder = BankStatementMatchServiceLogic.processMovements(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -458,12 +314,6 @@ public class BankStatementMatchServiceImplementation extends BankStatementMatchI
 				.asRuntimeException()
 			);
 		}
-	}
-
-	private ProcessMovementsResponse.Builder processMovements(ProcessMovementsRequest request) {
-		ProcessMovementsResponse.Builder builderList = ProcessMovementsResponse.newBuilder();
-
-		return builderList;
 	}
 
 }

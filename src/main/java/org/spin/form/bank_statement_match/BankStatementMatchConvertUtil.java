@@ -31,6 +31,8 @@ import org.spin.backend.grpc.form.bank_statement_match.BusinessPartner;
 import org.spin.backend.grpc.form.bank_statement_match.Currency;
 import org.spin.backend.grpc.form.bank_statement_match.ImportedBankMovement;
 import org.spin.backend.grpc.form.bank_statement_match.MatchingMovement;
+import org.spin.backend.grpc.form.bank_statement_match.Payment;
+import org.spin.backend.grpc.form.bank_statement_match.ResultMovement;
 import org.spin.backend.grpc.form.bank_statement_match.TenderType;
 import org.spin.base.util.ValueUtil;
 
@@ -200,6 +202,64 @@ public class BankStatementMatchConvertUtil {
 		return builder;
 	}
 
+	public static Payment.Builder convertPayment(MPayment payment) {
+		Payment.Builder builder = Payment.newBuilder();
+		if (payment == null) {
+			return builder;
+		}
+
+		BusinessPartner.Builder businessPartnerBuilder = convertBusinessPartner(
+			payment.getC_BPartner_ID()
+		);
+
+		Currency.Builder currencyBuilder = convertCurrency(
+			payment.getC_Currency_ID()
+		);
+
+		TenderType.Builder tenderTypeBuilder = convertTenderType(
+			payment.getTenderType()
+		);
+		boolean isReceipt = payment.isReceipt();
+		BigDecimal paymentAmount = payment.getPayAmt();
+		if (!isReceipt) {
+			paymentAmount = paymentAmount.negate();
+		}
+
+		builder.setId(payment.getC_Payment_ID())
+			.setUuid(
+				ValueUtil.validateNull(
+					payment.getUUID()
+				)
+			)
+			.setTransactionDate(
+				ValueUtil.getLongFromTimestamp(
+					payment.getDateTrx()
+				)
+			)
+			.setIsReceipt(isReceipt)
+			.setDocumentNo(
+				ValueUtil.validateNull(
+					payment.getDocumentNo()
+				)
+			)
+			.setDescription(
+				ValueUtil.validateNull(
+					payment.getDescription()
+				)
+			)
+			.setAmount(
+				ValueUtil.getDecimalFromBigDecimal(
+					paymentAmount
+				)
+			)
+			.setBusinessPartner(businessPartnerBuilder)
+			.setTenderType(tenderTypeBuilder)
+			.setCurrency(currencyBuilder)
+		;
+
+		return builder;
+	}
+
 
 	public static ImportedBankMovement.Builder convertImportedBankMovement(X_I_BankStatement bankStatemet) {
 		ImportedBankMovement.Builder builder = ImportedBankMovement.newBuilder();
@@ -347,6 +407,110 @@ public class BankStatementMatchConvertUtil {
 			);
 			builder.setCurrency(currencyBuilder);
 		}
+
+		return builder;
+	}
+
+
+	public static ResultMovement.Builder convertResultMovement(X_I_BankStatement bankStatemet) {
+		ResultMovement.Builder builder = ResultMovement.newBuilder();
+		if (bankStatemet == null || bankStatemet.getI_BankStatement_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(bankStatemet.getI_BankStatement_ID())
+			.setUuid(
+				ValueUtil.validateNull(
+					bankStatemet.getUUID()
+				)
+			)
+			.setReferenceNo(
+				ValueUtil.validateNull(
+					bankStatemet.getReferenceNo()
+				)
+			)
+			.setIsReceipt(
+				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) < 0
+			)
+			.setReferenceNo(
+				ValueUtil.validateNull(
+					bankStatemet.getReferenceNo()
+				)
+			)
+			.setMemo(
+				ValueUtil.validateNull(
+					bankStatemet.getMemo()
+				)
+			)
+			.setTransactionDate(
+				ValueUtil.getLongFromTimestamp(
+					bankStatemet.getStatementLineDate()
+				)
+			)
+			.setAmount(
+				ValueUtil.getDecimalFromBigDecimal(
+					bankStatemet.getTrxAmt()
+				)
+			)
+		;
+
+		BusinessPartner.Builder businessPartnerBuilder = BankStatementMatchConvertUtil.convertBusinessPartner(
+			bankStatemet.getC_BPartner_ID()
+		);
+		if (bankStatemet.getC_BPartner_ID() <= 0) {
+			businessPartnerBuilder.setName(
+				ValueUtil.validateNull(
+					bankStatemet.getBPartnerValue()
+				)
+			).setValue(
+				ValueUtil.validateNull(
+					bankStatemet.getBPartnerValue()
+				)
+			);
+		}
+		builder.setBusinessPartner(businessPartnerBuilder);
+
+		Currency.Builder currencyBuilder = Currency.newBuilder();
+		if (bankStatemet.getC_Currency_ID() > 0) {
+			currencyBuilder = BankStatementMatchConvertUtil.convertCurrency(
+				bankStatemet.getC_Currency_ID()
+			);
+		} else {
+ 			currencyBuilder = BankStatementMatchConvertUtil.convertCurrency(
+				bankStatemet.getISO_Code()
+			);
+		}
+		builder.setCurrency(currencyBuilder);
+
+		if (bankStatemet.getC_Payment_ID() > 0) {
+			MPayment payment = new MPayment(Env.getCtx(), bankStatemet.getC_Payment_ID(), null);
+			builder.setPaymentId(payment.getC_Payment_ID())
+				.setDocumentNo(
+					ValueUtil.validateNull(
+						payment.getDocumentNo()
+					)
+				)
+			;
+			TenderType.Builder tenderTypeBuilder = convertTenderType(
+				payment.getTenderType()
+			);
+			builder.setTenderType(tenderTypeBuilder);
+
+			if (builder.getBusinessPartner().getId() <= 0) {
+				businessPartnerBuilder = convertBusinessPartner(
+					payment.getC_BPartner_ID()
+				);
+			}
+
+			if (builder.getCurrency().getId() <= 0) {
+				currencyBuilder = convertCurrency(
+					payment.getC_Currency_ID()
+				);
+			}
+		}
+
+		builder.setBusinessPartner(businessPartnerBuilder)
+			.setCurrency(currencyBuilder);
 
 		return builder;
 	}
