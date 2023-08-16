@@ -78,13 +78,13 @@ public class BankStatementMatchUtil {
 		paymentFilters.add(bankAccountId);
 
 		//	Match
-		if(isMatchedMode) {
-			whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement ibs "
-				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
-		} else {
-			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement ibs "
-				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
-		}
+		// if(isMatchedMode) {
+		// 	whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement ibs "
+		// 		+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
+		// } else {
+		// 	whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement ibs "
+		// 		+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
+		// }
 
 		//	Date Trx
 		if (dateFrom != null) {
@@ -142,15 +142,15 @@ public class BankStatementMatchUtil {
 		filterParameters.add(bankAccountId);
 
 		//	Match
-		if(isMatchedMode) {
-			whereClasueBankStatement += "AND (C_Payment_ID IS NOT NULL "
-				+ "OR C_BPartner_ID IS NOT NULL "
-				+ "OR C_Invoice_ID IS NOT NULL) ";
-		} else {
-			whereClasueBankStatement += "AND (C_Payment_ID IS NULL "
-				+ "AND C_BPartner_ID IS NULL "
-				+ "AND C_Invoice_ID IS NULL) ";
-		}
+		// if(isMatchedMode) {
+		// 	whereClasueBankStatement += "AND (C_Payment_ID IS NOT NULL "
+		// 		+ "OR C_BPartner_ID IS NOT NULL "
+		// 		+ "OR C_Invoice_ID IS NOT NULL) ";
+		// } else {
+		// 	whereClasueBankStatement += "AND (C_Payment_ID IS NULL "
+		// 		+ "AND C_BPartner_ID IS NULL "
+		// 		+ "AND C_Invoice_ID IS NULL) ";
+		// }
 
 		//	Date Trx
 		if (dateFrom != null) {

@@ -373,8 +373,9 @@ public abstract class BankStatementMatchServiceLogic {
 			X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(context, bankStatementId, null);
 			
 			if(currentBankStatementImport.getC_Payment_ID() != 0
-					|| currentBankStatementImport.getC_BPartner_ID() != 0
-					|| currentBankStatementImport.getC_Invoice_ID() != 0) {
+				// || currentBankStatementImport.getC_BPartner_ID() != 0
+				// || currentBankStatementImport.getC_Invoice_ID() != 0
+			) {
 				//	put on hash
 				matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
 				matched++;
