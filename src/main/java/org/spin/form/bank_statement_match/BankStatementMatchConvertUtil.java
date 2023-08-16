@@ -385,6 +385,11 @@ public class BankStatementMatchConvertUtil {
 					bankStatemet.getTrxAmt()
 				)
 			)
+			.setIsAutomatic(
+				ValueUtil.stringToBoolean(
+					bankStatemet.getEftMemo()
+				)
+			)
 		;
 
 		if (bankStatemet.getC_Payment_ID() > 0) {
@@ -393,6 +398,11 @@ public class BankStatementMatchConvertUtil {
 				.setDocumentNo(
 					ValueUtil.validateNull(
 						payment.getDocumentNo()
+					)
+				)
+				.setPaymentAmount(
+					ValueUtil.getDecimalFromBigDecimal(
+						payment.getPayAmt()
 					)
 				)
 			;
@@ -493,6 +503,11 @@ public class BankStatementMatchConvertUtil {
 				.setDocumentNo(
 					ValueUtil.validateNull(
 						payment.getDocumentNo()
+					)
+				)
+				.setPaymentAmount(
+					ValueUtil.getDecimalFromBigDecimal(
+						payment.getPayAmt()
 					)
 				)
 			;

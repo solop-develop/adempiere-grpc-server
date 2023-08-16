@@ -238,6 +238,8 @@ message MatchingMovement {
 	string reference_no = 11;
 	string memo = 12;
 	int32 payment_id = 13;
+	bool is_automatic = 14;
+	data.Decimal payment_amount = 15;
 }
 
 message ListMatchingMovementsResponse {
@@ -262,6 +264,8 @@ message ResultMovement {
 	string reference_no = 11;
 	string memo = 12;
 	int32 payment_id = 13;
+	bool is_automatic = 14;
+	data.Decimal payment_amount = 15;
 }
 
 message ListResultMovementsRequest {
