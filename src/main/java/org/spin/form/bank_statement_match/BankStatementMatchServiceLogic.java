@@ -389,25 +389,29 @@ public abstract class BankStatementMatchServiceLogic {
 						paymentsId,
 						matchedPaymentHashMap.keySet().stream().collect(Collectors.toList())
 					);
-					if (info != null && info.isMatched()) {
-						//	Duplicate match
-						if(matchedPaymentHashMap.containsKey(info.getC_Payment_ID())) {
-							continue;
-						}
-						if (info.getC_Payment_ID() > 0) {
-							currentBankStatementImport.setC_Payment_ID(info.getC_Payment_ID());
-						}
-						if (info.getC_Invoice_ID() > 0) {
-							currentBankStatementImport.setC_Invoice_ID(info.getC_Invoice_ID());
-						}
-						if (info.getC_BPartner_ID() > 0) {
-							currentBankStatementImport.setC_BPartner_ID(info.getC_BPartner_ID());
-						}
-						//	put on hash
-						matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
-						matched++;
-						break;
+					if (info == null || !info.isMatched()) {
+						continue;
 					}
+
+					//	Duplicate match
+					if(matchedPaymentHashMap.containsKey(info.getC_Payment_ID())) {
+						continue;
+					}
+					if (info.getC_Payment_ID() > 0) {
+						currentBankStatementImport.setC_Payment_ID(info.getC_Payment_ID());
+					}
+					if (info.getC_Invoice_ID() > 0) {
+						currentBankStatementImport.setC_Invoice_ID(info.getC_Invoice_ID());
+					}
+					if (info.getC_BPartner_ID() > 0) {
+						currentBankStatementImport.setC_BPartner_ID(info.getC_BPartner_ID());
+					}
+					// TODO: Change to automatic match flag
+					currentBankStatementImport.setEftMemo("Y");
+
+					//	put on hash
+					matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
+					matched++;
 				}
 			}	//	for all matchers
 		}
@@ -415,7 +419,6 @@ public abstract class BankStatementMatchServiceLogic {
 		builderList.setRecordCount(matched);
 		for (Map.Entry<Integer, X_I_BankStatement> entry: matchedPaymentHashMap.entrySet()) {
 			X_I_BankStatement importBankStatement = entry.getValue();
-			importBankStatement.setEftMemo("Y");
 			importBankStatement.saveEx();
 			MatchingMovement.Builder builder = BankStatementMatchConvertUtil.convertMatchMovement(
 				importBankStatement

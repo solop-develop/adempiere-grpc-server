@@ -467,6 +467,11 @@ public class BankStatementMatchConvertUtil {
 					bankStatemet.getTrxAmt()
 				)
 			)
+			.setIsAutomatic(
+				ValueUtil.stringToBoolean(
+					bankStatemet.getEftMemo()
+				)
+			)
 		;
 
 		BusinessPartner.Builder businessPartnerBuilder = BankStatementMatchConvertUtil.convertBusinessPartner(
