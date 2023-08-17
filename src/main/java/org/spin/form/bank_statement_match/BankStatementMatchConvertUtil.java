@@ -20,12 +20,15 @@ import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.core.domains.models.X_I_BankStatement;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MBank;
+import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatement;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.form.bank_statement_match.BankAccount;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
 import org.spin.backend.grpc.form.bank_statement_match.BusinessPartner;
 import org.spin.backend.grpc.form.bank_statement_match.Currency;
@@ -41,6 +44,47 @@ import org.spin.base.util.ValueUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class BankStatementMatchConvertUtil {
+
+	public static BankAccount.Builder convertBankAccount(int bankAccountId) {
+		if (bankAccountId > 0) {
+			MBankAccount bankAccount = MBankAccount.get(Env.getCtx(), bankAccountId);
+			return convertBankAccount(bankAccount);
+		}
+		return BankAccount.newBuilder();
+	}
+	public static BankAccount.Builder convertBankAccount(MBankAccount bankAccount) {
+		BankAccount.Builder builder = BankAccount.newBuilder();
+		if (bankAccount == null || bankAccount.getC_BankAccount_ID() <= 0) {
+			return builder;
+		}
+		
+		MBank bank = MBank.get(Env.getCtx(), bankAccount.getC_Bank_ID());
+
+		String accountNo = ValueUtil.validateNull(bankAccount.getAccountNo());
+		int accountNoLength = accountNo.length();
+		if (accountNoLength > 4) {
+			accountNo = accountNo.substring(accountNoLength - 4);
+		}
+		accountNo = String.format("%1$" + 20 + "s", accountNo).replace(" ", "*");
+
+		Currency.Builder currencyBuilder = convertCurrency(bankAccount.getC_Currency_ID());
+		builder.setId(bankAccount.getC_BankAccount_ID())
+			.setUuid(ValueUtil.validateNull(bankAccount.getUUID()))
+			.setAccountNo(accountNo)
+			.setAccountName(ValueUtil.validateNull(bankAccount.getName()))
+			.setBankName(
+				ValueUtil.validateNull(bank.getName())
+			)
+			.setCurrency(
+				currencyBuilder
+			)
+			.setCurrentBalance(
+				ValueUtil.getDecimalFromBigDecimal(bankAccount.getCurrentBalance())
+			)
+		;
+
+		return builder;
+	}
 
 	public static BankStatement.Builder convertBankStatement(int bankStatementId) {
 		BankStatement.Builder builder = BankStatement.newBuilder();
@@ -62,7 +106,11 @@ public class BankStatementMatchConvertUtil {
 					bankStatement.getUUID()
 				)
 			)
-			.setBankAccountId(bankStatement.getC_BankAccount_ID())
+			.setBankAccount(
+				convertBankAccount(
+					bankStatement.getC_BankAccount_ID()
+				)
+			)
 			.setDocumentNo(
 				ValueUtil.validateNull(
 					bankStatement.getDocumentNo()
@@ -90,6 +138,21 @@ public class BankStatementMatchConvertUtil {
 			)
 			.setIsManual(bankStatement.isManual())
 			.setIsProcessed(bankStatement.isProcessed())
+			.setBeginningBalance(
+				ValueUtil.getDecimalFromBigDecimal(
+					bankStatement.getBeginningBalance()
+				)
+			)
+			.setStatementDifference(
+				ValueUtil.getDecimalFromBigDecimal(
+					bankStatement.getStatementDifference()
+				)
+			)
+			.setEndingBalance(
+				ValueUtil.getDecimalFromBigDecimal(
+					bankStatement.getEndingBalance()
+				)
+			)
 		;
 
 		return builder;
@@ -405,6 +468,11 @@ public class BankStatementMatchConvertUtil {
 						payment.getPayAmt()
 					)
 				)
+				.setPaymentDate(
+					ValueUtil.getLongFromTimestamp(
+						payment.getDateTrx()
+					)
+				)
 			;
 			TenderType.Builder tenderTypeBuilder = convertTenderType(
 				payment.getTenderType()
@@ -513,6 +581,11 @@ public class BankStatementMatchConvertUtil {
 				.setPaymentAmount(
 					ValueUtil.getDecimalFromBigDecimal(
 						payment.getPayAmt()
+					)
+				)
+				.setPaymentDate(
+					ValueUtil.getLongFromTimestamp(
+						payment.getDateTrx()
 					)
 				)
 			;

@@ -45,12 +45,22 @@ service BankStatementMatch {
 	rpc ProcessMovements(ProcessMovementsRequest) returns (ProcessMovementsResponse) {}
 }
 
+//	Bank Account
+message BankAccount {
+	int32 id = 1;
+	string uuid = 2;
+	string account_no = 3;
+	string account_name = 4;
+	string bank_name = 5;
+	Currency currency = 6;
+	data.Decimal current_balance = 7;
+}
 
 // Bank Statement
 message BankStatement {
 	int32 id = 1;
 	string uuid = 2;
-	int32 bank_account_id = 3;
+	BankAccount bank_account = 3;
 	string document_no = 4;
 	string name = 5;
 	int64 statement_date = 6;
@@ -58,6 +68,9 @@ message BankStatement {
 	bool is_manual = 8;
 	string document_status = 9;
 	bool is_processed = 10;
+	data.Decimal beginning_balance = 11;
+	data.Decimal statement_difference = 12;
+	data.Decimal ending_balance = 13;
 }
 
 message GetBankStatementRequest {
@@ -240,6 +253,7 @@ message MatchingMovement {
 	int32 payment_id = 13;
 	bool is_automatic = 14;
 	data.Decimal payment_amount = 15;
+	int64 payment_date = 16;
 }
 
 message ListMatchingMovementsResponse {
@@ -266,6 +280,7 @@ message ResultMovement {
 	int32 payment_id = 13;
 	bool is_automatic = 14;
 	data.Decimal payment_amount = 15;
+	int64 payment_date = 16;
 }
 
 message ListResultMovementsRequest {
