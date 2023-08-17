@@ -17,6 +17,7 @@ package org.spin.form.bank_statement_match;
 import java.math.BigDecimal;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.X_C_BankStatement;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.core.domains.models.X_I_BankStatement;
 import org.compiere.model.MBPartner;
@@ -100,6 +101,13 @@ public class BankStatementMatchConvertUtil {
 		if (bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
 			return builder;
 		}
+
+		String documentSatusName = MRefList.getListName(
+			Env.getCtx(),
+			X_C_BankStatement.DOCSTATUS_AD_Reference_ID,
+			bankStatement.getDocStatus()
+		);
+
 		builder.setId(bankStatement.getC_BankStatement_ID())
 			.setUuid(
 				ValueUtil.validateNull(
@@ -128,7 +136,7 @@ public class BankStatementMatchConvertUtil {
 			)
 			.setDocumentStatus(
 				ValueUtil.validateNull(
-					bankStatement.getDocStatus()
+					documentSatusName
 				)
 			)
 			.setStatementDate(
