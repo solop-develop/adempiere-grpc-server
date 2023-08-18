@@ -3137,6 +3137,12 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
 		int orgId = pos.getAD_Org_ID();
 		MUser salesRepresentative = MUser.get(Env.getCtx(), salesRepresentativeId);
+
+		final String whereClauseWithoutProposal = " AND NOT EXISTS(SELECT 1 FROM C_DocType dt "
+			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
+			+ "AND DocSubTypeSO NOT IN('BO', 'PR'))"
+		;
+
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<Object>();
 		whereClause.append("(C_Order.AD_Org_ID = ? OR C_Order.C_POS_ID = ?)");
@@ -3150,7 +3156,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				parameters.add(posId);
 			} else {
 				if(request.getIsOnlyAisleSeller()) {
-					whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?) AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsAisleSeller = 'Y'))");
+					whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?)")
+						.append(" AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsAisleSeller = 'Y'))")
+						.append(whereClauseWithoutProposal)
+					;
 					parameters.add(salesRepresentativeId);
 					parameters.add(salesRepresentativeId);
 					parameters.add(salesRepresentativeId);
@@ -3195,11 +3204,18 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		//	Is Invoiced
 		if(request.getIsWaitingForInvoice()) {
-			whereClause.append(" AND C_Order.Processed = 'N' AND NOT EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Order_ID = C_Order.C_Order_ID AND i.DocStatus IN('CO', 'CL'))");
+			whereClause.append(" AND C_Order.Processed = 'N'")
+				.append(" AND NOT EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Order_ID = C_Order.C_Order_ID AND i.DocStatus IN('CO', 'CL'))")
+				.append(whereClauseWithoutProposal)
+			;
 		}
-		//	for payment
+		//	for payment (credit)
 		if(request.getIsWaitingForPay()) {
-			whereClause.append(" AND DocStatus IN('CO') AND NOT EXISTS(SELECT 1 FROM C_Payment p WHERE p.C_Order_ID = C_Order.C_Order_ID)");
+			whereClause.append(" AND DocStatus IN('CO')")
+				.append(" AND (EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Order_ID = C_Order.C_Order_ID AND i.DocStatus IN('CO', 'CL') AND invoiceOpen(i.C_Invoice_ID, 0) <> 0)")
+				.append(" OR IsInvoiced = 'N')")
+				.append(whereClauseWithoutProposal)
+			;
 		}
 		if(request.getIsWaitingForShipment()) {
 			whereClause.append(" AND DocStatus IN('CO') AND NOT EXISTS(SELECT 1 FROM M_InOut io WHERE io.C_Order_ID = C_Order.C_Order_ID AND io.DocStatus IN('CO', 'CL'))");
