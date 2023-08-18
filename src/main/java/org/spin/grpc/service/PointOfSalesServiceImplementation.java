@@ -3140,7 +3140,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 		final String whereClauseWithoutProposal = " AND NOT EXISTS(SELECT 1 FROM C_DocType dt "
 			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
-			+ "AND DocSubTypeSO NOT IN('BO', 'PR'))"
+			+ "AND dt.DocSubTypeSO NOT IN('BO', 'PR'))"
 		;
 
 		StringBuffer whereClause = new StringBuffer();
