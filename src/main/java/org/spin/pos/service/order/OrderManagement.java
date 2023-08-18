@@ -370,6 +370,25 @@ public class OrderManagement {
 					payment.saveEx();
 				}
 			});
+		} else {
+			//	Add write off
+			if(!isOpenRefund) {
+				if(openAmount.get().compareTo(Env.ZERO) != 0) {
+					String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
+					MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, RecordUtil.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
+					paymentAllocation.setAD_Org_ID(salesOrder.getAD_Org_ID());
+					//	Set Description
+					paymentAllocation.saveEx();
+					MAllocationLine paymentAllocationLine = new MAllocationLine (paymentAllocation, Env.ZERO, Env.ZERO, openAmount.get(), Env.ZERO);
+					paymentAllocationLine.setDocInfo(salesOrder.getC_BPartner_ID(), salesOrder.getC_Order_ID(), invoiceId);
+					paymentAllocationLine.saveEx();
+					//	Complete
+					if (!paymentAllocation.processIt(MAllocationHdr.DOCACTION_Complete)) {
+						throw new AdempiereException(paymentAllocation.getProcessMsg());
+					}
+					paymentAllocation.saveEx();
+				}
+			}
 		}
 	}
 }
