@@ -92,6 +92,7 @@ public class ReverseSalesTransaction {
     	MPayment.getOfOrder(sourceOrder).forEach(sourcePayment -> {
         	MPayment returnPayment = new MPayment(sourceOrder.getCtx(), 0, transactionName);
             PO.copyValues(sourcePayment, returnPayment);
+            returnPayment.setC_Invoice_ID(-1);
             returnPayment.setDateTrx(getToday());
             returnPayment.setDateAcct(getToday());
             returnPayment.addDescription(Msg.parseTranslation(sourceOrder.getCtx(), " @From@ " + sourcePayment.getDocumentNo() + " @of@ @C_Order_ID@ " + sourceOrder.getDocumentNo()));
@@ -174,6 +175,7 @@ public class ReverseSalesTransaction {
 		returnOrder.setIsTransferred (false);
 		returnOrder.setPosted (false);
 		returnOrder.setProcessed (false);
+		returnOrder.setAD_Org_ID(sourceOrder.getAD_Org_ID());
 		returnOrder.saveEx(sourceOrder.get_TrxName());
 		int targetDocumentTypeId = getReturnDocumentTypeId(sourceOrder.getC_POS_ID(), posId, sourceOrder.getC_DocTypeTarget_ID());
 		//	Set Document base for return
