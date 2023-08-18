@@ -4998,8 +4998,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
         if(pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID) > 0) {
         	payment.setC_ConversionType_ID(pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
         }
-        //	Amount
-        BigDecimal paymentAmount = ValueUtil.getBigDecimalFromDecimal(request.getAmount());
         payment.setPayAmt(paymentAmount);
         //	Order Reference
         payment.setC_Order_ID(salesOrder.getC_Order_ID());
