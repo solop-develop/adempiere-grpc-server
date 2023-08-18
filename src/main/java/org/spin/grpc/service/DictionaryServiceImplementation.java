@@ -1681,7 +1681,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 					.setId(fieldGroup.getAD_FieldGroup_ID())
 					.setUuid(ValueUtil.validateNull(fieldGroup.getUUID()))
 					.setName(ValueUtil.validateNull(name))
-					.setFieldGroupType(fieldGroup.getFieldGroupType())
+					.setFieldGroupType(ValueUtil.validateNull(fieldGroup.getFieldGroupType()))
 					.setIsActive(fieldGroup.isActive());
 		}
 		return builder;
