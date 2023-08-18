@@ -4951,7 +4951,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if(pointOfSalesDefinition.getC_BankAccount_ID() <= 0) {
 			throw new AdempiereException("@NoCashBook@");
 		}
-		if(request.getAmount() == null) {
+        //	Amount
+        BigDecimal paymentAmount = ValueUtil.getBigDecimalFromDecimal(request.getAmount());
+		if(paymentAmount == null || paymentAmount.compareTo(Env.ZERO) == 0) {
 			throw new AdempiereException("@PayAmt@ @NotFound@");
 		}
 		//	Order

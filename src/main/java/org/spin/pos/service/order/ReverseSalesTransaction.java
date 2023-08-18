@@ -43,6 +43,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.base.util.DocumentUtil;
 
 /**
  * This class was created for Reverse Sales Transaction
@@ -61,6 +62,11 @@ public class ReverseSalesTransaction {
 		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
+			//	Validate source document
+			if(DocumentUtil.isDrafted(sourceOrder) 
+					|| sourceOrder.isReturnOrder()) {
+				throw new AdempiereException("@invalid@");
+			}
 			MOrder returnOrder = createReturnOrder(pos, sourceOrder, pos.getC_POS_ID(), transactionName);
 			if(!Util.isEmpty(description)) {
 				returnOrder.setDescription(description);
