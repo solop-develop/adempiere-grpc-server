@@ -53,9 +53,11 @@ message RequestType {
 	string name = 3;
 	string description = 4;
 	int32 due_date_tolerance = 5;
+	Status default_status = 6;
 }
 
 message ListRequestTypesRequest {
+	string search_value = 1;
 	int32 page_size = 2;
 	string page_token = 3;
 }
@@ -76,6 +78,7 @@ message User {
 }
 
 message ListSalesRepresentativesRequest {
+	string search_value = 1;
 	int32 page_size = 2;
 	string page_token = 3;
 }
@@ -96,6 +99,7 @@ message Priority {
 }
 
 message ListPrioritiesRequest {
+	string search_value = 1;
 	int32 page_size = 2;
 	string page_token = 3;
 }
@@ -115,6 +119,7 @@ message Status {
 }
 
 message ListStatusesRequest {
+	string search_value = 1;
 	int32 page_size = 2;
 	string page_token = 3;
 	int32 request_type_id = 4;
@@ -164,6 +169,7 @@ message ExistsIssuesResponse {
 }
 
 message ListIssuesRequest {
+	string search_value = 1;
 	int32 page_size = 2;
 	string page_token = 3;
 	string table_name = 4;
@@ -233,6 +239,7 @@ message IssueComment {
 }
 
 message ListIssueCommentsRequest {
+	string search_value = 1;
 	int32 page_size = 2;
 	string page_token = 3;
 	int32 issue_id = 4;

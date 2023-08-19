@@ -30,6 +30,7 @@ import org.compiere.model.MRequest;
 import org.compiere.model.MRequestAction;
 import org.compiere.model.MRequestType;
 import org.compiere.model.MRequestUpdate;
+import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
@@ -94,6 +95,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -103,13 +105,22 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private ListRequestTypesResponse.Builder listRequestTypes(ListRequestTypesRequest request) {
+		String whereClause = null;
+		List<Object> filtersList = new ArrayList<>();
+		if (!Util.isEmpty(request.getSearchValue(), false)) {
+			filtersList.add(request.getSearchValue());
+			whereClause = " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+		}
+
 		Query queryRequestTypes = new Query(
-				Env.getCtx(),
+			Env.getCtx(),
 			I_R_RequestType.Table_Name,
-			null,
+			whereClause,
 			null
 		)
 			// .setClient_ID()
+			.setParameters(filtersList)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setOnlyActiveRecords(true)
 		;
 		int recordCount = queryRequestTypes.count();
@@ -154,6 +165,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -163,11 +175,17 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private ListSalesRepresentativesResponse.Builder listSalesRepresentatives(ListSalesRepresentativesRequest request) {
-		final String whereClause = "EXISTS("
+		String whereClause = "EXISTS("
 			+ "SELECT * FROM C_BPartner bp WHERE "
 			+ "AD_User.C_BPartner_ID=bp.C_BPartner_ID "
 			+ "AND (bp.IsEmployee='Y' OR bp.IsSalesRep='Y'))"
 		;
+		List<Object> filtersList = new ArrayList<>();
+		if (!Util.isEmpty(request.getSearchValue(), false)) {
+			filtersList.add(request.getSearchValue());
+			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+		}
+
 		Query querySaleRepresentatives = new Query(
 			Env.getCtx(),
 			I_AD_User.Table_Name,
@@ -175,6 +193,8 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			null
 		)
 			// .setClient_ID()
+			.setParameters(filtersList)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setOnlyActiveRecords(true)
 		;
 		int recordCount = querySaleRepresentatives.count();
@@ -217,6 +237,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -226,7 +247,16 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 	}
 
 	private ListPrioritiesResponse.Builder listPriorities(ListPrioritiesRequest request) {
-		final String whereClause = "AD_Reference_ID = ?";
+		String whereClause = "AD_Reference_ID = ?";
+
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(MRequest.PRIORITY_AD_Reference_ID);
+
+		if (!Util.isEmpty(request.getSearchValue(), false)) {
+			filtersList.add(request.getSearchValue());
+			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+		}
+
 		Query queryPriority = new Query(
 			Env.getCtx(),
 			MRefList.Table_Name,
@@ -234,8 +264,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			null
 		)
 			// .setClient_ID()
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setOnlyActiveRecords(true)
-			.setParameters(MRequest.PRIORITY_AD_Reference_ID)
+			.setParameters(filtersList)
 		;
 
 		int recordCount = queryPriority.count();
@@ -278,6 +309,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -295,12 +327,21 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
 		}
 
-		final String whereClause = "EXISTS (SELECT * FROM R_RequestType rt "
+		String whereClause = "EXISTS (SELECT * FROM R_RequestType rt "
 			+ "INNER JOIN R_StatusCategory sc "
 			+ "ON (rt.R_StatusCategory_ID = sc.R_StatusCategory_ID) "
 			+ "WHERE R_Status.R_StatusCategory_ID = sc.R_StatusCategory_ID "
 			+ "AND rt.R_RequestType_ID = ?)"
 		;
+
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(requestTypeId);
+
+		if (!Util.isEmpty(request.getSearchValue(), false)) {
+			filtersList.add(request.getSearchValue());
+			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+		}
+
 		Query queryRequests = new Query(
 			Env.getCtx(),
 			I_R_Status.Table_Name,
@@ -308,8 +349,9 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			null
 		)
 			// .setClient_ID()
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setOnlyActiveRecords(true)
-			.setParameters(requestTypeId)
+			.setParameters(filtersList)
 		;
 
 		int recordCount = queryRequests.count();
@@ -353,6 +395,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -412,6 +455,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -458,6 +502,16 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			;
 		}
 
+		if (!Util.isEmpty(request.getSearchValue(), false)) {
+			whereClause += " AND (UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Subject) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Summary) LIKE '%' || UPPER(?) || '%' )"
+			;
+			parametersList.add(request.getSearchValue());
+			parametersList.add(request.getSearchValue());
+			parametersList.add(request.getSearchValue());
+		}
+
 		Query queryRequests = new Query(
 			Env.getCtx(),
 			I_R_Request.Table_Name,
@@ -466,6 +520,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		)
 			// .setClient_ID()
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setParameters(parametersList)
 		;
 
@@ -511,6 +566,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -608,6 +664,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -691,6 +748,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -767,6 +825,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -871,6 +930,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -910,6 +970,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -962,6 +1023,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)

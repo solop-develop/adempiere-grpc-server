@@ -18,6 +18,7 @@ package org.spin.form.issue_management;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_R_RequestAction;
+import org.adempiere.core.domains.models.I_R_Status;
 import org.adempiere.core.domains.models.X_R_RequestUpdate;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
@@ -25,6 +26,7 @@ import org.compiere.model.MRefList;
 import org.compiere.model.MRequest;
 import org.compiere.model.MRequestAction;
 import org.compiere.model.MRequestType;
+import org.compiere.model.MRole;
 import org.compiere.model.MStatus;
 import org.compiere.model.MUser;
 import org.compiere.model.Query;
@@ -186,6 +188,23 @@ public class IssueManagementConvertUtil {
 			.setDescription(ValueUtil.validateNull(requestType.getDescription()))
 			.setDueDateTolerance(requestType.getDueDateTolerance())
 		;
+
+		final String whereClause = "R_StatusCategory_ID = ? AND IsDefault = 'Y' ";
+		MStatus defaultStatus = new Query(
+			Env.getCtx(),
+			I_R_Status.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(requestType.getR_StatusCategory_ID())
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.first()
+		;
+		builder.setDefaultStatus(
+			convertStatus(
+				defaultStatus
+			)
+		);
 
 		return builder;
 	}
