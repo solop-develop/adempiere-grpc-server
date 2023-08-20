@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -453,7 +453,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			.setClient_ID()
 			.setParameters(parameters)
 			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int count = query.count();
@@ -587,12 +587,14 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		;
 		
 		new Query(
-				Env.getCtx(),
-				I_M_AttributeUse.Table_Name,
-				"M_AttributeSet_ID = ?",
-				null
-			)
+			Env.getCtx(),
+			I_M_AttributeUse.Table_Name,
+			"M_AttributeSet_ID = ?",
+			null
+		)
 			.setParameters(attributeSet.getM_AttributeSet_ID())
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.<MAttributeUse>list()
 			.forEach(attributeUse -> {
 				ProductAttribute.Builder productAttributeBuilder = convertProductAttribute(attributeUse.getM_Attribute_ID());
@@ -624,12 +626,14 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		
 		if (X_M_Attribute.ATTRIBUTEVALUETYPE_List.equals(attribute.getAttributeValueType())) {
 			new Query(
-					Env.getCtx(),
-					I_M_AttributeValue.Table_Name,
-					"M_Attribute_ID = ?",
-					null
-				)
+				Env.getCtx(),
+				I_M_AttributeValue.Table_Name,
+				"M_Attribute_ID = ?",
+				null
+			)
 				.setParameters(attribute.getM_Attribute_ID())
+				.setOnlyActiveRecords(true)
+				.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 				.<MAttributeValue>list()
 				.forEach(attributeValue -> {
 					ProductAttributeValue.Builder productAttributeValueBuilder = convertProductAttributeValue(attributeValue.getM_AttributeValue_ID());
@@ -811,7 +815,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		)
 			.setParameters(parameters)
 			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -953,7 +957,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 		)
 			.setParameters(parameters)
 			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());

@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -122,12 +122,13 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 
 		whereClause += "AD_User_ID > 0";
 		Query query = new Query(
-				Env.getCtx(),
+			Env.getCtx(),
 			I_AD_User.Table_Name,
 			whereClause,
 			null
 		)
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setParameters(parameters)
 		;
 		int recordCount = query.count();
@@ -213,12 +214,13 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		}
 
 		Query query = new Query(
-				Env.getCtx(),
+			Env.getCtx(),
 			I_AD_Role.Table_Name,
 			whereClause,
 			null
 		)
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setParameters(parameters)
 		;
 		int recordCount = query.count();

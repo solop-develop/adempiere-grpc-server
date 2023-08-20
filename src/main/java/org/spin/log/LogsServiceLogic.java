@@ -25,6 +25,7 @@ import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MPInstance;
+import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ProcessLog;
@@ -61,6 +62,8 @@ public class LogsServiceLogic {
 			null
 		)
 			.setParameters(userId, date)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		//	Get page and count
@@ -98,7 +101,10 @@ public class LogsServiceLogic {
 			whereClauseRecordsLog,
 			null
 		)
-			.setParameters(userId, date);
+			.setParameters(userId, date)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 		count += queryRecordLogs.count();
 		List<MChangeLog> recordLogList = queryRecordLogs
 			.setLimit(limit, offset)

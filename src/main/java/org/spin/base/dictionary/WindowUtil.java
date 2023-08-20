@@ -165,7 +165,7 @@ public class WindowUtil {
 		)
 			.setParameters(tab.getAD_Process_ID(), tab.getAD_Tab_ID(), tab.getAD_Table_ID())
 			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.getIDsAsList()
 		;
 		for(Integer processId : processIdList) {

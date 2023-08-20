@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -30,6 +30,7 @@ import org.compiere.model.MLocator;
 import org.compiere.model.MMovement;
 import org.compiere.model.MMovementLine;
 import org.compiere.model.MProduct;
+import org.compiere.model.MRole;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -101,7 +102,11 @@ public class ExpressMovementServiceImplementation extends ExpressMovementImplBas
 			I_M_Warehouse.Table_Name,
 			whereClause,
 			null
-		).setClient_ID();
+		)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 
 		int count = query.count();
 		String nexPageToken = "";
@@ -203,6 +208,8 @@ public class ExpressMovementServiceImplementation extends ExpressMovementImplBas
 			null
 		)
 			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setParameters(parameters);
 
 		int count = query.count();
@@ -787,6 +794,7 @@ public class ExpressMovementServiceImplementation extends ExpressMovementImplBas
 			.setParameters(movementId)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int count = query.count();

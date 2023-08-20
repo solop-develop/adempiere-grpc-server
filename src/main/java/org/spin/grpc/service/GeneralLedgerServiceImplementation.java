@@ -611,6 +611,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		)
 			.setOnlyActiveRecords(true)
 			.setParameters(acctSchemaId)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.<MAcctSchemaElement>list()
 		;
 

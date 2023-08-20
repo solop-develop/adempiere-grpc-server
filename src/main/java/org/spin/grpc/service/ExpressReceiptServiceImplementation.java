@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -37,6 +37,7 @@ import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MProduct;
+import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -111,7 +112,11 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 			I_C_BPartner.Table_Name,
 			whereClause,
 			null
-		).setClient_ID();
+		)
+			.setOnlyActiveRecords(true)
+			.setClient_ID()
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 
 		int count = query.count();
 		String nexPageToken = "";
@@ -219,6 +224,7 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 		)
 			.setParameters(businessPartnerId)
 			.setClient_ID()
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int count = query.count();
@@ -331,7 +337,9 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 			null
 		)
 			.setClient_ID()
-			.setParameters(parameters);
+			.setParameters(parameters)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 
 		int count = query.count();
 		String nexPageToken = "";
@@ -981,6 +989,7 @@ public class ExpressReceiptServiceImplementation extends ExpressReceiptImplBase 
 		)
 			.setParameters(receiptId)
 			.setClient_ID()
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setOnlyActiveRecords(true)
 		;
 

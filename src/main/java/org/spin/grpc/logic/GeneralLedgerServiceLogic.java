@@ -28,6 +28,7 @@ import org.compiere.model.MAcctSchema;
 import org.compiere.model.MClient;
 import org.compiere.model.MOrg;
 import org.compiere.model.MRefList;
+import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
@@ -87,6 +88,8 @@ public class GeneralLedgerServiceLogic {
 			null
 		)
 			.setParameters(referenceId)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		//	Get page and count

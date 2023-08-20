@@ -433,6 +433,8 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			null
 		)
 			.setParameters(recordId, table.getAD_Table_ID())
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.count()
 		;
 
@@ -859,6 +861,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 			// .setClient_ID()
 			.setOnlyActiveRecords(true)
 			.setParameters(recordId)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		Query queryRequestsLog = new Query(
@@ -869,6 +872,7 @@ public class IssueManagementServiceImplementation extends IssueManagementImplBas
 		)
 			.setOnlyActiveRecords(true)
 			.setParameters(recordId)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int recordCount = queryRequestsUpdate.count() + queryRequestsLog.count();

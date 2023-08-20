@@ -43,6 +43,7 @@ import org.compiere.model.MPaySelectionCheck;
 import org.compiere.model.MPaySelectionLine;
 import org.compiere.model.MPaymentBatch;
 import org.compiere.model.MRefList;
+import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.print.ReportEngine;
 import org.compiere.util.CLogger;
@@ -300,7 +301,10 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			I_C_PaySelection.Table_Name,
 			validationCode,
 			null
-		);
+		)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 
 		int count = query.count();
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder()
@@ -554,7 +558,10 @@ public class PaymentPrintExportServiceImplementation extends PaymentPrintExportI
 			I_C_PaySelectionLine.Table_Name,
 			whereClause,
 			null
-		).setParameters(paymentSelection.getC_PaySelection_ID(), paymentRule.getValue());
+		)
+			.setParameters(paymentSelection.getC_PaySelection_ID(), paymentRule.getValue())
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 
 		int count = paymentSelectionLine.count();
 

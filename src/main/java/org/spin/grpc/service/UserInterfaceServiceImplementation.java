@@ -1924,8 +1924,15 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		String language = Env.getCtx().getProperty(Env.LANGUAGE);
 		//	Get List
-		new Query(Env.getCtx(), I_AD_ReportView.Table_Name, whereClause, null)
+		new Query(
+			Env.getCtx(),
+			I_AD_ReportView.Table_Name,
+			whereClause,
+			null
+		)
 			.setParameters(parameters)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setOrderBy(I_AD_ReportView.COLUMNNAME_PrintName + ", " + I_AD_ReportView.COLUMNNAME_Name)
 			.<MReportView>list().forEach(reportViewReference -> {
 				ReportView.Builder reportViewBuilder = ReportView.newBuilder();
@@ -2077,10 +2084,17 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			parameters.add(reportView.getUUID());
 		}
 		//	Get List
-		new Query(Env.getCtx(), I_AD_PrintFormat.Table_Name, whereClause, null)
+		new Query(
+			Env.getCtx(),
+			I_AD_PrintFormat.Table_Name,
+			whereClause,
+			null
+		)
 			.setParameters(parameters)
 			.setOrderBy(I_AD_PrintFormat.COLUMNNAME_Name)
 			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.<MPrintFormat>list().forEach(printFormatReference -> {
 				PrintFormat.Builder printFormatBuilder = PrintFormat.newBuilder();
 				printFormatBuilder.setUuid(ValueUtil.validateNull(printFormatReference.getUUID()));
@@ -3834,6 +3848,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				null
 			)
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int recordCount = query.count();

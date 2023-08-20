@@ -382,11 +382,17 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			whereClause.append(" AND (").append(criteriaWhereClause).append(")");
 		}
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), I_C_BPartner.Table_Name, 
-				whereClause.toString(), null)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true);
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_BPartner.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
+			.setOnlyActiveRecords(true)
+			.setClient_ID()
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 		int count = query.count();
 		query
 		.setLimit(limit, offset)
@@ -732,10 +738,16 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		if(request.getRoleId() != 0) {
 			role = MRole.get(Env.getCtx(), request.getRoleId());
 		} else if(!Util.isEmpty(request.getRoleUuid())) {
-			role = new Query(Env.getCtx(), I_AD_Role.Table_Name, I_AD_Role.COLUMNNAME_UUID + " = ?", null)
+			role = new Query(
+				Env.getCtx(),
+				I_AD_Role.Table_Name,
+				I_AD_Role.COLUMNNAME_UUID + " = ?",
+				null
+			)
 				.setParameters(request.getRoleUuid())
 				.setOnlyActiveRecords(true)
-				.first();
+				.first()
+			;
 		}
 		//	get from role access
 		if (role == null || !role.isActive()) {
@@ -776,9 +788,15 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		Query query = new Query(Env.getCtx(), I_AD_Org.Table_Name, whereClause, null)
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_Org.Table_Name,
+			whereClause,
+			null
+		)
 			.setParameters(parameters)
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 		//	Count
 		int count = query.count();
@@ -848,6 +866,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			null
 		)
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setParameters(organizationId, false)
 		;
 		//	Count

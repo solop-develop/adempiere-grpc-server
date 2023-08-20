@@ -874,6 +874,7 @@ public class FileManagementServiceImplementation extends FileManagementImplBase 
 				"AD_Attachment_ID = ?",
 				null
 			).setParameters(attachment.getAD_Attachment_ID())
+			.setClient_ID()
 			.count();
 
 		return builder

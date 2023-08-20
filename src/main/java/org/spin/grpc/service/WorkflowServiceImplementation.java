@@ -32,6 +32,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MDocType;
 import org.compiere.model.MMenu;
 import org.compiere.model.MOrder;
+import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
@@ -254,8 +255,16 @@ public class WorkflowServiceImplementation extends WorkflowImplBase {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		Query query = new Query(Env.getCtx(), I_AD_WF_Activity.Table_Name, whereClause, null)
-				.setParameters(userId, userId, userId, userId);
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_WF_Activity.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(userId, userId, userId, userId)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 		int count = query.count();
 		List<MWFActivity> workflowActivitiesList = query
 				.setLimit(limit, offset)

@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -28,6 +28,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MResource;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MResourceType;
+import org.compiere.model.MRole;
 import org.compiere.model.MUOM;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -306,6 +307,7 @@ public class TimeControlServiceImplementation extends TimeControlImplBase {
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
 			.setParameters(parametersList)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setOrderBy(MResourceAssignment.COLUMNNAME_Created);
 
 		int count = query.count();
