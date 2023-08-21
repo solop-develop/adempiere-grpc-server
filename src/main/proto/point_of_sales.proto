@@ -101,6 +101,8 @@ service Store {
 	rpc PrintPreview(PrintPreviewRequest) returns (PrintPreviewResponse) {}
 	//	Print Preview for Shipment
 	rpc PrintShipmentPreview(PrintShipmentPreviewRequest) returns (PrintShipmentPreviewResponse) {}
+	// Bank
+	rpc ListBanks(ListBanksRequest) returns (ListBanksResponse) {}
 	//	Create Customer Account
 	rpc CreateCustomerBankAccount(CreateCustomerBankAccountRequest) returns (CustomerBankAccount) {}
 	//	Update Customer Account
@@ -442,6 +444,30 @@ message ShipmentLine {
 	string description = 6;
 	Decimal quantity = 7;
 	int32 line = 8;
+}
+
+// Bank
+message Bank {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string routing_no = 5;
+	string swift_code = 6;
+}
+
+message ListBanksRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+	string pos_uuid = 4;
+}
+
+message ListBanksResponse {
+	int64 record_count = 1;
+	repeated Bank records = 2;
+	string next_page_token = 3;
 }
 
 //	List Customer Accounts Request
