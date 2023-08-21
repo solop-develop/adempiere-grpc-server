@@ -3140,7 +3140,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 		final String whereClauseWithoutProposal = " AND NOT EXISTS(SELECT 1 FROM C_DocType dt "
 			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
-			+ "AND dt.DocSubTypeSO NOT IN('BO', 'PR'))"
+			+ "AND dt.DocSubTypeSO IN('OB', 'PR'))"
 		;
 
 		StringBuffer whereClause = new StringBuffer();
@@ -3217,8 +3217,21 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				.append(whereClauseWithoutProposal)
 			;
 		}
+		if(request.getIsBindingOffer()) {
+			whereClause.append(" AND DocStatus IN('DR', 'IP') ")
+				.append("AND EXISTS(SELECT 1 FROM C_DocType dt ")
+				.append("WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID ")
+				.append("AND dt.DocSubTypeSO IN('OB', 'PR')) ")
+			;
+		}
 		if(request.getIsWaitingForShipment()) {
 			whereClause.append(" AND DocStatus IN('CO') AND NOT EXISTS(SELECT 1 FROM M_InOut io WHERE io.C_Order_ID = C_Order.C_Order_ID AND io.DocStatus IN('CO', 'CL'))");
+		}
+		if(request.getIsClosed()) {
+			whereClause.append(" AND DocStatus IN('CL') ");
+		}
+		if(request.getIsNullified()) {
+			whereClause.append(" AND DocStatus IN('VO') ");
 		}
 		//	Date Order From
 		if(!Util.isEmpty(request.getDateOrderedFrom())) {

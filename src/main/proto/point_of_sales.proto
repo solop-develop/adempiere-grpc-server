@@ -896,8 +896,9 @@ message ListOrdersResponse {
 
 // List Orders Request
 message ListOrdersRequest {
-	string pos_uuid = 2;
-	string document_no = 3;
+	string pos_uuid = 1;
+	string document_no = 2;
+	string document_status = 3;
 	string business_partner_uuid = 4;
 	Decimal grand_total = 5;
 	Decimal open_amount = 6;
@@ -906,13 +907,17 @@ message ListOrdersRequest {
 	bool is_only_aisle_seller = 9;
 	bool is_waiting_for_invoice = 10;
 	bool is_waiting_for_shipment = 11;
-	string date_ordered_from = 12;
-	string date_ordered_to = 13;
-	string sales_representative_uuid = 14;
-	int32 page_size = 15;
-	string page_token = 16;
+	bool is_binding_offer = 12;
+	bool is_closed = 13;
+	bool is_nullified = 14;
+	string date_ordered_from = 15;
+	string date_ordered_to = 16;
+	string sales_representative_uuid = 17;
+	string search_value = 18;
+	int32 page_size = 19;
+	string page_token = 20;
 	// Query
-	Criteria criteria = 17;
+	Criteria criteria = 21;
 }
 
 //	List Order Lines Response
