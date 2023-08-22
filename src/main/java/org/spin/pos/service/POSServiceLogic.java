@@ -19,13 +19,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.adempiere.core.domains.models.I_C_Bank;
+import org.adempiere.core.domains.models.I_C_Campaign;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.Bank;
+import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.ListBanksRequest;
 import org.spin.backend.grpc.pos.ListBanksResponse;
+import org.spin.backend.grpc.pos.ListCampaignsRequest;
+import org.spin.backend.grpc.pos.ListCampaignsResponse;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
@@ -80,6 +84,43 @@ public class POSServiceLogic {
 		banksIdsList.forEach(tableId -> {
 			Bank.Builder accountingDocument = POSConvertUtil.convertBank(tableId);
 			builderList.addRecords(accountingDocument);
+		});
+
+		return builderList;
+	}
+
+
+	public static ListCampaignsResponse.Builder listCampaigns(ListCampaignsRequest request) {
+		List<Object> filtersList = new ArrayList<>();
+
+		String whereClause = null;
+		if (!Util.isEmpty(request.getSearchValue(), false)) {
+			filtersList.add(request.getSearchValue());
+			whereClause = "UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+		}
+
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_Campaign.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(filtersList)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
+
+		//	Get page and count
+		int recordCount = query.count();
+
+		ListCampaignsResponse.Builder builderList = ListCampaignsResponse.newBuilder()
+			.setRecordCount(recordCount)
+		;
+
+		//	Get List
+		query.getIDsAsList().forEach(campaignId -> {
+			Campaign.Builder campaignBuilder = POSConvertUtil.convertCampaign(campaignId);
+			builderList.addRecords(campaignBuilder);
 		});
 
 		return builderList;

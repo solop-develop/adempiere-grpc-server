@@ -161,6 +161,8 @@ service Store {
 	rpc SaveCommandShortcut(SaveCommandShortcutRequest) returns (CommandShortcut) {}
 	rpc ListCommandShortcuts(ListCommandShortcutsRequest) returns (ListCommandShortcutsResponse) {}
 	rpc DeleteCommandShortcut(DeleteCommandShortcutRequest) returns (Empty) {}
+	// Campaign
+	rpc ListCampaigns(ListCampaignsRequest) returns (ListCampaignsResponse) {}
 }
 
 //	Delete Refund reference request
@@ -1020,7 +1022,7 @@ message PointOfSales {
 	Decimal maximum_daily_refund_allowed = 28;
 	Currency refund_reference_currency = 29;
 	DocumentType return_document_type = 30;
-	string default_campaign_uuid = 31;
+	Campaign default_campaign = 31;
 	string default_opening_charge_uuid = 32;
 	string default_withdrawal_charge_uuid = 33;
 	Decimal maximum_discount_allowed = 34;
@@ -1263,7 +1265,7 @@ message Order {
 	bool is_delivered = 16;
 	string order_reference = 17;
 	string description = 18;
-	string campaign_uuid = 19;
+	Campaign campaign = 19;
 	Decimal display_currency_rate = 20;
 	Decimal open_amount = 21;
 	Decimal payment_amount = 22;
@@ -1454,5 +1456,30 @@ message ListCommandShortcutsRequest {
 message ListCommandShortcutsResponse {
 	int64 record_count = 1;
 	repeated CommandShortcut records = 2;
+	string next_page_token = 3;
+}
+
+
+// Campaign
+message Campaign {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	int64 start_date = 5;
+	int64 end_date = 6;
+}
+
+message ListCampaignsRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+	string pos_uuid = 4;
+}
+
+message ListCampaignsResponse {
+	int64 record_count = 1;
+	repeated Campaign records = 2;
 	string next_page_token = 3;
 }

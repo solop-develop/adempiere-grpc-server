@@ -4675,9 +4675,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		// Campaign
 		if (pos.get_ValueAsInt("DefaultCampaign_ID") > 0) {
-			builder.setDefaultCampaignUuid(
-				ValueUtil.validateNull(
-					RecordUtil.getUuidFromId(I_C_Campaign.Table_Name, pos.get_ValueAsInt("DefaultCampaign_ID"))
+			builder.setDefaultCampaign(
+				POSConvertUtil.convertCampaign(
+					pos.get_ValueAsInt("DefaultCampaign_ID")
 				)
 			);
 		}
@@ -6037,6 +6037,28 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		Empty.Builder builder = Empty.newBuilder();
 
 		return builder;
+	}
+
+
+
+	@Override
+	public void listCampaigns(ListCampaignsRequest request, StreamObserver<ListCampaignsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListCampaignsResponse.Builder cashListBuilder = POSServiceLogic.listCampaigns(request);
+			responseObserver.onNext(cashListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
 	}
 
 }

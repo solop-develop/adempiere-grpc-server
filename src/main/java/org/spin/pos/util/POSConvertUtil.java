@@ -18,9 +18,11 @@ package org.spin.pos.util;
 
 import org.adempiere.core.domains.models.I_C_POS;
 import org.compiere.model.MBank;
+import org.compiere.model.MCampaign;
 import org.compiere.model.PO;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.pos.Bank;
+import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.CommandShortcut;
 import org.spin.base.util.ValueUtil;
 
@@ -73,6 +75,52 @@ public class POSConvertUtil {
 
 		return builder;
 	}
+
+
+	public static Campaign.Builder convertCampaign(int campaignId) {
+		Campaign.Builder builder = Campaign.newBuilder();
+		if (campaignId <= 0) {
+			return builder;
+		}
+		MCampaign campaign = MCampaign.getById(Env.getCtx(), campaignId, null);
+		return convertCampaign(campaign);
+	}
+
+	public static Campaign.Builder convertCampaign(MCampaign campaign) {
+		Campaign.Builder builder = Campaign.newBuilder();
+		if (campaign == null || campaign.getC_Campaign_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(campaign.getC_Campaign_ID())
+			.setUuid(
+				ValueUtil.validateNull(
+					campaign.getUUID()
+				)
+			)
+			.setName(
+				ValueUtil.validateNull(
+					campaign.getName()
+				)
+			)
+			.setDescription(
+				ValueUtil.validateNull(
+					campaign.getDescription()
+				)
+			)
+			.setStartDate(
+				ValueUtil.getLongFromTimestamp(
+					campaign.getStartDate()
+				)
+			)
+			.setEndDate(
+				ValueUtil.getLongFromTimestamp(
+					campaign.getEndDate()
+				)
+			)
+		;
+		return builder;
+	}
+
 
 	public static CommandShortcut.Builder convertCommandShorcut(PO commandShortcut) {
 		CommandShortcut.Builder builder = CommandShortcut.newBuilder();

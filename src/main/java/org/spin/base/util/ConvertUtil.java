@@ -31,7 +31,6 @@ import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_Bank;
-import org.adempiere.core.domains.models.I_C_Campaign;
 import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_POSKeyLayout;
@@ -120,6 +119,7 @@ import org.spin.grpc.service.FileManagementServiceImplementation;
 import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.util.AttachmentUtil;
 import org.spin.model.MADAttachmentReference;
+import org.spin.pos.util.POSConvertUtil;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -587,7 +587,7 @@ public class ConvertUtil {
 	 * @param order
 	 * @return
 	 */
-	public static  Order.Builder convertOrder(MOrder order) {
+	public static Order.Builder convertOrder(MOrder order) {
 		Order.Builder builder = Order.newBuilder();
 		if(order == null) {
 			return builder;
@@ -696,7 +696,11 @@ public class ConvertUtil {
 			.setRefundAmount(ValueUtil.getDecimalFromBigDecimal(refundAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
 			.setDateOrdered(ValueUtil.convertDateToString(order.getDateOrdered()))
 			.setCustomer(convertCustomer((MBPartner) order.getC_BPartner()))
-			.setCampaignUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Campaign.Table_Name, order.getC_Campaign_ID())))
+			.setCampaign(
+				POSConvertUtil.convertCampaign(
+					order.getC_Campaign_ID()
+				)
+			)
 			.setChargeAmount(ValueUtil.getDecimalFromBigDecimal(chargeAmt))
 			.setCreditAmount(ValueUtil.getDecimalFromBigDecimal(creditAmt))
 		;
