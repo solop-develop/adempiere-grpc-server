@@ -3170,6 +3170,13 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					Value.Builder valueBuilder = ValueUtil.getValueFromReference(fieldValue.getValue(), fieldValue.getDisplayType());
 					calloutBuilder.putValues(fieldValue.getColumnName(), valueBuilder.build());
 				});
+
+			// always add is sales transaction on context
+			String isSalesTransaction = Env.getContext(tab.getCtx(), windowNo, "IsSOTrx", true);
+			if (!Util.isEmpty(isSalesTransaction, true)) {
+				Value.Builder valueBuilder = ValueUtil.getValueFromBoolean(isSalesTransaction);
+				calloutBuilder.putValues("IsSOTrx", valueBuilder.build());
+			}
 			calloutBuilder.setResult(ValueUtil.validateNull(result));
 			
 			setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
