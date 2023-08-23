@@ -445,7 +445,10 @@ message ShipmentLine {
 	Charge charge = 5;
 	string description = 6;
 	Decimal quantity = 7;
-	int32 line = 8;
+	Decimal movement_quantity = 8;
+	int32 line = 9;
+	ProductConversion uom = 10;
+	ProductConversion product_uom = 11;
 }
 
 // Bank

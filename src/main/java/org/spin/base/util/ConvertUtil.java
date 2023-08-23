@@ -49,7 +49,6 @@ import org.compiere.model.MCountry;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
-import org.compiere.model.MInOutLine;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MLanguage;
 import org.compiere.model.MLocation;
@@ -114,7 +113,6 @@ import org.spin.backend.grpc.pos.Payment;
 import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.Shipment;
-import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.grpc.service.FileManagementServiceImplementation;
 import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.util.AttachmentUtil;
@@ -1068,30 +1066,7 @@ public class ConvertUtil {
 			.setResourceAssignment(TimeControlServiceImplementation.convertResourceAssignment(orderLine.getS_ResourceAssignment_ID()))
 		;
 	}
-	
-	/**
-	 * Convert shipment line to stub
-	 * @param shipmentLine
-	 * @return
-	 */
-	public static ShipmentLine.Builder convertShipmentLine(MInOutLine shipmentLine) {
-		ShipmentLine.Builder builder = ShipmentLine.newBuilder();
-		if(shipmentLine == null) {
-			return builder;
-		}
-		MOrderLine orderLine = (MOrderLine) shipmentLine.getC_OrderLine();
-		//	Convert
-		return builder
-				.setUuid(ValueUtil.validateNull(shipmentLine.getUUID()))
-				.setOrderLineUuid(ValueUtil.validateNull(orderLine.getUUID()))
-				.setId(shipmentLine.getM_InOutLine_ID())
-				.setLine(shipmentLine.getLine())
-				.setDescription(ValueUtil.validateNull(shipmentLine.getDescription()))
-				.setProduct(convertProduct(shipmentLine.getM_Product_ID()))
-				.setCharge(convertCharge(shipmentLine.getC_Charge_ID()))
-				.setQuantity(ValueUtil.getDecimalFromBigDecimal(shipmentLine.getMovementQty()));
-	}
-	
+
 	/**
 	 * Convert product
 	 * @param productId

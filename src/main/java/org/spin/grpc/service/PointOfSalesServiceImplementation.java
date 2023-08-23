@@ -1965,8 +1965,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		query
 		.setLimit(limit, offset)
 		.<MInOutLine>list()
-		.forEach(order -> {
-			builder.addShipmentLines(ConvertUtil.convertShipmentLine(order));
+		.forEach(line -> {
+			ShipmentLine.Builder shipmenLinetBuilder = POSConvertUtil.convertShipmentLine(line);
+			builder.addShipmentLines(shipmenLinetBuilder);
 		});
 		//	
 		builder.setRecordCount(count);
@@ -2177,7 +2178,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			shipmentLineReference.set(shipmentLine);
 		}
 		//	Convert Line
-		return ConvertUtil.convertShipmentLine(shipmentLineReference.get());
+		return POSConvertUtil.convertShipmentLine(
+			shipmentLineReference.get()
+		);
 	}
 	
 	/**
