@@ -35,6 +35,7 @@ import org.compiere.model.MBankStatementLine;
 import org.compiere.model.MBankStatementMatcher;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MPayment;
+import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -431,12 +432,15 @@ public abstract class BankStatementMatchServiceLogic {
 
 
 	public static ListBankStatementsResponse.Builder listBankStatements(ListBankStatementsRequest request) {
+		final String whereClause = "Processed = 'Y' ";
 		Query query = new Query(
 			Env.getCtx(),
 			I_C_BankStatement.Table_Name,
-			null,
+			whereClause,
 			null
-		);
+		)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
 
 		//	Get page and count
 		int recordCount = query.count();

@@ -69,7 +69,7 @@ public class RecordManagementServiceLogic {
 			if (!Util.isEmpty(request.getRecordUuid()) || request.getRecordId() > 0) {
 				PO entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), request.getRecordUuid(), request.getRecordId(), transactionName);
 				if (entity != null && entity.get_ID() > 0) {
-					if (entity.get_ValueAsBoolean("IsProcessed")) {
+					if (entity.get_ColumnIndex("Processed") >= 0 && entity.get_ValueAsBoolean("Processed")) {
 						return;
 					}
 					entity.setIsActive(request.getIsActive());
@@ -88,7 +88,7 @@ public class RecordManagementServiceLogic {
 					ids.stream().forEach(id -> {
 						PO entity = table.getPO(id, transactionName);
 						if (entity != null && entity.get_ID() > 0) {
-							if (entity.get_ValueAsBoolean("IsProcessed")) {
+							if (entity.get_ColumnIndex("Processed") >= 0 && entity.get_ValueAsBoolean("Processed")) {
 								return;
 							}
 							entity.setIsActive(request.getIsActive());
