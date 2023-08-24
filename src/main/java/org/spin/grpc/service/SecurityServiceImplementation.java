@@ -14,18 +14,17 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.model.MBrowse;
 import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Role;
 import org.adempiere.core.domains.models.I_M_Warehouse;
+import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.model.MBrowse;
 import org.compiere.model.MClient;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MCountry;
@@ -35,7 +34,6 @@ import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MSession;
-import org.compiere.model.MSysConfig;
 import org.compiere.model.MTree;
 import org.compiere.model.MTreeNode;
 import org.compiere.model.MUser;
@@ -49,12 +47,6 @@ import org.compiere.util.Login;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
-import org.spin.base.db.LimitUtil;
-import org.spin.base.setup.SetupLoader;
-import org.spin.base.util.ContextManager;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.security.ChangeRoleRequest;
 import org.spin.backend.grpc.security.ContextValue;
 import org.spin.backend.grpc.security.ListRolesRequest;
@@ -72,19 +64,17 @@ import org.spin.backend.grpc.security.SetSessionAttributeRequest;
 import org.spin.backend.grpc.security.UserInfo;
 import org.spin.backend.grpc.security.UserInfoRequest;
 import org.spin.backend.grpc.security.ValueType;
+import org.spin.base.db.LimitUtil;
+import org.spin.base.util.ContextManager;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.SessionManager;
+import org.spin.base.util.ValueUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.util.AttachmentUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import java.security.Key;
-import java.sql.Timestamp;
-
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 /**
  * @author Yamel Senih, ysenih@erpya.com, ERPCyA http://www.erpya.com
  * Security service
@@ -190,29 +180,23 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 
 	private Session.Builder setSessionAttribute(SetSessionAttributeRequest request) {
 		Properties context = Env.getCtx();
-
+		//	Language
 		String language = Env.getAD_Language(context);
+		int warehouseId = Env.getContextAsInt(context, "#M_Warehouse_ID");
 		if (!Util.isEmpty(request.getLanguage())) {
 			language = ContextManager.getDefaultLanguage(request.getLanguage());
-			Env.setContext(context, "#AD_Language", language);
 		}
-
+		//	Warehouse
 		if (!Util.isEmpty(request.getWarehouseUuid(), true)) {
-			int warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
-			Env.setContext(context, "#M_Warehouse_ID", warehouseId);
+			int warehouseReferenceId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
+			if(warehouseReferenceId >= 0) {
+				warehouseId = warehouseReferenceId;
+			}
 		}
-
-		MSession session = MSession.get(context, false);
-		// Default preference values
-		SessionManager.loadDefaultSessionValues(context, language);
-
+		MSession currentSession = MSession.get(context, false);
 		// Session values
 		Session.Builder builder = Session.newBuilder();
-		final String bearerToken = createBearerToken(
-			session,
-			Env.getContextAsInt(context, "#M_Warehouse_ID"),
-			language
-		);
+		final String bearerToken = SessionManager.createSession(currentSession.getWebSession(), language, currentSession.getAD_Role_ID(), currentSession.getCreatedBy(), currentSession.getAD_Org_ID(), warehouseId);
 		builder.setToken(bearerToken);
 		return builder;
 	}
@@ -354,15 +338,13 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 	 */
 	private Session.Builder createSession(LoginRequest request, boolean isDefaultRole) {
 		Session.Builder builder = Session.newBuilder();
-		//	Get Session
-		Properties context = Env.getCtx();
 		//	Validate if is token based
 		int userId = -1;
 		int roleId = -1;
 		int organizationId = -1;
 		int warehouseId = -1;
 		if(!Util.isEmpty(request.getToken())) {
-			MADToken token = SessionManager.getSessionFromToken(request.getToken());
+			MADToken token = SessionManager.createSessionFromToken(request.getToken());
 			if(Optional.ofNullable(token).isPresent()) {
 				userId = token.getAD_User_ID();
 				roleId = token.getAD_Role_ID();
@@ -431,63 +413,11 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		if(roleId < 0) {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 		}
-		MRole role = MRole.get(context, roleId);
-		//	Warehouse / Org
-		Env.setContext (context, "#M_Warehouse_ID", warehouseId);
-		Env.setContext (context, "#AD_Session_ID", 0);
-		//  Client Info
-		MClient client = MClient.get(context, role.getAD_Client_ID());
-		Env.setContext(context, "#AD_Client_ID", client.getAD_Client_ID());
-		Env.setContext(context, "#AD_Org_ID", organizationId);
-		//	Role Info
-		Env.setContext(context, "#AD_Role_ID", roleId);
-		//	User Info
-		Env.setContext(context, "#AD_User_ID", userId);
-		//	
-		Env.setContext(context, "#Date", new Timestamp(System.currentTimeMillis()));
-		MSession session = MSession.get(context, true);
-		if (!Util.isEmpty(request.getClientVersion(), true)) {
-			session.setWebSession(request.getClientVersion());
-		}
-		Env.setContext (context, "#AD_Session_ID", session.getAD_Session_ID());
-		Env.setContext (context, "#Session_UUID", session.getUUID());
-		//	Load preferences
-		SessionManager.loadDefaultSessionValues(context, request.getLanguage());
 		//	Session values
-		final String bearerToken = createBearerToken(session, warehouseId, Env.getAD_Language(context));
+		final String bearerToken = SessionManager.createSession(request.getClientVersion(), request.getLanguage(), roleId, userId, organizationId, warehouseId);
 		builder.setToken(bearerToken);
 		//	Return session
 		return builder;
-	}
-
-
-	/**
-	 * Create token as bearer
-	 * @param session
-	 * @param warehouseId
-	 * @param language
-	 * @return
-	 */
-	private String createBearerToken(MSession session, int warehouseId, String language) {
-		MUser user = MUser.get(Env.getCtx(), session.getCreatedBy());
-		long sessionTimeout = getSessionTimeout(user);
-		if(sessionTimeout == 0) {
-			sessionTimeout = SetupLoader.getInstance().getServer().getExpiration();
-		}
-		byte[] keyBytes = Decoders.BASE64.decode(SetupLoader.getInstance().getServer().getSecret_key());
-        Key key = Keys.hmacShaKeyFor(keyBytes);
-        return Jwts.builder()
-        		.setId(String.valueOf(session.getAD_Session_ID()))
-        		.claim("AD_Client_ID", session.getAD_Client_ID())
-        		.claim("AD_Org_ID", session.getAD_Org_ID())
-        		.claim("AD_Role_ID", session.getAD_Role_ID())
-        		.claim("AD_User_ID", session.getCreatedBy())
-        		.claim("M_Warehouse_ID", warehouseId)
-        		.claim("AD_Language", language)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + sessionTimeout))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
 	}
 
 
@@ -613,30 +543,16 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			warehouseId = 0;
 		}
 
-		// fill context values
-		Env.setContext(context, "#AD_Session_ID", 0);
-		Env.setContext(context, "#Session_UUID", "");
-		Env.setContext(context, "#AD_User_ID", userId);
-		Env.setContext(context, "#AD_Role_ID", roleId);
-		Env.setContext(context, "#AD_Client_ID", role.getAD_Client_ID());
-		Env.setContext(context, "#AD_Org_ID", organizationId);
-		MSession session = MSession.get(context, true);
-		// Warehouse / Org
-		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
-		Env.setContext(context, "#AD_Session_ID", session.getAD_Session_ID());
 		// Default preference values
 		String language = request.getLanguage();
 		if (Util.isEmpty(language, true)) {
 			// set language with current session
 			language = Env.getContext(currentSession.getCtx(), Env.LANGUAGE);
 		}
-		SessionManager.loadDefaultSessionValues(context, language);
-
 		// Session values
 		Session.Builder builder = Session.newBuilder();
-		final String bearerToken = createBearerToken(session, warehouseId, Env.getAD_Language(context));
+		final String bearerToken = SessionManager.createSession(currentSession.getWebSession(), request.getLanguage(), roleId, userId, organizationId, warehouseId);
 		builder.setToken(bearerToken);
-
 		// Logout
 		logoutSession(LogoutRequest.newBuilder().build());
 
@@ -681,7 +597,7 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		MSession session = MSession.get(Env.getCtx(), false);
 		//	Logout
 		session.logout();
-		SessionManager.removeSession(session.getUUID());
+		SessionManager.revokeSession(session.getUUID());
 		//	Session values
 		Session.Builder builder = Session.newBuilder();
 		//	Return session
@@ -733,39 +649,8 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 				userInfo.setImage(ValueUtil.validateNull(attachmentReference.getValidFileName()));
 			}
 		}
-		userInfo.setConnectionTimeout(getSessionTimeout(user));
+		userInfo.setConnectionTimeout(SessionManager.getSessionTimeout(user));
 		return userInfo;
-	}
-	
-	/**
-	 * Get Session Timeout from user definition
-	 * @param user
-	 * @return
-	 */
-	private long getSessionTimeout(MUser user) {
-		long sessionTimeout = 0;
-		Object value = null;
-		// checks if the column exists in the database
-		if (user.get_ColumnIndex("ConnectionTimeout") >= 0) {
-			value = user.get_Value("ConnectionTimeout");
-		}
-		if(value == null) {
-			String sessionTimeoutAsString = MSysConfig.getValue("WEBUI_DEFAULT_TIMEOUT", Env.getAD_Client_ID(Env.getCtx()), 0);
-			try {
-				if (!Util.isEmpty(sessionTimeoutAsString, true)) {
-					sessionTimeout = Long.parseLong(sessionTimeoutAsString);
-				}
-			} catch (Exception e) {
-				log.severe(e.getLocalizedMessage());
-			}
-		} else {
-			try {
-				sessionTimeout = Long.parseLong(String.valueOf(value));
-			} catch (Exception e) {
-				log.severe(e.getLocalizedMessage());
-			}
-		}
-		return sessionTimeout;
 	}
 	
 	/**

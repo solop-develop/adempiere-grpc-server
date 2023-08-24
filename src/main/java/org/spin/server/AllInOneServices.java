@@ -18,8 +18,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.compiere.util.Env;
 import org.spin.authentication.AuthorizationServerInterceptor;
 import org.spin.base.setup.SetupLoader;
+import org.spin.base.util.ServiceContextProvider;
 import org.spin.base.util.Services;
 import org.spin.grpc.service.BankStatementMatchServiceImplementation;
 import org.spin.grpc.service.BusinessDataServiceImplementation;
@@ -70,7 +72,8 @@ public class AllInOneServices {
 	private Server server;
 
 	private static String defaultFileConnection = "resources/standalone.yaml";
-
+	private ServiceContextProvider contextProvider =  new ServiceContextProvider();
+	
 	/**
 	  * Get SSL / TLS context
 	  * @return
@@ -86,6 +89,8 @@ public class AllInOneServices {
 	  }
 
 	private void start() throws IOException {
+		//	Start based on provider
+        Env.setContextProvider(contextProvider);
 		ServerBuilder<?> serverBuilder;
 		if(SetupLoader.getInstance().getServer().isTlsEnabled()) {
 			serverBuilder = NettyServerBuilder.forPort(SetupLoader.getInstance().getServer().getPort())

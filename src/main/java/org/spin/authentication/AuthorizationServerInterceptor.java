@@ -16,6 +16,7 @@ package org.spin.authentication;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import org.spin.base.util.SessionManager;
 
@@ -33,6 +34,13 @@ public class AuthorizationServerInterceptor implements ServerInterceptor {
 	private static List<String> ALLOW_REQUESTS_WITHOUT_TOKEN = Arrays.asList(
 		"security.Security/RunLogin"
 	);
+	/**	Revoke session	*/
+	private static List<String> REVOKE_TOKEN_SERVICES = Arrays.asList(
+		"security.Security/RunChangeRole",
+		"security.Security/SetSessionAttribute"
+	);
+	/**	Threaded key for context management	*/
+	public static final Context.Key<Object> SESSION_CONTEXT = Context.key("session_context");
 
 	@Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
@@ -43,15 +51,19 @@ public class AuthorizationServerInterceptor implements ServerInterceptor {
 		}
 
 		Status status;
-		String value = metadata.get(Constants.AUTHORIZATION_METADATA_KEY);
-		if (value == null || value.trim().length() <= 0) {
+		String validToken = metadata.get(Constants.AUTHORIZATION_METADATA_KEY);
+		if (validToken == null || validToken.trim().length() <= 0) {
             status = Status.UNAUTHENTICATED.withDescription("Authorization token is missing");
-        } else if (!value.startsWith(Constants.BEARER_TYPE)) {
+        } else if (!validToken.startsWith(Constants.BEARER_TYPE)) {
             status = Status.UNAUTHENTICATED.withDescription("Unknown authorization type");
         } else {
             try {
-            	SessionManager.createSessionFromToken(value);
-                return Contexts.interceptCall(Context.current(), serverCall, metadata, serverCallHandler);
+            	Properties sessioncontext = SessionManager.getSessionFromToken(validToken);
+            	if(REVOKE_TOKEN_SERVICES.contains(callingMethod)) {
+            		SessionManager.revokeSession(validToken);
+            	}
+            	Context context = Context.current().withValue(SESSION_CONTEXT, sessioncontext);
+                return Contexts.interceptCall(context, serverCall, metadata, serverCallHandler);
             } catch (Exception e) {
                 status = Status.UNAUTHENTICATED.withDescription(e.getMessage()).withCause(e);
             }

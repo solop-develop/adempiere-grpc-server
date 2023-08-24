@@ -91,6 +91,7 @@ public class OrderManagement {
 				if (!salesOrder.processIt(MOrder.DOCACTION_Complete)) {
 					throw new AdempiereException("@ProcessFailed@ :" + salesOrder.getProcessMsg());
 				}
+				salesOrder.saveEx();
 				//	Release Order
 				salesOrder.set_ValueOfColumn("AssignedSalesRep_ID", null);
 				salesOrder.saveEx();

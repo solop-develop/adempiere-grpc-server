@@ -66,7 +66,7 @@ public class UpdateImplementation extends UpdateCenterImplBase {
 				throw new AdempiereException("Packages Requested is Null");
 			}
 			log.fine("Object List Requested = " + request);
-			SessionManager.createSessionFromToken(request.getToken());
+			SessionManager.getSessionFromToken(request.getToken());
 			ListPackagesResponse.Builder packagesList = convertPackagesList(request);
 			responseObserver.onNext(packagesList.build());
 			responseObserver.onCompleted();
@@ -86,7 +86,7 @@ public class UpdateImplementation extends UpdateCenterImplBase {
 				throw new AdempiereException("Updates Requested is Null");
 			}
 			log.fine("Object List Requested = " + request);
-			SessionManager.createSessionFromToken(request.getToken());
+			SessionManager.getSessionFromToken(request.getToken());
 			ListUpdatesResponse.Builder updatesList = convertUpdatesList(request);
 			responseObserver.onNext(updatesList.build());
 			responseObserver.onCompleted();
@@ -106,7 +106,7 @@ public class UpdateImplementation extends UpdateCenterImplBase {
 				throw new AdempiereException("Steps Requested is Null");
 			}
 			log.fine("Object List Requested = " + request);
-			SessionManager.createSessionFromToken(request.getToken());
+			SessionManager.getSessionFromToken(request.getToken());
 			ListStepsResponse.Builder stepsList = convertStepsList(request);
 			responseObserver.onNext(stepsList.build());
 			responseObserver.onCompleted();
