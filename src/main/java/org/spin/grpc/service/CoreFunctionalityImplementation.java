@@ -832,6 +832,7 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -865,14 +866,15 @@ public class CoreFunctionalityImplementation extends CoreFunctionalityImplBase {
 			whereClause,
 			null
 		)
+			.setParameters(organizationId, false)
 			.setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-			.setParameters(organizationId, false)
 		;
 		//	Count
 		int count = query.count();
 		//	Get List
-		query.setLimit(limit, offset)
+		// TODO: Fix .setLimit combined with .setApplyAccessFilter and with access record (ROWNUM error)
+		query //.setLimit(limit, offset)
 			.<MWarehouse>list()
 			.forEach(warehouse -> {
 				builder.addWarehouses(ConvertUtil.convertWarehouse(warehouse));
