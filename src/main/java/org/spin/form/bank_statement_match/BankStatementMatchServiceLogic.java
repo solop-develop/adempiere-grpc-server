@@ -432,7 +432,7 @@ public abstract class BankStatementMatchServiceLogic {
 
 
 	public static ListBankStatementsResponse.Builder listBankStatements(ListBankStatementsRequest request) {
-		final String whereClause = "Processed = 'Y' ";
+		final String whereClause = "Processed = 'N' ";
 		Query query = new Query(
 			Env.getCtx(),
 			I_C_BankStatement.Table_Name,
