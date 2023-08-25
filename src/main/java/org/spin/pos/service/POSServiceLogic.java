@@ -132,7 +132,7 @@ public class POSServiceLogic {
 			BankAccount.Builder bankAccountBuilder = ConvertUtil.convertBankAccount(bankAccountId);
 			builderList.addRecords(bankAccountBuilder);
 		});
-		return ListBankAccountsResponse.newBuilder();
+		return builderList;
 	}
 
 
