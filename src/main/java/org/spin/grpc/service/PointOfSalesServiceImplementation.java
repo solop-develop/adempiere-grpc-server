@@ -88,6 +88,7 @@ import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductPrice;
 import org.compiere.model.MProductPricing;
+import org.compiere.model.MRefList;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTable;
@@ -1314,7 +1315,21 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	
 	@Override
 	public void listCashMovements(ListCashMovementsRequest request, StreamObserver<ListCashMovementsResponse> responseObserver) {
-		
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Cash Movements = " + request.getPosUuid());
+			ListCashMovementsResponse.Builder response = listCashMovements(request);
+			responseObserver.onNext(response.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
 	}
 	
 	@Override
@@ -1592,6 +1607,94 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		});
 		//	Return
 		return Empty.newBuilder();
+	}
+	
+	/**
+	 * List all movements from cash
+	 * @return
+	 */
+	private ListCashMovementsResponse.Builder listCashMovements(ListCashMovementsRequest request) {
+		ListCashMovementsResponse.Builder builder = ListCashMovementsResponse.newBuilder();
+		if(Util.isEmpty(request.getPosUuid())) {
+			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
+		}
+		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
+		MBankStatement cashClosing = CashManagement.getOpenCashClosing(pos, RecordUtil.getDate(), true, null);
+		if(cashClosing == null
+				|| cashClosing.getC_BankStatement_ID() <= 0) {
+			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
+		}
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Object> parameters = new ArrayList<Object>();
+		StringBuffer whereClause = new StringBuffer("DocStatus IN('CO', 'CL') "
+				+ "AND C_POS_ID = ? "
+				+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl WHERE bsl.C_Payment_ID = C_Payment.C_Payment_ID AND bsl.C_BankStatement_ID = ?)");
+		parameters.add(pos.getC_POS_ID());
+		parameters.add(cashClosing.getC_BankStatement_ID());
+		//	Optional
+		if(!Util.isEmpty(request.getBusinessPartnerUuid())) {
+			parameters.add(RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getBusinessPartnerUuid(), null));
+			whereClause.append(" AND C_BPartner_ID = ?");
+		} else if(!Util.isEmpty(request.getSalesRepresentativeUuid())) {
+			parameters.add(RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null));
+			whereClause.append(" AND CollectingAgent_ID = ?");
+		}
+		//	Get Refund Reference list
+		Query query = new Query(Env.getCtx(), I_C_Payment.Table_Name, whereClause.toString(), null)
+				.setParameters(parameters)
+				.setClient_ID()
+				.setOnlyActiveRecords(true);
+		int count = query.count();
+		query
+		.setLimit(limit, offset)
+		.getIDsAsList()
+		.forEach(paymentId -> {
+			MPayment payment = new MPayment(pos.getCtx(), paymentId, null);
+			BigDecimal paymentAmount = payment.getPayAmt(true);
+			BigDecimal convertedPaymentAmount = ConvertUtil.getConvetedAmount(pos, payment, paymentAmount);
+			MRefList reference = MRefList.get(Env.getCtx(), MPayment.DOCSTATUS_AD_REFERENCE_ID, payment.getDocStatus(), null);
+			Payment.Builder paymentSummary = Payment.newBuilder()
+				.setId(payment.getC_Payment_ID())
+				.setUuid(ValueUtil.validateNull(payment.getUUID()))
+				.setDocumentNo(ValueUtil.validateNull(payment.getDocumentNo()))
+				.setDescription(ValueUtil.validateNull(payment.getDescription()))
+				.setCustomer(ConvertUtil.convertCustomer(MBPartner.get(payment.getCtx(), payment.getC_BPartner_ID())))
+				.setTenderTypeCode(ValueUtil.validateNull(payment.getTenderType()))
+				.setCurrency(ConvertUtil.convertCurrency(MCurrency.get(payment.getCtx(), payment.getC_Currency_ID())))
+				.setIsRefund(!payment.isReceipt())
+				.setAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount))
+				.setConvertedAmount(ValueUtil.getDecimalFromBigDecimal(convertedPaymentAmount))
+				.setCharge(ConvertUtil.convertCharge(payment.getC_Charge_ID()))
+				.setDocumentStatus(ConvertUtil.convertDocumentStatus(
+						ValueUtil.validateNull(payment.getDocStatus()), 
+						ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
+						ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))));
+			//	
+			if(payment.getCollectingAgent_ID() > 0) {
+				paymentSummary.setCollectingAgent(ConvertUtil.convertSalesRepresentative(MUser.get(payment.getCtx(), payment.getCollectingAgent_ID())));
+			}
+			if(payment.getC_Bank_ID() > 0) {
+				paymentSummary.setBankUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Bank.Table_Name, payment.getC_Bank_ID())));
+			}
+			if(payment.getC_DocType_ID() > 0) {
+				paymentSummary.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(payment.getCtx(), payment.getC_DocType_ID())));
+			}
+			builder.addCashMovements(paymentSummary.build());
+		});
+		//	
+		builder.setRecordCount(count);
+		//	Set page token
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		//	Set next page
+		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		//	Return
+		return builder;
 	}
 	
 	/**

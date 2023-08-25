@@ -724,6 +724,25 @@ public class ConvertUtil {
 	
 	/**
 	 * Get Converted Amount based on Order currency
+	 * @param pos
+	 * @param payment
+	 * @return
+	 * @return BigDecimal
+	 */
+	public static BigDecimal getConvetedAmount(MPOS pos, MPayment payment, BigDecimal amount) {
+		MPriceList priceList = MPriceList.get(pos.getCtx(), pos.getM_PriceList_ID(), null);
+		if(payment.getC_Currency_ID() == priceList.getC_Currency_ID()
+				|| amount == null
+				|| amount.compareTo(Env.ZERO) == 0) {
+			return amount;
+		}
+		BigDecimal convertedAmount = MConversionRate.convert(pos.getCtx(), amount, payment.getC_Currency_ID(), priceList.getC_Currency_ID(), payment.getDateAcct(), payment.getC_ConversionType_ID(), payment.getAD_Client_ID(), payment.getAD_Org_ID());
+		//	
+		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
+	}
+	
+	/**
+	 * Get Converted Amount based on Order currency
 	 * @param order
 	 * @param payment
 	 * @return
