@@ -210,14 +210,14 @@ public abstract class BankStatementMatchServiceLogic {
 		);
 
 		Query query = BankStatementMatchUtil.buildPaymentQuery(
+			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
 			isMatchedMode,
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
 			paymentAmountTo,
-			request.getBusinessPartnerId(),
-			request.getBankStatementId()
+			request.getBusinessPartnerId()
 		);
 
 		int count = query.count();
@@ -282,6 +282,7 @@ public abstract class BankStatementMatchServiceLogic {
 		);
 
 		Query importMovementsQuery = BankStatementMatchUtil.buildBankMovementQuery(
+			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
 			isMatchedMode,
 			dateFrom,
@@ -341,14 +342,14 @@ public abstract class BankStatementMatchServiceLogic {
 		);
 
 		Query paymentQuery = BankStatementMatchUtil.buildPaymentQuery(
+			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
 			isMatchedMode,
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
 			paymentAmountTo,
-			request.getBusinessPartnerId(),
-			request.getBankStatementId()
+			request.getBusinessPartnerId()
 		);
 		List<Integer> paymentsId = paymentQuery.getIDsAsList();
 		if (paymentsId == null || paymentsId.isEmpty()) {
@@ -356,6 +357,7 @@ public abstract class BankStatementMatchServiceLogic {
 		}
 
 		Query bankMovementQuery = BankStatementMatchUtil.buildBankMovementQuery(
+			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
 			isMatchedMode,
 			dateFrom,

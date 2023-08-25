@@ -50,14 +50,14 @@ public class BankStatementMatchUtil {
 
 
 	public static Query buildPaymentQuery(
+		int bankStatementId,
 		int bankAccountId,
 		boolean isMatchedMode,
 		Timestamp dateFrom,
 		Timestamp dateTo,
 		BigDecimal paymentAmountFrom,
 		BigDecimal paymentAmountTo,
-		int businessPartnerId,
-		int bankStatementId
+		int businessPartnerId
 	) {
 		String whereClasuePayment = "C_BankAccount_ID = ? "
 			+ " AND DocStatus NOT IN('IP', 'DR') "
@@ -129,6 +129,7 @@ public class BankStatementMatchUtil {
 
 
 	public static Query buildBankMovementQuery(
+		int bankStatementId,
 		int bankAccountId,
 		boolean isMatchedMode,
 		Timestamp dateFrom,
@@ -140,6 +141,16 @@ public class BankStatementMatchUtil {
 
 		ArrayList<Object> filterParameters = new ArrayList<Object>();
 		filterParameters.add(bankAccountId);
+
+		if(bankStatementId > 0) {
+			whereClasueBankStatement += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement bs "
+				+ "INNER JOIN C_BankStatementLine bsl "
+				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
+				+ "WHERE bsl.C_BankStatementLine_ID = I_BankStatement.C_BankStatementLine_ID "
+				+ "AND bs.DocStatus IN('CO', 'CL') "
+				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId + ") "
+			;
+		}
 
 		//	Match
 		// if(isMatchedMode) {

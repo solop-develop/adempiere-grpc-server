@@ -158,7 +158,8 @@ message ListImportedBankMovementsRequest {
 	string page_token = 2;
 	// filters
 	string search_value = 3;
-	int32 bank_account_id = 4;
+	int32 bank_statement_id = 4;
+	int32 bank_account_id = 5;
 	data.Decimal payment_amount_from = 6;
 	data.Decimal payment_amount_to = 7;
 	int64 transaction_date_from = 8;
@@ -177,6 +178,7 @@ message ImportedBankMovement {
 	data.Decimal amount = 8;
 	string memo = 9;
 	int32 payment_id = 10;
+	int32 bank_statement_line_id = 11;
 }
 
 message ListImportedBankMovementsResponse {

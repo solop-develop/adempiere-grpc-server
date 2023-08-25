@@ -377,6 +377,7 @@ public class BankStatementMatchConvertUtil {
 					bankStatemet.getTrxAmt()
 				)
 			)
+			.setBankStatementLineId(bankStatemet.getC_BankStatementLine_ID())
 		;
 
 		BusinessPartner.Builder businessPartnerBuilder = BankStatementMatchConvertUtil.convertBusinessPartner(
