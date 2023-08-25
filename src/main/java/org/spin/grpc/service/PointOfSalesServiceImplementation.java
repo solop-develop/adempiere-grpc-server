@@ -1678,10 +1678,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			BigDecimal paymentAmount = payment.getPayAmt(true);
 			BigDecimal convertedPaymentAmount = ConvertUtil.getConvetedAmount(pos, payment, paymentAmount);
 			MRefList reference = MRefList.get(Env.getCtx(), MPayment.DOCSTATUS_AD_REFERENCE_ID, payment.getDocStatus(), null);
-			Payment.Builder paymentSummary = Payment.newBuilder()
+			Payment.Builder paymentDetail = Payment.newBuilder()
 				.setId(payment.getC_Payment_ID())
 				.setUuid(ValueUtil.validateNull(payment.getUUID()))
 				.setDocumentNo(ValueUtil.validateNull(payment.getDocumentNo()))
+				.setReferenceNo(ValueUtil.validateNull(payment.getR_PnRef()))
+				.setPaymentDate(ValueUtil.convertDateToString(payment.getDateTrx()))
+				.setPaymentAccountDate(ValueUtil.convertDateToString(payment.getDateAcct()))
 				.setDescription(ValueUtil.validateNull(payment.getDescription()))
 				.setCustomer(ConvertUtil.convertCustomer(MBPartner.get(payment.getCtx(), payment.getC_BPartner_ID())))
 				.setTenderTypeCode(ValueUtil.validateNull(payment.getTenderType()))
@@ -1696,15 +1699,19 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 						ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))));
 			//	
 			if(payment.getCollectingAgent_ID() > 0) {
-				paymentSummary.setCollectingAgent(ConvertUtil.convertSalesRepresentative(MUser.get(payment.getCtx(), payment.getCollectingAgent_ID())));
+				paymentDetail.setCollectingAgent(ConvertUtil.convertSalesRepresentative(MUser.get(payment.getCtx(), payment.getCollectingAgent_ID())));
 			}
 			if(payment.getC_Bank_ID() > 0) {
-				paymentSummary.setBankUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Bank.Table_Name, payment.getC_Bank_ID())));
+				paymentDetail.setBankUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Bank.Table_Name, payment.getC_Bank_ID())));
 			}
 			if(payment.getC_DocType_ID() > 0) {
-				paymentSummary.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(payment.getCtx(), payment.getC_DocType_ID())));
+				paymentDetail.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(payment.getCtx(), payment.getC_DocType_ID())));
 			}
-			builder.addCashMovements(paymentSummary.build());
+			if(payment.getC_PaymentMethod_ID() > 0) {
+				MCPaymentMethod paymentMethod = MCPaymentMethod.getById(payment.getCtx(), payment.getC_PaymentMethod_ID(), null);
+				paymentDetail.setPaymentMethod(ConvertUtil.convertPaymentMethod(paymentMethod));
+			}
+			builder.addCashMovements(paymentDetail.build());
 		});
 		//	
 		builder.setRecordCount(count);
