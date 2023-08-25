@@ -250,6 +250,18 @@ public class OrderManagement {
 	}
 	
 	/**
+	 * Validate if a order is released
+	 * @param salesOrder
+	 * @return void
+	 */
+	public static void validateOrderReleased(MOrder salesOrder) {
+		if(salesOrder.get_ValueAsInt("AssignedSalesRep_ID") > 0
+				&& salesOrder.get_ValueAsInt("AssignedSalesRep_ID") != Env.getAD_User_ID(Env.getCtx())) {
+			throw new AdempiereException("@POS.SalesRepAssigned@");
+		}
+	}
+	
+	/**
 	 * Process payment of Order
 	 * @param salesOrder
 	 * @param pos

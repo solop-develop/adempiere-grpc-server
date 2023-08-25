@@ -15,25 +15,247 @@
  *************************************************************************************/
 package org.spin.pos.service.cash;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
+import org.adempiere.core.domains.models.I_AD_User;
+import org.adempiere.core.domains.models.I_C_Bank;
+import org.adempiere.core.domains.models.I_C_BankAccount;
+import org.adempiere.core.domains.models.I_C_ConversionType;
+import org.adempiere.core.domains.models.I_C_Currency;
+import org.adempiere.core.domains.models.I_C_Payment;
+import org.adempiere.core.domains.models.I_C_PaymentMethod;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MBank;
+import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatement;
 import org.compiere.model.MBankStatementLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
+import org.compiere.util.Util;
+import org.spin.backend.grpc.pos.CreatePaymentRequest;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ValueUtil;
 
 /**
  * This class was created for add all helper method for Cash Management
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class CashManagement {
+	
+	/**
+	 * Create Payment based on request, transaction name and pos
+	 * @param request
+	 * @param defaultChargeId
+	 * @param pointOfSalesDefinition
+	 * @param transactionName
+	 * @return
+	 */
+	public static MPayment createPaymentFromCharge(int defaultChargeId, CreatePaymentRequest request, MPOS pointOfSalesDefinition, String transactionName) {
+		MPayment payment = null;
+		String tenderType = request.getTenderTypeCode();
+		if(Util.isEmpty(tenderType)) {
+			tenderType = MPayment.TENDERTYPE_Cash;
+		}
+		if(pointOfSalesDefinition.getC_BankAccount_ID() <= 0) {
+			throw new AdempiereException("@NoCashBook@");
+		}
+		//	
+		MBankAccount cashAccount = MBankAccount.get(Env.getCtx(), pointOfSalesDefinition.getC_BankAccount_ID());
+		if(cashAccount.getC_BPartner_ID() <= 0) {
+			throw new AdempiereException("@C_BankAccount_ID@ @C_BPartner_ID@ @NotFound@");
+		}
+		//	Validate or complete
+		if(Util.isEmpty(request.getUuid())) {
+			if(request.getAmount() == null) {
+				throw new AdempiereException("@PayAmt@ @NotFound@");
+			}
+			//	Order
+			int currencyId = RecordUtil.getIdFromUuid(I_C_Currency.Table_Name, request.getCurrencyUuid(), transactionName);
+			if(currencyId <= 0) {
+				throw new AdempiereException("@C_Currency_ID@ @NotFound@");
+			}
+			payment = new MPayment(Env.getCtx(), 0, transactionName);
+			payment.setC_BankAccount_ID(pointOfSalesDefinition.getC_BankAccount_ID());
+			int documentTypeId;
+			if(!request.getIsRefund()) {
+				documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSOpeningDocumentType_ID");
+			} else {
+				documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSWithdrawalDocumentType_ID");
+			}
+			if(documentTypeId > 0) {
+				payment.setC_DocType_ID(documentTypeId);
+			} else {
+				payment.setC_DocType_ID(!request.getIsRefund());
+			}
+			payment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
+	        String value = DB.getDocumentNo(payment.getC_DocType_ID(), transactionName, false,  payment);
+	        payment.setDocumentNo(value);
+	        if(!Util.isEmpty(request.getPaymentAccountDate())) {
+	        	Timestamp date = ValueUtil.getDateFromString(request.getPaymentAccountDate());
+	        	if(date != null) {
+	        		payment.setDateAcct(date);
+	        	}
+	        }
+	        payment.setTenderType(tenderType);
+	        if(!Util.isEmpty(request.getDescription())) {
+	        	payment.setDescription(request.getDescription());
+	        }
+	        payment.setC_BPartner_ID (cashAccount.getC_BPartner_ID());
+	        payment.setC_Currency_ID(currencyId);
+	        payment.setC_POS_ID(pointOfSalesDefinition.getC_POS_ID());
+	        if(!Util.isEmpty(request.getCollectingAgentUuid())) {
+	        	payment.set_ValueOfColumn("CollectingAgent_ID", RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getCollectingAgentUuid(), transactionName));
+	        }
+	        if(pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID) > 0) {
+	        	payment.setC_ConversionType_ID(pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
+	        }
+	        payment.setC_Charge_ID(defaultChargeId);
+	        //	Amount
+	        BigDecimal paymentAmount = ValueUtil.getBigDecimalFromDecimal(request.getAmount());
+	        payment.setPayAmt(paymentAmount);
+	        payment.setDocStatus(MPayment.DOCSTATUS_Drafted);
+			switch (tenderType) {
+				case MPayment.TENDERTYPE_Check:
+					payment.setCheckNo(request.getReferenceNo());
+					break;
+				case MPayment.TENDERTYPE_DirectDebit:
+					break;
+				case MPayment.TENDERTYPE_CreditCard:
+					break;
+				case MPayment.TENDERTYPE_MobilePaymentInterbank:
+					payment.setR_PnRef(request.getReferenceNo());
+					break;
+				case MPayment.TENDERTYPE_Zelle:
+					payment.setR_PnRef(request.getReferenceNo());
+					break;
+				case MPayment.TENDERTYPE_CreditMemo:
+					payment.setR_PnRef(request.getReferenceNo());
+					break;
+				default:
+					payment.setDescription(request.getDescription());
+					break;
+			}
+			//	Payment Method
+			if(!Util.isEmpty(request.getPaymentMethodUuid())) {
+				int paymentMethodId = RecordUtil.getIdFromUuid(I_C_PaymentMethod.Table_Name, request.getPaymentMethodUuid(), transactionName);
+				if(paymentMethodId > 0) {
+					payment.set_ValueOfColumn(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID, paymentMethodId);
+				}
+			}
+			//	Set Bank Id
+			if(!Util.isEmpty(request.getBankUuid())) {
+				int bankId = RecordUtil.getIdFromUuid(I_C_Bank.Table_Name, request.getBankUuid(), transactionName);
+				payment.set_ValueOfColumn(MBank.COLUMNNAME_C_Bank_ID, bankId);
+			}
+			//	Validate reference
+			if(!Util.isEmpty(request.getReferenceNo())) {
+				payment.setDocumentNo(request.getReferenceNo());
+				payment.addDescription(request.getReferenceNo());
+			}
+			CashUtil.setCurrentDate(payment);
+			int referenceBankAccountId = RecordUtil.getIdFromUuid(I_C_BankAccount.Table_Name, request.getReferenceBankAccountUuid(), transactionName);
+			if(referenceBankAccountId > 0) {
+				payment.set_ValueOfColumn("POSReferenceBankAccount_ID", referenceBankAccountId);
+			}
+			payment.saveEx(transactionName);
+		} else {
+			int paymentId = RecordUtil.getIdFromUuid(I_C_Payment.Table_Name, request.getUuid(), transactionName);
+			if(paymentId <= 0) {
+				throw new AdempiereException("@C_Payment_ID@ @NotFound@");
+			}
+			payment = new MPayment(Env.getCtx(), paymentId, transactionName);
+			if(!Util.isEmpty(request.getDescription())) {
+				payment.setDescription(request.getDescription());
+			}
+			if(!Util.isEmpty(request.getCollectingAgentUuid())) {
+				payment.set_ValueOfColumn("CollectAgent_ID", RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getCollectingAgentUuid(), transactionName));
+			}
+			payment.saveEx(transactionName);
+		}
+		return payment;
+	}
+	
+	/**
+	 * Process Payment
+	 * @param pos
+	 * @param payment
+	 * @param transactionName
+	 */
+	public static void processPayment(MPOS pos, MPayment payment, String transactionName) {
+		//	Create bank transfer
+		MPayment relatedPayment = createRelatedPayment(pos, payment, transactionName);
+		if(relatedPayment != null) {
+			completePayment(pos, relatedPayment);
+		}
+		completePayment(pos, payment);
+	}
+	
+	/**
+	 * Process or complete payment and add to bank statement
+	 * @param pos
+	 * @param payment
+	 * @return void
+	 */
+	public static void completePayment(MPOS pos, MPayment payment) {
+		//	Process It
+		if(!payment.isProcessed()) {
+			payment.setDocStatus(MPayment.DOCSTATUS_Drafted);
+			payment.setDocAction(MPayment.ACTION_Complete);
+		}
+		payment.saveEx();
+		//	Complete It
+		if(!payment.isProcessed()) {
+			if(!payment.processIt(MPayment.ACTION_Complete)) {
+				throw new AdempiereException(payment.getProcessMsg());
+			}
+			payment.saveEx();
+		}
+		CashManagement.addPaymentToCash(pos, payment);
+	}
+	
+	/**
+	 * Create Related Payment from payment
+	 * @param pointOfSalesDefinition
+	 * @param sourcePayment
+	 * @param transactionName
+	 * @return
+	 */
+	private static MPayment createRelatedPayment(MPOS pointOfSalesDefinition, MPayment sourcePayment, String transactionName) {
+		if(sourcePayment.get_ValueAsInt("POSReferenceBankAccount_ID") <= 0) {
+			return null;
+		}
+		MPayment relatedPayment = new MPayment(Env.getCtx(), 0, transactionName);
+		PO.copyValues(sourcePayment, relatedPayment);
+		//	
+		relatedPayment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
+		relatedPayment.set_ValueOfColumn("POSReferenceBankAccount_ID", null);
+		relatedPayment.setC_BankAccount_ID(sourcePayment.get_ValueAsInt("POSReferenceBankAccount_ID"));
+		relatedPayment.setRelatedPayment_ID(sourcePayment.getC_Payment_ID());
+		int documentTypeId;
+		if(!sourcePayment.isReceipt()) {
+			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSDepositDocumentType_ID");
+		} else {
+			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSWithdrawalDocumentType_ID");
+		}
+		if(documentTypeId > 0) {
+			relatedPayment.setC_DocType_ID(documentTypeId);
+		} else {
+			relatedPayment.setC_DocType_ID(!sourcePayment.isReceipt());
+		}
+		relatedPayment.saveEx();
+		sourcePayment.setRelatedPayment_ID(relatedPayment.getC_Payment_ID());
+		sourcePayment.saveEx();
+		return relatedPayment;
+	}
 	
 	/**
 	 * Add payment to cash closing
