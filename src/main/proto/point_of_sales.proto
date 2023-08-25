@@ -103,6 +103,7 @@ service Store {
 	rpc PrintShipmentPreview(PrintShipmentPreviewRequest) returns (PrintShipmentPreviewResponse) {}
 	// Bank
 	rpc ListBanks(ListBanksRequest) returns (ListBanksResponse) {}
+	rpc ListBankAccounts(ListBankAccountsRequest) returns (ListBankAccountsResponse) {}
 	//	Create Customer Account
 	rpc CreateCustomerBankAccount(CreateCustomerBankAccountRequest) returns (CustomerBankAccount) {}
 	//	Update Customer Account
@@ -472,6 +473,22 @@ message ListBanksRequest {
 message ListBanksResponse {
 	int64 record_count = 1;
 	repeated Bank records = 2;
+	string next_page_token = 3;
+}
+
+// Bank Account
+message ListBankAccountsRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+	int32 bank_id = 4;
+	string pos_uuid = 5;
+}
+
+message ListBankAccountsResponse {
+	int64 record_count = 1;
+	repeated BankAccount records = 2;
 	string next_page_token = 3;
 }
 

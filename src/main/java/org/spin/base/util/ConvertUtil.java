@@ -1310,7 +1310,19 @@ public class ConvertUtil {
 		//	
 		return builder;
 	}
-	
+
+	/**
+	 * Convert Bank Account to gRPC stub class
+	 * @param bankAccount
+	 * @return
+	 */
+	public static BankAccount.Builder convertBankAccount(int bankAccountId) {
+		if(bankAccountId <= 0) {
+			return BankAccount.newBuilder();
+		}
+		MBankAccount bankAccount = MBankAccount.get(Env.getCtx(), bankAccountId);
+		return convertBankAccount(bankAccount);
+	}
 	/**
 	 * Convert Bank Account to gRPC stub class
 	 * @param bankAccount

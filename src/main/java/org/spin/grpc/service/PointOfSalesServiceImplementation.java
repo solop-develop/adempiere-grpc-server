@@ -1092,6 +1092,27 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 
 	@Override
+	public void listBankAccounts(ListBankAccountsRequest request, StreamObserver<ListBankAccountsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object ListBankAccountsRequest Null");
+			}
+			ListBankAccountsResponse.Builder bankAccountsBuilderList = POSServiceLogic.listBankAccounts(request);
+			responseObserver.onNext(bankAccountsBuilderList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
 	public void listCustomerBankAccounts(ListCustomerBankAccountsRequest request, StreamObserver<ListCustomerBankAccountsResponse> responseObserver) {
 		try {
 			if(request == null) {
