@@ -3256,7 +3256,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 
 		final String whereClauseWithoutProposal = " AND NOT EXISTS(SELECT 1 FROM C_DocType dt "
 			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
-			+ "AND dt.DocSubTypeSO IN('OB', 'PR'))"
+			+ "AND dt.DocSubTypeSO IN('ON', 'OB'))"
 		;
 
 		StringBuffer whereClause = new StringBuffer();
@@ -3272,7 +3272,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				parameters.add(posId);
 			} else {
 				if(request.getIsOnlyAisleSeller()) {
-					whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?)")
+					whereClause
+						.append(" AND DocStatus NOT IN('VO', 'CL')")
+						.append(" AND ((C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?)")
 						.append(" AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsAisleSeller = 'Y'))")
 						.append(whereClauseWithoutProposal)
 					;
@@ -3320,7 +3322,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 		//	Is Invoiced
 		if(request.getIsWaitingForInvoice()) {
-			whereClause.append(" AND C_Order.Processed = 'N'")
+			whereClause.append(" AND DocStatus NOT IN('VO', 'CL')")
 				.append(" AND NOT EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Order_ID = C_Order.C_Order_ID AND i.DocStatus IN('CO', 'CL'))")
 				.append(whereClauseWithoutProposal)
 			;
@@ -3328,7 +3330,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		//	for payment (credit)
 		if(request.getIsWaitingForPay()) {
 			whereClause.append(" AND DocStatus IN('CO')")
-				.append(" AND (EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Order_ID = C_Order.C_Order_ID AND i.DocStatus IN('CO', 'CL') AND invoiceOpen(i.C_Invoice_ID, 0) <> 0)")
+				.append(" AND (EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Order_ID = C_Order.C_Order_ID AND i.DocStatus IN('CO', 'CL') AND i.IsPaid = 'N')")
 				.append(" OR IsInvoiced = 'N')")
 				.append(whereClauseWithoutProposal)
 			;
@@ -3337,11 +3339,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			whereClause.append(" AND DocStatus IN('DR', 'IP') ")
 				.append("AND EXISTS(SELECT 1 FROM C_DocType dt ")
 				.append("WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID ")
-				.append("AND dt.DocSubTypeSO IN('OB', 'PR')) ")
+				.append("AND dt.DocSubTypeSO IN('ON', 'OB')) ")
 			;
 		}
 		if(request.getIsWaitingForShipment()) {
-			whereClause.append(" AND DocStatus IN('CO') AND NOT EXISTS(SELECT 1 FROM M_InOut io WHERE io.C_Order_ID = C_Order.C_Order_ID AND io.DocStatus IN('CO', 'CL'))");
+			whereClause.append(" AND DocStatus IN('CO') AND NOT EXISTS(SELECT 1 FROM M_InOut io WHERE io.C_Order_ID = C_Order.C_Order_ID AND io.DocStatus IN('CO', 'CL'))")
+			.append(whereClauseWithoutProposal)
+			;
 		}
 		if(request.getIsClosed()) {
 			whereClause.append(" AND DocStatus IN('CL') ");
