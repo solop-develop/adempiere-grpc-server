@@ -37,7 +37,8 @@ public class AuthorizationServerInterceptor implements ServerInterceptor {
 	/**	Revoke session	*/
 	private static List<String> REVOKE_TOKEN_SERVICES = Arrays.asList(
 		"security.Security/RunChangeRole",
-		"security.Security/SetSessionAttribute"
+		"security.Security/SetSessionAttribute",
+		"security.Security/RunLogout"
 	);
 	/**	Threaded key for context management	*/
 	public static final Context.Key<Object> SESSION_CONTEXT = Context.key("session_context");

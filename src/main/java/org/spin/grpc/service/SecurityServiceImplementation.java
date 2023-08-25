@@ -597,7 +597,6 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		MSession session = MSession.get(Env.getCtx(), false);
 		//	Logout
 		session.logout();
-		SessionManager.revokeSession(session.getUUID());
 		//	Session values
 		Session.Builder builder = Session.newBuilder();
 		//	Return session
