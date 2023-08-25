@@ -43,6 +43,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
+import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.authentication.BearerToken;
 import org.spin.authentication.Constants;
@@ -91,8 +92,8 @@ public class SessionManager {
 		if(values != null && values.length == 3) {
 			JwtParser parser = Jwts.parserBuilder().setSigningKey(SetupLoader.getInstance().getServer().getSecret_key()).build();
 	        Jws<Claims> claims = parser.parseClaimsJws(tokenValue);
-//	        int userId = claims.getBody().get("AD_User_ID", Integer.class);
-//			int roleId = claims.getBody().get("AD_Role_ID", Integer.class);
+	        int userId = claims.getBody().get("AD_User_ID", Integer.class);
+			int roleId = claims.getBody().get("AD_Role_ID", Integer.class);
 			int organizationId = claims.getBody().get("AD_Org_ID", Integer.class);
 			int warehouseId = claims.getBody().get("M_Warehouse_ID", Integer.class);
 			String language = claims.getBody().get("AD_Language", String.class);
@@ -104,7 +105,49 @@ public class SessionManager {
 				Env.setCtx(context);
 				return context;
 			} else {
-				throw new AdempiereException("@Invalid@ @Token@");	
+				context = (Properties) Env.getCtx().clone();
+				DB.validateSupportedUUIDFromDB();
+				//	
+				if(organizationId < 0) {
+					organizationId = 0;
+				}
+				if(warehouseId < 0) {
+					warehouseId = 0;
+				}
+				//	Get Values from role
+				if(roleId < 0) {
+					throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
+				}
+				Env.setContext (context, "#Date", TimeUtil.getDay(System.currentTimeMillis()));
+				Env.setContext(context, "#AD_Session_ID", Integer.parseInt(claims.getBody().getId()));
+				MRole role = MRole.get(context, roleId);
+				//	Warehouse / Org
+				Env.setContext (context, "#M_Warehouse_ID", warehouseId);
+				Env.setContext(context, "#AD_Client_ID", role.getAD_Client_ID());
+				Env.setContext(context, "#AD_Org_ID", organizationId);
+				//	Role Info
+				Env.setContext(context, "#AD_Role_ID", roleId);
+				//	User Info
+				Env.setContext(context, "#AD_User_ID", userId);
+				//	
+				MSession session = MSession.get(context, false);
+				if(session == null
+						|| session.getAD_Session_ID() <= 0) {
+					throw new AdempiereException("@AD_Session_ID@ @NotFound@");
+				}
+				//	Load preferences
+				loadDefaultSessionValues(context, language);
+				Env.setContext (context, "#AD_Session_ID", session.getAD_Session_ID());
+				Env.setContext (context, "#Session_UUID", session.getUUID());
+				Env.setContext(context, "#AD_User_ID", session.getCreatedBy());
+				Env.setContext(context, "#AD_Role_ID", session.getAD_Role_ID());
+				Env.setContext(context, "#AD_Client_ID", session.getAD_Client_ID());
+				Env.setContext(context, "#Date", new Timestamp(System.currentTimeMillis()));
+				setDefault(context, Env.getAD_Org_ID(context), organizationId, warehouseId);
+				Env.setContext(context, Env.LANGUAGE, ContextManager.getDefaultLanguage(language));
+				//	Save to Cache
+				sessionsContext.put(tokenValue, context);
+				return context;
 			}
 		} else {
 			throw new AdempiereException("@Invalid@ @Token@");
