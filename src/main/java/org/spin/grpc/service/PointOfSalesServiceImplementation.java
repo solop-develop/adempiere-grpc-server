@@ -1346,6 +1346,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
@@ -1635,8 +1636,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @return
 	 */
 	private ListCashMovementsResponse.Builder listCashMovements(ListCashMovementsRequest request) {
-		ListCashMovementsResponse.Builder builder = ListCashMovementsResponse.newBuilder();
-		if(Util.isEmpty(request.getPosUuid())) {
+		if(Util.isEmpty(request.getPosUuid(), true)) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
 		MPOS pos = getPOSFromUuid(request.getPosUuid(), true);
@@ -1645,6 +1645,14 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				|| cashClosing.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
 		}
+
+		ListCashMovementsResponse.Builder builder = ListCashMovementsResponse.newBuilder()
+			.setId(cashClosing.getC_BankStatement_ID())
+			.setUuid(
+				ValueUtil.validateNull(cashClosing.getUUID())
+			)
+		;
+
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());

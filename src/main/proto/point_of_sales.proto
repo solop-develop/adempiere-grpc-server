@@ -296,6 +296,9 @@ message ListCashMovementsResponse {
 	int64 record_count = 1;
 	repeated Payment cash_movements = 2;
 	string next_page_token = 3;
+	// header values
+	int32 id = 4;
+	string uuid = 5;
 }
 
 //	List Cash Summary Movements Request
