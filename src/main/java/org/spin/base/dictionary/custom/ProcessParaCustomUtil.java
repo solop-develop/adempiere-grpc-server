@@ -30,7 +30,7 @@ public class ProcessParaCustomUtil {
 		final String whereClauseUser = "AD_Process_Para_ID = ? AND EXISTS( "
 			+ "SELECT 1 FROM AD_ProcessCustom AS pc "
 			+ "WHERE pc.AD_User_ID = ? "
-			+ "AND pc.AD_ProcessParaCustom_ID = AD_ProcessParaCustom.AD_ProcessParaCustom_ID"
+			+ "AND pc.AD_ProcessCustom_ID = AD_ProcessParaCustom.AD_ProcessCustom_ID"
 		+ ")";
 		MProcessParaCustom browseFieldCustom = new Query(
 			Env.getCtx(),
@@ -47,7 +47,7 @@ public class ProcessParaCustomUtil {
 			final String whereClauseRole = "AD_Process_Para_ID = ? AND EXISTS( "
 				+ "SELECT 1 FROM AD_ProcessCustom AS pc "
 				+ "WHERE pc.AD_Role_ID = ? "
-				+ "AND pc.AD_ProcessParaCustom_ID = AD_ProcessParaCustom.AD_ProcessParaCustom_ID"
+				+ "AND pc.AD_ProcessCustom_ID = AD_ProcessParaCustom.AD_ProcessCustom_ID"
 			+ ")";
 			browseFieldCustom = new Query(
 				Env.getCtx(),
