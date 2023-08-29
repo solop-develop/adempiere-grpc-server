@@ -84,7 +84,7 @@ dependencies {
 	// Dashboard Improvements
 	implementation "${baseGroupId}:adempiere-dashboard-improvements:1.0.7"
 	// Point Of Sales Improvements
-	implementation "${baseGroupId}:adempiere-pos-improvements:1.0.0"
+	implementation "${baseGroupId}:adempiere-pos-improvements:1.0.1"
 	// Business Processors (To Task's and Schedulers)
 	implementation "${baseGroupId}:adempiere-business-processors:1.0.5"
 	implementation "${baseGroupId}:adempiere-kafka-connector:1.0.0"

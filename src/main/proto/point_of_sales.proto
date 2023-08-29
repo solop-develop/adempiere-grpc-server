@@ -597,13 +597,23 @@ message CustomerBankAccount {
 
 //	Print Ticket
 message PrintTicketRequest {
-	string pos_uuid = 2;
-	string order_uuid = 3;
+	int32 pos_id = 1;
+	int32 order_id = 2;
+	int32 invoice_id = 3;
+	int32 shipment_id = 4;
+	int32 record_id = 5;
+	string table_name = 6;
 }
 
 //	Response after print
 message PrintTicketResponse {
-	string result = 1;
+	string summary = 1;
+	bool is_error = 2;
+	string file_name = 3;
+	string mime_type = 4;
+	bytes output_stream = 5;
+	string result_type = 6;
+	map<string, string> result_values = 7;
 }
 
 //	Print Preview Ticket

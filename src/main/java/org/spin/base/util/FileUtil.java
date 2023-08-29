@@ -130,5 +130,22 @@ public class FileUtil {
 
 		return imageMimeType.containsKey(extension);
 	}
+	
+	/**
+	 * get file extension
+	 * @param fileName
+	 * @return
+	 */
+	public static String getExtension(String fileName) {
+		if(Util.isEmpty(fileName)) {
+			return "";
+		}
+		int index = fileName.lastIndexOf(".");
+		if(index <= -1) {
+			return "";
+		}
+		//	return
+		return fileName.substring(index + 1);
+	}
 
 }

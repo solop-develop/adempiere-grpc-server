@@ -463,9 +463,9 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 				if(Util.isEmpty(result.getReportType())) {
 					reportType = result.getReportType();
 				}
-				if(!Util.isEmpty(getExtension(validFileName))
-						&& !getExtension(validFileName).equals(reportType)) {
-					reportType = getExtension(validFileName);
+				if(!Util.isEmpty(FileUtil.getExtension(validFileName))
+						&& !FileUtil.getExtension(validFileName).equals(reportType)) {
+					reportType = FileUtil.getExtension(validFileName);
 				}
 				output.setReportType(request.getReportType());
 
@@ -496,25 +496,6 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			}
 		}
 		return response;
-	}
-
-
-
-	/**
-	 * get file extension
-	 * @param fileName
-	 * @return
-	 */
-	private static String getExtension(String fileName) {
-		if(Util.isEmpty(fileName)) {
-			return "";
-		}
-		int index = fileName.lastIndexOf(".");
-		if(index <= -1) {
-			return "";
-		}
-		//	return
-		return fileName.substring(index + 1);
 	}
 	
 	/**
