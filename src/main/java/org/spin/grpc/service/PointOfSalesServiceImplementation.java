@@ -956,6 +956,12 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			String accountName = request.getName();
 			if(Util.isEmpty(accountName)) {
 				accountName = businessPartner.getName() + "_" + request.getAccountNo();
+				if (bankId >= 0) {
+					MBank bank = MBank.get(Env.getCtx(), bankId);
+					if (bank != null) {
+						accountName += " (" + bank.getRoutingNo() + ")";
+					}
+				}
 			}
 			int customerBankAccountId = getCustomerBankAccountFromAccount(Env.getCtx(), businessPartner.getC_BPartner_ID(), bankId, request.getAccountNo(), request.getSocialSecurityNumber());
 			if(customerBankAccountId < 0) {
