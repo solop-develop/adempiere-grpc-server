@@ -27,7 +27,7 @@ public class ProcessParaCustomUtil {
 
 	public static MProcessParaCustom getProcessParaCustom(int processParameterId) {
 		final int userId = Env.getAD_User_ID(Env.getCtx());
-		final String whereClauseUser = "AD_ProcessPara_ID = ? AND EXISTS( "
+		final String whereClauseUser = "AD_Process_Para_ID = ? AND EXISTS( "
 			+ "SELECT 1 FROM AD_ProcessCustom AS pc "
 			+ "WHERE pc.AD_User_ID = ? "
 			+ "AND pc.AD_ProcessParaCustom_ID = AD_ProcessParaCustom.AD_ProcessParaCustom_ID"
@@ -44,7 +44,7 @@ public class ProcessParaCustomUtil {
 		;
 		if (browseFieldCustom == null) {
 			final int roleId = Env.getAD_Role_ID(Env.getCtx());
-			final String whereClauseRole = "AD_ProcessPara_ID = ? AND EXISTS( "
+			final String whereClauseRole = "AD_Process_Para_ID = ? AND EXISTS( "
 				+ "SELECT 1 FROM AD_ProcessCustom AS pc "
 				+ "WHERE pc.AD_Role_ID = ? "
 				+ "AND pc.AD_ProcessParaCustom_ID = AD_ProcessParaCustom.AD_ProcessParaCustom_ID"
