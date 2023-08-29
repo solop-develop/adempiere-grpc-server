@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -57,8 +57,8 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Empty;
-import org.spin.backend.grpc.user_customization.Level;
 import org.spin.backend.grpc.user_customization.LevelCustomization;
+import org.spin.backend.grpc.user_customization.LevelType;
 import org.spin.backend.grpc.user_customization.ListCustomizationsLevelRequest;
 import org.spin.backend.grpc.user_customization.ListCustomizationsLevelResponse;
 import org.spin.backend.grpc.user_customization.ListRolesRequest;
@@ -72,6 +72,7 @@ import org.spin.backend.grpc.user_customization.SaveWindowCustomizationRequest;
 import org.spin.backend.grpc.user_customization.User;
 import org.spin.backend.grpc.user_customization.UserCustomizationGrpc.UserCustomizationImplBase;
 import org.spin.base.db.LimitUtil;
+import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
@@ -87,7 +88,6 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 	/** Logger */
 	private CLogger log = CLogger.getCLogger(UserCustomizationImplementation.class);
 
-	static String IS_DISPLAYED_COLUMN_NAME = "IsDefaultDisplayed";
 
 	@Override
 	public void listUsers(ListUsersRequest request, StreamObserver<ListUsersResponse> responseObserver) {
@@ -100,6 +100,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -109,18 +110,16 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 	}
 
 	private ListUsersResponse.Builder listUsers(ListUsersRequest request) {
-		List<Object> parameters = new ArrayList<>();
 		String whereClause = "";
+		List<Object> parameters = new ArrayList<>();
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			whereClause = RecordUtil.addSearchValueAndGet("", I_AD_User.Table_Name, request.getSearchValue(), parameters);
-
-			if (!Util.isEmpty(whereClause, true)) {
-				whereClause = whereClause.replace(" WHERE ", "");
-				whereClause += " AND ";
-			}
+			whereClause += "(UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%')"
+			;
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
 		}
 
-		whereClause += "AD_User_ID > 0";
 		Query query = new Query(
 			Env.getCtx(),
 			I_AD_User.Table_Name,
@@ -149,18 +148,22 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 
 		query
 			.setLimit(limit, offset)
-			.list(MUser.class)
-			.forEach(user -> {
-				User.Builder builder = convertUser(user);
+			.getIDsAsList()
+			.forEach(userId -> {
+				User.Builder builder = convertUser(userId);
 				builderList.addRecords(builder);
 			});
 
 		return builderList;
 	}
 
+	private User.Builder convertUser(int userId) {
+		MUser user = MUser.get(Env.getCtx(), userId);
+		return convertUser(user);
+	}
 	private User.Builder convertUser(MUser user) {
 		User.Builder builder = User.newBuilder();
-		if (user == null || user.getAD_User_ID() <= 0) {
+		if (user == null) {
 			return builder;
 		}
 
@@ -194,6 +197,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -206,11 +210,11 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		List<Object> parameters = new ArrayList<>();
 		String whereClause = "";
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			whereClause = RecordUtil.addSearchValueAndGet("", I_AD_Role.Table_Name, request.getSearchValue(), parameters);
-
-			if (!Util.isEmpty(whereClause, true)) {
-				whereClause = whereClause.replace(" WHERE ", "");
-			}
+			whereClause += "(UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%')"
+			;
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
 		}
 
 		Query query = new Query(
@@ -241,15 +245,19 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 
 		query
 			.setLimit(limit, offset)
-			.list(MRole.class)
-			.forEach(user -> {
-				Role.Builder builder = convertRole(user);
+			.getIDsAsList()
+			.forEach(roleId -> {
+				Role.Builder builder = convertRole(roleId);
 				builderList.addRecords(builder);
 			});
 
 		return builderList;
 	}
 
+	private Role.Builder convertRole(int roleId) {
+		MRole role = MRole.get(Env.getCtx(), roleId);
+		return convertRole(role);
+	}
 	private Role.Builder convertRole(MRole role) {
 		Role.Builder builder = Role.newBuilder();
 		if (role == null) {
@@ -283,6 +291,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -295,20 +304,21 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		List<Object> parameters = new ArrayList<>();
 		String whereClause = "";
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			whereClause = RecordUtil.addSearchValueAndGet("", I_ASP_Level.Table_Name, request.getSearchValue(), parameters);
-
-			if (!Util.isEmpty(whereClause, true)) {
-				whereClause = whereClause.replace(" WHERE ", "");
-			}
+			whereClause += "AND (UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%')"
+			;
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
 		}
 
 		Query query = new Query(
-				Env.getCtx(),
+			Env.getCtx(),
 			I_ASP_Level.Table_Name,
-			null,
+			whereClause,
 			null
 		)
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setParameters(parameters)
 		;
 		int recordCount = query.count();
@@ -329,15 +339,22 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 
 		query
 			.setLimit(limit, offset)
-			.list(X_ASP_Level.class)
-			.forEach(aspLevel -> {
-				LevelCustomization.Builder builder = convertLevelCustomization(aspLevel);
+			.getIDsAsList()
+			.forEach(aspLevelId -> {
+				LevelCustomization.Builder builder = convertLevelCustomization(aspLevelId);
 				builderList.addRecords(builder);
 			});
 
 		return builderList;
 	}
 
+	private LevelCustomization.Builder convertLevelCustomization(int aspLevelId) {
+		if (aspLevelId <= 0) {
+			return LevelCustomization.newBuilder();
+		}
+		X_ASP_Level aspLevel = new X_ASP_Level(Env.getCtx(), aspLevelId, null);
+		return convertLevelCustomization(aspLevel);
+	}
 	private LevelCustomization.Builder convertLevelCustomization(X_ASP_Level aspLevel) {
 		LevelCustomization.Builder builder = LevelCustomization.newBuilder();
 		if (aspLevel == null || aspLevel.getASP_Level_ID() <= 0) {
@@ -365,18 +382,18 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 
 	private PO getEntityToCustomizationType(int levelType, int levelId, String levelUuid) {
 		String tableName = null;
-		if (Level.CLIENT_VALUE == levelType) {
+		if (LevelType.CLIENT_VALUE == levelType) {
 			tableName = I_ASP_Level.Table_Name;
-		} else if (Level.ROLE_VALUE == levelType) {
+		} else if (LevelType.ROLE_VALUE == levelType) {
 			tableName = I_AD_Role.Table_Name;
-		} else if (Level.USER_VALUE == levelType) {
+		} else if (LevelType.USER_VALUE == levelType) {
 			tableName = I_AD_User.Table_Name;
 		} else {
 			throw new AdempiereException("@LevelType@ @NotFound@");
 		}
 
 		PO entityType = RecordUtil.getEntity(Env.getCtx(), tableName, levelUuid, levelId, null);
-		if (entityType == null) {
+		if (entityType == null || !RecordUtil.isValidId(entityType.get_ID(), tableName)) {
 			throw new AdempiereException(
 				"@" + tableName + "_ID@ @NotFound@"
 			);
@@ -416,10 +433,13 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 			if (tab == null || tab.getAD_Tab_ID() <= 0) {
 				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 			}
+			// if(!MRole.getDefault().getWindowAccess(tab.getAD_Window_ID())) {
+			// 	throw new AdempiereException("@AccessTableNoUpdate@");
+			// }
 			MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 
 			// validate level, role, user
-			PO entity = getEntityToCustomizationType(request.getLevel().getNumber(), request.getLevelId(), request.getLevelUuid());
+			PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId(), request.getLevelUuid());
 			String columnKey = entity.get_TableName() + "_ID";
 
 			// instance window
@@ -478,7 +498,7 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 
 				// instance field
 				MField field = new Query(
-						Env.getCtx(),
+					Env.getCtx(),
 					I_AD_Field.Table_Name,
 					I_AD_Field.COLUMNNAME_AD_Column_ID + " = ? AND " + I_AD_Field.COLUMNNAME_AD_Tab_ID + " = ?",
 					transactionName
@@ -502,14 +522,36 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 					.findFirst()
 					.orElse(null)
 				;
+				if (customField == null || customField.getAD_FieldCustom_ID() <= 0) {
+					log.warning(
+						Msg.getMsg(Env.getCtx(), "@AD_FieldCustom_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
+					);
+					return;
+				}
 
 				// Panel sequence
-				customField.setSeqNo(fieldAttributes.getSequence());
+				if (fieldAttributes.getSequencePanel() > 0) {
+					customField.setSeqNo(fieldAttributes.getSequencePanel());
+				}
 				// checks if the column exists in the database
-				if (customField.get_ColumnIndex(IS_DISPLAYED_COLUMN_NAME) >= 0) {
+				if (customField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0 && !Util.isEmpty(fieldAttributes.getIsDefaultDisplayedAsPanel(), true)) {
 					customField.set_ValueOfColumn(
-						IS_DISPLAYED_COLUMN_NAME,
-						fieldAttributes.getIsDefaultDisplayed()
+						DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
+						ValueUtil.booleanToString(
+							fieldAttributes.getIsDefaultDisplayedAsPanel()
+						)
+					);
+				}
+				// Table Sequence
+				if (fieldAttributes.getSequenceTable() > 0) {
+					customField.setSeqNoGrid(fieldAttributes.getSequenceTable());
+				}
+				if (customField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
+					customField.set_ValueOfColumn(
+						DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME,
+						ValueUtil.booleanToString(
+							fieldAttributes.getIsDefaultDisplayedAsTable()
+						)
 					);
 				}
 				customField.saveEx();
@@ -549,9 +591,12 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		if (browse == null || browse.getAD_Browse_ID() <= 0) {
 			throw new AdempiereException("@AD_Browse_ID@ @NotFound@");
 		}
+		// if(!MRole.getDefault().getBrowseAccess(browse.getAD_Browse_ID())) {
+		// 	throw new AdempiereException("@AccessTableNoUpdate@");
+		// }
 
 		// validate level, role, user
-		PO entity = getEntityToCustomizationType(request.getLevel().getNumber(), request.getLevelId(), request.getLevelUuid());
+		PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId(), request.getLevelUuid());
 		String columnKey = entity.get_TableName() + "_ID";
 
 
@@ -627,14 +672,36 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 				.findFirst()
 				.orElse(null)
 			;
+			if (customBrowseField == null || customBrowseField.getAD_BrowseFieldCustom_ID() <= 0) {
+				log.warning(
+					Msg.getMsg(Env.getCtx(), "@getAD_BrowseCustom_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
+				);
+				return;
+			}
 
 			// Query Criteria sequence
-			customBrowseField.setSeqNoGrid(fieldAttributes.getSequence());
+			if (fieldAttributes.getSequencePanel() > 0) {
+				customBrowseField.setSeqNoGrid(fieldAttributes.getSequencePanel());
+			}
 			// checks if the column exists in the database
-			if (customBrowseField.get_ColumnIndex(IS_DISPLAYED_COLUMN_NAME) >= 0) {
+			if (customBrowseField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				customBrowseField.set_ValueOfColumn(
-					IS_DISPLAYED_COLUMN_NAME,
-					fieldAttributes.getIsDefaultDisplayed()
+					DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
+					ValueUtil.booleanToString(
+						fieldAttributes.getIsDefaultDisplayedAsPanel()
+					)
+				);
+			}
+			// records result
+			if (fieldAttributes.getSequenceTable() > 0) {
+				customBrowseField.setSeqNo(fieldAttributes.getSequenceTable());
+			}
+			if (customBrowseField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
+				customBrowseField.set_ValueOfColumn(
+					DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME,
+					ValueUtil.booleanToString(
+						fieldAttributes.getIsDefaultDisplayedAsTable()
+					)
 				);
 			}
 			customBrowseField.saveEx();
@@ -673,11 +740,13 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 		if (process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
+		// if(!MRole.getDefault().getProcessAccess(process.getAD_Process_ID())) {
+		// 	throw new AdempiereException("@AccessTableNoUpdate@");
+		// }
 
 		// validate level, role, user
-		PO entity = getEntityToCustomizationType(request.getLevel().getNumber(), request.getLevelId(), request.getLevelUuid());
+		PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId(), request.getLevelUuid());
 		String columnKey = entity.get_TableName() + "_ID";
-
 
 		// instance process
 		String sql = "SELECT AD_ProcessCustom_ID FROM AD_ProcessCustom WHERE AD_Process_ID = ? AND " + columnKey + " = ? ";
@@ -734,13 +803,23 @@ public class UserCustomizationImplementation extends UserCustomizationImplBase {
 				.findFirst()
 				.orElse(null)
 			;
+			if (customProcessParameter == null || customProcessParameter.getAD_ProcessParaCustom_ID() <= 0) {
+				log.warning(
+					Msg.getMsg(Env.getCtx(), "@AD_ProcessParaCustom_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
+				);
+				return;
+			}
 
-			customProcessParameter.setSeqNo(fieldAttributes.getSequence());
+			if (fieldAttributes.getSequencePanel() > 0) {
+				customProcessParameter.setSeqNo(fieldAttributes.getSequencePanel());
+			}
 			// checks if the column exists in the database
-			if (customProcessParameter.get_ColumnIndex(IS_DISPLAYED_COLUMN_NAME) >= 0) {
+			if (customProcessParameter.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				customProcessParameter.set_ValueOfColumn(
-					IS_DISPLAYED_COLUMN_NAME,
-					fieldAttributes.getIsDefaultDisplayed()
+					DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
+					ValueUtil.booleanToString(
+						fieldAttributes.getIsDefaultDisplayedAsPanel()
+					)
 				);
 			}
 			customProcessParameter.saveEx();

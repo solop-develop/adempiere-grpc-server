@@ -198,6 +198,9 @@ message Field {
 	int32 element_id = 56;
 	string element_uuid = 57;
 	repeated DependentField dependent_fields = 58;
+	// ASP Custom Attributes
+	string is_displayed_as_panel = 59;
+	string is_displayed_as_table = 60;
 }
 
 message DependentField {

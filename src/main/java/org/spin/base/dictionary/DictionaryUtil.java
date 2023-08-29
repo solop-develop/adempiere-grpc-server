@@ -35,6 +35,13 @@ import org.compiere.util.Util;
  */
 public class DictionaryUtil {
 
+	// Show/Hidden field on panel (single record)
+	public static String IS_DISPLAYED_AS_PANEL_COLUMN_NAME = "IsDisplayedAsPanel";
+
+
+	// Show/Hidden field on table (multi record)
+	public static String IS_DISPLAYED_AS_TABLE_COLUMN_NAME = "IsDisplayedAsTable";
+
 
 
 	/**

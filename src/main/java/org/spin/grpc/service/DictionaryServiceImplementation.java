@@ -38,8 +38,10 @@ import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_AD_Val_Rule;
 import org.adempiere.core.domains.models.I_AD_Window;
+import org.compiere.model.MBrowseFieldCustom;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
+import org.compiere.model.MFieldCustom;
 import org.compiere.model.MForm;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MLookupInfo;
@@ -47,6 +49,7 @@ import org.compiere.model.MMenu;
 import org.compiere.model.MMessage;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
+import org.compiere.model.MProcessParaCustom;
 import org.compiere.model.MReportView;
 import org.compiere.model.MRole;
 import org.compiere.model.MTab;
@@ -69,6 +72,9 @@ import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.dictionary.DictionaryConvertUtil;
 import org.spin.base.dictionary.WindowUtil;
+import org.spin.base.dictionary.custom.BrowseFieldCustomUtil;
+import org.spin.base.dictionary.custom.FieldCustomUtil;
+import org.spin.base.dictionary.custom.ProcessParaCustomUtil;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
@@ -910,6 +916,20 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			}
 		}
 
+		MProcessParaCustom processParaCustom = ProcessParaCustomUtil.getProcessParaCustom(processParameter.getAD_Process_Para_ID());
+		if (processParaCustom != null && processParaCustom.isActive()) {
+			// ASP default displayed field as panel
+			if (processParaCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
+				builder.setIsDisplayedAsPanel(
+					ValueUtil.validateNull(
+						processParaCustom.get_ValueAsString(
+							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
+						)
+					)
+				);
+			}
+		}
+
 		List<DependentField> dependentProcessParameters = generateDependentProcessParameters(processParameter);
 		builder.addAllDependentFields(dependentProcessParameters);
 
@@ -1049,6 +1069,30 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 				builder.setReference(referenceBuilder.build());
 			} else {
 				builder.setDisplayType(DisplayType.String);
+			}
+		}
+
+		MBrowseFieldCustom browseFieldCustom = BrowseFieldCustomUtil.getBrowseFieldCustom(browseField.getAD_Browse_Field_ID());
+		if (browseFieldCustom != null && browseFieldCustom.isActive()) {
+			// ASP default displayed field as panel
+			if (browseFieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
+				builder.setIsDisplayedAsPanel(
+					ValueUtil.validateNull(
+						browseFieldCustom.get_ValueAsString(
+							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
+						)
+					)
+				);
+			}
+			// ASP default displayed field as table
+			if (browseFieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
+				builder.setIsDisplayedAsTable(
+					ValueUtil.validateNull(
+						browseFieldCustom.get_ValueAsString(
+							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
+						)
+					)
+				);
 			}
 		}
 
@@ -1528,6 +1572,30 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 		if(field.getAD_FieldGroup_ID() > 0) {
 			FieldGroup.Builder fieldGroup = convertFieldGroup(context, field.getAD_FieldGroup_ID());
 			builder.setFieldGroup(fieldGroup.build());
+		}
+
+		MFieldCustom fieldCustom = FieldCustomUtil.getFieldCustom(field.getAD_Field_ID());
+		if (fieldCustom != null && fieldCustom.isActive()) {
+			// ASP default displayed field as panel
+			if (fieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
+				builder.setIsDisplayedAsPanel(
+					ValueUtil.validateNull(
+						fieldCustom.get_ValueAsString(
+							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
+						)
+					)
+				);
+			}
+			// ASP default displayed field as table
+			if (fieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
+				builder.setIsDisplayedAsTable(
+					ValueUtil.validateNull(
+						field.get_ValueAsString(
+							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
+						)
+					)
+				);
+			}
 		}
 
 		List<DependentField> depenentFieldsList = generateDependentFields(field);
