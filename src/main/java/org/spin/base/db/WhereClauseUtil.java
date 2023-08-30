@@ -624,6 +624,7 @@ public class WhereClauseUtil {
 	 * @param values
 	 * @return
 	 */
+	@Deprecated
 	public static String getBrowserWhereClause(MBrowse browser, String parsedWhereClause,
 			List<KeyValue> contextAttributes, HashMap<String, Object> parameterMap, List<Object> values) {
 		AtomicReference<String> convertedWhereClause = new AtomicReference<String>(parsedWhereClause);
