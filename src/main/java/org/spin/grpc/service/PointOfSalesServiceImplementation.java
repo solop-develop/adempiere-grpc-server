@@ -4475,8 +4475,9 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				if(quantity == null) {
 					quantityToOrder = Env.ONE;
 				}
-		        //create new line
+				//create new line
 				MOrderLine orderLine = new MOrderLine(order);
+				orderLine.setC_Campaign_ID(order.getC_Campaign_ID());
 				if(chargeId > 0) {
 					orderLine.setC_Charge_ID(chargeId);
 				} else if(productId > 0) {
