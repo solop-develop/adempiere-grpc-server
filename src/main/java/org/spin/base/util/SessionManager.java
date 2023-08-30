@@ -347,6 +347,34 @@ public class SessionManager {
 	}
 	
 	/**
+	 * Get Default Warehouse after login
+	 * @param organizationId
+	 * @return
+	 */
+	public static int getDefaultWarehouseId(int organizationId) {
+		String sql = "SELECT M_Warehouse_ID FROM M_Warehouse WHERE IsActive = 'Y' AND AD_Org_ID = ?";
+		return DB.getSQLValue(null, sql, organizationId);
+	}
+	
+	/**
+	 * Get Default role after login
+	 * @param userId
+	 * @return
+	 */
+	public static int getDefaultRoleId(int userId) {
+		String sql = "SELECT ur.AD_Role_ID "
+				+ "FROM AD_User_Roles ur "
+				+ "INNER JOIN AD_Role AS r ON ur.AD_Role_ID = r.AD_Role_ID "
+				+ "WHERE ur.AD_User_ID = ? AND ur.IsActive = 'Y' "
+				+ "AND r.IsActive = 'Y' "
+				+ "AND ((r.IsAccessAllOrgs = 'Y' AND EXISTS(SELECT 1 FROM AD_Org AS o WHERE (o.AD_Client_ID = r.AD_Client_ID OR o.AD_Org_ID = 0) AND o.IsActive = 'Y' AND o.IsSummary = 'N') ) "
+				+ "OR (r.IsUseUserOrgAccess = 'N' AND EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro WHERE ro.AD_Role_ID = ur.AD_Role_ID AND ro.IsActive = 'Y') ) "
+				+ "OR (r.IsUseUserOrgAccess = 'Y' AND EXISTS(SELECT 1 FROM AD_User_OrgAccess AS uo WHERE uo.AD_User_ID = ur.AD_User_ID AND uo.IsActive = 'Y') )) "
+				+ "ORDER BY COALESCE(ur.IsDefault,'N') DESC";
+		return DB.getSQLValue(null, sql, userId);
+	}
+	
+	/**
 	 * Get Default organization after login
 	 * @param roleId
 	 * @param userId

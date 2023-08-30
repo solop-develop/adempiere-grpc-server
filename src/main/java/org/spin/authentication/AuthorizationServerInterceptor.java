@@ -32,7 +32,9 @@ public class AuthorizationServerInterceptor implements ServerInterceptor {
 
 	/** Services/Methods allow request without Bearer token validation */
 	private static List<String> ALLOW_REQUESTS_WITHOUT_TOKEN = Arrays.asList(
-		"security.Security/RunLogin"
+		"security.Security/RunLogin",
+		"security.Security/ListServices",
+		"security.Security/RunLoginOpenID"
 	);
 	/**	Revoke session	*/
 	private static List<String> REVOKE_TOKEN_SERVICES = Arrays.asList(

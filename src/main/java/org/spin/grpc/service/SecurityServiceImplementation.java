@@ -15,7 +15,9 @@
 package org.spin.grpc.service;
 
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -47,16 +49,21 @@ import org.compiere.util.Login;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
+import org.spin.authentication.services.OpenIDUtil;
 import org.spin.backend.grpc.security.ChangeRoleRequest;
 import org.spin.backend.grpc.security.ContextValue;
 import org.spin.backend.grpc.security.ListRolesRequest;
 import org.spin.backend.grpc.security.ListRolesResponse;
+import org.spin.backend.grpc.security.ListServicesRequest;
+import org.spin.backend.grpc.security.ListServicesResponse;
+import org.spin.backend.grpc.security.LoginOpenIDRequest;
 import org.spin.backend.grpc.security.LoginRequest;
 import org.spin.backend.grpc.security.LogoutRequest;
 import org.spin.backend.grpc.security.Menu;
 import org.spin.backend.grpc.security.MenuRequest;
 import org.spin.backend.grpc.security.Role;
 import org.spin.backend.grpc.security.SecurityGrpc.SecurityImplBase;
+import org.spin.backend.grpc.security.Service;
 import org.spin.backend.grpc.security.Session;
 import org.spin.backend.grpc.security.SessionInfo;
 import org.spin.backend.grpc.security.SessionInfoRequest;
@@ -110,6 +117,47 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			log.fine("Session Requested = " + request.getUserName());
 			Session.Builder sessionBuilder = createSession(request, true);
 			responseObserver.onNext(sessionBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+	
+	@Override
+	public void runLoginOpenID(LoginOpenIDRequest request, StreamObserver<Session> responseObserver) {
+		try {
+			log.fine("Run Login Open ID");
+			Session.Builder sessionBuilder = createSessionFromOpenID(request);
+			responseObserver.onNext(sessionBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+	
+	@Override
+	public void listServices(ListServicesRequest request, StreamObserver<ListServicesResponse> responseObserver) {
+		try {
+			log.fine("List Services");
+			ListServicesResponse.Builder serviceBuilder = ListServicesResponse.newBuilder();
+			Hashtable<Integer, Map<String, String>> services = OpenIDUtil.getAuthenticationServices();
+			services.entrySet().forEach(service -> {
+				Service.Builder availableService = Service.newBuilder();
+				availableService.setId(service.getKey())
+					.setDisplayName(ValueUtil.validateNull(service.getValue().get(OpenIDUtil.DISPLAYNAME)))
+					.setAuthorizationUri(ValueUtil.validateNull(service.getValue().get(OpenIDUtil.ENDPOINT_Authorization_URI)))
+				;
+				serviceBuilder.addServices(availableService);
+			});
+			responseObserver.onNext(serviceBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -337,7 +385,6 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 	 * @return
 	 */
 	private Session.Builder createSession(LoginRequest request, boolean isDefaultRole) {
-		Session.Builder builder = Session.newBuilder();
 		//	Validate if is token based
 		int userId = -1;
 		int roleId = -1;
@@ -356,68 +403,71 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			if(userId < 0) {
 				throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 			}
+			if(!Util.isEmpty(request.getRoleUuid())) {
+				roleId = RecordUtil.getIdFromUuid(I_AD_Role.Table_Name, request.getRoleUuid(), null);
+			}
+			if(!Util.isEmpty(request.getOrganizationUuid())) {
+				organizationId = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
+			}
+			if(!Util.isEmpty(request.getWarehouseUuid())) {
+				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
+			}
 		}
-
-		final String sqlRole = "SELECT ur.AD_Role_ID "
-			+ "FROM AD_User_Roles ur "
-			+ "INNER JOIN AD_Role AS r ON ur.AD_Role_ID = r.AD_Role_ID "
-			+ "WHERE ur.AD_User_ID = ? AND ur.IsActive = 'Y' "
-			+ "AND r.IsActive = 'Y' "
-			+ "AND ((r.IsAccessAllOrgs = 'Y' AND EXISTS(SELECT 1 FROM AD_Org AS o WHERE (o.AD_Client_ID = r.AD_Client_ID OR o.AD_Org_ID = 0) AND o.IsActive = 'Y' AND o.IsSummary = 'N') ) "
-			+ "OR (r.IsUseUserOrgAccess = 'N' AND EXISTS(SELECT 1 FROM AD_Role_OrgAccess AS ro WHERE ro.AD_Role_ID = ur.AD_Role_ID AND ro.IsActive = 'Y') ) "
-			+ "OR (r.IsUseUserOrgAccess = 'Y' AND EXISTS(SELECT 1 FROM AD_User_OrgAccess AS uo WHERE uo.AD_User_ID = ur.AD_User_ID AND uo.IsActive = 'Y') )) "
-			+ "ORDER BY COALESCE(ur.IsDefault,'N') DESC";
-		if(isDefaultRole
-				&& Util.isEmpty(request.getRoleUuid())) {
-			if(roleId <= 0) {
-				roleId = DB.getSQLValue(null, sqlRole, userId);
+		return createValidSession(isDefaultRole, request.getClientVersion(), request.getLanguage(), roleId, userId, organizationId, warehouseId);
+	}
+	
+	/**
+	 * Create Valid Session After Login
+	 * @param isDefaultRole
+	 * @param clientVersion
+	 * @param language
+	 * @param roleId
+	 * @param userId
+	 * @param organizationId
+	 * @param warehouseId
+	 * @return
+	 */
+	private Session.Builder createValidSession(boolean isDefaultRole, String clientVersion, String language, int roleId, int userId, int organizationId, int warehouseId) {
+		Session.Builder builder = Session.newBuilder();
+			if(isDefaultRole
+					|| roleId <= 0) {
+				roleId = SessionManager.getDefaultRoleId(userId);
 			}
 			//	Organization
 			if(organizationId < 0) {
 				organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
 			}
-			warehouseId = DB.getSQLValue(null, "SELECT M_Warehouse_ID FROM M_Warehouse WHERE IsActive = 'Y' AND AD_Org_ID = ?", organizationId);
-		} else {
-			if(roleId <= 0) {
-				MRole role = new Query(
-					Env.getCtx(),
-					I_AD_Role.Table_Name,
-					"UUID = ?",
-					null
-				)
-					.setParameters(request.getRoleUuid())
-					.first();
-				if (role == null) {
-					// get default role
-					roleId = DB.getSQLValue(null, sqlRole, userId);
-				} else {
-					roleId = role.getAD_Role_ID();
-				}
-				//	Organization
-				if(organizationId < 0) {
-					organizationId = RecordUtil.getIdFromUuid(I_AD_Org.Table_Name, request.getOrganizationUuid(), null);
-				}
+			if(warehouseId < 0) {
+				warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+			}
+			if(warehouseId < 0) {
+				warehouseId = 0;
+			}
+			//	Get Values from role
+			if(roleId < 0) {
+				throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 			}
 			if(organizationId < 0) {
-				organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
+				throw new AdempiereException("@AD_User_ID@: @AD_Org_ID@ @NotFound@");
 			}
-			warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
-		}
-		if(organizationId < 0) {
-			throw new AdempiereException("@AD_User_ID@: @AD_Org_ID@ @NotFound@");
-		}
-		if(warehouseId < 0) {
-			warehouseId = 0;
-		}
-		//	Get Values from role
-		if(roleId < 0) {
+			//	Session values
+			final String bearerToken = SessionManager.createSession(clientVersion, language, roleId, userId, organizationId, warehouseId);
+			builder.setToken(bearerToken);
+			//	Return session
+			return builder;
+	}
+	
+	/**
+	 * Get and convert session
+	 * @param request
+	 * @return
+	 */
+	private Session.Builder createSessionFromOpenID(LoginOpenIDRequest request) {
+		MUser validUser = OpenIDUtil.getUserAuthenticated(request.getCodeParameter(), request.getStateParameter());
+		if(validUser == null) {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 		}
-		//	Session values
-		final String bearerToken = SessionManager.createSession(request.getClientVersion(), request.getLanguage(), roleId, userId, organizationId, warehouseId);
-		builder.setToken(bearerToken);
-		//	Return session
-		return builder;
+		return createValidSession(true, request.getClientVersion(), request.getLanguage(), -1, validUser.getAD_User_ID(), -1, -1); 
 	}
 
 

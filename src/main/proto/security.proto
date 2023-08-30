@@ -37,6 +37,10 @@ service Security {
 	rpc SetSessionAttribute(SetSessionAttributeRequest) returns (Session) {}
 	// List Roles
 	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {}
+	// List Available Services
+	rpc ListServices(ListServicesRequest) returns (ListServicesResponse) {}
+	// Request login from Open ID
+	rpc RunLoginOpenID(LoginOpenIDRequest) returns (Session) {}
 }
 
 
@@ -202,4 +206,27 @@ message Menu {
 	string reference_uuid = 12;
 	repeated Menu childs = 13;
 	bool is_active = 14;
+}
+
+//	Open ID
+
+message ListServicesRequest {
+
+}
+
+message ListServicesResponse {
+	repeated Service services = 1;
+}
+
+message Service {
+	int32 id = 1;
+	string display_name = 2;
+	string authorization_uri = 3;
+}
+
+message LoginOpenIDRequest {
+	string code_parameter = 1;
+	string state_parameter = 2;
+	string language = 3;
+	string client_version = 4;
 }
