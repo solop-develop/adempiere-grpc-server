@@ -89,7 +89,39 @@ public class ReturnSalesOrder {
 	}
     
 	public static MOrderLine updateRMALine(int rmaLineId, BigDecimal quantity, String descrption) {
-		return null;
+		AtomicReference<MOrderLine> returnOrderReference = new AtomicReference<MOrderLine>();
+		Trx.run(transactionName -> {
+			MOrderLine rmaLine = new MOrderLine(Env.getCtx(), rmaLineId, transactionName);
+			if(rmaLine.getC_OrderLine_ID() <= 0) {
+				throw new AdempiereException("@M_RMALine_ID@ @NotFound@");
+			}
+			MOrder rma = new MOrder(Env.getCtx(), rmaLine.getC_Order_ID(), transactionName);
+			//	Validate source document
+			if(DocumentUtil.isCompleted(rma) 
+					|| DocumentUtil.isClosed(rma)
+					|| !rma.isReturnOrder()
+					|| !OrderUtil.isValidOrder(rma)) {
+				throw new AdempiereException("@ActionNotAllowedHere@");
+			}
+			MOrderLine sourcerOrderLine = new MOrderLine(Env.getCtx(), rmaLine.getRef_OrderLine_ID(), transactionName);
+			if(sourcerOrderLine.getC_OrderLine_ID() <= 0) {
+				throw new AdempiereException("@Ref_OrderLine_ID@ @NotFound@");
+			}
+			BigDecimal quantityToOrder = quantity;
+			if(quantity == null) {
+				quantityToOrder = rmaLine.getQtyEntered();
+				quantityToOrder = quantityToOrder.add(Env.ONE);
+			}
+			//	Validate available
+			if(sourcerOrderLine.getQtyEntered().compareTo(quantityToOrder) < 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
+			//	Update order quantity
+			OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
+			rmaLine.saveEx();
+			returnOrderReference.set(rmaLine);
+		});
+		return returnOrderReference.get();
 	}
 	
     /**
@@ -112,9 +144,9 @@ public class ReturnSalesOrder {
 		Trx.run(transactionName -> {
 			MOrder rma = new MOrder(Env.getCtx(), rmaId, transactionName);
 			//	Validate source document
-			if(DocumentUtil.isDrafted(rma) 
+			if(DocumentUtil.isCompleted(rma) 
 					|| DocumentUtil.isClosed(rma)
-					|| rma.isReturnOrder()
+					|| !rma.isReturnOrder()
 					|| !OrderUtil.isValidOrder(rma)) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
@@ -132,7 +164,7 @@ public class ReturnSalesOrder {
 					quantityToOrder = quantityToOrder.add(Env.ONE);
 				}
 				//	Validate available
-				if(sourcerOrderLine.getQtyOrdered().subtract(sourcerOrderLine.getQtyDelivered()).compareTo(quantityToOrder) < 0) {
+				if(sourcerOrderLine.getQtyEntered().compareTo(quantityToOrder) < 0) {
 					throw new AdempiereException("@QtyInsufficient@");
 				}
 				//	Update order quantity
