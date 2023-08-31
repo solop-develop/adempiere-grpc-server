@@ -302,15 +302,36 @@ public class ValueUtil {
 				|| DisplayType.isID(referenceId)) {
 			return getValueFromObject(value);
 		} else if(DisplayType.Integer == referenceId) {
+			Integer integerValue = null;
 			if(value instanceof Integer) {
-				return getValueFromInteger((Integer) value);
+				integerValue = (Integer) value;
+			} else if (value instanceof Long) {
+				long longValue = (long) value;
+				integerValue = Math.toIntExact(longValue);
 			} else if(value instanceof BigDecimal) {
-				return getValueFromInteger(((BigDecimal) value).intValue());
-			} else {
-				return getValueFromInteger(null);
+				integerValue = ((BigDecimal) value).intValue();
+			} else if (value instanceof String) {
+				try {
+					integerValue = Integer.valueOf((String) value);
+				} catch (Exception e) {
+					integerValue = null;
+				}
 			}
+			return getValueFromInteger(integerValue);
 		} else if(DisplayType.isNumeric(referenceId)) {
-			return getValueFromDecimal((BigDecimal) value);
+			BigDecimal bigDecimalValue = null;
+			if (value instanceof Integer) {
+				Integer intValue = (Integer) value;
+				bigDecimalValue = BigDecimal.valueOf(intValue);
+			} else if (value instanceof Long) {
+				long longValue = (long) value;
+				bigDecimalValue = BigDecimal.valueOf(longValue);
+			} else if (value instanceof String) {
+				bigDecimalValue = new BigDecimal((String) value);
+			} else {
+				bigDecimalValue = (BigDecimal) value;
+			}
+			return getValueFromDecimal(bigDecimalValue);
 		} else if(DisplayType.YesNo == referenceId) {
 			if (value instanceof String) {
 				return getValueFromBoolean((String) value);
@@ -323,6 +344,10 @@ public class ValueUtil {
 		} else if (DisplayType.Button == referenceId) {
 			if (value instanceof Integer) {
 				return getValueFromInteger((Integer) value);
+			} else if (value instanceof Long) {
+				long longValue = (long) value;
+				Integer integerValue = Math.toIntExact(longValue);
+				return getValueFromInt(integerValue);
 			} else if(value instanceof BigDecimal) {
 				return getValueFromInteger(((BigDecimal) value).intValue());
 			} else if (value instanceof String) {
