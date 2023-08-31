@@ -133,6 +133,7 @@ import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.cash.CollectingManagement;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderUtil;
+import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.pos.util.POSConvertUtil;
@@ -1516,9 +1517,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	@Override
 	public void listAvailableSellers(ListAvailableSellersRequest request, StreamObserver<ListAvailableSellersResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
 			log.fine("Available Sellers = " + request.getPosUuid());
 			ListAvailableSellersResponse.Builder response = listAvailableSellers(request);
 			responseObserver.onNext(response.build());
@@ -1539,7 +1537,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Create RMA = " + request.getSourceOrderId());
-			MOrder rma = ReturnSalesOrder.createRMAFromOrder(request.getPosId(), request.getSourceOrderId(), request.getIsCreateLinesFromOrder(), null);
+			MOrder rma = ReturnSalesOrder.createRMAFromOrder(request.getPosId(), request.getSourceOrderId(), request.getSalesRepresentativeId(), request.getIsCreateLinesFromOrder(), null);
 			RMA.Builder returnOrder = ConvertUtil.convertRMA(rma);
 			responseObserver.onNext(returnOrder.build());
 			responseObserver.onCompleted();
@@ -1552,86 +1550,104 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 	}
 	
-//	@Override
-//	public void createShipmentLine(CreateShipmentLineRequest request, StreamObserver<ShipmentLine> responseObserver) {
-//		try {
-//			if(request == null) {
-//				throw new AdempiereException("Object Request Null");
-//			}
-//			log.fine("Add Line for Order = " + request.getShipmentUuid());
-//			ShipmentLine.Builder shipmentLine = createAndConvertShipmentLine(request);
-//			responseObserver.onNext(shipmentLine.build());
-//			responseObserver.onCompleted();
-//		} catch (Exception e) {
-//			log.severe(e.getLocalizedMessage());
-//			responseObserver.onError(Status.INTERNAL
-//					.withDescription(e.getLocalizedMessage())
-//					.withCause(e)
-//					.asRuntimeException());
-//		}
-//	}
-//	
-//	@Override
-//	public void deleteShipmentLine(DeleteShipmentLineRequest request, StreamObserver<Empty> responseObserver) {
-//		try {
-//			if(request == null) {
-//				throw new AdempiereException("Object Request Null");
-//			}
-//			log.fine("Delete Shipment Line = " + request.getShipmentLineUuid());
-//			Empty.Builder nothing = deleteShipmentLine(request);
-//			responseObserver.onNext(nothing.build());
-//			responseObserver.onCompleted();
-//		} catch (Exception e) {
-//			log.severe(e.getLocalizedMessage());
-//			responseObserver.onError(Status.INTERNAL
-//					.withDescription(e.getLocalizedMessage())
-//					.withCause(e)
-//					.asRuntimeException());
-//		}
-//	}
-//	
-//	@Override
-//	public void listShipmentLines(ListShipmentLinesRequest request, StreamObserver<ListShipmentLinesResponse> responseObserver) {
-//		try {
-//			if(request == null) {
-//				throw new AdempiereException("Object Request Null");
-//			}
-//			log.fine("List Shipment Lines from order = " + request.getShipmentUuid());
-//			ListShipmentLinesResponse.Builder shipmentLinesList = listShipmentLines(request);
-//			responseObserver.onNext(shipmentLinesList.build());
-//			responseObserver.onCompleted();
-//		} catch (Exception e) {
-//			log.severe(e.getLocalizedMessage());
-//			responseObserver.onError(Status.INTERNAL
-//					.withDescription(e.getLocalizedMessage())
-//					.withCause(e)
-//					.asRuntimeException());
-//		}
-//	}
-//	
-//	@Override
-//	public void processShipment(ProcessShipmentRequest request, StreamObserver<Shipment> responseObserver) {
-//		try {
-//			if(request == null) {
-//				throw new AdempiereException("Object Request Null");
-//			}
-//			log.fine("Create customer = " + request);
-//			Shipment.Builder shipment = processShipment(request);
-//			responseObserver.onNext(shipment.build());
-//			responseObserver.onCompleted();
-//		} catch (Exception e) {
-//			log.severe(e.getLocalizedMessage());
-//			responseObserver.onError(Status.INTERNAL
-//					.withDescription(e.getLocalizedMessage())
-//					.withCause(e)
-//					.asRuntimeException());
-//		}
-//	}
+	@Override
+	public void createRMALine(CreateRMALineRequest request, StreamObserver<RMALine> responseObserver) {
+		try {
+			log.fine("Add Line for RMA = " + request.getRmaId());
+			MOrderLine rmaLine = ReturnSalesOrder.createRMALineFromOrder(request.getRmaId(), request.getSourceOrderLineId(), ValueUtil.getBigDecimalFromDecimal(request.getQuantity()), request.getDescription());
+			RMALine.Builder returnLine = ConvertUtil.convertRMALine(rmaLine);
+			responseObserver.onNext(returnLine.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
 	
+	@Override
+	public void updateRMALine(UpdateRMALineRequest request, StreamObserver<RMALine> responseObserver) {
+		try {
+			log.fine("Update Line for RMA = " + request.getRmaLineId());
+			MOrderLine rmaLine = ReturnSalesOrder.updateRMALine(request.getRmaLineId(), ValueUtil.getBigDecimalFromDecimal(request.getQuantity()), request.getDescription());
+			RMALine.Builder returnLine = ConvertUtil.convertRMALine(rmaLine);
+			responseObserver.onNext(returnLine.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
 	
+	@Override
+	public void deleteRMALine(DeleteRMALineRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			log.fine("Delete Line for RMA = " + request.getRmaLineId());
+			RMAUtil.deleteRMALine(request.getRmaLineId());
+			responseObserver.onNext(Empty.newBuilder().build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+
+	@Override
+	public void deleteRMA(DeleteRMARequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			log.fine("Delete for RMA = " + request.getRmaId());
+			RMAUtil.deleteRMA(request.getRmaId());
+			responseObserver.onNext(Empty.newBuilder().build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
 	
+	@Override
+	public void listRMALines(ListRMALinesRequest request, StreamObserver<ListRMALinesResponse> responseObserver) {
+		try {
+			log.fine("List RMA Lines from order = " + request.getRmaId());
+			ListRMALinesResponse.Builder rmaLinesList = listRMALines(request);
+			responseObserver.onNext(rmaLinesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
 	
-	
+	@Override
+	public void processRMA(ProcessRMARequest request, StreamObserver<RMA> responseObserver) {
+		try {
+			log.fine("Process RMA" + request);
+			
+			RMA.Builder rma = ConvertUtil.convertRMA(ReturnSalesOrder.processRMAOrder(request.getRmaId(), request.getPosId(), request.getDocumentAction(), request.getDescription()));
+			responseObserver.onNext(rma.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
 	
 	/**
 	 * List shipment Lines from Order UUID
@@ -2182,6 +2198,54 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		});
 		//	Default
 		return ConvertUtil.convertShipment(shipmentReference.get());
+	}
+	
+	/**
+	 * List RMA Lines from RMA ID
+	 * @param request
+	 * @return
+	 */
+	private ListRMALinesResponse.Builder listRMALines(ListRMALinesRequest request) {
+		if(request.getRmaId() <= 0) {
+			throw new AdempiereException("@M_RMA_ID@ @NotFound@");
+		}
+		MOrder rma = new MOrder(Env.getCtx(), request.getRmaId(), null);
+		MPOS pos = new MPOS(Env.getCtx(), rma.getC_POS_ID(), null);
+		ListRMALinesResponse.Builder builder = ListRMALinesResponse.newBuilder();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		StringBuffer whereClause = new StringBuffer(I_C_OrderLine.COLUMNNAME_C_Order_ID + " = ?");
+		List<Object> parameters = new ArrayList<>();
+		parameters.add(request.getRmaId());
+		if(pos.get_ValueAsInt("DefaultDiscountCharge_ID") > 0) {
+			parameters.add(pos.get_ValueAsInt("DefaultDiscountCharge_ID"));
+			whereClause.append(" AND (C_Charge_ID IS NULL OR C_Charge_ID <> ?)");
+		}
+		//	Get Product list
+		Query query = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, whereClause.toString(), null)
+				.setParameters(parameters)
+				.setClient_ID()
+				.setOnlyActiveRecords(true);
+		int count = query.count();
+		query
+		.setLimit(limit, offset)
+		.setOrderBy(I_C_OrderLine.COLUMNNAME_Line)
+		.<MOrderLine>list()
+		.forEach(rmaLine -> {
+			builder.addRmaLines(ConvertUtil.convertRMALine(rmaLine));
+		});
+		//	
+		builder.setRecordCount(count);
+		//	Set page token
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		//	Set next page
+		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		return builder;
 	}
 	
 	/**
@@ -4493,7 +4557,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				}
 				orderLine.setS_ResourceAssignment_ID(resourceAssignmentId);
 
-				updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
+				OrderUtil.updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
 				orderLineReference.set(orderLine);
 			} else {
 				BigDecimal quantityToOrder = quantity;
@@ -4574,7 +4638,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					quantityToOrder = orderLine.getQtyEntered();
 					quantityToOrder = quantityToOrder.add(Env.ONE);
 				}
-				updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
+				OrderUtil.updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
 				orderLineReference.set(orderLine);
 			} else {
 				BigDecimal quantityToOrder = quantity;
@@ -4667,7 +4731,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				orderLine.set_ValueOfColumn("Ref_WarehouseSource_ID", warehouseId);
 			}
 			//	Validate UOM
-			updateUomAndQuantity(orderLine, unitOfMeasureId, quantity);
+			OrderUtil.updateUomAndQuantity(orderLine, unitOfMeasureId, quantity);
 			//	Set values
 			orderLine.setTax();
 			orderLine.saveEx(transactionName);
@@ -4677,29 +4741,6 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		});
 		return maybeOrderLine.get();
 	} //	UpdateLine
-	
-	/**
-	 * Set UOM and Quantity based on unit of measure
-	 * @param orderLine
-	 * @param unitOfMeasureId
-	 * @param quantity
-	 */
-	private void updateUomAndQuantity(MOrderLine orderLine, int unitOfMeasureId, BigDecimal quantity) {
-		if(quantity != null) {
-			orderLine.setQty(quantity);
-		}
-		if(unitOfMeasureId > 0) {
-			orderLine.setC_UOM_ID(unitOfMeasureId);
-		}
-		BigDecimal quantityEntered = orderLine.getQtyEntered();
-		BigDecimal priceEntered = orderLine.getPriceEntered();
-		BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), quantityEntered);
-		BigDecimal convertedPrice = MUOMConversion.convertProductTo(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), priceEntered);
-		orderLine.setQtyOrdered(convertedQuantity);
-		orderLine.setPriceActual(convertedPrice);
-		orderLine.setLineNetAmt();
-		orderLine.saveEx();
-	}
 	
 	/**
 	 * Set UOM and Quantity based on unit of measure

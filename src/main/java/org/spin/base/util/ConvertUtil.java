@@ -112,6 +112,7 @@ import org.spin.backend.grpc.pos.OrderLine;
 import org.spin.backend.grpc.pos.Payment;
 import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.RMA;
+import org.spin.backend.grpc.pos.RMALine;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.Shipment;
 import org.spin.grpc.service.FileManagementServiceImplementation;
@@ -796,6 +797,7 @@ public class ConvertUtil {
 		//	Convert
 		return builder
 			.setId(order.getC_Order_ID())
+			.setSourceOrderId(order.getRef_Order_ID())
 			.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(Env.getCtx(), order.getC_DocTypeTarget_ID())))
 			.setDocumentNo(ValueUtil.validateNull(order.getDocumentNo()))
 			.setSalesRepresentative(convertSalesRepresentative(MUser.get(Env.getCtx(), order.getSalesRep_ID())))
@@ -1207,6 +1209,109 @@ public class ConvertUtil {
 			.setUom(ConvertUtil.convertProductConversion(uom))
 			.setProductUom(ConvertUtil.convertProductConversion(productUom))
 			.setResourceAssignment(TimeControlServiceImplementation.convertResourceAssignment(orderLine.getS_ResourceAssignment_ID()))
+		;
+	}
+	
+	public static RMALine.Builder convertRMALine(MOrderLine orderLine) {
+		RMALine.Builder builder = RMALine.newBuilder();
+		if(orderLine == null) {
+			return builder;
+		}
+		MTax tax = MTax.get(Env.getCtx(), orderLine.getC_Tax_ID());
+		MOrder order = orderLine.getParent();
+		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
+		BigDecimal quantityEntered = orderLine.getQtyEntered();
+		BigDecimal quantityOrdered = orderLine.getQtyOrdered();
+		//	Units
+		BigDecimal priceListAmount = orderLine.getPriceList();
+		BigDecimal priceBaseAmount = orderLine.getPriceActual();
+		BigDecimal priceAmount = orderLine.getPriceEntered();
+		//	Discount
+		BigDecimal discountRate = orderLine.getDiscount();
+		BigDecimal discountAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO).subtract(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO));
+		//	Taxes
+		BigDecimal priceTaxAmount = tax.calculateTax(priceAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
+		BigDecimal priceBaseTaxAmount = tax.calculateTax(priceBaseAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
+		BigDecimal priceListTaxAmount = tax.calculateTax(priceListAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
+		//	Prices with tax
+		BigDecimal priceListWithTaxAmount = priceListAmount.add(priceListTaxAmount);
+		BigDecimal priceBaseWithTaxAmount = priceBaseAmount.add(priceBaseTaxAmount);
+		BigDecimal priceWithTaxAmount = priceAmount.add(priceTaxAmount);
+		//	Totals
+		BigDecimal totalDiscountAmount = discountAmount.multiply(quantityOrdered);
+		BigDecimal totalAmount = orderLine.getLineNetAmt();
+		BigDecimal totalBaseAmount = totalAmount.subtract(totalDiscountAmount);
+		BigDecimal totalTaxAmount = tax.calculateTax(totalAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
+		BigDecimal totalBaseAmountWithTax = totalBaseAmount.add(totalTaxAmount);
+		BigDecimal totalAmountWithTax = totalAmount.add(totalTaxAmount);
+
+		MUOMConversion uom = null;
+		MUOMConversion productUom = null;
+		if (orderLine.getM_Product_ID() > 0) {
+			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
+			List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
+			uom = productsConversion.stream()
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+				})
+				.findFirst()
+				.get();
+	
+			productUom = productsConversion.stream()
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+				})
+				.findFirst()
+				.get();
+		} else {
+			uom = new MUOMConversion(Env.getCtx(), 0, null);
+			uom.setC_UOM_ID(orderLine.getC_UOM_ID());
+			uom.setC_UOM_To_ID(orderLine.getC_UOM_ID());
+			uom.setMultiplyRate(Env.ONE);
+			uom.setDivideRate(Env.ONE);
+			productUom = uom;
+		}
+
+		int standardPrecision = priceList.getStandardPrecision();
+		BigDecimal availableQuantity = MStorage.getQtyAvailable(orderLine.getM_Warehouse_ID(), 0, orderLine.getM_Product_ID(), orderLine.getM_AttributeSetInstance_ID(), null);
+		//	Convert
+		return builder
+				.setId(orderLine.getC_OrderLine_ID())
+				.setSourceOrderLineId(orderLine.getRef_OrderLine_ID())
+				.setLine(orderLine.getLine())
+				.setDescription(ValueUtil.validateNull(orderLine.getDescription()))
+				.setLineDescription(ValueUtil.validateNull(orderLine.getName()))
+				.setProduct(convertProduct(orderLine.getM_Product_ID()))
+				.setCharge(convertCharge(orderLine.getC_Charge_ID()))
+				.setWarehouse(convertWarehouse(orderLine.getM_Warehouse_ID()))
+				.setQuantity(ValueUtil.getDecimalFromBigDecimal(quantityEntered.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setQuantityOrdered(ValueUtil.getDecimalFromBigDecimal(quantityOrdered.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setAvailableQuantity(ValueUtil.getDecimalFromBigDecimal(availableQuantity.setScale(standardPrecision, RoundingMode.HALF_UP)))
+				//	Prices
+				.setPriceList(ValueUtil.getDecimalFromBigDecimal(priceListAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setPrice(ValueUtil.getDecimalFromBigDecimal(priceAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setPriceBase(ValueUtil.getDecimalFromBigDecimal(priceBaseAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				//	Taxes
+				.setPriceListWithTax(ValueUtil.getDecimalFromBigDecimal(priceListWithTaxAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setPriceBaseWithTax(ValueUtil.getDecimalFromBigDecimal(priceBaseWithTaxAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setPriceWithTax(ValueUtil.getDecimalFromBigDecimal(priceWithTaxAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				//	Prices with taxes
+				.setListTaxAmount(ValueUtil.getDecimalFromBigDecimal(priceListTaxAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(priceTaxAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setBaseTaxAmount(ValueUtil.getDecimalFromBigDecimal(priceBaseTaxAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				//	Discounts
+				.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(discountAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setDiscountRate(ValueUtil.getDecimalFromBigDecimal(discountRate.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setTaxRate(ConvertUtil.convertTaxRate(tax))
+				//	Totals
+				.setTotalDiscountAmount(ValueUtil.getDecimalFromBigDecimal(totalDiscountAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setTotalTaxAmount(ValueUtil.getDecimalFromBigDecimal(totalTaxAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setTotalBaseAmount(ValueUtil.getDecimalFromBigDecimal(totalBaseAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setTotalBaseAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalBaseAmountWithTax.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setTotalAmount(ValueUtil.getDecimalFromBigDecimal(totalAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+				.setTotalAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalAmountWithTax.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setUom(ConvertUtil.convertProductConversion(uom))
+			.setProductUom(ConvertUtil.convertProductConversion(productUom))
 		;
 	}
 

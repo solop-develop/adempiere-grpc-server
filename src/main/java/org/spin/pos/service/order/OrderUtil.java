@@ -16,14 +16,17 @@
 package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Optional;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MDocType;
 import org.compiere.model.MOrder;
+import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
+import org.compiere.model.MUOMConversion;
 import org.compiere.model.PO;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
@@ -34,6 +37,29 @@ import org.spin.base.util.RecordUtil;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class OrderUtil {
+	
+	/**
+	 * Set UOM and Quantity based on unit of measure
+	 * @param orderLine
+	 * @param unitOfMeasureId
+	 * @param quantity
+	 */
+	public static void updateUomAndQuantity(MOrderLine orderLine, int unitOfMeasureId, BigDecimal quantity) {
+		if(quantity != null) {
+			orderLine.setQty(quantity);
+		}
+		if(unitOfMeasureId > 0) {
+			orderLine.setC_UOM_ID(unitOfMeasureId);
+		}
+		BigDecimal quantityEntered = orderLine.getQtyEntered();
+		BigDecimal priceEntered = orderLine.getPriceEntered();
+		BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), quantityEntered);
+		BigDecimal convertedPrice = MUOMConversion.convertProductTo(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), priceEntered);
+		orderLine.setQtyOrdered(convertedQuantity);
+		orderLine.setPriceActual(convertedPrice);
+		orderLine.setLineNetAmt();
+		orderLine.saveEx();
+	}
 	
 	public static boolean isValidOrder(MOrder order) {
 		MDocType documentType = MDocType.get(order.getCtx(), order.getC_DocTypeTarget_ID());
@@ -157,4 +183,8 @@ public class OrderUtil {
 		//	
 		return convertedAmount;
 	}
+	
+    public static Timestamp getToday() {
+    	return TimeUtil.getDay(System.currentTimeMillis());
+    }
 }
