@@ -204,8 +204,9 @@ public class ReverseSalesTransaction {
 		createReturnOrderLines(sourceOrder, returnOrder, transactionName);
         //	Process return Order
         if(!returnOrder.processIt(DocAction.ACTION_Complete)) {
-        	throw new AdempiereException(returnOrder.getProcessMsg());
+        	throw new AdempiereException("@ProcessFailed@ :" + returnOrder.getProcessMsg());
         }
+		returnOrder.saveEx();
         //	Generate Return
         generateReturnFromRMA(returnOrder, transactionName);
         //	Generate Credit Memo
@@ -245,6 +246,8 @@ public class ReverseSalesTransaction {
 		if(!invoice.processIt(MOrder.DOCACTION_Complete)) {
         	throw new AdempiereException(invoice.getProcessMsg());
         }
+		returnOrder.setIsInvoiced(true);
+		returnOrder.set_ValueOfColumn("AssignedSalesRep_ID", null);
 		invoice.saveEx();
     }
     
@@ -278,6 +281,7 @@ public class ReverseSalesTransaction {
 		if(!shipment.processIt(MOrder.DOCACTION_Complete)) {
         	throw new AdempiereException(shipment.getProcessMsg());
         }
+		returnOrder.setIsDelivered(true);
 		shipment.saveEx();
     }
     
