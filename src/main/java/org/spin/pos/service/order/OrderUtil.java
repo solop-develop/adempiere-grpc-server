@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MConversionRate;
+import org.compiere.model.MDocType;
 import org.compiere.model.MOrder;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
@@ -33,6 +34,11 @@ import org.spin.base.util.RecordUtil;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class OrderUtil {
+	
+	public static boolean isValidOrder(MOrder order) {
+		MDocType documentType = MDocType.get(order.getCtx(), order.getC_DocTypeTarget_ID());
+		return !documentType.isOffer() && !documentType.isProposal();
+	}
 	
 	/**
 	 * Set current date to order

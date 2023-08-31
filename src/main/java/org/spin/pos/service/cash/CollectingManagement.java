@@ -61,6 +61,9 @@ public class CollectingManagement {
 		if(Util.isEmpty(tenderType)) {
 			tenderType = MPayment.TENDERTYPE_Cash;
 		}
+		if(!OrderUtil.isValidOrder(salesOrder)) {
+			throw new AdempiereException("@ActionNotAllowedHere@");
+		}
 		if(pointOfSalesDefinition.getC_BankAccount_ID() <= 0) {
 			throw new AdempiereException("@NoCashBook@");
 		}

@@ -111,6 +111,7 @@ import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.OrderLine;
 import org.spin.backend.grpc.pos.Payment;
 import org.spin.backend.grpc.pos.PaymentMethod;
+import org.spin.backend.grpc.pos.RMA;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.Shipment;
 import org.spin.grpc.service.FileManagementServiceImplementation;
@@ -671,6 +672,129 @@ public class ConvertUtil {
 		//	Convert
 		return builder
 			.setUuid(ValueUtil.validateNull(order.getUUID()))
+			.setId(order.getC_Order_ID())
+			.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(Env.getCtx(), order.getC_DocTypeTarget_ID())))
+			.setDocumentNo(ValueUtil.validateNull(order.getDocumentNo()))
+			.setSalesRepresentative(convertSalesRepresentative(MUser.get(Env.getCtx(), order.getSalesRep_ID())))
+			.setDescription(ValueUtil.validateNull(order.getDescription()))
+			.setOrderReference(ValueUtil.validateNull(order.getPOReference()))
+			.setDocumentStatus(ConvertUtil.convertDocumentStatus(
+					ValueUtil.validateNull(order.getDocStatus()), 
+					ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
+					ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))))
+			.setPriceList(ConvertUtil.convertPriceList(MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName())))
+			.setWarehouse(convertWarehouse(order.getM_Warehouse_ID()))
+			.setIsDelivered(order.isDelivered())
+			.setDiscountAmount(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(totalDiscountAmount).orElse(Env.ZERO).setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setTaxAmount(ValueUtil.getDecimalFromBigDecimal(grandTotal.subtract(totalLines.add(discountAmount)).setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setTotalLines(ValueUtil.getDecimalFromBigDecimal(totalLines.add(totalDiscountAmount).setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setGrandTotal(ValueUtil.getDecimalFromBigDecimal(grandTotal.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setDisplayCurrencyRate(ValueUtil.getDecimalFromBigDecimal(displayCurrencyRate.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setPaymentAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setOpenAmount(ValueUtil.getDecimalFromBigDecimal(openAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setRefundAmount(ValueUtil.getDecimalFromBigDecimal(refundAmount.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
+			.setDateOrdered(ValueUtil.convertDateToString(order.getDateOrdered()))
+			.setCustomer(convertCustomer((MBPartner) order.getC_BPartner()))
+			.setCampaign(
+				POSConvertUtil.convertCampaign(
+					order.getC_Campaign_ID()
+				)
+			)
+			.setChargeAmount(ValueUtil.getDecimalFromBigDecimal(chargeAmt))
+			.setCreditAmount(ValueUtil.getDecimalFromBigDecimal(creditAmt))
+		;
+	}
+	
+	/**
+	 * Convert RMA
+	 * @param order
+	 * @return
+	 */
+	public static RMA.Builder convertRMA(MOrder order) {
+		RMA.Builder builder = RMA.newBuilder();
+		if(order == null) {
+			return builder;
+		}
+		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), order.get_TrxName());
+		int defaultDiscountChargeId = pos.get_ValueAsInt("DefaultDiscountCharge_ID");
+		MRefList reference = MRefList.get(Env.getCtx(), MOrder.DOCSTATUS_AD_REFERENCE_ID, order.getDocStatus(), null);
+		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
+		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
+		BigDecimal totalLines = orderLines.stream()
+				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
+				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal discountAmount = orderLines.stream()
+				.filter(orderLine -> orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId)
+				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal lineDiscountAmount = orderLines.stream()
+				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
+				.map(orderLine -> {
+					BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
+					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
+					BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
+						.multiply(Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO));
+					return discountLine;
+				})
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		//	
+		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
+		
+		//	
+		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
+			BigDecimal paymentAmount = payment.getPayAmt();
+			if(paymentAmount.compareTo(Env.ZERO) == 0
+					&& payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
+				MInvoice creditMemo = new Query(payment.getCtx(), MInvoice.Table_Name, "C_Payment_ID = ?", payment.get_TrxName()).setParameters(payment.getC_Payment_ID()).first();
+				if(creditMemo != null) {
+					paymentAmount = creditMemo.getGrandTotal();
+				}
+			}
+			if(!payment.isReceipt()) {
+				paymentAmount = payment.getPayAmt().negate();
+			}
+			return getConvetedAmount(order, payment, paymentAmount);
+		}).collect(Collectors.reducing(BigDecimal::add));
+
+		List<PO> paymentReferencesList = getPaymentReferencesList(order);
+		Optional<BigDecimal> paymentReferenceAmount = paymentReferencesList.stream()
+				.map(paymentReference -> {
+			BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
+			if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
+				amount = amount.negate();
+			}
+			return getConvetedAmount(order, paymentReference, amount);
+		}).collect(Collectors.reducing(BigDecimal::add));
+		BigDecimal grandTotal = order.getGrandTotal();
+		BigDecimal paymentAmount = Env.ZERO;
+		if(paidAmount.isPresent()) {
+			paymentAmount = paidAmount.get();
+		}
+
+		int standardPrecision = priceList.getStandardPrecision();
+
+		BigDecimal creditAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
+		Optional<BigDecimal> maybeCreditAmt = getPaymentChageOrCredit(order, true);
+		if (maybeCreditAmt.isPresent()) {
+			creditAmt = maybeCreditAmt.get()
+				.setScale(standardPrecision, RoundingMode.HALF_UP);
+		}
+		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
+		Optional<BigDecimal> maybeChargeAmt = getPaymentChageOrCredit(order, false);
+		if (maybeChargeAmt.isPresent()) {
+			chargeAmt = maybeChargeAmt.get()
+				.setScale(standardPrecision, RoundingMode.HALF_UP);
+		}
+		
+		BigDecimal totalPaymentAmount = paymentAmount;
+		if(paymentReferenceAmount.isPresent()) {
+			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
+		}
+
+		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
+		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount).negate());
+		BigDecimal displayCurrencyRate = getDisplayConversionRateFromOrder(order);
+		//	Convert
+		return builder
 			.setId(order.getC_Order_ID())
 			.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(Env.getCtx(), order.getC_DocTypeTarget_ID())))
 			.setDocumentNo(ValueUtil.validateNull(order.getDocumentNo()))

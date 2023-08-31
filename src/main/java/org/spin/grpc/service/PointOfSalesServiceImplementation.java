@@ -133,6 +133,7 @@ import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.cash.CollectingManagement;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderUtil;
+import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.pos.util.TicketHandler;
@@ -768,7 +769,11 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			}
 			log.fine("Print Ticket = " + request);
 			//	Print based on handler
-			TicketResult ticketResult = TicketHandler.getInstance().withPosId(request.getPosId()).withTableName(I_C_Order.Table_Name).withRecordId(request.getOrderId()).printTicket();
+			TicketResult ticketResult = TicketHandler.getInstance()
+					.withPosId(request.getPosId())
+					.withTableName(I_C_Order.Table_Name)
+					.withRecordId(request.getOrderId())
+					.printTicket();
 			//	Process response
 			PrintTicketResponse.Builder builder = PrintTicketResponse.newBuilder();
 			if(ticketResult != null) {
@@ -1526,6 +1531,107 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
+	
+	@Override
+	public void createRMA(CreateRMARequest request, StreamObserver<RMA> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Create RMA = " + request.getSourceOrderId());
+			MOrder rma = ReturnSalesOrder.createRMAFromOrder(request.getPosId(), request.getSourceOrderId(), request.getIsCreateLinesFromOrder(), null);
+			RMA.Builder returnOrder = ConvertUtil.convertRMA(rma);
+			responseObserver.onNext(returnOrder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+	
+//	@Override
+//	public void createShipmentLine(CreateShipmentLineRequest request, StreamObserver<ShipmentLine> responseObserver) {
+//		try {
+//			if(request == null) {
+//				throw new AdempiereException("Object Request Null");
+//			}
+//			log.fine("Add Line for Order = " + request.getShipmentUuid());
+//			ShipmentLine.Builder shipmentLine = createAndConvertShipmentLine(request);
+//			responseObserver.onNext(shipmentLine.build());
+//			responseObserver.onCompleted();
+//		} catch (Exception e) {
+//			log.severe(e.getLocalizedMessage());
+//			responseObserver.onError(Status.INTERNAL
+//					.withDescription(e.getLocalizedMessage())
+//					.withCause(e)
+//					.asRuntimeException());
+//		}
+//	}
+//	
+//	@Override
+//	public void deleteShipmentLine(DeleteShipmentLineRequest request, StreamObserver<Empty> responseObserver) {
+//		try {
+//			if(request == null) {
+//				throw new AdempiereException("Object Request Null");
+//			}
+//			log.fine("Delete Shipment Line = " + request.getShipmentLineUuid());
+//			Empty.Builder nothing = deleteShipmentLine(request);
+//			responseObserver.onNext(nothing.build());
+//			responseObserver.onCompleted();
+//		} catch (Exception e) {
+//			log.severe(e.getLocalizedMessage());
+//			responseObserver.onError(Status.INTERNAL
+//					.withDescription(e.getLocalizedMessage())
+//					.withCause(e)
+//					.asRuntimeException());
+//		}
+//	}
+//	
+//	@Override
+//	public void listShipmentLines(ListShipmentLinesRequest request, StreamObserver<ListShipmentLinesResponse> responseObserver) {
+//		try {
+//			if(request == null) {
+//				throw new AdempiereException("Object Request Null");
+//			}
+//			log.fine("List Shipment Lines from order = " + request.getShipmentUuid());
+//			ListShipmentLinesResponse.Builder shipmentLinesList = listShipmentLines(request);
+//			responseObserver.onNext(shipmentLinesList.build());
+//			responseObserver.onCompleted();
+//		} catch (Exception e) {
+//			log.severe(e.getLocalizedMessage());
+//			responseObserver.onError(Status.INTERNAL
+//					.withDescription(e.getLocalizedMessage())
+//					.withCause(e)
+//					.asRuntimeException());
+//		}
+//	}
+//	
+//	@Override
+//	public void processShipment(ProcessShipmentRequest request, StreamObserver<Shipment> responseObserver) {
+//		try {
+//			if(request == null) {
+//				throw new AdempiereException("Object Request Null");
+//			}
+//			log.fine("Create customer = " + request);
+//			Shipment.Builder shipment = processShipment(request);
+//			responseObserver.onNext(shipment.build());
+//			responseObserver.onCompleted();
+//		} catch (Exception e) {
+//			log.severe(e.getLocalizedMessage());
+//			responseObserver.onError(Status.INTERNAL
+//					.withDescription(e.getLocalizedMessage())
+//					.withCause(e)
+//					.asRuntimeException());
+//		}
+//	}
+	
+	
+	
+	
+	
 	
 	/**
 	 * List shipment Lines from Order UUID
@@ -2342,7 +2448,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				throw new AdempiereException("@SalesRep_ID@ @NotFound@");
 			}
 			MOrder salesOrder = new MOrder(Env.getCtx(), orderId, transactionName);
-			if(!OrderManagement.isValidOrder(salesOrder)) {
+			if(!OrderUtil.isValidOrder(salesOrder)) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 			if(salesOrder.isDelivered()) {

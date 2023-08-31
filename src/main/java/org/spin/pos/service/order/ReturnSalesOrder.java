@@ -15,8 +15,6 @@
  *************************************************************************************/
 package org.spin.pos.service.order;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,21 +23,14 @@ import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MDocType;
-import org.compiere.model.MInOut;
-import org.compiere.model.MInOutLine;
-import org.compiere.model.MInvoice;
-import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
-import org.compiere.model.MPayment;
 import org.compiere.model.MTable;
-import org.compiere.model.MUOM;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
 import org.compiere.util.Env;
-import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
@@ -49,16 +40,24 @@ import org.spin.base.util.DocumentUtil;
  * This class was created for Reverse Sales Transaction
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
-public class ReverseSalesTransaction {
+public class ReturnSalesOrder {
 	
 	/**
 	 * Create a Return order and cancel all payments
-	 * @param pos
+	 * @param posId
 	 * @param sourceOrderId
+	 * @param copyLines
 	 * @param description
 	 * @return
 	 */
-	public static MOrder returnCompleteOrder(MPOS pos, int sourceOrderId, String description) {
+	public static MOrder createRMAFromOrder(int posId, int sourceOrderId, boolean copyLines, String description) {
+		if(posId <= 0) {
+			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+		}
+		if(sourceOrderId <= 0) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
+		MPOS pos = new MPOS(Env.getCtx(), posId, null);
 		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
@@ -69,21 +68,14 @@ public class ReverseSalesTransaction {
 					|| !OrderUtil.isValidOrder(sourceOrder)) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
-			MOrder returnOrder = createReturnOrder(pos, sourceOrder, pos.getC_POS_ID(), transactionName);
+			MOrder returnOrder = copyRMAFromOrder(pos, sourceOrder, pos.getC_POS_ID(), transactionName);
 			if(!Util.isEmpty(description)) {
 				returnOrder.setDescription(description);
-				returnOrder.saveEx();
 			}
-			//	Close all
-	        if(!sourceOrder.processIt(MOrder.DOCACTION_Close)) {
-	        	throw new AdempiereException(sourceOrder.getProcessMsg());
-	        }
-	        sourceOrder.saveEx();
-	        if(!returnOrder.processIt(MOrder.DOCACTION_Close)) {
-	        	throw new AdempiereException(returnOrder.getProcessMsg());
-	        }
         	returnOrder.saveEx();
-        	OrderManagement.processPayments(returnOrder, pos, true, transactionName);
+        	if(copyLines) {
+        		copyRMALinesFromOrder(sourceOrder, returnOrder, transactionName);
+        	}
 			returnOrderReference.set(returnOrder);
 		});
 		return returnOrderReference.get();
@@ -96,23 +88,23 @@ public class ReverseSalesTransaction {
      * @param returnOrder
      * @param transactionName
      */
-    private static void createReversedPayments(MPOS pos, MOrder sourceOrder, MOrder returnOrder, String transactionName) {
-    	MPayment.getOfOrder(sourceOrder).forEach(sourcePayment -> {
-        	MPayment returnPayment = new MPayment(sourceOrder.getCtx(), 0, transactionName);
-            PO.copyValues(sourcePayment, returnPayment);
-            returnPayment.setC_Invoice_ID(-1);
-            returnPayment.setDateTrx(getToday());
-            returnPayment.setDateAcct(getToday());
-            returnPayment.addDescription(Msg.parseTranslation(sourceOrder.getCtx(), " @From@ " + sourcePayment.getDocumentNo() + " @of@ @C_Order_ID@ " + sourceOrder.getDocumentNo()));
-            returnPayment.setIsReceipt(sourcePayment.isReceipt());
-            returnPayment.setPayAmt(sourcePayment.getPayAmt().negate());
-            returnPayment.setDocAction(DocAction.ACTION_Complete);
-            returnPayment.setDocStatus(DocAction.STATUS_Drafted);
-            returnPayment.setC_Order_ID(returnOrder.getC_Order_ID());
-            returnPayment.setIsPrepayment(sourcePayment.isPrepayment());
-            returnPayment.saveEx();
-        });
-    }
+//    private static void createReversedPayments(MPOS pos, MOrder sourceOrder, MOrder returnOrder, String transactionName) {
+//    	MPayment.getOfOrder(sourceOrder).forEach(sourcePayment -> {
+//        	MPayment returnPayment = new MPayment(sourceOrder.getCtx(), 0, transactionName);
+//            PO.copyValues(sourcePayment, returnPayment);
+//            returnPayment.setC_Invoice_ID(-1);
+//            returnPayment.setDateTrx(getToday());
+//            returnPayment.setDateAcct(getToday());
+//            returnPayment.addDescription(Msg.parseTranslation(sourceOrder.getCtx(), " @From@ " + sourcePayment.getDocumentNo() + " @of@ @C_Order_ID@ " + sourceOrder.getDocumentNo()));
+//            returnPayment.setIsReceipt(sourcePayment.isReceipt());
+//            returnPayment.setPayAmt(sourcePayment.getPayAmt().negate());
+//            returnPayment.setDocAction(DocAction.ACTION_Complete);
+//            returnPayment.setDocStatus(DocAction.STATUS_Drafted);
+//            returnPayment.setC_Order_ID(returnOrder.getC_Order_ID());
+//            returnPayment.setIsPrepayment(sourcePayment.isPrepayment());
+//            returnPayment.saveEx();
+//        });
+//    }
 	
 	/**
 	 * Get Default document Type
@@ -147,14 +139,14 @@ public class ReverseSalesTransaction {
 	}
 	
     /**
-     * Create return order
+     * Create return order from source order
      * @param pos
      * @param sourceOrder
      * @param posId
      * @param transactionName
      * @return
      */
-    private static MOrder createReturnOrder(MPOS pos, MOrder sourceOrder, int posId, String transactionName) {
+    private static MOrder copyRMAFromOrder(MPOS pos, MOrder sourceOrder, int posId, String transactionName) {
     	MOrder returnOrder = new MOrder (sourceOrder.getCtx(), 0, transactionName);
 		returnOrder.set_TrxName(transactionName);
 		PO.copyValues(sourceOrder, returnOrder, false);
@@ -201,17 +193,6 @@ public class ReverseSalesTransaction {
 		copyAccountDimensions(sourceOrder, returnOrder);
 		returnOrder.setM_PriceList_ID(sourceOrder.getM_PriceList_ID());
 		returnOrder.saveEx();
-		createReturnOrderLines(sourceOrder, returnOrder, transactionName);
-        //	Process return Order
-        if(!returnOrder.processIt(DocAction.ACTION_Complete)) {
-        	throw new AdempiereException(returnOrder.getProcessMsg());
-        }
-        //	Generate Return
-        generateReturnFromRMA(returnOrder, transactionName);
-        //	Generate Credit Memo
-        generateCreditMemoFromRMA(returnOrder, transactionName);
-        //	Return all payments
-        createReversedPayments(pos, sourceOrder, returnOrder, transactionName);
 		return returnOrder;
     }
     
@@ -220,66 +201,66 @@ public class ReverseSalesTransaction {
      * @param returnOrder
      * @param transactionName
      */
-    private static void generateCreditMemoFromRMA(MOrder returnOrder, String transactionName) {
-    	MInvoice invoice = new MInvoice (returnOrder, 0, getToday());
-		invoice.saveEx();
-    	//	Convert Lines
-		new Query(returnOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
-			.setParameters(returnOrder.getC_Order_ID())
-			.setClient_ID()
-			.getIDsAsList()
-			.forEach(returnOrderLineId -> {
-				MOrderLine returnOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLineId, transactionName);
-				MOrderLine sourcerOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLine.getRef_OrderLine_ID(), transactionName);
-				MInvoiceLine line = new MInvoiceLine (invoice);
-				line.setOrderLine(returnOrderLine);
-				BigDecimal toReturn = sourcerOrderLine.getQtyInvoiced();
-				line.setQtyInvoiced(toReturn);
-				line.setQtyEntered(toReturn);
-				line.setQtyEntered(toReturn
-						.multiply(returnOrderLine.getQtyEntered())
-						.divide(returnOrderLine.getQtyOrdered(), MUOM.getPrecision(returnOrder.getCtx(), returnOrderLine.getC_UOM_ID()), RoundingMode.HALF_UP));	
-				line.setLine(returnOrderLine.getLine());
-				line.saveEx();
-		});
-		if(!invoice.processIt(MOrder.DOCACTION_Complete)) {
-        	throw new AdempiereException(invoice.getProcessMsg());
-        }
-		invoice.saveEx();
-    }
+//    private static void generateCreditMemoFromRMA(MOrder returnOrder, String transactionName) {
+//    	MInvoice invoice = new MInvoice (returnOrder, 0, getToday());
+//		invoice.saveEx();
+//    	//	Convert Lines
+//		new Query(returnOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
+//			.setParameters(returnOrder.getC_Order_ID())
+//			.setClient_ID()
+//			.getIDsAsList()
+//			.forEach(returnOrderLineId -> {
+//				MOrderLine returnOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLineId, transactionName);
+//				MOrderLine sourcerOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLine.getRef_OrderLine_ID(), transactionName);
+//				MInvoiceLine line = new MInvoiceLine (invoice);
+//				line.setOrderLine(returnOrderLine);
+//				BigDecimal toReturn = sourcerOrderLine.getQtyInvoiced();
+//				line.setQtyInvoiced(toReturn);
+//				line.setQtyEntered(toReturn);
+//				line.setQtyEntered(toReturn
+//						.multiply(returnOrderLine.getQtyEntered())
+//						.divide(returnOrderLine.getQtyOrdered(), MUOM.getPrecision(returnOrder.getCtx(), returnOrderLine.getC_UOM_ID()), RoundingMode.HALF_UP));	
+//				line.setLine(returnOrderLine.getLine());
+//				line.saveEx();
+//		});
+//		if(!invoice.processIt(MOrder.DOCACTION_Complete)) {
+//        	throw new AdempiereException(invoice.getProcessMsg());
+//        }
+//		invoice.saveEx();
+//    }
     
     /**
      * Generate Return from Return Order
      * @param returnOrder
      * @param transactionName
      */
-    private static void generateReturnFromRMA(MOrder returnOrder, String transactionName) {
-    	MInOut shipment = new MInOut (returnOrder, 0, getToday());
-		shipment.setM_Warehouse_ID(returnOrder.getM_Warehouse_ID());	//	sets Org too
-		shipment.saveEx();
-		//	Convert Lines
-		new Query(returnOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
-			.setParameters(returnOrder.getC_Order_ID())
-			.setClient_ID()
-			.getIDsAsList()
-			.forEach(returnOrderLineId -> {
-				MOrderLine returnOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLineId, transactionName);
-				MOrderLine sourcerOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLine.getRef_OrderLine_ID(), transactionName);
-				MInOutLine line = new MInOutLine (shipment);
-				BigDecimal toReturn = sourcerOrderLine.getQtyDelivered();
-				line.setOrderLine(returnOrderLine, 0, Env.ZERO);
-				line.setQty(toReturn);
-				line.setQtyEntered(toReturn
-						.multiply(returnOrderLine.getQtyEntered())
-						.divide(returnOrderLine.getQtyOrdered(), MUOM.getPrecision(returnOrder.getCtx(), returnOrderLine.getC_UOM_ID()), RoundingMode.HALF_UP));	
-				line.setLine(returnOrderLine.getLine());
-				line.saveEx();
-		});
-		if(!shipment.processIt(MOrder.DOCACTION_Complete)) {
-        	throw new AdempiereException(shipment.getProcessMsg());
-        }
-		shipment.saveEx();
-    }
+//    private static void generateReturnFromRMA(MOrder returnOrder, String transactionName) {
+//    	MInOut shipment = new MInOut (returnOrder, 0, getToday());
+//		shipment.setM_Warehouse_ID(returnOrder.getM_Warehouse_ID());	//	sets Org too
+//		shipment.saveEx();
+//		//	Convert Lines
+//		new Query(returnOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
+//			.setParameters(returnOrder.getC_Order_ID())
+//			.setClient_ID()
+//			.getIDsAsList()
+//			.forEach(returnOrderLineId -> {
+//				MOrderLine returnOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLineId, transactionName);
+//				MOrderLine sourcerOrderLine = new MOrderLine(returnOrder.getCtx(), returnOrderLine.getRef_OrderLine_ID(), transactionName);
+//				MInOutLine line = new MInOutLine (shipment);
+//				BigDecimal toReturn = sourcerOrderLine.getQtyDelivered();
+//				line.setOrderLine(returnOrderLine, 0, Env.ZERO);
+//				line.setQty(toReturn);
+//				line.setQtyEntered(toReturn
+//						.multiply(returnOrderLine.getQtyEntered())
+//						.divide(returnOrderLine.getQtyOrdered(), MUOM.getPrecision(returnOrder.getCtx(), returnOrderLine.getC_UOM_ID()), RoundingMode.HALF_UP));	
+//				line.setLine(returnOrderLine.getLine());
+//				line.saveEx();
+//		});
+//		if(!shipment.processIt(MOrder.DOCACTION_Complete)) {
+//        	throw new AdempiereException(shipment.getProcessMsg());
+//        }
+//		shipment.saveEx();
+//    }
     
     /**
      * Create all lines from order
@@ -287,7 +268,7 @@ public class ReverseSalesTransaction {
      * @param returnOrder
      * @param transactionName
      */
-    private static void createReturnOrderLines(MOrder sourceOrder, MOrder returnOrder, String transactionName) {
+    private static void copyRMALinesFromOrder(MOrder sourceOrder, MOrder returnOrder, String transactionName) {
     	new Query(sourceOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
     		.setParameters(sourceOrder.getC_Order_ID())
     		.setClient_ID()
