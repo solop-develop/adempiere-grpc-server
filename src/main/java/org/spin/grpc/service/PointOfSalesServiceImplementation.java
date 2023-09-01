@@ -1653,7 +1653,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	public void copyOrder(CopyOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
 			log.fine("Copy Order");
-			Order.Builder salesOrder = ConvertUtil.convertOrder(OrderManagement.createOrderFromOther(request.getPosId(), request.getSourceOrderId()));
+			Order.Builder salesOrder = ConvertUtil.convertOrder(OrderManagement.createOrderFromOther(request.getPosId(), request.getSalesRepresentativeId(), request.getSourceOrderId()));
 			responseObserver.onNext(salesOrder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

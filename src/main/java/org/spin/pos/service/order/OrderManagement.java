@@ -109,7 +109,7 @@ public class OrderManagement {
 		return orderReference.get();
 	}
 	
-	public static MOrder createOrderFromOther(int posId, int sourceOrderId) {
+	public static MOrder createOrderFromOther(int posId, int salesRepresentativeId, int sourceOrderId) {
 		if(posId <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
@@ -127,6 +127,12 @@ public class OrderManagement {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 			MOrder targetOrder = OrderUtil.copyOrder(pos, sourceOrder, transactionName);
+			if(salesRepresentativeId > 0) {
+				targetOrder.setSalesRep_ID(salesRepresentativeId);
+				if(targetOrder.get_ValueAsInt("AssignedSalesRep_ID") <= 0) {
+					targetOrder.set_ValueOfColumn("AssignedSalesRep_ID", salesRepresentativeId);
+				}
+			}
 			targetOrder.saveEx();
 			OrderUtil.copyOrderLinesFromOrder(sourceOrder, targetOrder, transactionName);
 			

@@ -230,6 +230,7 @@ public class OrderUtil {
 		salesOrder.setProcessed (false);
 		salesOrder.setAD_Org_ID(sourceOrder.getAD_Org_ID());
 		salesOrder.setC_DocTypeTarget_ID(sourceOrder.getC_DocTypeTarget_ID());
+		salesOrder.setC_POS_ID(pos.getC_POS_ID());
         //	Set references
 		salesOrder.setC_BPartner_ID(sourceOrder.getC_BPartner_ID());
 		salesOrder.setProcessed(false);
