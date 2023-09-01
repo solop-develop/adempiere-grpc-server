@@ -1637,7 +1637,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		try {
 			log.fine("Process RMA" + request);
 			
-			RMA.Builder rma = ConvertUtil.convertRMA(ReturnSalesOrder.processRMAOrder(request.getRmaId(), request.getPosId(), request.getDocumentAction(), request.getDescription()));
+			RMA.Builder rma = ConvertUtil.convertRMA(ReturnSalesOrder.processRMA(request.getRmaId(), request.getPosId(), request.getDocumentAction(), request.getDescription()));
 			responseObserver.onNext(rma.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

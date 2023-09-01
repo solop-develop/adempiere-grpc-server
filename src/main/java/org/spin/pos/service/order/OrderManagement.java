@@ -120,10 +120,9 @@ public class OrderManagement {
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
-			if(DocumentUtil.isDrafted(sourceOrder) 
-					|| DocumentUtil.isClosed(sourceOrder)
-					|| sourceOrder.isReturnOrder()
-					|| !OrderUtil.isValidOrder(sourceOrder)) {
+			if(DocumentUtil.isClosed(sourceOrder)
+					|| DocumentUtil.isVoided(sourceOrder)
+					|| sourceOrder.isReturnOrder()) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 			MOrder targetOrder = OrderUtil.copyOrder(pos, sourceOrder, transactionName);
