@@ -127,7 +127,7 @@ import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
-import org.spin.pos.service.POSServiceLogic;
+import org.spin.pos.service.bank.BankManagement;
 import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.cash.CollectingManagement;
@@ -136,6 +136,7 @@ import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
+import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.pos.util.TicketHandler;
 import org.spin.pos.util.TicketResult;
@@ -1123,7 +1124,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if (request == null) {
 				throw new AdempiereException("List Banks Request Null");
 			}
-			ListBanksResponse.Builder builder = POSServiceLogic.listBanks(request);
+			ListBanksResponse.Builder builder = BankManagement.listBanks(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1144,7 +1145,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object ListBankAccountsRequest Null");
 			}
-			ListBankAccountsResponse.Builder bankAccountsBuilderList = POSServiceLogic.listBankAccounts(request);
+			ListBankAccountsResponse.Builder bankAccountsBuilderList = BankManagement.listBankAccounts(request);
 			responseObserver.onNext(bankAccountsBuilderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -6010,7 +6011,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListCampaignsResponse.Builder cashListBuilder = POSServiceLogic.listCampaigns(request);
+			ListCampaignsResponse.Builder cashListBuilder = POS.listCampaigns(request);
 			responseObserver.onNext(cashListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

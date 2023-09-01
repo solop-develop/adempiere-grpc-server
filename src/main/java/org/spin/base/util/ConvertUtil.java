@@ -703,6 +703,7 @@ public class ConvertUtil {
 			)
 			.setChargeAmount(ValueUtil.getDecimalFromBigDecimal(chargeAmt))
 			.setCreditAmount(ValueUtil.getDecimalFromBigDecimal(creditAmt))
+			.setSourceRmaId(order.get_ValueAsInt("ECA14_Source_RMA_ID"))
 		;
 	}
 	
@@ -951,6 +952,10 @@ public class ConvertUtil {
 		MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
 		BigDecimal convertedAmount = getConvetedAmount(order, payment, paymentAmount)
 			.setScale(presicion, RoundingMode.HALF_UP);
+		String invoiceNo = null;
+		if(payment.getC_Invoice_ID() > 0) {
+			invoiceNo = payment.getC_Invoice().getDocumentNo();
+		}
 		
 		//	Convert
 		builder
@@ -958,6 +963,8 @@ public class ConvertUtil {
 			.setUuid(ValueUtil.validateNull(payment.getUUID()))
 			.setOrderUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Order.Table_Name, payment.getC_Order_ID())))
 			.setDocumentNo(ValueUtil.validateNull(payment.getDocumentNo()))
+			.setOrderDocumentNo(ValueUtil.validateNull(order.getDocumentNo()))
+			.setInvoiceDocumentNo(ValueUtil.validateNull(invoiceNo))
 			.setTenderTypeCode(ValueUtil.validateNull(payment.getTenderType()))
 			.setReferenceNo(ValueUtil.validateNull(Optional.ofNullable(payment.getCheckNo()).orElse(payment.getDocumentNo())))
 			.setDescription(ValueUtil.validateNull(payment.getDescription()))
@@ -1209,6 +1216,7 @@ public class ConvertUtil {
 			.setUom(ConvertUtil.convertProductConversion(uom))
 			.setProductUom(ConvertUtil.convertProductConversion(productUom))
 			.setResourceAssignment(TimeControlServiceImplementation.convertResourceAssignment(orderLine.getS_ResourceAssignment_ID()))
+			.setSourceRmaLineId(orderLine.get_ValueAsInt("ECA14_Source_RMALine_ID"))
 		;
 	}
 	
