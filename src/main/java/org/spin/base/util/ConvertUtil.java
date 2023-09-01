@@ -119,6 +119,7 @@ import org.spin.grpc.service.FileManagementServiceImplementation;
 import org.spin.grpc.service.TimeControlServiceImplementation;
 import org.spin.util.AttachmentUtil;
 import org.spin.model.MADAttachmentReference;
+import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
@@ -559,7 +560,7 @@ public class ConvertUtil {
 		return new Query(order.getCtx(), "C_POSPaymentReference", "C_Order_ID = ?", order.get_TrxName()).setParameters(order.getC_Order_ID()).list();
 	}
 	
-	private static List<PO> getPaymentReferencesList(MOrder order) {
+	public static List<PO> getPaymentReferencesList(MOrder order) {
 		return getPaymentReferences(order)
 			.stream()
 			.filter(paymentReference -> {
@@ -569,7 +570,7 @@ public class ConvertUtil {
 			.collect(Collectors.toList());
 	}
 
-	private static Optional<BigDecimal> getPaymentChageOrCredit(MOrder order, boolean isCredit) {
+	public static Optional<BigDecimal> getPaymentChageOrCredit(MOrder order, boolean isCredit) {
 		return getPaymentReferencesList(order)
 			.stream()
 			.filter(paymentReference -> {
@@ -632,40 +633,15 @@ public class ConvertUtil {
 			return getConvetedAmount(order, payment, paymentAmount);
 		}).collect(Collectors.reducing(BigDecimal::add));
 
-		List<PO> paymentReferencesList = getPaymentReferencesList(order);
-		Optional<BigDecimal> paymentReferenceAmount = paymentReferencesList.stream()
-				.map(paymentReference -> {
-			BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
-			if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
-				amount = amount.negate();
-			}
-			return getConvetedAmount(order, paymentReference, amount);
-		}).collect(Collectors.reducing(BigDecimal::add));
 		BigDecimal grandTotal = order.getGrandTotal();
 		BigDecimal paymentAmount = Env.ZERO;
 		if(paidAmount.isPresent()) {
 			paymentAmount = paidAmount.get();
 		}
 
-		int standardPrecision = priceList.getStandardPrecision();
-
-		BigDecimal creditAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
-		Optional<BigDecimal> maybeCreditAmt = getPaymentChageOrCredit(order, true);
-		if (maybeCreditAmt.isPresent()) {
-			creditAmt = maybeCreditAmt.get()
-				.setScale(standardPrecision, RoundingMode.HALF_UP);
-		}
-		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
-		Optional<BigDecimal> maybeChargeAmt = getPaymentChageOrCredit(order, false);
-		if (maybeChargeAmt.isPresent()) {
-			chargeAmt = maybeChargeAmt.get()
-				.setScale(standardPrecision, RoundingMode.HALF_UP);
-		}
-		
-		BigDecimal totalPaymentAmount = paymentAmount;
-		if(paymentReferenceAmount.isPresent()) {
-			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
-		}
+		BigDecimal creditAmt = OrderUtil.getCreditAmount(order);
+		BigDecimal chargeAmt = OrderUtil.getChargeAmount(order);
+		BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(order);
 
 		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
 		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount).negate());

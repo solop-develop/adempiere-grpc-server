@@ -137,6 +137,7 @@ import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
+import org.spin.pos.util.POSUtil;
 import org.spin.pos.util.TicketHandler;
 import org.spin.pos.util.TicketResult;
 import org.spin.store.model.MCPaymentMethod;
@@ -4142,12 +4143,13 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param userPin
      */
 	private Empty.Builder validatePIN(ValidatePINRequest request) {
-		MPOS pos = getPOSFromUuid(request.getPosUuid(), false);
+		MPOS pos = POSUtil.validateAndGetPOS(request.getPosId(), request.getPosUuid(), false);
+
 		if(Util.isEmpty(request.getPin())) {
 			throw new AdempiereException("@UserPIN@ @IsMandatory@");
 		}
 
-		if (validatePINSupervisor(pos.getC_POS_ID(), Env.getAD_User_ID(Env.getCtx()), request.getPin(), request.getRequestedAccess(), ValueUtil.getBigDecimalFromDecimal(request.getRequestedAmount()))) {
+		if (validatePINSupervisor(pos.getC_POS_ID(), Env.getAD_User_ID(Env.getCtx()), request.getPin(), request.getRequestedAccess(), ValueUtil.getBigDecimalFromDecimal(request.getRequestedAmount()), request.getOrderId())) {
 			return Empty.newBuilder();
 		}
 
@@ -4238,14 +4240,15 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		return null;
 	}
 	
-	private boolean validatePINSupervisor(int posId, int userId, String pin, String requestedAccess, BigDecimal requestedAmount) {
+	private boolean validatePINSupervisor(int posId, int userId, String pin, String requestedAccess, BigDecimal requestedAmount, int oderId) {
 		if (Util.isEmpty(requestedAccess)) {
 			return false;
 		}
+		MPOS pos = POSUtil.validateAndGetPOS(posId, false);
 
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<>();
-		parameters.add(posId);
+		parameters.add(pos.getC_POS_ID());
 		MTable table = MTable.get(Env.getCtx(), "C_POSSellerAllocation");
 		if (table != null && table.getColumn(requestedAccess) != null) {
 			whereClause.append(" AND seller.").append(requestedAccess).append("= 'Y'");

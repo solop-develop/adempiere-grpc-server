@@ -1,38 +1,44 @@
 /*************************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it    		 *
+ * This program is free software; you can redistribute it and/or modify it           *
  * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope   		 *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 		 *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           		 *
- * See the GNU General Public License for more details.                       		 *
- * You should have received a copy of the GNU General Public License along    		 *
- * with this program; if not, write to the Free Software Foundation, Inc.,    		 *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
- * For the text or an alternative of this public license, you may reach us    		 *
+ * by the Free Software Foundation. This program is distributed in the hope          *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
+ * See the GNU General Public License for more details.                              *
+ * You should have received a copy of the GNU General Public License along           *
+ * with this program; if not, write to the Free Software Foundation, Inc.,           *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
+ * For the text or an alternative of this public license, you may reach us           *
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.math.RoundingMode;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MDocType;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MUOMConversion;
+import org.compiere.model.MPriceList;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
+import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 
 /**
@@ -40,7 +46,18 @@ import org.spin.base.util.RecordUtil;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class OrderUtil {
-	
+
+	public static MOrder validateAndGetOrder(int orderId) {
+		if (orderId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
+		}
+		MOrder order = new MOrder(Env.getCtx(), orderId, null);
+		if (order == null || order.getC_Order_ID() <= 0) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
+		return order;
+	}
+
 	/**
 	 * Set UOM and Quantity based on unit of measure
 	 * @param orderLine
@@ -63,12 +80,12 @@ public class OrderUtil {
 		orderLine.setLineNetAmt();
 		orderLine.saveEx();
 	}
-	
+
 	public static boolean isValidOrder(MOrder order) {
 		MDocType documentType = MDocType.get(order.getCtx(), order.getC_DocTypeTarget_ID());
 		return !documentType.isOffer() && !documentType.isProposal();
 	}
-	
+
 	/**
 	 * Set current date to order
 	 * @param salesOrder
@@ -320,4 +337,97 @@ public class OrderUtil {
 			target.set_ValueOfColumn("User4_ID", source.get_ValueAsInt("User4_ID"));
 		}
     }
+
+	public static BigDecimal getCreditAmount(MOrder order) {
+		if (order == null) {
+			return BigDecimal.ZERO;
+		}
+		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
+		int standardPrecision = priceList.getStandardPrecision();
+
+		BigDecimal creditAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
+		Optional<BigDecimal> maybeCreditAmt = ConvertUtil.getPaymentChageOrCredit(order, true);
+		if (maybeCreditAmt.isPresent()) {
+			creditAmt = maybeCreditAmt.get()
+				.setScale(standardPrecision, RoundingMode.HALF_UP);
+		}
+		return creditAmt;
+	}
+
+	public static BigDecimal getChargeAmount(MOrder order) {
+		if (order == null) {
+			return BigDecimal.ZERO;
+		}
+		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
+		int standardPrecision = priceList.getStandardPrecision();
+
+		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
+		Optional<BigDecimal> maybeChargeAmt = ConvertUtil.getPaymentChageOrCredit(order, false);
+		if (maybeChargeAmt.isPresent()) {
+			chargeAmt = maybeChargeAmt.get()
+				.setScale(standardPrecision, RoundingMode.HALF_UP);
+		}
+		return chargeAmt;
+	}
+
+	public static BigDecimal getTotalAmountToPay(MOrder order) {
+		if (order == null) {
+			return BigDecimal.ZERO;
+		}
+		
+		BigDecimal grandTotal = order.getGrandTotal();
+		BigDecimal creditAmt = getCreditAmount(order);
+		BigDecimal chargeAmt = getChargeAmount(order);
+
+		BigDecimal grandTotalWithCreditCharges = grandTotal.subtract(creditAmt).add(chargeAmt);
+
+		return grandTotalWithCreditCharges;
+	}
+
+	/**
+	 * Get Payment Amount
+	 * @param order
+	 * @return
+	 */
+	public static BigDecimal getTotalPaymentAmount(MOrder order) {
+		if (order == null) {
+			return BigDecimal.ZERO;
+		}
+		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
+			BigDecimal paymentAmount = payment.getPayAmt();
+			if(paymentAmount.compareTo(Env.ZERO) == 0
+					&& payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
+				MInvoice creditMemo = new Query(payment.getCtx(), MInvoice.Table_Name, "C_Payment_ID = ?", payment.get_TrxName()).setParameters(payment.getC_Payment_ID()).first();
+				if(creditMemo != null) {
+					paymentAmount = creditMemo.getGrandTotal();
+				}
+			}
+			if(!payment.isReceipt()) {
+				paymentAmount = payment.getPayAmt().negate();
+			}
+			return getConvetedAmount(order, payment, paymentAmount);
+		}).collect(Collectors.reducing(BigDecimal::add));
+
+		List<PO> paymentReferencesList = ConvertUtil.getPaymentReferencesList(order);
+		Optional<BigDecimal> paymentReferenceAmount = paymentReferencesList.stream()
+				.map(paymentReference -> {
+			BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
+			if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
+				amount = amount.negate();
+			}
+			return getConvetedAmount(order, paymentReference, amount);
+		}).collect(Collectors.reducing(BigDecimal::add));
+
+		BigDecimal paymentAmount = Env.ZERO;
+		if(paidAmount.isPresent()) {
+			paymentAmount = paidAmount.get();
+		}		
+		BigDecimal totalPaymentAmount = paymentAmount;
+		if(paymentReferenceAmount.isPresent()) {
+			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
+		}
+
+		return totalPaymentAmount;
+	}
+
 }
