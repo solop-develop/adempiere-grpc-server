@@ -40,6 +40,7 @@ import org.compiere.model.MPayment;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
+import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
@@ -126,16 +127,24 @@ public class OrderManagement {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 			MOrder targetOrder = OrderUtil.copyOrder(pos, sourceOrder, transactionName);
-			if(salesRepresentativeId > 0) {
-				targetOrder.setSalesRep_ID(salesRepresentativeId);
-				if(targetOrder.get_ValueAsInt("AssignedSalesRep_ID") <= 0) {
-					targetOrder.set_ValueOfColumn("AssignedSalesRep_ID", salesRepresentativeId);
-				}
+			MBPartner businessPartner = (MBPartner) targetOrder.getC_BPartner();
+			OrderUtil.setCurrentDate(targetOrder);
+			int salesRepId = salesRepresentativeId;
+			MUser currentUser = MUser.get(Env.getCtx());
+			if (pos.get_ValueAsBoolean("IsSharedPOS")) {
+				salesRepId = currentUser.getAD_User_ID();
+			} else if (businessPartner.getSalesRep_ID() != 0) {
+				salesRepId = businessPartner.getSalesRep_ID();
+			} else {
+				salesRepId = pos.getSalesRep_ID();
 			}
+			if(salesRepId > 0) {
+				targetOrder.setSalesRep_ID(salesRepId);
+			}
+			targetOrder.set_ValueOfColumn("AssignedSalesRep_ID", currentUser.getAD_User_ID());
 			targetOrder.saveEx();
 			OrderUtil.copyOrderLinesFromOrder(sourceOrder, targetOrder, transactionName);
 			orderReference.set(targetOrder);
-			
 		});
 		return orderReference.get();
 	}
