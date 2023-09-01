@@ -3804,6 +3804,11 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				int campaignId = RecordUtil.getIdFromUuid(I_C_Campaign.Table_Name, request.getCampaignUuid(), transactionName);
 				if(campaignId > 0 && campaignId != salesOrder.getC_Campaign_ID()) {
 					salesOrder.setC_Campaign_ID(campaignId);
+					// update campaign on lines
+					for (MOrderLine orderLine: salesOrder.getLines()) {
+						orderLine.setC_Campaign_ID(campaignId);
+						orderLine.saveEx(transactionName);
+					}
 				}
 				if(!Util.isEmpty(request.getWarehouseUuid())) {
 					warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), transactionName);
