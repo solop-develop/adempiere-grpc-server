@@ -1171,7 +1171,7 @@ public class ConvertUtil {
 		int standardPrecision = priceList.getStandardPrecision();
 		BigDecimal availableQuantity = MStorage.getQtyAvailable(orderLine.getM_Warehouse_ID(), 0, orderLine.getM_Product_ID(), orderLine.getM_AttributeSetInstance_ID(), null);
 		//	Convert
-		return builder
+		return builder.setId(orderLine.getC_OrderLine_ID())
 				.setUuid(ValueUtil.validateNull(orderLine.getUUID()))
 				.setOrderUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Order.Table_Name, orderLine.getC_Order_ID())))
 				.setLine(orderLine.getLine())
@@ -1277,6 +1277,9 @@ public class ConvertUtil {
 		//	Convert
 		return builder
 				.setId(orderLine.getC_OrderLine_ID())
+				.setUuid(
+					ValueUtil.validateNull(orderLine.getUUID())
+				)
 				.setSourceOrderLineId(orderLine.getRef_OrderLine_ID())
 				.setLine(orderLine.getLine())
 				.setDescription(ValueUtil.validateNull(orderLine.getDescription()))

@@ -1192,10 +1192,12 @@ message ListPaymentsRequest {
 
 // Validate PIN Request
 message ValidatePINRequest {
+	int32 pos_id = 1;
 	string pos_uuid = 2;
 	string pin = 3;
 	string requested_access = 4;
 	Decimal requested_amount = 5;
+	int32 order_id = 6;
 }
 
 //	List Payments Response
@@ -1366,7 +1368,7 @@ message OrderLine {
 	ProductConversion uom = 30;
 	ProductConversion product_uom = 31;
 	time_control.ResourceAssignment resource_assignment = 32;
-	int32 source_rma_line_id = 33;
+	int32 id = 33;
 }
 
 // Request Product Price
@@ -1648,7 +1650,7 @@ message RMA {
 // Return Order Line
 message RMALine {
 	int32 id = 1;
-	string rma_id = 2;
+	string uuid = 2;
 	Product product = 3;
 	Charge charge = 4;
 	string line_description = 5;
