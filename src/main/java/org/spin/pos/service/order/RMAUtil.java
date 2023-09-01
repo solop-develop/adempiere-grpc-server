@@ -17,6 +17,7 @@ package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_C_InvoiceLine;
 import org.adempiere.core.domains.models.I_C_Order;
@@ -259,9 +260,10 @@ public class RMAUtil {
 		if(!invoice.processIt(MOrder.DOCACTION_Complete)) {
         	throw new AdempiereException(invoice.getProcessMsg());
         }
+		invoice.saveEx();
 		returnOrder.setIsInvoiced(true);
 		returnOrder.set_ValueOfColumn("AssignedSalesRep_ID", null);
-		invoice.saveEx();
+		returnOrder.saveEx();
     }
     
     /**
@@ -359,11 +361,27 @@ public class RMAUtil {
     		.getIDsAsList()
     		.forEach(sourceOrderLineId -> {
     			MOrderLine sourcerOrderLine = new MOrderLine(sourceOrder.getCtx(), sourceOrderLineId, transactionName);
-				//	Create new Invoice Line
-				MOrderLine returnOrderLine = RMAUtil.copyRMALineFromOrder(returnOrder, sourcerOrderLine, transactionName);
-				//	Save
-				returnOrderLine.saveEx(transactionName);
+    			BigDecimal availableQuantity = getAvailableQuantityForReturn(sourcerOrderLine, transactionName);
+    			if(availableQuantity.compareTo(Env.ZERO) > 0) {
+    				//	Create new Invoice Line
+    				MOrderLine returnOrderLine = RMAUtil.copyRMALineFromOrder(returnOrder, sourcerOrderLine, transactionName);
+    				OrderUtil.updateUomAndQuantity(returnOrderLine, returnOrderLine.getC_UOM_ID(), availableQuantity);
+    			}
     		});
+    }
+    
+    /**
+     * Get Available Quantity for Return Order
+     * @param sourceOrderLineId
+     * @param transactionName
+     * @return
+     */
+    public static BigDecimal getAvailableQuantityForReturn(MOrderLine sourceOrderLine, String transactionName) {
+    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, "Ref_OrderLine_ID = ? "
+    			+ "AND EXISTS(SELECT 1 FROM C_Order o WHERE o.C_Order_ID = C_OrderLine.C_Order_ID)", transactionName)
+    			.setParameters(sourceOrderLine.getC_OrderLine_ID())
+    			.aggregate(I_C_OrderLine.COLUMNNAME_QtyEntered, Query.AGGREGATE_SUM);
+    	return sourceOrderLine.getQtyEntered().subtract(Optional.ofNullable(quantity).orElse(Env.ZERO));
     }
     
     /**

@@ -135,6 +135,7 @@ public class OrderManagement {
 			}
 			targetOrder.saveEx();
 			OrderUtil.copyOrderLinesFromOrder(sourceOrder, targetOrder, transactionName);
+			orderReference.set(targetOrder);
 			
 		});
 		return orderReference.get();

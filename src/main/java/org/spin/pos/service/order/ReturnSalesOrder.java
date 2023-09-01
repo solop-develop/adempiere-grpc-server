@@ -107,18 +107,22 @@ public class ReturnSalesOrder {
 			if(sourcerOrderLine.getC_OrderLine_ID() <= 0) {
 				throw new AdempiereException("@Ref_OrderLine_ID@ @NotFound@");
 			}
-			BigDecimal quantityToOrder = quantity;
-			if(quantity == null) {
-				quantityToOrder = rmaLine.getQtyEntered();
-				quantityToOrder = quantityToOrder.add(Env.ONE);
-			}
-			//	Validate available
-			if(sourcerOrderLine.getQtyEntered().compareTo(quantityToOrder) < 0) {
+			BigDecimal availableQuantity = RMAUtil.getAvailableQuantityForReturn(sourcerOrderLine, transactionName);
+			if(availableQuantity.compareTo(Env.ZERO) > 0) {
+				//	Update order quantity
+				BigDecimal quantityToOrder = quantity;
+				if(quantity == null) {
+					quantityToOrder = rmaLine.getQtyEntered();
+					quantityToOrder = quantityToOrder.add(Env.ONE);
+				}
+				if(availableQuantity.subtract(quantityToOrder).compareTo(Env.ZERO) >= 0) {
+					OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
+				} else {
+					throw new AdempiereException("@QtyInsufficient@");
+				}
+			} else {
 				throw new AdempiereException("@QtyInsufficient@");
 			}
-			//	Update order quantity
-			OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
-			rmaLine.saveEx();
 			returnOrderReference.set(rmaLine);
 		});
 		return returnOrderReference.get();
@@ -155,6 +159,7 @@ public class ReturnSalesOrder {
 					.stream()
 					.filter(rmaLineTofind -> rmaLineTofind.getRef_OrderLine_ID() == sourceOrderLineId)
 					.findFirst();
+			BigDecimal availableQuantity = RMAUtil.getAvailableQuantityForReturn(sourcerOrderLine, transactionName);
 			if(maybeOrderLine.isPresent()) {
 				MOrderLine rmaLine = maybeOrderLine.get();
 				//	Set Quantity
@@ -163,26 +168,26 @@ public class ReturnSalesOrder {
 					quantityToOrder = rmaLine.getQtyEntered();
 					quantityToOrder = quantityToOrder.add(Env.ONE);
 				}
-				//	Validate available
-				if(sourcerOrderLine.getQtyEntered().compareTo(quantityToOrder) < 0) {
-					throw new AdempiereException("@QtyInsufficient@");
-				}
-				//	Update order quantity
-				OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
-				rmaLine.saveEx();
-				returnOrderReference.set(rmaLine);
+    			if(availableQuantity.subtract(quantityToOrder).compareTo(Env.ZERO) >= 0) {
+    				//	Update order quantity
+    				OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
+    				returnOrderReference.set(rmaLine);
+    			} else {
+    				throw new AdempiereException("@QtyInsufficient@");
+    			}
 			} else {
-				MOrderLine rmaLine = RMAUtil.copyRMALineFromOrder(rma, sourcerOrderLine, transactionName);
 				BigDecimal quantityToOrder = quantity;
 				if(quantity == null) {
 					quantityToOrder = Env.ONE;
 				}
-		        Optional.ofNullable(descrption).ifPresent(description -> rmaLine.setDescription(description));
-				//	Update movement quantity
-		        OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
-				//	Save Line
-		        rmaLine.saveEx();
-		        returnOrderReference.set(rmaLine);
+		        if(availableQuantity.subtract(quantityToOrder).compareTo(Env.ZERO) >= 0) {
+		        	MOrderLine rmaLine = RMAUtil.copyRMALineFromOrder(rma, sourcerOrderLine, transactionName);
+		        	Optional.ofNullable(descrption).ifPresent(description -> rmaLine.setDescription(description));
+		        	OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
+		        	returnOrderReference.set(rmaLine);
+    			} else {
+    				throw new AdempiereException("@QtyInsufficient@");
+    			}
 			}
 		});
 		return returnOrderReference.get();
