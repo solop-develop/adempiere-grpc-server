@@ -90,7 +90,6 @@ import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductPrice;
 import org.compiere.model.MProductPricing;
-import org.compiere.model.MRefList;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTable;
@@ -1650,6 +1649,22 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		}
 	}
 	
+	@Override
+	public void copyOrder(CopyOrderRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			log.fine("Copy Order");
+			Order.Builder salesOrder = ConvertUtil.convertOrder(OrderManagement.createOrderFromOther(request.getPosId(), request.getSourceOrderId()));
+			responseObserver.onNext(salesOrder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
+	}
+	
 	/**
 	 * List shipment Lines from Order UUID
 	 * @param request
@@ -1846,43 +1861,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		.getIDsAsList()
 		.forEach(paymentId -> {
 			MPayment payment = new MPayment(pos.getCtx(), paymentId, null);
-			BigDecimal paymentAmount = payment.getPayAmt(true);
-			BigDecimal convertedPaymentAmount = ConvertUtil.getConvetedAmount(pos, payment, paymentAmount);
-			MRefList reference = MRefList.get(Env.getCtx(), MPayment.DOCSTATUS_AD_REFERENCE_ID, payment.getDocStatus(), null);
-			Payment.Builder paymentDetail = Payment.newBuilder()
-				.setId(payment.getC_Payment_ID())
-				.setUuid(ValueUtil.validateNull(payment.getUUID()))
-				.setDocumentNo(ValueUtil.validateNull(payment.getDocumentNo()))
-				.setReferenceNo(ValueUtil.validateNull(payment.getR_PnRef()))
-				.setPaymentDate(ValueUtil.convertDateToString(payment.getDateTrx()))
-				.setPaymentAccountDate(ValueUtil.convertDateToString(payment.getDateAcct()))
-				.setDescription(ValueUtil.validateNull(payment.getDescription()))
-				.setCustomer(ConvertUtil.convertCustomer(MBPartner.get(payment.getCtx(), payment.getC_BPartner_ID())))
-				.setTenderTypeCode(ValueUtil.validateNull(payment.getTenderType()))
-				.setCurrency(ConvertUtil.convertCurrency(MCurrency.get(payment.getCtx(), payment.getC_Currency_ID())))
-				.setIsRefund(!payment.isReceipt())
-				.setAmount(ValueUtil.getDecimalFromBigDecimal(paymentAmount))
-				.setConvertedAmount(ValueUtil.getDecimalFromBigDecimal(convertedPaymentAmount))
-				.setCharge(ConvertUtil.convertCharge(payment.getC_Charge_ID()))
-				.setDocumentStatus(ConvertUtil.convertDocumentStatus(
-						ValueUtil.validateNull(payment.getDocStatus()), 
-						ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
-						ValueUtil.validateNull(ValueUtil.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))));
-			//	
-			if(payment.getCollectingAgent_ID() > 0) {
-				paymentDetail.setCollectingAgent(ConvertUtil.convertSalesRepresentative(MUser.get(payment.getCtx(), payment.getCollectingAgent_ID())));
-			}
-			if(payment.getC_Bank_ID() > 0) {
-				paymentDetail.setBankUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Bank.Table_Name, payment.getC_Bank_ID())));
-			}
-			if(payment.getC_DocType_ID() > 0) {
-				paymentDetail.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(payment.getCtx(), payment.getC_DocType_ID())));
-			}
-			if(payment.getC_PaymentMethod_ID() > 0) {
-				MCPaymentMethod paymentMethod = MCPaymentMethod.getById(payment.getCtx(), payment.getC_PaymentMethod_ID(), null);
-				paymentDetail.setPaymentMethod(ConvertUtil.convertPaymentMethod(paymentMethod));
-			}
-			builder.addCashMovements(paymentDetail.build());
+			builder.addCashMovements(ConvertUtil.convertPayment(payment));
 		});
 		//	
 		builder.setRecordCount(count);

@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Optional;
 
+import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MDocType;
@@ -28,6 +29,8 @@ import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.PO;
+import org.compiere.model.Query;
+import org.compiere.process.DocAction;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.spin.base.util.RecordUtil;
@@ -186,5 +189,135 @@ public class OrderUtil {
 	
     public static Timestamp getToday() {
     	return TimeUtil.getDay(System.currentTimeMillis());
+    }
+    
+    
+    /**
+     * Create new order from source order
+     * @param pos
+     * @param sourceOrder
+     * @param transactionName
+     * @return
+     */
+    public static MOrder copyOrder(MPOS pos, MOrder sourceOrder, String transactionName) {
+    	MOrder salesOrder = new MOrder (sourceOrder.getCtx(), 0, transactionName);
+		salesOrder.set_TrxName(transactionName);
+		PO.copyValues(sourceOrder, salesOrder, false);
+		//
+		salesOrder.setDocStatus (DocAction.STATUS_Drafted);		//	Draft
+		salesOrder.setDocAction(DocAction.ACTION_Complete);
+		//
+		salesOrder.setIsSelected (false);
+		salesOrder.setDateOrdered(OrderUtil.getToday());
+		salesOrder.setDateAcct(OrderUtil.getToday());
+		salesOrder.setDatePromised(OrderUtil.getToday());	//	assumption
+		salesOrder.setDatePrinted(null);
+		salesOrder.setIsPrinted (false);
+		//
+		salesOrder.setIsApproved (false);
+		salesOrder.setIsCreditApproved(false);
+		salesOrder.setC_Payment_ID(0);
+		salesOrder.setC_CashLine_ID(0);
+		//	Amounts are updated  when adding lines
+		salesOrder.setGrandTotal(Env.ZERO);
+		salesOrder.setTotalLines(Env.ZERO);
+		//
+		salesOrder.setIsDelivered(false);
+		salesOrder.setIsInvoiced(false);
+		salesOrder.setIsSelfService(false);
+		salesOrder.setIsTransferred (false);
+		salesOrder.setPosted (false);
+		salesOrder.setProcessed (false);
+		salesOrder.setAD_Org_ID(sourceOrder.getAD_Org_ID());
+		salesOrder.setC_DocTypeTarget_ID(sourceOrder.getC_DocTypeTarget_ID());
+        //	Set references
+		salesOrder.setC_BPartner_ID(sourceOrder.getC_BPartner_ID());
+		salesOrder.setProcessed(false);
+		//	
+		copyAccountDimensions(sourceOrder, salesOrder);
+		salesOrder.setM_PriceList_ID(sourceOrder.getM_PriceList_ID());
+		return salesOrder;
+    }
+    
+    /**
+     * Copy a order line and create a new instance for Order Line
+     * @param targetOrder
+     * @param sourcerOrderLine
+     * @param transactionName
+     * @return
+     */
+    public static MOrderLine copyOrderLine(MOrderLine sourcerOrderLine, MOrder targetOrder, String transactionName) {
+    	MOrderLine salesOrderLine = new MOrderLine(targetOrder);
+		if (sourcerOrderLine.getM_Product_ID() > 0) {
+			salesOrderLine.setM_Product_ID(sourcerOrderLine.getM_Product_ID());
+			if(sourcerOrderLine.getM_AttributeSetInstance_ID() > 0) {
+				salesOrderLine.setM_AttributeSetInstance_ID(sourcerOrderLine.getM_AttributeSetInstance_ID());
+			}
+		} else if(sourcerOrderLine.getC_Charge_ID() != 0) {
+			salesOrderLine.setC_Charge_ID(sourcerOrderLine.getC_Charge_ID());
+		}
+		//	
+		copyAccountDimensions(sourcerOrderLine, salesOrderLine);
+		//	Set quantity
+		salesOrderLine.setQty(sourcerOrderLine.getQtyEntered());
+		salesOrderLine.setQtyOrdered(sourcerOrderLine.getQtyOrdered());
+		salesOrderLine.setC_UOM_ID(sourcerOrderLine.getC_UOM_ID());
+		salesOrderLine.setC_Tax_ID(sourcerOrderLine.getC_Tax_ID());
+		salesOrderLine.setPrice();
+		salesOrderLine.setTax();
+		return salesOrderLine;
+    }
+    
+    /**
+     * Create all lines from order
+     * @param sourceOrder
+     * @param targetOrder
+     * @param transactionName
+     */
+    public static void copyOrderLinesFromOrder(MOrder sourceOrder, MOrder targetOrder, String transactionName) {
+    	new Query(sourceOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
+    		.setParameters(sourceOrder.getC_Order_ID())
+    		.setClient_ID()
+    		.getIDsAsList()
+    		.forEach(sourceOrderLineId -> {
+    			MOrderLine sourcerOrderLine = new MOrderLine(sourceOrder.getCtx(), sourceOrderLineId, transactionName);
+				//	Create new Invoice Line
+				MOrderLine returnOrderLine = copyOrderLine(sourcerOrderLine, targetOrder, transactionName);
+				//	Save
+				returnOrderLine.saveEx(transactionName);
+    		});
+    }
+    
+    /**
+     * Copy all account dimensions
+     * @param source
+     * @param target
+     */
+    public static void copyAccountDimensions(PO source, PO target) {
+		//	
+		if(source.get_ValueAsInt("AD_OrgTrx_ID") != 0) {
+			target.set_ValueOfColumn("AD_OrgTrx_ID", source.get_ValueAsInt("AD_OrgTrx_ID"));
+		}
+		if(source.get_ValueAsInt("C_Project_ID") != 0) {
+			target.set_ValueOfColumn("C_Project_ID", source.get_ValueAsInt("C_Project_ID"));
+		}
+		if(source.get_ValueAsInt("C_Campaign_ID") != 0) {
+			target.set_ValueOfColumn("C_Campaign_ID", source.get_ValueAsInt("C_Campaign_ID"));
+		}
+		if(source.get_ValueAsInt("C_Activity_ID") != 0) {
+			target.set_ValueOfColumn("C_Activity_ID", source.get_ValueAsInt("C_Activity_ID"));
+		}
+		if(source.get_ValueAsInt("User1_ID") != 0) {
+			target.set_ValueOfColumn("User1_ID", source.get_ValueAsInt("User1_ID"));
+		}
+		if(source.get_ValueAsInt("User2_ID") != 0) {
+			target.set_ValueOfColumn("User2_ID", source.get_ValueAsInt("User2_ID"));
+		}
+		if(source.get_ValueAsInt("User3_ID") != 0) {
+			target.set_ValueOfColumn("User3_ID", source.get_ValueAsInt("User3_ID"));
+		}
+		if(source.get_ValueAsInt("User4_ID") != 0) {
+			target.set_ValueOfColumn("User4_ID", source.get_ValueAsInt("User4_ID"));
+		}
     }
 }

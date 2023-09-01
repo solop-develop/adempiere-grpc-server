@@ -986,6 +986,9 @@ public class ConvertUtil {
 			.setReferenceBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.get_ValueAsInt("POSReferenceBankAccount_ID"))))
 			.setIsProcessed(payment.isProcessed())
 		;
+		if(payment.getCollectingAgent_ID() > 0) {
+			builder.setCollectingAgent(ConvertUtil.convertSalesRepresentative(MUser.get(payment.getCtx(), payment.getCollectingAgent_ID())));
+		}
 		return builder;
 	}
 	

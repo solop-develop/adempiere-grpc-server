@@ -46,39 +46,6 @@ import org.compiere.util.Trx;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class RMAUtil {
-	
-    /**
-     * Copy all account dimensions
-     * @param source
-     * @param target
-     */
-    public static void copyAccountDimensions(PO source, PO target) {
-		//	
-		if(source.get_ValueAsInt("AD_OrgTrx_ID") != 0) {
-			target.set_ValueOfColumn("AD_OrgTrx_ID", source.get_ValueAsInt("AD_OrgTrx_ID"));
-		}
-		if(source.get_ValueAsInt("C_Project_ID") != 0) {
-			target.set_ValueOfColumn("C_Project_ID", source.get_ValueAsInt("C_Project_ID"));
-		}
-		if(source.get_ValueAsInt("C_Campaign_ID") != 0) {
-			target.set_ValueOfColumn("C_Campaign_ID", source.get_ValueAsInt("C_Campaign_ID"));
-		}
-		if(source.get_ValueAsInt("C_Activity_ID") != 0) {
-			target.set_ValueOfColumn("C_Activity_ID", source.get_ValueAsInt("C_Activity_ID"));
-		}
-		if(source.get_ValueAsInt("User1_ID") != 0) {
-			target.set_ValueOfColumn("User1_ID", source.get_ValueAsInt("User1_ID"));
-		}
-		if(source.get_ValueAsInt("User2_ID") != 0) {
-			target.set_ValueOfColumn("User2_ID", source.get_ValueAsInt("User2_ID"));
-		}
-		if(source.get_ValueAsInt("User3_ID") != 0) {
-			target.set_ValueOfColumn("User3_ID", source.get_ValueAsInt("User3_ID"));
-		}
-		if(source.get_ValueAsInt("User4_ID") != 0) {
-			target.set_ValueOfColumn("User4_ID", source.get_ValueAsInt("User4_ID"));
-		}
-    }
     
 	/**
 	 * Get Default document Type
@@ -191,7 +158,7 @@ public class RMAUtil {
 		returnOrder.setRef_Order_ID(sourceOrder.getC_Order_ID());
 		returnOrder.setProcessed(false);
 		//	
-		RMAUtil.copyAccountDimensions(sourceOrder, returnOrder);
+		OrderUtil.copyAccountDimensions(sourceOrder, returnOrder);
 		returnOrder.setM_PriceList_ID(sourceOrder.getM_PriceList_ID());
 		returnOrder.saveEx();
 		return returnOrder;
@@ -215,7 +182,7 @@ public class RMAUtil {
 			returnOrderLine.setC_Charge_ID(sourcerOrderLine.getC_Charge_ID());
 		}
 		//	
-		RMAUtil.copyAccountDimensions(sourcerOrderLine, returnOrderLine);
+		OrderUtil.copyAccountDimensions(sourcerOrderLine, returnOrderLine);
 		//	Set quantity
 		returnOrderLine.setQty(sourcerOrderLine.getQtyEntered());
 		returnOrderLine.setQtyOrdered(sourcerOrderLine.getQtyOrdered());
@@ -355,7 +322,7 @@ public class RMAUtil {
 					returnOrderLine.setC_Charge_ID(sourcerOrderLine.getC_Charge_ID());
 				}
 				//	
-				RMAUtil.copyAccountDimensions(sourcerOrderLine, returnOrderLine);
+				OrderUtil.copyAccountDimensions(sourcerOrderLine, returnOrderLine);
 				//	Set quantity
 				returnOrderLine.setQty(sourcerOrderLine.getQtyEntered());
 				returnOrderLine.setQtyOrdered(sourcerOrderLine.getQtyOrdered());

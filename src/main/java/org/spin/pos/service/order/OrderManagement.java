@@ -109,6 +109,31 @@ public class OrderManagement {
 		return orderReference.get();
 	}
 	
+	public static MOrder createOrderFromOther(int posId, int sourceOrderId) {
+		if(posId <= 0) {
+			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+		}
+		if(sourceOrderId <= 0) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
+		MPOS pos = new MPOS(Env.getCtx(), posId, null);
+		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
+		Trx.run(transactionName -> {
+			MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
+			if(DocumentUtil.isDrafted(sourceOrder) 
+					|| DocumentUtil.isClosed(sourceOrder)
+					|| sourceOrder.isReturnOrder()
+					|| !OrderUtil.isValidOrder(sourceOrder)) {
+				throw new AdempiereException("@ActionNotAllowedHere@");
+			}
+			MOrder targetOrder = OrderUtil.copyOrder(pos, sourceOrder, transactionName);
+			targetOrder.saveEx();
+			OrderUtil.copyOrderLinesFromOrder(sourceOrder, targetOrder, transactionName);
+			
+		});
+		return orderReference.get();
+	}
+	
 	/**
 	 * Process Payment references
 	 * @param salesOrder
