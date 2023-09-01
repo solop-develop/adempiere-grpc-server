@@ -137,7 +137,6 @@ import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
-import org.spin.pos.util.POSUtil;
 import org.spin.pos.util.TicketHandler;
 import org.spin.pos.util.TicketResult;
 import org.spin.store.model.MCPaymentMethod;
@@ -4143,7 +4142,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param userPin
      */
 	private Empty.Builder validatePIN(ValidatePINRequest request) {
-		MPOS pos = POSUtil.validateAndGetPOS(request.getPosId(), request.getPosUuid(), false);
+		MPOS pos = POS.validateAndGetPOS(request.getPosId(), request.getPosUuid(), false);
 
 		if(Util.isEmpty(request.getPin())) {
 			throw new AdempiereException("@UserPIN@ @IsMandatory@");
@@ -4244,7 +4243,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 		if (Util.isEmpty(requestedAccess)) {
 			return false;
 		}
-		MPOS pos = POSUtil.validateAndGetPOS(posId, false);
+		MPOS pos = POS.validateAndGetPOS(posId, false);
 
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<>();
