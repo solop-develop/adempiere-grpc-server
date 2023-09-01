@@ -27,7 +27,7 @@ public class BrowseFieldCustomUtil {
 
 	public static MBrowseFieldCustom getBrowseFieldCustom(int browseFieldId) {
 		final int userId = Env.getAD_User_ID(Env.getCtx());
-		final String whereClauseUser = "AD_BrowseField_ID = ? AND EXISTS( "
+		final String whereClauseUser = "AD_Browse_Field_ID = ? AND EXISTS( "
 			+ "SELECT 1 FROM AD_BrowseCustom AS bc "
 			+ "WHERE bc.AD_User_ID = ? "
 			+ "AND bc.AD_BrowseCustom_ID = AD_BrowseFieldCustom.AD_BrowseCustom_ID"
@@ -44,7 +44,7 @@ public class BrowseFieldCustomUtil {
 		;
 		if (browseFieldCustom == null) {
 			final int roleId = Env.getAD_Role_ID(Env.getCtx());
-			final String whereClauseRole = "AD_BrowseField_ID = ? AND EXISTS( "
+			final String whereClauseRole = "AD_Browse_Field_ID = ? AND EXISTS( "
 				+ "SELECT 1 FROM AD_BrowseCustom AS bc "
 				+ "WHERE bc.AD_Role_ID = ? "
 				+ "AND bc.AD_BrowseCustom_ID = AD_BrowseFieldCustom.AD_BrowseCustom_ID"
