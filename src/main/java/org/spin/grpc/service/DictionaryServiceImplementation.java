@@ -1590,7 +1590,7 @@ public class DictionaryServiceImplementation extends DictionaryImplBase {
 			if (fieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsTable(
 					ValueUtil.validateNull(
-						field.get_ValueAsString(
+						fieldCustom.get_ValueAsString(
 							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
 						)
 					)
