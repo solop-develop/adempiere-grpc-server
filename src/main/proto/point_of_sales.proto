@@ -187,7 +187,7 @@ service Store {
 	rpc CreateOrderFromRMA(CreateOrderFromRMARequest) returns (Order) {}
 	//	Credit Memo as Payment Method
 	//	List Refund References
-	rpc ListCustomerCredit(ListCustomerCreditRequest) returns (ListCustomerCreditResponse) {}
+	rpc ListCustomerCredits(ListCustomerCreditsRequest) returns (ListCustomerCreditsResponse) {}
 }
 
 //	Delete Refund reference request
@@ -1713,7 +1713,7 @@ message CreditMemo {
 	int64 end_date = 6;
 }
 
-message ListCustomerCreditRequest {
+message ListCustomerCreditsRequest {
 	int32 page_size = 1;
 	string page_token = 2;
 	// filters
@@ -1721,7 +1721,7 @@ message ListCustomerCreditRequest {
 	string pos_id = 4;
 }
 
-message ListCustomerCreditResponse {
+message ListCustomerCreditsResponse {
 	int64 record_count = 1;
 	repeated CreditMemo records = 2;
 	string next_page_token = 3;
