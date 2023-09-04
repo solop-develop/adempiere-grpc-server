@@ -4157,17 +4157,17 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			throw new AdempiereException("@POS.SupervisorNotFound@");
 		}
 		//	Validate special access for PIN (Amount and other types)
-		if(request.getOrderId() > 0) {
-			MOrder order = new MOrder(Env.getCtx(), request.getOrderId(), null);
-			MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), null);
-			int standardPrecision = priceList.getStandardPrecision();
-		    BigDecimal totalOpenAmount = OrderUtil.getTotalOpenAmount(order);
-		    BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(order);
-		    BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(totalPaymentAmount).orElse(Env.ZERO));
-		    BigDecimal writeOffPercent = OrderUtil.getWriteOffPercent(totalOpenAmount, totalPaymentAmount, standardPrecision);
-			//	For Write off
-			if(request.getRequestedAccess().equals("TODO")) {
-				if(supervisorAccess.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent)) {
+		if(request.getRequestedAccess().equals(ColumnsAdded.COLUMNNAME_IsAllowsWriteOffAmount)) {
+			if(request.getOrderId() > 0) {
+				MOrder order = new MOrder(Env.getCtx(), request.getOrderId(), null);
+				MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), null);
+				int standardPrecision = priceList.getStandardPrecision();
+			    BigDecimal totalOpenAmount = OrderUtil.getTotalOpenAmount(order);
+			    BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(order);
+			    BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(totalPaymentAmount).orElse(Env.ZERO)).abs();
+			    BigDecimal writeOffPercent = OrderUtil.getWriteOffPercent(totalOpenAmount, totalPaymentAmount, standardPrecision);
+				//	For Write off
+			    if(supervisorAccess.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent)) {
 					BigDecimal allowedPercent = Optional.ofNullable((BigDecimal) supervisorAccess.get_Value(ColumnsAdded.COLUMNNAME_WriteOffPercentageTolerance)).orElse(Env.ZERO);
 					//	Validate Here
 					if(allowedPercent.compareTo(Env.ZERO) == 0
@@ -4192,9 +4192,10 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 						throw new AdempiereException("@POS.WriteOffNotAllowedByAmount@");
 					}
 				}
+			} else {
+				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
 		}
-		
 		//	Default
 		return Empty.newBuilder();
 	}

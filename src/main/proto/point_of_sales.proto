@@ -1104,6 +1104,7 @@ message PointOfSales {
 	bool is_allows_detail_cash_closing = 51;
 	Decimal write_off_percentage_tolerance = 52;
 	bool is_write_off_by_percent = 53;
+	bool is_allows_write_off_amount = 54;
 }
 
 // Request for create a order

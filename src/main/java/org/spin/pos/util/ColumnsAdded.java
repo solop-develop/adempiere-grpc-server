@@ -47,6 +47,7 @@ public class ColumnsAdded {
 	public static final String COLUMNNAME_WriteOffAmtCurrency_ID = "WriteOffAmtCurrency_ID";
 	public static final String COLUMNNAME_WriteOffAmtTolerance = "WriteOffAmtTolerance";
 	public static final String COLUMNNAME_WriteOffPercentageTolerance = "WriteOffPercentageTolerance";
+	public static final String COLUMNNAME_IsAllowsWriteOffAmount = "IsAllowsWriteOffAmount";
 	/**	Main POS Definition	*/
 	public static final String COLUMNNAME_DefaultCampaign_ID = "DefaultCampaign_ID";
 	public static final String COLUMNNAME_DefaultDiscountCharge_ID = "DefaultDiscountCharge_ID";

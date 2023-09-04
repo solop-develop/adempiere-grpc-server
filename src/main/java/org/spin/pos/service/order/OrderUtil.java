@@ -16,6 +16,7 @@
 package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Timestamp;
 import java.math.RoundingMode;
 import java.util.List;
@@ -396,7 +397,7 @@ public class OrderUtil {
 			return null;
 		}
 		BigDecimal difference = Optional.ofNullable(openAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(paymentAmount).orElse(Env.ZERO));
-		return difference.divide(Optional.ofNullable(openAmount).orElse(Env.ZERO), precision, RoundingMode.UP).multiply(Env.ONEHUNDRED);
+		return difference.divide(Optional.ofNullable(openAmount).orElse(Env.ZERO), MathContext.DECIMAL128).setScale(precision, RoundingMode.HALF_UP).multiply(Env.ONEHUNDRED);
 	}
 	
 	/**
