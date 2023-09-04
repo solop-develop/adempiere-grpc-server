@@ -183,6 +183,11 @@ service Store {
 	rpc ListRMALines(ListRMALinesRequest) returns (ListRMALinesResponse) {}
 	//	Process Return
 	rpc ProcessRMA(ProcessRMARequest) returns (RMA) {}
+	//	Create Order from RMA
+	rpc CreateOrderFromRMA(CreateOrderFromRMARequest) returns (Order) {}
+	//	Credit Memo as Payment Method
+	//	List Refund References
+	rpc ListCustomerCredit(ListCustomerCreditRequest) returns (ListCustomerCreditResponse) {}
 }
 
 //	Delete Refund reference request
@@ -1094,8 +1099,11 @@ message PointOfSales {
 	bool is_pos_manager = 46;
 	bool is_allows_modify_discount = 47;
 	bool is_keep_price_from_customer = 48;
-	Decimal maximum_line_discount_allowed = 59;
+	Decimal maximum_line_discount_allowed = 49;
 	bool is_allows_modify_customer = 50;
+	bool is_allows_detail_cash_closing = 51;
+	Decimal write_off_percentage_tolerance = 52;
+	bool is_write_off_by_percent = 53;
 }
 
 // Request for create a order
@@ -1623,6 +1631,13 @@ message ProcessRMARequest {
 	int32 pos_id = 4;
 }
 
+// Request for Create a new Sales Order from a RMA
+message CreateOrderFromRMARequest {
+	int32 source_rma_id = 1;
+	int32 sales_representative_id = 2;
+	int32 pos_id = 3;
+}
+
 // Return Order
 message RMA {
 	int32 id = 1;
@@ -1686,4 +1701,28 @@ message RMALine {
 	ProductConversion uom = 30;
 	ProductConversion product_uom = 31;
 	int32 source_order_line_id = 32;
+}
+
+// Customer Credit Memo
+message CreditMemo {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	int64 start_date = 5;
+	int64 end_date = 6;
+}
+
+message ListCustomerCreditRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	// filters
+	string search_value = 3;
+	string pos_id = 4;
+}
+
+message ListCustomerCreditResponse {
+	int64 record_count = 1;
+	repeated CreditMemo records = 2;
+	string next_page_token = 3;
 }

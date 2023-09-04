@@ -371,7 +371,7 @@ public class OrderUtil {
 		return chargeAmt;
 	}
 
-	public static BigDecimal getTotalAmountToPay(MOrder order) {
+	public static BigDecimal getTotalOpenAmount(MOrder order) {
 		if (order == null) {
 			return BigDecimal.ZERO;
 		}
@@ -384,7 +384,21 @@ public class OrderUtil {
 
 		return grandTotalWithCreditCharges;
 	}
-
+	
+	/**
+	 * Get Write Off Amount based on open amount vs payment amount
+	 * @param openAmount
+	 * @param paymentAmount
+	 * @return
+	 */
+	public static BigDecimal getWriteOffPercent(BigDecimal openAmount, BigDecimal paymentAmount, int precision) {
+		if(Optional.ofNullable(openAmount).orElse(Env.ZERO).compareTo(Env.ZERO) == 0) {
+			return null;
+		}
+		BigDecimal difference = Optional.ofNullable(openAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(paymentAmount).orElse(Env.ZERO));
+		return difference.divide(Optional.ofNullable(openAmount).orElse(Env.ZERO), precision, RoundingMode.UP).multiply(Env.ONEHUNDRED);
+	}
+	
 	/**
 	 * Get Payment Amount
 	 * @param order
