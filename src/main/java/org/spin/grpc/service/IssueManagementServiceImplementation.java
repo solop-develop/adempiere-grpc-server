@@ -39,7 +39,6 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.issue_management.CreateIssueCommentRequest;
 import org.spin.backend.grpc.issue_management.CreateIssueRequest;
 import org.spin.backend.grpc.issue_management.DeleteIssueCommentRequest;
@@ -71,6 +70,8 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.form.issue_management.IssueManagementConvertUtil;
+
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

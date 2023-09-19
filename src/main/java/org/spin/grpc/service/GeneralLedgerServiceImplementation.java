@@ -155,7 +155,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 	}
 
 	private ListEntitiesResponse.Builder listAccountingCombinations(ListAccountingCombinationsRequest request) {
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
 		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
 		} else if ((int) contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) <= 0) {
@@ -168,7 +168,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 
 		//
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
 
 		MTable table = MTable.get(Env.getCtx(), this.tableName);
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
@@ -240,9 +240,8 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 	private Entity.Builder convertAccountingCombination(SaveAccountingCombinationRequest request) {
 		// set context values
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
-
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), contextAttributesList);
 		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
 		} else if ((int) contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) <= 0) {
@@ -265,7 +264,7 @@ public class GeneralLedgerServiceImplementation extends GeneralLedgerImplBase {
 		
 		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accountingSchema.getAcctSchemaElements());
 
-		Map<String, Object> attributesList = ValueUtil.convertValuesToObjects(request.getAttributesList());
+		Map<String, Object> attributesList = ValueUtil.convertValuesMapToObjects(request.getAttributesMap());
 		StringBuffer sql = generateSQL(acctingSchemaElements, attributesList);
 
 		int clientId = Env.getContextAsInt(Env.getCtx(), windowNo, MAccount.COLUMNNAME_AD_Client_ID);

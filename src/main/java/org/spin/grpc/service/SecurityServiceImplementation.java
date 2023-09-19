@@ -51,7 +51,6 @@ import org.compiere.wf.MWorkflow;
 import org.spin.authentication.services.OpenIDUtil;
 import org.spin.backend.grpc.security.ChangeRoleRequest;
 import org.spin.backend.grpc.security.Client;
-import org.spin.backend.grpc.security.ContextValue;
 import org.spin.backend.grpc.security.ListRolesRequest;
 import org.spin.backend.grpc.security.ListRolesResponse;
 import org.spin.backend.grpc.security.ListServicesRequest;
@@ -70,7 +69,6 @@ import org.spin.backend.grpc.security.SessionInfoRequest;
 import org.spin.backend.grpc.security.SetSessionAttributeRequest;
 import org.spin.backend.grpc.security.UserInfo;
 import org.spin.backend.grpc.security.UserInfoRequest;
-import org.spin.backend.grpc.security.ValueType;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
@@ -79,6 +77,8 @@ import org.spin.base.util.ValueUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.util.AttachmentUtil;
+
+import com.google.protobuf.Struct;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -486,52 +486,25 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 	 * @param value
 	 * @return
 	 */
-	private ContextValue.Builder convertObjectFromContext(String value) {
-		ContextValue.Builder builder = ContextValue.newBuilder();
-		if (Util.isEmpty(value)) {
-			return builder;
-		}
-		if (ValueUtil.isNumeric(value)) {
-			builder.setValueType(ValueType.INTEGER);
-			builder.setIntValue(ValueUtil.getIntegerFromString(value));
-		} else if (ValueUtil.isBoolean(value)) {
-			builder.setValueType(ValueType.BOOLEAN);
-			boolean booleanValue = ValueUtil.stringToBoolean(value.trim());
-			builder.setBooleanValue(booleanValue);
-		} else if (ValueUtil.isDate(value)) {
-			builder.setValueType(ValueType.DATE);
-			builder.setLongValue(ValueUtil.getDateFromString(value).getTime());
-		} else {
-			builder.setValueType(ValueType.STRING);
-			builder.setStringValue(ValueUtil.validateNull(value));
-		}
-		//	
-		return builder;
-	}
-
-
-	/**
-	 * Get Object from ContextValue
-	 * @param contextValue
-	 * @return
-	 */
-	public Object getObjectFromContextValue(ContextValue contextValue) {
-		ValueType valueType = contextValue.getValueType();
-		if (valueType.equals(ValueType.BOOLEAN)) {
-			return contextValue.getBooleanValue();
-		} else if (valueType.equals(ValueType.DOUBLE)) {
-			return contextValue.getDoubleValue();
-		} else if (valueType.equals(ValueType.INTEGER)) {
-			return contextValue.getIntValue();
-		} else if (valueType.equals(ValueType.STRING)) {
-			return contextValue.getStringValue();
-		} else if (valueType.equals(ValueType.LONG) || valueType.equals(ValueType.DATE)) {
-			return ValueUtil.getTimestampFromLong(contextValue.getLongValue());
-		}
-		return null;
-	}
-
-
+//	private Value.Builder convertObjectFromContext(String value) {
+//		Value.Builder builder = Value.newBuilder();
+//		if (Util.isEmpty(value)) {
+//			return builder;
+//		}
+//		if (ValueUtil.isNumeric(value)) {
+//			builder.setIntValue(ValueUtil.getIntegerFromString(value));
+//		} else if (ValueUtil.isBoolean(value)) {
+//			boolean booleanValue = ValueUtil.stringToBoolean(value.trim());
+//			builder.setBooleanValue(booleanValue);
+//		} else if (ValueUtil.isDate(value)) {
+//			return ValueUtil.getValueFromDate(ValueUtil.getDateFromString(value));
+//		} else {
+//			builder.setStringValue(ValueUtil.validateNull(value));
+//		}
+//		//	
+//		return builder;
+//	}
+	
 	@Override
 	public void runChangeRole(ChangeRoleRequest request, StreamObserver<Session> responseObserver) {
 		try {
@@ -634,12 +607,37 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		session.setCostingPrecision(currency.getCostingPrecision());
 		session.setLanguage(ValueUtil.validateNull(ContextManager.getDefaultLanguage(Env.getAD_Language(Env.getCtx()))));
 		//	Set default context
+		Struct.Builder epale = Struct.newBuilder();
 		Env.getCtx().entrySet().stream()
 			.filter(keyValue -> isSessionContext(String.valueOf(keyValue.getKey())))
-			.forEach(contextKeyValue -> {
-				session.putDefaultContext(contextKeyValue.getKey().toString(), convertObjectFromContext((String)contextKeyValue.getValue()).build());
+			.forEach(contextKeyValue -> {				
+				epale.putFields(contextKeyValue.getKey().toString(), convertObjectFromContext((String)contextKeyValue.getValue()).build());
 			});
+		session.setDefaultContext(epale);
 	}
+	
+	private com.google.protobuf.Value.Builder convertObjectFromContext(String value) {
+		com.google.protobuf.Value.Builder builder = com.google.protobuf.Value.newBuilder();
+		if (Util.isEmpty(value)) {
+			return builder;
+		}
+		if (ValueUtil.isNumeric(value)) {
+			builder.setNumberValue(ValueUtil.getIntegerFromString(value));
+		} else if (ValueUtil.isBoolean(value)) {
+			boolean booleanValue = ValueUtil.stringToBoolean(value.trim());
+			builder.setBoolValue(booleanValue);
+		} else if(ValueUtil.isDate(value)) {
+			Struct.Builder date = Struct.newBuilder();
+			date.putFields("value", com.google.protobuf.Value.newBuilder().setStringValue(value).build());
+			date.putFields("time_zone", com.google.protobuf.Value.newBuilder().setStringValue("VE").build());
+			builder.setStructValue(date);
+		} else {
+			builder.setStringValue(ValueUtil.validateNull(value));
+		}
+		//	
+		return builder;
+	}
+
 	
 	
 	/**

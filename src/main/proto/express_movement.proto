@@ -20,6 +20,7 @@ option java_outer_classname = "ADempiereExpressMovement";
 
 import "base_data_type.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 package express_movement;
 
@@ -37,7 +38,7 @@ service ExpressMovement {
 			body: "*"
 		};
 	}
-	rpc DeleteMovement(DeleteMovementRequest) returns (data.Empty) {
+	rpc DeleteMovement(DeleteMovementRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/express-movement/movements/{id}" };
 	}
 	rpc ProcessMovement(ProcessMovementRequest) returns (Movement) {
@@ -53,7 +54,7 @@ service ExpressMovement {
 			body: "*"
 		};
 	}
-	rpc DeleteMovementLine(DeleteMovementLineRequest) returns (data.Empty) {
+	rpc DeleteMovementLine(DeleteMovementLineRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/express-movement/movement/{movement_id}/lines/{id}" };
 	}
 	rpc UpdateMovementLine(UpdateMovementLineRequest) returns (MovementLine) {

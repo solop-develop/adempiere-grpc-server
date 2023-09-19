@@ -20,6 +20,7 @@ option java_package = "org.spin.backend.grpc.issue_management";
 option java_outer_classname = "ADempiereIssueManagement";
 
 import "base_data_type.proto";
+import "google/protobuf/empty.proto";
 
 package issue_management;
 
@@ -38,12 +39,12 @@ service IssueManagement {
 	rpc ListIssues(ListIssuesRequest) returns (ListIssuesReponse) {}
 	rpc CreateIssue(CreateIssueRequest) returns (Issue) {}
 	rpc UpdateIssue(UpdateIssueRequest) returns (Issue) {}
-	rpc DeleteIssue(DeleteIssueRequest) returns (data.Empty) {}
+	rpc DeleteIssue(DeleteIssueRequest) returns (google.protobuf.Empty) {}
 	// Issue Comments
 	rpc ListIssueComments(ListIssueCommentsRequest) returns (ListIssueCommentsReponse) {}
 	rpc CreateIssueComment(CreateIssueCommentRequest) returns (IssueComment) {}
 	rpc UpdateIssueComment(UpdateIssueCommentRequest) returns (IssueComment) {}
-	rpc DeleteIssueComment(DeleteIssueCommentRequest) returns (data.Empty) {}
+	rpc DeleteIssueComment(DeleteIssueCommentRequest) returns (google.protobuf.Empty) {}
 }
 
 // Request Type Definition

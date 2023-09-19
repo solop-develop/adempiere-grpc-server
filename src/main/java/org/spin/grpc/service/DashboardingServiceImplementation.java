@@ -68,6 +68,7 @@ import org.spin.backend.grpc.dashboarding.Action;
 import org.spin.backend.grpc.dashboarding.ChartData;
 import org.spin.backend.grpc.dashboarding.ChartSerie;
 import org.spin.backend.grpc.common.Criteria;
+import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.dashboarding.Dashboard;
 import org.spin.backend.grpc.dashboarding.ExistsWindowDashboardsRequest;
 import org.spin.backend.grpc.dashboarding.ExistsWindowDashboardsResponse;
@@ -935,8 +936,8 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		// fill context
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		Map<String, Object> attributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-		ContextManager.setContextWithAttributes(windowNo, context, attributesList);
+		Map<String, Value> attributes = request.getContextAttributesMap();
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, context, attributes);
 
 		PO windowChart = RecordUtil.getEntity(context, "ECA50_WindowChart", request.getUuid(), request.getId(), null);
 		if (windowChart == null || windowChart.get_ID() <= 0) {
@@ -962,25 +963,23 @@ public class DashboardingServiceImplementation extends DashboardingImplBase {
 		Env.setContext(context, windowNo, I_AD_Table.COLUMNNAME_TableName, request.getTableName());
 
 		Map<String, Object> filtersList = new HashMap<String, Object>();
-
-		attributesList.entrySet().stream()
-			.forEach(entry -> {
-				PO chartParameter = new Query(
-						context,
-						"ECA50_WindowChartParameter",
-						"ColumnName = ? AND ECA50_WindowChart_ID = ?",
-						null
-					)
-					.setParameters(entry.getKey(), windowChart.get_ID())
-					.first()
-				;
-				if (chartParameter != null) {
-					filtersList.put(
-						chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL),
-						entry.getValue()
-					);
-				}
-			});
+		attributes.entrySet().forEach(entry -> {
+			PO chartParameter = new Query(
+					context,
+					"ECA50_WindowChartParameter",
+					"ColumnName = ? AND ECA50_WindowChart_ID = ?",
+					null
+				)
+				.setParameters(entry.getKey(), windowChart.get_ID())
+				.first()
+			;
+			if (chartParameter != null) {
+				filtersList.put(
+					chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL),
+					entry.getValue()
+				);
+			}
+		});
 
 		// prameters as client filters
 		Map<String, Object> clientFiltersList = DashboardingConvertUtil.convertFilterValuesToObjects(

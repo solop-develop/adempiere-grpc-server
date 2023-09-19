@@ -70,7 +70,6 @@ public class BankStatementMatchConvertUtil {
 
 		Currency.Builder currencyBuilder = convertCurrency(bankAccount.getC_Currency_ID());
 		builder.setId(bankAccount.getC_BankAccount_ID())
-			.setUuid(ValueUtil.validateNull(bankAccount.getUUID()))
 			.setAccountNo(accountNo)
 			.setAccountName(ValueUtil.validateNull(bankAccount.getName()))
 			.setBankName(
@@ -109,11 +108,6 @@ public class BankStatementMatchConvertUtil {
 		);
 
 		builder.setId(bankStatement.getC_BankStatement_ID())
-			.setUuid(
-				ValueUtil.validateNull(
-					bankStatement.getUUID()
-				)
-			)
 			.setBankAccount(
 				convertBankAccount(
 					bankStatement.getC_BankAccount_ID()
@@ -140,7 +134,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setStatementDate(
-				ValueUtil.getLongFromTimestamp(
+				ValueUtil.convertDateToString(
 					bankStatement.getStatementDate()
 				)
 			)
@@ -182,9 +176,6 @@ public class BankStatementMatchConvertUtil {
 		}
 
 		builder.setId(businessPartner.getC_BPartner_ID())
-			.setUuid(
-				ValueUtil.validateNull(businessPartner.getUUID())
-			)
 			.setValue(
 				ValueUtil.validateNull(businessPartner.getValue())
 			)
@@ -225,9 +216,6 @@ public class BankStatementMatchConvertUtil {
 		}
 
 		builder.setId(currency.getC_Currency_ID())
-			.setUuid(
-				ValueUtil.validateNull(currency.getUUID())
-			)
 			.setIsoCode(
 				ValueUtil.validateNull(currency.getISO_Code())
 			)
@@ -265,7 +253,6 @@ public class BankStatementMatchConvertUtil {
 		}
 
 		builder.setId(tenderType.getAD_Ref_List_ID())
-			.setUuid(ValueUtil.validateNull(tenderType.getUUID()))
 			.setValue(ValueUtil.validateNull(tenderType.getValue()))
 			.setName(
 				ValueUtil.validateNull(name)
@@ -302,13 +289,8 @@ public class BankStatementMatchConvertUtil {
 		}
 
 		builder.setId(payment.getC_Payment_ID())
-			.setUuid(
-				ValueUtil.validateNull(
-					payment.getUUID()
-				)
-			)
 			.setTransactionDate(
-				ValueUtil.getLongFromTimestamp(
+				ValueUtil.convertDateToString(
 					payment.getDateTrx()
 				)
 			)
@@ -344,11 +326,6 @@ public class BankStatementMatchConvertUtil {
 		}
 
 		builder.setId(bankStatemet.getI_BankStatement_ID())
-			.setUuid(
-				ValueUtil.validateNull(
-					bankStatemet.getUUID()
-				)
-			)
 			.setReferenceNo(
 				ValueUtil.validateNull(
 					bankStatemet.getReferenceNo()
@@ -368,7 +345,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.getLongFromTimestamp(
+				ValueUtil.convertDateToString(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -419,11 +396,6 @@ public class BankStatementMatchConvertUtil {
 		}
 
 		builder.setId(bankStatemet.getI_BankStatement_ID())
-			.setUuid(
-				ValueUtil.validateNull(
-					bankStatemet.getUUID()
-				)
-			)
 			.setReferenceNo(
 				ValueUtil.validateNull(
 					bankStatemet.getReferenceNo()
@@ -443,7 +415,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.getLongFromTimestamp(
+				ValueUtil.convertDateToString(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -478,7 +450,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDate(
-					ValueUtil.getLongFromTimestamp(
+					ValueUtil.convertDateToString(
 						payment.getDateTrx()
 					)
 				)
@@ -511,11 +483,6 @@ public class BankStatementMatchConvertUtil {
 		}
 
 		builder.setId(bankStatemet.getI_BankStatement_ID())
-			.setUuid(
-				ValueUtil.validateNull(
-					bankStatemet.getUUID()
-				)
-			)
 			.setReferenceNo(
 				ValueUtil.validateNull(
 					bankStatemet.getReferenceNo()
@@ -535,7 +502,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.getLongFromTimestamp(
+				ValueUtil.convertDateToString(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -593,7 +560,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDate(
-					ValueUtil.getLongFromTimestamp(
+					ValueUtil.convertDateToString(
 						payment.getDateTrx()
 					)
 				)

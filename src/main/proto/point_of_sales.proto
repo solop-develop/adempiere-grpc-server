@@ -22,6 +22,7 @@ import "core_functionality.proto";
 import "base_data_type.proto";
 import "file_management.proto";
 import "time_control.proto";
+import "google/protobuf/empty.proto";
 
 package data;
 
@@ -38,11 +39,11 @@ service Store {
 	//	Create Order
 	rpc CreateOrder(CreateOrderRequest) returns (Order) {}
 	//	Delete Order
-	rpc DeleteOrder(DeleteOrderRequest) returns (Empty) {}
+	rpc DeleteOrder(DeleteOrderRequest) returns (google.protobuf.Empty) {}
 	//	Create Order Line
 	rpc CreateOrderLine(CreateOrderLineRequest) returns (OrderLine) {}
 	//	Delete Order Line
-	rpc DeleteOrderLine(DeleteOrderLineRequest) returns (Empty) {}
+	rpc DeleteOrderLine(DeleteOrderLineRequest) returns (google.protobuf.Empty) {}
 	//	Update Order
 	rpc UpdateOrder(UpdateOrderRequest) returns (Order) {}
 	//	Release Order
@@ -65,13 +66,13 @@ service Store {
 	//	Update Payment
 	rpc UpdatePayment(UpdatePaymentRequest) returns (Payment) {}
 	//	Delete Payment
-	rpc DeletePayment(DeletePaymentRequest) returns (Empty) {}
+	rpc DeletePayment(DeletePaymentRequest) returns (google.protobuf.Empty) {}
 	//	List Payments
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {}
 	//	Process Order
 	rpc ProcessOrder(ProcessOrderRequest) returns (Order) {}
 	//	Validate PIN
-	rpc ValidatePIN(ValidatePINRequest) returns (Empty) {}
+	rpc ValidatePIN(ValidatePINRequest) returns (google.protobuf.Empty) {}
 	//	List of Available Warehouses
 	rpc ListAvailableWarehouses(ListAvailableWarehousesRequest) returns (ListAvailableWarehousesResponse) {}
 	//	List of Available Tender Types
@@ -111,18 +112,18 @@ service Store {
 	//	Get Customer Account
 	rpc GetCustomerBankAccount(GetCustomerBankAccountRequest) returns (CustomerBankAccount) {}
 	//	Delete Customer Account
-	rpc DeleteCustomerBankAccount(DeleteCustomerBankAccountRequest) returns (Empty) {}
+	rpc DeleteCustomerBankAccount(DeleteCustomerBankAccountRequest) returns (google.protobuf.Empty) {}
 	//	List Customer Accounts
 	rpc ListCustomerBankAccounts(ListCustomerBankAccountsRequest) returns (ListCustomerBankAccountsResponse) {}
 	//	shipment
 	//	Create Shipment
 	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {}
 	//	Delete Shipment
-	rpc DeleteShipment(DeleteShipmentRequest) returns (Empty) {}
+	rpc DeleteShipment(DeleteShipmentRequest) returns (google.protobuf.Empty) {}
 	//	Create Shipment Line
 	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {}
 	//	Delete Shipment Line
-	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (Empty) {}
+	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {}
 	//	Update Order Line
 	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {}
 	//	Get a Open Shipment
@@ -135,9 +136,9 @@ service Store {
 	//	Reverse Sales Transaction
 	rpc ReverseSales(ReverseSalesRequest) returns (Order) {}
 	//	Cash Management
-	rpc ProcessCashOpening(CashOpeningRequest) returns (Empty) {}
+	rpc ProcessCashOpening(CashOpeningRequest) returns (google.protobuf.Empty) {}
 	//	Cash Withdrawal
-	rpc ProcessCashWithdrawal(CashWithdrawalRequest) returns (Empty) {}
+	rpc ProcessCashWithdrawal(CashWithdrawalRequest) returns (google.protobuf.Empty) {}
 	//	Cash Closing
 	rpc ProcessCashClosing(CashClosingRequest) returns (CashClosing) {}
 	//	List all cash movements
@@ -145,13 +146,13 @@ service Store {
 	//	List Cash Summary
 	rpc ListCashSummaryMovements(ListCashSummaryMovementsRequest) returns (ListCashSummaryMovementsResponse) {}
 	//	Allocate Seller
-	rpc AllocateSeller(AllocateSellerRequest) returns (Empty) {}
+	rpc AllocateSeller(AllocateSellerRequest) returns (google.protobuf.Empty) {}
 	//	Allocate Seller
-	rpc DeallocateSeller(DeallocateSellerRequest) returns (Empty) {}
+	rpc DeallocateSeller(DeallocateSellerRequest) returns (google.protobuf.Empty) {}
 	//	Create Refund Reference
 	rpc CreatePaymentReference(CreatePaymentReferenceRequest) returns (PaymentReference) {}
 	//	Delete Refund Reference
-	rpc DeletePaymentReference(DeletePaymentReferenceRequest) returns (Empty) {}
+	rpc DeletePaymentReference(DeletePaymentReferenceRequest) returns (google.protobuf.Empty) {}
 	//	List Refund References
 	rpc ListPaymentReferences(ListPaymentReferencesRequest) returns (ListPaymentReferencesResponse) {}
 	//  List Stock: GET /api/stocks
@@ -161,7 +162,7 @@ service Store {
 	// Command Shortcut
 	rpc SaveCommandShortcut(SaveCommandShortcutRequest) returns (CommandShortcut) {}
 	rpc ListCommandShortcuts(ListCommandShortcutsRequest) returns (ListCommandShortcutsResponse) {}
-	rpc DeleteCommandShortcut(DeleteCommandShortcutRequest) returns (Empty) {}
+	rpc DeleteCommandShortcut(DeleteCommandShortcutRequest) returns (google.protobuf.Empty) {}
 	// Campaign
 	rpc ListCampaigns(ListCampaignsRequest) returns (ListCampaignsResponse) {}
 	//	Copy Order
@@ -170,11 +171,11 @@ service Store {
 	//	Create Return
 	rpc CreateRMA(CreateRMARequest) returns (RMA) {}
 	//	Delete Return
-	rpc DeleteRMA(DeleteRMARequest) returns (Empty) {}
+	rpc DeleteRMA(DeleteRMARequest) returns (google.protobuf.Empty) {}
 	//	Create Return Line
 	rpc CreateRMALine(CreateRMALineRequest) returns (RMALine) {}
 	//	Delete Return Line
-	rpc DeleteRMALine(DeleteRMALineRequest) returns (Empty) {}
+	rpc DeleteRMALine(DeleteRMALineRequest) returns (google.protobuf.Empty) {}
 	//	Update RMA Line
 	rpc UpdateRMALine(UpdateRMALineRequest) returns (RMALine) {}
 	//	Get a Open Return
@@ -708,7 +709,7 @@ message AddressRequest {
 	string contact_name = 18;
 	string email = 19;
 	string phone = 20;
-	repeated KeyValue additional_attributes = 21;
+	map <string, data.Value> additional_attributes = 21;
 	string pos_uuid = 22;
 }
 
@@ -725,7 +726,7 @@ message CreateCustomerRequest {
 	string pos_uuid = 13;
 	//	Location
 	repeated AddressRequest addresses = 14;
-	repeated KeyValue additional_attributes = 15;
+	map <string, data.Value> additional_attributes = 15;
 }
 
 // Request for update Customer
@@ -740,7 +741,7 @@ message UpdateCustomerRequest {
 	string description = 9;
 	//	Location
 	repeated AddressRequest addresses = 10;
-	repeated KeyValue additional_attributes = 11;
+	map <string, data.Value> additional_attributes = 11;
 	string pos_uuid = 12;
 }
 

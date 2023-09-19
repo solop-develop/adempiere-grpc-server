@@ -19,7 +19,7 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.user_customization";
 option java_outer_classname = "ADempiereUserCustomization";
 
-import "base_data_type.proto";
+import "google/protobuf/empty.proto";
 
 package user_customization;
 
@@ -29,9 +29,9 @@ service UserCustomization {
 	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {}
 	rpc ListCustomizationsLevel(ListCustomizationsLevelRequest) returns (ListCustomizationsLevelResponse) {}
 	// User Customization
-	rpc SaveWindowCustomization(SaveWindowCustomizationRequest) returns (data.Empty) {}
-	rpc SaveBrowseCustomization(SaveBrowseCustomizationRequest) returns (data.Empty) {}
-	rpc SaveProcessCustomization(SaveProcessCustomizationRequest) returns (data.Empty) {}
+	rpc SaveWindowCustomization(SaveWindowCustomizationRequest) returns (google.protobuf.Empty) {}
+	rpc SaveBrowseCustomization(SaveBrowseCustomizationRequest) returns (google.protobuf.Empty) {}
+	rpc SaveProcessCustomization(SaveProcessCustomizationRequest) returns (google.protobuf.Empty) {}
 }
 
 // User

@@ -16,9 +16,9 @@ package org.spin.base.db;
 
 import org.compiere.model.MQuery;
 import org.compiere.util.DisplayType;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Condition;
 import org.spin.backend.grpc.common.Operator;
-import org.spin.backend.grpc.common.Value.ValueType;
 
 /**
  * Class for handle SQL Operators
@@ -120,15 +120,15 @@ public class OperatorUtil {
 		if (condition.getValuesList().size() > 0) {
 			// list operator
 			return Operator.IN_VALUE;
-		} else if (condition.getValueTo().getValueType() != ValueType.UNKNOWN) {
-			if (condition.getValue().getValueType() != ValueType.UNKNOWN) {
+		} else if (condition.getValueTo().getNullValueValue() != com.google.protobuf.NullValue.NULL_VALUE_VALUE) {
+			if (condition.getValue().getNullValueValue() != com.google.protobuf.NullValue.NULL_VALUE_VALUE) {
 				// range operator
 				return Operator.BETWEEN_VALUE;
 			}
 			// only to value
 			// return Operator.LESS_EQUAL_VALUE;
 		}
-		if (condition.getValue().getValueType() == ValueType.STRING) {
+		if (!Util.isEmpty(condition.getValue().getStringValue())) {
 			// like
 			return Operator.LIKE_VALUE;
 		}

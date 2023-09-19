@@ -22,8 +22,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -69,10 +72,8 @@ import org.spin.backend.grpc.common.BusinessDataGrpc.BusinessDataImplBase;
 import org.spin.backend.grpc.common.CreateEntityRequest;
 import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.DeleteEntityRequest;
-import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.GetEntityRequest;
-import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.KeyValueSelection;
 import org.spin.backend.grpc.common.ListEntitiesRequest;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
@@ -84,6 +85,7 @@ import org.spin.backend.grpc.common.UpdateEntityRequest;
 import org.spin.backend.grpc.common.Value;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -269,8 +271,8 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			}
 		}
 		PO entity = null;
-		List<KeyValue> parametersList = new ArrayList<KeyValue>();
-		parametersList.addAll(request.getParametersList());
+		Map<String, Value> parameters = new HashMap<String, Value>();
+		parameters.putAll(request.getParametersMap());
 		int recordId = request.getRecordId();
 		if ((recordId > 0
 				|| !Util.isEmpty(request.getRecordUuid(), true))
@@ -310,7 +312,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			for(KeyValueSelection selectionKey : request.getSelectionsList()) {
 				selectionKeys.add(selectionKey.getSelectionId());
 				if(selectionKey.getValuesCount() > 0) {
-					selection.put(selectionKey.getSelectionId(), new LinkedHashMap<>(ValueUtil.convertValuesToObjects(selectionKey.getValuesList())));
+					selection.put(selectionKey.getSelectionId(), new LinkedHashMap<>(ValueUtil.convertValuesMapToObjects(selectionKey.getValuesMap())));
 				}
 			}
 			builder.withSelectedRecordsIds(request.getTableSelectedId(), selectionKeys, selection);
@@ -319,9 +321,9 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		String documentAction = null;
 		//	Parameters
 		if(request.getParametersCount() > 0) {
-			for(KeyValue parameter : parametersList.stream().filter(parameterValue -> !parameterValue.getKey().endsWith("_To")).collect(Collectors.toList())) {
+			for(Entry<String, Value> parameter : parameters.entrySet().stream().filter(parameterValue -> !parameterValue.getKey().endsWith("_To")).collect(Collectors.toList())) {
 				Object value = ValueUtil.getObjectFromValue(parameter.getValue());
-				Optional<KeyValue> maybeToParameter = parametersList.stream().filter(parameterValue -> parameterValue.getKey().equals(parameter.getKey() + "_To")).findFirst();
+				Optional<Entry<String, Value>> maybeToParameter = parameters.entrySet().stream().filter(parameterValue -> parameterValue.getKey().equals(parameter.getKey() + "_To")).findFirst();
 				if(value != null) {
 					if(maybeToParameter.isPresent()) {
 						Object valueTo = ValueUtil.getObjectFromValue(maybeToParameter.get().getValue());
@@ -574,16 +576,18 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		if(entity == null) {
 			throw new AdempiereException("@Error@ PO is null");
 		}
-		request.getAttributesList().forEach(attribute -> {
-			int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+		Map<String, Value> attributes = request.getAttributesMap();
+		attributes.keySet().forEach(key -> {
+			Value attribute = attributes.get(key);
+			int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), key);
 			Object value = null;
 			if(referenceId > 0) {
-				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
+				value = ValueUtil.getObjectFromReference(attribute, referenceId);
 			} 
 			if(value == null) {
-				value = ValueUtil.getObjectFromValue(attribute.getValue());
+				value = ValueUtil.getObjectFromValue(attribute);
 			}
-			entity.set_ValueOfColumn(attribute.getKey(), value);
+			entity.set_ValueOfColumn(key, value);
 		});
 		//	Save entity
 		entity.saveEx();
@@ -605,16 +609,18 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), request.getId(), null);
 		if(entity != null
 				&& entity.get_ID() >= 0) {
-			request.getAttributesList().forEach(attribute -> {
-				int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+			Map<String, Value> attributes = request.getAttributesMap();
+			attributes.keySet().forEach(key -> {
+				Value attribute = attributes.get(key);
+				int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), key);
 				Object value = null;
 				if(referenceId > 0) {
-					value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
+					value = ValueUtil.getObjectFromReference(attribute, referenceId);
 				} 
 				if(value == null) {
-					value = ValueUtil.getObjectFromValue(attribute.getValue());
+					value = ValueUtil.getObjectFromValue(attribute);
 				}
-				entity.set_ValueOfColumn(attribute.getKey(), value);
+				entity.set_ValueOfColumn(key, value);
 			});
 			//	Save entity
 			entity.saveEx();
@@ -753,7 +759,7 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
-						if(!valueBuilder.getValueType().equals(Value.ValueType.UNRECOGNIZED)) {
+						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
 							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
 						}
 					} catch (Exception e) {

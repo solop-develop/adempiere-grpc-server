@@ -22,7 +22,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -39,9 +38,7 @@ import org.compiere.util.NamePair;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Decimal;
-import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.Value;
-import org.spin.backend.grpc.common.Value.ValueType;
 
 /**
  * Class for handle Values from and to client
@@ -86,7 +83,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromInteger(Integer value) {
-		Value.Builder convertedValue = Value.newBuilder().setValueType(ValueType.INTEGER);
+		Value.Builder convertedValue = Value.newBuilder();
 		if(value != null) {
 			convertedValue.setIntValue((Integer)value);
 		}
@@ -99,7 +96,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromInt(int value) {
-		Value.Builder convertedValue = Value.newBuilder().setValueType(ValueType.INTEGER);
+		Value.Builder convertedValue = Value.newBuilder();
 		convertedValue.setIntValue(Integer.valueOf(value));
 		// default
 		return convertedValue;
@@ -111,7 +108,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromString(String value) {
-		return Value.newBuilder().setStringValue(validateNull(value)).setValueType(ValueType.STRING);
+		return Value.newBuilder().setStringValue(validateNull(value));
 	}
 
 	/**
@@ -120,7 +117,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromBoolean(boolean value) {
-		return Value.newBuilder().setBooleanValue(value).setValueType(ValueType.BOOLEAN);
+		return Value.newBuilder().setBooleanValue(value);
 	}
 	/**
 	 * Get value from a Boolean value
@@ -128,7 +125,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromBoolean(Boolean value) {
-		return Value.newBuilder().setBooleanValue(value.booleanValue()).setValueType(ValueType.BOOLEAN);
+		return Value.newBuilder().setBooleanValue(value.booleanValue());
 	}
 	/**
 	 * Get value from a String Boolean value
@@ -137,8 +134,7 @@ public class ValueUtil {
 	 */
 	public static Value.Builder getValueFromBoolean(String value) {
 		return Value.newBuilder()
-			.setBooleanValue(stringToBoolean(value))
-			.setValueType(ValueType.BOOLEAN);
+			.setBooleanValue(stringToBoolean(value));
 	}
 
 	/**
@@ -148,13 +144,12 @@ public class ValueUtil {
 	 */
 	public static Value.Builder getValueFromDate(Timestamp value) {
 		if (value == null) {
-			return Value.newBuilder().setValueType(ValueType.DATE);
+			return Value.newBuilder();
 		}
 		return Value.newBuilder()
-			.setLongValue(
-				getLongFromTimestamp(value)
-			)
-			.setValueType(ValueType.DATE);
+			.setDateValue(
+					convertDateToString(value)
+			);
 	}
 	
 	/**
@@ -164,7 +159,6 @@ public class ValueUtil {
 	 */
 	public static Value.Builder getValueFromDecimal(BigDecimal value) {
 		return Value.newBuilder()
-			.setValueType(ValueType.DECIMAL)
 			.setDecimalValue(
 				getDecimalFromBigDecimal(value)
 			);
@@ -198,10 +192,10 @@ public class ValueUtil {
 	 */
 	public static BigDecimal getDecimalFromValue(Value value) {
 		if (Util.isEmpty(value.getDecimalValue().getDecimalValue(), true)) {
-			if (value.getValueType() == Value.ValueType.INTEGER) {
+			if (value.getIntValue() != 0) {
 				return BigDecimal.valueOf(value.getIntValue());
 			}
-			if (value.getValueType() == Value.ValueType.STRING) {
+			if (Util.isEmpty(value.getStringValue())) {
 				return getBigDecimalFromString(value.getStringValue());
 			}
 			return null;
@@ -415,21 +409,20 @@ public class ValueUtil {
 		}
 		return displayedValue;
 	}
-
-
+	
 	/**
 	 * Convert Selection values from gRPC to ADempiere values
 	 * @param values
 	 * @return
 	 */
-	public static Map<String, Object> convertValuesToObjects(List<KeyValue> values) {
+	public static Map<String, Object> convertValuesMapToObjects(Map<String, Value> values) {
 		Map<String, Object> convertedValues = new HashMap<>();
 		if (values == null || values.size() <= 0) {
 			return convertedValues;
 		}
-		for(KeyValue value : values) {
-			convertedValues.put(value.getKey(), getObjectFromValue(value.getValue()));
-		}
+		values.keySet().forEach(keyValue -> {
+			convertedValues.put(keyValue, getObjectFromValue(values.get(keyValue)));
+		});
 		//	
 		return convertedValues;
 	}
@@ -449,16 +442,23 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Object getObjectFromValue(Value value, boolean uppercase) {
-		if(value.getValueType().equals(ValueType.BOOLEAN)) {
-			return value.getBooleanValue();
-		} else if(value.getValueType().equals(ValueType.DECIMAL)) {
-			return getDecimalFromValue(value);
-		} else if(value.getValueType().equals(ValueType.INTEGER)) {
-			return value.getIntValue();
-		} else if(value.getValueType().equals(ValueType.STRING)) {
+		if(value == null) {
+			return null;
+		}
+		if(Util.isEmpty(value.getDateValue())) {
+			return convertStringToDate(value.getDateValue());
+		}
+		if(Util.isEmpty(value.getStringValue())) {
 			return getStringFromValue(value, uppercase);
-		} else if(value.getValueType().equals(ValueType.DATE)) {
-			return getDateFromValue(value);
+		}
+		if(value.getDecimalValue() != null) {
+			return getDecimalFromValue(value);
+		}
+		if(value.getLongValue() != 0) {
+			return value.getLongValue();
+		}
+		if(value.getIntValue() != 0) {
+			return value.getIntValue();
 		}
 		return null;
 	}
@@ -470,8 +470,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Object getObjectFromReference(Value value, int referenceId) {
-		if(value == null
-				|| value.getValueType().equals(ValueType.UNKNOWN)) {
+		if(value == null) {
 			return null;
 		}
 		//	Validate values

@@ -19,6 +19,8 @@ option java_package = "org.spin.backend.grpc.security";
 option java_outer_classname = "ADempiereSecurity";
 
 import "google/api/annotations.proto";
+import "base_data_type.proto";
+import "google/protobuf/struct.proto";
 
 package security;
 
@@ -162,27 +164,22 @@ message SessionInfo {
 	string currency_symbol = 14;
 	int32 standard_precision = 15;
 	int32 costing_precision = 16;
-	map<string, ContextValue> default_context = 17;
-}
-
-enum ValueType {
-	NULL = 0;
-	INTEGER = 1;
-	LONG = 2;
-	DOUBLE = 3;
-	BOOLEAN = 4;
-	STRING = 5;
-	DATE = 6;
+	google.protobuf.Struct default_context = 17;
 }
 
 // Define value for object
-message ContextValue {
-	int32 int_value = 1;
-	int64 long_value = 2;
-	double double_value = 3;
-	bool boolean_value = 4;
-	string string_value = 5;
-	ValueType value_type = 6;
+message Value {
+	oneof kind {
+		google.protobuf.NullValue null_value = 1;
+		google.protobuf.Struct struct_value = 2;
+		google.protobuf.ListValue list_value = 3;
+		int32 int_value = 4;
+		int64 long_value = 5;
+		bool boolean_value = 6;
+		string string_value = 7;
+		string date_value = 8;
+		data.Decimal decimal_value = 9;
+	}
 }
 
 message SetSessionAttributeRequest {

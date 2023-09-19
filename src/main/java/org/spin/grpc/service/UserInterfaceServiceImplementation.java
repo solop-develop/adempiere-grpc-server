@@ -134,7 +134,6 @@ import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.DefaultValue;
 import org.spin.backend.grpc.common.DeletePreferenceRequest;
 import org.spin.backend.grpc.common.DrillTable;
-import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ExistsReferencesRequest;
 import org.spin.backend.grpc.common.ExistsReferencesResponse;
@@ -145,7 +144,6 @@ import org.spin.backend.grpc.common.GetPrivateAccessRequest;
 import org.spin.backend.grpc.common.GetRecordAccessRequest;
 import org.spin.backend.grpc.common.GetReportOutputRequest;
 import org.spin.backend.grpc.common.GetTabEntityRequest;
-import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.ListBrowserItemsRequest;
 import org.spin.backend.grpc.common.ListBrowserItemsResponse;
 import org.spin.backend.grpc.common.ListDrillTablesRequest;
@@ -213,6 +211,7 @@ import org.spin.model.MADContextInfo;
 import org.spin.util.ASPUtil;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -358,7 +357,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
 		List<MViewColumn> viewColumnsList = view.getViewColumns();
 
-		request.getAttributesList().forEach(attribute -> {
+		request.getAttributesMap().entrySet().forEach(attribute -> {
 			// find view column definition
 			MViewColumn viewColumn = viewColumnsList
 				.stream()
@@ -1030,7 +1029,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
-						if(!valueBuilder.getValueType().equals(Value.ValueType.UNRECOGNIZED)) {
+						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
 							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
 						}
 					} catch (Exception e) {
@@ -1093,7 +1092,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Fill context
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, context, request.getContextAttributesMap());
 
 		// get where clause including link column and parent column
 		String where = WhereClauseUtil.getTabWhereClauseFromParentTabs(context, tab, null);
@@ -1214,7 +1213,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		if (entity == null) {
 			throw new AdempiereException("@Error@ PO is null");
 		}
-		request.getAttributesList().forEach(attribute -> {
+		request.getAttributesMap().entrySet().forEach(attribute -> {
 			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if (referenceId > 0) {
@@ -1282,7 +1281,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
 		if (entity.get_ID() >= 0) {
-			request.getAttributesList().forEach(attribute -> {
+			request.getAttributesMap().entrySet().forEach(attribute -> {
 				int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 				Object value = null;
 				if (referenceId > 0) {
@@ -1357,7 +1356,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
 
 		//
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
@@ -2436,7 +2435,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		}
 		
 		//	Validate SQL
-		DefaultValue.Builder builder = getDefaultKeyAndValue(request.getContextAttributesList(), defaultValue, referenceId, referenceValueId, columnName, validationRuleId);
+		DefaultValue.Builder builder = getDefaultKeyAndValue(request.getContextAttributesMap(), defaultValue, referenceId, referenceValueId, columnName, validationRuleId);
 		return builder;
 	}
 	
@@ -2451,7 +2450,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 	 * @param validationRuleId
 	 * @return
 	 */
-	private DefaultValue.Builder getDefaultKeyAndValue(List<KeyValue> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
+	private DefaultValue.Builder getDefaultKeyAndValue(Map<String, Value> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
 		DefaultValue.Builder builder = DefaultValue.newBuilder();
 		if(Util.isEmpty(defaultValue, true)) {
 			return builder;
@@ -2460,7 +2459,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		// Fill contex
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), contextAttributes);
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), contextAttributes);
 
 		if(defaultValue.trim().startsWith("@SQL=")) {
 			defaultValue = defaultValue.replace("@SQL=", "");
@@ -2671,7 +2670,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Fill Env.getCtx()
 		
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
 
 		String sql = reference.QueryDirect;
 		sql = Env.parseContext(Env.getCtx(), windowNo, sql, false);
@@ -2744,8 +2743,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
 
-		Map<String, Object> contextAttributes = ValueUtil.convertValuesToObjects(
-			request.getContextAttributesList()
+		Map<String, Object> contextAttributes = ValueUtil.convertValuesMapToObjects(
+			request.getContextAttributesMap()
 		);
 
 		return listLookupItems(
@@ -2773,7 +2772,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		//	Fill Env.getCtx()
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), contextAttributes);
+		ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), contextAttributes);
 
 		String sql = reference.Query;
 		sql = Env.parseContext(Env.getCtx(), windowNo, sql, false);
@@ -2897,7 +2896,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//	Fill Env.getCtx()
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, context, request.getContextAttributesMap());
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 
 		//	get query columns
@@ -3025,7 +3024,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 						//	From field
 						String fieldColumnName = field.getAD_View_Column().getColumnName();
 						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
-						if(!valueBuilder.getValueType().equals(Value.ValueType.UNRECOGNIZED)) {
+						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
 							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
 						}
 					} catch (Exception e) {
@@ -3132,8 +3131,8 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			}
 
 			// set values on Env.getCtx()
-			Map<String, Object> attributes = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-			ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), attributes);
+			Map<String, Object> attributes = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+			ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), attributes);
 
 			//
 			Object oldValue = ValueUtil.getObjectFromValue(request.getOldValue());
@@ -3438,7 +3437,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//  Fill Env.getCtx()
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
 		
 		MTab tab = new Query(
 				Env.getCtx(),
@@ -3567,7 +3566,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		//  Fill Env.getCtx()
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
 		
 		MTab tab = new Query(
 				Env.getCtx(),
@@ -3603,7 +3602,6 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			request.getEntitiesList().stream().forEach(entitySelection -> {
 				PO entity = RecordUtil.getEntity(
 					Env.getCtx(), table.getTableName(),
-					entitySelection.getSelectionUuid(),
 					entitySelection.getSelectionId(),
 					transacctionName
 				);
@@ -3611,7 +3609,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 					return;
 				}
 				// set new values
-				entitySelection.getValuesList().stream().forEach(attribute -> {
+				entitySelection.getValuesMap().entrySet().forEach(attribute -> {
 					Object value = ValueUtil.getObjectFromValue(attribute.getValue());
 					entity.set_ValueOfColumn(attribute.getKey(), value);
 
@@ -3700,7 +3698,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 			final String whereTab = WhereClauseUtil.getWhereClauseFromTab(tab.getAD_Tab_ID());
 			//	Fill context
 			int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-			ContextManager.setContextWithAttributes(windowNo, context, request.getContextAttributesList());
+			ContextManager.setContextWithAttributesFromValuesMap(windowNo, context, request.getContextAttributesMap());
 			String parsedWhereClause = Env.parseContext(context, windowNo, whereTab, false);
 			if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(whereTab, true)) {
 				throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");

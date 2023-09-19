@@ -20,6 +20,7 @@ option java_package = "org.spin.backend.grpc.wf";
 option java_outer_classname = "ADempiereWorkflow";
 
 import "base_data_type.proto";
+import "google/protobuf/empty.proto";
 
 package workflow;
 
@@ -35,8 +36,8 @@ service Workflow {
 	rpc ListDocumentStatuses(ListDocumentStatusesRequest) returns (ListDocumentStatusesResponse) {}
 	//	Workflow Activities
 	rpc ListWorkflowActivities(ListWorkflowActivitiesRequest) returns (ListWorkflowActivitiesResponse) {}
-	rpc Process(ProcessRequest) returns (data.Empty) {}
-	rpc Forward(ForwardRequest) returns (data.Empty) {}
+	rpc Process(ProcessRequest) returns (google.protobuf.Empty) {}
+	rpc Forward(ForwardRequest) returns (google.protobuf.Empty) {}
 	//	Run a Document Action
 	rpc RunDocumentAction(RunDocumentActionRequest) returns (data.ProcessLog) {}
 }

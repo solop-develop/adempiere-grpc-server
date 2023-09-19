@@ -20,6 +20,7 @@ option java_package = "org.spin.backend.grpc.file_management";
 option java_outer_classname = "ADempiereFileManagement";
 
 import "base_data_type.proto";
+import "google/protobuf/empty.proto";
 
 package file_management;
 
@@ -36,7 +37,7 @@ service FileManagement {
 	rpc SetResourceReference(SetResourceReferenceRequest) returns (ResourceReference) {}
 	rpc SetResourceReferenceDescription(SetResourceReferenceDescriptionRequest) returns (ResourceReference) {}
 	rpc GetResourceReference(GetResourceReferenceRequest) returns (ResourceReference) {}
-	rpc DeleteResourceReference(DeleteResourceReferenceRequest) returns (data.Empty) {}
+	rpc DeleteResourceReference(DeleteResourceReferenceRequest) returns (google.protobuf.Empty) {}
 }
 
 // Resource Chunk

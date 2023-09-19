@@ -702,7 +702,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 			attributeSetInstace.setM_AttributeSet_ID(product.getM_AttributeSet_ID());
 			attributeSetInstace.saveEx();
 
-			Map<String, Object> attributesValues = ValueUtil.convertValuesToObjects(request.getAttributesList());
+			Map<String, Object> attributesValues = ValueUtil.convertValuesMapToObjects(request.getAttributesMap());
 			List<MAttribute> attributes = Arrays.asList(atttibuteSet.getMAttributes(isProductASI));
 			if (attributes == null || attributes.size() <= 0) {
 				attributes = Arrays.asList(atttibuteSet.getMAttributes(!isProductASI));
@@ -903,7 +903,7 @@ public class MaterialManagementServiceImplementation extends MaterialManagementI
 	private ListLocatorsResponse.Builder listLocators(ListLocatorsRequest request) {
 		// Fill Env.getCtx()
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
 
 		String whereClause = "1 = 1";
 		List<Object> parameters = new ArrayList<Object>();

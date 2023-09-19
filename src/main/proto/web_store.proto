@@ -17,7 +17,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.store";
 option java_outer_classname = "ADempiereWebStore";
-
+import "google/protobuf/empty.proto";
 
 package store;
 
@@ -60,7 +60,7 @@ service WebStore {
 	//	Get Cart Totals: GET /api/cart/totals
 	rpc GetCartTotals(GetCartTotalsRequest) returns (CartTotals) {}
 	//	Post Cart: POST /api/cart/delete
-	rpc DeleteCartItem(DeleteCartItemRequest) returns (Empty) {}
+	rpc DeleteCartItem(DeleteCartItemRequest) returns (google.protobuf.Empty) {}
 	//	GET Orders History: GET /api/user/order-history
 	rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {}
 }

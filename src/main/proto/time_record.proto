@@ -21,7 +21,6 @@ option java_outer_classname = "ADempiereTimeRecord";
 
 import "base_data_type.proto";
 import "core_functionality.proto";
-import "business.proto";
 
 package time_record;
 

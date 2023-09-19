@@ -51,15 +51,15 @@ message ListAccountingCombinationsRequest {
 	string page_token = 3;
 	// filters
 	string search_value = 4;
-	repeated data.KeyValue context_attributes = 5;
+	map <string, data.Value> context_attributes = 5;
 	data.Criteria filters = 6;
 }
 
 message SaveAccountingCombinationRequest {
-	repeated data.KeyValue context_attributes = 2;
+	map <string, data.Value> context_attributes = 2;
 	string uuid = 3;
 	int32 id = 4;
-	repeated data.KeyValue attributes = 5;
+	map <string, data.Value> attributes = 5;
 }
 
 

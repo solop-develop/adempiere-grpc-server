@@ -27,7 +27,6 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.spin.backend.grpc.common.Value;
-import org.spin.backend.grpc.common.Value.ValueType;
 import org.spin.base.util.ValueUtil;
 
 public class ParameterUtil {
@@ -111,15 +110,15 @@ public class ParameterUtil {
 	 * @throws SQLException
 	 */
 	public static void setParameterFromValue(PreparedStatement pstmt, Value value, int index) throws SQLException {
-		if(value.getValueType().equals(ValueType.INTEGER)) {
+		if(ValueUtil.getObjectFromValue(value) instanceof Integer) {
 			pstmt.setInt(index, ValueUtil.getIntegerFromValue(value));
-		} else if(value.getValueType().equals(ValueType.DECIMAL)) {
+		} else if(ValueUtil.getObjectFromValue(value) instanceof BigDecimal) {
 			pstmt.setBigDecimal(index, ValueUtil.getDecimalFromValue(value));
-		} else if(value.getValueType().equals(ValueType.BOOLEAN)) {
+		} else if(ValueUtil.getObjectFromValue(value) instanceof Boolean) {
 			pstmt.setBoolean(index, ValueUtil.getBooleanFromValue(value));
-		} else if(value.getValueType().equals(ValueType.STRING)) {
+		} else if(ValueUtil.getObjectFromValue(value) instanceof String) {
 			pstmt.setString(index, ValueUtil.getStringFromValue(value));
-		} else if(value.getValueType().equals(ValueType.DATE)) {
+		} else if(ValueUtil.getObjectFromValue(value) instanceof Timestamp) {
 			pstmt.setTimestamp(index, ValueUtil.getDateFromValue(value));
 		}
 	}

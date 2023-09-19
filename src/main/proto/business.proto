@@ -20,6 +20,7 @@ option java_outer_classname = "ADempiereData";
 
 import "base_data_type.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 package data;
 
@@ -44,7 +45,7 @@ service BusinessData {
 		};
 	}
 	// Delete Entity Request
-	rpc DeleteEntity(DeleteEntityRequest) returns (Empty) {
+	rpc DeleteEntity(DeleteEntityRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/business-data/entities/{id}" };
 	}
 	//	List a Entities
@@ -197,7 +198,7 @@ service UserInterface {
 		};
 	}
 	//	Delete Preference from field
-	rpc DeletePreference(DeletePreferenceRequest) returns (Empty) {
+	rpc DeletePreference(DeletePreferenceRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/user-interface/preference/{id}" };
 	}
 	//	List General Info
@@ -327,7 +328,7 @@ message GetReportOutputRequest {
 // Create Entity Request
 message CreateEntityRequest {
 	string table_name = 2;
-	repeated KeyValue attributes = 3;
+	map<string, data.Value> attributes = 3;
 }
 
 // Create Private Access Request
@@ -381,7 +382,7 @@ message UpdateEntityRequest {
 	string table_name = 2;
 	string uuid = 3;
 	int32 id = 4;
-	repeated KeyValue attributes = 5;
+	map<string, data.Value> attributes = 5;
 }
 
 // Delete Entity Request
@@ -397,7 +398,7 @@ message DeleteEntityRequest {
 message ListBrowserItemsRequest {
 	string uuid = 1;
 	Criteria criteria = 2;
-	repeated KeyValue context_attributes = 3;
+	map<string, data.Value> context_attributes = 3;
 	int32 page_size = 4;
 	string page_token = 5;
 }
@@ -414,7 +415,7 @@ message UpdateBrowserEntityRequest {
 	string uuid = 2;
 	int32 id = 3;
 	int32 record_id = 4;
-	repeated KeyValue attributes = 5;
+	map<string, data.Value> attributes = 5;
 }
 
 // Context Info Value
@@ -434,7 +435,7 @@ message GetLookupItemRequest {
 	string column_uuid = 7;
 	string column_name = 8;
 	string table_name = 9;
-	repeated KeyValue context_attributes = 10;
+	map<string, data.Value> context_attributes = 10;
 }
 
 // Get Default Value Request
@@ -444,7 +445,7 @@ message GetDefaultValueRequest {
 	string field_uuid = 3;
 	string browse_field_uuid = 4;
 	string column_uuid = 5;
-	repeated KeyValue context_attributes = 6;
+	map<string, data.Value> context_attributes = 6;
 	Value value = 7;
 }
 
@@ -482,7 +483,7 @@ message ListLookupItemsRequest {
 	string column_name = 7;
 	string table_name = 8;
 	string search_value = 9;
-	repeated KeyValue context_attributes = 10;
+	map<string, data.Value> context_attributes = 10;
 	int32 page_size = 11;
 	string page_token = 12;
 }
@@ -499,7 +500,7 @@ message GetTabEntityRequest {
 	string window_uuid = 2;
 	string tab_uuid = 3;
 	int32 window_no = 4;
-	repeated KeyValue context_attributes = 5;
+	map<string, data.Value> context_attributes = 5;
 	string uuid = 6;
 	int32 id = 7;
 }
@@ -509,7 +510,7 @@ message CreateTabEntityRequest {
 	string window_uuid = 2;
 	string tab_uuid = 3;
 	int32 window_no = 4;
-	repeated KeyValue attributes = 5;
+	map<string, data.Value> attributes = 5;
 }
 
 // Update Tab Entity Request
@@ -519,7 +520,7 @@ message UpdateTabEntityRequest {
 	int32 window_no = 4;
 	string uuid = 5;
 	int32 id = 6;
-	repeated KeyValue attributes = 7;
+	map<string, data.Value> attributes = 7;
 }
 
 // List Tab Entities Request
@@ -528,7 +529,7 @@ message ListTabEntitiesRequest {
 	string tab_uuid = 3;
 	int32 window_no = 4;
 	Criteria filters = 5;
-	repeated KeyValue context_attributes = 6;
+	map<string, data.Value> context_attributes = 6;
 	repeated string columns = 7;
 	string search_value = 8;
 	int32 page_size = 9;
@@ -569,7 +570,7 @@ message RunCalloutRequest {
 	Value old_value = 7;
 	Value value = 8;
 	int32 window_no = 9;
-	repeated KeyValue context_attributes = 10;
+	map<string, data.Value> context_attributes = 10;
 }
 
 // Callout response with data from server
@@ -592,7 +593,7 @@ message RunBusinessProcessRequest {
 	int32 report_view_id = 10;
 	string report_view_uuid = 11;
 	bool is_summary = 12;
-	repeated KeyValue parameters = 13;
+	map<string, data.Value> parameters = 13;
 	repeated KeyValueSelection selections = 14;
 }
 
@@ -733,7 +734,7 @@ message ListGeneralInfoRequest {
 	string page_token = 3;
 	// filters
 	Criteria filters = 4;
-	repeated KeyValue context_attributes = 5;
+	map<string, data.Value> context_attributes = 5;
 	string search_value = 6;
 	// references
 	string process_parameter_uuid = 7;
@@ -751,12 +752,12 @@ message ListTabSequencesRequest {
 	string window_uuid = 4;
 	string tab_uuid = 5;
 	// filters
-	repeated KeyValue context_attributes = 6;
+	map<string, data.Value> context_attributes = 6;
 }
 
 message SaveTabSequencesRequest {
 	string tab_uuid = 2;
-	repeated KeyValue context_attributes = 3;
+	map<string, data.Value> context_attributes = 3;
 	repeated KeyValueSelection entities = 4;
 }
 
@@ -769,7 +770,7 @@ message ListTreeNodesRequest {
 	string uuid = 4;
 	int32 element_id = 5;
 	string element_uuid = 6;
-	repeated KeyValue context_attributes = 7;
+	map<string, data.Value> context_attributes = 7;
 }
 
 // Tree Node

@@ -77,17 +77,18 @@ public class BusinessPartnerServiceImplementation extends BusinessPartnerImplBas
 	 */
 	private ListEntitiesResponse.Builder listBusinessPartnerInfo(ListBusinessPartnerInfoRequest request) {
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			request.getReferenceUuid(),
-			request.getFieldUuid(),
-			request.getProcessParameterUuid(),
-			request.getBrowseFieldUuid(),
-			request.getColumnUuid(),
+			request.getReferenceId(),
+			request.getFieldId(),
+			request.getProcessParameterId(),
+			request.getBrowseFieldId(),
+			request.getColumnId(),
 			request.getColumnName(),
 			this.tableName
 		);
 		
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
 
 		//
 		MTable table = MTable.get(Env.getCtx(), this.tableName);
@@ -116,14 +117,14 @@ public class BusinessPartnerServiceImplementation extends BusinessPartnerImplBas
 
 		//	For dynamic condition
 		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
-		if (!Util.isEmpty(dynamicWhere, true)) {
-			//	Add includes first AND
-			whereClause.append(" AND ")
-				.append("(")
-				.append(dynamicWhere)
-				.append(")");
-		}
+//		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
+//		if (!Util.isEmpty(dynamicWhere, true)) {
+//			//	Add includes first AND
+//			whereClause.append(" AND ")
+//				.append("(")
+//				.append(dynamicWhere)
+//				.append(")");
+//		}
 
 		sqlWithRoleAccess += whereClause;
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, this.tableName, request.getSearchValue(), params);

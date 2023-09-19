@@ -253,6 +253,111 @@ public class ReferenceInfo {
 		//	Return
 		return join.toString();
 	}
+	
+	/**
+	 * Get reference Info from request
+	 * @param request
+	 * @return
+	 */
+	static public MLookupInfo getInfoFromRequest(int referenceId, int fieldId, int processParameterId, int browseFieldId, int columnId, String columnName, String tableName) {
+		int referenceValueId = 0;
+		int validationRuleId = 0;
+		MField field = null;
+		if (fieldId > 0) {
+			field = new MField(Env.getCtx(), fieldId, null);
+		}
+		if(field != null) {
+			List<MField> customFields = ASPUtil.getInstance(Env.getCtx()).getWindowFields(field.getAD_Tab_ID());
+			if(customFields != null) {
+				Optional<MField> maybeField = customFields.stream().filter(customField -> customField.getAD_Field_ID() == fieldId).findFirst();
+				if(maybeField.isPresent()) {
+					field = maybeField.get();
+					MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+					//	Display Type
+					referenceId = column.getAD_Reference_ID();
+					referenceValueId = column.getAD_Reference_Value_ID();
+					validationRuleId = column.getAD_Val_Rule_ID();
+					columnName = column.getColumnName();
+					if(field.getAD_Reference_ID() > 0) {
+						referenceId = field.getAD_Reference_ID();
+					}
+					if(field.getAD_Reference_Value_ID() > 0) {
+						referenceValueId = field.getAD_Reference_Value_ID();
+					}
+					if(field.getAD_Val_Rule_ID() > 0) {
+						validationRuleId = field.getAD_Val_Rule_ID();
+					}
+				}
+			}
+		} else if(browseFieldId > 0) {
+			MBrowseField browseField = new MBrowseField(Env.getCtx(), browseFieldId, null);
+			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
+			if(customFields != null) {
+				Optional<MBrowseField> maybeField = customFields.stream().filter(customField -> customField.getAD_Browse_Field_ID() == browseFieldId).findFirst();
+				if(maybeField.isPresent()) {
+					browseField = maybeField.get();
+					referenceId = browseField.getAD_Reference_ID();
+					referenceValueId = browseField.getAD_Reference_Value_ID();
+					validationRuleId = browseField.getAD_Val_Rule_ID();
+					MViewColumn viewColumn = browseField.getAD_View_Column();
+					if(viewColumn.getAD_Column_ID() > 0) {
+						columnName = MColumn.getColumnName(Env.getCtx(), viewColumn.getAD_Column_ID());
+					} else {
+						columnName = browseField.getAD_Element().getColumnName();
+					}
+				}
+			}
+		} else if(processParameterId > 0) {
+			MProcessPara processParameter = new MProcessPara(Env.getCtx(), processParameterId, null);
+			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
+			if(customParameters != null) {
+				Optional<MProcessPara> maybeParameter = customParameters.stream().filter(customField -> customField.getAD_Process_Para_ID() == processParameterId).findFirst();
+				if(maybeParameter.isPresent()) {
+					processParameter = maybeParameter.get();
+					referenceId = processParameter.getAD_Reference_ID();
+					referenceValueId = processParameter.getAD_Reference_Value_ID();
+					validationRuleId = processParameter.getAD_Val_Rule_ID();
+					columnName = processParameter.getColumnName();
+				}
+			}
+		} else if(columnId > 0) {
+			MColumn column = MColumn.get(Env.getCtx(), columnId);
+			referenceId = column.getAD_Reference_ID();
+			referenceValueId = column.getAD_Reference_Value_ID();
+			validationRuleId = column.getAD_Val_Rule_ID();
+			columnName = column.getColumnName();
+		} else if(referenceId > 0) {
+			referenceValueId = referenceId;
+			referenceId = DisplayType.Search;
+		} else if(!Util.isEmpty(tableName) && !Util.isEmpty(columnName)) {
+			columnId = MColumn.getColumn_ID(tableName, columnName);
+			if(columnId > 0) {
+				MColumn column = MColumn.get(Env.getCtx(), columnId);
+				referenceId = column.getAD_Reference_ID();
+				if (referenceValueId <= 0) {
+					referenceValueId = column.getAD_Reference_Value_ID();
+				}
+				if (referenceId == DisplayType.ID) {
+					if (referenceValueId > 0) {
+						//	Is force a Table
+						referenceId = DisplayType.Table;
+					} else {
+						//	Is force a Table Direct
+						referenceId = DisplayType.TableDir;
+					}
+				}
+				validationRuleId = column.getAD_Val_Rule_ID();
+				columnName = column.getColumnName();
+			}
+		} else if(!Util.isEmpty(tableName)) {
+			//	Is force a Table Direct
+			referenceId = DisplayType.TableDir;
+			columnName = tableName + "_ID";
+		} else {
+			throw new AdempiereException("@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Process_Para_ID@ / @IsMandatory@");
+		}
+		return ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
+	}
 
 	/**
 	 * Get reference Info from request

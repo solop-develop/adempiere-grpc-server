@@ -19,10 +19,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,10 +38,8 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Condition;
 import org.spin.backend.grpc.common.Criteria;
-import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.Operator;
 import org.spin.backend.grpc.common.Value;
-import org.spin.backend.grpc.common.Value.ValueType;
 import org.spin.base.dictionary.WindowUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.util.ASPUtil;
@@ -131,7 +127,7 @@ public class WhereClauseUtil {
 
 			valuesList.forEach(itemValue -> {
 				Object currentValue = ValueUtil.getObjectFromValue(itemValue);
-				boolean isString = DisplayType.isText(displayType) || itemValue.getValueType() == ValueType.STRING || currentValue instanceof String;
+				boolean isString = DisplayType.isText(displayType) || !Util.isEmpty(itemValue.getStringValue()) || currentValue instanceof String;
 
 				if (currentValue == null || (isString && Util.isEmpty((String) currentValue, true))) {
 					if (Util.isEmpty(additionalSQL.toString(), true)) {
@@ -207,7 +203,7 @@ public class WhereClauseUtil {
 			);
 			sqlValue = " ? ";
 
-			boolean isString = DisplayType.isText(displayType) || value.getValueType() == ValueType.STRING || parameterValue instanceof String;
+			boolean isString = DisplayType.isText(displayType) || !Util.isEmpty(value.getStringValue()) || parameterValue instanceof String;
 			boolean isEmptyString = isString && Util.isEmpty((String) parameterValue, true);
 			if (isString) {
 				if (isEmptyString) {
@@ -265,7 +261,7 @@ public class WhereClauseUtil {
 
 			valuesList.forEach(itemValue -> {
 				Object currentValue = ValueUtil.getObjectFromValue(itemValue);
-				boolean isString = DisplayType.isText(displayType) || itemValue.getValueType() == ValueType.STRING || currentValue instanceof String;
+				boolean isString = DisplayType.isText(displayType) || !Util.isEmpty(itemValue.getStringValue()) || currentValue instanceof String;
 
 				if (currentValue == null || (isString && Util.isEmpty((String) currentValue, true))) {
 					if (Util.isEmpty(additionalSQL.toString(), true)) {
@@ -330,7 +326,7 @@ public class WhereClauseUtil {
 			String dbValue = ParameterUtil.getDBValue(parameterValue, displayType);
 			sqlValue = dbValue;
 
-			boolean isString = DisplayType.isText(displayType) || value.getValueType() == ValueType.STRING || parameterValue instanceof String;
+			boolean isString = DisplayType.isText(displayType) || !Util.isEmpty(value.getStringValue()) || parameterValue instanceof String;
 			boolean isEmptyString = isString && Util.isEmpty((String) parameterValue, true);
 			if (isString) {
 				if (isEmptyString) {
@@ -613,130 +609,6 @@ public class WhereClauseUtil {
 		return where.toString();
 	}
 
-
-
-
-	/**
-	 * Get Where clause for Smart Browse
- 	 * @deprecated use {@link #getBrowserWhereClauseFromCriteria} instead
-	 * @param browser
-	 * @param parsedWhereClause
-	 * @param values
-	 * @return
-	 */
-	@Deprecated
-	public static String getBrowserWhereClause(MBrowse browser, String parsedWhereClause,
-			List<KeyValue> contextAttributes, HashMap<String, Object> parameterMap, List<Object> values) {
-		AtomicReference<String> convertedWhereClause = new AtomicReference<String>(parsedWhereClause);
-		if (!Util.isEmpty(parsedWhereClause, true) && contextAttributes != null && contextAttributes.size() > 0) {
-			contextAttributes.forEach(contextValue -> {
-				String value = String.valueOf(ValueUtil.getObjectFromValue(contextValue.getValue()));
-				String contextKey = "@" + contextValue.getKey() + "@";
-				convertedWhereClause.set(
-						convertedWhereClause.get().replaceAll(contextKey, value));
-			});
-		}
-
-		// Add field to map
-		List<MBrowseField> fields = ASPUtil.getInstance().getBrowseFields(browser.getAD_Browse_ID());
-		HashMap<String, MBrowseField> fieldsMap = new HashMap<>();
-		for (MBrowseField field : fields) {
-			fieldsMap.put(field.getAD_View_Column().getColumnName(), field);
-		}
-
-		//
-		StringBuilder browserWhereClause = new StringBuilder();
-		boolean onRange = false;
-		if (parameterMap != null && parameterMap.size() > 0) {
-			for (Entry<String, Object> parameter : parameterMap.entrySet()) {
-				MBrowseField field = fieldsMap.get(parameter.getKey());
-				if (field == null) {
-					continue;
-				}
-				String columnName = field.getAD_View_Column().getColumnSQL();
-				Object parameterValue = parameter.getValue();
-				if (!onRange) {
-					if (parameterValue != null && !field.isRange()) {
-						if (browserWhereClause.length() > 0) {
-							browserWhereClause.append(" AND ");
-						}
-						if (DisplayType.String == field.getAD_Reference_ID()) {
-							String value = (String) parameterValue;
-							if (value.contains(",")) {
-								value = value.replace(" ", "");
-								String inStr = new String(value);
-								StringBuffer outStr = new StringBuffer("(");
-								int i = inStr.indexOf(',');
-								while (i != -1) {
-									outStr.append("'" + inStr.substring(0, i) + "',");
-									inStr = inStr.substring(i + 1, inStr.length());
-									i = inStr.indexOf(',');
-
-								}
-								outStr.append("'" + inStr + "')");
-								//
-								browserWhereClause.append(columnName).append(" IN ")
-										.append(outStr);
-							} else if (value.contains("%")) {
-								browserWhereClause.append(" lower( ").append(columnName).append(") LIKE ? ");
-								values.add(parameterValue.toString().toLowerCase());
-							} else {
-								browserWhereClause.append(" lower( ").append(columnName).append(") = ? ");
-								values.add(parameterValue.toString().toLowerCase());
-							}
-						} else {
-							browserWhereClause.append(columnName).append("=? ");
-							values.add(parameterValue);
-						}
-					} else if (parameterValue != null && field.isRange()) {
-						if (browserWhereClause.length() > 0) {
-							browserWhereClause.append(" AND ");
-						}
-						if (DisplayType.String == field.getAD_Reference_ID()) {
-							browserWhereClause.append(" lower( ").append(columnName).append(") >= ? ");
-							values.add(parameterValue.toString().toLowerCase());
-						} else {
-							browserWhereClause.append(columnName).append(" >= ? ");
-							values.add(parameterValue);
-						}
-						onRange = true;
-					} else if (parameterValue == null && field.isRange()) {
-						onRange = true;
-					} else
-						continue;
-				} else if (parameterValue != null) {
-					if (browserWhereClause.length() > 0) {
-						browserWhereClause.append(" AND ");
-					}
-					if (DisplayType.String == field.getAD_Reference_ID()) {
-						browserWhereClause.append(" lower( ").append(columnName).append(") <= ? ");
-						values.add(parameterValue.toString().toLowerCase());
-					} else {
-						browserWhereClause.append(columnName).append(" <= ? ");
-						values.add(parameterValue);
-					}
-					onRange = false;
-				} else {
-					onRange = false;
-				}
-			}
-		}
-		//
-		String whereClause = null;
-		//
-		if (!Util.isEmpty(convertedWhereClause.get(), true)) {
-			whereClause = convertedWhereClause.get();
-		}
-		if (browserWhereClause.length() > 0) {
-			if (Util.isEmpty(whereClause, true)) {
-				whereClause = " (" + browserWhereClause.toString() + ") ";
-			} else {
-				whereClause = " (" + whereClause + ") AND (" + browserWhereClause + ") ";
-			}
-		}
-		return whereClause;
-	}
-
 	/**
 	 * Get Where clause for Smart Browse by Criteria Conditions
 	 * 
@@ -821,7 +693,7 @@ public class WhereClauseUtil {
 					value = conditionStart.getValue();
 	
 					int operatorTo = operatorValue;
-					if (valueTo == null || valueTo.getValueType() == Value.ValueType.UNKNOWN) {
+					if (valueTo == null || valueTo.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
 						Condition conditionEnd = parametersList.stream().filter(parameter -> {
 							return parameter.getColumnName().equals(columnNameParameter + "_To");
 						})

@@ -21,6 +21,7 @@ option java_outer_classname = "ADempierePayrollActionNotice";
 
 import "base_data_type.proto";
 import "business.proto";
+import "google/protobuf/empty.proto";
 
 package payroll_action_notice;
 
@@ -39,7 +40,7 @@ service PayrollActionNotice {
 	// Save Payroll Movement
 	rpc SavePayrollMovement(SavePayrollMovementRequest) returns (data.Entity) {}
 	// Delete Payroll Movements
-	rpc DeletePayrollMovements(DeletePayrollMovementsRequest) returns (data.Empty) {}
+	rpc DeletePayrollMovements(DeletePayrollMovementsRequest) returns (google.protobuf.Empty) {}
 }
 
 // List Payroll Process Request
@@ -48,7 +49,7 @@ message ListPayrollProcessRequest {
 	string page_token = 3;
 	// filters
 	string search_value = 4;
-	repeated data.KeyValue context_attributes = 5;
+	map <string, data.Value> context_attributes = 5;
 }
 
 // List Employee Request
@@ -57,7 +58,7 @@ message ListEmployeeValidRequest {
 	string page_token = 3;
 	// filters
 	string search_value = 4;
-	repeated data.KeyValue context_attributes = 5;
+	map <string, data.Value> context_attributes = 5;
 }
 
 // List Payroll Conceps Request
@@ -65,7 +66,7 @@ message ListPayrollConceptsRequest {
 	int32 page_size = 2;
 	string page_token = 3;
 	// filters
-	repeated data.KeyValue context_attributes = 4;
+	map <string, data.Value> context_attributes = 4;
 	string search_value = 5;
 }
 
@@ -81,21 +82,21 @@ message ListPayrollMovementsRequest {
 	string page_token = 3;
 	// filters
 	data.Criteria filters = 4;
-	repeated data.KeyValue context_attributes = 5;
+	map <string, data.Value> context_attributes = 5;
 	string search_value = 6;
 }
 
 // Save Payroll Movement Request
 message SavePayrollMovementRequest {
-	repeated data.KeyValue context_attributes = 2;
+	map <string, data.Value> context_attributes = 2;
 	string uuid = 3;
 	int32 id = 4;
-	repeated data.KeyValue attributes = 5;
+	map <string, data.Value> attributes = 5;
 }
 
 // Delete Payroll Movements Request
 message DeletePayrollMovementsRequest {
-	repeated data.KeyValue context_attributes = 2;
+	map <string, data.Value> context_attributes = 2;
 	repeated string uuids = 3;
 	repeated int32 ids = 4;
 }

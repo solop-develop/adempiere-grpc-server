@@ -49,7 +49,6 @@ import org.compiere.wf.MWFActivity;
 import org.compiere.wf.MWFNode;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.common.DocumentStatus;
-import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.wf.ForwardRequest;
 import org.spin.backend.grpc.wf.ListDocumentActionsRequest;
@@ -73,6 +72,8 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.base.util.WorkflowUtil;
+
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

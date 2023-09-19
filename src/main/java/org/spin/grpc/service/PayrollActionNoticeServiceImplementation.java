@@ -44,7 +44,6 @@ import org.eevolution.hr.model.MHRMovement;
 import org.eevolution.hr.model.MHRPayroll;
 import org.eevolution.hr.model.MHRPeriod;
 import org.eevolution.hr.model.MHRProcess;
-import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
@@ -65,6 +64,8 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
+
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -189,9 +190,9 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 	private ListLookupItemsResponse.Builder convertEmployeeValidList(Properties context, ListEmployeeValidRequest request) {
 		ListLookupItemsResponse.Builder lookupsList = ListLookupItemsResponse.newBuilder();
 
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
 		int payrollProcessId = (int) contextAttributesList.get(MHRProcess.COLUMNNAME_HR_Process_ID);
-		if (request.getContextAttributesList() == null || payrollProcessId <= 0) {
+		if (contextAttributesList == null || payrollProcessId <= 0) {
 			return lookupsList;
 		}
 
@@ -314,8 +315,8 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 	private ListLookupItemsResponse.Builder convertPayrollConceptsList(Properties context, ListPayrollConceptsRequest request) {
 		ListLookupItemsResponse.Builder listLookups = ListLookupItemsResponse.newBuilder();
 
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-		if (request.getContextAttributesList() == null || contextAttributesList.size() <= 0) {
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
 			return listLookups;
 		}
 
@@ -538,8 +539,8 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 	private ListEntitiesResponse.Builder convertListPayrollMovements(Properties context, ListPayrollMovementsRequest request) {
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-		if (request.getContextAttributesList() == null || contextAttributesList.size() <= 0) {
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
 			return builder;
 		}
 
@@ -696,8 +697,8 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 		Entity.Builder builder = Entity.newBuilder();
 		builder.setTableName(MHRMovement.Table_Name);
 
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesToObjects(request.getContextAttributesList());
-		if (request.getContextAttributesList() == null || contextAttributesList.size() <= 0) {
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
 			return builder;
 		}
 
@@ -712,7 +713,7 @@ public class PayrollActionNoticeServiceImplementation extends PayrollActionNotic
 			throw new AdempiereException("@BPartnerNotFound@");
 		}
 
-		Map<String, Object> attributesList = ValueUtil.convertValuesToObjects(request.getAttributesList());
+		Map<String, Object> attributesList = ValueUtil.convertValuesMapToObjects(request.getAttributesMap());
 
 		// Concept
 		int conceptId = 0;

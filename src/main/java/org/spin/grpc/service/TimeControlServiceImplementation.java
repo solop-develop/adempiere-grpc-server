@@ -35,7 +35,6 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.time_control.ConfirmResourceAssignmentRequest;
 import org.spin.backend.grpc.time_control.CreateResourceAssignmentRequest;
 import org.spin.backend.grpc.time_control.DeleteResourceAssignmentRequest;
@@ -51,6 +50,8 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
+
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

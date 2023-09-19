@@ -111,11 +111,10 @@ import org.compiere.util.MimeType;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Empty;
-import org.spin.backend.grpc.common.KeyValue;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ProductPrice;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
+import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.pos.*;
 import org.spin.backend.grpc.pos.StoreGrpc.StoreImplBase;
 import org.spin.base.db.CountUtil;
@@ -144,6 +143,7 @@ import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -2865,7 +2865,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				}
 			}
 			//	Additional attributes
-			setAdditionalAttributes(businessPartner, request.getAdditionalAttributesList());
+			setAdditionalAttributes(businessPartner, request.getAdditionalAttributesMap());
 			//	Save it
 			businessPartner.saveEx(transactionName);
 			
@@ -2890,19 +2890,21 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 	 * @param attributes
 	 * @return void
 	 */
-	private void setAdditionalAttributes(PO entity, List<KeyValue> attributes) {
-		//	Additional attributes
-		attributes.forEach(attribute -> {
-			int referenceId = getReferenceId(entity.get_Table_ID(), attribute.getKey());
-			Object value = null;
-			if(referenceId > 0) {
-				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
-			} 
-			if(value == null) {
-				value = ValueUtil.getObjectFromValue(attribute.getValue());
-			}
-			entity.set_ValueOfColumn(attribute.getKey(), value);
-		});
+	private void setAdditionalAttributes(PO entity, Map<String, Value> attributes) {
+		if(attributes != null) {
+			attributes.keySet().forEach(key -> {
+				Value attribute = attributes.get(key);
+				int referenceId = getReferenceId(entity.get_Table_ID(), key);
+				Object value = null;
+				if(referenceId > 0) {
+					value = ValueUtil.getObjectFromReference(attribute, referenceId);
+				} 
+				if(value == null) {
+					value = ValueUtil.getObjectFromValue(attribute);
+				}
+				entity.set_ValueOfColumn(key, value);
+			});
+		}
 	}
 	
 	/**
@@ -2989,7 +2991,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			businessPartnerLocation.setName(".");
 		}
 		//	Additional attributes
-		setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributesList());
+		setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributesMap());
 		businessPartnerLocation.saveEx(transactionName);
 		//	Contact
 		if(!Util.isEmpty(address.getContactName()) || !Util.isEmpty(address.getEmail()) || !Util.isEmpty(address.getPhone())) {
@@ -3052,7 +3054,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 			//	Description
 			Optional.ofNullable(request.getDescription()).ifPresent(value -> businessPartner.setDescription(value));
 			//	Additional attributes
-			setAdditionalAttributes(businessPartner, request.getAdditionalAttributesList());
+			setAdditionalAttributes(businessPartner, request.getAdditionalAttributesMap());
 			//	Save it
 			businessPartner.saveEx(transactionName);
 			//	Location
@@ -3118,7 +3120,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 						Optional.ofNullable(address.getPhone()).ifPresent(phome -> businessPartnerLocation.setPhone(phome));
 						Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.set_ValueOfColumn("Description", description));
 						//	Additional attributes
-						setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributesList());
+						setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributesMap());
 						businessPartnerLocation.saveEx(transactionName);
 						//	Contact
 						AtomicReference<MUser> contactReference = new AtomicReference<MUser>(getOfBusinessPartnerLocation(businessPartnerLocation, transactionName));

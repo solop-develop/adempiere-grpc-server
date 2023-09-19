@@ -151,7 +151,7 @@ message SaveRecordsRequest {
 	// process before save changes
 	bool is_process = 4;
 	int32 process_id = 5;
-	repeated data.KeyValue parameters = 6;
+	map <string, data.Value> parameters = 6;
 }
 
 message SaveRecordsResponse {

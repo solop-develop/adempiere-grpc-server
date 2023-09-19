@@ -20,6 +20,7 @@ option java_outer_classname = "ADempiereWMS";
 
 import "core_functionality.proto";
 import "base_data_type.proto";
+import "google/protobuf/empty.proto";
 
 package wms;
 
@@ -28,7 +29,7 @@ service WarehouseManagement {
  	//	Create OutBound Order
 	rpc CreateOutBoundOrder(CreateOutBoundOrderRequest) returns (OutBoundOrder) {}
 	//	Delete OutBound Order
-	rpc DeleteOutBoundOrder(DeleteOutBoundOrderRequest) returns (data.Empty) {}
+	rpc DeleteOutBoundOrder(DeleteOutBoundOrderRequest) returns (google.protobuf.Empty) {}
 	//	Get a OutBound Order
 	rpc GetOutBoundOrder(GetOutBoundOrderRequest) returns (OutBoundOrder) {}
 	//	List OutBound Orders

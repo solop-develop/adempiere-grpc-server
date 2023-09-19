@@ -19,8 +19,8 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.bpartner";
 option java_outer_classname = "ADempiereBusinessPartner";
 
-import "base_data_type.proto";
 import "business.proto";
+import "base_data_type.proto";
 import "google/api/annotations.proto";
 
 package business_partner;
@@ -38,14 +38,14 @@ message ListBusinessPartnerInfoRequest {
 	int32 page_size = 2;
 	string page_token = 3;
 	// filters
-	data.Criteria filters = 4;
-	repeated data.KeyValue context_attributes = 5;
+	data.Filters filters = 4;
+	map<string, data.Value> context_attributes = 5;
 	string search_value = 6;
 	// references
-	string process_parameter_uuid = 7;
-	string field_uuid = 8;
-	string browse_field_uuid = 9;
-	string reference_uuid = 10;
-	string column_uuid = 11;
+	string process_parameter_id = 7;
+	string field_id = 8;
+	string browse_field_id = 9;
+	string reference_id = 10;
+	string column_id = 11;
 	string column_name = 13;
 }

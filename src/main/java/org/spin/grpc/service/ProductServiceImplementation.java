@@ -88,7 +88,7 @@ public class ProductServiceImplementation extends ProductImplBase {
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributes(windowNo, Env.getCtx(), request.getContextAttributesList());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
 
 		//
 		MTable table = MTable.get(Env.getCtx(), this.tableName);

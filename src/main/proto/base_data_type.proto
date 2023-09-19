@@ -17,43 +17,30 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.common";
 option java_outer_classname = "ADempiereBase";
+import "google/protobuf/struct.proto";
+
 
 package data;
-
-//  Empty message
-message Empty {
-	
-}
 
 //	Entities Selections
 message KeyValueSelection {
 	int32 selection_id = 1;
-	string selection_uuid = 2;
-	repeated KeyValue values = 3;
-}
-
-// Key and Value pairs
-message KeyValue {
-	string key = 1;
-	Value value = 2;
+	map<string, Value> values = 2;
 }
 
 // Define value for object
 message Value {
-	int32 int_value = 1;
-	int64 long_value = 2;
-	bool boolean_value = 3;
-	string string_value = 4;
-	Decimal decimal_value = 5;
-	enum ValueType {
-		UNKNOWN = 0;
-		INTEGER = 1;
-		DECIMAL = 2;
-		BOOLEAN = 3;
-		STRING = 4;
-		DATE = 5;
+	oneof kind {
+		google.protobuf.NullValue null_value = 1;
+		google.protobuf.Struct struct_value = 2;
+		google.protobuf.ListValue list_value = 3;
+		int32 int_value = 4;
+		int64 long_value = 5;
+		bool boolean_value = 6;
+		string string_value = 7;
+		string date_value = 8;
+		Decimal decimal_value = 9;
 	}
-	ValueType value_type = 6;
 }
 
 // Define numeric types
@@ -63,6 +50,18 @@ message Decimal {
 }
 
 // Query for Request Object
+ //	Filters
+ message Filters {
+	repeated Filter filters = 1;
+}
+
+//  Filter
+message Filter {
+	string column_name = 1;
+	Operator operator = 2;
+	repeated Value values = 3;
+}
+
 message Criteria {
 	string table_name = 1;
 	string query = 2;

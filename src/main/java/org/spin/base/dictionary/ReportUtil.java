@@ -97,7 +97,7 @@ public class ReportUtil {
 				;
 				value = conditionStart.getValue();
 
-				if (valueTo == null || valueTo.getValueType() == Value.ValueType.UNKNOWN) {
+				if (valueTo == null || valueTo.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
 					Condition conditionEnd = parametersList.stream().filter(parameter -> {
 						return parameter.getColumnName().equals(columnNameParameter + "_To");
 					})

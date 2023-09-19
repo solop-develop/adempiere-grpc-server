@@ -32,7 +32,6 @@ import org.compiere.util.Env;
 import org.compiere.util.MimeType;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.file_management.Attachment;
 import org.spin.backend.grpc.file_management.DeleteResourceReferenceRequest;
 import org.spin.backend.grpc.file_management.ExistsAttachmentRequest;
@@ -59,6 +58,7 @@ import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

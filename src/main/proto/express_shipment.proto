@@ -19,6 +19,7 @@ option java_package = "org.spin.backend.grpc.form.express_shipment";
 option java_outer_classname = "ADempiereExpressShipment";
 
 import "base_data_type.proto";
+import "google/protobuf/empty.proto";
 
 package express_shipment;
 
@@ -28,11 +29,11 @@ service ExpressShipment {
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
 	// Shipment
 	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {}
-	rpc DeleteShipment(DeleteShipmentRequest) returns (data.Empty) {}
+	rpc DeleteShipment(DeleteShipmentRequest) returns (google.protobuf.Empty) {}
 	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {}
 	//	Shipment Line
 	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {}
-	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (data.Empty) {}
+	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {}
 	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {}
 	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {}
 }

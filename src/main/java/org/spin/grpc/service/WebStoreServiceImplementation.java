@@ -104,7 +104,6 @@ import org.spin.backend.grpc.store.CreateCustomerRequest;
 import org.spin.backend.grpc.store.CreateOrderRequest;
 import org.spin.backend.grpc.store.Customer;
 import org.spin.backend.grpc.store.DeleteCartItemRequest;
-import org.spin.backend.grpc.store.Empty;
 import org.spin.backend.grpc.store.FormattedPrice;
 import org.spin.backend.grpc.store.GetCartRequest;
 import org.spin.backend.grpc.store.GetCartTotalsRequest;
@@ -160,6 +159,7 @@ import org.spin.util.AttachmentUtil;
 import org.spin.util.TokenGeneratorHandler;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

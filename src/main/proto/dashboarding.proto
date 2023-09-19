@@ -307,6 +307,6 @@ message GetWindowMetricsRequest {
 	string table_name = 3;
 	int32 record_id = 4;
 	string record_uuid = 5;
-	repeated data.KeyValue context_attributes = 6;
+	map<string, data.Value> context_attributes = 6;
 	repeated Filter filters = 7;
 }

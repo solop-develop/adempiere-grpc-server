@@ -40,7 +40,6 @@ import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
@@ -85,14 +84,10 @@ import org.spin.grpc.service.UserInterfaceServiceImplementation;
 public abstract class BankStatementMatchServiceLogic {
 
 	public static BankStatement.Builder getBankStatement(GetBankStatementRequest request) {
-		if (request.getId() < 0 && Util.isEmpty(request.getUuid(), true)) {
-			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@/@UUID@");
+		if (request.getId() < 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
 		}
 		int recordId = request.getId();
-		if (recordId <= 0) {
-			recordId = RecordUtil.getIdFromUuid(I_C_BankStatement.Table_Name, request.getUuid(), null);
-		}
-		
 		MBankStatement bankStatement = new MBankStatement(Env.getCtx(), recordId, null);
 		if (bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
@@ -195,10 +190,10 @@ public abstract class BankStatementMatchServiceLogic {
 
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
+		Timestamp dateFrom = ValueUtil.getDateFromString(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(
+		Timestamp dateTo = ValueUtil.getDateFromString(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -267,10 +262,10 @@ public abstract class BankStatementMatchServiceLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
+		Timestamp dateFrom = ValueUtil.getDateFromString(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(
+		Timestamp dateTo = ValueUtil.getDateFromString(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -326,10 +321,10 @@ public abstract class BankStatementMatchServiceLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
+		Timestamp dateFrom = ValueUtil.getDateFromString(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(
+		Timestamp dateTo = ValueUtil.getDateFromString(
 			request.getTransactionDateTo()
 		);
 
@@ -483,10 +478,10 @@ public abstract class BankStatementMatchServiceLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
+		Timestamp dateFrom = ValueUtil.getDateFromString(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(
+		Timestamp dateTo = ValueUtil.getDateFromString(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -601,10 +596,10 @@ public abstract class BankStatementMatchServiceLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(
+		Timestamp dateFrom = ValueUtil.getDateFromString(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(
+		Timestamp dateTo = ValueUtil.getDateFromString(
 			request.getTransactionDateTo()
 		);
 

@@ -36,7 +36,7 @@ message ListPaymentInfoRequest {
 	string page_token = 3;
 	// filters
 	data.Criteria filters = 4;
-	repeated data.KeyValue context_attributes = 5;
+	map <string, data.Value> context_attributes = 5;
 	string search_value = 6;
 	// references
 	string process_parameter_uuid = 7;

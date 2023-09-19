@@ -85,6 +85,10 @@ public class RecordUtil {
 		String tableName = MTable.getTableName(context, tableId);
 		return getEntity(context, tableName, uuid, recordId, transactionName);
 	}
+	
+	public static PO getEntity(Properties context, String tableName, int recordId, String transactionName) {
+		return getEntity(context, tableName, recordId, transactionName);
+	}
 
 	/**
 	 * get Entity from Table and (UUID / Record ID)
@@ -526,7 +530,7 @@ public class RecordUtil {
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
-						if(!valueBuilder.getValueType().equals(Value.ValueType.UNRECOGNIZED)) {
+						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
 							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
 						}
 					} catch (Exception e) {

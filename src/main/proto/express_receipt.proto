@@ -20,6 +20,7 @@ option java_outer_classname = "ADempiereExpressReceipt";
 
 import "base_data_type.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 package express_receipt;
 
@@ -40,7 +41,7 @@ service ExpressReceipt {
 			body: "*"
 		};
 	}
-	rpc DeleteReceipt(DeleteReceiptRequest) returns (data.Empty) {
+	rpc DeleteReceipt(DeleteReceiptRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/express-receipt/receipts/{id}" };
 	}
 	rpc ProcessReceipt(ProcessReceiptRequest) returns (Receipt) {
@@ -56,7 +57,7 @@ service ExpressReceipt {
 			body: "*"
 		};
 	}
-	rpc DeleteReceiptLine(DeleteReceiptLineRequest) returns (data.Empty) {
+	rpc DeleteReceiptLine(DeleteReceiptLineRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/express-receipt/receipts/{receipt_id}/lines/{id}" };
 	}
 	rpc UpdateReceiptLine(UpdateReceiptLineRequest) returns (ReceiptLine) {

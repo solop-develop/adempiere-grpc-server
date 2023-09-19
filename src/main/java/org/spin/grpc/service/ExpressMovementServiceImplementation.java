@@ -37,7 +37,6 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Empty;
 import org.spin.backend.grpc.form.express_movement.CreateMovementLineRequest;
 import org.spin.backend.grpc.form.express_movement.CreateMovementRequest;
 import org.spin.backend.grpc.form.express_movement.DeleteMovementLineRequest;
@@ -60,6 +59,8 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
+
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

@@ -21,6 +21,7 @@ option java_outer_classname = "ADempiereTimeControl";
 
 import "base_data_type.proto";
 import "core_functionality.proto";
+import "google/protobuf/empty.proto";
 
 package time_control;
 
@@ -33,7 +34,7 @@ service TimeControl {
 	// Update Resource Assignment
 	rpc UpdateResourceAssignment(UpdateResourceAssignmentRequest) returns (ResourceAssignment) {}
 	// Delete Resource Assignment
-	rpc DeleteResourceAssignment(DeleteResourceAssignmentRequest) returns (data.Empty) {}
+	rpc DeleteResourceAssignment(DeleteResourceAssignmentRequest) returns (google.protobuf.Empty) {}
 	// Confirm Resource Assignment
 	rpc ConfirmResourceAssignment(ConfirmResourceAssignmentRequest) returns (ResourceAssignment) {}
 }
