@@ -443,23 +443,25 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 					|| roleId <= 0) {
 				roleId = SessionManager.getDefaultRoleId(userId);
 			}
-			//	Organization
-			if(organizationId < 0) {
-				organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
-			}
-			if(warehouseId < 0) {
-				warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
-			}
-			if(warehouseId < 0) {
-				warehouseId = 0;
-			}
 			//	Get Values from role
 			if(roleId < 0) {
 				throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 			}
+
+			//	Organization
+			if(organizationId <= 0) {
+				organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
+			}
 			if(organizationId < 0) {
 				throw new AdempiereException("@AD_User_ID@: @AD_Org_ID@ @NotFound@");
 			}
+
+			if (organizationId == 0) {
+				warehouseId = 0;
+			} else if (warehouseId <= 0) {
+				warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+			}
+
 			//	Session values
 			final String bearerToken = SessionManager.createSession(clientVersion, language, roleId, userId, organizationId, warehouseId);
 			builder.setToken(bearerToken);
