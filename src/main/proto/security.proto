@@ -19,7 +19,6 @@ option java_package = "org.spin.backend.grpc.security";
 option java_outer_classname = "ADempiereSecurity";
 
 import "google/api/annotations.proto";
-import "base_data_type.proto";
 import "google/protobuf/struct.proto";
 
 package security;
@@ -33,7 +32,7 @@ service Security {
 			body: "*"
 		};
 	}
-	// Request a Role from uuid
+	// Request a Role
 	rpc RunLogout(LogoutRequest) returns (Session) {
 		option (google.api.http) = { post: "/security/logout" };
 	}
@@ -41,7 +40,7 @@ service Security {
 	rpc GetUserInfo(UserInfoRequest) returns (UserInfo) {
 		option (google.api.http) = { get: "/security/user-info" };
 	}
-	// Request Menu from Parent UUID
+	// Request Menu from Parent
 	rpc GetMenu(MenuRequest) returns (Menu) {
 		option (google.api.http) = { get: "/security/menu" };
 	}
@@ -137,113 +136,90 @@ message MenuRequest {
 // User information
 message UserInfo {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	string comments = 5;
-	string image = 6;
-	int64 connection_timeout = 7;
+	string name = 2;
+	string description = 3;
+	string comments = 4;
+	string image = 5;
+	int64 connection_timeout = 6;
 }
 
 
 // SessionInfo
 message SessionInfo {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	UserInfo user_info = 4;
-	Role role = 5;
-	bool processed = 6;
-	string language = 7;
-	int32 country_id = 8;
-	string country_code = 9;
-	string country_name = 10;
-	string display_sequence = 11;
-	string currency_name = 12;
-	string currency_iso_code = 13;
-	string currency_symbol = 14;
-	int32 standard_precision = 15;
-	int32 costing_precision = 16;
-	google.protobuf.Struct default_context = 17;
-}
-
-// Define value for object
-message Value {
-	oneof kind {
-		google.protobuf.NullValue null_value = 1;
-		google.protobuf.Struct struct_value = 2;
-		google.protobuf.ListValue list_value = 3;
-		int32 int_value = 4;
-		int64 long_value = 5;
-		bool boolean_value = 6;
-		string string_value = 7;
-		string date_value = 8;
-		data.Decimal decimal_value = 9;
-	}
+	string name = 2;
+	UserInfo user_info = 3;
+	Role role = 4;
+	bool processed = 5;
+	string language = 6;
+	int32 country_id = 7;
+	string country_code = 8;
+	string country_name = 9;
+	string display_sequence = 10;
+	string currency_name = 11;
+	string currency_iso_code = 12;
+	string currency_symbol = 13;
+	int32 standard_precision = 14;
+	int32 costing_precision = 15;
+	google.protobuf.Struct default_context = 16;
 }
 
 message SetSessionAttributeRequest {
 	string language = 1;
 	int32 warehouse_id = 2;
-	string warehouse_uuid = 3;
 }
 
 message Client {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	string logo = 5;
-	string logo_report = 6;
-	string logo_web = 7;
+	string name = 2;
+	string description = 3;
+	string logo = 4;
+	string logo_report = 5;
+	string logo_web = 6;
 }
 
 // Role Definition
 message Role {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	Client client = 5;
-	bool is_can_report = 7;
-	bool is_can_export = 8;
-	bool is_personal_lock = 9;
-	bool is_personal_access = 10;
-	bool is_allow_info_account = 11;
-	bool is_allow_info_business_partner = 12;
-	bool is_allow_info_in_out = 13;
-	bool is_allow_info_order = 14;
-	bool is_allow_info_product = 15;
-	bool is_allow_info_schedule = 16;
-	bool is_allow_info_mrp = 17;
-	bool is_allow_html_view = 18;
-	bool is_allow_info_asset = 19;
-	bool is_allow_info_cash_journal = 20;
-	bool is_allow_info_invoice = 21;
-	bool is_allow_info_payment = 22;
-	bool is_allow_info_resource = 23;
-	bool is_allow_info_crp = 24;
-	bool is_allow_xls_view = 25;
+	string name = 2;
+	string description = 3;
+	Client client = 4;
+	bool is_can_report = 5;
+	bool is_can_export = 6;
+	bool is_personal_lock = 7;
+	bool is_personal_access = 8;
+	bool is_allow_info_account = 9;
+	bool is_allow_info_business_partner = 10;
+	bool is_allow_info_in_out = 11;
+	bool is_allow_info_order = 12;
+	bool is_allow_info_product = 13;
+	bool is_allow_info_schedule = 14;
+	bool is_allow_info_mrp = 15;
+	bool is_allow_html_view = 16;
+	bool is_allow_info_asset = 17;
+	bool is_allow_info_cash_journal = 18;
+	bool is_allow_info_invoice = 19;
+	bool is_allow_info_payment = 20;
+	bool is_allow_info_resource = 21;
+	bool is_allow_info_crp = 22;
+	bool is_allow_xls_view = 23;
 }
 
 // Menu
 message Menu {
 	int32 id = 1;
-	string uuid = 2;
-	int32 parent_id = 3;
-	string parent_uuid = 4;
-	string name = 5;
-	string description = 6;
-	string sequence = 7;
-	bool is_active = 8;
-	bool is_read_only = 9;
-	bool is_summary = 10;
-	bool is_s_o_trx = 11;
-	string action = 12;
+	int32 parent_id = 2;
+	string name = 3;
+	string description = 4;
+	string sequence = 5;
+	bool is_active = 6;
+	bool is_read_only = 7;
+	bool is_summary = 8;
+	bool is_s_o_trx = 9;
+	string action = 10;
 	// Supported References
-	int32 reference_id = 13;
-	string reference_uuid = 14;
-	repeated Menu childs = 15;
+	int32 reference_id = 11;
+	repeated Menu childs = 12;
 }
 
 //	Open ID

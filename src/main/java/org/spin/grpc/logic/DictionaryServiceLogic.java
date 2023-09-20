@@ -20,7 +20,7 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.ListFieldsRequest;
 import org.spin.backend.grpc.dictionary.ListFieldsResponse;
-import org.spin.grpc.service.DictionaryServiceImplementation;
+import org.spin.grpc.service.Dictionary;
 
 import io.vavr.control.Try;
 
@@ -89,7 +89,7 @@ public class DictionaryServiceLogic {
 				if (column == null || column.getAD_Column_ID() <= 0) {
 					continue;
 				}
-				Field.Builder fieldBuilder = DictionaryServiceImplementation.convertField(context, column);
+				Field.Builder fieldBuilder = Dictionary.convertField(context, column);
 				int sequence = (recordCount + 1) * 10;
 				fieldBuilder.setSequence(sequence);
 				fieldBuilder.setIsDisplayed(true);
@@ -135,7 +135,7 @@ public class DictionaryServiceLogic {
 			
 				Field.Builder fieldBuilder = fieldsList.get(field.getAD_Column_ID());
 				if (fieldBuilder == null) {
-					fieldBuilder = DictionaryServiceImplementation.convertField(context, field, true);
+					fieldBuilder = Dictionary.convertField(context, field, true);
 					// disable on query
 					fieldBuilder.setSequence(0);
 					fieldBuilder.setIsDisplayed(false);

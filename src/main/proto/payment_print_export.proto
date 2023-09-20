@@ -21,6 +21,7 @@ option java_outer_classname = "ADempierePaymentPrintExport";
 import "base_data_type.proto";
 import "business.proto";
 import "core_functionality.proto";
+import "google/protobuf/struct.proto";
 
 package payment_print_export;
 
@@ -58,7 +59,7 @@ message BankAccount {
 	string account_no = 3;
 	string account_name = 4;
 	string bank_name = 5;
-	data.Decimal current_balance = 6;
+	google.protobuf.Struct current_balance = 6;
 }
 
 // Payment Selection
@@ -67,7 +68,7 @@ message PaymentSelection {
 	string uuid = 2;
 	string document_no = 3;
 	BankAccount bank_account = 4;
-	data.Decimal payment_amount = 5;
+	google.protobuf.Struct payment_amount = 5;
 	int32 payment_quantity = 6;
 	data.Currency currency = 7;
 }
@@ -123,11 +124,11 @@ message Payment {
 	string vendor_uuid = 5;
 	string vendor_tax_id = 6;
 	string vendor_name = 7;
-	data.Decimal grand_total = 8;
-	data.Decimal over_under_amount = 9;
-	data.Decimal payment_amount = 10;
-	data.Decimal open_amount = 11;
-	data.Decimal final_balance = 12;
+	google.protobuf.Struct grand_total = 8;
+	google.protobuf.Struct over_under_amount = 9;
+	google.protobuf.Struct payment_amount = 10;
+	google.protobuf.Struct open_amount = 11;
+	google.protobuf.Struct final_balance = 12;
 }
 
 message ListPaymentsResponse {

@@ -21,6 +21,7 @@ option java_outer_classname = "ADempiereDashboarding";
 import "base_data_type.proto";
 import "dictionary.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 
 package dashboarding;
 
@@ -159,7 +160,7 @@ message Metrics {
 	string description = 4;
 	string x_axis_label = 5;
 	string y_axis_label = 6;
-	data.Decimal measure_target = 7;
+	google.protobuf.Struct measure_target = 7;
 	repeated ColorSchema color_schemas = 8;
 	repeated ChartSerie series = 9;
 }
@@ -173,14 +174,14 @@ message ChartSerie {
 //	Data of Chart
 message ChartData {
 	string name = 1;
-	data.Decimal value = 2;
+	google.protobuf.Struct value = 2;
 }
 
 //	Color Schema
 message ColorSchema {
 	string name = 1;
 	string color = 2;
-	data.Decimal percent = 3;
+	google.protobuf.Struct percent = 3;
 }
 
 enum Action {
@@ -289,7 +290,7 @@ message WindowMetrics {
 	string description = 4;
 	string x_axis_label = 5;
 	string y_axis_label = 6;
-	data.Decimal measure_target = 7;
+	google.protobuf.Struct measure_target = 7;
 	repeated ColorSchema color_schemas = 8;
 	repeated ChartSerie series = 9;
 }

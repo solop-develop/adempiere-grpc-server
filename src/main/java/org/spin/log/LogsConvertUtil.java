@@ -62,6 +62,7 @@ import org.spin.backend.grpc.logs.EntityLog;
 import org.spin.backend.grpc.logs.ListEntityLogsResponse;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
+import static com.google.protobuf.util.Timestamps.fromMillis;
 
 /**
  * This class was created for add all convert methods for Logs service
@@ -312,17 +313,18 @@ public class LogsConvertUtil {
 			return builder;
 		}
 
-		builder.setInstanceUuid(ValueUtil.validateNull(instance.getUUID()));
+		builder.setInstanceId(instance.getAD_PInstance_ID());
 		builder.setIsError(!instance.isOK());
 		builder.setIsProcessing(instance.isProcessing());
-		builder.setLastRun(instance.getUpdated().getTime());
+		
+		builder.setLastRun(fromMillis(instance.getUpdated().getTime()));
 		String summary = instance.getErrorMsg();
 		if(!Util.isEmpty(summary, true)) {
 			summary = Msg.parseTranslation(Env.getCtx(), summary);
 		}
 		//	for report
 		MProcess process = MProcess.get(Env.getCtx(), instance.getAD_Process_ID());
-		builder.setUuid(ValueUtil.validateNull(process.getUUID()));
+		builder.setId(instance.getAD_Process_ID());
 		builder.setName(ValueUtil.validateNull(process.getName()));
 		builder.setDescription(ValueUtil.validateNull(process.getDescription()));
 		if(process.isReport()) {
@@ -402,7 +404,7 @@ public class LogsConvertUtil {
 				String value = parameter.getP_String();
 				if(!Util.isEmpty(value, true)) {
 					hasFromParameter = true;
-					parameterBuilder = ValueUtil.getValueFromBoolean(value);
+					parameterBuilder = ValueUtil.getValueFromStringBoolean(value);
 				}
 			} else {
 				String value = parameter.getP_String();
@@ -458,9 +460,6 @@ public class LogsConvertUtil {
 		}
 		if (processPara != null) {
 			builder.setId(processPara.getAD_Process_Para_ID())
-				.setUuid(
-					ValueUtil.validateNull(processPara.getUUID())
-				)
 				.setName(
 					ValueUtil.validateNull(
 						processPara.get_Translation(I_AD_Process_Para.COLUMNNAME_Name)
@@ -518,7 +517,7 @@ public class LogsConvertUtil {
 			String value = instancePara.getP_String();
 			if(!Util.isEmpty(value, true)) {
 				hasFromParameter = true;
-				parameterBuilder = ValueUtil.getValueFromBoolean(value);
+				parameterBuilder = ValueUtil.getValueFromStringBoolean(value);
 			}
 		} else {
 			String value = instancePara.getP_String();

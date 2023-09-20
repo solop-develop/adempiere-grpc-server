@@ -26,11 +26,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_Bank;
-import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_POSKeyLayout;
 import org.adempiere.core.domains.models.I_C_UOM;
@@ -96,7 +94,6 @@ import org.spin.backend.grpc.common.ProductConversion;
 import org.spin.backend.grpc.common.SalesRepresentative;
 import org.spin.backend.grpc.common.TaxRate;
 import org.spin.backend.grpc.common.UnitOfMeasure;
-import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.common.Warehouse;
 import org.spin.backend.grpc.common.ChatEntry.ModeratorStatus;
 import org.spin.backend.grpc.pos.Address;
@@ -114,15 +111,21 @@ import org.spin.backend.grpc.pos.RMA;
 import org.spin.backend.grpc.pos.RMALine;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.Shipment;
-import org.spin.grpc.service.FileManagementServiceImplementation;
-import org.spin.grpc.service.TimeControlServiceImplementation;
+import org.spin.grpc.service.FileManagement;
+import org.spin.grpc.service.TimeControl;
 import org.spin.util.AttachmentUtil;
+
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
+import com.google.type.Decimal;
+
 import org.spin.model.MADAttachmentReference;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
+import static com.google.protobuf.util.Timestamps.fromMillis;
 
 /**
  * Class for convert any document
@@ -181,19 +184,18 @@ public class ConvertUtil {
 		if (chatEntry == null) {
 			return builder;
 		}
-		builder.setUuid(ValueUtil.validateNull(chatEntry.getUUID()));
 		builder.setId(chatEntry.getCM_ChatEntry_ID());
-		builder.setChatUuid(ValueUtil.validateNull(chatEntry.getCM_Chat().getUUID()));
+		builder.setChatId(chatEntry.getCM_Chat_ID());
 		builder.setSubject(ValueUtil.validateNull(chatEntry.getSubject()));
 		builder.setCharacterData(ValueUtil.validateNull(chatEntry.getCharacterData()));
 
 		if (chatEntry.getAD_User_ID() > 0) {
 			MUser user = MUser.get(chatEntry.getCtx(), chatEntry.getAD_User_ID());
-			builder.setUserUuid(ValueUtil.validateNull(user.getUUID()));
+			builder.setUserId(chatEntry.getAD_User_ID());
 			builder.setUserName(ValueUtil.validateNull(user.getName()));
 		}
-
-		builder.setLogDate(chatEntry.getCreated().getTime());
+		
+		builder.setLogDate(fromMillis(chatEntry.getCreated().getTime()));
 		//	Confidential Type
 		if(!Util.isEmpty(chatEntry.getConfidentialType())) {
 			if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_PublicInformation)) {
@@ -239,8 +241,7 @@ public class ConvertUtil {
 		if(entity == null) {
 			return builder;
 		}
-		builder.setUuid(ValueUtil.validateNull(entity.get_ValueAsString(I_AD_Element.COLUMNNAME_UUID)))
-			.setId(entity.get_ID());
+		builder.setId(entity.get_ID());
 		//	Convert attributes
 		POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), entity.get_Table_ID());
 		builder.setTableName(ValueUtil.validateNull(poInfo.getTableName()));
@@ -253,7 +254,7 @@ public class ConvertUtil {
 				continue;
 			}
 			//	Add
-			builder.putValues(columnName, builderValue.build());
+			builder.setValues(Struct.newBuilder().putFields(columnName, builderValue.build()));
 		}
 		//	
 		return builder;
@@ -298,7 +299,6 @@ public class ConvertUtil {
 		}
 
 		return DocumentType.newBuilder()
-				.setUuid(ValueUtil.validateNull(documentType.getUUID()))
 				.setId(documentType.getC_DocType_ID())
 				.setName(ValueUtil.validateNull(documentType.getName()))
 				.setDescription(ValueUtil.validateNull(documentType.getDescription()))
@@ -315,7 +315,6 @@ public class ConvertUtil {
 			return BusinessPartner.newBuilder();
 		}
 		return BusinessPartner.newBuilder()
-				.setUuid(ValueUtil.validateNull(businessPartner.getUUID()))
 				.setId(businessPartner.getC_BPartner_ID())
 				.setValue(ValueUtil.validateNull(businessPartner.getValue()))
 				.setTaxId(ValueUtil.validateNull(businessPartner.getTaxID()))
@@ -338,7 +337,6 @@ public class ConvertUtil {
 		}
 		//	convert charge
 		return builder
-			.setUuid(ValueUtil.validateNull(charge.getUUID()))
 			.setId(charge.getC_Charge_ID())
 			.setName(ValueUtil.validateNull(charge.getName()))
 			.setDescription(ValueUtil.validateNull(charge.getDescription()));
@@ -356,16 +354,15 @@ public class ConvertUtil {
 		}
 		//	convert charge
 		builder
-			.setUuid(ValueUtil.validateNull(conversionRate.getUUID()))
 			.setId(conversionRate.getC_Conversion_Rate_ID())
-			.setValidFrom(ValueUtil.validateNull(ValueUtil.convertDateToString(conversionRate.getValidFrom())))
-			.setConversionTypeUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_ConversionType.Table_Name, conversionRate.getC_ConversionType_ID())))
+			.setValidFrom(fromMillis(conversionRate.getValidFrom().getTime()))
+			.setConversionTypeId(conversionRate.getC_ConversionType_ID())
 			.setCurrencyFrom(convertCurrency(MCurrency.get(Env.getCtx(), conversionRate.getC_Currency_ID())))
 			.setCurrencyTo(convertCurrency(MCurrency.get(Env.getCtx(), conversionRate.getC_Currency_ID_To())))
 			.setMultiplyRate(ValueUtil.getDecimalFromBigDecimal(conversionRate.getMultiplyRate()))
 			.setDivideRate(ValueUtil.getDecimalFromBigDecimal(conversionRate.getDivideRate()));
 		if(conversionRate.getValidTo() != null) {
-			builder.setValidTo(ValueUtil.validateNull(ValueUtil.convertDateToString(conversionRate.getValidTo())));
+			builder.setValidTo(fromMillis(conversionRate.getValidTo().getTime()));
 		}
 		//	
 		return builder;
@@ -381,8 +378,7 @@ public class ConvertUtil {
 		if (product == null) {
 			return builder;
 		}
-		builder.setUuid(ValueUtil.validateNull(product.getUUID()))
-				.setId(product.getM_Product_ID())
+		builder.setId(product.getM_Product_ID())
 				.setValue(ValueUtil.validateNull(product.getValue()))
 				.setName(ValueUtil.validateNull(product.getName()))
 				.setDescription(ValueUtil.validateNull(product.getDescription()))
@@ -475,8 +471,7 @@ public class ConvertUtil {
 		if(country == null) {
 			return builder;
 		}
-		builder.setUuid(ValueUtil.validateNull(country.getUUID()))
-			.setId(country.getC_Country_ID())
+		builder.setId(country.getC_Country_ID())
 			.setCountryCode(ValueUtil.validateNull(country.getCountryCode()))
 			.setName(ValueUtil.validateNull(country.getName()))
 			.setDescription(ValueUtil.validateNull(country.getDescription()))
@@ -514,8 +509,7 @@ public class ConvertUtil {
 			return builder;
 		}
 		//	Set values
-		return builder.setUuid(ValueUtil.validateNull(currency.getUUID()))
-			.setId(currency.getC_Currency_ID())
+		return builder.setId(currency.getC_Currency_ID())
 			.setIsoCode(ValueUtil.validateNull(currency.getISO_Code()))
 			.setCurSymbol(ValueUtil.validateNull(currency.getCurSymbol()))
 			.setDescription(ValueUtil.validateNull(currency.getDescription()))
@@ -534,8 +528,7 @@ public class ConvertUtil {
 			return builder;
 		}
 		//	
-		return builder.setUuid(ValueUtil.validateNull(priceList.getUUID()))
-			.setId(priceList.getM_PriceList_ID())
+		return builder.setId(priceList.getM_PriceList_ID())
 			.setName(ValueUtil.validateNull(priceList.getName()))
 			.setDescription(ValueUtil.validateNull(priceList.getDescription()))
 			.setCurrency(convertCurrency(MCurrency.get(priceList.getCtx(), priceList.getC_Currency_ID())))
@@ -1160,7 +1153,7 @@ public class ConvertUtil {
 				.setTotalAmountWithTax(ValueUtil.getDecimalFromBigDecimal(totalAmountWithTax.setScale(priceList.getStandardPrecision(), RoundingMode.HALF_UP)))
 			.setUom(ConvertUtil.convertProductConversion(uom))
 			.setProductUom(ConvertUtil.convertProductConversion(productUom))
-			.setResourceAssignment(TimeControlServiceImplementation.convertResourceAssignment(orderLine.getS_ResourceAssignment_ID()))
+			.setResourceAssignment(TimeControl.convertResourceAssignment(orderLine.getS_ResourceAssignment_ID()))
 			.setSourceRmaLineId(orderLine.get_ValueAsInt("ECA14_Source_RMALine_ID"))
 		;
 	}
@@ -1372,7 +1365,7 @@ public class ConvertUtil {
 				.setQuantity(ValueUtil.getDecimalFromBigDecimal(Optional.ofNullable(key.getQty()).orElse(Env.ZERO)))
 				.setProductValue(ValueUtil.validateNull(productValue))
 			.setResourceReference(
-				FileManagementServiceImplementation.convertResourceReference(
+				FileManagement.convertResourceReference(
 					FileUtil.getResourceFromImageId(
 						key.getAD_Image_ID())
 					)
@@ -1391,7 +1384,6 @@ public class ConvertUtil {
 			return SalesRepresentative.newBuilder();
 		}
 		return SalesRepresentative.newBuilder()
-				.setUuid(ValueUtil.validateNull(salesRepresentative.getUUID()))
 				.setId(salesRepresentative.getAD_User_ID())
 				.setName(ValueUtil.validateNull(salesRepresentative.getName()))
 				.setDescription(ValueUtil.validateNull(salesRepresentative.getDescription()));
@@ -1538,8 +1530,7 @@ public class ConvertUtil {
 			return builder;
 		}
 		//	
-		return builder.setUuid(ValueUtil.validateNull(bankAccount.getUUID()))
-			.setId(bankAccount.getAD_Org_ID())
+		return builder.setId(bankAccount.getAD_Org_ID())
 			.setAccountNo(ValueUtil.validateNull(bankAccount.getAccountNo()))
 			.setName(ValueUtil.validateNull(bankAccount.getName()))
 			.setDescription(ValueUtil.validateNull(bankAccount.getDescription()))
@@ -1575,7 +1566,6 @@ public class ConvertUtil {
 		}
 		return Organization.newBuilder()
 				.setCorporateBrandingImage(ValueUtil.validateNull(corporateImageBranding.get()))
-				.setUuid(ValueUtil.validateNull(organization.getUUID()))
 				.setId(organization.getAD_Org_ID())
 				.setName(ValueUtil.validateNull(organization.getName()))
 				.setDescription(ValueUtil.validateNull(organization.getDescription()))
@@ -1597,7 +1587,6 @@ public class ConvertUtil {
 			return Warehouse.newBuilder();
 		}
 		return Warehouse.newBuilder()
-				.setUuid(ValueUtil.validateNull(warehouse.getUUID()))
 				.setId(warehouse.getM_Warehouse_ID())
 				.setName(ValueUtil.validateNull(warehouse.getName()))
 				.setDescription(ValueUtil.validateNull(warehouse.getDescription()));
@@ -1615,7 +1604,6 @@ public class ConvertUtil {
 		}
 
 		unitOfMeasureBuilder
-			.setUuid(ValueUtil.validateNull(unitOfMeasure.getUUID()))
 			.setId(unitOfMeasure.getC_UOM_ID())
 			.setName(ValueUtil.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Name)))
 			.setCode(ValueUtil.validateNull(unitOfMeasure.getX12DE355()))
@@ -1639,7 +1627,6 @@ public class ConvertUtil {
 		MUOM uomToConvert = MUOM.get(Env.getCtx(), productConversion.getC_UOM_To_ID());
 		
 		return ProductConversion.newBuilder()
-			.setUuid(ValueUtil.validateNull(productConversion.getUUID()))
 			.setId(productConversion.getC_UOM_Conversion_ID())
 			.setMultiplyRate(ValueUtil.getDecimalFromBigDecimal(productConversion.getMultiplyRate()))
 			.setDivideRate(ValueUtil.getDecimalFromBigDecimal(productConversion.getDivideRate()))

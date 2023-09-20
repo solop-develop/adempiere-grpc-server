@@ -60,7 +60,6 @@ public class UserInterfaceConvertUtil {
 		}
 
 		builder.setId(treeType.getAD_Ref_List_ID())
-			.setUuid(ValueUtil.validateNull(treeType.getUUID()))
 			.setValue(ValueUtil.validateNull(treeType.getValue()))
 			.setName(
 				ValueUtil.validateNull(name)

@@ -19,7 +19,7 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.file_management";
 option java_outer_classname = "ADempiereFileManagement";
 
-import "base_data_type.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/empty.proto";
 
 package file_management;
@@ -66,7 +66,7 @@ message ResourceReference {
 	string uuid = 2;
 	string name = 3;
 	string file_name = 4;
-	data.Decimal file_size = 5;
+	google.protobuf.Struct file_size = 5;
 	string description = 6;
 	string text_message = 7;
 	string content_type = 8;
@@ -81,7 +81,7 @@ message LoadResourceRequest {
 	bytes data = 1;
 	int32 resource_id = 2;
 	string resource_uuid = 3;
-	data.Decimal file_size = 4;
+	google.protobuf.Struct file_size = 4;
 }
 
 enum Operation {

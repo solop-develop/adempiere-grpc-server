@@ -49,7 +49,6 @@ import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
-import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.form.import_file_loader.GetImportFromatRequest;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
 import org.spin.backend.grpc.form.import_file_loader.ImportTable;
@@ -65,9 +64,12 @@ import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.ValueUtil;
-import org.spin.grpc.service.BusinessDataServiceImplementation;
-import org.spin.grpc.service.UserInterfaceServiceImplementation;
+import org.spin.grpc.service.BusinessData;
+import org.spin.grpc.service.UserInterface;
 import org.spin.util.AttachmentUtil;
+
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -138,15 +140,14 @@ public class ImportFileLoaderServiceLogic {
 			Value.Builder value = ValueUtil.getValueFromString(
 				charset.name()
 			);
-			LookupItem.Builder builder = LookupItem.newBuilder()
-				.putValues(
+			LookupItem.Builder builder = LookupItem.newBuilder().setValues(Struct.newBuilder().putFields(
 					LookupUtil.VALUE_COLUMN_KEY,
 					value.build()
 				)
-				.putValues(
+				.putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
 					value.build()
-				)
+				))
 			;
 			builderList.addRecords(builder);
 		});
@@ -193,7 +194,7 @@ public class ImportFileLoaderServiceLogic {
 			"AD_ImpFormat.AD_Table_ID = " + table.getAD_Table_ID()
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterfaceServiceImplementation.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
 			reference,
 			null,
 			request.getPageSize(),
@@ -218,7 +219,7 @@ public class ImportFileLoaderServiceLogic {
 			"AD_ImpFormat.AD_Client_ID = @#AD_Client_ID@ AND AD_ImpFormat.AD_Table_ID = " + table.getAD_Table_ID()
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterfaceServiceImplementation.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
 			reference,
 			null,
 			request.getPageSize(),
@@ -322,10 +323,9 @@ public class ImportFileLoaderServiceLogic {
 
 			RunBusinessProcessRequest.Builder runProcessRequest = RunBusinessProcessRequest.newBuilder()
 				.setId(process.getAD_Process_ID())
-				.setUuid(process.getUUID())
 				.putAllParameters(request.getParametersMap())
 			;
-			ProcessLog.Builder processLog = BusinessDataServiceImplementation.runBusinessProcess(
+			ProcessLog.Builder processLog = BusinessData.runBusinessProcess(
 				runProcessRequest.build()
 			);
 			builder.setProcessLog(processLog);
@@ -532,10 +532,7 @@ public class ImportFileLoaderServiceLogic {
 					valueBuilder = ValueUtil.getValueFromString(entry);
 				}
 
-				entitBuilder.putValues(
-					row.getColumnName(),
-					valueBuilder.build()
-				);
+				entitBuilder.setValues(Struct.newBuilder().putFields(row.getColumnName(), valueBuilder.build()));
 			}
 
 			// columns.fo
@@ -588,7 +585,6 @@ public class ImportFileLoaderServiceLogic {
 
 			builderItem.setTableName(I_AD_Process.Table_Name);
 			builderItem.setId(processDefinition.getAD_Process_ID());
-			builderItem.setUuid(ValueUtil.validateNull(processDefinition.getUUID()));
 
 			builderList.addRecords(builderItem.build());
 		});

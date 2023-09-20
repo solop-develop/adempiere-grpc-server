@@ -38,6 +38,7 @@ import org.spin.backend.grpc.logs.UserActivityType;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
+import static com.google.protobuf.util.Timestamps.toMillis;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -136,14 +137,14 @@ public class LogsServiceLogic {
 			if (u1.getUserActivityType() == UserActivityType.ENTITY_LOG) {
 				from = ValueUtil.getTimestampFromLong(u1.getEntityLog().getLogDate());
 			} else {
-				from = ValueUtil.getTimestampFromLong(u1.getProcessLog().getLastRun());
+				from = ValueUtil.getTimestampFromLong(toMillis(u1.getProcessLog().getLastRun()));
 			}
 
 			Timestamp to = null;
 			if (u2.getUserActivityType() == UserActivityType.ENTITY_LOG) {
 				to = ValueUtil.getTimestampFromLong(u2.getEntityLog().getLogDate());
 			} else {
-				to = ValueUtil.getTimestampFromLong(u2.getProcessLog().getLastRun());
+				to = ValueUtil.getTimestampFromLong(toMillis((u2.getProcessLog().getLastRun())));
 			}
 
 			if (from == null || to == null) {

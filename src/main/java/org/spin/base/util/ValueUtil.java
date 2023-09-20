@@ -37,8 +37,9 @@ import org.compiere.util.Msg;
 import org.compiere.util.NamePair;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Decimal;
-import org.spin.backend.grpc.common.Value;
+
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 /**
  * Class for handle Values from and to client
@@ -57,9 +58,9 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromObject(Object value) {
-		Value.Builder builderValue = Value.newBuilder();
+		Value.Builder builder = Value.newBuilder();
 		if(value == null) {
-			return builderValue;
+			return builder;
 		}
 		//	Validate value
 		if(value instanceof BigDecimal) {
@@ -74,7 +75,7 @@ public class ValueUtil {
 			return getValueFromDate((Timestamp) value);
 		}
 		//	
-		return builderValue;
+		return builder;
 	}
 	
 	/**
@@ -83,12 +84,11 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromInteger(Integer value) {
-		Value.Builder convertedValue = Value.newBuilder();
-		if(value != null) {
-			convertedValue.setIntValue((Integer)value);
+		if(value == null) {
+			return Value.newBuilder();
 		}
 		//	default
-		return convertedValue;
+		return Value.newBuilder().setNumberValue((Integer)value);
 	}
 	/**
 	 * Get value from Int
@@ -96,10 +96,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromInt(int value) {
-		Value.Builder convertedValue = Value.newBuilder();
-		convertedValue.setIntValue(Integer.valueOf(value));
-		// default
-		return convertedValue;
+		return getValueFromInteger(value);
 	}
 	
 	/**
@@ -117,7 +114,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromBoolean(boolean value) {
-		return Value.newBuilder().setBooleanValue(value);
+		return Value.newBuilder().setBoolValue(value);
 	}
 	/**
 	 * Get value from a Boolean value
@@ -125,16 +122,18 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromBoolean(Boolean value) {
-		return Value.newBuilder().setBooleanValue(value.booleanValue());
+		if(value == null) {
+			return Value.newBuilder();
+		}
+		return Value.newBuilder().setBoolValue(value);
 	}
 	/**
 	 * Get value from a String Boolean value
 	 * @param value
 	 * @return
 	 */
-	public static Value.Builder getValueFromBoolean(String value) {
-		return Value.newBuilder()
-			.setBooleanValue(stringToBoolean(value));
+	public static Value.Builder getValueFromStringBoolean(String value) {
+		return getValueFromBoolean(stringToBoolean(value));
 	}
 
 	/**
@@ -146,10 +145,10 @@ public class ValueUtil {
 		if (value == null) {
 			return Value.newBuilder();
 		}
-		return Value.newBuilder()
-			.setDateValue(
-					convertDateToString(value)
-			);
+		Struct.Builder date = Struct.newBuilder();
+		date.putFields("type", Value.newBuilder().setStringValue("date").build());
+		date.putFields("value", Value.newBuilder().setStringValue(convertDateToString(value)).build());
+		return Value.newBuilder().setStructValue(date);
 	}
 	
 	/**
@@ -158,10 +157,7 @@ public class ValueUtil {
 	 * @return
 	 */
 	public static Value.Builder getValueFromDecimal(BigDecimal value) {
-		return Value.newBuilder()
-			.setDecimalValue(
-				getDecimalFromBigDecimal(value)
-			);
+		return Value.newBuilder().setStructValue(getDecimalFromBigDecimal(value));
 	}
 	
 	/**
@@ -169,21 +165,15 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static Decimal.Builder getDecimalFromBigDecimal(BigDecimal value) {
+	public static Struct.Builder getDecimalFromBigDecimal(BigDecimal value) {
 		if (value == null) {
-			return Decimal.newBuilder();
+			return Struct.newBuilder();
 		}
-		return Decimal.newBuilder()
-			.setDecimalValue(value.toPlainString())
-			.setScale(value.scale());
+		Struct.Builder decimalValue = Struct.newBuilder();
+		decimalValue.putFields("type", Value.newBuilder().setStringValue("decimal").build());
+		decimalValue.putFields("value", Value.newBuilder().setStringValue(value.toPlainString()).build());
+		return decimalValue;
 	}
-
-	public static Decimal.Builder getDecimalFromInt(int value) {
-		return getDecimalFromBigDecimal(
-			new BigDecimal(value)
-		);
-	}
-
 
 	/**
 	 * Get Decimal from Value
@@ -328,7 +318,7 @@ public class ValueUtil {
 			return getValueFromDecimal(bigDecimalValue);
 		} else if(DisplayType.YesNo == referenceId) {
 			if (value instanceof String) {
-				return getValueFromBoolean((String) value);
+				return getValueFromStringBoolean((String) value);
 			}
 			return getValueFromBoolean((Boolean) value);
 		} else if(DisplayType.isDate(referenceId)) {

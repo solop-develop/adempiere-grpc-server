@@ -23,41 +23,41 @@ import org.spin.authentication.AuthorizationServerInterceptor;
 import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.ServiceContextProvider;
 import org.spin.base.util.Services;
-import org.spin.grpc.service.BankStatementMatchServiceImplementation;
-import org.spin.grpc.service.BusinessDataServiceImplementation;
-import org.spin.grpc.service.BusinessPartnerServiceImplementation;
-import org.spin.grpc.service.CoreFunctionalityImplementation;
-import org.spin.grpc.service.DashboardingServiceImplementation;
-import org.spin.grpc.service.DictionaryServiceImplementation;
-import org.spin.grpc.service.EnrollmentServiceImplementation;
-import org.spin.grpc.service.ExpressMovementServiceImplementation;
-import org.spin.grpc.service.ExpressReceiptServiceImplementation;
-import org.spin.grpc.service.ExpressShipmentServiceImplementation;
-import org.spin.grpc.service.FileManagementServiceImplementation;
-import org.spin.grpc.service.GeneralLedgerServiceImplementation;
-import org.spin.grpc.service.ImportFileLoaderServiceImplementation;
-import org.spin.grpc.service.InOutServiceImplementation;
-import org.spin.grpc.service.InvoiceServiceImplementation;
-import org.spin.grpc.service.IssueManagementServiceImplementation;
-import org.spin.grpc.service.LogsServiceImplementation;
-import org.spin.grpc.service.MatchPOReceiptInvoiceServiceImplementation;
-import org.spin.grpc.service.MaterialManagementServiceImplementation;
-import org.spin.grpc.service.OrderServiceImplementation;
-import org.spin.grpc.service.PaymentAllocationServiceImplementation;
-import org.spin.grpc.service.PaymentPrintExportServiceImplementation;
-import org.spin.grpc.service.PaymentServiceImplementation;
-import org.spin.grpc.service.PayrollActionNoticeServiceImplementation;
-import org.spin.grpc.service.PointOfSalesServiceImplementation;
-import org.spin.grpc.service.ProductServiceImplementation;
-import org.spin.grpc.service.RecordManagementServiceImplementation;
-import org.spin.grpc.service.SecurityServiceImplementation;
-import org.spin.grpc.service.TimeControlServiceImplementation;
-import org.spin.grpc.service.TimeRecordServiceImplementation;
-import org.spin.grpc.service.UpdateImplementation;
-import org.spin.grpc.service.UserCustomizationImplementation;
-import org.spin.grpc.service.UserInterfaceServiceImplementation;
-import org.spin.grpc.service.WebStoreServiceImplementation;
-import org.spin.grpc.service.WorkflowServiceImplementation;
+import org.spin.grpc.service.BankStatementMatch;
+import org.spin.grpc.service.BusinessData;
+import org.spin.grpc.service.BusinessPartner;
+import org.spin.grpc.service.CoreFunctionality;
+import org.spin.grpc.service.Dashboarding;
+import org.spin.grpc.service.Dictionary;
+import org.spin.grpc.service.Enrollment;
+import org.spin.grpc.service.ExpressMovement;
+import org.spin.grpc.service.ExpressReceipt;
+import org.spin.grpc.service.ExpressShipment;
+import org.spin.grpc.service.FileManagement;
+import org.spin.grpc.service.GeneralLedger;
+import org.spin.grpc.service.ImportFileLoader;
+import org.spin.grpc.service.InOutInfo;
+import org.spin.grpc.service.InvoiceInfo;
+import org.spin.grpc.service.IssueManagement;
+import org.spin.grpc.service.LogsInfo;
+import org.spin.grpc.service.MatchPOReceiptInvoice;
+import org.spin.grpc.service.MaterialManagement;
+import org.spin.grpc.service.OrderInfo;
+import org.spin.grpc.service.PaymentAllocation;
+import org.spin.grpc.service.PaymentPrintExport;
+import org.spin.grpc.service.PaymentInfo;
+import org.spin.grpc.service.PayrollActionNotice;
+import org.spin.grpc.service.PointOfSalesForm;
+import org.spin.grpc.service.ProductInfo;
+import org.spin.grpc.service.RecordManagement;
+import org.spin.grpc.service.Security;
+import org.spin.grpc.service.TimeControl;
+import org.spin.grpc.service.TimeRecord;
+import org.spin.grpc.service.UpdateManagement;
+import org.spin.grpc.service.UserCustomization;
+import org.spin.grpc.service.UserInterface;
+import org.spin.grpc.service.WebStore;
+import org.spin.grpc.service.Workflow;
 
 import io.grpc.Server;
 import io.grpc.netty.GrpcSslContexts;
@@ -104,177 +104,177 @@ public class AllInOneServices {
 
 		//	Bank Statement Match
 		if (SetupLoader.getInstance().getServer().isValidService(Services.BANK_STATEMENT_MATCH.getServiceName())) {
-			serverBuilder.addService(new BankStatementMatchServiceImplementation());
+			serverBuilder.addService(new BankStatementMatch());
 			logger.info("Service " + Services.BANK_STATEMENT_MATCH.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Business Logic
 		if(SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS.getServiceName())) {
-			serverBuilder.addService(new BusinessDataServiceImplementation());
+			serverBuilder.addService(new BusinessData());
 			logger.info("Service " + Services.BUSINESS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Business Partner
 		if (SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS_PARTNER.getServiceName())) {
-			serverBuilder.addService(new BusinessPartnerServiceImplementation());
+			serverBuilder.addService(new BusinessPartner());
 			logger.info("Service " + Services.BUSINESS_PARTNER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Core Implementation
 		if(SetupLoader.getInstance().getServer().isValidService(Services.CORE.getServiceName())) {
-			serverBuilder.addService(new CoreFunctionalityImplementation());
+			serverBuilder.addService(new CoreFunctionality());
 			logger.info("Service " + Services.CORE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Dictionary
 		if(SetupLoader.getInstance().getServer().isValidService(Services.DICTIONARY.getServiceName())) {
-			serverBuilder.addService(new DictionaryServiceImplementation());
+			serverBuilder.addService(new Dictionary());
 			logger.info("Service " + Services.DICTIONARY.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Enrollment
 		if(SetupLoader.getInstance().getServer().isValidService(Services.ENROLLMENT.getServiceName())) {
-			serverBuilder.addService(new EnrollmentServiceImplementation());
+			serverBuilder.addService(new Enrollment());
 			logger.info("Service " + Services.ENROLLMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		// Express Movement
 		if (SetupLoader.getInstance().getServer().isValidService(Services.EXPRESS_MOVEMENT.getServiceName())) {
-			serverBuilder.addService(new ExpressMovementServiceImplementation());
+			serverBuilder.addService(new ExpressMovement());
 			logger.info("Service " + Services.EXPRESS_MOVEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		// Express Receipt
 		if (SetupLoader.getInstance().getServer().isValidService(Services.EXPRESS_RECEIPT.getServiceName())) {
-			serverBuilder.addService(new ExpressReceiptServiceImplementation());
+			serverBuilder.addService(new ExpressReceipt());
 			logger.info("Service " + Services.EXPRESS_RECEIPT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		// Express Shipment
 		if (SetupLoader.getInstance().getServer().isValidService(Services.EXPRESS_SHIPMENT.getServiceName())) {
-			serverBuilder.addService(new ExpressShipmentServiceImplementation());
+			serverBuilder.addService(new ExpressShipment());
 			logger.info("Service " + Services.EXPRESS_SHIPMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	File Management
 		if(SetupLoader.getInstance().getServer().isValidService(Services.FILE_MANAGEMENT.getServiceName())) {
-			serverBuilder.addService(new FileManagementServiceImplementation());
+			serverBuilder.addService(new FileManagement());
 			logger.info("Service " + Services.FILE_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Dashboarding
 		if(SetupLoader.getInstance().getServer().isValidService(Services.DASHBOARDING.getServiceName())) {
-			serverBuilder.addService(new DashboardingServiceImplementation());
+			serverBuilder.addService(new Dashboarding());
 			logger.info("Service " + Services.DASHBOARDING.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Workflow
 		if(SetupLoader.getInstance().getServer().isValidService(Services.WORKFLOW.getServiceName())) {
-			serverBuilder.addService(new WorkflowServiceImplementation());
+			serverBuilder.addService(new Workflow());
 			logger.info("Service " + Services.WORKFLOW.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	General Ledger
 		if(SetupLoader.getInstance().getServer().isValidService(Services.GENERAL_LEDGER.getServiceName())) {
-			serverBuilder.addService(new GeneralLedgerServiceImplementation());
+			serverBuilder.addService(new GeneralLedger());
 			logger.info("Service " + Services.GENERAL_LEDGER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Import File Loader
 		if(SetupLoader.getInstance().getServer().isValidService(Services.IMPORT_FILE_LOADER.getServiceName())) {
-			serverBuilder.addService(new ImportFileLoaderServiceImplementation());
+			serverBuilder.addService(new ImportFileLoader());
 			logger.info("Service " + Services.IMPORT_FILE_LOADER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Log
 		if(SetupLoader.getInstance().getServer().isValidService(Services.LOG.getServiceName())) {
-			serverBuilder.addService(new LogsServiceImplementation());
+			serverBuilder.addService(new LogsInfo());
 			logger.info("Service " + Services.LOG.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Match PO-Receipt-Invocie
 		if (SetupLoader.getInstance().getServer().isValidService(Services.MATCH_PO_RECEIPT_INVOICE.getServiceName())) {
-			serverBuilder.addService(new MatchPOReceiptInvoiceServiceImplementation());
+			serverBuilder.addService(new MatchPOReceiptInvoice());
 			logger.info("Service " + Services.MATCH_PO_RECEIPT_INVOICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Material Management
 		if(SetupLoader.getInstance().getServer().isValidService(Services.MATERIAL_MANAGEMENT.getServiceName())) {
-			serverBuilder.addService(new MaterialManagementServiceImplementation());
+			serverBuilder.addService(new MaterialManagement());
 			logger.info("Service " + Services.MATERIAL_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	For Security
 		if (SetupLoader.getInstance().getServer().isValidService(Services.SECURITY.getServiceName())) {
-			serverBuilder.addService(new SecurityServiceImplementation());
+			serverBuilder.addService(new Security());
 			logger.info("Service " + Services.SECURITY.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Store
 		if(SetupLoader.getInstance().getServer().isValidService(Services.STORE.getServiceName())) {
-			serverBuilder.addService(new WebStoreServiceImplementation());
+			serverBuilder.addService(new WebStore());
 			logger.info("Service " + Services.STORE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	POS
 		if(SetupLoader.getInstance().getServer().isValidService(Services.POS.getServiceName())) {
-			serverBuilder.addService(new PointOfSalesServiceImplementation());
+			serverBuilder.addService(new PointOfSalesForm());
 			logger.info("Service " + Services.POS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Updater
 		if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
-			serverBuilder.addService(new UpdateImplementation());
+			serverBuilder.addService(new UpdateManagement());
 			logger.info("Service " + Services.UPDATER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	In-Out
 		if(SetupLoader.getInstance().getServer().isValidService(Services.IN_OUT.getServiceName())) {
-			serverBuilder.addService(new InOutServiceImplementation());
+			serverBuilder.addService(new InOutInfo());
 			logger.info("Service " + Services.IN_OUT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Invoice
 		if(SetupLoader.getInstance().getServer().isValidService(Services.INVOICE.getServiceName())) {
-			serverBuilder.addService(new InvoiceServiceImplementation());
+			serverBuilder.addService(new InvoiceInfo());
 			logger.info("Service " + Services.INVOICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Issue Management
 		if (SetupLoader.getInstance().getServer().isValidService(Services.ISSUE_MANAGEMENT.getServiceName())) {
-			serverBuilder.addService(new IssueManagementServiceImplementation());
+			serverBuilder.addService(new IssueManagement());
 			logger.info("Service " + Services.ISSUE_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Order
 		if(SetupLoader.getInstance().getServer().isValidService(Services.ORDER.getServiceName())) {
-			serverBuilder.addService(new OrderServiceImplementation());
+			serverBuilder.addService(new OrderInfo());
 			logger.info("Service " + Services.ORDER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payment
 		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT.getServiceName())) {
-			serverBuilder.addService(new PaymentServiceImplementation());
+			serverBuilder.addService(new PaymentInfo());
 			logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payment
 		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT_ALLOCATION.getServiceName())) {
-			serverBuilder.addService(new PaymentAllocationServiceImplementation());
+			serverBuilder.addService(new PaymentAllocation());
 			logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payment Print/Export
 		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT_PTINT_EXPORT.getServiceName())) {
-			serverBuilder.addService(new PaymentPrintExportServiceImplementation());
+			serverBuilder.addService(new PaymentPrintExport());
 			logger.info("Service " + Services.PAYMENT_PTINT_EXPORT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payroll Action Notice
 		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYROLL_ACTION_NOTICE.getServiceName())) {
-			serverBuilder.addService(new PayrollActionNoticeServiceImplementation());
+			serverBuilder.addService(new PayrollActionNotice());
 			logger.info("Service " + Services.PAYROLL_ACTION_NOTICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Product
 		if (SetupLoader.getInstance().getServer().isValidService(Services.PRODUCT.getServiceName())) {
-			serverBuilder.addService(new ProductServiceImplementation());
+			serverBuilder.addService(new ProductInfo());
 			logger.info("Service " + Services.PRODUCT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Record Management
 		if (SetupLoader.getInstance().getServer().isValidService(Services.RECORD_MANAGEMENT.getServiceName())) {
-			serverBuilder.addService(new RecordManagementServiceImplementation());
+			serverBuilder.addService(new RecordManagement());
 			logger.info("Service " + Services.RECORD_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Time Control
 		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {
-			serverBuilder.addService(new TimeControlServiceImplementation());
+			serverBuilder.addService(new TimeControl());
 			logger.info("Service " + Services.TIME_CONTROL.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Time Record
 		if (SetupLoader.getInstance().getServer().isValidService(Services.TIME_RECORD.getServiceName())) {
-			serverBuilder.addService(new TimeRecordServiceImplementation());
+			serverBuilder.addService(new TimeRecord());
 			logger.info("Service " + Services.TIME_RECORD.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	User Customization
 		if(SetupLoader.getInstance().getServer().isValidService(Services.USER_CUSTOMIZATION.getServiceName())) {
-			serverBuilder.addService(new UserCustomizationImplementation());
+			serverBuilder.addService(new UserCustomization());
 			logger.info("Service " + Services.USER_CUSTOMIZATION.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	User Interface
 		if(SetupLoader.getInstance().getServer().isValidService(Services.UI.getServiceName())) {
-			serverBuilder.addService(new UserInterfaceServiceImplementation());
+			serverBuilder.addService(new UserInterface());
 			logger.info("Service " + Services.UI.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Add Server

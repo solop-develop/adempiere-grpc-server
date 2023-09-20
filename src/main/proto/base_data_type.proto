@@ -18,6 +18,7 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.common";
 option java_outer_classname = "ADempiereBase";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 
 package data;
@@ -39,14 +40,8 @@ message Value {
 		bool boolean_value = 6;
 		string string_value = 7;
 		string date_value = 8;
-		Decimal decimal_value = 9;
+		google.protobuf.Struct decimal_value = 9;
 	}
-}
-
-// Define numeric types
-message Decimal {
-	string decimal_value = 1;
-	int32 scale = 2;
 }
 
 // Query for Request Object
@@ -67,7 +62,7 @@ message Criteria {
 	string query = 2;
 	string where_clause = 3;
 	string order_by_clause = 4;
-	string reference_uuid = 5;
+	int32 reference_id = 5;
 	repeated Condition conditions = 6;
 	repeated Value values = 7;
 	repeated OrderByProperty order_by_column = 8;
@@ -117,9 +112,9 @@ message Condition {
 
 // Zoom Information
 message RecordReferenceInfo {
-	string uuid = 1;
-	string window_uuid = 2;
-	string tab_uuid = 3;
+	int32 id = 1;
+	int32 window_id = 2;
+	int32 tab_id = 3;
 	string table_name = 4;
 	string where_clause = 5;
 	int64 record_count = 6;
@@ -145,33 +140,31 @@ message DocumentAction {
 // Value Object from ADempiere
 message Entity {
 	int32 id = 1;
-	string uuid = 2;
-	string table_name = 3;
-	map<string, Value> values = 4;
+	string table_name = 2;
+	google.protobuf.Struct values = 3;
 }
 
 //	Response with log and values from server
 message ProcesInstanceParameter {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string column_name = 4;
-	Value value = 5;
-	Value value_to = 6;
+	string name = 2;
+	string column_name = 3;
+	Value value = 4;
+	Value value_to = 5;
 }
 
 message ProcessLog {
-	string uuid = 1;
+	int32 id = 1;
 	string name = 2;
 	string description = 3;
-	string instance_uuid = 4;
+	int32 instance_id = 4;
 	bool is_error = 5;
 	string summary = 6;
 	string result_table_name = 7;
 	bool is_processing = 8;
-	int64 last_run = 9;
+	google.protobuf.Timestamp last_run = 9;
 	repeated ProcessInfoLog logs = 10;
-	map<string, Value> parameters = 11;
+	google.protobuf.Struct parameters = 11;
 	ReportOutput output = 12;
 	repeated ProcesInstanceParameter process_intance_parameters = 13;
 }
@@ -185,24 +178,23 @@ message ProcessInfoLog {
 // Translations Item
 message Translation {
 	string language = 1;
-	string uuid = 2;
-	map<string, Value> values = 3;
+	google.protobuf.Struct values = 2;
 }
 
 // Print Format
 message PrintFormat {
-	string uuid = 1;
+	int32 id = 1;
 	string name = 2;
 	string description = 3;
 	string table_name = 4;
 	bool is_default = 5;
-	string report_view_uuid = 6;
+	int32 report_view_id = 6;
 }
 
 
 // Report View
 message ReportView {
-	string uuid = 1;
+	int32 id = 1;
 	string name = 2;
 	string description = 3;
 	string table_name = 4;
@@ -216,7 +208,7 @@ message DrillTable {
 
 //	Used for get output from report / BusinessProcess like PDF, HTML another result for show to end user
 message ReportOutput {
-	string uuid = 1;
+	int32 id = 1;
 	string name = 2;
 	string description = 3;
 	string file_name = 4;
@@ -226,8 +218,8 @@ message ReportOutput {
 	int64 data_rows = 8;
 	string header_name = 9;
 	string footer_name = 10;
-	string print_format_uuid = 11;
-	string report_view_uuid = 12;
+	int32 print_format_id = 11;
+	int32 report_view_id = 12;
 	string table_name = 13;
 	bytes output_stream = 14;
 	//	Output Type

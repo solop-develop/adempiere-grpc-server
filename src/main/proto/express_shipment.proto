@@ -18,8 +18,8 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.form.express_shipment";
 option java_outer_classname = "ADempiereExpressShipment";
 
-import "base_data_type.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 package express_shipment;
 
@@ -152,7 +152,7 @@ message CreateShipmentLineRequest {
 	string description = 3;
 	int32 product_id = 4;
 	string product_uuid = 5;
-	data.Decimal quantity = 6;
+	google.protobuf.Struct quantity = 6;
 	bool is_quantity_from_order_line = 7;
 }
 
@@ -163,7 +163,7 @@ message ShipmentLine {
 	string order_line_uuid = 4;
 	Product product = 5;
 	string description = 6;
-	data.Decimal quantity = 7;
+	google.protobuf.Struct quantity = 7;
 	int32 line = 8;
 }
 
@@ -190,5 +190,5 @@ message UpdateShipmentLineRequest {
 	int32 id = 1;
 	string uuid = 2;
 	string description = 3;
-	data.Decimal quantity = 4;
+	google.protobuf.Struct quantity = 4;
 }

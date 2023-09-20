@@ -18,9 +18,9 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.form.express_movement";
 option java_outer_classname = "ADempiereExpressMovement";
 
-import "base_data_type.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 package express_movement;
 
@@ -155,7 +155,7 @@ message CreateMovementLineRequest {
 	string description = 7;
 	int32 product_id = 8;
 	string product_uuid = 9;
-	data.Decimal quantity = 10;
+	google.protobuf.Struct quantity = 10;
 }
 
 message MovementLine {
@@ -167,7 +167,7 @@ message MovementLine {
 	string warehouse_to_uuid = 6;;
 	Product product = 7;
 	string description = 8;
-	data.Decimal quantity = 9;
+	google.protobuf.Struct quantity = 9;
 	int32 line = 10;
 }
 
@@ -194,5 +194,5 @@ message UpdateMovementLineRequest {
 	int32 id = 1;
 	string uuid = 2;
 	string description = 3;
-	data.Decimal quantity = 4;
+	google.protobuf.Struct quantity = 4;
 }

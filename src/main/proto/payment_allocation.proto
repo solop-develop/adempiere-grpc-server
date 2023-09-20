@@ -18,7 +18,7 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.form.payment_allocation";
 option java_outer_classname = "ADempierePaymentAllocation";
 
-import "base_data_type.proto";
+import "google/protobuf/struct.proto";
 import "business.proto";
 
 package payment_allocation;
@@ -141,9 +141,9 @@ message Payment {
 	Organization organization = 7;
 	string description = 8;
 	Currency currency = 9;
-	data.Decimal payment_amount = 10;
-	data.Decimal converted_amount = 11;
-	data.Decimal open_amount = 12;
+	google.protobuf.Struct payment_amount = 10;
+	google.protobuf.Struct converted_amount = 11;
+	google.protobuf.Struct open_amount = 12;
 }
 
 message ListPaymentsRequest {
@@ -178,10 +178,10 @@ message Invoice {
 	Organization organization = 7;
 	string description = 8;
 	Currency currency = 9;
-	data.Decimal original_amount = 10;
-	data.Decimal converted_amount = 11;
-	data.Decimal open_amount = 12;
-	data.Decimal discount_amount = 13;
+	google.protobuf.Struct original_amount = 10;
+	google.protobuf.Struct converted_amount = 11;
+	google.protobuf.Struct open_amount = 12;
+	google.protobuf.Struct discount_amount = 13;
 }
 
 message ListInvoicesRequest {
@@ -211,7 +211,7 @@ message Charge {
 	string uuid = 2;
 	string name = 3;
 	string description = 4;
-	data.Decimal amount = 5;
+	google.protobuf.Struct amount = 5;
 }
 
 message ListChargesRequest {
@@ -244,17 +244,17 @@ message PaymentSelection {
 	int32 id = 1;
 	string uuid = 2;
 	int64 transaction_date = 3;
-	data.Decimal applied_amount = 4;
+	google.protobuf.Struct applied_amount = 4;
 }
 
 message InvoiceSelection {
 	int32 id = 1;
 	string uuid = 2;
 	int64 date_invoiced = 3;
-	data.Decimal applied_amount = 4;
-	data.Decimal discount_amount = 5;
-	data.Decimal write_off_amount = 6;
-	data.Decimal open_amount = 7;
+	google.protobuf.Struct applied_amount = 4;
+	google.protobuf.Struct discount_amount = 5;
+	google.protobuf.Struct write_off_amount = 6;
+	google.protobuf.Struct open_amount = 7;
 }
 
 // Process
@@ -266,7 +266,7 @@ message ProcessRequest {
 	int32 transaction_organization_id = 5;
 	int64 date = 6;
 	string description = 7;
-	data.Decimal total_difference = 8;
+	google.protobuf.Struct total_difference = 8;
 	repeated PaymentSelection payment_selections = 9;
 	repeated InvoiceSelection invoice_selections = 10;
 }

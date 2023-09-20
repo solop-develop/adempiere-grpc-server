@@ -18,9 +18,9 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.form.bank_statement_match";
 option java_outer_classname = "ADempiereBankStatementMatch";
 
-import "base_data_type.proto";
 import "business.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 
 package bank_statement_match;
 
@@ -86,7 +86,7 @@ message BankAccount {
 	string account_name = 3;
 	string bank_name = 4;
 	Currency currency = 5;
-	data.Decimal current_balance = 6;
+	google.protobuf.Struct current_balance = 6;
 }
 
 // Bank Statement
@@ -100,9 +100,9 @@ message BankStatement {
 	bool is_manual = 7;
 	string document_status = 8;
 	bool is_processed = 9;
-	data.Decimal beginning_balance = 10;
-	data.Decimal statement_difference = 11;
-	data.Decimal ending_balance = 12;
+	google.protobuf.Struct beginning_balance = 10;
+	google.protobuf.Struct statement_difference = 11;
+	google.protobuf.Struct ending_balance = 12;
 }
 
 message GetBankStatementRequest {
@@ -188,8 +188,8 @@ message ListImportedBankMovementsRequest {
 	string search_value = 3;
 	int32 bank_statement_id = 4;
 	int32 bank_account_id = 5;
-	data.Decimal payment_amount_from = 6;
-	data.Decimal payment_amount_to = 7;
+	google.protobuf.Struct payment_amount_from = 6;
+	google.protobuf.Struct payment_amount_to = 7;
 	string transaction_date_from = 8;
 	string transaction_date_to = 9;
 	MatchMode match_mode = 10;
@@ -202,7 +202,7 @@ message ImportedBankMovement {
 	string reference_no = 4;
 	BusinessPartner business_partner = 5;
 	Currency currency = 6;
-	data.Decimal amount = 7;
+	google.protobuf.Struct amount = 7;
 	string memo = 8;
 	int32 payment_id = 9;
 	int32 bank_statement_line_id = 10;
@@ -223,8 +223,8 @@ message ListPaymentsRequest {
 	int32 bank_statement_id = 4;
 	int32 bank_account_id = 5;
 	int32 business_partner_id = 6;
-	data.Decimal payment_amount_from = 7;
-	data.Decimal payment_amount_to = 8;
+	google.protobuf.Struct payment_amount_from = 7;
+	google.protobuf.Struct payment_amount_to = 8;
 	string transaction_date_from = 9;
 	string transaction_date_to = 10;
 	MatchMode match_mode = 11;
@@ -238,7 +238,7 @@ message Payment {
 	BusinessPartner business_partner = 5;
 	TenderType tender_type = 6;
 	Currency currency = 7;
-	data.Decimal amount = 8;
+	google.protobuf.Struct amount = 8;
 	string description = 9;
 }
 
@@ -258,8 +258,8 @@ message ListMatchingMovementsRequest {
 	int32 bank_statement_id = 4;
 	int32 bank_account_id = 5;
 	int32 business_partner_id = 6;
-	data.Decimal payment_amount_from = 7;
-	data.Decimal payment_amount_to = 8;
+	google.protobuf.Struct payment_amount_from = 7;
+	google.protobuf.Struct payment_amount_to = 8;
 	string transaction_date_from = 9;
 	string transaction_date_to = 10;
 	MatchMode match_mode = 11;
@@ -273,13 +273,13 @@ message MatchingMovement {
 	BusinessPartner business_partner = 5;
 	TenderType tender_type = 6;
 	Currency currency = 7;
-	data.Decimal amount = 8;
+	google.protobuf.Struct amount = 8;
 	string description = 9;
 	string reference_no = 10;
 	string memo = 11;
 	int32 payment_id = 12;
 	bool is_automatic = 13;
-	data.Decimal payment_amount = 14;
+	google.protobuf.Struct payment_amount = 14;
 	string payment_date = 15;
 }
 
@@ -299,13 +299,13 @@ message ResultMovement {
 	BusinessPartner business_partner = 5;
 	TenderType tender_type = 6;
 	Currency currency = 7;
-	data.Decimal amount = 8;
+	google.protobuf.Struct amount = 8;
 	string description = 9;
 	string reference_no = 10;
 	string memo = 11;
 	int32 payment_id = 12;
 	bool is_automatic = 13;
-	data.Decimal payment_amount = 14;
+	google.protobuf.Struct payment_amount = 14;
 	string payment_date = 15;
 }
 
@@ -316,8 +316,8 @@ message ListResultMovementsRequest {
 	string search_value = 3;
 	int32 bank_statement_id = 4;
 	int32 bank_account_id = 5;
-	data.Decimal payment_amount_from = 7;
-	data.Decimal payment_amount_to = 8;
+	google.protobuf.Struct payment_amount_from = 7;
+	google.protobuf.Struct payment_amount_to = 8;
 	string transaction_date_from = 9;
 	string transaction_date_to = 10;
 }
@@ -354,8 +354,8 @@ message UnmatchPaymentsResponse {
 message ProcessMovementsRequest {
 	int32 bank_statement_id = 1;
 	int32 bank_account_id = 2;
-	data.Decimal payment_amount_from = 5;
-	data.Decimal payment_amount_to = 6;
+	google.protobuf.Struct payment_amount_from = 5;
+	google.protobuf.Struct payment_amount_to = 6;
 	string transaction_date_from = 7;
 	string transaction_date_to = 8;
 }

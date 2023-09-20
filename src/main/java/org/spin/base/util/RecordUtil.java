@@ -510,9 +510,6 @@ public class RecordUtil {
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
 						String columnName = metaData.getColumnName (index);
-						if (columnName.toUpperCase().equals("UUID")) {
-							valueObjectBuilder.setUuid(rs.getString(index));
-						}
 						MColumn field = columnsMap.get(columnName.toUpperCase());
 						Value.Builder valueBuilder = Value.newBuilder();
 						//	Display Columns

@@ -21,6 +21,8 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.LookupItem;
 
+import com.google.protobuf.Struct;
+
 /**
  * A helper class for Lookups
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -62,7 +64,7 @@ public class LookupUtil {
 		// Key Column
 		if(keyValue instanceof Integer) {
 			builder.setId((Integer) keyValue);
-			builder.putValues(KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build());
+			builder.setValues(Struct.newBuilder().putFields(KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue)).build());
 		} else {
 			builder.putValues(KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build());
 		}
@@ -75,7 +77,6 @@ public class LookupUtil {
 			builder.putValues(DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build());
 		}
 		// UUID Value
-		builder.setUuid(ValueUtil.validateNull(uuidValue));
 		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
 
 		return builder;
@@ -94,7 +95,6 @@ public class LookupUtil {
 		}
 
 		builder.setId(refList.getAD_Ref_List_ID())
-			.setUuid(ValueUtil.validateNull(refList.getUUID()))
 			.setTableName(I_AD_Ref_List.Table_Name)
 		;
 

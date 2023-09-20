@@ -74,7 +74,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
-import org.spin.grpc.service.UserInterfaceServiceImplementation;
+import org.spin.grpc.service.UserInterface;
 
 
 /**
@@ -147,7 +147,7 @@ public abstract class BankStatementMatchServiceLogic {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterfaceServiceImplementation.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
 			reference,
 			null,
 			request.getPageSize(),
@@ -171,7 +171,7 @@ public abstract class BankStatementMatchServiceLogic {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterfaceServiceImplementation.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
 			reference,
 			null,
 			request.getPageSize(),
