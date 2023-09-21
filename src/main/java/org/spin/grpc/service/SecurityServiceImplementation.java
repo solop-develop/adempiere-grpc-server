@@ -38,6 +38,7 @@ import org.compiere.model.MSession;
 import org.compiere.model.MTree;
 import org.compiere.model.MTreeNode;
 import org.compiere.model.MUser;
+import org.compiere.model.MWarehouse;
 import org.compiere.model.MWindow;
 import org.compiere.model.Query;
 import org.compiere.util.CCache;
@@ -458,8 +459,15 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 
 			if (organizationId == 0) {
 				warehouseId = 0;
-			} else if (warehouseId <= 0) {
-				warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+			} else {
+				if (warehouseId <= 0) {
+					warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+				} else {
+					MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+					if (warehouse == null || warehouse.getM_Warehouse_ID() <= 0 || warehouse.getAD_Org_ID() != organizationId) {
+						warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+					}
+				}
 			}
 
 			//	Session values
@@ -594,8 +602,17 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		if (request.getWarehouseId() >= 0) {
 			warehouseId = request.getWarehouseId();
 		}
-		if (warehouseId < 0) {
+		if (organizationId == 0) {
 			warehouseId = 0;
+		} else {
+			if (warehouseId <= 0) {
+				warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+			} else {
+				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+				if (warehouse == null || warehouse.getM_Warehouse_ID() <= 0 || warehouse.getAD_Org_ID() != organizationId) {
+					warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+				}
+			}
 		}
 
 		// Default preference values

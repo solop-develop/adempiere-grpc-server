@@ -365,10 +365,13 @@ public class SessionManager {
 	 * @return
 	 */
 	public static int getDefaultWarehouseId(int organizationId) {
-		String sql = "SELECT M_Warehouse_ID FROM M_Warehouse WHERE IsActive = 'Y' AND AD_Org_ID = ?";
+		if (organizationId < 0) {
+			return -1;
+		}
+		String sql = "SELECT M_Warehouse_ID FROM M_Warehouse WHERE IsActive = 'Y' AND AD_Org_ID = ? AND IsInTransit='N'";
 		return DB.getSQLValue(null, sql, organizationId);
 	}
-	
+
 	/**
 	 * Get Default role after login
 	 * @param userId
@@ -407,7 +410,7 @@ public class SessionManager {
 				+ "ORDER BY o.AD_Org_ID DESC, o.Name";
 		return DB.getSQLValue(null, organizationSQL, roleId, userId);
 	}
-	
+
 	/**
 	 *	Load Preferences into Context for selected client.
 	 *  <p>
