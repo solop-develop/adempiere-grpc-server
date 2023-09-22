@@ -226,7 +226,7 @@ public class ReferenceInfo {
 	}
 
 	/**
-	 * Get Join value for query Only column SQL
+	 * Get Join value for query
 	 * @return
 	 */
 	public String getJoinValue(String baseColumnName) {
