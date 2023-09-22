@@ -55,13 +55,16 @@ import org.spin.backend.grpc.common.ProcesInstanceParameter;
 import org.spin.backend.grpc.common.ProcessInfoLog;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ReportOutput;
-import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityEventType;
 import org.spin.backend.grpc.logs.EntityLog;
 import org.spin.backend.grpc.logs.ListEntityLogsResponse;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
+
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
+
 import static com.google.protobuf.util.Timestamps.fromMillis;
 
 /**
@@ -353,6 +356,7 @@ public class LogsConvertUtil {
 			builder.addLogs(logBuilder.build());
 		}
 		//	
+		Struct.Builder parametersMap = Struct.newBuilder();
 		for(MPInstancePara parameter : instance.getParameters()) {
 			Value.Builder parameterBuilder = Value.newBuilder();
 			Value.Builder parameterToBuilder = Value.newBuilder();
@@ -421,11 +425,11 @@ public class LogsConvertUtil {
 			}
 			//	For parameter
 			if(hasFromParameter) {
-				builder.putParameters(parameterName, parameterBuilder.build());
+				parametersMap.putFields(parameterName, parameterBuilder.build());
 			}
 			//	For to parameter
 			if(hasToParameter) {
-				builder.putParameters(parameterName + "_To", parameterToBuilder.build());
+				parametersMap.putFields(parameterName + "_To", parameterToBuilder.build());
 			}
 
 			ProcesInstanceParameter.Builder instanceParaBuilder = convertProcessInstance(
@@ -433,6 +437,7 @@ public class LogsConvertUtil {
 			);
 			builder.addProcessIntanceParameters(instanceParaBuilder);
 		}
+		builder.setParameters(parametersMap);
 		return builder;
 	}
 
@@ -535,7 +540,7 @@ public class LogsConvertUtil {
 
 		//	For parameter
 		if(hasFromParameter) {
-			builder.setValue(parameterBuilder);
+			builder.setValue(parameterBuilder.build());
 		}
 		//	For to parameter
 		if(hasToParameter) {

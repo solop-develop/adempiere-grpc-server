@@ -19,8 +19,9 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.issue_management";
 option java_outer_classname = "ADempiereIssueManagement";
 
-import "base_data_type.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 package issue_management;
 
@@ -50,11 +51,10 @@ service IssueManagement {
 // Request Type Definition
 message RequestType {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	int32 due_date_tolerance = 5;
-	Status default_status = 6;
+	string name = 2;
+	string description = 3;
+	int32 due_date_tolerance = 4;
+	Status default_status = 5;
 }
 
 message ListRequestTypesRequest {
@@ -72,10 +72,9 @@ message ListRequestTypesResponse {
 // User (or Sales Representative) Definition
 message User {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	string avatar = 5;
+	string name = 2;
+	string description = 3;
+	string avatar = 4;
 }
 
 message ListSalesRepresentativesRequest {
@@ -93,10 +92,9 @@ message ListSalesRepresentativesResponse {
 // Priority
 message Priority {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string value = 2;
+	string name = 3;
+	string description = 4;
 }
 
 message ListPrioritiesRequest {
@@ -114,9 +112,8 @@ message ListPrioritiesResponse {
 // Status
 message Status {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
+	string name = 2;
+	string description = 3;
 }
 
 message ListStatusesRequest {
@@ -124,7 +121,6 @@ message ListStatusesRequest {
 	int32 page_size = 2;
 	string page_token = 3;
 	int32 request_type_id = 4;
-	string request_type_uuid = 5;
 }
 
 message ListStatusesResponse {
@@ -135,34 +131,31 @@ message ListStatusesResponse {
 
 message DueType {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string value = 2;
+	string name = 3;
+	string description = 4;
 }
 
 // Issue Definition
 message Issue {
 	int32 id = 1;
-	string uuid = 2;
-	string document_no = 3;
-	string subject = 4;
-	string summary = 5;
-	int64 created = 6;
-	int64 last_updated = 7;
-	RequestType request_type = 8;
-	User user = 9;
-	User sales_representative = 10;
-	Status status = 11;
-	Priority priority = 12;
-	int64 date_next_action = 13;
-	DueType due_type = 14;
+	string document_no = 2;
+	string subject = 3;
+	string summary = 4;
+	google.protobuf.Timestamp created = 5;
+	google.protobuf.Timestamp last_updated = 6;
+	RequestType request_type = 7;
+	User user = 8;
+	User sales_representative = 9;
+	Status status = 10;
+	Priority priority = 11;
+	google.protobuf.Timestamp date_next_action = 12;
+	DueType due_type = 13;
 }
 
 message ExistsIssuesRequest {
-	string table_name = 2;
-	int32 record_id = 3;
-	string record_uuid = 4;
+	string table_name = 1;
+	int32 record_id = 2;
 }
 
 message ExistsIssuesResponse {
@@ -175,7 +168,6 @@ message ListIssuesRequest {
 	string page_token = 3;
 	string table_name = 4;
 	int32 record_id = 5;
-	string record_uuid = 6;
 }
 
 message ListIssuesReponse {
@@ -185,39 +177,30 @@ message ListIssuesReponse {
 }
 
 message CreateIssueRequest {
-	string table_name = 2;
-	int32 record_id = 3;
-	string record_uuid = 4;
-	string subject = 5;
-	string summary = 6;
-	int32 request_type_id = 7;
-	string request_type_uuid = 8;
-	int32 sales_representative_id = 9;
-	string sales_representative_uuid = 10;
-	int32 status_id = 11;
-	string status_uuid = 12;
-	string priority_value = 13;
-	int64 date_next_action = 14;
+	string table_name = 1;
+	int32 record_id = 2;
+	string subject = 3;
+	string summary = 4;
+	int32 request_type_id = 5;
+	int32 sales_representative_id = 6;
+	int32 status_id = 7;
+	string priority_value = 8;
+	string date_next_action = 9;
 }
 
 message UpdateIssueRequest {
-	int32 id = 2;
-	string uuid = 3;
-	string subject = 5;
-	string summary = 6;
-	int32 request_type_id = 7;
-	string request_type_uuid = 8;
-	int32 sales_representative_id = 9;
-	string sales_representative_uuid = 10;
-	int32 status_id = 11;
-	string status_uuid = 12;
-	string priority_value = 13;
-	int64 date_next_action = 14;
+	int32 id = 1;
+	string subject = 2;
+	string summary = 3;
+	int32 request_type_id = 4;
+	int32 sales_representative_id = 5;
+	int32 status_id = 6;
+	string priority_value = 7;
+	string date_next_action = 8;
 }
 
 message DeleteIssueRequest {
-	int32 id = 2;
-	string uuid = 3;
+	int32 id = 1;
 }
 
 enum IssueCommentType {
@@ -228,15 +211,14 @@ enum IssueCommentType {
 // Issue Comment Definition
 message IssueComment {
 	int32 id = 1;
-	string uuid = 2;
-	string result = 3;
-	int64 created = 4;
-	User user = 5;
-	IssueCommentType issue_comment_type = 6;
+	string result = 2;
+	google.protobuf.Timestamp created = 3;
+	User user = 4;
+	IssueCommentType issue_comment_type = 5;
 	// log fields
-	string label = 7;
-	data.Value new_value = 8;
-	string displayed_value = 9;
+	string label = 6;
+	google.protobuf.Value new_value = 7;
+	string displayed_value = 8;
 }
 
 message ListIssueCommentsRequest {
@@ -244,7 +226,6 @@ message ListIssueCommentsRequest {
 	int32 page_size = 2;
 	string page_token = 3;
 	int32 issue_id = 4;
-	string issue_uuid = 5;
 }
 
 message ListIssueCommentsReponse {
@@ -254,18 +235,15 @@ message ListIssueCommentsReponse {
 }
 
 message CreateIssueCommentRequest {
-	int32 issue_id = 2;
-	string issue_uuid = 3;
-	string result = 4;
+	int32 issue_id = 1;
+	string result = 2;
 }
 
 message UpdateIssueCommentRequest {
-	int32 id = 2;
-	string uuid = 3;
-	string result = 4;
+	int32 id = 1;
+	string result = 2;
 }
 
 message DeleteIssueCommentRequest {
-	int32 id = 2;
-	string uuid = 3;
+	int32 id = 1;
 }

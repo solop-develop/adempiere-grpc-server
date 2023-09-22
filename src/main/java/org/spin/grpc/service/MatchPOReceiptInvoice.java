@@ -69,6 +69,8 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 
+import com.google.protobuf.Struct;
+
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
@@ -110,51 +112,42 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		// Invoice
 		LookupItem.Builder lookupInvoice = LookupItem.newBuilder()
 			.setId(MatchType.INVOICE_VALUE)
-			.putValues(
-				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
-					MatchType.INVOICE_VALUE
-				).build()
-			)
-			.putValues(
-				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
-					Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
-				).build())
+			.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY,
+					ValueUtil.getValueFromInt(
+							MatchType.INVOICE_VALUE
+						).build()))
+			.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+					ValueUtil.getValueFromString(
+							Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
+						).build()))
 		;
 		builderList.addRecords(lookupInvoice);
 
 		// Receipt
 		LookupItem.Builder lookupReceipt = LookupItem.newBuilder()
 			.setId(MatchType.RECEIPT_VALUE)
-			.putValues(
-				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
-					MatchType.RECEIPT_VALUE
-				).build()
-			)
-			.putValues(
-				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
-					Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
-				).build())
+			.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY,
+					ValueUtil.getValueFromInt(
+							MatchType.RECEIPT_VALUE
+						).build()))
+			.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+					ValueUtil.getValueFromString(
+							Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
+						).build()))
 		;
 		builderList.addRecords(lookupReceipt);
 
 		// Purchase Order
 		LookupItem.Builder lookupOrder = LookupItem.newBuilder()
 			.setId(MatchType.PURCHASE_ORDER_VALUE)
-			.putValues(
-				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
-					MatchType.PURCHASE_ORDER_VALUE
-				).build()
-			)
-			.putValues(
-				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
-					Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
-				).build())
+			.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY,
+					ValueUtil.getValueFromInt(
+							MatchType.PURCHASE_ORDER_VALUE
+						).build()))
+			.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+					ValueUtil.getValueFromString(
+							Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
+						).build()))
 		;
 		builderList.addRecords(lookupOrder);
 
@@ -193,17 +186,17 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		if (matchTypeFrom == MatchType.RECEIPT) {
 			LookupItem.Builder lookupInvoice = LookupItem.newBuilder()
 				.setId(MatchType.INVOICE_VALUE)
-				.putValues(
+				.setValues(Struct.newBuilder().putFields(
 					LookupUtil.VALUE_COLUMN_KEY,
 					ValueUtil.getValueFromInt(
 						MatchType.INVOICE_VALUE
 					).build()
-				)
-				.putValues(
+				))
+				.setValues(Struct.newBuilder().putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
 					ValueUtil.getValueFromString(
 						Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
-					).build())
+					).build()))
 			;
 			builderList.addRecords(lookupInvoice);
 		}
@@ -212,17 +205,17 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		if (matchTypeFrom == MatchType.INVOICE || matchTypeFrom == MatchType.PURCHASE_ORDER) {
 			LookupItem.Builder lookupReceipt = LookupItem.newBuilder()
 				.setId(MatchType.RECEIPT_VALUE)
-				.putValues(
+				.setValues(Struct.newBuilder().putFields(
 					LookupUtil.VALUE_COLUMN_KEY,
 					ValueUtil.getValueFromInt(
 						MatchType.RECEIPT_VALUE
 					).build()
-				)
-				.putValues(
+				))
+				.setValues(Struct.newBuilder().putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
 					ValueUtil.getValueFromString(
 						Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
-					).build())
+					).build()))
 			;
 			builderList.addRecords(lookupReceipt);
 		}
@@ -231,17 +224,17 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		if (matchTypeFrom == MatchType.RECEIPT) {
 			LookupItem.Builder lookupOrder = LookupItem.newBuilder()
 				.setId(MatchType.PURCHASE_ORDER_VALUE)
-				.putValues(
+				.setValues(Struct.newBuilder().putFields(
 					LookupUtil.VALUE_COLUMN_KEY,
 					ValueUtil.getValueFromInt(
 						MatchType.PURCHASE_ORDER_VALUE
 					).build()
-				)
-				.putValues(
+				))
+				.setValues(Struct.newBuilder().putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
 					ValueUtil.getValueFromString(
 						Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
-					).build())
+					).build()))
 			;
 			builderList.addRecords(lookupOrder);
 		}
@@ -275,32 +268,32 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
 
 		LookupItem.Builder lookupMatched = LookupItem.newBuilder()
-			.putValues(
+				.setValues(Struct.newBuilder().putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
 				ValueUtil.getValueFromInt(
 					MatchMode.MODE_NOT_MATCHED_VALUE
 				).build()
-			)
-			.putValues(
+			))
+				.setValues(Struct.newBuilder().putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueUtil.getValueFromString(
 					Msg.translate(context, "NotMatched")
-				).build())
+				).build()))
 		;
 		builderList.addRecords(lookupMatched);
 
 		LookupItem.Builder lookupUnMatched = LookupItem.newBuilder()
-			.putValues(
+				.setValues(Struct.newBuilder().putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
 				ValueUtil.getValueFromInt(
 					MatchMode.MODE_MATCHED_VALUE
 				).build()
-			)
-			.putValues(
+			))
+				.setValues(Struct.newBuilder().putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueUtil.getValueFromString(
 					Msg.translate(context, "Matched")
-				).build())
+				).build()))
 		;
 		builderList.addRecords(lookupUnMatched);
 

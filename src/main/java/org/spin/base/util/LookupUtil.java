@@ -64,20 +64,20 @@ public class LookupUtil {
 		// Key Column
 		if(keyValue instanceof Integer) {
 			builder.setId((Integer) keyValue);
-			builder.setValues(Struct.newBuilder().putFields(KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue)).build());
+			builder.setValues(Struct.newBuilder().putFields(KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build()).build());
 		} else {
-			builder.putValues(KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build());
+			builder.setValues(Struct.newBuilder().putFields(KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build()).build());
 		}
 		//	Set Value
 		if(!Util.isEmpty(value)) {
-			builder.putValues(VALUE_COLUMN_KEY, ValueUtil.getValueFromString(value).build());
+			builder.setValues(Struct.newBuilder().putFields(VALUE_COLUMN_KEY, ValueUtil.getValueFromString(value).build()).build());
 		}
 		//	Display column
 		if(!Util.isEmpty(displayValue)) {
-			builder.putValues(DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build());
+			builder.setValues(Struct.newBuilder().putFields(DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build()).build());
 		}
 		// UUID Value
-		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
+//		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
 
 		return builder;
 	}
@@ -99,10 +99,10 @@ public class LookupUtil {
 		;
 
 		// Key Column
-		builder.putValues(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromString(refList.getValue()).build());
+		builder.setValues(Struct.newBuilder().putFields(KEY_COLUMN_KEY, ValueUtil.getValueFromString(refList.getValue()).build()).build());
 
 		//	Value
-		builder.putValues(LookupUtil.VALUE_COLUMN_KEY, ValueUtil.getValueFromString(refList.getValue()).build());
+		builder.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY, ValueUtil.getValueFromString(refList.getValue()).build()).build());
 
 		//	Display column
 		String name = refList.getName();
@@ -110,10 +110,10 @@ public class LookupUtil {
 			// set translated values
 			name = refList.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
 		}
-		builder.putValues(LookupUtil.DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(name).build());
+		builder.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(name).build()).build());
 
 		// UUID Value
-		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(refList.getUUID()).build());
+//		builder.setValues(Struct.newBuilder().putFields(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(refList.getUUID()).build()).build());
 
 		return builder;
 	}

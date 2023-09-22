@@ -24,29 +24,25 @@ import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.apps.graph.GraphColumn;
-import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.model.MBrowse;
-import org.adempiere.model.MDocumentStatus;
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Chart;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Note;
-import org.adempiere.core.domains.models.I_AD_Role;
 import org.adempiere.core.domains.models.I_AD_Rule;
-import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_AD_TreeNodeMM;
-import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_AD_WF_Activity;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_PA_DashboardContent;
 import org.adempiere.core.domains.models.I_PA_Goal;
 import org.adempiere.core.domains.models.I_R_Request;
+import org.adempiere.core.domains.models.X_AD_TreeNodeMM;
+import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.model.MDocumentStatus;
 import org.compiere.model.MChart;
 import org.compiere.model.MColorSchema;
 import org.compiere.model.MDashboardContent;
-import org.compiere.model.MForm;
 import org.compiere.model.MGoal;
 import org.compiere.model.MMeasure;
 import org.compiere.model.MMenu;
@@ -55,24 +51,18 @@ import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
-import org.adempiere.core.domains.models.X_AD_TreeNodeMM;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.base.db.LimitUtil;
-import org.spin.base.util.ContextManager;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.backend.grpc.common.Criteria;
+import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.dashboarding.Action;
 import org.spin.backend.grpc.dashboarding.ChartData;
 import org.spin.backend.grpc.dashboarding.ChartSerie;
-import org.spin.backend.grpc.common.Criteria;
-import org.spin.backend.grpc.common.Value;
 import org.spin.backend.grpc.dashboarding.Dashboard;
+import org.spin.backend.grpc.dashboarding.DashboardingGrpc.DashboardingImplBase;
 import org.spin.backend.grpc.dashboarding.ExistsWindowDashboardsRequest;
 import org.spin.backend.grpc.dashboarding.ExistsWindowDashboardsResponse;
-import org.spin.backend.grpc.dashboarding.DashboardingGrpc.DashboardingImplBase;
 import org.spin.backend.grpc.dashboarding.Favorite;
 import org.spin.backend.grpc.dashboarding.GetMetricsRequest;
 import org.spin.backend.grpc.dashboarding.GetWindowMetricsRequest;
@@ -92,6 +82,11 @@ import org.spin.backend.grpc.dashboarding.PendingDocument;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dashboarding.WindowMetrics;
+import org.spin.base.db.LimitUtil;
+import org.spin.base.util.ContextManager;
+import org.spin.base.util.RecordUtil;
+import org.spin.base.util.SessionManager;
+import org.spin.base.util.ValueUtil;
 import org.spin.dashboarding.DashboardingConvertUtil;
 import org.spin.eca50.controller.ChartBuilder;
 import org.spin.eca50.data.ChartValue;
@@ -153,7 +148,7 @@ public class Dashboarding extends DashboardingImplBase {
 	 */
 	private Metrics.Builder getMetrics(GetMetricsRequest request) {
 		Metrics.Builder builder = Metrics.newBuilder();
-		MGoal goal = (MGoal) RecordUtil.getEntity(Env.getCtx(), I_PA_Goal.Table_Name, request.getUuid(), request.getId(), null);
+		MGoal goal = (MGoal) RecordUtil.getEntity(Env.getCtx(), I_PA_Goal.Table_Name, request.getId(), null);
 		if(goal == null) {
 			throw new AdempiereException("@PA_Goal_ID@ @NotFound@");
 		}
@@ -181,7 +176,6 @@ public class Dashboarding extends DashboardingImplBase {
 			builder.setName(ValueUtil.validateNull(goal.getName()));
 			builder.setDescription(ValueUtil.validateNull(goal.getDescription()));
 			builder.setId(goal.getPA_Goal_ID());
-			builder.setUuid(ValueUtil.validateNull(goal.getUUID()));
 			builder.setXAxisLabel(ValueUtil.validateNull(goal.getXAxisText()));
 			builder.setYAxisLabel(ValueUtil.validateNull(goal.getName()));
 
@@ -239,32 +233,22 @@ public class Dashboarding extends DashboardingImplBase {
 		ListPendingDocumentsResponse.Builder builder = ListPendingDocumentsResponse.newBuilder();
 		//	Get entity
 		if(request.getUserId() <= 0
-				&& Util.isEmpty(request.getUserUuid())
-				&& request.getRoleId() <= 0
-				&& Util.isEmpty(request.getRoleUuid())) {
+				&& request.getRoleId() <= 0) {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ @NotFound@");
 		}
 		//	Get user
 		int userId = request.getUserId();
-		if(userId <= 0) {
-			userId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getUserUuid(), null);
-		}
 		//	Get role
 		int roleId = request.getRoleId();
-		if(roleId <= 0) {
-			roleId = RecordUtil.getIdFromUuid(I_AD_Role.Table_Name, request.getRoleUuid(), null);
-		}
 		//	Get from document status
 		Arrays.asList(MDocumentStatus.getDocumentStatusIndicators(context, userId, roleId)).forEach(documentStatus -> {
 			PendingDocument.Builder pendingDocument = PendingDocument.newBuilder();
 			pendingDocument.setDocumentName(ValueUtil.validateNull(documentStatus.getName()));
 			// for Reference
 			if(documentStatus.getAD_Window_ID() != 0) {
-				MWindow window = MWindow.get(context, documentStatus.getAD_Window_ID());
-				pendingDocument.setWindowUuid(ValueUtil.validateNull(window.getUUID()));
+				pendingDocument.setWindowId(documentStatus.getAD_Window_ID());
 			} else if(documentStatus.getAD_Form_ID() != 0) {
-				MForm form = new MForm(context, documentStatus.getAD_Form_ID(), null);
-				pendingDocument.setFormUuid(ValueUtil.validateNull(form.getUUID()));
+				pendingDocument.setFormId(documentStatus.getAD_Form_ID());
 			}
 			//	Criteria
 			MTable table = MTable.get(context, documentStatus.getAD_Table_ID());
@@ -309,16 +293,12 @@ public class Dashboarding extends DashboardingImplBase {
 	private ListDashboardsResponse.Builder listDashboards(ListDashboardsRequest request) {
 		Properties context = Env.getCtx();
 		//	Get entity
-		if(request.getRoleId() <= 0
-				&& Util.isEmpty(request.getRoleUuid())) {
+		if(request.getRoleId() <= 0) {
 			throw new AdempiereException("@AD_Role_ID@ @NotFound@");
 		}
 
 		//	Get role
 		int roleId = request.getRoleId();
-		if(roleId <= 0) {
-			roleId = RecordUtil.getIdFromUuid(I_AD_Role.Table_Name, request.getRoleUuid(), null);
-		}
 
 		ListDashboardsResponse.Builder builder = ListDashboardsResponse.newBuilder();
 		int recordCount = 0;
@@ -348,7 +328,6 @@ public class Dashboarding extends DashboardingImplBase {
 			.forEach(chartDefinition -> {
 				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder();
 				dashboardBuilder.setId(chartDefinition.getPA_Goal_ID());
-				dashboardBuilder.setUuid(ValueUtil.validateNull(chartDefinition.getUUID()));
 				dashboardBuilder.setName(ValueUtil.validateNull(chartDefinition.getName()));
 				dashboardBuilder.setDescription(ValueUtil.validateNull(chartDefinition.getDescription()));
 				dashboardBuilder.setDashboardType("chart");
@@ -384,7 +363,6 @@ public class Dashboarding extends DashboardingImplBase {
 			.forEach(dashboard -> {
 				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder();
 				dashboardBuilder.setId(dashboard.getPA_DashboardContent_ID());
-				dashboardBuilder.setUuid(ValueUtil.validateNull(dashboard.getUUID()));
 				dashboardBuilder.setName(ValueUtil.validateNull(dashboard.getName()));
 				dashboardBuilder.setDescription(ValueUtil.validateNull(dashboard.getDescription()));
 				dashboardBuilder.setHtml(ValueUtil.validateNull(dashboard.getHTML()));
@@ -396,13 +374,11 @@ public class Dashboarding extends DashboardingImplBase {
 				dashboardBuilder.setDashboardType("dashboard");
 				//	For Window
 				if(dashboard.getAD_Window_ID() != 0) {
-					MWindow window = MWindow.get(context, dashboard.getAD_Window_ID());
-					dashboardBuilder.setWindowUuid(ValueUtil.validateNull(window.getUUID()));
+					dashboardBuilder.setWindowId(dashboard.getAD_Window_ID());
 				}
 				//	For Smart Browser
 				if(dashboard.getAD_Browse_ID() != 0) {
-					MBrowse browser = MBrowse.get(context, dashboard.getAD_Browse_ID());
-					dashboardBuilder.setWindowUuid(ValueUtil.validateNull(browser.getUUID()));
+					dashboardBuilder.setBrowserId(dashboard.getAD_Browse_ID());
 				}
 				//	File Name
 				String fileName = dashboard.getZulFilePath();
@@ -564,18 +540,11 @@ public class Dashboarding extends DashboardingImplBase {
 		builder.setDescription(
 			ValueUtil.validateNull(description)
 		);
-
-		String actionUuid = "";
 		if (menu.getAction().equals(MMenu.ACTION_Window)) {
 			if (menu.getAD_Window_ID() > 0) {
-				MWindow window = new MWindow(Env.getCtx(), menu.getAD_Window_ID(), null);
-				actionUuid = window.getUUID();
+				builder.setActionId(menu.getAD_Window_ID());
 			}
 		}
-		builder.setActionUuid(
-			ValueUtil.validateNull(actionUuid)
-		);
-
 		return builder;
 	}
 
@@ -627,17 +596,11 @@ public class Dashboarding extends DashboardingImplBase {
 		builder.setDescription(
 			ValueUtil.validateNull(description)
 		);
-
-		String actionUuid = "";
 		if (menu.getAction().equals(MMenu.ACTION_Window)) {
 			if (menu.getAD_Window_ID() > 0) {
-				MWindow window = new MWindow(Env.getCtx(), menu.getAD_Window_ID(), null);
-				actionUuid = window.getUUID();
+				builder.setActionId(menu.getAD_Window_ID());
 			}
 		}
-		builder.setActionUuid(
-			ValueUtil.validateNull(actionUuid)
-		);
 
 		return builder;
 	}
@@ -706,18 +669,11 @@ public class Dashboarding extends DashboardingImplBase {
 		builder.setDescription(
 			ValueUtil.validateNull(description)
 		);
-
-		String actionUuid = "";
-		if (menu.getAction().equals(MMenu.ACTION_Form)) {
-			if (menu.getAD_Form_ID() > 0) {
-				MForm form = new MForm(Env.getCtx(), menu.getAD_Form_ID(), null);
-				actionUuid = form.getUUID();
+		if (menu.getAction().equals(MMenu.ACTION_Window)) {
+			if (menu.getAD_Window_ID() > 0) {
+				builder.setActionId(menu.getAD_Window_ID());
 			}
 		}
-		builder.setActionUuid(
-			ValueUtil.validateNull(actionUuid)
-		);
-
 		return builder;
 	}
 
@@ -753,20 +709,16 @@ public class Dashboarding extends DashboardingImplBase {
 
 	private ExistsWindowDashboardsResponse.Builder existsWindowDashboards(ExistsWindowDashboardsRequest request) {
 		// validate window
-		if (request.getWindowId() <= 0 && Util.isEmpty(request.getWindowUuid(), true)) {
+		if (request.getWindowId() <= 0) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
 		}
-		MWindow window = (MWindow) RecordUtil.getEntity(Env.getCtx(), I_AD_Window.Table_Name, request.getWindowUuid(), request.getWindowId(), null);
+		MWindow window = (MWindow) RecordUtil.getEntity(Env.getCtx(), I_AD_Window.Table_Name, request.getWindowId(), null);
 		if (window == null || window.getAD_Window_ID() <= 0) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
 		}
 
 		// validate tab
 		int tabId = request.getTabId();
-		if (tabId <= 0 && !Util.isEmpty(request.getTabUuid(), true)) {
-			tabId = RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), null);
-		}
-
 		// Get role
 		int roleId = Env.getAD_Role_ID(Env.getCtx());
 
@@ -811,20 +763,16 @@ public class Dashboarding extends DashboardingImplBase {
 	ListWindowDashboardsResponse.Builder listWindowDashboards(ListWindowDashboardsRequest request) {
 		Properties context = Env.getCtx();
 		// validate window
-		if (request.getWindowId() <= 0 && Util.isEmpty(request.getWindowUuid(), true)) {
+		if (request.getWindowId() <= 0) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
 		}
-		MWindow window = (MWindow) RecordUtil.getEntity(context, I_AD_Window.Table_Name, request.getWindowUuid(), request.getWindowId(), null);
+		MWindow window = (MWindow) RecordUtil.getEntity(context, I_AD_Window.Table_Name, request.getWindowId(), null);
 		if (window == null || window.getAD_Window_ID() <= 0) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
 		}
 
 		// validate tab
 		int tabId = request.getTabId();
-		if (tabId <= 0 && !Util.isEmpty(request.getTabUuid(), true)) {
-			tabId = RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), null);
-		}
-
 		// Get role
 		int roleId = Env.getAD_Role_ID(context);
 
@@ -867,9 +815,6 @@ public class Dashboarding extends DashboardingImplBase {
 				);
 				WindowDashboard.Builder chartBuilder = DashboardingConvertUtil.convertWindowDashboard(chartDefinition);
 				chartBuilder.setId(windowChartAllocation.get_ID())
-					.setUuid(
-						ValueUtil.validateNull(windowChartAllocation.get_UUID())
-					)
 					.setSequence(
 						windowChartAllocation.get_ValueAsInt(I_PA_Goal.COLUMNNAME_SeqNo)
 					)
@@ -939,7 +884,7 @@ public class Dashboarding extends DashboardingImplBase {
 		Map<String, Value> attributes = request.getContextAttributesMap();
 		ContextManager.setContextWithAttributesFromValuesMap(windowNo, context, attributes);
 
-		PO windowChart = RecordUtil.getEntity(context, "ECA50_WindowChart", request.getUuid(), request.getId(), null);
+		PO windowChart = RecordUtil.getEntity(context, "ECA50_WindowChart", request.getId(), null);
 		if (windowChart == null || windowChart.get_ID() <= 0) {
 			throw new AdempiereException("@ECA50_WindowChart_ID@ @NotFound@");
 		}
@@ -953,9 +898,6 @@ public class Dashboarding extends DashboardingImplBase {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 		int recordId = request.getRecordId();
-		if (recordId <= 0) {
-			recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
-		}
 		if (recordId <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}

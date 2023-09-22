@@ -47,9 +47,11 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
-import org.spin.backend.grpc.common.Value;
 import org.spin.base.db.FromUtil;
 import org.spin.base.db.ParameterUtil;
+
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 /**
  * Class for handle records utils values
@@ -518,7 +520,7 @@ public class RecordUtil {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
 							}
-							valueObjectBuilder.putValues(columnName, valueBuilder.build());
+							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()).build());
 							continue;
 						}
 						if (field.isKey()) {
@@ -528,7 +530,7 @@ public class RecordUtil {
 						String fieldColumnName = field.getColumnName();
 						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
 						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
+							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()).build());
 						}
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());

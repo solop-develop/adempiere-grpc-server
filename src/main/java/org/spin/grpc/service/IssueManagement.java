@@ -15,7 +15,6 @@
 package org.spin.grpc.service;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import org.adempiere.core.domains.models.I_AD_User;
@@ -28,11 +27,9 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRequest;
 import org.compiere.model.MRequestAction;
-import org.compiere.model.MRequestType;
 import org.compiere.model.MRequestUpdate;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
-import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -48,19 +45,19 @@ import org.spin.backend.grpc.issue_management.ExistsIssuesResponse;
 import org.spin.backend.grpc.issue_management.Issue;
 import org.spin.backend.grpc.issue_management.IssueComment;
 import org.spin.backend.grpc.issue_management.IssueManagementGrpc.IssueManagementImplBase;
-import org.spin.backend.grpc.issue_management.Priority;
 import org.spin.backend.grpc.issue_management.ListIssueCommentsReponse;
 import org.spin.backend.grpc.issue_management.ListIssueCommentsRequest;
 import org.spin.backend.grpc.issue_management.ListIssuesReponse;
 import org.spin.backend.grpc.issue_management.ListIssuesRequest;
-import org.spin.backend.grpc.issue_management.ListPrioritiesResponse;
 import org.spin.backend.grpc.issue_management.ListPrioritiesRequest;
+import org.spin.backend.grpc.issue_management.ListPrioritiesResponse;
 import org.spin.backend.grpc.issue_management.ListRequestTypesRequest;
 import org.spin.backend.grpc.issue_management.ListRequestTypesResponse;
 import org.spin.backend.grpc.issue_management.ListSalesRepresentativesRequest;
 import org.spin.backend.grpc.issue_management.ListSalesRepresentativesResponse;
 import org.spin.backend.grpc.issue_management.ListStatusesRequest;
 import org.spin.backend.grpc.issue_management.ListStatusesResponse;
+import org.spin.backend.grpc.issue_management.Priority;
 import org.spin.backend.grpc.issue_management.RequestType;
 import org.spin.backend.grpc.issue_management.UpdateIssueCommentRequest;
 import org.spin.backend.grpc.issue_management.UpdateIssueRequest;
@@ -321,9 +318,6 @@ public class IssueManagement extends IssueManagementImplBase {
 
 	private ListStatusesResponse.Builder listStatuses(ListStatusesRequest request) {
 		int requestTypeId = request.getRequestTypeId();
-		if (requestTypeId <= 0 && !Util.isEmpty(request.getRequestTypeUuid(), true)) {
-			requestTypeId = RecordUtil.getIdFromUuid(MRequestType.Table_Name, request.getRequestTypeUuid(), null);
-		}
 		if (requestTypeId <= 0) {
 			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
 		}
@@ -417,13 +411,6 @@ public class IssueManagement extends IssueManagementImplBase {
 
 		// validate record
 		int recordId = request.getRecordId();
-		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
-			if (recordId < 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
-		}
-
 		final String whereClause = "Record_ID = ? "
 			+ "AND AD_Table_ID = ? "
 		;
@@ -471,7 +458,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = "";
 
-		if (!Util.isEmpty(request.getTableName(), true) || !Util.isEmpty(request.getRecordUuid(), true)) {
+		if (!Util.isEmpty(request.getTableName(), true)) {
 			// validate table
 			if (Util.isEmpty(request.getTableName(), true)) {
 				throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
@@ -483,13 +470,9 @@ public class IssueManagement extends IssueManagementImplBase {
 
 			// validate record
 			int recordId = request.getRecordId();
-			if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
-				recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
-				if (recordId < 0) {
-					throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-				}
+			if (recordId < 0) {
+				throw new AdempiereException("@Record_ID@ / @NotFound@");
 			}
-
 			parametersList.add(table.getAD_Table_ID());
 			parametersList.add(recordId);
 			whereClause = "AD_Table_ID = ? AND Record_ID = ? ";
@@ -582,7 +565,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		MRequest requestRecord = new MRequest(Env.getCtx(), 0, null);
 
 		// create issue with record on window
-		if (!Util.isEmpty(request.getTableName(), true) || !Util.isEmpty(request.getRecordUuid(), true) || request.getRecordId() > 0) {
+		if (!Util.isEmpty(request.getTableName(), true) || request.getRecordId() > 0) {
 			if (Util.isEmpty(request.getTableName(), true)) {
 				throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 			}
@@ -593,14 +576,13 @@ public class IssueManagement extends IssueManagementImplBase {
 			}
 
 			// validate record
-			if (request.getRecordId() < 0 && Util.isEmpty(request.getRecordUuid(), true)) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			if (request.getRecordId() < 0) {
+				throw new AdempiereException("@Record_ID@ / @NotFound@");
 			}
-			PO entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), request.getRecordUuid(), request.getRecordId(), null);
+			PO entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), request.getRecordId(), null);
 			if (entity == null) {
 				throw new AdempiereException("@PO@ @NotFound@");
 			}
-
 			PO.copyValues(entity, requestRecord, true);
 
 			// validate if entity key column exists on request to set
@@ -621,17 +603,11 @@ public class IssueManagement extends IssueManagementImplBase {
 		}
 
 		int requestTypeId = request.getRequestTypeId();
-		if (requestTypeId <= 0 && !Util.isEmpty(request.getRequestTypeUuid(), true)) {
-			requestTypeId = RecordUtil.getIdFromUuid(MRequestType.Table_Name, request.getRequestTypeUuid(), null);
-		}
 		if (requestTypeId <= 0) {
 			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
 		}
 
 		int salesRepresentativeId = request.getSalesRepresentativeId();
-		if (salesRepresentativeId <= 0 && !Util.isEmpty(request.getSalesRepresentativeUuid(), true)) {
-			salesRepresentativeId = RecordUtil.getIdFromUuid(MUser.Table_Name, request.getSalesRepresentativeUuid(), null);
-		}
 		if (salesRepresentativeId <= 0) {
 			throw new AdempiereException("@SalesRep_ID@ @NotFound@");
 		}
@@ -644,9 +620,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		requestRecord.setPriority(
 			ValueUtil.validateNull(request.getPriorityValue())
 		);
-		requestRecord.setDateNextAction(
-			ValueUtil.getTimestampFromLong(request.getDateNextAction())
-		);
+		requestRecord.setDateNextAction(ValueUtil.convertStringToDate(request.getDateNextAction()));
 		requestRecord.saveEx();
 
 		Issue.Builder builder = IssueManagementConvertUtil.convertRequest(requestRecord);
@@ -679,9 +653,6 @@ public class IssueManagement extends IssueManagementImplBase {
 	private Issue.Builder updateIssue(UpdateIssueRequest request) {
 		// validate record
 		int recordId = request.getId();
-		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(MRequest.Table_Name, request.getUuid(), null);
-		}
 		if (recordId <= 0) {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
@@ -694,17 +665,11 @@ public class IssueManagement extends IssueManagementImplBase {
 		}
 
 		int requestTypeId = request.getRequestTypeId();
-		if (requestTypeId <= 0 && !Util.isEmpty(request.getRequestTypeUuid(), true)) {
-			requestTypeId = RecordUtil.getIdFromUuid(MRequestType.Table_Name, request.getRequestTypeUuid(), null);
-		}
 		if (requestTypeId <= 0) {
 			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
 		}
 
 		int salesRepresentativeId = request.getSalesRepresentativeId();
-		if (salesRepresentativeId <= 0 && !Util.isEmpty(request.getSalesRepresentativeUuid(), true)) {
-			salesRepresentativeId = RecordUtil.getIdFromUuid(MUser.Table_Name, request.getSalesRepresentativeUuid(), null);
-		}
 		if (salesRepresentativeId <= 0) {
 			throw new AdempiereException("@SalesRep_ID@ @NotFound@");
 		}
@@ -721,14 +686,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			ValueUtil.validateNull(request.getPriorityValue())
 		);
 		requestRecord.setDateNextAction(
-			ValueUtil.getTimestampFromLong(request.getDateNextAction())
+			ValueUtil.convertStringToDate(request.getDateNextAction())
 		);
 		
-		if (!Util.isEmpty(request.getStatusUuid(), true) || request.getStatusId() > 0) {
+		if (request.getStatusId() > 0) {
 			int statusId = request.getStatusId();
-			if (statusId <= 0) {
-				statusId = RecordUtil.getIdFromUuid(I_R_Status.Table_Name, request.getStatusUuid(), null);
-			}
 			requestRecord.setR_Status_ID(statusId);
 		}
 
@@ -764,13 +726,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		Trx.run(transactionName -> {
 			// validate record
 			int recordId = request.getId();
-			if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				recordId = RecordUtil.getIdFromUuid(I_R_Request.Table_Name, request.getUuid(), transactionName);
-				if (recordId < 0) {
-					throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-				}
+			if (recordId < 0) {
+				throw new AdempiereException("@Record_ID@ / @NotFound@");
 			}
-
 			MRequest requestRecord = new MRequest(Env.getCtx(), recordId, transactionName);
 			if (requestRecord == null || requestRecord.getR_Request_ID() <= 0) {
 				throw new AdempiereException("@R_Request_ID@ @NotFound@");
@@ -840,11 +798,8 @@ public class IssueManagement extends IssueManagementImplBase {
 	private ListIssueCommentsReponse.Builder listIssueComments(ListIssueCommentsRequest request) {
 		// validate parent record
 		int recordId = request.getIssueId();
-		if (recordId <= 0 && !Util.isEmpty(request.getIssueUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(I_R_Request.COLUMNNAME_R_Request_ID, request.getIssueUuid(), null);
-			if (recordId < 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
+		if (recordId < 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		
 		MRequest requestRecord = new MRequest(Env.getCtx(), recordId, null);
@@ -914,7 +869,8 @@ public class IssueManagement extends IssueManagementImplBase {
 			});
 
 		issueCommentsList.stream()
-			.sorted(Comparator.comparing(IssueComment.Builder::getCreated))
+		//	TODO: Add support here... Other way?
+//			.sorted(Comparator.comparing(IssueComment.Builder::getCreated))
 			.forEach(issueComment -> {
 				builderList.addRecords(issueComment);
 			});
@@ -947,11 +903,8 @@ public class IssueManagement extends IssueManagementImplBase {
 	private IssueComment.Builder createIssueComment(CreateIssueCommentRequest request) {
 		// validate parent record
 		int recordId = request.getIssueId();
-		if (recordId <= 0 && !Util.isEmpty(request.getIssueUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(I_R_Request.COLUMNNAME_R_Request_ID, request.getIssueUuid(), null);
-			if (recordId < 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
+		if (recordId < 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		MRequest requestRecord = new MRequest(Env.getCtx(), recordId, null);
 		requestRecord.setResult(
@@ -987,13 +940,9 @@ public class IssueManagement extends IssueManagementImplBase {
 	private IssueComment.Builder updateIssueComment(UpdateIssueCommentRequest request) {
 		// validate parent record
 		int recordId = request.getId();
-		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(I_R_Request.COLUMNNAME_R_Request_ID, request.getUuid(), null);
-			if (recordId <= 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
+		if (recordId <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
-
 		// validate entity
 		MRequestUpdate requestUpdate = new MRequestUpdate(Env.getCtx(), recordId, null);
 		if (requestUpdate == null || requestUpdate.getR_Request_ID() <= 0) {
@@ -1040,13 +989,9 @@ public class IssueManagement extends IssueManagementImplBase {
 	private Empty.Builder deleteIssueComment(DeleteIssueCommentRequest request) {
 		// validate record
 		int recordId = request.getId();
-		if (recordId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(I_R_RequestUpdate.Table_Name, request.getUuid(), null);
-			if (recordId < 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
+		if (recordId < 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
-
 		// validate entity
 		MRequestUpdate requestUpdate = new MRequestUpdate(Env.getCtx(), recordId, null);
 		if (requestUpdate == null || requestUpdate.getR_Request_ID() <= 0) {

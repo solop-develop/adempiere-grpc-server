@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_C_Order;
@@ -50,7 +51,13 @@ public class ValueUtil {
 	/**	Date format	*/
 	private static final String TIME_FORMAT = "yyyy-MM-dd hh:mm:ss";
 	private static final String DATE_FORMAT = "yyyy-MM-dd";
-
+	private static final String TYPE_KEY = "type";
+	private static final String VALUE_KEY = "value";
+	//	Types
+	public static final String TYPE_DATE = "date";
+	public static final String TYPE_DATE_TIME = "date_time";
+	public static final String TYPE_DECIMAL = "decimal";
+	
 
 	/**
 	 * Get Value 
@@ -146,8 +153,8 @@ public class ValueUtil {
 			return Value.newBuilder();
 		}
 		Struct.Builder date = Struct.newBuilder();
-		date.putFields("type", Value.newBuilder().setStringValue("date").build());
-		date.putFields("value", Value.newBuilder().setStringValue(convertDateToString(value)).build());
+		date.putFields(TYPE_KEY, Value.newBuilder().setStringValue(TYPE_DATE).build());
+		date.putFields(VALUE_KEY, Value.newBuilder().setStringValue(convertDateToString(value)).build());
 		return Value.newBuilder().setStructValue(date);
 	}
 	
@@ -170,28 +177,19 @@ public class ValueUtil {
 			return Struct.newBuilder();
 		}
 		Struct.Builder decimalValue = Struct.newBuilder();
-		decimalValue.putFields("type", Value.newBuilder().setStringValue("decimal").build());
-		decimalValue.putFields("value", Value.newBuilder().setStringValue(value.toPlainString()).build());
+		decimalValue.putFields(TYPE_KEY, Value.newBuilder().setStringValue(TYPE_DECIMAL).build());
+		decimalValue.putFields(VALUE_KEY, Value.newBuilder().setStringValue(value.toPlainString()).build());
 		return decimalValue;
 	}
 
 	/**
 	 * Get Decimal from Value
-	 * @param value
+	 * @param decimalValue
 	 * @return
 	 */
-	public static BigDecimal getDecimalFromValue(Value value) {
-		if (Util.isEmpty(value.getDecimalValue().getDecimalValue(), true)) {
-			if (value.getIntValue() != 0) {
-				return BigDecimal.valueOf(value.getIntValue());
-			}
-			if (Util.isEmpty(value.getStringValue())) {
-				return getBigDecimalFromString(value.getStringValue());
-			}
-			return null;
-		}
+	public static BigDecimal getDecimalFromValue(org.spin.backend.grpc.common.Value decimalValue) {
 		// Value.Decimal.DecimalValue
-		return getBigDecimalFromDecimal(value.getDecimalValue());
+		return getBigDecimalFromDecimal(decimalValue.getDecimalValue());
 	}
 	
 	/**
@@ -199,12 +197,24 @@ public class ValueUtil {
 	 * @param decimalValue
 	 * @return
 	 */
-	public static BigDecimal getBigDecimalFromDecimal(Decimal decimalValue) {
-		if (decimalValue == null || Util.isEmpty(decimalValue.getDecimalValue(), true)) {
+	public static BigDecimal getBigDecimalFromDecimal(Struct decimalValue) {
+		Map<String, Value> values = decimalValue.getFieldsMap();
+		if(values == null) {
 			return null;
 		}
-		return new BigDecimal(decimalValue.getDecimalValue())
-			.setScale(decimalValue.getScale());
+		Value type = values.get(TYPE_KEY);
+		Value value = values.get(VALUE_KEY);
+		if(type == null
+				|| value == null) {
+			return null;
+		}
+		String validType = Optional.ofNullable(type.getStringValue()).orElse("");
+		String validValue = Optional.ofNullable(value.getStringValue()).orElse("");
+		if(!validType.equals(TYPE_DECIMAL)
+				|| validValue.length() == 0) {
+			return null;
+		}
+		return new BigDecimal(validValue);
 	}
 	
 	/**
@@ -212,7 +222,7 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static Timestamp getDateFromValue(Value value) {
+	public static Timestamp getDateFromValue(org.spin.backend.grpc.common.Value value) {
 		if(value.getLongValue() > 0) {
 			return new Timestamp(value.getLongValue());
 		}
@@ -225,7 +235,7 @@ public class ValueUtil {
 	 * @param uppercase
 	 * @return
 	 */
-	public static String getStringFromValue(Value value, boolean uppercase) {
+	public static String getStringFromValue(org.spin.backend.grpc.common.Value value, boolean uppercase) {
 		String stringValue = value.getStringValue();
 		if(Util.isEmpty(stringValue, true)) {
 			return null;
@@ -242,7 +252,7 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static String getStringFromValue(Value value) {
+	public static String getStringFromValue(org.spin.backend.grpc.common.Value value) {
 		return getStringFromValue(value, false);
 	}
 	
@@ -251,7 +261,7 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static int getIntegerFromValue(Value value) {
+	public static int getIntegerFromValue(org.spin.backend.grpc.common.Value value) {
 		return value.getIntValue();
 	}
 	
@@ -260,7 +270,7 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static boolean getBooleanFromValue(Value value) {
+	public static boolean getBooleanFromValue(org.spin.backend.grpc.common.Value value) {
 		if (!Util.isEmpty(value.getStringValue(), true)) {
 			return "Y".equals(value.getStringValue())
 				|| "Yes".equals(value.getStringValue())
@@ -405,7 +415,7 @@ public class ValueUtil {
 	 * @param values
 	 * @return
 	 */
-	public static Map<String, Object> convertValuesMapToObjects(Map<String, Value> values) {
+	public static Map<String, Object> convertValuesMapToObjects(Map<String, org.spin.backend.grpc.common.Value> values) {
 		Map<String, Object> convertedValues = new HashMap<>();
 		if (values == null || values.size() <= 0) {
 			return convertedValues;
@@ -422,7 +432,7 @@ public class ValueUtil {
 	 * @param valueToConvert
 	 * @return
 	 */
-	public static Object getObjectFromValue(Value valueToConvert) {
+	public static Object getObjectFromValue(org.spin.backend.grpc.common.Value valueToConvert) {
 		return getObjectFromValue(valueToConvert, false);
 	}
 	
@@ -431,7 +441,7 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static Object getObjectFromValue(Value value, boolean uppercase) {
+	public static Object getObjectFromValue(org.spin.backend.grpc.common.Value value, boolean uppercase) {
 		if(value == null) {
 			return null;
 		}
@@ -459,7 +469,7 @@ public class ValueUtil {
 	 * @param referenceId
 	 * @return
 	 */
-	public static Object getObjectFromReference(Value value, int referenceId) {
+	public static Object getObjectFromReference(org.spin.backend.grpc.common.Value value, int referenceId) {
 		if(value == null) {
 			return null;
 		}

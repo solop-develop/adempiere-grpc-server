@@ -42,6 +42,7 @@ import org.spin.backend.grpc.issue_management.User;
 import org.spin.base.util.ValueUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
+import static com.google.protobuf.util.Timestamps.fromMillis;
 
 /**
  * This class was created for add all convert methods for Issue Management form
@@ -73,7 +74,6 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(priority.getAD_Ref_List_ID())
-			.setUuid(ValueUtil.validateNull(priority.getUUID()))
 			.setValue(ValueUtil.validateNull(priority.getValue()))
 			.setName(
 				ValueUtil.validateNull(name)
@@ -101,7 +101,6 @@ public class IssueManagementConvertUtil {
 			return builder;
 		}
 		builder.setId(user.getAD_User_ID())
-			.setUuid(ValueUtil.validateNull(user.getUUID()))
 			.setName(ValueUtil.validateNull(user.getName()))
 			.setDescription(ValueUtil.validateNull(user.getDescription()))
 		;
@@ -152,7 +151,6 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(dueType.getAD_Ref_List_ID())
-			.setUuid(ValueUtil.validateNull(dueType.getUUID()))
 			.setValue(ValueUtil.validateNull(dueType.getValue()))
 			.setName(
 				ValueUtil.validateNull(name)
@@ -183,7 +181,6 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(requestType.getR_RequestType_ID())
-			.setUuid(ValueUtil.validateNull(requestType.getUUID()))
 			.setName(ValueUtil.validateNull(requestType.getName()))
 			.setDescription(ValueUtil.validateNull(requestType.getDescription()))
 			.setDueDateTolerance(requestType.getDueDateTolerance())
@@ -227,7 +224,6 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(status.getR_Status_ID())
-			.setUuid(ValueUtil.validateNull(status.getUUID()))
 			.setName(ValueUtil.validateNull(status.getName()))
 			.setDescription(ValueUtil.validateNull(status.getDescription()))
 		;
@@ -251,18 +247,13 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(request.getR_Request_ID())
-			.setUuid(ValueUtil.validateNull(request.getUUID()))
 			.setDocumentNo(ValueUtil.validateNull(request.getDocumentNo()))
 			.setSubject(ValueUtil.validateNull(request.getSubject()))
 			.setSummary(ValueUtil.validateNull(request.getSummary()))
-			.setCreated(
-				ValueUtil.getLongFromTimestamp(request.getUpdated())
+			.setCreated(fromMillis(request.getUpdated().getTime()))
+			.setLastUpdated(fromMillis(request.getUpdated().getTime())
 			)
-			.setLastUpdated(
-				ValueUtil.getLongFromTimestamp(request.getUpdated())
-			)
-			.setDateNextAction(
-				ValueUtil.getLongFromTimestamp(request.getDateNextAction())
+			.setDateNextAction(fromMillis(request.getDateNextAction().getTime())
 			)
 			.setDueType(
 				convertDueType(request.getDueType())
@@ -304,9 +295,7 @@ public class IssueManagementConvertUtil {
 			return builder;
 		}
 		builder.setId(requestUpdate.getR_RequestUpdate_ID())
-			.setUuid(ValueUtil.validateNull(requestUpdate.getUUID()))
-			.setCreated(
-				ValueUtil.getLongFromTimestamp(requestUpdate.getCreated())
+			.setCreated(fromMillis(requestUpdate.getCreated().getTime())
 			)
 			.setResult(
 				ValueUtil.validateNull(requestUpdate.getResult())
@@ -335,10 +324,7 @@ public class IssueManagementConvertUtil {
 			return builder;
 		}
 		builder.setId(requestAction.getR_RequestAction_ID())
-			.setUuid(ValueUtil.validateNull(requestAction.getUUID()))
-			.setCreated(
-				ValueUtil.getLongFromTimestamp(requestAction.getCreated())
-			)
+			.setCreated(fromMillis(requestAction.getCreated().getTime()))
 			.setIssueCommentType(IssueCommentType.LOG)
 			.setUser(
 				IssueManagementConvertUtil.convertUser(requestAction.getCreatedBy())

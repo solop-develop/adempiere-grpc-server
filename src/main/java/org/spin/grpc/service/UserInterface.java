@@ -180,7 +180,6 @@ import org.spin.backend.grpc.common.UnlockPrivateAccessRequest;
 import org.spin.backend.grpc.common.UpdateBrowserEntityRequest;
 import org.spin.backend.grpc.common.UpdateTabEntityRequest;
 import org.spin.backend.grpc.common.UserInterfaceGrpc.UserInterfaceImplBase;
-import org.spin.backend.grpc.common.Value;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.OrderByUtil;
@@ -203,6 +202,8 @@ import org.spin.util.ASPUtil;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -478,7 +479,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				recordReferenceBuilder.setDisplayName(zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")");
 				recordReferenceBuilder.setColumnName(ValueUtil.validateNull(zoomQuery.getZoomColumnName()));
 				recordReferenceBuilder.setValue(
-					ValueUtil.getValueFromObject(zoomQuery.getZoomValue())
+					ValueUtil.getValueFromObject(zoomQuery.getZoomValue()).build()
 				);
 
 				//	Add to list
@@ -961,7 +962,7 @@ public class UserInterface extends UserInterfaceImplBase {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
 							}
-							valueObjectBuilder.putValues(columnName, valueBuilder.build());
+							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()).build());
 							continue;
 						}
 						if (field.isKey()) {
@@ -971,7 +972,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						String fieldColumnName = field.getColumnName();
 						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
 						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
+							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()).build());
 						}
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
@@ -1781,7 +1782,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						if(value != null) {
 							Value.Builder builderValue = ValueUtil.getValueFromObject(value);
 							if(builderValue != null) {
-								translationBuilder.putValues(column.getColumnName(), builderValue.build());
+								translationBuilder.setValues(Struct.newBuilder().putFields(column.getColumnName(), builderValue.build()).build());
 							}
 							//	Set Language
 							if(Util.isEmpty(translationBuilder.getLanguage())) {
@@ -2346,7 +2347,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param validationRuleId
 	 * @return
 	 */
-	private DefaultValue.Builder getDefaultKeyAndValue(Map<String, Value> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
+	private DefaultValue.Builder getDefaultKeyAndValue(Map<String, org.spin.backend.grpc.common.Value> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
 		DefaultValue.Builder builder = DefaultValue.newBuilder();
 		if(Util.isEmpty(defaultValue, true)) {
 			return builder;
@@ -2413,7 +2414,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						referenceId = DisplayType.TableDir;
 						columnName = tableKeyColumn;
 					} else {
-						builder.putValues(columnName, ValueUtil.getValueFromObject(defaultValueAsObject).build());
+						builder.setValues(Struct.newBuilder().putFields(columnName, ValueUtil.getValueFromObject(defaultValueAsObject).build()));
 						return builder;
 					}
 				}
@@ -2472,7 +2473,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 			}
 		} else {
-			builder.putValues(columnName, ValueUtil.getValueFromObject(defaultValueAsObject).build());
+			builder.setValues(Struct.newBuilder().putFields(columnName, ValueUtil.getValueFromObject(defaultValueAsObject).build()));
 		}
 
 		return builder;
@@ -2908,14 +2909,14 @@ public class UserInterface extends UserInterfaceImplBase {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
 							}
-							valueObjectBuilder.putValues(columnName, valueBuilder.build());
+							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()));
 							continue;
 						}
 						//	From field
 						String fieldColumnName = field.getAD_View_Column().getColumnName();
 						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
 						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
+							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()));
 						}
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
@@ -3030,14 +3031,14 @@ public class UserInterface extends UserInterfaceImplBase {
 				.filter(fieldValue -> isValidChange(fieldValue))
 				.forEach(fieldValue -> {
 					Value.Builder valueBuilder = ValueUtil.getValueFromReference(fieldValue.getValue(), fieldValue.getDisplayType());
-					calloutBuilder.putValues(fieldValue.getColumnName(), valueBuilder.build());
+					calloutBuilder.setValues(Struct.newBuilder().putFields(fieldValue.getColumnName(), valueBuilder.build()));
 				});
 
 			// always add is sales transaction on context
 			String isSalesTransaction = Env.getContext(tab.getCtx(), windowNo, "IsSOTrx", true);
 			if (!Util.isEmpty(isSalesTransaction, true)) {
 				Value.Builder valueBuilder = ValueUtil.getValueFromStringBoolean(isSalesTransaction);
-				calloutBuilder.putValues("IsSOTrx", valueBuilder.build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("IsSOTrx", valueBuilder.build()));
 			}
 			calloutBuilder.setResult(ValueUtil.validateNull(result));
 			
@@ -3063,40 +3064,40 @@ public class UserInterface extends UserInterfaceImplBase {
 			if (calloutClass.equals("org.compiere.model.CalloutOrder.docType")) {
 				// - OrderType
 				String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
-				calloutBuilder.putValues("OrderType", ValueUtil.getValueFromString(docSubTypeSO).build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("OrderType", ValueUtil.getValueFromString(docSubTypeSO).build()));
 
 				// - HasCharges
 				String hasCharges =  Env.getContext(Env.getCtx(), windowNo, "HasCharges");
-				calloutBuilder.putValues("HasCharges", ValueUtil.getValueFromStringBoolean(hasCharges).build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("HasCharges", ValueUtil.getValueFromStringBoolean(hasCharges).build()));
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.priceList")) {
 				// - M_PriceList_Version_ID
 				int priceListVersionId =  Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				calloutBuilder.putValues("M_PriceList_Version_ID", ValueUtil.getValueFromInteger(priceListVersionId).build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("M_PriceList_Version_ID", ValueUtil.getValueFromInteger(priceListVersionId).build()));
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.product")) {
 				// - M_PriceList_Version_ID
 				int priceListVersionId =  Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				calloutBuilder.putValues("M_PriceList_Version_ID", ValueUtil.getValueFromInteger(priceListVersionId).build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("M_PriceList_Version_ID", ValueUtil.getValueFromInteger(priceListVersionId).build()));
 				
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				calloutBuilder.putValues("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build()));
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.charge")) {
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				calloutBuilder.putValues("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build()));
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.amt")) {
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				calloutBuilder.putValues("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build()));
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.qty")) {
 				// - UOMConversion
 				String isConversion = Env.getContext(Env.getCtx(), "UOMConversion");
-				calloutBuilder.putValues("UOMConversion", ValueUtil.getValueFromStringBoolean(isConversion).build());
+				calloutBuilder.setValues(Struct.newBuilder().putFields("UOMConversion", ValueUtil.getValueFromStringBoolean(isConversion).build()));
 			}
 		}
 
@@ -3254,20 +3255,20 @@ public class UserInterface extends UserInterfaceImplBase {
 		// Key Column
 		if(keyValue instanceof Integer) {
 			builder.setId((Integer) keyValue);
-			builder.putValues(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build());
+			builder.setValues(Struct.newBuilder().putFields(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build()));
 		} else {
-			builder.putValues(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build());
+			builder.setValues(Struct.newBuilder().putFields(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build()));
 		}
 		//	Set Value
 		if(!Util.isEmpty(value)) {
-			builder.putValues(LookupUtil.VALUE_COLUMN_KEY, ValueUtil.getValueFromString(value).build());
+			builder.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY, ValueUtil.getValueFromString(value).build()));
 		}
 		//	Display column
 		if(!Util.isEmpty(displayValue)) {
-			builder.putValues(LookupUtil.DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build());
+			builder.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build()));
 		}
 		// UUID Value
-		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
+//		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
 
 		return builder;
 	}
@@ -3358,26 +3359,26 @@ public class UserInterface extends UserInterfaceImplBase {
 			;
 
 			// set attributes
-			entityBuilder.putValues(
+			entityBuilder.setValues(Struct.newBuilder().putFields(
 				keyColumn.getColumnName(),
 				ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
-			);
-			entityBuilder.putValues(
+			));
+			entityBuilder.setValues(Struct.newBuilder().putFields(
 				LookupUtil.UUID_COLUMN_KEY,
 				ValueUtil.getValueFromString(entity.get_UUID()).build()
-			);
-			entityBuilder.putValues(
+			));
+			entityBuilder.setValues(Struct.newBuilder().putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueUtil.getValueFromString(entity.getDisplayValue()).build()
-			);
-			entityBuilder.putValues(
+			));
+			entityBuilder.setValues(Struct.newBuilder().putFields(
 				sortColumnName,
 				ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
-			);
-			entityBuilder.putValues(
+			));
+			entityBuilder.setValues(Struct.newBuilder().putFields(
 				includedColumnName,
 				ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
-			);
+			));
 
 			builderList.addRecords(entityBuilder);
 		});
@@ -3468,26 +3469,26 @@ public class UserInterface extends UserInterfaceImplBase {
 				;
 
 				// set attributes
-				entityBuilder.putValues(
+				entityBuilder.setValues(Struct.newBuilder().putFields(
 					keyColumn.getColumnName(),
 					ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
-				);
-				entityBuilder.putValues(
+				));
+				entityBuilder.setValues(Struct.newBuilder().putFields(
 					LookupUtil.UUID_COLUMN_KEY,
 					ValueUtil.getValueFromString(entity.get_UUID()).build()
-				);
-				entityBuilder.putValues(
+				));
+				entityBuilder.setValues(Struct.newBuilder().putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
 					ValueUtil.getValueFromString(entity.getDisplayValue()).build()
-				);
-				entityBuilder.putValues(
+				));
+				entityBuilder.setValues(Struct.newBuilder().putFields(
 					sortColumnName,
 					ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
-				);
-				entityBuilder.putValues(
+				));
+				entityBuilder.setValues(Struct.newBuilder().putFields(
 					includedColumnName,
 					ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
-				);
+				));
 
 				builderList.addRecords(entityBuilder);
 			});

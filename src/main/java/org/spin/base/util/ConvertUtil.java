@@ -117,7 +117,6 @@ import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
-import com.google.type.Decimal;
 
 import org.spin.model.MADAttachmentReference;
 import org.spin.pos.service.order.OrderUtil;
@@ -1419,7 +1418,7 @@ public class ConvertUtil {
 					&& !columnName.equals(MBPartner.COLUMNNAME_Name2)
 					&& !columnName.equals(MBPartner.COLUMNNAME_Description);
 		}).forEach(columnName -> {
-			customer.putAdditionalAttributes(columnName, ValueUtil.getValueFromObject(businessPartner.get_Value(columnName)).build());
+			customer.setAdditionalAttributes(Struct.newBuilder().putFields(columnName, ValueUtil.getValueFromObject(businessPartner.get_Value(columnName)).build()));
 		});
 		//	Add Address
 		Arrays.asList(businessPartner.getLocations(true)).stream().filter(customerLocation -> customerLocation.isActive()).forEach(address -> customer.addAddresses(convertCustomerAddress(address)));
@@ -1501,7 +1500,7 @@ public class ConvertUtil {
 					&& !columnName.equals(MBPartnerLocation.COLUMNNAME_Phone)
 					&& !columnName.equals(MBPartnerLocation.COLUMNNAME_Name);
 		}).forEach(columnName -> {
-			builder.putAdditionalAttributes(columnName, ValueUtil.getValueFromObject(businessPartnerLocation.get_Value(columnName)).build());
+			builder.setAdditionalAttributes(Struct.newBuilder().putFields(columnName, ValueUtil.getValueFromObject(businessPartnerLocation.get_Value(columnName)).build()));
 		});
 		//	
 		return builder;

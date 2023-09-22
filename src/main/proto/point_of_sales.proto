@@ -727,7 +727,7 @@ message CreateCustomerRequest {
 	string pos_uuid = 13;
 	//	Location
 	repeated AddressRequest addresses = 14;
-	map <string, data.Value> additional_attributes = 15;
+	google.protobuf.Struct additional_attributes = 15;
 }
 
 // Request for update Customer
@@ -742,7 +742,7 @@ message UpdateCustomerRequest {
 	string description = 9;
 	//	Location
 	repeated AddressRequest addresses = 10;
-	map <string, data.Value> additional_attributes = 11;
+	google.protobuf.Struct additional_attributes = 11;
 	string pos_uuid = 12;
 }
 
@@ -1003,11 +1003,12 @@ message ListOrdersRequest {
 	string date_ordered_from = 16;
 	string date_ordered_to = 17;
 	string sales_representative_uuid = 18;
-	string search_value = 19;
-	int32 page_size = 20;
-	string page_token = 21;
-	// Query
-	Criteria criteria = 22;
+	string filters = 19;
+	repeated string sort_columns = 20;
+	repeated string group_columns = 21;
+	repeated string select_columns = 22;
+	int32 page_size = 23;
+	string page_token = 24;
 }
 
 //	List Order Lines Response
@@ -1033,10 +1034,12 @@ message ListProductPriceRequest {
 	string pos_uuid = 5;
 	string price_list_uuid = 6;
 	string warehouse_uuid = 7;
-	// Query
-	Criteria criteria = 8;
-	int32 page_size = 9;
-	string page_token = 10;
+	string filters = 8;
+	repeated string sort_columns = 9;
+	repeated string group_columns = 10;
+	repeated string select_columns = 11;
+	int32 page_size = 12;
+	string page_token = 13;
 }
 
 // POS from user uuid
@@ -1196,10 +1199,12 @@ message ListPaymentsRequest {
 	string order_uuid = 3;
 	bool is_only_refund = 4;
 	bool is_only_receipt = 5;
-	int32 page_size = 6;
-	string page_token = 7;
-	// Query
-	Criteria criteria = 8;
+	string filters = 6;
+	repeated string sort_columns = 7;
+	repeated string group_columns = 8;
+	repeated string select_columns = 9;
+	int32 page_size = 10;
+	string page_token = 11;
 }
 
 // Validate PIN Request

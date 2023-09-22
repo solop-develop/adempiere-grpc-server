@@ -320,14 +320,19 @@ message GetReportOutputRequest {
 	bool is_summary = 4;
 	string report_name = 5;
 	string report_type = 6;
-	// Query
-	Criteria criteria = 7;
+	//	Filters
+	string filters = 7;
+	repeated string sort_columns = 8;
+	repeated string group_columns = 9;
+	repeated string select_columns = 10;
+	int32 page_size = 11;
+	string page_token = 12;
 }
 
 // Create Entity Request
 message CreateEntityRequest {
 	string table_name = 1;
-	map<string, data.Value> attributes = 2;
+	google.protobuf.Struct attributes = 2;
 }
 
 // Create Private Access Request
@@ -340,8 +345,13 @@ message LockPrivateAccessRequest {
 message GetEntityRequest {
 	int32 id = 1;
 	string table_name = 2;
-	// Query
-	Criteria criteria = 3;
+	//	Filters
+	string filters = 3;
+	repeated string sort_columns = 4;
+	repeated string group_columns = 5;
+	repeated string select_columns = 6;
+	int32 page_size = 7;
+	string page_token = 8;
 }
 
 // Get Private Access Request
@@ -374,7 +384,7 @@ message RollbackEntityRequest {
 message UpdateEntityRequest {
 	string table_name = 1;
 	int32 id = 2;
-	map<string, data.Value> attributes = 3;
+	google.protobuf.Struct attributes = 3;
 }
 
 // Delete Entity Request
@@ -392,10 +402,14 @@ message DeleteEntitiesBatchRequest {
 // Browser request
 message ListBrowserItemsRequest {
 	int32 id = 1;
-	Criteria criteria = 2;
-	map<string, data.Value> context_attributes = 3;
-	int32 page_size = 4;
-	string page_token = 5;
+	google.protobuf.Struct context_attributes = 2;
+	//	Filters
+	string filters = 3;
+	repeated string sort_columns = 4;
+	repeated string group_columns = 5;
+	repeated string select_columns = 6;
+	int32 page_size = 7;
+	string page_token = 8;
 }
 
 // Browsers List
@@ -409,7 +423,7 @@ message ListBrowserItemsResponse {
 message UpdateBrowserEntityRequest {
 	int32 id = 1;
 	int32 record_id = 2;
-	map<string, data.Value> attributes = 3;
+	google.protobuf.Struct attributes = 3;
 }
 
 // Context Info Value
@@ -428,7 +442,7 @@ message GetLookupItemRequest {
 	int32 column_id = 6;
 	string column_name = 7;
 	string table_name = 8;
-	map<string, data.Value> context_attributes = 9;
+	google.protobuf.Struct context_attributes = 9;
 }
 
 // Get Default Value Request
@@ -438,8 +452,8 @@ message GetDefaultValueRequest {
 	int32 field_id = 2;
 	int32 browse_field_id = 3;
 	int32 column_id = 4;
-	map<string, data.Value> context_attributes = 5;
-	Value value = 6;
+	google.protobuf.Struct context_attributes = 5;
+	google.protobuf.Value value = 6;
 }
 
 // Default Value Response
@@ -472,10 +486,14 @@ message ListLookupItemsRequest {
 	int32 column_id = 5;
 	string column_name = 6;
 	string table_name = 7;
-	string search_value = 8;
-	map<string, data.Value> context_attributes = 9;
-	int32 page_size = 10;
-	string page_token = 11;
+	google.protobuf.Struct context_attributes = 8;
+	//	Filters
+	string filters = 9;
+	repeated string sort_columns = 10;
+	repeated string group_columns = 11;
+	repeated string select_columns = 12;
+	int32 page_size = 13;
+	string page_token = 14;
 }
 
 // List Lookup Item Response
@@ -490,7 +508,7 @@ message GetTabEntityRequest {
 	int32 id = 1;
 	int32 window_id = 2;
 	int32 tab_id = 3;
-	map<string, data.Value> context_attributes = 4;
+	google.protobuf.Struct context_attributes = 4;
 }
 
 // Create Tab Entity Request
@@ -498,7 +516,7 @@ message CreateTabEntityRequest {
 	int32 id = 1;
 	int32 window_id = 2;
 	int32 tab_id = 3;
-	map<string, data.Value> attributes = 4;
+	google.protobuf.Struct attributes = 4;
 }
 
 // Update Tab Entity Request
@@ -506,19 +524,21 @@ message UpdateTabEntityRequest {
 	int32 id = 1;
 	int32 window_id = 2;
 	int32 tab_id = 3;
-	map<string, data.Value> attributes = 4;
+	google.protobuf.Struct attributes = 4;
 }
 
 // List Tab Entities Request
 message ListTabEntitiesRequest {
 	int32 window_id = 1;
 	int32 tab_id = 2;
-	Criteria filters = 3;
-	map<string, data.Value> context_attributes = 4;
-	repeated string columns = 5;
-	string search_value = 6;
-	int32 page_size = 7;
-	string page_token = 8;
+	google.protobuf.Struct context_attributes = 3;
+	//	Filters
+	string filters = 4;
+	repeated string sort_columns = 5;
+	repeated string group_columns = 6;
+	repeated string select_columns = 7;
+	int32 page_size = 8;
+	string page_token = 9;
 }
 
 // @deprecated please use ListEntitiesResponse
@@ -531,11 +551,13 @@ message ListTabEntitiesResponse {
 
 // List Entities Request
 message ListEntitiesRequest {
-	// Query
-	Criteria criteria = 1;
-	repeated string columns = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	//	Filters
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
 }
 
 // List Entities Response
@@ -552,16 +574,16 @@ message RunCalloutRequest {
 	int32 tab_id = 3;
 	string callout = 4;
 	string column_name = 5;
-	Value old_value = 6;
-	Value value = 7;
+	google.protobuf.Value old_value = 6;
+	google.protobuf.Value value = 7;
 	int32 window_no = 8;
-	map<string, data.Value> context_attributes = 9;
+	google.protobuf.Struct context_attributes = 9;
 }
 
 // Callout response with data from server
 message Callout {
 	string result = 1;
-	map<string, Value> values = 2;
+	google.protobuf.Struct values = 2;
 }
 
 // BusinessProcess Request
@@ -574,7 +596,7 @@ message RunBusinessProcessRequest {
 	int32 print_format_id = 6;
 	int32 report_view_id = 7;
 	bool is_summary = 8;
-	map<string, data.Value> parameters = 9;
+	google.protobuf.Struct parameters = 9;
 	repeated KeyValueSelection selections = 10;
 }
 
@@ -590,7 +612,7 @@ message ListTranslationsRequest {
 //	Translations List
 message ListTranslationsResponse {
 	int64 record_count = 1;
-	repeated Translation translations = 2;
+	repeated google.protobuf.Struct translations = 2;
 	string next_page_token = 3;
 }
 
@@ -705,34 +727,40 @@ message ListReferencesResponse {
 
 // List General Info Request
 message ListGeneralInfoRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	Criteria filters = 3;
-	map<string, data.Value> context_attributes = 4;
-	string search_value = 5;
+	google.protobuf.Struct context_attributes = 1;
 	// references
-	int32 process_parameter_id = 6;
-	int32 field_id = 7;
-	int32 browse_field_id = 8;
-	int32 reference_id = 9;
-	int32 column_id = 10;
-	string table_name = 11;
-	string column_name = 12;
+	int32 process_parameter_id = 2;
+	int32 field_id = 3;
+	int32 browse_field_id = 4;
+	int32 reference_id = 5;
+	int32 column_id = 6;
+	string table_name = 7;
+	string column_name = 8;
+	//	Filters
+	string filters = 9;
+	repeated string sort_columns = 10;
+	repeated string group_columns = 11;
+	repeated string select_columns = 12;
+	int32 page_size = 13;
+	string page_token = 14;
 }
 
 message ListTabSequencesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	int32 window_id = 3;
-	int32 tab_id = 4;
-	// filters
-	map<string, data.Value> context_attributes = 5;
+	int32 window_id = 1;
+	int32 tab_id = 2;
+	//	Filters
+	string filters = 3;
+	repeated string sort_columns = 4;
+	repeated string group_columns = 5;
+	repeated string select_columns = 6;
+	int32 page_size = 7;
+	string page_token = 8;
+	google.protobuf.Struct context_attributes = 9;
 }
 
 message SaveTabSequencesRequest {
 	int32 tab_id = 1;
-	map<string, data.Value> context_attributes = 2;
+	google.protobuf.Struct context_attributes = 2;
 	repeated KeyValueSelection entities = 3;
 }
 
@@ -743,7 +771,7 @@ message ListTreeNodesRequest {
 	string table_name = 2;
 	int32 id = 3;
 	int32 element_id = 4;
-	map<string, data.Value> context_attributes = 5;
+	google.protobuf.Struct context_attributes = 5;
 }
 
 // Tree Node
@@ -782,9 +810,12 @@ message MailTemplate {
 }
 
 message ListMailTemplatesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
 }
 
 message ListMailTemplatesResponse {

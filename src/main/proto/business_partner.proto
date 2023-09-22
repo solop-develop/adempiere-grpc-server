@@ -20,8 +20,8 @@ option java_package = "org.spin.backend.grpc.bpartner";
 option java_outer_classname = "ADempiereBusinessPartner";
 
 import "business.proto";
-import "base_data_type.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 
 package business_partner;
 
@@ -31,21 +31,25 @@ service BusinessPartner {
 	rpc ListBusinessPartnerInfo(ListBusinessPartnerInfoRequest) returns (data.ListEntitiesResponse) {
 		option (google.api.http) = { get: "/business-partner/business-partners" };
 	}
+	rpc EpaleInfo(ListBusinessPartnerInfoRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { post: "/business-partner/business-partners" };
+	}
 }
 
 // List Business Partner Info Request
 message ListBusinessPartnerInfoRequest {
-	int32 page_size = 2;
-	string page_token = 3;
+	string process_parameter_id = 1;
+	string field_id = 2;
+	string browse_field_id = 3;
+	string reference_id = 4;
+	string column_id = 5;
+	string column_name = 6;
 	// filters
-	data.Filters filters = 4;
-	map<string, data.Value> context_attributes = 5;
-	string search_value = 6;
-	// references
-	string process_parameter_id = 7;
-	string field_id = 8;
-	string browse_field_id = 9;
-	string reference_id = 10;
-	string column_id = 11;
-	string column_name = 13;
+	string filters = 7;
+	repeated string sort_columns = 8;
+	repeated string group_columns = 9;
+	repeated string select_columns = 10;
+	int32 page_size = 11;
+	string page_token = 12;
+	google.protobuf.Struct context_attributes = 13;
 }

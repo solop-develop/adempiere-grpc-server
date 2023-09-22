@@ -76,6 +76,8 @@ import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.grpc.service.UserInterface;
 
+import com.google.protobuf.Struct;
+
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -102,32 +104,32 @@ public abstract class BankStatementMatchServiceLogic {
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
 
 		LookupItem.Builder lookupMatched = LookupItem.newBuilder()
-			.putValues(
+			.setValues(Struct.newBuilder().putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
 				ValueUtil.getValueFromInt(
 					MatchMode.MODE_NOT_MATCHED_VALUE
 				).build()
-			)
-			.putValues(
+			).build())
+			.setValues(Struct.newBuilder().putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueUtil.getValueFromString(
 					Msg.translate(Env.getCtx(), "NotMatched")
-				).build())
+				).build()).build())
 		;
 		builderList.addRecords(lookupMatched);
 
 		LookupItem.Builder lookupUnMatched = LookupItem.newBuilder()
-			.putValues(
+			.setValues(Struct.newBuilder().putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
 				ValueUtil.getValueFromInt(
 					MatchMode.MODE_MATCHED_VALUE
 				).build()
-			)
-			.putValues(
+			).build())
+			.setValues(Struct.newBuilder().putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueUtil.getValueFromString(
 					Msg.translate(Env.getCtx(), "Matched")
-				).build())
+				).build()).build())
 		;
 		builderList.addRecords(lookupUnMatched);
 

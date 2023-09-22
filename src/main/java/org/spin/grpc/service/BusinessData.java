@@ -86,6 +86,7 @@ import org.spin.base.workflow.WorkflowUtil;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import com.google.protobuf.Struct;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -743,21 +744,21 @@ public class BusinessData extends BusinessDataImplBase {
 					try {
 						String columnName = metaData.getColumnName (index);
 						MColumn field = columnsMap.get(columnName.toUpperCase());
-						Value.Builder valueBuilder = Value.newBuilder();
+						com.google.protobuf.Value.Builder valueBuilder = com.google.protobuf.Value.newBuilder();
 						//	Display Columns
 						if(field == null) {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
 							}
-							valueObjectBuilder.putValues(columnName, valueBuilder.build());
+							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()).build());
 							continue;
 						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
 						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-							valueObjectBuilder.putValues(fieldColumnName, valueBuilder.build());
+							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()).build());
 						}
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());

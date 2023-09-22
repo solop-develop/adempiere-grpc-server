@@ -70,6 +70,25 @@ public class BusinessPartner extends BusinessPartnerImplBase {
 		}
 	}
 	
+	@Override
+	public void epaleInfo(ListBusinessPartnerInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListEntitiesResponse.Builder entityValueList = listBusinessPartnerInfo(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException());
+		}
+	}
+	
 	/**
 	 * Get default value base on field, process parameter, browse field or column
 	 * @param request
