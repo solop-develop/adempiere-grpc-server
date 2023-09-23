@@ -55,6 +55,19 @@ public class ValueUtil {
 
 
 	/**
+	 * Value is empty
+	 * @param value
+	 * @return
+	 */
+	public static boolean isEmptyValue(Value value) {
+		return value == null
+			|| value.isInitialized()
+			|| value.getValueType() == ValueType.UNKNOWN
+		;
+	}
+
+
+	/**
 	 * Get Value 
 	 * @param value
 	 * @return

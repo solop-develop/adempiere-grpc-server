@@ -810,7 +810,7 @@ public class WhereClauseUtil {
 				if (rangeAdd.containsKey(viewColumn.getColumnName())) {
 					return;
 				}
-				if (browseField.isRange()) {
+				if (browseField.isRange() && (ValueUtil.isEmptyValue(value) || ValueUtil.isEmptyValue(valueTo))) {
 					final String columnNameParameter = viewColumn.getColumnName();
 					Condition conditionStart = parametersList.stream().filter(parameter -> {
 						return parameter.getColumnName().equals(columnNameParameter);
@@ -829,12 +829,17 @@ public class WhereClauseUtil {
 							.orElse(Condition.newBuilder().build())
 						;
 						valueTo = conditionEnd.getValue();
-						operatorTo = conditionEnd.getOperatorValue();
+						operatorValue = conditionEnd.getOperatorValue();
+						if (conditionStart.getOperatorValue() > 0 && operatorValue == Operator.VOID_VALUE) {
+							operatorValue = conditionStart.getOperatorValue();
+						}
 					}
 	
 					columnName = viewColumn.getColumnSQL();
 					if (conditionStart.getOperator() == Operator.GREATER_EQUAL && operatorTo == Operator.LESS_EQUAL_VALUE) {
 						operatorValue = Operator.BETWEEN_VALUE;
+					} else if (operatorValue == Operator.BETWEEN_VALUE) {
+						; // omit
 					} else {
 						if (whereClause.length() > 0) {
 							whereClause.append(" AND ");
