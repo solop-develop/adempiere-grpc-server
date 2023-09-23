@@ -40,6 +40,7 @@ import org.spin.backend.grpc.common.Operator;
 import org.spin.base.dictionary.WindowUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.util.ASPUtil;
+import com.google.protobuf.Value;
 
 /**
  * Class for handle SQL Where Clause
@@ -359,8 +360,8 @@ public class WhereClauseUtil {
 	 * @param {List<Object>} params
 	 * @return
 	 */
-	public static String getWhereClauseFromCriteria(Criteria criteria, List<Object> params) {
-		return getWhereClauseFromCriteria(criteria, null, params);
+	public static String getWhereClauseFromCriteria(String filters, List<Object> params) {
+		return getWhereClauseFromCriteria(filters, null, params);
 	}
 
 	/**
@@ -370,8 +371,8 @@ public class WhereClauseUtil {
 	 * @param {List<Object>} params
 	 * @return
 	 */
-	public static String getWhereClauseFromCriteria(Criteria criteria, String tableName, List<Object> params) {
-		return getWhereClauseFromCriteria(criteria, tableName, null, params);
+	public static String getWhereClauseFromCriteria(String filters, String tableName, List<Object> params) {
+		return getWhereClauseFromCriteria(filters, tableName, null, params);
 	}
 
 	/**
@@ -382,14 +383,8 @@ public class WhereClauseUtil {
 	 * @param {List<Object>} params
 	 * @return
 	 */
-	public static String getWhereClauseFromCriteria(Criteria criteria, String tableName, String tableAlias, List<Object> params) {
+	public static String getWhereClauseFromCriteria(String filters, String tableName, String tableAlias, List<Object> params) {
 		StringBuffer whereClause = new StringBuffer();
-		if (!Util.isEmpty(criteria.getWhereClause(), true)) {
-			whereClause.append("(").append(criteria.getWhereClause()).append(")");
-		}
-		if (Util.isEmpty(tableName, true)) {
-			tableName = criteria.getTableName();
-		}
 		final MTable table = MTable.get(Env.getCtx(), tableName);
 		//	Validate
 		if (table == null || table.getAD_Table_ID() <= 0) {
@@ -399,8 +394,8 @@ public class WhereClauseUtil {
 			tableAlias = tableName;
 		}
 		final String tableNameAlias = tableAlias;
-
-		criteria.getConditionsList().stream()
+		Gson
+		filters.getConditionsList().stream()
 			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
 			.forEach(condition -> {
 				int operatorValue = condition.getOperatorValue();

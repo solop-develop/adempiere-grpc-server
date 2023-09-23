@@ -1041,12 +1041,11 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(where, true)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
 		}
-		Criteria criteria = request.getFilters();
 		StringBuffer whereClause = new StringBuffer(parsedWhereClause);
 		List<Object> params = new ArrayList<>();
 
 		//	For dynamic condition
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(criteria, tableName, params);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
 		if(!Util.isEmpty(dynamicWhere, true)) {
 			if(!Util.isEmpty(whereClause.toString(), true)) {
 				whereClause.append(" AND ");
@@ -1269,13 +1268,8 @@ public class UserInterface extends UserInterfaceImplBase {
 	private ListEntitiesResponse.Builder listGeneralInfo(ListGeneralInfoRequest request) {
 		String tableName = request.getTableName();
 		if (Util.isEmpty(tableName, true)) {
-			tableName = request.getFilters().getTableName();
-		}
-		if (Util.isEmpty(tableName, true)) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
-
-		
 		MTable table = MTable.get(Env.getCtx(), tableName);
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
@@ -1603,11 +1597,10 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
 
-		Criteria criteria = request.getCriteria();
-		if(Util.isEmpty(criteria.getTableName(), true)) {
+		if(Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @TableName@");
 		}
-		MTable table = MTable.get(Env.getCtx(), criteria.getTableName());
+		MTable table = MTable.get(Env.getCtx(), request.getTableName());
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@TableName@ @NotFound@");
 		}
@@ -2776,7 +2769,6 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			return builder;
 		}
-		Criteria criteria = request.getCriteria();
 		HashMap<String, Object> parameterMap = new HashMap<>();
 		//	Populate map
 		criteria.getConditionsList().forEach(condition -> {

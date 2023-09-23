@@ -490,17 +490,12 @@ public class BusinessData extends BusinessDataImplBase {
 	 */
 	private Entity.Builder getEntity(GetEntityRequest request) {
 		String tableName = request.getTableName();
-		if(Util.isEmpty(request.getTableName())) {
-			if(request.getCriteria() != null) {
-				tableName = request.getCriteria().getTableName();
-			}
-		}
 		PO entity = null;
 		if(request.getId() != 0) {
 			entity = RecordUtil.getEntity(Env.getCtx(), tableName, request.getId(), null);
-		} else if(request.getCriteria() != null) {
+		} else if(request.getFilters() != null) {
 			List<Object> parameters = new ArrayList<Object>();
-			String whereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getCriteria(), parameters);
+			String whereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), parameters);
 			entity = RecordUtil.getEntity(Env.getCtx(), tableName, whereClause, parameters, null);
 		}
 		//	Return
@@ -630,11 +625,10 @@ public class BusinessData extends BusinessDataImplBase {
 	 * @return
 	 */
 	private ListEntitiesResponse.Builder convertEntitiesList(Properties context, ListEntitiesRequest request) {
-		Criteria criteria = request.getCriteria();
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> params = new ArrayList<>();
 		//	For dynamic condition
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(criteria, params);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), params);
 		if(!Util.isEmpty(dynamicWhere)) {
 			if(whereClause.length() > 0) {
 				whereClause.append(" AND ");
@@ -662,43 +656,57 @@ public class BusinessData extends BusinessDataImplBase {
 
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		//	
-		if(Util.isEmpty(criteria.getQuery())) {
-			Query query = new Query(context, criteria.getTableName(), whereClause.toString(), null)
-					.setParameters(params);
-			count = query.count();
-			if(!Util.isEmpty(criteria.getOrderByClause())) {
-				query.setOrderBy(criteria.getOrderByClause());
-			}
-			List<PO> entityList = query
-					.setLimit(limit, offset)
-					.<PO>list();
-			//	
-			for(PO entity : entityList) {
-				Entity.Builder valueObject = ConvertUtil.convertEntity(entity);
-				builder.addRecords(valueObject.build());
-			}
-		} else {
-			StringBuilder sql = new StringBuilder(criteria.getQuery());
-			if (whereClause.length() > 0) {
-				sql.append(" WHERE ").append(whereClause); // includes first AND
-			}
-			//	
-			String parsedSQL = MRole.getDefault().addAccessSQL(sql.toString(),
-					null, MRole.SQL_FULLYQUALIFIED,
-					MRole.SQL_RO);
-
-			String orderByClause = criteria.getOrderByClause();
-			if (!Util.isEmpty(orderByClause, true)) {
-				orderByClause = " ORDER BY " + orderByClause;
-			}
-
-			//	Count records
-			count = CountUtil.countRecords(parsedSQL, criteria.getTableName(), params);
-			//	Add Row Number
-			parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-			//	Add Order By
-			parsedSQL = parsedSQL + orderByClause;
-			builder = convertListEntitiesResult(MTable.get(context, criteria.getTableName()), parsedSQL, params);
+//		if(Util.isEmpty(criteria.getQuery())) {
+//			Query query = new Query(context, criteria.getTableName(), whereClause.toString(), null)
+//					.setParameters(params);
+//			count = query.count();
+//			if(!Util.isEmpty(criteria.getOrderByClause())) {
+//				query.setOrderBy(criteria.getOrderByClause());
+//			}
+//			List<PO> entityList = query
+//					.setLimit(limit, offset)
+//					.<PO>list();
+//			//	
+//			for(PO entity : entityList) {
+//				Entity.Builder valueObject = ConvertUtil.convertEntity(entity);
+//				builder.addRecords(valueObject.build());
+//			}
+//		} else {
+//			StringBuilder sql = new StringBuilder(criteria.getQuery());
+//			if (whereClause.length() > 0) {
+//				sql.append(" WHERE ").append(whereClause); // includes first AND
+//			}
+//			//	
+//			String parsedSQL = MRole.getDefault().addAccessSQL(sql.toString(),
+//					null, MRole.SQL_FULLYQUALIFIED,
+//					MRole.SQL_RO);
+//
+//			String orderByClause = criteria.getOrderByClause();
+//			if (!Util.isEmpty(orderByClause, true)) {
+//				orderByClause = " ORDER BY " + orderByClause;
+//			}
+//
+//			//	Count records
+//			count = CountUtil.countRecords(parsedSQL, criteria.getTableName(), params);
+//			//	Add Row Number
+//			parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
+//			//	Add Order By
+//			parsedSQL = parsedSQL + orderByClause;
+//			builder = convertListEntitiesResult(MTable.get(context, criteria.getTableName()), parsedSQL, params);
+//		}
+		Query query = new Query(context, request.getTableName(), whereClause.toString(), null)
+				.setParameters(params);
+		count = query.count();
+		if(!Util.isEmpty(criteria.getOrderByClause())) {
+			query.setOrderBy(criteria.getOrderByClause());
+		}
+		List<PO> entityList = query
+				.setLimit(limit, offset)
+				.<PO>list();
+		//	
+		for(PO entity : entityList) {
+			Entity.Builder valueObject = ConvertUtil.convertEntity(entity);
+			builder.addRecords(valueObject.build());
 		}
 		//	
 		builder.setRecordCount(count);

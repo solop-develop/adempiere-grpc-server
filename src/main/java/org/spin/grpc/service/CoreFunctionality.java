@@ -429,7 +429,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			parameters.add(request.getPostalCode());
 		}
 		//	
-		String criteriaWhereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getCriteria(), I_C_BPartner.Table_Name, parameters);
+		String criteriaWhereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), I_C_BPartner.Table_Name, parameters);
 		if(whereClause.length() > 0
 				&& !Util.isEmpty(criteriaWhereClause)) {
 			whereClause.append(" AND (").append(criteriaWhereClause).append(")");
@@ -689,7 +689,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			parameters.add(request.getPostalCode());
 		}
 		//	
-		String criteriaWhereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getCriteria(), parameters);
+		String criteriaWhereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), parameters);
 		if(whereClause.length() > 0
 				&& !Util.isEmpty(criteriaWhereClause)) {
 			whereClause.append(" AND (").append(criteriaWhereClause).append(")");

@@ -38,33 +38,18 @@ import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
-import org.adempiere.core.domains.models.I_C_BP_Group;
 import org.adempiere.core.domains.models.I_C_BPartner;
-import org.adempiere.core.domains.models.I_C_Bank;
-import org.adempiere.core.domains.models.I_C_BankStatement;
-import org.adempiere.core.domains.models.I_C_Campaign;
-import org.adempiere.core.domains.models.I_C_Charge;
-import org.adempiere.core.domains.models.I_C_City;
 import org.adempiere.core.domains.models.I_C_ConversionType;
-import org.adempiere.core.domains.models.I_C_Country;
 import org.adempiere.core.domains.models.I_C_Currency;
-import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_C_POS;
-import org.adempiere.core.domains.models.I_C_POSKeyLayout;
 import org.adempiere.core.domains.models.I_C_Payment;
-import org.adempiere.core.domains.models.I_C_PaymentMethod;
-import org.adempiere.core.domains.models.I_C_Region;
-import org.adempiere.core.domains.models.I_C_UOM;
 import org.adempiere.core.domains.models.I_M_InOut;
 import org.adempiere.core.domains.models.I_M_InOutLine;
-import org.adempiere.core.domains.models.I_M_PriceList;
 import org.adempiere.core.domains.models.I_M_Product;
 import org.adempiere.core.domains.models.I_M_Storage;
-import org.adempiere.core.domains.models.I_M_Warehouse;
-import org.adempiere.core.domains.models.I_S_ResourceAssignment;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.GenericPO;
 import org.compiere.model.MAttributeSetInstance;
@@ -102,7 +87,6 @@ import org.compiere.model.M_Element;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
-import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -143,6 +127,7 @@ import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import com.google.protobuf.Value;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -432,7 +417,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void releaseOrder(ReleaseOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(changeOrderAssigned(request.getOrderId(), null));
+			Order.Builder order = ConvertUtil.convertOrder(changeOrderAssigned(request.getOrderId()));
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -518,9 +503,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	public void listAvailableWarehouses(ListAvailableWarehousesRequest request,
 			StreamObserver<ListAvailableWarehousesResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
 			ListAvailableWarehousesResponse.Builder warehouses = listWarehouses(request);
 			responseObserver.onNext(warehouses.build());
 			responseObserver.onCompleted();
@@ -537,9 +519,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	public void listAvailablePriceList(ListAvailablePriceListRequest request,
 			StreamObserver<ListAvailablePriceListResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
 			ListAvailablePriceListResponse.Builder priceList = listPriceList(request);
 			responseObserver.onNext(priceList.build());
 			responseObserver.onCompleted();
@@ -693,9 +672,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				//	Write map
 				if(ticketResult.getResultValues() != null) {
 					Map<String, Object> resultValues = ticketResult.getResultValues();
-					resultValues.entrySet().forEach(set -> {
-						builder.putResultValues(ValueUtil.validateNull(set.getKey()), ValueUtil.validateNull(String.valueOf(set.getValue())));
-					});
+					builder.setResultValues(ValueUtil.convertObjectMapToStruct(resultValues));
 				}
 			}
 			responseObserver.onNext(builder.build());
@@ -785,7 +762,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				throw new AdempiereException("@POS.PreviewDocumentNotAllowed@");
 			}
 
-			int shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), null);
+			int shipmentId = request.getShipmentId();
 			
 			PrintShipmentPreviewResponse.Builder ticket = PrintShipmentPreviewResponse.newBuilder()
 				.setResult("Ok");
@@ -825,21 +802,14 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createCustomerBankAccount(CreateCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Get customer = " + request);
 			if(request.getCustomerId() <= 0) {
 				throw new AdempiereException("@C_BPartner_ID@ @IsMandatory@");
 			}
 			if(Util.isEmpty(request.getAccountNo())) {
 				throw new AdempiereException("@AccountNo@ @IsMandatory@");
 			}
-			MBPartner businessPartner = MBPartner.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getCustomerUuid(), null));
-			int bankId = 0;
-			if(!Util.isEmpty(request.getBankUuid())) {
-				bankId = RecordUtil.getIdFromUuid(I_C_Bank.Table_Name, request.getBankUuid(), null);
-			}
+			MBPartner businessPartner = MBPartner.get(Env.getCtx(), request.getCustomerId());
+			int bankId = request.getBankId();
 			if(bankId <= 0 && request.getIsAch()) {
 				throw new AdempiereException("@C_Bank_ID@ @IsMandatory@");
 			}
@@ -907,15 +877,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void updateCustomerBankAccount(UpdateCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Update customer bank account = " + request);
-			if(Util.isEmpty(request.getCustomerBankAccountUuid())) {
+			if(request.getCustomerBankAccountId() <= 0) {
 				throw new AdempiereException("@C_BPBankAccount_ID@ @IsMandatory@");
 			}
 			//	For data
-			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), RecordUtil.getIdFromUuid(I_C_BP_BankAccount.Table_Name, request.getCustomerBankAccountUuid(), null), null);
+			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), request.getCustomerBankAccountId(), null);
 			businessPartnerBankAccount.setIsACH(request.getIsAch());
 			//	Validate all data
 			Optional.ofNullable(request.getCity()).ifPresent(value -> businessPartnerBankAccount.setA_City(value));
@@ -928,8 +894,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			Optional.ofNullable(request.getStreet()).ifPresent(value -> businessPartnerBankAccount.setA_Street(value));
 			Optional.ofNullable(request.getZip()).ifPresent(value -> businessPartnerBankAccount.setA_Zip(value));
 			Optional.ofNullable(request.getAccountNo()).ifPresent(value -> businessPartnerBankAccount.setAccountNo(value));
-			if(!Util.isEmpty(request.getBankUuid())) {
-				businessPartnerBankAccount.setC_Bank_ID(RecordUtil.getIdFromUuid(I_C_Bank.Table_Name, request.getBankUuid(), null));
+			if(request.getBankId() > 0) {
+				businessPartnerBankAccount.setC_Bank_ID(request.getBankId());
 			}
 			Optional.ofNullable(request.getAddressVerified()).ifPresent(value -> businessPartnerBankAccount.setR_AvsAddr(value));
 			Optional.ofNullable(request.getZipVerified()).ifPresent(value -> businessPartnerBankAccount.setR_AvsZip(value));
@@ -956,15 +922,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void getCustomerBankAccount(GetCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Get customer bank account = " + request);
-			if(Util.isEmpty(request.getCustomerBankAccountUuid())) {
+			if(request.getCustomerBankAccountId() <= 0) {
 				throw new AdempiereException("@C_BP_BankAccount_ID@ @IsMandatory@");
 			}
 			//	For data
-			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), RecordUtil.getIdFromUuid(I_C_BP_BankAccount.Table_Name, request.getCustomerBankAccountUuid(), null), null);
+			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), request.getCustomerBankAccountId(), null);
 			responseObserver.onNext(ConvertUtil.convertCustomerBankAccount(businessPartnerBankAccount).build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -979,15 +941,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deleteCustomerBankAccount(DeleteCustomerBankAccountRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Delete customer bank account = " + request);
-			if(Util.isEmpty(request.getCustomerBankAccountUuid())) {
+			if(request.getCustomerBankAccountId() <= 0) {
 				throw new AdempiereException("@C_BP_BankAccount_ID@ @IsMandatory@");
 			}
 			//	For data
-			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), RecordUtil.getIdFromUuid(I_C_BP_BankAccount.Table_Name, request.getCustomerBankAccountUuid(), null), null);
+			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), request.getCustomerBankAccountId(), null);
 			businessPartnerBankAccount.deleteEx(true);
 			responseObserver.onNext(Empty.newBuilder().build());
 			responseObserver.onCompleted();
@@ -1004,9 +962,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listBanks(ListBanksRequest request, StreamObserver<ListBanksResponse> responseObserver) {
 		try {
-			if (request == null) {
-				throw new AdempiereException("List Banks Request Null");
-			}
 			ListBanksResponse.Builder builder = BankManagement.listBanks(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
@@ -1025,9 +980,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listBankAccounts(ListBankAccountsRequest request, StreamObserver<ListBankAccountsResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object ListBankAccountsRequest Null");
-			}
 			ListBankAccountsResponse.Builder bankAccountsBuilderList = BankManagement.listBankAccounts(request);
 			responseObserver.onNext(bankAccountsBuilderList.build());
 			responseObserver.onCompleted();
@@ -1046,16 +998,12 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listCustomerBankAccounts(ListCustomerBankAccountsRequest request, StreamObserver<ListCustomerBankAccountsResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("list customer bank accounts = " + request);
 			if(request.getCustomerId() <= 0) {
 				throw new AdempiereException("@C_BPartner_ID@ @IsMandatory@");
 			}
 			//	For data
 			ListCustomerBankAccountsResponse.Builder builder = ListCustomerBankAccountsResponse.newBuilder();
-			int customerId = RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getCustomerUuid(), null);
+			int customerId = request.getCustomerId();
 			String nexPageToken = null;
 			int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 			int limit = LimitUtil.getPageSize(request.getPageSize());
@@ -1096,10 +1044,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createShipment(CreateShipmentRequest request, StreamObserver<Shipment> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Create Shipment = " + request.getOrderUuid());
 			Shipment.Builder shipment = createShipment(request);
 			responseObserver.onNext(shipment.build());
 			responseObserver.onCompleted();
@@ -1115,10 +1059,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createShipmentLine(CreateShipmentLineRequest request, StreamObserver<ShipmentLine> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Add Line for Order = " + request.getShipmentUuid());
 			ShipmentLine.Builder shipmentLine = createAndConvertShipmentLine(request);
 			responseObserver.onNext(shipmentLine.build());
 			responseObserver.onCompleted();
@@ -1134,10 +1074,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deleteShipmentLine(DeleteShipmentLineRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Delete Shipment Line = " + request.getShipmentLineUuid());
 			Empty.Builder nothing = deleteShipmentLine(request);
 			responseObserver.onNext(nothing.build());
 			responseObserver.onCompleted();
@@ -1153,10 +1089,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listShipmentLines(ListShipmentLinesRequest request, StreamObserver<ListShipmentLinesResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("List Shipment Lines from order = " + request.getShipmentUuid());
 			ListShipmentLinesResponse.Builder shipmentLinesList = listShipmentLines(request);
 			responseObserver.onNext(shipmentLinesList.build());
 			responseObserver.onCompleted();
@@ -1172,10 +1104,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void processShipment(ProcessShipmentRequest request, StreamObserver<Shipment> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Create customer = " + request);
 			Shipment.Builder shipment = processShipment(request);
 			responseObserver.onNext(shipment.build());
 			responseObserver.onCompleted();
@@ -1191,10 +1119,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void reverseSales(ReverseSalesRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Create customer = " + request);
 			Order.Builder order = reverseSalesTransaction(request);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
@@ -1210,10 +1134,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void processCashOpening(CashOpeningRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Cash Opening = " + request.getPosId());
 			Empty.Builder empty = cashOpening(request);
 			responseObserver.onNext(empty.build());
 			responseObserver.onCompleted();
@@ -1229,10 +1149,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void processCashWithdrawal(CashWithdrawalRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Cash Withdrawal = " + request.getPosId());
 			Empty.Builder empty = cashWithdrawal(request);
 			responseObserver.onNext(empty.build());
 			responseObserver.onCompleted();
@@ -1248,10 +1164,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void processCashClosing(CashClosingRequest request, StreamObserver<CashClosing> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Cash Withdrawal = " + request.getPosId());
 			CashClosing.Builder closing = cashClosing(request);
 			responseObserver.onNext(closing.build());
 			responseObserver.onCompleted();
@@ -1267,10 +1179,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listCashMovements(ListCashMovementsRequest request, StreamObserver<ListCashMovementsResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Cash Movements = " + request.getPosId());
 			ListCashMovementsResponse.Builder response = listCashMovements(request);
 			responseObserver.onNext(response.build());
 			responseObserver.onCompleted();
@@ -1287,10 +1195,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listCashSummaryMovements(ListCashSummaryMovementsRequest request, StreamObserver<ListCashSummaryMovementsResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Cash Summary Movements = " + request.getPosId());
 			ListCashSummaryMovementsResponse.Builder response = listCashSummaryMovements(request);
 			responseObserver.onNext(response.build());
 			responseObserver.onCompleted();
@@ -1306,10 +1210,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void allocateSeller(AllocateSellerRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Cash Withdrawal = " + request.getPosId());
 			Empty.Builder empty = allocateSeller(request);
 			responseObserver.onNext(empty.build());
 			responseObserver.onCompleted();
@@ -1325,10 +1225,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createPaymentReference(CreatePaymentReferenceRequest request, StreamObserver<PaymentReference> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Cash Withdrawal = " + request.getPosId());
 			PaymentReference.Builder refund = createPaymentReference(request);
 			responseObserver.onNext(refund.build());
 			responseObserver.onCompleted();
@@ -1344,10 +1240,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deletePaymentReference(DeletePaymentReferenceRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Delete Refund Reference = " + request.getUuid());
 			Empty.Builder orderLine = deletePaymentReference(request);
 			responseObserver.onNext(orderLine.build());
 			responseObserver.onCompleted();
@@ -1363,10 +1255,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listPaymentReferences(ListPaymentReferencesRequest request, StreamObserver<ListPaymentReferencesResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Get Refund Reference List = " + request.getCustomerUuid());
 			ListPaymentReferencesResponse.Builder refundReferenceList = listPaymentReferencesLines(request);
 			responseObserver.onNext(refundReferenceList.build());
 			responseObserver.onCompleted();
@@ -1382,10 +1270,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deallocateSeller(DeallocateSellerRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Cash Withdrawal = " + request.getPosId());
 			Empty.Builder empty = deallocateSeller(request);
 			responseObserver.onNext(empty.build());
 			responseObserver.onCompleted();
@@ -1401,7 +1285,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listAvailableSellers(ListAvailableSellersRequest request, StreamObserver<ListAvailableSellersResponse> responseObserver) {
 		try {
-			log.fine("Available Sellers = " + request.getPosId());
 			ListAvailableSellersResponse.Builder response = listAvailableSellers(request);
 			responseObserver.onNext(response.build());
 			responseObserver.onCompleted();
@@ -1417,10 +1300,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createRMA(CreateRMARequest request, StreamObserver<RMA> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Create RMA = " + request.getSourceOrderId());
 			MOrder rma = ReturnSalesOrder.createRMAFromOrder(request.getPosId(), request.getSourceOrderId(), request.getSalesRepresentativeId(), request.getIsCreateLinesFromOrder(), null);
 			RMA.Builder returnOrder = ConvertUtil.convertRMA(rma);
 			responseObserver.onNext(returnOrder.build());
@@ -1437,7 +1316,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createRMALine(CreateRMALineRequest request, StreamObserver<RMALine> responseObserver) {
 		try {
-			log.fine("Add Line for RMA = " + request.getRmaId());
 			MOrderLine rmaLine = ReturnSalesOrder.createRMALineFromOrder(request.getRmaId(), request.getSourceOrderLineId(), ValueUtil.getBigDecimalFromDecimal(request.getQuantity()), request.getDescription());
 			RMALine.Builder returnLine = ConvertUtil.convertRMALine(rmaLine);
 			responseObserver.onNext(returnLine.build());
@@ -1454,7 +1332,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void updateRMALine(UpdateRMALineRequest request, StreamObserver<RMALine> responseObserver) {
 		try {
-			log.fine("Update Line for RMA = " + request.getRmaLineId());
 			MOrderLine rmaLine = ReturnSalesOrder.updateRMALine(request.getRmaLineId(), ValueUtil.getBigDecimalFromDecimal(request.getQuantity()), request.getDescription());
 			RMALine.Builder returnLine = ConvertUtil.convertRMALine(rmaLine);
 			responseObserver.onNext(returnLine.build());
@@ -1471,7 +1348,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deleteRMALine(DeleteRMALineRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			log.fine("Delete Line for RMA = " + request.getRmaLineId());
 			RMAUtil.deleteRMALine(request.getRmaLineId());
 			responseObserver.onNext(Empty.newBuilder().build());
 			responseObserver.onCompleted();
@@ -1487,7 +1363,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deleteRMA(DeleteRMARequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			log.fine("Delete for RMA = " + request.getRmaId());
 			RMAUtil.deleteRMA(request.getRmaId());
 			responseObserver.onNext(Empty.newBuilder().build());
 			responseObserver.onCompleted();
@@ -1503,7 +1378,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listRMALines(ListRMALinesRequest request, StreamObserver<ListRMALinesResponse> responseObserver) {
 		try {
-			log.fine("List RMA Lines from order = " + request.getRmaId());
 			ListRMALinesResponse.Builder rmaLinesList = listRMALines(request);
 			responseObserver.onNext(rmaLinesList.build());
 			responseObserver.onCompleted();
@@ -1519,8 +1393,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void processRMA(ProcessRMARequest request, StreamObserver<RMA> responseObserver) {
 		try {
-			log.fine("Process RMA" + request);
-			
 			RMA.Builder rma = ConvertUtil.convertRMA(ReturnSalesOrder.processRMA(request.getRmaId(), request.getPosId(), request.getDocumentAction(), request.getDescription()));
 			responseObserver.onNext(rma.build());
 			responseObserver.onCompleted();
@@ -1536,7 +1408,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void copyOrder(CopyOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			log.fine("Copy Order");
 			Order.Builder salesOrder = ConvertUtil.convertOrder(OrderManagement.createOrderFromOther(request.getPosId(), request.getSalesRepresentativeId(), request.getSourceOrderId()));
 			responseObserver.onNext(salesOrder.build());
 			responseObserver.onCompleted();
@@ -1552,7 +1423,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createOrderFromRMA(CreateOrderFromRMARequest request, StreamObserver<Order> responseObserver) {
 		try {
-			log.fine("Create Order from RMA");
 			Order.Builder salesOrder = ConvertUtil.convertOrder(OrderManagement.createOrderFromRMA(request.getPosId(), request.getSalesRepresentativeId(), request.getSourceRmaId()));
 			responseObserver.onNext(salesOrder.build());
 			responseObserver.onCompleted();
@@ -1568,7 +1438,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listCustomerCredits(ListCustomerCreditsRequest request, StreamObserver<ListCustomerCreditsResponse> responseObserver) {
 		try {
-			log.fine("List Customer Credit Memos");
 			ListCustomerCreditsResponse.Builder response = listCustomerCredits(request);
 			responseObserver.onNext(response.build());
 			responseObserver.onCompleted();
@@ -1641,7 +1510,7 @@ public class PointOfSalesForm extends StoreImplBase {
 						.setId(rs.getInt("C_Invoice_ID"))
 						.setDocumentNo(ValueUtil.validateNull(rs.getString("DocumentNo")))
 						.setDescription(ValueUtil.validateNull(rs.getString("Description")))
-						.setDocumentDate(ValueUtil.convertDateToString(rs.getTimestamp("DateInvoiced")))
+						.setDocumentDate(ValueUtil.getTimestampFromDate(rs.getTimestamp("DateInvoiced")))
 						.setCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), rs.getInt("C_Currency_ID"))))
 						.setAmount(ValueUtil.getDecimalFromBigDecimal(rs.getBigDecimal("GrandTotal")))
 						.setOpenAmount(ValueUtil.getDecimalFromBigDecimal(rs.getBigDecimal("OpenAmount")))
@@ -1673,7 +1542,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListAvailableSellersResponse.Builder listAvailableSellers(ListAvailableSellersRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		ListAvailableSellersResponse.Builder builder = ListAvailableSellersResponse.newBuilder();
@@ -1682,7 +1551,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
+		int posId = request.getPosId();
 		//	
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<Object>();
@@ -1720,14 +1589,14 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Empty.Builder deallocateSeller(DeallocateSellerRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
-		if(Util.isEmpty(request.getSalesRepresentativeUuid())) {
+		if(request.getSalesRepresentativeId() <= 0) {
 			throw new AdempiereException("@SalesRep_ID@ @IsMandatory@");
 		}
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
-		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
+		int posId = request.getPosId();
+		int salesRepresentativeId = request.getSalesRepresentativeId();
 		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
 		if(!pointOfSales.get_ValueAsBoolean("IsAllowsAllocateSeller")) {
 			throw new AdempiereException("@POS.AllocateSellerNotAllowed@");
@@ -1751,14 +1620,14 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Empty.Builder allocateSeller(AllocateSellerRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
-		if(Util.isEmpty(request.getSalesRepresentativeUuid())) {
+		if(request.getSalesRepresentativeId() <= 0) {
 			throw new AdempiereException("@SalesRep_ID@ @IsMandatory@");
 		}
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
-		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
+		int posId = request.getPosId();
+		int salesRepresentativeId = request.getSalesRepresentativeId();
 		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
 		if(!pointOfSales.get_ValueAsBoolean("IsAllowsAllocateSeller")) {
 			throw new AdempiereException("@POS.AllocateSellerNotAllowed@");
@@ -1816,7 +1685,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListCashMovementsResponse.Builder listCashMovements(ListCashMovementsRequest request) {
-		if(Util.isEmpty(request.getPosId(), true)) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
 		MPOS pos = getPOSFromId(request.getPosId(), true);
@@ -1828,9 +1697,6 @@ public class PointOfSalesForm extends StoreImplBase {
 
 		ListCashMovementsResponse.Builder builder = ListCashMovementsResponse.newBuilder()
 			.setId(cashClosing.getC_BankStatement_ID())
-			.setUuid(
-				ValueUtil.validateNull(cashClosing.getUUID())
-			)
 		;
 
 		String nexPageToken = null;
@@ -1845,11 +1711,11 @@ public class PointOfSalesForm extends StoreImplBase {
 		parameters.add(pos.getC_POS_ID());
 		parameters.add(cashClosing.getC_BankStatement_ID());
 		//	Optional
-		if(!Util.isEmpty(request.getBusinessPartnerUuid())) {
-			parameters.add(RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getBusinessPartnerUuid(), null));
+		if(request.getBusinessPartnerId() > 0) {
+			parameters.add(request.getBusinessPartnerId());
 			whereClause.append(" AND C_BPartner_ID = ?");
-		} else if(!Util.isEmpty(request.getSalesRepresentativeUuid())) {
-			parameters.add(RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null));
+		} else if(request.getSalesRepresentativeId() > 0) {
+			parameters.add(request.getSalesRepresentativeId());
 			whereClause.append(" AND CollectingAgent_ID = ?");
 		}
 		//	Get Refund Reference list
@@ -1885,7 +1751,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		ListCashSummaryMovementsResponse.Builder builder = ListCashSummaryMovementsResponse.newBuilder();
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
 		MPOS pos = getPOSFromId(request.getPosId(), true);
@@ -1895,8 +1761,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
 		}
 		builder
-			.setId(cashClosing.getC_BankStatement_ID())
-			.setUuid(ValueUtil.validateNull(cashClosing.getUUID()));
+			.setId(cashClosing.getC_BankStatement_ID());
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
@@ -1905,7 +1770,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		int count = 0;
 		try {
 			//	Get Bank statement
-			String sql = "SELECT pm.UUID AS PaymentMethodUUID, pm.Name AS PaymentMethodName, pm.TenderType AS TenderTypeCode, p.C_Currency_ID, p.IsReceipt, (SUM(p.PayAmt) * CASE WHEN p.IsReceipt = 'Y' THEN 1 ELSE -1 END) AS PaymentAmount "
+			String sql = "SELECT pm.C_PaymentMethod_ID, pm.Name AS PaymentMethodName, pm.TenderType AS TenderTypeCode, p.C_Currency_ID, p.IsReceipt, (SUM(p.PayAmt) * CASE WHEN p.IsReceipt = 'Y' THEN 1 ELSE -1 END) AS PaymentAmount "
 					+ "FROM C_Payment p "
 					+ "INNER JOIN C_PaymentMethod pm ON(pm.C_PaymentMethod_ID = p.C_PaymentMethod_ID) "
 					+ "WHERE p.DocStatus IN('CO', 'CL') "
@@ -1924,7 +1789,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
 				PaymentSummary.Builder paymentSummary = PaymentSummary.newBuilder()
-						.setPaymentMethodUuid(ValueUtil.validateNull(rs.getString("PaymentMethodUUID")))
+						.setPaymentMethodId(rs.getInt("C_PaymentMethod_ID"))
 						.setPaymentMethodName(ValueUtil.validateNull(rs.getString("PaymentMethodName")))
 						.setTenderTypeCode(ValueUtil.validateNull(rs.getString("TenderTypeCode")))
 						.setCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), rs.getInt("C_Currency_ID"))))
@@ -1958,16 +1823,16 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private PaymentReference.Builder createPaymentReference(CreatePaymentReferenceRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
-		if(Util.isEmpty(request.getOrderUuid())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @IsMandatory@");
 		}
-		if(Util.isEmpty(request.getSalesRepresentativeUuid())) {
+		if(request.getSalesRepresentativeId() <= 0) {
 			throw new AdempiereException("@SalesRep_ID@ @IsMandatory@");
 		}
-		if(Util.isEmpty(request.getCurrencyUuid())) {
+		if(request.getCurrencyId() <= 0) {
 			throw new AdempiereException("@C_Currency_ID@ @IsMandatory@");
 		}
 		if(request.getCustomerId() <= 0) {
@@ -1981,11 +1846,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			GenericPO refundReferenceToCreate = new GenericPO("C_POSPaymentReference", Env.getCtx(), 0, transactionName);
 			refundReferenceToCreate.set_ValueOfColumn("Amount", ValueUtil.getBigDecimalFromDecimal(request.getAmount()));
 			refundReferenceToCreate.set_ValueOfColumn("AmtSource", ValueUtil.getBigDecimalFromDecimal(request.getSourceAmount()));
-			if(!Util.isEmpty(request.getCustomerBankAccountUuid())) {
-				refundReferenceToCreate.set_ValueOfColumn("C_BP_BankAccount_ID", RecordUtil.getIdFromUuid(I_C_BP_BankAccount.Table_Name, request.getCustomerBankAccountUuid(), transactionName));
+			if(request.getCustomerBankAccountId() > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("C_BP_BankAccount_ID", request.getCustomerBankAccountId());
 			}
-			refundReferenceToCreate.set_ValueOfColumn("C_BPartner_ID", RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getCustomerUuid(), transactionName));
-			int currencyId = RecordUtil.getIdFromUuid(I_C_Currency.Table_Name, request.getCurrencyUuid(), transactionName);
+			refundReferenceToCreate.set_ValueOfColumn("C_BPartner_ID", request.getCustomerId());
+			int currencyId = request.getCurrencyId();
 			if(currencyId > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_Currency_ID", currencyId);
 			}
@@ -1993,18 +1858,18 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID) > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_ConversionType_ID", pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
 			}
-			MOrder salesOrder = getOrder(request.getOrderUuid(), transactionName);
+			MOrder salesOrder = getOrder(request.getOrderId(), transactionName);
 			//	Throw if not exist conversion
 			ConvertUtil.validateConversion(salesOrder, currencyId, pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
 			refundReferenceToCreate.set_ValueOfColumn("C_Order_ID", salesOrder.getC_Order_ID());
-			int id = RecordUtil.getIdFromUuid(I_C_PaymentMethod.Table_Name, request.getPaymentMethodUuid(), transactionName);
+			int id = request.getPaymentMethodId();
 			if(id > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_PaymentMethod_ID", id);
 			}
 			if(pos.getC_POS_ID() > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
 			}
-			id = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), transactionName);
+			id = request.getSalesRepresentativeId();
 			if(id > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("SalesRep_ID", id);
 			}
@@ -2024,10 +1889,10 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Empty.Builder cashOpening(CashOpeningRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
-		if(Util.isEmpty(request.getCollectingAgentUuid())) {
+		if(request.getCollectingAgentId() <= 0) {
 			throw new AdempiereException("@CollectingAgent_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
@@ -2060,18 +1925,15 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private CashClosing.Builder cashClosing(CashClosingRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		CashClosing.Builder cashClosing = CashClosing.newBuilder();
 		Trx.run(transactionName -> {
 			int bankStatementId = request.getId();
 			if(bankStatementId <= 0
-					&& Util.isEmpty(request.getUuid())) {
+					&& request.getId() <= 0) {
 				throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
-			}
-			if(bankStatementId <= 0) {
-				bankStatementId = RecordUtil.getIdFromUuid(I_C_BankStatement.Table_Name, request.getUuid(), transactionName);
 			}
 			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, transactionName);
 			if(bankStatement.isProcessed()) {
@@ -2090,7 +1952,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	        //	Set
 	        cashClosing
 	        	.setId(bankStatement.getC_BankStatement_ID())
-	        	.setUuid(ValueUtil.validateNull(bankStatement.getUUID()))
 	        	.setDocumentNo(ValueUtil.validateNull(bankStatement.getDocumentNo()))
 	        	.setDescription(ValueUtil.validateNull(bankStatement.getDescription()))
 	        	.setDocumentStatus(ConvertUtil.convertDocumentStatus(bankStatement.getDocStatus(), bankStatement.getDocStatus(), bankStatement.getDocStatus()))
@@ -2106,7 +1967,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private Empty.Builder cashWithdrawal(CashWithdrawalRequest request) {
 		MPOS pos = getPOSFromId(request.getPosId(), true);
-		if(Util.isEmpty(request.getCollectingAgentUuid())) {
+		if(request.getCollectingAgentId() <= 0) {
 			throw new AdempiereException("@CollectingAgent_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
@@ -2136,10 +1997,10 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return Shipment.Builder
 	 */
 	private Order.Builder reverseSalesTransaction(ReverseSalesRequest request) {
-		if(Util.isEmpty(request.getOrderUuid())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
-		int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
+		int orderId = request.getPosId();
 		MPOS pos = getPOSFromId(request.getPosId(), true);
 		MOrder returnOrder = ReverseSalesTransaction.returnCompleteOrder(pos, orderId, request.getDescription());
 		//	Default
@@ -2153,7 +2014,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return Shipment.Builder
 	 */
 	private Shipment.Builder processShipment(ProcessShipmentRequest request) {
-		if(Util.isEmpty(request.getShipmentUuid())) {
+		if(request.getShipmentId() <= 0) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 		if(Util.isEmpty(request.getDocumentAction())) {
@@ -2166,7 +2027,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		AtomicReference<MInOut> shipmentReference = new AtomicReference<MInOut>();
 		Trx.run(transactionName -> {
-			int shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), transactionName);
+			int shipmentId = request.getShipmentId();
 			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, transactionName);
 			if(shipment.isProcessed()) {
 				throw new AdempiereException("@M_InOut_ID@ @Processed@");
@@ -2236,7 +2097,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListShipmentLinesResponse.Builder listShipmentLines(ListShipmentLinesRequest request) {
-		if(Util.isEmpty(request.getShipmentUuid())) {
+		if(request.getShipmentId() <= 0) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 		ListShipmentLinesResponse.Builder builder = ListShipmentLinesResponse.newBuilder();
@@ -2245,7 +2106,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		int shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), null);
+		int shipmentId = request.getShipmentId();
 		//	Get Product list
 		Query query = new Query(Env.getCtx(), I_M_InOutLine.Table_Name, I_M_InOutLine.COLUMNNAME_M_InOut_ID + " = ?", null)
 				.setParameters(shipmentId)
@@ -2277,7 +2138,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private ListPaymentReferencesResponse.Builder listPaymentReferencesLines(ListPaymentReferencesRequest request) {
 		if(request.getCustomerId() <= 0
-				&& Util.isEmpty(request.getOrderUuid())) {
+				&& request.getPosId() <= 0) {
 			throw new AdempiereException("@C_BPartner_ID@ / @C_Order_ID@ @IsMandatory@");
 		}
 		ListPaymentReferencesResponse.Builder builder = ListPaymentReferencesResponse.newBuilder();
@@ -2291,14 +2152,14 @@ public class PointOfSalesForm extends StoreImplBase {
 
 		List<Object> parameters = new ArrayList<Object>();
 		StringBuffer whereClause = new StringBuffer("(IsPaid = 'N' AND Processed = 'N' OR IsKeepReferenceAfterProcess = 'Y')");
-		if(!Util.isEmpty(request.getOrderUuid())) {
-			parameters.add(RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null));
+		if(request.getPosId() <= 0) {
+			parameters.add(request.getOrderId());
 			whereClause.append(" AND C_Order_ID = ?");
 		} else if(request.getCustomerId() <= 0) {
-			parameters.add(RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getCustomerUuid(), null));
+			parameters.add(request.getCustomerId());
 			whereClause.append(" AND EXISTS(SELECT 1 FROM C_BP_BankAccount ba WHERE ba.C_BP_BankAccount_ID = C_POSPaymentReference.C_BP_BankAccount_ID AND ba.C_BPartner_ID = ?)");
-		} else if(!Util.isEmpty(request.getPosId())) {
-			parameters.add(RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null));
+		} else if(request.getPosId() <= 0) {
+			parameters.add(request.getPosId());
 			whereClause.append(" AND C_POS_ID = ?");
 		}
 		//	Get Refund Reference list
@@ -2351,14 +2212,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			.setIsPaid(paymentReference.get_ValueAsBoolean("IsPaid"))
 			.setTenderTypeCode(ValueUtil.validateNull(paymentReference.get_ValueAsString("TenderType")))
 			.setCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), paymentReference.get_ValueAsInt("C_Currency_ID"))))
-			.setCustomerBankAccountUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_BP_BankAccount.Table_Name, paymentReference.get_ValueAsInt("C_BP_BankAccount_ID"))))
-			.setOrderUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_Order.Table_Name, paymentReference.get_ValueAsInt("C_Order_ID"))))
-			.setPosUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(I_C_POS.Table_Name, paymentReference.get_ValueAsInt("C_POS_ID"))))
+			.setCustomerBankAccountId(paymentReference.get_ValueAsInt("C_BP_BankAccount_ID"))
+			.setOrderId(paymentReference.get_ValueAsInt("C_Order_ID"))
+			.setPosId(paymentReference.get_ValueAsInt("C_POS_ID"))
 			.setSalesRepresentative(ConvertUtil.convertSalesRepresentative(MUser.get(Env.getCtx(), paymentReference.get_ValueAsInt("SalesRep_ID"))))
 			.setId(paymentReference.get_ID())
-			.setUuid(ValueUtil.validateNull(paymentReference.get_UUID()))
 			.setPaymentMethod(paymentMethodBuilder)
-			.setPaymentDate(ValueUtil.validateNull(ValueUtil.convertDateToString((Timestamp) paymentReference.get_Value("PayDate"))))
+			.setPaymentDate(ValueUtil.getTimestampFromDate(((Timestamp) paymentReference.get_Value("PayDate"))))
 			.setIsAutomatic(paymentReference.get_ValueAsBoolean("IsAutoCreatedReference"))
 			.setIsProcessed(paymentReference.get_ValueAsBoolean("Processed"))
 			.setConvertedAmount(ValueUtil.getDecimalFromBigDecimal(convertedAmount))
@@ -2374,12 +2234,12 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Empty.Builder deleteShipmentLine(DeleteShipmentLineRequest request) {
-		if(Util.isEmpty(request.getShipmentLineUuid())) {
+		if(request.getShipmentLineId() <= 0) {
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
-			MInOutLine shipmentLine = new Query(Env.getCtx(), I_M_InOutLine.Table_Name, I_M_InOutLine.COLUMNNAME_UUID + " = ?", transactionName)
-					.setParameters(request.getShipmentLineUuid())
+			MInOutLine shipmentLine = new Query(Env.getCtx(), I_M_InOutLine.Table_Name, I_M_InOutLine.COLUMNNAME_M_InOutLine_ID + " = ?", transactionName)
+					.setParameters(request.getShipmentLineId())
 					.setClient_ID()
 					.first();
 			if(shipmentLine != null
@@ -2405,15 +2265,15 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private ShipmentLine.Builder createAndConvertShipmentLine(CreateShipmentLineRequest request) {
 		//	Validate Order
-		if(Util.isEmpty(request.getShipmentUuid())) {
+		if(request.getShipmentId() <= 0) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 		//	Validate Product and charge
-		if(Util.isEmpty(request.getOrderLineUuid())) {
+		if(request.getOrderLineId() <= 0) {
 			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 		}
-		int shipmentId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getShipmentUuid(), null);
-		int salesOrderLineId = RecordUtil.getIdFromUuid(I_C_OrderLine.Table_Name, request.getOrderLineUuid(), null);
+		int shipmentId = request.getShipmentId();
+		int salesOrderLineId = request.getOrderLineId();
 		if(shipmentId <= 0) {
 			return ShipmentLine.newBuilder();
 		}
@@ -2480,13 +2340,13 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Shipment.Builder createShipment(CreateShipmentRequest request) {
-		if(Util.isEmpty(request.getOrderUuid())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 		AtomicReference<MInOut> maybeShipment = new AtomicReference<MInOut>();
 		Trx.run(transactionName -> {
-			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), transactionName);
-			int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), transactionName);
+			int orderId = request.getOrderId();
+			int salesRepresentativeId = request.getSalesRepresentativeId();
 			if(orderId <= 0) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
@@ -2741,14 +2601,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			//	Description
 			Optional.ofNullable(request.getDescription()).ifPresent(value -> businessPartner.setDescription(value));
 			//	Business partner group
-			if(!Util.isEmpty(request.getBusinessPartnerGroupUuid())) {
-				int businessPartnerGroupId = RecordUtil.getIdFromUuid(I_C_BP_Group.Table_Name, request.getBusinessPartnerGroupUuid(), transactionName);
+			if(request.getBusinessPartnerGroupId() > 0) {
+				int businessPartnerGroupId = request.getBusinessPartnerGroupId();
 				if(businessPartnerGroupId != 0) {
 					businessPartner.setC_BP_Group_ID(businessPartnerGroupId);
 				}
 			}
 			//	Additional attributes
-			setAdditionalAttributes(businessPartner, request.getAdditionalAttributesMap());
+			setAdditionalAttributes(businessPartner, request.getAdditionalAttributes().getFieldsMap());
 			//	Save it
 			businessPartner.saveEx(transactionName);
 			
@@ -2813,27 +2673,16 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return void
 	 */
 	private void createCustomerAddress(MBPartner customer, AddressRequest address, MLocation templateLocation, String transactionName) {
-		int countryId = 0;
-		if(!Util.isEmpty(address.getCountryUuid())) {
-			countryId = RecordUtil.getIdFromUuid(I_C_Country.Table_Name, address.getCountryUuid(), transactionName);
-		}
+		int countryId = address.getCountryId();
 		//	Instance it
 		MLocation location = new MLocation(Env.getCtx(), 0, transactionName);
 		if(countryId > 0) {
-			int regionId = 0;
-			int cityId = 0;
+			int regionId = address.getRegionId();
+			int cityId = address.getCityId();
 			String cityName = null;
-			//	
-			if(!Util.isEmpty(address.getRegionUuid())) {
-				regionId = RecordUtil.getIdFromUuid(I_C_Region.Table_Name, address.getRegionUuid(), transactionName);
-			}
 			//	City Name
 			if(!Util.isEmpty(address.getCityName())) {
 				cityName = address.getCityName();
-			}
-			//	City Reference
-			if(!Util.isEmpty(address.getCityUuid())) {
-				cityId = RecordUtil.getIdFromUuid(I_C_City.Table_Name, address.getCityUuid(), transactionName);
 			}
 			location.setC_Country_ID(countryId);
 			location.setC_Region_ID(regionId);
@@ -2874,7 +2723,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			businessPartnerLocation.setName(".");
 		}
 		//	Additional attributes
-		setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributesMap());
+		setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributes().getFieldsMap());
 		businessPartnerLocation.saveEx(transactionName);
 		//	Contact
 		if(!Util.isEmpty(address.getContactName()) || !Util.isEmpty(address.getEmail()) || !Util.isEmpty(address.getPhone())) {
@@ -2907,14 +2756,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@POS.ModifyCustomerNotAllowed@");
 		}
 		//	Customer Uuid
-		if(Util.isEmpty(request.getUuid())) {
+		if(request.getId() <= 0) {
 			throw new AdempiereException("@C_BPartner_ID@ @IsMandatory@");
 		}
 		//	
 		AtomicReference<MBPartner> customer = new AtomicReference<MBPartner>();
 		Trx.run(transactionName -> {
 			//	Create it
-			MBPartner businessPartner = MBPartner.get(Env.getCtx(), RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getUuid(), transactionName));
+			MBPartner businessPartner = MBPartner.get(Env.getCtx(), request.getId());
 			if(businessPartner == null) {
 				throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 			}
@@ -2937,29 +2786,19 @@ public class PointOfSalesForm extends StoreImplBase {
 			//	Description
 			Optional.ofNullable(request.getDescription()).ifPresent(value -> businessPartner.setDescription(value));
 			//	Additional attributes
-			setAdditionalAttributes(businessPartner, request.getAdditionalAttributesMap());
+			setAdditionalAttributes(businessPartner, request.getAdditionalAttributes().getFieldsMap());
 			//	Save it
 			businessPartner.saveEx(transactionName);
 			//	Location
 			request.getAddressesList().forEach(address -> {
-				int countryId = 0;
-				if(!Util.isEmpty(address.getCountryUuid())) {
-					countryId = RecordUtil.getIdFromUuid(I_C_Country.Table_Name, address.getCountryUuid(), transactionName);
-				}
+				int countryId = address.getCountryId();
 				//	
-				int regionId = 0;
-				if(!Util.isEmpty(address.getRegionUuid())) {
-					regionId = RecordUtil.getIdFromUuid(I_C_Region.Table_Name, address.getRegionUuid(), transactionName);
-				}
+				int regionId = address.getRegionId();
 				String cityName = null;
-				int cityId = 0;
+				int cityId = address.getCityId();
 				//	City Name
 				if(!Util.isEmpty(address.getCityName())) {
 					cityName = address.getCityName();
-				}
-				//	City Reference
-				if(!Util.isEmpty(address.getCityUuid())) {
-					cityId = RecordUtil.getIdFromUuid(I_C_City.Table_Name, address.getCityUuid(), transactionName);
 				}
 				//	Validate it
 				if(countryId > 0
@@ -2967,7 +2806,7 @@ public class PointOfSalesForm extends StoreImplBase {
 						|| cityId > 0
 						|| !Util.isEmpty(cityName)) {
 					//	Find it
-					Optional<MBPartnerLocation> maybeCustomerLocation = Arrays.asList(businessPartner.getLocations(true)).stream().filter(customerLocation -> ValueUtil.validateNull(customerLocation.getUUID()).equals(ValueUtil.validateNull(address.getUuid()))).findFirst();
+					Optional<MBPartnerLocation> maybeCustomerLocation = Arrays.asList(businessPartner.getLocations(true)).stream().filter(customerLocation -> customerLocation.getC_BPartner_Location_ID() == address.getId()).findFirst();
 					if(maybeCustomerLocation.isPresent()) {
 						MBPartnerLocation businessPartnerLocation = maybeCustomerLocation.get();
 						MLocation location = businessPartnerLocation.getLocation(true);
@@ -3003,7 +2842,7 @@ public class PointOfSalesForm extends StoreImplBase {
 						Optional.ofNullable(address.getPhone()).ifPresent(phome -> businessPartnerLocation.setPhone(phome));
 						Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.set_ValueOfColumn("Description", description));
 						//	Additional attributes
-						setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributesMap());
+						setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributes().getFieldsMap());
 						businessPartnerLocation.saveEx(transactionName);
 						//	Contact
 						AtomicReference<MUser> contactReference = new AtomicReference<MUser>(getOfBusinessPartnerLocation(businessPartnerLocation, transactionName));
@@ -3068,7 +2907,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListAvailableWarehousesResponse.Builder listWarehouses(ListAvailableWarehousesRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		ListAvailableWarehousesResponse.Builder builder = ListAvailableWarehousesResponse.newBuilder();
@@ -3082,7 +2921,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		int offset = (pageNumber - 1) * limit;
 
 		//	Aisle Seller
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
+		int posId = request.getPosId();
 		//	Get Product list
 		Query query = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ?", null)
 				.setParameters(posId)
@@ -3097,7 +2936,6 @@ public class PointOfSalesForm extends StoreImplBase {
 			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), availableWarehouse.get_ValueAsInt("M_Warehouse_ID"));
 			builder.addWarehouses(AvailableWarehouse.newBuilder()
 					.setId(warehouse.getM_Warehouse_ID())
-					.setUuid(ValueUtil.validateNull(warehouse.getUUID()))
 					.setKey(ValueUtil.validateNull(warehouse.getValue()))
 					.setName(ValueUtil.validateNull(warehouse.getName()))
 					.setIsPosRequiredPin(availableWarehouse.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)));
@@ -3119,7 +2957,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListAvailablePriceListResponse.Builder listPriceList(ListAvailablePriceListRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		ListAvailablePriceListResponse.Builder builder = ListAvailablePriceListResponse.newBuilder();
@@ -3134,7 +2972,7 @@ public class PointOfSalesForm extends StoreImplBase {
 
 		//	Dynamic where clause
 		//	Aisle Seller
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
+		int posId = request.getPosId();
 		//	Get Product list
 		Query query = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ?", null)
 				.setParameters(posId)
@@ -3149,7 +2987,6 @@ public class PointOfSalesForm extends StoreImplBase {
 			MPriceList priceList = MPriceList.get(Env.getCtx(), availablePriceList.get_ValueAsInt("M_PriceList_ID"), null);
 			builder.addPriceList(AvailablePriceList.newBuilder()
 					.setId(priceList.getM_PriceList_ID())
-					.setUuid(ValueUtil.validateNull(priceList.getUUID()))
 					.setKey(ValueUtil.validateNull(priceList.getName()))
 					.setName(ValueUtil.validateNull(priceList.getName()))
 					.setIsPosRequiredPin(availablePriceList.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)));
@@ -3171,7 +3008,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListAvailablePaymentMethodsResponse.Builder listPaymentMethods(ListAvailablePaymentMethodsRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		ListAvailablePaymentMethodsResponse.Builder builder = ListAvailablePaymentMethodsResponse.newBuilder();
@@ -3192,7 +3029,7 @@ public class PointOfSalesForm extends StoreImplBase {
 
 		//	Dynamic where clause
 		//	Aisle Seller
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
+		int posId = request.getPosId();
 		//	Get Product list
 		Query query = new Query(
 				Env.getCtx(),
@@ -3213,13 +3050,12 @@ public class PointOfSalesForm extends StoreImplBase {
 
 			AvailablePaymentMethod.Builder tenderTypeValue = AvailablePaymentMethod.newBuilder()
 				.setId(availablePaymentMethod.get_ID())
-				.setUuid(ValueUtil.validateNull(availablePaymentMethod.get_UUID()))
 				.setName(
 					Util.isEmpty(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)) ?
 						ValueUtil.validateNull(paymentMethod.getName()) : 
 						ValueUtil.validateNull(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name))
 				)
-				.setPosUuid(ValueUtil.validateNull(request.getPosId()))
+				.setPosId(request.getPosId())
 					.setIsPosRequiredPin(availablePaymentMethod.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
 					.setIsAllowedToRefund(availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefund"))
 					.setIsAllowedToRefundOpen(availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefundOpen"))
@@ -3254,7 +3090,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListAvailableDocumentTypesResponse.Builder listDocumentTypes(ListAvailableDocumentTypesRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		ListAvailableDocumentTypesResponse.Builder builder = ListAvailableDocumentTypesResponse.newBuilder();
@@ -3269,7 +3105,7 @@ public class PointOfSalesForm extends StoreImplBase {
 
 		//	Dynamic where clause
 		//	Aisle Seller
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
+		int posId = request.getPosId();
 		//	Get Product list
 		Query query = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ?", null)
 				.setParameters(posId)
@@ -3284,7 +3120,6 @@ public class PointOfSalesForm extends StoreImplBase {
 			MDocType documentType = MDocType.get(Env.getCtx(), availableDocumentType.get_ValueAsInt("C_DocType_ID"));
 			builder.addDocumentTypes(AvailableDocumentType.newBuilder()
 					.setId(documentType.getC_DocType_ID())
-					.setUuid(ValueUtil.validateNull(documentType.getUUID()))
 					.setKey(ValueUtil.validateNull(documentType.getName()))
 					.setName(ValueUtil.validateNull(documentType.getPrintName()))
 					.setIsPosRequiredPin(availableDocumentType.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)));
@@ -3347,10 +3182,9 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private MOrder processOrder(ProcessOrderRequest request) {
-		if(!Util.isEmpty(request.getOrderUuid())) {
+		if(request.getPosId() <= 0) {
 			MPOS pos = getPOSFromId(request.getPosId(), true);
-			int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
-			OrderManagement.processOrder(pos, orderId, request.getIsOpenRefund());
+			OrderManagement.processOrder(pos, request.getOrderId(), request.getIsOpenRefund());
 		}
 		return null;
 	}
@@ -3436,11 +3270,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListOrdersResponse.Builder listOrders(ListOrdersRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
 		//	Sales Representative
-		if(Util.isEmpty(request.getSalesRepresentativeUuid())) {
+		if(request.getSalesRepresentativeId() <= 0) {
 			throw new AdempiereException("@SalesRep_ID@ @IsMandatory@");
 		}
 		ListOrdersResponse.Builder builder = ListOrdersResponse.newBuilder();
@@ -3452,7 +3286,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Dynamic where clause
 		MPOS pos = getPOSFromId(request.getPosId(), true);
 		int posId = pos.getC_POS_ID();
-		int salesRepresentativeId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getSalesRepresentativeUuid(), null);
+		int salesRepresentativeId = request.getSalesRepresentativeId();
 		int orgId = pos.getAD_Org_ID();
 		MUser salesRepresentative = MUser.get(Env.getCtx(), salesRepresentativeId);
 
@@ -3497,8 +3331,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(request.getDocumentNo());
 		}
 		//	Business Partner
-		if(!Util.isEmpty(request.getBusinessPartnerUuid())) {
-			int businessPartnerId = RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getBusinessPartnerUuid(), null);
+		if(request.getBusinessPartnerId() > 0) {
+			int businessPartnerId = request.getBusinessPartnerId();
 			whereClause.append(" AND C_BPartner_ID = ?");
 			parameters.add(businessPartnerId);
 		}
@@ -3563,14 +3397,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			;
 		}
 		//	Date Order From
-		if(!Util.isEmpty(request.getDateOrderedFrom())) {
+		if(ValueUtil.getDateFromTimestampDate(request.getDateOrderedFrom()) != null) {
 			whereClause.append(" AND DateOrdered >= ?");
-			parameters.add(TimeUtil.getDay(ValueUtil.convertStringToDate(request.getDateOrderedFrom())));
+			parameters.add(TimeUtil.getDay(ValueUtil.getDateFromTimestampDate(request.getDateOrderedFrom())));
 		}
 		//	Date Order To
-		if(!Util.isEmpty(request.getDateOrderedTo())) {
+		if(ValueUtil.getDateFromTimestampDate(request.getDateOrderedTo()) != null) {
 			whereClause.append(" AND DateOrdered <= ?");
-			parameters.add(TimeUtil.getDay(ValueUtil.convertStringToDate(request.getDateOrderedTo())));
+			parameters.add(TimeUtil.getDay(ValueUtil.getDateFromTimestampDate(request.getDateOrderedTo())));
 		}
 		whereClause.append(" AND AD_Org_ID = ? ");
 		parameters.add(orgId);
@@ -3604,7 +3438,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		ListPaymentsResponse.Builder builder = ListPaymentsResponse.newBuilder();
@@ -3618,8 +3452,8 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
 		//	Aisle Seller
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
-		int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
+		int posId = request.getPosId();
+		int orderId = request.getOrderId();
 		//	For order
 		if(orderId > 0) {
 			whereClause.append("C_Payment.C_Order_ID = ?");
@@ -3669,10 +3503,10 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListOrderLinesResponse.Builder listOrderLines(ListOrderLinesRequest request) {
-		if(Util.isEmpty(request.getOrderUuid())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
-		int orderId = RecordUtil.getIdFromUuid(I_C_Order.Table_Name, request.getOrderUuid(), null);
+		int orderId = request.getOrderId();
 		MOrder order = new MOrder(Env.getCtx(), orderId, null);
 		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), order.get_TrxName());
 		ListOrderLinesResponse.Builder builder = ListOrderLinesResponse.newBuilder();
@@ -3719,6 +3553,10 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private MOrder getOrder(int id, String transactionName) {
 		return (MOrder) RecordUtil.getEntity(Env.getCtx(), I_C_Order.Table_Name, id, transactionName);
+	}
+	
+	private MOrder changeOrderAssigned(int orderId) {
+		return changeOrderAssigned(orderId, 0);
 	}
 	
 	/**
@@ -5391,7 +5229,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	private ProductPrice.Builder getProductPrice(GetProductPriceRequest request) {
 		//	Get Product
 		MProduct product = null;
-		String key = Env.getAD_Client_ID(Env.getCtx()) + "|";
 		if(!Util.isEmpty(request.getSearchValue())) {
 			product = new Query(Env.getCtx(), I_M_Product.Table_Name, 
 						"("
@@ -5645,7 +5482,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Warehouse
 		MWarehouse warehouse = MWarehouse.get(Env.getCtx(), storage.getM_Warehouse_ID());
 		builder
-			.setWarehouseUuid(warehouse.getUUID())
 			.setWarehouseId(warehouse.getM_Warehouse_ID())
 			.setWarehouseName(Optional.ofNullable(warehouse.getName()).orElse("")
 		);
@@ -5656,10 +5492,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void listAvailableCash(ListAvailableCashRequest request, StreamObserver<ListAvailableCashResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("List Available Warehouses = " + request.getPosId());
 			ListAvailableCashResponse.Builder cashListBuilder = listCash(Env.getCtx(), request);
 			responseObserver.onNext(cashListBuilder.build());
 			responseObserver.onCompleted();
@@ -5678,7 +5510,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListAvailableCashResponse.Builder listCash(Properties context, ListAvailableCashRequest request) {
-		if(Util.isEmpty(request.getPosId())) {
+		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		ListAvailableCashResponse.Builder builder = ListAvailableCashResponse.newBuilder();
@@ -5692,7 +5524,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		int offset = (pageNumber - 1) * limit;
 
 		//	Aisle Seller
-		int posId = RecordUtil.getIdFromUuid(I_C_POS.Table_Name, request.getPosId(), null);
+		int posId = request.getPosId();
 		//	Get Product list
 		Query query = new Query(
 				Env.getCtx(),
@@ -5712,7 +5544,6 @@ public class PointOfSalesForm extends StoreImplBase {
 				MBankAccount bankAccount = MBankAccount.get(context, availableCash.get_ValueAsInt("C_BankAccount_ID"));
 				AvailableCash.Builder availableCashBuilder = AvailableCash.newBuilder()
 					.setId(bankAccount.getC_BankAccount_ID())
-					.setUuid(ValueUtil.validateNull(bankAccount.getUUID()))
 					.setName(ValueUtil.validateNull(bankAccount.getName()))
 					.setKey(ValueUtil.validateNull(bankAccount.getAccountNo()))
 					.setIsPosRequiredPin(availableCash.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
@@ -5874,12 +5705,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 	private Empty.Builder deleteCommandShortcut(DeleteCommandShortcutRequest request) {
-		if (request.getId() <= 0 && Util.isEmpty(request.getUuid())) {
+		if (request.getId() <= 0) {
 			throw new AdempiereException("@C_POSCommandShortcut_ID@ @NotFound@");
 		}
-
 		Trx.run(transactionName -> {
-			PO commandShorcut = RecordUtil.getEntity(Env.getCtx(), "C_POSCommandShortcut", request.getUuid(), request.getId(), transactionName);
+			PO commandShorcut = RecordUtil.getEntity(Env.getCtx(), "C_POSCommandShortcut", request.getId(), transactionName);
 			if (commandShorcut == null || commandShorcut.get_ID() <= 0) {
 				throw new AdempiereException("@C_POSCommandShortcut_ID@ @NotFound@");
 			}

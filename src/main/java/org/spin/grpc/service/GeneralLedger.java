@@ -80,9 +80,6 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	@Override
 	public void getAccountingCombination(GetAccountingCombinationRequest request, StreamObserver<Entity> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
 			Entity.Builder accountingCombination = getAccountingCombination(request);
 			responseObserver.onNext(accountingCombination.build());
 			responseObserver.onCompleted();
@@ -97,22 +94,13 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 	private Entity.Builder getAccountingCombination(GetAccountingCombinationRequest request) {
 		// Validate ID
-		if(request.getId() == 0 && Util.isEmpty(request.getUuid()) && Util.isEmpty(request.getValue())) {
+		if(request.getId() == 0 && Util.isEmpty(request.getValue())) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 
 		MAccount accountingCombination = null;
 		if(request.getId() > 0) {
 			accountingCombination = MAccount.getValidCombination(Env.getCtx(), request.getId(), null);
-		} else if(!Util.isEmpty(request.getUuid(), true)) {
-			accountingCombination = new Query(
-					Env.getCtx(),
-					this.tableName,
-					MAccount.COLUMNNAME_UUID + " = ? ",
-					null
-				)
-				.setParameters(request.getUuid())
-				.firstOnly();
 		} else if (!Util.isEmpty(request.getValue(), true)) {
 			// Value as combination
 			accountingCombination = new Query(
@@ -137,10 +125,6 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	@Override
 	public void listAccountingCombinations(ListAccountingCombinationsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
 			ListEntitiesResponse.Builder entitiesList = listAccountingCombinations(request);
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
@@ -154,7 +138,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	}
 
 	private ListEntitiesResponse.Builder listAccountingCombinations(ListAccountingCombinationsRequest request) {
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
 		} else if ((int) contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) <= 0) {
@@ -167,7 +151,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 		//
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		MTable table = MTable.get(Env.getCtx(), this.tableName);
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
@@ -239,7 +223,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	private Entity.Builder convertAccountingCombination(SaveAccountingCombinationRequest request) {
 		// set context values
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 		ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), contextAttributesList);
 		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
@@ -263,7 +247,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		
 		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accountingSchema.getAcctSchemaElements());
 
-		Map<String, Object> attributesList = ValueUtil.convertValuesMapToObjects(request.getAttributesMap());
+		Map<String, Object> attributesList = ValueUtil.convertValuesMapToObjects(request.getAttributes().getFieldsMap());
 		StringBuffer sql = generateSQL(acctingSchemaElements, attributesList);
 
 		int clientId = Env.getContextAsInt(Env.getCtx(), windowNo, MAccount.COLUMNNAME_AD_Client_ID);
@@ -466,15 +450,10 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 		// Validate ID
-		if (request.getRecordId() <= 0 && Util.isEmpty(request.getRecordUuid())) {
+		if (request.getRecordId() <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		int recordId = request.getRecordId();
-		if (recordId <= 0) {
-			String recordUuid = ValueUtil.validateNull(request.getRecordUuid());
-			recordId = RecordUtil.getIdFromUuid(tableName, recordUuid, null);
-		}
-
 		StartRePostResponse.Builder rePostBuilder = StartRePostResponse.newBuilder();
 
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
@@ -659,8 +638,8 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 
 		// Date
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(request.getDateFrom());
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(request.getDateTo());
+		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
+		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
 		if (dateFrom != null || dateTo != null) {
 			whereClause.append(" AND ");
 			if (dateFrom != null && dateTo != null) {
@@ -687,7 +666,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 		// Document
 		String tableName = request.getTableName();
-		if (!Util.isEmpty(tableName, true) && (request.getRecordId() > 0 || !Util.isEmpty(request.getRecordUuid(), true))) {
+		if (!Util.isEmpty(tableName, true) && request.getRecordId() > 0) {
 			int tableId = MTable.getTable_ID(tableName);
 			whereClause.append(" AND ")
 				.append(table.getTableName())
@@ -699,9 +678,6 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 			// record
 			int recordId = request.getRecordId();
-			if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid())) {
-				recordId = RecordUtil.getIdFromUuid(tableName, request.getRecordUuid(), null);
-			}
 			if (recordId > 0) {
 				whereClause.append(" AND ")
 					.append(table.getTableName())

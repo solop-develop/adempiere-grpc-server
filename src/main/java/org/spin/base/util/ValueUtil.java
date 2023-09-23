@@ -469,6 +469,24 @@ public class ValueUtil {
 	}
 	
 	/**
+	 * Convert Selection values from gRPC to ADempiere values
+	 * @param values
+	 * @return
+	 */
+	public static Value.Builder convertObjectMapToStruct(Map<String, Object> values) {
+		Value.Builder convertedValues = Value.newBuilder();
+		if (values == null || values.size() <= 0) {
+			return convertedValues;
+		}
+		Struct.Builder mapValue = Struct.newBuilder();
+		values.keySet().forEach(keyValue -> {
+			mapValue.putFields(keyValue, getValueFromObject(values.get(keyValue)).build());
+		});
+		//	
+		return convertedValues.setStructValue(mapValue);
+	}
+	
+	/**
 	 * Default get value from type
 	 * @param valueToConvert
 	 * @return

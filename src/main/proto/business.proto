@@ -320,19 +320,20 @@ message Preference {
 
 // Get Entity Request
 message GetReportOutputRequest {
-	int32 process_id = 1;
-	int32 print_format_id = 2;
-	int32 report_view_id = 3;
-	bool is_summary = 4;
-	string report_name = 5;
-	string report_type = 6;
-	//	Filters
-	string filters = 7;
-	repeated string sort_columns = 8;
-	repeated string group_columns = 9;
-	repeated string select_columns = 10;
-	int32 page_size = 11;
-	string page_token = 12;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 process_id = 8;
+	int32 print_format_id = 9;
+	int32 report_view_id = 10;
+	bool is_summary = 11;
+	string report_name = 12;
+	string report_type = 13;
+	string table_name = 14;
 }
 
 // Create Entity Request
@@ -564,6 +565,7 @@ message ListEntitiesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string table_name = 8;
 }
 
 // List Entities Response
