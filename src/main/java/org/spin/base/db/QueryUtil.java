@@ -274,7 +274,7 @@ public class QueryUtil {
 					queryToAdd.append(", ");
 					queryToAdd.append(referenceInfo.getDisplayValue(viewColumn.getColumnName()));
 					String joinValue = referenceInfo.getJoinValue(columnName, tableName);
-					if (viewColumn.getAD_Column_ID() <= 0 && !Util.isEmpty(viewColumn.getColumnSQL(), true)) {
+					if (viewColumn.getAD_Column_ID() <= 0) {
 						// sub query
 						joinValue = referenceInfo.getJoinValue(columnName);
 					}
