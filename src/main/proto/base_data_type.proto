@@ -23,29 +23,6 @@ import "google/protobuf/timestamp.proto";
 
 package data;
 
-enum OrderType {
-	ASCENDING = 0;
-	DESCENDING = 1;
-}
-
-enum Operator {
-	VOID = 0;
-	EQUAL = 1;
-	NOT_EQUAL = 2;
-	LIKE = 3;
-	NOT_LIKE = 4;
-	GREATER = 5;
-	GREATER_EQUAL = 6;
-	LESS = 7;
-	LESS_EQUAL = 8;
-	BETWEEN = 9;
-	NOT_BETWEEN = 10;
-	NOT_NULL = 11;
-	NULL = 12;
-	IN = 13;
-	NOT_IN = 14;
-}
-
 // Document Item
 message DocumentStatus {
 	string value = 1;

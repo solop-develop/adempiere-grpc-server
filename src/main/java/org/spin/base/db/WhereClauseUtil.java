@@ -36,11 +36,11 @@ import org.compiere.model.MTable;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Operator;
 import org.spin.base.dictionary.WindowUtil;
+import org.spin.base.query.Filter;
+import org.spin.base.query.FilterManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.util.ASPUtil;
-import com.google.protobuf.Value;
 
 /**
  * Class for handle SQL Where Clause
@@ -91,41 +91,32 @@ public class WhereClauseUtil {
 	 * @param params
 	 * @return
 	 */
-	public static String getRestrictionByOperator(
-		String columnName, int operatorValue,
-		Value value, Value valueTo, List<Value> valuesList, List<Object> params
-	) {
-		return getRestrictionByOperator(columnName, 0, operatorValue, value, valueTo, valuesList, params);
+	public static String getRestrictionByOperator(Filter condition, List<Object> params) {
+		return getRestrictionByOperator(condition, 0, params);
 	}
 
 	/**
 	 * Get sql restriction by operator
-	 * @param columnName
-	 * @param operatorValue
-	 * @param value
-	 * @param valueTo
-	 * @param valuesList
-	 * @param params
+	 * @param condition
+	 * @param displayType
+	 * @param parameters
 	 * @return
 	 */
-	public static String getRestrictionByOperator(
-		String columnName, int displayType, int operatorValue,
-		Value value, Value valueTo, List<Value> valuesList, List<Object> params
-	) {
-		String sqlOperator = OperatorUtil.convertOperator(operatorValue);
-
+	public static String getRestrictionByOperator(Filter condition, int displayType, List<Object> parameters) {
+		String sqlOperator = OperatorUtil.convertOperator(condition.getOperator());
+		String columnName = condition.getColumnName();
+		String operatorValue = condition.getOperator();
 		String sqlValue = "";
 		StringBuilder additionalSQL = new StringBuilder();
 		//	For IN or NOT IN
-		if (operatorValue == Operator.IN_VALUE
-				|| operatorValue == Operator.NOT_IN_VALUE) {
+		if (operatorValue.equals(Filter.IN)
+				|| operatorValue.equals(Filter.NOT_IN)) {
 			StringBuilder parameterValues = new StringBuilder();
 			final String baseColumnName = columnName;
 			StringBuilder column_name = new StringBuilder(columnName);
 
-			valuesList.forEach(itemValue -> {
-				Object currentValue = ValueUtil.getObjectFromValue(itemValue);
-				boolean isString = DisplayType.isText(displayType) || !Util.isEmpty(itemValue.getStringValue()) || currentValue instanceof String;
+			condition.getValues().forEach(currentValue -> {
+				boolean isString = DisplayType.isText(displayType) || currentValue instanceof String;
 
 				if (currentValue == null || (isString && Util.isEmpty((String) currentValue, true))) {
 					if (Util.isEmpty(additionalSQL.toString(), true)) {
@@ -149,7 +140,7 @@ public class WhereClauseUtil {
 					sqlInValue = "UPPER(?)";
 				}
 				parameterValues.append(sqlInValue);
-				params.add(currentValue);
+				parameters.add(currentValue);
 			});
 
 			columnName = column_name.toString();
@@ -159,28 +150,28 @@ public class WhereClauseUtil {
 					additionalSQL.insert(0, " OR " + columnName + sqlOperator);
 				}
 			}
-		} else if(operatorValue == Operator.BETWEEN_VALUE || operatorValue == Operator.NOT_BETWEEN_VALUE) {
-			Object valueStart = ValueUtil.getObjectFromValue(value);
-			Object valueEnd = ValueUtil.getObjectFromValue(valueTo);
+		} else if(operatorValue.equals(Filter.BETWEEN) || operatorValue.equals(Filter.NOT_BETWEEN)) {
+			Object valueStart = condition.getFromValue();
+			Object valueEnd = condition.getToValue();
 
 			sqlValue = "";
 			if (valueStart == null) {
 				sqlValue = " ? ";
-				sqlOperator = OperatorUtil.convertOperator(Operator.LESS_EQUAL_VALUE);
-				params.add(valueEnd);
+				sqlOperator = OperatorUtil.convertOperator(Filter.LESS_EQUAL);
+				parameters.add(valueEnd);
 			} else if (valueEnd == null) {
 				sqlValue = " ? ";
-				sqlOperator = OperatorUtil.convertOperator(Operator.GREATER_EQUAL_VALUE);
-				params.add(valueStart);
+				sqlOperator = OperatorUtil.convertOperator(Filter.GREATER_EQUAL);
+				parameters.add(valueStart);
 			} else {
 				sqlValue = " ? AND ? ";
-				params.add(valueStart);
-				params.add(valueEnd);
+				parameters.add(valueStart);
+				parameters.add(valueEnd);
 			}
-		} else if(operatorValue == Operator.LIKE_VALUE || operatorValue == Operator.NOT_LIKE_VALUE) {
+		} else if(operatorValue.equals(Filter.LIKE) || operatorValue.equals(Filter.NOT_LIKE)) {
 			columnName = "UPPER(" + columnName + ")";
 			String parameterValue = ValueUtil.validateNull(
-				(String) ValueUtil.getObjectFromValue(value, true)
+				(String) condition.getValue()
 			);
 			// if (!Util.isEmpty(parameterValue, true)) {
 			// 	if (!parameterValue.startsWith("%")) {
@@ -192,16 +183,14 @@ public class WhereClauseUtil {
 			// }
 			// parameterValue = "UPPPER(" + parameterValue + ")";
 			sqlValue = "'%' || UPPER(?) || '%'";
-			params.add(parameterValue);
-		} else if(operatorValue == Operator.NULL_VALUE || operatorValue == Operator.NOT_NULL_VALUE) {
+			parameters.add(parameterValue);
+		} else if(operatorValue.equals(Filter.NULL) || operatorValue.equals(Filter.NOT_NULL)) {
 			;
-		} else if (operatorValue == Operator.EQUAL_VALUE || operatorValue == Operator.NOT_EQUAL_VALUE) {
-			Object parameterValue = ValueUtil.getObjectFromValue(
-				value
-			);
+		} else if (operatorValue.equals(Filter.EQUAL) || operatorValue.equals(Filter.NOT_EQUAL)) {
+			Object parameterValue = condition.getValue();
 			sqlValue = " ? ";
 
-			boolean isString = DisplayType.isText(displayType) || !Util.isEmpty(value.getStringValue()) || parameterValue instanceof String;
+			boolean isString = DisplayType.isText(displayType) || parameterValue instanceof String;
 			boolean isEmptyString = isString && Util.isEmpty((String) parameterValue, true);
 			if (isString) {
 				if (isEmptyString) {
@@ -217,14 +206,12 @@ public class WhereClauseUtil {
 					.append(" IS NULL ")
 				;
 			}
-			params.add(parameterValue);
+			parameters.add(parameterValue);
 		} else {
 			// Greater, Greater Equal, Less, Less Equal
-			Object parameterValue = ValueUtil.getObjectFromValue(
-				value
-			);
+			Object parameterValue = condition.getValue();
 			sqlValue = " ? ";
-			params.add(parameterValue);
+			parameters.add(parameterValue);
 		}
 
 		String rescriction = "(" + columnName + sqlOperator + sqlValue + additionalSQL.toString() + ")";
@@ -242,24 +229,21 @@ public class WhereClauseUtil {
 	 * @param params
 	 * @return
 	 */
-	public static String getRestrictionByOperator(
-		String columnName, int displayType, int operatorValue,
-		Value value, Value valueTo, List<Value> valuesList
-	) {
-		String sqlOperator = OperatorUtil.convertOperator(operatorValue);
-
+	public static String getRestrictionByOperator(Filter condition, int displayType) {
+		String sqlOperator = OperatorUtil.convertOperator(condition.getOperator());
+		String columnName = condition.getColumnName();
+		String operatorValue = condition.getOperator();
 		String sqlValue = "";
 		StringBuilder additionalSQL = new StringBuilder();
 		//	For IN or NOT IN
-		if (operatorValue == Operator.IN_VALUE
-				|| operatorValue == Operator.NOT_IN_VALUE) {
+		if (operatorValue.equals(Filter.IN)
+				|| operatorValue.equals(Filter.NOT_IN)) {
 			StringBuilder parameterValues = new StringBuilder();
 			final String baseColumnName = columnName;
 			StringBuilder column_name = new StringBuilder(columnName);
 
-			valuesList.forEach(itemValue -> {
-				Object currentValue = ValueUtil.getObjectFromValue(itemValue);
-				boolean isString = DisplayType.isText(displayType) || !Util.isEmpty(itemValue.getStringValue()) || currentValue instanceof String;
+			condition.getValues().forEach(currentValue -> {
+				boolean isString = DisplayType.isText(displayType) || currentValue instanceof String;
 
 				if (currentValue == null || (isString && Util.isEmpty((String) currentValue, true))) {
 					if (Util.isEmpty(additionalSQL.toString(), true)) {
@@ -293,38 +277,34 @@ public class WhereClauseUtil {
 					additionalSQL.insert(0, " OR " + columnName + sqlOperator);
 				}
 			}
-		} else if(operatorValue == Operator.BETWEEN_VALUE || operatorValue == Operator.NOT_BETWEEN_VALUE) {
-			Object valueStart = ValueUtil.getObjectFromValue(value);
-			Object valueEnd = ValueUtil.getObjectFromValue(valueTo);
+		} else if(operatorValue.equals(Filter.BETWEEN) || operatorValue.equals(Filter.NOT_BETWEEN)) {
+			Object valueStart = condition.getValue();
+			Object valueEnd = condition.getToValue();
 			String dbValueStart = ParameterUtil.getDBValue(valueStart, displayType);
 			String dbValueEnd = ParameterUtil.getDBValue(valueEnd, displayType);
 
 			sqlValue = "";
 			if (valueStart == null) {
 				sqlValue = dbValueEnd;
-				sqlOperator = OperatorUtil.convertOperator(Operator.LESS_EQUAL_VALUE);
+				sqlOperator = OperatorUtil.convertOperator(Filter.LESS_EQUAL);
 			} else if (valueEnd == null) {
 				sqlValue = dbValueStart;
-				sqlOperator = OperatorUtil.convertOperator(Operator.GREATER_EQUAL_VALUE);
+				sqlOperator = OperatorUtil.convertOperator(Filter.GREATER_EQUAL);
 			} else {
 				sqlValue = dbValueStart + " AND " +dbValueEnd;
 			}
-		} else if(operatorValue == Operator.LIKE_VALUE || operatorValue == Operator.NOT_LIKE_VALUE) {
+		} else if(operatorValue.equals(Filter.LIKE) || operatorValue.equals(Filter.NOT_LIKE)) {
 			columnName = "UPPER(" + columnName + ")";
-			String parameterValue = ValueUtil.validateNull(
-				(String) ValueUtil.getObjectFromValue(value, true)
-			);
+			String parameterValue = ValueUtil.validateNull((String) condition.getValue());
 			sqlValue = "'%' || UPPER(" + parameterValue + ") || '%'";
-		} else if(operatorValue == Operator.NULL_VALUE || operatorValue == Operator.NOT_NULL_VALUE) {
+		} else if(operatorValue.equals(Filter.NULL) || operatorValue.equals(Filter.NOT_NULL)) {
 			;
-		} else if (operatorValue == Operator.EQUAL_VALUE || operatorValue == Operator.NOT_EQUAL_VALUE) {
-			Object parameterValue = ValueUtil.getObjectFromValue(
-				value
-			);
+		} else if (operatorValue.equals(Filter.EQUAL) || operatorValue.equals(Filter.NOT_EQUAL)) {
+			Object parameterValue = condition.getValue();
 			String dbValue = ParameterUtil.getDBValue(parameterValue, displayType);
 			sqlValue = dbValue;
 
-			boolean isString = DisplayType.isText(displayType) || !Util.isEmpty(value.getStringValue()) || parameterValue instanceof String;
+			boolean isString = DisplayType.isText(displayType) || parameterValue instanceof String;
 			boolean isEmptyString = isString && Util.isEmpty((String) parameterValue, true);
 			if (isString) {
 				if (isEmptyString) {
@@ -342,9 +322,7 @@ public class WhereClauseUtil {
 			}
 		} else {
 			// Greater, Greater Equal, Less, Less Equal
-			Object parameterValue = ValueUtil.getObjectFromValue(
-				value
-			);
+			Object parameterValue = condition.getValue();
 			sqlValue = ParameterUtil.getDBValue(parameterValue, displayType);
 		}
 
@@ -394,34 +372,19 @@ public class WhereClauseUtil {
 			tableAlias = tableName;
 		}
 		final String tableNameAlias = tableAlias;
-		Gson
-		filters.getConditionsList().stream()
+		FilterManager.newInstance(filters).getConditions().stream()
 			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
 			.forEach(condition -> {
-				int operatorValue = condition.getOperatorValue();
 				if (whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
 				String columnName = tableNameAlias + "." + condition.getColumnName();
-				if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
-					operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
-						condition
-					);
-				}
 				MColumn column = MColumn.get(
 					Env.getCtx(),
 					MColumn.getColumn_ID(table.getTableName(), columnName)
 				);
 
-				String restriction = WhereClauseUtil.getRestrictionByOperator(
-					columnName,
-					column.getAD_Reference_ID(),
-					operatorValue,
-					condition.getValue(),
-					condition.getValueTo(),
-					condition.getValuesList(),
-					params
-				);
+				String restriction = WhereClauseUtil.getRestrictionByOperator(condition, column.getAD_Reference_ID(), params);
 
 				whereClause.append(restriction);
 		});
@@ -609,7 +572,7 @@ public class WhereClauseUtil {
 	 * @param filterValues
 	 * @return
 	 */
-	public static String getBrowserWhereClauseFromCriteria(int browseId, Criteria criteria, List<Object> filterValues) {
+	public static String getBrowserWhereClauseFromCriteria(int browseId, String criteria, List<Object> filterValues) {
 		if (browseId <= 0) {
 			return null;
 		}
@@ -623,24 +586,25 @@ public class WhereClauseUtil {
 	/**
 	 * Get Where clause for Smart Browse by Criteria Conditions
 	 *
-	 * @param criteria
+	 * @param filters
 	 * @param browser
 	 * @param filterValues
 	 * @return where clasuse with generated restrictions
 	 */
-	public static String getBrowserWhereClauseFromCriteria(MBrowse browser, Criteria criteria, List<Object> filterValues) {
+	public static String getBrowserWhereClauseFromCriteria(MBrowse browser, String filters, List<Object> filterValues) {
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			return null;
 		}
-		if (criteria == null) {
+		if (filters == null) {
 			return null;
 		}
-
+		
 		StringBuffer whereClause = new StringBuffer();
-		if (!Util.isEmpty(criteria.getWhereClause(), true)) {
-			whereClause.append("(").append(criteria.getWhereClause()).append(")");
-		}
-		if (criteria.getConditionsList() == null || criteria.getConditionsList().size() <= 0) {
+		List<Filter> conditions = FilterManager.newInstance(filters).getConditions();
+//		if (!Util.isEmpty(filters.getWhereClause(), true)) {
+//			whereClause.append("(").append(filters.getWhereClause()).append(")");
+//		}
+		if (conditions == null || conditions.size() == 0) {
 			return whereClause.toString();
 		}
 
@@ -650,18 +614,11 @@ public class WhereClauseUtil {
 		for (MBrowseField browseField : browseFieldsList) {
 			browseFields.put(browseField.getAD_View_Column().getColumnName(), browseField);
 		}
-		List<Condition> parametersList = criteria.getConditionsList();
 		HashMap<String, String> rangeAdd = new HashMap<>();
-		
-
-		parametersList.stream()
+		conditions.stream()
 			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
 			.forEach(condition -> {
 				String columnName = condition.getColumnName();
-				int operatorValue = condition.getOperatorValue();
-				Value value = condition.getValue();
-				Value valueTo = condition.getValueTo();
-
 				MBrowseField browseField = browseFields.get(columnName);
 				if (browseField == null && columnName.endsWith("_To")) {
 					String rangeColumnName = columnName.substring(0, columnName.length() - "_To".length());
@@ -674,71 +631,10 @@ public class WhereClauseUtil {
 				if (rangeAdd.containsKey(viewColumn.getColumnName())) {
 					return;
 				}
-				if (browseField.isRange()) {
-					final String columnNameParameter = viewColumn.getColumnName();
-					Condition conditionStart = parametersList.stream().filter(parameter -> {
-						return parameter.getColumnName().equals(columnNameParameter);
-					})
-						.findFirst()
-						.orElse(Condition.newBuilder().build())
-					;
-					value = conditionStart.getValue();
-	
-					int operatorTo = operatorValue;
-					if (valueTo == null || valueTo.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-						Condition conditionEnd = parametersList.stream().filter(parameter -> {
-							return parameter.getColumnName().equals(columnNameParameter + "_To");
-						})
-							.findFirst()
-							.orElse(Condition.newBuilder().build())
-						;
-						valueTo = conditionEnd.getValue();
-						operatorTo = conditionEnd.getOperatorValue();
-					}
-	
-					columnName = viewColumn.getColumnSQL();
-					if (conditionStart.getOperator() == Operator.GREATER_EQUAL && operatorTo == Operator.LESS_EQUAL_VALUE) {
-						operatorValue = Operator.BETWEEN_VALUE;
-					} else {
-						if (whereClause.length() > 0) {
-							whereClause.append(" AND ");
-						}
-						String restrictionTo = WhereClauseUtil.getRestrictionByOperator(
-							columnName,
-							browseField.getAD_Reference_ID(),
-							operatorTo,
-							valueTo, // as current value
-							null,
-							condition.getValuesList(),
-							filterValues
-						);
-						whereClause.append(restrictionTo);
-						valueTo = null;
-					}
-					rangeAdd.put(columnNameParameter, columnNameParameter);
-				} else {
-					columnName = viewColumn.getColumnSQL();
-					if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
-						operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
-							condition
-						);
-					}
-				}
-
 				if (whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
-
-				String restriction = WhereClauseUtil.getRestrictionByOperator(
-					columnName,
-					browseField.getAD_Reference_ID(),
-					operatorValue,
-					value,
-					valueTo,
-					condition.getValuesList(),
-					filterValues
-				);
-
+				String restriction = WhereClauseUtil.getRestrictionByOperator(condition, browseField.getAD_Reference_ID(), filterValues);
 				whereClause.append(restriction);
 			});
 
@@ -750,12 +646,12 @@ public class WhereClauseUtil {
 	/**
 	 * Get Where clause for View by Criteria Conditions
 	 * 
-	 * @param criteria
+	 * @param filters
 	 * @param viewId
 	 * @param filterValues
 	 * @return
 	 */
-	public static String getViewWhereClauseFromCriteria(Criteria criteria, int viewId, List<Object> filterValues) {
+	public static String getViewWhereClauseFromCriteria(String filters, int viewId, List<Object> filterValues) {
 		if (viewId <= 0) {
 			return null;
 		}
@@ -763,33 +659,33 @@ public class WhereClauseUtil {
 		if (view == null || view.getAD_View_ID() <= 0) {
 			return null;
 		}
-		return getViewWhereClauseFromCriteria(criteria, view, filterValues);
+		return getViewWhereClauseFromCriteria(filters, view, filterValues);
 	}
 
 	/**
 	 * Get Where clause for View by Criteria Conditions
 	 * 
-	 * @param criteria
+	 * @param filters
 	 * @param view
 	 * @param filterValues
 	 * @return
 	 */
-	public static String getViewWhereClauseFromCriteria(Criteria criteria, MView view, List<Object> filterValues) {
+	public static String getViewWhereClauseFromCriteria(String filters, MView view, List<Object> filterValues) {
 		if (view == null || view.getAD_View_ID() <= 0) {
 			return null;
 		}
-		if (criteria == null) {
+		if (filters == null) {
 			return null;
 		}
 
 		StringBuffer whereClause = new StringBuffer();
-		if (!Util.isEmpty(criteria.getWhereClause(), true)) {
-			whereClause.append("(").append(criteria.getWhereClause()).append(")");
-		}
-		if (criteria.getConditionsList() == null || criteria.getConditionsList().size() <= 0) {
+		List<Filter> conditions = FilterManager.newInstance(filters).getConditions();
+//		if (!Util.isEmpty(filters.getWhereClause(), true)) {
+//			whereClause.append("(").append(filters.getWhereClause()).append(")");
+//		}
+		if (conditions == null || conditions.size() == 0) {
 			return whereClause.toString();
 		}
-
 		// Add view columns to map
 		List<MViewColumn> viewColumnsList = view.getViewColumns();
 		HashMap<String, MViewColumn> viewColummns = new HashMap<>();
@@ -797,36 +693,17 @@ public class WhereClauseUtil {
 			viewColummns.put(viewColumn.getColumnName(), viewColumn);
 		}
 
-		criteria.getConditionsList().stream()
+		conditions.stream()
 			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
 			.forEach(condition -> {
 				MViewColumn viewColumn = viewColummns.get(condition.getColumnName());
 				if (viewColumn == null || viewColumn.getAD_View_Column_ID() <= 0) {
 					return;
 				}
-
-				int operatorValue = condition.getOperatorValue();
 				if (whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
-
-				String columnName = viewColumn.getColumnSQL();
-				if (operatorValue < 0 || operatorValue == Operator.VOID_VALUE) {
-					operatorValue = OperatorUtil.getDefaultOperatorByConditionValue(
-						condition
-					);
-				}
-
-				String restriction = WhereClauseUtil.getRestrictionByOperator(
-					columnName,
-					viewColumn.getAD_Reference_ID(),
-					operatorValue,
-					condition.getValue(),
-					condition.getValueTo(),
-					condition.getValuesList(),
-					filterValues
-				);
-
+				String restriction = WhereClauseUtil.getRestrictionByOperator(condition, viewColumn.getAD_Reference_ID(), filterValues);
 				whereClause.append(restriction);
 			});
 

@@ -33,7 +33,7 @@ service Product {
 // List Product Info Request
 message ListProductInfoRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

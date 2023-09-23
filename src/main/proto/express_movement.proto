@@ -80,7 +80,7 @@ message Warehouse {
 
 message ListWarehousesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -98,7 +98,7 @@ message ListWarehousesResponse {
 // Product
 message ListProductsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -166,7 +166,7 @@ message MovementLine {
 
 message ListMovementLinesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

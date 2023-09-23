@@ -47,7 +47,6 @@ import org.compiere.model.MGoal;
 import org.compiere.model.MMeasure;
 import org.compiere.model.MMenu;
 import org.compiere.model.MRule;
-import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -251,10 +250,12 @@ public class Dashboarding extends DashboardingImplBase {
 				pendingDocument.setFormId(documentStatus.getAD_Form_ID());
 			}
 			//	Criteria
-			MTable table = MTable.get(context, documentStatus.getAD_Table_ID());
-			pendingDocument.setCriteria(Criteria.newBuilder()
-					.setTableName(ValueUtil.validateNull(table.getTableName()))
-					.setWhereClause(ValueUtil.validateNull(documentStatus.getWhereClause())));
+//			MTable table = MTable.get(context, documentStatus.getAD_Table_ID());
+			//	TODO: Add filter from SQL
+//			pendingDocument
+//					.setCriteria(Criteria.newBuilder()
+//					.setTableName(ValueUtil.validateNull(table.getTableName()))
+//					.setWhereClause(ValueUtil.validateNull(documentStatus.getWhereClause())));
 			//	Set quantity
 			pendingDocument.setRecordCount(MDocumentStatus.evaluate(documentStatus));
 			//	TODO: Add description for interface

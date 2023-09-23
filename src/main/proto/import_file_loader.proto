@@ -40,7 +40,7 @@ service ImportFileLoader {
 // Charset
 message ListCharsetsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -52,7 +52,7 @@ message ListCharsetsRequest {
 // Import Table
 message ListImportTablesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -84,7 +84,7 @@ message ListImportTablesResponse {
 // Import Format
 message ListImportFormatsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -96,7 +96,7 @@ message ListImportFormatsRequest {
 
 message ListClientImportFormatsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -143,7 +143,7 @@ message GetImportFromatRequest {
 // Preview File
 message ListFilePreviewRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -176,7 +176,7 @@ message SaveRecordsResponse {
 // Process Import
 message ListImportProcessesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

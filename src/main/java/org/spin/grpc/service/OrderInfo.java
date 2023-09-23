@@ -87,7 +87,7 @@ public class OrderInfo extends OrderImplBase {
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributes());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		//
 		MTable table = MTable.get(Env.getCtx(), this.tableName);

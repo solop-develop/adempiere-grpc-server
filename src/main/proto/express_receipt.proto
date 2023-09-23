@@ -84,7 +84,7 @@ message BusinessPartner {
 
 message ListBusinessPartnersRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -102,7 +102,7 @@ message ListBusinessPartnersResponse {
 // Orders
 message ListPurchaseOrdersRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -127,7 +127,7 @@ message ListPurchaseOrdersResponse {
 // Product
 message ListProductsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -197,7 +197,7 @@ message ReceiptLine {
 
 message ListReceiptLinesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

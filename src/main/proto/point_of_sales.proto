@@ -214,7 +214,7 @@ message DeallocateSellerRequest {
 //	List allocated sellers for POS
 message ListAvailableSellersRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -288,7 +288,7 @@ message PaymentReference {
 //	List Refund Reference Request
 message ListPaymentReferencesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -319,7 +319,7 @@ message PaymentSummary {
 //	List Cash Movements Request
 message ListCashMovementsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -344,7 +344,7 @@ message ListCashMovementsResponse {
 //	List Cash Summary Movements Request
 message ListCashSummaryMovementsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -442,7 +442,7 @@ message CreateShipmentLineRequest {
 //	List Shipment Lines Request
 message ListShipmentLinesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -511,7 +511,7 @@ message Bank {
 
 message ListBanksRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -529,7 +529,7 @@ message ListBanksResponse {
 // Bank Account
 message ListBankAccountsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -548,7 +548,7 @@ message ListBankAccountsResponse {
 //	List Customer Accounts Request
 message ListCustomerBankAccountsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -872,7 +872,7 @@ message PaymentMethod {
 //	List discount schema for POS
 message ListAvailableDiscountsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -915,7 +915,7 @@ message AvailablePriceList {
 //	List warehouses for POS
 message ListAvailableWarehousesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -927,7 +927,7 @@ message ListAvailableWarehousesRequest {
 //	List document types for POS
 message ListAvailableDocumentTypesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -946,7 +946,7 @@ message ListAvailableWarehousesResponse {
 //	List payment type for POS
 message ListAvailablePaymentMethodsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -972,7 +972,7 @@ message ListAvailableDocumentTypesResponse {
 //	List price list for POS
 message ListAvailablePriceListRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -991,7 +991,7 @@ message ListAvailablePriceListResponse {
 //	List warehouses for POS
 message ListAvailableCurrenciesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1031,7 +1031,7 @@ message ListOrdersResponse {
 // List Orders Request
 message ListOrdersRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1067,7 +1067,7 @@ message ListOrderLinesResponse {
 // List Orders Request
 message ListOrderLinesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1080,7 +1080,7 @@ message ListOrderLinesRequest {
 // List Product Price Request
 message ListProductPriceRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1096,7 +1096,7 @@ message ListProductPriceRequest {
 // POS from user id
 message ListPointOfSalesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1250,7 +1250,7 @@ message DeletePaymentRequest {
 // List Payments Request
 message ListPaymentsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1518,7 +1518,7 @@ message Stock {
 
 message ListStocksRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1539,7 +1539,7 @@ message ListStocksResponse {
 //	List Cash Register for POS
 message ListAvailableCashRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1585,7 +1585,7 @@ message DeleteCommandShortcutRequest {
 
 message ListCommandShortcutsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1612,7 +1612,7 @@ message Campaign {
 
 message ListCampaignsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1683,7 +1683,7 @@ message CreateRMALineRequest {
 //	List Return Lines Request
 message ListRMALinesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -1792,7 +1792,7 @@ message CreditMemo {
 
 message ListCustomerCreditsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

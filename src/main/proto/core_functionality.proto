@@ -102,7 +102,7 @@ message ListBusinessPartnersResponse {
 // List Business Partner Request
 message ListBusinessPartnersRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -127,7 +127,7 @@ message GetBusinessPartnerRequest {
 	string phone = 9;
 	//	Filters
 	string filters = 10;
-	repeated string sort_columns = 11;
+	string sort_by = 11;
 	repeated string group_columns = 12;
 	repeated string select_columns = 13;
 	int32 page_size = 14;
@@ -164,7 +164,7 @@ message CreateBusinessPartnerRequest {
 // Languages Request
 message ListLanguagesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -258,7 +258,7 @@ message ListOrganizationsResponse {
 // Organization from Role
 message ListOrganizationsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -284,7 +284,7 @@ message ListWarehousesResponse {
 // Warehouses Request
 message ListWarehousesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -307,7 +307,7 @@ message UnitOfMeasure {
 // List Product UOM Conversion Request
 message ListProductConversionRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

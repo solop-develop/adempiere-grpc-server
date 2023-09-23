@@ -79,7 +79,7 @@ message Dashboard {
 // Dashboards Request
 message ListDashboardsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -98,7 +98,7 @@ message ListDashboardsResponse {
 // Favorites Items Request
 message ListFavoritesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -126,7 +126,7 @@ message ListFavoritesResponse {
 // Document Statuses Request
 message ListPendingDocumentsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -153,7 +153,7 @@ message PendingDocument {
 	int64 record_count = 6;
 	//	Filters
 	string filters = 7;
-	repeated string sort_columns = 8;
+	string sort_by = 8;
 	repeated string group_columns = 9;
 	repeated string select_columns = 10;
 	int32 page_size = 11;
@@ -215,7 +215,7 @@ message Notification {
 
 message ListNotificationsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -280,7 +280,7 @@ message WindowDashboard {
 
 message ListWindowDashboardsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -314,7 +314,7 @@ message GetWindowMetricsRequest {
 	int32 record_id = 3;
 	//	Filters
 	string filters = 4;
-	repeated string sort_columns = 5;
+	string sort_by = 5;
 	repeated string group_columns = 6;
 	repeated string select_columns = 7;
 	int32 page_size = 8;

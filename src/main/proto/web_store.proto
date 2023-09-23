@@ -70,7 +70,7 @@ service WebStore {
 //	https://sfa-docs.now.sh/guide/default-modules/api.html#get-vsbridgeuserorder-history
 message ListOrdersRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -188,7 +188,7 @@ message Rate {
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#post-api-cart-shipping-methods
 message ListShippingMethodsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -221,7 +221,7 @@ message ShippingMethod {
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#get-api-cart-payment-methods
 message ListPaymentMethodsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -444,7 +444,7 @@ message GetStockRequest {
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#get-api-stock-list
 message ListStocksRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -464,7 +464,7 @@ message ListStocksResponse {
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#api-product-list
 message ListProductsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -541,7 +541,7 @@ message Product {
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#api-product-list
 message ListRenderProductsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

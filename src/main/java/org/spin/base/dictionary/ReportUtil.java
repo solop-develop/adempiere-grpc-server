@@ -34,6 +34,8 @@ import org.compiere.print.ReportEngine;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.base.query.Filter;
+import org.spin.base.query.FilterManager;
 import org.spin.util.ASPUtil;
 import org.spin.util.AbstractExportFormat;
 import org.spin.util.ReportExportHandler;
@@ -48,30 +50,25 @@ public class ReportUtil {
 
 	/**
 	 * Get Report Query from Criteria
-	 * @param criteria
+	 * @param filters
 	 * @return
 	 */
-	public static MQuery getReportQueryFromCriteria(int reportId, Criteria criteria) {
-		MTable table = MTable.get(Env.getCtx(), criteria.getTableName());
+	public static MQuery getReportQueryFromCriteria(int reportId, String tableName, String filters) {
+		MTable table = MTable.get(Env.getCtx(), tableName);
 		MQuery query = new MQuery(table.getTableName());
 		List<MProcessPara> reportParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(reportId);
 		HashMap<String, MProcessPara> parametersMap = new HashMap<>();
 		for (MProcessPara paramerter : reportParameters) {
 			parametersMap.put(paramerter.getColumnName(), paramerter);
 		}
-
+		List<Filter> conditions = FilterManager.newInstance(filters).getConditions();
 		StringBuilder whereClause = new StringBuilder();
-		List<Condition> parametersList = criteria.getConditionsList();
 		HashMap<String, String> rangeAdd = new HashMap<>();
 
-		parametersList.stream()
+		conditions.stream()
 		.filter(condition -> !Util.isEmpty(condition.getColumnName()))
 		.forEach(condition -> {
 			String columnName = condition.getColumnName();
-			int operatorValue = condition.getOperatorValue();
-			Value value = condition.getValue();
-			Value valueTo = condition.getValueTo();
-
 			MProcessPara reportParameter = parametersMap.get(columnName);
 			if (reportParameter == null && columnName.endsWith("_To")) {
 				String rangeColumnName = columnName.substring(0, columnName.length() - "_To".length());
@@ -83,39 +80,7 @@ public class ReportUtil {
 			if (rangeAdd.containsKey(reportParameter.getColumnName())) {
 				return;
 			}
-			if (reportParameter.isRange()) {
-				final String columnNameParameter = reportParameter.getColumnName();
-				Condition conditionStart = parametersList.stream().filter(parameter -> {
-					return parameter.getColumnName().equals(columnNameParameter);
-				})
-					.findFirst()
-					.orElse(Condition.newBuilder().build())
-				;
-				value = conditionStart.getValue();
-
-				if (valueTo == null || valueTo.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-					Condition conditionEnd = parametersList.stream().filter(parameter -> {
-						return parameter.getColumnName().equals(columnNameParameter + "_To");
-					})
-						.findFirst()
-						.orElse(Condition.newBuilder().build())
-					;
-					valueTo = conditionEnd.getValue();
-				}
-
-				columnName = columnNameParameter;
-				operatorValue = Operator.BETWEEN_VALUE;
-				rangeAdd.put(columnName, columnName);
-			}
-
-			String restriction = WhereClauseUtil.getRestrictionByOperator(
-				columnName,
-				reportParameter.getAD_Reference_ID(),
-				operatorValue,
-				value,
-				valueTo,
-				null
-			);
+			String restriction = WhereClauseUtil.getRestrictionByOperator(condition, reportParameter.getAD_Reference_ID());
 
 			if (whereClause.length() > 0) {
 				whereClause.append(" AND ");

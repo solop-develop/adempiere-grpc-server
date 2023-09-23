@@ -27,48 +27,64 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Yamel Senih, ysenih@erpya.com, ERPCyA http://www.erpya.com
- * A Stub class that represent a filters from request
- * [{"name":"AD_Client_ID", "operator":"equal", "values": 1000000}, {"name":"AD_Org_ID", "operator":"in", "values": [1000000, 11, 0]}]
+ * A Stub class that represent a sort from request
+ * [{"name":"Name", "type":"asc"}, {"name":"Value", "type":"desc"}]
  */
-public class FilterManager {
+public class SortingManager {
 	
 	private List<Map<String, Object>> fillValues;
 	
 	/**
 	 * read filters and convert to stub
-	 * @param filter
+	 * @param sorting
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private FilterManager(String filter) {
-		if(Util.isEmpty(filter)) {
+	private SortingManager(String sorting) {
+		if(Util.isEmpty(sorting)) {
 			fillValues = new ArrayList<>();
 		} else {
 			ObjectMapper fileMapper = new ObjectMapper();
 			try {
-				fillValues = fileMapper.readValue(filter, List.class);
+				fillValues = fileMapper.readValue(sorting, List.class);
 			} catch (JsonProcessingException e) {
 				throw new RuntimeException("Invalid filter");
 			}
 		}
 	}
 	
-	public static FilterManager newInstance(String filters) {
-		return new FilterManager(filters);
+	public static SortingManager newInstance(String filters) {
+		return new SortingManager(filters);
 	}
 	
-	public List<Filter> getConditions() {
+	public List<Order> getSorting() {
 		if(fillValues == null) {
-			return new ArrayList<Filter>();
+			return new ArrayList<Order>();
 		}
-		return fillValues.stream().map(value -> new Filter(value))
+		return fillValues.stream().map(value -> new Order(value))
 				.collect(Collectors.toList());
 	}
 	
+	public String getSotingAsSQL() {
+		StringBuffer sortingAsSQL = new StringBuffer();
+		getSorting().forEach(sotring -> {
+			if(sortingAsSQL.length() > 0) {
+				sortingAsSQL.append(", ");
+			}
+			sortingAsSQL.append(sotring.getColumnName());
+			if(sotring.getSortType().equals(Order.ASCENDING)) {
+				sortingAsSQL.append(" ASC");
+			} else if(sotring.getSortType().equals(Order.DESCENDING)) {
+				sortingAsSQL.append(" DESC");
+			}
+		});
+		return sortingAsSQL.toString();
+	}
+	
 	public static void main(String[] args) {
-		FilterManager.newInstance("[{\"name\":\"AD_Client_ID\", \"operator\":\"equal\", \"values\": 1000000}, {\"name\":\"AD_Org_ID\", \"operator\":\"in\", \"values\": [1000000, 11, 0]}]")
-		.getConditions().forEach(condition -> {
-			System.out.println(condition);
+		SortingManager.newInstance("[{\"name\":\"Name\", \"type\":\"asc\"}, {\"name\":\"Value\", \"type\":\"desc\"}]")
+		.getSorting().forEach(sort -> {
+			System.out.println(sort);
 		});
 	}
 }

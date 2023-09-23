@@ -50,7 +50,7 @@ service Logs {
 // BusinessProcess Activity Request
 message ListProcessLogsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -72,7 +72,7 @@ message ListProcessLogsResponse {
 // Record Log Request
 message ListEntityLogsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -134,7 +134,7 @@ message ExistsChatEntriesResponse {
 // Record Chat Request
 message ListEntityChatsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -178,7 +178,7 @@ message EntityChat {
 // Record Chat Entry Request
 message ListChatEntriesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -197,7 +197,7 @@ message ListChatEntriesResponse {
 // Recent Items Request
 message ListRecentItemsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -234,7 +234,7 @@ message RecentItem {
 // Workflow Activities Request
 message ListWorkflowLogsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -254,7 +254,7 @@ message ListWorkflowLogsResponse {
 //	User Activity
 message ListUserActivitesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

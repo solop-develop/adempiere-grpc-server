@@ -16,8 +16,7 @@ package org.spin.base.db;
 
 import org.compiere.model.MQuery;
 import org.compiere.util.DisplayType;
-import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Operator;
+import org.spin.base.query.Filter;
 
 /**
  * Class for handle SQL Operators
@@ -30,58 +29,58 @@ public class OperatorUtil {
 
 	/**
 	 * Convert operator from gRPC to SQL
-	 * @param gRpcOperator
+	 * @param serviceOperator
 	 * @return
 	 */
-	public static String convertOperator(int gRpcOperator) {
+	public static String convertOperator(String serviceOperator) {
 		String operator = MQuery.EQUAL;
-		switch (gRpcOperator) {
-			case Operator.BETWEEN_VALUE:
+		switch (serviceOperator) {
+			case Filter.BETWEEN:
 				operator = MQuery.BETWEEN;
 				break;
-			case Operator.NOT_BETWEEN_VALUE:
+			case Filter.NOT_BETWEEN:
 				operator = " NOT BETWEEN ";
 				break;
-			case Operator.EQUAL_VALUE:
+			case Filter.EQUAL:
 				operator = MQuery.EQUAL;
 				break;
-			case Operator.GREATER_EQUAL_VALUE:
+			case Filter.GREATER_EQUAL:
 				operator = MQuery.GREATER_EQUAL;
 				break;
-			case Operator.GREATER_VALUE:
+			case Filter.GREATER:
 				operator = MQuery.GREATER;
 				break;
-			case Operator.IN_VALUE:
+			case Filter.IN:
 				operator = " IN ";
 				break;
-			case Operator.LESS_EQUAL_VALUE:
+			case Filter.LESS_EQUAL:
 				operator = MQuery.LESS_EQUAL;
 				break;
-			case Operator.LESS_VALUE:
+			case Filter.LESS:
 				operator = MQuery.LESS;
 				break;
-			case Operator.LIKE_VALUE:
+			case Filter.LIKE:
 				operator = MQuery.LIKE;
 				break;
-			case Operator.NOT_EQUAL_VALUE:
+			case Filter.NOT_EQUAL:
 				operator = MQuery.NOT_EQUAL;
 				break;
-			case Operator.NOT_IN_VALUE:
+			case Filter.NOT_IN:
 				operator = " NOT IN ";
 				break;
-			case Operator.NOT_LIKE_VALUE:
+			case Filter.NOT_LIKE:
 				operator = MQuery.NOT_LIKE;
 				break;
-			case Operator.NOT_NULL_VALUE:
+			case Filter.NOT_NULL:
 				operator = MQuery.NOT_NULL;
 				break;
-			case Operator.NULL_VALUE:
+			case Filter.NULL:
 				operator = MQuery.NULL;
 				break;
 			default:
 				operator = MQuery.EQUAL;
 				break;
-			}
+		}
 		return operator;
 	}
 
@@ -90,8 +89,8 @@ public class OperatorUtil {
 	 * @param displayTypeId
 	 * @return
 	 */
-	public static int getDefaultOperatorByDisplayType(int displayTypeId) {
-		int operator = Operator.EQUAL_VALUE;
+	public static String getDefaultOperatorByDisplayType(int displayTypeId) {
+		String operator = Filter.EQUAL;
 		switch (displayTypeId) {
 			case DisplayType.String:
 			case DisplayType.Text:
@@ -102,37 +101,11 @@ public class OperatorUtil {
 			case DisplayType.FilePathOrName:
 			case DisplayType.URL:
 			case DisplayType.PrinterName:
-				operator = Operator.LIKE_VALUE;
+				operator = Filter.LIKE;
 				break;
 			default:
 				break;
 			}
 		return operator;
 	}
-
-	/**
-	 * Evaluate value, valueTo, and values to get operator
-	 * @param condition
-	 * @return
-	 */
-	public static int getDefaultOperatorByConditionValue(Condition condition) {
-		if (condition.getValuesList().size() > 0) {
-			// list operator
-			return Operator.IN_VALUE;
-		} else if (condition.getValueTo().getNullValueValue() != com.google.protobuf.NullValue.NULL_VALUE_VALUE) {
-			if (condition.getValue().getNullValueValue() != com.google.protobuf.NullValue.NULL_VALUE_VALUE) {
-				// range operator
-				return Operator.BETWEEN_VALUE;
-			}
-			// only to value
-			// return Operator.LESS_EQUAL_VALUE;
-		}
-		if (!Util.isEmpty(condition.getValue().getStringValue())) {
-			// like
-			return Operator.LIKE_VALUE;
-		}
-		// no valid column set default operator
-		return Operator.EQUAL_VALUE;
-	}
-
 }

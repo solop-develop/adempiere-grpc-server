@@ -28,6 +28,8 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.spin.base.util.ValueUtil;
 
+import com.google.protobuf.Value;
+
 public class ParameterUtil {
 
 	/**	Logger			*/

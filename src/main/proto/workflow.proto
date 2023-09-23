@@ -51,7 +51,7 @@ message WorkflowDefinitionRequest {
 // Workflow Definition Request
 message ListWorkflowsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -176,7 +176,7 @@ message WorkflowCondition {
 // Valid Document Actions Request
 message ListDocumentActionsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -199,7 +199,7 @@ message ListDocumentActionsResponse {
 // Valid Document Status Request
 message ListDocumentStatusesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -221,7 +221,7 @@ message ListDocumentStatusesResponse {
 // Workflow Activities Request
 message ListWorkflowActivitiesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

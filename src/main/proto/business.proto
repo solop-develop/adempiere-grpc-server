@@ -321,7 +321,7 @@ message Preference {
 // Get Entity Request
 message GetReportOutputRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -354,7 +354,7 @@ message GetEntityRequest {
 	string table_name = 2;
 	//	Filters
 	string filters = 3;
-	repeated string sort_columns = 4;
+	string sort_by = 4;
 	repeated string group_columns = 5;
 	repeated string select_columns = 6;
 	int32 page_size = 7;
@@ -409,7 +409,7 @@ message DeleteEntitiesBatchRequest {
 // Browser request
 message ListBrowserItemsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -486,7 +486,7 @@ message LookupItem {
 // List Lookup Item
 message ListLookupItemsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -537,7 +537,7 @@ message UpdateTabEntityRequest {
 // List Tab Entities Request
 message ListTabEntitiesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -559,7 +559,7 @@ message ListTabEntitiesResponse {
 // List Entities Request
 message ListEntitiesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -617,7 +617,7 @@ message RunBusinessProcessRequest {
 // Translations Request
 message ListTranslationsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -638,7 +638,7 @@ message ListTranslationsResponse {
 // Print Formats Request
 message ListPrintFormatsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -696,7 +696,7 @@ message ChatEntry {
 // Report _views Request
 message ListReportViewsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -741,7 +741,7 @@ message ListReportViewsResponse {
 // Drill table Request
 message ListDrillTablesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -771,7 +771,7 @@ message ExistsReferencesResponse {
 // List References
 message ListReferencesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -805,7 +805,7 @@ message ListReferencesResponse {
 // List General Info Request
 message ListGeneralInfoRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -824,7 +824,7 @@ message ListGeneralInfoRequest {
 
 message ListTabSequencesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -845,7 +845,7 @@ message SaveTabSequencesRequest {
 // List Tree Nodes Request
 message ListTreeNodesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -895,7 +895,7 @@ message MailTemplate {
 
 message ListMailTemplatesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

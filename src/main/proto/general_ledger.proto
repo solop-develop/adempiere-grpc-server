@@ -49,7 +49,7 @@ message GetAccountingCombinationRequest {
 
 message ListAccountingCombinationsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -68,7 +68,7 @@ message SaveAccountingCombinationRequest {
 // Accounting Schema
 message ListAccountingSchemasRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -79,7 +79,7 @@ message ListAccountingSchemasRequest {
 // Posting Type
 message ListPostingTypesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -90,7 +90,7 @@ message ListPostingTypesRequest {
 // Accounting Document
 message ListAccountingDocumentsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -113,7 +113,7 @@ message ListAccountingDocumentsResponse {
 // Organization
 message ListOrganizationsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -124,7 +124,7 @@ message ListOrganizationsRequest {
 // Accounting Fact
 message ListAccountingFactsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

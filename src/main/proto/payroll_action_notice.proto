@@ -47,7 +47,7 @@ service PayrollActionNotice {
 // List Payroll Process Request
 message ListPayrollProcessRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -59,7 +59,7 @@ message ListPayrollProcessRequest {
 // List Employee Request
 message ListEmployeeValidRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -71,7 +71,7 @@ message ListEmployeeValidRequest {
 // List Payroll Conceps Request
 message ListPayrollConceptsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -88,7 +88,7 @@ message GetPayrollConceptDefinitionRequest {
 // List Payroll Movements Request
 message ListPayrollMovementsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

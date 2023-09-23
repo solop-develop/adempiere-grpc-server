@@ -186,6 +186,8 @@ import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.dictionary.ReportUtil;
+import org.spin.base.query.FilterManager;
+import org.spin.base.query.SortingManager;
 import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
@@ -1087,10 +1089,10 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		//
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), false, params);
-
-		String orderByClause = criteria.getOrderByClause();
-		if (!Util.isEmpty(orderByClause, true)) {
-			orderByClause = " ORDER BY " + criteria.getOrderByClause();
+		
+		String orderByClause = "";
+		if (!Util.isEmpty(request.getSortBy(), true)) {
+			orderByClause = " ORDER BY " + SortingManager.newInstance(request.getSortBy()).getSotingAsSQL();
 		}
 
 		//	Count records
@@ -1648,10 +1650,10 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		//	
 		ReportOutput.Builder builder = ReportOutput.newBuilder();
-		MQuery query = ReportUtil.getReportQueryFromCriteria(process.getAD_Process_ID(), criteria);
-		if(!Util.isEmpty(criteria.getWhereClause(), true)) {
-			query.addRestriction(criteria.getWhereClause());
-		}
+		MQuery query = ReportUtil.getReportQueryFromCriteria(process.getAD_Process_ID(), request.getTableName(), request.getFilters());
+//		if(!Util.isEmpty(criteria.getWhereClause(), true)) {
+//			query.addRestriction(criteria.getWhereClause());
+//		}
 
 		//	Run report engine
 		ReportEngine reportEngine = new ReportEngine(Env.getCtx(), printFormat, query, printInformation);
@@ -2771,8 +2773,8 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		HashMap<String, Object> parameterMap = new HashMap<>();
 		//	Populate map
-		criteria.getConditionsList().forEach(condition -> {
-			parameterMap.put(condition.getColumnName(), ValueUtil.getObjectFromValue(condition.getValue()));
+		FilterManager.newInstance(request.getFilters()).getConditions().forEach(condition -> {
+			parameterMap.put(condition.getColumnName(), condition.getValue());
 		});
 
 		//	Fill Env.getCtx()
@@ -2817,7 +2819,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		List<Object> filterValues = new ArrayList<Object>();
 		String dynamicWhere = WhereClauseUtil.getBrowserWhereClauseFromCriteria(
 			browser,
-			criteria,
+			request.getFilters(),
 			filterValues
 		);
 		if (!Util.isEmpty(dynamicWhere, true)) {

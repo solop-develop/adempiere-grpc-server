@@ -75,6 +75,7 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.dictionary.DictionaryUtil;
+import org.spin.base.query.SortingManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
@@ -697,8 +698,8 @@ public class BusinessData extends BusinessDataImplBase {
 		Query query = new Query(context, request.getTableName(), whereClause.toString(), null)
 				.setParameters(params);
 		count = query.count();
-		if(!Util.isEmpty(criteria.getOrderByClause())) {
-			query.setOrderBy(criteria.getOrderByClause());
+		if(!Util.isEmpty(request.getSortBy())) {
+			query.setOrderBy(SortingManager.newInstance(request.getSortBy()).getSotingAsSQL());
 		}
 		List<PO> entityList = query
 				.setLimit(limit, offset)

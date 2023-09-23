@@ -15,17 +15,36 @@
 
 package org.spin.base.query;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author Yamel Senih, ysenih@erpya.com, ERPCyA http://www.erpya.com
- * A Stub class that represent a filters from request
+ * A Stub class that represent a sorting from request
  */
-public class Filters {
-	private List<Filter> filters;
+public class Order {
 
-	public List<Filter> getFilters() {
-		return filters;
+	public static final String ASCENDING = "asc";
+	public static final String DESCENDING = "des";
+	//	
+	public static final String NAME = "name";
+	public static final String TYPE = "type";
+	
+	private Map<String, Object> condition;
+	
+	public Order(Map<String, Object> condition) {
+		this.condition = condition;
 	}
 	
+	public String getColumnName() {
+		return (String) condition.get(NAME);
+	}
+	
+	public String getSortType() {
+		return (String) condition.get(TYPE);
+	}
+	
+	@Override
+	public String toString() {
+		return "Order [getColumnName()=" + getColumnName() + ", getSortType()=" + getSortType() + "]";
+	}
 }

@@ -112,7 +112,7 @@ message GetBankStatementRequest {
 
 message ListBankStatementsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -131,7 +131,7 @@ message ListBankStatementsResponse {
 // Bank Account
 message ListBankAccountsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -151,7 +151,7 @@ message BusinessPartner {
 
 message ListBusinessPartnersRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -168,7 +168,7 @@ message ListBusinessPartnersResponse {
 
 message ListSearchModesRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -199,7 +199,7 @@ enum MatchMode {
 // Imported Bank Movements
 message ListImportedBankMovementsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -236,7 +236,7 @@ message ListImportedBankMovementsResponse {
 // Payments Movements
 message ListPaymentsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -274,7 +274,7 @@ message ListPaymentsResponse {
 // Matched Bank/Payment Movements
 message ListMatchingMovementsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
@@ -336,7 +336,7 @@ message ResultMovement {
 
 message ListResultMovementsRequest {
 	string filters = 1;
-	repeated string sort_columns = 2;
+	string sort_by = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;

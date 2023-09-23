@@ -43,6 +43,8 @@ import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.base.query.Filter;
+import org.spin.base.query.FilterManager;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
@@ -591,8 +593,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.<MAcctSchemaElement>list()
 		;
-
-		List<Condition> conditionsList = request.getFilters().getConditionsList();
+		List<Filter> conditionsList = FilterManager.newInstance(request.getFilters()).getConditions();
 		acctSchemaElements.forEach(acctSchemaElement -> {
 			if (acctSchemaElement.getElementType().equals(X_C_AcctSchema_Element.ELEMENTTYPE_Organization)) {
 				// Organization filter is inside the request
@@ -601,7 +602,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 			String columnName = MAcctSchemaElement.getColumnName(acctSchemaElement.getElementType());
 
-			Condition elementAccount = conditionsList.stream()
+			Filter elementAccount = conditionsList.stream()
 				.filter(condition -> {
 					return condition.getColumnName().equals(columnName);
 				})
@@ -611,9 +612,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			if (elementAccount == null) {
 				return;
 			}
-			Object value = ValueUtil.getObjectFromValue(
-				elementAccount.getValue()
-			);
+			Object value = elementAccount.getValue();
 			if (value == null) {
 				return;
 			}
