@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.adempiere.core.domains.models.I_C_Project;
 import org.adempiere.core.domains.models.I_R_Request;
@@ -51,7 +50,6 @@ import org.spin.backend.grpc.form.time_record.TimeRecordGrpc.TimeRecordImplBase;
 import org.spin.backend.grpc.form.time_record.User;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 
@@ -77,7 +75,6 @@ public class TimeRecord extends TimeRecordImplBase {
 			return builder;
 		}
 		builder.setId(request.getR_Request_ID());
-		builder.setUuid(ValueUtil.validateNull(request.getUUID()));
 		builder.setDocumentNo(ValueUtil.validateNull(request.getDocumentNo()));
 		builder.setSubject(ValueUtil.validateNull(request.getSubject()));
 		builder.setSummary(ValueUtil.validateNull(request.getSummary()));
@@ -171,7 +168,6 @@ public class TimeRecord extends TimeRecordImplBase {
 			return builder;
 		}
 		builder.setId(project.getC_Project_ID());
-		builder.setUuid(ValueUtil.validateNull(project.getUUID()));
 		builder.setValue(ValueUtil.validateNull(project.getValue()));
 		builder.setName(ValueUtil.validateNull(project.getName()));
 
@@ -253,7 +249,6 @@ public class TimeRecord extends TimeRecordImplBase {
 			return builder;
 		}
 		builder.setId(resourceType.getS_ResourceType_ID());
-		builder.setUuid(ValueUtil.validateNull(resourceType.getUUID()));
 		builder.setValue(ValueUtil.validateNull(resourceType.getValue()));
 		builder.setName(ValueUtil.validateNull(resourceType.getName()));
 		builder.setDescription(ValueUtil.validateNull(resourceType.getDescription()));
@@ -275,7 +270,6 @@ public class TimeRecord extends TimeRecordImplBase {
 			return builder;
 		}
 		builder.setId(user.getAD_User_ID());
-		builder.setUuid(ValueUtil.validateNull(user.getUUID()));
 		builder.setValue(ValueUtil.validateNull(user.getValue()));
 		builder.setName(ValueUtil.validateNull(user.getName()));
 		builder.setDescription(ValueUtil.validateNull(user.getDescription()));
@@ -303,7 +297,6 @@ public class TimeRecord extends TimeRecordImplBase {
 			return builder;
 		}
 		builder.setId(resource.getS_ResourceType_ID());
-		builder.setUuid(ValueUtil.validateNull(resource.getUUID()));
 		builder.setName(ValueUtil.validateNull(resource.getName()));
 
 		MResourceType resourceType = MResourceType.get(Env.getCtx(), resource.getS_ResourceType_ID());
@@ -338,14 +331,13 @@ public class TimeRecord extends TimeRecordImplBase {
 			return builder;
 		}
 		builder.setId(resourceAssignment.getS_ResourceAssignment_ID());
-		builder.setUuid(ValueUtil.validateNull(resourceAssignment.getUUID()));
 		builder.setName(ValueUtil.validateNull(resourceAssignment.getName()));
 		builder.setDescription(ValueUtil.validateNull(resourceAssignment.getDescription()));
 		if (resourceAssignment.getAssignDateFrom() != null) {
-			builder.setAssignDateFrom(resourceAssignment.getAssignDateFrom().getTime());
+			builder.setAssignDateFrom(ValueUtil.getTimestampFromDate(resourceAssignment.getAssignDateFrom()));
 		}
 		if (resourceAssignment.getAssignDateTo() != null) {
-			builder.setAssignDateTo(resourceAssignment.getAssignDateTo().getTime());
+			builder.setAssignDateTo(ValueUtil.getTimestampFromDate(resourceAssignment.getAssignDateTo()));
 		}
 		builder.setIsConfirmed(resourceAssignment.isConfirmed());
 		builder.setQuantity(
@@ -439,17 +431,14 @@ public class TimeRecord extends TimeRecordImplBase {
 
 		// set date
 		Timestamp dateFrom = new Timestamp(System.currentTimeMillis());
-		if (!Objects.isNull(request.getDate()) && request.getDate() > 0) {
-			dateFrom = new Timestamp(request.getDate());
+		if (ValueUtil.getDateFromTimestampDate(request.getDate()) != null) {
+			dateFrom = ValueUtil.getDateFromTimestampDate(request.getDate());
 		}
 		resourceAssignment.setAssignDateFrom(dateFrom);
 
 		// set project
-		if (request.getProjectId() > 0 || !Util.isEmpty(request.getProjectUuid(), true)) {
+		if (request.getProjectId() > 0) {
 			int projectId = request.getProjectId();
-			if (projectId <= 0) {
-				projectId = RecordUtil.getIdFromUuid(I_C_Project.Table_Name, request.getProjectUuid(), null);
-			}
 			// checks if the column exists in the database
 			if (resourceAssignment.get_ColumnIndex(I_C_Project.COLUMNNAME_C_Project_ID) >= 0) {
 				resourceAssignment.set_ValueOfColumn(
@@ -460,11 +449,8 @@ public class TimeRecord extends TimeRecordImplBase {
 		}
 
 		// set request
-		if (request.getRequestId() > 0 || !Util.isEmpty(request.getRequestUuid(), true)) {
+		if (request.getRequestId() > 0) {
 			int requestId = request.getProjectId();
-			if (requestId <= 0) {
-				requestId = RecordUtil.getIdFromUuid(I_R_Request.Table_Name, request.getRequestUuid(), null);
-			}
 			// checks if the column exists in the database
 			if (resourceAssignment.get_ColumnIndex(I_R_Request.COLUMNNAME_R_Request_ID) >= 0) {
 				resourceAssignment.set_ValueOfColumn(
@@ -517,13 +503,13 @@ public class TimeRecord extends TimeRecordImplBase {
 			+ ") "
 		;
 
-		if (!Objects.isNull(request.getDateFrom()) && request.getDateFrom() > 0) {
-			Timestamp dateFrom = new Timestamp(request.getDateFrom());
+		if (ValueUtil.getDateFromTimestampDate(request.getDateFrom()) != null) {
+			Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
 			parametersList.add(dateFrom);
 			whereClause += " AND AssignDateFrom = ? ";
 		}
-		if (!Objects.isNull(request.getDateTo()) && request.getDateTo() > 0) {
-			Timestamp dateTo = new Timestamp(request.getDateTo());
+		if (ValueUtil.getDateFromTimestampDate(request.getDateTo()) != null) {
+			Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
 			parametersList.add(dateTo);
 			whereClause += " AND AssignDateTo = ? ";
 		}

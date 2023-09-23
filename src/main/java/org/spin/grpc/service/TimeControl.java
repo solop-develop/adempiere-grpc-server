@@ -19,11 +19,9 @@ import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.adempiere.core.domains.models.I_S_ResourceType;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MResource;
 import org.compiere.model.MResourceAssignment;
@@ -47,7 +45,6 @@ import org.spin.backend.grpc.time_control.TimeControlGrpc.TimeControlImplBase;
 import org.spin.backend.grpc.time_control.UpdateResourceAssignmentRequest;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 
@@ -75,7 +72,6 @@ public class TimeControl extends TimeControlImplBase {
 			return builder;
 		}
 		builder.setId(resourceType.getS_ResourceType_ID());
-		builder.setUuid(ValueUtil.validateNull(resourceType.getUUID()));
 		builder.setValue(ValueUtil.validateNull(resourceType.getValue()));
 		builder.setName(ValueUtil.validateNull(resourceType.getName()));
 		builder.setDescription(ValueUtil.validateNull(resourceType.getDescription()));
@@ -97,7 +93,6 @@ public class TimeControl extends TimeControlImplBase {
 			return builder;
 		}
 		builder.setId(resource.getS_ResourceType_ID());
-		builder.setUuid(ValueUtil.validateNull(resource.getUUID()));
 		builder.setName(ValueUtil.validateNull(resource.getName()));
 		
 		MResourceType resourceType = MResourceType.get(Env.getCtx(), resource.getS_ResourceType_ID());
@@ -127,14 +122,13 @@ public class TimeControl extends TimeControlImplBase {
 			return builder;
 		}
 		builder.setId(resourceAssignment.getS_ResourceAssignment_ID());
-		builder.setUuid(ValueUtil.validateNull(resourceAssignment.getUUID()));
 		builder.setName(ValueUtil.validateNull(resourceAssignment.getName()));
 		builder.setDescription(ValueUtil.validateNull(resourceAssignment.getDescription()));
 		if (resourceAssignment.getAssignDateFrom() != null) {
-		    builder.setAssignDateFrom(resourceAssignment.getAssignDateFrom().getTime());
+		    builder.setAssignDateFrom(ValueUtil.getTimestampFromDate(resourceAssignment.getAssignDateFrom()));
 		}
 		if (resourceAssignment.getAssignDateTo() != null) {
-		    builder.setAssignDateTo(resourceAssignment.getAssignDateTo().getTime());
+		    builder.setAssignDateTo(ValueUtil.getTimestampFromDate(resourceAssignment.getAssignDateTo()));
 		}
 		builder.setIsConfirmed(resourceAssignment.isConfirmed());
 		builder.setQuantity(
@@ -189,13 +183,8 @@ public class TimeControl extends TimeControlImplBase {
 	
 	private ResourceAssignment.Builder createResourceAssignment(CreateResourceAssignmentRequest request) {
 	    int resourceTypeId = request.getResourceTypeId();
-        if (resourceTypeId <= 0) {
-            if (!Util.isEmpty(request.getResourceTypeUuid(), true)) {
-                resourceTypeId = RecordUtil.getIdFromUuid(MResourceType.Table_Name, request.getResourceTypeUuid(), null);
-            }
-            if (resourceTypeId <= 0) {
-                throw new AdempiereException("@FillMandatory@ @S_ResourceType_ID@");
-            }
+	    if (resourceTypeId <= 0) {
+            throw new AdempiereException("@FillMandatory@ @S_ResourceType_ID@");
         }
 
 		if (Util.isEmpty(request.getName(), true)) {
@@ -254,11 +243,8 @@ public class TimeControl extends TimeControlImplBase {
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = " 1=1 ";
 		// filter by resource type
-		if (request.getResourceTypeId() > 0 || !Util.isEmpty(request.getResourceTypeUuid(), true)) {
+		if (request.getResourceTypeId() > 0) {
 			int resourceTypeId = request.getResourceTypeId();
-			if (resourceTypeId <= 0) {
-				resourceTypeId = RecordUtil.getIdFromUuid(I_S_ResourceType.Table_Name, request.getResourceTypeUuid(), null);
-			}
 			parametersList.add(resourceTypeId);
 			whereClause += " AND NOT EXISTS("
 				+ " SELECT 1 FROM S_Resource "
@@ -288,13 +274,13 @@ public class TimeControl extends TimeControlImplBase {
 				+ " WHERE C_OrderLine.S_ResourceAssignment_ID = S_ResourceAssignment.S_ResourceAssignment_ID "
 				+ ") ";
 		}
-		if (!Objects.isNull(request.getDateFrom()) && request.getDateFrom() > 0) {
-			Timestamp dateFrom = new Timestamp(request.getDateFrom());
+		if (ValueUtil.getDateFromTimestampDate(request.getDateFrom()) != null) {
+			Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
 			parametersList.add(dateFrom);
 			whereClause += " AND AssignDateFrom = ? ";
 		}
-		if (!Objects.isNull(request.getDateTo()) && request.getDateTo() > 0) {
-			Timestamp dateTo = new Timestamp(request.getDateTo());
+		if (ValueUtil.getDateFromTimestampDate(request.getDateTo()) != null) {
+			Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
 			parametersList.add(dateTo);
 			whereClause += " AND AssignDateTo = ? ";
 		}
@@ -352,12 +338,7 @@ public class TimeControl extends TimeControlImplBase {
     private ResourceAssignment.Builder updateResourcesAssignment(UpdateResourceAssignmentRequest request) {
         int resourceAssignmentId = request.getId();
         if (resourceAssignmentId <= 0) {
-            if (!Util.isEmpty(request.getUuid(), true)) {
-                resourceAssignmentId = RecordUtil.getIdFromUuid(MResourceAssignment.Table_Name, request.getUuid(), null);
-            }
-            if (resourceAssignmentId <= 0) {
-                throw new AdempiereException("@FillMandatory@ @S_ResourceType_ID@");
-            }
+            throw new AdempiereException("@FillMandatory@ @S_ResourceType_ID@");
         }
         MResourceAssignment resourceAssignment = new MResourceAssignment(Env.getCtx(), resourceAssignmentId, null);
         if (resourceAssignment == null || resourceAssignment.getS_ResourceAssignment_ID() <= 0) {
@@ -398,11 +379,7 @@ public class TimeControl extends TimeControlImplBase {
         // Validate ID
         int recordId = request.getId();
         if (recordId <= 0) {
-            String recordUuid = ValueUtil.validateNull(request.getUuid());
-            recordId = RecordUtil.getIdFromUuid(MResourceAssignment.Table_Name, recordUuid, null);
-            if (recordId <= 0) {
-                throw new AdempiereException("@Record_ID@ @NotFound@");
-            }
+            throw new AdempiereException("@Record_ID@ @NotFound@");
         }
 
 		MResourceAssignment resourceAssignment = new MResourceAssignment(Env.getCtx(), recordId, null);
@@ -440,30 +417,21 @@ public class TimeControl extends TimeControlImplBase {
 		// Validate ID
 		int resourceAssignmentId = request.getId();
 		if (resourceAssignmentId <= 0) {
-			String recordUuid = ValueUtil.validateNull(request.getUuid());
-			resourceAssignmentId = RecordUtil.getIdFromUuid(MResourceAssignment.Table_Name, recordUuid, null);
-			if (resourceAssignmentId <= 0) {
-				throw new AdempiereException("@Record_ID@ @NotFound@");
-			}
+			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
-
-		MResourceAssignment resourceAssignment = confirmResourceAssignment(request.getId(), request.getUuid());
+		MResourceAssignment resourceAssignment = confirmResourceAssignment(request.getId());
 
 		ResourceAssignment.Builder builder = convertResourceAssignment(resourceAssignment);
 		
 		return builder;
 	}
 	
-	public static MResourceAssignment confirmResourceAssignment(int resourceAssignmentId, String resourceAssignmentUuid) {
+	public static MResourceAssignment confirmResourceAssignment(int resourceAssignmentId) {
 
 		AtomicReference<MResourceAssignment> resourceAssignmentReference = new AtomicReference<MResourceAssignment>();
 
 		Trx.run(transactionName -> {
 			int recordId = resourceAssignmentId;
-			// Validate ID
-			if (recordId <= 0) {
-				recordId = RecordUtil.getIdFromUuid(MResourceAssignment.Table_Name, resourceAssignmentUuid, transactionName);
-			}
 			if (recordId <= 0) {
 				throw new AdempiereException("@Record_ID@ @NotFound@");
 			}

@@ -152,9 +152,6 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		}
 
 		builder.setId(businessPartner.getC_BPartner_ID())
-			.setUuid(
-				ValueUtil.validateNull(businessPartner.getUUID())
-			)
 			.setValue(
 				ValueUtil.validateNull(businessPartner.getValue())
 			)
@@ -202,9 +199,6 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		Properties context = Env.getCtx();
 
 		int businessPartnerId = request.getBusinessPartnerId();
-		if (businessPartnerId <= 0 && !Util.isEmpty(request.getBusinessPartnerUuid(), true)) {
-			businessPartnerId = RecordUtil.getIdFromUuid(I_C_BPartner.Table_Name, request.getBusinessPartnerUuid(), null);
-		}
 		if (businessPartnerId <= 0) {
 			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 		}
@@ -261,11 +255,8 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		}
 
 		builder.setId(purchaseOrder.getC_Order_ID())
-			.setUuid(
-				ValueUtil.validateNull(purchaseOrder.getUUID())
-			)
 			.setDateOrdered(
-				ValueUtil.getLongFromTimestamp(purchaseOrder.getDateOrdered())
+				ValueUtil.getTimestampFromDate(purchaseOrder.getDateOrdered())
 			)
 			.setDocumentNo(
 				ValueUtil.validateNull(purchaseOrder.getDocumentNo())
@@ -299,9 +290,6 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 	private ListProductsResponse.Builder listProducts(ListProductsRequest request) {
 		int orderId = request.getOrderId();
-		if (orderId <= 0 && !Util.isEmpty(request.getOrderUuid(), true)) {
-			orderId = RecordUtil.getIdFromUuid(this.tableName, request.getOrderUuid(), null);
-		}
 		if (orderId <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
@@ -384,9 +372,6 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 			return builder;
 		}
 		builder.setId(product.getM_Product_ID())
-			.setUuid(
-				ValueUtil.validateNull(product.getUUID())
-			)
 			.setUpc(
 				ValueUtil.validateNull(product.getUPC())
 			)
@@ -412,17 +397,14 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		}
 
 		builder.setId(receipt.getM_InOut_ID())
-			.setUuid(
-				ValueUtil.validateNull(receipt.getUUID())
-			)
 			.setDocumentNo(
 				ValueUtil.validateNull(receipt.getDocumentNo())
 			)
 			.setDateOrdered(
-				ValueUtil.getLongFromTimestamp(receipt.getDateOrdered())
+				ValueUtil.getTimestampFromDate(receipt.getDateOrdered())
 			)
 			.setMovementDate(
-				ValueUtil.getLongFromTimestamp(receipt.getMovementDate())
+				ValueUtil.getTimestampFromDate(receipt.getMovementDate())
 			)
 			.setIsCompleted(
 				DocumentUtil.isCompleted(receipt)
@@ -431,7 +413,6 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		MOrderLine purchaseOrderLine = new MOrderLine(Env.getCtx(), receipt.getC_Order_ID(), null);
 		if (purchaseOrderLine != null && purchaseOrderLine.getC_OrderLine_ID() > 0) {
 			builder.setOrderId(purchaseOrderLine.getC_OrderLine_ID())
-				.setOrderUuid(purchaseOrderLine.getUUID())
 			;
 		}
 
@@ -460,16 +441,13 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 	private Receipt.Builder createReceipt(CreateReceiptRequest request) {
-		if (request.getOrderId() <= 0 && Util.isEmpty(request.getOrderUuid(), true)) {
+		if (request.getOrderId() <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 
 		AtomicReference<MInOut> maybeReceipt = new AtomicReference<MInOut>();
 		Trx.run(transactionName -> {
 			int orderId = request.getOrderId();
-			if (orderId <= 0 && !Util.isEmpty(request.getOrderUuid(), true)) {
-				orderId = RecordUtil.getIdFromUuid(this.tableName, request.getOrderUuid(), null);
-			}
 			if (orderId <= 0) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
@@ -585,14 +563,11 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 	private Empty.Builder deleteReceipt(DeleteReceiptRequest request) {
-		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+		if (request.getId() <= 0) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
 			int receiptId = request.getId();
-			if (receiptId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				receiptId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
-			}
 			if (receiptId <= 0) {
 				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 			}
@@ -637,9 +612,6 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 		Trx.run(transactionName -> {
 			int receiptId = request.getId();
-			if (receiptId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				receiptId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
-			}
 			if (receiptId <= 0) {
 				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 			}
@@ -687,22 +659,15 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 	private ReceiptLine.Builder createReceiptLine(CreateReceiptLineRequest request) {
-		if (request.getReceiptId() <= 0 && Util.isEmpty(request.getReceiptUuid(), true)) {
+		if (request.getReceiptId() <= 0) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
-		if (request.getProductId() <= 0 && Util.isEmpty(request.getProductUuid(), true)) {
-			throw new AdempiereException("@M_Product_ID@ @NotFound@");
-		}
-
 		AtomicReference<MInOutLine> receiptLineReference = new AtomicReference<MInOutLine>();
 
 		Trx.run(transactionName -> {
 			int receiptId = request.getReceiptId();
 			if (receiptId <= 0) {
-				receiptId = RecordUtil.getIdFromUuid(this.tableName, request.getReceiptUuid(), transactionName);
-				if (receiptId <= 0) {
-					throw new AdempiereException("@M_InOut_ID@ @NotFound@");
-				}
+				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 			}
 			MInOut receipt = new MInOut(Env.getCtx(), receiptId, transactionName);
 			if (receipt == null || receipt.getM_InOut_ID() <= 0) {
@@ -714,10 +679,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			int productId = request.getProductId();
 			if (productId <= 0) {
-				productId = RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), transactionName);
-				if (productId <= 0) {
-					throw new AdempiereException("@M_Product_ID@ @NotFound@");
-				}
+				throw new AdempiereException("@M_Product_ID@ @NotFound@");
 			}
 
 			final String whereClause = "M_Product_ID = ? "
@@ -740,7 +702,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+				quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -803,15 +765,12 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 	private Empty.Builder deleteReceiptLine(DeleteReceiptLineRequest request) {
-		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+		if (request.getId() <= 0) {
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 
 		Trx.run(transactionName -> {
 			int receiptLineId = request.getId();
-			if (receiptLineId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				receiptLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), transactionName);
-			}
 			if (receiptLineId <= 0) {
 				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 			}
@@ -853,7 +812,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 	private ReceiptLine.Builder updateReceiptLine(UpdateReceiptLineRequest request) {
-		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+		if (request.getId() <= 0) {
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 
@@ -862,10 +821,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		Trx.run(transactionName -> {
 			int receiptLineId = request.getId();
 			if (receiptLineId <= 0) {
-				receiptLineId = RecordUtil.getIdFromUuid(I_M_InOutLine.Table_Name, request.getUuid(), transactionName);
-				if (receiptLineId <= 0) {
-					throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
-				}
+				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 			}
 
 			MInOutLine receiptLine = new MInOutLine(Env.getCtx(), receiptLineId, transactionName);
@@ -884,7 +840,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+				quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -944,9 +900,6 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		}
 
 		builder.setId(receiptLine.getM_InOutLine_ID())
-			.setUuid(
-				ValueUtil.validateNull(receiptLine.getUUID())
-			)
 			.setProduct(
 				convertProduct(receiptLine.getM_Product_ID())
 			)
@@ -961,9 +914,6 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		MOrderLine orderLine = new MOrderLine(Env.getCtx(), receiptLine.getC_OrderLine_ID(), null);
 		if (orderLine != null && orderLine.getC_OrderLine_ID() > 0) {
 			builder.setOrderLineId(orderLine.getC_OrderLine_ID())
-				.setOrderLineUuid(
-					ValueUtil.validateNull(orderLine.getUUID())
-				)
 			;
 		}
 
@@ -971,15 +921,12 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 	private ListReceiptLinesResponse.Builder listReceiptLines(ListReceiptLinesRequest request) {
-		if (request.getReceiptId() <= 0 && Util.isEmpty(request.getReceiptUuid(), true)) {
+		if (request.getReceiptId() <= 0) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 		int receiptId = request.getReceiptId();
 		if (receiptId <= 0) {
-			receiptId = RecordUtil.getIdFromUuid(I_M_InOut.Table_Name, request.getReceiptUuid(), null);
-			if (receiptId <= 0) {
-				throw new AdempiereException("@M_InOut_ID@ @NotFound@");
-			}
+			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 
 		Query query = new Query(

@@ -59,7 +59,6 @@ import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityEventType;
 import org.spin.backend.grpc.logs.EntityLog;
 import org.spin.backend.grpc.logs.ListEntityLogsResponse;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 
 import com.google.protobuf.Struct;
@@ -105,7 +104,6 @@ public class LogsConvertUtil {
 		EntityLog.Builder builder = EntityLog.newBuilder();
 		builder.setLogId(recordLog.getAD_ChangeLog_ID());
 		builder.setId(recordLog.getRecord_ID());
-		builder.setUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(table.getTableName(), recordLog.getRecord_ID())));
 		builder.setTableName(ValueUtil.validateNull(table.getTableName()));
 		
 		String displayedName = table.get_Translation(I_AD_Table.COLUMNNAME_Name);
@@ -113,19 +111,16 @@ public class LogsConvertUtil {
 			MWindow window = MWindow.get(Env.getCtx(), table.getAD_Window_ID());
 			displayedName = window.get_Translation(I_AD_Window.COLUMNNAME_Name);
 			builder.setWindowId(window.getAD_Window_ID());
-			builder.setWindowUuid(
-				ValueUtil.validateNull(window.getUUID())
-			);
 		}
 		builder.setDisplayedName(
 			ValueUtil.validateNull(displayedName)
 		);
 
-		builder.setSessionUuid(ValueUtil.validateNull(recordLog.getAD_Session().getUUID()));
-		builder.setUserUuid(ValueUtil.validateNull(user.getUUID()));
+		builder.setSessionId(recordLog.getAD_Session_ID());
+		builder.setUserId(user.getAD_User_ID());
 		builder.setUserName(ValueUtil.validateNull(user.getName()));
 		builder.setTransactionName(ValueUtil.validateNull(recordLog.getTrxName()));
-		builder.setLogDate(recordLog.getCreated().getTime());
+		builder.setLogDate(ValueUtil.getTimestampFromDate(recordLog.getCreated()));
 		if(recordLog.getEventChangeLog().endsWith(MChangeLog.EVENTCHANGELOG_Insert)) {
 			builder.setEventType(EntityEventType.INSERT);
 		} else if(recordLog.getEventChangeLog().endsWith(MChangeLog.EVENTCHANGELOG_Update)) {

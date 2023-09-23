@@ -28,7 +28,9 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Value;
+
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 /**
  * Class for handle Context
@@ -41,6 +43,10 @@ public class ContextManager {
 
 	public static Properties setContextWithAttributesFromObjectMap(int windowNo, Properties context, Map<String, Object> attributes) {
 		return setContextWithAttributes(windowNo, context, attributes, true);
+	}
+	
+	public static Properties setContextWithAttributesFromStruct(int windowNo, Properties context, Struct attributes) {
+		return setContextWithAttributesFromValuesMap(windowNo, context, attributes.getFieldsMap());
 	}
 	
 	public static Properties setContextWithAttributesFromValuesMap(int windowNo, Properties context, Map<String, Value> attributes) {

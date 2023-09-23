@@ -54,10 +54,6 @@ public class ProductInfo extends ProductImplBase {
 	@Override
 	public void listProductInfo(ListProductInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
 			ListEntitiesResponse.Builder entityValueList = listProductInfo(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
@@ -78,17 +74,17 @@ public class ProductInfo extends ProductImplBase {
 	 */
 	private ListEntitiesResponse.Builder listProductInfo( ListProductInfoRequest request) {
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			request.getReferenceUuid(),
-			request.getFieldUuid(),
-			request.getProcessParameterUuid(),
-			request.getBrowseFieldUuid(),
-			request.getColumnUuid(),
+			request.getReferenceId(),
+			request.getFieldId(),
+			request.getProcessParameterId(),
+			request.getBrowseFieldId(),
+			request.getColumnId(),
 			request.getColumnName(),
 			this.tableName
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		//
 		MTable table = MTable.get(Env.getCtx(), this.tableName);

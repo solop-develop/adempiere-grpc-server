@@ -18,7 +18,6 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.common";
 option java_outer_classname = "ADempiereCoreFunctionality";
 
-import "base_data_type.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
@@ -83,7 +82,7 @@ message SystemInfo {
 	string last_build_info = 4;
 	string logo_url = 5;
 	// backend
-	string backend_date_version = 6;
+	google.protobuf.Timestamp backend_date_version = 6;
 	string backend_main_version = 7;
 	string backend_implementation_version = 8;
 }
@@ -102,17 +101,19 @@ message ListBusinessPartnersResponse {
 
 // List Business Partner Request
 message ListBusinessPartnersRequest {
-	string search_value = 2;
-	string value = 3;
-	string name = 4;
-	string contact_name = 6;
-	string email = 7;
-	string postal_code = 8;
-	string phone = 9;
-	// Query
-	Criteria criteria = 10;
-	int32 page_size = 11;
-	string page_token = 12;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string value = 8;
+	string name = 9;
+	string contact_name = 10;
+	string email = 11;
+	string postal_code = 12;
+	string phone = 13;
 }
 
 // Request Business Partner
@@ -124,8 +125,13 @@ message GetBusinessPartnerRequest {
 	string email = 7;
 	string postal_code = 8;
 	string phone = 9;
-	// Query
-	Criteria criteria = 10;
+	//	Filters
+	string filters = 10;
+	repeated string sort_columns = 11;
+	repeated string group_columns = 12;
+	repeated string select_columns = 13;
+	int32 page_size = 14;
+	string page_token = 15;
 }
 
 // Request Business Partner
@@ -157,8 +163,13 @@ message CreateBusinessPartnerRequest {
 
 // Languages Request
 message ListLanguagesRequest {
-	int32 page_size = 2;
-	string page_token = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 //	Languages List
@@ -198,7 +209,7 @@ message GetConversionRateRequest {
 	int32 conversion_type_id = 2;
 	int32 currency_from_id = 3;
 	int32 currency_to_id = 4;
-	string conversion_date = 5;
+	google.protobuf.Timestamp conversion_date = 5;
 }
 
 // Currency info
@@ -219,8 +230,8 @@ message ConversionRate {
 	google.protobuf.Timestamp valid_to = 4;
 	Currency currency_from = 5;
 	Currency currency_to = 6;
-	google.protobuf.Struct multiply_rate = 7;
-	google.protobuf.Struct divide_rate = 8;
+	google.protobuf.Value multiply_rate = 7;
+	google.protobuf.Value divide_rate = 8;
 }
 
 // Organization
@@ -246,9 +257,14 @@ message ListOrganizationsResponse {
 
 // Organization from Role
 message ListOrganizationsRequest {
-	int32 role_id = 1;
-	int32 page_size = 2;
-	string page_token = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 role_id = 8;
 }
 
 // Warehouse
@@ -267,9 +283,14 @@ message ListWarehousesResponse {
 
 // Warehouses Request
 message ListWarehousesRequest {
-	int32 organization_id = 1;
-	int32 page_size = 2;
-	string page_token = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 organization_id = 8;
 }
 
 // Unit of Measure
@@ -285,9 +306,14 @@ message UnitOfMeasure {
 
 // List Product UOM Conversion Request
 message ListProductConversionRequest {
-	int32 product_id = 1;
-	int32 page_size = 2;
-	string page_token = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 product_id = 8;
 }
 
 // Product UOM Conversion
@@ -295,8 +321,8 @@ message ProductConversion {
 	int32 id = 1;
 	UnitOfMeasure uom = 2;
 	UnitOfMeasure product_uom = 3;
-	google.protobuf.Struct multiply_rate = 4;
-	google.protobuf.Struct divide_rate = 5;
+	google.protobuf.Value multiply_rate = 4;
+	google.protobuf.Value divide_rate = 5;
 }
 
 //	List Product Conversion Response
@@ -359,15 +385,15 @@ message Product {
 	string product_group_name = 14;
 	string product_class_name = 15;
 	string product_classification_name = 16;
-	google.protobuf.Struct weight = 17;
-	google.protobuf.Struct volume = 18;
+	google.protobuf.Value weight = 17;
+	google.protobuf.Value volume = 18;
 	string upc = 19;
 	string sku = 20;
 	int32 shelf_width = 21;
-	google.protobuf.Struct shelf_height = 22;
+	google.protobuf.Value shelf_height = 22;
 	int32 shelf_depth = 23;
 	int32 units_per_pack = 24;
-	google.protobuf.Struct units_per_pallet = 25;
+	google.protobuf.Value units_per_pallet = 25;
 	int32 guarantee_days = 26;
 	string description_url = 27;
 	string version_no = 28;
@@ -381,30 +407,30 @@ message TaxRate {
 	string name = 2;
 	string description = 3;
 	string tax_indicator = 4;
-	google.protobuf.Struct rate = 5;
+	google.protobuf.Value rate = 5;
 }
 
 // Product Price
 message ProductPrice {
 	Product product = 1;
-	google.protobuf.Struct price_list = 2;
-	google.protobuf.Struct price_standard = 3;
-	google.protobuf.Struct price_limit = 4;
+	google.protobuf.Value price_list = 2;
+	google.protobuf.Value price_standard = 3;
+	google.protobuf.Value price_limit = 4;
 	string price_list_name = 5;
 	bool is_tax_included = 6;
 	string valid_from = 7;
 	Currency currency = 8;
 	TaxRate tax_rate = 9;
 	int32 price_precision = 10;
-	google.protobuf.Struct quantity_on_hand = 11;
-	google.protobuf.Struct quantity_reserved = 12;
-	google.protobuf.Struct quantity_ordered = 13;
-	google.protobuf.Struct quantity_available = 14;
+	google.protobuf.Value quantity_on_hand = 11;
+	google.protobuf.Value quantity_reserved = 12;
+	google.protobuf.Value quantity_ordered = 13;
+	google.protobuf.Value quantity_available = 14;
 	//	Schema Values
 	Currency display_currency = 15;
-	google.protobuf.Struct display_price_list = 16;
-	google.protobuf.Struct display_price_standard = 17;
-	google.protobuf.Struct display_price_limit = 18;
+	google.protobuf.Value display_price_list = 16;
+	google.protobuf.Value display_price_standard = 17;
+	google.protobuf.Value display_price_limit = 18;
 	ConversionRate conversion_rate = 19;
 }
 
@@ -443,8 +469,8 @@ message BankAccount {
 	Currency currency = 5;
 	string bban = 6;
 	string iban = 7;
-	google.protobuf.Struct credit_limit = 8;
-	google.protobuf.Struct current_balance = 9;
+	google.protobuf.Value credit_limit = 8;
+	google.protobuf.Value current_balance = 9;
 	bool is_default = 10;
 	BusinessPartner business_partner = 11;
 	enum BankAccountType {

@@ -78,9 +78,14 @@ message Dashboard {
 
 // Dashboards Request
 message ListDashboardsRequest {
-	int32 role_id = 1;
-	int32 page_size = 2;
-	string page_token = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 role_id = 8;
 }
 
 //	Dashboards List
@@ -92,9 +97,14 @@ message ListDashboardsResponse {
 
 // Favorites Items Request
 message ListFavoritesRequest {
-	int32 user_id = 1;
-	int32 page_size = 2;
-	string page_token = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 user_id = 8;
 }
 
 // Recent Item
@@ -115,10 +125,15 @@ message ListFavoritesResponse {
 
 // Document Statuses Request
 message ListPendingDocumentsRequest {
-	int32 user_id = 1;
-	int32 role_id = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 user_id = 8;
+	int32 role_id = 9;
 }
 
 //	Recent Items List
@@ -157,7 +172,7 @@ message Metrics {
 	string description = 3;
 	string x_axis_label = 4;
 	string y_axis_label = 5;
-	google.protobuf.Struct measure_target = 6;
+	google.protobuf.Value measure_target = 6;
 	repeated ColorSchema color_schemas = 7;
 	repeated ChartSerie series = 8;
 }
@@ -171,14 +186,14 @@ message ChartSerie {
 //	Data of Chart
 message ChartData {
 	string name = 1;
-	google.protobuf.Struct value = 2;
+	google.protobuf.Value value = 2;
 }
 
 //	Color Schema
 message ColorSchema {
 	string name = 1;
 	string color = 2;
-	google.protobuf.Struct percent = 3;
+	google.protobuf.Value percent = 3;
 }
 
 enum Action {
@@ -199,9 +214,13 @@ message Notification {
 }
 
 message ListNotificationsRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	string search_value = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListNotificationsResponse {
@@ -260,11 +279,15 @@ message WindowDashboard {
 }
 
 message ListWindowDashboardsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
-	int32 window_id = 4;
-	int32 tab_id = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
 }
 
 message ListWindowDashboardsResponse {
@@ -280,7 +303,7 @@ message WindowMetrics {
 	string description = 3;
 	string x_axis_label = 4;
 	string y_axis_label = 5;
-	google.protobuf.Struct measure_target = 6;
+	google.protobuf.Value measure_target = 6;
 	repeated ColorSchema color_schemas = 7;
 	repeated ChartSerie series = 8;
 }

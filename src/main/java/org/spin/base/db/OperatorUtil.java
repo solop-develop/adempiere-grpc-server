@@ -17,7 +17,6 @@ package org.spin.base.db;
 import org.compiere.model.MQuery;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Condition;
 import org.spin.backend.grpc.common.Operator;
 
 /**

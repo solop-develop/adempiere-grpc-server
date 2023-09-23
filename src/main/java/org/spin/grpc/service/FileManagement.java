@@ -17,10 +17,12 @@ package org.spin.grpc.service;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.core.domains.models.I_AD_AttachmentReference;
 import org.adempiere.core.domains.models.I_C_Invoice;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MArchive;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MClientInfo;
@@ -50,10 +52,6 @@ import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
-import org.adempiere.core.domains.models.I_AD_Archive;
-import org.adempiere.core.domains.models.I_AD_Attachment;
-import org.adempiere.core.domains.models.I_AD_AttachmentReference;
-import org.adempiere.core.domains.models.I_AD_Image;
 import org.spin.model.MADAttachmentReference;
 import org.spin.util.AttachmentUtil;
 
@@ -62,7 +60,6 @@ import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import java.nio.ByteBuffer;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -126,17 +123,29 @@ public class FileManagement extends FileManagementImplBase {
 		return resourceReference;
 	}
 
-
+	/**
+	 * Validate attachment reference exists.
+	 * @return attachment reference
+	 */
+	public static MADAttachmentReference validateAttachmentReferenceById(int id) {
+		if(id <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
+		}
+		MADAttachmentReference resourceReference = MADAttachmentReference.getById(
+			Env.getCtx(),
+			id,
+			null
+		);
+		if(resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
+			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
+		}
+		return resourceReference;
+	}
 
 	@Override
 	public void getResource(GetResourceRequest request, StreamObserver<Resource> responseObserver) {
 		try {
-			if (request == null || (Util.isEmpty(request.getResourceUuid(), true) && Util.isEmpty(request.getResourceName(), true))) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Download Requested = " + request.getResourceUuid());
-			//	Get resource
-			getResource(request.getResourceUuid(), request.getResourceName(), responseObserver);
+			getResource(request.getResourceId(), request.getResourceName(), responseObserver);
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
@@ -176,7 +185,7 @@ public class FileManagement extends FileManagementImplBase {
 	 * @param responseObserver
 	 * @throws Exception 
 	 */
-	private void getResource(String resourceUuid, String resourceName, StreamObserver<Resource> responseObserver) throws Exception {
+	private void getResource(int resourceId, String resourceName, StreamObserver<Resource> responseObserver) throws Exception {
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
 		if (!AttachmentUtil.getInstance().isValidForClient(clientId)) {
 			responseObserver.onError(new AdempiereException("@NotFound@"));
@@ -184,14 +193,7 @@ public class FileManagement extends FileManagementImplBase {
 		}
 
 		//	Validate by name
-		if (Util.isEmpty(resourceUuid, true)) {
-			resourceUuid = getResourceUuidFromName(resourceName);
-			if (Util.isEmpty(resourceUuid, true)) {
-				responseObserver.onError(new AdempiereException("@NotFound@"));
-				return;
-			}
-		}
-		int attachmentReferenceId = RecordUtil.getIdFromUuid(I_AD_AttachmentReference.Table_Name, resourceUuid, null);
+		int attachmentReferenceId = resourceId;
 		byte[] data = AttachmentUtil.getInstance()
 			.withClientId(clientId)
 			.withAttachmentReferenceId(attachmentReferenceId)
@@ -252,8 +254,8 @@ public class FileManagement extends FileManagementImplBase {
 		if (request.getId() > 0) {
 			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
 		}
-		if (resourceReference == null && !Util.isEmpty(request.getUuid(), true)) {
-			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getUuid(), null);
+		if (resourceReference == null) {
+			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
 		}
 		if (resourceReference == null && !Util.isEmpty(request.getResourceName(), true)) {
 			String resourceUuid = getResourceUuidFromName(request.getResourceName());
@@ -261,9 +263,6 @@ public class FileManagement extends FileManagementImplBase {
 		}
 
 		int imageId = request.getImageId();
-		if (resourceReference == null && imageId <= 0 && !Util.isEmpty(request.getImageUuid(), true)) {
-			imageId = RecordUtil.getIdFromUuid(I_AD_Image.Table_Name, request.getImageUuid(), null);
-		}
 		if (resourceReference == null && imageId > 0) {
 			resourceReference = MADAttachmentReference.getByImageId(
 				Env.getCtx(),
@@ -274,9 +273,6 @@ public class FileManagement extends FileManagementImplBase {
 		}
 
 		int archiveId = request.getArchiveId();
-		if (resourceReference == null && archiveId <= 0 && !Util.isEmpty(request.getArchiveUuid(), true)) {
-			archiveId = RecordUtil.getIdFromUuid(I_AD_Archive.Table_Name, request.getArchiveUuid(), null);
-		}
 		if (resourceReference == null && archiveId > 0) {
 			resourceReference = MADAttachmentReference.getByArchiveId(
 				Env.getCtx(),
@@ -309,7 +305,7 @@ public class FileManagement extends FileManagementImplBase {
 						validateAndGetClientInfo();
 
 						// validate and get attachment reference by uuid
-						MADAttachmentReference resourceReference = validateAttachmentReferenceByUuid(fileUploadRequest.getResourceUuid());
+						MADAttachmentReference resourceReference = validateAttachmentReferenceById(fileUploadRequest.getResourceId());
 
 						resourceUuid.set(resourceReference.getUUID());
 						BigDecimal size = ValueUtil.getBigDecimalFromDecimal(fileUploadRequest.getFileSize());
@@ -389,13 +385,10 @@ public class FileManagement extends FileManagementImplBase {
 	}
 
 	Attachment.Builder setAttachmentDescription(SetAttachmentDescriptionRequest request) {
-		if(request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+		if(request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Attachment_ID@");
 		}
 		int attachmentId = request.getId();
-		if (attachmentId <= 0) {
-			attachmentId = RecordUtil.getIdFromUuid(I_AD_Attachment.Table_Name, request.getUuid(), null);
-		}
 		MAttachment attachment = new MAttachment(Env.getCtx(), attachmentId, null);
 		if(attachment == null || attachment.getAD_Attachment_ID() <= 0) {
 			throw new AdempiereException("@AD_Attachment_ID@ @NotFound@");
@@ -440,9 +433,6 @@ public class FileManagement extends FileManagementImplBase {
 		MTable table = validateAndGetTable(request.getTableName());
 
 		int recordId = request.getRecordId();
-		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
-		}
 		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 			return Attachment.newBuilder();
 		}
@@ -464,9 +454,6 @@ public class FileManagement extends FileManagementImplBase {
 		}
 		builder
 			.setId(reference.getAD_AttachmentReference_ID())
-			.setUuid(
-				ValueUtil.validateNull(reference.getUUID())
-			)
 			.setName(
 				ValueUtil.validateNull(reference.getFileName())
 			)
@@ -488,10 +475,10 @@ public class FileManagement extends FileManagementImplBase {
 				reference.getFileSize())
 			)
 			.setCreated(
-				ValueUtil.getLongFromTimestamp(reference.getCreated())
+				ValueUtil.getTimestampFromDate(reference.getCreated())
 			)
 			.setUpdated(
-				ValueUtil.getLongFromTimestamp(reference.getUpdated())
+				ValueUtil.getTimestampFromDate(reference.getUpdated())
 			)
 		;
 
@@ -523,9 +510,6 @@ public class FileManagement extends FileManagementImplBase {
 		}
 		Attachment.Builder builder = Attachment.newBuilder()
 			.setId(attachment.getAD_Attachment_ID())
-			.setUuid(
-				ValueUtil.validateNull(attachment.getUUID())
-			)
 			.setTitle(ValueUtil.validateNull(attachment.getTitle()))
 			.setTextMessage(
 				ValueUtil.validateNull(attachment.getTextMsg())
@@ -641,9 +625,6 @@ public class FileManagement extends FileManagementImplBase {
 
 				// validate record
 				int recordId = request.getRecordId();
-				if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
-					recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
-				}
 				if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 					throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 				}
@@ -707,9 +688,6 @@ public class FileManagement extends FileManagementImplBase {
 		if (request.getId() > 0) {
 			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
 		}
-		if (resourceReference == null && !Util.isEmpty(request.getUuid(), true)) {
-			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getUuid(), null);
-		}
 		if (resourceReference == null && !Util.isEmpty(request.getFileName(), true)) {
 			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), request.getFileName(), null);
 		}
@@ -765,25 +743,14 @@ public class FileManagement extends FileManagementImplBase {
 	}
 	
 	Empty.Builder deleteResourceReference(DeleteResourceReferenceRequest request) throws Exception {
-		String resourceUuid = request.getResourceUuid();
-		if (Util.isEmpty(resourceUuid, true)) {
-			resourceUuid = getResourceUuidFromName(request.getResourceName());
-		}
-		if (request.getResourceId() <= 0 && Util.isEmpty(resourceUuid, true)) {
-			if (!Util.isEmpty(request.getResourceName(), true)) {
-				throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
-			}
+		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
 		}
 
 		MADAttachmentReference resourceReference = null;
-		if (request.getResourceId() > 0) {
-			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getResourceId(), null);
+		if (request.getId() > 0) {
+			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
 		}
-		if ((resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) && !Util.isEmpty(resourceUuid, true)) {
-			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), resourceUuid, null);
-		}
-
 		if (resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
 			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
 		}
@@ -855,9 +822,6 @@ public class FileManagement extends FileManagementImplBase {
 
 		// validate record
 		int recordId = request.getRecordId();
-		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
-		}
 		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}

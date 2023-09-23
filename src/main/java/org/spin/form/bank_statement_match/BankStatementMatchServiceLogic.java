@@ -192,17 +192,17 @@ public abstract class BankStatementMatchServiceLogic {
 
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromString(
+		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromString(
+		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -264,17 +264,17 @@ public abstract class BankStatementMatchServiceLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromString(
+		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromString(
+		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -323,18 +323,18 @@ public abstract class BankStatementMatchServiceLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromString(
+		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromString(
+		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -480,17 +480,17 @@ public abstract class BankStatementMatchServiceLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromString(
+		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromString(
+		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -598,18 +598,18 @@ public abstract class BankStatementMatchServiceLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromString(
+		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromString(
+		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getBigDecimalFromDecimal(
+		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 

@@ -21,6 +21,7 @@ option java_outer_classname = "ADempiereExpressReceipt";
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 package express_receipt;
 
@@ -74,18 +75,21 @@ service ExpressReceipt {
 
 // Business Partner
 message BusinessPartner {
-	string uuid = 1;
-	int32 id = 2;
-	string value = 3;
-	string tax_id = 4;
-	string name = 5;
-	string description = 6;
+	int32 id = 1;
+	string value = 2;
+	string tax_id = 3;
+	string name = 4;
+	string description = 5;
 }
 
 message ListBusinessPartnersRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListBusinessPartnersResponse {
@@ -97,18 +101,20 @@ message ListBusinessPartnersResponse {
 
 // Orders
 message ListPurchaseOrdersRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
-	int32 business_partner_id = 4;
-	string business_partner_uuid = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 business_partner_id = 8;
 }
 
 message PurchaseOrder {
 	int32 id = 1;
-	string uuid = 2;
-	string document_no = 3;
-	int64 date_ordered = 4;
+	string document_no = 2;
+	google.protobuf.Timestamp date_ordered = 3;
 }
 
 message ListPurchaseOrdersResponse {
@@ -120,25 +126,23 @@ message ListPurchaseOrdersResponse {
 
 // Product
 message ListProductsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
-	int32 order_id = 4;
-	string order_uuid = 5;
-	string upc = 6;
-	string sku = 7;
-	string value = 8;
-	string name = 9;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 order_id = 8;
 }
 
 message Product {
-	string uuid = 1;
-	int32 id = 2;
-	string upc = 3;
-	string sku = 4;
-	string value = 5;
-	string name = 6;
-	string description = 7;
+	int32 id = 1;
+	string upc = 2;
+	string sku = 3;
+	string value = 4;
+	string name = 5;
+	string description = 6;
 }
 
 message ListProductsResponse {
@@ -151,61 +155,55 @@ message ListProductsResponse {
 // Receipt
 message CreateReceiptRequest {
 	int32 order_id = 1;
-	string order_uuid = 2;
-	bool is_create_lines_from_order = 3;
+	bool is_create_lines_from_order = 2;
 }
 
 message Receipt {
 	int32 id = 1;
-	string uuid = 2;
-	string document_no = 3;
-	int64 date_ordered = 4;
-	int64 movement_date = 5;
-	int32 order_id = 6;
-	string order_uuid = 7;
-	bool is_completed = 8;
+	string document_no = 2;
+	google.protobuf.Timestamp date_ordered = 3;
+	google.protobuf.Timestamp movement_date = 4;
+	int32 order_id = 5;
+	bool is_completed = 6;
 }
 
 message DeleteReceiptRequest {
 	int32 id = 1;
-	string uuid = 2;
 }
 
 message ProcessReceiptRequest {
 	int32 id = 1;
-	string uuid = 2;
-	string description = 3;
+	string description = 2;
 }
 
 
 // Receipt Line
 message CreateReceiptLineRequest {
 	int32 receipt_id = 1;
-	string receipt_uuid = 2;
-	string description = 3;
-	int32 product_id = 4;
-	string product_uuid = 5;
-	google.protobuf.Struct quantity = 6;
-	bool is_quantity_from_order_line = 7;
+	string description = 2;
+	int32 product_id = 3;
+	google.protobuf.Value quantity = 4;
+	bool is_quantity_from_order_line = 5;
 }
 
 message ReceiptLine {
 	int32 id = 1;
-	string uuid = 2;
-	int32 order_line_id = 3;
-	string order_line_uuid = 4;
-	Product product = 5;
-	string description = 6;
-	google.protobuf.Struct quantity = 7;
-	int32 line = 8;
+	int32 order_line_id = 2;
+	Product product = 3;
+	string description = 4;
+	google.protobuf.Value quantity = 5;
+	int32 line = 6;
 }
 
 message ListReceiptLinesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
-	int32 receipt_id = 4;
-	string receipt_uuid = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 receipt_id = 8;
 }
 
 message ListReceiptLinesResponse {
@@ -216,12 +214,10 @@ message ListReceiptLinesResponse {
 
 message DeleteReceiptLineRequest {
 	int32 id = 1;
-	string uuid = 2;
 }
 
 message UpdateReceiptLineRequest {
 	int32 id = 1;
-	string uuid = 2;
-	string description = 3;
-	google.protobuf.Struct quantity = 4;
+	string description = 2;
+	google.protobuf.Value quantity = 3;
 }

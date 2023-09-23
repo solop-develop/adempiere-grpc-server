@@ -72,6 +72,7 @@ import org.spin.model.MADToken;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -604,8 +605,8 @@ public class Security extends SecurityImplBase {
 		session.setDefaultContext(epale);
 	}
 	
-	private com.google.protobuf.Value.Builder convertObjectFromContext(String value) {
-		com.google.protobuf.Value.Builder builder = com.google.protobuf.Value.newBuilder();
+	private Value.Builder convertObjectFromContext(String value) {
+		Value.Builder builder = Value.newBuilder();
 		if (Util.isEmpty(value)) {
 			return builder;
 		}
@@ -615,10 +616,7 @@ public class Security extends SecurityImplBase {
 			boolean booleanValue = ValueUtil.stringToBoolean(value.trim());
 			builder.setBoolValue(booleanValue);
 		} else if(ValueUtil.isDate(value)) {
-			Struct.Builder date = Struct.newBuilder();
-			date.putFields("value", com.google.protobuf.Value.newBuilder().setStringValue(value).build());
-			date.putFields("time_zone", com.google.protobuf.Value.newBuilder().setStringValue("VE").build());
-			builder.setStructValue(date);
+			return ValueUtil.getValueFromDate(ValueUtil.convertStringToDate(value));
 		} else {
 			builder.setStringValue(ValueUtil.validateNull(value));
 		}

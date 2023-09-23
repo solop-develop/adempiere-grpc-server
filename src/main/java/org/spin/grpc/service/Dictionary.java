@@ -20,24 +20,19 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.core.domains.models.I_AD_Browse;
-import org.adempiere.model.MBrowse;
-import org.adempiere.model.MBrowseField;
-import org.adempiere.model.MView;
-import org.adempiere.model.MViewColumn;
-import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
 import org.adempiere.core.domains.models.I_AD_Form;
 import org.adempiere.core.domains.models.I_AD_Message;
-import org.adempiere.core.domains.models.I_AD_Process;
-import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
-import org.adempiere.core.domains.models.I_AD_Val_Rule;
-import org.adempiere.core.domains.models.I_AD_Window;
+import org.adempiere.core.domains.models.X_AD_FieldGroup;
+import org.adempiere.core.domains.models.X_AD_Reference;
+import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.model.MBrowse;
+import org.adempiere.model.MBrowseField;
+import org.adempiere.model.MViewColumn;
 import org.compiere.model.MBrowseFieldCustom;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
@@ -58,28 +53,12 @@ import org.compiere.model.MValRule;
 import org.compiere.model.MWindow;
 import org.compiere.model.M_Element;
 import org.compiere.model.Query;
-import org.adempiere.core.domains.models.X_AD_FieldGroup;
-import org.adempiere.core.domains.models.X_AD_Reference;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.compiere.wf.MWorkflow;
-import org.spin.base.db.OrderByUtil;
-import org.spin.base.db.QueryUtil;
-import org.spin.base.db.WhereClauseUtil;
-import org.spin.base.dictionary.DictionaryConvertUtil;
-import org.spin.base.dictionary.WindowUtil;
-import org.spin.base.dictionary.custom.BrowseFieldCustomUtil;
-import org.spin.base.dictionary.custom.FieldCustomUtil;
-import org.spin.base.dictionary.custom.ProcessParaCustomUtil;
-import org.spin.base.util.DictionaryUtil;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ReferenceUtil;
-import org.spin.base.util.ValueUtil;
-import org.spin.grpc.logic.DictionaryServiceLogic;
 import org.spin.backend.grpc.dictionary.Browser;
 import org.spin.backend.grpc.dictionary.ContextInfo;
 import org.spin.backend.grpc.dictionary.DependentField;
@@ -101,6 +80,18 @@ import org.spin.backend.grpc.dictionary.ReportExportType;
 import org.spin.backend.grpc.dictionary.Tab;
 import org.spin.backend.grpc.dictionary.ValidationRule;
 import org.spin.backend.grpc.dictionary.Window;
+import org.spin.base.db.OrderByUtil;
+import org.spin.base.db.QueryUtil;
+import org.spin.base.db.WhereClauseUtil;
+import org.spin.base.dictionary.DictionaryConvertUtil;
+import org.spin.base.dictionary.WindowUtil;
+import org.spin.base.dictionary.custom.BrowseFieldCustomUtil;
+import org.spin.base.dictionary.custom.FieldCustomUtil;
+import org.spin.base.dictionary.custom.ProcessParaCustomUtil;
+import org.spin.base.util.DictionaryUtil;
+import org.spin.base.util.ReferenceUtil;
+import org.spin.base.util.ValueUtil;
+import org.spin.grpc.logic.DictionaryServiceLogic;
 import org.spin.model.MADContextInfo;
 import org.spin.model.MADFieldCondition;
 import org.spin.model.MADFieldDefinition;
@@ -133,10 +124,6 @@ public class Dictionary extends DictionaryImplBase {
 	@Override
 	public void getField(FieldRequest request, StreamObserver<Field> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getFieldUuid());
 			Field.Builder fieldBuilder = getField(request);
 			responseObserver.onNext(fieldBuilder.build());
 			responseObserver.onCompleted();
@@ -153,10 +140,6 @@ public class Dictionary extends DictionaryImplBase {
 	@Override
 	public void getReference(ReferenceRequest request, StreamObserver<Reference> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getReferenceUuid());
 			Reference.Builder fieldBuilder = convertReference(Env.getCtx(), request);
 			responseObserver.onNext(fieldBuilder.build());
 			responseObserver.onCompleted();
@@ -172,10 +155,6 @@ public class Dictionary extends DictionaryImplBase {
 	@Override
 	public void getValidationRule(EntityRequest request, StreamObserver<ValidationRule> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getUuid());
 			ValidationRule.Builder fieldBuilder = convertValidationRule(Env.getCtx(), request);
 			responseObserver.onNext(fieldBuilder.build());
 			responseObserver.onCompleted();
@@ -191,11 +170,7 @@ public class Dictionary extends DictionaryImplBase {
 	@Override
 	public void getProcess(EntityRequest request, StreamObserver<Process> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getUuid());
-			Process.Builder processBuilder = convertProcess(Env.getCtx(), request.getUuid(), request.getId(), true);
+			Process.Builder processBuilder = convertProcess(Env.getCtx(), request.getId(), true);
 			responseObserver.onNext(processBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -210,11 +185,7 @@ public class Dictionary extends DictionaryImplBase {
 	@Override
 	public void getBrowser(EntityRequest request, StreamObserver<Browser> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getUuid());
-			Browser.Builder browserBuilder = convertBrowser(Env.getCtx(), request.getUuid(), true);
+			Browser.Builder browserBuilder = convertBrowser(Env.getCtx(), request.getId(), true);
 			responseObserver.onNext(browserBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -229,11 +200,7 @@ public class Dictionary extends DictionaryImplBase {
 	@Override
 	public void getForm(EntityRequest request, StreamObserver<Form> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getUuid());
-			Form.Builder formBuilder = convertForm(Env.getCtx(), request.getUuid(), request.getId());
+			Form.Builder formBuilder = convertForm(Env.getCtx(), request.getId());
 			responseObserver.onNext(formBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -252,11 +219,7 @@ public class Dictionary extends DictionaryImplBase {
 	 */
 	public void requestWindow(EntityRequest request, StreamObserver<Window> responseObserver, boolean withTabs) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getUuid());
-			Window.Builder windowBuilder = convertWindow(Env.getCtx(), request.getUuid(), request.getId(), withTabs);
+			Window.Builder windowBuilder = convertWindow(Env.getCtx(), request.getId(), withTabs);
 			responseObserver.onNext(windowBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -276,11 +239,7 @@ public class Dictionary extends DictionaryImplBase {
 	 */
 	public void requestTab(EntityRequest request, StreamObserver<Tab> responseObserver, boolean withFields) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getUuid());
-			Tab.Builder tabBuilder = convertTab(Env.getCtx(), request.getUuid(), withFields);
+			Tab.Builder tabBuilder = convertTab(Env.getCtx(), request.getId(), withFields);
 			responseObserver.onNext(tabBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -299,16 +258,8 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param id
 	 * @param withTabs
 	 */
-	private Window.Builder convertWindow(Properties context, String uuid, int id, boolean withTabs) {
-		MWindow window = null;
-		if(id > 0) {
-			window = MWindow.get(context, id);
-		} else if(!Util.isEmpty(uuid)) {
-			window = new Query(context, I_AD_Window.Table_Name, I_AD_Window.COLUMNNAME_UUID + " = ?", null)
-					.setParameters(uuid)
-					.setOnlyActiveRecords(true)
-					.first(); 
-		}
+	private Window.Builder convertWindow(Properties context, int id, boolean withTabs) {
+		MWindow window = MWindow.get(context, id);
 		if(window == null) {
 			return Window.newBuilder();
 		}
@@ -321,19 +272,11 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param uuid
 	 * @param id
 	 */
-	private Form.Builder convertForm(Properties context, String uuid, int id) {
+	private Form.Builder convertForm(Properties context, int id) {
 		String whereClause = null;
 		Object parameter = null;
-		if(id > 0) {
-			whereClause = I_AD_Form.COLUMNNAME_AD_Form_ID + " = ?";
-			parameter = id;
-		} else if(!Util.isEmpty(uuid)) {
-			whereClause = I_AD_Form.COLUMNNAME_UUID + " = ?";
-			parameter = uuid;
-		}
-		if(parameter == null) {
-			return Form.newBuilder();
-		}
+		whereClause = I_AD_Form.COLUMNNAME_AD_Form_ID + " = ?";
+		parameter = id;
 		MForm form = new Query(context, I_AD_Form.Table_Name, whereClause, null)
 				.setParameters(parameter)
 				.setOnlyActiveRecords(true)
@@ -354,7 +297,6 @@ public class Dictionary extends DictionaryImplBase {
 		//	
 		builder
 				.setId(form.getAD_Form_ID())
-				.setUuid(ValueUtil.validateNull(form.getUUID()))
 				.setName(ValueUtil.validateNull(ValueUtil.getTranslation(form, MForm.COLUMNNAME_Name)))
 				.setDescription(ValueUtil.validateNull(ValueUtil.getTranslation(form, MForm.COLUMNNAME_Description)))
 				.setHelp(ValueUtil.validateNull(ValueUtil.getTranslation(form, MForm.COLUMNNAME_Help)))
@@ -404,7 +346,6 @@ public class Dictionary extends DictionaryImplBase {
 		//	
 		builder = Window.newBuilder()
 				.setId(window.getAD_Window_ID())
-				.setUuid(ValueUtil.validateNull(window.getUUID()))
 				.setName(window.getName())
 				.setDescription(ValueUtil.validateNull(window.getDescription()))
 				.setHelp(ValueUtil.validateNull(window.getHelp()))
@@ -480,26 +421,20 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param withFields
 	 * @return
 	 */
-	private Tab.Builder convertTab(Properties context, String uuid, boolean withFields) {
-		MTab tab = MTab.get(context, RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, uuid, null));
+	private Tab.Builder convertTab(Properties context, int id, boolean withFields) {
+		MTab tab = MTab.get(context, id);
 		//	Convert
 		return convertTab(context, tab, withFields);
 	}
 	
 	/**
 	 * Convert Process from UUID
-	 * @param uuid
 	 * @param id
 	 * @param withParameters
 	 * @return
 	 */
-	private Process.Builder convertProcess(Properties context, String uuid, int id, boolean withParameters) {
-		MProcess process = null;
-		if(id > 0) {
-			process = MProcess.get(context, id);
-		} else if(!Util.isEmpty(uuid)) {
-			process = MProcess.get(context, RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, uuid, null));
-		}
+	private Process.Builder convertProcess(Properties context, int id, boolean withParameters) {
+		MProcess process = MProcess.get(context, id);
 		if(process == null) {
 			return Process.newBuilder();
 		}
@@ -513,8 +448,8 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param withFields
 	 * @return
 	 */
-	private Browser.Builder convertBrowser(Properties context, String uuid, boolean withFields) {
-		MBrowse browser = ASPUtil.getInstance(context).getBrowse(RecordUtil.getIdFromUuid(I_AD_Browse.Table_Name, uuid, null));
+	private Browser.Builder convertBrowser(Properties context, int id, boolean withFields) {
+		MBrowse browser = ASPUtil.getInstance(context).getBrowse(id);
 		//	Convert
 		return convertBrowser(context, browser, withFields);
 	}
@@ -541,13 +476,10 @@ public class Dictionary extends DictionaryImplBase {
 		int tabId = tab.getAD_Tab_ID();
 		tab = ASPUtil.getInstance(context).getWindowTab(tab.getAD_Window_ID(), tabId);
 
-		String parentTabUuid = null;
+		int parentTabId = 0;
 		// root tab has no parent
 		if (tab.getTabLevel() > 0) {
-			int parentTabId = WindowUtil.getDirectParentTabId(tab.getAD_Window_ID(), tabId);
-			if (parentTabId > 0) {
-				parentTabUuid = RecordUtil.getUuidFromId(I_AD_Tab.Table_Name, parentTabId, null);
-			}
+			parentTabId = WindowUtil.getDirectParentTabId(tab.getAD_Window_ID(), tabId);
 		}
 
 		//	Get table attributes
@@ -564,7 +496,6 @@ public class Dictionary extends DictionaryImplBase {
 		//	create build
 		Tab.Builder builder = Tab.newBuilder()
 				.setId(tab.getAD_Tab_ID())
-				.setUuid(ValueUtil.validateNull(tab.getUUID()))
 				.setName(ValueUtil.validateNull(tab.getName()))
 				.setDescription(ValueUtil.validateNull(tab.getDescription()))
 				.setHelp(ValueUtil.validateNull(tab.getHelp()))
@@ -586,9 +517,7 @@ public class Dictionary extends DictionaryImplBase {
 				.setIsView(table.isView())
 				.setTabLevel(tab.getTabLevel())
 				.setTableName(ValueUtil.validateNull(table.getTableName()))
-			.setParentTabUuid(
-				ValueUtil.validateNull(parentTabUuid)
-			)
+			.setParentTabId(parentTabId)
 				.setIsChangeLog(table.isChangeLog())
 				.setIsActive(tab.isActive())
 				.addAllContextColumnNames(
@@ -677,7 +606,6 @@ public class Dictionary extends DictionaryImplBase {
 			if (message != null) {
 				messageText
 					.setId(message.getAD_Message_ID())
-					.setUuid(ValueUtil.validateNull(message.getUUID()))
 					.setValue(ValueUtil.validateNull(message.getValue()))
 					.setMessageText(ValueUtil.validateNull(msgText))
 					.setMessageTip(ValueUtil.validateNull(msgTip))
@@ -685,7 +613,6 @@ public class Dictionary extends DictionaryImplBase {
 			}
 			builder = ContextInfo.newBuilder()
 					.setId(contextInfoValue.getAD_ContextInfo_ID())
-					.setUuid(ValueUtil.validateNull(contextInfoValue.getUUID()))
 					.setName(ValueUtil.validateNull(contextInfoValue.getName()))
 					.setDescription(ValueUtil.validateNull(contextInfoValue.getDescription()))
 					.setMessageText(messageText.build())
@@ -706,7 +633,6 @@ public class Dictionary extends DictionaryImplBase {
 		process = ASPUtil.getInstance(context).getProcess(process.getAD_Process_ID());
 		Process.Builder builder = Process.newBuilder()
 				.setId(process.getAD_Process_ID())
-				.setUuid(ValueUtil.validateNull(process.getUUID()))
 				.setValue(ValueUtil.validateNull(process.getValue()))
 				.setName(ValueUtil.validateNull(process.getName()))
 				.setDescription(ValueUtil.validateNull(process.getDescription()))
@@ -717,15 +643,13 @@ public class Dictionary extends DictionaryImplBase {
 				.setIsActive(process.isActive());
 
 		if (process.getAD_Browse_ID() > 0) {
-			MBrowse browse = ASPUtil.getInstance(context).getBrowse(process.getAD_Browse_ID());
-			builder.setBrowserUuid(ValueUtil.validateNull(browse.getUUID()));
+			builder.setBrowserId(process.getAD_Browse_ID());
 		}
 		if (process.getAD_Form_ID() > 0) {
-			builder.setFormUuid(ValueUtil.validateNull(process.getAD_Form().getUUID()));
+			builder.setFormId(process.getAD_Form_ID());
 		}
 		if (process.getAD_Workflow_ID() > 0) {
-			MWorkflow workflow = MWorkflow.get(Env.getCtx(), process.getAD_Workflow_ID());
-			builder.setWorkflowUuid(ValueUtil.validateNull(workflow.getUUID()));
+			builder.setWorkflowId(process.getAD_Workflow_ID());
 		}
 		//	Report Types
 		if(process.isReport()) {
@@ -800,7 +724,6 @@ public class Dictionary extends DictionaryImplBase {
 		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
 		Browser.Builder builder = Browser.newBuilder()
 				.setId(browser.getAD_Browse_ID())
-				.setUuid(ValueUtil.validateNull(browser.getUUID()))
 				.setValue(ValueUtil.validateNull(browser.getValue()))
 				.setName(browser.getName())
 				.setDescription(ValueUtil.validateNull(browser.getDescription()))
@@ -822,8 +745,7 @@ public class Dictionary extends DictionaryImplBase {
 				);
 		//	Set View UUID
 		if(browser.getAD_View_ID() > 0) {
-			MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
-			builder.setViewUuid(ValueUtil.validateNull(view.getUUID()));
+			builder.setViewId(browser.getAD_View_ID());
 		}
 		// set table name
 		if (browser.getAD_Table_ID() > 0) {
@@ -870,7 +792,6 @@ public class Dictionary extends DictionaryImplBase {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 				.setId(processParameter.getAD_Process_Para_ID())
-				.setUuid(ValueUtil.validateNull(processParameter.getUUID()))
 				.setName(ValueUtil.validateNull(processParameter.getName()))
 				.setDescription(ValueUtil.validateNull(processParameter.getDescription()))
 				.setHelp(ValueUtil.validateNull(processParameter.getHelp()))
@@ -973,11 +894,9 @@ public class Dictionary extends DictionaryImplBase {
 			.forEach(currentParameter -> {
 				DependentField.Builder builder = DependentField.newBuilder();
 				builder.setContainerId(process.getAD_Process_ID());
-				builder.setContainerUuid(process.getUUID());
 				builder.setContainerName(process.getName());
 
 				builder.setId(currentParameter.getAD_Process_Para_ID());
-				builder.setUuid(currentParameter.getUUID());
 				builder.setColumnName(currentParameter.getColumnName());
 
 				depenentFieldsList.add(builder.build());
@@ -998,7 +917,6 @@ public class Dictionary extends DictionaryImplBase {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 				.setId(browseField.getAD_Browse_Field_ID())
-				.setUuid(ValueUtil.validateNull(browseField.getUUID()))
 				.setName(ValueUtil.validateNull(browseField.getName()))
 				.setDescription(ValueUtil.validateNull(browseField.getDescription()))
 				.setHelp(ValueUtil.validateNull(browseField.getHelp()))
@@ -1035,7 +953,6 @@ public class Dictionary extends DictionaryImplBase {
 			MColumn column = MColumn.get(context, viewColumn.getAD_Column_ID());
 			elementName = column.getColumnName();
 			builder.setColumnId(column.getAD_Column_ID());
-			builder.setColumnUuid(ValueUtil.validateNull(column.getUUID()));
 		}
 
 		//	Default element
@@ -1044,7 +961,6 @@ public class Dictionary extends DictionaryImplBase {
 		}
 		builder.setElementName(ValueUtil.validateNull(elementName));
 		builder.setElementId(browseField.getAD_Element_ID());
-		builder.setElementUuid(ValueUtil.validateNull(browseField.getAD_Element().getUUID()));
 
 		//	
 		int displayTypeId = browseField.getAD_Reference_ID();
@@ -1160,11 +1076,9 @@ public class Dictionary extends DictionaryImplBase {
 				DependentField.Builder builder = DependentField.newBuilder();
 
 				builder.setContainerId(browse.getAD_Browse_ID());
-				builder.setContainerUuid(browse.getUUID());
 				builder.setContainerName(browse.getName());
 				builder.setId(currentBrowseField.getAD_Browse_Field_ID());
-				builder.setUuid(currentBrowseField.getUUID());
-
+				
 				MViewColumn currentViewColumn = MViewColumn.getById(Env.getCtx(), currentBrowseField.getAD_View_Column_ID(), null);
 				builder.setColumnName(currentViewColumn.getColumnName());
 
@@ -1183,20 +1097,12 @@ public class Dictionary extends DictionaryImplBase {
 	private Field.Builder getField(FieldRequest request) {
 		Field.Builder builder = Field.newBuilder();
 		//	For UUID
-		if(!Util.isEmpty(request.getFieldUuid())) {
-			builder = convertField(Env.getCtx(), request.getFieldUuid());
-		} else if(!Util.isEmpty(request.getColumnUuid())) {
-			MColumn column = new Query(Env.getCtx(), I_AD_Column.Table_Name, I_AD_Column.COLUMNNAME_UUID + " = ?", null)
-					.setParameters(request.getColumnUuid())
-					.setOnlyActiveRecords(true)
-					.first();
-			builder = convertField(Env.getCtx(), column);
-		} else if(!Util.isEmpty(request.getElementUuid())) {
-			M_Element element = new Query(Env.getCtx(), I_AD_Element.Table_Name, I_AD_Element.COLUMNNAME_UUID + " = ?", null)
-					.setParameters(request.getElementUuid())
-					.setOnlyActiveRecords(true)
-					.first();
-			builder = convertField(Env.getCtx(), element);
+		if(request.getFieldId() > 0) {
+			builder = convertField(Env.getCtx(), request.getFieldId());
+		} else if(request.getColumnId() > 0) {
+			builder = convertField(Env.getCtx(), MColumn.get(Env.getCtx(), request.getColumnId()));
+		} else if(request.getElementId() > 0) {
+			builder = convertField(Env.getCtx(), new M_Element(Env.getCtx(), request.getElementId(), null));
 		} else if(!Util.isEmpty(request.getElementColumnName())) {
 			M_Element element = new Query(Env.getCtx(), I_AD_Element.Table_Name, I_AD_Element.COLUMNNAME_ColumnName+ " = ?", null)
 					.setParameters(request.getElementColumnName())
@@ -1216,12 +1122,12 @@ public class Dictionary extends DictionaryImplBase {
 	
 	/**
 	 * Convert Field from UUID
-	 * @param uuid
+	 * @param id
 	 * @return
 	 */
-	private Field.Builder convertField(Properties context, String uuid) {
+	private Field.Builder convertField(Properties context, int id) {
 		MField field = new Query(context, I_AD_Field.Table_Name, I_AD_Field.COLUMNNAME_AD_Field_ID + " = ?", null)
-				.setParameters(RecordUtil.getIdFromUuid(I_AD_Field.Table_Name, uuid, null))
+				.setParameters(id)
 				.setOnlyActiveRecords(true)
 				.first();
 		int fieldId = field.getAD_Field_ID();
@@ -1277,16 +1183,13 @@ public class Dictionary extends DictionaryImplBase {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 				.setId(column.getAD_Column_ID())
-				.setUuid(ValueUtil.validateNull(column.getUUID()))
 				.setName(ValueUtil.validateNull(column.getName()))
 				.setDescription(ValueUtil.validateNull(column.getDescription()))
 				.setHelp(ValueUtil.validateNull(column.getHelp()))
 				.setCallout(ValueUtil.validateNull(column.getCallout()))
 				.setColumnId(column.getAD_Column_ID())
-				.setColumnUuid(ValueUtil.validateNull(column.getUUID()))
 				.setColumnName(ValueUtil.validateNull(column.getColumnName()))
 				.setElementId(element.getAD_Element_ID())
-				.setElementUuid(ValueUtil.validateNull(element.getUUID()))
 				.setElementName(ValueUtil.validateNull(element.getColumnName()))
 				.setColumnSql(ValueUtil.validateNull(column.getColumnSQL()))
 				.setDefaultValue(ValueUtil.validateNull(defaultValue))
@@ -1387,12 +1290,9 @@ public class Dictionary extends DictionaryImplBase {
 				DependentField.Builder builder = DependentField.newBuilder();
 
 				builder.setContainerId(table.getAD_Table_ID());
-				builder.setContainerUuid(table.getUUID());
 				builder.setContainerName(table.getTableName());
 	
 				builder.setId(currentColumn.getAD_Column_ID());
-				builder.setUuid(currentColumn.getUUID());
-	
 				builder.setColumnName(currentColumn.getColumnName());
 
 				depenentFieldsList.add(builder.build());
@@ -1418,7 +1318,6 @@ public class Dictionary extends DictionaryImplBase {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 				.setId(element.getAD_Element_ID())
-				.setUuid(ValueUtil.validateNull(element.getUUID()))
 				.setName(ValueUtil.validateNull(ValueUtil.getTranslation(element, M_Element.COLUMNNAME_Name)))
 				.setDescription(ValueUtil.validateNull(ValueUtil.getTranslation(element, M_Element.COLUMNNAME_Description)))
 				.setHelp(ValueUtil.validateNull(ValueUtil.getTranslation(element, M_Element.COLUMNNAME_Help)))
@@ -1478,16 +1377,13 @@ public class Dictionary extends DictionaryImplBase {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 				.setId(field.getAD_Field_ID())
-				.setUuid(ValueUtil.validateNull(field.getUUID()))
 				.setName(ValueUtil.validateNull(field.getName()))
 				.setDescription(ValueUtil.validateNull(field.getDescription()))
 				.setHelp(ValueUtil.validateNull(field.getHelp()))
 				.setCallout(ValueUtil.validateNull(column.getCallout()))
 				.setColumnId(column.getAD_Column_ID())
-				.setColumnUuid(column.getUUID())
 				.setColumnName(ValueUtil.validateNull(column.getColumnName()))
 				.setElementId(element.getAD_Element_ID())
-				.setElementUuid(ValueUtil.validateNull(element.getUUID()))
 				.setElementName(ValueUtil.validateNull(element.getColumnName()))
 				.setColumnSql(ValueUtil.validateNull(column.getColumnSQL()))
 				.setDefaultValue(ValueUtil.validateNull(defaultValue))
@@ -1675,12 +1571,10 @@ public class Dictionary extends DictionaryImplBase {
 					.forEach(currentField -> {
 						DependentField.Builder builder = DependentField.newBuilder();
 						builder.setContainerId(tab.getAD_Tab_ID());
-						builder.setContainerUuid(tab.getUUID());
 						builder.setContainerName(tab.getName());
 
 						builder.setId(currentField.getAD_Field_ID());
-						builder.setUuid(currentField.getUUID());
-
+						
 						String currentColumnName = MColumn.getColumnName(Env.getCtx(), currentField.getAD_Column_ID());
 						builder.setColumnName(currentColumnName);
 
@@ -1704,7 +1598,6 @@ public class Dictionary extends DictionaryImplBase {
 			//	Reference
 			builder = FieldDefinition.newBuilder()
 					.setId(fieldDefinition.getAD_FieldDefinition_ID())
-					.setUuid(ValueUtil.validateNull(fieldDefinition.getUUID()))
 					.setValue(ValueUtil.validateNull(fieldDefinition.getValue()))
 					.setName(ValueUtil.validateNull(fieldDefinition.getName()));
 			//	Get conditions
@@ -1714,7 +1607,6 @@ public class Dictionary extends DictionaryImplBase {
 				}
 				FieldCondition.Builder fieldConditionBuilder = FieldCondition.newBuilder()
 						.setId(fieldDefinition.getAD_FieldDefinition_ID())
-						.setUuid(ValueUtil.validateNull(condition.getUUID()))
 						.setCondition(ValueUtil.validateNull(condition.getCondition()))
 						.setStylesheet(ValueUtil.validateNull(condition.getStylesheet()))
 						.setIsActive(fieldDefinition.isActive());
@@ -1747,7 +1639,6 @@ public class Dictionary extends DictionaryImplBase {
 			//	Field Group
 			builder = FieldGroup.newBuilder()
 					.setId(fieldGroup.getAD_FieldGroup_ID())
-					.setUuid(ValueUtil.validateNull(fieldGroup.getUUID()))
 					.setName(ValueUtil.validateNull(name))
 					.setFieldGroupType(ValueUtil.validateNull(fieldGroup.getFieldGroupType()))
 					.setIsActive(fieldGroup.isActive());
@@ -1764,10 +1655,8 @@ public class Dictionary extends DictionaryImplBase {
 	private Reference.Builder convertReference(Properties context, ReferenceRequest request) {
 		Reference.Builder builder = Reference.newBuilder();
 		MLookupInfo info = null;
-		if(!Util.isEmpty(request.getReferenceUuid())) {
-			X_AD_Reference reference = new Query(context, I_AD_Reference.Table_Name, I_AD_Reference.COLUMNNAME_UUID + " = ?", null)
-					.setParameters(request.getReferenceUuid())
-					.first();
+		if(request.getReferenceId() > 0) {
+			X_AD_Reference reference = new X_AD_Reference(context, request.getReferenceId(), null);
 			if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_TableValidation)) {
 				info = MLookupFactory.getLookupInfo(context, 0, 0, DisplayType.Search, Language.getLanguage(Env.getAD_Language(context)), null, reference.getAD_Reference_ID(), false, null, false);
 			} else if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_ListValidation)) {
@@ -1794,10 +1683,6 @@ public class Dictionary extends DictionaryImplBase {
 		MValRule validationRule = null;
 		if(request.getId() > 0) {
 			validationRule = MValRule.get(context, request.getId());
-		} else {
-			validationRule = new Query(context, I_AD_Val_Rule.Table_Name, I_AD_Val_Rule.COLUMNNAME_UUID + " = ?", null)
-					.setParameters(request.getUuid())
-					.first();
 		}
 		if (validationRule == null) {
 			return ValidationRule.newBuilder();
@@ -1805,7 +1690,6 @@ public class Dictionary extends DictionaryImplBase {
 		//	
 		return ValidationRule.newBuilder()
 				.setId(validationRule.getAD_Val_Rule_ID())
-				.setUuid(ValueUtil.validateNull(validationRule.getUUID()))
 				.setName(ValueUtil.validateNull(validationRule.getName()))
 				.setDescription(ValueUtil.validateNull(validationRule.getDescription()))
 				.setValidationCode(ValueUtil.validateNull(validationRule.getCode()))
@@ -1836,26 +1720,14 @@ public class Dictionary extends DictionaryImplBase {
 	}
 
 	private ListFieldsResponse.Builder getIdentifierFields(ListFieldsRequest request) {
-		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableUuid(), true) && Util.isEmpty(request.getTableName(), true)) {
+		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
-
 		Properties context = Env.getCtx();
 		MTable table = null;
 		int tableId = request.getTableId();
 		if (tableId > 0) {
 			table = MTable.get(context, tableId);
-		} else if(!Util.isEmpty(request.getTableUuid(), true)) {
-			table = new Query(
-				context,
-				MTable.Table_Name,
-				MTable.COLUMNNAME_UUID + " = ?",
-				null
-			)
-				.setParameters(request.getTableUuid())
-				.setOnlyActiveRecords(true)
-				.first()
-			;
 		} else if (!Util.isEmpty(request.getTableName(), true)) {
 			table = MTable.get(context, request.getTableName());
 		}
@@ -1923,7 +1795,7 @@ public class Dictionary extends DictionaryImplBase {
 	}
 
 	private ListFieldsResponse.Builder getTableSearchFields(ListFieldsRequest request) {
-		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableUuid(), true) && Util.isEmpty(request.getTableName(), true)) {
+		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 
@@ -1932,16 +1804,6 @@ public class Dictionary extends DictionaryImplBase {
 		int tableId = request.getTableId();
 		if (tableId > 0) {
 			table = MTable.get(context, tableId);
-		} else if(!Util.isEmpty(request.getTableUuid(), true)) {
-			table = new Query(
-				context,
-				MTable.Table_Name,
-				MTable.COLUMNNAME_UUID + " = ?",
-				null
-			)
-				.setParameters(request.getTableUuid())
-				.setOnlyActiveRecords(true)
-				.first();
 		} else if (!Util.isEmpty(request.getTableName(), true)) {
 			table = MTable.get(context, request.getTableName());
 		}

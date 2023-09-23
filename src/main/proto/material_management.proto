@@ -18,9 +18,9 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.material_management";
 option java_outer_classname = "ADempiereMaterialManagement";
 
-import "base_data_type.proto";
 import "google/protobuf/struct.proto";
 import "business.proto";
+import "google/protobuf/timestamp.proto";
 
 package material_management;
 
@@ -42,137 +42,125 @@ service MaterialManagement {
 
 // Get Accounting Combination Request
 message ListProductStorageRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string table_name = 4;
-	int32 record_id = 5;
-	string record_uuid = 6;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+	int32 record_id = 9;
 }
 
 message ProductAttributeValue {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string value = 2;
+	string name = 3;
+	string description = 4;
 }
 
 message ProductAttribute {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	string value_type = 5;
-	bool is_mandatory = 6;
-	bool is_instance_attribute = 7;
-	int32 sequence = 8;
-	repeated ProductAttributeValue product_attribute_values = 9;
+	string name = 2;
+	string description = 3;
+	string value_type = 4;
+	bool is_mandatory = 5;
+	bool is_instance_attribute = 6;
+	int32 sequence = 7;
+	repeated ProductAttributeValue product_attribute_values = 8;
 }
 
 message ProductAttributeSet {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	bool is_instance_attribute = 5;
+	string name = 2;
+	string description = 3;
+	bool is_instance_attribute = 4;
 	// Lot Attributes
-	bool is_lot = 6;
-	bool is_lot_mandatory = 7;
-	int32 lot_control_id = 8;
-	string lot_char_start_overwrite = 9;
-	string lot_char_end_overwrite = 10;
+	bool is_lot = 5;
+	bool is_lot_mandatory = 6;
+	int32 lot_control_id = 7;
+	string lot_char_start_overwrite = 8;
+	string lot_char_end_overwrite = 9;
 	// Serial Attributes
-	bool is_serial = 11;
-	bool is_serial_mandatory = 12;
-	int32 serial_control_id = 13;
-	string serial_char_start_overwrite = 14;
-	string serial_char_end_overwrite = 15;
+	bool is_serial = 10;
+	bool is_serial_mandatory = 11;
+	int32 serial_control_id = 12;
+	string serial_char_start_overwrite = 13;
+	string serial_char_end_overwrite = 14;
 	// Guarantee Date Attributes
-	bool is_guarantee_date = 16;
-	bool is_guarantee_date_mandatory = 17;
-	int32 guarantee_days = 18;
-	string mandatory_type = 19;
-	repeated ProductAttribute product_attributes = 20;
+	bool is_guarantee_date = 15;
+	bool is_guarantee_date_mandatory = 16;
+	int32 guarantee_days = 17;
+	string mandatory_type = 18;
+	repeated ProductAttribute product_attributes = 19;
 }
 
 // Based on M_AttributeInstance table
 message ProductAttributeInstance {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	google.protobuf.Struct value_number = 4;
-	int32 product_attribute_set_instance_id = 5;
-	string product_attribute_set_instance_uuid = 6;
-	int32 product_attribute_id = 7;
-	string product_attribute_uuid = 8;
-	int32 product_attribute_value_id = 9;
-	string product_attribute_value_uuid = 10;
+	string value = 2;
+	google.protobuf.Value value_number = 3;
+	int32 product_attribute_set_instance_id = 4;
+	int32 product_attribute_id = 5;
+	int32 product_attribute_value_id = 6;
 }
 
 message ProductAttributeSetInstance {
 	int32 id = 1;
-	string uuid = 2;
-	string description = 3;
-	int64 guarantee_date = 4;
-	string lot = 5;
-	int32 lot_id = 6;
-	string serial = 7;
-	ProductAttributeSet product_attribute_set = 8;
-	repeated ProductAttributeInstance product_attribute_instances = 9;
+	string description = 2;
+	google.protobuf.Timestamp guarantee_date = 3;
+	string lot = 4;
+	int32 lot_id = 5;
+	string serial = 6;
+	ProductAttributeSet product_attribute_set = 7;
+	repeated ProductAttributeInstance product_attribute_instances = 8;
 }
 
 message GetProductAttributeSetRequest {
-	int32 id = 2;
-	string uuid = 3;
-	int32 product_id = 4;
-	string product_uuid = 5;
-	int32 product_attribute_set_instance_id = 6;
-	string product_attribute_set_instance_uuid = 7;
+	int32 id = 1;
+	int32 product_id = 2;
+	int32 product_attribute_set_instance_id = 3;
 }
 
 message ListProductAttributesRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
-	data.Criteria filters = 5;
-	//
-	int32 product_id = 6;
-	string product_uuid = 7;
-	int32 product_attribute_set_instance_id = 8;
-	string product_attribute_set_instance_uuid = 9;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 product_id = 8;
+	int32 product_attribute_set_instance_id = 9;
 }
 
 message ListProductAttributeValuesRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
-	data.Criteria filters = 5;
-	//
-	int32 product_attribute_id = 6;
-	string product_attribute_uuid = 7;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 product_attribute_id = 8;
 }
 
 message GetProductAttributeSetInstanceRequest {
-	int32 id = 2;
-	string uuid = 3;
-	int32 product_id = 4;
-	string product_uuid = 5;
+	int32 id = 1;
+	int32 product_id = 2;
 }
 
 message ListProductAttributeSetInstancesRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
-	data.Criteria filters = 5;
-	//
-	int32 product_id = 6;
-	string product_uuid = 7;
-	int32 product_attribute_set_id = 8;
-	string product_attribute_set_uuid = 9;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 product_id = 8;
+	int32 product_attribute_set_id = 9;
 }
 
 // List List Product Attribute Set Instances Response
@@ -184,36 +172,35 @@ message ListProductAttributeSetInstancesResponse {
 
 // Save Product Attribute Set Instance Request
 message SaveProductAttributeSetInstanceRequest {
-	int32 id = 2;
-	string uuid = 3;
-	int64 guarantee_date = 4;
-	string lot = 5;
-	string serial = 6;
-	int32 product_id = 7;
-	string product_uuid = 8;
-	int32 product_attribute_set_id = 9;
-	string product_attribute_set_uuid = 10;
+	int32 id = 1;
+	google.protobuf.Timestamp guarantee_date = 2;
+	string lot = 3;
+	string serial = 4;
+	int32 product_id = 5;
+	int32 product_attribute_set_id = 6;
 	// Product Attribute UUID, Value
-	map <string, data.Value> attributes = 11;
+	google.protobuf.Struct attributes = 7;
 }
 
 // Warehouse
 message Warehouse {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
-	bool is_in_transit = 6;
-	Warehouse warehouse_source = 7;
+	string value = 2;
+	string name = 3;
+	string description = 4;
+	bool is_in_transit = 5;
+	Warehouse warehouse_source = 6;
 }
 
 message ListAvailableWarehousesRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	string search_value = 4;
-	int32 warehouse_id = 5;
-	string warehouse_uuid = 6;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 warehouse_id = 8;
 }
 
 message ListAvailableWarehousesResponse {
@@ -225,31 +212,32 @@ message ListAvailableWarehousesResponse {
 // Locator
 message Locator {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	bool is_default = 4;
-	string aisle = 5; // (X)
-	string bin = 6; // (Y)
-	string level = 7; // (Z)
-	Warehouse warehouse = 8;
+	string value = 2;
+	bool is_default = 3;
+	string aisle = 4; // (X)
+	string bin = 5; // (Y)
+	string level = 6; // (Z)
+	Warehouse warehouse = 7;
 }
 
 message ListLocatorsRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
-	map <string, data.Value> context_attributes = 5;
-	int32 warehouse_id = 6;
-	string warehouse_uuid = 7;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	google.protobuf.Struct context_attributes = 8;
+	int32 warehouse_id = 9;
 	// references
-	string process_parameter_uuid = 8;
-	string field_uuid = 9;
-	string browse_field_uuid = 10;
-	string reference_uuid = 11;
-	string column_uuid = 12;
-	string table_name = 13;
-	string column_name = 14;
+	int32 process_parameter_id = 10;
+	int32 field_id = 11;
+	int32 browse_field_id = 12;
+	int32 reference_id = 13;
+	int32 column_id = 14;
+	string table_name = 15;
+	string column_name = 16;
 }
 
 message ListLocatorsResponse {

@@ -141,9 +141,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 		// backend info
 		builder.setBackendDateVersion(
-				ValueUtil.validateNull(
-					Version.DATE_VERSION
-				)
+				ValueUtil.getTimestampFromDate(ValueUtil.convertStringToDate(Version.DATE_VERSION))
 			)
 			.setBackendMainVersion(
 				ValueUtil.validateNull(
@@ -287,7 +285,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			return null;
 		}
 		//	Get values
-		Timestamp conversionDate = ValueUtil.convertStringToDate(request.getConversionDate());
+		Timestamp conversionDate = ValueUtil.getDateFromTimestampDate(request.getConversionDate());
 		if(conversionDate == null) {
 			conversionDate = TimeUtil.getDay(System.currentTimeMillis());
 		}

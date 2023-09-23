@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_AD_WF_Activity;
 import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.adempiere.core.domains.models.I_C_Order;
@@ -91,10 +90,6 @@ public class Workflow extends WorkflowImplBase {
 	@Override
 	public void getWorkflow(WorkflowDefinitionRequest request, StreamObserver<WorkflowDefinition> responseObserver) {
 		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Menu Requested = " + request.getUuid());
 			WorkflowDefinition.Builder workflowBuilder = getWorkflow(request);
 			responseObserver.onNext(workflowBuilder.build());
 			responseObserver.onCompleted();
@@ -115,20 +110,14 @@ public class Workflow extends WorkflowImplBase {
 	 * @return builder
 	 */
 	private WorkflowDefinition.Builder getWorkflow(WorkflowDefinitionRequest request) {
-		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Workflow_ID@/@UUID@");
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Workflow_ID@");
 		}
 		Properties context = Env.getCtx();
 		String whereClause = null;
 		Object parameter = null;
-		if (request.getId() > 0) {
-			whereClause = MWorkflow.COLUMNNAME_AD_Workflow_ID + " = ?";
-			parameter = request.getId();
-		} else if(!Util.isEmpty(request.getUuid(), true)) {
-			whereClause = MWorkflow.COLUMNNAME_UUID + " = ?";
-			parameter = request.getUuid();
-		}
-
+		whereClause = MWorkflow.COLUMNNAME_AD_Workflow_ID + " = ?";
+		parameter = request.getId();
 		MWorkflow workflow = new Query(
 				context,
 				MWorkflow.Table_Name,
@@ -236,11 +225,11 @@ public class Workflow extends WorkflowImplBase {
 	 * @return
 	 */
 	private ListWorkflowActivitiesResponse.Builder listWorkflowActivities(ListWorkflowActivitiesRequest request) {
-		if(Util.isEmpty(request.getUserUuid())) {
+		if(request.getUserId() <= 0) {
 			throw new AdempiereException("@AD_User_ID@ @NotFound@");
 		}
 		//	
-		int userId = RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getUserUuid(), null);
+		int userId = request.getUserId();
 		String whereClause = "AD_WF_Activity.Processed='N' "
 				+ "AND AD_WF_Activity.WFState='OS' "
 				+ "AND ( AD_WF_Activity.AD_User_ID=? "
@@ -310,7 +299,7 @@ public class Workflow extends WorkflowImplBase {
 		MTable table = MTable.get(context, request.getTableName());
 		int recordId = 0;
 		//	Get entity
-		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), request.getId(), null);
+		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getId(), null);
 		if(entity != null) {
 			//	
 			documentStatus = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocStatus);
@@ -549,7 +538,7 @@ public class Workflow extends WorkflowImplBase {
 	 * @return
 	 */
 	private ListDocumentActionsResponse.Builder convertDocumentActions(Properties context, ListDocumentActionsRequest request) {
-		if(request.getId() <= 0 && Util.isEmpty(request.getUuid())) {
+		if(request.getId() <= 0) {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
 		if(Util.isEmpty(request.getTableName())) {
@@ -560,7 +549,7 @@ public class Workflow extends WorkflowImplBase {
 		if(table == null || table.getAD_Table_ID() == 0) {
 			throw new AdempiereException("@AD_Table_ID@ @Invalid@");
 		}
-		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getUuid(), request.getId(), null);
+		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getId(), null);
 		if (entity == null) {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
@@ -695,7 +684,6 @@ public class Workflow extends WorkflowImplBase {
 		ProcessLog.Builder response = org.spin.base.workflow.WorkflowUtil.startWorkflow(
 			request.getTableName(),
 			request.getId(),
-			request.getUuid(),
 			request.getDocumentAction()
 		);
 		return response;
@@ -728,12 +716,7 @@ public class Workflow extends WorkflowImplBase {
 			// validate workflow activity
 			int workflowActivityId = request.getId();
 			if (workflowActivityId <= 0) {
-				if (!Util.isEmpty(request.getUuid(), true)) {
-					workflowActivityId = RecordUtil.getIdFromUuid(MWFActivity.Table_Name, request.getUuid(), transactionName);
-				}
-				if (workflowActivityId <= 0) {
-					throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-				}
+				throw new AdempiereException("@Record_ID@ @NotFound@");
 			}
 
 			MWFActivity workActivity = new MWFActivity(Env.getCtx(), workflowActivityId, transactionName);
@@ -797,12 +780,7 @@ public class Workflow extends WorkflowImplBase {
 		// validate workflow activity
 		int workflowActivityId = request.getId();
 		if (workflowActivityId <= 0) {
-			if (!Util.isEmpty(request.getUuid(), true)) {
-				workflowActivityId = RecordUtil.getIdFromUuid(MWFActivity.Table_Name, request.getUuid(), null);
-			}
-			if (workflowActivityId <= 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
+			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		MWFActivity workActivity = new MWFActivity(Env.getCtx(), workflowActivityId, null);
 		if (workActivity == null || workActivity.getAD_WF_Activity_ID() <= 0) {
@@ -812,12 +790,7 @@ public class Workflow extends WorkflowImplBase {
 		// validate user
 		int userId = request.getUserId();
 		if (userId <= 0) {
-			if (!Util.isEmpty(request.getUuid(), true)) {
-				workflowActivityId = RecordUtil.getIdFromUuid(MUser.Table_Name, request.getUserUuid(), null);
-			}
-			if (userId <= 0) {
-				throw new AdempiereException("@AD_User_ID@ @NotFound@");
-			}
+			throw new AdempiereException("@AD_User_ID@ @NotFound@");
 		}
 		MUser user = MUser.get(Env.getCtx(), userId);
 		if (user == null || user.getAD_User_ID() <= 0) {

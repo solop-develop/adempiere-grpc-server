@@ -21,6 +21,7 @@ option java_outer_classname = "ADempiereTimeRecord";
 
 import "core_functionality.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 package time_record;
 
@@ -36,16 +37,19 @@ service TimeRecord {
 // Issue (Request)
 message Issue {
 	int32 id = 1;
-	string uuid = 2;
-	string document_no = 3;
-	string subject = 4;
-	string summary = 5;
+	string document_no = 2;
+	string subject = 3;
+	string summary = 4;
 }
 
 message ListIssuesRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	string search_value = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListIssuesResponse {
@@ -58,15 +62,18 @@ message ListIssuesResponse {
 // Project
 message Project {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
+	string value = 2;
+	string name = 3;
 }
 
 message ListProjectsRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	string search_value = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListProjectsResponse {
@@ -79,61 +86,58 @@ message ListProjectsResponse {
 // Resource Assigment
 message ResourceType {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
-	data.UnitOfMeasure unit_of_measure = 6;
+	string value = 2;
+	string name = 3;
+	string description = 4;
+	data.UnitOfMeasure unit_of_measure = 5;
 }
 
 message User {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string value = 2;
+	string name = 3;
+	string description = 4;
 }
 
 message Resource {
 	int32 id = 1;
-	string uuid = 2;
-	ResourceType resource_type = 3;
-	User user = 4;
-	string name = 5;
-	string description = 6;
+	ResourceType resource_type = 2;
+	User user = 3;
+	string name = 4;
+	string description = 5;
 }
 
 message ResourceAssignment {
 	int32 id = 1;
-	string uuid = 2;
-	Resource resource = 3;
-	string name = 4;
-	string description = 5;
-	int64 assign_date_from = 6;
-	int64 assign_date_to = 7;
-	bool is_confirmed = 8;
-	google.protobuf.Struct quantity = 9;
+	Resource resource = 2;
+	string name = 3;
+	string description = 4;
+	google.protobuf.Timestamp assign_date_from = 5;
+	google.protobuf.Timestamp assign_date_to = 6;
+	bool is_confirmed = 7;
+	google.protobuf.Value quantity = 8;
 }
 
 message CreateTimeRecordRequest {
-	int32 request_id = 2;
-	string request_uuid = 3;
-	int32 project_id = 4;
-	string project_uuid = 5;
-	google.protobuf.Struct quantity = 6;
-	string name = 7;
-	string description = 8;
-	int64 date = 9;
+	int32 request_id = 1;
+	int32 project_id = 2;
+	google.protobuf.Value quantity = 3;
+	string name = 4;
+	string description = 5;
+	google.protobuf.Timestamp date = 6;
 }
 
 message ListTimeRecordRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	string search_value = 4;
-	// filters
-	int32 quantity = 5;
-	int64 date_from = 6;
-	int64 date_to = 7;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 quantity = 8;
+	google.protobuf.Timestamp date_from = 9;
+	google.protobuf.Timestamp date_to = 10;
 }
 
 message ListTimeRecordResponse {

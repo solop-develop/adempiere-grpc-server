@@ -223,9 +223,6 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		}
 
 		builder.setId(organization.getAD_Org_ID())
-			.setUuid(
-				ValueUtil.validateNull(organization.getUUID())
-			)
 			.setValue(
 				ValueUtil.validateNull(organization.getName())
 			)
@@ -325,9 +322,6 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		}
 
 		builder.setId(currency.getC_Currency_ID())
-			.setUuid(
-				ValueUtil.validateNull(currency.getUUID())
-			)
 			.setIsoCode(
 				ValueUtil.validateNull(currency.getISO_Code())
 			)
@@ -429,7 +423,6 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		}
 
 		builder.setId(transactionType.getAD_Ref_List_ID())
-			.setUuid(ValueUtil.validateNull(transactionType.getUUID()))
 			.setValue(ValueUtil.validateNull(transactionType.getValue()))
 			.setName(
 				ValueUtil.validateNull(name)
@@ -467,7 +460,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		Properties context = Env.getCtx();
 		int currencyId = request.getCurrencyId();
 		int businessPartnerId = request.getBusinessPartnerId();
-		Timestamp date = ValueUtil.getTimestampFromLong(
+		Timestamp date = ValueUtil.getDateFromTimestampDate(
 			request.getDate()
 		);
 
@@ -548,15 +541,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				);
 
 				int paymentId = rs.getInt(I_C_Payment.COLUMNNAME_C_Payment_ID);
-				String paymentUuid = RecordUtil.getUuidFromId(I_C_Payment.Table_Name, paymentId, null);
-
 				Payment.Builder paymentBuilder = Payment.newBuilder()
 					.setId(paymentId)
-					.setUuid(
-						ValueUtil.validateNull(paymentUuid)
-					)
 					.setTransactionDate(
-						ValueUtil.getLongFromTimestamp(
+						ValueUtil.getTimestampFromDate(
 							rs.getTimestamp(I_C_Payment.COLUMNNAME_DateTrx)
 						)
 					)
@@ -634,7 +622,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		Properties context = Env.getCtx();
 		int currencyId = request.getCurrencyId();
 		int businessPartnerId = request.getBusinessPartnerId();
-		Timestamp date = ValueUtil.getTimestampFromLong(
+		Timestamp date = ValueUtil.getDateFromTimestampDate(
 			request.getDate()
 		);
 
@@ -718,14 +706,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				);
 
 				int invoiceId = rs.getInt(I_C_Invoice.COLUMNNAME_C_Invoice_ID);
-				String invoiceUuid = RecordUtil.getUuidFromId(I_C_Invoice.Table_Name, invoiceId, null);
 				Invoice.Builder invoiceBuilder = Invoice.newBuilder()
 					.setId(invoiceId)
-					.setUuid(
-						ValueUtil.validateNull(invoiceUuid)
-					)
 					.setDateInvoiced(
-						ValueUtil.getLongFromTimestamp(
+						ValueUtil.getTimestampFromDate(
 							rs.getTimestamp(I_C_Invoice.COLUMNNAME_DateInvoiced)
 						)
 					)
@@ -833,9 +817,6 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		}
 
 		builder.setId(charge.getC_Charge_ID())
-			.setUuid(
-				ValueUtil.validateNull(charge.getUUID())
-			)
 			.setName(
 				ValueUtil.validateNull(charge.getName())
 			)
@@ -899,14 +880,14 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	private Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
 		AtomicReference<Timestamp> transactionDateReference = new AtomicReference<Timestamp>();
 		paymentSelection.forEach(paymentSelected -> {
-			Timestamp paymentDate = ValueUtil.getTimestampFromLong(
+			Timestamp paymentDate = ValueUtil.getDateFromTimestampDate(
 				paymentSelected.getTransactionDate()
 			);
 			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), paymentDate);
 			transactionDateReference.set(transactionDate);
 		});
 		invoiceSelection.forEach(invoiceSelected -> {
-			Timestamp invoiceDate = ValueUtil.getTimestampFromLong(
+			Timestamp invoiceDate = ValueUtil.getDateFromTimestampDate(
 				invoiceSelected.getDateInvoiced()
 			);
 			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), invoiceDate);
@@ -953,7 +934,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		Trx.run(transactionName -> {
 			// transaction date
-			Timestamp transactionDate = ValueUtil.getTimestampFromLong(
+			Timestamp transactionDate = ValueUtil.getDateFromTimestampDate(
 				request.getDate()
 			);
 			if (transactionDate == null) {
@@ -963,7 +944,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				);
 			}
 
-			BigDecimal totalDifference = ValueUtil.getBigDecimalFromDecimal(
+			BigDecimal totalDifference = ValueUtil.getDecimalFromValue(
 				request.getTotalDifference()
 			);
 			String status = saveData(
@@ -1018,7 +999,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		// Sum up the payment and applied amounts.
 		BigDecimal paymentAppliedAmt = Env.ZERO;
 		for (PaymentSelection payment : paymentSelection) {
-			BigDecimal paymentAmt = ValueUtil.getBigDecimalFromDecimal(
+			BigDecimal paymentAmt = ValueUtil.getDecimalFromValue(
 				payment.getAppliedAmount()
 			);
 			amountList.add(paymentAmt);

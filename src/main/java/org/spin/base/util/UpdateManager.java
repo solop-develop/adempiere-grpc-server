@@ -129,7 +129,6 @@ public class UpdateManager {
 			buildConnection();
 			return blockingStub.listPackages(
 					  ListPackagesRequest.newBuilder()
-					  	.setToken(getToken())
 					  	.setPageToken(ValueUtil.validateNull(pageToken))
 					  	.setVersion(version)
 					  	.setReleaseNo(releaseNo)
@@ -153,7 +152,6 @@ public class UpdateManager {
 			buildConnection();
 			return blockingStub.listUpdates(
 				  ListUpdatesRequest.newBuilder()
-				  	.setToken(getToken())
 				  	.setPageToken(ValueUtil.validateNull(pageToken))
 				  	.setEntityType(entityType)
 				  	.setReleaseNo(ValueUtil.validateNull(releaseNo))
@@ -167,18 +165,17 @@ public class UpdateManager {
 	
 	/**
 	 * List Steps from update
-	 * @param updateUuid
+	 * @param updateId
 	 * @param pageToken
 	 * @return
 	 */
-	public ListStepsResponse listSteps(String updateUuid, String pageToken, int fromStep) {
+	public ListStepsResponse listSteps(int updateId, String pageToken, int fromStep) {
 		try {
 			buildConnection();
 			return blockingStub.listSteps(
 				  ListStepsRequest.newBuilder()
-				  	.setToken(getToken())
 				  	.setPageToken(ValueUtil.validateNull(pageToken))
-				  	.setUpdateUuid(updateUuid)
+				  	.setUpdateId(updateId)
 				  	.setFromStep(fromStep)
 				  	.build());
 		} catch (Exception e) {

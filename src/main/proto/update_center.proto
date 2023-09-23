@@ -32,36 +32,38 @@ service UpdateCenter {
 
 // Packages Request
 message ListPackagesRequest {
-	string token = 1;
-	string language = 2;
-	string release_no = 3;
-	string version = 4;
-	int32 page_size = 6;
-	string page_token = 7;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string language = 8;
+	string release_no = 9;
+	string version = 10;
 }
 
 // Package
 message Package {
 	int32 id = 1;
-	string uuid = 2;
-	string entity_type = 3;
-	string model_package = 4;
-	string version = 5;	
-	string name = 6;
-	string description = 7;
-	string help = 8;
-	repeated PackageVersion versions = 9;
+	string entity_type = 2;
+	string model_package = 3;
+	string version = 4;	
+	string name = 5;
+	string description = 6;
+	string help = 7;
+	repeated PackageVersion versions = 8;
 }
 
 // Package Version
 message PackageVersion {
 	int32 id = 1;
-	string uuid = 2;
-	string version = 3;
-	int32 sequence = 4;	
-	string name = 5;
-	string description = 6;
-	string help = 7;
+	string version = 2;
+	int32 sequence = 3;	
+	string name = 4;
+	string description = 5;
+	string help = 6;
 }
 
 //	List Packages Response
@@ -73,13 +75,17 @@ message ListPackagesResponse {
 
 // Updates Request
 message ListUpdatesRequest {
-	string token = 1;
-	string language = 2;
-	string release_no = 3;
-	string version = 4;
-	string entity_type = 5;	
-	int32 page_size = 6;
-	string page_token = 7;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string language = 8;
+	string release_no = 9;
+	string version = 10;
+	string entity_type = 11;
 }
 
 //	List Updates Response
@@ -92,23 +98,25 @@ message ListUpdatesResponse {
 // Update
 message Update {
 	int32 id = 1;
-	string uuid = 2;
-	string entity_type = 3;
-	string release_no = 4;
-	int32 sequence = 6;	
-	string name = 7;
-	string comments = 8;
-	int32 step_quantity = 9;
+	string entity_type = 2;
+	string release_no = 3;
+	int32 sequence = 4;	
+	string name = 5;
+	string comments = 6;
+	int32 step_quantity = 7;
 }
 
 // Steps Request
 message ListStepsRequest {
-	string token = 1;
-	int32 update_id = 2;
-	string update_uuid = 3;	
-	int32 page_size = 4;
-	string page_token = 5;
-	int32 from_step = 6;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 update_id = 8;
+	int32 from_step = 9;
 }
 
 //	List Steps Response
@@ -121,30 +129,28 @@ message ListStepsResponse {
 // Step
 message Step {
 	int32 id = 1;
-	string uuid = 2;
-	string step_type = 3;
-	string action = 4;
-	int32 table_id = 5;
-	int32 record_id = 7;
-	int32 column_id = 8;
-	string database_type = 9;
-	int32 sequence = 10;
-	string comments = 11;
-	bool is_parsed = 12;
-	string sql_statement = 13;
-	string rollback_statement = 14;
-	repeated StepValue step_values = 15;
+	string step_type = 2;
+	string action = 3;
+	int32 table_id = 4;
+	int32 record_id = 5;
+	int32 column_id = 6;
+	string database_type = 7;
+	int32 sequence = 8;
+	string comments = 9;
+	bool is_parsed = 10;
+	string sql_statement = 11;
+	string rollback_statement = 12;
+	repeated StepValue step_values = 13;
 }
 
 // Step Value
 message StepValue {
 	int32 id = 1;
-	string uuid = 2;
-	int32 column_id = 3;
-	string old_value = 4;
-	string new_value = 5;
-	string backup_value = 7;
-	bool is_old_null = 8;
-	bool is_new_null = 9;
-	bool is_backup_null = 10;
+	int32 column_id = 2;
+	string old_value = 3;
+	string new_value = 4;
+	string backup_value = 5;
+	bool is_old_null = 6;
+	bool is_new_null = 7;
+	bool is_backup_null = 8;
 }

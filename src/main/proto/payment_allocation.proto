@@ -20,6 +20,7 @@ option java_outer_classname = "ADempierePaymentAllocation";
 
 import "google/protobuf/struct.proto";
 import "business.proto";
+import "google/protobuf/timestamp.proto";
 
 package payment_allocation;
 
@@ -45,18 +46,21 @@ service PaymentAllocation {
 
 // Business Partner
 message BusinessPartner {
-	string uuid = 1;
-	int32 id = 2;
-	string value = 3;
-	string tax_id = 4;
-	string name = 5;
-	string description = 6;
+	int32 id = 1;
+	string value = 2;
+	string tax_id = 3;
+	string name = 4;
+	string description = 5;
 }
 
 message ListBusinessPartnersRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListBusinessPartnersResponse {
@@ -69,15 +73,18 @@ message ListBusinessPartnersResponse {
 // Organization
 message Organization {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
+	string value = 2;
+	string name = 3;
 }
 
 message ListOrganizationsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListOrganizatiosResponse {
@@ -90,15 +97,18 @@ message ListOrganizatiosResponse {
 // Currency
 message Currency {
 	int32 id = 1;
-	string uuid = 2;
-	string iso_code = 3;
-	string description = 4;
+	string iso_code = 2;
+	string description = 3;
 }
 
 message ListCurrenciesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListCurrenciesResponse {
@@ -111,16 +121,19 @@ message ListCurrenciesResponse {
 // Transaction Type
 message TransactionType {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string value = 2;
+	string name = 3;
+	string description = 4;
 }
 
 message ListTransactionTypesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListTransactionTypesResponse {
@@ -133,31 +146,33 @@ message ListTransactionTypesResponse {
 // Payments Movements
 message Payment {
 	int32 id = 1;
-	string uuid = 2;
-	int64 transaction_date = 3;
-	bool is_receipt = 4;
-	string document_no = 5;
-	TransactionType transaction_type = 6; // AP-AR
-	Organization organization = 7;
-	string description = 8;
-	Currency currency = 9;
-	google.protobuf.Struct payment_amount = 10;
-	google.protobuf.Struct converted_amount = 11;
-	google.protobuf.Struct open_amount = 12;
+	google.protobuf.Timestamp transaction_date = 2;
+	bool is_receipt = 3;
+	string document_no = 4;
+	TransactionType transaction_type = 5; // AP-AR
+	Organization organization = 6;
+	string description = 7;
+	Currency currency = 8;
+	google.protobuf.Value payment_amount = 9;
+	google.protobuf.Value converted_amount = 10;
+	google.protobuf.Value open_amount = 11;
 }
 
 message ListPaymentsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 business_partner_id = 4;
-	int64 date = 5;
-	int32 organization_id = 6;
-	int32 currency_id = 7;
-	bool is_multi_currency = 8;
-	string transaction_type = 9; // AP-AR
-	bool is_automatic_write_off = 10;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 business_partner_id = 8;
+	google.protobuf.Timestamp date = 9;
+	int32 organization_id = 10;
+	int32 currency_id = 11;
+	bool is_multi_currency = 12;
+	string transaction_type = 13; // AP-AR
+	bool is_automatic_write_off = 14;
 }
 
 message ListPaymentsResponse {
@@ -170,32 +185,34 @@ message ListPaymentsResponse {
 // Invoice
 message Invoice {
 	int32 id = 1;
-	string uuid = 2;
-	int64 date_invoiced = 3;
-	bool is_sales_transaction = 4;
-	string document_no = 5;
-	TransactionType transaction_type = 6; // AP-AR
-	Organization organization = 7;
-	string description = 8;
-	Currency currency = 9;
-	google.protobuf.Struct original_amount = 10;
-	google.protobuf.Struct converted_amount = 11;
-	google.protobuf.Struct open_amount = 12;
-	google.protobuf.Struct discount_amount = 13;
+	google.protobuf.Timestamp date_invoiced = 2;
+	bool is_sales_transaction = 3;
+	string document_no = 4;
+	TransactionType transaction_type = 5; // AP-AR
+	Organization organization = 6;
+	string description = 7;
+	Currency currency = 8;
+	google.protobuf.Value original_amount = 9;
+	google.protobuf.Value converted_amount = 10;
+	google.protobuf.Value open_amount = 11;
+	google.protobuf.Value discount_amount = 12;
 }
 
 message ListInvoicesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 business_partner_id = 4;
-	int64 date = 5;
-	int32 organization_id = 6;
-	int32 currency_id = 7;
-	bool is_multi_currency = 8;
-	string transaction_type = 9; // AP-AR
-	bool is_automatic_write_off = 10;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 business_partner_id = 8;
+	google.protobuf.Timestamp date = 9;
+	int32 organization_id = 10;
+	int32 currency_id = 11;
+	bool is_multi_currency = 12;
+	string transaction_type = 13; // AP-AR
+	bool is_automatic_write_off = 14;
 }
 
 message ListInvoicesResponse {
@@ -208,16 +225,19 @@ message ListInvoicesResponse {
 // Charge
 message Charge {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	google.protobuf.Struct amount = 5;
+	string name = 2;
+	string description = 3;
+	google.protobuf.Value amount = 4;
 }
 
 message ListChargesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListChargesResponse {
@@ -229,9 +249,13 @@ message ListChargesResponse {
 
 // Transaction Organization
 message ListTransactionOrganizationsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListTransactionOrganizationsResponse {
@@ -242,19 +266,17 @@ message ListTransactionOrganizationsResponse {
 
 message PaymentSelection {
 	int32 id = 1;
-	string uuid = 2;
-	int64 transaction_date = 3;
-	google.protobuf.Struct applied_amount = 4;
+	google.protobuf.Timestamp transaction_date = 2;
+	google.protobuf.Value applied_amount = 3;
 }
 
 message InvoiceSelection {
 	int32 id = 1;
-	string uuid = 2;
-	int64 date_invoiced = 3;
-	google.protobuf.Struct applied_amount = 4;
-	google.protobuf.Struct discount_amount = 5;
-	google.protobuf.Struct write_off_amount = 6;
-	google.protobuf.Struct open_amount = 7;
+	google.protobuf.Timestamp date_invoiced = 2;
+	google.protobuf.Value applied_amount = 3;
+	google.protobuf.Value discount_amount = 4;
+	google.protobuf.Value write_off_amount = 5;
+	google.protobuf.Value open_amount = 6;
 }
 
 // Process
@@ -264,9 +286,9 @@ message ProcessRequest {
 	bool is_multi_currency = 3;
 	int32 charge_id = 4;
 	int32 transaction_organization_id = 5;
-	int64 date = 6;
+	google.protobuf.Timestamp date = 6;
 	string description = 7;
-	google.protobuf.Struct total_difference = 8;
+	google.protobuf.Value total_difference = 8;
 	repeated PaymentSelection payment_selections = 9;
 	repeated InvoiceSelection invoice_selections = 10;
 }

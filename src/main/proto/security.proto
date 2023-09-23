@@ -86,8 +86,13 @@ message Session {
 
 // List Roles Request
 message ListRolesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 //	Roles List
@@ -224,7 +229,13 @@ message Menu {
 
 //	Open ID
 message ListServicesRequest {
-	// empty request
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListServicesResponse {

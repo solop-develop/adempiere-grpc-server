@@ -63,9 +63,6 @@ public class Util {
 		}
 
 		builder.setId(businessPartner.getC_BPartner_ID())
-			.setUuid(
-				ValueUtil.validateNull(businessPartner.getUUID())
-			)
 			.setValue(
 				ValueUtil.validateNull(businessPartner.getValue())
 			)
@@ -94,21 +91,11 @@ public class Util {
 		builder.setId(
 				resultSet.getInt("ID")
 			)
-			.setUuid(
-				ValueUtil.validateNull(
-					resultSet.getString(I_C_Invoice.COLUMNNAME_UUID)
-				)
-			)
 			.setHeaderId(
 				resultSet.getInt("Header_ID")
 			)
-			.setHeaderUuid(
-				ValueUtil.validateNull(
-					resultSet.getString("Header_UUID")
-				)
-			)
 			.setDate(
-				ValueUtil.getLongFromTimestamp(
+				ValueUtil.getTimestampFromDate(
 					resultSet.getTimestamp(5) // Date
 				)
 			)

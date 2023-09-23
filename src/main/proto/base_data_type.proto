@@ -23,22 +23,6 @@ import "google/protobuf/timestamp.proto";
 
 package data;
 
-//	Entities Selections
-message KeyValueSelection {
-	int32 selection_id = 1;
-	google.protobuf.Struct values = 2;
-}
-
-//  Query Values
-message QueryValues {
-	string filters = 1;
-	repeated string sort_columns = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-}
-
 enum OrderType {
 	ASCENDING = 0;
 	DESCENDING = 1;
@@ -60,19 +44,6 @@ enum Operator {
 	NULL = 12;
 	IN = 13;
 	NOT_IN = 14;
-}
-
-// Zoom Information
-message RecordReferenceInfo {
-	int32 id = 1;
-	int32 window_id = 2;
-	int32 tab_id = 3;
-	string table_name = 4;
-	string where_clause = 5;
-	int64 record_count = 6;
-	string column_name = 7;
-	string display_name = 8;
-	google.protobuf.Value value = 9;
 }
 
 // Document Item
@@ -125,37 +96,6 @@ message ProcessLog {
 message ProcessInfoLog {
 	int32 record_id = 1;
 	string log = 2;
-}
-
-// Translations Item
-message Translation {
-	string language = 1;
-	google.protobuf.Struct values = 2;
-}
-
-// Print Format
-message PrintFormat {
-	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string table_name = 4;
-	bool is_default = 5;
-	int32 report_view_id = 6;
-}
-
-
-// Report View
-message ReportView {
-	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string table_name = 4;
-}
-
-// Drill Table
-message DrillTable {
-	string table_name = 1;
-	string print_name = 2;
 }
 
 //	Used for get output from report / BusinessProcess like PDF, HTML another result for show to end user

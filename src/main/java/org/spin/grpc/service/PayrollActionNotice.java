@@ -31,12 +31,10 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
-import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
-import org.compiere.util.Util;
 import org.eevolution.hr.model.MHRConcept;
 import org.eevolution.hr.model.MHRDepartment;
 import org.eevolution.hr.model.MHREmployee;
@@ -56,9 +54,9 @@ import org.spin.backend.grpc.form.ListPayrollMovementsRequest;
 import org.spin.backend.grpc.form.ListPayrollProcessRequest;
 import org.spin.backend.grpc.form.PayrollActionNoticeGrpc.PayrollActionNoticeImplBase;
 import org.spin.backend.grpc.form.SavePayrollMovementRequest;
-import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
+import org.spin.base.db.ParameterUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
@@ -191,7 +189,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	private ListLookupItemsResponse.Builder convertEmployeeValidList(Properties context, ListEmployeeValidRequest request) {
 		ListLookupItemsResponse.Builder lookupsList = ListLookupItemsResponse.newBuilder();
 
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 		int payrollProcessId = (int) contextAttributesList.get(MHRProcess.COLUMNNAME_HR_Process_ID);
 		if (contextAttributesList == null || payrollProcessId <= 0) {
 			return lookupsList;
@@ -316,7 +314,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	private ListLookupItemsResponse.Builder convertPayrollConceptsList(Properties context, ListPayrollConceptsRequest request) {
 		ListLookupItemsResponse.Builder listLookups = ListLookupItemsResponse.newBuilder();
 
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
 			return listLookups;
 		}
@@ -462,20 +460,12 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		String tableName = MHRConcept.Table_Name;
 
 		MHRConcept conceptDefinition = null;
-		if(request.getId() > 0) {
-			conceptDefinition = MHRConcept.getById(Env.getCtx(), request.getId(), null);
-		} else if(!Util.isEmpty(request.getUuid(), true)) {
-			conceptDefinition = new Query(
-					Env.getCtx(),
-					tableName,
-					MHRConcept.COLUMNNAME_UUID + " = ? ",
-					null
-				)
-				.setParameters(request.getUuid())
-				.first();
+		if(request.getId() <= 0) {
+			throw new AdempiereException("@HR_Concept_ID@ @IsMandatory@");
 		}
+		conceptDefinition = MHRConcept.getById(Env.getCtx(), request.getId(), null);
 		if (conceptDefinition == null) {
-			throw new AdempiereException("@HR_Concept_ID@ Null");
+			throw new AdempiereException("@HR_Concept_ID@ @NotFound@");
 		}
 
 		Entity.Builder entityBuilder = Entity.newBuilder();
@@ -539,7 +529,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	private ListEntitiesResponse.Builder convertListPayrollMovements(Properties context, ListPayrollMovementsRequest request) {
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
 			return builder;
 		}
@@ -696,7 +686,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		Entity.Builder builder = Entity.newBuilder();
 		builder.setTableName(MHRMovement.Table_Name);
 
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
 			return builder;
 		}
@@ -712,7 +702,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			throw new AdempiereException("@BPartnerNotFound@");
 		}
 
-		Map<String, Object> attributesList = ValueUtil.convertValuesMapToObjects(request.getAttributesMap());
+		Map<String, Object> attributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 
 		// Concept
 		int conceptId = 0;
@@ -990,12 +980,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	Empty.Builder convertDeleteEntity(Properties context, DeletePayrollMovementsRequest request) {
 		List<Integer> ids = request.getIdsList();
 
-		List<Object> uuids = new ArrayList<Object>();
-		request.getUuidsList().forEach(uuid -> {
-			uuids.add(uuid);
-		});
-		
-		if (ids.size() <= 0 && uuids.size() <= 0) {
+		if (ids.size() <= 0) {
 			throw new AdempiereException("@NoRecordID@");
 		}
 
@@ -1012,29 +997,6 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 					}
 				});
 			}
-			// delete with uuid's
-			/*
-			else {
-				String sqlParams = " ?,".repeat(uuids.size());
-				sqlParams = sqlParams.substring(0, sqlParams.length() - 1);
-				String whereClause = MHRMovement.COLUMNNAME_UUID + " IN( " + sqlParams + " ) ";
-
-				List<MHRMovement> payrollMovementsList = new Query(
-						Env.getCtx(),
-						tableName,
-						whereClause,
-						transactionName
-					)
-					.setParameters(uuids)
-					.list();
-
-				payrollMovementsList.forEach(payrollMovement -> {
-					if (payrollMovement != null && payrollMovement.get_ID() > 0) {
-						payrollMovement.deleteEx(true);
-					}
-				});
-			}
-			*/
 		});
 		//	Return
 		return Empty.newBuilder();

@@ -232,6 +232,12 @@ service UserInterface {
 	}
 }
 
+// Translations Item
+message Translation {
+	string language = 1;
+	google.protobuf.Struct values = 2;
+}
+
 //	Role Access Request
 message GetRecordAccessRequest {
 	string table_name = 1;
@@ -401,15 +407,15 @@ message DeleteEntitiesBatchRequest {
 
 // Browser request
 message ListBrowserItemsRequest {
-	int32 id = 1;
-	google.protobuf.Struct context_attributes = 2;
-	//	Filters
-	string filters = 3;
-	repeated string sort_columns = 4;
-	repeated string group_columns = 5;
-	repeated string select_columns = 6;
-	int32 page_size = 7;
-	string page_token = 8;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 id = 8;
+	google.protobuf.Struct context_attributes = 9;
 }
 
 // Browsers List
@@ -478,22 +484,22 @@ message LookupItem {
 
 // List Lookup Item
 message ListLookupItemsRequest {
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 	// References
-	int32 process_parameter_id = 1;
-	int32 field_id = 2;
-	int32 browse_field_id = 3;
-	int32 reference_id = 4;
-	int32 column_id = 5;
-	string column_name = 6;
-	string table_name = 7;
-	google.protobuf.Struct context_attributes = 8;
-	//	Filters
-	string filters = 9;
-	repeated string sort_columns = 10;
-	repeated string group_columns = 11;
-	repeated string select_columns = 12;
-	int32 page_size = 13;
-	string page_token = 14;
+	int32 process_parameter_id = 8;
+	int32 field_id = 9;
+	int32 browse_field_id = 10;
+	int32 reference_id = 11;
+	int32 column_id = 12;
+	string column_name = 13;
+	string table_name = 14;
+	google.protobuf.Struct context_attributes = 15;
 }
 
 // List Lookup Item Response
@@ -529,16 +535,16 @@ message UpdateTabEntityRequest {
 
 // List Tab Entities Request
 message ListTabEntitiesRequest {
-	int32 window_id = 1;
-	int32 tab_id = 2;
-	google.protobuf.Struct context_attributes = 3;
-	//	Filters
-	string filters = 4;
-	repeated string sort_columns = 5;
-	repeated string group_columns = 6;
-	repeated string select_columns = 7;
-	int32 page_size = 8;
-	string page_token = 9;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	google.protobuf.Struct context_attributes = 10;
 }
 
 // @deprecated please use ListEntitiesResponse
@@ -551,13 +557,13 @@ message ListTabEntitiesResponse {
 
 // List Entities Request
 message ListEntitiesRequest {
-	//	Filters
 	string filters = 1;
 	repeated string sort_columns = 2;
 	repeated string group_columns = 3;
 	repeated string select_columns = 4;
 	int32 page_size = 5;
 	string page_token = 6;
+	string search_value = 7;
 }
 
 // List Entities Response
@@ -586,6 +592,12 @@ message Callout {
 	google.protobuf.Struct values = 2;
 }
 
+//	Entities Selections
+message KeyValueSelection {
+	int32 selection_id = 1;
+	google.protobuf.Struct values = 2;
+}
+
 // BusinessProcess Request
 message RunBusinessProcessRequest {
 	int32 id = 1;
@@ -602,27 +614,37 @@ message RunBusinessProcessRequest {
 
 // Translations Request
 message ListTranslationsRequest {
-	int32 id = 1;
-	string table_name = 2;
-	string language = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
 	int32 page_size = 5;
 	string page_token = 6;
+	string search_value = 7;
+	int32 id = 8;
+	string table_name = 9;
+	string language = 10;
 }
 
 //	Translations List
 message ListTranslationsResponse {
 	int64 record_count = 1;
-	repeated google.protobuf.Struct translations = 2;
+	repeated Translation translations = 2;
 	string next_page_token = 3;
 }
 
 // Print Formats Request
 message ListPrintFormatsRequest {
-	string table_name = 1;
-	int32 report_view_id = 2;
-	int32 process_id = 3;
-	int32 page_size = 4;
-	string page_token = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+	int32 report_view_id = 9;
+	int32 process_id = 10;
 }
 
 //	Print Format List
@@ -671,10 +693,40 @@ message ChatEntry {
 
 // Report _views Request
 message ListReportViewsRequest {
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+	int32 process_id = 9;
+}
+
+// Print Format
+message PrintFormat {
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+	string table_name = 4;
+	bool is_default = 5;
+	int32 report_view_id = 6;
+}
+
+
+// Report View
+message ReportView {
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+	string table_name = 4;
+}
+
+// Drill Table
+message DrillTable {
 	string table_name = 1;
-	int32 process_id = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string print_name = 2;
 }
 
 //	Report View List
@@ -686,9 +738,14 @@ message ListReportViewsResponse {
 
 // Drill table Request
 message ListDrillTablesRequest {
-	string table_name = 1;
-	int32 page_size = 2;
-	string page_token = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
 }
 
 //	Drill Tables List
@@ -711,11 +768,29 @@ message ExistsReferencesResponse {
 
 // List References
 message ListReferencesRequest {
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 id = 8;
+	string table_name = 9;
+	int32 window_id = 10;
+}
+
+// Zoom Information
+message RecordReferenceInfo {
 	int32 id = 1;
-	string table_name = 2;
-	int32 window_id = 3;
-	int32 page_size = 4;
-	string page_token = 5;
+	int32 window_id = 2;
+	int32 tab_id = 3;
+	string table_name = 4;
+	string where_clause = 5;
+	int64 record_count = 6;
+	string column_name = 7;
+	string display_name = 8;
+	google.protobuf.Value value = 9;
 }
 
 // List References Response
@@ -727,35 +802,35 @@ message ListReferencesResponse {
 
 // List General Info Request
 message ListGeneralInfoRequest {
-	google.protobuf.Struct context_attributes = 1;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	google.protobuf.Struct context_attributes = 8;
 	// references
-	int32 process_parameter_id = 2;
-	int32 field_id = 3;
-	int32 browse_field_id = 4;
-	int32 reference_id = 5;
-	int32 column_id = 6;
-	string table_name = 7;
-	string column_name = 8;
-	//	Filters
-	string filters = 9;
-	repeated string sort_columns = 10;
-	repeated string group_columns = 11;
-	repeated string select_columns = 12;
-	int32 page_size = 13;
-	string page_token = 14;
+	int32 process_parameter_id = 9;
+	int32 field_id = 10;
+	int32 browse_field_id = 11;
+	int32 reference_id = 12;
+	int32 column_id = 13;
+	string table_name = 14;
+	string column_name = 15;
 }
 
 message ListTabSequencesRequest {
-	int32 window_id = 1;
-	int32 tab_id = 2;
-	//	Filters
-	string filters = 3;
-	repeated string sort_columns = 4;
-	repeated string group_columns = 5;
-	repeated string select_columns = 6;
-	int32 page_size = 7;
-	string page_token = 8;
-	google.protobuf.Struct context_attributes = 9;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	google.protobuf.Struct context_attributes = 10;
 }
 
 message SaveTabSequencesRequest {
@@ -767,11 +842,18 @@ message SaveTabSequencesRequest {
 
 // List Tree Nodes Request
 message ListTreeNodesRequest {
-	int32 tab_id = 1;
-	string table_name = 2;
-	int32 id = 3;
-	int32 element_id = 4;
-	google.protobuf.Struct context_attributes = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 tab_id = 8;
+	string table_name = 9;
+	int32 id = 10;
+	int32 element_id = 11;
+	google.protobuf.Struct context_attributes = 12;
 }
 
 // Tree Node
@@ -816,6 +898,7 @@ message ListMailTemplatesRequest {
 	repeated string select_columns = 4;
 	int32 page_size = 5;
 	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListMailTemplatesResponse {

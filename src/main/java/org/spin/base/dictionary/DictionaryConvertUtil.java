@@ -21,7 +21,6 @@ import java.util.Optional;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Window;
-import org.adempiere.core.domains.models.X_AD_Reference;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MWindow;
 import org.compiere.util.Env;
@@ -29,7 +28,6 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.ZoomWindow;
 import org.spin.base.util.DictionaryUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 import org.spin.util.ASPUtil;
 
@@ -60,8 +58,6 @@ public class DictionaryConvertUtil {
 		// reference value
 		if (info.AD_Reference_Value_ID > 0) {
 			builder.setId(info.AD_Reference_Value_ID);
-			String uuid = RecordUtil.getUuidFromId(X_AD_Reference.Table_Name, info.AD_Reference_Value_ID);
-			builder.setUuid(ValueUtil.validateNull(uuid));
 		}
 
 		//	Window Reference
@@ -103,7 +99,6 @@ public class DictionaryConvertUtil {
 		//	Return
 		return ZoomWindow.newBuilder()
 			.setId(window.getAD_Window_ID())
-			.setUuid(ValueUtil.validateNull(window.getUUID()))
 			.setName(ValueUtil.validateNull(name))
 			.setDescription(ValueUtil.validateNull(description))
 			.setIsSalesTransaction(window.isSOTrx())

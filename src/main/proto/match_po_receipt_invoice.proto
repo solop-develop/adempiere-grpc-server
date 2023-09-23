@@ -20,6 +20,7 @@ option java_outer_classname = "ADempierePaymentAllocation";
 
 import "google/protobuf/struct.proto";
 import "business.proto";
+import "google/protobuf/timestamp.proto";
 
 package match_po_receipt_invoice;
 
@@ -50,16 +51,24 @@ enum MatchType {
 }
 
 message ListMatchesTypesFromRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListMatchesTypesToRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
-	MatchType match_from_type = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	MatchType match_from_type = 8;
 }
 
 
@@ -70,44 +79,54 @@ enum MatchMode {
 }
 
 message ListSearchModesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 
 // Vendor (Business Partner)
 message Vendor {
-	string uuid = 1;
-	int32 id = 2;
-	string value = 3;
-	string tax_id = 4;
-	string name = 5;
-	string description = 6;
+	int32 id = 1;
+	string value = 2;
+	string tax_id = 3;
+	string name = 4;
+	string description = 5;
 }
 
 message ListVendorsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 
 // Product
 message ListProductsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message Product {
-	string uuid = 1;
-	int32 id = 2;
-	string upc = 3;
-	string sku = 4;
-	string value = 5;
-	string name = 6;
-	string description = 7;
+	int32 id = 1;
+	string upc = 2;
+	string sku = 3;
+	string value = 4;
+	string name = 5;
+	string description = 6;
 }
 
 message ListProductsResponse {
@@ -120,32 +139,34 @@ message ListProductsResponse {
 // Matched
 message Matched {
 	int32 id = 1;
-	string uuid = 2;
-	int32 header_id = 3;
-	string header_uuid = 4;
-	string document_no = 5;
-	int64 date = 6;
-	int32 vendor_id = 7;
-	string vendor_name = 8;
-	int32 line_no = 9;
-	int32 product_id = 10;
-	string product_name = 11;
-	google.protobuf.Struct quantity = 12;
-	google.protobuf.Struct matched_quantity = 13;
-	MatchType match_type = 14;
+	int32 header_id = 2;
+	string document_no = 3;
+	google.protobuf.Timestamp date = 4;
+	int32 vendor_id = 5;
+	string vendor_name = 6;
+	int32 line_no = 7;
+	int32 product_id = 8;
+	string product_name = 9;
+	google.protobuf.Value quantity = 10;
+	google.protobuf.Value matched_quantity = 11;
+	MatchType match_type = 12;
 }
 
 message ListMatchedFromRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
-	MatchMode match_mode = 4;
-	MatchType match_from_type = 5;
-	MatchType match_to_type = 6;
-	int32 vendor_id = 7;
-	int32 product_id = 8;
-	int64 date_from = 9;
-	int64 date_to = 10;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	MatchMode match_mode = 8;
+	MatchType match_from_type = 9;
+	MatchType match_to_type = 10;
+	int32 vendor_id = 11;
+	int32 product_id = 12;
+	google.protobuf.Timestamp date_from = 13;
+	google.protobuf.Timestamp date_to = 14;
 }
 
 message ListMatchedFromResponse {
@@ -157,18 +178,22 @@ message ListMatchedFromResponse {
 
 // Matched To
 message ListMatchedToRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
-	MatchMode match_mode = 4;
-	MatchType match_from_type = 5;
-	MatchType match_to_type = 6;
-	int32 match_from_selected_id = 7;
-	int32 vendor_id = 8;
-	int32 product_id = 9;
-	int64 date_from = 10;
-	int64 date_to = 11;
-	bool is_same_quantity = 12;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	MatchMode match_mode = 8;
+	MatchType match_from_type = 9;
+	MatchType match_to_type = 10;
+	int32 match_from_selected_id = 11;
+	int32 vendor_id = 12;
+	int32 product_id = 13;
+	google.protobuf.Timestamp date_from = 14;
+	google.protobuf.Timestamp date_to = 15;
+	bool is_same_quantity = 16;
 }
 
 message ListMatchedToResponse {
@@ -185,7 +210,7 @@ message ProcessRequest {
 	MatchType match_to_type = 3;
 	int32 match_from_selected_id = 4;
 	repeated Matched matched_to_selections = 5;
-	google.protobuf.Struct quantity = 6;
+	google.protobuf.Value quantity = 6;
 }
 
 message ProcessResponse {

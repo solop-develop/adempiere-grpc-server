@@ -18,7 +18,6 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -146,7 +145,6 @@ import org.spin.backend.grpc.store.UpdateCustomerRequest;
 import org.spin.backend.grpc.store.WebStoreGrpc.WebStoreImplBase;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.model.MADAttachmentReference;
@@ -171,20 +169,12 @@ import io.grpc.stub.StreamObserver;
 public class WebStore extends WebStoreImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(WebStore.class);
-	/**	Date format	*/
-	private final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
-	/**	Date Converter	*/
-	private SimpleDateFormat dateConverter = new SimpleDateFormat(DATE_FORMAT);
 	/**	Product Cache	*/
 	private static CCache<String, MProduct> productCache = new CCache<String, MProduct>(I_M_Product.Table_Name, 30, 0);	//	no time-out
 	
 	@Override
 	public void createCustomer(CreateCustomerRequest request, StreamObserver<Customer> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + request.getEmail());
 			Customer.Builder customer = createCustomer(request);
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
@@ -200,10 +190,6 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void resetPassword(ResetPasswordRequest request, StreamObserver<ResetPasswordResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + request.getEmail());
 			ResetPasswordResponse.Builder resetPasswordResponse = resetPassword(request);
 			responseObserver.onNext(resetPasswordResponse.build());
 			responseObserver.onCompleted();
@@ -219,10 +205,6 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void changePassword(ChangePasswordRequest request, StreamObserver<ChangePasswordResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + SessionManager.getSessionUuid());
 			ChangePasswordResponse.Builder changePasswordResponse = changePassword(request);
 			responseObserver.onNext(changePasswordResponse.build());
 			responseObserver.onCompleted();
@@ -238,10 +220,6 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void getCustomer(GetCustomerRequest request, StreamObserver<Customer> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + SessionManager.getSessionUuid());
 			Customer.Builder customer = getCustomerInfo(request);
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
@@ -257,10 +235,6 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void getStock(GetStockRequest request, StreamObserver<Stock> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + SessionManager.getSessionUuid());
 			Stock.Builder stock = getStockFromSku(request);
 			responseObserver.onNext(stock.build());
 			responseObserver.onCompleted();
@@ -276,10 +250,6 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void listStocks(ListStocksRequest request, StreamObserver<ListStocksResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + SessionManager.getSessionUuid());
 			ListStocksResponse.Builder stocks = listStocks(request);
 			responseObserver.onNext(stocks.build());
 			responseObserver.onCompleted();
@@ -295,10 +265,6 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void listProducts(ListProductsRequest request, StreamObserver<ListProductsResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + SessionManager.getSessionUuid());
 			ListProductsResponse.Builder products = listProducts(request);
 			responseObserver.onNext(products.build());
 			responseObserver.onCompleted();
@@ -314,10 +280,6 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void listRenderProducts(ListRenderProductsRequest request, StreamObserver<ListRenderProductsResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + SessionManager.getSessionUuid());
 			ListRenderProductsResponse.Builder products = listRenderProducts(request);
 			responseObserver.onNext(products.build());
 			responseObserver.onCompleted();
@@ -333,10 +295,6 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void createCart(CreateCartRequest request, StreamObserver<Cart> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + SessionManager.getSessionUuid());
 			Trx.run(transactionName -> {
 				Cart.Builder cart = convertCart(createCart(request.getIsGuest(), transactionName), transactionName);
 				responseObserver.onNext(cart.build());
@@ -354,12 +312,8 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void getCart(GetCartRequest request, StreamObserver<Cart> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + SessionManager.getSessionUuid());
 			Trx.run(transactionName -> {
-				Cart.Builder cart = convertCart(getCart(request.getCartId(), request.getCartUuid(), request.getIsGuest(), 0, transactionName), transactionName);
+				Cart.Builder cart = convertCart(getCart(request.getCartId(), request.getIsGuest(), 0, transactionName), transactionName);
 				responseObserver.onNext(cart.build());
 				responseObserver.onCompleted();
 			});
@@ -509,13 +463,7 @@ public class WebStore extends WebStoreImplBase {
 	@Override
 	public void getResource(GetResourceRequest request, StreamObserver<Resource> responseObserver) {
 		try {
-			if(request == null
-					|| (Util.isEmpty(request.getResourceUuid()) 
-							&& Util.isEmpty(request.getResourceName()))) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Download Requested = " + request.getResourceUuid());
-			getResource(request.getResourceUuid(), request.getResourceName(), responseObserver);
+			getResource(request.getResourceId(), request.getResourceName(), responseObserver);
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
@@ -572,8 +520,7 @@ public class WebStore extends WebStoreImplBase {
 	 * @return
 	 */
 	private Order.Builder createOrder(CreateOrderRequest request, String transactionName) {
-		if(request.getCartId() == 0
-				&& Util.isEmpty(request.getCartUuid())) {
+		if(request.getCartId() == 0) {
 			throw new AdempiereException("@W_Basket_ID@ @IsMandatory@");
 		}
 		MStore store = VueStoreFrontUtil.getDefaultStore(Env.getAD_Org_ID(Env.getCtx()));
@@ -597,7 +544,7 @@ public class WebStore extends WebStoreImplBase {
 			throw new AdempiereException("@PaymentRule@ @IsMandatory@");
 		}
 		//	Validate Business Partner
-		X_W_Basket basket = getCart(request.getCartId(), request.getCartUuid(), !Util.isEmpty(request.getCartUuid()), request.getUserId(), transactionName);
+		X_W_Basket basket = getCart(request.getCartId(), false, request.getUserId(), transactionName);
 		if(basket == null) {
 			throw new AdempiereException("@W_Basket_ID@ @IsMandatory@");
 		}
@@ -861,9 +808,9 @@ public class WebStore extends WebStoreImplBase {
 		Order.Builder builder = Order.newBuilder();
 		builder.setId(salesOrder.getC_Order_ID())
 			.setDocumentNo(ValueUtil.validateNull(salesOrder.getDocumentNo()))
-			.setCreated(dateConverter.format(salesOrder.getCreated()))
-			.setUpdated(dateConverter.format(salesOrder.getUpdated()))
-			.setTransmited(dateConverter.format(salesOrder.getUpdated()))
+			.setCreated(ValueUtil.getTimestampFromDate(salesOrder.getCreated()))
+			.setUpdated(ValueUtil.getTimestampFromDate(salesOrder.getUpdated()))
+			.setTransmited(ValueUtil.getTimestampFromDate(salesOrder.getUpdated()))
 			.setCarrierCode(request.getCarrierCode())
 			.setMethodCode(request.getMethodCode())
 			.setPaymentMethodCode(request.getPaymentMethodCode())
@@ -892,9 +839,9 @@ public class WebStore extends WebStoreImplBase {
 		Order.Builder builder = Order.newBuilder();
 		builder.setId(salesOrder.getC_Order_ID())
 			.setDocumentNo(ValueUtil.validateNull(salesOrder.getDocumentNo()))
-			.setCreated(dateConverter.format(salesOrder.getCreated()))
-			.setUpdated(dateConverter.format(salesOrder.getUpdated()))
-			.setTransmited(dateConverter.format(salesOrder.getUpdated()))
+			.setCreated(ValueUtil.getTimestampFromDate(salesOrder.getCreated()))
+			.setUpdated(ValueUtil.getTimestampFromDate(salesOrder.getUpdated()))
+			.setTransmited(ValueUtil.getTimestampFromDate(salesOrder.getUpdated()))
 			.setShippingAddress(convertAddress(MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()), ((MBPartnerLocation) salesOrder.getC_BPartner_Location()), transactionName))
 			.setShippingAddress(convertAddress(MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()), ((MBPartnerLocation) salesOrder.getBill_Location()), transactionName));
 		//	Add Lines
@@ -1066,11 +1013,11 @@ public class WebStore extends WebStoreImplBase {
 	
 	/**
 	 * Get File from fileName
-	 * @param resourceUuid
+	 * @param resourceId
 	 * @param responseObserver
 	 * @throws Exception 
 	 */
-	private void getResource(String resourceUuid, String resourceName, StreamObserver<Resource> responseObserver) throws Exception {
+	private void getResource(int resourceId, String resourceName, StreamObserver<Resource> responseObserver) throws Exception {
 		if(!AttachmentUtil.getInstance().isValidForClient(Env.getAD_Client_ID(Env.getCtx()))) {
 			responseObserver.onCompleted();
 			return;
@@ -1087,14 +1034,14 @@ public class WebStore extends WebStoreImplBase {
 				responseObserver.onCompleted();
 				return;
 			}
-			resourceUuid = reference.getUUID();
-		} else if(Util.isEmpty(resourceUuid)) {
+			resourceId = reference.getAD_AttachmentReference_ID();
+		} else if(resourceId <= 0) {
 			responseObserver.onCompleted();
 			return;
 		}
 		byte[] data = AttachmentUtil.getInstance()
 			.withClientId(Env.getAD_Client_ID(Env.getCtx()))
-			.withAttachmentReferenceId(RecordUtil.getIdFromUuid(I_AD_AttachmentReference.Table_Name, resourceUuid, null))
+			.withAttachmentReferenceId(resourceId)
 			.getAttachment();
 		if(data == null) {
 			responseObserver.onCompleted();
@@ -1131,7 +1078,7 @@ public class WebStore extends WebStoreImplBase {
 					|| product.getM_Product_ID() == 0) {
 				throw new AdempiereException("@M_Product_ID@ @NotFound@");
 			}
-			X_W_Basket basket = getCart(request.getCartId(), request.getCartUuid(), !Util.isEmpty(request.getCartUuid()), 0, transactionName);
+			X_W_Basket basket = getCart(request.getCartId(), false, 0, transactionName);
 			//	Get Lines
 			List<X_W_BasketLine> items = new Query(Env.getCtx(), X_W_BasketLine.Table_Name, X_W_BasketLine.COLUMNNAME_W_Basket_ID + " = ? "
 					+ "AND (M_Product_ID = ? OR EXISTS(SELECT 1 FROM M_Product p WHERE p.M_Product_ID = W_BasketLine.M_Product_ID AND p.SKU = ?))", transactionName)
@@ -1154,7 +1101,7 @@ public class WebStore extends WebStoreImplBase {
 	private CartTotals.Builder getCartTotals(GetCartTotalsRequest request) {
 		CartTotals.Builder builder = CartTotals.newBuilder();
 		Trx.run(transactionName -> {
-			X_W_Basket basket = getCart(request.getCartId(), request.getCartUuid(), !Util.isEmpty(request.getCartUuid()), 0, transactionName);
+			X_W_Basket basket = getCart(request.getCartId(), false, 0, transactionName);
 			if(basket == null) {
 				throw new AdempiereException("@W_Basket_ID@ @NotFound@");
 			}
@@ -1189,7 +1136,7 @@ public class WebStore extends WebStoreImplBase {
 	private ShippingInformation.Builder getShippingInformation(GetShippingInformationRequest request) {
 		ShippingInformation.Builder builder = ShippingInformation.newBuilder();
 		Trx.run(transactionName -> {
-			X_W_Basket basket = getCart(request.getCartId(), request.getCartUuid(), !Util.isEmpty(request.getCartUuid()), 0, transactionName);
+			X_W_Basket basket = getCart(request.getCartId(), false, 0, transactionName);
 			if(basket == null) {
 				throw new AdempiereException("@W_Basket_ID@ @NotFound@");
 			}
@@ -1306,8 +1253,7 @@ public class WebStore extends WebStoreImplBase {
 	 */
 	private ListShippingMethodsResponse.Builder listShippingMethods(ListShippingMethodsRequest request) {
 		ListShippingMethodsResponse.Builder builder = ListShippingMethodsResponse.newBuilder();
-		if(request.getCartId() == 0
-				&& Util.isEmpty(request.getCartUuid())) {
+		if(request.getCartId() == 0) {
 			throw new AdempiereException("@W_Basket_ID@ @IsMandatory@");
 		}
 		MStore store = VueStoreFrontUtil.getDefaultStore(Env.getAD_Org_ID(Env.getCtx()));
@@ -1484,8 +1430,7 @@ public class WebStore extends WebStoreImplBase {
 	 */
 	private ListPaymentMethodsResponse.Builder listPaymentMethods(ListPaymentMethodsRequest request) {
 		ListPaymentMethodsResponse.Builder builder = ListPaymentMethodsResponse.newBuilder();
-		if(request.getCartId() == 0
-				&& Util.isEmpty(request.getCartUuid())) {
+		if(request.getCartId() == 0) {
 			throw new AdempiereException("@W_Basket_ID@ @IsMandatory@");
 		}
 		MStore store = VueStoreFrontUtil.getDefaultStore(Env.getAD_Org_ID(Env.getCtx()));
@@ -1526,24 +1471,18 @@ public class WebStore extends WebStoreImplBase {
 	/**
 	 * Get Cart from Id or UUID
 	 * @param cartId
-	 * @param cartUuid
 	 * @param isGuest
 	 * @param transactionName
 	 * @return
 	 */
-	private X_W_Basket getCart(int cartId, String cartUuid, boolean isGuest, int userId, String transactionName) {
+	private X_W_Basket getCart(int cartId, boolean isGuest, int userId, String transactionName) {
 		String whereClause = I_W_Basket.COLUMNNAME_W_Basket_ID + " = ? AND " + I_W_Basket.COLUMNNAME_AD_User_ID + " = ?";
 		List<Object> parameters = new ArrayList<>();
-		if(isGuest) {
-			whereClause = I_W_Basket.COLUMNNAME_UUID + " = ?";
-			parameters.add(cartUuid);
+		parameters.add(cartId);
+		if(userId > 0) {
+			parameters.add(userId);
 		} else {
-			parameters.add(cartId);
-			if(userId > 0) {
-				parameters.add(userId);
-			} else {
-				parameters.add(Env.getAD_User_ID(Env.getCtx()));
-			}
+			parameters.add(Env.getAD_User_ID(Env.getCtx()));
 		}
 		//	Return cart
 		return new Query(Env.getCtx(), I_W_Basket.Table_Name, whereClause, null)
@@ -1607,7 +1546,7 @@ public class WebStore extends WebStoreImplBase {
 					|| product.getM_Product_ID() == 0) {
 				throw new AdempiereException("@M_Product_ID@ @NotFound@");
 			}
-			X_W_Basket basket = getCart(request.getCartId(), request.getCartUuid(), request.getIsGuest(), 0, transactionName);
+			X_W_Basket basket = getCart(request.getCartId(), request.getIsGuest(), 0, transactionName);
 			//	Get Lines
 			List<X_W_BasketLine> items = new Query(Env.getCtx(), X_W_BasketLine.Table_Name, X_W_BasketLine.COLUMNNAME_W_Basket_ID + " = ?", transactionName)
 					.setParameters(basket.getW_Basket_ID())
@@ -1657,8 +1596,7 @@ public class WebStore extends WebStoreImplBase {
 		MPriceList priceList = MPriceList.get(Env.getCtx(), store.getM_PriceList_ID(), transactionName);
 		MCurrency currency = MCurrency.get(Env.getCtx(), priceList.getC_Currency_ID());
 		//	
-		builder.setId(basket.getW_Basket_ID())
-			.setUuid(ValueUtil.validateNull(basket.getUUID()));
+		builder.setId(basket.getW_Basket_ID());
 		//	
 		List<X_W_BasketLine> items = new Query(Env.getCtx(), X_W_BasketLine.Table_Name, X_W_BasketLine.COLUMNNAME_W_Basket_ID + " = ?", transactionName)
 				.setParameters(basket.getW_Basket_ID())
@@ -1895,8 +1833,8 @@ public class WebStore extends WebStoreImplBase {
 			.setFirstName(ValueUtil.validateNull(customer.getName()))
 			.setLastName(ValueUtil.validateNull(customer.get_ValueAsString(MBPartner.COLUMNNAME_Name2)))
 			.setId(customer.getAD_User_ID())
-			.setCreated(dateConverter.format(customer.getCreated()))
-			.setUpdated(dateConverter.format(customer.getUpdated()))
+			.setCreated(ValueUtil.getTimestampFromDate(customer.getCreated()))
+			.setUpdated(ValueUtil.getTimestampFromDate(customer.getUpdated()))
 			.setOrganizationName(ValueUtil.validateNull(MOrg.get(Env.getCtx(), customer.getAD_Org_ID()).getName()));
 		//	TODO: Add Web Site ID and Web Store ID
 		if(customer.getC_BPartner_ID() > 0) {
@@ -2510,8 +2448,8 @@ public class WebStore extends WebStoreImplBase {
 			//	TODO: Add to product
 			.setVisibility(org.spin.backend.grpc.store.Product.Visibility.BOTH)
 			.setProductGroupId(product.getM_Product_Group_ID())
-			.setCreated(dateConverter.format(product.getCreated()))
-			.setUpdated(dateConverter.format(product.getUpdated()))
+			.setCreated(ValueUtil.getTimestampFromDate(product.getCreated()))
+			.setUpdated(ValueUtil.getTimestampFromDate(product.getUpdated()))
 			//	Pricing
 			.setPrice(productPricing.getPriceStd().setScale(productPricing.getPrecision()).doubleValue())
 			//	TODO: Get Criteria

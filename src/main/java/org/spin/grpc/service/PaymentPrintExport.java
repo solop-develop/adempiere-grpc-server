@@ -121,18 +121,13 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 	private PaymentSelection.Builder getPaymentSelection(GetPaymentSelectionRequest request) {
 		// validate key values
-		if(request.getId() == 0 && Util.isEmpty(request.getUuid())) {
-			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+		if(request.getId() == 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 
 		int paymentSelectionId = request.getId();
 		if (paymentSelectionId <= 0) {
-			if (!Util.isEmpty(request.getUuid(), true)) {
-				paymentSelectionId = RecordUtil.getIdFromUuid(I_C_PaySelection.Table_Name, request.getUuid(), null);
-			}
-			if (paymentSelectionId <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_PaySelection_ID@");
-			}
+			throw new AdempiereException("@FillMandatory@ @C_PaySelection_ID@");
 		}
 
 		MPaySelection paymentSelection = new Query(
@@ -156,7 +151,6 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 			return builder;
 		}
 		builder.setId(paymentSelection.getC_PaySelection_ID())
-			.setUuid(ValueUtil.validateNull(paymentSelection.getUUID()))
 			.setDocumentNo(ValueUtil.validateNull(paymentSelection.getDocumentNo()))
 			.setCurrency(
 				convertCurrency(paymentSelection.getC_Currency_ID())
@@ -232,7 +226,6 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 		accountNo = String.format("%1$" + 20 + "s", accountNo).replace(" ", "*");
 
 		builder.setId(bankAccount.getC_BankAccount_ID())
-			.setUuid(ValueUtil.validateNull(bankAccount.getUUID()))
 			.setAccountNo(accountNo)
 			.setAccountName(ValueUtil.validateNull(bankAccount.getName()))
 			.setBankName(

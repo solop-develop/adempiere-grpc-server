@@ -20,6 +20,7 @@ option java_outer_classname = "ADempiereImportFileLoader";
 
 import "base_data_type.proto";
 import "business.proto";
+import "google/protobuf/struct.proto";
 
 package import_file_loader;
 
@@ -38,35 +39,39 @@ service ImportFileLoader {
 
 // Charset
 message ListCharsetsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 
 // Import Table
 message ListImportTablesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ImportColumn {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string column_name = 4;
-	int32 display_type = 5;
+	string name = 2;
+	string column_name = 3;
+	int32 display_type = 4;
 }
 
 message ImportTable {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string table_name = 4;
-	repeated ImportColumn import_columns = 5;
+	string name = 2;
+	string table_name = 3;
+	repeated ImportColumn import_columns = 4;
 }
 
 message ListImportTablesResponse {
@@ -78,51 +83,55 @@ message ListImportTablesResponse {
 
 // Import Format
 message ListImportFormatsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 table_id = 4;
-	string table_name = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 table_id = 8;
+	string table_name = 9;
 }
 
 message ListClientImportFormatsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 table_id = 4;
-	string table_name = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 table_id = 8;
+	string table_name = 9;
 }
 
 message ImportFormat {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	string table_name = 5;
-	string format_type = 6;
-	string separator_character = 7;
-	repeated FormatField format_fields = 8;
+	string name = 2;
+	string description = 3;
+	string table_name = 4;
+	string format_type = 5;
+	string separator_character = 6;
+	repeated FormatField format_fields = 7;
 }
 
 message FormatField {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	int32 sequence = 4;
-	string column_name = 5;
-	string data_type = 6;
-	int32 start_no = 7;
-	int32 end_no = 8;
-	string default_value = 9;
+	string name = 2;
+	int32 sequence = 3;
+	string column_name = 4;
+	string data_type = 5;
+	int32 start_no = 6;
+	int32 end_no = 7;
+	string default_value = 8;
 	// number
-	string defimal_point = 10;
-	bool is_divide_by_100 = 11;
+	string defimal_point = 9;
+	bool is_divide_by_100 = 10;
 	// date
-	string date_format = 12;
+	string date_format = 11;
 	// constant
-	string constant_value = 13;
+	string constant_value = 12;
 }
 
 // Format Field
@@ -133,13 +142,16 @@ message GetImportFromatRequest {
 
 // Preview File
 message ListFilePreviewRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 import_format_id = 4;
-	int32 resource_id = 5;
-	string charset = 6;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 import_format_id = 8;
+	int32 resource_id = 9;
+	string charset = 10;
 }
 
 
@@ -151,7 +163,7 @@ message SaveRecordsRequest {
 	// process before save changes
 	bool is_process = 4;
 	int32 process_id = 5;
-	map <string, data.Value> parameters = 6;
+	google.protobuf.Struct parameters = 6;
 }
 
 message SaveRecordsResponse {
@@ -163,10 +175,13 @@ message SaveRecordsResponse {
 
 // Process Import
 message ListImportProcessesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 table_id = 4;
-	string table_name = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 table_id = 8;
+	string table_name = 9;
 }

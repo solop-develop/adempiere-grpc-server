@@ -134,7 +134,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setStatementDate(
-				ValueUtil.convertDateToString(
+				ValueUtil.getTimestampFromDate(
 					bankStatement.getStatementDate()
 				)
 			)
@@ -290,7 +290,7 @@ public class BankStatementMatchConvertUtil {
 
 		builder.setId(payment.getC_Payment_ID())
 			.setTransactionDate(
-				ValueUtil.convertDateToString(
+				ValueUtil.getTimestampFromDate(
 					payment.getDateTrx()
 				)
 			)
@@ -345,7 +345,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.convertDateToString(
+				ValueUtil.getTimestampFromDate(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -415,7 +415,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.convertDateToString(
+				ValueUtil.getTimestampFromDate(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -450,7 +450,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDate(
-					ValueUtil.convertDateToString(
+					ValueUtil.getTimestampFromDate(
 						payment.getDateTrx()
 					)
 				)
@@ -502,7 +502,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.convertDateToString(
+				ValueUtil.getTimestampFromDate(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -560,7 +560,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDate(
-					ValueUtil.convertDateToString(
+					ValueUtil.getTimestampFromDate(
 						payment.getDateTrx()
 					)
 				)

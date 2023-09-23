@@ -12,7 +12,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MTable;
-import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -35,7 +34,7 @@ public class DictionaryServiceLogic {
 
 
 	public static ListFieldsResponse.Builder listSearchInfoFields(ListFieldsRequest request) {
-		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableUuid(), true) && Util.isEmpty(request.getTableName(), true)) {
+		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 
@@ -44,17 +43,6 @@ public class DictionaryServiceLogic {
 		int tableId = request.getTableId();
 		if (tableId > 0) {
 			table = MTable.get(context, tableId);
-		} else if(!Util.isEmpty(request.getTableUuid(), true)) {
-			table = new Query(
-				context,
-				MTable.Table_Name,
-				MTable.COLUMNNAME_UUID + " = ?",
-				null
-			)
-				.setParameters(request.getTableUuid())
-				.setOnlyActiveRecords(true)
-				.first()
-			;
 		} else if (!Util.isEmpty(request.getTableName(), true)) {
 			table = MTable.get(context, request.getTableName());
 		}

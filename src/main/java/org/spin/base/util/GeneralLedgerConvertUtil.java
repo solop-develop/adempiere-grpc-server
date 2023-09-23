@@ -41,11 +41,6 @@ public class GeneralLedgerConvertUtil {
 		}
 
 		builder.setId(table.getAD_Table_ID())
-			.setUuid(
-				ValueUtil.validateNull(
-					table.getUUID()
-				)
-			)
 			.setName(
 				ValueUtil.validateNull(
 					table.getName()

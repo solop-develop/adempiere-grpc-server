@@ -22,6 +22,7 @@ option java_outer_classname = "ADempierePayrollActionNotice";
 import "base_data_type.proto";
 import "business.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 package payroll_action_notice;
 
@@ -45,58 +46,66 @@ service PayrollActionNotice {
 
 // List Payroll Process Request
 message ListPayrollProcessRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
-	map <string, data.Value> context_attributes = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	google.protobuf.Struct context_attributes = 8;
 }
 
 // List Employee Request
 message ListEmployeeValidRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
-	map <string, data.Value> context_attributes = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	google.protobuf.Struct context_attributes = 8;
 }
 
 // List Payroll Conceps Request
 message ListPayrollConceptsRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	map <string, data.Value> context_attributes = 4;
-	string search_value = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	google.protobuf.Struct context_attributes = 8;
 }
 
 // Get Payroll Concept Definition Request
 message GetPayrollConceptDefinitionRequest {
-	int32 id = 2;
-	string uuid = 3;
+	int32 id = 1;
 }
 
 // List Payroll Movements Request
 message ListPayrollMovementsRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	data.Criteria filters = 4;
-	map <string, data.Value> context_attributes = 5;
-	string search_value = 6;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	google.protobuf.Struct context_attributes = 8;
 }
 
 // Save Payroll Movement Request
 message SavePayrollMovementRequest {
-	map <string, data.Value> context_attributes = 2;
-	string uuid = 3;
-	int32 id = 4;
-	map <string, data.Value> attributes = 5;
+	google.protobuf.Struct context_attributes = 1;
+	int32 id = 2;
+	google.protobuf.Struct attributes = 3;
 }
 
 // Delete Payroll Movements Request
 message DeletePayrollMovementsRequest {
-	map <string, data.Value> context_attributes = 2;
-	repeated string uuids = 3;
-	repeated int32 ids = 4;
+	google.protobuf.Struct context_attributes = 1;
+	repeated int32 ids = 2;
 }

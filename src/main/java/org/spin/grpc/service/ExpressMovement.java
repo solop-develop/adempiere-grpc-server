@@ -142,9 +142,6 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		}
 
 		builder.setId(warehouse.getM_Warehouse_ID())
-			.setUuid(
-				ValueUtil.validateNull(warehouse.getUUID())
-			)
 			.setValue(
 				ValueUtil.validateNull(warehouse.getValue())
 			)
@@ -255,9 +252,6 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			return builder;
 		}
 		builder.setId(product.getM_Product_ID())
-			.setUuid(
-				ValueUtil.validateNull(product.getUUID())
-			)
 			.setUpc(
 				ValueUtil.validateNull(product.getUPC())
 			)
@@ -284,14 +278,11 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		}
 
 		builder.setId(movement.getM_Movement_ID())
-			.setUuid(
-				ValueUtil.validateNull(movement.getUUID())
-			)
 			.setDocumentNo(
 				ValueUtil.validateNull(movement.getDocumentNo())
 			)
 			.setMovementDate(
-				ValueUtil.getLongFromTimestamp(movement.getMovementDate())
+				ValueUtil.getTimestampFromDate(movement.getMovementDate())
 			)
 			.setDescription(
 				ValueUtil.validateNull(movement.getDescription())
@@ -365,14 +356,11 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private Empty.Builder deleteMovement(DeleteMovementRequest request) {
-		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+		if (request.getId() <= 0) {
 			throw new AdempiereException("@M_Movement_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
 			int movementId = request.getId();
-			if (movementId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				movementId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
-			}
 			if (movementId <= 0) {
 				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
 			}
@@ -417,9 +405,6 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		Trx.run(transactionName -> {
 			int movementId = request.getId();
-			if (movementId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				movementId = RecordUtil.getIdFromUuid(this.tableName, request.getUuid(), transactionName);
-			}
 			if (movementId <= 0) {
 				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
 			}
@@ -470,16 +455,16 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private MovementLine.Builder createMovementLine(CreateMovementLineRequest request) {
-		if (request.getMovementId() <= 0 && Util.isEmpty(request.getMovementUuid(), true)) {
+		if (request.getMovementId() <= 0) {
 			throw new AdempiereException("@M_Movement_ID@ @NotFound@");
 		}
-		if (request.getProductId() <= 0 && Util.isEmpty(request.getProductUuid(), true)) {
+		if (request.getProductId() <= 0) {
 			throw new AdempiereException("@M_Product_ID@ @NotFound@");
 		}
-		if (request.getWarehouseId() <= 0 && Util.isEmpty(request.getWarehouseUuid(), true)) {
+		if (request.getWarehouseId() <= 0) {
 			throw new AdempiereException("@M_Warehouse_ID@ @NotFound@");
 		}
-		if (request.getWarehouseToId() <= 0 && Util.isEmpty(request.getWarehouseToUuid(), true)) {
+		if (request.getWarehouseToId() <= 0) {
 			throw new AdempiereException("@M_WarehouseTo_ID@ @NotFound@");
 		}
 
@@ -488,10 +473,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		Trx.run(transactionName -> {
 			int movementId = request.getMovementId();
 			if (movementId <= 0) {
-				movementId = RecordUtil.getIdFromUuid(this.tableName, request.getMovementUuid(), transactionName);
-				if (movementId <= 0) {
-					throw new AdempiereException("@M_Movement_ID@ @NotFound@");
-				}
+				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
 			}
 			MMovement movement = new MMovement(Env.getCtx(), movementId, transactionName);
 			if (movement == null || movement.getM_Movement_ID() <= 0) {
@@ -503,19 +485,13 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 			int productId = request.getProductId();
 			if (productId <= 0) {
-				productId = RecordUtil.getIdFromUuid(I_M_Product.Table_Name, request.getProductUuid(), transactionName);
-				if (productId <= 0) {
-					throw new AdempiereException("@M_Product_ID@ @NotFound@");
-				}
+				throw new AdempiereException("@M_Product_ID@ @NotFound@");
 			}
 
 			// warehouse and default locator
 			int warehouseId = request.getWarehouseId();
 			if (warehouseId <= 0) {
-				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), transactionName);
-				if (warehouseId <= 0) {
-					throw new AdempiereException("@M_Warehouse_ID@ @NotFound@");
-				}
+				throw new AdempiereException("@M_Warehouse_ID@ @NotFound@");
 			}
 			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
 			if (warehouse == null || warehouse.getM_Warehouse_ID() <= 0) {
@@ -529,10 +505,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			// warehouse to and default locator to
 			int warehouseToId = request.getWarehouseToId();
 			if (warehouseToId <= 0) {
-				warehouseToId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseToUuid(), transactionName);
-				if (warehouseToId <= 0) {
-					throw new AdempiereException("@M_WarehouseTo_ID@ @NotFound@");
-				}
+				throw new AdempiereException("@M_WarehouseTo_ID@ @NotFound@");
 			}
 			MWarehouse warehouseTo = MWarehouse.get(Env.getCtx(), warehouseToId);
 			MLocator locatorTo = warehouseTo.getDefaultLocator();
@@ -562,7 +535,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+				quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -614,15 +587,12 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private Empty.Builder deleteShipmentLine(DeleteMovementLineRequest request) {
-		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+		if (request.getId() <= 0) {
 			throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
 		}
 
 		Trx.run(transactionName -> {
 			int movementLineId = request.getId();
-			if (movementLineId <= 0 && !Util.isEmpty(request.getUuid(), true)) {
-				movementLineId = RecordUtil.getIdFromUuid(I_M_MovementLine.Table_Name, request.getUuid(), transactionName);
-			}
 			if (movementLineId <= 0) {
 				throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
 			}
@@ -664,7 +634,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private MovementLine.Builder updateMovementLine(UpdateMovementLineRequest request) {
-		if (request.getId() <= 0 && Util.isEmpty(request.getUuid(), true)) {
+		if (request.getId() <= 0) {
 			throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
 		}
 
@@ -673,12 +643,8 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		Trx.run(transactionName -> {
 			int movementLineId = request.getId();
 			if (movementLineId <= 0) {
-				movementLineId = RecordUtil.getIdFromUuid(I_M_MovementLine.Table_Name, request.getUuid(), transactionName);
-				if (movementLineId <= 0) {
-					throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
-				}
+				throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
 			}
-
 			MMovementLine movementLine = new MMovementLine(Env.getCtx(), movementLineId, transactionName);
 			if (movementLine == null || movementLine.getM_MovementLine_ID() <= 0) {
 				throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
@@ -688,7 +654,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				throw new AdempiereException("@M_MovementLine_ID@ @Processed@");
 			}
 
-			BigDecimal quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+			BigDecimal quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
 			if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 				quantity = BigDecimal.ONE;
 			}
@@ -738,9 +704,6 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		}
 
 		builder.setId(movementLine.getM_MovementLine_ID())
-			.setUuid(
-				ValueUtil.validateNull(movementLine.getUUID())
-			)
 			.setProduct(
 				convertProduct(movementLine.getM_Product_ID())
 			)
@@ -756,18 +719,12 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		if (locator != null && locator.getM_Locator_ID() > 0) {
 			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), locator.getM_Warehouse_ID());
 			builder.setWarehouseId(warehouse.getM_Warehouse_ID())
-				.setWarehouseUuid(
-					ValueUtil.validateNull(warehouse.getUUID())
-				)
 			;
 		}
 		MLocator locatorTo = MLocator.get(Env.getCtx(), movementLine.getM_LocatorTo_ID());
 		if (locatorTo != null && locatorTo.getM_Locator_ID() > 0) {
 			MWarehouse warehouseTo = MWarehouse.get(Env.getCtx(), locatorTo.getM_Warehouse_ID());
 			builder.setWarehouseId(warehouseTo.getM_Warehouse_ID())
-				.setWarehouseUuid(
-					ValueUtil.validateNull(warehouseTo.getUUID())
-				)
 			;
 		}
 
@@ -775,17 +732,13 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private ListMovementLinesResponse.Builder listMovementLines(ListMovementLinesRequest request) {
-		if (request.getMovementId() <= 0 && Util.isEmpty(request.getMovementUuid(), true)) {
+		if (request.getMovementId() <= 0) {
 			throw new AdempiereException("@M_Movement_ID@ @NotFound@");
 		}
 		int movementId = request.getMovementId();
 		if (movementId <= 0) {
-			movementId = RecordUtil.getIdFromUuid(this.tableName, request.getMovementUuid(), null);
-			if (movementId <= 0) {
-				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
-			}
+			throw new AdempiereException("@M_Movement_ID@ @NotFound@");
 		}
-
 		Query query = new Query(
 			Env.getCtx(),
 			I_M_MovementLine.Table_Name,

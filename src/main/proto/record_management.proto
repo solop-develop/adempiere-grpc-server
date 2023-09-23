@@ -21,19 +21,28 @@ option java_outer_classname = "ADempiereRecordManagement";
 package record_management;
 
 service RecordManagement {
-	rpc ToggleIsActiveRecords(ToggleIsActiveRecordsRequest) returns (ToggleIsActiveRecordsResponse) {}
+	rpc ToggleIsActiveRecord(ToggleIsActiveRecordRequest) returns (ToggleIsActiveRecordResponse) {}
+	rpc ToggleIsActiveRecordsBatch(ToggleIsActiveRecordsBatchRequest) returns (ToggleIsActiveRecordsBatchResponse) {}
 }
 
-message ToggleIsActiveRecordsRequest {
+message ToggleIsActiveRecordRequest {
 	string table_name = 1;
 	bool is_active = 2;
-	string record_uuid = 3;
-	int32 record_id = 4;
-	repeated string records_uuids = 5;
-	repeated int32 records_ids = 6;
+	int32 id = 3;
 }
 
-message ToggleIsActiveRecordsResponse {
+message ToggleIsActiveRecordsBatchRequest {
+	string table_name = 1;
+	bool is_active = 2;
+	repeated int32 ids = 5;
+}
+
+message ToggleIsActiveRecordResponse {
+	string message = 1;
+}
+
+message ToggleIsActiveRecordsBatchResponse {
 	string message = 1;
 	int64 total_changes = 2;
 }
+

@@ -54,46 +54,49 @@ service PaymentPrintExport {
 
 //	Bank Account
 message BankAccount {
-	string uuid = 1;
-	int32 id = 2;
-	string account_no = 3;
-	string account_name = 4;
-	string bank_name = 5;
-	google.protobuf.Struct current_balance = 6;
+	int32 id = 1;
+	string account_no = 2;
+	string account_name = 3;
+	string bank_name = 4;
+	google.protobuf.Value current_balance = 5;
 }
 
 // Payment Selection
 message PaymentSelection {
 	int32 id = 1;
-	string uuid = 2;
-	string document_no = 3;
-	BankAccount bank_account = 4;
-	google.protobuf.Struct payment_amount = 5;
-	int32 payment_quantity = 6;
-	data.Currency currency = 7;
+	string document_no = 2;
+	BankAccount bank_account = 3;
+	google.protobuf.Value payment_amount = 4;
+	int32 payment_quantity = 5;
+	data.Currency currency = 6;
 }
 
 // List Payment Selections Request
 message ListPaymentSelectionsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 // Get Payment Selection Request
 message GetPaymentSelectionRequest {
 	int32 id = 1;
-	string uuid = 2;
 }
 
 // List Payment Rules Request
 message ListPaymentRulesRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 payment_selection_id = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 payment_selection_id = 8;
 }
 
 // Get Document No Request
@@ -108,27 +111,28 @@ message GetDocumentNoResponse {
 }
 
 message ListPaymentsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 payment_selection_id = 4;
-	string payment_rule = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 payment_selection_id = 8;
+	string payment_rule = 9;
 }
 
 message Payment {
 	int32 id = 1;
-	string uuid = 2;
-	string document_no = 3; //
-	int32 vendor_id = 4;
-	string vendor_uuid = 5;
-	string vendor_tax_id = 6;
-	string vendor_name = 7;
-	google.protobuf.Struct grand_total = 8;
-	google.protobuf.Struct over_under_amount = 9;
-	google.protobuf.Struct payment_amount = 10;
-	google.protobuf.Struct open_amount = 11;
-	google.protobuf.Struct final_balance = 12;
+	string document_no = 2; //
+	int32 vendor_id = 3;
+	string vendor_tax_id = 4;
+	string vendor_name = 5;
+	google.protobuf.Value grand_total = 6;
+	google.protobuf.Value over_under_amount = 7;
+	google.protobuf.Value payment_amount = 8;
+	google.protobuf.Value open_amount = 9;
+	google.protobuf.Value final_balance = 10;
 }
 
 message ListPaymentsResponse {

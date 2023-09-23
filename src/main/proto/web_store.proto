@@ -18,6 +18,8 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.store";
 option java_outer_classname = "ADempiereWebStore";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
 
 package store;
 
@@ -41,7 +43,7 @@ service WebStore {
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
 	//  List Products: GET /api/product/render-list
 	rpc ListRenderProducts(ListRenderProductsRequest) returns (ListRenderProductsResponse) {}
-	//	Service for get a resource from resource uuid: GET /img
+	//	Service for get a resource from resource id: GET /img
 	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
 	//	Create Cart: POST /api/cart/create
 	rpc CreateCart(CreateCartRequest) returns (Cart) {}
@@ -67,9 +69,14 @@ service WebStore {
 
 //	https://sfa-docs.now.sh/guide/default-modules/api.html#get-vsbridgeuserorder-history
 message ListOrdersRequest {
-	int32 cart_id = 2;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
 	int32 page_size = 5;
 	string page_token = 6;
+	string search_value = 7;
+	int32 cart_id = 8;
 }
 
 //	List of Orders
@@ -81,10 +88,9 @@ message ListOrdersResponse {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#post-api-cart-delete
 message DeleteCartItemRequest {
-	int32 cart_id = 2;
-	string cart_uuid = 3;
-	string sku = 4;
-	int32 product_id = 5;
+	int32 cart_id = 1;
+	string sku = 2;
+	int32 product_id = 3;
 }
 
 //  Empty message
@@ -94,26 +100,24 @@ message Empty {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#get-api-cart-totals
 message GetCartTotalsRequest {
-	int32 cart_id = 2;
-	string cart_uuid = 3;
+	int32 cart_id = 1;
 }
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#post-api-cart-shipping-information
 message GetShippingInformationRequest {
-	int32 cart_id = 2;
-	string cart_uuid = 3;
-	AddressRequest shipping_address = 4;
-	AddressRequest billing_address = 5;
-	string carrier_code = 6;
-	string method_code = 7;
+	int32 cart_id = 1;
+	AddressRequest shipping_address = 2;
+	AddressRequest billing_address = 3;
+	string carrier_code = 4;
+	string method_code = 5;
 }
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#post-api-user-me
 message UpdateCustomerRequest {
 	int32 id = 2;
 	int32 business_partner_group_id = 3;
-	string created = 4;
-	string updated = 5;
+	google.protobuf.Timestamp created = 4;
+	google.protobuf.Timestamp updated = 5;
 	string organization_name = 6;
 	string email = 7;
 	string first_name = 8;
@@ -183,11 +187,15 @@ message Rate {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#post-api-cart-shipping-methods
 message ListShippingMethodsRequest {
-	int32 cart_id = 2;
-	string cart_uuid = 3;
-	AddressRequest shipping_address = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
 	int32 page_size = 5;
 	string page_token = 6;
+	string search_value = 7;
+	int32 cart_id = 9;
+	AddressRequest shipping_address = 10;
 }
 
 //	List of Payment Methods
@@ -212,10 +220,14 @@ message ShippingMethod {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#get-api-cart-payment-methods
 message ListPaymentMethodsRequest {
-	int32 cart_id = 2;
-	string cart_uuid = 3;
-	int32 page_size = 4;
-	string page_token = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 cart_id = 8;
 }
 
 //	List of Payment Methods
@@ -234,17 +246,16 @@ message PaymentMethod {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#post-api-order-create
 message CreateOrderRequest {
-	int32 cart_id = 2;
-	string cart_uuid = 3;
-	int32 customer_id = 4;
-	int32 user_id = 5;
-	AddressRequest shipping_address = 6;
-	AddressRequest billing_address = 7;
-	string method_code = 8;
-	string carrier_code = 9;
-	string payment_method_code = 10;
-	repeated ProductOrderLine products = 11;
-	repeated PaymentRequest payments = 12;
+	int32 cart_id = 1;
+	int32 customer_id = 2;
+	int32 user_id = 3;
+	AddressRequest shipping_address = 4;
+	AddressRequest billing_address = 5;
+	string method_code = 6;
+	string carrier_code = 7;
+	string payment_method_code = 8;
+	repeated ProductOrderLine products = 9;
+	repeated PaymentRequest payments = 10;
 }
 
 //	Product used for create order line
@@ -261,7 +272,7 @@ message PaymentRequest {
 	string reference_no = 2;
 	string description = 3;
 	double amount = 4;
-	string payment_date = 5;
+	google.protobuf.Timestamp payment_date = 5;
 	string payment_method_code = 6;
 	string currency_code = 7;
 	AddressRequest billing_address = 8;
@@ -271,9 +282,9 @@ message PaymentRequest {
 message Order {
 	int32 id = 1;
 	string document_no = 2;
-	string created = 3;
-	string updated = 4;
-	string transmited = 5;
+	google.protobuf.Timestamp created = 3;
+	google.protobuf.Timestamp updated = 4;
+	google.protobuf.Timestamp transmited = 5;
 	Address shipping_address = 6;
 	Address billing_address = 7;
 	string method_code = 8;
@@ -310,12 +321,11 @@ message OrderLine {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#post-api-cart-update
 message UpdateCartRequest {
-	int32 cart_id = 2;
-	string cart_uuid = 3;
-	bool is_guest = 4;
-	string sku = 5;
-	double quantity = 6;
-	repeated ConfigurableItemOption configurable_item_options = 7;
+	int32 cart_id = 1;
+	bool is_guest = 2;
+	string sku = 3;
+	double quantity = 4;
+	repeated ConfigurableItemOption configurable_item_options = 5;
 }
 
 //	Configurable Product Options
@@ -326,9 +336,8 @@ message ConfigurableItemOption {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#get-api-cart-pull
 message GetCartRequest {
-	int32 cart_id = 2;
-	string cart_uuid = 3;
-	bool is_guest = 4;
+	int32 cart_id = 1;
+	bool is_guest = 2;
 }
 
 // https://docs.storefrontapi.com/guide/default-modules/api.html#post-api-cart-create
@@ -339,22 +348,21 @@ message CreateCartRequest {
 //	Cart for store
 message Cart {
 	int32 id = 1;
-	string uuid = 2;
-	double grand_total = 3;
-	double subtotal = 4;
-	double discount_amount = 5;
-	double subtotal_with_discount = 6;
-	double tax_amount = 7;
-	double shipping_amount = 8;
-	double shipping_discount_amount = 9;
-	double shipping_tax_amount = 10;
-	double base_shipping_tax_amount = 11;
-	double subtotal_incl_tax = 12;
-	double shipping_incl_tax = 13;
-	string base_currency_code = 14;
-	string quote_currency_code = 15;
-	int32 items_quantity = 16;
-	repeated CartItem items = 17;
+	double grand_total = 2;
+	double subtotal = 3;
+	double discount_amount = 4;
+	double subtotal_with_discount = 5;
+	double tax_amount = 6;
+	double shipping_amount = 7;
+	double shipping_discount_amount = 8;
+	double shipping_tax_amount = 9;
+	double base_shipping_tax_amount = 10;
+	double subtotal_incl_tax = 11;
+	double shipping_incl_tax = 12;
+	string base_currency_code = 13;
+	string quote_currency_code = 14;
+	int32 items_quantity = 15;
+	repeated CartItem items = 16;
 }
 
 //	Cart Item
@@ -395,10 +403,10 @@ message CartItem {
 
 // https://docs.storefrontapi.com/guide/default-modules/api.html#image-module
 message GetResourceRequest {
-	string resource_uuid = 2;
-	string resource_name = 3;
-	int64 width = 4;
-	int64 height = 5;
+	int32 resource_id = 1;
+	string resource_name = 2;
+	int64 width = 3;
+	int64 height = 4;
 	enum Operation {
 		RESIZE = 0;
 		CROP = 1;
@@ -406,7 +414,7 @@ message GetResourceRequest {
 		IDENTIFY = 3;
 	}
 	//	Operation
-	Operation operation = 6;
+	Operation operation = 5;
 }
 
 // Resource Chunk
@@ -435,10 +443,15 @@ message GetStockRequest {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#get-api-stock-list
 message ListStocksRequest {
-	string sku = 2;
-	string store_code = 3;
-	int32 page_size = 4;
-	string page_token = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string sku = 8;
+	string store_code = 9;
 }
 
 //	List of Stock
@@ -450,9 +463,14 @@ message ListStocksResponse {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#api-product-list
 message ListProductsRequest {
-	repeated string skus = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	repeated string skus = 8;
 }
 
 //	List of Products
@@ -486,7 +504,7 @@ message Stock {
     bool is_enable_quantity_increments = 20;
     bool is_use_config_manage_stock = 21;
     bool is_manage_stock = 22;
-    string low_stock_date = 23;
+    google.protobuf.Timestamp low_stock_date = 23;
     bool is_decimal_divided = 24;
     double stock_status_changed_auto = 25;
 }
@@ -512,8 +530,8 @@ message Product {
 	}
 	Visibility visibility = 6;
 	int32 product_group_id = 7;
-	string created = 8;
-	string updated = 9;
+	google.protobuf.Timestamp created = 8;
+	google.protobuf.Timestamp updated = 9;
 	repeated string product_links = 10;
 	repeated string tier_prices = 11;
 	repeated Attribute custom_attributes = 12;
@@ -522,9 +540,14 @@ message Product {
 
 //	https://docs.storefrontapi.com/guide/default-modules/api.html#api-product-list
 message ListRenderProductsRequest {
-	repeated string skus = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	repeated string skus = 8;
 }
 
 //	List of Products Rendered
@@ -639,8 +662,8 @@ message Condition {
 message Customer {
 	int32 id = 1;
 	int32 business_partner_group_id = 2;
-	string created = 3;
-	string updated = 4;
+	google.protobuf.Timestamp created = 3;
+	google.protobuf.Timestamp updated = 4;
 	string organization_name = 5;
 	string email = 6;
 	string first_name = 7;

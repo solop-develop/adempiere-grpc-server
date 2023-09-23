@@ -18,13 +18,10 @@ package org.spin.grpc.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Browse_Field;
 import org.adempiere.core.domains.models.I_AD_Field;
-import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_Role;
-import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_AD_View_Column;
 import org.adempiere.core.domains.models.I_ASP_Level;
@@ -169,9 +166,6 @@ public class UserCustomization extends UserCustomizationImplBase {
 		}
 
 		builder.setId(user.getAD_User_ID())
-			.setUuid(
-				ValueUtil.validateNull(user.getUUID())
-			)
 			.setValue(
 				ValueUtil.validateNull(user.getValue())
 			)
@@ -266,9 +260,6 @@ public class UserCustomization extends UserCustomizationImplBase {
 		}
 		
 		builder.setId(role.getAD_Role_ID())
-			.setUuid(
-				ValueUtil.validateNull(role.getUUID())
-			)
 			.setName(
 				ValueUtil.validateNull(role.getName())
 			)
@@ -363,9 +354,6 @@ public class UserCustomization extends UserCustomizationImplBase {
 		}
 
 		builder.setId(aspLevel.getASP_Level_ID())
-			.setUuid(
-				ValueUtil.validateNull(aspLevel.getUUID())
-			)
 			.setValue(
 				ValueUtil.validateNull(aspLevel.getValue())
 			)
@@ -381,7 +369,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 	}
 
 
-	private PO getEntityToCustomizationType(int levelType, int levelId, String levelUuid) {
+	private PO getEntityToCustomizationType(int levelType, int levelId) {
 		String tableName = null;
 		if (LevelType.CLIENT_VALUE == levelType) {
 			tableName = I_ASP_Level.Table_Name;
@@ -393,7 +381,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			throw new AdempiereException("@LevelType@ @NotFound@");
 		}
 
-		PO entityType = RecordUtil.getEntity(Env.getCtx(), tableName, levelUuid, levelId, null);
+		PO entityType = RecordUtil.getEntity(Env.getCtx(), tableName, levelId, null);
 		if (entityType == null || !RecordUtil.isValidId(entityType.get_ID(), tableName)) {
 			throw new AdempiereException(
 				"@" + tableName + "_ID@ @NotFound@"
@@ -424,12 +412,12 @@ public class UserCustomization extends UserCustomizationImplBase {
 	}
 
 	private Empty.Builder saveWindowCustomization(SaveWindowCustomizationRequest request) {
-		if (Util.isEmpty(request.getTabUuid(), true)) {
+		int tabId = request.getTabId();
+		if (tabId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
 
 		Trx.run(transactionName -> {
-			int tabId = RecordUtil.getIdFromUuid(I_AD_Tab.Table_Name, request.getTabUuid(), transactionName);
 			MTab tab = MTab.get(Env.getCtx(), tabId);
 			if (tab == null || tab.getAD_Tab_ID() <= 0) {
 				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
@@ -440,7 +428,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 
 			// validate level, role, user
-			PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId(), request.getLevelUuid());
+			PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId());
 			String columnKey = entity.get_TableName() + "_ID";
 
 			// instance window
@@ -584,10 +572,10 @@ public class UserCustomization extends UserCustomizationImplBase {
 	}
 
 	private Empty.Builder saveBrowseCustomization(SaveBrowseCustomizationRequest request) {
-		if (Util.isEmpty(request.getBrowseUuid(), true)) {
+		int browseId = request.getBrowseId();
+		if (browseId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Browse_ID@");
 		}
-		int browseId = RecordUtil.getIdFromUuid(I_AD_Browse.Table_Name, request.getBrowseUuid(), null);
 		MBrowse browse = MBrowse.get(Env.getCtx(), browseId);
 		if (browse == null || browse.getAD_Browse_ID() <= 0) {
 			throw new AdempiereException("@AD_Browse_ID@ @NotFound@");
@@ -597,7 +585,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		// }
 
 		// validate level, role, user
-		PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId(), request.getLevelUuid());
+		PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId());
 		String columnKey = entity.get_TableName() + "_ID";
 
 
@@ -733,10 +721,10 @@ public class UserCustomization extends UserCustomizationImplBase {
 	}
 
 	private Empty.Builder saveProcessCustomization(SaveProcessCustomizationRequest request) {
-		if (Util.isEmpty(request.getProcessUuid(), true)) {
+		int processId = request.getProcessId();
+		if (processId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
-		int processId = RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, request.getProcessUuid(), null);
 		MProcess process = MProcess.get(Env.getCtx(), processId);
 		if (process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
@@ -746,7 +734,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		// }
 
 		// validate level, role, user
-		PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId(), request.getLevelUuid());
+		PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId());
 		String columnKey = entity.get_TableName() + "_ID";
 
 		// instance process

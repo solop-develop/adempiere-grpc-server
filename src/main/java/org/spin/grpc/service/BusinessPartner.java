@@ -107,7 +107,7 @@ public class BusinessPartner extends BusinessPartnerImplBase {
 		
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		//
 		MTable table = MTable.get(Env.getCtx(), this.tableName);

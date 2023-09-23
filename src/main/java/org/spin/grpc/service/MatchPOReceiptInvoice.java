@@ -440,9 +440,6 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			return builder;
 		}
 		builder.setId(product.getM_Product_ID())
-			.setUuid(
-				ValueUtil.validateNull(product.getUUID())
-			)
 			.setUpc(
 				ValueUtil.validateNull(product.getUPC())
 			)
@@ -500,8 +497,8 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		}
 
 		// Date filter
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(request.getDateFrom());
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(request.getDateTo());
+		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
+		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
 		if (dateFrom != null && dateTo != null) {
 			whereClause += " AND " + dateColumn + " BETWEEN " + DB.TO_DATE(dateFrom)
 				+ " AND " + DB.TO_DATE(dateTo)
@@ -593,8 +590,8 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		whereClause += " AND hdr.C_BPartner_ID = " + request.getVendorId();
 
 		// Date filter
-		Timestamp dateFrom = ValueUtil.getTimestampFromLong(request.getDateFrom());
-		Timestamp dateTo = ValueUtil.getTimestampFromLong(request.getDateTo());
+		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
+		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
 		if (dateFrom != null && dateTo != null) {
 			whereClause += " AND " + dateColumn + " BETWEEN " + DB.TO_DATE(dateFrom)
 				+ " AND " + DB.TO_DATE(dateTo)
@@ -608,7 +605,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		if (request.getIsSameQuantity()) {
 			final String quantityColumn = org.spin.form.match_po_receipt_invoice.Util.getQuantityColumn(matchFromType);
 			Matched.Builder matchedFromSelected = org.spin.form.match_po_receipt_invoice.Util.getMatchedSelectedFrom(matchFromSelectedId, isMatched, matchFromType, matchToType);
-			BigDecimal quantity = ValueUtil.getBigDecimalFromDecimal(
+			BigDecimal quantity = ValueUtil.getDecimalFromValue(
 				matchedFromSelected.getQuantity()
 			);
 			whereClause += " AND " + quantityColumn + " = " + quantity;
@@ -682,7 +679,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		Trx.run(transactionName -> {
 			boolean isMatchMode = MatchMode.MODE_MATCHED == request.getMatchMode();
-			final BigDecimal quantity = ValueUtil.getBigDecimalFromDecimal(
+			final BigDecimal quantity = ValueUtil.getDecimalFromValue(
 				request.getQuantity()
 			);
 			boolean isMatchFromOder = MatchType.PURCHASE_ORDER == request.getMatchFromType();
@@ -698,8 +695,8 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			);
 
 			request.getMatchedToSelectionsList().forEach(lineMatchedTo -> {
-				BigDecimal mathcedQuantity = ValueUtil.getBigDecimalFromDecimal(lineMatchedTo.getMatchedQuantity());
-				BigDecimal documentQuantity = ValueUtil.getBigDecimalFromDecimal(lineMatchedTo.getQuantity());
+				BigDecimal mathcedQuantity = ValueUtil.getDecimalFromValue(lineMatchedTo.getMatchedQuantity());
+				BigDecimal documentQuantity = ValueUtil.getDecimalFromValue(lineMatchedTo.getQuantity());
 
 				Optional<BigDecimal> qty = Optional.empty();
 				Optional<BigDecimal> docQty = Optional.ofNullable((BigDecimal) documentQuantity);

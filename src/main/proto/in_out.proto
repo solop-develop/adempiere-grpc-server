@@ -19,8 +19,8 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.inout";
 option java_outer_classname = "ADempiereInOut";
 
-import "base_data_type.proto";
 import "business.proto";
+import "google/protobuf/struct.proto";
 
 package in_out;
 
@@ -32,17 +32,19 @@ service InOut {
 
 // List InOut Info Request
 message ListInOutInfoRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	data.Criteria filters = 4;
-	map <string, data.Value> context_attributes = 5;
-	string search_value = 6;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	google.protobuf.Struct context_attributes = 8;
 	// references
-	string process_parameter_uuid = 7;
-	string field_uuid = 8;
-	string browse_field_uuid = 9;
-	string reference_uuid = 10;
-	string column_uuid = 11;
-	string column_name = 13;
+	int32 process_parameter_id = 9;
+	int32 field_id = 10;
+	int32 browse_field_id = 11;
+	int32 reference_id = 12;
+	int32 column_id = 13;
+	string column_name = 14;
 }

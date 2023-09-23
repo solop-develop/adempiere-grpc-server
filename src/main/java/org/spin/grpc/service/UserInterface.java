@@ -121,7 +121,6 @@ import org.spin.backend.grpc.common.ChatEntry;
 import org.spin.backend.grpc.common.ContextInfoValue;
 import org.spin.backend.grpc.common.CreateChatEntryRequest;
 import org.spin.backend.grpc.common.CreateTabEntityRequest;
-import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.DefaultValue;
 import org.spin.backend.grpc.common.DeletePreferenceRequest;
 import org.spin.backend.grpc.common.DrillTable;
@@ -338,7 +337,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
 		List<MViewColumn> viewColumnsList = view.getViewColumns();
 
-		request.getAttributesMap().entrySet().forEach(attribute -> {
+		request.getAttributes().getFieldsMap().entrySet().forEach(attribute -> {
 			// find view column definition
 			MViewColumn viewColumn = viewColumnsList
 				.stream()
@@ -1034,7 +1033,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Fill context
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, context, request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, context, request.getContextAttributes());
 
 		// get where clause including link column and parent column
 		String where = WhereClauseUtil.getTabWhereClauseFromParentTabs(context, tab, null);
@@ -1154,7 +1153,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (entity == null) {
 			throw new AdempiereException("@Error@ PO is null");
 		}
-		request.getAttributesMap().entrySet().forEach(attribute -> {
+		request.getAttributes().getFieldsMap().entrySet().forEach(attribute -> {
 			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if (referenceId > 0) {
@@ -1219,7 +1218,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
 		if (entity.get_ID() >= 0) {
-			request.getAttributesMap().entrySet().forEach(attribute -> {
+			request.getAttributes().getFieldsMap().entrySet().forEach(attribute -> {
 				int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 				Object value = null;
 				if (referenceId > 0) {
@@ -1293,7 +1292,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		//
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
@@ -2332,7 +2331,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		
 		//	Validate SQL
-		DefaultValue.Builder builder = getDefaultKeyAndValue(request.getContextAttributesMap(), defaultValue, referenceId, referenceValueId, columnName, validationRuleId);
+		DefaultValue.Builder builder = getDefaultKeyAndValue(request.getContextAttributes().getFieldsMap(), defaultValue, referenceId, referenceValueId, columnName, validationRuleId);
 		return builder;
 	}
 	
@@ -2347,7 +2346,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param validationRuleId
 	 * @return
 	 */
-	private DefaultValue.Builder getDefaultKeyAndValue(Map<String, org.spin.backend.grpc.common.Value> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
+	private DefaultValue.Builder getDefaultKeyAndValue(Map<String, Value> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
 		DefaultValue.Builder builder = DefaultValue.newBuilder();
 		if(Util.isEmpty(defaultValue, true)) {
 			return builder;
@@ -2561,7 +2560,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Fill Env.getCtx()
 		
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		String sql = reference.QueryDirect;
 		sql = Env.parseContext(Env.getCtx(), windowNo, sql, false);
@@ -2635,7 +2634,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 
 		Map<String, Object> contextAttributes = ValueUtil.convertValuesMapToObjects(
-			request.getContextAttributesMap()
+			request.getContextAttributes().getFieldsMap()
 		);
 
 		return listLookupItems(
@@ -2787,7 +2786,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Fill Env.getCtx()
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, context, request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, context, request.getContextAttributes());
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 
 		//	get query columns
@@ -2995,7 +2994,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 
 			// set values on Env.getCtx()
-			Map<String, Object> attributes = ValueUtil.convertValuesMapToObjects(request.getContextAttributesMap());
+			Map<String, Object> attributes = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 			ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), attributes);
 
 			//
@@ -3300,7 +3299,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		//  Fill Env.getCtx()
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 		
 		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		;
@@ -3421,7 +3420,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		//  Fill Env.getCtx()
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 		
 		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
@@ -3456,7 +3455,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					return;
 				}
 				// set new values
-				entitySelection.getValuesMap().entrySet().forEach(attribute -> {
+				entitySelection.getValues().getFieldsMap().entrySet().forEach(attribute -> {
 					Object value = ValueUtil.getObjectFromValue(attribute.getValue());
 					entity.set_ValueOfColumn(attribute.getKey(), value);
 
@@ -3540,7 +3539,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			final String whereTab = WhereClauseUtil.getWhereClauseFromTab(tab.getAD_Tab_ID());
 			//	Fill context
 			int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-			ContextManager.setContextWithAttributesFromValuesMap(windowNo, context, request.getContextAttributesMap());
+			ContextManager.setContextWithAttributesFromStruct(windowNo, context, null);
 			String parsedWhereClause = Env.parseContext(context, windowNo, whereTab, false);
 			if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(whereTab, true)) {
 				throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");

@@ -38,18 +38,18 @@ service BusinessPartner {
 
 // List Business Partner Info Request
 message ListBusinessPartnerInfoRequest {
-	string process_parameter_id = 1;
-	string field_id = 2;
-	string browse_field_id = 3;
-	string reference_id = 4;
-	string column_id = 5;
-	string column_name = 6;
-	// filters
-	string filters = 7;
-	repeated string sort_columns = 8;
-	repeated string group_columns = 9;
-	repeated string select_columns = 10;
-	int32 page_size = 11;
-	string page_token = 12;
-	google.protobuf.Struct context_attributes = 13;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string process_parameter_id = 8;
+	string field_id = 9;
+	string browse_field_id = 10;
+	string reference_id = 11;
+	string column_id = 12;
+	string column_name = 13;
+	google.protobuf.Struct context_attributes = 14;
 }

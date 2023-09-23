@@ -22,6 +22,7 @@ option java_outer_classname = "ADempiereTimeControl";
 import "core_functionality.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 package time_control;
 
@@ -41,67 +42,65 @@ service TimeControl {
 
 // Create Time Control Request
 message CreateResourceAssignmentRequest {
-	int32 resource_type_id = 2;
-	string resource_type_uuid = 3;
-	string name = 4;
-	string description = 5;
+	int32 resource_type_id = 1;
+	string name = 2;
+	string description = 3;
 }
 
 // List Time Control Request
 message ListResourcesAssignmentRequest {
-	int32 page_size = 2;
-	string page_token = 3;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 	// filters
-	int32 resource_type_id = 4;
-	string resource_type_uuid = 5;
-	string name = 6;
-	string description = 7;
-	string confirmed = 8;
-	bool is_waiting_for_ordered = 9;
-	int64 date_from = 10;
-	int64 date_to = 11;
+	int32 resource_type_id = 8;
+	string name = 9;
+	string description = 10;
+	string confirmed = 11;
+	bool is_waiting_for_ordered = 12;
+	google.protobuf.Timestamp date_from = 13;
+	google.protobuf.Timestamp date_to = 14;
 }
 
 // Update Time Control Request
 message UpdateResourceAssignmentRequest {
-	int32 id = 2;
-	string uuid = 3;
-	string name = 4;
-	string description = 5;
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
 }
 
 // Delete Time Control Request
 message DeleteResourceAssignmentRequest {
-	int32 id = 2;
-	string uuid = 3;
+	int32 id = 1;
 }
 
 message ResourceType {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
-	data.UnitOfMeasure unit_of_measure = 6;
+	string value = 2;
+	string name = 3;
+	string description = 4;
+	data.UnitOfMeasure unit_of_measure = 5;
 }
 
 message Resource {
 	int32 id = 1;
-	string uuid = 2;
-	ResourceType resource_type = 3;
-	string name = 4;
+	ResourceType resource_type = 2;
+	string name = 3;
 }
 
 message ResourceAssignment {
 	int32 id = 1;
-	string uuid = 2;
-	Resource resource = 3;
-	string name = 4;
-	string description = 5;
-	int64 assign_date_from = 6;
-	int64 assign_date_to = 7;
-	bool is_confirmed = 8;
-	google.protobuf.Struct quantity = 9;
+	Resource resource = 2;
+	string name = 3;
+	string description = 4;
+	google.protobuf.Timestamp assign_date_from = 5;
+	google.protobuf.Timestamp assign_date_to = 6;
+	bool is_confirmed = 7;
+	google.protobuf.Value quantity = 8;
 }
 
 message ListResourcesAssignmentResponse {
@@ -111,6 +110,5 @@ message ListResourcesAssignmentResponse {
 }
 
 message ConfirmResourceAssignmentRequest {
-	int32 id = 2;
-	string uuid = 3;
+	int32 id = 1;
 }

@@ -16,25 +16,21 @@ package org.spin.grpc.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_AD_EntityType;
 import org.adempiere.core.domains.models.I_AD_Migration;
 import org.adempiere.core.domains.models.I_AD_MigrationData;
 import org.adempiere.core.domains.models.I_AD_MigrationStep;
 import org.adempiere.core.domains.models.I_AD_Modification;
+import org.adempiere.core.domains.models.X_AD_Modification;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MEntityType;
 import org.compiere.model.MMigration;
 import org.compiere.model.MMigrationData;
 import org.compiere.model.MMigrationStep;
 import org.compiere.model.Query;
-import org.adempiere.core.domains.models.X_AD_Modification;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.base.db.LimitUtil;
-import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.backend.grpc.update.ListPackagesRequest;
 import org.spin.backend.grpc.update.ListPackagesResponse;
 import org.spin.backend.grpc.update.ListStepsRequest;
@@ -47,6 +43,8 @@ import org.spin.backend.grpc.update.Step;
 import org.spin.backend.grpc.update.StepValue;
 import org.spin.backend.grpc.update.Update;
 import org.spin.backend.grpc.update.UpdateCenterGrpc.UpdateCenterImplBase;
+import org.spin.base.db.LimitUtil;
+import org.spin.base.util.ValueUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -62,11 +60,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	@Override
 	public void listPackages(ListPackagesRequest request, StreamObserver<ListPackagesResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Packages Requested is Null");
-			}
-			log.fine("Object List Requested = " + request);
-			SessionManager.getSessionFromToken(request.getToken());
 			ListPackagesResponse.Builder packagesList = convertPackagesList(request);
 			responseObserver.onNext(packagesList.build());
 			responseObserver.onCompleted();
@@ -82,11 +75,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	@Override
 	public void listUpdates(ListUpdatesRequest request, StreamObserver<ListUpdatesResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Updates Requested is Null");
-			}
-			log.fine("Object List Requested = " + request);
-			SessionManager.getSessionFromToken(request.getToken());
 			ListUpdatesResponse.Builder updatesList = convertUpdatesList(request);
 			responseObserver.onNext(updatesList.build());
 			responseObserver.onCompleted();
@@ -102,11 +90,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	@Override
 	public void listSteps(ListStepsRequest request, StreamObserver<ListStepsResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Steps Requested is Null");
-			}
-			log.fine("Object List Requested = " + request);
-			SessionManager.getSessionFromToken(request.getToken());
 			ListStepsResponse.Builder stepsList = convertStepsList(request);
 			responseObserver.onNext(stepsList.build());
 			responseObserver.onCompleted();
@@ -128,9 +111,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 		ListStepsResponse.Builder builder = ListStepsResponse.newBuilder();
 		//	Get Migration
 		int migrationId = request.getUpdateId();
-		if(migrationId <= 0) {
-			migrationId = RecordUtil.getIdFromUuid(I_AD_Migration.Table_Name, request.getUpdateUuid(), null);
-		}
 		//	Validate
 		if(request.getUpdateId() < 0) {
 			throw new AdempiereException("@AD_Migration_ID@ @NotFound@");
@@ -178,7 +158,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	private Step.Builder convertStep(MMigrationStep migrationStep) {
 		Step.Builder builder = Step.newBuilder()
 				.setId(migrationStep.getAD_MigrationStep_ID())
-				.setUuid(ValueUtil.validateNull(migrationStep.getUUID()))
 				.setAction(ValueUtil.validateNull(migrationStep.getAction()))
 				.setComments(ValueUtil.validateNull(migrationStep.getComments()))
 				.setStepType(ValueUtil.validateNull(migrationStep.getStepType()))
@@ -203,7 +182,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	private StepValue.Builder convertStepValue(MMigrationData migrationData) {
 		StepValue.Builder builder = StepValue.newBuilder()
 				.setId(migrationData.getAD_MigrationData_ID())
-				.setUuid(ValueUtil.validateNull(migrationData.getUUID()))
 				.setColumnId(migrationData.getAD_Column_ID())
 				.setOldValue(ValueUtil.validateNull(migrationData.getOldValue()))
 				.setBackupValue(ValueUtil.validateNull(migrationData.getBackupValue()))
@@ -268,7 +246,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	private Update.Builder convertMigration(MMigration migration) {
 		return Update.newBuilder()
 				.setId(migration.getAD_Migration_ID())
-				.setUuid(ValueUtil.validateNull(migration.getUUID()))
 				.setEntityType(ValueUtil.validateNull(migration.getEntityType()))
 				.setSequence(migration.getSeqNo())
 				.setName(ValueUtil.validateNull(migration.getName()))
@@ -345,7 +322,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	private Package.Builder convertPackage(MEntityType entityType) {
 		Package.Builder builder = Package.newBuilder()
 				.setId(entityType.getAD_EntityType_ID())
-				.setUuid(ValueUtil.validateNull(entityType.getUUID()))
 				.setEntityType(ValueUtil.validateNull(entityType.getEntityType()))
 				.setName(ValueUtil.validateNull(entityType.getName()))
 				.setDescription(ValueUtil.validateNull(entityType.getDescription()))
@@ -368,7 +344,6 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	private PackageVersion.Builder convertPackageVersion(X_AD_Modification modification) {
 		return PackageVersion.newBuilder()
 				.setId(modification.getAD_Modification_ID())
-				.setUuid(ValueUtil.validateNull(modification.getUUID()))
 				.setSequence(modification.getSeqNo())
 				.setName(ValueUtil.validateNull(modification.getName()))
 				.setDescription(ValueUtil.validateNull(modification.getDescription()))

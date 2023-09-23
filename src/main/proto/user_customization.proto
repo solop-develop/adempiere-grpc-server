@@ -37,17 +37,19 @@ service UserCustomization {
 // User
 message User {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string value = 2;
+	string name = 3;
+	string description = 4;
 }
 
 message ListUsersRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListUsersResponse {
@@ -59,17 +61,19 @@ message ListUsersResponse {
 // Role
 message Role {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string value = 2;
+	string name = 3;
+	string description = 4;
 }
 
 message ListRolesRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListRolesResponse {
@@ -81,17 +85,19 @@ message ListRolesResponse {
 // Level Customization
 message LevelCustomization {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
+	string value = 2;
+	string name = 3;
+	string description = 4;
 }
 
 message ListCustomizationsLevelRequest {
-	int32 page_size = 2;
-	string page_token = 3;
-	// filters
-	string search_value = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
 }
 
 message ListCustomizationsLevelResponse {
@@ -107,41 +113,43 @@ enum LevelType {
 }
 
 message FieldAttributes {
-	int32 id = 1;
-	string uuid = 2;
-	string column_name = 3;
-	string color = 4;
-	int32 display_size = 5;
-	string display_component_type = 6;
-	string component_template_code = 7;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	int32 id = 7;
+	string column_name = 8;
+	string color = 9;
+	int32 display_size = 10;
+	string display_component_type = 11;
+	string component_template_code = 12;
 	// panel sequence
-	int32 sequence_panel = 8;
-	string is_default_displayed_as_panel = 9;
+	int32 sequence_panel = 13;
+	string is_default_displayed_as_panel = 14;
 	// table sequence
-	int32 sequence_table = 10;
-	string is_default_displayed_as_table = 11;
+	int32 sequence_table = 15;
+	string is_default_displayed_as_table = 16;
 }
 
 message SaveWindowCustomizationRequest {
-	string tab_uuid = 2;
-	LevelType level_type = 3;
-	int32 level_id = 4;
-	string level_uuid = 5;
-	repeated FieldAttributes field_attributes = 6;
+	int32 tab_id = 1;
+	LevelType level_type = 2;
+	int32 level_id = 3;
+	repeated FieldAttributes field_attributes = 4;
 }
 
 message SaveBrowseCustomizationRequest {
-	string browse_uuid = 2;
-	LevelType level_type = 3;
-	int32 level_id = 4;
-	string level_uuid = 5;
-	repeated FieldAttributes field_attributes = 6;
+	int32 browse_id = 1;
+	LevelType level_type = 2;
+	int32 level_id = 3;
+	repeated FieldAttributes field_attributes = 4;
 }
 
 message SaveProcessCustomizationRequest {
-	string process_uuid = 2;
-	LevelType level_type = 3;
-	int32 level_id = 4;
-	string level_uuid = 5;
-	repeated FieldAttributes field_attributes = 6;
+	int32 process_id = 1;
+	LevelType level_type = 2;
+	int32 level_id = 3;
+	repeated FieldAttributes field_attributes = 4;
 }

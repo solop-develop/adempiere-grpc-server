@@ -27,9 +27,7 @@ import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_InvoiceLine;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
-import org.adempiere.core.domains.models.I_M_Attribute;
 import org.adempiere.core.domains.models.I_M_AttributeInstance;
-import org.adempiere.core.domains.models.I_M_AttributeSet;
 import org.adempiere.core.domains.models.I_M_AttributeSetInstance;
 import org.adempiere.core.domains.models.I_M_AttributeUse;
 import org.adempiere.core.domains.models.I_M_AttributeValue;
@@ -130,9 +128,6 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		List<Object> parametersList = new ArrayList<>(); // includes on filters criteria
 		if (!Util.isEmpty(request.getTableName(), true)) {
 			int recordId = request.getRecordId();
-			if (recordId <= 0) {
-				recordId = RecordUtil.getIdFromUuid(request.getTableName(), request.getRecordUuid(), null);
-			}
 			if (recordId <= 0) {
 				throw new AdempiereException("@Record_ID@ @NotFound@");
 			}
@@ -281,18 +276,11 @@ public class MaterialManagement extends MaterialManagementImplBase {
 	private ProductAttributeSet.Builder getProductAttributeSet(GetProductAttributeSetRequest request) {
 		int productAttributeSetId = request.getId();
 		if (productAttributeSetId <= 0) {
-			if (!Util.isEmpty(request.getUuid())) {
-				productAttributeSetId = RecordUtil.getIdFromUuid(I_M_AttributeSet.Table_Name, request.getUuid(), null);
-			}
-		}
-
-		if (productAttributeSetId <= 0) {
-			if (request.getProductId() > 0 || !Util.isEmpty(request.getProductUuid(), true)) {
+			if (request.getProductId() > 0) {
 				// get with product
 				MProduct product = (MProduct) RecordUtil.getEntity(
 					Env.getCtx(),
 					I_M_Product.Table_Name,
-					request.getProductUuid(), 
 					request.getProductId(),
 					null
 				);
@@ -303,12 +291,11 @@ public class MaterialManagement extends MaterialManagementImplBase {
 					throw new AdempiereException("@PAttributeNoAttributeSet@");
 				}
 				productAttributeSetId = product.getM_AttributeSet_ID();
-			} else if (request.getProductAttributeSetInstanceId() > 0 || !Util.isEmpty(request.getProductAttributeSetInstanceUuid(), true)) {
+			} else if (request.getProductAttributeSetInstanceId() > 0) {
 				// get with attribute set instance
 				MAttributeSetInstance attributeSetInstance = (MAttributeSetInstance) RecordUtil.getEntity(
 					Env.getCtx(),
 					I_M_AttributeSetInstance.Table_Name,
-					request.getProductAttributeSetInstanceUuid(), 
 					request.getProductAttributeSetInstanceId(),
 					null
 				);
@@ -353,18 +340,11 @@ public class MaterialManagement extends MaterialManagementImplBase {
 	private ProductAttributeSetInstance.Builder getProductAttributeSetInstance(GetProductAttributeSetInstanceRequest request) {
 		int productAttributeSetInstanceId = request.getId();
 		if (productAttributeSetInstanceId <= 0) {
-			if (!Util.isEmpty(request.getUuid())) {
-				productAttributeSetInstanceId = RecordUtil.getIdFromUuid(I_M_AttributeSetInstance.Table_Name, request.getUuid(), null);
-			}
-		}
-
-		if (productAttributeSetInstanceId <= 0) {
-			if (request.getProductId() > 0 || !Util.isEmpty(request.getProductUuid(), true)) {
+			if (request.getProductId() > 0) {
 				// get with product
 				MProduct product = (MProduct) RecordUtil.getEntity(
 					Env.getCtx(),
 					I_M_Product.Table_Name,
-					request.getProductUuid(), 
 					request.getProductId(),
 					null
 				);
@@ -406,18 +386,11 @@ public class MaterialManagement extends MaterialManagementImplBase {
 
 	private ListProductAttributeSetInstancesResponse.Builder listProductAttributeSetInstances(ListProductAttributeSetInstancesRequest request) {
 		int productAttributeSetId = request.getProductAttributeSetId();
-		if (productAttributeSetId <= 0) {
-			if (!Util.isEmpty(request.getProductAttributeSetUuid())) {
-				productAttributeSetId = RecordUtil.getIdFromUuid(I_M_AttributeSet.Table_Name, request.getProductAttributeSetUuid(), null);
-			}
-		}
-
 		// get with product
-		if (productAttributeSetId <= 0 && (request.getProductId() > 0 || !Util.isEmpty(request.getProductUuid(), true))) {
+		if (productAttributeSetId <= 0 && request.getProductId() > 0) {
 			MProduct product = (MProduct) RecordUtil.getEntity(
 				Env.getCtx(),
 				I_M_Product.Table_Name,
-				request.getProductUuid(), 
 				request.getProductId(),
 				null
 			);
@@ -496,7 +469,6 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 		builder.setId(attributeSetInstance.getM_AttributeSetInstance_ID())
-			.setUuid(ValueUtil.validateNull(attributeSetInstance.getUUID()))
 			.setDescription(ValueUtil.validateNull(attributeSetInstance.getDescription()))
 			.setLot(ValueUtil.validateNull(attributeSetInstance.getLot()))
 			.setLotId(attributeSetInstance.getM_Lot_ID())
@@ -506,7 +478,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			)
 		;
 		if (attributeSetInstance.getGuaranteeDate() != null) {
-			builder.setGuaranteeDate(attributeSetInstance.getGuaranteeDate().getTime());
+			builder.setGuaranteeDate(ValueUtil.getTimestampFromDate(attributeSetInstance.getGuaranteeDate()));
 		}
 
 		final String whereClause = I_M_AttributeInstance.COLUMNNAME_M_AttributeSetInstance_ID + " = ? ";
@@ -542,14 +514,10 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			valueNumber = valueNumber.setScale(1, RoundingMode.HALF_UP);
 		}
 
-		String productAttributeUuid = RecordUtil.getUuidFromId(I_M_Attribute.Table_Name, attributeInstance.getM_Attribute_ID());
-
 		builder.setId(0)
-			.setUuid(ValueUtil.validateNull(attributeInstance.getUUID()))
 			.setValue(ValueUtil.validateNull(attributeInstance.getValue()))
 			.setValueNumber(ValueUtil.getDecimalFromBigDecimal(valueNumber))
 			.setProductAttributeId(attributeInstance.getM_Attribute_ID())
-			.setProductAttributeUuid(ValueUtil.validateNull(productAttributeUuid))
 			.setProductAttributeValueId(attributeInstance.getM_AttributeValue_ID())
 			.setProductAttributeSetInstanceId(attributeInstance.getM_AttributeSetInstance_ID())
 		;
@@ -566,7 +534,6 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 		builder.setId(attributeSet.getM_AttributeSet_ID())
-			.setUuid(ValueUtil.validateNull(attributeSet.getUUID()))
 			.setName(ValueUtil.validateNull(attributeSet.getName()))
 			.setDescription(ValueUtil.validateNull(attributeSet.getDescription()))
 			.setIsInstanceAttribute(attributeSet.isInstanceAttribute())
@@ -616,7 +583,6 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 		builder.setId(attribute.getM_Attribute_ID())
-			.setUuid(ValueUtil.validateNull(attribute.getUUID()))
 			.setName(ValueUtil.validateNull(attribute.getName()))
 			.setDescription(ValueUtil.validateNull(attribute.getDescription()))
 			.setValueType(ValueUtil.validateNull(attribute.getAttributeValueType()))
@@ -654,7 +620,6 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 		builder.setId(productAttributeValue.getM_AttributeValue_ID())
-			.setUuid(ValueUtil.validateNull(productAttributeValue.getUUID()))
 			.setName(ValueUtil.validateNull(productAttributeValue.getName()))
 			.setDescription(ValueUtil.validateNull(productAttributeValue.getDescription()))
 			.setValue(ValueUtil.validateNull(productAttributeValue.getValue()))
@@ -686,11 +651,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 
 		Trx.run(transactionName -> {
 			int attributeSetInstanceId = request.getId();
-			if (attributeSetInstanceId <= 0) {
-				attributeSetInstanceId = RecordUtil.getIdFromUuid(I_M_AttributeSetInstance.Table_Name, request.getUuid(), transactionName);
-			}
-
-			MProduct product = (MProduct) RecordUtil.getEntity(Env.getCtx(), I_M_Product.Table_Name, request.getProductUuid(), request.getProductId(), transactionName);
+			MProduct product = (MProduct) RecordUtil.getEntity(Env.getCtx(), I_M_Product.Table_Name, request.getProductId(), transactionName);
 			if (product.getM_AttributeSet_ID() < 1) {
 				throw new AdempiereException("@PAttributeNoAttributeSet@");
 			}
@@ -702,7 +663,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			attributeSetInstace.setM_AttributeSet_ID(product.getM_AttributeSet_ID());
 			attributeSetInstace.saveEx();
 
-			Map<String, Object> attributesValues = ValueUtil.convertValuesMapToObjects(request.getAttributesMap());
+			Map<String, Object> attributesValues = ValueUtil.convertValuesMapToObjects(request.getAttributes().getFieldsMap());
 			List<MAttribute> attributes = Arrays.asList(atttibuteSet.getMAttributes(isProductASI));
 			if (attributes == null || attributes.size() <= 0) {
 				attributes = Arrays.asList(atttibuteSet.getMAttributes(!isProductASI));
@@ -786,12 +747,9 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// Add warehouse to filter
-		if (!Util.isEmpty(request.getWarehouseUuid(), true) || request.getWarehouseId() > 0) {
+		if (request.getWarehouseId() > 0) {
 			whereClause += " AND M_Warehouse_ID = ?";
 			int warehouseId = request.getWarehouseId();
-			if (!Util.isEmpty(request.getWarehouseUuid())) {
-				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
-			}
 			parameters.add(warehouseId);
 		}
 
@@ -865,7 +823,6 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		builder.setId(warehouse.getM_Warehouse_ID())
-			.setUuid(ValueUtil.validateNull(warehouse.getUUID()))
 			.setValue(ValueUtil.validateNull(warehouse.getValue()))
 			.setName(ValueUtil.validateNull(warehouse.getName()))
 			.setDescription(ValueUtil.validateNull(warehouse.getDescription()))
@@ -903,18 +860,15 @@ public class MaterialManagement extends MaterialManagementImplBase {
 	private ListLocatorsResponse.Builder listLocators(ListLocatorsRequest request) {
 		// Fill Env.getCtx()
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		String whereClause = "1 = 1";
 		List<Object> parameters = new ArrayList<Object>();
 
 		// Add warehouse to filter
-		if (!Util.isEmpty(request.getWarehouseUuid(), true) || request.getWarehouseId() > 0) {
+		if (request.getWarehouseId() > 0) {
 			whereClause += " AND M_Warehouse_ID = ?";
 			int warehouseId = request.getWarehouseId();
-			if (!Util.isEmpty(request.getWarehouseUuid())) {
-				warehouseId = RecordUtil.getIdFromUuid(I_M_Warehouse.Table_Name, request.getWarehouseUuid(), null);
-			}
 			parameters.add(warehouseId);
 		}
 
@@ -926,11 +880,11 @@ public class MaterialManagement extends MaterialManagementImplBase {
 
 		// Add dynamic validation to filter
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			request.getReferenceUuid(),
-			request.getFieldUuid(),
-			request.getProcessParameterUuid(),
-			request.getBrowseFieldUuid(),
-			request.getColumnUuid(),
+			request.getReferenceId(),
+			request.getFieldId(),
+			request.getProcessParameterId(),
+			request.getBrowseFieldId(),
+			request.getColumnId(),
 			request.getColumnName(),
 			I_M_Locator.Table_Name
 		);
@@ -1001,7 +955,6 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		builder.setId(locator.getM_Locator_ID())
-			.setUuid(ValueUtil.validateNull(locator.getUUID()))
 			.setValue(ValueUtil.validateNull(locator.getValue()))
 			.setIsDefault(locator.isDefault())
 			.setAisle(ValueUtil.validateNull(locator.getX()))

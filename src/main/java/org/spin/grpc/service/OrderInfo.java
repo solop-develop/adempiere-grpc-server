@@ -77,17 +77,17 @@ public class OrderInfo extends OrderImplBase {
 	 */
 	private ListEntitiesResponse.Builder listOrderInfo(ListOrderInfoRequest request) {
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			request.getReferenceUuid(),
-			request.getFieldUuid(),
-			request.getProcessParameterUuid(),
-			request.getBrowseFieldUuid(),
-			request.getColumnUuid(),
+			request.getReferenceId(),
+			request.getFieldId(),
+			request.getProcessParameterId(),
+			request.getBrowseFieldId(),
+			request.getColumnId(),
 			request.getColumnName(),
 			this.tableName
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributesMap());
+		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		//
 		MTable table = MTable.get(Env.getCtx(), this.tableName);

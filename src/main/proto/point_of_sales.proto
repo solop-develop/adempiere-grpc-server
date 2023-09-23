@@ -24,6 +24,7 @@ import "file_management.proto";
 import "time_control.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 package data;
 
@@ -194,29 +195,33 @@ service Store {
 
 //	Delete Refund reference request
 message DeletePaymentReferenceRequest {
-	int32 id = 2;
-	string uuid = 3;
-	string pos_uuid = 4;
+	int32 id = 1;
+	int32 pos_id = 2;
 }
 
 //	Allocate Seller Request
 message AllocateSellerRequest {
-	string pos_uuid = 2;
-	string sales_representative_uuid = 3;
+	int32 pos_id = 1;
+	int32 sales_representative_id = 2;
 }
 
 //	Deallocate Seller Request
 message DeallocateSellerRequest {
-	string pos_uuid = 2;
-	string sales_representative_uuid = 3;
+	int32 pos_id = 1;
+	int32 sales_representative_id = 2;
 }
 
 //	List allocated sellers for POS
 message ListAvailableSellersRequest {
-	bool is_only_allocated = 2;
-	string pos_uuid = 3;
-	int32 page_size = 4;
-	string page_token = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	bool is_only_allocated = 8;
+	int32 pos_id = 9;
 }
 
 //	Discounts Response
@@ -228,67 +233,70 @@ message ListAvailableSellersResponse {
 
 // Available Discounts
 message AvailableSeller {
-	int32 id = 2;
-	string uuid = 3;
-	string key = 4;
-	string name = 5;
-	bool is_pos_required_pin = 6;
-	string description = 7;
-	string comments = 8;
-	string image = 9;
+	int32 id = 1;
+	string key = 2;
+	string name = 3;
+	bool is_pos_required_pin = 4;
+	string description = 5;
+	string comments = 6;
+	string image = 7;
 }
 
 //	Refund reference request
 message CreatePaymentReferenceRequest {
-	string pos_uuid = 2;
-	string sales_representative_uuid = 3;
-	string description = 4;
-	google.protobuf.Struct source_amount = 5;
-	google.protobuf.Struct amount = 6;
-	string payment_date = 7;
-	string tender_type_code = 8;
-	string currency_uuid = 9;
-	string conversion_type_uuid = 10;
-	string payment_method_uuid = 11;
-	string payment_account_date = 12;
-	string customer_bank_account_uuid = 13;
-	string order_uuid = 14;
-	string customer_uuid = 15;
-	bool is_receipt = 16;
-	int32 invoice_reference_id = 17;
+	int32 pos_id = 1;
+	int32 sales_representative_id = 2;
+	string description = 3;
+	google.protobuf.Value source_amount = 4;
+	google.protobuf.Value amount = 5;
+	google.protobuf.Timestamp payment_date = 6;
+	string tender_type_code = 7;
+	int32 currency_id = 8;
+	int32 conversion_type_id = 9;
+	int32 payment_method_id = 10;
+	google.protobuf.Timestamp payment_account_date = 11;
+	int32 customer_bank_account_id = 12;
+	int32 order_id = 13;
+	int32 customer_id = 14;
+	bool is_receipt = 15;
+	int32 invoice_reference_id = 16;
 }
 
 //	Refund Reference
 message PaymentReference {
 	int32 id = 1;
-	string uuid = 2;
-	string pos_uuid = 3;
-	SalesRepresentative sales_representative = 4;
-	string description = 5;
-	google.protobuf.Struct amount = 6;
-	string payment_date = 7;
-	string tender_type_code = 8;
-	Currency currency = 9;
-	PaymentMethod payment_method = 10;
-	string payment_account_date = 11;
-	string customer_bank_account_uuid = 12;
-	string order_uuid = 13;
-	bool is_paid = 14;
-	bool is_receipt = 15;
-	google.protobuf.Struct source_amount = 16;
-	bool is_automatic = 17;
-	bool is_processed = 18;
-	google.protobuf.Struct converted_amount = 19;
-	int32 invoice_reference_id = 20;
+	int32 pos_id = 2;
+	SalesRepresentative sales_representative = 3;
+	string description = 4;
+	google.protobuf.Value amount = 5;
+	google.protobuf.Timestamp payment_date = 6;
+	string tender_type_code = 7;
+	Currency currency = 8;
+	PaymentMethod payment_method = 9;
+	google.protobuf.Timestamp payment_account_date = 10;
+	int32 customer_bank_account_id = 11;
+	int32 order_id = 12;
+	bool is_paid = 13;
+	bool is_receipt = 14;
+	google.protobuf.Value source_amount = 15;
+	bool is_automatic = 16;
+	bool is_processed = 17;
+	google.protobuf.Value converted_amount = 18;
+	int32 invoice_reference_id = 19;
 }
 
 //	List Refund Reference Request
 message ListPaymentReferencesRequest {
-	string pos_uuid = 2;
-	string customer_uuid = 3;
-	string order_uuid = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
 	int32 page_size = 5;
 	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 customer_id = 9;
+	int32 order_id = 10;
 }
 
 //	List Refund Reference Response
@@ -300,23 +308,28 @@ message ListPaymentReferencesResponse {
 
 //	Payment Summary
 message PaymentSummary {
-	string payment_method_uuid = 1;
+	int32 payment_method_id = 1;
 	string payment_method_name = 2;
 	string tender_type_code = 3;
 	Currency currency = 4;
 	bool is_refund = 5;
-	google.protobuf.Struct amount = 6;
+	google.protobuf.Value amount = 6;
 }
 
 //	List Cash Movements Request
 message ListCashMovementsRequest {
-	string pos_uuid = 2;
-	string business_partner_uuid = 3;
-	bool is_only_processed = 4;
-	bool is_only_refund = 5;
-	string sales_representative_uuid = 6;
-	int32 page_size = 7;
-	string page_token = 8;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 business_partner_id = 9;
+	bool is_only_processed = 10;
+	bool is_only_refund = 11;
+	int32 sales_representative_id = 12;
 }
 
 //	List cash movements
@@ -326,111 +339,117 @@ message ListCashMovementsResponse {
 	string next_page_token = 3;
 	// header values
 	int32 id = 4;
-	string uuid = 5;
 }
 
 //	List Cash Summary Movements Request
 message ListCashSummaryMovementsRequest {
-	string pos_uuid = 2;
-	bool is_only_processed = 3;
-	bool is_only_refund = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
 	int32 page_size = 5;
 	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	bool is_only_processed = 9;
+	bool is_only_refund = 10;
 }
 
 //	List cash summary movements
 message ListCashSummaryMovementsResponse {
 	int64 record_count = 1;
 	int32 id = 2;
-	string uuid = 3;
-	repeated PaymentSummary cash_movements = 4;
-	string next_page_token = 5;
+	repeated PaymentSummary cash_movements = 3;
+	string next_page_token = 4;
 }
 
 //	Cash closing
 message CashClosing {
-	string uuid = 2;
-	int32 id = 3;
-	string document_no = 4;
-	DocumentType document_type = 5;
-	DocumentStatus document_status = 6;
-	string description = 7;
+	int32 id = 1;
+	string document_no = 2;
+	DocumentType document_type = 3;
+	DocumentStatus document_status = 4;
+	string description = 5;
 }
 
 //	Request for create cash closing
 message CashClosingRequest {
-	string pos_uuid = 2;
-	string uuid = 3;
-	int32 id = 4;
-	string collecting_agent_uuid = 5;
-	string description = 6;
+	int32 pos_id = 1;
+	int32 id = 2;
+	int32 collecting_agent_id = 3;
+	string description = 4;
 }
 
 //	Request for create cash withdrawal
 message CashWithdrawalRequest {
-	string pos_uuid = 2;
-	string collecting_agent_uuid = 3;
-	string description = 4;
-	repeated CreatePaymentRequest payments = 5;
+	int32 pos_id = 1;
+	int32 collecting_agent_id = 2;
+	string description = 3;
+	repeated CreatePaymentRequest payments = 4;
 }
 
 //	Request for create cash opening
 message CashOpeningRequest {
-	string pos_uuid = 2;
-	string collecting_agent_uuid = 3;
-	string description = 4;
-	repeated CreatePaymentRequest payments = 5;
+	int32 pos_id = 1;
+	int32 collecting_agent_id = 2;
+	string description = 3;
+	repeated CreatePaymentRequest payments = 4;
 }
 
 // Request for create a Shipment from Order
 message CreateShipmentRequest {
-	string order_uuid = 2;
-	string sales_representative_uuid = 3;
-	string pos_uuid = 4;
-	bool is_create_lines_from_order = 5;
+	int32 order_id = 1;
+	int32 sales_representative_id = 2;
+	int32 pos_id = 3;
+	bool is_create_lines_from_order = 4;
 }
 
 // Request for create a Shipment from Order
 message GetOpenShipmentRequest {
-	string order_uuid = 2;
-	string pos_uuid = 3;
+	int32 order_id = 1;
+	int32 pos_id = 2;
 }
 
 // Request for delete a Shipment
 message DeleteShipmentRequest {
-	string shipment_uuid = 2;
-	string pos_uuid = 3;
+	int32 shipment_id = 1;
+	int32 pos_id = 2;
 }
 
 // Request for delete a Shipment Line
 message DeleteShipmentLineRequest {
-	string shipment_line_uuid = 2;
-	string pos_uuid = 3;
+	int32 shipment_line_id = 1;
+	int32 pos_id = 2;
 }
 
 // Request for delete a Shipment Line
 message UpdateShipmentLineRequest {
-	string shipment_line_uuid = 2;
-	string description = 5;
-	google.protobuf.Struct quantity = 6;
-	string pos_uuid = 7;
+	int32 shipment_line_id = 1;
+	string description = 2;
+	google.protobuf.Value quantity = 3;
+	int32 pos_id = 4;
 }
 
 // Request for Create a Shipment Line
 message CreateShipmentLineRequest {
-	string shipment_uuid = 2;
-	string order_line_uuid = 3;
-	string description = 5;
-	google.protobuf.Struct quantity = 6;	
-	string pos_uuid = 7;
+	int32 shipment_id = 1;
+	int32 order_line_id = 2;
+	string description = 3;
+	google.protobuf.Value quantity = 4;	
+	int32 pos_id = 5;
 }
 
 //	List Shipment Lines Request
 message ListShipmentLinesRequest {
-	string shipment_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
-	string pos_uuid = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 shipment_id = 8;
+	int32 pos_id = 9;
 }
 
 //	List shipment Lines
@@ -442,63 +461,63 @@ message ListShipmentLinesResponse {
 
 // Shipment
 message Shipment {
-	string uuid = 1;
-	int32 id = 2;
-	string document_no = 3;
-	DocumentType document_type = 4;
-	SalesRepresentative sales_representative = 5;
-	DocumentStatus document_status = 6;
-	Warehouse warehouse = 7;
-	string movement_date = 8;
-	string order_uuid = 9;
+	int32 id = 1;
+	string document_no = 2;
+	DocumentType document_type = 3;
+	SalesRepresentative sales_representative = 4;
+	DocumentStatus document_status = 5;
+	Warehouse warehouse = 6;
+	google.protobuf.Timestamp movement_date = 7;
+	int32 order_id = 8;
 }
 
 // Request for Process a Shipment
 message ProcessShipmentRequest {
-	string shipment_uuid = 2;
-	string description = 3;
-	string document_action = 4;
-	string pos_uuid = 5;
+	int32 shipment_id = 1;
+	string description = 2;
+	string document_action = 3;
+	int32 pos_id = 4;
 }
 
 // Request for Reverse a Sales Transaction
 message ReverseSalesRequest {
-	string pos_uuid = 2;
-	string order_uuid = 3;
-	string description = 4;
+	int32 pos_id = 1;
+	int32 order_id = 2;
+	string description = 3;
 }
 
 // Sales Shipment Line
 message ShipmentLine {
 	int32 id = 1;
-	string uuid = 2;
-	string order_line_uuid = 3;
-	Product product = 4;
-	Charge charge = 5;
-	string description = 6;
-	google.protobuf.Struct quantity = 7;
-	google.protobuf.Struct movement_quantity = 8;
-	int32 line = 9;
-	ProductConversion uom = 10;
-	ProductConversion product_uom = 11;
+	int32 order_line_id = 2;
+	Product product = 3;
+	Charge charge = 4;
+	string description = 5;
+	google.protobuf.Value quantity = 6;
+	google.protobuf.Value movement_quantity = 7;
+	int32 line = 8;
+	ProductConversion uom = 9;
+	ProductConversion product_uom = 10;
 }
 
 // Bank
 message Bank {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	string routing_no = 5;
-	string swift_code = 6;
+	string name = 2;
+	string description = 3;
+	string routing_no = 4;
+	string swift_code = 5;
 }
 
 message ListBanksRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	string pos_uuid = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 message ListBanksResponse {
@@ -509,12 +528,15 @@ message ListBanksResponse {
 
 // Bank Account
 message ListBankAccountsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 bank_id = 4;
-	string pos_uuid = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 bank_id = 8;
+	int32 pos_id = 9;
 }
 
 message ListBankAccountsResponse {
@@ -525,10 +547,15 @@ message ListBankAccountsResponse {
 
 //	List Customer Accounts Request
 message ListCustomerBankAccountsRequest {
-	string customer_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
-	string pos_uuid = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 customer_id = 8;
+	int32 pos_id = 9;
 }
 
 //	List Customer Accounts Response
@@ -540,31 +567,8 @@ message ListCustomerBankAccountsResponse {
 
 //	Create Customer Account
 message CreateCustomerBankAccountRequest {
-	string customer_uuid = 2;
-	string pos_uuid = 3;
-	string city = 4;
-	string country = 5;
-	string email = 6;
-	string driver_license = 7;
-	string social_security_number = 8;
-	string name = 9;
-	string state = 10;
-	string street = 11;
-	string zip = 12;
-	string bank_account_type = 13;
-	string bank_uuid = 14;
-	bool is_ach = 15;
-	string address_verified = 16;
-	string zip_verified = 17;
-	string routing_no = 18;
-	string iban = 19;
-	bool is_payroll_account = 20;
-	string account_no = 21;
-}
-
-//	Update Customer Account
-message UpdateCustomerBankAccountRequest {
-	string customer_bank_account_uuid = 2;
+	int32 customer_id = 1;
+	int32 pos_id = 2;
 	string city = 3;
 	string country = 4;
 	string email = 5;
@@ -575,7 +579,7 @@ message UpdateCustomerBankAccountRequest {
 	string street = 10;
 	string zip = 11;
 	string bank_account_type = 12;
-	string bank_uuid = 13;
+	int32 bank_id = 13;
 	bool is_ach = 14;
 	string address_verified = 15;
 	string zip_verified = 16;
@@ -583,26 +587,49 @@ message UpdateCustomerBankAccountRequest {
 	string iban = 18;
 	bool is_payroll_account = 19;
 	string account_no = 20;
-	string pos_uuid = 21;
+}
+
+//	Update Customer Account
+message UpdateCustomerBankAccountRequest {
+	int32 customer_bank_account_id = 1;
+	string city = 2;
+	string country = 3;
+	string email = 4;
+	string driver_license = 5;
+	string social_security_number = 6;
+	string name = 7;
+	string state = 8;
+	string street = 9;
+	string zip = 10;
+	string bank_account_type = 11;
+	int32 bank_id = 12;
+	bool is_ach = 13;
+	string address_verified = 14;
+	string zip_verified = 15;
+	string routing_no = 16;
+	string iban = 17;
+	bool is_payroll_account = 18;
+	string account_no = 19;
+	int32 pos_id = 20;
 }
 
 //	Delete Customer Account
 message DeleteCustomerBankAccountRequest {
-	string customer_bank_account_uuid = 2;
-	string pos_uuid = 3;
+	int32 customer_bank_account_id = 1;
+	int32 pos_id = 2;
 }
 
 //	Get Customer Account
 message GetCustomerBankAccountRequest {
-	string customer_bank_account_uuid = 2;
-	string pos_uuid = 3;
+	int32 customer_bank_account_id = 1;
+	int32 pos_id = 2;
 }
 
 
 //	Customer Account
 message CustomerBankAccount {
-	string customer_uuid = 1;
-	string customer_bank_account_uuid = 2;
+	int32 id = 1;
+	int32 customer_id = 2;
 	string city = 3;
 	string country = 4;
 	string email = 5;
@@ -613,7 +640,7 @@ message CustomerBankAccount {
 	string street = 10;
 	string zip = 11;
 	string bank_account_type = 12;
-	string bank_uuid = 13;
+	int32 bank_id = 13;
 	bool is_ach = 14;
 	string address_verified = 15;
 	string zip_verified = 16;
@@ -641,14 +668,14 @@ message PrintTicketResponse {
 	string mime_type = 4;
 	bytes output_stream = 5;
 	string result_type = 6;
-	map<string, string> result_values = 7;
+	google.protobuf.Value result_values = 7;
 }
 
 //	Print Preview Ticket
 message PrintPreviewRequest {
-	string pos_uuid = 2;
-	string order_uuid = 3;
-	string report_type = 4;
+	int32 pos_id = 1;
+	int32 order_id = 2;
+	string report_type = 3;
 }
 
 //	Response after preview
@@ -659,9 +686,9 @@ message PrintPreviewResponse {
 
 //	Print Preview Ticket for Shipment
 message PrintShipmentPreviewRequest {
-	string pos_uuid = 2;
-	string shipment_uuid = 3;
-	string report_type = 4;
+	int32 pos_id = 1;
+	int32 shipment_id = 2;
+	string report_type = 3;
 }
 
 //	Response after preview
@@ -672,50 +699,66 @@ message PrintShipmentPreviewResponse {
 
 //	Request Daily Refund
 message GetAvailableRefundRequest {
-	string pos_uuid = 2;
-	string date = 3;
+	int32 pos_id = 1;
+	google.protobuf.Timestamp date = 2;
 }
 
 //	Daily Refund
 message AvailableRefund {
-	google.protobuf.Struct refund = 1;
+	google.protobuf.Value refund = 1;
 	repeated TenderTypeRefund tender_type_refunds = 2;
 }
 
 //	Tender Type Refund
 message TenderTypeRefund {
 	string tender_type = 1;
-	google.protobuf.Struct refund = 2;
+	google.protobuf.Value refund = 2;
 }
 
 //	Address information for request
 message AddressRequest {
 	int32 id = 1;
-	string uuid = 2;
-	string first_name = 3;
-	string last_name = 4;
-	string address1 = 5;
-	string address2 = 6;
-	string address3 = 7;
-	string address4 = 8;
-	string city_uuid = 9;
-	string city_name = 10;
-	string postal_code = 11;
-	string region_uuid = 12;
-	string region_name = 13;
-	string country_uuid = 14;
-	string description = 15;
-	bool is_default_billing = 16;
-	bool is_default_shipping = 17;
-	string contact_name = 18;
-	string email = 19;
-	string phone = 20;
-	google.protobuf.Struct additional_attributes = 21;
-	string pos_uuid = 22;
+	string first_name = 2;
+	string last_name = 3;
+	string address1 = 4;
+	string address2 = 5;
+	string address3 = 6;
+	string address4 = 7;
+	int32 city_id = 8;
+	string city_name = 9;
+	string postal_code = 10;
+	int32 region_id = 11;
+	string region_name = 12;
+	int32 country_id = 13;
+	string description = 14;
+	bool is_default_billing = 15;
+	bool is_default_shipping = 16;
+	string contact_name = 17;
+	string email = 18;
+	string phone = 19;
+	google.protobuf.Struct additional_attributes = 20;
+	int32 pos_id = 21;
 }
 
 // Request for create Customer
 message CreateCustomerRequest {
+	string value = 1;
+	string tax_id = 2;
+	string duns = 3;
+	string naics = 4;
+	string name = 5;
+	string last_name = 6;
+	string description = 7;
+	int32 business_partner_group_id = 8;
+	int32 pos_id = 9;
+	//	Location
+	repeated AddressRequest addresses = 10;
+	google.protobuf.Struct additional_attributes = 11;
+}
+
+// Request for update Customer
+message UpdateCustomerRequest {
+	int32 id = 1;
 	string value = 2;
 	string tax_id = 3;
 	string duns = 4;
@@ -723,139 +766,119 @@ message CreateCustomerRequest {
 	string name = 6;
 	string last_name = 7;
 	string description = 8;
-	string business_partner_group_uuid = 12;
-	string pos_uuid = 13;
 	//	Location
-	repeated AddressRequest addresses = 14;
-	google.protobuf.Struct additional_attributes = 15;
-}
-
-// Request for update Customer
-message UpdateCustomerRequest {
-	string uuid = 2;
-	string value = 3;
-	string tax_id = 4;
-	string duns = 5;
-	string naics = 6;
-	string name = 7;
-	string last_name = 8;
-	string description = 9;
-	//	Location
-	repeated AddressRequest addresses = 10;
-	google.protobuf.Struct additional_attributes = 11;
-	string pos_uuid = 12;
+	repeated AddressRequest addresses = 9;
+	google.protobuf.Struct additional_attributes = 10;
+	int32 pos_id = 11;
 }
 
 // Request Get a Customer
 message GetCustomerRequest {
-	string search_value = 2;
-	string value = 3;
-	string name = 4;
-	string contact_name = 6;
-	string email = 7;
-	string postal_code = 8;
-	string phone = 9;
-	string pos_uuid = 10;
+	string search_value = 1;
+	string value = 2;
+	string name = 3;
+	string contact_name = 4;
+	string email = 5;
+	string postal_code = 6;
+	string phone = 7;
+	int32 pos_id = 8;
 }
 
 // Customer
 message Customer {
-	string uuid = 1;
-	int32 id = 2;
-	string value = 3;
-	string tax_id = 4;
-	string duns = 5;
-	string naics = 6;
-	string name = 7;
-	string last_name = 8;
-	string description = 9;
-	repeated Address addresses = 10;
-	google.protobuf.Struct additional_attributes = 11;
+	int32 id = 1;
+	string value = 2;
+	string tax_id = 3;
+	string duns = 4;
+	string naics = 5;
+	string name = 6;
+	string last_name = 7;
+	string description = 8;
+	repeated Address addresses = 9;
+	google.protobuf.Struct additional_attributes = 10;
 }
 
 //	Address
 message Address {
 	int32 id = 1;
-	string uuid = 2;
 	//	Location
-	Region region = 4;
-	City city = 5;
-	string address1 = 6;
-	string address2 = 7;
-	string address3 = 8;
-	string address4 = 9;
-	string phone = 10;
-	string postal_code = 11;
-	string country_code = 12;
-	string country_uuid = 13;
-	int32 country_id = 14;
-	bool is_default_shipping = 15;
-	bool is_default_billing = 16;
-	string contact_name = 17;
-	string email = 18;
-	string description = 19;
-	string first_name = 20;
-	string last_name = 21;
-	google.protobuf.Struct additional_attributes = 22;
+	Region region = 2;
+	City city = 3;
+	string address1 = 4;
+	string address2 = 5;
+	string address3 = 6;
+	string address4 = 7;
+	string phone = 8;
+	string postal_code = 9;
+	string country_code = 10;
+	int32 country_id = 11;
+	bool is_default_shipping = 12;
+	bool is_default_billing = 13;
+	string contact_name = 14;
+	string email = 15;
+	string description = 16;
+	string first_name = 17;
+	string last_name = 18;
+	google.protobuf.Struct additional_attributes = 19;
 }
 
 //	City
 message City {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
+	string name = 2;
 }
 
 //	Region
 message Region {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
+	string name = 2;
 }
 
 
 // Available Warehouse
 message AvailableWarehouse {
-	int32 id = 2;
-	string uuid = 3;
-	string key = 4;
-	string name = 5;
-	bool is_pos_required_pin = 6;
+	int32 id = 1;
+	string key = 2;
+	string name = 3;
+	bool is_pos_required_pin = 4;
 }
 
 // Available Tender Type
 message AvailablePaymentMethod {
-	int32 id = 2;
-	string uuid = 3;
-	string name = 4;
-	string pos_uuid = 5;
-	bool is_displayedfrom_collection = 6;
-	bool is_pos_required_pin = 7;
-	bool is_allowed_to_refund = 8;
-	bool is_allowed_to_refund_open = 9;
-	google.protobuf.Struct maximum_refund_allowed = 10;
-	google.protobuf.Struct maximum_daily_refund_allowed = 11;
-	Currency refund_reference_currency = 12;
-	Currency reference_currency = 13;
-	bool is_payment_reference = 14;
-	PaymentMethod payment_method = 15;
+	int32 id = 1;
+	string name = 2;
+	int32 pos_id = 3;
+	bool is_displayedfrom_collection = 4;
+	bool is_pos_required_pin = 5;
+	bool is_allowed_to_refund = 6;
+	bool is_allowed_to_refund_open = 7;
+	google.protobuf.Value maximum_refund_allowed = 8;
+	google.protobuf.Value maximum_daily_refund_allowed = 9;
+	Currency refund_reference_currency = 10;
+	Currency reference_currency = 11;
+	bool is_payment_reference = 12;
+	PaymentMethod payment_method = 13;
 }
 
 message PaymentMethod {
 	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
-	string tender_type = 6;
-	bool is_active = 7;
+	string value = 2;
+	string name = 3;
+	string description = 4;
+	string tender_type = 5;
+	bool is_active = 6;
 }
 
 //	List discount schema for POS
 message ListAvailableDiscountsRequest {
-	string pos_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 //	Discounts Response
@@ -867,43 +890,50 @@ message ListAvailableDiscountsResponse {
 
 // Available Discounts
 message AvailableDiscount {
-	int32 id = 2;
-	string uuid = 3;
-	string key = 4;
-	string name = 5;
-	bool is_pos_required_pin = 6;
+	int32 id = 1;
+	string key = 2;
+	string name = 3;
+	bool is_pos_required_pin = 4;
 }
 
 // Available Document Type
 message AvailableDocumentType {
-	int32 id = 2;
-	string uuid = 3;
-	string key = 4;
-	string name = 5;
-	bool is_pos_required_pin = 6;
+	int32 id = 1;
+	string key = 2;
+	string name = 3;
+	bool is_pos_required_pin = 4;
 }
 
 // Available Price List
 message AvailablePriceList {
-	int32 id = 2;
-	string uuid = 3;
-	string key = 4;
-	string name = 5;
-	bool is_pos_required_pin = 6;
+	int32 id = 1;
+	string key = 2;
+	string name = 3;
+	bool is_pos_required_pin = 4;
 }
 
 //	List warehouses for POS
 message ListAvailableWarehousesRequest {
-	string pos_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 //	List document types for POS
 message ListAvailableDocumentTypesRequest {
-	string pos_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 //	List Available Warehouses
@@ -915,9 +945,14 @@ message ListAvailableWarehousesResponse {
 
 //	List payment type for POS
 message ListAvailablePaymentMethodsRequest {
-	string pos_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 //	List Available Tender Types
@@ -936,9 +971,14 @@ message ListAvailableDocumentTypesResponse {
 
 //	List price list for POS
 message ListAvailablePriceListRequest {
-	string pos_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 //	Price List Response
@@ -950,9 +990,14 @@ message ListAvailablePriceListResponse {
 
 //	List warehouses for POS
 message ListAvailableCurrenciesRequest {
-	string pos_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 //	Currencies Response
@@ -985,30 +1030,31 @@ message ListOrdersResponse {
 
 // List Orders Request
 message ListOrdersRequest {
-	string pos_uuid = 1;
-	string document_no = 2;
-	string document_status = 3;
-	string business_partner_uuid = 4;
-	google.protobuf.Struct grand_total = 5;
-	google.protobuf.Struct open_amount = 6;
-	bool is_waiting_for_pay = 7;
-	bool is_only_processed = 8;
-	bool is_only_aisle_seller = 9;
-	bool is_waiting_for_invoice = 10;
-	bool is_waiting_for_shipment = 11;
-	bool is_binding_offer = 12;
-	bool is_closed = 13;
-	bool is_nullified = 14;
-	bool is_only_rma = 15;
-	string date_ordered_from = 16;
-	string date_ordered_to = 17;
-	string sales_representative_uuid = 18;
-	string filters = 19;
-	repeated string sort_columns = 20;
-	repeated string group_columns = 21;
-	repeated string select_columns = 22;
-	int32 page_size = 23;
-	string page_token = 24;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	string document_no = 9;
+	string document_status = 10;
+	int32 business_partner_id = 11;
+	google.protobuf.Value grand_total = 12;
+	google.protobuf.Value open_amount = 13;
+	bool is_waiting_for_pay = 14;
+	bool is_only_processed = 15;
+	bool is_only_aisle_seller = 16;
+	bool is_waiting_for_invoice = 17;
+	bool is_waiting_for_shipment = 18;
+	bool is_binding_offer = 19;
+	bool is_closed = 20;
+	bool is_nullified = 21;
+	bool is_only_rma = 22;
+	google.protobuf.Timestamp date_ordered_from = 23;
+	google.protobuf.Timestamp date_ordered_to = 24;
+	int32 sales_representative_id = 25;
 }
 
 //	List Order Lines Response
@@ -1020,201 +1066,209 @@ message ListOrderLinesResponse {
 
 // List Orders Request
 message ListOrderLinesRequest {
-	string order_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
-	string pos_uuid = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 order_id = 9;
 }
 
 // List Product Price Request
 message ListProductPriceRequest {
-	string search_value = 2;
-	string business_partner_uuid = 3;
-	string valid_from = 4;
-	string pos_uuid = 5;
-	string price_list_uuid = 6;
-	string warehouse_uuid = 7;
-	string filters = 8;
-	repeated string sort_columns = 9;
-	repeated string group_columns = 10;
-	repeated string select_columns = 11;
-	int32 page_size = 12;
-	string page_token = 13;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 business_partner_id = 9;
+	string valid_from = 10;
+	int32 price_list_id = 11;
+	int32 warehouse_id = 12;
 }
 
-// POS from user uuid
+// POS from user id
 message ListPointOfSalesRequest {
-	string user_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
-	string pos_uuid = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 user_id = 9;
 }
 
 // Point of Sales request
 message PointOfSalesRequest {
-	string pos_uuid = 2;
+	int32 pos_id = 1;
 }
 
 // Point of Sales definition
 message PointOfSales {
-	string uuid = 1;
-	int32 id = 2;
-	string name = 3;
-	string description = 4;
-	string help = 5;
-	bool is_modify_price = 6;
-	bool is_pos_required_pin = 7;
-	bool is_aisle_seller = 8;
-	bool is_shared_pos = 9;
-	DocumentType document_type = 10;
-	BankAccount cash_bank_account = 11;
-	BankAccount cash_transfer_bank_account = 12;
-	SalesRepresentative sales_representative = 13;
-	Customer template_customer = 14;
-	PriceList price_list = 15;
-	Warehouse warehouse = 16;
-	Currency display_currency = 17;
-	string conversion_type_uuid = 18;
-	string key_layout_uuid = 19;
-	bool is_allows_modify_quantity = 20;
-	bool is_allows_return_order = 21;
-	bool is_allows_collect_order = 22;
-	bool is_allows_create_order = 23;
-	bool is_allows_confirm_shipment = 24;
-	bool is_display_tax_amount = 25;
-	bool is_display_discount = 26;
-	google.protobuf.Struct maximum_refund_allowed = 27;
-	google.protobuf.Struct maximum_daily_refund_allowed = 28;
-	Currency refund_reference_currency = 29;
-	DocumentType return_document_type = 30;
-	Campaign default_campaign = 31;
-	string default_opening_charge_uuid = 32;
-	string default_withdrawal_charge_uuid = 33;
-	google.protobuf.Struct maximum_discount_allowed = 34;
-	google.protobuf.Struct write_off_amount_tolerance = 35;
-	bool is_allows_allocate_seller = 36;
-	bool is_allows_concurrent_use = 37;
-	bool is_confirm_complete_shipment = 38;
-	bool is_allows_cash_closing = 39;
-	bool is_allows_cash_opening = 40;
-	bool is_allows_cash_withdrawal = 41;
-	bool is_allows_apply_discount = 42;
-	bool is_allows_create_customer = 43;
-	bool is_allows_print_document = 44;
-	bool is_allows_preview_document = 45;
-	bool is_pos_manager = 46;
-	bool is_allows_modify_discount = 47;
-	bool is_keep_price_from_customer = 48;
-	google.protobuf.Struct maximum_line_discount_allowed = 49;
-	bool is_allows_modify_customer = 50;
-	bool is_allows_detail_cash_closing = 51;
-	google.protobuf.Struct write_off_percentage_tolerance = 52;
-	bool is_write_off_by_percent = 53;
-	bool is_allows_write_off_amount = 54;
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+	string help = 4;
+	bool is_modify_price = 5;
+	bool is_pos_required_pin = 6;
+	bool is_aisle_seller = 7;
+	bool is_shared_pos = 8;
+	DocumentType document_type = 9;
+	BankAccount cash_bank_account = 10;
+	BankAccount cash_transfer_bank_account = 11;
+	SalesRepresentative sales_representative = 12;
+	Customer template_customer = 13;
+	PriceList price_list = 14;
+	Warehouse warehouse = 15;
+	Currency display_currency = 16;
+	int32 conversion_type_id = 17;
+	int32 key_layout_id = 18;
+	bool is_allows_modify_quantity = 19;
+	bool is_allows_return_order = 20;
+	bool is_allows_collect_order = 21;
+	bool is_allows_create_order = 22;
+	bool is_allows_confirm_shipment = 23;
+	bool is_display_tax_amount = 24;
+	bool is_display_discount = 25;
+	google.protobuf.Value maximum_refund_allowed = 26;
+	google.protobuf.Value maximum_daily_refund_allowed = 27;
+	Currency refund_reference_currency = 28;
+	DocumentType return_document_type = 29;
+	Campaign default_campaign = 30;
+	int32 default_opening_charge_id = 31;
+	int32 default_withdrawal_charge_id = 32;
+	google.protobuf.Value maximum_discount_allowed = 33;
+	google.protobuf.Value write_off_amount_tolerance = 34;
+	bool is_allows_allocate_seller = 35;
+	bool is_allows_concurrent_use = 36;
+	bool is_confirm_complete_shipment = 37;
+	bool is_allows_cash_closing = 38;
+	bool is_allows_cash_opening = 39;
+	bool is_allows_cash_withdrawal = 40;
+	bool is_allows_apply_discount = 41;
+	bool is_allows_create_customer = 42;
+	bool is_allows_print_document = 43;
+	bool is_allows_preview_document = 44;
+	bool is_pos_manager = 45;
+	bool is_allows_modify_discount = 46;
+	bool is_keep_price_from_customer = 47;
+	google.protobuf.Value maximum_line_discount_allowed = 48;
+	bool is_allows_modify_customer = 49;
+	bool is_allows_detail_cash_closing = 50;
+	google.protobuf.Value write_off_percentage_tolerance = 51;
+	bool is_write_off_by_percent = 52;
+	bool is_allows_write_off_amount = 53;
 }
 
 // Request for create a order
 message CreateOrderRequest {
-	string pos_uuid = 2;
-	string customer_uuid = 3;
-	string document_type_uuid = 4;
-	string price_list_uuid = 5;
-	string warehouse_uuid = 6;
-	string sales_representative_uuid = 7;
-	string campaign_uuid = 8;
+	int32 pos_id = 1;
+	int32 customer_id = 2;
+	int32 document_type_id = 3;
+	int32 price_list_id = 4;
+	int32 warehouse_id = 5;
+	int32 sales_representative_id = 6;
+	int32 campaign_id = 7;
 }
 
 // Request for release a order
 message ReleaseOrderRequest {
-	string pos_uuid = 2;
-	string sales_representative_uuid = 3;
-	string order_uuid = 4;
+	int32 pos_id = 1;
+	int32 sales_representative_id = 2;
+	int32 order_id = 3;
 }
 
 // Request for hold a order
 message HoldOrderRequest {
-	string pos_uuid = 2;
-	string sales_representative_uuid = 3;
-	string order_uuid = 4;
+	int32 pos_id = 1;
+	int32 sales_representative_id = 2;
+	int32 order_id = 3;
 }
 
 // Request for process a order
 message ProcessOrderRequest {
-	string pos_uuid = 2;
-	string order_uuid = 3;
-	bool create_payments = 4;
-	bool is_open_refund = 5;
-	repeated CreatePaymentRequest payments = 6;
+	int32 pos_id = 1;
+	int32 order_id = 2;
+	bool create_payments = 3;
+	bool is_open_refund = 4;
+	repeated CreatePaymentRequest payments = 5;
 }
 
 //	Create Payment
 message CreatePaymentRequest {
-	string uuid = 2;
-	int32 id = 3;
-	string pos_uuid = 4;
-	string order_uuid = 5;
-	string invoice_uuid = 6;
-	string bank_uuid = 7;
-	string reference_no = 8;
-	string description = 9;
-	google.protobuf.Struct amount = 10;
-	string payment_date = 11;
-	string tender_type_code = 12;
-	string currency_uuid = 13;
-	string payment_method_uuid = 14;
-	string payment_account_date = 15;
-	bool is_refund = 16;
-	string charge_uuid = 17;
-	string collecting_agent_uuid = 18;
-	string reference_bank_account_uuid = 19;
-	string customer_bank_account_uuid = 20;
-	int32 invoice_reference_id = 21;
+	int32 id = 1;
+	int32 pos_id = 2;
+	int32 order_id = 3;
+	int32 invoice_id = 4;
+	int32 bank_id = 5;
+	string reference_no = 6;
+	string description = 7;
+	google.protobuf.Value amount = 8;
+	google.protobuf.Timestamp payment_date = 9;
+	string tender_type_code = 10;
+	int32 currency_id = 11;
+	int32 payment_method_id = 12;
+	google.protobuf.Timestamp payment_account_date = 13;
+	bool is_refund = 14;
+	int32 charge_id = 15;
+	int32 collecting_agent_id = 16;
+	int32 reference_bank_account_id = 17;
+	int32 customer_bank_account_id = 18;
+	int32 invoice_reference_id = 19;
 }
 
 //	Update Payment
 message UpdatePaymentRequest {
-	string payment_uuid = 2;
-	string bank_uuid = 3;
-	string reference_no = 4;
-	string description = 5;
-	google.protobuf.Struct amount = 6;
-	string payment_date = 7;
-	string tender_type_code = 8;
-	string payment_method_uuid = 9;
-	string payment_account_date = 10;
-	string pos_uuid = 11;
-	string reference_bank_account_uuid = 12;
-	int32 invoice_reference_id = 13;
+	int32 payment_id = 1;
+	int32 bank_id = 2;
+	string reference_no = 3;
+	string description = 4;
+	google.protobuf.Value amount = 5;
+	google.protobuf.Timestamp payment_date = 6;
+	string tender_type_code = 7;
+	int32 payment_method_id = 8;
+	google.protobuf.Timestamp payment_account_date = 9;
+	int32 pos_id = 10;
+	int32 reference_bank_account_id = 11;
+	int32 invoice_reference_id = 12;
 }
 
 // Request for delete a payment
 message DeletePaymentRequest {
-	string payment_uuid = 2;
-	string pos_uuid = 3;
+	int32 payment_id = 1;
+	int32 pos_id = 2;
 }
 
 // List Payments Request
 message ListPaymentsRequest {
-	string pos_uuid = 2;
-	string order_uuid = 3;
-	bool is_only_refund = 4;
-	bool is_only_receipt = 5;
-	string filters = 6;
-	repeated string sort_columns = 7;
-	repeated string group_columns = 8;
-	repeated string select_columns = 9;
-	int32 page_size = 10;
-	string page_token = 11;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 order_id = 9;
+	bool is_only_refund = 10;
+	bool is_only_receipt = 11;
 }
 
 // Validate PIN Request
 message ValidatePINRequest {
 	int32 pos_id = 1;
-	string pos_uuid = 2;
-	string pin = 3;
-	string requested_access = 4;
-	google.protobuf.Struct requested_amount = 5;
-	int32 order_id = 6;
+	string pin = 2;
+	string requested_access = 3;
+	google.protobuf.Value requested_amount = 4;
+	int32 order_id = 5;
 }
 
 //	List Payments Response
@@ -1226,214 +1280,209 @@ message ListPaymentsResponse {
 
 //	Payment
 message Payment {
-	string uuid = 1;
-	int32 id = 2;
-	string document_no = 3;
-	SalesRepresentative collecting_agent = 4;
-	DocumentStatus document_status = 5;
-	Customer customer = 6;
-	string pos_uuid = 7;
-	string order_uuid = 8;
-	string invoice_uuid = 9;
-	string bank_uuid = 10;
-	string reference_no = 11;
-	string description = 12;
-	google.protobuf.Struct amount = 13;
-	string payment_date = 14;
-	string payment_account_date = 15;
-	string tender_type_code = 16;
-	Currency currency = 17;
-	bool is_refund = 18;
-	string name = 19;
-	google.protobuf.Struct converted_amount = 20;
-	PaymentMethod payment_method = 21;
-	BankAccount bank_account = 22;
-	BankAccount reference_bank_account = 23;
-	Charge charge = 24;
-	DocumentType document_type = 25;
-	bool is_processed = 27;
-	string order_document_no = 28;
-	string invoice_document_no = 29;
+	int32 id = 1;
+	string document_no = 2;
+	SalesRepresentative collecting_agent = 3;
+	DocumentStatus document_status = 4;
+	Customer customer = 5;
+	int32 pos_id = 6;
+	int32 order_id = 7;
+	int32 invoice_id = 8;
+	int32 bank_id = 9;
+	string reference_no = 10;
+	string description = 11;
+	google.protobuf.Value amount = 12;
+	google.protobuf.Timestamp payment_date = 13;
+	google.protobuf.Timestamp payment_account_date = 14;
+	string tender_type_code = 15;
+	Currency currency = 16;
+	bool is_refund = 17;
+	string name = 18;
+	google.protobuf.Value converted_amount = 19;
+	PaymentMethod payment_method = 20;
+	BankAccount bank_account = 21;
+	BankAccount reference_bank_account = 22;
+	Charge charge = 23;
+	DocumentType document_type = 24;
+	bool is_processed = 25;
+	string order_document_no = 26;
+	string invoice_document_no = 27;
 }
 
 // Request for delete a order
 message DeleteOrderRequest {
-	string order_uuid = 2;
-	string pos_uuid = 3;
+	int32 order_id = 1;
+	int32 pos_id = 2;
 }
 
 // Request for delete a order
 message DeleteOrderLineRequest {
-	string order_line_uuid = 2;
-	string pos_uuid = 3;
+	int32 order_line_id = 1;
+	int32 pos_id = 2;
 }
 
 // Request for create a order line
 message CreateOrderLineRequest {
-	string order_uuid = 2;
-	string product_uuid = 3;
-	string charge_uuid = 4;
-	string description = 5;
-	google.protobuf.Struct quantity = 6;
-	google.protobuf.Struct price = 7;
-	google.protobuf.Struct discount_rate = 8;
-	string warehouse_uuid = 9;
-	string pos_uuid = 10;
-	string resource_assignment_uuid = 11;
+	int32 order_id = 1;
+	int32 product_id = 2;
+	int32 charge_id = 3;
+	string description = 4;
+	google.protobuf.Value quantity = 5;
+	google.protobuf.Value price = 6;
+	google.protobuf.Value discount_rate = 7;
+	int32 warehouse_id = 8;
+	int32 pos_id = 9;
+	int32 resource_assignment_id = 10;
 }
 
 // Request for update a order
 message UpdateOrderRequest {
-	string order_uuid = 2;
-	string pos_uuid = 3;
-	string customer_uuid = 4;
-	string document_type_uuid = 5;
-	string price_list_uuid = 6;
-	string warehouse_uuid = 7;
-	string description = 8;
-	string campaign_uuid = 9;
-	google.protobuf.Struct discount_rate = 10;
-	google.protobuf.Struct discount_rate_off = 11;
-	google.protobuf.Struct discount_amount_off = 12;
-	string sales_representative_uuid = 13;
+	int32 order_id = 1;
+	int32 pos_id = 2;
+	int32 customer_id = 3;
+	int32 document_type_id = 4;
+	int32 price_list_id = 5;
+	int32 warehouse_id = 6;
+	string description = 7;
+	int32 campaign_id = 8;
+	google.protobuf.Value discount_rate = 9;
+	google.protobuf.Value discount_rate_off = 10;
+	google.protobuf.Value discount_amount_off = 11;
+	int32 sales_representative_id = 12;
 }
 
 // Request for update a order line
 message UpdateOrderLineRequest {
-	string order_line_uuid = 2;
-	string description = 3;
-	google.protobuf.Struct quantity = 4;
-	google.protobuf.Struct price = 5;
-	string uom_uuid = 6;
-	google.protobuf.Struct discount_rate = 7;
-	bool is_add_quantity = 8;
-	string warehouse_uuid = 9;
-	string pos_uuid = 10;
+	int32 order_line_id = 1;
+	string description = 2;
+	google.protobuf.Value quantity = 3;
+	google.protobuf.Value price = 4;
+	int32 uom_id = 5;
+	google.protobuf.Value discount_rate = 6;
+	bool is_add_quantity = 7;
+	int32 warehouse_id = 8;
+	int32 pos_id = 9;
 }
 
 // Request for get a order
 message GetOrderRequest {
-	string order_uuid = 2;
-	string pos_uuid = 3;
+	int32 order_id = 1;
+	int32 pos_id = 2;
 }
 
 // Request for get a key layout
 message GetKeyLayoutRequest {
-	string key_layout_uuid = 2;
-	string pos_uuid = 3;
+	int32 key_layout_id = 3;
+	int32 pos_id = 4;
 }
 
 // Sales Order
 message Order {
-	string uuid = 1;
-	int32 id = 2;
-	string document_no = 3;
-	DocumentType document_type = 4;
-	SalesRepresentative sales_representative = 5;
-	DocumentStatus document_status = 6;
-	PriceList price_list = 7;
-	Warehouse warehouse = 8;
-	google.protobuf.Struct total_lines = 9;
-	google.protobuf.Struct grand_total = 10;
-	google.protobuf.Struct tax_amount = 12;
-	google.protobuf.Struct discount_amount = 13;
-	string date_ordered = 14;
-	Customer customer = 15;
-	bool is_delivered = 16;
-	string order_reference = 17;
-	string description = 18;
-	Campaign campaign = 19;
-	google.protobuf.Struct display_currency_rate = 20;
-	google.protobuf.Struct open_amount = 21;
-	google.protobuf.Struct payment_amount = 22;
-	google.protobuf.Struct refund_amount = 23;
-	google.protobuf.Struct charge_amount = 24;
-	google.protobuf.Struct credit_amount = 25;
-	int32 source_rma_id = 26;
-	bool is_rma = 27;
-	bool is_binding_offer = 28;
-	bool is_order = 29;
+	int32 id = 1;
+	string document_no = 2;
+	DocumentType document_type = 3;
+	SalesRepresentative sales_representative = 4;
+	DocumentStatus document_status = 5;
+	PriceList price_list = 6;
+	Warehouse warehouse = 7;
+	google.protobuf.Value total_lines = 8;
+	google.protobuf.Value grand_total = 9;
+	google.protobuf.Value tax_amount = 10;
+	google.protobuf.Value discount_amount = 11;
+	google.protobuf.Timestamp date_ordered = 12;
+	Customer customer = 13;
+	bool is_delivered = 14;
+	string order_reference = 15;
+	string description = 16;
+	Campaign campaign = 17;
+	google.protobuf.Value display_currency_rate = 18;
+	google.protobuf.Value open_amount = 19;
+	google.protobuf.Value payment_amount = 20;
+	google.protobuf.Value refund_amount = 21;
+	google.protobuf.Value charge_amount = 22;
+	google.protobuf.Value credit_amount = 23;
+	int32 source_rma_id = 24;
+	bool is_rma = 25;
+	bool is_binding_offer = 26;
+	bool is_order = 27;
 }
 
 // Sales Order Line
 message OrderLine {
-	string uuid = 1;
-	string order_uuid = 2;
+	int32 id = 1;
+	int32 order_id = 2;
 	Product product = 3;
 	Charge charge = 4;
 	string line_description = 5;
 	string description = 6;
 	Warehouse warehouse = 7;
-	google.protobuf.Struct quantity = 8;
-	google.protobuf.Struct quantity_ordered = 9;
-	google.protobuf.Struct available_quantity = 10;
-	google.protobuf.Struct price = 11;
-	google.protobuf.Struct price_with_tax = 12;
-	google.protobuf.Struct price_base = 13;
-	google.protobuf.Struct price_base_with_tax = 14;
-	google.protobuf.Struct price_list = 15;
-	google.protobuf.Struct price_list_with_tax = 16;
-	google.protobuf.Struct discount_rate = 17;
-	google.protobuf.Struct discount_amount = 18;
-	google.protobuf.Struct tax_amount = 19;
-	google.protobuf.Struct base_tax_amount = 20;
-	google.protobuf.Struct list_tax_amount = 21;
+	google.protobuf.Value quantity = 8;
+	google.protobuf.Value quantity_ordered = 9;
+	google.protobuf.Value available_quantity = 10;
+	google.protobuf.Value price = 11;
+	google.protobuf.Value price_with_tax = 12;
+	google.protobuf.Value price_base = 13;
+	google.protobuf.Value price_base_with_tax = 14;
+	google.protobuf.Value price_list = 15;
+	google.protobuf.Value price_list_with_tax = 16;
+	google.protobuf.Value discount_rate = 17;
+	google.protobuf.Value discount_amount = 18;
+	google.protobuf.Value tax_amount = 19;
+	google.protobuf.Value base_tax_amount = 20;
+	google.protobuf.Value list_tax_amount = 21;
 	TaxRate tax_rate = 22;
 	//	Totals
-	google.protobuf.Struct total_discount_amount = 23;
-	google.protobuf.Struct total_tax_amount = 24;
-	google.protobuf.Struct total_base_amount = 25;
-	google.protobuf.Struct total_base_amount_with_tax = 26;
-	google.protobuf.Struct total_amount = 27;
-	google.protobuf.Struct total_amount_with_tax = 28;
+	google.protobuf.Value total_discount_amount = 23;
+	google.protobuf.Value total_tax_amount = 24;
+	google.protobuf.Value total_base_amount = 25;
+	google.protobuf.Value total_base_amount_with_tax = 26;
+	google.protobuf.Value total_amount = 27;
+	google.protobuf.Value total_amount_with_tax = 28;
 	int32 line = 29;
 	ProductConversion uom = 30;
 	ProductConversion product_uom = 31;
 	time_control.ResourceAssignment resource_assignment = 32;
-	int32 id = 33;
-	int32 source_rma_line_id = 34;
+	int32 source_rma_line_id = 33;
 }
 
 // Request Product Price
 message GetProductPriceRequest {
-	string search_value = 2;
-	string upc = 3;
-	string value = 4;
-	string name = 5;
-	string business_partner_uuid = 6;
-	string valid_from = 7;
-	string pos_uuid = 8;
-	string price_list_uuid = 9;
-	string warehouse_uuid = 10;
+	string search_value = 1;
+	string upc = 2;
+	string value = 3;
+	string name = 4;
+	int32 business_partner_id = 5;
+	string valid_from = 6;
+	int32 pos_id = 7;
+	int32 price_list_id = 8;
+	int32 warehouse_id = 9;
 }
 
 // Layout for POS
 message KeyLayout {
-	string uuid = 1;
-	int32 id = 2;
-	string name = 3;
-	string description = 4;
-	string help = 5;
-	string layout_type = 6;
-	int32 columns = 7;
-	string color = 8;
-	repeated Key keys = 9;
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+	string help = 4;
+	string layout_type = 5;
+	int32 columns = 6;
+	string color = 7;
+	repeated Key keys = 8;
 }
 
 // Key for layout
 message Key {
-	string uuid = 1;
-	int32 id = 2;
-	string name = 3;
-	string description = 4;
-	string sub_key_layout_uuid = 5;
-	string color = 6;
-	int32 sequence = 7;
-	int32 span_x = 8;
-	int32 span_y = 9;
-	string product_value = 10;
-	google.protobuf.Struct quantity = 11;
-	file_management.ResourceReference resource_reference = 12;
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+	int32 sub_key_layout_id = 4;
+	string color = 5;
+	int32 sequence = 6;
+	int32 span_x = 7;
+	int32 span_y = 8;
+	string product_value = 9;
+	google.protobuf.Value quantity = 10;
+	file_management.ResourceReference resource_reference = 11;
 }
 
 //	Stock
@@ -1459,21 +1508,25 @@ message Stock {
 	bool is_enable_quantity_increments = 19;
 	bool is_use_config_manage_stock = 20;
 	bool is_manage_stock = 21;
-	string low_stock_date = 22;
+	google.protobuf.Timestamp low_stock_date = 22;
 	bool is_decimal_divided = 23;
 	double stock_status_changed_auto = 24;
 	int32 warehouse_id = 25;
-	string warehouse_uuid = 26;
-	string warehouse_name = 27;
-	string attribute_name = 28;
+	string warehouse_name = 26;
+	string attribute_name = 27;
 }
 
 message ListStocksRequest {
-	string sku = 2;
-	string value = 3;
-	int32 page_size = 4;
-	string page_token = 5;
-	string pos_uuid = 6;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	string sku = 9;
+	string value = 10;
 }
 
 //	List of Stock
@@ -1485,9 +1538,14 @@ message ListStocksResponse {
 
 //	List Cash Register for POS
 message ListAvailableCashRequest {
-	string pos_uuid = 2;
-	int32 page_size = 3;
-	string page_token = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 //	List Available Warehouses
@@ -1499,41 +1557,41 @@ message ListAvailableCashResponse {
 
 // Available Warehouse
 message AvailableCash {
-	int32 id = 2;
-	string uuid = 3;
-	string key = 4;
-	string name = 5;
-	bool is_pos_required_pin = 6;
-	BankAccount bank_account = 7;
+	int32 id = 1;
+	string key = 2;
+	string name = 3;
+	bool is_pos_required_pin = 4;
+	BankAccount bank_account = 5;
 }
 
 // Mnemonic Commands
 message CommandShortcut {
 	int32 id = 1;
-	string uuid = 2;
-	int32 pos_id = 3;
-	string pos_uuid = 4;
-	string command = 5;
-	string shortcut = 6;
+	int32 pos_id = 2;
+	string command = 3;
+	string shortcut = 4;
 }
 
 message SaveCommandShortcutRequest {
-	string pos_uuid = 1;
+	int32 pos_id = 1;
 	string command = 2;
 	string shortcut = 3;
 }
 
 message DeleteCommandShortcutRequest {
-	string pos_uuid = 1;
+	int32 pos_id = 1;
 	int32 id = 2;
-	string uuid = 3;
 }
 
 message ListCommandShortcutsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	string search_value = 3;
-	string pos_uuid = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 message ListCommandShortcutsResponse {
@@ -1546,19 +1604,21 @@ message ListCommandShortcutsResponse {
 // Campaign
 message Campaign {
 	int32 id = 1;
-	string uuid = 2;
-	string name = 3;
-	string description = 4;
-	int64 start_date = 5;
-	int64 end_date = 6;
+	string name = 2;
+	string description = 3;
+	google.protobuf.Timestamp start_date = 4;
+	google.protobuf.Timestamp end_date = 5;
 }
 
 message ListCampaignsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	string pos_uuid = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
 }
 
 message ListCampaignsResponse {
@@ -1607,7 +1667,7 @@ message DeleteRMALineRequest {
 message UpdateRMALineRequest {
 	int32 rma_line_id = 1;
 	string description = 2;
-	google.protobuf.Struct quantity = 3;
+	google.protobuf.Value quantity = 3;
 	int32 pos_id = 4;
 }
 
@@ -1616,16 +1676,21 @@ message CreateRMALineRequest {
 	int32 rma_id = 1;
 	int32 source_order_line_id = 2;
 	string description = 3;
-	google.protobuf.Struct quantity = 4;	
+	google.protobuf.Value quantity = 4;	
 	int32 pos_id = 5;
 }
 
 //	List Return Lines Request
 message ListRMALinesRequest {
-	int32 rma_id = 1;
-	int32 page_size = 2;
-	string page_token = 3;
-	int32 pos_id = 4;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 rma_id = 9;
 }
 
 //	List RMA Lines
@@ -1659,60 +1724,59 @@ message RMA {
 	DocumentStatus document_status = 5;
 	PriceList price_list = 6;
 	Warehouse warehouse = 7;
-	google.protobuf.Struct total_lines = 8;
-	google.protobuf.Struct grand_total = 9;
-	google.protobuf.Struct tax_amount = 10;
-	google.protobuf.Struct discount_amount = 11;
-	string date_ordered = 12;
+	google.protobuf.Value total_lines = 8;
+	google.protobuf.Value grand_total = 9;
+	google.protobuf.Value tax_amount = 10;
+	google.protobuf.Value discount_amount = 11;
+	google.protobuf.Timestamp date_ordered = 12;
 	Customer customer = 13;
 	bool is_delivered = 14;
 	string order_reference = 15;
 	string description = 16;
 	Campaign campaign = 17;
-	google.protobuf.Struct display_currency_rate = 18;
-	google.protobuf.Struct open_amount = 19;
-	google.protobuf.Struct payment_amount = 20;
-	google.protobuf.Struct refund_amount = 21;
-	google.protobuf.Struct charge_amount = 22;
-	google.protobuf.Struct credit_amount = 23;
+	google.protobuf.Value display_currency_rate = 18;
+	google.protobuf.Value open_amount = 19;
+	google.protobuf.Value payment_amount = 20;
+	google.protobuf.Value refund_amount = 21;
+	google.protobuf.Value charge_amount = 22;
+	google.protobuf.Value credit_amount = 23;
 	int32 source_order_id = 24;
 }
 
 // Return Order Line
 message RMALine {
 	int32 id = 1;
-	string uuid = 2;
-	Product product = 3;
-	Charge charge = 4;
-	string line_description = 5;
-	string description = 6;
-	Warehouse warehouse = 7;
-	google.protobuf.Struct quantity = 8;
-	google.protobuf.Struct quantity_ordered = 9;
-	google.protobuf.Struct available_quantity = 10;
-	google.protobuf.Struct price = 11;
-	google.protobuf.Struct price_with_tax = 12;
-	google.protobuf.Struct price_base = 13;
-	google.protobuf.Struct price_base_with_tax = 14;
-	google.protobuf.Struct price_list = 15;
-	google.protobuf.Struct price_list_with_tax = 16;
-	google.protobuf.Struct discount_rate = 17;
-	google.protobuf.Struct discount_amount = 18;
-	google.protobuf.Struct tax_amount = 19;
-	google.protobuf.Struct base_tax_amount = 20;
-	google.protobuf.Struct list_tax_amount = 21;
-	TaxRate tax_rate = 22;
+	Product product = 2;
+	Charge charge = 3;
+	string line_description = 4;
+	string description = 5;
+	Warehouse warehouse = 6;
+	google.protobuf.Value quantity = 7;
+	google.protobuf.Value quantity_ordered = 8;
+	google.protobuf.Value available_quantity = 9;
+	google.protobuf.Value price = 10;
+	google.protobuf.Value price_with_tax = 11;
+	google.protobuf.Value price_base = 12;
+	google.protobuf.Value price_base_with_tax = 13;
+	google.protobuf.Value price_list = 14;
+	google.protobuf.Value price_list_with_tax = 15;
+	google.protobuf.Value discount_rate = 16;
+	google.protobuf.Value discount_amount = 17;
+	google.protobuf.Value tax_amount = 18;
+	google.protobuf.Value base_tax_amount = 19;
+	google.protobuf.Value list_tax_amount = 20;
+	TaxRate tax_rate = 21;
 	//	Totals
-	google.protobuf.Struct total_discount_amount = 23;
-	google.protobuf.Struct total_tax_amount = 24;
-	google.protobuf.Struct total_base_amount = 25;
-	google.protobuf.Struct total_base_amount_with_tax = 26;
-	google.protobuf.Struct total_amount = 27;
-	google.protobuf.Struct total_amount_with_tax = 28;
-	int32 line = 29;
-	ProductConversion uom = 30;
-	ProductConversion product_uom = 31;
-	int32 source_order_line_id = 32;
+	google.protobuf.Value total_discount_amount = 22;
+	google.protobuf.Value total_tax_amount = 23;
+	google.protobuf.Value total_base_amount = 24;
+	google.protobuf.Value total_base_amount_with_tax = 25;
+	google.protobuf.Value total_amount = 26;
+	google.protobuf.Value total_amount_with_tax = 27;
+	int32 line = 28;
+	ProductConversion uom = 29;
+	ProductConversion product_uom = 30;
+	int32 source_order_line_id = 31;
 }
 
 // Customer Credit Memo
@@ -1720,19 +1784,22 @@ message CreditMemo {
 	int32 id = 1;
 	string document_no = 2;
 	string description = 3;
-	string document_date = 4;
-	google.protobuf.Struct amount = 5;
-	google.protobuf.Struct open_amount = 6;
+	google.protobuf.Timestamp document_date = 4;
+	google.protobuf.Value amount = 5;
+	google.protobuf.Value open_amount = 6;
 	Currency currency = 7;
 }
 
 message ListCustomerCreditsRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-	// filters
-	string search_value = 3;
-	int32 pos_id = 4;
-	int32 customer_id = 5;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 customer_id = 9;
 }
 
 message ListCustomerCreditsResponse {

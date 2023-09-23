@@ -21,6 +21,7 @@ option java_outer_classname = "ADempiereWMS";
 import "core_functionality.proto";
 import "base_data_type.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 package wms;
 
@@ -38,43 +39,47 @@ service WarehouseManagement {
 
 //	OutBound Order request to create
 message CreateOutBoundOrderRequest {
-	string document_type_uuid = 2;
-	string warehouse_uuid = 3;
-	string sales_representative_uuid = 4;
+	int32 document_type_id = 1;
+	int32 warehouse_id = 2;
+	int32 sales_representative_id = 3;
 }
 
 //	OutBound Order
 message OutBoundOrder {
-	string uuid = 1;
-	int32 id = 2;
-	string document_no = 3;
-	data.DocumentType document_type = 4;
-	data.SalesRepresentative sales_representative = 5;
-	data.DocumentStatus document_status = 6;
-	string date_ordered = 7;
+	int32 id = 1;
+	string document_no = 2;
+	data.DocumentType document_type = 3;
+	data.SalesRepresentative sales_representative = 4;
+	data.DocumentStatus document_status = 5;
+	google.protobuf.Timestamp date_ordered = 6;
 }
 
 // Request for delete a outbound order
 message DeleteOutBoundOrderRequest {
-	string order_uuid = 2;
+	int32 order_id = 1;
 }
 
 // Request for get a outbound order
 message GetOutBoundOrderRequest {
-	string order_uuid = 2;
+	int32 order_id = 1;
 }
 
 // List OutBound Orders Request
 message ListOutBoundOrdersRequest {
-	string warehouse_uuid = 2;
-	string document_no = 3;
-	string order_reference_uuid = 4;
-	bool is_processed = 8;
-	string pick_date_from = 11;
-	string pick_date_to = 12;
-	string sales_representative_uuid = 13;
-	int32 page_size = 14;
-	string page_token = 15;
+	string filters = 1;
+	repeated string sort_columns = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 warehouse_id = 8;
+	string document_no = 9;
+	int32 order_reference_id = 10;
+	bool is_processed = 11;
+	google.protobuf.Timestamp pick_date_from = 12;
+	google.protobuf.Timestamp pick_date_to = 13;
+	int32 sales_representative_id = 14;
 }
 
 //	List OutBound Orders Response

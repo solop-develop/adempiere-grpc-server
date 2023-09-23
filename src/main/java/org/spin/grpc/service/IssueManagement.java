@@ -686,7 +686,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			ValueUtil.validateNull(request.getPriorityValue())
 		);
 		requestRecord.setDateNextAction(
-			ValueUtil.convertStringToDate(request.getDateNextAction())
+			ValueUtil.getDateFromTimestampDate(request.getDateNextAction())
 		);
 		
 		if (request.getStatusId() > 0) {

@@ -58,7 +58,6 @@ import org.compiere.util.Util;
 import org.eevolution.services.dsl.ProcessBuilder;
 import org.spin.backend.grpc.common.BusinessDataGrpc.BusinessDataImplBase;
 import org.spin.backend.grpc.common.CreateEntityRequest;
-import org.spin.backend.grpc.common.Criteria;
 import org.spin.backend.grpc.common.DeleteEntitiesBatchRequest;
 import org.spin.backend.grpc.common.DeleteEntityRequest;
 import org.spin.backend.grpc.common.Entity;
@@ -71,7 +70,6 @@ import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.common.UpdateEntityRequest;
-import org.spin.backend.grpc.common.Value;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.ParameterUtil;
@@ -87,6 +85,7 @@ import org.spin.base.workflow.WorkflowUtil;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -270,7 +269,7 @@ public class BusinessData extends BusinessDataImplBase {
 		}
 		PO entity = null;
 		Map<String, Value> parameters = new HashMap<String, Value>();
-		parameters.putAll(request.getParametersMap());
+		parameters.putAll(request.getParameters().getFieldsMap());
 		int recordId = request.getRecordId();
 		if (recordId > 0
 				&& !Util.isEmpty(request.getTableName(), true)) {
@@ -304,8 +303,8 @@ public class BusinessData extends BusinessDataImplBase {
 			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
 			for(KeyValueSelection selectionKey : request.getSelectionsList()) {
 				selectionKeys.add(selectionKey.getSelectionId());
-				if(selectionKey.getValuesCount() > 0) {
-					selection.put(selectionKey.getSelectionId(), new LinkedHashMap<>(ValueUtil.convertValuesMapToObjects(selectionKey.getValuesMap())));
+				if(selectionKey.getValues().getFieldsCount() > 0) {
+					selection.put(selectionKey.getSelectionId(), new LinkedHashMap<>(ValueUtil.convertValuesMapToObjects(selectionKey.getValues().getFieldsMap())));
 				}
 			}
 			builder.withSelectedRecordsIds(request.getTableSelectedId(), selectionKeys, selection);
@@ -313,7 +312,7 @@ public class BusinessData extends BusinessDataImplBase {
 		//	get document action
 		String documentAction = null;
 		//	Parameters
-		if(request.getParametersCount() > 0) {
+		if(request.getParameters().getFieldsCount() > 0) {
 			for(Entry<String, Value> parameter : parameters.entrySet().stream().filter(parameterValue -> !parameterValue.getKey().endsWith("_To")).collect(Collectors.toList())) {
 				Object value = ValueUtil.getObjectFromValue(parameter.getValue());
 				Optional<Entry<String, Value>> maybeToParameter = parameters.entrySet().stream().filter(parameterValue -> parameterValue.getKey().equals(parameter.getKey() + "_To")).findFirst();
@@ -337,7 +336,6 @@ public class BusinessData extends BusinessDataImplBase {
 			return WorkflowUtil.startWorkflow(
 				request.getTableName(),
 				entity.get_ID(),
-				entity.get_UUID(),
 				documentAction
 			);
 		}
@@ -573,7 +571,7 @@ public class BusinessData extends BusinessDataImplBase {
 		if(entity == null) {
 			throw new AdempiereException("@Error@ PO is null");
 		}
-		Map<String, Value> attributes = request.getAttributesMap();
+		Map<String, Value> attributes = request.getAttributes().getFieldsMap();
 		attributes.keySet().forEach(key -> {
 			Value attribute = attributes.get(key);
 			int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), key);
@@ -606,7 +604,7 @@ public class BusinessData extends BusinessDataImplBase {
 		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getId(), null);
 		if(entity != null
 				&& entity.get_ID() >= 0) {
-			Map<String, Value> attributes = request.getAttributesMap();
+			Map<String, Value> attributes = request.getAttributes().getFieldsMap();
 			attributes.keySet().forEach(key -> {
 				Value attribute = attributes.get(key);
 				int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), key);

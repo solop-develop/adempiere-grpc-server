@@ -23,15 +23,11 @@ import org.adempiere.core.domains.models.I_AD_WF_Process;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_CM_ChatEntry;
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.model.MBrowse;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
-import org.compiere.model.MChatType;
-import org.compiere.model.MForm;
 import org.compiere.model.MMenu;
 import org.compiere.model.MPInstance;
-import org.compiere.model.MProcess;
 import org.compiere.model.MRecentItem;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
@@ -68,7 +64,6 @@ import org.spin.backend.grpc.logs.RecentItem;
 import org.spin.backend.grpc.wf.WorkflowProcess;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.base.util.WorkflowUtil;
@@ -218,18 +213,15 @@ public class LogsInfo extends LogsImplBase {
 				throw new AdempiereException("@AD_Table_ID@ @Invalid@");
 			}
 			int id = request.getId();
-			if(id <= 0) {
-				id = RecordUtil.getIdFromUuid(table.getTableName(), request.getUuid(), null);
-			}
 			parameters.add(id);
 			parameters.add(table.getAD_Table_ID());
 			sql = "Record_ID = ? AND EXISTS(SELECT 1 FROM AD_Process WHERE AD_Table_ID = ? AND AD_Process_ID = AD_PInstance.AD_Process_ID)";
-		} if(!Util.isEmpty(request.getUserUuid())) {
-			parameters.add(request.getUserUuid());
-			sql = "EXISTS(SELECT 1 FROM AD_User WHERE UUID = ? AND AD_User_ID = AD_PInstance.AD_User_ID)";
-		} else if(!Util.isEmpty(request.getInstanceUuid())) {
-			parameters.add(request.getInstanceUuid());
-			sql = "UUID = ?";
+		} if(request.getUserId() > 0) {
+			parameters.add(request.getUserId());
+			sql = "AD_User_ID = ?";
+		} else if(request.getInstanceId() > 0) {
+			parameters.add(request.getInstanceId());
+			sql = "AD_PInstance_ID = ?";
 		} else {
 			parameters.add(SessionManager.getSessionUuid());
 			sql = "EXISTS(SELECT 1 FROM AD_Session WHERE UUID = ? AND AD_Session_ID = AD_PInstance.AD_Session_ID)";
@@ -273,9 +265,6 @@ public class LogsInfo extends LogsImplBase {
 			.append(I_AD_WF_Process.COLUMNNAME_Record_ID).append(" = ?");
 		//	Set parameters
 		int id = request.getId();
-		if(id <= 0) {
-			id = RecordUtil.getIdFromUuid(table.getTableName(), request.getUuid(), null);
-		}
 		parameters.add(table.getAD_Table_ID());
 		parameters.add(id);
 		//	Get page and count
@@ -329,9 +318,6 @@ public class LogsInfo extends LogsImplBase {
 				.append(I_AD_ChangeLog.COLUMNNAME_Record_ID).append(" = ?");
 			//	Set parameters
 			int id = request.getId();
-			if(id <= 0) {
-				id = RecordUtil.getIdFromUuid(table.getTableName(), request.getUuid(), null);
-			}
 			parameters.add(table.getAD_Table_ID());
 			parameters.add(id);
 		} else {
@@ -380,10 +366,10 @@ public class LogsInfo extends LogsImplBase {
 							.setDisplayName(ValueUtil.validateNull(recentItem.getLabel()));
 					String menuName = "";
 					String menuDescription = "";
-					String referenceUuid = null;
+					int referenceId = 0;
 					if(recentItem.getAD_Tab_ID() > 0) {
 						MTab tab = MTab.get(Env.getCtx(), recentItem.getAD_Tab_ID());
-						recentItemBuilder.setTabUuid(ValueUtil.validateNull(tab.getUUID()));
+						recentItemBuilder.setTabId(tab.getAD_Tab_ID());
 						menuName = tab.getName();
 						menuDescription = tab.getDescription();
 						if(!Env.isBaseLanguage(Env.getCtx(), "")) {
@@ -395,10 +381,10 @@ public class LogsInfo extends LogsImplBase {
 					}
 					if(recentItem.getAD_Window_ID() > 0) {
 						MWindow window = MWindow.get(Env.getCtx(), recentItem.getAD_Window_ID());
-						recentItemBuilder.setWindowUuid(ValueUtil.validateNull(window.getUUID()));
+						recentItemBuilder.setWindowId(window.getAD_Window_ID());
 						menuName = window.getName();
 						menuDescription = window.getDescription();
-						referenceUuid = window.getUUID();
+						referenceId = window.getAD_Window_ID();
 						if(!Env.isBaseLanguage(Env.getCtx(), "")) {
 							menuName = window.get_Translation("Name");
 							menuDescription = window.get_Translation("Description");
@@ -408,7 +394,7 @@ public class LogsInfo extends LogsImplBase {
 					}
 					if(recentItem.getAD_Menu_ID() > 0) {
 						MMenu menu = MMenu.getFromId(Env.getCtx(), recentItem.getAD_Menu_ID());
-						recentItemBuilder.setMenuUuid(ValueUtil.validateNull(menu.getUUID()));
+						recentItemBuilder.setMenuId(menu.getAD_Menu_ID());
 						menuName = menu.getName();
 						menuDescription = menu.getDescription();
 						if(!Env.isBaseLanguage(Env.getCtx(), "")) {
@@ -421,24 +407,20 @@ public class LogsInfo extends LogsImplBase {
 						if(!Util.isEmpty(menu.getAction())) {
 							if(menu.getAction().equals(MMenu.ACTION_Form)) {
 								if(menu.getAD_Form_ID() > 0) {
-									MForm form = new MForm(Env.getCtx(), menu.getAD_Form_ID(), null);
-									referenceUuid = form.getUUID();
+									referenceId = menu.getAD_Form_ID();
 								}
 							} else if(menu.getAction().equals(MMenu.ACTION_Window)) {
 								if(menu.getAD_Window_ID() > 0) {
-									MWindow window = new MWindow(Env.getCtx(), menu.getAD_Window_ID(), null);
-									referenceUuid = window.getUUID();
+									referenceId = menu.getAD_Window_ID();
 								}
 							} else if(menu.getAction().equals(MMenu.ACTION_Process)
 								|| menu.getAction().equals(MMenu.ACTION_Report)) {
 								if(menu.getAD_Process_ID() > 0) {
-									MProcess process = MProcess.get(Env.getCtx(), menu.getAD_Process_ID());
-									referenceUuid = process.getUUID();
+									referenceId = menu.getAD_Process_ID();
 								}
 							} else if(menu.getAction().equals(MMenu.ACTION_SmartBrowse)) {
 								if(menu.getAD_Browse_ID() > 0) {
-									MBrowse smartBrowser = MBrowse.get(Env.getCtx(), menu.getAD_Browse_ID());
-									referenceUuid = smartBrowser.getUUID();
+									referenceId = menu.getAD_Browse_ID();
 								}
 							}
 						}
@@ -446,8 +428,8 @@ public class LogsInfo extends LogsImplBase {
 					//	Add time
 					recentItemBuilder.setMenuName(ValueUtil.validateNull(menuName));
 					recentItemBuilder.setMenuDescription(ValueUtil.validateNull(menuDescription));
-					recentItemBuilder.setUpdated(recentItem.getUpdated().getTime());
-					recentItemBuilder.setReferenceUuid(ValueUtil.validateNull(referenceUuid));
+					recentItemBuilder.setUpdated(ValueUtil.getTimestampFromDate(recentItem.getUpdated()));
+					recentItemBuilder.setReferenceId(referenceId);
 					//	For uuid
 					if(recentItem.getAD_Table_ID() != 0
 							&& recentItem.getRecord_ID() != 0) {
@@ -455,7 +437,6 @@ public class LogsInfo extends LogsImplBase {
 						if(table != null
 								&& table.getAD_Table_ID() != 0) {
 							recentItemBuilder.setId(recentItem.getRecord_ID())
-								.setUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(table.getTableName(), recentItem.getRecord_ID())))
 								.setTableName(ValueUtil.validateNull(table.getTableName()))
 								.setTableId(recentItem.getAD_Table_ID());
 						}
@@ -478,8 +459,7 @@ public class LogsInfo extends LogsImplBase {
 	 * @return
 	 */
 	private ListChatEntriesResponse.Builder convertChatEntries(ListChatEntriesRequest request) {
-		if(request.getId() <= 0
-				&& Util.isEmpty(request.getUuid())) {
+		if(request.getId() <= 0) {
 			throw new AdempiereException("@CM_Chat_ID@ @NotFound@");
 		}
 		//	Get page and count
@@ -489,9 +469,6 @@ public class LogsInfo extends LogsImplBase {
 		int offset = (pageNumber - 1) * limit;
 
 		int id = request.getId();
-		if(id <= 0) {
-			id = RecordUtil.getIdFromUuid(I_CM_Chat.Table_Name, request.getUuid(), null);
-		}
 		Query query = new Query(Env.getCtx(), I_CM_ChatEntry.Table_Name, I_CM_ChatEntry.COLUMNNAME_CM_Chat_ID + " = ?", null)
 				.setParameters(id);
 		int count = query.count();
@@ -540,9 +517,6 @@ public class LogsInfo extends LogsImplBase {
 			.append(I_CM_Chat.COLUMNNAME_Record_ID).append(" = ?");
 		//	Set parameters
 		int id = request.getId();
-		if(id <= 0) {
-			id = RecordUtil.getIdFromUuid(table.getTableName(), request.getUuid(), null);
-		}
 		parameters.add(table.getAD_Table_ID());
 		parameters.add(id);
 		//	Get page and count
@@ -584,21 +558,18 @@ public class LogsInfo extends LogsImplBase {
 	private EntityChat.Builder convertRecordChat(MChat recordChat) {
 		MTable table = MTable.get(recordChat.getCtx(), recordChat.getAD_Table_ID());
 		EntityChat.Builder builder = EntityChat.newBuilder();
-		builder.setChatUuid(ValueUtil.validateNull(recordChat.getUUID()));
+		builder.setChatId(recordChat.getCM_Chat_ID());
 		builder.setTableName(ValueUtil.validateNull(table.getTableName()));
 		if(recordChat.getCM_ChatType_ID() != 0) {
-			MChatType chatType = MChatType.get(recordChat.getCtx(), recordChat.getCM_Chat_ID());
-			builder.setChatTypeUuid(ValueUtil.validateNull(chatType.getUUID()));
+			builder.setChatTypeId(recordChat.getCM_Chat_ID());
 		}
 		builder.setId(recordChat.getRecord_ID());
-		builder.setUuid(ValueUtil.validateNull(RecordUtil.getUuidFromId(table.getTableName(), recordChat.getRecord_ID())));
 		builder.setDescription(ValueUtil.validateNull(recordChat.getDescription()));
-		builder.setLogDate(recordChat.getCreated().getTime());
+		builder.setLogDate(ValueUtil.getTimestampFromDate(recordChat.getCreated()));
 
 		if (recordChat.getCreatedBy() > 0) {
 			MUser user = MUser.get(recordChat.getCtx(), recordChat.getCreatedBy());
 			builder.setUserId(recordChat.getCreatedBy());
-			builder.setUserUuid(ValueUtil.validateNull(user.getUUID()));
 			builder.setUserName(ValueUtil.validateNull(user.getName()));
 		}
 
@@ -657,13 +628,9 @@ public class LogsInfo extends LogsImplBase {
 
 		// validate record
 		int recordId = request.getRecordId();
-		if (recordId <= 0 && !Util.isEmpty(request.getRecordUuid(), true)) {
-			recordId = RecordUtil.getIdFromUuid(table.getTableName(), request.getRecordUuid(), null);
-			if (recordId < 0) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-			}
+		if (recordId < 0) {
+			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
-
 		final String whereClause = "EXISTS("
 			+ "SELECT 1 FROM CM_Chat "
 			+ "WHERE CM_Chat.CM_Chat_Id = CM_ChatEntry.CM_Chat_Id "

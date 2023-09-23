@@ -55,11 +55,6 @@ public class POSConvertUtil {
 			return builder;
 		}
 		builder.setId(bank.getC_Bank_ID())
-			.setUuid(
-				ValueUtil.validateNull(
-					bank.getUUID()
-				)
-			)
 			.setName(
 				ValueUtil.validateNull(
 					bank.getName()
@@ -101,11 +96,6 @@ public class POSConvertUtil {
 			return builder;
 		}
 		builder.setId(campaign.getC_Campaign_ID())
-			.setUuid(
-				ValueUtil.validateNull(
-					campaign.getUUID()
-				)
-			)
 			.setName(
 				ValueUtil.validateNull(
 					campaign.getName()
@@ -117,12 +107,12 @@ public class POSConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueUtil.getLongFromTimestamp(
+				ValueUtil.getTimestampFromDate(
 					campaign.getStartDate()
 				)
 			)
 			.setEndDate(
-				ValueUtil.getLongFromTimestamp(
+				ValueUtil.getTimestampFromDate(
 					campaign.getEndDate()
 				)
 			)
@@ -137,9 +127,6 @@ public class POSConvertUtil {
 			return builder;
 		}
 		builder.setId(commandShortcut.get_ID())
-			.setUuid(
-				ValueUtil.validateNull(commandShortcut.get_UUID())
-			)
 			.setPosId(
 				commandShortcut.get_ValueAsInt(I_C_POS.COLUMNNAME_C_POS_ID)
 			)
@@ -198,8 +185,7 @@ public class POSConvertUtil {
 
 		//	Convert
 		return builder
-			.setUuid(ValueUtil.validateNull(shipmentLine.getUUID()))
-			.setOrderLineUuid(ValueUtil.validateNull(orderLine.getUUID()))
+			.setOrderLineId(orderLine.getC_OrderLine_ID())
 			.setId(shipmentLine.getM_InOutLine_ID())
 			.setLine(shipmentLine.getLine())
 			.setDescription(ValueUtil.validateNull(shipmentLine.getDescription()))

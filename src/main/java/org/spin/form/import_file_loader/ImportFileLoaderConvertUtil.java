@@ -43,9 +43,6 @@ public class ImportFileLoaderConvertUtil {
 		}
 
 		builder.setId(table.getAD_Table_ID())
-			.setUuid(
-				ValueUtil.validateNull(table.getUUID())
-			)
 			.setName(
 				ValueUtil.validateNull(name)
 			)
@@ -61,9 +58,6 @@ public class ImportFileLoaderConvertUtil {
 
 			ImportColumn.Builder columnBuilder = ImportColumn.newBuilder()
 				.setId(column.getAD_Column_ID())
-				.setUuid(
-					ValueUtil.validateNull(column.getUUID())
-				)
 				.setName(
 					ValueUtil.validateNull(nameOfColumn)
 				)
@@ -87,9 +81,6 @@ public class ImportFileLoaderConvertUtil {
 		}
 
 		builder.setId(importFormat.getAD_ImpFormat_ID())
-			.setUuid(
-				ValueUtil.validateNull(importFormat.getUUID())
-			)
 			.setName(
 				ValueUtil.validateNull(importFormat.getName())
 			)
@@ -124,9 +115,6 @@ public class ImportFileLoaderConvertUtil {
 		}
 
 		builder.setId(importFormatRow.getAD_ImpFormat_Row_ID())
-			.setUuid(
-				ValueUtil.validateNull(importFormatRow.getUUID())
-			)
 			.setName(
 				ValueUtil.validateNull(importFormatRow.getName())
 			)

@@ -20,6 +20,7 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,7 @@ import org.compiere.util.Util;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
+import static com.google.protobuf.util.Timestamps.fromMillis;
 
 /**
  * Class for handle Values from and to client
@@ -158,13 +160,21 @@ public class ValueUtil {
 		return Value.newBuilder().setStructValue(date);
 	}
 	
+	public static com.google.protobuf.Timestamp getTimestampFromDate(Timestamp value) {
+		if (value == null) {
+			return null;
+		}
+		return fromMillis(value.getTime());
+	}
+	
+	
 	/**
 	 * Get value from big decimal
 	 * @param value
 	 * @return
 	 */
 	public static Value.Builder getValueFromDecimal(BigDecimal value) {
-		return Value.newBuilder().setStructValue(getDecimalFromBigDecimal(value));
+		return getDecimalFromBigDecimal(value);
 	}
 	
 	/**
@@ -172,24 +182,18 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static Struct.Builder getDecimalFromBigDecimal(BigDecimal value) {
+	public static Value.Builder getDecimalFromBigDecimal(BigDecimal value) {
 		if (value == null) {
-			return Struct.newBuilder();
+			return Value.newBuilder();
 		}
 		Struct.Builder decimalValue = Struct.newBuilder();
 		decimalValue.putFields(TYPE_KEY, Value.newBuilder().setStringValue(TYPE_DECIMAL).build());
 		decimalValue.putFields(VALUE_KEY, Value.newBuilder().setStringValue(value.toPlainString()).build());
-		return decimalValue;
+		return Value.newBuilder().setStructValue(decimalValue);
 	}
-
-	/**
-	 * Get Decimal from Value
-	 * @param decimalValue
-	 * @return
-	 */
-	public static BigDecimal getDecimalFromValue(org.spin.backend.grpc.common.Value decimalValue) {
-		// Value.Decimal.DecimalValue
-		return getBigDecimalFromDecimal(decimalValue.getDecimalValue());
+	
+	public static BigDecimal getBigDecimalFromDecimal(Value decimalValue) {
+		return getDecimalFromValue(decimalValue);
 	}
 	
 	/**
@@ -197,8 +201,13 @@ public class ValueUtil {
 	 * @param decimalValue
 	 * @return
 	 */
-	public static BigDecimal getBigDecimalFromDecimal(Struct decimalValue) {
-		Map<String, Value> values = decimalValue.getFieldsMap();
+	public static BigDecimal getDecimalFromValue(Value decimalValue) {
+		if(decimalValue == null
+				|| decimalValue.hasNullValue()
+				|| !decimalValue.hasStringValue()) {
+			return null;
+		}
+		Map<String, Value> values = decimalValue.getStructValue().getFieldsMap();
 		if(values == null) {
 			return null;
 		}
@@ -218,15 +227,47 @@ public class ValueUtil {
 	}
 	
 	/**
+	 * Get Date from value
+	 * @param dateValue
+	 * @return
+	 */
+	public static Timestamp getDateFromTimestampDate(com.google.protobuf.Timestamp dateValue) {
+		if(dateValue == null) {
+			return null;
+		}
+		Instant epochDate = Instant.ofEpochSecond(dateValue.getSeconds(), dateValue.getNanos());
+		return new Timestamp(Date.from(epochDate).getTime());
+	}
+	
+	/**
 	 * Get Date from a value
 	 * @param value
 	 * @return
 	 */
-	public static Timestamp getDateFromValue(org.spin.backend.grpc.common.Value value) {
-		if(value.getLongValue() > 0) {
-			return new Timestamp(value.getLongValue());
+	public static Timestamp getDateFromValue(Value dateValue) {
+		if(dateValue == null
+				|| dateValue.hasNullValue()
+				|| !dateValue.hasStringValue()) {
+			return null;
 		}
-		return null;
+		Map<String, Value> values = dateValue.getStructValue().getFieldsMap();
+		if(values == null) {
+			return null;
+		}
+		Value type = values.get(TYPE_KEY);
+		Value value = values.get(VALUE_KEY);
+		if(type == null
+				|| value == null) {
+			return null;
+		}
+		String validType = Optional.ofNullable(type.getStringValue()).orElse("");
+		String validValue = Optional.ofNullable(value.getStringValue()).orElse("");
+		if((!validType.equals(TYPE_DATE)
+				&& !validType.equals(TYPE_DATE_TIME))
+				|| validValue.length() == 0) {
+			return null;
+		}
+		return convertStringToDate(validValue);
 	}
 	
 	/**
@@ -235,7 +276,7 @@ public class ValueUtil {
 	 * @param uppercase
 	 * @return
 	 */
-	public static String getStringFromValue(org.spin.backend.grpc.common.Value value, boolean uppercase) {
+	public static String getStringFromValue(Value value, boolean uppercase) {
 		String stringValue = value.getStringValue();
 		if(Util.isEmpty(stringValue, true)) {
 			return null;
@@ -252,7 +293,7 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static String getStringFromValue(org.spin.backend.grpc.common.Value value) {
+	public static String getStringFromValue(Value value) {
 		return getStringFromValue(value, false);
 	}
 	
@@ -261,8 +302,8 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static int getIntegerFromValue(org.spin.backend.grpc.common.Value value) {
-		return value.getIntValue();
+	public static int getIntegerFromValue(Value value) {
+		return (int) value.getNumberValue();
 	}
 	
 	/**
@@ -270,14 +311,14 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static boolean getBooleanFromValue(org.spin.backend.grpc.common.Value value) {
+	public static boolean getBooleanFromValue(Value value) {
 		if (!Util.isEmpty(value.getStringValue(), true)) {
 			return "Y".equals(value.getStringValue())
 				|| "Yes".equals(value.getStringValue())
 				|| "true".equals(value.getStringValue());
 		}
 
-		return value.getBooleanValue();
+		return value.getBoolValue();
 	}
 	
 	/**
@@ -415,7 +456,7 @@ public class ValueUtil {
 	 * @param values
 	 * @return
 	 */
-	public static Map<String, Object> convertValuesMapToObjects(Map<String, org.spin.backend.grpc.common.Value> values) {
+	public static Map<String, Object> convertValuesMapToObjects(Map<String, Value> values) {
 		Map<String, Object> convertedValues = new HashMap<>();
 		if (values == null || values.size() <= 0) {
 			return convertedValues;
@@ -432,7 +473,7 @@ public class ValueUtil {
 	 * @param valueToConvert
 	 * @return
 	 */
-	public static Object getObjectFromValue(org.spin.backend.grpc.common.Value valueToConvert) {
+	public static Object getObjectFromValue(Value valueToConvert) {
 		return getObjectFromValue(valueToConvert, false);
 	}
 	
@@ -441,26 +482,64 @@ public class ValueUtil {
 	 * @param value
 	 * @return
 	 */
-	public static Object getObjectFromValue(org.spin.backend.grpc.common.Value value, boolean uppercase) {
-		if(value == null) {
+	public static Object getObjectFromValue(Value value, boolean uppercase) {
+		if(value == null
+				|| value.hasNullValue()) {
 			return null;
 		}
-		if(Util.isEmpty(value.getDateValue())) {
-			return convertStringToDate(value.getDateValue());
-		}
-		if(Util.isEmpty(value.getStringValue())) {
+		if(value.hasStringValue()) {
 			return getStringFromValue(value, uppercase);
 		}
-		if(value.getDecimalValue() != null) {
-			return getDecimalFromValue(value);
+		if(value.hasNumberValue()) {
+			return (int) value.getNumberValue();
 		}
-		if(value.getLongValue() != 0) {
-			return value.getLongValue();
+		if(value.hasBoolValue()) {
+			return value.getBoolValue();
 		}
-		if(value.getIntValue() != 0) {
-			return value.getIntValue();
+		if(value.hasStructValue()) {
+			if(isDecimalValue(value)) {
+				return getDecimalFromValue(value);
+			} else if(isDateValue(value)) {
+				return getDateFromValue(value);
+			}
 		}
 		return null;
+	}
+	
+	/**
+	 * Validate if a value is date
+	 * @param value
+	 * @return
+	 */
+	public static boolean isDateValue(Value value) {
+		Map<String, Value> values = value.getStructValue().getFieldsMap();
+		if(values == null) {
+			return false;
+		}
+		Value type = values.get(TYPE_KEY);
+		if(type == null) {
+			return false;
+		}
+		String validType = Optional.ofNullable(type.getStringValue()).orElse("");
+		return validType.equals(TYPE_DATE) || validType.equals(TYPE_DATE_TIME);
+	}
+	
+	/**
+	 * Validate if is a decimal value
+	 * @param value
+	 * @return
+	 */
+	public static boolean isDecimalValue(Value value) {
+		Map<String, Value> values = value.getStructValue().getFieldsMap();
+		if(values == null) {
+			return false;
+		}
+		Value type = values.get(TYPE_KEY);
+		if(type == null) {
+			return false;
+		}
+		String validType = Optional.ofNullable(type.getStringValue()).orElse("");
+		return validType.equals(TYPE_DECIMAL);
 	}
 	
 	/**
@@ -469,7 +548,7 @@ public class ValueUtil {
 	 * @param referenceId
 	 * @return
 	 */
-	public static Object getObjectFromReference(org.spin.backend.grpc.common.Value value, int referenceId) {
+	public static Object getObjectFromReference(Value value, int referenceId) {
 		if(value == null) {
 			return null;
 		}

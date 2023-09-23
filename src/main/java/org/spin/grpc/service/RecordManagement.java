@@ -14,12 +14,13 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.record_management.RecordManagementGrpc.RecordManagementImplBase;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordRequest;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
 import org.spin.grpc.logic.RecordManagementServiceLogic;
-import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsRequest;
-import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsResponse;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -33,13 +34,27 @@ public class RecordManagement extends RecordManagementImplBase {
 
 
 	@Override
-	public void toggleIsActiveRecords(ToggleIsActiveRecordsRequest request, StreamObserver<ToggleIsActiveRecordsResponse> responseObserver) {
+	public void toggleIsActiveRecord(ToggleIsActiveRecordRequest request, StreamObserver<ToggleIsActiveRecordResponse> responseObserver) {
 		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ToggleIsActiveRecordsResponse.Builder builder = RecordManagementServiceLogic.toggleIsActiveRecords(request);
+			ToggleIsActiveRecordResponse.Builder builder = RecordManagementServiceLogic.toggleIsActiveRecord(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+	
+	@Override
+	public void toggleIsActiveRecordsBatch(ToggleIsActiveRecordsBatchRequest request,
+			StreamObserver<ToggleIsActiveRecordsBatchResponse> responseObserver) {
+		try {
+			ToggleIsActiveRecordsBatchResponse.Builder builder = RecordManagementServiceLogic.toggleIsActiveRecords(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

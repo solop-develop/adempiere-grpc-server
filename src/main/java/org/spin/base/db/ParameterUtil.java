@@ -26,7 +26,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
-import org.spin.backend.grpc.common.Value;
 import org.spin.base.util.ValueUtil;
 
 public class ParameterUtil {

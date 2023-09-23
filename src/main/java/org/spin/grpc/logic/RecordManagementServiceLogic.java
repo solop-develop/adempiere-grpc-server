@@ -24,8 +24,10 @@ import org.compiere.model.PO;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsRequest;
-import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsResponse;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordRequest;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
+import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ValueUtil;
 
@@ -52,22 +54,56 @@ public class RecordManagementServiceLogic {
 	}
 
 
-
-	public static ToggleIsActiveRecordsResponse.Builder toggleIsActiveRecords(ToggleIsActiveRecordsRequest request) {
+	public static ToggleIsActiveRecordsBatchResponse.Builder toggleIsActiveRecords(ToggleIsActiveRecordsBatchRequest request) {
 		StringBuilder errorMessage = new StringBuilder();
 		AtomicInteger recordsChanges = new AtomicInteger(0);
 
 		Trx.run(transactionName -> {
 			MTable table = validateAndGetTable(request.getTableName());
-
-			if (Util.isEmpty(request.getRecordUuid(), true) && !RecordUtil.isValidId(request.getRecordId(), table.getAccessLevel()) &&
-				(request.getRecordsIdsList() == null || request.getRecordsIdsList().size() == 0) &&
-				(request.getRecordsUuidsList() == null || request.getRecordsUuidsList().size() == 0)) {
-				throw new AdempiereException("@FillMandatory@ @Record_ID@ / @UUID@");
+			List<Integer> ids = request.getIdsList();
+			if (ids.size() > 0) {
+				ids.stream().forEach(id -> {
+					PO entity = table.getPO(id, transactionName);
+					if (entity != null && entity.get_ID() > 0) {
+						if (entity.get_ColumnIndex("Processed") >= 0 && entity.get_ValueAsBoolean("Processed")) {
+							return;
+						}
+						entity.setIsActive(request.getIsActive());
+						try {
+							entity.saveEx();
+							recordsChanges.incrementAndGet();
+						} catch (Exception e) {
+							e.printStackTrace();
+							errorMessage.append(e.getLocalizedMessage());
+						}
+					}
+				});
 			}
+		});
+		ToggleIsActiveRecordsBatchResponse.Builder builder = ToggleIsActiveRecordsBatchResponse.newBuilder()
+			.setMessage(
+				ValueUtil.validateNull(
+					errorMessage.toString()
+				)
+			)
+			.setTotalChanges(recordsChanges.get())
+		;
 
-			if (!Util.isEmpty(request.getRecordUuid()) || request.getRecordId() > 0) {
-				PO entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), request.getRecordUuid(), request.getRecordId(), transactionName);
+		//	Return
+		return builder;
+	}
+
+	public static ToggleIsActiveRecordResponse.Builder toggleIsActiveRecord(ToggleIsActiveRecordRequest request) {
+		StringBuilder errorMessage = new StringBuilder();
+		AtomicInteger recordsChanges = new AtomicInteger(0);
+
+		Trx.run(transactionName -> {
+			MTable table = validateAndGetTable(request.getTableName());
+			if (request.getId() <= 0 && !RecordUtil.isValidId(request.getId(), table.getAccessLevel())) {
+				throw new AdempiereException("@FillMandatory@ @Record_ID@");
+			}
+			if (request.getId() > 0) {
+				PO entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), request.getId(), transactionName);
 				if (entity != null && entity.get_ID() > 0) {
 					if (entity.get_ColumnIndex("Processed") >= 0 && entity.get_ValueAsBoolean("Processed")) {
 						return;
@@ -82,37 +118,14 @@ public class RecordManagementServiceLogic {
 					}
 				}
 			}
-			else {
-				List<Integer> ids = request.getRecordsIdsList();
-				if (ids.size() > 0) {
-					ids.stream().forEach(id -> {
-						PO entity = table.getPO(id, transactionName);
-						if (entity != null && entity.get_ID() > 0) {
-							if (entity.get_ColumnIndex("Processed") >= 0 && entity.get_ValueAsBoolean("Processed")) {
-								return;
-							}
-							entity.setIsActive(request.getIsActive());
-							try {
-								entity.saveEx();
-								recordsChanges.incrementAndGet();
-							} catch (Exception e) {
-								e.printStackTrace();
-								errorMessage.append(e.getLocalizedMessage());
-							}
-						}
-					});
-				}
-			}
 		});
-		ToggleIsActiveRecordsResponse.Builder builder = ToggleIsActiveRecordsResponse.newBuilder()
+		ToggleIsActiveRecordResponse.Builder builder = ToggleIsActiveRecordResponse.newBuilder()
 			.setMessage(
 				ValueUtil.validateNull(
 					errorMessage.toString()
 				)
 			)
-			.setTotalChanges(recordsChanges.get())
 		;
-
 		//	Return
 		return builder;
 	}

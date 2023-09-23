@@ -63,7 +63,7 @@ public class WorkflowUtil {
 
 
 
-	public static ProcessLog.Builder startWorkflow(String tableName, int recordId, String recordUuid, String documentAction) {
+	public static ProcessLog.Builder startWorkflow(String tableName, int recordId, String documentAction) {
 		Properties context = Env.getCtx();
 		if (Util.isEmpty(tableName, true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
@@ -82,11 +82,11 @@ public class WorkflowUtil {
 				throw new AdempiereException("@NotValid@ @AD_Table_ID@ @IsDocument@@");
 			}
 
-			if (recordId <= 0 && Util.isEmpty(recordUuid, true)) {
-				throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
+			if (recordId <= 0) {
+				throw new AdempiereException("@Record_ID@ @NotFound@");
 			}
 
-			PO entity = RecordUtil.getEntity(context, table.getTableName(), recordUuid, recordId, null);
+			PO entity = RecordUtil.getEntity(context, table.getTableName(), recordId, null);
 			if (entity == null || entity.get_ID() <= 0) {
 				throw new AdempiereException("@Error@ @PO@ @NotFound@");
 			}
