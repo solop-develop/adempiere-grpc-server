@@ -2902,7 +2902,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 
 		//	get query columns
 		String query = QueryUtil.getBrowserQueryWithReferences(browser);
-		String sql = Env.parseContext(context, windowNo, query, false);
+		String sql = Env.parseContext(context, windowNo, query, false, true);
 		if (Util.isEmpty(sql, true)) {
 			throw new AdempiereException("@AD_Browse_ID@ @SQL@ @Unparseable@");
 		}
@@ -2923,7 +2923,7 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 		StringBuffer whereClause = new StringBuffer();
 		String where = browser.getWhereClause();
 		if (!Util.isEmpty(where, true)) {
-			String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
+			String parsedWhereClause = Env.parseContext(context, windowNo, where, false, true);
 			if (Util.isEmpty(parsedWhereClause, true)) {
 				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
 			}
