@@ -2928,8 +2928,10 @@ public class UserInterfaceServiceImplementation extends UserInterfaceImplBase {
 				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
 			}
 			whereClause
-				.append(" AND ")
-				.append(parsedWhereClause);
+				.append(" AND (")
+				.append(parsedWhereClause)
+				.append(")")
+			;
 		}
 
 		//	For dynamic condition

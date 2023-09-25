@@ -803,7 +803,7 @@ public class WhereClauseUtil {
 					String rangeColumnName = columnName.substring(0, columnName.length() - "_To".length());
 					browseField = browseFields.get(rangeColumnName);
 				}
-				if (browseField == null) {
+				if (browseField == null || browseField.isInfoOnly()) {
 					return;
 				}
 				MViewColumn viewColumn = browseField.getAD_View_Column();
@@ -829,9 +829,9 @@ public class WhereClauseUtil {
 							.orElse(Condition.newBuilder().build())
 						;
 						valueTo = conditionEnd.getValue();
-						operatorValue = conditionEnd.getOperatorValue();
+						operatorTo = conditionEnd.getOperatorValue();
 						if (conditionStart.getOperatorValue() > 0 && operatorValue == Operator.VOID_VALUE) {
-							operatorValue = conditionStart.getOperatorValue();
+							operatorTo = conditionStart.getOperatorValue();
 						}
 					}
 	
