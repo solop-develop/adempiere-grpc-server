@@ -14,6 +14,12 @@
  ************************************************************************************/
 package org.spin.base.db;
 
+import java.util.List;
+
+import org.adempiere.model.MView;
+import org.adempiere.model.MViewDefinition;
+import org.compiere.model.MTable;
+import org.compiere.util.Env;
 import org.compiere.util.Util;
 
 /**
@@ -21,6 +27,17 @@ import org.compiere.util.Util;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class FromUtil {
+
+	public static String getFromClauseByView(int viewId) {
+		MView view = new MView(Env.getCtx(), viewId);
+		List<MViewDefinition> viewDefinitionsList = view.getViewDefinitions();
+
+		MViewDefinition fromViewDefinition = viewDefinitionsList.get(0);
+		MTable table = new MTable(Env.getCtx(), fromViewDefinition.getAD_Table_ID(), null);
+		String fromClause = " FROM " + table.getTableName() + " " + fromViewDefinition.getTableAlias();
+		return fromClause;
+	}
+
 
 	/**
 	 * Get regex pattern to match with table name and/or table alias

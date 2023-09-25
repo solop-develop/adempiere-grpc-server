@@ -224,11 +224,14 @@ public class ReferenceInfo {
 		//	
 		return getDisplayColumnValue(isHasJoinValue()) + " AS \"" + getDisplayColumnAlias() + "\"";
 	}
-	
+
 	/**
 	 * Get Join value for query
 	 * @return
 	 */
+	public String getJoinValue(String baseColumnName) {
+		return getJoinValue(baseColumnName, null);
+	}
 	public String getJoinValue(String baseColumnName, String baseTable) {
 		buildAlias();
 		if(!isHasJoinValue()) {
@@ -237,7 +240,13 @@ public class ReferenceInfo {
 		StringBuffer join = new StringBuffer();
 		join.append(" LEFT JOIN ")
 			.append(getTableName()).append(" AS ").append(getTableAlias())
-			.append(" ON(").append(getJoinColumnName(true)).append(" = ").append(baseTable).append(".").append(baseColumnName);
+			.append(" ON(").append(getJoinColumnName(true)).append(" = ")
+		;
+		if (!Util.isEmpty(baseTable, hasJoinValue)) {
+			join.append(baseTable).append(".");
+		}
+		join.append(baseColumnName);
+
 		//	Reference
 		if(getReferenceId() > 0) {
 			join.append(" AND ").append(getTableAlias() + ".AD_Reference_ID = ").append(getReferenceId());

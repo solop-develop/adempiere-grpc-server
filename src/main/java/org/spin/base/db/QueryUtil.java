@@ -1,3 +1,17 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
 package org.spin.base.db;
 
 import java.util.List;
@@ -215,7 +229,7 @@ public class QueryUtil {
 		});
 
 		MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
-		sql.append(" FROM ").append(view.getFromClause());
+		sql.append(" FROM").append(view.getFromClause());
 		return sql.toString();
 	}
 
@@ -226,7 +240,10 @@ public class QueryUtil {
 	 */
 	public static String getBrowserQueryWithReferences(MBrowse browser) {
 		String originalQuery = getBrowserQuery(browser);
-		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
+
+		String fromClause = FromUtil.getFromClauseByView(browser.getAD_View_ID());
+		int fromIndex = originalQuery.toUpperCase().indexOf(fromClause.toUpperCase());
+
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 		for (MBrowseField browseField : ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID())) {
@@ -245,6 +262,7 @@ public class QueryUtil {
 					MColumn column = MColumn.get(Env.getCtx(), viewColumn.getAD_Column_ID());
 					columnName = column.getColumnName();
 				}
+
 				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
 					.getReferenceInfo(
 						displayTypeId,
@@ -255,7 +273,12 @@ public class QueryUtil {
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
 					queryToAdd.append(referenceInfo.getDisplayValue(viewColumn.getColumnName()));
-					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableName));
+					String joinValue = referenceInfo.getJoinValue(columnName, tableName);
+					if (viewColumn.getAD_Column_ID() <= 0) {
+						// sub query
+						joinValue = referenceInfo.getJoinValue(columnName);
+					}
+					joinsToAdd.append(joinValue);
 				}
 			}
 		}

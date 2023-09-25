@@ -35,18 +35,41 @@ static_resources:
               "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
               proto_descriptor: "/data/service_definition.pb"
               services:
-                - security.Security
                 - bank_statement_match.BankStatementMatch
                 - business_partner.BusinessPartner
                 - data.BusinessData
-                - data.UserInterface
-                - data.CoreFunctionality
                 - data.CoreFunctionality
                 - dashboarding.Dashboarding
                 - dictionary.Dictionary
                 - enrollment.Register
                 - express_movement.ExpressMovement
                 - express_receipt.ExpressReceipt
+                - express_shipment.ExpressShipment
+                - file_management.FileManagement
+                - general_ledger.GeneralLedger
+                - import_file_loader.ImportFileLoader
+                - in_out.InOut
+                - invoice.Invoice
+                - issue_management.IssueManagement
+                - logs.Logs
+                - match_po_receipt_invoice.MatchPORReceiptInvoice
+                - material_management.MaterialManagement
+                - order.Order
+                - payment_allocation.PaymentAllocation
+                - payment_print_export.PaymentPrintExport
+                - payment.Payment
+                - payroll_action_notice.PayrollActionNotice
+                - data.Store
+                - product.Product
+                - record_management.RecordManagement
+                - security.Security
+                - time_control.TimeControl
+                - time_record.TimeRecord
+                - updates.UpdateCenter
+                - user_customization.UserCustomization
+                - wms.WarehouseManagement
+                - store.WebStore
+                - workflow.Workflow
               print_options:
                 add_whitespace: true
                 always_print_primitive_fields: true
