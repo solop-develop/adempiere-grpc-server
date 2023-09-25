@@ -21,13 +21,19 @@ option java_outer_classname = "ADempiereOrder";
 
 import "business.proto";
 import "google/protobuf/struct.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /info/sales/
 
 package order;
 
 // The order service definition.
 service Order {
 	// List Order Info Request
-	rpc ListOrderInfo(ListOrderInfoRequest) returns (data.ListEntitiesResponse) {}
+	rpc ListOrderInfo(ListOrderInfoRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/info/sales/orders" };
+	}
 }
 
 // List Order Info Request

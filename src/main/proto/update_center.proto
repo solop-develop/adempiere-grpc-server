@@ -18,16 +18,27 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.update";
 option java_outer_classname = "ADempiereUpdate";
 
+import "google/api/annotations.proto";
+
+// Base URL
+// /updates/
+
 package updates;
 
 // The Update service definition.
 service UpdateCenter {
   // List Available Packages
-  rpc ListPackages(ListPackagesRequest) returns (ListPackagesResponse) {}
+  rpc ListPackages(ListPackagesRequest) returns (ListPackagesResponse) {
+	option (google.api.http) = { get: "/updates/packages" };
+  }
   // List Available Updates
-  rpc ListUpdates(ListUpdatesRequest) returns (ListUpdatesResponse) {}
+  rpc ListUpdates(ListUpdatesRequest) returns (ListUpdatesResponse) {
+	option (google.api.http) = { get: "/updates/updates" };
+  }
   // List Steps
-  rpc ListSteps(ListStepsRequest) returns (ListStepsResponse) {}
+  rpc ListSteps(ListStepsRequest) returns (ListStepsResponse) {
+	option (google.api.http) = { get: "/updates/steps" };
+  }
 }
 
 // Packages Request

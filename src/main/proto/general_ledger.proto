@@ -23,22 +23,50 @@ import "base_data_type.proto";
 import "business.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /general-ledger/
 
 package general_ledger;
 
 // The General Ledger service definition.
 service GeneralLedger {
 	// Accounting Combination
-	rpc getAccountingCombination(GetAccountingCombinationRequest) returns (data.Entity) {}
-	rpc ListAccountingCombinations(ListAccountingCombinationsRequest) returns (data.ListEntitiesResponse) {}
-	rpc SaveAccountingCombination(SaveAccountingCombinationRequest) returns (data.Entity) {}
+	rpc getAccountingCombination(GetAccountingCombinationRequest) returns (data.Entity) {
+		option (google.api.http) = { get: "/general-ledger/accounts/combinations" };
+	}
+	rpc ListAccountingCombinations(ListAccountingCombinationsRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/combinations" };
+	}
+	rpc SaveAccountingCombination(SaveAccountingCombinationRequest) returns (data.Entity) {
+		option (google.api.http) = { 
+			post: "/general-ledger/accounts/combinations",
+			body: "*"
+		};
+	}
 	// Accounting Viewer
-	rpc ListAccountingSchemas(ListAccountingSchemasRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListPostingTypes(ListPostingTypesRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListAccountingDocuments(ListAccountingDocumentsRequest) returns (ListAccountingDocumentsResponse) {}
-	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListAccountingFacts(ListAccountingFactsRequest) returns (data.ListEntitiesResponse) {}
-	rpc StartRePost(StartRePostRequest) returns (StartRePostResponse) {}
+	rpc ListAccountingSchemas(ListAccountingSchemasRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/schemas" };
+	}
+	rpc ListPostingTypes(ListPostingTypesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/posting-types" };
+	}
+	rpc ListAccountingDocuments(ListAccountingDocumentsRequest) returns (ListAccountingDocumentsResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/documents" };
+	}
+	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/general-ledger/organizations" };
+	}
+	rpc ListAccountingFacts(ListAccountingFactsRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/facts" };
+	}
+	rpc StartRePost(StartRePostRequest) returns (StartRePostResponse) {
+		option (google.api.http) = { 
+			post: "/general-ledger/re-post",
+			body: "*"
+		};
+	}
 }
 
 // Accounting Combination

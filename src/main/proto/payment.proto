@@ -21,13 +21,19 @@ option java_outer_classname = "ADempierePayment";
 
 import "business.proto";
 import "google/protobuf/struct.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /info/open-items/
 
 package payment;
 
 // The payment service definition.
 service Payment {
 	// List Payment Info Request
-	rpc ListPaymentInfo(ListPaymentInfoRequest) returns (data.ListEntitiesResponse) {}
+	rpc ListPaymentInfo(ListPaymentInfoRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/info/open-items/payments" };
+	}
 }
 
 // List Payment Info Request

@@ -21,13 +21,19 @@ option java_outer_classname = "ADempiereInvoice";
 
 import "business.proto";
 import "google/protobuf/struct.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /info/sales/
 
 package invoice;
 
 // The invoice service definition.
 service Invoice {
 	// List Invoice Info Request
-	rpc ListInvoiceInfo(ListInvoiceInfoRequest) returns (data.ListEntitiesResponse) {}
+	rpc ListInvoiceInfo(ListInvoiceInfoRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/info/sales/invoices" };
+	}
 }
 
 // List Invoice Info Request

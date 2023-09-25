@@ -21,6 +21,10 @@ option java_outer_classname = "ADempierePaymentAllocation";
 import "google/protobuf/struct.proto";
 import "business.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /payment-allocation/
 
 package payment_allocation;
 
@@ -30,17 +34,35 @@ package payment_allocation;
 // - org.adempiere.webui.apps.form.WAllocation
 service PaymentAllocation {
 	// lists criteria
-	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListCurrencies(ListCurrenciesRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListTransactionTypes(ListTransactionTypesRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/payment-allocation/business-partners" };
+	}
+	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/payment-allocation/organizations" };
+	}
+	rpc ListCurrencies(ListCurrenciesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/payment-allocation/currencies" };
+	}
+	rpc ListTransactionTypes(ListTransactionTypesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/payment-allocation/transaction-types" };
+	}
 	// list result
-	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {}
-	rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse) {}
+	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
+		option (google.api.http) = { get: "/payment-allocation/payments" };
+	}
+	rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse) {
+		option (google.api.http) = { get: "/payment-allocation/invoices" };
+	}
 	// process
-	rpc ListCharges(ListChargesRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListTransactionOrganizations(ListTransactionOrganizationsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc Process(ProcessRequest) returns (ProcessResponse) {}
+	rpc ListCharges(ListChargesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/payment-allocation/charges" };
+	}
+	rpc Process(ProcessRequest) returns (ProcessResponse) {
+		option (google.api.http) = { 
+			post: "/payment-allocation/process",
+			body: "*"
+		};
+	}
 }
 
 

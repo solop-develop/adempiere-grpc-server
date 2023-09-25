@@ -24,6 +24,9 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 
+// Base URL
+// /business-data/
+
 package data;
 
 // The greeting service definition.

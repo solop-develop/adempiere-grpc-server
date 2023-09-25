@@ -21,20 +21,40 @@ option java_outer_classname = "ADempiereImportFileLoader";
 import "base_data_type.proto";
 import "business.proto";
 import "google/protobuf/struct.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /import-loader/
 
 package import_file_loader;
 
 service ImportFileLoader {
-	rpc ListCharsets(ListCharsetsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListImportTables(ListImportTablesRequest) returns (ListImportTablesResponse) {}
-	rpc ListImportFormats(ListImportFormatsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListClientImportFormats(ListClientImportFormatsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc GetImportFromat(GetImportFromatRequest) returns (ImportFormat) {}
+	rpc ListCharsets(ListCharsetsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/import-loader/charsets" };
+	}
+	rpc ListImportTables(ListImportTablesRequest) returns (ListImportTablesResponse) {
+		option (google.api.http) = { get: "/import-loader/tables" };
+	}
+	rpc ListImportFormats(ListImportFormatsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/import-loader/formats" };
+	}
+	rpc GetImportFromat(GetImportFromatRequest) returns (ImportFormat) {
+		option (google.api.http) = { get: "/import-loader/formats/{id}" };
+	}
 	// Manage File
-	rpc SaveRecords(SaveRecordsRequest) returns (SaveRecordsResponse) {}
-	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {}
+	rpc SaveRecords(SaveRecordsRequest) returns (SaveRecordsResponse) {
+		option (google.api.http) = { 
+			post: "/import-loader/imports",
+			body: "*"
+		};
+	}
+	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/import-loader/preview" };
+	}
 	// Process
-	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/import-loader/imports" };
+	}
 }
 
 // Charset

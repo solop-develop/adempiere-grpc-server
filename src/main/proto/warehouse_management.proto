@@ -22,19 +22,34 @@ import "core_functionality.proto";
 import "base_data_type.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /wms/
 
 package wms;
 
 // The Update service definition.
 service WarehouseManagement {
  	//	Create OutBound Order
-	rpc CreateOutBoundOrder(CreateOutBoundOrderRequest) returns (OutBoundOrder) {}
+	rpc CreateOutBoundOrder(CreateOutBoundOrderRequest) returns (OutBoundOrder) {
+		option (google.api.http) = { 
+			post: "/wms/orders",
+			body: "*"
+		};
+	}
 	//	Delete OutBound Order
-	rpc DeleteOutBoundOrder(DeleteOutBoundOrderRequest) returns (google.protobuf.Empty) {}
+	rpc DeleteOutBoundOrder(DeleteOutBoundOrderRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/wms/orders/{id}" };
+	}
 	//	Get a OutBound Order
-	rpc GetOutBoundOrder(GetOutBoundOrderRequest) returns (OutBoundOrder) {}
+	rpc GetOutBoundOrder(GetOutBoundOrderRequest) returns (OutBoundOrder) {
+		option (google.api.http) = { get: "/wms/orders/{id}" };
+	}
 	//	List OutBound Orders
-	rpc ListOutBoundOrders(ListOutBoundOrdersRequest) returns (ListOutBoundOrdersResponse) {}
+	rpc ListOutBoundOrders(ListOutBoundOrdersRequest) returns (ListOutBoundOrdersResponse) {
+		option (google.api.http) = { get: "/wms/orders" };
+	}
 }
 
 //	OutBound Order request to create

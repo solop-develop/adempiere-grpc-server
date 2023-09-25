@@ -21,23 +21,48 @@ option java_outer_classname = "ADempiereMaterialManagement";
 import "google/protobuf/struct.proto";
 import "business.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /material-management/
 
 package material_management;
 
 // The Material Management service definition.
 service MaterialManagement {
 	// List Product Storage
-	rpc ListProductStorage(ListProductStorageRequest) returns (data.ListEntitiesResponse) {}
+	rpc ListProductStorage(ListProductStorageRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/material-management/products-storage" };
+	}
 	// Attribute Set
-	rpc ListProductAttributeValues(ListProductAttributeValuesRequest) returns (data.ListEntitiesResponse) {}
-	rpc ListProductAttributes(ListProductAttributesRequest) returns (data.ListEntitiesResponse) {}
-	rpc GetProductAttributeSet(GetProductAttributeSetRequest) returns (ProductAttributeSet) {}
-	rpc GetProductAttributeSetInstance(GetProductAttributeSetInstanceRequest) returns (ProductAttributeSetInstance) {}
-	rpc ListProductAttributeSetInstances(ListProductAttributeSetInstancesRequest) returns (ListProductAttributeSetInstancesResponse) {}
-	rpc SaveProductAttributeSetInstance(SaveProductAttributeSetInstanceRequest) returns (ProductAttributeSetInstance) {}
+	rpc ListProductAttributeValues(ListProductAttributeValuesRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/material-management/attribute-values" };
+	}
+	rpc ListProductAttributes(ListProductAttributesRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/material-management/attribute-values" };
+	}
+	rpc GetProductAttributeSet(GetProductAttributeSetRequest) returns (ProductAttributeSet) {
+		option (google.api.http) = { get: "/material-management/products/{id}/attribute-values" };
+	}
+	rpc GetProductAttributeSetInstance(GetProductAttributeSetInstanceRequest) returns (ProductAttributeSetInstance) {
+		option (google.api.http) = { get: "/material-management/products/{product_id}/instances/{id}" };
+	}
+	rpc ListProductAttributeSetInstances(ListProductAttributeSetInstancesRequest) returns (ListProductAttributeSetInstancesResponse) {
+		option (google.api.http) = { get: "/material-management/products/{product_id}/instances" };
+	}
+	rpc SaveProductAttributeSetInstance(SaveProductAttributeSetInstanceRequest) returns (ProductAttributeSetInstance) {
+		option (google.api.http) = { 
+			post: "/material-management/products/{product_id}/instances",
+			body: "*"
+		};
+	}
 	// Locator
-	rpc ListAvailableWarehouses(ListAvailableWarehousesRequest) returns (ListAvailableWarehousesResponse) {}
-	rpc ListLocators(ListLocatorsRequest) returns (ListLocatorsResponse) {}
+	rpc ListAvailableWarehouses(ListAvailableWarehousesRequest) returns (ListAvailableWarehousesResponse) {
+		option (google.api.http) = { get: "/material-management/warehouses" };
+	}
+	rpc ListLocators(ListLocatorsRequest) returns (ListLocatorsResponse) {
+		option (google.api.http) = { get: "/material-management/locatos" };
+	}
 }
 
 // Get Accounting Combination Request

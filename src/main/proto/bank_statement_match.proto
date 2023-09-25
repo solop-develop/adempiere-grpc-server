@@ -23,6 +23,9 @@ import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
+// Base URL
+// /bank-statement-match/
+
 package bank_statement_match;
 
 // The Banck Statement Match form service definition.

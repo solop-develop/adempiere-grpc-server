@@ -21,22 +21,58 @@ option java_outer_classname = "ADempiereExpressShipment";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /express-shipment/
 
 package express_shipment;
 
 service ExpressShipment {
-	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {}
-	rpc ListSalesOrders(ListSalesOrdersRequest) returns (ListSalesOrdersResponse) {}
-	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
+	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {
+		option (google.api.http) = { get: "/express-shipment/business-partners" };
+	}
+	rpc ListSalesOrders(ListSalesOrdersRequest) returns (ListSalesOrdersResponse) {
+		option (google.api.http) = { get: "/express-shipment/orders" };
+	}
+	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
+		option (google.api.http) = { get: "/express-shipment/products" };
+	}
 	// Shipment
-	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {}
-	rpc DeleteShipment(DeleteShipmentRequest) returns (google.protobuf.Empty) {}
-	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {}
+	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {
+		option (google.api.http) = { 
+			post: "/express-shipment/shipments",
+			body: "*"
+		};
+	}
+	rpc DeleteShipment(DeleteShipmentRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/express-shipment/shipments/{id}" };
+	}
+	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {
+		option (google.api.http) = { 
+			put: "/express-shipment/shipments/{id}/process",
+			body: "*"
+		};
+	}
 	//	Shipment Line
-	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {}
-	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {}
-	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {}
-	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {}
+	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {
+		option (google.api.http) = { 
+			post: "/express-shipment/shipments/{id}/lines",
+			body: "*"
+		};
+	}
+	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/express-shipment/shipments/{shipment_id}/lines/{id}" };
+	}
+	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {
+		option (google.api.http) = { 
+			put: "/express-shipment/shipments/{shipment_id}/lines/{id}",
+			body: "*"
+		};
+	}
+	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {
+		option (google.api.http) = { get: "/express-shipment/shipments" };
+	}
 }
 
 
@@ -180,7 +216,8 @@ message ListShipmentLinesResponse {
 }
 
 message DeleteShipmentLineRequest {
-	int32 id = 1;
+	int32 shipment_id = 1;	
+	int32 id = 2;
 }
 
 message UpdateShipmentLineRequest {

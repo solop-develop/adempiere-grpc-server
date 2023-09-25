@@ -874,7 +874,7 @@ public class Security extends SecurityImplBase {
 				Menu.Builder childBuilder = convertMenu(Env.getCtx(), MMenu.getFromId(Env.getCtx(), child.getNode_ID()), child.getParent_ID(), Env.getAD_Language(Env.getCtx()));
 				//	Explode child
 				addChildren(Env.getCtx(), childBuilder, child, Env.getAD_Language(Env.getCtx()));
-				builder.addChilds(childBuilder.build());
+				builder.addChildren(childBuilder.build());
 			}
 		}
 		//	Set from DB
@@ -958,7 +958,7 @@ public class Security extends SecurityImplBase {
 			MTreeNode child = (MTreeNode)childrens.nextElement();
 			Menu.Builder childBuilder = convertMenu(context, MMenu.getFromId(context, child.getNode_ID()), child.getParent_ID(), language);
 			addChildren(context, childBuilder, child, language);
-			builder.addChilds(childBuilder.build());
+			builder.addChildren(childBuilder.build());
 		}
 	}
 }

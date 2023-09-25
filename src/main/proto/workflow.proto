@@ -22,25 +22,54 @@ option java_outer_classname = "ADempiereWorkflow";
 import "base_data_type.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /workflow/
 
 package workflow;
 
 //	Workflow management service
 service Workflow {
 	// Get Workflow
-	rpc GetWorkflow(WorkflowDefinitionRequest) returns (WorkflowDefinition) {}
+	rpc GetWorkflow(WorkflowDefinitionRequest) returns (WorkflowDefinition) {
+		option (google.api.http) = { get: "/workflow/workflows/{id}" };
+	}
 	//	List Workflow
-	rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse) {}
+	rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse) {
+		option (google.api.http) = { get: "/workflow/workflows" };
+	}
 	//	List Document Actions
-	rpc ListDocumentActions(ListDocumentActionsRequest) returns (ListDocumentActionsResponse) {}
+	rpc ListDocumentActions(ListDocumentActionsRequest) returns (ListDocumentActionsResponse) {
+		option (google.api.http) = { get: "/workflow/workflows/{id}/actions" };
+	}
 	//	List Document Statuses
-	rpc ListDocumentStatuses(ListDocumentStatusesRequest) returns (ListDocumentStatusesResponse) {}
+	rpc ListDocumentStatuses(ListDocumentStatusesRequest) returns (ListDocumentStatusesResponse) {
+		option (google.api.http) = { get: "/workflow/workflows/{id}/statuses" };
+	}
 	//	Workflow Activities
-	rpc ListWorkflowActivities(ListWorkflowActivitiesRequest) returns (ListWorkflowActivitiesResponse) {}
-	rpc Process(ProcessRequest) returns (google.protobuf.Empty) {}
-	rpc Forward(ForwardRequest) returns (google.protobuf.Empty) {}
+	rpc ListWorkflowActivities(ListWorkflowActivitiesRequest) returns (ListWorkflowActivitiesResponse) {
+		option (google.api.http) = { get: "/workflow/workflows/{id}/activities" };
+	}
+	rpc Process(ProcessRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { 
+			post: "/workflow/workflows/{id}/process",
+			body: "*"
+		};
+	}
+	rpc Forward(ForwardRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { 
+			post: "/workflow/workflows/{id}/forward",
+			body: "*"
+		};
+	}
 	//	Run a Document Action
-	rpc RunDocumentAction(RunDocumentActionRequest) returns (data.ProcessLog) {}
+	rpc RunDocumentAction(RunDocumentActionRequest) returns (data.ProcessLog) {
+		option (google.api.http) = { 
+			post: "/workflow/workflows/{id}/run-action",
+			body: "*"
+		};
+	}
 }
 
 // Object request

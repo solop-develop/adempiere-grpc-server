@@ -22,16 +22,31 @@ option java_outer_classname = "ADempiereTimeRecord";
 import "core_functionality.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /time-record/
 
 package time_record;
 
 // The Time Record service definition
 service TimeRecord {
-	rpc ListIssues(ListIssuesRequest) returns (ListIssuesResponse) {}
-	rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {}
+	rpc ListIssues(ListIssuesRequest) returns (ListIssuesResponse) {
+		option (google.api.http) = { get: "/time-record/issues" };
+	}
+	rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+		option (google.api.http) = { get: "/time-record/projects" };
+	}
 	// Resource Assigment
-	rpc CreateTimeRecord(CreateTimeRecordRequest) returns (ResourceAssignment) {}
-	rpc ListTimeRecord(ListTimeRecordRequest) returns (ListTimeRecordResponse) {}
+	rpc CreateTimeRecord(CreateTimeRecordRequest) returns (ResourceAssignment) {
+		option (google.api.http) = { 
+			post: "/time-record/time-records",
+			body: "*"
+		};
+	}
+	rpc ListTimeRecord(ListTimeRecordRequest) returns (ListTimeRecordResponse) {
+		option (google.api.http) = { get: "/time-record/time-records" };
+	}
 }
 
 // Issue (Request)

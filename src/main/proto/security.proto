@@ -47,7 +47,7 @@ service Security {
 	// Request change role
 	rpc RunChangeRole(ChangeRoleRequest) returns (Session) {
 		option (google.api.http) = {
-			post: "/security/change-role",
+			put: "/security/change-role",
 			body: "*"
 		};
 	}
@@ -57,7 +57,7 @@ service Security {
 	}
 	rpc SetSessionAttribute(SetSessionAttributeRequest) returns (Session) {
 		option (google.api.http) = {
-			post: "/security/session-attribute",
+			put: "/security/session-attribute",
 			body: "*"
 		};
 	}
@@ -224,7 +224,7 @@ message Menu {
 	string action = 10;
 	// Supported References
 	int32 reference_id = 11;
-	repeated Menu childs = 12;
+	repeated Menu children = 12;
 }
 
 //	Open ID

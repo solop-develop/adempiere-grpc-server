@@ -23,25 +23,49 @@ import "base_data_type.proto";
 import "business.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /human-resources/
 
 package payroll_action_notice;
 
 // The payroll-action-notice service definition.
 service PayrollActionNotice {
 	// List Payroll Process
-	rpc ListPayrollProcess(ListPayrollProcessRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListPayrollProcess(ListPayrollProcessRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/human-resources/process" };
+	}
 	// List Employee Valid
-	rpc ListEmployeeValid(ListEmployeeValidRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListEmployeeValid(ListEmployeeValidRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/human-resources/employees" };
+	}
 	// List Payroll Concepts
-	rpc ListPayrollConcepts(ListPayrollConceptsRequest) returns (data.ListLookupItemsResponse) {}
+	rpc ListPayrollConcepts(ListPayrollConceptsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/human-resources/concepts" };
+	}
 	// Get Payroll Concept Definition
-	rpc GetPayrollConceptDefinition(GetPayrollConceptDefinitionRequest) returns (data.Entity) {}
+	rpc GetPayrollConceptDefinition(GetPayrollConceptDefinitionRequest) returns (data.Entity) {
+		option (google.api.http) = { get: "/human-resources/concepts/{id}" };
+	}
 	// List Payroll Movements
-	rpc ListPayrollMovements(ListPayrollMovementsRequest) returns (data.ListEntitiesResponse) {}
+	rpc ListPayrollMovements(ListPayrollMovementsRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/human-resources/movements" };
+	}
 	// Save Payroll Movement
-	rpc SavePayrollMovement(SavePayrollMovementRequest) returns (data.Entity) {}
+	rpc SavePayrollMovement(SavePayrollMovementRequest) returns (data.Entity) {
+		option (google.api.http) = { 
+			post: "/human-resources/movements",
+			body: "*"
+		};
+	}
 	// Delete Payroll Movements
-	rpc DeletePayrollMovements(DeletePayrollMovementsRequest) returns (google.protobuf.Empty) {}
+	rpc DeletePayrollMovements(DeletePayrollMovementsRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { 
+			post: "/human-resources/delete-movements",
+			body: "*"
+		};
+	}
 }
 
 // List Payroll Process Request

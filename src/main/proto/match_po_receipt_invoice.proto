@@ -21,6 +21,10 @@ option java_outer_classname = "ADempierePaymentAllocation";
 import "google/protobuf/struct.proto";
 import "business.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /match-po/
 
 package match_po_receipt_invoice;
 
@@ -30,16 +34,35 @@ package match_po_receipt_invoice;
 // - org.adempiere.webui.apps.form.WMatch
 service MatchPORReceiptInvoice {
 	// lists criteria
-	rpc ListMatchesTypesFrom(ListMatchesTypesFromRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListMatchesTypesTo(ListMatchesTypesToRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListSearchModes(ListSearchModesRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListVendors(ListVendorsRequest) returns (data.ListLookupItemsResponse) {}
-	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
+	rpc ListMatchesTypesFrom(ListMatchesTypesFromRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/match-po/matches-types-from" };
+	}
+	rpc ListMatchesTypesTo(ListMatchesTypesToRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/match-po/matches-types-to" };
+	}
+	rpc ListSearchModes(ListSearchModesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/match-po/search-modes" };
+	}
+	rpc ListVendors(ListVendorsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/match-po/vendors" };
+	}
+	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
+		option (google.api.http) = { get: "/match-po/products" };
+	}
 	// list result
-	rpc ListMatchedFrom(ListMatchedFromRequest) returns (ListMatchedFromResponse) {}
-	rpc ListMatchedTo(ListMatchedToRequest) returns (ListMatchedToResponse) {}
+	rpc ListMatchedFrom(ListMatchedFromRequest) returns (ListMatchedFromResponse) {
+		option (google.api.http) = { get: "/match-po/matches-from" };
+	}
+	rpc ListMatchedTo(ListMatchedToRequest) returns (ListMatchedToResponse) {
+		option (google.api.http) = { get: "/match-po/matches-to" };
+	}
 	// process
-	rpc Process(ProcessRequest) returns (ProcessResponse) {}
+	rpc Process(ProcessRequest) returns (ProcessResponse) {
+		option (google.api.http) = { 
+			post: "/match-po/process",
+			body: "*"
+		};
+	}
 }
 
 

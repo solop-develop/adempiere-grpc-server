@@ -17,12 +17,26 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.record_management";
 option java_outer_classname = "ADempiereRecordManagement";
+import "google/api/annotations.proto";
+
+// Base URL
+// /record-management/
 
 package record_management;
 
 service RecordManagement {
-	rpc ToggleIsActiveRecord(ToggleIsActiveRecordRequest) returns (ToggleIsActiveRecordResponse) {}
-	rpc ToggleIsActiveRecordsBatch(ToggleIsActiveRecordsBatchRequest) returns (ToggleIsActiveRecordsBatchResponse) {}
+	rpc ToggleIsActiveRecord(ToggleIsActiveRecordRequest) returns (ToggleIsActiveRecordResponse) {
+		option (google.api.http) = { 
+			post: "/record-management/{table_name}/{id}/toogle",
+			body: "*"
+		};
+	}
+	rpc ToggleIsActiveRecordsBatch(ToggleIsActiveRecordsBatchRequest) returns (ToggleIsActiveRecordsBatchResponse) {
+		option (google.api.http) = { 
+			post: "/record-management/{table_name}/toogle",
+			body: "*"
+		};
+	}
 }
 
 message ToggleIsActiveRecordRequest {

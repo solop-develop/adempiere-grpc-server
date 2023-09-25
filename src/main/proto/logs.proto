@@ -23,6 +23,10 @@ import "base_data_type.proto";
 import "business.proto";
 import "workflow.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /logs/
 
 package logs;
 
@@ -30,21 +34,37 @@ package logs;
 //	Logger services
 service Logs {
 	//	Request BusinessProcess Activity from current session
-	rpc ListProcessLogs(ListProcessLogsRequest) returns (ListProcessLogsResponse) {}
+	rpc ListProcessLogs(ListProcessLogsRequest) returns (ListProcessLogsResponse) {
+		option (google.api.http) = { get: "/logs/process" };
+	}
 	//	Request Record Log List
-	rpc ListEntityLogs(ListEntityLogsRequest) returns (ListEntityLogsResponse) {}
+	rpc ListEntityLogs(ListEntityLogsRequest) returns (ListEntityLogsResponse) {
+		option (google.api.http) = { get: "/logs/entities" };
+	}
 	//	Request Record Chat List
-	rpc ListEntityChats(ListEntityChatsRequest) returns (ListEntityChatsResponse) {}
+	rpc ListEntityChats(ListEntityChatsRequest) returns (ListEntityChatsResponse) {
+		option (google.api.http) = { get: "/logs/chat-entities" };
+	}
 	//	Exists Chat Entries
-	rpc ExistsChatEntries(ExistsChatEntriesRequest) returns (ExistsChatEntriesResponse) {}
+	rpc ExistsChatEntries(ExistsChatEntriesRequest) returns (ExistsChatEntriesResponse) {
+		option (google.api.http) = { get: "/logs/chat-entries/{table_name}/{record_id}/exists" };
+	}
 	//	Request Chat Entries List
-	rpc ListChatEntries(ListChatEntriesRequest) returns (ListChatEntriesResponse) {}
+	rpc ListChatEntries(ListChatEntriesRequest) returns (ListChatEntriesResponse) {
+		option (google.api.http) = { get: "/logs/chat-entries" };
+	}
 	//	List workflow processes
-	rpc ListWorkflowLogs(ListWorkflowLogsRequest) returns (ListWorkflowLogsResponse) {}
+	rpc ListWorkflowLogs(ListWorkflowLogsRequest) returns (ListWorkflowLogsResponse) {
+		option (google.api.http) = { get: "/logs/workflows" };
+	}
 	//	Request Recent Items
-	rpc ListRecentItems(ListRecentItemsRequest) returns (ListRecentItemsResponse) {}
+	rpc ListRecentItems(ListRecentItemsRequest) returns (ListRecentItemsResponse) {
+		option (google.api.http) = { get: "/logs/recent-items" };
+	}
 	// Request List User Activities
-	rpc ListUserActivites(ListUserActivitesRequest) returns (ListUserActivitesResponse) {}
+	rpc ListUserActivites(ListUserActivitesRequest) returns (ListUserActivitesResponse) {
+		option (google.api.http) = { get: "/logs/user-activities" };
+	}
 }
 
 // BusinessProcess Activity Request

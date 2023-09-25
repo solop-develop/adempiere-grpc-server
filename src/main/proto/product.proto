@@ -21,13 +21,19 @@ option java_outer_classname = "ADempiereProduct";
 
 import "business.proto";
 import "google/protobuf/struct.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /info/material-management/
 
 package product;
 
 // The product service definition.
 service Product {
 	// List Product Info Request
-	rpc ListProductInfo(ListProductInfoRequest) returns (data.ListEntitiesResponse) {}
+	rpc ListProductInfo(ListProductInfoRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/info/material-management/products" };
+	}
 }
 
 // List Product Info Request

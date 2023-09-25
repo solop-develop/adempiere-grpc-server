@@ -23,21 +23,41 @@ import "core_functionality.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /time-control/
 
 package time_control;
 
 // The Time Control service definition.
 service TimeControl {
 	// Create Resource Assignment
-	rpc CreateResourceAssignment(CreateResourceAssignmentRequest) returns (ResourceAssignment) {}
+	rpc CreateResourceAssignment(CreateResourceAssignmentRequest) returns (ResourceAssignment) {
+		option (google.api.http) = {
+			post: "/time-control/assignements",
+			body: "*"
+		};
+	}
 	// List Resource Assignment
-	rpc ListResourcesAssignment(ListResourcesAssignmentRequest) returns (ListResourcesAssignmentResponse) {}
+	rpc ListResourcesAssignment(ListResourcesAssignmentRequest) returns (ListResourcesAssignmentResponse) {
+		option (google.api.http) = { get: "/time-control/assignements" };
+	}
 	// Update Resource Assignment
-	rpc UpdateResourceAssignment(UpdateResourceAssignmentRequest) returns (ResourceAssignment) {}
+	rpc UpdateResourceAssignment(UpdateResourceAssignmentRequest) returns (ResourceAssignment) {
+		option (google.api.http) = {
+			put: "/time-control/assignements/{id}",
+			body: "*"
+		};
+	}
 	// Delete Resource Assignment
-	rpc DeleteResourceAssignment(DeleteResourceAssignmentRequest) returns (google.protobuf.Empty) {}
+	rpc DeleteResourceAssignment(DeleteResourceAssignmentRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/time-control/assignements/{id}" };
+	}
 	// Confirm Resource Assignment
-	rpc ConfirmResourceAssignment(ConfirmResourceAssignmentRequest) returns (ResourceAssignment) {}
+	rpc ConfirmResourceAssignment(ConfirmResourceAssignmentRequest) returns (ResourceAssignment) {
+		option (google.api.http) = { post: "/time-control/assignements/{id}/confirm" };
+	}
 }
 
 // Create Time Control Request

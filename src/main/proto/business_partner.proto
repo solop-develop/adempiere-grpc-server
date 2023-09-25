@@ -23,6 +23,9 @@ import "business.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 
+// Base URL
+// /business-partner/
+
 package business_partner;
 
 // The business partner service definition.

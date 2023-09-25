@@ -282,7 +282,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void getOrder(GetOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(getOrder(request.getOrderId(), null));
+			Order.Builder order = ConvertUtil.convertOrder(getOrder(request.getId(), null));
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -417,7 +417,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void releaseOrder(ReleaseOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(changeOrderAssigned(request.getOrderId()));
+			Order.Builder order = ConvertUtil.convertOrder(changeOrderAssigned(request.getId()));
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -432,7 +432,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void holdOrder(HoldOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(changeOrderAssigned(request.getOrderId(), request.getSalesRepresentativeId()));
+			Order.Builder order = ConvertUtil.convertOrder(changeOrderAssigned(request.getId(), request.getSalesRepresentativeId()));
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -922,11 +922,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void getCustomerBankAccount(GetCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
 		try {
-			if(request.getCustomerBankAccountId() <= 0) {
+			if(request.getId() <= 0) {
 				throw new AdempiereException("@C_BP_BankAccount_ID@ @IsMandatory@");
 			}
 			//	For data
-			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), request.getCustomerBankAccountId(), null);
+			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), request.getId(), null);
 			responseObserver.onNext(ConvertUtil.convertCustomerBankAccount(businessPartnerBankAccount).build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1332,7 +1332,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void updateRMALine(UpdateRMALineRequest request, StreamObserver<RMALine> responseObserver) {
 		try {
-			MOrderLine rmaLine = ReturnSalesOrder.updateRMALine(request.getRmaLineId(), ValueUtil.getBigDecimalFromDecimal(request.getQuantity()), request.getDescription());
+			MOrderLine rmaLine = ReturnSalesOrder.updateRMALine(request.getId(), ValueUtil.getBigDecimalFromDecimal(request.getQuantity()), request.getDescription());
 			RMALine.Builder returnLine = ConvertUtil.convertRMALine(rmaLine);
 			responseObserver.onNext(returnLine.build());
 			responseObserver.onCompleted();
@@ -1348,7 +1348,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deleteRMALine(DeleteRMALineRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			RMAUtil.deleteRMALine(request.getRmaLineId());
+			RMAUtil.deleteRMALine(request.getId());
 			responseObserver.onNext(Empty.newBuilder().build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1363,7 +1363,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deleteRMA(DeleteRMARequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			RMAUtil.deleteRMA(request.getRmaId());
+			RMAUtil.deleteRMA(request.getId());
 			responseObserver.onNext(Empty.newBuilder().build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2014,7 +2014,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return Shipment.Builder
 	 */
 	private Shipment.Builder processShipment(ProcessShipmentRequest request) {
-		if(request.getShipmentId() <= 0) {
+		if(request.getId() <= 0) {
 			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
 		if(Util.isEmpty(request.getDocumentAction())) {
@@ -2027,7 +2027,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		AtomicReference<MInOut> shipmentReference = new AtomicReference<MInOut>();
 		Trx.run(transactionName -> {
-			int shipmentId = request.getShipmentId();
+			int shipmentId = request.getId();
 			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, transactionName);
 			if(shipment.isProcessed()) {
 				throw new AdempiereException("@M_InOut_ID@ @Processed@");
@@ -2234,12 +2234,12 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Empty.Builder deleteShipmentLine(DeleteShipmentLineRequest request) {
-		if(request.getShipmentLineId() <= 0) {
+		if(request.getId() <= 0) {
 			throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
 			MInOutLine shipmentLine = new Query(Env.getCtx(), I_M_InOutLine.Table_Name, I_M_InOutLine.COLUMNNAME_M_InOutLine_ID + " = ?", transactionName)
-					.setParameters(request.getShipmentLineId())
+					.setParameters(request.getId())
 					.setClient_ID()
 					.first();
 			if(shipmentLine != null
@@ -3184,7 +3184,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	private MOrder processOrder(ProcessOrderRequest request) {
 		if(request.getPosId() <= 0) {
 			MPOS pos = getPOSFromId(request.getPosId(), true);
-			OrderManagement.processOrder(pos, request.getOrderId(), request.getIsOpenRefund());
+			OrderManagement.processOrder(pos, request.getId(), request.getIsOpenRefund());
 		}
 		return null;
 	}
@@ -3599,9 +3599,9 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private MOrder updateOrder(UpdateOrderRequest request) {
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
-		if(request.getOrderId() > 0) {
+		if(request.getId() > 0) {
 			Trx.run(transactionName -> {
-				MOrder salesOrder = getOrder(request.getOrderId(), transactionName);
+				MOrder salesOrder = getOrder(request.getId(), transactionName);
 				if(salesOrder == null) {
 					throw new AdempiereException("@C_Order_ID@ @NotFound@");
 				}
@@ -4098,12 +4098,12 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Empty.Builder deleteOrderLine(DeleteOrderLineRequest request) {
-		if(request.getOrderLineId() <= 0) {
+		if(request.getId() <= 0) {
 			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
 			MOrderLine orderLine = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, I_C_OrderLine.COLUMNNAME_C_OrderLine_ID + " = ?", transactionName)
-					.setParameters(request.getOrderLineId())
+					.setParameters(request.getId())
 					.setClient_ID()
 					.first();
 			if(orderLine != null
@@ -4195,7 +4195,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Empty.Builder deletePayment(DeletePaymentRequest request) {
-		int paymentId = request.getPaymentId();
+		int paymentId = request.getId();
 		if(paymentId <= 0) {
 			throw new AdempiereException("@C_Payment_ID@ @NotFound@");
 		}
@@ -4235,7 +4235,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private OrderLine.Builder updateAndConvertOrderLine(UpdateOrderLineRequest request) {
 		//	Validate Order
-		int orderLineId = request.getOrderLineId();
+		int orderLineId = request.getId();
 		if(orderLineId <= 0) {
 			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 		}
@@ -4957,7 +4957,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		AtomicReference<MPayment> maybePayment = new AtomicReference<MPayment>();
 		Trx.run(transactionName -> {
 			String tenderType = request.getTenderTypeCode();
-			int paymentId = request.getPaymentId();
+			int paymentId = request.getId();
 			if(paymentId <= 0) {
 				throw new AdempiereException("@C_Payment_ID@ @NotFound@");
 			}

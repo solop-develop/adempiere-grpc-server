@@ -22,30 +22,72 @@ option java_outer_classname = "ADempiereIssueManagement";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /issue-management/
 
 package issue_management;
 
 // The Issue Management service definition.
 service IssueManagement {
 	// Request Type
-	rpc ListRequestTypes(ListRequestTypesRequest) returns (ListRequestTypesResponse) {}
+	rpc ListRequestTypes(ListRequestTypesRequest) returns (ListRequestTypesResponse) {
+		option (google.api.http) = { get: "/issue-management/request-types" };
+	}
 	// Sales Representative
-	rpc ListSalesRepresentatives(ListSalesRepresentativesRequest) returns (ListSalesRepresentativesResponse) {}
+	rpc ListSalesRepresentatives(ListSalesRepresentativesRequest) returns (ListSalesRepresentativesResponse) {
+		option (google.api.http) = { get: "/issue-management/sales-representatives" };
+	}
 	// Priority
-	rpc ListPriorities(ListPrioritiesRequest) returns (ListPrioritiesResponse) {}
+	rpc ListPriorities(ListPrioritiesRequest) returns (ListPrioritiesResponse) {
+		option (google.api.http) = { get: "/issue-management/priorities" };
+	}
 	// Status
-	rpc ListStatuses(ListStatusesRequest) returns (ListStatusesResponse) {}
+	rpc ListStatuses(ListStatusesRequest) returns (ListStatusesResponse) {
+		option (google.api.http) = { get: "/issue-management/statuses" };
+	}
 	// Issue
-	rpc ExistsIssues(ExistsIssuesRequest) returns (ExistsIssuesResponse) {}
-	rpc ListIssues(ListIssuesRequest) returns (ListIssuesReponse) {}
-	rpc CreateIssue(CreateIssueRequest) returns (Issue) {}
-	rpc UpdateIssue(UpdateIssueRequest) returns (Issue) {}
-	rpc DeleteIssue(DeleteIssueRequest) returns (google.protobuf.Empty) {}
+	rpc ExistsIssues(ExistsIssuesRequest) returns (ExistsIssuesResponse) {
+		option (google.api.http) = { get: "/issue-management/issues/{table_name}/{record_id}/exists" };
+	}
+	rpc ListIssues(ListIssuesRequest) returns (ListIssuesReponse) {
+		option (google.api.http) = { get: "/issue-management/issues/{table_name}/{record_id}" };
+	}
+	rpc CreateIssue(CreateIssueRequest) returns (Issue) {
+		option (google.api.http) = { 
+			post: "/issue-management/issues",
+			body: "*"
+		};
+	}
+	rpc UpdateIssue(UpdateIssueRequest) returns (Issue) {
+		option (google.api.http) = { 
+			put: "/issue-management/issues/{id}",
+			body: "*"
+		};
+	}
+	rpc DeleteIssue(DeleteIssueRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/issue-management/issues/{id}" };
+	}
 	// Issue Comments
-	rpc ListIssueComments(ListIssueCommentsRequest) returns (ListIssueCommentsReponse) {}
-	rpc CreateIssueComment(CreateIssueCommentRequest) returns (IssueComment) {}
-	rpc UpdateIssueComment(UpdateIssueCommentRequest) returns (IssueComment) {}
-	rpc DeleteIssueComment(DeleteIssueCommentRequest) returns (google.protobuf.Empty) {}
+	rpc ListIssueComments(ListIssueCommentsRequest) returns (ListIssueCommentsReponse) {
+		option (google.api.http) = { get: "/issue-management/issues/{issue_id}/comments" };
+	}
+	rpc CreateIssueComment(CreateIssueCommentRequest) returns (IssueComment) {
+		option (google.api.http) = { 
+			post: "/issue-management/issues/{issue_id}/comments",
+			body: "*"
+		};
+	}
+	rpc UpdateIssueComment(UpdateIssueCommentRequest) returns (IssueComment) {
+		option (google.api.http) = { 
+			put: "/issue-management/issues/{issue_id}/comments/{id}",
+			body: "*"
+		};
+	}
+	rpc DeleteIssueComment(DeleteIssueCommentRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/issue-management/issues/{issue_id}/comments/{id}" };
+	}
 }
 
 // Request Type Definition
@@ -266,8 +308,10 @@ message CreateIssueCommentRequest {
 message UpdateIssueCommentRequest {
 	int32 id = 1;
 	string result = 2;
+	int32 issue_id = 3;
 }
 
 message DeleteIssueCommentRequest {
 	int32 id = 1;
+	int32 issue_id = 2;
 }

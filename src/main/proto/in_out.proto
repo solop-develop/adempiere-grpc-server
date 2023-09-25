@@ -21,13 +21,19 @@ option java_outer_classname = "ADempiereInOut";
 
 import "business.proto";
 import "google/protobuf/struct.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /info/material-management/
 
 package in_out;
 
 // The in-out service definition.
 service InOut {
 	// List In-Out Info Request
-	rpc ListInOutInfo(ListInOutInfoRequest) returns (data.ListEntitiesResponse) {}
+	rpc ListInOutInfo(ListInOutInfoRequest) returns (data.ListEntitiesResponse) {
+		option (google.api.http) = { get: "/info/material-management/in-out" };
+	}
 }
 
 // List InOut Info Request

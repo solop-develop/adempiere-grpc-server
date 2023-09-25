@@ -145,7 +145,7 @@ public class FileManagement extends FileManagementImplBase {
 	@Override
 	public void getResource(GetResourceRequest request, StreamObserver<Resource> responseObserver) {
 		try {
-			getResource(request.getResourceId(), request.getResourceName(), responseObserver);
+			getResource(request.getId(), request.getResourceName(), responseObserver);
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
@@ -305,7 +305,7 @@ public class FileManagement extends FileManagementImplBase {
 						validateAndGetClientInfo();
 
 						// validate and get attachment reference by uuid
-						MADAttachmentReference resourceReference = validateAttachmentReferenceById(fileUploadRequest.getResourceId());
+						MADAttachmentReference resourceReference = validateAttachmentReferenceById(fileUploadRequest.getId());
 
 						resourceUuid.set(resourceReference.getUUID());
 						BigDecimal size = ValueUtil.getBigDecimalFromDecimal(fileUploadRequest.getFileSize());
@@ -585,7 +585,7 @@ public class FileManagement extends FileManagementImplBase {
 				if (!FileUtil.isValidImage(fileName)) {
 					throw new AdempiereException("@Error@ @FileInvalidExtension@. @attach.image@");	
 				}
-				MImage image = MImage.get(Env.getCtx(), request.getResourceId(), transactionName);
+				MImage image = MImage.get(Env.getCtx(), request.getId(), transactionName);
 				if (image == null) {
 					image = new MImage(Env.getCtx(), 0, transactionName);
 				}
@@ -604,7 +604,7 @@ public class FileManagement extends FileManagementImplBase {
 					attachmentReference.setAD_Image_ID(image.getAD_Image_ID());
 				}
 			} else if(request.getResourceType() == ResourceType.ARCHIVE) {
-				MArchive archive = new MArchive(Env.getCtx(), request.getResourceId(), transactionName);
+				MArchive archive = new MArchive(Env.getCtx(), request.getId(), transactionName);
 				archive.setName(fileName);
 				archive.setDescription(request.getDescription());
 				archive.saveEx();
@@ -630,7 +630,7 @@ public class FileManagement extends FileManagementImplBase {
 				}
 				final int recordIdentifier = recordId;
 
-				MAttachment attachment = new MAttachment(Env.getCtx(), request.getResourceId(), transactionName);
+				MAttachment attachment = new MAttachment(Env.getCtx(), request.getId(), transactionName);
 				if (attachment.getAD_Attachment_ID() <= 0) {
 					attachment = new MAttachment(Env.getCtx(), table.getAD_Table_ID(), recordIdentifier, transactionName);
 				}

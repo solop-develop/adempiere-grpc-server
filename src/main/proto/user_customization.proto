@@ -20,18 +20,43 @@ option java_package = "org.spin.backend.grpc.user_customization";
 option java_outer_classname = "ADempiereUserCustomization";
 
 import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+// Base URL
+// /customizations/
 
 package user_customization;
 
 // The User Customization service definition.
 service UserCustomization {
-	rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
-	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {}
-	rpc ListCustomizationsLevel(ListCustomizationsLevelRequest) returns (ListCustomizationsLevelResponse) {}
+	rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+		option (google.api.http) = { get: "/customizations/users" };
+	}
+	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
+		option (google.api.http) = { get: "/customizations/roles" };
+	}
+	rpc ListCustomizationsLevel(ListCustomizationsLevelRequest) returns (ListCustomizationsLevelResponse) {
+		option (google.api.http) = { get: "/customizations/levels" };
+	}
 	// User Customization
-	rpc SaveWindowCustomization(SaveWindowCustomizationRequest) returns (google.protobuf.Empty) {}
-	rpc SaveBrowseCustomization(SaveBrowseCustomizationRequest) returns (google.protobuf.Empty) {}
-	rpc SaveProcessCustomization(SaveProcessCustomizationRequest) returns (google.protobuf.Empty) {}
+	rpc SaveWindowCustomization(SaveWindowCustomizationRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { 
+			post: "/customizations/windows",
+			body: "*"
+		};
+	}
+	rpc SaveBrowseCustomization(SaveBrowseCustomizationRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { 
+			post: "/customizations/brosers",
+			body: "*"
+		};
+	}
+	rpc SaveProcessCustomization(SaveProcessCustomizationRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { 
+			post: "/customizations/process",
+			body: "*"
+		};
+	}
 }
 
 // User

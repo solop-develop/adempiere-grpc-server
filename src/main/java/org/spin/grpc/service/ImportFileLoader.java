@@ -23,7 +23,6 @@ import org.spin.backend.grpc.form.import_file_loader.ImportFileLoaderGrpc.Import
 import org.spin.form.import_file_loader.ImportFileLoaderServiceLogic;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
 import org.spin.backend.grpc.form.import_file_loader.ListCharsetsRequest;
-import org.spin.backend.grpc.form.import_file_loader.ListClientImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListFilePreviewRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportProcessesRequest;
@@ -115,26 +114,26 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 
 
 
-	@Override
-	public void listClientImportFormats(ListClientImportFormatsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listClientImportFormats(request);
-			responseObserver.onNext(builderList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
+//	@Override
+//	public void listClientImportFormats(ListClientImportFormatsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+//		try {
+//			if (request == null) {
+//				throw new AdempiereException("Object Request Null");
+//			}
+//
+//			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listClientImportFormats(request);
+//			responseObserver.onNext(builderList.build());
+//			responseObserver.onCompleted();
+//		} catch (Exception e) {
+//			log.severe(e.getLocalizedMessage());
+//			e.printStackTrace();
+//			responseObserver.onError(Status.INTERNAL
+//				.withDescription(e.getLocalizedMessage())
+//				.withCause(e)
+//				.asRuntimeException()
+//			);
+//		}
+//	}
 
 
 

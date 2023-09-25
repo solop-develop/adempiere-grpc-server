@@ -19,52 +19,119 @@ option java_package = "org.spin.backend.grpc.store";
 option java_outer_classname = "ADempiereWebStore";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
 
+// Base URL
+// /store/web-store/
 
 package store;
 
 //	Web Store Service used for ADempiere integration with vue store front api
 service WebStore {
 	//	Create Customer: POST /api/user/create
-	rpc CreateCustomer(CreateCustomerRequest) returns (Customer) {}
+	rpc CreateCustomer(CreateCustomerRequest) returns (Customer) {
+		option (google.api.http) = { 
+			post: "/store/web-store/user",
+			body: "*"
+		};
+	}
 	//  Reset Password from Store: POST /api/user/reset-password
-  	rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {}
+  	rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {
+		option (google.api.http) = { 
+			post: "/store/web-store/user/reset-password",
+			body: "*"
+		};
+	}
 	//  Change Password: POST /api/user/change-password
-	rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {}
+	rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {
+		option (google.api.http) = { 
+			post: "/store/web-store/user/change-password",
+			body: "*"
+		};
+	}
 	//  Get Customer: GET /api/user/me
-	rpc GetCustomer(GetCustomerRequest) returns (Customer) {}
+	rpc GetCustomer(GetCustomerRequest) returns (Customer) {
+		option (google.api.http) = { get: "/store/web-store/user/me" };
+	}
 	//	Update Cutomer Info: POST /api/user/me
-	rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer) {}
+	rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer) {
+		option (google.api.http) = { 
+			post: "/store/web-store/user/me",
+			body: "*"
+		};
+	}
 	//  Get Stock: GET /api/stock/check/sku
-	rpc GetStock(GetStockRequest) returns (Stock) {}
+	rpc GetStock(GetStockRequest) returns (Stock) {
+		option (google.api.http) = { get: "/store/web-store/stock/{sku}" };
+	}
 	//  List Stock: GET /api/stock/list
-	rpc ListStocks(ListStocksRequest) returns (ListStocksResponse) {}
+	rpc ListStocks(ListStocksRequest) returns (ListStocksResponse) {
+		option (google.api.http) = { get: "/store/web-store/stock/list/{sku}" };
+	}
 	//  List Products: GET /api/product/list
-	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
+	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
+		option (google.api.http) = { get: "/store/web-store/product/list" };
+	}
 	//  List Products: GET /api/product/render-list
-	rpc ListRenderProducts(ListRenderProductsRequest) returns (ListRenderProductsResponse) {}
+	rpc ListRenderProducts(ListRenderProductsRequest) returns (ListRenderProductsResponse) {
+		option (google.api.http) = { get: "/store/web-store/product/render-list" };
+	}
 	//	Service for get a resource from resource id: GET /img
-	rpc GetResource(GetResourceRequest) returns (stream Resource) {}
+	rpc GetResource(GetResourceRequest) returns (stream Resource) {
+		option (google.api.http) = { get: "/store/web-store/img" };
+	}
 	//	Create Cart: POST /api/cart/create
-	rpc CreateCart(CreateCartRequest) returns (Cart) {}
+	rpc CreateCart(CreateCartRequest) returns (Cart) {
+		option (google.api.http) = { 
+			post: "/store/web-store/cart/create",
+			body: "*"
+		};
+	}
 	//	Pull Cart: GET /api/cart/pull
-	rpc GetCart(GetCartRequest) returns (Cart) {}
+	rpc GetCart(GetCartRequest) returns (Cart) {
+		option (google.api.http) = { get: "/store/web-store/cart/pull" };
+	}
 	//	Update Cart: POST /api/cart/update
-	rpc UpdateCart(UpdateCartRequest) returns (CartItem) {}
+	rpc UpdateCart(UpdateCartRequest) returns (CartItem) {
+		option (google.api.http) = { 
+			post: "/store/web-store/cart/update",
+			body: "*"
+		};
+	}
 	//	Create Order: POST /api/order/create
-	rpc CreateOrder(CreateOrderRequest) returns (Order) {}
+	rpc CreateOrder(CreateOrderRequest) returns (Order) {
+		option (google.api.http) = { 
+			post: "/store/web-store/order/create",
+			body: "*"
+		};
+	}
 	//	Get Payment Methods: GET /api/cart/payment-methods
-	rpc ListPaymentMethods(ListPaymentMethodsRequest) returns (ListPaymentMethodsResponse) {}
+	rpc ListPaymentMethods(ListPaymentMethodsRequest) returns (ListPaymentMethodsResponse) {
+		option (google.api.http) = { get: "/store/web-store/cart/payment-methods" };
+	}
 	//	Get Shipping Methods: POST /api/cart/shipping-methods
-	rpc ListShippingMethods(ListShippingMethodsRequest) returns (ListShippingMethodsResponse) {}
+	rpc ListShippingMethods(ListShippingMethodsRequest) returns (ListShippingMethodsResponse) {
+		option (google.api.http) = { get: "/store/web-store/cart/shipping-methods" };
+	}
 	//	Get Shipping Information: POST /api/cart/shipping-information
-	rpc GetShippingInformation(GetShippingInformationRequest) returns (ShippingInformation) {}
+	rpc GetShippingInformation(GetShippingInformationRequest) returns (ShippingInformation) {
+		option (google.api.http) = { get: "/store/web-store/cart/shipping-information" };
+	}
 	//	Get Cart Totals: GET /api/cart/totals
-	rpc GetCartTotals(GetCartTotalsRequest) returns (CartTotals) {}
+	rpc GetCartTotals(GetCartTotalsRequest) returns (CartTotals) {
+		option (google.api.http) = { get: "/store/web-store/cart/totals" };
+	}
 	//	Post Cart: POST /api/cart/delete
-	rpc DeleteCartItem(DeleteCartItemRequest) returns (google.protobuf.Empty) {}
+	rpc DeleteCartItem(DeleteCartItemRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { 
+			post: "/store/web-store/cart/delete",
+			body: "*"
+		};
+	}
 	//	GET Orders History: GET /api/user/order-history
-	rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {}
+	rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
+		option (google.api.http) = { get: "/store/web-store/user/order-history" };
+	}
 }
 
 //	https://sfa-docs.now.sh/guide/default-modules/api.html#get-vsbridgeuserorder-history
