@@ -47,7 +47,7 @@ service CoreFunctionality {
 	}
 	//	Get Business Partner from search
 	rpc GetBusinessPartner(GetBusinessPartnerRequest) returns (BusinessPartner) {
-		option (google.api.http) = { get: "/core-functionality/business-partners/{id}" };
+		option (google.api.http) = { get: "/core-functionality/business-partners/{search_value}" };
 	}
 	//	Create Business Partner
 	rpc CreateBusinessPartner(CreateBusinessPartnerRequest) returns (BusinessPartner) {
@@ -66,7 +66,7 @@ service CoreFunctionality {
 	}
 	//	List Product Conversion UOM
 	rpc ListProductConversion(ListProductConversionRequest) returns (ListProductConversionResponse) {
-		option (google.api.http) = { get: "/core-functionality/product-conversions" };
+		option (google.api.http) = { get: "/core-functionality/product-conversions/{id}" };
 	}
 }
 
@@ -313,7 +313,7 @@ message ListProductConversionRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 product_id = 8;
+	int32 id = 8;
 }
 
 // Product UOM Conversion

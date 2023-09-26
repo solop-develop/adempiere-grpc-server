@@ -316,7 +316,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 	}
 
 	private ListProductConversionResponse.Builder convertListProductConversion(Properties context, ListProductConversionRequest request) {
-		int productId = request.getProductId();
+		int productId = request.getId();
 		if (productId <= 0) {
 			throw new AdempiereException("@M_Product_ID@ @NotFound@");
 		}
