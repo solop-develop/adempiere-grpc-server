@@ -34,19 +34,11 @@ public class DictionaryServiceLogic {
 
 
 	public static ListFieldsResponse.Builder listSearchInfoFields(ListFieldsRequest request) {
-		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableName(), true)) {
+		if (Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
-
 		Properties context = Env.getCtx();
-		MTable table = null;
-		int tableId = request.getTableId();
-		if (tableId > 0) {
-			table = MTable.get(context, tableId);
-		} else if (!Util.isEmpty(request.getTableName(), true)) {
-			table = MTable.get(context, request.getTableName());
-		}
-
+		MTable table = MTable.get(context, request.getTableName());
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}

@@ -58,13 +58,13 @@ service Dictionary {
 	}
 	// List Search Info Fields
 	rpc ListSearchInfoFields(ListFieldsRequest) returns (ListFieldsResponse) {
-		option (google.api.http) = { get: "/dictionary/search-info-fields" };
+		option (google.api.http) = { get: "/dictionary/search-info-fields/{table_name}" };
 	}
 	rpc ListIdentifiersFields(ListFieldsRequest) returns (ListFieldsResponse) {
-		option (google.api.http) = { get: "/dictionary/identifier-fields" };
+		option (google.api.http) = { get: "/dictionary/identifier-fields/{table_name}" };
 	}
 	rpc ListTableSearchFields(ListFieldsRequest) returns (ListFieldsResponse) {
-		option (google.api.http) = { get: "/dictionary/table-search-fields" };
+		option (google.api.http) = { get: "/dictionary/table-search-fields/{table_name}" };
 	}
 }
 
@@ -75,7 +75,7 @@ message EntityRequest {
 
 // Field request
 message FieldRequest {
-	int32 field_id = 1;
+	int32 id = 1;
 	int32 column_id = 2;
 	int32 element_id = 3;
 	// Table_name + _column_name
@@ -86,7 +86,7 @@ message FieldRequest {
 
 // Reference request
 message ReferenceRequest {
-	int32 reference_id = 1;
+	int32 id = 1;
 	// Table_name + column_name assumed that it is Table Direct
 	string column_name = 2;
 }
@@ -363,9 +363,7 @@ message ListFieldsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	// with table
-	int32 table_id = 8;
-	string table_name = 9;
+	string table_name = 8;
 }
 
 message ListFieldsResponse {

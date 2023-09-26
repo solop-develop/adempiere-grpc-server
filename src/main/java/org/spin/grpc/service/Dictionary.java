@@ -1097,8 +1097,8 @@ public class Dictionary extends DictionaryImplBase {
 	private Field.Builder getField(FieldRequest request) {
 		Field.Builder builder = Field.newBuilder();
 		//	For UUID
-		if(request.getFieldId() > 0) {
-			builder = convertField(Env.getCtx(), request.getFieldId());
+		if(request.getId() > 0) {
+			builder = convertField(Env.getCtx(), request.getId());
 		} else if(request.getColumnId() > 0) {
 			builder = convertField(Env.getCtx(), MColumn.get(Env.getCtx(), request.getColumnId()));
 		} else if(request.getElementId() > 0) {
@@ -1655,8 +1655,8 @@ public class Dictionary extends DictionaryImplBase {
 	private Reference.Builder convertReference(Properties context, ReferenceRequest request) {
 		Reference.Builder builder = Reference.newBuilder();
 		MLookupInfo info = null;
-		if(request.getReferenceId() > 0) {
-			X_AD_Reference reference = new X_AD_Reference(context, request.getReferenceId(), null);
+		if(request.getId() > 0) {
+			X_AD_Reference reference = new X_AD_Reference(context, request.getId(), null);
 			if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_TableValidation)) {
 				info = MLookupFactory.getLookupInfo(context, 0, 0, DisplayType.Search, Language.getLanguage(Env.getAD_Language(context)), null, reference.getAD_Reference_ID(), false, null, false);
 			} else if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_ListValidation)) {
@@ -1720,17 +1720,11 @@ public class Dictionary extends DictionaryImplBase {
 	}
 
 	private ListFieldsResponse.Builder getIdentifierFields(ListFieldsRequest request) {
-		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableName(), true)) {
+		if (Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 		Properties context = Env.getCtx();
-		MTable table = null;
-		int tableId = request.getTableId();
-		if (tableId > 0) {
-			table = MTable.get(context, tableId);
-		} else if (!Util.isEmpty(request.getTableName(), true)) {
-			table = MTable.get(context, request.getTableName());
-		}
+		MTable table = MTable.get(context, request.getTableName());
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
@@ -1795,19 +1789,12 @@ public class Dictionary extends DictionaryImplBase {
 	}
 
 	private ListFieldsResponse.Builder getTableSearchFields(ListFieldsRequest request) {
-		if (request.getTableId() <= 0 && Util.isEmpty(request.getTableName(), true)) {
+		if (Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
-
 		Properties context = Env.getCtx();
-		MTable table = null;
-		int tableId = request.getTableId();
-		if (tableId > 0) {
-			table = MTable.get(context, tableId);
-		} else if (!Util.isEmpty(request.getTableName(), true)) {
-			table = MTable.get(context, request.getTableName());
-		}
-		if (table == null || table.getAD_Table_ID() < 1) {
+		MTable table = MTable.get(context, request.getTableName());
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 
