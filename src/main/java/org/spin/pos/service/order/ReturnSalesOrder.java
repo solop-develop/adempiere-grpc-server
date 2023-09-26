@@ -110,14 +110,9 @@ public class ReturnSalesOrder {
 				throw new AdempiereException("@" + ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + "@ @NotFound@");
 			}
 			BigDecimal availableQuantity = RMAUtil.getAvailableQuantityForReturn(sourcerOrderLine.getC_OrderLine_ID(), rmaLineId, sourcerOrderLine.getQtyEntered(), quantity);
-			if(availableQuantity.compareTo(Env.ZERO) >= 0) {
+			if(availableQuantity.compareTo(Env.ZERO) > 0) {
 				//	Update order quantity
-				BigDecimal quantityToOrder = quantity;
-				if(quantity == null) {
-					quantityToOrder = rmaLine.getQtyEntered();
-					quantityToOrder = quantityToOrder.add(Env.ONE);
-				}
-				OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
+				OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), availableQuantity);
 			} else {
 				throw new AdempiereException("@QtyInsufficient@");
 			}
@@ -166,22 +161,18 @@ public class ReturnSalesOrder {
 					quantityToOrder = rmaLine.getQtyEntered();
 					quantityToOrder = quantityToOrder.add(Env.ONE);
 				}
-    			if(availableQuantity.compareTo(Env.ZERO) >= 0) {
+    			if(availableQuantity.compareTo(Env.ZERO) > 0) {
     				//	Update order quantity
-    				OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
+    				OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), availableQuantity);
     				returnOrderReference.set(rmaLine);
     			} else {
     				throw new AdempiereException("@QtyInsufficient@");
     			}
 			} else {
-				BigDecimal quantityToOrder = quantity;
-				if(quantity == null) {
-					quantityToOrder = Env.ONE;
-				}
-		        if(availableQuantity.compareTo(Env.ZERO) >= 0) {
+				if(availableQuantity.compareTo(Env.ZERO) > 0) {
 		        	MOrderLine rmaLine = RMAUtil.copyRMALineFromOrder(rma, sourcerOrderLine, transactionName);
 		        	Optional.ofNullable(descrption).ifPresent(description -> rmaLine.setDescription(description));
-		        	OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), quantityToOrder);
+		        	OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), availableQuantity);
 		        	returnOrderReference.set(rmaLine);
     			} else {
     				throw new AdempiereException("@QtyInsufficient@");

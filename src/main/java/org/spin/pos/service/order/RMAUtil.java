@@ -370,12 +370,20 @@ public class RMAUtil {
      */
     public static BigDecimal getAvailableQuantityForReturn(int sourceOrderLineId, BigDecimal sourceQuantity, BigDecimal quantityToReturn) {
     	BigDecimal quantity = getReturnedQuantity(sourceOrderLineId);
-    	return Optional.ofNullable(sourceQuantity).orElse(Env.ZERO).subtract(Optional.ofNullable(quantity).orElse(Env.ZERO)).subtract(Optional.ofNullable(quantityToReturn).orElse(Env.ZERO));
+    	BigDecimal availableQuantity = Optional.ofNullable(sourceQuantity).orElse(Env.ZERO).subtract(Optional.ofNullable(quantity).orElse(Env.ZERO));
+    	if(availableQuantity.compareTo(quantityToReturn) <= 0) {
+    		return availableQuantity;
+    	}
+    	return quantityToReturn;
     }
     
     public static BigDecimal getAvailableQuantityForReturn(int sourceOrderLineId, int rmaLineId, BigDecimal sourceQuantity, BigDecimal quantityToReturn) {
     	BigDecimal quantity = getReturnedQuantityExcludeRMA(sourceOrderLineId, rmaLineId);
-    	return Optional.ofNullable(sourceQuantity).orElse(Env.ZERO).subtract(Optional.ofNullable(quantity).orElse(Env.ZERO)).subtract(Optional.ofNullable(quantityToReturn).orElse(Env.ZERO));
+    	BigDecimal availableQuantity = Optional.ofNullable(sourceQuantity).orElse(Env.ZERO).subtract(Optional.ofNullable(quantity).orElse(Env.ZERO));
+    	if(availableQuantity.compareTo(quantityToReturn) <= 0) {
+    		return availableQuantity;
+    	}
+    	return quantityToReturn;
     }
     
     /**
