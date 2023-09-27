@@ -392,7 +392,7 @@ public class RMAUtil {
      * @return
      */
     public static BigDecimal getReturnedQuantity(int sourceOrderLineId) {
-    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, "ECA14_Source_OrderLine_ID = ? "
+    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + " = ? "
     			+ "AND EXISTS(SELECT 1 FROM C_Order o WHERE o.C_Order_ID = C_OrderLine.C_Order_ID)", null)
     			.setParameters(sourceOrderLineId)
     			.aggregate(I_C_OrderLine.COLUMNNAME_QtyEntered, Query.AGGREGATE_SUM);
@@ -400,7 +400,7 @@ public class RMAUtil {
     }
     
     public static BigDecimal getReturnedQuantityExcludeRMA(int sourceOrderLineId, int rmaLineId) {
-    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, "ECA14_Source_OrderLine_ID = ? AND C_OrderLine_ID <> ? "
+    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + " = ? AND C_OrderLine_ID <> ? "
     			+ "AND EXISTS(SELECT 1 FROM C_Order o WHERE o.C_Order_ID = C_OrderLine.C_Order_ID)", null)
     			.setParameters(sourceOrderLineId, rmaLineId)
     			.aggregate(I_C_OrderLine.COLUMNNAME_QtyEntered, Query.AGGREGATE_SUM);

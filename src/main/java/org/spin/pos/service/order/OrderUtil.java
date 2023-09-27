@@ -42,6 +42,7 @@ import org.compiere.process.DocAction;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.spin.base.util.RecordUtil;
+import org.spin.pos.util.ColumnsAdded;
 
 /**
  * A util class for change values for documents
@@ -363,21 +364,28 @@ public class OrderUtil {
     
     /**
      * Create all lines from order
-     * @param sourceOrder
+     * @param sourceRma
      * @param targetOrder
      * @param transactionName
      */
-    public static void copyOrderLinesFromRMA(MOrder sourceOrder, MOrder targetOrder, String transactionName) {
-    	new Query(sourceOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
-    		.setParameters(sourceOrder.getC_Order_ID())
+    public static void copyOrderLinesFromRMA(MOrder sourceRma, MOrder targetOrder, String transactionName) {
+    	new Query(sourceRma.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
+    		.setParameters(sourceRma.getC_Order_ID())
     		.setClient_ID()
     		.getIDsAsList()
-    		.forEach(sourceOrderLineId -> {
-    			MOrderLine sourcerOrderLine = new MOrderLine(sourceOrder.getCtx(), sourceOrderLineId, transactionName);
+    		.forEach(sourceRmaLineId -> {
+    			MOrderLine sourcerRmaLine = new MOrderLine(sourceRma.getCtx(), sourceRmaLineId, transactionName);
 				//	Create new Invoice Line
-				MOrderLine targetOrderLine = copyOrderLine(sourcerOrderLine, targetOrder, true, transactionName);
-				targetOrderLine.set_ValueOfColumn("ECA14_Source_RMALine_ID", sourcerOrderLine.getC_OrderLine_ID());
-				OrderUtil.updateUomAndQuantity(targetOrderLine, targetOrderLine.getC_UOM_ID(), targetOrderLine.getQtyEntered());
+				MOrderLine targetOrderLine = copyOrderLine(sourcerRmaLine, targetOrder, true, transactionName);
+				targetOrderLine.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID, sourcerRmaLine.getC_OrderLine_ID());
+				BigDecimal availableQuantity = getAvailableQuantityForSell(sourcerRmaLine.getC_OrderLine_ID(), sourcerRmaLine.getQtyEntered(), targetOrderLine.getQtyEntered());
+				if(availableQuantity.compareTo(Env.ZERO) > 0) {
+					OrderUtil.updateUomAndQuantity(targetOrderLine, targetOrderLine.getC_UOM_ID(), availableQuantity);
+    			}
+				//	Just copy available
+//				else {
+//    				throw new AdempiereException("@QtyInsufficient@");
+//    			}
     		});
     }
     
@@ -535,4 +543,50 @@ public class OrderUtil {
 		return totalPaymentAmount;
 	}
 
+    /**
+     * Get Available Quantity for Return Order
+     * @param sourceRmaLineId
+     * @param sourceQuantity
+     * @param quantityToReturn
+     * @return
+     */
+    public static BigDecimal getAvailableQuantityForSell(int sourceRmaLineId, BigDecimal sourceQuantity, BigDecimal quantityToReturn) {
+    	BigDecimal quantity = getSoldQuantity(sourceRmaLineId);
+    	BigDecimal availableQuantity = Optional.ofNullable(sourceQuantity).orElse(Env.ZERO).subtract(Optional.ofNullable(quantity).orElse(Env.ZERO));
+    	if(availableQuantity.compareTo(quantityToReturn) <= 0) {
+    		return availableQuantity;
+    	}
+    	return quantityToReturn;
+    }
+    
+    public static BigDecimal getAvailableQuantityForSell(int sourceRmaLineId, int orderLineId, BigDecimal sourceQuantity, BigDecimal quantityToReturn) {
+    	BigDecimal quantity = getSoldQuantityExcludeSalesOrder(sourceRmaLineId, orderLineId);
+    	BigDecimal availableQuantity = Optional.ofNullable(sourceQuantity).orElse(Env.ZERO).subtract(Optional.ofNullable(quantity).orElse(Env.ZERO));
+    	if(availableQuantity.compareTo(quantityToReturn) <= 0) {
+    		return availableQuantity;
+    	}
+    	return quantityToReturn;
+    }
+    
+    /**
+     * Get sum of complete returned quantity for order
+     * @param sourceRmaLineId
+     * @return
+     */
+    public static BigDecimal getSoldQuantity(int sourceRmaLineId) {
+    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID + " = ? "
+    			+ "AND EXISTS(SELECT 1 FROM C_Order o WHERE o.C_Order_ID = C_OrderLine.C_Order_ID)", null)
+    			.setParameters(sourceRmaLineId)
+    			.aggregate(I_C_OrderLine.COLUMNNAME_QtyEntered, Query.AGGREGATE_SUM);
+    	return Optional.ofNullable(quantity).orElse(Env.ZERO);
+    }
+    
+    public static BigDecimal getSoldQuantityExcludeSalesOrder(int sourceRmaLineId, int salesOrderLineId) {
+    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID + " = ? AND C_OrderLine_ID <> ? "
+    			+ "AND EXISTS(SELECT 1 FROM C_Order o WHERE o.C_Order_ID = C_OrderLine.C_Order_ID)", null)
+    			.setParameters(sourceRmaLineId, salesOrderLineId)
+    			.aggregate(I_C_OrderLine.COLUMNNAME_QtyEntered, Query.AGGREGATE_SUM);
+    	return Optional.ofNullable(quantity).orElse(Env.ZERO);
+    }
+	
 }

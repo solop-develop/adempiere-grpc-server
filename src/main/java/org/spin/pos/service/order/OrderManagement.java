@@ -192,7 +192,7 @@ public class OrderManagement {
 			}
 			targetOrder.set_ValueOfColumn("AssignedSalesRep_ID", currentUser.getAD_User_ID());
 			//	Set reference
-			targetOrder.set_ValueOfColumn("ECA14_Source_RMA_ID", sourceOrder.getC_Order_ID());
+			targetOrder.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID, sourceOrder.getC_Order_ID());
 			targetOrder.saveEx();
 			OrderUtil.copyOrderLinesFromRMA(sourceOrder, targetOrder, transactionName);
 			orderReference.set(targetOrder);

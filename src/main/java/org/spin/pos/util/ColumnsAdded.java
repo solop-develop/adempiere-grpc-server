@@ -71,6 +71,8 @@ public class ColumnsAdded {
 	public static final String COLUMNNAME_AssignedSalesRep_ID = "AssignedSalesRep_ID";
 	public static final String COLUMNNAME_ECA14_Source_OrderLine_ID = "ECA14_Source_OrderLine_ID";
 	public static final String COLUMNNAME_ECA14_Source_Order_ID = "ECA14_Source_Order_ID";
+	public static final String COLUMNNAME_ECA14_Source_RMALine_ID = "ECA14_Source_RMALine_ID";
+	public static final String COLUMNNAME_ECA14_Source_RMA_ID = "ECA14_Source_RMA_ID";
 	/**	For Payment	*/
 	public static final String COLUMNNAME_ECA14_Invoice_Reference_ID = "ECA14_Invoice_Reference_ID";
 	public static final String COLUMNNAME_ECA14_Reference_Amount = "ECA14_Reference_Amount";
