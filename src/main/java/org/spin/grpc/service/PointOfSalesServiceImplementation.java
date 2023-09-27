@@ -1741,14 +1741,22 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 				//	Add parameters
 				parameters.add(request.getSearchValue());
 			}
+			if(request.getDocumentTypeId() > 0) {
+				sql.append(" AND i.C_DocType_ID = ?");
+				parameters.add(request.getDocumentTypeId());
+			}
 			sql.append(whereClause);
 			sql.append(" ORDER BY i.DateInvoiced DESC");
 			count = CountUtil.countRecords(sql.toString(), "C_Invoice i", parameters);
 			pstmt = DB.prepareStatement(sql.toString(), null);
-			pstmt.setInt(1, request.getCustomerId());
-			pstmt.setInt(2, pos.getAD_Org_ID());
+			int index = 1;
+			pstmt.setInt(index++, request.getCustomerId());
+			pstmt.setInt(index++, pos.getAD_Org_ID());
 			if(whereClause.length() > 0) {
-				pstmt.setString(3, request.getSearchValue());
+				pstmt.setString(index++, request.getSearchValue());
+			}
+			if(request.getDocumentTypeId() > 0) {
+				pstmt.setInt(index++, request.getDocumentTypeId());
 			}
 			//	Get from Query
 			rs = pstmt.executeQuery();
@@ -3341,6 +3349,7 @@ public class PointOfSalesServiceImplementation extends StoreImplBase {
 					.setMaximumRefundAllowed(ValueUtil.getDecimalFromBigDecimal((BigDecimal) availablePaymentMethod.get_Value("MaximumRefundAllowed")))
 					.setMaximumDailyRefundAllowed(ValueUtil.getDecimalFromBigDecimal((BigDecimal) availablePaymentMethod.get_Value("MaximumDailyRefundAllowed")))
 					.setIsPaymentReference(availablePaymentMethod.get_ValueAsBoolean("IsPaymentReference"))
+					.setDocumentTypeId(availablePaymentMethod.get_ValueAsInt("C_DocTypeCreditMemo_ID"))
 				.setPaymentMethod(paymentMethodBuilder)
 			;
 					if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
