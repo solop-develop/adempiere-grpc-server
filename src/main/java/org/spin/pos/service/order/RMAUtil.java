@@ -236,6 +236,9 @@ public class RMAUtil {
      * @param transactionName
      */
     public static void generateCreditMemoFromRMA(MOrder returnOrder, String transactionName) {
+    	if(!OrderUtil.isInvoiced(returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID), transactionName)) {
+    		return;
+    	}
     	MInvoice invoice = new MInvoice (returnOrder, 0, OrderUtil.getToday());
 		invoice.saveEx();
     	//	Convert Lines
@@ -267,6 +270,9 @@ public class RMAUtil {
      * @param transactionName
      */
     public static void generateReturnFromRMA(MOrder returnOrder, String transactionName) {
+    	if(!OrderUtil.isDelivered(returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID), transactionName)) {
+    		return;
+    	}
     	MInOut shipment = new MInOut (returnOrder, 0, OrderUtil.getToday());
 		shipment.setM_Warehouse_ID(returnOrder.getM_Warehouse_ID());	//	sets Org too
 		shipment.saveEx();

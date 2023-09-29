@@ -39,6 +39,7 @@ import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.spin.base.util.RecordUtil;
@@ -59,6 +60,20 @@ public class OrderUtil {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 		return order;
+	}
+	
+    public static boolean isDelivered(int orderId, String transactionName) {
+ 		String sql = "SELECT M_InOut_ID FROM M_InOut "
+			+ "WHERE C_Order_ID=? AND DocStatus IN ('CO','CL')";
+		int deliveryId = DB.getSQLValue(transactionName, sql, orderId);
+		return deliveryId > 0;
+	}
+    
+    public static boolean isInvoiced(int orderId, String transactionName) {
+    	String sql = "SELECT C_Invoice_ID FROM C_Invoice "
+    			+ "WHERE C_Order_ID=? AND DocStatus IN ('CO','CL')";
+    		int invoiceId = DB.getSQLValue(transactionName, sql, orderId);
+    		return invoiceId > 0;
 	}
 	
 	/**
