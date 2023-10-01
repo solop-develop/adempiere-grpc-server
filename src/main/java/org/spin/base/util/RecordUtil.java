@@ -188,6 +188,20 @@ public class RecordUtil {
 
 
 	/**
+	 * Evaluate if is valid identifier
+	 * @param id
+	 * @param accesLevel
+	 * @return
+	 */
+	public static boolean validateRecordId(int id, String accesLevel) {
+		if (!isValidId(id, accesLevel)) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@ / @UUID@");
+		}
+		return true;
+	}
+
+
+	/**
 	 * Get UUID from record id
 	 * @param tableName
 	 * @param id
@@ -506,8 +520,10 @@ public class RecordUtil {
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
-				Entity.Builder valueObjectBuilder = Entity.newBuilder();
-				valueObjectBuilder.setTableName(table.getTableName());
+				Entity.Builder entityBuilder = Entity.newBuilder()
+					.setTableName(table.getTableName())
+				;
+				Struct.Builder values = Struct.newBuilder();
 				ResultSetMetaData metaData = rs.getMetaData();
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
@@ -520,24 +536,33 @@ public class RecordUtil {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
 							}
-							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()).build());
+							values.putFields(
+								columnName,
+								valueBuilder.build()
+							);
 							continue;
 						}
 						if (field.isKey()) {
-							valueObjectBuilder.setId(rs.getInt(index));
+							entityBuilder.setId(rs.getInt(index));
 						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
-						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
-						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()).build());
-						}
+						Object value = rs.getObject(index);
+						valueBuilder = ValueUtil.getValueFromReference(
+							value,
+							field.getAD_Reference_ID()
+						);
+						values.putFields(
+							fieldColumnName,
+							valueBuilder.build()
+						);
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
 					}
 				}
 				//	
-				builder.addRecords(valueObjectBuilder.build());
+				entityBuilder.setValues(values);
+				builder.addRecords(entityBuilder.build());
 				recordCount++;
 			}
 		} catch (Exception e) {
@@ -547,9 +572,7 @@ public class RecordUtil {
 			DB.close(rs, pstmt);
 		}
 		//	Set record counts
-		if (builder.getRecordCount() <= 0) {
-			builder.setRecordCount(recordCount);
-		}
+		builder.setRecordCount(recordCount);
 		//	Return
 		return builder;
 	}

@@ -100,7 +100,6 @@ public class LogsConvertUtil {
 	 */
 	public static EntityLog.Builder convertRecordLogHeader(MChangeLog recordLog) {
 		MTable table = MTable.get(recordLog.getCtx(), recordLog.getAD_Table_ID());
-		MUser user = MUser.get(recordLog.getCtx(), recordLog.getCreatedBy());
 		EntityLog.Builder builder = EntityLog.newBuilder();
 		builder.setLogId(recordLog.getAD_ChangeLog_ID());
 		builder.setId(recordLog.getRecord_ID());
@@ -116,9 +115,17 @@ public class LogsConvertUtil {
 			ValueUtil.validateNull(displayedName)
 		);
 
+		// created by
+		MUser user = MUser.get(recordLog.getCtx(), recordLog.getCreatedBy());
+		builder.setCreatedBy(user.getAD_User_ID());
+		builder.setCreatedByName(ValueUtil.validateNull(user.getName()));
+
+		// updated by
+		user = MUser.get(recordLog.getCtx(), recordLog.getUpdatedBy());
+		builder.setUpdatedBy(user.getAD_User_ID());
+		builder.setUpdatedByName(ValueUtil.validateNull(user.getName()));
+
 		builder.setSessionId(recordLog.getAD_Session_ID());
-		builder.setUserId(user.getAD_User_ID());
-		builder.setUserName(ValueUtil.validateNull(user.getName()));
 		builder.setTransactionName(ValueUtil.validateNull(recordLog.getTrxName()));
 		builder.setLogDate(ValueUtil.getTimestampFromDate(recordLog.getCreated()));
 		if(recordLog.getEventChangeLog().endsWith(MChangeLog.EVENTCHANGELOG_Insert)) {

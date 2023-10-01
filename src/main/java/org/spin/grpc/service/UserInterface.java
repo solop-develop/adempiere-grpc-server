@@ -129,7 +129,6 @@ import org.spin.backend.grpc.common.ExistsReferencesRequest;
 import org.spin.backend.grpc.common.ExistsReferencesResponse;
 import org.spin.backend.grpc.common.GetContextInfoValueRequest;
 import org.spin.backend.grpc.common.GetDefaultValueRequest;
-import org.spin.backend.grpc.common.GetLookupItemRequest;
 import org.spin.backend.grpc.common.GetPrivateAccessRequest;
 import org.spin.backend.grpc.common.GetRecordAccessRequest;
 import org.spin.backend.grpc.common.GetReportOutputRequest;
@@ -239,24 +238,6 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 	}
 
-	@Override
-	public void getLookupItem(GetLookupItemRequest request, StreamObserver<LookupItem> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			LookupItem.Builder lookupValue = convertLookupItem(request);
-			responseObserver.onNext(lookupValue.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
 	@Override
 	public void listLookupItems(ListLookupItemsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
@@ -888,7 +869,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	@Override
 	public void getTabEntity(GetTabEntityRequest request, StreamObserver<Entity> responseObserver) {
 		try {
-			Entity.Builder entityValue = getEntity(request);
+			Entity.Builder entityValue = getTabEntity(request);
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -906,7 +887,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private Entity.Builder getEntity(GetTabEntityRequest request) {
+	private Entity.Builder getTabEntity(GetTabEntityRequest request) {
 		if (request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
@@ -951,6 +932,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
+				Struct.Builder values = Struct.newBuilder();
 				ResultSetMetaData metaData = rs.getMetaData();
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
@@ -963,7 +945,7 @@ public class UserInterface extends UserInterfaceImplBase {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
 							}
-							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()).build());
+							values.putFields(columnName, valueBuilder.build());
 							continue;
 						}
 						if (field.isKey()) {
@@ -971,15 +953,15 @@ public class UserInterface extends UserInterfaceImplBase {
 						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
-						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
-						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()).build());
-						}
+						Object value = rs.getObject(index);
+						valueBuilder = ValueUtil.getValueFromReference(value, field.getAD_Reference_ID());
+						values.putFields(fieldColumnName, valueBuilder.build());
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
 						e.printStackTrace();
 					}
 				}
+				valueObjectBuilder.setValues(values);
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -1030,7 +1012,8 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}
 
-		String tableName = MTable.getTableName(Env.getCtx(), tab.getAD_Table_ID());
+		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
+		String tableName = table.getTableName();
 
 		//	Fill context
 		Properties context = Env.getCtx();
@@ -1101,7 +1084,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
 		parsedSQL = parsedSQL + orderByClause;
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), tableName), parsedSQL, params);
+		builder = RecordUtil.convertListEntitiesResult(table, parsedSQL, params);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -1174,7 +1157,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setId(entity.get_ID())
 		;
 
-		Entity.Builder builder = getEntity(getEntityBuilder.build());
+		Entity.Builder builder = getTabEntity(getEntityBuilder.build());
 		return builder;
 	}
 
@@ -1239,7 +1222,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setId(entity.get_ID())
 		;
 
-		Entity.Builder builder = getEntity(getEntityBuilder.build());
+		Entity.Builder builder = getTabEntity(getEntityBuilder.build());
 		return builder;
 	}
 
@@ -2293,6 +2276,30 @@ public class UserInterface extends UserInterfaceImplBase {
 					}
 				}
 			}
+		}  else if(request.getBrowseFieldToId() > 0) {
+			MBrowseField browseField = (MBrowseField) RecordUtil.getEntity(Env.getCtx(), I_AD_Browse_Field.Table_Name, request.getBrowseFieldToId(), null);
+			int browseFieldId = browseField.getAD_Browse_Field_ID();
+			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
+			if(customFields != null) {
+				Optional<MBrowseField> maybeField = customFields.stream().filter(customField -> customField.getAD_Browse_Field_ID() == browseFieldId).findFirst();
+				if(maybeField.isPresent()) {
+					browseField = maybeField.get();
+					defaultValue = browseField.getDefaultValue2(); // value to
+					referenceId = browseField.getAD_Reference_ID();
+					referenceValueId = browseField.getAD_Reference_Value_ID();
+					validationRuleId = browseField.getAD_Val_Rule_ID();
+					MViewColumn viewColumn = browseField.getAD_View_Column();
+					if(viewColumn.getAD_Column_ID() > 0) {
+						MColumn column = MColumn.get(Env.getCtx(), viewColumn.getAD_Column_ID());
+						columnName = column.getColumnName();
+						if(Util.isEmpty(defaultValue) && !Util.isEmpty(column.getDefaultValue())) {
+							defaultValue = column.getDefaultValue();
+						}
+					} else {
+						columnName = browseField.getAD_Element().getColumnName();
+					}
+				}
+			}
 		} else if(request.getProcessParameterId() > 0) {
 			MProcessPara processParameter = (MProcessPara) RecordUtil.getEntity(Env.getCtx(), I_AD_Process_Para.Table_Name, request.getProcessParameterId(), null);
 			int processParameterId = processParameter.getAD_Process_Para_ID();
@@ -2306,6 +2313,21 @@ public class UserInterface extends UserInterfaceImplBase {
 					validationRuleId = processParameter.getAD_Val_Rule_ID();
 					columnName = processParameter.getColumnName();
 					defaultValue = processParameter.getDefaultValue();
+				}
+			}
+		} else if(request.getProcessParameterToId() > 0) {
+			MProcessPara processParameter = (MProcessPara) RecordUtil.getEntity(Env.getCtx(), I_AD_Process_Para.Table_Name, request.getProcessParameterToId(), null);
+			int processParameterId = processParameter.getAD_Process_Para_ID();
+			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
+			if(customParameters != null) {
+				Optional<MProcessPara> maybeParameter = customParameters.stream().filter(customField -> customField.getAD_Process_Para_ID() == processParameterId).findFirst();
+				if(maybeParameter.isPresent()) {
+					processParameter = maybeParameter.get();
+					referenceId = processParameter.getAD_Reference_ID();
+					referenceValueId = processParameter.getAD_Reference_Value_ID();
+					validationRuleId = processParameter.getAD_Val_Rule_ID();
+					columnName = processParameter.getColumnName();
+					defaultValue = processParameter.getDefaultValue2(); // value to
 				}
 			}
 		} else if(request.getColumnId() > 0) {
@@ -2343,6 +2365,8 @@ public class UserInterface extends UserInterfaceImplBase {
 	 */
 	private DefaultValue.Builder getDefaultKeyAndValue(Map<String, Value> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
 		DefaultValue.Builder builder = DefaultValue.newBuilder();
+		Struct.Builder values = Struct.newBuilder();
+		builder.setValues(values);
 		if(Util.isEmpty(defaultValue, true)) {
 			return builder;
 		}
@@ -2532,82 +2556,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Return values
 		return builder;
 	}
-	
-	/**
-	 * Convert Lookup from query
-	 * @param request
-	 * @return
-	 */
-	private LookupItem.Builder convertLookupItem(GetLookupItemRequest request) {
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			request.getReferenceId(),
-			request.getFieldId(),
-			request.getProcessParameterId(),
-			request.getBrowseFieldId(),
-			request.getColumnId(),
-			request.getColumnName(),
-			request.getTableName()
-		);
-		if(reference == null) {
-			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
-		}
 
-		//	Fill Env.getCtx()
-		
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
-
-		String sql = reference.QueryDirect;
-		sql = Env.parseContext(Env.getCtx(), windowNo, sql, false);
-		if(Util.isEmpty(sql)
-				&& !Util.isEmpty(reference.QueryDirect)) {
-			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
-		}
-		sql = MRole.getDefault(Env.getCtx(), false).addAccessSQL(sql,
-				reference.TableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
-		LookupItem.Builder builder = LookupItem.newBuilder();
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-			//	SELECT Key, Value, Name FROM ...
-			pstmt = DB.prepareStatement(sql.toString(), null);
-			pstmt.setInt(1, request.getId());
-
-			//	Get from Query
-			rs = pstmt.executeQuery();
-			if (rs.next()) {
-				//	1 = Key Column
-				//	2 = Optional Value
-				//	3 = Display Value
-				ResultSetMetaData metaData = rs.getMetaData();
-				int keyValueType = metaData.getColumnType(1);
-				Object keyValue = null;
-				if(keyValueType == Types.VARCHAR
-						|| keyValueType == Types.NVARCHAR
-						|| keyValueType == Types.CHAR
-						|| keyValueType == Types.NCHAR) {
-					keyValue = rs.getString(2);
-				} else {
-					keyValue = rs.getInt(1);
-				}
-				String uuid = null;
-				//	Validate if exist UUID
-				int uuidIndex = getColumnIndex(metaData, I_AD_Element.COLUMNNAME_UUID);
-				if(uuidIndex != -1) {
-					uuid = rs.getString(uuidIndex);
-				}
-				//	
-				builder = LookupUtil.convertObjectFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
-			}
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			throw new AdempiereException(e);
-		} finally {
-			DB.close(rs, pstmt);
-		}
-		//	Return values
-		return builder;
-	}
 
 	/**
 	 * Convert Object Request to list
@@ -2871,7 +2820,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param values
 	 * @return
 	 */
-	private ListBrowserItemsResponse.Builder convertBrowserResult(MBrowse browser, String sql, List<Object> values) {
+	private ListBrowserItemsResponse.Builder convertBrowserResult(MBrowse browser, String sql, List<Object> parameters) {
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		ListBrowserItemsResponse.Builder builder = ListBrowserItemsResponse.newBuilder();
@@ -2884,16 +2833,30 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(sql, null);
-			ParameterUtil.setParametersFromObjectsList(pstmt, values);
+			ParameterUtil.setParametersFromObjectsList(pstmt, parameters);
+
+			MBrowseField fieldKey = browser.getFieldKey();
+			String keyColumnName = null;
+			if (fieldKey != null && fieldKey.get_ID() > 0) {
+				keyColumnName = fieldKey.getAD_View_Column().getColumnName();
+			}
+			keyColumnName = ValueUtil.validateNull(keyColumnName);
 
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
-				Entity.Builder valueObjectBuilder = Entity.newBuilder();
+				Struct.Builder values = Struct.newBuilder();
 				ResultSetMetaData metaData = rs.getMetaData();
+
+				Entity.Builder entityBuilder = Entity.newBuilder();
+				if (!Util.isEmpty(keyColumnName, true) && rs.getObject(keyColumnName) != null) {
+					entityBuilder.setId(
+						rs.getInt(keyColumnName)
+					);
+				}
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
-						String columnName = metaData.getColumnName (index);
+						String columnName = metaData.getColumnName(index);
 						MBrowseField field = fieldsMap.get(columnName.toUpperCase());
 						Value.Builder valueBuilder = Value.newBuilder();;
 						//	Display Columns
@@ -2902,21 +2865,30 @@ public class UserInterface extends UserInterfaceImplBase {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueUtil.getValueFromString(value);
 							}
-							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()));
+							values.putFields(
+								columnName,
+								valueBuilder.build()
+							);
 							continue;
 						}
 						//	From field
 						String fieldColumnName = field.getAD_View_Column().getColumnName();
-						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
-						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()));
-						}
+						Object value = rs.getObject(index);
+						valueBuilder = ValueUtil.getValueFromReference(
+							value,
+							field.getAD_Reference_ID()
+						);
+						values.putFields(
+							fieldColumnName,
+							valueBuilder.build()
+						);
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
 					}
 				}
 				//	
-				builder.addRecords(valueObjectBuilder.build());
+				entityBuilder.setValues(values);
+				builder.addRecords(entityBuilder.build());
 				recordCount++;
 			}
 		} catch (Exception e) {
@@ -3241,28 +3213,46 @@ public class UserInterface extends UserInterfaceImplBase {
 	 */
 	private DefaultValue.Builder convertDefaultValueFromResult(Object keyValue, String uuidValue, String value, String displayValue) {
 		DefaultValue.Builder builder = DefaultValue.newBuilder();
+		Struct.Builder values = Struct.newBuilder();
 		if(keyValue == null) {
+			builder.setValues(values);
 			return builder;
 		}
 
 		// Key Column
 		if(keyValue instanceof Integer) {
 			builder.setId((Integer) keyValue);
-			builder.setValues(Struct.newBuilder().putFields(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromInteger((Integer) keyValue).build()));
+			values.putFields(
+				LookupUtil.KEY_COLUMN_KEY,
+				ValueUtil.getValueFromInteger((Integer) keyValue).build()
+			);
 		} else {
-			builder.setValues(Struct.newBuilder().putFields(LookupUtil.KEY_COLUMN_KEY, ValueUtil.getValueFromString((String) keyValue).build()));
+			values.putFields(
+				LookupUtil.KEY_COLUMN_KEY,
+				ValueUtil.getValueFromString((String) keyValue).build()
+			);
 		}
 		//	Set Value
 		if(!Util.isEmpty(value)) {
-			builder.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY, ValueUtil.getValueFromString(value).build()));
+			values.putFields(
+				LookupUtil.VALUE_COLUMN_KEY,
+				ValueUtil.getValueFromString(value).build()
+			);
 		}
 		//	Display column
 		if(!Util.isEmpty(displayValue)) {
-			builder.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY, ValueUtil.getValueFromString(displayValue).build()));
+			values.putFields(
+				LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueUtil.getValueFromString(displayValue).build()
+			);
 		}
 		// UUID Value
-//		builder.putValues(LookupUtil.UUID_COLUMN_KEY, ValueUtil.getValueFromString(uuidValue).build());
+		values.putFields(
+			LookupUtil.UUID_COLUMN_KEY,
+			ValueUtil.getValueFromString(uuidValue).build()
+		);
 
+		builder.setValues(values);
 		return builder;
 	}
 

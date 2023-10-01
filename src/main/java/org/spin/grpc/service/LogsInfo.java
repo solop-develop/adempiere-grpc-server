@@ -64,6 +64,7 @@ import org.spin.backend.grpc.logs.RecentItem;
 import org.spin.backend.grpc.wf.WorkflowProcess;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.base.util.ValueUtil;
 import org.spin.base.util.WorkflowUtil;
@@ -206,17 +207,23 @@ public class LogsInfo extends LogsImplBase {
 	private ListProcessLogsResponse.Builder listProcessLogs(ListProcessLogsRequest request) {
 		String sql = null;
 		List<Object> parameters = new ArrayList<>();
-		if(!Util.isEmpty(request.getTableName())) {
+		if (request.getId() > 0) {
+			sql = "AD_Process_ID = ?";
+			parameters.add(request.getId());
+		} else if(!Util.isEmpty(request.getTableName())) {
 			MTable table = MTable.get(Env.getCtx(), request.getTableName());
 			if(table == null
 					|| table.getAD_Table_ID() == 0) {
 				throw new AdempiereException("@AD_Table_ID@ @Invalid@");
 			}
-			int id = request.getId();
-			parameters.add(id);
+			int recordId = request.getRecordId();
+			RecordUtil.validateRecordId(recordId, table.getAccessLevel());
+
+			parameters.add(recordId);
 			parameters.add(table.getAD_Table_ID());
-			sql = "Record_ID = ? AND EXISTS(SELECT 1 FROM AD_Process WHERE AD_Table_ID = ? AND AD_Process_ID = AD_PInstance.AD_Process_ID)";
-		} if(request.getUserId() > 0) {
+			// TODO: Add AD_Tab.AD_Process_ID, AD_Column.AD_Process_ID
+			sql = "Record_ID = ? AND EXISTS(SELECT 1 FROM AD_Table_Process WHERE AD_Table_ID = ? AND AD_Process_ID = AD_PInstance.AD_Process_ID)";
+		} else if(request.getUserId() > 0) {
 			parameters.add(request.getUserId());
 			sql = "AD_User_ID = ?";
 		} else if(request.getInstanceId() > 0) {
@@ -226,15 +233,21 @@ public class LogsInfo extends LogsImplBase {
 			parameters.add(SessionManager.getSessionUuid());
 			sql = "EXISTS(SELECT 1 FROM AD_Session WHERE UUID = ? AND AD_Session_ID = AD_PInstance.AD_Session_ID)";
 		}
-		List<MPInstance> processInstanceList = new Query(Env.getCtx(), I_AD_PInstance.Table_Name, 
-				sql, null)
-				.setParameters(parameters)
-				.setOrderBy(I_AD_PInstance.COLUMNNAME_Created + " DESC")
-				.<MPInstance>list();
+		List<Integer> processInstanceList = new Query(
+			Env.getCtx(),
+			I_AD_PInstance.Table_Name,
+			sql,
+			null
+		)
+			.setParameters(parameters)
+			.setOrderBy(I_AD_PInstance.COLUMNNAME_Created + " DESC")
+			.getIDsAsList()
+		;
 		//	
 		ListProcessLogsResponse.Builder builder = ListProcessLogsResponse.newBuilder();
 		//	Convert Process Instance
-		for(MPInstance processInstance : processInstanceList) {
+		for(Integer processInstanceId : processInstanceList) {
+			MPInstance processInstance = new MPInstance(Env.getCtx(), processInstanceId, null);
 			ProcessLog.Builder valueObject = LogsConvertUtil.convertProcessLog(processInstance);
 			builder.addProcessLogs(valueObject.build());
 		}

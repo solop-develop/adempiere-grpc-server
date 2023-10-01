@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -35,15 +35,29 @@ package logs;
 service Logs {
 	//	Request BusinessProcess Activity from current session
 	rpc ListProcessLogs(ListProcessLogsRequest) returns (ListProcessLogsResponse) {
-		option (google.api.http) = { get: "/logs/process" };
+		option (google.api.http) = {
+			get: "/logs/process"
+			additional_bindings: {
+				get: "/logs/process/{id}"
+			}
+			additional_bindings: {
+				get: "/logs/process/instance/{instance_id}"
+			}
+			additional_bindings: {
+				get: "/logs/process/{table_name}/{record_id}"
+			}
+			additional_bindings: {
+				get: "/logs/process/user/{user_id}"
+			}
+		};
 	}
 	//	Request Record Log List
 	rpc ListEntityLogs(ListEntityLogsRequest) returns (ListEntityLogsResponse) {
-		option (google.api.http) = { get: "/logs/entities" };
+		option (google.api.http) = { get: "/logs/entities/{table_name}/{id}" };
 	}
 	//	Request Record Chat List
 	rpc ListEntityChats(ListEntityChatsRequest) returns (ListEntityChatsResponse) {
-		option (google.api.http) = { get: "/logs/chat-entities" };
+		option (google.api.http) = { get: "/logs/chat-entities/{table_name}/{id}" };
 	}
 	//	Exists Chat Entries
 	rpc ExistsChatEntries(ExistsChatEntriesRequest) returns (ExistsChatEntriesResponse) {
@@ -51,11 +65,11 @@ service Logs {
 	}
 	//	Request Chat Entries List
 	rpc ListChatEntries(ListChatEntriesRequest) returns (ListChatEntriesResponse) {
-		option (google.api.http) = { get: "/logs/chat-entries" };
+		option (google.api.http) = { get: "/logs/chat-entries/{id}" };
 	}
 	//	List workflow processes
 	rpc ListWorkflowLogs(ListWorkflowLogsRequest) returns (ListWorkflowLogsResponse) {
-		option (google.api.http) = { get: "/logs/workflows" };
+		option (google.api.http) = { get: "/logs/workflows/{table_name}/{id}" };
 	}
 	//	Request Recent Items
 	rpc ListRecentItems(ListRecentItemsRequest) returns (ListRecentItemsResponse) {
@@ -76,10 +90,11 @@ message ListProcessLogsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 user_id = 8;
-	int32 instance_id = 9;
-	string table_name = 10;
-	int32 id = 11;
+	int32 id = 8;
+	int32 user_id = 9;
+	int32 instance_id = 10;
+	string table_name = 11;
+	int32 record_id = 12;
 }
 
 // BusinessProcess Response List
@@ -126,12 +141,14 @@ message EntityLog {
 	int32 window_id = 4;
 	string table_name = 5;
 	int32 session_id = 6;
-	int32 user_id = 7;
-	string user_name = 8;
-	string transaction_name = 9;
-	EntityEventType event_type = 10;
-	google.protobuf.Timestamp log_date = 11;
-	repeated ChangeLog change_logs = 12;
+	int32 created_by = 7;
+	string created_by_name = 8;
+	int32 updated_by = 9;
+	string updated_by_name = 10;
+	string transaction_name = 11;
+	EntityEventType event_type = 12;
+	google.protobuf.Timestamp log_date = 13;
+	repeated ChangeLog change_logs = 14;
 }
 
 message ListEntityLogsResponse {

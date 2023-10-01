@@ -63,32 +63,14 @@ public class BusinessPartner extends BusinessPartnerImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void epaleInfo(ListBusinessPartnerInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
 
-			ListEntitiesResponse.Builder entityValueList = listBusinessPartnerInfo(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
-		}
-	}
-	
 	/**
 	 * Get default value base on field, process parameter, browse field or column
 	 * @param request
@@ -160,7 +142,7 @@ public class BusinessPartner extends BusinessPartnerImplBase {
 		count = CountUtil.countRecords(parsedSQL, this.tableName, params);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), this.tableName), parsedSQL, params);
+		builder = RecordUtil.convertListEntitiesResult(table, parsedSQL, params);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token

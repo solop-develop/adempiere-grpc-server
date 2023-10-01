@@ -14,6 +14,7 @@
  ************************************************************************************/
 syntax = "proto3";
 
+
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.common";
 option java_outer_classname = "ADempiereData";
@@ -33,39 +34,51 @@ package data;
 service BusinessData {
 	// Get a Entity
 	rpc GetEntity(GetEntityRequest) returns (Entity) {
-		option (google.api.http) = { get: "/business-data/entities/{id}" };
+		option (google.api.http) = { get: "/business-data/entities/{table_name}/{id}" };
 	}
 	// Create Entity Request
 	rpc CreateEntity(CreateEntityRequest) returns (Entity) {
 		option (google.api.http) = {
-			post: "/business-data/entities",
+			post: "/business-data/entities/{table_name}",
 			body: "*"
 		};
 	}
 	// Update Entity Request
 	rpc UpdateEntity(UpdateEntityRequest) returns (Entity) {
 		option (google.api.http) = {
-			put: "/business-data/entities/{id}",
+			patch: "/business-data/entities/{table_name}/{id}",
 			body: "*"
 		};
 	}
 	// Delete Entity Request
 	rpc DeleteEntity(DeleteEntityRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/business-data/entities/{id}" };
+		option (google.api.http) = { delete: "/business-data/entities/{table_name}/{id}" };
 	}
 	// Delete Entity Request
 	rpc DeleteEntitiesBatch(DeleteEntitiesBatchRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { post: "/business-data/entities/batch-delete" };
+		option (google.api.http) = { post: "/business-data/entities/batch-delete/{table_name}" };
 	}
 	//	List a Entities
 	rpc ListEntities(ListEntitiesRequest) returns (ListEntitiesResponse) {
-		option (google.api.http) = { get: "/business-data/entities" };
+		option (google.api.http) = { get: "/business-data/entities/{table_name}" };
 	}
 	//	Request a BusinessProcess / Report
 	rpc RunBusinessProcess(RunBusinessProcessRequest) returns (ProcessLog) {
 		option (google.api.http) = {
-			post: "/business-data/process",
+			post: "/business-data/process/{id}",
 			body: "*"
+			additional_bindings: {
+				post: "/business-data/process/{id}/smart-browse/{browser_id}",
+				body: "*"
+			}
+			additional_bindings: {
+				post: "/business-data/process/{id}/window/{table_name}/{record_id}",
+				body: "*"
+			}
+			additional_bindings: {
+				post: "/business-data/process/{id}/workflow/{workflow_id}",
+				body: "*"
+			}
 		};
 	}
 }
@@ -74,70 +87,100 @@ service BusinessData {
 service UserInterface {
 	// Get a Tab Entity
 	rpc GetTabEntity(GetTabEntityRequest) returns (Entity) {
-		option (google.api.http) = { get: "/user-interface/entities/{id}" };
+		option (google.api.http) = { get: "/user-interface/entities/{tab_id}/{id}" };
 	}
 	// Create Tab Entity
 	rpc CreateTabEntity(CreateTabEntityRequest) returns (Entity) {
 		option (google.api.http) = {
-			post: "/user-interface/entities",
+			post: "/user-interface/entities/{tab_id}",
 			body: "*"
 		};
 	}
 	// Update Tab Entity
 	rpc UpdateTabEntity(UpdateTabEntityRequest) returns (Entity) {
 		option (google.api.http) = {
-			put: "/user-interface/entities/{id}",
+			patch: "/user-interface/entities/{tab_id}/{id}",
 			body: "*"
 		};
 	}
 	//	List tab Entities
 	rpc ListTabEntities(ListTabEntitiesRequest) returns (ListEntitiesResponse) {
-		option (google.api.http) = { get: "/user-interface/entities" };
+		option (google.api.http) = { get: "/user-interface/entities/{tab_id}" };
 	}
 	//	Rollback Entity Request
 	rpc RollbackEntity(RollbackEntityRequest) returns (Entity) {
 		option (google.api.http) = {
-			put: "/user-interface/entities/{id}/rollback",
+			patch: "/user-interface/entities/{table_name}/{id}/rollback",
 			body: "*"
 		};
 	}
 	// Run a Callout
 	rpc RunCallout(RunCalloutRequest) returns (Callout) {
 		option (google.api.http) = {
-			post: "/user-interface/run-callout",
+			post: "/user-interface/run-callout/{tab_id}/{column_name}/{callout}",
 			body: "*"
 		};
 	}
 	//	Request Translations List
 	rpc ListTranslations(ListTranslationsRequest) returns (ListTranslationsResponse) {
-		option (google.api.http) = { get: "/user-interface/translations" };
+		option (google.api.http) = { get: "/user-interface/translations/{table_name}/{id}/{language}" };
 	}
 	// Get Default Value
 	rpc GetDefaultValue(GetDefaultValueRequest) returns (DefaultValue) {
-		option (google.api.http) = { get: "/user-interface/default-value/{id}" };
-	}
-	// Get Lookup Item
-	rpc GetLookupItem(GetLookupItemRequest) returns (LookupItem) {
-		option (google.api.http) = { get: "/user-interface/lookups/{id}" };
+		option (google.api.http) = {
+			get: "/user-interface/default-value/{table_name}/{column_name}"
+			additional_bindings: {
+				get: "/user-interface/default-value/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/default-value/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/default-value/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/default-value/parameter/{process_parameter_to_id}/to"
+			}
+			additional_bindings: {
+				get: "/user-interface/default-value/query-criteria/{browse_field_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/default-value/query-criteria/{browse_field_to_id}/to"
+			}
+		};
 	}
 	// List Lookup Item
 	rpc ListLookupItems(ListLookupItemsRequest) returns (ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/user-interface/lookups" };
+		option (google.api.http) = {
+			get: "/user-interface/lookups/{table_name}/{column_name}"
+			additional_bindings: {
+				get: "/user-interface/lookups/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/lookups/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/lookups/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/lookups/query-criteria/{browse_field_id}"
+			}
+		};
 	}
 	//	Request Browser Data
 	rpc ListBrowserItems(ListBrowserItemsRequest) returns (ListBrowserItemsResponse) {
-		option (google.api.http) = { get: "/user-interface/browser-items" };
+		option (google.api.http) = { get: "/user-interface/browser-items/{id}" };
 	}
 	// Update Browser Entity
 	rpc UpdateBrowserEntity(UpdateBrowserEntityRequest) returns (Entity) {
 		option (google.api.http) = {
-			put: "/user-interface/browser-items/{id}",
+			patch: "/user-interface/browser-items/{id}/{record_id}",
 			body: "*"
 		};
 	}
 	// Exists References on Record
 	rpc ExistsReferences(ExistsReferencesRequest) returns (ExistsReferencesResponse) {
-		option (google.api.http) = { get: "/user-interface/references/{record_id}/exists" };
+		option (google.api.http) = { get: "/user-interface/references/{tab_id}/{record_id}/exists" };
 	}
 	// List a References
 	rpc ListReferences(ListReferencesRequest) returns (ListReferencesResponse) {
@@ -149,85 +192,117 @@ service UserInterface {
 	}
 	// Get Private Access
 	rpc GetPrivateAccess(GetPrivateAccessRequest) returns (PrivateAccess) {
-		option (google.api.http) = { get: "/user-interface/private-access/{id}" };
+		option (google.api.http) = { get: "/user-interface/private-access/{table_name}/{id}" };
 	}
 	// Create Private Access
 	rpc LockPrivateAccess(LockPrivateAccessRequest) returns (PrivateAccess) {
 		option (google.api.http) = {
-			put: "/user-interface/private-access/{id}/lock",
+			patch: "/user-interface/private-access/{table_name}/{id}/lock",
 			body: "*"
 		};
 	}
 	// Change Private Access
 	rpc UnlockPrivateAccess(UnlockPrivateAccessRequest) returns (PrivateAccess) {
 		option (google.api.http) = {
-			put: "/user-interface/private-access/{id}/unlock",
+			patch: "/user-interface/private-access/{table_name}/{id}/unlock",
 			body: "*"
 		};
 	}
 	// Get Record Access
 	rpc GetRecordAccess(GetRecordAccessRequest) returns (RecordAccess) {
-		option (google.api.http) = { get: "/user-interface/record-access/{id}" };
+		option (google.api.http) = { get: "/user-interface/record-access/{table_name}/{id}" };
 	}
 	// Set Record Access
 	rpc SetRecordAccess(SetRecordAccessRequest) returns (RecordAccess) {
 		option (google.api.http) = {
-			put: "/user-interface/record-access/{id}",
+			patch: "/user-interface/record-access/{table_name}/{id}",
 			body: "*"
 		};
 	}
 	//	Request Print Format List
 	rpc ListPrintFormats(ListPrintFormatsRequest) returns (ListPrintFormatsResponse) {
-		option (google.api.http) = { get: "/user-interface/print-formats" };
+		option (google.api.http) = {
+			get: "/user-interface/print-formats/{process_id}"
+			additional_bindings: {
+				get: "/user-interface/print-formats/table/{table_name}"
+			}
+			additional_bindings: {
+				get: "/user-interface/print-formats/report-view/{report_view_id}"
+			}
+		};
 	}
 	//	Request Report View List
 	rpc ListReportViews(ListReportViewsRequest) returns (ListReportViewsResponse) {
-		option (google.api.http) = { get: "/user-interface/report-views" };
+		option (google.api.http) = {
+			get: "/user-interface/report-views/{process_id}"
+			additional_bindings: {
+				get: "/user-interface/report-views/table/{table_name}"
+			}
+		};
 	}
 	//	Request Drill Tables List
 	rpc ListDrillTables(ListDrillTablesRequest) returns (ListDrillTablesResponse) {
-		option (google.api.http) = { get: "/user-interface/drill-tables" };
+		option (google.api.http) = { get: "/user-interface/drill-tables/{table_name}" };
 	}
 	//	Request Report Output
 	rpc GetReportOutput(GetReportOutputRequest) returns (ReportOutput) {
-		option (google.api.http) = { get: "/user-interface/report-output/{process_id}" };
+		option (google.api.http) = { get: "/user-interface/report-output/{process_id}/{table_name}" };
 	}
 	// Add Chat Entry
 	rpc CreateChatEntry(CreateChatEntryRequest) returns (ChatEntry) {
 		option (google.api.http) = {
-			post: "/user-interface/chat-entry",
+			post: "/user-interface/chat-entry/{table_name}",
 			body: "*"
 		};
 	}
 	//	Set Preference from field
 	rpc SetPreference(SetPreferenceRequest) returns (Preference) {
 		option (google.api.http) = {
-			post: "/user-interface/preference",
+			post: "/user-interface/preference/{type}/{container_id}/{column_name}",
 			body: "*"
 		};
 	}
 	//	Delete Preference from field
 	rpc DeletePreference(DeletePreferenceRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/user-interface/preference/{id}" };
+		option (google.api.http) = { delete: "/user-interface/preference/{type}/{container_id}/{column_name}" };
 	}
 	//	List General Info
 	rpc ListGeneralInfo(ListGeneralInfoRequest) returns (ListEntitiesResponse) {
-		option (google.api.http) = { get: "/user-interface/general-info" };
+		option (google.api.http) = {
+			get: "/user-interface/general-info/{table_name}/{column_name}"
+			additional_bindings: {
+				get: "/user-interface/general-info/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/general-info/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/general-info/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/user-interface/general-info/query-criteria/{browse_field_id}"
+			}
+		};
 	}
 	//	List Tab Sequences
 	rpc ListTabSequences(ListTabSequencesRequest) returns (ListEntitiesResponse) {
-		option (google.api.http) = { get: "/user-interface/tab-sequences" };
+		option (google.api.http) = {get: "/user-interface/tab-sequences/{tab_id}" };
 	}
 	//	Save Tab Sequences
 	rpc SaveTabSequences(SaveTabSequencesRequest) returns (ListEntitiesResponse) {
 		option (google.api.http) = {
-			post: "/user-interface/tab-sequences",
+			post: "/user-interface/tab-sequences/{tab_id}",
 			body: "*"
 		};
 	}
 	// List Tree Nodes Request
 	rpc ListTreeNodes(ListTreeNodesRequest) returns (ListTreeNodesResponse) {
-		option (google.api.http) = { get: "/user-interface/tree-nodes" };
+		option (google.api.http) = {
+			get: "/user-interface/tree-nodes/{table_name}"
+			additional_bindings: {
+				get: "/user-interface/tree-nodes/tab/{tab_id}"
+			}
+		};
 	}
 	// List Mail Templates
 	rpc ListMailTemplates(ListMailTemplatesRequest) returns (ListMailTemplatesResponse) {
@@ -345,12 +420,6 @@ message CreateEntityRequest {
 	google.protobuf.Struct attributes = 2;
 }
 
-// Create Private Access Request
-message LockPrivateAccessRequest {
-	string table_name = 1;
-	int32 id = 2;
-}
-
 // Get Entity Request
 message GetEntityRequest {
 	int32 id = 1;
@@ -364,19 +433,22 @@ message GetEntityRequest {
 	string page_token = 8;
 }
 
-// Get Private Access Request
+// Private Access
 message GetPrivateAccessRequest {
 	string table_name = 1;
 	int32 id = 2;
 }
 
-// Delete Private Access Request
+message LockPrivateAccessRequest {
+	string table_name = 1;
+	int32 id = 2;
+}
+
 message UnlockPrivateAccessRequest {
 	string table_name = 1;
 	int32 id = 2;
 }
 
-// Private Access Object
 message PrivateAccess {
 	string table_name = 1;
 	int32 id = 2;
@@ -442,28 +514,19 @@ message ContextInfoValue {
 	string message_tip = 2;
 }
 
-// Get Lookup Item
-message GetLookupItemRequest {
-	int32 id = 1;
-	int32 process_parameter_id = 2;
-	int32 field_id = 3;
-	int32 browse_field_id = 4;
-	int32 reference_id = 5;
-	int32 column_id = 6;
-	string column_name = 7;
-	string table_name = 8;
-	google.protobuf.Struct context_attributes = 9;
-}
-
 // Get Default Value Request
 message GetDefaultValueRequest {
 	// References
-	int32 process_parameter_id = 1;
-	int32 field_id = 2;
-	int32 browse_field_id = 3;
-	int32 column_id = 4;
-	google.protobuf.Struct context_attributes = 5;
-	google.protobuf.Value value = 6;
+	string table_name = 1;
+	string column_name = 2;
+	int32 column_id = 3;
+	int32 field_id = 4;
+	int32 process_parameter_id = 5;
+	int32 process_parameter_to_id = 6;
+	int32 browse_field_id = 7;
+	int32 browse_field_to_id = 8;
+	google.protobuf.Struct context_attributes = 9;
+	google.protobuf.Value value = 10;
 }
 
 // Default Value Response
@@ -496,13 +559,13 @@ message ListLookupItemsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	// References
-	int32 process_parameter_id = 8;
-	int32 field_id = 9;
-	int32 browse_field_id = 10;
-	int32 reference_id = 11;
-	int32 column_id = 12;
-	string column_name = 13;
-	string table_name = 14;
+	string table_name = 8;
+	string column_name = 9;
+	int32 column_id = 10;
+	int32 field_id = 11;
+	int32 process_parameter_id = 12;
+	int32 browse_field_id = 13;
+	int32 reference_id = 14;
 	google.protobuf.Struct context_attributes = 15;
 }
 
@@ -549,14 +612,6 @@ message ListTabEntitiesRequest {
 	int32 window_id = 8;
 	int32 tab_id = 9;
 	google.protobuf.Struct context_attributes = 10;
-}
-
-// @deprecated please use ListEntitiesResponse
-// List Entities Response
-message ListTabEntitiesResponse {
-	int64 record_count = 1;
-	repeated Entity records = 2;
-	string next_page_token = 3;
 }
 
 // List Entities Request
@@ -606,15 +661,21 @@ message KeyValueSelection {
 // BusinessProcess Request
 message RunBusinessProcessRequest {
 	int32 id = 1;
-	string table_name = 2;
-	int32 record_id = 3;
-	int32 table_selected_id = 4;
-	string report_type = 5;
-	int32 print_format_id = 6;
-	int32 report_view_id = 7;
-	bool is_summary = 8;
-	google.protobuf.Struct parameters = 9;
-	repeated KeyValueSelection selections = 10;
+	google.protobuf.Struct parameters = 2;
+	// report
+	string report_type = 3;
+	int32 print_format_id = 4;
+	int32 report_view_id = 5;
+	bool is_summary = 6;
+	// browser
+	int32 browser_id = 7;
+	repeated KeyValueSelection selections = 8;
+	// window
+	string table_name = 9;
+	int32 record_id = 10;
+	// workflow
+	int32 workflow_id = 11;
+	string doc_action = 12;
 }
 
 // Translations Request

@@ -333,10 +333,7 @@ public class ValueUtil {
 			return builderValue;
 		}
 		//	Validate values
-		if(isLookup(referenceId)
-				|| DisplayType.isID(referenceId)) {
-			return getValueFromObject(value);
-		} else if(DisplayType.Integer == referenceId) {
+		if (DisplayType.isID(referenceId) || DisplayType.Integer == referenceId) {
 			Integer integerValue = null;
 			if(value instanceof Integer) {
 				integerValue = (Integer) value;
@@ -376,6 +373,8 @@ public class ValueUtil {
 			return getValueFromDate((Timestamp) value);
 		} else if(DisplayType.isText(referenceId)) {
 			return getValueFromString((String) value);
+		} else if (isLookup(referenceId)) {
+			return getValueFromObject(value);
 		} else if (DisplayType.Button == referenceId) {
 			if (value instanceof Integer) {
 				return getValueFromInteger((Integer) value);
