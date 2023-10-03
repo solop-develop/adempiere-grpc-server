@@ -68,7 +68,7 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -153,16 +153,16 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 		builder.setId(businessPartner.getC_BPartner_ID())
 			.setValue(
-				ValueUtil.validateNull(businessPartner.getValue())
+				ValueManager.validateNull(businessPartner.getValue())
 			)
 			.setTaxId(
-				ValueUtil.validateNull(businessPartner.getTaxID())
+				ValueManager.validateNull(businessPartner.getTaxID())
 			)
 			.setName(
-				ValueUtil.validateNull(businessPartner.getName())
+				ValueManager.validateNull(businessPartner.getName())
 			)
 			.setDescription(
-				ValueUtil.validateNull(businessPartner.getDescription())
+				ValueManager.validateNull(businessPartner.getDescription())
 			)
 		;
 
@@ -256,10 +256,10 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 		builder.setId(purchaseOrder.getC_Order_ID())
 			.setDateOrdered(
-				ValueUtil.getTimestampFromDate(purchaseOrder.getDateOrdered())
+				ValueManager.getTimestampFromDate(purchaseOrder.getDateOrdered())
 			)
 			.setDocumentNo(
-				ValueUtil.validateNull(purchaseOrder.getDocumentNo())
+				ValueManager.validateNull(purchaseOrder.getDocumentNo())
 			)
 		;
 
@@ -343,7 +343,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 
@@ -373,16 +373,16 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		}
 		builder.setId(product.getM_Product_ID())
 			.setUpc(
-				ValueUtil.validateNull(product.getUPC())
+				ValueManager.validateNull(product.getUPC())
 			)
 			.setSku(
-				ValueUtil.validateNull(product.getSKU())
+				ValueManager.validateNull(product.getSKU())
 			)
 			.setValue(
-				ValueUtil.validateNull(product.getValue())
+				ValueManager.validateNull(product.getValue())
 			)
 			.setName(
-				ValueUtil.validateNull(product.getName())
+				ValueManager.validateNull(product.getName())
 			)
 		;
 
@@ -398,13 +398,13 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 		builder.setId(receipt.getM_InOut_ID())
 			.setDocumentNo(
-				ValueUtil.validateNull(receipt.getDocumentNo())
+				ValueManager.validateNull(receipt.getDocumentNo())
 			)
 			.setDateOrdered(
-				ValueUtil.getTimestampFromDate(receipt.getDateOrdered())
+				ValueManager.getTimestampFromDate(receipt.getDateOrdered())
 			)
 			.setMovementDate(
-				ValueUtil.getTimestampFromDate(receipt.getMovementDate())
+				ValueManager.getTimestampFromDate(receipt.getMovementDate())
 			)
 			.setIsCompleted(
 				DocumentUtil.isCompleted(receipt)
@@ -702,7 +702,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -840,7 +840,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -857,7 +857,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			receiptLine.setQty(quantity);
 			receiptLine.setDescription(
-				ValueUtil.validateNull(request.getDescription())
+				ValueManager.validateNull(request.getDescription())
 			);
 			receiptLine.saveEx(transactionName);
 
@@ -904,10 +904,10 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				convertProduct(receiptLine.getM_Product_ID())
 			)
 			.setDescription(
-				ValueUtil.validateNull(receiptLine.getDescription())
+				ValueManager.validateNull(receiptLine.getDescription())
 			)
 			.setQuantity(
-				ValueUtil.getDecimalFromBigDecimal(receiptLine.getQtyEntered())
+				ValueManager.getDecimalFromBigDecimal(receiptLine.getQtyEntered())
 			)
 			.setLine(receiptLine.getLine())
 		;
@@ -954,7 +954,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		ListReceiptLinesResponse.Builder builderList = ListReceiptLinesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 

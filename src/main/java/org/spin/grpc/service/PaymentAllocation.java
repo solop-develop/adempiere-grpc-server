@@ -80,7 +80,7 @@ import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.PaymentAllocationImplBase;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -223,10 +223,14 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		builder.setId(organization.getAD_Org_ID())
 			.setValue(
-				ValueUtil.validateNull(organization.getName())
+				ValueManager.validateNull(
+					organization.getName()
+				)
 			)
 			.setName(
-				ValueUtil.validateNull(organization.getName())
+				ValueManager.validateNull(
+					organization.getName()
+				)
 			)
 		;
 
@@ -322,10 +326,14 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		builder.setId(currency.getC_Currency_ID())
 			.setIsoCode(
-				ValueUtil.validateNull(currency.getISO_Code())
+				ValueManager.validateNull(
+					currency.getISO_Code()
+				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(currency.getDescription())
+				ValueManager.validateNull(
+					currency.getDescription()
+				)
 			)
 		;
 
@@ -422,12 +430,16 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		}
 
 		builder.setId(transactionType.getAD_Ref_List_ID())
-			.setValue(ValueUtil.validateNull(transactionType.getValue()))
+			.setValue(
+				ValueManager.validateNull(
+					transactionType.getValue()
+				)
+			)
 			.setName(
-				ValueUtil.validateNull(name)
+				ValueManager.validateNull(name)
 			)
 			.setDescription(
-				ValueUtil.validateNull(description)
+				ValueManager.validateNull(description)
 			)
 		;
 
@@ -459,7 +471,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		Properties context = Env.getCtx();
 		int currencyId = request.getCurrencyId();
 		int businessPartnerId = request.getBusinessPartnerId();
-		Timestamp date = ValueUtil.getDateFromTimestampDate(
+		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getDate()
 		);
 
@@ -489,7 +501,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		String transactionType = request.getTransactionType();
 		if (!Util.isEmpty(transactionType, true) && !transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesPayables)) {
-			String isReceipt = ValueUtil.booleanToString(
+			String isReceipt = ValueManager.booleanToString(
 				transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesOnly)
 			);
 			sql.append(" AND p.IsReceipt= '" + isReceipt +"'" );
@@ -532,7 +544,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
-				boolean isReceipt = ValueUtil.stringToBoolean(
+				boolean isReceipt = ValueManager.stringToBoolean(
 					rs.getString("IsReceipt")
 				);
 				TransactionType.Builder transactionTypeBuilder = convertTransactionType(
@@ -543,33 +555,33 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				Payment.Builder paymentBuilder = Payment.newBuilder()
 					.setId(paymentId)
 					.setTransactionDate(
-						ValueUtil.getTimestampFromDate(
+						ValueManager.getTimestampFromDate(
 							rs.getTimestamp(I_C_Payment.COLUMNNAME_DateTrx)
 						)
 					)
 					.setIsReceipt(isReceipt)
 					.setDocumentNo(
-						ValueUtil.validateNull(
+						ValueManager.validateNull(
 							rs.getString(I_C_Payment.COLUMNNAME_DocumentNo)
 						)
 					)
 					.setDescription(
-						ValueUtil.validateNull(
+						ValueManager.validateNull(
 							rs.getString(I_C_Payment.COLUMNNAME_Description)
 						)
 					)
 					.setPaymentAmount(
-						ValueUtil.getDecimalFromBigDecimal(
+						ValueManager.getDecimalFromBigDecimal(
 							rs.getBigDecimal(I_C_Payment.COLUMNNAME_PayAmt)
 						)
 					)
 					.setConvertedAmount(
-						ValueUtil.getDecimalFromBigDecimal(
+						ValueManager.getDecimalFromBigDecimal(
 							rs.getBigDecimal("ConvertedAmt")
 						)
 					)
 					.setOpenAmount(
-						ValueUtil.getDecimalFromBigDecimal(
+						ValueManager.getDecimalFromBigDecimal(
 							rs.getBigDecimal("AvailableAmt")
 						)
 					)
@@ -621,7 +633,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		Properties context = Env.getCtx();
 		int currencyId = request.getCurrencyId();
 		int businessPartnerId = request.getBusinessPartnerId();
-		Timestamp date = ValueUtil.getDateFromTimestampDate(
+		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getDate()
 		);
 
@@ -652,7 +664,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		String transactionType = request.getTransactionType();
 		if (!Util.isEmpty(transactionType, true) && !transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesPayables)) {
-			String isReceipt = ValueUtil.booleanToString(
+			String isReceipt = ValueManager.booleanToString(
 				transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesOnly)
 			);
 			sql.append(" AND i.IsSOTrx= '" + isReceipt +"'" );
@@ -697,7 +709,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
-				boolean isSalesTransaction = ValueUtil.stringToBoolean(
+				boolean isSalesTransaction = ValueManager.stringToBoolean(
 					rs.getString(I_C_Invoice.COLUMNNAME_IsSOTrx)
 				);
 				TransactionType.Builder transactionTypeBuilder = convertTransactionType(
@@ -708,38 +720,38 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				Invoice.Builder invoiceBuilder = Invoice.newBuilder()
 					.setId(invoiceId)
 					.setDateInvoiced(
-						ValueUtil.getTimestampFromDate(
+						ValueManager.getTimestampFromDate(
 							rs.getTimestamp(I_C_Invoice.COLUMNNAME_DateInvoiced)
 						)
 					)
 					.setIsSalesTransaction(isSalesTransaction)
 					.setDocumentNo(
-						ValueUtil.validateNull(
+						ValueManager.validateNull(
 							rs.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
 						)
 					)
 					.setDescription(
-						ValueUtil.validateNull(
+						ValueManager.validateNull(
 							rs.getString(I_C_Invoice.COLUMNNAME_Description)
 						)
 					)
 					.setOriginalAmount(
-						ValueUtil.getDecimalFromBigDecimal(
+						ValueManager.getDecimalFromBigDecimal(
 							rs.getBigDecimal("OriginalAmt")
 						)
 					)
 					.setConvertedAmount(
-						ValueUtil.getDecimalFromBigDecimal(
+						ValueManager.getDecimalFromBigDecimal(
 							rs.getBigDecimal("ConvertedAmt")
 						)
 					)
 					.setOpenAmount(
-						ValueUtil.getDecimalFromBigDecimal(
+						ValueManager.getDecimalFromBigDecimal(
 							rs.getBigDecimal("OpenAmt")
 						)
 					)
 					.setDiscountAmount(
-						ValueUtil.getDecimalFromBigDecimal(
+						ValueManager.getDecimalFromBigDecimal(
 							rs.getBigDecimal("DiscountAmt")
 						)
 					)
@@ -817,13 +829,19 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		builder.setId(charge.getC_Charge_ID())
 			.setName(
-				ValueUtil.validateNull(charge.getName())
+				ValueManager.validateNull(
+					charge.getName()
+				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(charge.getDescription())
+				ValueManager.validateNull(
+					charge.getDescription()
+				)
 			)
 			.setAmount(
-				ValueUtil.getDecimalFromBigDecimal(charge.getChargeAmt())
+				ValueManager.getDecimalFromBigDecimal(
+					charge.getChargeAmt()
+				)
 			)
 		;
 
@@ -833,14 +851,14 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	private Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
 		AtomicReference<Timestamp> transactionDateReference = new AtomicReference<Timestamp>();
 		paymentSelection.forEach(paymentSelected -> {
-			Timestamp paymentDate = ValueUtil.getDateFromTimestampDate(
+			Timestamp paymentDate = ValueManager.getDateFromTimestampDate(
 				paymentSelected.getTransactionDate()
 			);
 			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), paymentDate);
 			transactionDateReference.set(transactionDate);
 		});
 		invoiceSelection.forEach(invoiceSelected -> {
-			Timestamp invoiceDate = ValueUtil.getDateFromTimestampDate(
+			Timestamp invoiceDate = ValueManager.getDateFromTimestampDate(
 				invoiceSelected.getDateInvoiced()
 			);
 			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), invoiceDate);
@@ -887,7 +905,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		Trx.run(transactionName -> {
 			// transaction date
-			Timestamp transactionDate = ValueUtil.getDateFromTimestampDate(
+			Timestamp transactionDate = ValueManager.getDateFromTimestampDate(
 				request.getDate()
 			);
 			if (transactionDate == null) {
@@ -897,7 +915,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				);
 			}
 
-			BigDecimal totalDifference = ValueUtil.getDecimalFromValue(
+			BigDecimal totalDifference = ValueManager.getDecimalFromValue(
 				request.getTotalDifference()
 			);
 			String status = saveData(
@@ -915,7 +933,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		return ProcessResponse.newBuilder()
 			.setMessage(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					atomicStatus.get()
 				)
 			)
@@ -952,7 +970,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		// Sum up the payment and applied amounts.
 		BigDecimal paymentAppliedAmt = Env.ZERO;
 		for (PaymentSelection payment : paymentSelection) {
-			BigDecimal paymentAmt = ValueUtil.getDecimalFromValue(
+			BigDecimal paymentAmt = ValueManager.getDecimalFromValue(
 				payment.getAppliedAmount()
 			);
 			amountList.add(paymentAmt);
@@ -982,17 +1000,17 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		for (InvoiceSelection invoice : invoiceSelection) {
 			//  Invoice variables
 			int C_Invoice_ID = invoice.getId();
-			BigDecimal AppliedAmt = ValueUtil.getBigDecimalFromDecimal(
+			BigDecimal AppliedAmt = ValueManager.getBigDecimalFromDecimal(
 				invoice.getAppliedAmount()
 			);
 			//  semi-fixed fields (reset after first invoice)
-			BigDecimal DiscountAmt = ValueUtil.getBigDecimalFromDecimal(
+			BigDecimal DiscountAmt = ValueManager.getBigDecimalFromDecimal(
 				invoice.getDiscountAmount()
 			);
-			BigDecimal WriteOffAmt = ValueUtil.getBigDecimalFromDecimal(
+			BigDecimal WriteOffAmt = ValueManager.getBigDecimalFromDecimal(
 				invoice.getWriteOffAmount()
 			);
-			BigDecimal invoiceOpen = ValueUtil.getBigDecimalFromDecimal(
+			BigDecimal invoiceOpen = ValueManager.getBigDecimalFromDecimal(
 				invoice.getOpenAmount()
 			);
 			//	OverUnderAmt needs to be in Allocation Currency
@@ -1009,7 +1027,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				PaymentSelection payment = paymentSelection.get(j);
 
 				int paymentId = payment.getId();
-				BigDecimal paymentAmt = ValueUtil.getBigDecimalFromDecimal(
+				BigDecimal paymentAmt = ValueManager.getBigDecimalFromDecimal(
 					payment.getAppliedAmount()
 				);
 

@@ -51,8 +51,8 @@ import org.spin.backend.grpc.file_management.SetResourceReferenceDescriptionRequ
 import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ValueUtil;
 import org.spin.model.MADAttachmentReference;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.ByteString;
@@ -308,7 +308,7 @@ public class FileManagement extends FileManagementImplBase {
 						MADAttachmentReference resourceReference = validateAttachmentReferenceById(fileUploadRequest.getId());
 
 						resourceUuid.set(resourceReference.getUUID());
-						BigDecimal size = ValueUtil.getBigDecimalFromDecimal(fileUploadRequest.getFileSize());
+						BigDecimal size = ValueManager.getBigDecimalFromDecimal(fileUploadRequest.getFileSize());
 						if (size != null && fileUploadRequest.getData() != null) {
 							byte[] initByte = new byte[size.intValue()];
 							buffer.set(ByteBuffer.wrap(initByte));
@@ -455,30 +455,30 @@ public class FileManagement extends FileManagementImplBase {
 		builder
 			.setId(reference.getAD_AttachmentReference_ID())
 			.setName(
-				ValueUtil.validateNull(reference.getFileName())
+				ValueManager.validateNull(reference.getFileName())
 			)
 			.setFileName(
-				ValueUtil.validateNull(reference.getValidFileName())
+				ValueManager.validateNull(reference.getValidFileName())
 			)
 			.setDescription(
-				ValueUtil.validateNull(reference.getDescription())
+				ValueManager.validateNull(reference.getDescription())
 			)
 			.setTextMessage(
-				ValueUtil.validateNull(reference.getTextMsg())
+				ValueManager.validateNull(reference.getTextMsg())
 			)
 			.setContentType(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					MimeType.getMimeType(reference.getFileName())
 				)
 			)
-			.setFileSize(ValueUtil.getDecimalFromBigDecimal(
-				reference.getFileSize())
+			.setFileSize(
+				ValueManager.getDecimalFromBigDecimal(reference.getFileSize())
 			)
 			.setCreated(
-				ValueUtil.getTimestampFromDate(reference.getCreated())
+				ValueManager.getTimestampFromDate(reference.getCreated())
 			)
 			.setUpdated(
-				ValueUtil.getTimestampFromDate(reference.getUpdated())
+				ValueManager.getTimestampFromDate(reference.getUpdated())
 			)
 		;
 
@@ -510,9 +510,9 @@ public class FileManagement extends FileManagementImplBase {
 		}
 		Attachment.Builder builder = Attachment.newBuilder()
 			.setId(attachment.getAD_Attachment_ID())
-			.setTitle(ValueUtil.validateNull(attachment.getTitle()))
+			.setTitle(ValueManager.validateNull(attachment.getTitle()))
 			.setTextMessage(
-				ValueUtil.validateNull(attachment.getTextMsg())
+				ValueManager.validateNull(attachment.getTextMsg())
 			)
 		;
 

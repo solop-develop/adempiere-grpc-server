@@ -67,7 +67,7 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -152,16 +152,16 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 		builder.setId(businessPartner.getC_BPartner_ID())
 			.setValue(
-				ValueUtil.validateNull(businessPartner.getValue())
+				ValueManager.validateNull(businessPartner.getValue())
 			)
 			.setTaxId(
-				ValueUtil.validateNull(businessPartner.getTaxID())
+				ValueManager.validateNull(businessPartner.getTaxID())
 			)
 			.setName(
-				ValueUtil.validateNull(businessPartner.getName())
+				ValueManager.validateNull(businessPartner.getName())
 			)
 			.setDescription(
-				ValueUtil.validateNull(businessPartner.getDescription())
+				ValueManager.validateNull(businessPartner.getDescription())
 			)
 		;
 
@@ -254,10 +254,10 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 		builder.setId(salesOrder.getC_Order_ID())
 			.setDateOrdered(
-				ValueUtil.getTimestampFromDate(salesOrder.getDateOrdered())
+				ValueManager.getTimestampFromDate(salesOrder.getDateOrdered())
 			)
 			.setDocumentNo(
-				ValueUtil.validateNull(salesOrder.getDocumentNo())
+				ValueManager.validateNull(salesOrder.getDocumentNo())
 			)
 		;
 
@@ -341,7 +341,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 
@@ -371,16 +371,16 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		}
 		builder.setId(product.getM_Product_ID())
 			.setUpc(
-				ValueUtil.validateNull(product.getUPC())
+				ValueManager.validateNull(product.getUPC())
 			)
 			.setSku(
-				ValueUtil.validateNull(product.getSKU())
+				ValueManager.validateNull(product.getSKU())
 			)
 			.setValue(
-				ValueUtil.validateNull(product.getValue())
+				ValueManager.validateNull(product.getValue())
 			)
 			.setName(
-				ValueUtil.validateNull(product.getName())
+				ValueManager.validateNull(product.getName())
 			)
 		;
 
@@ -396,13 +396,13 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 		builder.setId(shipment.getM_InOut_ID())
 			.setDocumentNo(
-				ValueUtil.validateNull(shipment.getDocumentNo())
+				ValueManager.validateNull(shipment.getDocumentNo())
 			)
 			.setDateOrdered(
-				ValueUtil.getTimestampFromDate(shipment.getDateOrdered())
+				ValueManager.getTimestampFromDate(shipment.getDateOrdered())
 			)
 			.setMovementDate(
-				ValueUtil.getTimestampFromDate(shipment.getMovementDate())
+				ValueManager.getTimestampFromDate(shipment.getMovementDate())
 			)
 			.setIsCompleted(
 				DocumentUtil.isCompleted(shipment)
@@ -701,7 +701,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -842,7 +842,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -855,7 +855,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 			shipmentLine.setQty(quantity);
 			shipmentLine.setDescription(
-				ValueUtil.validateNull(request.getDescription())
+				ValueManager.validateNull(request.getDescription())
 			);
 			shipmentLine.saveEx(transactionName);
 
@@ -902,10 +902,10 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				convertProduct(shipmentLine.getM_Product_ID())
 			)
 			.setDescription(
-				ValueUtil.validateNull(shipmentLine.getDescription())
+				ValueManager.validateNull(shipmentLine.getDescription())
 			)
 			.setQuantity(
-				ValueUtil.getDecimalFromBigDecimal(shipmentLine.getQtyEntered())
+				ValueManager.getDecimalFromBigDecimal(shipmentLine.getQtyEntered())
 			)
 			.setLine(shipmentLine.getLine())
 		;
@@ -951,7 +951,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		ListShipmentLinesResponse.Builder builderList = ListShipmentLinesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 

@@ -33,7 +33,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.payment.ListPaymentInfoRequest;
 import org.spin.backend.grpc.payment.PaymentGrpc.PaymentImplBase;
@@ -148,8 +148,9 @@ public class PaymentInfo extends PaymentImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		
 		return builder;
 	}

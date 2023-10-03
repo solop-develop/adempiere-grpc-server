@@ -66,9 +66,9 @@ import org.spin.backend.grpc.security.UserInfoRequest;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
@@ -147,8 +147,16 @@ public class Security extends SecurityImplBase {
 			services.entrySet().forEach(service -> {
 				Service.Builder availableService = Service.newBuilder();
 				availableService.setId(service.getKey())
-					.setDisplayName(ValueUtil.validateNull(service.getValue().get(OpenIDUtil.DISPLAYNAME)))
-					.setAuthorizationUri(ValueUtil.validateNull(service.getValue().get(OpenIDUtil.ENDPOINT_Authorization_URI)))
+					.setDisplayName(
+						ValueManager.validateNull(
+							service.getValue().get(OpenIDUtil.DISPLAYNAME)
+						)
+					)
+					.setAuthorizationUri(
+						ValueManager.validateNull(
+							service.getValue().get(OpenIDUtil.ENDPOINT_Authorization_URI)
+						)
+					)
 				;
 				serviceBuilder.addServices(availableService);
 			});
@@ -353,8 +361,9 @@ public class Security extends SecurityImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	Return
 		return builder;
 	}
@@ -586,15 +595,31 @@ public class Security extends SecurityImplBase {
 		MCurrency currency = MCurrency.get(Env.getCtx(), country.getC_Currency_ID());
 		//	Set values for currency
 		session.setCountryId(country.getC_Country_ID());
-		session.setCountryCode(ValueUtil.validateNull(country.getCountryCode()));
-		session.setCountryName(ValueUtil.validateNull(country.getName()));
-		session.setDisplaySequence(ValueUtil.validateNull(country.getDisplaySequence()));
-		session.setCurrencyIsoCode(ValueUtil.validateNull(currency.getISO_Code()));
-		session.setCurrencyName(ValueUtil.validateNull(currency.getDescription()));
-		session.setCurrencySymbol(ValueUtil.validateNull(currency.getCurSymbol()));
+		session.setCountryCode(
+			ValueManager.validateNull(
+				country.getCountryCode()
+			)
+		);
+		session.setCountryName(
+			ValueManager.validateNull(
+				country.getName()
+			)
+		);
+		session.setDisplaySequence(
+			ValueManager.validateNull(
+				country.getDisplaySequence()
+			)
+		);
+		session.setCurrencyIsoCode(
+			ValueManager.validateNull(currency.getISO_Code()));
+		session.setCurrencyName(
+			ValueManager.validateNull(currency.getDescription()));
+		session.setCurrencySymbol(
+			ValueManager.validateNull(currency.getCurSymbol()));
 		session.setStandardPrecision(currency.getStdPrecision());
 		session.setCostingPrecision(currency.getCostingPrecision());
-		session.setLanguage(ValueUtil.validateNull(ContextManager.getDefaultLanguage(Env.getAD_Language(Env.getCtx()))));
+		session.setLanguage(
+			ValueManager.validateNull(ContextManager.getDefaultLanguage(Env.getAD_Language(Env.getCtx()))));
 		//	Set default context
 		Struct.Builder epale = Struct.newBuilder();
 		Env.getCtx().entrySet().stream()
@@ -610,15 +635,19 @@ public class Security extends SecurityImplBase {
 		if (Util.isEmpty(value)) {
 			return builder;
 		}
-		if (ValueUtil.isNumeric(value)) {
-			builder.setNumberValue(ValueUtil.getIntegerFromString(value));
-		} else if (ValueUtil.isBoolean(value)) {
-			boolean booleanValue = ValueUtil.stringToBoolean(value.trim());
+		if (ValueManager.isNumeric(value)) {
+			builder.setNumberValue(ValueManager.getIntegerFromString(value));
+		} else if (ValueManager.isBoolean(value)) {
+			boolean booleanValue = ValueManager.stringToBoolean(value.trim());
 			builder.setBoolValue(booleanValue);
-		} else if(ValueUtil.isDate(value)) {
-			return ValueUtil.getValueFromDate(ValueUtil.convertStringToDate(value));
+		} else if(ValueManager.isDate(value)) {
+			return ValueManager.getValueFromDate(
+				ValueManager.convertStringToDate(value)
+			);
 		} else {
-			builder.setStringValue(ValueUtil.validateNull(value));
+			builder.setStringValue(
+				ValueManager.validateNull(value)
+			);
 		}
 		//	
 		return builder;
@@ -653,9 +682,18 @@ public class Security extends SecurityImplBase {
 		SessionManager.loadDefaultSessionValues(context, Env.getAD_Language(context));
 		//	Session values
 		SessionInfo.Builder builder = SessionInfo.newBuilder();
-		builder.setId(session.getAD_Session_ID());
-		builder.setName(ValueUtil.validateNull(session.getDescription()));
-		builder.setUserInfo(convertUserInfo(MUser.get(context, session.getCreatedBy())).build());
+		builder.setId(session.getAD_Session_ID())
+			.setName(
+				ValueManager.validateNull(
+					session.getDescription()
+				)
+			)
+			.setUserInfo(
+				convertUserInfo(
+					MUser.get(context, session.getCreatedBy())
+				).build()
+			)
+		;
 		//	Set role
 		Role.Builder roleBuilder = convertRole(
 			MRole.get(context, session.getAD_Role_ID())
@@ -673,17 +711,34 @@ public class Security extends SecurityImplBase {
 	 * @return
 	 */
 	private UserInfo.Builder convertUserInfo(MUser user) {
-		UserInfo.Builder userInfo = UserInfo.newBuilder();
-		userInfo.setId(user.getAD_User_ID());
-		userInfo.setName(ValueUtil.validateNull(user.getName()));
-		userInfo.setDescription(ValueUtil.validateNull(user.getDescription()));
-		userInfo.setComments(ValueUtil.validateNull(user.getComments()));
+		UserInfo.Builder userInfo = UserInfo.newBuilder()
+			.setId(user.getAD_User_ID())
+			.setName(
+				ValueManager.validateNull(
+					user.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					user.getDescription()
+				)
+			)
+			.setComments(
+				ValueManager.validateNull(
+					user.getComments()
+				)
+			)
+		;
 		if(user.getLogo_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(user.getAD_Client_ID())) {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), user.getAD_Client_ID());
 			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(user.getCtx(), clientInfo.getFileHandler_ID(), user.getLogo_ID(), null);
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
-				userInfo.setImage(ValueUtil.validateNull(attachmentReference.getValidFileName()));
+				userInfo.setImage(
+					ValueManager.validateNull(
+						attachmentReference.getValidFileName()
+					)
+				);
 			}
 		}
 		userInfo.setConnectionTimeout(SessionManager.getSessionTimeout(user));
@@ -731,10 +786,14 @@ public class Security extends SecurityImplBase {
 		}
 		builder.setId(client.getAD_Client_ID())
 			.setName(
-				ValueUtil.validateNull(client.getName())
+				ValueManager.validateNull(
+					client.getName()
+				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(client.getDescription())
+				ValueManager.validateNull(
+					client.getDescription()
+				)
 			)
 		;
 
@@ -750,7 +809,7 @@ public class Security extends SecurityImplBase {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogo(
-						ValueUtil.validateNull(
+						ValueManager.validateNull(
 							attachmentReference.getValidFileName()
 						)
 					);
@@ -765,7 +824,7 @@ public class Security extends SecurityImplBase {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogoReport(
-						ValueUtil.validateNull(
+						ValueManager.validateNull(
 							attachmentReference.getValidFileName()
 						)
 					);
@@ -780,7 +839,7 @@ public class Security extends SecurityImplBase {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogoWeb(
-						ValueUtil.validateNull(
+						ValueManager.validateNull(
 							attachmentReference.getValidFileName()
 						)
 					);
@@ -807,8 +866,16 @@ public class Security extends SecurityImplBase {
 		Client.Builder clientBuilder = convertClient(role.getAD_Client_ID());
 		builder = Role.newBuilder()
 			.setId(role.getAD_Role_ID())
-			.setName(ValueUtil.validateNull(role.getName()))
-			.setDescription(ValueUtil.validateNull(role.getDescription()))
+			.setName(
+				ValueManager.validateNull(
+					role.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					role.getDescription()
+				)
+			)
 			.setClient(
 				clientBuilder
 			)
@@ -907,9 +974,16 @@ public class Security extends SecurityImplBase {
 		}
 		Menu.Builder builder = Menu.newBuilder()
 				.setId(menu.getAD_Menu_ID())
-				.setName(ValueUtil.validateNull(name))
-				.setDescription(ValueUtil.validateNull(description))
-				.setAction(ValueUtil.validateNull(menu.getAction()))
+				.setName(
+					ValueManager.validateNull(name)
+				)
+				.setDescription(
+					ValueManager.validateNull(description))
+				.setAction(
+					ValueManager.validateNull(
+						menu.getAction()
+					)
+				)
 				.setIsSOTrx(menu.isSOTrx())
 				.setIsSummary(menu.isSummary())
 				.setIsReadOnly(menu.isReadOnly())

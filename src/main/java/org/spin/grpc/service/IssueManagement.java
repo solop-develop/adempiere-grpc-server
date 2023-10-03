@@ -65,8 +65,8 @@ import org.spin.backend.grpc.issue_management.User;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.form.issue_management.IssueManagementConvertUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -135,8 +135,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		queryRequestTypes
 			.setLimit(limit, offset)
@@ -209,7 +210,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		querySaleRepresentatives
 			.setLimit(limit, offset)
@@ -281,7 +284,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		queryPriority
 			.setLimit(limit, offset)
@@ -363,7 +368,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		queryRequests
 			.setLimit(limit, offset)
@@ -524,7 +531,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		queryRequests
 			.setLimit(limit, offset)
@@ -618,9 +627,11 @@ public class IssueManagement extends IssueManagementImplBase {
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
 		requestRecord.setPriority(
-			ValueUtil.validateNull(request.getPriorityValue())
+			ValueManager.validateNull(request.getPriorityValue())
 		);
-		requestRecord.setDateNextAction(ValueUtil.convertStringToDate(request.getDateNextAction()));
+		requestRecord.setDateNextAction(
+			ValueManager.convertStringToDate(request.getDateNextAction())
+		);
 		requestRecord.saveEx();
 
 		Issue.Builder builder = IssueManagementConvertUtil.convertRequest(requestRecord);
@@ -683,10 +694,10 @@ public class IssueManagement extends IssueManagementImplBase {
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
 		requestRecord.setPriority(
-			ValueUtil.validateNull(request.getPriorityValue())
+			ValueManager.validateNull(request.getPriorityValue())
 		);
 		requestRecord.setDateNextAction(
-			ValueUtil.getDateFromTimestampDate(request.getDateNextAction())
+			ValueManager.getDateFromTimestampDate(request.getDateNextAction())
 		);
 		
 		if (request.getStatusId() > 0) {
@@ -845,7 +856,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		List<IssueComment.Builder> issueCommentsList = new ArrayList<>();
 		queryRequestsUpdate
@@ -908,7 +921,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		}
 		MRequest requestRecord = new MRequest(Env.getCtx(), recordId, null);
 		requestRecord.setResult(
-			ValueUtil.validateNull(request.getResult())
+			ValueManager.validateNull(request.getResult())
 		);
 		requestRecord.saveEx();
 
@@ -957,7 +970,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		}
 
 		requestUpdate.setResult(
-			ValueUtil.validateNull(request.getResult())
+			ValueManager.validateNull(request.getResult())
 		);
 		requestUpdate.saveEx();
 

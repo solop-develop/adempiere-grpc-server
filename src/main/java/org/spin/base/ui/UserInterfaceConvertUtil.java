@@ -22,7 +22,7 @@ import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.TreeType;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * This class was created for add all convert methods for User Interface service
@@ -60,12 +60,12 @@ public class UserInterfaceConvertUtil {
 		}
 
 		builder.setId(treeType.getAD_Ref_List_ID())
-			.setValue(ValueUtil.validateNull(treeType.getValue()))
+			.setValue(ValueManager.validateNull(treeType.getValue()))
 			.setName(
-				ValueUtil.validateNull(name)
+				ValueManager.validateNull(name)
 			)
 			.setDescription(
-				ValueUtil.validateNull(description)
+				ValueManager.validateNull(description)
 			)
 		;
 

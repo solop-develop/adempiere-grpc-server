@@ -50,7 +50,7 @@ import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.base.dictionary.DictionaryConvertUtil;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * This class was created for add all convert methods for POS form
@@ -80,7 +80,7 @@ public class DashboardingConvertUtil {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 		}
-		return ValueUtil.validateNull(
+		return ValueManager.validateNull(
 			String.format("#%06X", (0xFFFFFF & color))
 		);
 	}
@@ -101,7 +101,7 @@ public class DashboardingConvertUtil {
 //			if (filter.getValuesList() != null && filter.getValuesList().size() > 0) {
 //				List<Object> values = new ArrayList<Object>();
 //				filter.getValuesList().forEach(valueBuilder -> {
-//					Object currentValue = ValueUtil.getObjectFromValue(
+//					Object currentValue = ValueManager.getObjectFromValue(
 //						valueBuilder
 //					);
 //					values.add(currentValue);
@@ -109,14 +109,14 @@ public class DashboardingConvertUtil {
 //				value = values;
 //			}
 //			else {
-//				value = ValueUtil.getObjectFromValue(filter.getValue());
+//				value = ValueManager.getObjectFromValue(filter.getValue());
 //				// to BETWEEN clause
 //				if (filter.hasValueTo()) {
 //					Object currentValue = value;
 //					List<Object> values = new ArrayList<Object>();
 //					values.add(currentValue);
 //					values.add(
-//						ValueUtil.getObjectFromValue(
+//						ValueManager.getObjectFromValue(
 //							filter.getValueTo()
 //						)
 //					);
@@ -249,11 +249,11 @@ public class DashboardingConvertUtil {
 				}
 			}
 			builder.setReferenceId(referenceId);
-			builder.setAction(ValueUtil.validateNull(action));
+			builder.setAction(ValueManager.validateNull(action));
 		}
 		//	Set name and description
-		builder.setMenuName(ValueUtil.validateNull(menuName));
-		builder.setMenuDescription(ValueUtil.validateNull(menuDescription));
+		builder.setMenuName(ValueManager.validateNull(menuName));
+		builder.setMenuDescription(ValueManager.validateNull(menuDescription));
 		return builder;
 	}
 
@@ -264,7 +264,7 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueUtil.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark1Percent()))
+				ValueManager.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark1Percent()))
 			)
 			.setColor(
 				getColorAsHex(
@@ -281,7 +281,7 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueUtil.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark2Percent()))
+				ValueManager.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark2Percent()))
 			)
 			.setColor(
 				getColorAsHex(
@@ -298,7 +298,7 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueUtil.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark3Percent()))
+				ValueManager.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark3Percent()))
 			)
 			.setColor(
 				getColorAsHex(
@@ -315,7 +315,7 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueUtil.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark4Percent()))
+				ValueManager.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark4Percent()))
 			)
 			.setColor(
 				getColorAsHex(
@@ -364,12 +364,12 @@ public class DashboardingConvertUtil {
 		}
 		
 		builder.setName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					grapColumn.getLabel()
 				)
 			)
 			.setValue(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					new BigDecimal(grapColumn.getValue())
 				)
 			)
@@ -386,17 +386,17 @@ public class DashboardingConvertUtil {
 		}
 		builder.setId(chartParameter.get_ID())
 			.setName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Description)
 				)
 			)
 			.setHelp(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Help)
 				)
 			)
@@ -404,12 +404,12 @@ public class DashboardingConvertUtil {
 				chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_SeqNo)
 			)
 			.setColumnName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ColumnName)
 				)
 			)
 			.setColumnSql(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString("ColumnSQL")
 				)
 			)
@@ -426,7 +426,7 @@ public class DashboardingConvertUtil {
 				chartParameter.get_ValueAsBoolean(I_AD_Process_Para.COLUMNNAME_IsRange)
 			)
 			.setDefaultValue(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_DefaultValue)
 				)
 			)
@@ -434,27 +434,27 @@ public class DashboardingConvertUtil {
 				chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Reference_ID)
 			)
 			.setVFormat(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_VFormat)
 				)
 			)
 			.setValueMax(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ValueMax)
 				)
 			)
 			.setValueMin(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ValueMin)
 				)
 			)
 			.setDisplayLogic(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_DisplayLogic)
 				)
 			)
 			.setReadOnlyLogic(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ReadOnlyLogic)
 				)
 			)
@@ -499,14 +499,14 @@ public class DashboardingConvertUtil {
 		builder = WindowDashboard.newBuilder()
 			.setId(chartDefinition.getAD_Chart_ID())
 			.setName(
-				ValueUtil.validateNull(chartDefinition.getName())
+				ValueManager.validateNull(chartDefinition.getName())
 			)
 			.setDescription(
-				ValueUtil.validateNull(chartDefinition.getDescription())
+				ValueManager.validateNull(chartDefinition.getDescription())
 			)
 			.setDashboardType("chart")
 			.setChartType(
-				ValueUtil.validateNull(chartDefinition.getChartType())
+				ValueManager.validateNull(chartDefinition.getChartType())
 			)
 			.setIsCollapsible(true)
 			.setIsOpenByDefault(true)
@@ -528,7 +528,7 @@ public class DashboardingConvertUtil {
 			.setOnlyActiveRecords(true)
 			.<PO>list()
 			.forEach(windowChartParameter -> {
-				String contextColumn = ValueUtil.validateNull(
+				String contextColumn = ValueManager.validateNull(
 					windowChartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnName)
 				);
 				contextColumnsList.add(contextColumn);

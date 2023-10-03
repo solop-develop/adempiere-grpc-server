@@ -37,7 +37,8 @@ import org.spin.backend.grpc.logs.UserActivity;
 import org.spin.backend.grpc.logs.UserActivityType;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
+
 import static com.google.protobuf.util.Timestamps.toMillis;
 
 /**
@@ -47,7 +48,7 @@ import static com.google.protobuf.util.Timestamps.toMillis;
 public class LogsServiceLogic {
 	public static ListUserActivitesResponse.Builder listUserActivites(ListUserActivitesRequest request) {
 		final int userId = Env.getAD_User_ID(Env.getCtx());
-		Timestamp date = ValueUtil.getDateFromTimestampDate(
+		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getDate()
 		);
 		if (date == null) {
@@ -135,16 +136,23 @@ public class LogsServiceLogic {
 		List<UserActivity> recordsList = userActivitiesList.stream().sorted((u1, u2) -> {
 			Timestamp from = null;
 			if (u1.getUserActivityType() == UserActivityType.ENTITY_LOG) {
-				from = ValueUtil.getDateFromTimestampDate(u1.getEntityLog().getLogDate());
+				from = ValueManager.getDateFromTimestampDate(
+					u1.getEntityLog().getLogDate()
+				);
 			} else {
-				from = ValueUtil.getTimestampFromLong(toMillis(u1.getProcessLog().getLastRun()));
+				from = ValueManager.getTimestampFromLong(
+					toMillis(u1.getProcessLog().getLastRun())
+				);
 			}
 
 			Timestamp to = null;
 			if (u2.getUserActivityType() == UserActivityType.ENTITY_LOG) {
-				to = ValueUtil.getDateFromTimestampDate(u2.getEntityLog().getLogDate());
+				to = ValueManager.getDateFromTimestampDate(
+					u2.getEntityLog().getLogDate()
+				);
 			} else {
-				to = ValueUtil.getTimestampFromLong(toMillis((u2.getProcessLog().getLastRun())));
+				to = ValueManager.getTimestampFromLong(
+					toMillis((u2.getProcessLog().getLastRun())));
 			}
 
 			if (from == null || to == null) {
@@ -156,10 +164,12 @@ public class LogsServiceLogic {
 		})
 		.collect(Collectors.toList());
 
-
-		builderList.setRecordCount(count);
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
-		builderList.addAllRecords(recordsList);
+		builderList.setRecordCount(count)
+			.setNextPageToken(
+				ValueManager.validateNull(nexPageToken)
+			)
+			.addAllRecords(recordsList)
+		;
 
 		return builderList;
 	}

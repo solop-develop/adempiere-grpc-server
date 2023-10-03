@@ -63,9 +63,9 @@ import org.spin.backend.grpc.form.import_file_loader.SaveRecordsRequest;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.base.util.ValueUtil;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.UserInterface;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
@@ -137,7 +137,7 @@ public class ImportFileLoaderServiceLogic {
 		}
 
 		charsetsList.stream().forEach(charset -> {
-			Value.Builder value = ValueUtil.getValueFromString(
+			Value.Builder value = ValueManager.getValueFromString(
 				charset.name()
 			);
 			LookupItem.Builder builder = LookupItem.newBuilder().setValues(Struct.newBuilder().putFields(
@@ -518,7 +518,7 @@ public class ImportFileLoaderServiceLogic {
 				Value.Builder valueBuilder = Value.newBuilder();
 				if (row.isDate()) {
 					Timestamp dateValue = Timestamp.valueOf(entry);
-					valueBuilder = ValueUtil.getValueFromDate(dateValue);
+					valueBuilder = ValueManager.getValueFromDate(dateValue);
 				} else if (row.isNumber()) {
 					BigDecimal numberValue = null;
 					if (!Util.isEmpty(entry, true)) {
@@ -527,9 +527,9 @@ public class ImportFileLoaderServiceLogic {
 						// 	numberValue = numberValue.divide(BigDecimal.valueOf(100));
 						// }
 					}
-					valueBuilder = ValueUtil.getValueFromDecimal(numberValue);
+					valueBuilder = ValueManager.getValueFromDecimal(numberValue);
 				} else {
-					valueBuilder = ValueUtil.getValueFromString(entry);
+					valueBuilder = ValueManager.getValueFromString(entry);
 				}
 
 				entitBuilder.setValues(Struct.newBuilder().putFields(row.getColumnName(), valueBuilder.build()));

@@ -25,6 +25,7 @@ import org.spin.backend.grpc.update.ListStepsResponse;
 import org.spin.backend.grpc.update.ListUpdatesRequest;
 import org.spin.backend.grpc.update.ListUpdatesResponse;
 import org.spin.backend.grpc.update.UpdateCenterGrpc;
+import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -128,11 +129,12 @@ public class UpdateManager {
 		try {
 			buildConnection();
 			return blockingStub.listPackages(
-					  ListPackagesRequest.newBuilder()
-					  	.setPageToken(ValueUtil.validateNull(pageToken))
-					  	.setVersion(version)
-					  	.setReleaseNo(releaseNo)
-					  	.build());
+				ListPackagesRequest.newBuilder()
+					.setPageToken(ValueManager.validateNull(pageToken))
+					.setVersion(version)
+					.setReleaseNo(releaseNo)
+					.build()
+			);
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -151,11 +153,12 @@ public class UpdateManager {
 		try {
 			buildConnection();
 			return blockingStub.listUpdates(
-				  ListUpdatesRequest.newBuilder()
-				  	.setPageToken(ValueUtil.validateNull(pageToken))
-				  	.setEntityType(entityType)
-				  	.setReleaseNo(ValueUtil.validateNull(releaseNo))
-				  	.build());
+				ListUpdatesRequest.newBuilder()
+					.setPageToken(ValueManager.validateNull(pageToken))
+					.setEntityType(entityType)
+					.setReleaseNo(ValueManager.validateNull(releaseNo))
+					.build()
+			);
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -173,11 +176,12 @@ public class UpdateManager {
 		try {
 			buildConnection();
 			return blockingStub.listSteps(
-				  ListStepsRequest.newBuilder()
-				  	.setPageToken(ValueUtil.validateNull(pageToken))
-				  	.setUpdateId(updateId)
-				  	.setFromStep(fromStep)
-				  	.build());
+				ListStepsRequest.newBuilder()
+					.setPageToken(ValueManager.validateNull(pageToken))
+					.setUpdateId(updateId)
+					.setFromStep(fromStep)
+					.build()
+			);
 		} catch (Exception e) {
 			throw e;
 		} finally {

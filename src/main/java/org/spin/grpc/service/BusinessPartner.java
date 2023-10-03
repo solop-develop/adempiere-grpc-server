@@ -33,7 +33,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.backend.grpc.bpartner.BusinessPartnerGrpc.BusinessPartnerImplBase;
 import org.spin.backend.grpc.bpartner.ListBusinessPartnerInfoRequest;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
@@ -151,7 +151,7 @@ public class BusinessPartner extends BusinessPartnerImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
 		
 		return builder;
 	}

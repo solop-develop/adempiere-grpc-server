@@ -39,8 +39,8 @@ import org.spin.backend.grpc.issue_management.IssueCommentType;
 import org.spin.backend.grpc.issue_management.Priority;
 import org.spin.backend.grpc.issue_management.RequestType;
 import org.spin.backend.grpc.issue_management.User;
-import org.spin.base.util.ValueUtil;
 import org.spin.model.MADAttachmentReference;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.AttachmentUtil;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 
@@ -74,12 +74,14 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(priority.getAD_Ref_List_ID())
-			.setValue(ValueUtil.validateNull(priority.getValue()))
+			.setValue(
+				ValueManager.validateNull(priority.getValue())
+			)
 			.setName(
-				ValueUtil.validateNull(name)
+				ValueManager.validateNull(name)
 			)
 			.setDescription(
-				ValueUtil.validateNull(description)
+				ValueManager.validateNull(description)
 			)
 		;
 
@@ -101,8 +103,12 @@ public class IssueManagementConvertUtil {
 			return builder;
 		}
 		builder.setId(user.getAD_User_ID())
-			.setName(ValueUtil.validateNull(user.getName()))
-			.setDescription(ValueUtil.validateNull(user.getDescription()))
+			.setName(
+				ValueManager.validateNull(user.getName())
+			)
+			.setDescription(
+				ValueManager.validateNull(user.getDescription())
+			)
 		;
 		if (user.getLogo_ID() > 0) {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()));
@@ -115,7 +121,7 @@ public class IssueManagementConvertUtil {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setAvatar(
-						ValueUtil.validateNull(
+						ValueManager.validateNull(
 							attachmentReference.getValidFileName()
 						)
 					);
@@ -151,12 +157,14 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(dueType.getAD_Ref_List_ID())
-			.setValue(ValueUtil.validateNull(dueType.getValue()))
+			.setValue(
+				ValueManager.validateNull(dueType.getValue())
+			)
 			.setName(
-				ValueUtil.validateNull(name)
+				ValueManager.validateNull(name)
 			)
 			.setDescription(
-				ValueUtil.validateNull(description)
+				ValueManager.validateNull(description)
 			)
 		;
 
@@ -181,8 +189,12 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(requestType.getR_RequestType_ID())
-			.setName(ValueUtil.validateNull(requestType.getName()))
-			.setDescription(ValueUtil.validateNull(requestType.getDescription()))
+			.setName(
+				ValueManager.validateNull(requestType.getName())
+			)
+			.setDescription(
+				ValueManager.validateNull(requestType.getDescription())
+			)
 			.setDueDateTolerance(requestType.getDueDateTolerance())
 		;
 
@@ -224,8 +236,12 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(status.getR_Status_ID())
-			.setName(ValueUtil.validateNull(status.getName()))
-			.setDescription(ValueUtil.validateNull(status.getDescription()))
+			.setName(
+				ValueManager.validateNull(status.getName())
+			)
+			.setDescription(
+				ValueManager.validateNull(status.getDescription())
+			)
 		;
 
 		return builder;
@@ -247,9 +263,15 @@ public class IssueManagementConvertUtil {
 		}
 
 		builder.setId(request.getR_Request_ID())
-			.setDocumentNo(ValueUtil.validateNull(request.getDocumentNo()))
-			.setSubject(ValueUtil.validateNull(request.getSubject()))
-			.setSummary(ValueUtil.validateNull(request.getSummary()))
+			.setDocumentNo(
+				ValueManager.validateNull(request.getDocumentNo())
+			)
+			.setSubject(
+				ValueManager.validateNull(request.getSubject())
+			)
+			.setSummary(
+				ValueManager.validateNull(request.getSummary())
+			)
 			.setCreated(fromMillis(request.getUpdated().getTime()))
 			.setLastUpdated(fromMillis(request.getUpdated().getTime())
 			)
@@ -295,10 +317,11 @@ public class IssueManagementConvertUtil {
 			return builder;
 		}
 		builder.setId(requestUpdate.getR_RequestUpdate_ID())
-			.setCreated(fromMillis(requestUpdate.getCreated().getTime())
+			.setCreated(
+				fromMillis(requestUpdate.getCreated().getTime())
 			)
 			.setResult(
-				ValueUtil.validateNull(requestUpdate.getResult())
+				ValueManager.validateNull(requestUpdate.getResult())
 			)
 			.setIssueCommentType(IssueCommentType.COMMENT)
 			.setUser(
@@ -406,16 +429,21 @@ public class IssueManagementConvertUtil {
 					label = column.get_Translation(I_AD_Column.COLUMNNAME_Name);
 				}
 				builder.setLabel(
-					ValueUtil.validateNull(label)
+					ValueManager.validateNull(label)
 				);
 
 				Object value = requestAction.get_Value(columnModified);
 				builder.setNewValue(
-					ValueUtil.getValueFromReference(value, column.getAD_Reference_ID())
+					ValueManager.getValueFromReference(value, column.getAD_Reference_ID())
 				);
-				String displayedValue = ValueUtil.getDisplayedValueFromReference(value, columnModified, column.getAD_Reference_ID(), column.getAD_Reference_Value_ID());
+				String displayedValue = ValueManager.getDisplayedValueFromReference(
+					value,
+					columnModified,
+					column.getAD_Reference_ID(),
+					column.getAD_Reference_Value_ID()
+				);
 				builder.setDisplayedValue(
-					ValueUtil.validateNull(displayedValue)
+					ValueManager.validateNull(displayedValue)
 				);
 			}
 		}

@@ -44,7 +44,7 @@ import org.spin.backend.grpc.update.StepValue;
 import org.spin.backend.grpc.update.Update;
 import org.spin.backend.grpc.update.UpdateCenterGrpc.UpdateCenterImplBase;
 import org.spin.base.db.LimitUtil;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -145,8 +145,11 @@ public class UpdateManagement extends UpdateCenterImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(
+				nexPageToken
+			)
+		);
 		return builder;
 	}
 	
@@ -157,16 +160,37 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private Step.Builder convertStep(MMigrationStep migrationStep) {
 		Step.Builder builder = Step.newBuilder()
-				.setId(migrationStep.getAD_MigrationStep_ID())
-				.setAction(ValueUtil.validateNull(migrationStep.getAction()))
-				.setComments(ValueUtil.validateNull(migrationStep.getComments()))
-				.setStepType(ValueUtil.validateNull(migrationStep.getStepType()))
-				.setTableId(migrationStep.getAD_Table_ID())
-				.setRecordId(migrationStep.getRecord_ID())
-				.setIsParsed(migrationStep.isParse())
-				.setSequence(migrationStep.getSeqNo())
-				.setSqlStatement(ValueUtil.validateNull(migrationStep.getSQLStatement()))
-				.setRollbackStatement(ValueUtil.validateNull(migrationStep.getRollbackStatement()));
+			.setId(migrationStep.getAD_MigrationStep_ID())
+			.setAction(
+				ValueManager.validateNull(
+					migrationStep.getAction()
+				)
+			)
+			.setComments(
+				ValueManager.validateNull(
+					migrationStep.getComments()
+				)
+			)
+			.setStepType(
+				ValueManager.validateNull(
+					migrationStep.getStepType()
+				)
+			)
+			.setTableId(migrationStep.getAD_Table_ID())
+			.setRecordId(migrationStep.getRecord_ID())
+			.setIsParsed(migrationStep.isParse())
+			.setSequence(migrationStep.getSeqNo())
+			.setSqlStatement(
+				ValueManager.validateNull(
+					migrationStep.getSQLStatement()
+				)
+			)
+			.setRollbackStatement(
+				ValueManager.validateNull(
+					migrationStep.getRollbackStatement()
+				)
+			)
+		;
 		new Query(Env.getCtx(), I_AD_MigrationData.Table_Name, I_AD_MigrationData.COLUMNNAME_AD_MigrationStep_ID + " = ?", null)
 			.setParameters(migrationStep.getAD_MigrationStep_ID())
 			.<MMigrationData>list()
@@ -181,14 +205,27 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private StepValue.Builder convertStepValue(MMigrationData migrationData) {
 		StepValue.Builder builder = StepValue.newBuilder()
-				.setId(migrationData.getAD_MigrationData_ID())
-				.setColumnId(migrationData.getAD_Column_ID())
-				.setOldValue(ValueUtil.validateNull(migrationData.getOldValue()))
-				.setBackupValue(ValueUtil.validateNull(migrationData.getBackupValue()))
-				.setNewValue(ValueUtil.validateNull(migrationData.getNewValue()))
-				.setIsOldNull(migrationData.isOldNull())
-				.setIsBackupNull(migrationData.isBackupNull())
-				.setIsNewNull(migrationData.isNewNull());
+			.setId(migrationData.getAD_MigrationData_ID())
+			.setColumnId(migrationData.getAD_Column_ID())
+			.setOldValue(
+				ValueManager.validateNull(
+					migrationData.getOldValue()
+				)
+			)
+			.setBackupValue(
+				ValueManager.validateNull(
+					migrationData.getBackupValue()
+				)
+			)
+			.setNewValue(
+				ValueManager.validateNull(
+					migrationData.getNewValue()
+				)
+			)
+			.setIsOldNull(migrationData.isOldNull())
+			.setIsBackupNull(migrationData.isBackupNull())
+			.setIsNewNull(migrationData.isNewNull())
+		;
 		return builder;
 	}
 	
@@ -233,8 +270,9 @@ public class UpdateManagement extends UpdateCenterImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		return builder;
 	}
 	
@@ -245,13 +283,30 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private Update.Builder convertMigration(MMigration migration) {
 		return Update.newBuilder()
-				.setId(migration.getAD_Migration_ID())
-				.setEntityType(ValueUtil.validateNull(migration.getEntityType()))
-				.setSequence(migration.getSeqNo())
-				.setName(ValueUtil.validateNull(migration.getName()))
-				.setComments(ValueUtil.validateNull(migration.getComments()))
-				.setReleaseNo(ValueUtil.validateNull(migration.getReleaseNo()))
-				.setStepQuantity(getStepQuantity(migration));
+			.setId(migration.getAD_Migration_ID())
+			.setEntityType(
+				ValueManager.validateNull(
+					migration.getEntityType()
+				)
+			)
+			.setSequence(migration.getSeqNo())
+			.setName(
+				ValueManager.validateNull(
+					migration.getName()
+				)
+			)
+			.setComments(
+				ValueManager.validateNull(
+					migration.getComments()
+				)
+			)
+			.setReleaseNo(
+				ValueManager.validateNull(
+					migration.getReleaseNo()
+				)
+			)
+			.setStepQuantity(getStepQuantity(migration))
+		;
 	}
 	
 	/**
@@ -309,8 +364,9 @@ public class UpdateManagement extends UpdateCenterImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		return builder;
 	}
 	
@@ -321,18 +377,52 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private Package.Builder convertPackage(MEntityType entityType) {
 		Package.Builder builder = Package.newBuilder()
-				.setId(entityType.getAD_EntityType_ID())
-				.setEntityType(ValueUtil.validateNull(entityType.getEntityType()))
-				.setName(ValueUtil.validateNull(entityType.getName()))
-				.setDescription(ValueUtil.validateNull(entityType.getDescription()))
-				.setHelp(ValueUtil.validateNull(entityType.getHelp()))
-				.setVersion(ValueUtil.validateNull(entityType.getVersion()))
-				.setModelPackage(ValueUtil.validateNull(entityType.getModelPackage()));
-		new Query(Env.getCtx(), I_AD_Modification.Table_Name, I_AD_Modification.COLUMNNAME_EntityType + " = ?", null)
+			.setId(entityType.getAD_EntityType_ID())
+			.setEntityType(
+				ValueManager.validateNull(
+					entityType.getEntityType()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					entityType.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					entityType.getDescription()
+				)
+			)
+			.setHelp(
+				ValueManager.validateNull(
+					entityType.getHelp()
+				)
+			)
+			.setVersion(
+				ValueManager.validateNull(
+					entityType.getVersion()
+				)
+			)
+			.setModelPackage(
+				ValueManager.validateNull(
+					entityType.getModelPackage()
+				)
+			)
+		;
+		new Query(
+			Env.getCtx(),
+			I_AD_Modification.Table_Name,
+			I_AD_Modification.COLUMNNAME_EntityType + " = ?",
+			null
+		)
 			.setParameters(entityType.getEntityType())
 			.setOrderBy(I_AD_Modification.COLUMNNAME_SeqNo)
 			.<X_AD_Modification>list()
-			.forEach(modification -> builder.addVersions(convertPackageVersion(modification)));
+			.forEach(modification -> {
+				builder.addVersions(
+					convertPackageVersion(modification)
+				);
+			});
 		return builder;
 	}
 	
@@ -343,11 +433,28 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private PackageVersion.Builder convertPackageVersion(X_AD_Modification modification) {
 		return PackageVersion.newBuilder()
-				.setId(modification.getAD_Modification_ID())
-				.setSequence(modification.getSeqNo())
-				.setName(ValueUtil.validateNull(modification.getName()))
-				.setDescription(ValueUtil.validateNull(modification.getDescription()))
-				.setHelp(ValueUtil.validateNull(modification.getHelp()))
-				.setVersion(ValueUtil.validateNull(modification.getVersion()));
+			.setId(modification.getAD_Modification_ID())
+			.setSequence(modification.getSeqNo())
+			.setName(
+				ValueManager.validateNull(
+					modification.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					modification.getDescription()
+				)
+			)
+			.setHelp(
+				ValueManager.validateNull(
+					modification.getHelp()
+				)
+			)
+			.setVersion(
+				ValueManager.validateNull(
+					modification.getVersion()
+				)
+			)
+		;
 	}
 }

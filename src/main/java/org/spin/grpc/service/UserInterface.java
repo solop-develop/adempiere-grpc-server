@@ -196,8 +196,8 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.model.MADContextInfo;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.ASPUtil;
 
 import com.google.protobuf.ByteString;
@@ -346,10 +346,13 @@ public class UserInterface extends UserInterfaceImplBase {
 
 			Object value = null;
 			if (referenceId > 0) {
-				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
+				value = ValueManager.getObjectFromReference(
+					attribute.getValue(),
+					referenceId
+				);
 			}
 			if (value == null) {
-				value = ValueUtil.getObjectFromValue(attribute.getValue());
+				value = ValueManager.getObjectFromValue(attribute.getValue());
 			}
 			entity.set_ValueOfColumn(columnName, value);
 		});
@@ -454,15 +457,33 @@ public class UserInterface extends UserInterfaceImplBase {
 				if (tab != null && tab.getAD_Tab_ID() > 0) {
 					recordReferenceBuilder.setTabId(tab.getAD_Tab_ID());
 				}
-				recordReferenceBuilder.setTableName(ValueUtil.validateNull(zoomQuery.getZoomTableName()));
-				recordReferenceBuilder.setWhereClause(ValueUtil.validateNull(zoomQuery.getWhereClause()));
-				recordReferenceBuilder.setRecordCount(zoomQuery.getRecordCount());
-
-				recordReferenceBuilder.setDisplayName(zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")");
-				recordReferenceBuilder.setColumnName(ValueUtil.validateNull(zoomQuery.getZoomColumnName()));
-				recordReferenceBuilder.setValue(
-					ValueUtil.getValueFromObject(zoomQuery.getZoomValue()).build()
-				);
+				recordReferenceBuilder.setTableName(
+						ValueManager.validateNull(
+							zoomQuery.getZoomTableName()
+						)
+					)
+					.setWhereClause(
+						ValueManager.validateNull(
+							zoomQuery.getWhereClause()
+						)
+					)
+					.setRecordCount(
+						zoomQuery.getRecordCount()
+					)
+					.setDisplayName(
+						zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")"
+					)
+					.setColumnName(
+						ValueManager.validateNull(
+							zoomQuery.getZoomColumnName()
+						)
+					)
+					.setValue(
+						ValueManager.getValueFromObject(
+							zoomQuery.getZoomValue()
+						).build()
+					)
+				;
 
 				//	Add to list
 				builder.addReferences(recordReferenceBuilder.build());
@@ -943,7 +964,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						if(field == null) {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
-								valueBuilder = ValueUtil.getValueFromString(value);
+								valueBuilder = ValueManager.getValueFromString(value);
 							}
 							values.putFields(columnName, valueBuilder.build());
 							continue;
@@ -954,7 +975,10 @@ public class UserInterface extends UserInterfaceImplBase {
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						Object value = rs.getObject(index);
-						valueBuilder = ValueUtil.getValueFromReference(value, field.getAD_Reference_ID());
+						valueBuilder = ValueManager.getValueFromReference(
+							value,
+							field.getAD_Reference_ID()
+						);
 						values.putFields(fieldColumnName, valueBuilder.build());
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
@@ -1091,8 +1115,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	Return
 		return builder;
 	}
@@ -1141,10 +1166,13 @@ public class UserInterface extends UserInterfaceImplBase {
 			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if (referenceId > 0) {
-				value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
+				value = ValueManager.getObjectFromReference(
+					attribute.getValue(),
+					referenceId
+				);
 			} 
 			if (value == null) {
-				value = ValueUtil.getObjectFromValue(attribute.getValue());
+				value = ValueManager.getObjectFromValue(attribute.getValue());
 			}
 			entity.set_ValueOfColumn(attribute.getKey(), value);
 		});
@@ -1206,10 +1234,13 @@ public class UserInterface extends UserInterfaceImplBase {
 				int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 				Object value = null;
 				if (referenceId > 0) {
-					value = ValueUtil.getObjectFromReference(attribute.getValue(), referenceId);
+					value = ValueManager.getObjectFromReference(
+						attribute.getValue(),
+						referenceId
+					);
 				} 
 				if (value == null) {
-					value = ValueUtil.getObjectFromValue(attribute.getValue());
+					value = ValueManager.getObjectFromValue(attribute.getValue());
 				}
 				entity.set_ValueOfColumn(attribute.getKey(), value);
 			});
@@ -1331,8 +1362,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		
 		return builder;
 	}
@@ -1352,14 +1384,24 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	
 		int tableId = MTable.getTable_ID(request.getTableName());
 		int recordId = request.getId();
-		RecordAccess.Builder builder = RecordAccess.newBuilder().setTableName(ValueUtil.validateNull(request.getTableName()))
-				.setId(recordId);
+		RecordAccess.Builder builder = RecordAccess.newBuilder()
+			.setTableName(
+				ValueManager.validateNull(
+					request.getTableName()
+				)
+			)
+			.setId(recordId)
+		;
 		//	Populate access List
 		getRecordAccess(tableId, recordId, null).forEach(recordAccess -> {
 			MRole role = MRole.get(Env.getCtx(), recordAccess.getAD_Role_ID());
 			builder.addCurrentRoles(RecordAccessRole.newBuilder()
 				.setRoleId(role.getAD_Role_ID())
-				.setRoleName(ValueUtil.validateNull(role.getName()))
+				.setRoleName(
+					ValueManager.validateNull(
+						role.getName()
+					)
+				)
 				.setIsActive(recordAccess.isActive())
 				.setIsDependentEntities(recordAccess.isDependentEntities())
 				.setIsExclude(recordAccess.isExclude())
@@ -1367,9 +1409,15 @@ public class UserInterface extends UserInterfaceImplBase {
 		});
 		//	Populate roles list
 		getRolesList(null).forEach(role -> {
-			builder.addAvailableRoles(RecordAccessRole.newBuilder()
+			builder.addAvailableRoles(
+				RecordAccessRole.newBuilder()
 					.setRoleId(role.getAD_Role_ID())
-					.setRoleName(ValueUtil.validateNull(role.getName())));
+					.setRoleName(
+						ValueManager.validateNull(
+							role.getName()
+						)
+					)
+			);
 		});
 		return builder;
 	}
@@ -1418,8 +1466,13 @@ public class UserInterface extends UserInterfaceImplBase {
 		Trx.run(transactionName -> {
 			int tableId = MTable.getTable_ID(request.getTableName());
 			AtomicInteger recordId = new AtomicInteger(request.getId());
-			builder.setTableName(ValueUtil.validateNull(request.getTableName()))
-				.setId(recordId.get());
+			builder.setTableName(
+					ValueManager.validateNull(
+						request.getTableName()
+					)
+				)
+				.setId(recordId.get())
+			;
 			//	Delete old
 			DB.executeUpdateEx("DELETE FROM AD_Record_Access "
 					+ "WHERE AD_Table_ID = ? "
@@ -1439,13 +1492,19 @@ public class UserInterface extends UserInterfaceImplBase {
 				recordAccess.setIsReadOnly(recordAccessToSet.getIsReadOnly());
 				recordAccess.saveEx();
 				//	Add current roles
-				builder.addCurrentRoles(RecordAccessRole.newBuilder()
+				builder.addCurrentRoles(
+					RecordAccessRole.newBuilder()
 						.setRoleId(role.getAD_Role_ID())
-						.setRoleName(ValueUtil.validateNull(role.getName()))
+						.setRoleName(
+							ValueManager.validateNull(
+								role.getName()
+							)
+						)
 						.setIsActive(recordAccess.isActive())
 						.setIsDependentEntities(recordAccess.isDependentEntities())
 						.setIsExclude(recordAccess.isExclude())
-						.setIsReadOnly(recordAccess.isReadOnly()));
+						.setIsReadOnly(recordAccess.isReadOnly())
+				);
 			});
 			//	Populate roles list
 			getRolesList(transactionName).forEach(roleToGet -> {
@@ -1506,8 +1565,13 @@ public class UserInterface extends UserInterfaceImplBase {
 				.setOrganizationId(preference.getAD_Org_ID())
 				.setUserId(preference.getAD_User_ID())
 				.setContainerId(id)
-				.setColumnName(ValueUtil.validateNull(preference.getAttribute()))
-				.setValue(preference.getValue());
+				.setColumnName(
+					ValueManager.validateNull(
+						preference.getAttribute()
+					)
+				)
+				.setValue(preference.getValue())
+			;
 		}
 		//	
 		return builder;
@@ -1653,17 +1717,34 @@ public class UserInterface extends UserInterfaceImplBase {
 		if(reportFile != null
 				&& reportFile.exists()) {
 			String validFileName = FileUtil.getValidFileName(reportFile.getName());
-			builder.setFileName(ValueUtil.validateNull(validFileName));
-			builder.setName(ValueUtil.validateNull(reportEngine.getName()));
-			builder.setMimeType(ValueUtil.validateNull(MimeType.getMimeType(validFileName)));
+			builder.setFileName(
+					ValueManager.validateNull(validFileName)
+				)
+				.setName(
+					ValueManager.validateNull(
+						reportEngine.getName()
+					)
+				)
+				.setMimeType(
+					ValueManager.validateNull(
+						MimeType.getMimeType(validFileName)
+					)
+				)
+			;
 			String headerName = Msg.getMsg(Env.getCtx(), "Report") + ": " + reportEngine.getName() + "  " + Env.getHeader(Env.getCtx(), 0);
-			builder.setHeaderName(ValueUtil.validateNull(headerName));
+			builder.setHeaderName(
+				ValueManager.validateNull(headerName)
+			);
 			StringBuffer footerName = new StringBuffer ();
 			footerName.append(Msg.getMsg(Env.getCtx(), "DataCols")).append("=")
 				.append(reportEngine.getColumnCount())
 				.append(", ").append(Msg.getMsg(Env.getCtx(), "DataRows")).append("=")
 				.append(reportEngine.getRowCount());
-			builder.setFooterName(ValueUtil.validateNull(footerName.toString()));
+			builder.setFooterName(
+				ValueManager.validateNull(
+					footerName.toString()
+				)
+			);
 			//	Type
 			builder.setReportType(request.getReportType());
 			ByteString resultFile = ByteString.readFrom(new FileInputStream(reportFile));
@@ -1674,9 +1755,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			if(reportView != null) {
 				builder.setReportViewId(reportView.getAD_ReportView_ID());
 			}
-			builder.setPrintFormatId(printFormat.getAD_PrintFormat_ID());
-			builder.setTableName(ValueUtil.validateNull(table.getTableName()));
-			builder.setOutputStream(resultFile);
+			builder.setPrintFormatId(printFormat.getAD_PrintFormat_ID())
+				.setTableName(
+					ValueManager.validateNull(
+						table.getTableName()
+					)
+				)
+				.setOutputStream(resultFile)
+			;
 		}
 		//	Return
 		return builder;
@@ -1757,13 +1843,20 @@ public class UserInterface extends UserInterfaceImplBase {
 					table.getColumnsAsList().stream().filter(column -> column.isTranslated()).forEach(column -> {
 						Object value = translation.get_Value(column.getColumnName());
 						if(value != null) {
-							Value.Builder builderValue = ValueUtil.getValueFromObject(value);
+							Value.Builder builderValue = ValueManager.getValueFromObject(value);
 							if(builderValue != null) {
-								translationBuilder.setValues(Struct.newBuilder().putFields(column.getColumnName(), builderValue.build()).build());
+								translationBuilder.setValues(
+									Struct.newBuilder().putFields(column.getColumnName(),
+									builderValue.build()).build()
+								);
 							}
 							//	Set Language
 							if(Util.isEmpty(translationBuilder.getLanguage())) {
-								translationBuilder.setLanguage(ValueUtil.validateNull(translation.get_ValueAsString("AD_Language")));
+								translationBuilder.setLanguage(
+									ValueManager.validateNull(
+										translation.get_ValueAsString("AD_Language")
+									)
+								);
 							}
 						}
 					});
@@ -1856,11 +1949,20 @@ public class UserInterface extends UserInterfaceImplBase {
 					}
 				}
 
-				reportViewBuilder.setId(reportViewReference.getAD_ReportView_ID());
-				reportViewBuilder.setName(ValueUtil.validateNull(name));
-				reportViewBuilder.setDescription(ValueUtil.validateNull(description));
+				reportViewBuilder.setId(reportViewReference.getAD_ReportView_ID())
+					.setName(
+						ValueManager.validateNull(name)
+					)
+					.setDescription(
+						ValueManager.validateNull(description)
+					)
+				;
 				MTable table = MTable.get(Env.getCtx(), reportViewReference.getAD_Table_ID());
-				reportViewBuilder.setTableName(ValueUtil.validateNull(table.getTableName()));
+				reportViewBuilder.setTableName(
+					ValueManager.validateNull(
+						table.getTableName()
+					)
+				);
 				//	add
 				builder.addReportViews(reportViewBuilder);
 			});
@@ -1900,7 +2002,9 @@ public class UserInterface extends UserInterfaceImplBase {
 					M_Element element = M_Element.get(Env.getCtx(), columnName);
 					//	Add here
 					DrillTable.Builder drillTable = DrillTable.newBuilder();
-					drillTable.setTableName(ValueUtil.validateNull(drillTableName));
+					drillTable.setTableName(
+						ValueManager.validateNull(drillTableName)
+					);
 					String name = element.getPrintName();
 					String poName = element.getPO_PrintName();
 					if(!Env.isBaseLanguage(Env.getCtx(), "")) {
@@ -1917,7 +2021,9 @@ public class UserInterface extends UserInterfaceImplBase {
 						name = name + "/" + poName;
 					}
 					//	Print Name
-					drillTable.setPrintName(ValueUtil.validateNull(name));
+					drillTable.setPrintName(
+						ValueManager.validateNull(name)
+					);
 					//	Add to list
 					builder.addDrillTables(drillTable);
 				}
@@ -1976,13 +2082,26 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.<MPrintFormat>list().forEach(printFormatReference -> {
-				PrintFormat.Builder printFormatBuilder = PrintFormat.newBuilder();
-				printFormatBuilder.setId(printFormatReference.getAD_PrintFormat_ID());
-				printFormatBuilder.setName(ValueUtil.validateNull(printFormatReference.getName()));
-				printFormatBuilder.setDescription(ValueUtil.validateNull(printFormatReference.getDescription()));
-				printFormatBuilder.setIsDefault(printFormatReference.isDefault());
+				PrintFormat.Builder printFormatBuilder = PrintFormat.newBuilder()
+					.setId(printFormatReference.getAD_PrintFormat_ID())
+					.setName(
+						ValueManager.validateNull(
+							printFormatReference.getName()
+						)
+					)
+					.setDescription(
+						ValueManager.validateNull(
+							printFormatReference.getDescription()
+						)
+					)
+					.setIsDefault(printFormatReference.isDefault())
+				;
 				MTable table = MTable.get(Env.getCtx(), printFormatReference.getAD_Table_ID());
-				printFormatBuilder.setTableName(ValueUtil.validateNull(table.getTableName()));
+				printFormatBuilder.setTableName(
+					ValueManager.validateNull(
+						table.getTableName()
+					)
+				);
 				if(printFormatReference.getAD_ReportView_ID() != 0) {
 					printFormatBuilder.setReportViewId(printFormatReference.getAD_ReportView_ID());
 				}
@@ -2432,7 +2551,12 @@ public class UserInterface extends UserInterfaceImplBase {
 						referenceId = DisplayType.TableDir;
 						columnName = tableKeyColumn;
 					} else {
-						builder.setValues(Struct.newBuilder().putFields(columnName, ValueUtil.getValueFromObject(defaultValueAsObject).build()));
+						builder.setValues(
+							Struct.newBuilder().putFields(
+								columnName,
+								ValueManager.getValueFromObject(defaultValueAsObject).build()
+							)
+						);
 						return builder;
 					}
 				}
@@ -2491,7 +2615,12 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 			}
 		} else {
-			builder.setValues(Struct.newBuilder().putFields(columnName, ValueUtil.getValueFromObject(defaultValueAsObject).build()));
+			builder.setValues(
+				Struct.newBuilder().putFields(
+					columnName,
+					ValueManager.getValueFromObject(defaultValueAsObject).build()
+				)
+			);
 		}
 
 		return builder;
@@ -2527,7 +2656,9 @@ public class UserInterface extends UserInterfaceImplBase {
 					//	
 					String messageText = Msg.getMsg(Env.getAD_Language(Env.getCtx()), message.getValue(), arguments);
 					//	Set result message
-					builder.setMessageText(ValueUtil.validateNull(messageText));
+					builder.setMessageText(
+						ValueManager.validateNull(messageText)
+					);
 				}
 			} catch (Exception e) {
 				log.log(Level.WARNING, e.getLocalizedMessage());
@@ -2577,7 +2708,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
 
-		Map<String, Object> contextAttributes = ValueUtil.convertValuesMapToObjects(
+		Map<String, Object> contextAttributes = ValueManager.convertValuesMapToObjects(
 			request.getContextAttributes().getFieldsMap()
 		);
 
@@ -2672,7 +2803,9 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 				//	
 				LookupItem.Builder valueObject = LookupUtil.convertObjectFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
-				valueObject.setTableName(ValueUtil.validateNull(reference.TableName));
+				valueObject.setTableName(
+					ValueManager.validateNull(reference.TableName)
+				);
 				builder.addRecords(valueObject.build());
 			}
 		} catch (Exception e) {
@@ -2684,7 +2817,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	
 		builder.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 		//	Return
@@ -2806,7 +2939,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Return
 		builder = convertBrowserResult(browser, parsedSQL, filterValues);
 		//	Validate page token
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		builder.setRecordCount(count);
 		//	Return
 		return builder;
@@ -2840,7 +2975,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			if (fieldKey != null && fieldKey.get_ID() > 0) {
 				keyColumnName = fieldKey.getAD_View_Column().getColumnName();
 			}
-			keyColumnName = ValueUtil.validateNull(keyColumnName);
+			keyColumnName = ValueManager.validateNull(keyColumnName);
 
 			//	Get from Query
 			rs = pstmt.executeQuery();
@@ -2863,7 +2998,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						if(field == null) {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
-								valueBuilder = ValueUtil.getValueFromString(value);
+								valueBuilder = ValueManager.getValueFromString(value);
 							}
 							values.putFields(
 								columnName,
@@ -2874,7 +3009,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						//	From field
 						String fieldColumnName = field.getAD_View_Column().getColumnName();
 						Object value = rs.getObject(index);
-						valueBuilder = ValueUtil.getValueFromReference(
+						valueBuilder = ValueManager.getValueFromReference(
 							value,
 							field.getAD_Reference_ID()
 						);
@@ -2960,12 +3095,18 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 
 			// set values on Env.getCtx()
-			Map<String, Object> attributes = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
+			Map<String, Object> attributes = ValueManager.convertValuesMapToObjects(
+				request.getContextAttributes().getFieldsMap()
+			);
 			ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), attributes);
 
 			//
-			Object oldValue = ValueUtil.getObjectFromValue(request.getOldValue());
-			Object value = ValueUtil.getObjectFromValue(request.getValue());
+			Object oldValue = ValueManager.getObjectFromValue(
+				request.getOldValue()
+			);
+			Object value = ValueManager.getObjectFromValue(
+				request.getValue()
+			);
 			ContextManager.setTabContextByObject(Env.getCtx(), windowNo, tabNo, request.getColumnName(), value);
 
 			//	Initial load for callout wrapper
@@ -2995,17 +3136,22 @@ public class UserInterface extends UserInterfaceImplBase {
 			Arrays.asList(gridTab.getFields()).stream()
 				.filter(fieldValue -> isValidChange(fieldValue))
 				.forEach(fieldValue -> {
-					Value.Builder valueBuilder = ValueUtil.getValueFromReference(fieldValue.getValue(), fieldValue.getDisplayType());
+					Value.Builder valueBuilder = ValueManager.getValueFromReference(
+						fieldValue.getValue(),
+						fieldValue.getDisplayType()
+					);
 					calloutBuilder.setValues(Struct.newBuilder().putFields(fieldValue.getColumnName(), valueBuilder.build()));
 				});
 
 			// always add is sales transaction on context
 			String isSalesTransaction = Env.getContext(tab.getCtx(), windowNo, "IsSOTrx", true);
 			if (!Util.isEmpty(isSalesTransaction, true)) {
-				Value.Builder valueBuilder = ValueUtil.getValueFromStringBoolean(isSalesTransaction);
+				Value.Builder valueBuilder = ValueManager.getValueFromStringBoolean(isSalesTransaction);
 				calloutBuilder.setValues(Struct.newBuilder().putFields("IsSOTrx", valueBuilder.build()));
 			}
-			calloutBuilder.setResult(ValueUtil.validateNull(result));
+			calloutBuilder.setResult(
+				ValueManager.validateNull(result)
+			);
 			
 			setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
 		});
@@ -3026,44 +3172,70 @@ public class UserInterface extends UserInterfaceImplBase {
 		String className = clazz.getName();
 
 		if (calloutClass.startsWith(className)) {
+			Struct.Builder values = Struct.newBuilder();
 			if (calloutClass.equals("org.compiere.model.CalloutOrder.docType")) {
 				// - OrderType
 				String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
-				calloutBuilder.setValues(Struct.newBuilder().putFields("OrderType", ValueUtil.getValueFromString(docSubTypeSO).build()));
+				values.putFields(
+					"OrderType",
+					ValueManager.getValueFromString(docSubTypeSO).build()
+				);
 
 				// - HasCharges
-				String hasCharges =  Env.getContext(Env.getCtx(), windowNo, "HasCharges");
-				calloutBuilder.setValues(Struct.newBuilder().putFields("HasCharges", ValueUtil.getValueFromStringBoolean(hasCharges).build()));
+				String hasCharges = Env.getContext(Env.getCtx(), windowNo, "HasCharges");
+				values.putFields(
+					"HasCharges",
+					ValueManager.getValueFromStringBoolean(hasCharges).build()
+				);
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.priceList")) {
 				// - M_PriceList_Version_ID
-				int priceListVersionId =  Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				calloutBuilder.setValues(Struct.newBuilder().putFields("M_PriceList_Version_ID", ValueUtil.getValueFromInteger(priceListVersionId).build()));
+				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
+				values.putFields(
+					"M_PriceList_Version_ID",
+					ValueManager.getValueFromInteger(priceListVersionId).build()
+				);
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.product")) {
 				// - M_PriceList_Version_ID
-				int priceListVersionId =  Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				calloutBuilder.setValues(Struct.newBuilder().putFields("M_PriceList_Version_ID", ValueUtil.getValueFromInteger(priceListVersionId).build()));
+				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
+				values.putFields(
+					"M_PriceList_Version_ID",
+					ValueManager.getValueFromInteger(priceListVersionId).build()
+				);
 				
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				calloutBuilder.setValues(Struct.newBuilder().putFields("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build()));
+				values.putFields(
+					"DiscountSchema",
+					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+				);
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.charge")) {
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				calloutBuilder.setValues(Struct.newBuilder().putFields("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build()));
+				values.putFields(
+					"DiscountSchema",
+					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+				);
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.amt")) {
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				calloutBuilder.setValues(Struct.newBuilder().putFields("DiscountSchema", ValueUtil.getValueFromStringBoolean(isDiscountSchema).build()));
+				values.putFields(
+					"DiscountSchema",
+					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+				);
 			}
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.qty")) {
 				// - UOMConversion
 				String isConversion = Env.getContext(Env.getCtx(), "UOMConversion");
-				calloutBuilder.setValues(Struct.newBuilder().putFields("UOMConversion", ValueUtil.getValueFromStringBoolean(isConversion).build()));
+				values.putFields(
+					"UOMConversion",
+					ValueManager.getValueFromStringBoolean(isConversion).build()
+				);
 			}
+			calloutBuilder.setValues(values);
 		}
 
 		return calloutBuilder;
@@ -3224,32 +3396,32 @@ public class UserInterface extends UserInterfaceImplBase {
 			builder.setId((Integer) keyValue);
 			values.putFields(
 				LookupUtil.KEY_COLUMN_KEY,
-				ValueUtil.getValueFromInteger((Integer) keyValue).build()
+				ValueManager.getValueFromInteger((Integer) keyValue).build()
 			);
 		} else {
 			values.putFields(
 				LookupUtil.KEY_COLUMN_KEY,
-				ValueUtil.getValueFromString((String) keyValue).build()
+				ValueManager.getValueFromString((String) keyValue).build()
 			);
 		}
 		//	Set Value
 		if(!Util.isEmpty(value)) {
 			values.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromString(value).build()
+				ValueManager.getValueFromString(value).build()
 			);
 		}
 		//	Display column
 		if(!Util.isEmpty(displayValue)) {
 			values.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(displayValue).build()
+				ValueManager.getValueFromString(displayValue).build()
 			);
 		}
 		// UUID Value
 		values.putFields(
 			LookupUtil.UUID_COLUMN_KEY,
-			ValueUtil.getValueFromString(uuidValue).build()
+			ValueManager.getValueFromString(uuidValue).build()
 		);
 
 		builder.setValues(values);
@@ -3342,26 +3514,38 @@ public class UserInterface extends UserInterfaceImplBase {
 			;
 
 			// set attributes
-			entityBuilder.setValues(Struct.newBuilder().putFields(
+			Struct.Builder values = Struct.newBuilder();
+			values.putFields(
 				keyColumn.getColumnName(),
-				ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
-			));
-			entityBuilder.setValues(Struct.newBuilder().putFields(
+				ValueManager.getValueFromInt(
+					entity.get_ValueAsInt(keyColumn.getColumnName())
+				).build()
+			);
+			values.putFields(
 				LookupUtil.UUID_COLUMN_KEY,
-				ValueUtil.getValueFromString(entity.get_UUID()).build()
-			));
-			entityBuilder.setValues(Struct.newBuilder().putFields(
+				ValueManager.getValueFromString(
+					entity.get_UUID()
+				).build()
+			);
+			values.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(entity.getDisplayValue()).build()
-			));
-			entityBuilder.setValues(Struct.newBuilder().putFields(
+				ValueManager.getValueFromString(
+					entity.getDisplayValue()
+				).build()
+			);
+			values.putFields(
 				sortColumnName,
-				ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
-			));
-			entityBuilder.setValues(Struct.newBuilder().putFields(
+				ValueManager.getValueFromInt(
+					entity.get_ValueAsInt(sortColumnName)
+				).build()
+			);
+			values.putFields(
 				includedColumnName,
-				ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
-			));
+				ValueManager.getValueFromBoolean(
+					entity.get_ValueAsBoolean(includedColumnName)
+				).build()
+			);
+			entityBuilder.setValues(values);
 
 			builderList.addRecords(entityBuilder);
 		});
@@ -3370,9 +3554,10 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//  Set next page
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
-		
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
+
 		return builderList;
 	}
 
@@ -3440,7 +3625,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 				// set new values
 				entitySelection.getValues().getFieldsMap().entrySet().forEach(attribute -> {
-					Object value = ValueUtil.getObjectFromValue(attribute.getValue());
+					Object value = ValueManager.getObjectFromValue(attribute.getValue());
 					entity.set_ValueOfColumn(attribute.getKey(), value);
 
 				});
@@ -3451,27 +3636,40 @@ public class UserInterface extends UserInterfaceImplBase {
 					.setId(entity.get_ID())
 				;
 
+				Struct.Builder values = Struct.newBuilder();
 				// set attributes
-				entityBuilder.setValues(Struct.newBuilder().putFields(
+				values.putFields(
 					keyColumn.getColumnName(),
-					ValueUtil.getValueFromInt(entity.get_ValueAsInt(keyColumn.getColumnName())).build()
-				));
-				entityBuilder.setValues(Struct.newBuilder().putFields(
+					ValueManager.getValueFromInt(
+						entity.get_ValueAsInt(keyColumn.getColumnName())
+					).build()
+				);
+				values.putFields(
 					LookupUtil.UUID_COLUMN_KEY,
-					ValueUtil.getValueFromString(entity.get_UUID()).build()
-				));
-				entityBuilder.setValues(Struct.newBuilder().putFields(
+					ValueManager.getValueFromString(
+						entity.get_UUID()
+					).build()
+				);
+				values.putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueUtil.getValueFromString(entity.getDisplayValue()).build()
-				));
-				entityBuilder.setValues(Struct.newBuilder().putFields(
+					ValueManager.getValueFromString(
+						entity.getDisplayValue()
+					).build()
+				);
+				values.putFields(
 					sortColumnName,
-					ValueUtil.getValueFromInt(entity.get_ValueAsInt(sortColumnName)).build()
-				));
-				entityBuilder.setValues(Struct.newBuilder().putFields(
+					ValueManager.getValueFromInt(
+						entity.get_ValueAsInt(sortColumnName)
+					).build()
+				);
+				values.putFields(
 					includedColumnName,
-					ValueUtil.getValueFromBoolean(entity.get_ValueAsBoolean(includedColumnName)).build()
-				));
+					ValueManager.getValueFromBoolean(
+						entity.get_ValueAsBoolean(includedColumnName)
+					).build()
+				);
+
+				entityBuilder.setValues(values);
 
 				builderList.addRecords(entityBuilder);
 			});
@@ -3583,10 +3781,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setRecordId(treeNode.getNode_ID())
 			.setSequence(treeNode.getSeqNo())
 			.setName(
-				ValueUtil.validateNull(treeNode.getName())
+				ValueManager.validateNull(
+					treeNode.getName()
+				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(treeNode.getDescription())
+				ValueManager.validateNull(
+					treeNode.getDescription()
+				)
 			)
 			.setParentId(treeNode.getParent_ID())
 			.setIsSummary(treeNode.isSummary())
@@ -3685,7 +3887,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		query
 			.setLimit(limit, offset)
@@ -3704,19 +3908,19 @@ public class UserInterface extends UserInterfaceImplBase {
 			return builder;
 		}
 
-		String mailText = ValueUtil.validateNull(mailTemplate.getMailText())
-			+ ValueUtil.validateNull(mailTemplate.getMailText2())
-			+ ValueUtil.validateNull(mailTemplate.getMailText3())
+		String mailText = ValueManager.validateNull(mailTemplate.getMailText())
+			+ ValueManager.validateNull(mailTemplate.getMailText2())
+			+ ValueManager.validateNull(mailTemplate.getMailText3())
 		;
 		builder.setId(mailTemplate.getR_MailText_ID())
 			.setName(
-				ValueUtil.validateNull(mailTemplate.getName())
+				ValueManager.validateNull(mailTemplate.getName())
 			)
 			.setSubject(
-				ValueUtil.validateNull(mailTemplate.getMailHeader())
+				ValueManager.validateNull(mailTemplate.getMailHeader())
 			)
 			.setMailText(
-				ValueUtil.validateNull(mailText)
+				ValueManager.validateNull(mailText)
 			)
 		;
 

@@ -29,7 +29,7 @@ import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -82,7 +82,7 @@ public class RecordManagementServiceLogic {
 		});
 		ToggleIsActiveRecordsBatchResponse.Builder builder = ToggleIsActiveRecordsBatchResponse.newBuilder()
 			.setMessage(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					errorMessage.toString()
 				)
 			)
@@ -121,7 +121,7 @@ public class RecordManagementServiceLogic {
 		});
 		ToggleIsActiveRecordResponse.Builder builder = ToggleIsActiveRecordResponse.newBuilder()
 			.setMessage(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					errorMessage.toString()
 				)
 			)

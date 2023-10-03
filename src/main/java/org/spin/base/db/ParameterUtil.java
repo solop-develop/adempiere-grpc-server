@@ -26,7 +26,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Value;
 
@@ -77,7 +77,9 @@ public class ParameterUtil {
 		} else if(value instanceof Date) {
 			pstmt.setDate(index, (Date) value);
 		} else if(value instanceof Boolean) {
-			pstmt.setString(index, ((Boolean) value) ? "Y" : "N");
+			// pstmt.setString(index, ((Boolean) value) ? "Y" : "N");
+			String boolValue = ValueManager.booleanToString((Boolean) value);
+			pstmt.setString(index, boolValue);
 		} else {
 			pstmt.setObject(index, null);
 		}
@@ -110,17 +112,22 @@ public class ParameterUtil {
 	 * @param index
 	 * @throws SQLException
 	 */
-	public static void setParameterFromValue(PreparedStatement pstmt, Value value, int index) throws SQLException {
-		if(ValueUtil.getObjectFromValue(value) instanceof Integer) {
-			pstmt.setInt(index, ValueUtil.getIntegerFromValue(value));
-		} else if(ValueUtil.getObjectFromValue(value) instanceof BigDecimal) {
-			pstmt.setBigDecimal(index, ValueUtil.getDecimalFromValue(value));
-		} else if(ValueUtil.getObjectFromValue(value) instanceof Boolean) {
-			pstmt.setBoolean(index, ValueUtil.getBooleanFromValue(value));
-		} else if(ValueUtil.getObjectFromValue(value) instanceof String) {
-			pstmt.setString(index, ValueUtil.getStringFromValue(value));
-		} else if(ValueUtil.getObjectFromValue(value) instanceof Timestamp) {
-			pstmt.setTimestamp(index, ValueUtil.getDateFromValue(value));
+	public static void setParameterFromValue(PreparedStatement pstmt, Value grpcValue, int index) throws SQLException {
+		Object value = ValueManager.getObjectFromValue(grpcValue);
+		if(value instanceof Integer) {
+			pstmt.setInt(index, ValueManager.getIntegerFromValue(grpcValue));
+		} else if(value instanceof BigDecimal) {
+			pstmt.setBigDecimal(index, ValueManager.getDecimalFromValue(grpcValue));
+		} else if(value instanceof Boolean) {
+			// pstmt.setBoolean(index, ValueManager.getBooleanFromValue(grpcValue));
+			String boolValue = ValueManager.booleanToString((Boolean) value);
+			pstmt.setString(index, boolValue);
+		} else if(value instanceof String) {
+			pstmt.setString(index, ValueManager.getStringFromValue(grpcValue));
+		} else if(value instanceof Timestamp) {
+			pstmt.setTimestamp(index, ValueManager.getDateFromValue(grpcValue));
+		} else {
+			pstmt.setObject(index, value);
 		}
 	}
 
@@ -140,7 +147,7 @@ public class ParameterUtil {
 		} else if (value instanceof String) {
 			sqlValue = value.toString();
 		} else if (value instanceof Boolean) {
-			sqlValue = " '" + ValueUtil.booleanToString((Boolean) value, false) + "' ";
+			sqlValue = " '" + ValueManager.booleanToString((Boolean) value, false) + "' ";
 		} else if(value instanceof Timestamp) {
 			sqlValue = DB.TO_DATE((Timestamp) value, displayType == DisplayType.Date);
 		}

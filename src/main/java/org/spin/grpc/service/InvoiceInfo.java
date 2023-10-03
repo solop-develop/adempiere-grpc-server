@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -33,7 +33,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.backend.grpc.invoice.InvoiceGrpc.InvoiceImplBase;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.invoice.ListInvoiceInfoRequest;
@@ -149,7 +149,7 @@ public class InvoiceInfo extends InvoiceImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
 		
 		return builder;
 	}

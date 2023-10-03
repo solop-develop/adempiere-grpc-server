@@ -71,7 +71,7 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -142,7 +142,9 @@ public class UserCustomization extends UserCustomizationImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		query
 			.setLimit(limit, offset)
@@ -167,13 +169,19 @@ public class UserCustomization extends UserCustomizationImplBase {
 
 		builder.setId(user.getAD_User_ID())
 			.setValue(
-				ValueUtil.validateNull(user.getValue())
+				ValueManager.validateNull(
+					user.getValue()
+				)
 			)
 			.setName(
-				ValueUtil.validateNull(user.getName())
+				ValueManager.validateNull(
+					user.getName()
+				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(user.getDescription())
+				ValueManager.validateNull(
+					user.getDescription()
+				)
 			)
 		;
 
@@ -236,7 +244,9 @@ public class UserCustomization extends UserCustomizationImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		query
 			.setLimit(limit, offset)
@@ -261,10 +271,14 @@ public class UserCustomization extends UserCustomizationImplBase {
 		
 		builder.setId(role.getAD_Role_ID())
 			.setName(
-				ValueUtil.validateNull(role.getName())
+				ValueManager.validateNull(
+					role.getName()
+				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(role.getDescription())
+				ValueManager.validateNull(
+					role.getDescription()
+				)
 			)
 		;
 
@@ -327,7 +341,9 @@ public class UserCustomization extends UserCustomizationImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		query
 			.setLimit(limit, offset)
@@ -355,13 +371,19 @@ public class UserCustomization extends UserCustomizationImplBase {
 
 		builder.setId(aspLevel.getASP_Level_ID())
 			.setValue(
-				ValueUtil.validateNull(aspLevel.getValue())
+				ValueManager.validateNull(
+					aspLevel.getValue()
+				)
 			)
 			.setName(
-				ValueUtil.validateNull(aspLevel.getName())
+				ValueManager.validateNull(
+					aspLevel.getName()
+				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(aspLevel.getDescription())
+				ValueManager.validateNull(
+					aspLevel.getDescription()
+				)
 			)
 		;
 
@@ -526,7 +548,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 				if (customField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0 && !Util.isEmpty(fieldAttributes.getIsDefaultDisplayedAsPanel(), true)) {
 					customField.set_ValueOfColumn(
 						DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
-						ValueUtil.booleanToString(
+						ValueManager.booleanToString(
 							fieldAttributes.getIsDefaultDisplayedAsPanel()
 						)
 					);
@@ -538,7 +560,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 				if (customField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 					customField.set_ValueOfColumn(
 						DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME,
-						ValueUtil.booleanToString(
+						ValueManager.booleanToString(
 							fieldAttributes.getIsDefaultDisplayedAsTable()
 						)
 					);
@@ -676,7 +698,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			if (customBrowseField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				customBrowseField.set_ValueOfColumn(
 					DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
-					ValueUtil.booleanToString(
+					ValueManager.booleanToString(
 						fieldAttributes.getIsDefaultDisplayedAsPanel()
 					)
 				);
@@ -688,7 +710,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			if (customBrowseField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 				customBrowseField.set_ValueOfColumn(
 					DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME,
-					ValueUtil.booleanToString(
+					ValueManager.booleanToString(
 						fieldAttributes.getIsDefaultDisplayedAsTable()
 					)
 				);
@@ -806,7 +828,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			if (customProcessParameter.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				customProcessParameter.set_ValueOfColumn(
 					DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
-					ValueUtil.booleanToString(
+					ValueManager.booleanToString(
 						fieldAttributes.getIsDefaultDisplayedAsPanel()
 					)
 				);

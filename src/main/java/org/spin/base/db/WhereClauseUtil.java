@@ -39,7 +39,7 @@ import org.compiere.util.Util;
 import org.spin.base.dictionary.WindowUtil;
 import org.spin.base.query.Filter;
 import org.spin.base.query.FilterManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.ASPUtil;
 
 /**
@@ -170,7 +170,7 @@ public class WhereClauseUtil {
 			}
 		} else if(operatorValue.equals(Filter.LIKE) || operatorValue.equals(Filter.NOT_LIKE)) {
 			columnName = "UPPER(" + columnName + ")";
-			String parameterValue = ValueUtil.validateNull(
+			String parameterValue = ValueManager.validateNull(
 				(String) condition.getValue()
 			);
 			// if (!Util.isEmpty(parameterValue, true)) {
@@ -295,7 +295,7 @@ public class WhereClauseUtil {
 			}
 		} else if(operatorValue.equals(Filter.LIKE) || operatorValue.equals(Filter.NOT_LIKE)) {
 			columnName = "UPPER(" + columnName + ")";
-			String parameterValue = ValueUtil.validateNull((String) condition.getValue());
+			String parameterValue = ValueManager.validateNull((String) condition.getValue());
 			sqlValue = "'%' || UPPER(" + parameterValue + ") || '%'";
 		} else if(operatorValue.equals(Filter.NULL) || operatorValue.equals(Filter.NOT_NULL)) {
 			;

@@ -49,8 +49,8 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.grpc.logic.GeneralLedgerServiceLogic;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
@@ -140,7 +140,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	}
 
 	private ListEntitiesResponse.Builder listAccountingCombinations(ListAccountingCombinationsRequest request) {
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
+		Map<String, Object> contextAttributesList = ValueManager.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
 		} else if ((int) contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) <= 0) {
@@ -199,7 +199,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
 
 		return builder;
 	}
@@ -225,7 +225,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	private Entity.Builder convertAccountingCombination(SaveAccountingCombinationRequest request) {
 		// set context values
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		Map<String, Object> contextAttributesList = ValueUtil.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
+		Map<String, Object> contextAttributesList = ValueManager.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
 		ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), contextAttributesList);
 		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
@@ -245,11 +245,11 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		int accountingSchemaId = (int) contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID);
 		MAcctSchema accountingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId, null);
 
-		String accountingCombinationAlias = ValueUtil.validateNull((String) contextAttributesList.get(MAccount.COLUMNNAME_Alias));
+		String accountingCombinationAlias = ValueManager.validateNull((String) contextAttributesList.get(MAccount.COLUMNNAME_Alias));
 		
 		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accountingSchema.getAcctSchemaElements());
 
-		Map<String, Object> attributesList = ValueUtil.convertValuesMapToObjects(request.getAttributes().getFieldsMap());
+		Map<String, Object> attributesList = ValueManager.convertValuesMapToObjects(request.getAttributes().getFieldsMap());
 		StringBuffer sql = generateSQL(acctingSchemaElements, attributesList);
 
 		int clientId = Env.getContextAsInt(Env.getCtx(), windowNo, MAccount.COLUMNNAME_AD_Client_ID);
@@ -263,7 +263,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
 				accountingCombinationId = rs.getInt(1);
-				accountingAlias = ValueUtil.validateNull(rs.getString(2));
+				accountingAlias = ValueManager.validateNull(rs.getString(2));
 			}
 			rs.close();
 			pstmt.close();
@@ -447,7 +447,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	}
 	
 	private StartRePostResponse.Builder convertStartRePost(StartRePostRequest request) {
-		String tableName = ValueUtil.validateNull(request.getTableName());
+		String tableName = ValueManager.validateNull(request.getTableName());
 		if (Util.isEmpty(tableName, true)) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
@@ -637,8 +637,8 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 
 		// Date
-		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
-		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(request.getDateFrom());
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(request.getDateTo());
 		if (dateFrom != null || dateTo != null) {
 			whereClause.append(" AND ");
 			if (dateFrom != null && dateTo != null) {
@@ -728,7 +728,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//  Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
 
 		return builder;
 	}

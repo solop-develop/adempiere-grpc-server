@@ -28,7 +28,7 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.ZoomWindow;
 import org.spin.base.util.DictionaryUtil;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.ASPUtil;
 
 public class DictionaryConvertUtil {
@@ -47,9 +47,9 @@ public class DictionaryConvertUtil {
 			Optional.ofNullable(info.QueryDirect).orElse("") + Optional.ofNullable(info.Query).orElse("") + Optional.ofNullable(info.ValidationCode).orElse("")
 		);
 		Reference.Builder builder = Reference.newBuilder()
-			.setTableName(ValueUtil.validateNull(info.TableName))
-			.setKeyColumnName(ValueUtil.validateNull(info.KeyColumn))
-			.setDisplayColumnName(ValueUtil.validateNull(info.DisplayColumn))
+			.setTableName(ValueManager.validateNull(info.TableName))
+			.setKeyColumnName(ValueManager.validateNull(info.KeyColumn))
+			.setDisplayColumnName(ValueManager.validateNull(info.DisplayColumn))
 			.addAllContextColumnNames(
 				contextColumnsList
 			)
@@ -99,8 +99,8 @@ public class DictionaryConvertUtil {
 		//	Return
 		return ZoomWindow.newBuilder()
 			.setId(window.getAD_Window_ID())
-			.setName(ValueUtil.validateNull(name))
-			.setDescription(ValueUtil.validateNull(description))
+			.setName(ValueManager.validateNull(name))
+			.setDescription(ValueManager.validateNull(description))
 			.setIsSalesTransaction(window.isSOTrx())
 		;
 	}

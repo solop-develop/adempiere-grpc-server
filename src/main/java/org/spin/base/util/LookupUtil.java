@@ -20,6 +20,7 @@ import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.LookupItem;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Struct;
 
@@ -68,32 +69,32 @@ public class LookupUtil {
 			builder.setId((Integer) keyValue);
 			values.putFields(
 				KEY_COLUMN_KEY,
-				ValueUtil.getValueFromInteger((Integer) keyValue).build()
+				ValueManager.getValueFromInteger((Integer) keyValue).build()
 			);
 		} else {
 			values.putFields(
 				KEY_COLUMN_KEY,
-				ValueUtil.getValueFromString((String) keyValue).build()
+				ValueManager.getValueFromString((String) keyValue).build()
 			);
 		}
 		//	Set Value
 		if(!Util.isEmpty(value)) {
 			values.putFields(
 				VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromString(value).build()
+				ValueManager.getValueFromString(value).build()
 			);
 		}
 		//	Display column
 		if(!Util.isEmpty(displayValue)) {
 			values.putFields(
 				DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(displayValue).build()
+				ValueManager.getValueFromString(displayValue).build()
 			);
 		}
 		// UUID Value
 		values.putFields(
 			LookupUtil.UUID_COLUMN_KEY,
-			ValueUtil.getValueFromString(uuidValue).build()
+			ValueManager.getValueFromString(uuidValue).build()
 		);
 
 		builder.setValues(values);
@@ -121,13 +122,13 @@ public class LookupUtil {
 		// Key Column
 		values.putFields(
 			KEY_COLUMN_KEY,
-			ValueUtil.getValueFromString(refList.getValue()).build()
+			ValueManager.getValueFromString(refList.getValue()).build()
 		);
 
 		//	Value
 		values.putFields(
 			LookupUtil.VALUE_COLUMN_KEY,
-			ValueUtil.getValueFromString(refList.getValue()).build()
+			ValueManager.getValueFromString(refList.getValue()).build()
 		);
 
 		//	Display column
@@ -138,13 +139,13 @@ public class LookupUtil {
 		}
 		values.putFields(
 			LookupUtil.DISPLAY_COLUMN_KEY,
-			ValueUtil.getValueFromString(name).build()
+			ValueManager.getValueFromString(name).build()
 		);
 
 		// UUID Value
 		values.putFields(
 			LookupUtil.UUID_COLUMN_KEY,
-			ValueUtil.getValueFromString(refList.getUUID()).build()
+			ValueManager.getValueFromString(refList.getUUID()).build()
 		);
 
 		builder.setValues(values);

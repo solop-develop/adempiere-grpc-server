@@ -84,7 +84,7 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.ByteString;
 
@@ -151,7 +151,11 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 			return builder;
 		}
 		builder.setId(paymentSelection.getC_PaySelection_ID())
-			.setDocumentNo(ValueUtil.validateNull(paymentSelection.getDocumentNo()))
+			.setDocumentNo(
+				ValueManager.validateNull(
+					paymentSelection.getDocumentNo()
+				)
+			)
 			.setCurrency(
 				convertCurrency(paymentSelection.getC_Currency_ID())
 			)
@@ -218,7 +222,9 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 		
 		MBank bank = MBank.get(Env.getCtx(), bankAccount.getC_Bank_ID());
 
-		String accountNo = ValueUtil.validateNull(bankAccount.getAccountNo());
+		String accountNo = ValueManager.validateNull(
+			bankAccount.getAccountNo()
+		);
 		int accountNoLength = accountNo.length();
 		if (accountNoLength > 4) {
 			accountNo = accountNo.substring(accountNoLength - 4);
@@ -227,12 +233,20 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 		builder.setId(bankAccount.getC_BankAccount_ID())
 			.setAccountNo(accountNo)
-			.setAccountName(ValueUtil.validateNull(bankAccount.getName()))
+			.setAccountName(
+				ValueManager.validateNull(
+					bankAccount.getName()
+				)
+			)
 			.setBankName(
-				ValueUtil.validateNull(bank.getName())
+				ValueManager.validateNull(
+					bank.getName()
+				)
 			)
 			.setCurrentBalance(
-				ValueUtil.getDecimalFromBigDecimal(bankAccount.getCurrentBalance())
+				ValueManager.getDecimalFromBigDecimal(
+					bankAccount.getCurrentBalance()
+				)
 			)
 		;
 
@@ -477,23 +491,31 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 		builder.setDocumentNo(documentNo)
 			.setVendorId(vendor.getC_BPartner_ID())
-			.setVendorTaxId(ValueUtil.validateNull(vendor.getUUID()))
-			.setVendorTaxId(ValueUtil.validateNull(vendor.getTaxID()))
-			.setVendorName(ValueUtil.validateNull(vendor.getName()))
+			// .setVendorTaxId(ValueUtil.validateNull(vendor.getUUID()))
+			.setVendorTaxId(
+				ValueManager.validateNull(
+					vendor.getTaxID()
+				)
+			)
+			.setVendorName(
+				ValueManager.validateNull(
+					vendor.getName()
+				)
+			)
 			.setGrandTotal(
-				ValueUtil.getDecimalFromBigDecimal(grandTotal)
+				ValueManager.getDecimalFromBigDecimal(grandTotal)
 			)
 			.setPaymentAmount(
-				ValueUtil.getDecimalFromBigDecimal(paymentAmount)
+				ValueManager.getDecimalFromBigDecimal(paymentAmount)
 			)
 			.setOpenAmount(
-				ValueUtil.getDecimalFromBigDecimal(openAmount)
+				ValueManager.getDecimalFromBigDecimal(openAmount)
 			)
 			.setOverUnderAmount(
-				ValueUtil.getDecimalFromBigDecimal(overUnderAmount)
+				ValueManager.getDecimalFromBigDecimal(overUnderAmount)
 			)
 			.setFinalBalance(
-				ValueUtil.getDecimalFromBigDecimal(finalBalance)
+				ValueManager.getDecimalFromBigDecimal(finalBalance)
 			)
 		;
 
@@ -571,7 +593,7 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueUtil.validateNull(nexPageToken)
+			ValueManager.validateNull(nexPageToken)
 		);
 	
 		return builderList;
@@ -852,7 +874,9 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 		);
 		try {
 			File outFile = File.createTempFile("WPayPrint", null);
-			String validFileName = ValueUtil.validateNull(outFile.getName());
+			String validFileName = ValueManager.validateNull(
+				outFile.getName()
+			);
 			reportOutputBuilder.setName(
 				validFileName
 			);
@@ -1017,12 +1041,14 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 		try {
 			File outFile = File.createTempFile("WPayPrint", null);
-			String validFileName = ValueUtil.validateNull(outFile.getName());
+			String validFileName = ValueManager.validateNull(
+				outFile.getName()
+			);
 			reportOutputBuilder.setName(
 				validFileName
 			);
 			reportOutputBuilder.setMimeType(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					MimeType.getMimeType(validFileName)
 				)
 			);

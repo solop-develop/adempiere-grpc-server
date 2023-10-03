@@ -51,7 +51,7 @@ import org.spin.backend.grpc.form.time_record.User;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -74,10 +74,23 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (request == null) {
 			return builder;
 		}
-		builder.setId(request.getR_Request_ID());
-		builder.setDocumentNo(ValueUtil.validateNull(request.getDocumentNo()));
-		builder.setSubject(ValueUtil.validateNull(request.getSubject()));
-		builder.setSummary(ValueUtil.validateNull(request.getSummary()));
+		builder.setId(request.getR_Request_ID())
+			.setDocumentNo(
+				ValueManager.validateNull(
+					request.getDocumentNo()
+				)
+			)
+			.setSubject(
+				ValueManager.validateNull(
+					request.getSubject()
+				)
+			)
+			.setSummary(
+				ValueManager.validateNull(
+					request.getSummary()
+				)
+			)
+		;
 
 		return builder;
 	}
@@ -142,7 +155,9 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		queryRequests
 			.setLimit(limit, offset)
@@ -167,9 +182,18 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (project == null) {
 			return builder;
 		}
-		builder.setId(project.getC_Project_ID());
-		builder.setValue(ValueUtil.validateNull(project.getValue()));
-		builder.setName(ValueUtil.validateNull(project.getName()));
+		builder.setId(project.getC_Project_ID())
+			.setValue(
+				ValueManager.validateNull(
+					project.getValue()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					project.getName()
+				)
+			)
+		;
 
 		return builder;
 	}
@@ -225,7 +249,9 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		queryRequests
 			.setLimit(limit, offset)
@@ -248,10 +274,23 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (resourceType == null) {
 			return builder;
 		}
-		builder.setId(resourceType.getS_ResourceType_ID());
-		builder.setValue(ValueUtil.validateNull(resourceType.getValue()));
-		builder.setName(ValueUtil.validateNull(resourceType.getName()));
-		builder.setDescription(ValueUtil.validateNull(resourceType.getDescription()));
+		builder.setId(resourceType.getS_ResourceType_ID())
+			.setValue(
+				ValueManager.validateNull(
+					resourceType.getValue()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					resourceType.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					resourceType.getDescription()
+				)
+			)
+		;
 
 		MUOM unitOfMeasure = MUOM.get(Env.getCtx(), resourceType.getC_UOM_ID());
 		builder.setUnitOfMeasure(ConvertUtil.convertUnitOfMeasure(unitOfMeasure));
@@ -269,10 +308,23 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (user == null || user.getAD_User_ID() <= 0) {
 			return builder;
 		}
-		builder.setId(user.getAD_User_ID());
-		builder.setValue(ValueUtil.validateNull(user.getValue()));
-		builder.setName(ValueUtil.validateNull(user.getName()));
-		builder.setDescription(ValueUtil.validateNull(user.getDescription()));
+		builder.setId(user.getAD_User_ID())
+			.setValue(
+				ValueManager.validateNull(
+					user.getValue()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					user.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					user.getDescription()
+				)
+			)
+		;
 
 		return builder;
 	}
@@ -296,8 +348,13 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (resource == null) {
 			return builder;
 		}
-		builder.setId(resource.getS_ResourceType_ID());
-		builder.setName(ValueUtil.validateNull(resource.getName()));
+		builder.setId(resource.getS_ResourceType_ID())
+			.setName(
+				ValueManager.validateNull(
+					resource.getName()
+				)
+			)
+		;
 
 		MResourceType resourceType = MResourceType.get(Env.getCtx(), resource.getS_ResourceType_ID());
 		ResourceType.Builder resourceTypeBuilder = convertResourceType(resourceType);
@@ -330,18 +387,35 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (resourceAssignment == null) {
 			return builder;
 		}
-		builder.setId(resourceAssignment.getS_ResourceAssignment_ID());
-		builder.setName(ValueUtil.validateNull(resourceAssignment.getName()));
-		builder.setDescription(ValueUtil.validateNull(resourceAssignment.getDescription()));
+		builder.setId(resourceAssignment.getS_ResourceAssignment_ID())
+			.setName(
+				ValueManager.validateNull(
+					resourceAssignment.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					resourceAssignment.getDescription()
+				)
+			)
+		;
 		if (resourceAssignment.getAssignDateFrom() != null) {
-			builder.setAssignDateFrom(ValueUtil.getTimestampFromDate(resourceAssignment.getAssignDateFrom()));
+			builder.setAssignDateFrom(
+				ValueManager.getTimestampFromDate(
+					resourceAssignment.getAssignDateFrom()
+				)
+			);
 		}
 		if (resourceAssignment.getAssignDateTo() != null) {
-			builder.setAssignDateTo(ValueUtil.getTimestampFromDate(resourceAssignment.getAssignDateTo()));
+			builder.setAssignDateTo(
+				ValueManager.getTimestampFromDate(
+					resourceAssignment.getAssignDateTo()
+				)
+			);
 		}
 		builder.setIsConfirmed(resourceAssignment.isConfirmed());
 		builder.setQuantity(
-			ValueUtil.getDecimalFromBigDecimal(
+			ValueManager.getDecimalFromBigDecimal(
 				resourceAssignment.getQty()
 			)
 		);
@@ -362,12 +436,12 @@ public class TimeRecord extends TimeRecordImplBase {
 		}
 		MResourceAssignment resourceAssignment = new Query(
 			Env.getCtx(),
-				MResourceAssignment.Table_Name,
-				" S_Resource_ID = ? ",
-				null
-			)
-				.setParameters(resource.getS_Resource_ID())
-				.first();
+			MResourceAssignment.Table_Name,
+			" S_Resource_ID = ? ",
+			null
+		)
+			.setParameters(resource.getS_Resource_ID())
+			.first();
 
 		return convertResourceAssignment(resourceAssignment);
 	}
@@ -400,7 +474,9 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (Util.isEmpty(request.getName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @Name@");
 		}
-		BigDecimal quantity = ValueUtil.getBigDecimalFromDecimal(request.getQuantity());
+		BigDecimal quantity = ValueManager.getBigDecimalFromDecimal(
+			request.getQuantity()
+		);
 		if (quantity == null) {
 			throw new AdempiereException("@FillMandatory@ @Qty@");
 		}
@@ -427,12 +503,18 @@ public class TimeRecord extends TimeRecordImplBase {
 		resourceAssignment.getAD_Org_ID();
 		resourceAssignment.setName(request.getName());
 		resourceAssignment.setQty(quantity);
-		resourceAssignment.setDescription(ValueUtil.validateNull(request.getDescription()));
+		resourceAssignment.setDescription(
+			ValueManager.validateNull(
+				request.getDescription()
+			)
+		);
 
 		// set date
 		Timestamp dateFrom = new Timestamp(System.currentTimeMillis());
-		if (ValueUtil.getDateFromTimestampDate(request.getDate()) != null) {
-			dateFrom = ValueUtil.getDateFromTimestampDate(request.getDate());
+		if (ValueManager.getDateFromTimestampDate(request.getDate()) != null) {
+			dateFrom = ValueManager.getDateFromTimestampDate(
+				request.getDate()
+			);
 		}
 		resourceAssignment.setAssignDateFrom(dateFrom);
 
@@ -503,13 +585,17 @@ public class TimeRecord extends TimeRecordImplBase {
 			+ ") "
 		;
 
-		if (ValueUtil.getDateFromTimestampDate(request.getDateFrom()) != null) {
-			Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
+		if (ValueManager.getDateFromTimestampDate(request.getDateFrom()) != null) {
+			Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+				request.getDateFrom()
+			);
 			parametersList.add(dateFrom);
 			whereClause += " AND AssignDateFrom = ? ";
 		}
-		if (ValueUtil.getDateFromTimestampDate(request.getDateTo()) != null) {
-			Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
+		if (ValueManager.getDateFromTimestampDate(request.getDateTo()) != null) {
+			Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+				request.getDateTo()
+			);
 			parametersList.add(dateTo);
 			whereClause += " AND AssignDateTo = ? ";
 		}
@@ -549,8 +635,9 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		// Set next page
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		return builderList;
 	}

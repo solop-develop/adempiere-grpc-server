@@ -49,6 +49,7 @@ import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.base.db.FromUtil;
 import org.spin.base.db.ParameterUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -534,7 +535,7 @@ public class RecordUtil {
 						if(field == null) {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
-								valueBuilder = ValueUtil.getValueFromString(value);
+								valueBuilder = ValueManager.getValueFromString(value);
 							}
 							values.putFields(
 								columnName,
@@ -548,7 +549,7 @@ public class RecordUtil {
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						Object value = rs.getObject(index);
-						valueBuilder = ValueUtil.getValueFromReference(
+						valueBuilder = ValueManager.getValueFromReference(
 							value,
 							field.getAD_Reference_ID()
 						);

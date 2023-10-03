@@ -38,7 +38,7 @@ import org.spin.backend.grpc.form.bank_statement_match.MatchingMovement;
 import org.spin.backend.grpc.form.bank_statement_match.Payment;
 import org.spin.backend.grpc.form.bank_statement_match.ResultMovement;
 import org.spin.backend.grpc.form.bank_statement_match.TenderType;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * This class was created for add all convert methods for Issue Management form
@@ -61,7 +61,7 @@ public class BankStatementMatchConvertUtil {
 		
 		MBank bank = MBank.get(Env.getCtx(), bankAccount.getC_Bank_ID());
 
-		String accountNo = ValueUtil.validateNull(bankAccount.getAccountNo());
+		String accountNo = ValueManager.validateNull(bankAccount.getAccountNo());
 		int accountNoLength = accountNo.length();
 		if (accountNoLength > 4) {
 			accountNo = accountNo.substring(accountNoLength - 4);
@@ -71,15 +71,17 @@ public class BankStatementMatchConvertUtil {
 		Currency.Builder currencyBuilder = convertCurrency(bankAccount.getC_Currency_ID());
 		builder.setId(bankAccount.getC_BankAccount_ID())
 			.setAccountNo(accountNo)
-			.setAccountName(ValueUtil.validateNull(bankAccount.getName()))
+			.setAccountName(
+				ValueManager.validateNull(bankAccount.getName())
+			)
 			.setBankName(
-				ValueUtil.validateNull(bank.getName())
+				ValueManager.validateNull(bank.getName())
 			)
 			.setCurrency(
 				currencyBuilder
 			)
 			.setCurrentBalance(
-				ValueUtil.getDecimalFromBigDecimal(bankAccount.getCurrentBalance())
+				ValueManager.getDecimalFromBigDecimal(bankAccount.getCurrentBalance())
 			)
 		;
 
@@ -114,44 +116,44 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setDocumentNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatement.getDocumentNo()
 				)
 			)
 			.setName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatement.getName()
 				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatement.getDescription()
 				)
 			)
 			.setDocumentStatus(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					documentSatusName
 				)
 			)
 			.setStatementDate(
-				ValueUtil.getTimestampFromDate(
+				ValueManager.getTimestampFromDate(
 					bankStatement.getStatementDate()
 				)
 			)
 			.setIsManual(bankStatement.isManual())
 			.setIsProcessed(bankStatement.isProcessed())
 			.setBeginningBalance(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					bankStatement.getBeginningBalance()
 				)
 			)
 			.setStatementDifference(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					bankStatement.getStatementDifference()
 				)
 			)
 			.setEndingBalance(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					bankStatement.getEndingBalance()
 				)
 			)
@@ -177,16 +179,16 @@ public class BankStatementMatchConvertUtil {
 
 		builder.setId(businessPartner.getC_BPartner_ID())
 			.setValue(
-				ValueUtil.validateNull(businessPartner.getValue())
+				ValueManager.validateNull(businessPartner.getValue())
 			)
 			.setTaxId(
-				ValueUtil.validateNull(businessPartner.getTaxID())
+				ValueManager.validateNull(businessPartner.getTaxID())
 			)
 			.setName(
-				ValueUtil.validateNull(businessPartner.getName())
+				ValueManager.validateNull(businessPartner.getName())
 			)
 			.setDescription(
-				ValueUtil.validateNull(businessPartner.getDescription())
+				ValueManager.validateNull(businessPartner.getDescription())
 			)
 		;
 
@@ -217,10 +219,10 @@ public class BankStatementMatchConvertUtil {
 
 		builder.setId(currency.getC_Currency_ID())
 			.setIsoCode(
-				ValueUtil.validateNull(currency.getISO_Code())
+				ValueManager.validateNull(currency.getISO_Code())
 			)
 			.setDescription(
-				ValueUtil.validateNull(currency.getDescription())
+				ValueManager.validateNull(currency.getDescription())
 			)
 		;
 
@@ -253,12 +255,14 @@ public class BankStatementMatchConvertUtil {
 		}
 
 		builder.setId(tenderType.getAD_Ref_List_ID())
-			.setValue(ValueUtil.validateNull(tenderType.getValue()))
+			.setValue(
+				ValueManager.validateNull(tenderType.getValue())
+			)
 			.setName(
-				ValueUtil.validateNull(name)
+				ValueManager.validateNull(name)
 			)
 			.setDescription(
-				ValueUtil.validateNull(description)
+				ValueManager.validateNull(description)
 			)
 		;
 
@@ -290,23 +294,23 @@ public class BankStatementMatchConvertUtil {
 
 		builder.setId(payment.getC_Payment_ID())
 			.setTransactionDate(
-				ValueUtil.getTimestampFromDate(
+				ValueManager.getTimestampFromDate(
 					payment.getDateTrx()
 				)
 			)
 			.setIsReceipt(isReceipt)
 			.setDocumentNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					payment.getDocumentNo()
 				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					payment.getDescription()
 				)
 			)
 			.setAmount(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					paymentAmount
 				)
 			)
@@ -327,7 +331,7 @@ public class BankStatementMatchConvertUtil {
 
 		builder.setId(bankStatemet.getI_BankStatement_ID())
 			.setReferenceNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getReferenceNo()
 				)
 			)
@@ -335,22 +339,22 @@ public class BankStatementMatchConvertUtil {
 				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) < 0
 			)
 			.setReferenceNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getReferenceNo()
 				)
 			)
 			.setMemo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getMemo()
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.getTimestampFromDate(
+				ValueManager.getTimestampFromDate(
 					bankStatemet.getStatementLineDate()
 				)
 			)
 			.setAmount(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					bankStatemet.getTrxAmt()
 				)
 			)
@@ -362,11 +366,11 @@ public class BankStatementMatchConvertUtil {
 		);
 		if (bankStatemet.getC_BPartner_ID() <= 0) {
 			businessPartnerBuilder.setName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getBPartnerValue()
 				)
 			).setValue(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getBPartnerValue()
 				)
 			);
@@ -397,12 +401,12 @@ public class BankStatementMatchConvertUtil {
 
 		builder.setId(bankStatemet.getI_BankStatement_ID())
 			.setReferenceNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getReferenceNo()
 				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getDescription()
 				)
 			)
@@ -410,12 +414,12 @@ public class BankStatementMatchConvertUtil {
 				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) < 0
 			)
 			.setMemo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getMemo()
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.getTimestampFromDate(
+				ValueManager.getTimestampFromDate(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -425,12 +429,12 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setAmount(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					bankStatemet.getTrxAmt()
 				)
 			)
 			.setIsAutomatic(
-				ValueUtil.stringToBoolean(
+				ValueManager.stringToBoolean(
 					bankStatemet.getEftMemo()
 				)
 			)
@@ -440,17 +444,17 @@ public class BankStatementMatchConvertUtil {
 			MPayment payment = new MPayment(Env.getCtx(), bankStatemet.getC_Payment_ID(), null);
 			builder.setPaymentId(payment.getC_Payment_ID())
 				.setDocumentNo(
-					ValueUtil.validateNull(
+					ValueManager.validateNull(
 						payment.getDocumentNo()
 					)
 				)
 				.setPaymentAmount(
-					ValueUtil.getDecimalFromBigDecimal(
+					ValueManager.getDecimalFromBigDecimal(
 						payment.getPayAmt()
 					)
 				)
 				.setPaymentDate(
-					ValueUtil.getTimestampFromDate(
+					ValueManager.getTimestampFromDate(
 						payment.getDateTrx()
 					)
 				)
@@ -484,7 +488,7 @@ public class BankStatementMatchConvertUtil {
 
 		builder.setId(bankStatemet.getI_BankStatement_ID())
 			.setReferenceNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getReferenceNo()
 				)
 			)
@@ -492,27 +496,27 @@ public class BankStatementMatchConvertUtil {
 				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) < 0
 			)
 			.setReferenceNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getReferenceNo()
 				)
 			)
 			.setMemo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getMemo()
 				)
 			)
 			.setTransactionDate(
-				ValueUtil.getTimestampFromDate(
+				ValueManager.getTimestampFromDate(
 					bankStatemet.getStatementLineDate()
 				)
 			)
 			.setAmount(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					bankStatemet.getTrxAmt()
 				)
 			)
 			.setIsAutomatic(
-				ValueUtil.stringToBoolean(
+				ValueManager.stringToBoolean(
 					bankStatemet.getEftMemo()
 				)
 			)
@@ -523,11 +527,11 @@ public class BankStatementMatchConvertUtil {
 		);
 		if (bankStatemet.getC_BPartner_ID() <= 0) {
 			businessPartnerBuilder.setName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getBPartnerValue()
 				)
 			).setValue(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bankStatemet.getBPartnerValue()
 				)
 			);
@@ -550,17 +554,17 @@ public class BankStatementMatchConvertUtil {
 			MPayment payment = new MPayment(Env.getCtx(), bankStatemet.getC_Payment_ID(), null);
 			builder.setPaymentId(payment.getC_Payment_ID())
 				.setDocumentNo(
-					ValueUtil.validateNull(
+					ValueManager.validateNull(
 						payment.getDocumentNo()
 					)
 				)
 				.setPaymentAmount(
-					ValueUtil.getDecimalFromBigDecimal(
+					ValueManager.getDecimalFromBigDecimal(
 						payment.getPayAmt()
 					)
 				)
 				.setPaymentDate(
-					ValueUtil.getTimestampFromDate(
+					ValueManager.getTimestampFromDate(
 						payment.getDateTrx()
 					)
 				)

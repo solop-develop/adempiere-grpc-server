@@ -83,8 +83,8 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.base.workflow.WorkflowUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
@@ -315,7 +315,13 @@ public class BusinessData extends BusinessDataImplBase {
 			for(KeyValueSelection selectionKey : request.getSelectionsList()) {
 				selectionKeys.add(selectionKey.getSelectionId());
 				if(selectionKey.getValues().getFieldsCount() > 0) {
-					selection.put(selectionKey.getSelectionId(), new LinkedHashMap<>(ValueUtil.convertValuesMapToObjects(selectionKey.getValues().getFieldsMap())));
+					LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
+						ValueManager.convertValuesMapToObjects(selectionKey.getValues().getFieldsMap())
+					);
+					selection.put(
+						selectionKey.getSelectionId(),
+						entities
+					);
 				}
 			}
 			MBrowseField fieldKey = browse.getFieldKey();
@@ -336,11 +342,11 @@ public class BusinessData extends BusinessDataImplBase {
 		//	Parameters
 		if(request.getParameters().getFieldsCount() > 0) {
 			for(Entry<String, Value> parameter : parameters.entrySet().stream().filter(parameterValue -> !parameterValue.getKey().endsWith("_To")).collect(Collectors.toList())) {
-				Object value = ValueUtil.getObjectFromValue(parameter.getValue());
+				Object value = ValueManager.getObjectFromValue(parameter.getValue());
 				Optional<Entry<String, Value>> maybeToParameter = parameters.entrySet().stream().filter(parameterValue -> parameterValue.getKey().equals(parameter.getKey() + "_To")).findFirst();
 				if(value != null) {
 					if(maybeToParameter.isPresent()) {
-						Object valueTo = ValueUtil.getObjectFromValue(maybeToParameter.get().getValue());
+						Object valueTo = ValueManager.getObjectFromValue(maybeToParameter.get().getValue());
 						builder.withParameter(parameter.getKey(), value, valueTo);
 					} else {
 						builder.withParameter(parameter.getKey(), value);
@@ -377,7 +383,7 @@ public class BusinessData extends BusinessDataImplBase {
 				summary = e.getLocalizedMessage();
 			}
 			result.setSummary(
-				ValueUtil.validateNull(summary)
+				ValueManager.validateNull(summary)
 			);
 		}
 		int reportViewReferenceId = 0;
@@ -446,7 +452,7 @@ public class BusinessData extends BusinessDataImplBase {
 			response.setSummary(Msg.parseTranslation(Env.getCtx(), result.getSummary()));
 		}
 		//	
-		response.setResultTableName(ValueUtil.validateNull(result.getResultTableName()));
+		response.setResultTableName(ValueManager.validateNull(result.getResultTableName()));
 		//	Convert Log
 		if(result.getLogList() != null) {
 			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
@@ -461,10 +467,11 @@ public class BusinessData extends BusinessDataImplBase {
 					&& reportFile.exists()) {
 				String validFileName = FileUtil.getValidFileName(reportFile.getName());
 				ReportOutput.Builder output = ReportOutput.newBuilder();
-				output.setFileName(ValueUtil.validateNull(validFileName));
-				output.setName(result.getTitle());
-				output.setMimeType(ValueUtil.validateNull(MimeType.getMimeType(validFileName)));
-				output.setDescription(ValueUtil.validateNull(process.getDescription()));
+				output.setFileName(ValueManager.validateNull(validFileName))
+					.setName(result.getTitle())
+					.setMimeType(ValueManager.validateNull(MimeType.getMimeType(validFileName)))
+					.setDescription(ValueManager.validateNull(process.getDescription()))
+				;
 				//	Type
 				String reportType = result.getReportType();
 				if(Util.isEmpty(result.getReportType())) {
@@ -485,7 +492,7 @@ public class BusinessData extends BusinessDataImplBase {
 
 					if (Util.isEmpty(response.getSummary(), true)) {
 						response.setSummary(
-							ValueUtil.validateNull(
+							ValueManager.validateNull(
 								e.getLocalizedMessage()
 							)
 						);
@@ -494,11 +501,12 @@ public class BusinessData extends BusinessDataImplBase {
 				if(reportType.endsWith("html") || reportType.endsWith("txt")) {
 					output.setOutputBytes(resultFile);
 				}
-				output.setReportType(reportType);
-				output.setOutputStream(resultFile);
-				output.setReportViewId(reportViewReferenceId);
-				output.setPrintFormatId(printFormatReferenceId);
-				output.setTableName(ValueUtil.validateNull(tableName));
+				output.setReportType(reportType)
+					.setOutputStream(resultFile)
+					.setReportViewId(reportViewReferenceId)
+					.setPrintFormatId(printFormatReferenceId)
+					.setTableName(ValueManager.validateNull(tableName))
+				;
 				response.setOutput(output.build());
 			}
 		}
@@ -594,10 +602,10 @@ public class BusinessData extends BusinessDataImplBase {
 			int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), key);
 			Object value = null;
 			if(referenceId > 0) {
-				value = ValueUtil.getObjectFromReference(attribute, referenceId);
+				value = ValueManager.getObjectFromReference(attribute, referenceId);
 			} 
 			if(value == null) {
-				value = ValueUtil.getObjectFromValue(attribute);
+				value = ValueManager.getObjectFromValue(attribute);
 			}
 			entity.set_ValueOfColumn(key, value);
 		});
@@ -627,10 +635,10 @@ public class BusinessData extends BusinessDataImplBase {
 				int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), key);
 				Object value = null;
 				if(referenceId > 0) {
-					value = ValueUtil.getObjectFromReference(attribute, referenceId);
+					value = ValueManager.getObjectFromReference(attribute, referenceId);
 				} 
 				if(value == null) {
-					value = ValueUtil.getObjectFromValue(attribute);
+					value = ValueManager.getObjectFromValue(attribute);
 				}
 				entity.set_ValueOfColumn(key, value);
 			});
@@ -737,7 +745,7 @@ public class BusinessData extends BusinessDataImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set netxt page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
 		//	Return
 		return builder;
 	}
@@ -777,14 +785,14 @@ public class BusinessData extends BusinessDataImplBase {
 						if(field == null) {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
-								valueBuilder = ValueUtil.getValueFromString(value);
+								valueBuilder = ValueManager.getValueFromString(value);
 							}
 							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()).build());
 							continue;
 						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
-						valueBuilder = ValueUtil.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
+						valueBuilder = ValueManager.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
 						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
 							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()).build());
 						}

@@ -67,7 +67,7 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Struct;
 
@@ -110,44 +110,63 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
 
 		// Invoice
+		Struct.Builder valuesInvoice = Struct.newBuilder()
+			.putFields(LookupUtil.VALUE_COLUMN_KEY,
+				ValueManager.getValueFromInt(
+					MatchType.INVOICE_VALUE
+				).build()
+			)
+			.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueManager.getValueFromString(
+					Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
+				).build()
+			)
+		;
 		LookupItem.Builder lookupInvoice = LookupItem.newBuilder()
 			.setId(MatchType.INVOICE_VALUE)
-			.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY,
-					ValueUtil.getValueFromInt(
-							MatchType.INVOICE_VALUE
-						).build()))
-			.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueUtil.getValueFromString(
-							Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
-						).build()))
+			.setValues(valuesInvoice)
 		;
 		builderList.addRecords(lookupInvoice);
 
 		// Receipt
+		Struct.Builder valuesReceipt = Struct.newBuilder()
+			.putFields(LookupUtil.VALUE_COLUMN_KEY,
+				ValueManager.getValueFromInt(
+					MatchType.RECEIPT_VALUE
+				).build()
+			)
+			.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueManager.getValueFromString(
+					Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
+				).build()
+			)
+		;
 		LookupItem.Builder lookupReceipt = LookupItem.newBuilder()
 			.setId(MatchType.RECEIPT_VALUE)
-			.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY,
-					ValueUtil.getValueFromInt(
-							MatchType.RECEIPT_VALUE
-						).build()))
-			.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueUtil.getValueFromString(
-							Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
-						).build()))
+			.setValues(
+				valuesReceipt
+			)
 		;
 		builderList.addRecords(lookupReceipt);
 
 		// Purchase Order
+		Struct.Builder valuesOrder = Struct.newBuilder()
+			.putFields(LookupUtil.VALUE_COLUMN_KEY,
+				ValueManager.getValueFromInt(
+					MatchType.PURCHASE_ORDER_VALUE
+				).build()
+			)
+			.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueManager.getValueFromString(
+					Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
+				).build()
+			)
+		;
 		LookupItem.Builder lookupOrder = LookupItem.newBuilder()
 			.setId(MatchType.PURCHASE_ORDER_VALUE)
-			.setValues(Struct.newBuilder().putFields(LookupUtil.VALUE_COLUMN_KEY,
-					ValueUtil.getValueFromInt(
-							MatchType.PURCHASE_ORDER_VALUE
-						).build()))
-			.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueUtil.getValueFromString(
-							Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
-						).build()))
+			.setValues(
+				valuesOrder
+			)
 		;
 		builderList.addRecords(lookupOrder);
 
@@ -182,61 +201,70 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
 
-		// Invoice
+		// Receipt -> Invocie / Purchase Order
 		if (matchTypeFrom == MatchType.RECEIPT) {
-			LookupItem.Builder lookupInvoice = LookupItem.newBuilder()
-				.setId(MatchType.INVOICE_VALUE)
-				.setValues(Struct.newBuilder().putFields(
-					LookupUtil.VALUE_COLUMN_KEY,
-					ValueUtil.getValueFromInt(
+				// Invoice
+			Struct.Builder valuesInvoice = Struct.newBuilder()
+				.putFields(LookupUtil.VALUE_COLUMN_KEY,
+					ValueManager.getValueFromInt(
 						MatchType.INVOICE_VALUE
 					).build()
-				))
-				.setValues(Struct.newBuilder().putFields(
-					LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueUtil.getValueFromString(
+				)
+				.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+					ValueManager.getValueFromString(
 						Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
-					).build()))
+					).build()
+				)
+			;
+			LookupItem.Builder lookupInvoice = LookupItem.newBuilder()
+				.setId(MatchType.INVOICE_VALUE)
+				.setValues(valuesInvoice)
 			;
 			builderList.addRecords(lookupInvoice);
-		}
 
-		// Receipt
-		if (matchTypeFrom == MatchType.INVOICE || matchTypeFrom == MatchType.PURCHASE_ORDER) {
-			LookupItem.Builder lookupReceipt = LookupItem.newBuilder()
-				.setId(MatchType.RECEIPT_VALUE)
-				.setValues(Struct.newBuilder().putFields(
-					LookupUtil.VALUE_COLUMN_KEY,
-					ValueUtil.getValueFromInt(
-						MatchType.RECEIPT_VALUE
-					).build()
-				))
-				.setValues(Struct.newBuilder().putFields(
-					LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueUtil.getValueFromString(
-						Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
-					).build()))
-			;
-			builderList.addRecords(lookupReceipt);
-		}
-
-		// Purchase Order
-		if (matchTypeFrom == MatchType.RECEIPT) {
-			LookupItem.Builder lookupOrder = LookupItem.newBuilder()
-				.setId(MatchType.PURCHASE_ORDER_VALUE)
-				.setValues(Struct.newBuilder().putFields(
-					LookupUtil.VALUE_COLUMN_KEY,
-					ValueUtil.getValueFromInt(
+			// Purchase Order
+			Struct.Builder valuesOrder = Struct.newBuilder()
+				.putFields(LookupUtil.VALUE_COLUMN_KEY,
+					ValueManager.getValueFromInt(
 						MatchType.PURCHASE_ORDER_VALUE
 					).build()
-				))
-				.setValues(Struct.newBuilder().putFields(
-					LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueUtil.getValueFromString(
+				)
+				.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+					ValueManager.getValueFromString(
 						Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
-					).build()))
+					).build()
+				)
+			;
+			LookupItem.Builder lookupOrder = LookupItem.newBuilder()
+				.setId(MatchType.PURCHASE_ORDER_VALUE)
+				.setValues(
+					valuesOrder
+				)
 			;
 			builderList.addRecords(lookupOrder);
+		}
+
+		// Invocie / Purchase Order -> Receipt
+		if (matchTypeFrom == MatchType.INVOICE || matchTypeFrom == MatchType.PURCHASE_ORDER) {
+			Struct.Builder valuesReceipt = Struct.newBuilder()
+				.putFields(LookupUtil.VALUE_COLUMN_KEY,
+					ValueManager.getValueFromInt(
+						MatchType.RECEIPT_VALUE
+					).build()
+				)
+				.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+					ValueManager.getValueFromString(
+						Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
+					).build()
+				)
+			;
+			LookupItem.Builder lookupReceipt = LookupItem.newBuilder()
+				.setId(MatchType.RECEIPT_VALUE)
+				.setValues(
+					valuesReceipt
+				)
+			;
+			builderList.addRecords(lookupReceipt);
 		}
 
 		return builderList;
@@ -267,35 +295,49 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
 
-		LookupItem.Builder lookupMatched = LookupItem.newBuilder()
-				.setValues(Struct.newBuilder().putFields(
+		// unmatched
+		Struct.Builder valuesUnMatched = Struct.newBuilder()
+			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
+				ValueManager.getValueFromInt(
 					MatchMode.MODE_NOT_MATCHED_VALUE
 				).build()
-			))
-				.setValues(Struct.newBuilder().putFields(
+			)
+			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
+				ValueManager.getValueFromString(
 					Msg.translate(context, "NotMatched")
-				).build()))
-		;
-		builderList.addRecords(lookupMatched);
-
-		LookupItem.Builder lookupUnMatched = LookupItem.newBuilder()
-				.setValues(Struct.newBuilder().putFields(
-				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
-					MatchMode.MODE_MATCHED_VALUE
 				).build()
-			))
-				.setValues(Struct.newBuilder().putFields(
-				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
-					Msg.translate(context, "Matched")
-				).build()))
+			)
+		;
+		LookupItem.Builder lookupUnMatched = LookupItem.newBuilder()
+			.setValues(
+				valuesUnMatched
+			)
 		;
 		builderList.addRecords(lookupUnMatched);
+
+		// matched
+		Struct.Builder valuesMatched = Struct.newBuilder()
+			.putFields(
+				LookupUtil.VALUE_COLUMN_KEY,
+				ValueManager.getValueFromInt(
+					MatchMode.MODE_MATCHED_VALUE
+				).build()
+			)
+			.putFields(
+				LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueManager.getValueFromString(
+					Msg.translate(context, "Matched")
+				).build()
+			)
+		;
+		LookupItem.Builder lookupMatched = LookupItem.newBuilder()
+			.setValues(
+				valuesMatched
+			)
+		;
+		builderList.addRecords(lookupMatched);
 
 		return builderList;
 	}
@@ -411,7 +453,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 
@@ -441,16 +483,16 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		}
 		builder.setId(product.getM_Product_ID())
 			.setUpc(
-				ValueUtil.validateNull(product.getUPC())
+				ValueManager.validateNull(product.getUPC())
 			)
 			.setSku(
-				ValueUtil.validateNull(product.getSKU())
+				ValueManager.validateNull(product.getSKU())
 			)
 			.setValue(
-				ValueUtil.validateNull(product.getValue())
+				ValueManager.validateNull(product.getValue())
 			)
 			.setName(
-				ValueUtil.validateNull(product.getName())
+				ValueManager.validateNull(product.getName())
 			)
 		;
 
@@ -497,8 +539,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		}
 
 		// Date filter
-		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
-		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+			request.getDateFrom()
+		);
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+			request.getDateTo()
+		);
 		if (dateFrom != null && dateTo != null) {
 			whereClause += " AND " + dateColumn + " BETWEEN " + DB.TO_DATE(dateFrom)
 				+ " AND " + DB.TO_DATE(dateTo)
@@ -590,8 +636,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		whereClause += " AND hdr.C_BPartner_ID = " + request.getVendorId();
 
 		// Date filter
-		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
-		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+			request.getDateFrom()
+		);
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+			request.getDateTo()
+		);
 		if (dateFrom != null && dateTo != null) {
 			whereClause += " AND " + dateColumn + " BETWEEN " + DB.TO_DATE(dateFrom)
 				+ " AND " + DB.TO_DATE(dateTo)
@@ -605,7 +655,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		if (request.getIsSameQuantity()) {
 			final String quantityColumn = org.spin.form.match_po_receipt_invoice.Util.getQuantityColumn(matchFromType);
 			Matched.Builder matchedFromSelected = org.spin.form.match_po_receipt_invoice.Util.getMatchedSelectedFrom(matchFromSelectedId, isMatched, matchFromType, matchToType);
-			BigDecimal quantity = ValueUtil.getDecimalFromValue(
+			BigDecimal quantity = ValueManager.getDecimalFromValue(
 				matchedFromSelected.getQuantity()
 			);
 			whereClause += " AND " + quantityColumn + " = " + quantity;
@@ -679,7 +729,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		Trx.run(transactionName -> {
 			boolean isMatchMode = MatchMode.MODE_MATCHED == request.getMatchMode();
-			final BigDecimal quantity = ValueUtil.getDecimalFromValue(
+			final BigDecimal quantity = ValueManager.getDecimalFromValue(
 				request.getQuantity()
 			);
 			boolean isMatchFromOder = MatchType.PURCHASE_ORDER == request.getMatchFromType();
@@ -695,8 +745,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			);
 
 			request.getMatchedToSelectionsList().forEach(lineMatchedTo -> {
-				BigDecimal mathcedQuantity = ValueUtil.getDecimalFromValue(lineMatchedTo.getMatchedQuantity());
-				BigDecimal documentQuantity = ValueUtil.getDecimalFromValue(lineMatchedTo.getQuantity());
+				BigDecimal mathcedQuantity = ValueManager.getDecimalFromValue(
+					lineMatchedTo.getMatchedQuantity()
+				);
+				BigDecimal documentQuantity = ValueManager.getDecimalFromValue(
+					lineMatchedTo.getQuantity()
+				);
 
 				Optional<BigDecimal> qty = Optional.empty();
 				Optional<BigDecimal> docQty = Optional.ofNullable((BigDecimal) documentQuantity);
@@ -748,7 +802,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		return ProcessResponse.newBuilder()
 			.setMessage(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					atomicStatus.get()
 				)
 			)

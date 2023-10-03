@@ -34,10 +34,10 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.CreatePaymentRequest;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ValueUtil;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * This class manage all related to collecting and payment methods
@@ -65,8 +65,10 @@ public class CollectingManagement {
 		if(pointOfSalesDefinition.getC_BankAccount_ID() <= 0) {
 			throw new AdempiereException("@NoCashBook@");
 		}
-        //	Amount
-        BigDecimal paymentAmount = ValueUtil.getDecimalFromValue(request.getAmount());
+		//	Amount
+		BigDecimal paymentAmount = ValueManager.getDecimalFromValue(
+			request.getAmount()
+		);
 		if(paymentAmount == null || paymentAmount.compareTo(Env.ZERO) == 0) {
 			throw new AdempiereException("@PayAmt@ @NotFound@");
 		}
@@ -93,12 +95,16 @@ public class CollectingManagement {
 			payment.setC_DocType_ID(!request.getIsRefund());
 		}
 		payment.setAD_Org_ID(salesOrder.getAD_Org_ID());
-		Timestamp date = ValueUtil.getDateFromTimestampDate(request.getPaymentDate());
+		Timestamp date = ValueManager.getDateFromTimestampDate(
+			request.getPaymentDate()
+		);
     	if(date != null) {
     		payment.setDateTrx(date);
     		payment.setDateAcct(date);
     	}
-    	Timestamp dateValue = ValueUtil.getDateFromTimestampDate(request.getPaymentAccountDate());
+		Timestamp dateValue = ValueManager.getDateFromTimestampDate(
+			request.getPaymentAccountDate()
+		);
     	if(dateValue != null) {
     		payment.setDateAcct(dateValue);
     	}

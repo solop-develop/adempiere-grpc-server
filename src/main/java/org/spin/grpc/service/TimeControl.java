@@ -46,7 +46,7 @@ import org.spin.backend.grpc.time_control.UpdateResourceAssignmentRequest;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -71,10 +71,23 @@ public class TimeControl extends TimeControlImplBase {
 		if (resourceType == null) {
 			return builder;
 		}
-		builder.setId(resourceType.getS_ResourceType_ID());
-		builder.setValue(ValueUtil.validateNull(resourceType.getValue()));
-		builder.setName(ValueUtil.validateNull(resourceType.getName()));
-		builder.setDescription(ValueUtil.validateNull(resourceType.getDescription()));
+		builder.setId(resourceType.getS_ResourceType_ID())
+			.setValue(
+				ValueManager.validateNull(
+					resourceType.getValue()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					resourceType.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					resourceType.getDescription()
+				)
+			)
+		;
 		
 		MUOM unitOfMeasure = MUOM.get(Env.getCtx(), resourceType.getC_UOM_ID());
 		builder.setUnitOfMeasure(ConvertUtil.convertUnitOfMeasure(unitOfMeasure));
@@ -92,8 +105,13 @@ public class TimeControl extends TimeControlImplBase {
 		if (resource == null) {
 			return builder;
 		}
-		builder.setId(resource.getS_ResourceType_ID());
-		builder.setName(ValueUtil.validateNull(resource.getName()));
+		builder.setId(resource.getS_ResourceType_ID())
+			.setName(
+				ValueManager.validateNull(
+					resource.getName()
+				)
+			)
+		;
 		
 		MResourceType resourceType = MResourceType.get(Env.getCtx(), resource.getS_ResourceType_ID());
 		ResourceType.Builder resourceTypeBuilder = convertResourceType(resourceType);
@@ -121,21 +139,33 @@ public class TimeControl extends TimeControlImplBase {
 		if (resourceAssignment == null) {
 			return builder;
 		}
-		builder.setId(resourceAssignment.getS_ResourceAssignment_ID());
-		builder.setName(ValueUtil.validateNull(resourceAssignment.getName()));
-		builder.setDescription(ValueUtil.validateNull(resourceAssignment.getDescription()));
+		builder.setId(resourceAssignment.getS_ResourceAssignment_ID())
+			.setName(
+				ValueManager.validateNull(
+					resourceAssignment.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					resourceAssignment.getDescription()
+				)
+			)
+		;
 		if (resourceAssignment.getAssignDateFrom() != null) {
-		    builder.setAssignDateFrom(ValueUtil.getTimestampFromDate(resourceAssignment.getAssignDateFrom()));
+			builder.setAssignDateFrom(
+				ValueManager.getTimestampFromDate(resourceAssignment.getAssignDateFrom()));
 		}
 		if (resourceAssignment.getAssignDateTo() != null) {
-		    builder.setAssignDateTo(ValueUtil.getTimestampFromDate(resourceAssignment.getAssignDateTo()));
+		    builder.setAssignDateTo(
+				ValueManager.getTimestampFromDate(resourceAssignment.getAssignDateTo()));
 		}
-		builder.setIsConfirmed(resourceAssignment.isConfirmed());
-		builder.setQuantity(
-	        ValueUtil.getDecimalFromBigDecimal(
-                resourceAssignment.getQty()
-            )
-		);
+		builder.setIsConfirmed(resourceAssignment.isConfirmed())
+			.setQuantity(
+				ValueManager.getDecimalFromBigDecimal(
+					resourceAssignment.getQty()
+				)
+			)
+		;
 
 		MResource resourceType = MResource.get(Env.getCtx(), resourceAssignment.getS_Resource_ID());
 		Resource.Builder resourceTypeBuilder = convertResource(resourceType);
@@ -206,7 +236,11 @@ public class TimeControl extends TimeControlImplBase {
 		MResourceAssignment resourceAssignment = new MResourceAssignment(Env.getCtx(), 0, null);
 		resourceAssignment.setAD_Org_ID(Env.getAD_Org_ID(Env.getCtx()));
 		resourceAssignment.setName(request.getName());
-		resourceAssignment.setDescription(ValueUtil.validateNull(request.getDescription()));
+		resourceAssignment.setDescription(
+			ValueManager.validateNull(
+				request.getDescription()
+			)
+		);
 		resourceAssignment.setAssignDateFrom(new Timestamp(System.currentTimeMillis()));
 		resourceAssignment.setS_Resource_ID(resource.getS_Resource_ID());
 		resourceAssignment.setQty(BigDecimal.ZERO); // overwrite constructor value
@@ -274,13 +308,17 @@ public class TimeControl extends TimeControlImplBase {
 				+ " WHERE C_OrderLine.S_ResourceAssignment_ID = S_ResourceAssignment.S_ResourceAssignment_ID "
 				+ ") ";
 		}
-		if (ValueUtil.getDateFromTimestampDate(request.getDateFrom()) != null) {
-			Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(request.getDateFrom());
+		if (ValueManager.getDateFromTimestampDate(request.getDateFrom()) != null) {
+			Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+				request.getDateFrom()
+			);
 			parametersList.add(dateFrom);
 			whereClause += " AND AssignDateFrom = ? ";
 		}
-		if (ValueUtil.getDateFromTimestampDate(request.getDateTo()) != null) {
-			Timestamp dateTo = ValueUtil.getDateFromTimestampDate(request.getDateTo());
+		if (ValueManager.getDateFromTimestampDate(request.getDateTo()) != null) {
+			Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+				request.getDateTo()
+			);
 			parametersList.add(dateTo);
 			whereClause += " AND AssignDateTo = ? ";
 		}
@@ -311,8 +349,9 @@ public class TimeControl extends TimeControlImplBase {
 		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//  Set next page
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		
 		return builderList;
 	}
@@ -348,8 +387,16 @@ public class TimeControl extends TimeControlImplBase {
             throw new AdempiereException("@IsConfirmed@");
         }
 
-        resourceAssignment.setName(ValueUtil.validateNull(request.getName()));
-        resourceAssignment.setDescription(ValueUtil.validateNull(request.getDescription()));
+		resourceAssignment.setName(
+			ValueManager.validateNull(
+				request.getName()
+			)
+		);
+		resourceAssignment.setDescription(
+			ValueManager.validateNull(
+				request.getDescription()
+			)
+		);
         resourceAssignment.saveEx();
 
         ResourceAssignment.Builder builder = convertResourceAssignment(resourceAssignment);

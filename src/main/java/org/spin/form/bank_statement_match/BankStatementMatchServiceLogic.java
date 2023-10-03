@@ -73,8 +73,8 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.grpc.service.UserInterface;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Struct;
 
@@ -106,13 +106,13 @@ public abstract class BankStatementMatchServiceLogic {
 		LookupItem.Builder lookupMatched = LookupItem.newBuilder()
 			.setValues(Struct.newBuilder().putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
+				ValueManager.getValueFromInt(
 					MatchMode.MODE_NOT_MATCHED_VALUE
 				).build()
 			).build())
 			.setValues(Struct.newBuilder().putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
+				ValueManager.getValueFromString(
 					Msg.translate(Env.getCtx(), "NotMatched")
 				).build()).build())
 		;
@@ -121,13 +121,13 @@ public abstract class BankStatementMatchServiceLogic {
 		LookupItem.Builder lookupUnMatched = LookupItem.newBuilder()
 			.setValues(Struct.newBuilder().putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueUtil.getValueFromInt(
+				ValueManager.getValueFromInt(
 					MatchMode.MODE_MATCHED_VALUE
 				).build()
 			).build())
 			.setValues(Struct.newBuilder().putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueUtil.getValueFromString(
+				ValueManager.getValueFromString(
 					Msg.translate(Env.getCtx(), "Matched")
 				).build()).build())
 		;
@@ -192,17 +192,17 @@ public abstract class BankStatementMatchServiceLogic {
 
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -230,7 +230,7 @@ public abstract class BankStatementMatchServiceLogic {
 		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 
@@ -264,17 +264,17 @@ public abstract class BankStatementMatchServiceLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -323,18 +323,18 @@ public abstract class BankStatementMatchServiceLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -455,7 +455,7 @@ public abstract class BankStatementMatchServiceLogic {
 		ListBankStatementsResponse.Builder builderList = ListBankStatementsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 
@@ -480,17 +480,17 @@ public abstract class BankStatementMatchServiceLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -598,18 +598,18 @@ public abstract class BankStatementMatchServiceLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueUtil.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
 			request.getTransactionDateTo()
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueUtil.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 

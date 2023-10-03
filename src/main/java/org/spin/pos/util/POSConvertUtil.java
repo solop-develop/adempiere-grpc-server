@@ -33,7 +33,7 @@ import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.CommandShortcut;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * This class was created for add all convert methods for POS form
@@ -56,22 +56,22 @@ public class POSConvertUtil {
 		}
 		builder.setId(bank.getC_Bank_ID())
 			.setName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bank.getName()
 				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bank.getDescription()
 				)
 			)
 			.setRoutingNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bank.getRoutingNo()
 				)
 			)
 			.setSwiftCode(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					bank.getSwiftCode()
 				)
 			)
@@ -97,22 +97,22 @@ public class POSConvertUtil {
 		}
 		builder.setId(campaign.getC_Campaign_ID())
 			.setName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					campaign.getName()
 				)
 			)
 			.setDescription(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					campaign.getDescription()
 				)
 			)
 			.setStartDate(
-				ValueUtil.getTimestampFromDate(
+				ValueManager.getTimestampFromDate(
 					campaign.getStartDate()
 				)
 			)
 			.setEndDate(
-				ValueUtil.getTimestampFromDate(
+				ValueManager.getTimestampFromDate(
 					campaign.getEndDate()
 				)
 			)
@@ -131,12 +131,12 @@ public class POSConvertUtil {
 				commandShortcut.get_ValueAsInt(I_C_POS.COLUMNNAME_C_POS_ID)
 			)
 			.setCommand(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					commandShortcut.get_ValueAsString("ECA14_Command")
 				)
 			)
 			.setShortcut(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					commandShortcut.get_ValueAsString("ECA14_Shortcut")
 				)
 			)
@@ -188,7 +188,9 @@ public class POSConvertUtil {
 			.setOrderLineId(orderLine.getC_OrderLine_ID())
 			.setId(shipmentLine.getM_InOutLine_ID())
 			.setLine(shipmentLine.getLine())
-			.setDescription(ValueUtil.validateNull(shipmentLine.getDescription()))
+			.setDescription(
+				ValueManager.validateNull(shipmentLine.getDescription())
+			)
 			.setProduct(
 				ConvertUtil.convertProduct(
 					shipmentLine.getM_Product_ID()
@@ -200,12 +202,12 @@ public class POSConvertUtil {
 				)
 			)
 			.setQuantity(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					shipmentLine.getQtyEntered()
 				)
 			)
 			.setMovementQuantity(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					shipmentLine.getMovementQty()
 				)
 			)

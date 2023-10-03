@@ -146,10 +146,10 @@ import org.spin.backend.grpc.store.WebStoreGrpc.WebStoreImplBase;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
+import org.spin.service.grpc.util.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.model.MWDeliveryViaRuleAllocation;
 import org.spin.store.util.VueStoreFrontUtil;
@@ -807,10 +807,18 @@ public class WebStore extends WebStoreImplBase {
 	private Order.Builder convertOrder(CreateOrderRequest request, MOrder salesOrder, String transactionName) {
 		Order.Builder builder = Order.newBuilder();
 		builder.setId(salesOrder.getC_Order_ID())
-			.setDocumentNo(ValueUtil.validateNull(salesOrder.getDocumentNo()))
-			.setCreated(ValueUtil.getTimestampFromDate(salesOrder.getCreated()))
-			.setUpdated(ValueUtil.getTimestampFromDate(salesOrder.getUpdated()))
-			.setTransmited(ValueUtil.getTimestampFromDate(salesOrder.getUpdated()))
+			.setDocumentNo(
+				ValueManager.validateNull(salesOrder.getDocumentNo())
+			)
+			.setCreated(
+				ValueManager.getTimestampFromDate(salesOrder.getCreated())
+			)
+			.setUpdated(
+				ValueManager.getTimestampFromDate(salesOrder.getUpdated())
+			)
+			.setTransmited(
+				ValueManager.getTimestampFromDate(salesOrder.getUpdated())
+			)
 			.setCarrierCode(request.getCarrierCode())
 			.setMethodCode(request.getMethodCode())
 			.setPaymentMethodCode(request.getPaymentMethodCode())
@@ -820,10 +828,15 @@ public class WebStore extends WebStoreImplBase {
 		Arrays.asList(salesOrder.getLines(true, null)).forEach(orderLine -> {
 			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
 			builder.addOrderLines(OrderLine.newBuilder()
-					.setSku(ValueUtil.validateNull(product.getSKU()))
-					.setName(ValueUtil.validateNull(product.getName()))
-					.setPrice(orderLine.getPriceActual().doubleValue())
-					.setQuantity(orderLine.getQtyOrdered().doubleValue()));
+				.setSku(
+					ValueManager.validateNull(product.getSKU())
+				)
+				.setName(
+					ValueManager.validateNull(product.getName())
+				)
+				.setPrice(orderLine.getPriceActual().doubleValue())
+				.setQuantity(orderLine.getQtyOrdered().doubleValue()))
+			;
 		});
 		return builder;
 	}
@@ -838,20 +851,54 @@ public class WebStore extends WebStoreImplBase {
 	private Order.Builder convertOrder(MOrder salesOrder, String transactionName) {
 		Order.Builder builder = Order.newBuilder();
 		builder.setId(salesOrder.getC_Order_ID())
-			.setDocumentNo(ValueUtil.validateNull(salesOrder.getDocumentNo()))
-			.setCreated(ValueUtil.getTimestampFromDate(salesOrder.getCreated()))
-			.setUpdated(ValueUtil.getTimestampFromDate(salesOrder.getUpdated()))
-			.setTransmited(ValueUtil.getTimestampFromDate(salesOrder.getUpdated()))
-			.setShippingAddress(convertAddress(MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()), ((MBPartnerLocation) salesOrder.getC_BPartner_Location()), transactionName))
-			.setShippingAddress(convertAddress(MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()), ((MBPartnerLocation) salesOrder.getBill_Location()), transactionName));
+			.setDocumentNo(
+				ValueManager.validateNull(
+					salesOrder.getDocumentNo()
+				)
+			)
+			.setCreated(
+				ValueManager.getTimestampFromDate(
+					salesOrder.getCreated()
+				)
+			)
+			.setUpdated(
+				ValueManager.getTimestampFromDate(
+					salesOrder.getUpdated()
+				)
+			)
+			.setTransmited(
+				ValueManager.getTimestampFromDate(
+					salesOrder.getUpdated()
+				)
+			)
+			.setShippingAddress(
+				convertAddress(
+					MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()),
+					((MBPartnerLocation) salesOrder.getC_BPartner_Location()),
+					transactionName
+				)
+			)
+			.setShippingAddress(
+				convertAddress(
+					MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()),
+					((MBPartnerLocation) salesOrder.getBill_Location()),
+					transactionName
+				)
+			)
+		;
 		//	Add Lines
 		Arrays.asList(salesOrder.getLines(true, null)).forEach(orderLine -> {
 			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
 			builder.addOrderLines(OrderLine.newBuilder()
-					.setSku(ValueUtil.validateNull(product.getSKU()))
-					.setName(ValueUtil.validateNull(product.getName()))
-					.setPrice(orderLine.getPriceActual().doubleValue())
-					.setQuantity(orderLine.getQtyOrdered().doubleValue()));
+				.setSku(
+					ValueManager.validateNull(product.getSKU())
+				)
+				.setName(
+					ValueManager.validateNull(product.getName())
+				)
+				.setPrice(orderLine.getPriceActual().doubleValue())
+				.setQuantity(orderLine.getQtyOrdered().doubleValue()))
+			;
 		});
 		return builder;
 	}
@@ -1144,11 +1191,21 @@ public class WebStore extends WebStoreImplBase {
 			if(store == null) {
 				throw new AdempiereException("@W_Store_ID@ @NotFound@");
 			}
-			MCPaymentMethod.getOfStore(Env.getCtx(), store.getW_Store_ID(), transactionName).forEach(paymentMethod -> builder.addPaymentMethods(
+			MCPaymentMethod.getOfStore(Env.getCtx(), store.getW_Store_ID(), transactionName).forEach(paymentMethod -> {
+				builder.addPaymentMethods(
 					PaymentMethod.newBuilder()
-						.setCode(ValueUtil.validateNull(paymentMethod.getValue()))
-						.setName(ValueUtil.validateNull(paymentMethod.getName())))
-					);
+						.setCode(
+							ValueManager.validateNull(
+								paymentMethod.getValue()
+							)
+						)
+						.setName(
+							ValueManager.validateNull(
+								paymentMethod.getName()
+							)
+						)
+				);
+			});
 			//	Reload Fleet calculation
 			reloadShippingCalculation(basket.getW_Basket_ID(), request.getMethodCode(), transactionName);
 			Cart.Builder cart = convertCart(basket, transactionName);
@@ -1241,8 +1298,9 @@ public class WebStore extends WebStoreImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		return builder;
 	}
 	
@@ -1284,8 +1342,9 @@ public class WebStore extends WebStoreImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		return builder;
 	}
 	
@@ -1451,19 +1510,30 @@ public class WebStore extends WebStoreImplBase {
 				.setOnlyActiveRecords(true);
 		//	Count it
 		int count = query.count();
-		query.setLimit(limit, offset).<MCPaymentMethod>list().forEach(paymentMethod -> builder.addPaymentMethods(
+		query.setLimit(limit, offset).<MCPaymentMethod>list().forEach(paymentMethod -> {
+			builder.addPaymentMethods(
 				PaymentMethod.newBuilder()
-					.setCode(ValueUtil.validateNull(paymentMethod.getValue()))
-					.setName(ValueUtil.validateNull(paymentMethod.getName())))
-				);
+					.setCode(
+						ValueManager.validateNull(
+							paymentMethod.getValue()
+						)
+					)
+					.setName(
+						ValueManager.validateNull(
+							paymentMethod.getName()
+						)
+					)
+			);
+		});
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	
 		return builder;
 	}
@@ -1624,19 +1694,28 @@ public class WebStore extends WebStoreImplBase {
 				BigDecimal lineTotalAmount = (BigDecimal) item.get_Value(VueStoreFrontUtil.COLUMNNAME_LineTotalAmt);
 				//	Cart Item
 				CartItem.Builder cartItem = CartItem.newBuilder()
-						.setProductId(product.getM_Product_ID())
-						.setSku(ValueUtil.validateNull(product.getSKU()))
-						.setName(ValueUtil.validateNull(product.getName()))
-						.setProductTypeValue(getProductTypeFromProduct(product).getNumber())
-						.setQuantity(item.getQty().doubleValue())
-						.setPrice(Optional.ofNullable(item.getPrice()).orElse(Env.ZERO).doubleValue())
-						.setRowTotal(Optional.ofNullable(lineListAmount).orElse(Env.ZERO).doubleValue())
-						.setRowTotalWithDiscount(Optional.ofNullable(lineNetAmount).orElse(Env.ZERO).doubleValue())
-						.setRowTotalInclTax(Optional.ofNullable(lineTotalAmount).orElse(Env.ZERO).doubleValue())
-						.setTaxAmount(Optional.ofNullable(taxAmount).orElse(Env.ZERO).doubleValue())
-						.setTaxPercent(Optional.ofNullable(taxRate).orElse(Env.ZERO).doubleValue())
-						.setDiscountAmount(Optional.ofNullable(lineDiscount).orElse(Env.ZERO).doubleValue())
-						.setDiscountPercent(Optional.ofNullable(lineDiscountRate).orElse(Env.ZERO).doubleValue());
+					.setProductId(product.getM_Product_ID())
+					.setSku(
+						ValueManager.validateNull(
+							product.getSKU()
+						)
+					)
+					.setName(
+						ValueManager.validateNull(
+							product.getName()
+						)
+					)
+					.setProductTypeValue(getProductTypeFromProduct(product).getNumber())
+					.setQuantity(item.getQty().doubleValue())
+					.setPrice(Optional.ofNullable(item.getPrice()).orElse(Env.ZERO).doubleValue())
+					.setRowTotal(Optional.ofNullable(lineListAmount).orElse(Env.ZERO).doubleValue())
+					.setRowTotalWithDiscount(Optional.ofNullable(lineNetAmount).orElse(Env.ZERO).doubleValue())
+					.setRowTotalInclTax(Optional.ofNullable(lineTotalAmount).orElse(Env.ZERO).doubleValue())
+					.setTaxAmount(Optional.ofNullable(taxAmount).orElse(Env.ZERO).doubleValue())
+					.setTaxPercent(Optional.ofNullable(taxRate).orElse(Env.ZERO).doubleValue())
+					.setDiscountAmount(Optional.ofNullable(lineDiscount).orElse(Env.ZERO).doubleValue())
+					.setDiscountPercent(Optional.ofNullable(lineDiscountRate).orElse(Env.ZERO).doubleValue())
+				;
 				//	Add to Cart
 				builder.addItems(cartItem);
 				//	Totals
@@ -1685,8 +1764,16 @@ public class WebStore extends WebStoreImplBase {
 			}
 			//	Set totals
 			builder.setItemsQuantity(items.size())
-				.setBaseCurrencyCode(ValueUtil.validateNull(currency.getISO_Code()))
-				.setQuoteCurrencyCode(ValueUtil.validateNull(currency.getISO_Code()))
+				.setBaseCurrencyCode(
+					ValueManager.validateNull(
+						currency.getISO_Code()
+					)
+				)
+				.setQuoteCurrencyCode(
+					ValueManager.validateNull(
+						currency.getISO_Code()
+					)
+				)
 				.setDiscountAmount(discount.get().doubleValue())
 				.setTaxAmount(tax.get().doubleValue())
 				.setSubtotal(subtotal.get().doubleValue())
@@ -1695,7 +1782,8 @@ public class WebStore extends WebStoreImplBase {
 				.setGrandTotal(grandTotal.get().doubleValue())
 				.setShippingAmount(shipping.get().doubleValue())
 				.setShippingInclTax(shipping.get().add(shippingTax.get()).doubleValue())
-				.setShippingTaxAmount(shippingTax.get().doubleValue());
+				.setShippingTaxAmount(shippingTax.get().doubleValue())
+			;
 		}
 		//	Return cart
 		return builder;
@@ -1723,19 +1811,28 @@ public class WebStore extends WebStoreImplBase {
 		BigDecimal lineTotalAmount = (BigDecimal) basketLine.get_Value(VueStoreFrontUtil.COLUMNNAME_LineTotalAmt);
 		//	Cart Item
 		return CartItem.newBuilder()
-				.setProductId(product.getM_Product_ID())
-				.setSku(ValueUtil.validateNull(product.getSKU()))
-				.setName(ValueUtil.validateNull(product.getName()))
-				.setProductTypeValue(getProductTypeFromProduct(product).getNumber())
-				.setQuantity(basketLine.getQty().doubleValue())
-				.setPrice(Optional.ofNullable(basketLine.getPrice()).orElse(Env.ZERO).doubleValue())
-				.setRowTotal(Optional.ofNullable(lineListAmount).orElse(Env.ZERO).doubleValue())
-				.setRowTotalWithDiscount(Optional.ofNullable(lineNetAmount).orElse(Env.ZERO).doubleValue())
-				.setRowTotalInclTax(Optional.ofNullable(lineTotalAmount).orElse(Env.ZERO).doubleValue())
-				.setTaxAmount(Optional.ofNullable(taxAmount).orElse(Env.ZERO).doubleValue())
-				.setTaxPercent(Optional.ofNullable(taxRate).orElse(Env.ZERO).doubleValue())
-				.setDiscountAmount(Optional.ofNullable(lineDiscount).orElse(Env.ZERO).doubleValue())
-				.setDiscountPercent(Optional.ofNullable(lineDiscountRate).orElse(Env.ZERO).doubleValue());
+			.setProductId(product.getM_Product_ID())
+			.setSku(
+				ValueManager.validateNull(
+					product.getSKU()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					product.getName()
+				)
+			)
+			.setProductTypeValue(getProductTypeFromProduct(product).getNumber())
+			.setQuantity(basketLine.getQty().doubleValue())
+			.setPrice(Optional.ofNullable(basketLine.getPrice()).orElse(Env.ZERO).doubleValue())
+			.setRowTotal(Optional.ofNullable(lineListAmount).orElse(Env.ZERO).doubleValue())
+			.setRowTotalWithDiscount(Optional.ofNullable(lineNetAmount).orElse(Env.ZERO).doubleValue())
+			.setRowTotalInclTax(Optional.ofNullable(lineTotalAmount).orElse(Env.ZERO).doubleValue())
+			.setTaxAmount(Optional.ofNullable(taxAmount).orElse(Env.ZERO).doubleValue())
+			.setTaxPercent(Optional.ofNullable(taxRate).orElse(Env.ZERO).doubleValue())
+			.setDiscountAmount(Optional.ofNullable(lineDiscount).orElse(Env.ZERO).doubleValue())
+			.setDiscountPercent(Optional.ofNullable(lineDiscountRate).orElse(Env.ZERO).doubleValue())
+		;
 	}
 	
 	/**
@@ -1801,8 +1898,8 @@ public class WebStore extends WebStoreImplBase {
 				//	Save
 				location.saveEx(transactionName);
 				//	Update location of business partner
-				businessPartnerLocation.setName(ValueUtil.validateNull(address.getFirstName()));
-				businessPartnerLocation.set_ValueOfColumn(MBPartner.COLUMNNAME_Description, ValueUtil.validateNull(address.getLastName()));
+				businessPartnerLocation.setName(ValueManager.validateNull(address.getFirstName()));
+				businessPartnerLocation.set_ValueOfColumn(MBPartner.COLUMNNAME_Description, ValueManager.validateNull(address.getLastName()));
 				businessPartnerLocation.setC_Location_ID(location.getC_Location_ID());
 				businessPartnerLocation.setPhone(address.getPhone());
 				boolean isDefaultShipping = request.getDefaultShipping() == businessPartnerLocation.getC_BPartner_Location_ID();
@@ -1829,13 +1926,38 @@ public class WebStore extends WebStoreImplBase {
 	private Customer.Builder convertCustomer(MUser customer) {
 		Customer.Builder builder = Customer.newBuilder();
 		//	Set builder
-		builder.setEmail(ValueUtil.validateNull(customer.getEMail()))
-			.setFirstName(ValueUtil.validateNull(customer.getName()))
-			.setLastName(ValueUtil.validateNull(customer.get_ValueAsString(MBPartner.COLUMNNAME_Name2)))
+		builder.setEmail(
+				ValueManager.validateNull(
+					customer.getEMail()
+				)
+			)
+			.setFirstName(
+				ValueManager.validateNull(
+					customer.getName()
+				)
+			)
+			.setLastName(
+				ValueManager.validateNull(
+					customer.get_ValueAsString(MBPartner.COLUMNNAME_Name2)
+				)
+			)
 			.setId(customer.getAD_User_ID())
-			.setCreated(ValueUtil.getTimestampFromDate(customer.getCreated()))
-			.setUpdated(ValueUtil.getTimestampFromDate(customer.getUpdated()))
-			.setOrganizationName(ValueUtil.validateNull(MOrg.get(Env.getCtx(), customer.getAD_Org_ID()).getName()));
+			.setCreated(
+				ValueManager.getTimestampFromDate(
+					customer.getCreated()
+				)
+			)
+			.setUpdated(
+				ValueManager.getTimestampFromDate(
+					customer.getUpdated()
+				)
+			)
+			.setOrganizationName(
+				ValueManager.validateNull(
+					MOrg.get(Env.getCtx(), customer.getAD_Org_ID()).getName()
+				)
+			)
+		;
 		//	TODO: Add Web Site ID and Web Store ID
 		if(customer.getC_BPartner_ID() > 0) {
 			Arrays.asList(((MBPartner) customer.getC_BPartner()).getLocations(true))
@@ -1937,35 +2059,95 @@ public class WebStore extends WebStoreImplBase {
 		MLocation location = MLocation.get(Env.getCtx(), businessPartnerLocation.getC_Location_ID(), transactionName);
 		builder.setId(businessPartnerLocation.getC_BPartner_Location_ID())
 			.setCountryCode(MCountry.get(Env.getCtx(), location.getC_Country_ID()).getCountryCode())
-			.setPostalCode(ValueUtil.validateNull(location.getPostal()))
-			.setPhone(ValueUtil.validateNull(Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(Optional.ofNullable(phone).orElse(""))))
-			.setFirstName(ValueUtil.validateNull(businessPartnerLocation.getName()))
-			.setLastName(ValueUtil.validateNull(businessPartnerLocation.get_ValueAsString(MBPartner.COLUMNNAME_Description)))
-			.setAddress1(ValueUtil.validateNull(location.getAddress1()))
-			.setAddress2(ValueUtil.validateNull(location.getAddress2()))
-			.setAddress3(ValueUtil.validateNull(location.getAddress3()))
-			.setAddress4(ValueUtil.validateNull(location.getAddress4()))
-			.setIsDefaultShipping(businessPartnerLocation.isShipTo() && businessPartnerLocation.get_ValueAsBoolean(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping))
-			.setIsDefaultShipping(businessPartnerLocation.isBillTo() && businessPartnerLocation.get_ValueAsBoolean(VueStoreFrontUtil.COLUMNNAME_IsDefaultBilling));
+			.setPostalCode(
+				ValueManager.validateNull(
+					location.getPostal()
+				)
+			)
+			.setPhone(
+				ValueManager.validateNull(Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(
+					Optional.ofNullable(phone).orElse(""))
+				)
+			)
+			.setFirstName(
+				ValueManager.validateNull(
+					businessPartnerLocation.getName()
+				)
+			)
+			.setLastName(
+				ValueManager.validateNull(
+					businessPartnerLocation.get_ValueAsString(MBPartner.COLUMNNAME_Description)
+				)
+			)
+			.setAddress1(
+				ValueManager.validateNull(
+					location.getAddress1()
+				)
+			)
+			.setAddress2(
+				ValueManager.validateNull(
+					location.getAddress2())
+				)
+			.setAddress3(
+				ValueManager.validateNull(
+					location.getAddress3()
+				)
+			)
+			.setAddress4(
+				ValueManager.validateNull(
+					location.getAddress4()
+				)
+			)
+			.setIsDefaultShipping(
+				businessPartnerLocation.isShipTo() &&
+				businessPartnerLocation.get_ValueAsBoolean(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping)
+			)
+			.setIsDefaultShipping(
+				businessPartnerLocation.isBillTo() &&
+				businessPartnerLocation.get_ValueAsBoolean(VueStoreFrontUtil.COLUMNNAME_IsDefaultBilling)
+			)
+		;
 		//	City
 		if(location.getC_City_ID() > 0) {
 			MCity city = MCity.get(Env.getCtx(), location.getC_City_ID());
-			builder.setCity(City.newBuilder()
+			builder.setCity(
+				City.newBuilder()
 					.setId(city.getC_City_ID())
-					.setName(ValueUtil.validateNull(city.getName())));
+					.setName(
+						ValueManager.validateNull(
+							city.getName()
+						)
+					)
+				)
+			;
 		} else {
 			builder.setCity(City.newBuilder()
-					.setName(ValueUtil.validateNull(location.getCity())));
+				.setName(
+					ValueManager.validateNull(
+						location.getCity())
+					)
+				)
+			;
 		}
 		//	Region
 		if(location.getC_Region_ID() > 0) {
 			MRegion region = MRegion.get(Env.getCtx(), location.getC_Region_ID());
 			builder.setRegion(Region.newBuilder()
-					.setId(region.getC_Region_ID())
-					.setName(ValueUtil.validateNull(region.getName())));
+				.setId(region.getC_Region_ID())
+				.setName(
+					ValueManager.validateNull(
+						region.getName())
+					)
+				)
+			;
 		} else {
 			builder.setCity(City.newBuilder()
-					.setName(ValueUtil.validateNull(location.getCity())));
+				.setName(
+					ValueManager.validateNull(
+						location.getCity())
+					)
+				)
+			;
 		}
 		return builder;
 	}
@@ -2208,8 +2390,9 @@ public class WebStore extends WebStoreImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	
 		return builder;
 	}
@@ -2265,8 +2448,9 @@ public class WebStore extends WebStoreImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	
 		return builder;
 	}
@@ -2322,9 +2506,17 @@ public class WebStore extends WebStoreImplBase {
 		MCurrency currency = MCurrency.get(Env.getCtx(), productPriceList.getC_Currency_ID());
 		//	Set product values
 		return builder.setId(product.getM_Product_ID())
-			.setName(ValueUtil.validateNull(product.getName()))
+			.setName(
+				ValueManager.validateNull(
+					product.getName()
+				)
+			)
 			.setStoreId(Env.getAD_Org_ID(Env.getCtx()))
-			.setUrl(ValueUtil.validateNull(product.getDescriptionURL()))
+			.setUrl(
+				ValueManager.validateNull(
+					product.getDescriptionURL()
+				)
+			)
 			.setProductType(getProductTypeFromProduct(product))
 			.setPriceInfo(
 					PriceInfo.newBuilder()
@@ -2441,23 +2633,34 @@ public class WebStore extends WebStoreImplBase {
 		productPricing.setPriceDate(validFrom);
 		//	Set product values
 		return builder.setId(product.getM_Product_ID())
-			.setSku(ValueUtil.validateNull(product.getSKU()))
-			.setName(ValueUtil.validateNull(product.getName()))
+			.setSku(
+				ValueManager.validateNull(product.getSKU())
+			)
+			.setName(
+				ValueManager.validateNull(product.getName())
+			)
 			//	TODO: Add status from product
 			.setStatus(org.spin.backend.grpc.store.Product.Status.ENABLED)
 			//	TODO: Add to product
 			.setVisibility(org.spin.backend.grpc.store.Product.Visibility.BOTH)
 			.setProductGroupId(product.getM_Product_Group_ID())
-			.setCreated(ValueUtil.getTimestampFromDate(product.getCreated()))
-			.setUpdated(ValueUtil.getTimestampFromDate(product.getUpdated()))
+			.setCreated(
+				ValueManager.getTimestampFromDate(product.getCreated())
+			)
+			.setUpdated(
+				ValueManager.getTimestampFromDate(product.getUpdated())
+			)
 			//	Pricing
 			.setPrice(productPricing.getPriceStd().setScale(productPricing.getPrecision()).doubleValue())
 			//	TODO: Get Criteria
 			.addCustomAttributes(
-					Attribute.newBuilder()
-						.setAttributeCode("description")
-						.setValue(ValueUtil.validateNull(product.getDescription()))
-						);
+				Attribute.newBuilder()
+					.setAttributeCode("description")
+					.setValue(
+						ValueManager.validateNull(product.getDescription())
+					)
+			)
+		;
 	}
 	
 	/**
@@ -2487,8 +2690,9 @@ public class WebStore extends WebStoreImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	
 		return builder;
 	}

@@ -18,6 +18,7 @@ package org.spin.base.util;
 import org.compiere.model.MTable;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.general_ledger.AccountingDocument;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * This class was created for add all convert methods for General Ledger service
@@ -42,12 +43,12 @@ public class GeneralLedgerConvertUtil {
 
 		builder.setId(table.getAD_Table_ID())
 			.setName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					table.getName()
 				)
 			)
 			.setTableName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					table.getTableName()
 				)
 			)

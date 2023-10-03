@@ -37,7 +37,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.CreatePaymentRequest;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * This class was created for add all helper method for Cash Management
@@ -91,7 +91,9 @@ public class CashManagement {
 		payment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
         String value = DB.getDocumentNo(payment.getC_DocType_ID(), transactionName, false,  payment);
         payment.setDocumentNo(value);
-        Timestamp date = ValueUtil.getDateFromTimestampDate(request.getPaymentAccountDate());
+		Timestamp date = ValueManager.getDateFromTimestampDate(
+			request.getPaymentAccountDate()
+		);
     	if(date != null) {
     		payment.setDateAcct(date);
     	}
@@ -110,7 +112,9 @@ public class CashManagement {
         }
         payment.setC_Charge_ID(defaultChargeId);
         //	Amount
-        BigDecimal paymentAmount = ValueUtil.getDecimalFromValue(request.getAmount());
+		BigDecimal paymentAmount = ValueManager.getDecimalFromValue(
+			request.getAmount()
+		);
         payment.setPayAmt(paymentAmount);
         payment.setDocStatus(MPayment.DOCSTATUS_Drafted);
 		switch (tenderType) {

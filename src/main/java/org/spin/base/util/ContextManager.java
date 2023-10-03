@@ -28,6 +28,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -50,7 +51,7 @@ public class ContextManager {
 	}
 	
 	public static Properties setContextWithAttributesFromValuesMap(int windowNo, Properties context, Map<String, Value> attributes) {
-		return setContextWithAttributes(windowNo, context, ValueUtil.convertValuesMapToObjects(attributes), true);
+		return setContextWithAttributes(windowNo, context, ValueManager.convertValuesMapToObjects(attributes), true);
 	}
 
 	/**

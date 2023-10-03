@@ -33,7 +33,7 @@ import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -74,7 +74,7 @@ public class WorkflowUtil {
 		}
 		ProcessLog.Builder response = ProcessLog.newBuilder()
 			.setResultTableName(
-				ValueUtil.validateNull(tableName)
+				ValueManager.validateNull(tableName)
 			)
 		;
 		try {
@@ -139,7 +139,7 @@ public class WorkflowUtil {
 					}
 					String summary = processInfo.getSummary();
 					response.setSummary(
-						ValueUtil.validateNull(summary)
+						ValueManager.validateNull(summary)
 					);
 					response.setIsError(processInfo.isError());
 				}
@@ -152,7 +152,7 @@ public class WorkflowUtil {
 				summary = e.getLocalizedMessage();
 			}
 			response.setSummary(
-				ValueUtil.validateNull(summary)
+				ValueManager.validateNull(summary)
 			);
 			response.setIsError(true);
 		}

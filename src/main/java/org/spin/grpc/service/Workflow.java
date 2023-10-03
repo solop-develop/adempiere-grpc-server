@@ -69,8 +69,8 @@ import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.base.util.WorkflowUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -273,8 +273,9 @@ public class Workflow extends WorkflowImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	Return
 		return builder;
 	}
@@ -305,7 +306,7 @@ public class Workflow extends WorkflowImplBase {
 			documentStatus = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocStatus);
 			documentAction = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocAction);
 			//
-			isProcessing = ValueUtil.booleanToString(
+			isProcessing = ValueManager.booleanToString(
 				entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_Processing)
 			);
 			documentTypeId = entity.get_ValueAsInt(I_C_Order.COLUMNNAME_C_DocTypeTarget_ID);
@@ -320,7 +321,7 @@ public class Workflow extends WorkflowImplBase {
 				}
 			}
 			if (entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
-				isSOTrx = ValueUtil.booleanToString(
+				isSOTrx = ValueManager.booleanToString(
 					entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)
 				);
 			}
@@ -367,10 +368,17 @@ public class Workflow extends WorkflowImplBase {
 		statusesList.stream().filter(status -> status != null).forEach(status -> {
 			for (int i = 0; i < valueList.size(); i++) {
 				if (status.equals(valueList.get(i))) {
-					DocumentStatus.Builder documentStatusBuilder = DocumentStatus.newBuilder();
-					documentStatusBuilder.setValue(ValueUtil.validateNull(valueList.get(i)));
-					documentStatusBuilder.setName(ValueUtil.validateNull(nameList.get(i)));
-					documentStatusBuilder.setDescription(ValueUtil.validateNull(descriptionList.get(i)));
+					DocumentStatus.Builder documentStatusBuilder = DocumentStatus.newBuilder()
+						.setValue(
+							ValueManager.validateNull(valueList.get(i))
+						)
+						.setName(
+							ValueManager.validateNull(nameList.get(i))
+						)
+						.setDescription(
+							ValueManager.validateNull(descriptionList.get(i))
+						)
+					;
 					builder.addDocumentStatuses(documentStatusBuilder);
 				}
 			}
@@ -408,10 +416,17 @@ public class Workflow extends WorkflowImplBase {
 		Arrays.asList(options).stream().filter(option -> option != null).forEach(option -> {
 			for (int i = 0; i < valueList.size(); i++) {
 				if (option.equals(valueList.get(i))) {
-					DocumentStatus.Builder documentActionBuilder = DocumentStatus.newBuilder();
-					documentActionBuilder.setValue(ValueUtil.validateNull(valueList.get(i)));
-					documentActionBuilder.setName(ValueUtil.validateNull(nameList.get(i)));
-					documentActionBuilder.setDescription(ValueUtil.validateNull(descriptionList.get(i)));
+					DocumentStatus.Builder documentActionBuilder = DocumentStatus.newBuilder()
+						.setValue(
+							ValueManager.validateNull(valueList.get(i))
+						)
+						.setName(
+							ValueManager.validateNull(nameList.get(i))
+						)
+						.setDescription(
+							ValueManager.validateNull(descriptionList.get(i))
+						)
+					;
 					builder.addDocumentStatuses(documentActionBuilder);
 				}
 			}
@@ -525,8 +540,9 @@ public class Workflow extends WorkflowImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	Return
 		return builder;
 	}
@@ -574,7 +590,7 @@ public class Workflow extends WorkflowImplBase {
 
 		String isSOTrx = "Y";
 		if (entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
-			isSOTrx = ValueUtil.booleanToString(
+			isSOTrx = ValueManager.booleanToString(
 				entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)
 			);
 		}
@@ -724,7 +740,7 @@ public class Workflow extends WorkflowImplBase {
 				throw new AdempiereException("@AD_WF_Activity_ID@ @NotFound@");
 			}
 
-			String message = ValueUtil.validateNull(request.getMessage());
+			String message = ValueManager.validateNull(request.getMessage());
 			int userId = Env.getAD_User_ID(Env.getCtx());
 
 			MWFNode node = workActivity.getNode();
@@ -733,7 +749,8 @@ public class Workflow extends WorkflowImplBase {
 			if (MWFNode.ACTION_UserChoice.equals(node.getAction())) {
 				MColumn column = MColumn.get(Env.getCtx(), node.getAD_Column_ID());
 				int displayTypeId = column.getAD_Reference_ID();
-				String isApproved = ValueUtil.booleanToString(request.getIsApproved());
+				String isApproved = ValueManager.booleanToString(
+					request.getIsApproved());
 				try {
 					workActivity.setUserChoice(userId, isApproved, displayTypeId, message);
 				} catch (Exception e) {
@@ -797,7 +814,9 @@ public class Workflow extends WorkflowImplBase {
 			throw new AdempiereException("@AD_User_ID@ @NotFound@");
 		}
 
-		String message = ValueUtil.validateNull(request.getMessage());
+		String message = ValueManager.validateNull(
+			request.getMessage()
+		);
 		boolean isSuccefully = workActivity.forwardTo(user.getAD_User_ID(), message);
 		if (!isSuccefully) {
 			throw new AdempiereException("@CannotForward@");

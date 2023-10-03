@@ -75,7 +75,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -114,7 +114,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 		MSystem adempiereInfo = MSystem.get(Env.getCtx());
 		if (adempiereInfo != null) {
-			String name = ValueUtil.validateNull(
+			String name = ValueManager.validateNull(
 				adempiereInfo.getName()
 			);
 			if (name.trim().equals("?")) {
@@ -122,17 +122,17 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			}
 			builder.setName(name)
 				.setReleaseNo(
-					ValueUtil.validateNull(
+					ValueManager.validateNull(
 						adempiereInfo.getReleaseNo()
 					)
 				)
 				.setVersion(
-					ValueUtil.validateNull(
+					ValueManager.validateNull(
 						adempiereInfo.getVersion()
 					)
 				)
 				.setLastBuildInfo(
-					ValueUtil.validateNull(
+					ValueManager.validateNull(
 						adempiereInfo.getLastBuildInfo()
 					)
 				)
@@ -141,20 +141,22 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 		// backend info
 		builder.setBackendDateVersion(
-				ValueUtil.getTimestampFromDate(ValueUtil.convertStringToDate(Version.DATE_VERSION))
+				ValueManager.getTimestampFromDate(
+					ValueManager.convertStringToDate(Version.DATE_VERSION)
+				)
 			)
 			.setBackendMainVersion(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					Version.MAIN_VERSION
 				)
 			)
 			.setBackendImplementationVersion(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					Version.IMPLEMENTATION_VERSION
 				)
 			)
 			.setLogoUrl(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					System.getenv("SYSTEM_LOGO_URL")
 				)
 			)
@@ -285,7 +287,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			return null;
 		}
 		//	Get values
-		Timestamp conversionDate = ValueUtil.getDateFromTimestampDate(request.getConversionDate());
+		Timestamp conversionDate = ValueManager.getDateFromTimestampDate(request.getConversionDate());
 		if(conversionDate == null) {
 			conversionDate = TimeUtil.getDay(System.currentTimeMillis());
 		}
@@ -458,7 +460,9 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		return builder;
 	}
 	
@@ -853,7 +857,9 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set netxt page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		return builder;
 	}
 
@@ -920,7 +926,9 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set netxt page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		return builder;
 	}
 }

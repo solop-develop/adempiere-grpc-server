@@ -85,7 +85,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -163,8 +163,9 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		return builder;
 	}
@@ -452,8 +453,9 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//  Set next page
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		return builderList;
 	}
@@ -469,16 +471,31 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 		builder.setId(attributeSetInstance.getM_AttributeSetInstance_ID())
-			.setDescription(ValueUtil.validateNull(attributeSetInstance.getDescription()))
-			.setLot(ValueUtil.validateNull(attributeSetInstance.getLot()))
+			.setDescription(
+				ValueManager.validateNull(
+					attributeSetInstance.getDescription()
+				)
+			)
+			.setLot(
+				ValueManager.validateNull(
+					attributeSetInstance.getLot()
+				)
+			)
 			.setLotId(attributeSetInstance.getM_Lot_ID())
-			.setSerial(ValueUtil.validateNull(attributeSetInstance.getSerNo()))
+			.setSerial(
+				ValueManager.validateNull(
+					attributeSetInstance.getSerNo())
+				)
 			.setProductAttributeSet(
 				convertProductAttributeSet(attributeSetInstance.getM_AttributeSet_ID())
 			)
 		;
 		if (attributeSetInstance.getGuaranteeDate() != null) {
-			builder.setGuaranteeDate(ValueUtil.getTimestampFromDate(attributeSetInstance.getGuaranteeDate()));
+			builder.setGuaranteeDate(
+				ValueManager.getTimestampFromDate(
+					attributeSetInstance.getGuaranteeDate()
+				)
+			);
 		}
 
 		final String whereClause = I_M_AttributeInstance.COLUMNNAME_M_AttributeSetInstance_ID + " = ? ";
@@ -515,8 +532,14 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		builder.setId(0)
-			.setValue(ValueUtil.validateNull(attributeInstance.getValue()))
-			.setValueNumber(ValueUtil.getDecimalFromBigDecimal(valueNumber))
+			.setValue(
+				ValueManager.validateNull(
+					attributeInstance.getValue()
+				)
+			)
+			.setValueNumber(
+				ValueManager.getDecimalFromBigDecimal(valueNumber)
+			)
 			.setProductAttributeId(attributeInstance.getM_Attribute_ID())
 			.setProductAttributeValueId(attributeInstance.getM_AttributeValue_ID())
 			.setProductAttributeSetInstanceId(attributeInstance.getM_AttributeSetInstance_ID())
@@ -534,23 +557,51 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 		builder.setId(attributeSet.getM_AttributeSet_ID())
-			.setName(ValueUtil.validateNull(attributeSet.getName()))
-			.setDescription(ValueUtil.validateNull(attributeSet.getDescription()))
+			.setName(
+				ValueManager.validateNull(
+					attributeSet.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					attributeSet.getDescription()
+				)
+			)
 			.setIsInstanceAttribute(attributeSet.isInstanceAttribute())
 			.setIsLot(attributeSet.isLot())
 			.setIsLotMandatory(attributeSet.isLotMandatory())
 			.setLotControlId(attributeSet.getM_LotCtl_ID())
-			.setLotCharStartOverwrite(ValueUtil.validateNull(attributeSet.getLotCharSOverwrite()))
-			.setLotCharEndOverwrite(ValueUtil.validateNull(attributeSet.getLotCharEOverwrite()))
+			.setLotCharStartOverwrite(
+				ValueManager.validateNull(
+					attributeSet.getLotCharSOverwrite()
+				)
+			)
+			.setLotCharEndOverwrite(
+				ValueManager.validateNull(
+					attributeSet.getLotCharEOverwrite()
+				)
+			)
 			.setIsSerial(attributeSet.isSerNo())
 			.setIsSerialMandatory(attributeSet.isSerNoMandatory())
 			.setSerialControlId(attributeSet.getM_SerNoCtl_ID())
-			.setSerialCharStartOverwrite(ValueUtil.validateNull(attributeSet.getSerNoCharSOverwrite()))
-			.setSerialCharEndOverwrite(ValueUtil.validateNull(attributeSet.getSerNoCharEOverwrite()))
+			.setSerialCharStartOverwrite(
+				ValueManager.validateNull(
+					attributeSet.getSerNoCharSOverwrite()
+				)
+			)
+			.setSerialCharEndOverwrite(
+				ValueManager.validateNull(
+					attributeSet.getSerNoCharEOverwrite()
+				)
+			)
 			.setIsGuaranteeDate(attributeSet.isGuaranteeDate())
 			.setIsGuaranteeDateMandatory(attributeSet.isGuaranteeDateMandatory())
 			.setGuaranteeDays(attributeSet.getGuaranteeDays())
-			.setMandatoryType(ValueUtil.validateNull(attributeSet.getMandatoryType()))
+			.setMandatoryType(
+				ValueManager.validateNull(
+					attributeSet.getMandatoryType()
+				)
+			)
 		;
 		
 		new Query(
@@ -583,9 +634,21 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 		builder.setId(attribute.getM_Attribute_ID())
-			.setName(ValueUtil.validateNull(attribute.getName()))
-			.setDescription(ValueUtil.validateNull(attribute.getDescription()))
-			.setValueType(ValueUtil.validateNull(attribute.getAttributeValueType()))
+			.setName(
+				ValueManager.validateNull(
+					attribute.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					attribute.getDescription()
+				)
+			)
+			.setValueType(
+				ValueManager.validateNull(
+					attribute.getAttributeValueType()
+				)
+			)
 			.setIsInstanceAttribute(attribute.isInstanceAttribute())
 			.setIsMandatory(attribute.isMandatory())
 		;
@@ -620,9 +683,21 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 		builder.setId(productAttributeValue.getM_AttributeValue_ID())
-			.setName(ValueUtil.validateNull(productAttributeValue.getName()))
-			.setDescription(ValueUtil.validateNull(productAttributeValue.getDescription()))
-			.setValue(ValueUtil.validateNull(productAttributeValue.getValue()))
+			.setName(
+				ValueManager.validateNull(
+					productAttributeValue.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					productAttributeValue.getDescription()
+				)
+			)
+			.setValue(
+				ValueManager.validateNull(
+					productAttributeValue.getValue()
+				)
+			)
 		;
 		
 		return builder;
@@ -663,7 +738,9 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			attributeSetInstace.setM_AttributeSet_ID(product.getM_AttributeSet_ID());
 			attributeSetInstace.saveEx();
 
-			Map<String, Object> attributesValues = ValueUtil.convertValuesMapToObjects(request.getAttributes().getFieldsMap());
+			Map<String, Object> attributesValues = ValueManager.convertValuesMapToObjects(
+				request.getAttributes().getFieldsMap()
+			);
 			List<MAttribute> attributes = Arrays.asList(atttibuteSet.getMAttributes(isProductASI));
 			if (attributes == null || attributes.size() <= 0) {
 				attributes = Arrays.asList(atttibuteSet.getMAttributes(!isProductASI));
@@ -804,8 +881,9 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		// Set next page
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		return builderList;
 	}
@@ -823,9 +901,21 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		builder.setId(warehouse.getM_Warehouse_ID())
-			.setValue(ValueUtil.validateNull(warehouse.getValue()))
-			.setName(ValueUtil.validateNull(warehouse.getName()))
-			.setDescription(ValueUtil.validateNull(warehouse.getDescription()))
+			.setValue(
+				ValueManager.validateNull(
+					warehouse.getValue()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					warehouse.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					warehouse.getDescription()
+				)
+			)
 			.setIsInTransit(warehouse.isInTransit())
 		;
 		if (warehouse.getM_WarehouseSource_ID() > 0) {
@@ -942,8 +1032,9 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		// Set next page
-		builderList.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 
 		return builderList;
 	}
@@ -955,11 +1046,27 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		builder.setId(locator.getM_Locator_ID())
-			.setValue(ValueUtil.validateNull(locator.getValue()))
+			.setValue(
+				ValueManager.validateNull(
+					locator.getValue()
+				)
+			)
 			.setIsDefault(locator.isDefault())
-			.setAisle(ValueUtil.validateNull(locator.getX()))
-			.setBin(ValueUtil.validateNull(locator.getX()))
-			.setLevel(ValueUtil.validateNull(locator.getZ()))
+			.setAisle(
+				ValueManager.validateNull(
+					locator.getX()
+				)
+			)
+			.setBin(
+				ValueManager.validateNull(
+					locator.getX()
+				)
+			)
+			.setLevel(
+				ValueManager.validateNull(
+					locator.getZ()
+				)
+			)
 		;
 		if (locator.getM_Warehouse_ID() > 0) {
 			Warehouse.Builder builderWarehouse = convertAvailableWarehouse(

@@ -58,7 +58,7 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -143,13 +143,13 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		builder.setId(warehouse.getM_Warehouse_ID())
 			.setValue(
-				ValueUtil.validateNull(warehouse.getValue())
+				ValueManager.validateNull(warehouse.getValue())
 			)
 			.setName(
-				ValueUtil.validateNull(warehouse.getName())
+				ValueManager.validateNull(warehouse.getName())
 			)
 			.setDescription(
-				ValueUtil.validateNull(warehouse.getDescription())
+				ValueManager.validateNull(warehouse.getDescription())
 			)
 		;
 
@@ -223,7 +223,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 
@@ -253,16 +253,16 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		}
 		builder.setId(product.getM_Product_ID())
 			.setUpc(
-				ValueUtil.validateNull(product.getUPC())
+				ValueManager.validateNull(product.getUPC())
 			)
 			.setSku(
-				ValueUtil.validateNull(product.getSKU())
+				ValueManager.validateNull(product.getSKU())
 			)
 			.setValue(
-				ValueUtil.validateNull(product.getValue())
+				ValueManager.validateNull(product.getValue())
 			)
 			.setName(
-				ValueUtil.validateNull(product.getName())
+				ValueManager.validateNull(product.getName())
 			)
 		;
 
@@ -279,13 +279,13 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		builder.setId(movement.getM_Movement_ID())
 			.setDocumentNo(
-				ValueUtil.validateNull(movement.getDocumentNo())
+				ValueManager.validateNull(movement.getDocumentNo())
 			)
 			.setMovementDate(
-				ValueUtil.getTimestampFromDate(movement.getMovementDate())
+				ValueManager.getTimestampFromDate(movement.getMovementDate())
 			)
 			.setDescription(
-				ValueUtil.validateNull(movement.getDescription())
+				ValueManager.validateNull(movement.getDescription())
 			)
 			.setIsCompleted(
 				DocumentUtil.isCompleted(movement)
@@ -535,7 +535,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -550,7 +550,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 			movementLine.setMovementQty(quantity);
 			movementLine.setDescription(
-				ValueUtil.validateNull(request.getDescription())
+				ValueManager.validateNull(request.getDescription())
 			);
 			movementLine.saveEx(transactionName);
 
@@ -654,14 +654,14 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				throw new AdempiereException("@M_MovementLine_ID@ @Processed@");
 			}
 
-			BigDecimal quantity = ValueUtil.getDecimalFromValue(request.getQuantity());
+			BigDecimal quantity = ValueManager.getDecimalFromValue(request.getQuantity());
 			if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 				quantity = BigDecimal.ONE;
 			}
 
 			movementLine.setMovementQty(quantity);
 			movementLine.setDescription(
-				ValueUtil.validateNull(request.getDescription())
+				ValueManager.validateNull(request.getDescription())
 			);
 			movementLine.saveEx(transactionName);
 
@@ -708,10 +708,10 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				convertProduct(movementLine.getM_Product_ID())
 			)
 			.setDescription(
-				ValueUtil.validateNull(movementLine.getDescription())
+				ValueManager.validateNull(movementLine.getDescription())
 			)
 			.setQuantity(
-				ValueUtil.getDecimalFromBigDecimal(movementLine.getMovementQty())
+				ValueManager.getDecimalFromBigDecimal(movementLine.getMovementQty())
 			)
 			.setLine(movementLine.getLine())
 		;
@@ -764,7 +764,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		ListMovementLinesResponse.Builder builderList = ListMovementLinesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 

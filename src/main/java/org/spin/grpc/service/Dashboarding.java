@@ -83,10 +83,10 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.dashboarding.DashboardingConvertUtil;
 import org.spin.eca50.controller.ChartBuilder;
 import org.spin.eca50.data.ChartValue;
+import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Value;
 
@@ -162,7 +162,7 @@ public class Dashboarding extends DashboardingImplBase {
 						ChartData.Builder chartDataBuilder = ChartData.newBuilder()
 								.setName(dataSet.getName())
 								.setValue(
-									ValueUtil.getDecimalFromBigDecimal(dataSet.getAmount())
+									ValueManager.getDecimalFromBigDecimal(dataSet.getAmount())
 								)
 							;
 						serieStub.add(chartDataBuilder.build());
@@ -172,11 +172,20 @@ public class Dashboarding extends DashboardingImplBase {
 			}
 		} else {
 			//	Set values
-			builder.setName(ValueUtil.validateNull(goal.getName()));
-			builder.setDescription(ValueUtil.validateNull(goal.getDescription()));
-			builder.setId(goal.getPA_Goal_ID());
-			builder.setXAxisLabel(ValueUtil.validateNull(goal.getXAxisText()));
-			builder.setYAxisLabel(ValueUtil.validateNull(goal.getName()));
+			builder.setName(
+					ValueManager.validateNull(goal.getName())
+				)
+				.setDescription(
+					ValueManager.validateNull(goal.getDescription())
+				)
+				.setId(goal.getPA_Goal_ID())
+				.setXAxisLabel(
+					ValueManager.validateNull(goal.getXAxisText())
+				)
+				.setYAxisLabel(
+					ValueManager.validateNull(goal.getName())
+				)
+			;
 
 			MMeasure measure = goal.getMeasure();
 			List<GraphColumn> chartData = measure.getGraphColumnList(goal);
@@ -201,7 +210,7 @@ public class Dashboarding extends DashboardingImplBase {
 		}
 
 		builder.setMeasureTarget(
-			ValueUtil.getDecimalFromBigDecimal(goal.getMeasureTarget())
+			ValueManager.getDecimalFromBigDecimal(goal.getMeasureTarget())
 		);
 
 		//	Add measure color
@@ -242,7 +251,7 @@ public class Dashboarding extends DashboardingImplBase {
 		//	Get from document status
 		Arrays.asList(MDocumentStatus.getDocumentStatusIndicators(context, userId, roleId)).forEach(documentStatus -> {
 			PendingDocument.Builder pendingDocument = PendingDocument.newBuilder();
-			pendingDocument.setDocumentName(ValueUtil.validateNull(documentStatus.getName()));
+			pendingDocument.setDocumentName(ValueManager.validateNull(documentStatus.getName()));
 			// for Reference
 			if(documentStatus.getAD_Window_ID() != 0) {
 				pendingDocument.setWindowId(documentStatus.getAD_Window_ID());
@@ -254,8 +263,8 @@ public class Dashboarding extends DashboardingImplBase {
 			//	TODO: Add filter from SQL
 //			pendingDocument
 //					.setCriteria(Criteria.newBuilder()
-//					.setTableName(ValueUtil.validateNull(table.getTableName()))
-//					.setWhereClause(ValueUtil.validateNull(documentStatus.getWhereClause())));
+//					.setTableName(ValueManager.validateNull(table.getTableName()))
+//					.setWhereClause(ValueManager.validateNull(documentStatus.getWhereClause())));
 			//	Set quantity
 			pendingDocument.setRecordCount(MDocumentStatus.evaluate(documentStatus));
 			//	TODO: Add description for interface
@@ -327,14 +336,21 @@ public class Dashboarding extends DashboardingImplBase {
 			.setOrderBy(I_PA_Goal.COLUMNNAME_SeqNo)
 			.<MGoal>list()
 			.forEach(chartDefinition -> {
-				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder();
-				dashboardBuilder.setId(chartDefinition.getPA_Goal_ID());
-				dashboardBuilder.setName(ValueUtil.validateNull(chartDefinition.getName()));
-				dashboardBuilder.setDescription(ValueUtil.validateNull(chartDefinition.getDescription()));
-				dashboardBuilder.setDashboardType("chart");
-				dashboardBuilder.setChartType(ValueUtil.validateNull(chartDefinition.getChartType()));
-				dashboardBuilder.setIsCollapsible(true);
-				dashboardBuilder.setIsOpenByDefault(true);
+				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder()
+					.setId(chartDefinition.getPA_Goal_ID())
+					.setName(
+						ValueManager.validateNull(chartDefinition.getName())
+					)
+					.setDescription(
+						ValueManager.validateNull(chartDefinition.getDescription())
+					)
+					.setDashboardType("chart")
+					.setChartType(
+						ValueManager.validateNull(chartDefinition.getChartType())
+					)
+					.setIsCollapsible(true)
+					.setIsOpenByDefault(true)
+				;
 				//	Add to builder
 				builder.addDashboards(dashboardBuilder);
 			});
@@ -362,17 +378,18 @@ public class Dashboarding extends DashboardingImplBase {
 				+ I_PA_DashboardContent.COLUMNNAME_Line)
 			.<MDashboardContent>list()
 			.forEach(dashboard -> {
-				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder();
-				dashboardBuilder.setId(dashboard.getPA_DashboardContent_ID());
-				dashboardBuilder.setName(ValueUtil.validateNull(dashboard.getName()));
-				dashboardBuilder.setDescription(ValueUtil.validateNull(dashboard.getDescription()));
-				dashboardBuilder.setHtml(ValueUtil.validateNull(dashboard.getHTML()));
-				dashboardBuilder.setColumnNo(dashboard.getColumnNo());
-				dashboardBuilder.setLineNo(dashboard.getLine());
-				dashboardBuilder.setIsEventRequired(dashboard.isEventRequired());
-				dashboardBuilder.setIsCollapsible(dashboard.isCollapsible());
-				dashboardBuilder.setIsOpenByDefault(dashboard.isOpenByDefault());
-				dashboardBuilder.setDashboardType("dashboard");
+				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder()
+					.setId(dashboard.getPA_DashboardContent_ID())
+					.setName(ValueManager.validateNull(dashboard.getName()))
+					.setDescription(ValueManager.validateNull(dashboard.getDescription()))
+					.setHtml(ValueManager.validateNull(dashboard.getHTML()))
+					.setColumnNo(dashboard.getColumnNo())
+					.setLineNo(dashboard.getLine())
+					.setIsEventRequired(dashboard.isEventRequired())
+					.setIsCollapsible(dashboard.isCollapsible())
+					.setIsOpenByDefault(dashboard.isOpenByDefault())
+					.setDashboardType("dashboard")
+				;
 				//	For Window
 				if(dashboard.getAD_Window_ID() != 0) {
 					dashboardBuilder.setWindowId(dashboard.getAD_Window_ID());
@@ -395,7 +412,11 @@ public class Dashboarding extends DashboardingImplBase {
 						endIndex = fileName.length();
 					}
 					//	Set
-					dashboardBuilder.setFileName(ValueUtil.validateNull(fileName.substring(beginIndex, endIndex)));
+					dashboardBuilder.setFileName(
+						ValueManager.validateNull(
+							fileName.substring(beginIndex, endIndex))
+						)
+					;
 				}
 				builder.addDashboards(dashboardBuilder);
 			});
@@ -532,14 +553,14 @@ public class Dashboarding extends DashboardingImplBase {
 			name = menu.getName();
 		}
 		builder.setName(
-			ValueUtil.validateNull(name)
+			ValueManager.validateNull(name)
 		);
 		String description = menu.get_Translation(I_AD_Menu.COLUMNNAME_Description);
 		if (Util.isEmpty(description, true)) {
 			description = menu.getDescription();
 		}
 		builder.setDescription(
-			ValueUtil.validateNull(description)
+			ValueManager.validateNull(description)
 		);
 		if (menu.getAction().equals(MMenu.ACTION_Window)) {
 			if (menu.getAD_Window_ID() > 0) {
@@ -588,14 +609,14 @@ public class Dashboarding extends DashboardingImplBase {
 			name = menu.getName();
 		}
 		builder.setName(
-			ValueUtil.validateNull(name)
+			ValueManager.validateNull(name)
 		);
 		String description = menu.get_Translation(I_AD_Menu.COLUMNNAME_Description);
 		if (Util.isEmpty(description, true)) {
 			description = menu.getDescription();
 		}
 		builder.setDescription(
-			ValueUtil.validateNull(description)
+			ValueManager.validateNull(description)
 		);
 		if (menu.getAction().equals(MMenu.ACTION_Window)) {
 			if (menu.getAD_Window_ID() > 0) {
@@ -661,14 +682,14 @@ public class Dashboarding extends DashboardingImplBase {
 			name = menu.getName();
 		}
 		builder.setName(
-			ValueUtil.validateNull(name)
+			ValueManager.validateNull(name)
 		);
 		String description = menu.get_Translation(I_AD_Menu.COLUMNNAME_Description);
 		if (Util.isEmpty(description, true)) {
 			description = menu.getDescription();
 		}
 		builder.setDescription(
-			ValueUtil.validateNull(description)
+			ValueManager.validateNull(description)
 		);
 		if (menu.getAction().equals(MMenu.ACTION_Window)) {
 			if (menu.getAD_Window_ID() > 0) {
@@ -801,7 +822,7 @@ public class Dashboarding extends DashboardingImplBase {
 		ListWindowDashboardsResponse.Builder builderList = ListWindowDashboardsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueUtil.validateNull(nexPageToken)
+				ValueManager.validateNull(nexPageToken)
 			)
 		;
 
@@ -828,7 +849,7 @@ public class Dashboarding extends DashboardingImplBase {
 				if (ruleId > 0) {
 					MRule rule = MRule.get(Env.getCtx(), ruleId);
 					chartBuilder.setTransformationScript(
-						ValueUtil.validateNull(rule.getScript())
+						ValueManager.validateNull(rule.getScript())
 					);
 				}
 
@@ -919,7 +940,7 @@ public class Dashboarding extends DashboardingImplBase {
 			if (chartParameter != null) {
 				filtersList.put(
 					chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL),
-					ValueUtil.getObjectFromValue(entry.getValue())
+					ValueManager.getObjectFromValue(entry.getValue())
 				);
 			}
 		});
@@ -959,7 +980,7 @@ public class Dashboarding extends DashboardingImplBase {
 					ChartData.Builder chartDataBuilder = ChartData.newBuilder()
 						.setName(dataSet.getName())
 						.setValue(
-							ValueUtil.getDecimalFromBigDecimal(dataSet.getAmount())
+							ValueManager.getDecimalFromBigDecimal(dataSet.getAmount())
 						)
 					;
 					serieStub.add(chartDataBuilder.build());

@@ -41,7 +41,7 @@ import org.compiere.util.Env;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchType;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Matched;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Vendor;
-import org.spin.base.util.ValueUtil;
+import org.spin.service.grpc.util.ValueManager;
 
 public class Util {
 	/**	Logger			*/
@@ -64,16 +64,16 @@ public class Util {
 
 		builder.setId(businessPartner.getC_BPartner_ID())
 			.setValue(
-				ValueUtil.validateNull(businessPartner.getValue())
+				ValueManager.validateNull(businessPartner.getValue())
 			)
 			.setTaxId(
-				ValueUtil.validateNull(businessPartner.getTaxID())
+				ValueManager.validateNull(businessPartner.getTaxID())
 			)
 			.setName(
-				ValueUtil.validateNull(businessPartner.getName())
+				ValueManager.validateNull(businessPartner.getName())
 			)
 			.setDescription(
-				ValueUtil.validateNull(businessPartner.getDescription())
+				ValueManager.validateNull(businessPartner.getDescription())
 			)
 		;
 
@@ -95,12 +95,12 @@ public class Util {
 				resultSet.getInt("Header_ID")
 			)
 			.setDate(
-				ValueUtil.getTimestampFromDate(
+				ValueManager.getTimestampFromDate(
 					resultSet.getTimestamp(5) // Date
 				)
 			)
 			.setDocumentNo(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					resultSet.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
 				)
 			)
@@ -108,12 +108,12 @@ public class Util {
 				resultSet.getInt(I_C_InvoiceLine.COLUMNNAME_Line)
 			)
 			.setQuantity(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					resultSet.getBigDecimal("Quantity")
 				)
 			)
 			.setMatchedQuantity(
-				ValueUtil.getDecimalFromBigDecimal(
+				ValueManager.getDecimalFromBigDecimal(
 					resultSet.getBigDecimal("MatchedQuantity")
 				)
 			)
@@ -121,7 +121,7 @@ public class Util {
 				resultSet.getInt(I_C_InvoiceLine.COLUMNNAME_M_Product_ID)
 			)
 			.setProductName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					resultSet.getString("M_Product_Name")
 				)
 			)
@@ -129,7 +129,7 @@ public class Util {
 				resultSet.getInt(I_C_Invoice.COLUMNNAME_C_BPartner_ID)
 			)
 			.setVendorName(
-				ValueUtil.validateNull(
+				ValueManager.validateNull(
 					resultSet.getString("C_BPartner_Name")
 				)
 			)

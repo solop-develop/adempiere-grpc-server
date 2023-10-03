@@ -66,10 +66,10 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.base.util.ValueUtil;
 import org.spin.base.util.WorkflowUtil;
 import org.spin.log.LogsConvertUtil;
 import org.spin.log.LogsServiceLogic;
+import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -305,8 +305,9 @@ public class LogsInfo extends LogsImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	Return
 		return builder;
 	}
@@ -356,8 +357,9 @@ public class LogsInfo extends LogsImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	Return
 		return builder;
 	}
@@ -376,7 +378,10 @@ public class LogsInfo extends LogsImplBase {
 			for(MRecentItem recentItem : recentItemsList) {
 				try {
 					RecentItem.Builder recentItemBuilder = RecentItem.newBuilder()
-							.setDisplayName(ValueUtil.validateNull(recentItem.getLabel()));
+						.setDisplayName(
+							ValueManager.validateNull(recentItem.getLabel())
+						)
+					;
 					String menuName = "";
 					String menuDescription = "";
 					int referenceId = 0;
@@ -390,7 +395,9 @@ public class LogsInfo extends LogsImplBase {
 							menuDescription = tab.get_Translation("Description");
 						}
 						//	Add Action
-						recentItemBuilder.setAction(ValueUtil.validateNull(MMenu.ACTION_Window));
+						recentItemBuilder.setAction(
+							ValueManager.validateNull(MMenu.ACTION_Window)
+						);
 					}
 					if(recentItem.getAD_Window_ID() > 0) {
 						MWindow window = MWindow.get(Env.getCtx(), recentItem.getAD_Window_ID());
@@ -403,7 +410,9 @@ public class LogsInfo extends LogsImplBase {
 							menuDescription = window.get_Translation("Description");
 						}
 						//	Add Action
-						recentItemBuilder.setAction(ValueUtil.validateNull(MMenu.ACTION_Window));
+						recentItemBuilder.setAction(
+							ValueManager.validateNull(MMenu.ACTION_Window)
+						);
 					}
 					if(recentItem.getAD_Menu_ID() > 0) {
 						MMenu menu = MMenu.getFromId(Env.getCtx(), recentItem.getAD_Menu_ID());
@@ -415,7 +424,9 @@ public class LogsInfo extends LogsImplBase {
 							menuDescription = menu.get_Translation("Description");
 						}
 						//	Add Action
-						recentItemBuilder.setAction(ValueUtil.validateNull(menu.getAction()));
+						recentItemBuilder.setAction(
+							ValueManager.validateNull(menu.getAction())
+						);
 						//	Supported actions
 						if(!Util.isEmpty(menu.getAction())) {
 							if(menu.getAction().equals(MMenu.ACTION_Form)) {
@@ -439,10 +450,17 @@ public class LogsInfo extends LogsImplBase {
 						}
 					}
 					//	Add time
-					recentItemBuilder.setMenuName(ValueUtil.validateNull(menuName));
-					recentItemBuilder.setMenuDescription(ValueUtil.validateNull(menuDescription));
-					recentItemBuilder.setUpdated(ValueUtil.getTimestampFromDate(recentItem.getUpdated()));
-					recentItemBuilder.setReferenceId(referenceId);
+					recentItemBuilder.setMenuName(
+							ValueManager.validateNull(menuName)
+						)
+						.setMenuDescription(
+							ValueManager.validateNull(menuDescription)
+						)
+						.setUpdated(
+							ValueManager.getTimestampFromDate(recentItem.getUpdated())
+						)
+						.setReferenceId(referenceId)
+					;
 					//	For uuid
 					if(recentItem.getAD_Table_ID() != 0
 							&& recentItem.getRecord_ID() != 0) {
@@ -450,13 +468,16 @@ public class LogsInfo extends LogsImplBase {
 						if(table != null
 								&& table.getAD_Table_ID() != 0) {
 							recentItemBuilder.setId(recentItem.getRecord_ID())
-								.setTableName(ValueUtil.validateNull(table.getTableName()))
+								.setTableName(
+									ValueManager.validateNull(table.getTableName())
+								)
 								.setTableId(recentItem.getAD_Table_ID());
 						}
 					}
 					//	
-					builder.addRecentItems(recentItemBuilder.build());	
+					builder.addRecentItems(recentItemBuilder.build());
 				} catch (Exception e) {
+					e.printStackTrace();
 					log.severe(e.getLocalizedMessage());
 				}
 			}
@@ -501,8 +522,9 @@ public class LogsInfo extends LogsImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	Return
 		return builder;
 	}
@@ -557,8 +579,9 @@ public class LogsInfo extends LogsImplBase {
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		//	Set next page
-		builder.setNextPageToken(ValueUtil.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
 		//	Return
 		return builder;
 	}
@@ -571,19 +594,29 @@ public class LogsInfo extends LogsImplBase {
 	private EntityChat.Builder convertRecordChat(MChat recordChat) {
 		MTable table = MTable.get(recordChat.getCtx(), recordChat.getAD_Table_ID());
 		EntityChat.Builder builder = EntityChat.newBuilder();
-		builder.setChatId(recordChat.getCM_Chat_ID());
-		builder.setTableName(ValueUtil.validateNull(table.getTableName()));
+		builder.setChatId(recordChat.getCM_Chat_ID())
+			.setTableName(
+				ValueManager.validateNull(table.getTableName())
+			)
+			.setId(recordChat.getRecord_ID())
+			.setDescription(
+				ValueManager.validateNull(recordChat.getDescription())
+			)
+			.setLogDate(
+				ValueManager.getTimestampFromDate(recordChat.getCreated())
+			)
+		;
 		if(recordChat.getCM_ChatType_ID() != 0) {
 			builder.setChatTypeId(recordChat.getCM_Chat_ID());
 		}
-		builder.setId(recordChat.getRecord_ID());
-		builder.setDescription(ValueUtil.validateNull(recordChat.getDescription()));
-		builder.setLogDate(ValueUtil.getTimestampFromDate(recordChat.getCreated()));
 
 		if (recordChat.getCreatedBy() > 0) {
 			MUser user = MUser.get(recordChat.getCtx(), recordChat.getCreatedBy());
-			builder.setUserId(recordChat.getCreatedBy());
-			builder.setUserName(ValueUtil.validateNull(user.getName()));
+			builder.setUserId(recordChat.getCreatedBy())
+				.setUserName(
+					ValueManager.validateNull(user.getName())
+				)
+			;
 		}
 
 		//	Confidential Type
