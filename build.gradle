@@ -9,11 +9,12 @@ plugins {
 
 group 'com.nikhilm'
 sourceCompatibility = 1.11
-def grpcVersion = '1.55.1'
+def grpcVersion = '1.58.0'
 def baseVersion = '3.9.4'
 def baseGroupId = 'io.github.adempiere'
 def customBaseVersion = ""
 def javaMainClass = "org.spin.server.AllInOneServices"
+
 repositories {
     mavenCentral()
     mavenLocal()
@@ -32,9 +33,9 @@ dependencies {
             '*.jar'
         ]
     )
-	implementation "io.netty:netty-handler:4.1.89.Final"
+	implementation "io.netty:netty-handler:4.1.99.Final"
     implementation "io.grpc:grpc-alts:${grpcVersion}"
-    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+	runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-netty:${grpcVersion}"
