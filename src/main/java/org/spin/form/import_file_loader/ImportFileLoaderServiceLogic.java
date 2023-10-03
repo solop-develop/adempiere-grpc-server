@@ -140,14 +140,18 @@ public class ImportFileLoaderServiceLogic {
 			Value.Builder value = ValueManager.getValueFromString(
 				charset.name()
 			);
-			LookupItem.Builder builder = LookupItem.newBuilder().setValues(Struct.newBuilder().putFields(
+			Struct.Builder values = Struct.newBuilder()
+				.putFields(
 					LookupUtil.VALUE_COLUMN_KEY,
 					value.build()
 				)
 				.putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
 					value.build()
-				))
+				)
+			;
+			LookupItem.Builder builder = LookupItem.newBuilder()
+				.setValues(values)
 			;
 			builderList.addRecords(builder);
 		});
@@ -487,6 +491,7 @@ public class ImportFileLoaderServiceLogic {
 			Entity.Builder entitBuilder = Entity.newBuilder()
 				.setTableName(table.getTableName())
 			;
+			Struct.Builder lineValues = Struct.newBuilder();
 
 			for (int i = 0; i < format.getRowCount(); i++) {
 				ImpFormatRow row = (ImpFormatRow) format.getRow(i);
@@ -532,9 +537,13 @@ public class ImportFileLoaderServiceLogic {
 					valueBuilder = ValueManager.getValueFromString(entry);
 				}
 
-				entitBuilder.setValues(Struct.newBuilder().putFields(row.getColumnName(), valueBuilder.build()));
+				lineValues.putFields(
+					row.getColumnName(),
+					valueBuilder.build()
+				);
 			}
 
+			entitBuilder.setValues(lineValues);
 			// columns.fo
 			builderList.addRecords(entitBuilder);
 		});

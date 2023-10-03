@@ -472,40 +472,41 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			throw new AdempiereException("@HR_Concept_ID@ @NotFound@");
 		}
 
-		Entity.Builder entityBuilder = Entity.newBuilder();
-		
-		entityBuilder.setTableName(tableName);
-		entityBuilder.setId(conceptDefinition.getHR_Concept_ID());
+		Entity.Builder entityBuilder = Entity.newBuilder()
+			.setTableName(tableName)
+			.setId(conceptDefinition.getHR_Concept_ID())
+		;
+		Struct.Builder rowValues = Struct.newBuilder();
 
 		Value.Builder id = ValueManager.getValueFromInteger(
 			conceptDefinition.getHR_Concept_ID()
 		);
-		entityBuilder.setValues(Struct.newBuilder().putFields(MHRConcept.COLUMNNAME_HR_Concept_ID, id.build()));
+		rowValues.putFields(MHRConcept.COLUMNNAME_HR_Concept_ID, id.build());
 
 		Value.Builder uuid = ValueManager.getValueFromString(
 			conceptDefinition.getUUID()
 		);
-		entityBuilder.setValues(Struct.newBuilder().putFields(MHRConcept.COLUMNNAME_UUID, uuid.build()).build());
+		rowValues.putFields(MHRConcept.COLUMNNAME_UUID, uuid.build());
 
 		Value.Builder name = ValueManager.getValueFromString(
 			conceptDefinition.getName()
 		);
-		entityBuilder.setValues(Struct.newBuilder().putFields(MHRConcept.COLUMNNAME_Name, name.build()).build());
+		rowValues.putFields(MHRConcept.COLUMNNAME_Name, name.build());
 
 		Value.Builder value = ValueManager.getValueFromString(
 			conceptDefinition.getValue()
 		);
-		entityBuilder.setValues(Struct.newBuilder().putFields(MHRConcept.COLUMNNAME_Name, value.build()).build());
+		rowValues.putFields(MHRConcept.COLUMNNAME_Name, value.build());
 
 		Value.Builder type = ValueManager.getValueFromString(
 			conceptDefinition.getType()
 		);
-		entityBuilder.setValues(Struct.newBuilder().putFields(MHRConcept.COLUMNNAME_Type, type.build()).build());
+		rowValues.putFields(MHRConcept.COLUMNNAME_Type, type.build());
 
 		Value.Builder columnType = ValueManager.getValueFromString(
 			conceptDefinition.getColumnType()
 		);
-		entityBuilder.setValues(Struct.newBuilder().putFields(MHRConcept.COLUMNNAME_ColumnType, columnType.build()).build());
+		rowValues.putFields(MHRConcept.COLUMNNAME_ColumnType, columnType.build());
 
 		int referenceId = conceptDefinition.getAD_Reference_ID();
 		String referenceUuid = null;
@@ -516,12 +517,14 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		Value.Builder referenceIdValue = ValueManager.getValueFromInteger(
 			conceptDefinition.getAD_Reference_ID()
 		);
-		entityBuilder.setValues(Struct.newBuilder().putFields(MHRConcept.COLUMNNAME_AD_Reference_ID, referenceIdValue.build()).build());
+		rowValues.putFields(MHRConcept.COLUMNNAME_AD_Reference_ID, referenceIdValue.build());
 
 		Value.Builder referenceUuidValue = ValueManager.getValueFromString(
 			referenceUuid
 		);
-		entityBuilder.setValues(Struct.newBuilder().putFields(MHRConcept.COLUMNNAME_AD_Reference_ID + "_UUID", referenceUuidValue.build()).build());
+		rowValues.putFields(MHRConcept.COLUMNNAME_AD_Reference_ID + "_UUID", referenceUuidValue.build());
+
+		entityBuilder.setValues(rowValues);
 
 		return entityBuilder;
 	}
@@ -604,94 +607,97 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			pstmt.setInt(4, businessPartnerId);
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
-				Entity.Builder entity = Entity.newBuilder();
-				entity.setTableName(MHRMovement.Table_Name);
-				entity.setId(rs.getInt(MHRMovement.COLUMNNAME_HR_Movement_ID));
+				Entity.Builder entity = Entity.newBuilder()
+					.setTableName(MHRMovement.Table_Name)
+					.setId(rs.getInt(MHRMovement.COLUMNNAME_HR_Movement_ID))
+				;
+				Struct.Builder rowValues = Struct.newBuilder();
 
 				// AD_Org_ID
 				Value.Builder organizationId = ValueManager.getValueFromInteger(
 					rs.getInt(MHRMovement.COLUMNNAME_AD_Org_ID)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_AD_Org_ID, organizationId.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_AD_Org_ID, organizationId.build());
 
 				// DisplayColumn_AD_Org_ID
 				Value.Builder organizationName = ValueManager.getValueFromString(
 					rs.getString(1)
 				);
-				entity.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY + "_" + MHRMovement.COLUMNNAME_AD_Org_ID, organizationName.build()).build());
+				rowValues.putFields(LookupUtil.DISPLAY_COLUMN_KEY + "_" + MHRMovement.COLUMNNAME_AD_Org_ID, organizationName.build());
 
 				// HR_Movement_ID
 				Value.Builder movementId = ValueManager.getValueFromInteger(
 					rs.getInt(MHRMovement.COLUMNNAME_HR_Movement_ID)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_HR_Movement_ID, movementId.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_HR_Movement_ID, movementId.build());
 				// movement UUID
 				Value.Builder processUuid = ValueManager.getValueFromString(
 					rs.getString(MHRMovement.COLUMNNAME_UUID)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_UUID, processUuid.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_UUID, processUuid.build());
 
 				// DisplayColumn_HR_Movement_ID
 				Value.Builder movementName = ValueManager.getValueFromString(
 					rs.getString(2)
 				);
-				entity.setValues(Struct.newBuilder().putFields(LookupUtil.DISPLAY_COLUMN_KEY + "_" + MHRMovement.COLUMNNAME_HR_Movement_ID, movementName.build()).build());
+				rowValues.putFields(LookupUtil.DISPLAY_COLUMN_KEY + "_" + MHRMovement.COLUMNNAME_HR_Movement_ID, movementName.build());
 
 				// ValidFrom
 				Value.Builder validFrom = ValueManager.getValueFromDate(
 					rs.getTimestamp(MHRMovement.COLUMNNAME_ValidFrom)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_ValidFrom, validFrom.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_ValidFrom, validFrom.build());
 
 				// ColumnType
 				Value.Builder columnType = ValueManager.getValueFromString(
 					rs.getString(4)
 				);
-				entity.setValues(Struct.newBuilder().putFields("ColumnType", columnType.build()).build());
+				rowValues.putFields("ColumnType", columnType.build());
 
 				// Qty
 				Value.Builder quantity = ValueManager.getValueFromDecimal(
 					rs.getBigDecimal(MHRMovement.COLUMNNAME_Qty)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_Qty, quantity.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_Qty, quantity.build());
 
 				// Amount
 				Value.Builder amount = ValueManager.getValueFromDecimal(
 					rs.getBigDecimal(MHRMovement.COLUMNNAME_Amount)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_Amount, amount.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_Amount, amount.build());
 
 				// ServiceDate
 				Value.Builder serviceDate = ValueManager.getValueFromDate(
 					rs.getTimestamp(MHRMovement.COLUMNNAME_ServiceDate)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_ServiceDate, serviceDate.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_ServiceDate, serviceDate.build());
 
 				// TextMsg
 				Value.Builder textMessage = ValueManager.getValueFromString(
 					rs.getString(MHRMovement.COLUMNNAME_TextMsg)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_TextMsg, textMessage.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_TextMsg, textMessage.build());
 
 				// Description
 				Value.Builder description = ValueManager.getValueFromString(
 					rs.getString(MHRMovement.COLUMNNAME_Description)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_Description, description.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_Description, description.build());
 
 				// Concept
 				Value.Builder concept = ValueManager.getValueFromString(
 					rs.getString(MHRMovement.COLUMNNAME_HR_Concept_ID)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_HR_Concept_ID, concept.build()).build());	
+				rowValues.putFields(MHRMovement.COLUMNNAME_HR_Concept_ID, concept.build());
 
 				// Process ID
 				Value.Builder processId = ValueManager.getValueFromInteger(
 					rs.getInt(MHRMovement.COLUMNNAME_HR_Process_ID)
 				);
-				entity.setValues(Struct.newBuilder().putFields(MHRMovement.COLUMNNAME_HR_Process_ID, processId.build()).build());
+				rowValues.putFields(MHRMovement.COLUMNNAME_HR_Process_ID, processId.build());
 
 				//  prepare next
+				entity.setValues(rowValues);
 				builder.addRecords(entity);
 				rowCount++;
 			}
@@ -895,7 +901,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		movement.setIsManual(true);
 	
 		movement.saveEx();
-		
+
 		builder = generateEntityBuilderFromMovement(builder, movement);
 
 		return builder;
@@ -903,131 +909,167 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	
 	private Entity.Builder generateEntityBuilderFromMovement(Entity.Builder entityBulder, MHRMovement payrollMovement) {
 		entityBulder.setId(payrollMovement.getHR_Movement_ID());
-		
-		entityBulder.setValues(Struct.newBuilder().putFields(
+
+		Struct.Builder rowValues = Struct.newBuilder();
+
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_HR_Movement_ID,
 			(ValueManager.getValueFromInteger(
 				payrollMovement.getHR_Movement_ID())
 			).build()
-		).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_UUID,
 			(ValueManager.getValueFromString(
 				payrollMovement.getUUID())
 			).build()
-		).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_IsManual,
 			(ValueManager.getValueFromBoolean(
 				payrollMovement.isManual()
 			)).build()
-		).build());
+		);
 
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_SeqNo,
 			(ValueManager.getValueFromInteger(
 				payrollMovement.getSeqNo()
 			)).build()
-		).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_HR_Concept_ID,
 			(ValueManager.getValueFromInteger(
 				payrollMovement.getHR_Concept_ID()
 			)).build()
-		).build());
+		);
 
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		rowValues.putFields(
 			MHRConcept.COLUMNNAME_HR_Concept_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getHR_Concept_ID())).build()
-				).build());
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getHR_Concept_ID()
+			)).build()
+		);
 		// Values
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_Qty,
 			(ValueManager.getValueFromDecimal(
 				payrollMovement.getQty()
 			)).build()
-		).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_Amount,
 			(ValueManager.getValueFromDecimal(
 				payrollMovement.getAmount()
 			)).build()
-		).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_TextMsg,
 			(ValueManager.getValueFromString(
 				payrollMovement.getTextMsg()
 			)).build()
-		).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_ServiceDate,
 			(ValueManager.getValueFromDate(
 				payrollMovement.getServiceDate()
 			)).build()
-		).build());
+		);
 
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_HR_Concept_Category_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getHR_Concept_Category_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getHR_Concept_Category_ID())
+			).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_Description,
-			(ValueManager.getValueFromString(payrollMovement.getDescription())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromString(
+				payrollMovement.getDescription()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_HR_Process_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getHR_Process_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getHR_Process_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_PeriodNo,
-			(ValueManager.getValueFromInteger(payrollMovement.getPeriodNo())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getPeriodNo()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_ValidFrom,
-			(ValueManager.getValueFromDate(payrollMovement.getValidFrom())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromDate(
+				payrollMovement.getValidFrom()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_ValidTo,
-			(ValueManager.getValueFromDate(payrollMovement.getValidTo())).build()
-				).build());
+			(ValueManager.getValueFromDate(
+				payrollMovement.getValidTo()
+			)).build()
+		);
 
 		// employee attributes
-		entityBulder.setValues(Struct.newBuilder().putFields(
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-				).build());
-		entityBulder.setValues(Struct.newBuilder().putFields(
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(payrollMovement.getAD_Org_ID())).build()
-		).build());
+			(ValueManager.getValueFromInteger(
+				payrollMovement.getAD_Org_ID()
+			)).build()
+		);
+
+		entityBulder.setValues(rowValues);
 
 		return entityBulder;
 	}

@@ -1432,6 +1432,7 @@ public class ConvertUtil {
 			.setDescription(ValueManager.validateNull(businessPartner.getDescription()))
 		;
 		//	Additional Attributes
+		Struct.Builder customerAdditionalAttributes = Struct.newBuilder();
 		MTable.get(Env.getCtx(), businessPartner.get_Table_ID()).getColumnsAsList().stream().map(column -> column.getColumnName()).filter(columnName -> {
 			return !columnName.equals(MBPartner.COLUMNNAME_UUID)
 					&& !columnName.equals(MBPartner.COLUMNNAME_Value)
@@ -1442,14 +1443,14 @@ public class ConvertUtil {
 					&& !columnName.equals(MBPartner.COLUMNNAME_Name2)
 					&& !columnName.equals(MBPartner.COLUMNNAME_Description);
 		}).forEach(columnName -> {
-			Struct.Builder values = Struct.newBuilder()
-				.putFields(
-					columnName,
-					ValueManager.getValueFromObject(businessPartner.get_Value(columnName)).build()
-				)
-			;
-			customer.setAdditionalAttributes(values);
+			customerAdditionalAttributes.putFields(
+				columnName,
+				ValueManager.getValueFromObject(
+					businessPartner.get_Value(columnName)
+				).build()
+			);
 		});
+		customer.setAdditionalAttributes(customerAdditionalAttributes);
 		//	Add Address
 		Arrays.asList(businessPartner.getLocations(true)).stream()
 			.filter(customerLocation -> customerLocation.isActive())
@@ -1548,7 +1549,9 @@ public class ConvertUtil {
 			Struct.Builder values = Struct.newBuilder()
 				.putFields(
 					columnName,
-					ValueManager.getValueFromObject(businessPartnerLocation.get_Value(columnName)).build()
+					ValueManager.getValueFromObject(
+						businessPartnerLocation.get_Value(columnName)
+					).build()
 				)
 			;
 			builder.setAdditionalAttributes(values);

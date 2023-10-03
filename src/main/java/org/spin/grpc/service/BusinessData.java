@@ -73,7 +73,7 @@ import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.common.UpdateEntityRequest;
-import org.spin.base.db.CountUtil;
+// import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereClauseUtil;
@@ -775,6 +775,7 @@ public class BusinessData extends BusinessDataImplBase {
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
 				Entity.Builder valueObjectBuilder = Entity.newBuilder();
+				Struct.Builder rowValues = Struct.newBuilder();
 				ResultSetMetaData metaData = rs.getMetaData();
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
@@ -787,14 +788,23 @@ public class BusinessData extends BusinessDataImplBase {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueManager.getValueFromString(value);
 							}
-							valueObjectBuilder.setValues(Struct.newBuilder().putFields(columnName, valueBuilder.build()).build());
+							rowValues.putFields(
+								columnName,
+								valueBuilder.build()
+							);
 							continue;
 						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
-						valueBuilder = ValueManager.getValueFromReference(rs.getObject(index), field.getAD_Reference_ID());
+						valueBuilder = ValueManager.getValueFromReference(
+							rs.getObject(index),
+							field.getAD_Reference_ID()
+						);
 						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {
-							valueObjectBuilder.setValues(Struct.newBuilder().putFields(fieldColumnName, valueBuilder.build()).build());
+							rowValues.putFields(
+								fieldColumnName,
+								valueBuilder.build()
+							);
 						}
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
@@ -802,6 +812,7 @@ public class BusinessData extends BusinessDataImplBase {
 					}
 				}
 				//	
+				valueObjectBuilder.setValues(rowValues);
 				builder.addRecords(valueObjectBuilder.build());
 				recordCount++;
 			}

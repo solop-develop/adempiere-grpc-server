@@ -103,35 +103,49 @@ public abstract class BankStatementMatchServiceLogic {
 	public static ListLookupItemsResponse.Builder listSearchModes(ListSearchModesRequest request) {
 		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
 
-		LookupItem.Builder lookupMatched = LookupItem.newBuilder()
-			.setValues(Struct.newBuilder().putFields(
+		// unmatched
+		Struct.Builder valuesUnMatched = Struct.newBuilder()
+			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
 				ValueManager.getValueFromInt(
 					MatchMode.MODE_NOT_MATCHED_VALUE
 				).build()
-			).build())
-			.setValues(Struct.newBuilder().putFields(
+			)
+			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueManager.getValueFromString(
 					Msg.translate(Env.getCtx(), "NotMatched")
-				).build()).build())
+				).build()
+			)
 		;
-		builderList.addRecords(lookupMatched);
-
 		LookupItem.Builder lookupUnMatched = LookupItem.newBuilder()
-			.setValues(Struct.newBuilder().putFields(
+			.setValues(
+				valuesUnMatched
+			)
+		;
+		builderList.addRecords(lookupUnMatched);
+
+		// matched
+		Struct.Builder valuesMatched = Struct.newBuilder()
+			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
 				ValueManager.getValueFromInt(
 					MatchMode.MODE_MATCHED_VALUE
 				).build()
-			).build())
-			.setValues(Struct.newBuilder().putFields(
+			)
+			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueManager.getValueFromString(
 					Msg.translate(Env.getCtx(), "Matched")
-				).build()).build())
+				).build()
+			)
 		;
-		builderList.addRecords(lookupUnMatched);
+		LookupItem.Builder lookupMatched = LookupItem.newBuilder()
+			.setValues(
+				valuesMatched
+			)
+		;
+		builderList.addRecords(lookupMatched);
 
 		return builderList;
 	}

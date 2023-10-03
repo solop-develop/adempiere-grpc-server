@@ -1840,14 +1840,15 @@ public class UserInterface extends UserInterfaceImplBase {
 				.<PO>list()
 				.forEach(translation -> {
 					Translation.Builder translationBuilder = Translation.newBuilder();
+					Struct.Builder translationValues = Struct.newBuilder();
 					table.getColumnsAsList().stream().filter(column -> column.isTranslated()).forEach(column -> {
 						Object value = translation.get_Value(column.getColumnName());
 						if(value != null) {
 							Value.Builder builderValue = ValueManager.getValueFromObject(value);
 							if(builderValue != null) {
-								translationBuilder.setValues(
-									Struct.newBuilder().putFields(column.getColumnName(),
-									builderValue.build()).build()
+								translationValues.putFields(
+									column.getColumnName(),
+									builderValue.build()
 								);
 							}
 							//	Set Language
@@ -1860,6 +1861,7 @@ public class UserInterface extends UserInterfaceImplBase {
 							}
 						}
 					});
+					translationBuilder.setValues(translationValues);
 					builder.addTranslations(translationBuilder);
 				});
 		});
@@ -2551,12 +2553,11 @@ public class UserInterface extends UserInterfaceImplBase {
 						referenceId = DisplayType.TableDir;
 						columnName = tableKeyColumn;
 					} else {
-						builder.setValues(
-							Struct.newBuilder().putFields(
-								columnName,
-								ValueManager.getValueFromObject(defaultValueAsObject).build()
-							)
+						values.putFields(
+							columnName,
+							ValueManager.getValueFromObject(defaultValueAsObject).build()
 						);
+						builder.setValues(values);
 						return builder;
 					}
 				}
@@ -2615,12 +2616,11 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 			}
 		} else {
-			builder.setValues(
-				Struct.newBuilder().putFields(
-					columnName,
-					ValueManager.getValueFromObject(defaultValueAsObject).build()
-				)
+			values.putFields(
+				columnName,
+				ValueManager.getValueFromObject(defaultValueAsObject).build()
 			);
+			builder.setValues(values);
 		}
 
 		return builder;
@@ -3133,6 +3133,7 @@ public class UserInterface extends UserInterfaceImplBase {
 
 			//	Run it
 			String result = processCallout(windowNo, gridTab, gridField);
+			Struct.Builder contextValues = Struct.newBuilder();
 			Arrays.asList(gridTab.getFields()).stream()
 				.filter(fieldValue -> isValidChange(fieldValue))
 				.forEach(fieldValue -> {
@@ -3140,19 +3141,27 @@ public class UserInterface extends UserInterfaceImplBase {
 						fieldValue.getValue(),
 						fieldValue.getDisplayType()
 					);
-					calloutBuilder.setValues(Struct.newBuilder().putFields(fieldValue.getColumnName(), valueBuilder.build()));
+					contextValues.putFields(
+						fieldValue.getColumnName(),
+						valueBuilder.build()
+					);
 				});
 
 			// always add is sales transaction on context
 			String isSalesTransaction = Env.getContext(tab.getCtx(), windowNo, "IsSOTrx", true);
 			if (!Util.isEmpty(isSalesTransaction, true)) {
 				Value.Builder valueBuilder = ValueManager.getValueFromStringBoolean(isSalesTransaction);
-				calloutBuilder.setValues(Struct.newBuilder().putFields("IsSOTrx", valueBuilder.build()));
+				contextValues.putFields(
+					"IsSOTrx",
+					valueBuilder.build()
+				);
 			}
 			calloutBuilder.setResult(
-				ValueManager.validateNull(result)
-			);
-			
+					ValueManager.validateNull(result)
+				)
+				.setValues(contextValues)
+			;
+
 			setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
 		});
 		return calloutBuilder;
@@ -3172,18 +3181,18 @@ public class UserInterface extends UserInterfaceImplBase {
 		String className = clazz.getName();
 
 		if (calloutClass.startsWith(className)) {
-			Struct.Builder values = Struct.newBuilder();
+			Struct.Builder contextValues = calloutBuilder.getValuesBuilder();
 			if (calloutClass.equals("org.compiere.model.CalloutOrder.docType")) {
 				// - OrderType
 				String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
-				values.putFields(
+				contextValues.putFields(
 					"OrderType",
 					ValueManager.getValueFromString(docSubTypeSO).build()
 				);
 
 				// - HasCharges
 				String hasCharges = Env.getContext(Env.getCtx(), windowNo, "HasCharges");
-				values.putFields(
+				contextValues.putFields(
 					"HasCharges",
 					ValueManager.getValueFromStringBoolean(hasCharges).build()
 				);
@@ -3191,7 +3200,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.priceList")) {
 				// - M_PriceList_Version_ID
 				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				values.putFields(
+				contextValues.putFields(
 					"M_PriceList_Version_ID",
 					ValueManager.getValueFromInteger(priceListVersionId).build()
 				);
@@ -3199,14 +3208,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.product")) {
 				// - M_PriceList_Version_ID
 				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				values.putFields(
+				contextValues.putFields(
 					"M_PriceList_Version_ID",
 					ValueManager.getValueFromInteger(priceListVersionId).build()
 				);
 				
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				values.putFields(
+				contextValues.putFields(
 					"DiscountSchema",
 					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
 				);
@@ -3214,7 +3223,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.charge")) {
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				values.putFields(
+				contextValues.putFields(
 					"DiscountSchema",
 					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
 				);
@@ -3222,7 +3231,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.amt")) {
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				values.putFields(
+				contextValues.putFields(
 					"DiscountSchema",
 					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
 				);
@@ -3230,12 +3239,12 @@ public class UserInterface extends UserInterfaceImplBase {
 			else if (calloutClass.equals("org.compiere.model.CalloutOrder.qty")) {
 				// - UOMConversion
 				String isConversion = Env.getContext(Env.getCtx(), "UOMConversion");
-				values.putFields(
+				contextValues.putFields(
 					"UOMConversion",
 					ValueManager.getValueFromStringBoolean(isConversion).build()
 				);
 			}
-			calloutBuilder.setValues(values);
+			calloutBuilder.setValues(contextValues);
 		}
 
 		return calloutBuilder;

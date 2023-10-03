@@ -621,13 +621,18 @@ public class Security extends SecurityImplBase {
 		session.setLanguage(
 			ValueManager.validateNull(ContextManager.getDefaultLanguage(Env.getAD_Language(Env.getCtx()))));
 		//	Set default context
-		Struct.Builder epale = Struct.newBuilder();
+		Struct.Builder contextValues = Struct.newBuilder();
 		Env.getCtx().entrySet().stream()
 			.filter(keyValue -> isSessionContext(String.valueOf(keyValue.getKey())))
-			.forEach(contextKeyValue -> {				
-				epale.putFields(contextKeyValue.getKey().toString(), convertObjectFromContext((String)contextKeyValue.getValue()).build());
+			.forEach(contextKeyValue -> {
+				contextValues.putFields(
+					contextKeyValue.getKey().toString(),
+					convertObjectFromContext(
+						(String) contextKeyValue.getValue()
+					).build()
+				);
 			});
-		session.setDefaultContext(epale);
+		session.setDefaultContext(contextValues);
 	}
 	
 	private Value.Builder convertObjectFromContext(String value) {
