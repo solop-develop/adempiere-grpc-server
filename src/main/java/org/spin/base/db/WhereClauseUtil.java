@@ -105,7 +105,7 @@ public class WhereClauseUtil {
 	public static String getRestrictionByOperator(Filter condition, int displayType, List<Object> parameters) {
 		String sqlOperator = OperatorUtil.convertOperator(condition.getOperator());
 		String columnName = condition.getColumnName();
-		String operatorValue = condition.getOperator();
+		String operatorValue = condition.getOperator().toLowerCase();
 		String sqlValue = "";
 		StringBuilder additionalSQL = new StringBuilder();
 		//	For IN or NOT IN
@@ -624,17 +624,24 @@ public class WhereClauseUtil {
 					String rangeColumnName = columnName.substring(0, columnName.length() - "_To".length());
 					browseField = browseFields.get(rangeColumnName);
 				}
-				if (browseField == null) {
+				if (browseField == null || browseField.isInfoOnly()) {
 					return;
 				}
 				MViewColumn viewColumn = browseField.getAD_View_Column();
 				if (rangeAdd.containsKey(viewColumn.getColumnName())) {
 					return;
 				}
+				// overwrite column name on restriction
+				columnName = viewColumn.getColumnSQL();
+				condition.setColumnName(columnName);
 				if (whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
-				String restriction = WhereClauseUtil.getRestrictionByOperator(condition, browseField.getAD_Reference_ID(), filterValues);
+				String restriction = WhereClauseUtil.getRestrictionByOperator(
+					condition,
+					browseField.getAD_Reference_ID(),
+					filterValues
+				);
 				whereClause.append(restriction);
 			});
 

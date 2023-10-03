@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 
 package org.spin.base.query;
@@ -53,7 +53,11 @@ public class Filter {
 	public Filter(Map<String, Object> condition) {
 		this.condition = condition;
 	}
-	
+
+	public void setColumnName(String columnName) {
+		condition.put(NAME, columnName);
+	}
+
 	public String getColumnName() {
 		return (String) condition.get(NAME);
 	}
@@ -61,7 +65,7 @@ public class Filter {
 	public String getOperator() {
 		return (String) condition.get(OPERATOR);
 	}
-	
+
 	public Object getValue() {
 		return condition.get(VALUES);
 	}

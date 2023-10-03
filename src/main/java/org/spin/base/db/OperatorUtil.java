@@ -34,7 +34,7 @@ public class OperatorUtil {
 	 */
 	public static String convertOperator(String serviceOperator) {
 		String operator = MQuery.EQUAL;
-		switch (serviceOperator) {
+		switch (serviceOperator.toLowerCase()) {
 			case Filter.BETWEEN:
 				operator = MQuery.BETWEEN;
 				break;
