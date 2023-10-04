@@ -275,10 +275,13 @@ public class Security extends SecurityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -943,7 +946,12 @@ public class Security extends SecurityImplBase {
 			Enumeration<?> childrens = rootNode.children();
 			while (childrens.hasMoreElements()) {
 				MTreeNode child = (MTreeNode)childrens.nextElement();
-				Menu.Builder childBuilder = convertMenu(Env.getCtx(), MMenu.getFromId(Env.getCtx(), child.getNode_ID()), child.getParent_ID(), Env.getAD_Language(Env.getCtx()));
+				Menu.Builder childBuilder = convertMenu(
+					Env.getCtx(),
+					MMenu.getFromId(Env.getCtx(), child.getNode_ID()),
+					child.getParent_ID(),
+					Env.getAD_Language(Env.getCtx())
+				);
 				//	Explode child
 				addChildren(Env.getCtx(), childBuilder, child, Env.getAD_Language(Env.getCtx()));
 				builder.addChildren(childBuilder.build());
@@ -971,28 +979,30 @@ public class Security extends SecurityImplBase {
 			description = menu.get_Translation(I_AD_Menu.COLUMNNAME_Description, language);
 		}
 		//	Validate for default
-		if(Util.isEmpty(name)) {
+		if(Util.isEmpty(name, true)) {
 			name = menu.getName();
 		}
-		if(Util.isEmpty(description)) {
+		if(Util.isEmpty(description, true)) {
 			description = menu.getDescription();
 		}
 		Menu.Builder builder = Menu.newBuilder()
-				.setId(menu.getAD_Menu_ID())
-				.setName(
-					ValueManager.validateNull(name)
+			.setId(menu.getAD_Menu_ID())
+			.setName(
+				ValueManager.validateNull(name)
+			)
+			.setDescription(
+				ValueManager.validateNull(description))
+			.setAction(
+				ValueManager.validateNull(
+					menu.getAction()
 				)
-				.setDescription(
-					ValueManager.validateNull(description))
-				.setAction(
-					ValueManager.validateNull(
-						menu.getAction()
-					)
-				)
-				.setIsSOTrx(menu.isSOTrx())
-				.setIsSummary(menu.isSummary())
-				.setIsReadOnly(menu.isReadOnly())
-				.setIsActive(menu.isActive());
+			)
+			.setIsSOTrx(menu.isSOTrx())
+			.setIsSummary(menu.isSummary())
+			.setIsReadOnly(menu.isReadOnly())
+			.setIsActive(menu.isActive())
+			.setParentId(parentId)
+		;
 		//	Supported actions
 		if(!Util.isEmpty(menu.getAction())) {
 			int referenceId = 0;
@@ -1018,8 +1028,7 @@ public class Security extends SecurityImplBase {
 					referenceId = menu.getAD_Workflow_ID();
 				}
 			}
-			builder.setReferenceId(referenceId)
-			;
+			builder.setReferenceId(referenceId);
 		}
 		return builder;
 	}

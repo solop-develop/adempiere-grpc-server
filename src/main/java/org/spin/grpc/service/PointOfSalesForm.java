@@ -3226,9 +3226,15 @@ public class PointOfSalesForm extends StoreImplBase {
 						ValueManager.validateNull(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name))
 				)
 				.setPosId(request.getPosId())
-				.setIsPosRequiredPin(availablePaymentMethod.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
-				.setIsAllowedToRefund(availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefund"))
-				.setIsAllowedToRefundOpen(availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefundOpen"))
+				.setIsPosRequiredPin(
+					availablePaymentMethod.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+				)
+				.setIsAllowedToRefund(
+					availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefund")
+				)
+				.setIsAllowedToRefundOpen(
+					availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefundOpen")
+				)
 				.setMaximumRefundAllowed(
 					ValueManager.getDecimalFromBigDecimal(
 						(BigDecimal) availablePaymentMethod.get_Value("MaximumRefundAllowed")
@@ -3239,7 +3245,12 @@ public class PointOfSalesForm extends StoreImplBase {
 						(BigDecimal) availablePaymentMethod.get_Value("MaximumDailyRefundAllowed")
 					)
 				)
-				.setIsPaymentReference(availablePaymentMethod.get_ValueAsBoolean("IsPaymentReference"))
+				.setIsPaymentReference(
+					availablePaymentMethod.get_ValueAsBoolean("IsPaymentReference")
+				)
+				.setDocumentTypeId(
+					availablePaymentMethod.get_ValueAsInt("C_DocTypeCreditMemo_ID")
+				)
 				.setPaymentMethod(paymentMethodBuilder)
 			;
 			if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
