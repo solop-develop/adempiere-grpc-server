@@ -281,10 +281,13 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -912,7 +915,12 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 			Enumeration<?> childrens = rootNode.children();
 			while (childrens.hasMoreElements()) {
 				MTreeNode child = (MTreeNode)childrens.nextElement();
-				Menu.Builder childBuilder = convertMenu(Env.getCtx(), MMenu.getFromId(Env.getCtx(), child.getNode_ID()), child.getParent_ID(), Env.getAD_Language(Env.getCtx()));
+				Menu.Builder childBuilder = convertMenu(
+					Env.getCtx(),
+					MMenu.getFromId(Env.getCtx(), child.getNode_ID()),
+					child.getParent_ID(),
+					Env.getAD_Language(Env.getCtx())
+				);
 				//	Explode child
 				addChildren(Env.getCtx(), childBuilder, child, Env.getAD_Language(Env.getCtx()));
 				builder.addChilds(childBuilder.build());
@@ -948,7 +956,10 @@ public class SecurityServiceImplementation extends SecurityImplBase {
 		}
 		String parentUuid = null;
 		if(parentId > 0) {
-			parentUuid = MMenu.getFromId(context, parentId).getUUID();
+			MMenu parentMenu = MMenu.getFromId(context, parentId);
+			if (parentMenu != null && parentMenu.getAD_Menu_ID() > 0) {
+				parentUuid = parentMenu.getUUID();
+			}
 		}
 		Menu.Builder builder = Menu.newBuilder()
 				.setId(menu.getAD_Menu_ID())

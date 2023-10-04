@@ -106,6 +106,7 @@ Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igu
  * `IS_ENABLED_ALL_SERVICES`: Si esta en verdadero, omite el valor de `SERVICES_ENABLED` y arranca todos los servicios, el valor por defecto es `true`.
  * `SERVER_LOG_LEVEL`: Nivel de Bitácora. Por defecto: `WARNING`.
  * `TZ`: (Time Zone) Indica la zona horaria a establecer en el contenedor basado en nginx, el valor por defecto es `America/Caracas` (UTC -4:00).
+ * `SYSTEM_LOGO_URL`: Logo de la imagen principal del sistema, mostrada en la pantalla del login.
 
 ### Construir imagen docker (sólo para desarrollo):
 Primero compile los archivos de salida.

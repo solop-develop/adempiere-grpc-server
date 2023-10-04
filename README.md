@@ -106,6 +106,7 @@ To use this Docker image you must have your Docker engine version greater than o
  * `IS_ENABLED_ALL_SERVICES`: If it is true, omit the value of `SERVICES_ENABLED` and start all services, the default value is `true`.
  * `SERVER_LOG_LEVEL`: Log Level. Default: `WARNING`.
  * `TZ`: (Time Zone) Indicates the time zone to set in the nginx-based container, the default value is `America/Caracas` (UTC -4:00).
+ * `SYSTEM_LOGO_URL`: Logo of the main image of the system, shown in the login screen.
 
 ### Build docker image (for development only):
 First compile output files.
