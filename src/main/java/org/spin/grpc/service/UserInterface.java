@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -2344,6 +2344,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		String defaultValue = null;
 		if(request.getFieldId() > 0) {
 			MField field = (MField) RecordUtil.getEntity(Env.getCtx(), I_AD_Field.Table_Name, request.getFieldId(), null);
+			if(field == null || field.getAD_Field_ID() <= 0) {
+				throw new AdempiereException("@AD_Field_ID@ @NotFound@");
+			}
 			int fieldId = field.getAD_Field_ID();
 			List<MField> customFields = ASPUtil.getInstance(Env.getCtx()).getWindowFields(field.getAD_Tab_ID());
 			if(customFields != null) {
@@ -2374,6 +2377,9 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 		} else if(request.getBrowseFieldId() > 0) {
 			MBrowseField browseField = (MBrowseField) RecordUtil.getEntity(Env.getCtx(), I_AD_Browse_Field.Table_Name, request.getBrowseFieldId(), null);
+			if (browseField == null || browseField.getAD_Browse_Field_ID() <= 0) {
+				throw new AdempiereException("@AD_Browse_Field_ID@ @NotFound@");
+			}
 			int browseFieldId = browseField.getAD_Browse_Field_ID();
 			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
 			if(customFields != null) {
@@ -2397,8 +2403,11 @@ public class UserInterface extends UserInterfaceImplBase {
 					}
 				}
 			}
-		}  else if(request.getBrowseFieldToId() > 0) {
+		} else if(request.getBrowseFieldToId() > 0) {
 			MBrowseField browseField = (MBrowseField) RecordUtil.getEntity(Env.getCtx(), I_AD_Browse_Field.Table_Name, request.getBrowseFieldToId(), null);
+			if (browseField == null || browseField.getAD_Browse_Field_ID() <= 0) {
+				throw new AdempiereException("@AD_Browse_Field_ID@ @NotFound@");
+			}
 			int browseFieldId = browseField.getAD_Browse_Field_ID();
 			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
 			if(customFields != null) {
@@ -2423,6 +2432,9 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 		} else if(request.getProcessParameterId() > 0) {
 			MProcessPara processParameter = (MProcessPara) RecordUtil.getEntity(Env.getCtx(), I_AD_Process_Para.Table_Name, request.getProcessParameterId(), null);
+			if(processParameter == null || processParameter.getAD_Process_Para_ID() <= 0) {
+				throw new AdempiereException("@AD_Process_Para_ID@ @NotFound@");
+			}
 			int processParameterId = processParameter.getAD_Process_Para_ID();
 			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
 			if(customParameters != null) {
@@ -2438,6 +2450,9 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 		} else if(request.getProcessParameterToId() > 0) {
 			MProcessPara processParameter = (MProcessPara) RecordUtil.getEntity(Env.getCtx(), I_AD_Process_Para.Table_Name, request.getProcessParameterToId(), null);
+			if(processParameter == null || processParameter.getAD_Process_Para_ID() <= 0) {
+				throw new AdempiereException("@AD_Process_Para_ID@ @NotFound@");
+			}
 			int processParameterId = processParameter.getAD_Process_Para_ID();
 			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
 			if(customParameters != null) {
@@ -2453,23 +2468,49 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 		} else if(request.getColumnId() > 0) {
 			MColumn column = MColumn.get(Env.getCtx(), request.getColumnId());
+			if(column == null || column.getAD_Column_ID() <= 0) {
+				throw new AdempiereException("@AD_Column_ID@ @NotFound@");
+			}
+			referenceId = column.getAD_Reference_ID();
+			referenceValueId = column.getAD_Reference_Value_ID();
+			validationRuleId = column.getAD_Val_Rule_ID();
+			columnName = column.getColumnName();
+			defaultValue = column.getDefaultValue();
+		} else if (!Util.isEmpty(request.getTableName(), true) && !Util.isEmpty(request.getColumnName(), true)) {
+			MTable table = MTable.get(Env.getCtx(), request.getTableName());
+			if(table == null || table.getAD_Table_ID() <= 0) {
+				throw new AdempiereException("@TableName@ @NotFound@");
+			}
+			MColumn column = table.getColumn(request.getColumnName());
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				throw new AdempiereException("@ColumnName@ @NotFound@");
+			}
 			referenceId = column.getAD_Reference_ID();
 			referenceValueId = column.getAD_Reference_Value_ID();
 			validationRuleId = column.getAD_Val_Rule_ID();
 			columnName = column.getColumnName();
 			defaultValue = column.getDefaultValue();
 		} else {
-			throw new AdempiereException("@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Process_Para_ID@ / @IsMandatory@");
+			throw new AdempiereException(
+				"@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Field_ID@ / @AD_Process_Para_ID@ / @AD_Browse_Field_ID@ / @IsMandatory@"
+			);
 		}
-		
+
 		// overwrite default value with user value request
 		if (Optional.ofNullable(request.getValue()).isPresent()
 			&& !Util.isEmpty(request.getValue().getStringValue())) {
 			defaultValue = request.getValue().getStringValue();
 		}
-		
+
 		//	Validate SQL
-		DefaultValue.Builder builder = getDefaultKeyAndValue(request.getContextAttributes().getFieldsMap(), defaultValue, referenceId, referenceValueId, columnName, validationRuleId);
+		DefaultValue.Builder builder = getDefaultKeyAndValue(
+			request.getContextAttributes().getFieldsMap(),
+			defaultValue,
+			referenceId,
+			referenceValueId,
+			columnName,
+			validationRuleId
+		);
 		return builder;
 	}
 	
@@ -2524,7 +2565,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 		}
 		if (ReferenceUtil.validateReference(referenceId) || DisplayType.Button == referenceId) {
-			if(referenceId == DisplayType.List) {
+			if(referenceId == DisplayType.List || columnName.equals("DocAction")) {
 				// (') (text) (') or (") (text) (")
 				String singleQuotesPattern = "('|\")(\\w+)('|\")";
 				// columnName = value
@@ -2542,7 +2583,13 @@ public class UserInterface extends UserInterfaceImplBase {
 					log.fine(Msg.parseTranslation(Env.getCtx(), "@AD_Ref_List_ID@ @NotFound@") + ": " + defaultValueList);
 					return builder;
 				}
-				builder = convertDefaultValueFromResult(referenceList.getValue(), referenceList.getUUID(), referenceList.getValue(), referenceList.get_Translation(MRefList.COLUMNNAME_Name));
+				builder = convertDefaultValueFromResult(
+					referenceList.getValue(),
+					referenceList.getUUID(),
+					referenceList.getValue(),
+					referenceList.get_Translation(MRefList.COLUMNNAME_Name)
+				);
+				builder.setId(referenceList.getAD_Ref_List_ID());
 			} else {
 				if (DisplayType.Button == referenceId) {
 					if (columnName.equals("Record_ID")) {

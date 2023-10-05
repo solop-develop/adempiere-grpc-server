@@ -10,7 +10,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,           *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
  * For the text or an alternative of this public license, you may reach us           *
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
  * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
@@ -26,10 +26,12 @@ import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_Reference;
+import org.adempiere.core.domains.models.X_AD_Reference;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcessPara;
+import org.compiere.model.MTable;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -271,11 +273,11 @@ public class ReferenceInfo {
 	static public MLookupInfo getInfoFromRequest(int referenceId, int fieldId, int processParameterId, int browseFieldId, int columnId, String columnName, String tableName) {
 		int referenceValueId = 0;
 		int validationRuleId = 0;
-		MField field = null;
-		if (fieldId > 0) {
-			field = new MField(Env.getCtx(), fieldId, null);
-		}
-		if(field != null) {
+		if(fieldId > 0) {
+			MField field = new MField(Env.getCtx(), fieldId, null);
+			if(field == null || field.getAD_Field_ID() <= 0) {
+				throw new AdempiereException("@AD_Field_ID@ @NotFound@");
+			}
 			List<MField> customFields = ASPUtil.getInstance(Env.getCtx()).getWindowFields(field.getAD_Tab_ID());
 			if(customFields != null) {
 				Optional<MField> maybeField = customFields.stream().filter(customField -> customField.getAD_Field_ID() == fieldId).findFirst();
@@ -300,6 +302,9 @@ public class ReferenceInfo {
 			}
 		} else if(browseFieldId > 0) {
 			MBrowseField browseField = new MBrowseField(Env.getCtx(), browseFieldId, null);
+			if(browseField == null || browseField.getAD_Browse_Field_ID() <= 0) {
+				throw new AdempiereException("@AD_Browse_Field_ID@ @NotFound@");
+			}
 			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
 			if(customFields != null) {
 				Optional<MBrowseField> maybeField = customFields.stream().filter(customField -> customField.getAD_Browse_Field_ID() == browseFieldId).findFirst();
@@ -318,6 +323,9 @@ public class ReferenceInfo {
 			}
 		} else if(processParameterId > 0) {
 			MProcessPara processParameter = new MProcessPara(Env.getCtx(), processParameterId, null);
+			if(processParameter == null || processParameter.getAD_Process_Para_ID() <= 0) {
+				throw new AdempiereException("@AD_Process_Para_ID@ @NotFound@");
+			}
 			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
 			if(customParameters != null) {
 				Optional<MProcessPara> maybeParameter = customParameters.stream().filter(customField -> customField.getAD_Process_Para_ID() == processParameterId).findFirst();
@@ -331,17 +339,39 @@ public class ReferenceInfo {
 			}
 		} else if(columnId > 0) {
 			MColumn column = MColumn.get(Env.getCtx(), columnId);
+			if(column == null || column.getAD_Column_ID() <= 0) {
+				throw new AdempiereException("@AD_Column_ID@ @NotFound@");
+			}
 			referenceId = column.getAD_Reference_ID();
 			referenceValueId = column.getAD_Reference_Value_ID();
 			validationRuleId = column.getAD_Val_Rule_ID();
 			columnName = column.getColumnName();
 		} else if(referenceId > 0) {
+			X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceId, null);
+			if(reference == null || reference.getAD_Reference_ID() <= 0) {
+				throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
+			}
 			referenceValueId = referenceId;
 			referenceId = DisplayType.Search;
-		} else if(!Util.isEmpty(tableName) && !Util.isEmpty(columnName)) {
-			columnId = MColumn.getColumn_ID(tableName, columnName);
-			if(columnId > 0) {
-				MColumn column = MColumn.get(Env.getCtx(), columnId);
+		} else if(columnId > 0) {
+			MColumn column = MColumn.get(Env.getCtx(), columnId);
+			if(column == null || column.getAD_Column_ID() <= 0) {
+				throw new AdempiereException("@AD_Column_ID@ @NotFound@");
+			}
+			referenceId = column.getAD_Reference_ID();
+			referenceValueId = column.getAD_Reference_Value_ID();
+			validationRuleId = column.getAD_Val_Rule_ID();
+			columnName = column.getColumnName();
+		} else if(!Util.isEmpty(tableName)) {
+			MTable table = MTable.get(Env.getCtx(), tableName);
+			if(table == null || table.getAD_Table_ID() <= 0) {
+				throw new AdempiereException("@TableName@ @NotFound@");
+			}
+			if(!Util.isEmpty(columnName, true)) {
+				MColumn column = table.getColumn(columnName);
+				if (column == null || column.getAD_Column_ID() <= 0) {
+					throw new AdempiereException("@ColumnName@ @NotFound@");
+				}
 				referenceId = column.getAD_Reference_ID();
 				if (referenceValueId <= 0) {
 					referenceValueId = column.getAD_Reference_Value_ID();
@@ -357,15 +387,23 @@ public class ReferenceInfo {
 				}
 				validationRuleId = column.getAD_Val_Rule_ID();
 				columnName = column.getColumnName();
+			} else {
+				//	Is force a Table Direct
+				referenceId = DisplayType.TableDir;
+				columnName = tableName + "_ID";
 			}
-		} else if(!Util.isEmpty(tableName)) {
-			//	Is force a Table Direct
-			referenceId = DisplayType.TableDir;
-			columnName = tableName + "_ID";
 		} else {
-			throw new AdempiereException("@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Process_Para_ID@ / @IsMandatory@");
+			throw new AdempiereException(
+				"@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Field_ID@ / @AD_Process_Para_ID@ / @AD_Browse_Field_ID@ / @IsMandatory@"
+			);
 		}
-		return ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
+
+		return ReferenceUtil.getReferenceLookupInfo(
+			referenceId,
+			referenceValueId,
+			columnName,
+			validationRuleId
+		);
 	}
 
 	/**
