@@ -250,6 +250,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
@@ -569,7 +570,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			DefaultValue.Builder defaultValue = getInfoFromDefaultValueRequest(request);
+			DefaultValue.Builder defaultValue = getDefaultValue(request);
 			responseObserver.onNext(defaultValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2336,7 +2337,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private DefaultValue.Builder getInfoFromDefaultValueRequest(GetDefaultValueRequest request) {
+	private DefaultValue.Builder getDefaultValue(GetDefaultValueRequest request) {
 		int referenceId = 0;
 		int referenceValueId = 0;
 		int validationRuleId = 0;
