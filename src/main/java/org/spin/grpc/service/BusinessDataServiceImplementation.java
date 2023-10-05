@@ -29,6 +29,9 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.model.MBrowse;
+import org.adempiere.model.MBrowseField;
+import org.adempiere.model.MViewDefinition;
 import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.adempiere.core.domains.models.I_AD_PrintFormat;
 import org.adempiere.core.domains.models.I_AD_Process;
@@ -304,16 +307,40 @@ public class BusinessDataServiceImplementation extends BusinessDataImplBase {
 			builder.withReportExportFormat(reportType);
 		}
 		//	Selection
-		if(request.getSelectionsCount() > 0) {
+		if(request.getBrowserId() > 0 && request.getSelectionsCount() > 0) {
+			MBrowse browse = MBrowse.get(
+				Env.getCtx(),
+				request.getBrowserId()
+			);
+			if (browse == null || browse.getAD_Browse_ID() <= 0) {
+				throw new AdempiereException("@AD_Browse_ID@ @NotFound@");
+			}
 			List<Integer> selectionKeys = new ArrayList<>();
 			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
 			for(KeyValueSelection selectionKey : request.getSelectionsList()) {
 				selectionKeys.add(selectionKey.getSelectionId());
 				if(selectionKey.getValuesCount() > 0) {
-					selection.put(selectionKey.getSelectionId(), new LinkedHashMap<>(ValueUtil.convertValuesToObjects(selectionKey.getValuesList())));
+					LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
+						ValueUtil.convertValuesToObjects(selectionKey.getValuesList())
+					);
+					selection.put(
+						selectionKey.getSelectionId(),
+						entities
+					);
 				}
 			}
-			builder.withSelectedRecordsIds(request.getTableSelectedId(), selectionKeys, selection);
+			MBrowseField fieldKey = browse.getFieldKey();
+			int tableSelectionId = 0;
+			String tableAlias = null;
+			//	Set Selected Values
+			if (fieldKey != null && fieldKey.get_ID() > 0) {
+				MViewDefinition viewDefinition = (MViewDefinition) fieldKey.getAD_View_Column().getAD_View_Definition();
+				tableSelectionId = viewDefinition.getAD_Table_ID();
+				tableAlias = viewDefinition.getTableAlias();
+			}
+			builder.withSelectedRecordsIds(tableSelectionId, selectionKeys, selection)
+				.withSelectedRecordsIds(tableSelectionId, tableAlias, selectionKeys)
+			;
 		}
 		//	get document action
 		String documentAction = null;

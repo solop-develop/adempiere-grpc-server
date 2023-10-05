@@ -594,6 +594,7 @@ message RunBusinessProcessRequest {
 	bool is_summary = 12;
 	repeated KeyValue parameters = 13;
 	repeated KeyValueSelection selections = 14;
+	int32 browser_id = 15;
 }
 
 // Translations Request
