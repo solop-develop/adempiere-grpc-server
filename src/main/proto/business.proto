@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -76,7 +76,7 @@ service BusinessData {
 				body: "*"
 			}
 			additional_bindings: {
-				post: "/business-data/process/{id}/workflow/{workflow_id}",
+				post: "/business-data/process/{id}/workflow/{table_name}/{record_id}/{document_action}",
 				body: "*"
 			}
 		};
@@ -675,7 +675,7 @@ message RunBusinessProcessRequest {
 	int32 record_id = 10;
 	// workflow
 	int32 workflow_id = 11;
-	string doc_action = 12;
+	string document_action = 12;
 }
 
 // Translations Request

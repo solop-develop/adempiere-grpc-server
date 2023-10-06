@@ -14,6 +14,8 @@
  ************************************************************************************/
 package org.spin.base.workflow;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Process;
@@ -22,6 +24,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MPInstance;
 import org.compiere.model.MProcess;
+import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.process.DocAction;
@@ -62,6 +65,37 @@ public class WorkflowUtil {
 	}
 
 
+	/**
+	 * Check document action access
+	 * Based on `org.compiere.model.MRole.checkActionAccess` method
+	 */
+	public static boolean checkDocumentActionAccess(int documentTypeId, String documentAction) {
+		if (documentTypeId <= 0) {
+			return false;
+		}
+		if (Util.isEmpty(documentAction, true)) {
+			return false;
+		}
+		Properties context = Env.getCtx();
+		MRole role = MRole.get(context, Env.getAD_Role_ID(context));
+
+		final List<Object> params = new ArrayList<Object>();
+		params.add(Env.getAD_Client_ID(context));
+		params.add(documentTypeId);
+		params.add(documentAction);
+
+		final String sql = "SELECT 1" // DISTINCT rl.Value
+			+ " FROM AD_Document_Action_Access a"
+			+ " INNER JOIN AD_Ref_List rl ON (rl.AD_Reference_ID=135 AND rl.AD_Ref_List_ID=a.AD_Ref_List_ID)"
+			+ " WHERE a.IsActive='Y' AND a.AD_Client_ID=? AND a.C_DocType_ID=?" // #1,2
+			+ " AND rl.Value = ?"
+			+ " AND " + role.getIncludedRolesWhereClause("a.AD_Role_ID", params)
+		;
+		int withAccess = DB.getSQLValue(null, sql, params);
+		return withAccess == 1;
+	}
+
+
 
 	public static ProcessLog.Builder startWorkflow(String tableName, int recordId, String documentAction) {
 		Properties context = Env.getCtx();
@@ -93,6 +127,18 @@ public class WorkflowUtil {
 			//	Validate as document
 			if (!DocAction.class.isAssignableFrom(entity.getClass())) {
 				throw new AdempiereException("@Invalid@ @Document@");
+			}
+
+			Integer doctypeId = (Integer) entity.get_Value("C_DocType_ID");
+			if(doctypeId == null || doctypeId.intValue() <= 0){
+				doctypeId = (Integer) entity.get_Value("C_DocTypeTarget_ID");
+			}
+			boolean isWithAccess = checkDocumentActionAccess(
+				doctypeId,
+				documentAction
+			);
+			if (!isWithAccess) {
+				throw new AdempiereException("@AccessCannotProcess@");
 			}
 
 			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_DocAction, documentAction);

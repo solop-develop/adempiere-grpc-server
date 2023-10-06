@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -52,21 +52,21 @@ service Workflow {
 		option (google.api.http) = { get: "/workflow/workflows/{id}/activities" };
 	}
 	rpc Process(ProcessRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/workflow/workflows/{id}/process",
 			body: "*"
 		};
 	}
 	rpc Forward(ForwardRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/workflow/workflows/{id}/forward",
 			body: "*"
 		};
 	}
 	//	Run a Document Action
 	rpc RunDocumentAction(RunDocumentActionRequest) returns (data.ProcessLog) {
-		option (google.api.http) = { 
-			post: "/workflow/workflows/{id}/run-action",
+		option (google.api.http) = {
+			post: "/workflow/workflows/run-action/{table_name}/{id}/{document_action}",
 			body: "*"
 		};
 	}
