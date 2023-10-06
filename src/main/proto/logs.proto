@@ -240,9 +240,6 @@ message ListRecentItemsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 user_id = 8;
-	int32 role_id = 9;
-	bool current_session = 10;
 }
 
 //	Recent Items List

@@ -100,26 +100,9 @@ public class LogsInfo extends LogsImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void listRecentItems(ListRecentItemsRequest request, StreamObserver<ListRecentItemsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Process Activity Requested is Null");
-			}
-			log.fine("Recent Items Requested = " + request);
-			ListRecentItemsResponse.Builder entityValueList = convertRecentItems(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
+
 	@Override
 	public void listEntityLogs(ListEntityLogsRequest request, StreamObserver<ListEntityLogsResponse> responseObserver) {
 		try {
@@ -245,12 +228,18 @@ public class LogsInfo extends LogsImplBase {
 		;
 		//	
 		ListProcessLogsResponse.Builder builder = ListProcessLogsResponse.newBuilder();
+		if (processInstanceList == null || processInstanceList.size() <= 0) {
+			return builder;
+		}
 		//	Convert Process Instance
 		for(Integer processInstanceId : processInstanceList) {
 			MPInstance processInstance = new MPInstance(Env.getCtx(), processInstanceId, null);
 			ProcessLog.Builder valueObject = LogsConvertUtil.convertProcessLog(processInstance);
 			builder.addProcessLogs(valueObject.build());
 		}
+		builder.setRecordCount(
+			processInstanceList.size()
+		);
 		//	Return
 		return builder;
 	}
@@ -366,122 +355,145 @@ public class LogsInfo extends LogsImplBase {
 
 
 
+	@Override
+	public void listRecentItems(ListRecentItemsRequest request, StreamObserver<ListRecentItemsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Recent Items Requested is Null");
+			}
+			ListRecentItemsResponse.Builder entityValueList = listRecentItems(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert Recent Items
 	 * @param request
 	 * @return
 	 */
-	private ListRecentItemsResponse.Builder convertRecentItems(ListRecentItemsRequest request) {
+	private ListRecentItemsResponse.Builder listRecentItems(ListRecentItemsRequest request) {
 		ListRecentItemsResponse.Builder builder = ListRecentItemsResponse.newBuilder();
+
 		List<MRecentItem> recentItemsList = MRecentItem.getFromUserAndRole(Env.getCtx());
-		if(recentItemsList != null) {
-			for(MRecentItem recentItem : recentItemsList) {
-				try {
-					RecentItem.Builder recentItemBuilder = RecentItem.newBuilder()
-						.setDisplayName(
-							ValueManager.validateNull(recentItem.getLabel())
-						)
-					;
-					String menuName = "";
-					String menuDescription = "";
-					int referenceId = 0;
-					if(recentItem.getAD_Tab_ID() > 0) {
-						MTab tab = MTab.get(Env.getCtx(), recentItem.getAD_Tab_ID());
-						recentItemBuilder.setTabId(tab.getAD_Tab_ID());
-						menuName = tab.getName();
-						menuDescription = tab.getDescription();
-						if(!Env.isBaseLanguage(Env.getCtx(), "")) {
-							menuName = tab.get_Translation("Name");
-							menuDescription = tab.get_Translation("Description");
-						}
-						//	Add Action
-						recentItemBuilder.setAction(
-							ValueManager.validateNull(MMenu.ACTION_Window)
-						);
+		if(recentItemsList == null || recentItemsList.size() <= 0) {
+			return builder;
+		}
+		for(MRecentItem recentItem : recentItemsList) {
+			try {
+				RecentItem.Builder recentItemBuilder = RecentItem.newBuilder()
+					.setDisplayName(
+						ValueManager.validateNull(recentItem.getLabel())
+					)
+				;
+				String menuName = "";
+				String menuDescription = "";
+				int referenceId = 0;
+				if(recentItem.getAD_Tab_ID() > 0) {
+					MTab tab = MTab.get(Env.getCtx(), recentItem.getAD_Tab_ID());
+					recentItemBuilder.setTabId(tab.getAD_Tab_ID());
+					menuName = tab.getName();
+					menuDescription = tab.getDescription();
+					if(!Env.isBaseLanguage(Env.getCtx(), "")) {
+						menuName = tab.get_Translation("Name");
+						menuDescription = tab.get_Translation("Description");
 					}
-					if(recentItem.getAD_Window_ID() > 0) {
-						MWindow window = MWindow.get(Env.getCtx(), recentItem.getAD_Window_ID());
-						recentItemBuilder.setWindowId(window.getAD_Window_ID());
-						menuName = window.getName();
-						menuDescription = window.getDescription();
-						referenceId = window.getAD_Window_ID();
-						if(!Env.isBaseLanguage(Env.getCtx(), "")) {
-							menuName = window.get_Translation("Name");
-							menuDescription = window.get_Translation("Description");
-						}
-						//	Add Action
-						recentItemBuilder.setAction(
-							ValueManager.validateNull(MMenu.ACTION_Window)
-						);
+					//	Add Action
+					recentItemBuilder.setAction(
+						ValueManager.validateNull(MMenu.ACTION_Window)
+					);
+				}
+				if(recentItem.getAD_Window_ID() > 0) {
+					MWindow window = MWindow.get(Env.getCtx(), recentItem.getAD_Window_ID());
+					recentItemBuilder.setWindowId(window.getAD_Window_ID());
+					menuName = window.getName();
+					menuDescription = window.getDescription();
+					referenceId = window.getAD_Window_ID();
+					if(!Env.isBaseLanguage(Env.getCtx(), "")) {
+						menuName = window.get_Translation("Name");
+						menuDescription = window.get_Translation("Description");
 					}
-					if(recentItem.getAD_Menu_ID() > 0) {
-						MMenu menu = MMenu.getFromId(Env.getCtx(), recentItem.getAD_Menu_ID());
-						recentItemBuilder.setMenuId(menu.getAD_Menu_ID());
-						menuName = menu.getName();
-						menuDescription = menu.getDescription();
-						if(!Env.isBaseLanguage(Env.getCtx(), "")) {
-							menuName = menu.get_Translation("Name");
-							menuDescription = menu.get_Translation("Description");
-						}
-						//	Add Action
-						recentItemBuilder.setAction(
-							ValueManager.validateNull(menu.getAction())
-						);
-						//	Supported actions
-						if(!Util.isEmpty(menu.getAction())) {
-							if(menu.getAction().equals(MMenu.ACTION_Form)) {
-								if(menu.getAD_Form_ID() > 0) {
-									referenceId = menu.getAD_Form_ID();
-								}
-							} else if(menu.getAction().equals(MMenu.ACTION_Window)) {
-								if(menu.getAD_Window_ID() > 0) {
-									referenceId = menu.getAD_Window_ID();
-								}
-							} else if(menu.getAction().equals(MMenu.ACTION_Process)
-								|| menu.getAction().equals(MMenu.ACTION_Report)) {
-								if(menu.getAD_Process_ID() > 0) {
-									referenceId = menu.getAD_Process_ID();
-								}
-							} else if(menu.getAction().equals(MMenu.ACTION_SmartBrowse)) {
-								if(menu.getAD_Browse_ID() > 0) {
-									referenceId = menu.getAD_Browse_ID();
-								}
+					//	Add Action
+					recentItemBuilder.setAction(
+						ValueManager.validateNull(MMenu.ACTION_Window)
+					);
+				}
+				if(recentItem.getAD_Menu_ID() > 0) {
+					MMenu menu = MMenu.getFromId(Env.getCtx(), recentItem.getAD_Menu_ID());
+					recentItemBuilder.setMenuId(menu.getAD_Menu_ID());
+					menuName = menu.getName();
+					menuDescription = menu.getDescription();
+					if(!Env.isBaseLanguage(Env.getCtx(), "")) {
+						menuName = menu.get_Translation("Name");
+						menuDescription = menu.get_Translation("Description");
+					}
+					//	Add Action
+					recentItemBuilder.setAction(
+						ValueManager.validateNull(menu.getAction())
+					);
+					//	Supported actions
+					if(!Util.isEmpty(menu.getAction())) {
+						if(menu.getAction().equals(MMenu.ACTION_Form)) {
+							if(menu.getAD_Form_ID() > 0) {
+								referenceId = menu.getAD_Form_ID();
+							}
+						} else if(menu.getAction().equals(MMenu.ACTION_Window)) {
+							if(menu.getAD_Window_ID() > 0) {
+								referenceId = menu.getAD_Window_ID();
+							}
+						} else if(menu.getAction().equals(MMenu.ACTION_Process)
+							|| menu.getAction().equals(MMenu.ACTION_Report)) {
+							if(menu.getAD_Process_ID() > 0) {
+								referenceId = menu.getAD_Process_ID();
+							}
+						} else if(menu.getAction().equals(MMenu.ACTION_SmartBrowse)) {
+							if(menu.getAD_Browse_ID() > 0) {
+								referenceId = menu.getAD_Browse_ID();
 							}
 						}
 					}
-					//	Add time
-					recentItemBuilder.setMenuName(
-							ValueManager.validateNull(menuName)
-						)
-						.setMenuDescription(
-							ValueManager.validateNull(menuDescription)
-						)
-						.setUpdated(
-							ValueManager.getTimestampFromDate(recentItem.getUpdated())
-						)
-						.setReferenceId(referenceId)
-					;
-					//	For uuid
-					if(recentItem.getAD_Table_ID() != 0
-							&& recentItem.getRecord_ID() != 0) {
-						MTable table = MTable.get(Env.getCtx(), recentItem.getAD_Table_ID());
-						if(table != null
-								&& table.getAD_Table_ID() != 0) {
-							recentItemBuilder.setId(recentItem.getRecord_ID())
-								.setTableName(
-									ValueManager.validateNull(table.getTableName())
-								)
-								.setTableId(recentItem.getAD_Table_ID());
-						}
-					}
-					//	
-					builder.addRecentItems(recentItemBuilder.build());
-				} catch (Exception e) {
-					e.printStackTrace();
-					log.severe(e.getLocalizedMessage());
 				}
+				//	Add time
+				recentItemBuilder.setMenuName(
+						ValueManager.validateNull(menuName)
+					)
+					.setMenuDescription(
+						ValueManager.validateNull(menuDescription)
+					)
+					.setUpdated(
+						ValueManager.getTimestampFromDate(recentItem.getUpdated())
+					)
+					.setReferenceId(referenceId)
+				;
+				//	For uuid
+				if(recentItem.getAD_Table_ID() != 0 && recentItem.getRecord_ID() != 0) {
+					MTable table = MTable.get(Env.getCtx(), recentItem.getAD_Table_ID());
+					if(table != null && table.getAD_Table_ID() != 0) {
+						recentItemBuilder.setId(recentItem.getRecord_ID())
+							.setTableName(
+								ValueManager.validateNull(table.getTableName())
+							)
+							.setTableId(recentItem.getAD_Table_ID());
+					}
+				}
+				//	
+				builder.addRecentItems(recentItemBuilder.build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				log.severe(e.getLocalizedMessage());
 			}
 		}
+		builder.setRecordCount(recentItemsList.size());
+
 		//	Return
 		return builder;
 	}
