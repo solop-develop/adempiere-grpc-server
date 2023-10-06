@@ -78,7 +78,6 @@ import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.ReferenceRequest;
 import org.spin.backend.grpc.dictionary.ReportExportType;
 import org.spin.backend.grpc.dictionary.Tab;
-import org.spin.backend.grpc.dictionary.ValidationRule;
 import org.spin.backend.grpc.dictionary.Window;
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
@@ -151,22 +150,9 @@ public class Dictionary extends DictionaryImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void getValidationRule(EntityRequest request, StreamObserver<ValidationRule> responseObserver) {
-		try {
-			ValidationRule.Builder fieldBuilder = convertValidationRule(Env.getCtx(), request);
-			responseObserver.onNext(fieldBuilder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
+
 	@Override
 	public void getProcess(EntityRequest request, StreamObserver<Process> responseObserver) {
 		try {
@@ -691,6 +677,8 @@ public class Dictionary extends DictionaryImplBase {
 			return Process.newBuilder();
 		}
 		process = ASPUtil.getInstance(context).getProcess(process.getAD_Process_ID());
+		List<MProcessPara> parametersList = ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID());
+
 		Process.Builder builder = Process.newBuilder()
 			.setId(process.getAD_Process_ID())
 			.setUuid(
@@ -712,6 +700,9 @@ public class Dictionary extends DictionaryImplBase {
 			.setIsDirectPrint(process.isDirectPrint())
 			.setIsReport(process.isReport())
 			.setIsActive(process.isActive())
+			.setIsHaveParameres(
+				parametersList != null && parametersList.size() > 0
+			)
 		;
 
 		if (process.getAD_Browse_ID() > 0) {
@@ -746,9 +737,9 @@ public class Dictionary extends DictionaryImplBase {
 			}
 		}
 		//	For parameters
-		if(withParams) {
+		if(withParams && parametersList != null && parametersList.size() > 0) {
 			String language = context.getProperty(Env.LANGUAGE);
-			for(MProcessPara parameter : ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID())) {
+			for(MProcessPara parameter : parametersList) {
 				// TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
 				if(!Language.isBaseLanguage(language)) {
 					//	Name
@@ -1934,41 +1925,6 @@ public class Dictionary extends DictionaryImplBase {
 		}
 
 		return builder;
-	}
-	
-	/**
-	 * Convert Validation rule
-	 * @param context
-	 * @param request
-	 * @return
-	 */
-	private ValidationRule.Builder convertValidationRule(Properties context, EntityRequest request) {
-		MValRule validationRule = null;
-		if(request.getId() > 0) {
-			validationRule = MValRule.get(context, request.getId());
-		}
-		if (validationRule == null) {
-			return ValidationRule.newBuilder();
-		}
-		//	
-		return ValidationRule.newBuilder()
-			.setId(validationRule.getAD_Val_Rule_ID())
-			.setUuid(
-				ValueManager.validateNull(validationRule.getUUID())
-			)
-			.setName(
-				ValueManager.validateNull(validationRule.getName())
-			)
-			.setDescription(
-				ValueManager.validateNull(validationRule.getDescription())
-			)
-			.setValidationCode(
-				ValueManager.validateNull(validationRule.getCode())
-			)
-			.setType(
-				ValueManager.validateNull(validationRule.getType())
-			)
-		;
 	}
 
 

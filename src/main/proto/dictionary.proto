@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -40,13 +40,14 @@ service Dictionary {
 	rpc GetReference(ReferenceRequest) returns (Reference) {
 		option (google.api.http) = { get: "/dictionary/references/{id}" };
 	}
-	// Reference Request
-	rpc GetValidationRule(EntityRequest) returns (ValidationRule) {
-		option (google.api.http) = { get: "/dictionary/validation-rules/{id}" };
-	}
-	// Request Process
+	// Request Process/Report
 	rpc GetProcess(EntityRequest) returns (Process) {
-		option (google.api.http) = { get: "/dictionary/processes/{id}" };
+		option (google.api.http) = {
+			get: "/dictionary/processes/{id}"
+			additional_bindings: {
+				get: "/dictionary/reports/{id}"
+			}
+		};
 	}
 	// Request Browser
 	rpc GetBrowser(EntityRequest) returns (Browser) {
@@ -302,6 +303,7 @@ message Process {
 	int32 form_id = 14;
 	int32 workflow_id = 15;
 	string uuid = 16;
+	bool is_have_parameres = 17;
 }
 
 // Form
