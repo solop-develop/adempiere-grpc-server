@@ -68,6 +68,10 @@ service BusinessData {
 			post: "/business-data/process/{id}",
 			body: "*"
 			additional_bindings: {
+				post: "/business-data/report/{id}",
+				body: "*"
+			}
+			additional_bindings: {
 				post: "/business-data/process/{id}/smart-browse/{browser_id}",
 				body: "*"
 			}

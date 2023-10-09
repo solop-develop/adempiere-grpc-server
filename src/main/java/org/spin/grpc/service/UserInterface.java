@@ -727,26 +727,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void listReportViews(ListReportViewsRequest request, StreamObserver<ListReportViewsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			
-			ListReportViewsResponse.Builder reportViewsList = convertReportViewsList(Env.getCtx(), request);
-			responseObserver.onNext(reportViewsList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
 	@Override
 	public void listDrillTables(ListDrillTablesRequest request, StreamObserver<ListDrillTablesResponse> responseObserver) {
 		try {
@@ -1014,13 +995,16 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
 	/**
 	 * Convert Object to list
 	 * @param request
@@ -1869,39 +1853,58 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listReportViews(ListReportViewsRequest request, StreamObserver<ListReportViewsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			
+			ListReportViewsResponse.Builder reportViewsList = listReportViews(request);
+			responseObserver.onNext(reportViewsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert Report View to gRPC
-	 * @param Env.getCtx()
 	 * @param request
 	 * @return
 	 */
-	private ListReportViewsResponse.Builder convertReportViewsList(Properties context, ListReportViewsRequest request) {
-		ListReportViewsResponse.Builder builder = ListReportViewsResponse.newBuilder();
-		//	Get entity
-		if(Util.isEmpty(request.getTableName())
-				&& request.getProcessId() <= 0) {
-			throw new AdempiereException("@TableName@ / @AD_Process_ID@ @NotFound@");
-		}
+	private ListReportViewsResponse.Builder listReportViews(ListReportViewsRequest request) {
+		Properties context = Env.getCtx();
 		String whereClause = null;
 		List<Object> parameters = new ArrayList<>();
 		//	For Table Name
-		if(!Util.isEmpty(request.getTableName())) {
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if(table == null) {
+		if(!Util.isEmpty(request.getTableName(), true)) {
+			MTable table = MTable.get(context, request.getTableName());
+			if(table == null || table.getAD_Table_ID() <= 0) {
 				throw new AdempiereException("@TableName@ @NotFound@");
 			}
 			whereClause = "AD_Table_ID = ?";
 			parameters.add(table.getAD_Table_ID());
 		} else if(request.getProcessId() > 0) {
-			whereClause = "EXISTS(SELECT 1 FROM AD_Process p WHERE p.UUID = ? AND p.AD_ReportView_ID = AD_ReportView.AD_ReportView_ID)";
+			whereClause = "EXISTS(SELECT 1 FROM AD_Process p WHERE p.AD_Process_ID = ? AND p.AD_ReportView_ID = AD_ReportView.AD_ReportView_ID)";
 			parameters.add(request.getProcessId());
+		} else {
+			throw new AdempiereException("@TableName@ / @AD_Process_ID@ @NotFound@");
 		}
-
-		String language = Env.getCtx().getProperty(Env.LANGUAGE);
+		String language = context.getProperty(Env.LANGUAGE);
 		//	Get List
-		new Query(
-			Env.getCtx(),
+		Query query = new Query(
+			context,
 			I_AD_ReportView.Table_Name,
 			whereClause,
 			null
@@ -1909,7 +1912,12 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setParameters(parameters)
 			.setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-			.setOrderBy(I_AD_ReportView.COLUMNNAME_PrintName + ", " + I_AD_ReportView.COLUMNNAME_Name)
+		;
+
+		ListReportViewsResponse.Builder builder = ListReportViewsResponse.newBuilder()
+			.setRecordCount(query.count())
+		;
+		query.setOrderBy(I_AD_ReportView.COLUMNNAME_PrintName + ", " + I_AD_ReportView.COLUMNNAME_Name)
 			.<MReportView>list().forEach(reportViewReference -> {
 				ReportView.Builder reportViewBuilder = ReportView.newBuilder();
 				String name = reportViewReference.getName();
@@ -1930,12 +1938,12 @@ public class UserInterface extends UserInterfaceImplBase {
 
 					// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/31
 					PO translation = new Query(
-							Env.getCtx(), 
-							I_AD_ReportView.Table_Name + "_Trl",
-							I_AD_ReportView.COLUMNNAME_AD_ReportView_ID + " = ? AND " +
-							"IsTranslated = ? AND AD_Language = ?",
-							null
-						)
+						context, 
+						I_AD_ReportView.Table_Name + "_Trl",
+						I_AD_ReportView.COLUMNNAME_AD_ReportView_ID + " = ? AND " +
+						"IsTranslated = ? AND AD_Language = ?",
+						null
+					)
 						.setParameters(reportViewReference.get_ID(), "Y", language)
 						.setOnlyActiveRecords(true)
 						.first();
@@ -1960,7 +1968,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						ValueManager.validateNull(description)
 					)
 				;
-				MTable table = MTable.get(Env.getCtx(), reportViewReference.getAD_Table_ID());
+				MTable table = MTable.get(context, reportViewReference.getAD_Table_ID());
 				reportViewBuilder.setTableName(
 					ValueManager.validateNull(
 						table.getTableName()
@@ -1972,7 +1980,8 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
 	/**
 	 * Convert Report View to gRPC
 	 * @param request
