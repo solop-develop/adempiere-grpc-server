@@ -770,6 +770,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -780,17 +781,17 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 	/**
 	 * Convert Organization to list
+	 * TODO: Move or add this service to Security
 	 * @param request
 	 * @return
 	 */
 	private ListOrganizationsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
-		MRole role = null;
-		int roleId = request.getRoleId();
-		if(roleId <= 0) {
+		final int roleId = request.getRoleId();
+		if(roleId < 0) {
 			throw new AdempiereException("@AD_Role_ID@ @NotFound@");
-		} else {
-			role = MRole.get(Env.getCtx(), roleId);
 		}
+		MRole role = MRole.get(Env.getCtx(), roleId);
+
 		//	get from role access
 		if (role == null || !role.isActive()) {
 			throw new AdempiereException("@AD_Role_ID@ @NotFound@");
@@ -887,6 +888,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 	/**
 	 * Convert warehouses list
+	 * TODO: Move or add this service to Security
 	 * @param request
 	 * @return
 	 */
