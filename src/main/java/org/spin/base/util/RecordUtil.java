@@ -15,6 +15,8 @@
  *************************************************************************************/
 package org.spin.base.util;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -315,14 +317,17 @@ public class RecordUtil {
 	 * @param parameters
 	 * @return
 	 */
-	public static String addSearchValueAndGet(String sql, String table_name, String table_alias, String searchValue, boolean isTranslated, List<Object> parameters) {
-		if(Util.isEmpty(searchValue, true)) {
+	public static String addSearchValueAndGet(String sql, String table_name, String table_alias, String search_value, boolean isTranslated, List<Object> parameters) {
+		if(Util.isEmpty(search_value, true)) {
 			return sql;
 		}
 		MTable table = MTable.get(Env.getCtx(), table_name);
 		if(table == null || table.getAD_Table_ID() <= 0) {
 			return sql;
 		}
+
+		// URL decode to change characteres
+		String searchValue = URLDecoder.decode(search_value, StandardCharsets.UTF_8);
 
 		String lang = Env.getAD_Language(Env.getCtx());
 		// search on trl table
@@ -333,8 +338,12 @@ public class RecordUtil {
 		StringBuffer where = new StringBuffer();
 		List<MColumn> selectionColums = table.getColumnsAsList().stream()
 			.filter(column -> {
-				return (column.isIdentifier() || column.isSelectionColumn())
-					&& Util.isEmpty(column.getColumnSQL(), true) && DisplayType.isText(column.getAD_Reference_ID());
+				return (column.isIdentifier() || column.isSelectionColumn()
+					|| column.getColumnName().equals("Name")
+					|| column.getColumnName().equals("Value")
+					|| column.getColumnName().equals("DocumentNo"))
+					&& Util.isEmpty(column.getColumnSQL(), true)
+					&& DisplayType.isText(column.getAD_Reference_ID());
 			})
 			.collect(Collectors.toList());
 
