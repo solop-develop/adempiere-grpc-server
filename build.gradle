@@ -50,7 +50,7 @@ dependencies {
 	implementation 'com.sun.xml.bind:jaxb-core:3.0.0-M4'
 	implementation 'javax.activation:activation:1.1.1'
 
-	implementation "${baseGroupId}:adempiere-grpc-utils:1.0.4"
+	implementation "${baseGroupId}:adempiere-grpc-utils:1.0.5"
 
 	//	ADempiere Core
 	implementation "${baseGroupId}:base:${baseVersion}"
@@ -104,6 +104,7 @@ configurations.all {
 	resolutionStrategy {
 		// used by aws-java-sdk-core (storefront is joda-time-2.10.4)
 		force("joda-time:joda-time:2.8.1")
+		// force("io.github.adempiere:adempiere-grpc-utils:local-1.0.1")
 	}
 }
 

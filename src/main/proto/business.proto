@@ -495,7 +495,7 @@ message ListBrowserItemsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	int32 id = 8;
-	google.protobuf.Struct context_attributes = 9;
+	string context_attributes = 9;
 }
 
 // Browsers List
@@ -529,7 +529,7 @@ message GetDefaultValueRequest {
 	int32 process_parameter_to_id = 6;
 	int32 browse_field_id = 7;
 	int32 browse_field_to_id = 8;
-	google.protobuf.Struct context_attributes = 9;
+	string context_attributes = 9;
 	google.protobuf.Value value = 10;
 }
 
@@ -570,7 +570,7 @@ message ListLookupItemsRequest {
 	int32 process_parameter_id = 12;
 	int32 browse_field_id = 13;
 	int32 reference_id = 14;
-	google.protobuf.Struct context_attributes = 15;
+	string context_attributes = 15;
 }
 
 // List Lookup Item Response
@@ -585,15 +585,14 @@ message GetTabEntityRequest {
 	int32 id = 1;
 	int32 window_id = 2;
 	int32 tab_id = 3;
-	google.protobuf.Struct context_attributes = 4;
+	string context_attributes = 4;
 }
 
 // Create Tab Entity Request
 message CreateTabEntityRequest {
-	int32 id = 1;
-	int32 window_id = 2;
-	int32 tab_id = 3;
-	google.protobuf.Struct attributes = 4;
+	int32 window_id = 1;
+	int32 tab_id = 2;
+	google.protobuf.Struct attributes = 3;
 }
 
 // Update Tab Entity Request
@@ -615,7 +614,7 @@ message ListTabEntitiesRequest {
 	string search_value = 7;
 	int32 window_id = 8;
 	int32 tab_id = 9;
-	google.protobuf.Struct context_attributes = 10;
+	string context_attributes = 10;
 }
 
 // List Entities Request
@@ -879,7 +878,7 @@ message ListGeneralInfoRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	string context_attributes = 8;
 	// references
 	int32 process_parameter_id = 9;
 	int32 field_id = 10;
@@ -900,7 +899,7 @@ message ListTabSequencesRequest {
 	string search_value = 7;
 	int32 window_id = 8;
 	int32 tab_id = 9;
-	google.protobuf.Struct context_attributes = 10;
+	string context_attributes = 10;
 }
 
 message SaveTabSequencesRequest {
@@ -923,7 +922,7 @@ message ListTreeNodesRequest {
 	string table_name = 9;
 	int32 id = 10;
 	int32 element_id = 11;
-	google.protobuf.Struct context_attributes = 12;
+	string context_attributes = 12;
 }
 
 // Tree Node

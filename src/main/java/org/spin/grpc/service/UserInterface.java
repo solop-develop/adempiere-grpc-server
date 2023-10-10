@@ -1027,7 +1027,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Fill context
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromStruct(windowNo, context, request.getContextAttributes());
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, context, request.getContextAttributes()
+		);
 
 		// get where clause including link column and parent column
 		String where = WhereClauseUtil.getTabWhereClauseFromParentTabs(context, tab, null);
@@ -1287,7 +1289,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, Env.getCtx(), request.getContextAttributes()
+		);
 
 		//
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
@@ -2514,7 +2518,7 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		//	Validate SQL
 		DefaultValue.Builder builder = getDefaultKeyAndValue(
-			request.getContextAttributes().getFieldsMap(),
+			request.getContextAttributes(),
 			defaultValue,
 			referenceId,
 			referenceValueId,
@@ -2535,25 +2539,29 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param validationRuleId
 	 * @return
 	 */
-	private DefaultValue.Builder getDefaultKeyAndValue(Map<String, Value> contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
-		DefaultValue.Builder builder = DefaultValue.newBuilder();
+	private DefaultValue.Builder getDefaultKeyAndValue(String contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
 		Struct.Builder values = Struct.newBuilder();
-		builder.setValues(values);
+		DefaultValue.Builder builder = DefaultValue.newBuilder()
+			.setValues(values)
+		;
 		if(Util.isEmpty(defaultValue, true)) {
 			return builder;
 		}
 		Object defaultValueAsObject = null;
 
-		// Fill contex
+		// Fill context
+		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromValuesMap(windowNo, Env.getCtx(), contextAttributes);
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, context, contextAttributes, true
+		);
 
 		if(defaultValue.trim().startsWith("@SQL=")) {
 			defaultValue = defaultValue.replace("@SQL=", "");
-			defaultValue = Env.parseContext(Env.getCtx(), windowNo, defaultValue, false);
+			defaultValue = Env.parseContext(context, windowNo, defaultValue, false);
 			defaultValueAsObject = convertDefaultValue(defaultValue);
 		} else {
-			defaultValueAsObject = Env.parseContext(Env.getCtx(), windowNo, defaultValue, false);
+			defaultValueAsObject = Env.parseContext(context, windowNo, defaultValue, false);
 		}
 		//	 For lookups
 		if(defaultValueAsObject == null) {
@@ -2588,9 +2596,9 @@ public class UserInterface extends UserInterfaceImplBase {
 				// remove single quotation mark 'DR' -> DR, "DR" -> DR
 				String defaultValueList = matcherSingleQuotes.replaceAll("$2");
 
-				MRefList referenceList = MRefList.get(Env.getCtx(), referenceValueId, defaultValueList, null);
+				MRefList referenceList = MRefList.get(context, referenceValueId, defaultValueList, null);
 				if (referenceList == null) {
-					log.fine(Msg.parseTranslation(Env.getCtx(), "@AD_Ref_List_ID@ @NotFound@") + ": " + defaultValueList);
+					log.fine(Msg.parseTranslation(context, "@AD_Ref_List_ID@ @NotFound@") + ": " + defaultValueList);
 					return builder;
 				}
 				builder = convertDefaultValueFromResult(
@@ -2604,8 +2612,8 @@ public class UserInterface extends UserInterfaceImplBase {
 				if (DisplayType.Button == referenceId) {
 					if (columnName.equals("Record_ID")) {
 						defaultValueAsObject = Integer.valueOf(defaultValueAsObject.toString());
-						int tableId = Env.getContextAsInt(Env.getCtx(), windowNo, I_AD_Table.COLUMNNAME_AD_Table_ID);
-						MTable table = MTable.get(Env.getCtx(), tableId);
+						int tableId = Env.getContextAsInt(context, windowNo, I_AD_Table.COLUMNNAME_AD_Table_ID);
+						MTable table = MTable.get(context, tableId);
 						String tableKeyColumn = table.getTableName() + "_ID";
 						referenceId = DisplayType.TableDir;
 						columnName = tableKeyColumn;
@@ -2623,7 +2631,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				if(lookupInfo == null || Util.isEmpty(lookupInfo.QueryDirect, true)) {
 					return builder;
 				}
-				String sql = MRole.getDefault(Env.getCtx(), false).addAccessSQL(
+				String sql = MRole.getDefault(context, false).addAccessSQL(
 					lookupInfo.QueryDirect,
 					lookupInfo.TableName,
 					MRole.SQL_FULLYQUALIFIED,
@@ -2765,13 +2773,9 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
 
-		Map<String, Object> contextAttributes = ValueManager.convertValuesMapToObjects(
-			request.getContextAttributes().getFieldsMap()
-		);
-
 		return listLookupItems(
 			reference,
-			contextAttributes,
+			request.getContextAttributes(),
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue()
@@ -2787,22 +2791,25 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param String searchValue
 	 * @return
 	 */
-	public static ListLookupItemsResponse.Builder listLookupItems(MLookupInfo reference, Map<String, Object> contextAttributes, int pageSize, String pageToken, String searchValue) {
+	public static ListLookupItemsResponse.Builder listLookupItems(MLookupInfo reference, String contextAttributes, int pageSize, String pageToken, String searchValue) {
 		if (reference == null) {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
 
-		//	Fill Env.getCtx()
+		//	Fill context
+		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), contextAttributes);
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, context, contextAttributes
+		);
 
 		String sql = reference.Query;
-		sql = Env.parseContext(Env.getCtx(), windowNo, sql, false);
-		if(Util.isEmpty(sql)
-				&& !Util.isEmpty(reference.Query)) {
+		sql = Env.parseContext(context, windowNo, sql, false);
+		if(Util.isEmpty(sql, true)
+				&& !Util.isEmpty(reference.Query, true)) {
 			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
 		}
-		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
+		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
 				sql,
 				reference.TableName,
@@ -2906,7 +2913,8 @@ public class UserInterface extends UserInterfaceImplBase {
 	 */
 	private ListBrowserItemsResponse.Builder listBrowserItems(ListBrowserItemsRequest request) {
 		ListBrowserItemsResponse.Builder builder = ListBrowserItemsResponse.newBuilder();
-		MBrowse browser = ASPUtil.getInstance(Env.getCtx()).getBrowse(request.getId());
+		Properties context = Env.getCtx();
+		MBrowse browser = ASPUtil.getInstance(context).getBrowse(request.getId());
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			return builder;
 		}
@@ -2916,10 +2924,9 @@ public class UserInterface extends UserInterfaceImplBase {
 			parameterMap.put(condition.getColumnName(), condition.getValue());
 		});
 
-		//	Fill Env.getCtx()
-		Properties context = Env.getCtx();
+		//	Fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromStruct(windowNo, context, request.getContextAttributes());
+		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 
 		//	get query columns
@@ -3518,11 +3525,12 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}
 
-		//  Fill Env.getCtx()
+		// Fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		
-		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
-		
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, Env.getCtx(), request.getContextAttributes()
+		);
+
 		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		;
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {

@@ -54,6 +54,15 @@ public class ContextManager {
 		return setContextWithAttributes(windowNo, context, ValueManager.convertValuesMapToObjects(attributes), true);
 	}
 
+	public static Properties setContextWithAttributesFromString(int windowNo, Properties context, String jsonValues) {
+		return setContextWithAttributesFromString(windowNo, context, jsonValues, true);
+	}
+
+	public static Properties setContextWithAttributesFromString(int windowNo, Properties context, String jsonValues, boolean isClearWindow) {
+		Map<String, Object> attributes = ValueManager.convertJsonStringToMap(jsonValues);
+		return setContextWithAttributes(windowNo, context, attributes, isClearWindow);
+	}
+
 	/**
 	 * Set context with attributes
 	 * @param windowNo
