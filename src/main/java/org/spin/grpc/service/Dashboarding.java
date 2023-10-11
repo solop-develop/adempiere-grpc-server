@@ -101,23 +101,6 @@ import io.grpc.stub.StreamObserver;
 public class Dashboarding extends DashboardingImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(Dashboarding.class);
-	@Override
-	public void listPendingDocuments(ListPendingDocumentsRequest request, StreamObserver<ListPendingDocumentsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListPendingDocumentsResponse.Builder pendingDocumentsList = convertPendingDocumentList(Env.getCtx(), request);
-			responseObserver.onNext(pendingDocumentsList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
 
 
 
@@ -231,27 +214,48 @@ public class Dashboarding extends DashboardingImplBase {
 	}
 
 
+
+	@Override
+	public void listPendingDocuments(ListPendingDocumentsRequest request, StreamObserver<ListPendingDocumentsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListPendingDocumentsResponse.Builder pendingDocumentsList = listPendingDocuments(request);
+			responseObserver.onNext(pendingDocumentsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert pending documents to gRPC
-	 * @param context
 	 * @param request
 	 * @return
 	 */
-	private ListPendingDocumentsResponse.Builder convertPendingDocumentList(Properties context, ListPendingDocumentsRequest request) {
+	private ListPendingDocumentsResponse.Builder listPendingDocuments(ListPendingDocumentsRequest request) {
 		ListPendingDocumentsResponse.Builder builder = ListPendingDocumentsResponse.newBuilder();
-		//	Get entity
-		if(request.getUserId() <= 0
-				&& request.getRoleId() <= 0) {
-			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ @NotFound@");
-		}
+
+		Properties context = Env.getCtx();
 		//	Get user
-		int userId = request.getUserId();
+		int userId = Env.getAD_User_ID(context);
 		//	Get role
-		int roleId = request.getRoleId();
+		int roleId = Env.getAD_Role_ID(context);
+
 		//	Get from document status
 		Arrays.asList(MDocumentStatus.getDocumentStatusIndicators(context, userId, roleId)).forEach(documentStatus -> {
 			PendingDocument.Builder pendingDocument = PendingDocument.newBuilder();
-			pendingDocument.setDocumentName(ValueManager.validateNull(documentStatus.getName()));
+			pendingDocument.setDocumentName(
+				ValueManager.validateNull(documentStatus.getName())
+			);
 			// for Reference
 			if(documentStatus.getAD_Window_ID() != 0) {
 				pendingDocument.setWindowId(documentStatus.getAD_Window_ID());
@@ -302,13 +306,9 @@ public class Dashboarding extends DashboardingImplBase {
 	 */
 	private ListDashboardsResponse.Builder listDashboards(ListDashboardsRequest request) {
 		Properties context = Env.getCtx();
-		//	Get entity
-		if(request.getRoleId() <= 0) {
-			throw new AdempiereException("@AD_Role_ID@ @NotFound@");
-		}
 
 		//	Get role
-		int roleId = request.getRoleId();
+		final int roleId = Env.getAD_Role_ID(context);
 
 		ListDashboardsResponse.Builder builder = ListDashboardsResponse.newBuilder();
 		int recordCount = 0;

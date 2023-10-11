@@ -85,7 +85,6 @@ message ListDashboardsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 role_id = 8;
 }
 
 //	Dashboards List
@@ -104,7 +103,6 @@ message ListFavoritesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 user_id = 8;
 }
 
 // Recent Item
@@ -132,8 +130,6 @@ message ListPendingDocumentsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 user_id = 8;
-	int32 role_id = 9;
 }
 
 //	Recent Items List
