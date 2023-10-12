@@ -48,13 +48,13 @@ service Dashboarding {
 	}
 	// Custom Window Metrics
 	rpc ExistsWindowDashboards(ExistsWindowDashboardsRequest) returns (ExistsWindowDashboardsResponse) {
-		option (google.api.http) = { get: "/dashboarding/exists-window-dashboards" };
+		option (google.api.http) = { get: "/dashboarding/exists-window-dashboards/{window_id}" };
 	}
 	rpc ListWindowDashboards(ListWindowDashboardsRequest) returns (ListWindowDashboardsResponse) {
-		option (google.api.http) = { get: "/dashboarding/window-dashboards" };
+		option (google.api.http) = { get: "/dashboarding/window-dashboards/{window_id}" };
 	}
 	rpc GetWindowMetrics(GetWindowMetricsRequest) returns (WindowMetrics) {
-		option (google.api.http) = { get: "/dashboarding/window-metrics/{id}" };
+		option (google.api.http) = { get: "/dashboarding/window-metrics/{id}/{table_name}/{record_id}" };
 	}
 }
 

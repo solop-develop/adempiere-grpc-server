@@ -255,7 +255,13 @@ public class FileManagement extends FileManagementImplBase {
 			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
 		}
 		if (resourceReference == null) {
-			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
+			resourceReference = MADAttachmentReference.getByAttachmentId(
+				Env.getCtx(),
+				clientInfo.getFileHandler_ID(),
+				request.getId(),
+				request.getResourceName(),
+				null
+			);
 		}
 		if (resourceReference == null && !Util.isEmpty(request.getResourceName(), true)) {
 			String resourceUuid = getResourceUuidFromName(request.getResourceName());

@@ -52,7 +52,12 @@ service IssueManagement {
 		option (google.api.http) = { get: "/issue-management/issues/{table_name}/{record_id}/exists" };
 	}
 	rpc ListIssues(ListIssuesRequest) returns (ListIssuesReponse) {
-		option (google.api.http) = { get: "/issue-management/issues/{table_name}/{record_id}" };
+		option (google.api.http) = {
+			get: "/issue-management/issues"
+			additional_bindings: {
+				get: "/issue-management/issues/{table_name}/{record_id}"
+			}
+		};
 	}
 	rpc CreateIssue(CreateIssueRequest) returns (Issue) {
 		option (google.api.http) = { 

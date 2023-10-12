@@ -33,45 +33,74 @@ package file_management;
 service FileManagement {
 	//	Resource/File
 	rpc LoadResource(stream LoadResourceRequest) returns (ResourceReference) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/file-management/resources/{id}",
 			body: "*"
 		};
 	}
 	rpc GetResource(GetResourceRequest) returns (stream Resource) {
-		option (google.api.http) = { get: "/file-management/resources/{id}" };
+		option (google.api.http) = {
+			get: "/file-management/resources/{id}"
+			additional_bindings: {
+				get: "/file-management/resources/{resource_name}"
+			}
+		};
 	}
 	//	Attachment
 	rpc SetAttachmentDescription(SetAttachmentDescriptionRequest) returns (Attachment) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			put: "/file-management/attachments/{id}",
 			body: "*"
 		};
 	}
 	rpc ExistsAttachment(ExistsAttachmentRequest) returns (ExistsAttachmentResponse) {
-		option (google.api.http) = { get: "/file-management/attachments/{id}/exists" };
+		option (google.api.http) = { get: "/file-management/attachments/{table_name}/{record_id}/exists" };
 	}
 	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {
-		option (google.api.http) = { get: "/file-management/attachments/{id}" };
+		option (google.api.http) = { get: "/file-management/attachments/{table_name}/{record_id}" };
 	}
 	//	Resource Reference
 	rpc SetResourceReference(SetResourceReferenceRequest) returns (ResourceReference) {
-		option (google.api.http) = { 
-			put: "/file-management/references/{id}",
+		option (google.api.http) = {
+			put: "/file-management/references/attachment/{table_name}/{record_id}",
 			body: "*"
+			additional_bindings: {
+				put: "/file-management/references/image/{id}",
+				body: "*"
+			}
+			additional_bindings: {
+				put: "/file-management/references/archive/{id}",
+				body: "*"
+			}
 		};
 	}
 	rpc SetResourceReferenceDescription(SetResourceReferenceDescriptionRequest) returns (ResourceReference) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			put: "/file-management/references/{id}/description",
 			body: "*"
 		};
 	}
 	rpc GetResourceReference(GetResourceReferenceRequest) returns (ResourceReference) {
-		option (google.api.http) = { get: "/file-management/references/{id}" };
+		option (google.api.http) = {
+			get: "/file-management/references/{id}"
+			additional_bindings: {
+				get: "/file-management/references/attachment/{id}/{resource_name}"
+			}
+			additional_bindings: {
+				get: "/file-management/references/image/{image_id}"
+			}
+			additional_bindings: {
+				get: "/file-management/references/archive/{archive_id}"
+			}
+		};
 	}
 	rpc DeleteResourceReference(DeleteResourceReferenceRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/file-management/references/{id}" };
+		option (google.api.http) = {
+			delete: "/file-management/references/{id}"
+			additional_bindings: {
+				delete: "/file-management/references/{resource_name}"
+			}
+		};
 	}
 }
 
@@ -171,7 +200,7 @@ message SetResourceReferenceDescriptionRequest {
 
 message DeleteResourceReferenceRequest {
 	int32 id = 1;
-	string name = 2;
+	string resource_name = 2;
 }
 
 message ExistsAttachmentRequest {
