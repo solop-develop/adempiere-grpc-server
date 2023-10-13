@@ -157,6 +157,7 @@ message Tab {
 	FieldGroup field_group = 33;
 	string read_only_logic = 34;
 	string uuid = 35;
+	repeated string key_columns = 36;
 }
 
 // Field
@@ -341,6 +342,7 @@ message Browser {
 	bool is_active = 18;
 	string table_name = 19;
 	string uuid = 20;
+	string field_key = 21;
 }
 
 // Zoom Window

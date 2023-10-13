@@ -15,6 +15,7 @@
 package org.spin.grpc.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -555,6 +556,11 @@ public class Dictionary extends DictionaryImplBase {
 					+ Optional.ofNullable(tab.getOrderByClause()).orElse("")
 				)
 			)
+			.addAllKeyColumns(
+				Arrays.asList(
+					table.getKeyColumns()
+				)
+			)
 		;
 
 		//	For link
@@ -823,6 +829,16 @@ public class Dictionary extends DictionaryImplBase {
 				)
 			)
 		;
+		//	Set fied key
+		MBrowseField fieldKey = browser.getFieldKey();
+		if (fieldKey != null && fieldKey.get_ID() > 0) {
+			MViewColumn viewColumn = MViewColumn.getById(context, fieldKey.getAD_View_Column_ID(), null);
+			builder.setFieldKey(
+				ValueManager.validateNull(
+					viewColumn.getColumnName()
+				)
+			);
+		}
 		//	Set View UUID
 		if(browser.getAD_View_ID() > 0) {
 			builder.setViewId(browser.getAD_View_ID());
