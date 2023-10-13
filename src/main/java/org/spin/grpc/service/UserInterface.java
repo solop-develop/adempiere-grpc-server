@@ -871,10 +871,13 @@ public class UserInterface extends UserInterfaceImplBase {
 
 
 
+	/**
+	 * TODO: Does not work for tables (Access, Acct, Translation) with multiple keys
+	 */
 	@Override
 	public void getTabEntity(GetTabEntityRequest request, StreamObserver<Entity> responseObserver) {
 		try {
-			Entity.Builder entityValue = getTabEntity(request);
+			Entity.Builder entityValue = getTabEntity(request, new ArrayList<Object>());
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -892,7 +895,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private Entity.Builder getTabEntity(GetTabEntityRequest request) {
+	private Entity.Builder getTabEntity(GetTabEntityRequest request, ArrayList<Object> multiKeys) {
 		if (request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
@@ -909,12 +912,26 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		String tableName = table.getTableName();
+		String[] keyColumns = table.getKeyColumns();
 
 		String sql = QueryUtil.getTabQueryWithReferences(tab);
 		// add filter
 		StringBuffer whereClause = new StringBuffer()
 			.append(" WHERE ")
-			.append(tableName + "." + tableName + "_ID = ?");
+		;
+		List<Object> parametersLit = new ArrayList<Object>();
+		if (keyColumns.length == 1) {
+			whereClause.append(tableName + "." + tableName + "_ID = ?");
+			parametersLit.add(request.getId());
+		} else {
+			String whereMultiKeys = WhereClauseUtil.getWhereClauseFromKeyColumns(keyColumns);
+			whereMultiKeys = WhereClauseUtil.getWhereRestrictionsWithAlias(
+				table.getTableName(),
+				whereMultiKeys
+			);
+			whereClause.append(whereMultiKeys);
+			parametersLit = multiKeys;
+		}
 		sql += whereClause.toString();
 
 		PreparedStatement pstmt = null;
@@ -927,12 +944,12 @@ public class UserInterface extends UserInterfaceImplBase {
 			for (MColumn column: table.getColumnsAsList()) {
 				columnsMap.put(column.getColumnName().toUpperCase(), column);
 			}
-			
+
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(sql, null);
 
 			// add query parameters
-			pstmt.setInt(1, request.getId());
+			ParameterUtil.setParametersFromObjectsList(pstmt, parametersLit);
 
 			//	Get from Query
 			rs = pstmt.executeQuery();
@@ -1123,6 +1140,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -1151,7 +1169,8 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (entity == null) {
 			throw new AdempiereException("@Error@ PO is null");
 		}
-		request.getAttributes().getFieldsMap().entrySet().forEach(attribute -> {
+		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
+		attributes.entrySet().forEach(attribute -> {
 			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if (referenceId > 0) {
@@ -1167,14 +1186,25 @@ public class UserInterface extends UserInterfaceImplBase {
 		});
 		//	Save entity
 		entity.saveEx();
-		
-		
+
+		String[] keyColumns = table.getKeyColumns();
+		ArrayList<Object> parametersList = new ArrayList<Object>();
+		if (keyColumns.length > 1) {
+			parametersList = ParameterUtil.getParametersFromKeyColumns(
+				keyColumns,
+				attributes
+			);
+		}
+
 		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
 			.setTabId(request.getTabId())
 			.setId(entity.get_ID())
 		;
 
-		Entity.Builder builder = getTabEntity(getEntityBuilder.build());
+		Entity.Builder builder = getTabEntity(
+			getEntityBuilder.build(),
+			parametersList
+		);
 		return builder;
 	}
 
@@ -1190,6 +1220,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -1214,35 +1245,61 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
-		PO entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), request.getId(), null);
+		String[] keyColumns = table.getKeyColumns();
+		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
+		ArrayList<Object> parametersList = new ArrayList<Object>();
+		PO entity = null;
+		if (keyColumns.length == 1) {
+			entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), request.getId(), null);
+		} else {
+			final String whereClause = WhereClauseUtil.getWhereClauseFromKeyColumns(keyColumns);
+			parametersList = ParameterUtil.getParametersFromKeyColumns(
+				keyColumns,
+				attributes
+			);
+			entity = new Query(
+				Env.getCtx(),
+				table.getTableName(),
+				whereClause,
+				null
+			).setParameters(parametersList)
+			.first();
+		}
 		if (entity == null) {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
-		if (entity.get_ID() >= 0) {
-			request.getAttributes().getFieldsMap().entrySet().forEach(attribute -> {
-				int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
-				Object value = null;
-				if (referenceId > 0) {
-					value = ValueManager.getObjectFromReference(
-						attribute.getValue(),
-						referenceId
-					);
-				} 
-				if (value == null) {
-					value = ValueManager.getObjectFromValue(attribute.getValue());
-				}
-				entity.set_ValueOfColumn(attribute.getKey(), value);
-			});
-			//	Save entity
-			entity.saveEx();
-		}
+		PO currentEntity = entity;
+		attributes.entrySet().forEach(attribute -> {
+			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(
+				currentEntity.get_Table_ID(),
+				attribute.getKey()
+			);
+			Object value = null;
+			if (referenceId > 0) {
+				value = ValueManager.getObjectFromReference(
+					attribute.getValue(),
+					referenceId
+				);
+			} 
+			if (value == null) {
+				value = ValueManager.getObjectFromValue(attribute.getValue());
+			}
+			currentEntity.set_ValueOfColumn(attribute.getKey(), value);
+		});
+		//	Save entity
+		currentEntity.saveEx();
+
 
 		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
 			.setTabId(request.getTabId())
-			.setId(entity.get_ID())
+			.setId(currentEntity.get_ID())
 		;
 
-		Entity.Builder builder = getTabEntity(getEntityBuilder.build());
+		Entity.Builder builder = getTabEntity(
+			getEntityBuilder.build(),
+			parametersList
+		);
+
 		return builder;
 	}
 

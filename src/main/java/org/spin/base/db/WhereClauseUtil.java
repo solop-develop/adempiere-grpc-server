@@ -564,6 +564,20 @@ public class WhereClauseUtil {
 		return where.toString();
 	}
 
+	public static String getWhereClauseFromKeyColumns(String[] keyColumns) {
+		String whereClause = "";
+		if (keyColumns != null && keyColumns.length > 0) {
+			for (String columnName: keyColumns) {
+				if (!Util.isEmpty(whereClause, true)) {
+					whereClause += " AND ";
+				}
+				whereClause += columnName + " = ? ";
+			}
+		}
+
+		return whereClause;
+	}
+
 	/**
 	 * Get Where clause for Smart Browse by Criteria Conditions
 	 * 

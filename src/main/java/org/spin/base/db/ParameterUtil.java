@@ -19,7 +19,9 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -152,6 +154,24 @@ public class ParameterUtil {
 			sqlValue = DB.TO_DATE((Timestamp) value, displayType == DisplayType.Date);
 		}
 		return sqlValue;
+	}
+
+	public static ArrayList<Object> getParametersFromKeyColumns(String[] keyColumns, Map<String, Value> attributes) {
+		ArrayList<Object> parametersList = new ArrayList<Object>();
+
+		if (keyColumns != null && keyColumns.length > 0) {
+			for (String columnName: keyColumns) {
+				Value value = attributes.get(columnName);
+				if (value != null) {
+					parametersList.add(
+						ValueManager.getObjectFromValue(value)
+					);
+					attributes.remove(columnName);
+				}
+			}
+		}
+
+		return parametersList;
 	}
 
 }
