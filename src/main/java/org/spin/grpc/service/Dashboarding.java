@@ -592,9 +592,10 @@ public class Dashboarding extends DashboardingImplBase {
 		)
 		.setParameters(userId, roleId)
 		.count();
-		builder.setQuantity(quantity);
 
-		builder.setAction(Action.WINDOW);
+		builder.setQuantity(quantity)
+			.setAction(Action.WINDOW)
+		;
 
 		final String whereClauseMenu = "Name = 'Request' AND IsSummary = 'N'";
 		MMenu menu = new Query(
@@ -691,9 +692,9 @@ public class Dashboarding extends DashboardingImplBase {
 		builder.setDescription(
 			ValueManager.validateNull(description)
 		);
-		if (menu.getAction().equals(MMenu.ACTION_Window)) {
-			if (menu.getAD_Window_ID() > 0) {
-				builder.setActionId(menu.getAD_Window_ID());
+		if (menu.getAction().equals(MMenu.ACTION_Form)) {
+			if (menu.getAD_Form_ID() > 0) {
+				builder.setActionId(menu.getAD_Form_ID());
 			}
 		}
 		return builder;

@@ -721,6 +721,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
@@ -734,11 +735,12 @@ public class UserInterface extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListDrillTablesResponse.Builder drillTablesList = convertDrillTablesList(request);
+			ListDrillTablesResponse.Builder drillTablesList = listDrillTables(request);
 			responseObserver.onNext(drillTablesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
@@ -1991,7 +1993,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListDrillTablesResponse.Builder convertDrillTablesList(ListDrillTablesRequest request) {
+	private ListDrillTablesResponse.Builder listDrillTables(ListDrillTablesRequest request) {
 		ListDrillTablesResponse.Builder builder = ListDrillTablesResponse.newBuilder();
 		//	Get entity
 		if(Util.isEmpty(request.getTableName())) {
@@ -2012,6 +2014,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				pstmt = DB.prepareStatement(sql, null);
 				pstmt.setInt(1, table.getAD_Table_ID());
 				resultSet = pstmt.executeQuery();
+				int recordCount = 0;
 				while (resultSet.next()) {
 					String drillTableName = resultSet.getString("TableName");
 					String columnName = resultSet.getString("ColumnName");
@@ -2040,9 +2043,11 @@ public class UserInterface extends UserInterfaceImplBase {
 					drillTable.setPrintName(
 						ValueManager.validateNull(name)
 					);
+					recordCount++;
 					//	Add to list
 					builder.addDrillTables(drillTable);
 				}
+				builder.setRecordCount(recordCount);
 				resultSet.close();
 				pstmt.close();
 			} catch (SQLException e) {
@@ -2061,7 +2066,6 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private ListPrintFormatsResponse.Builder convertPrintFormatsList(Properties context, ListPrintFormatsRequest request) {
-		ListPrintFormatsResponse.Builder builder = ListPrintFormatsResponse.newBuilder();
 		//	Get entity
 		if(Util.isEmpty(request.getTableName())
 				&& request.getProcessId() <= 0
@@ -2086,7 +2090,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			parameters.add(reportView.getUUID());
 		}
 		//	Get List
-		new Query(
+		Query query = new Query(
 			Env.getCtx(),
 			I_AD_PrintFormat.Table_Name,
 			whereClause,
@@ -2097,7 +2101,12 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-			.<MPrintFormat>list().forEach(printFormatReference -> {
+		;
+		ListPrintFormatsResponse.Builder builder = ListPrintFormatsResponse.newBuilder()
+			.setRecordCount(query.count())
+		;
+
+		query.<MPrintFormat>list().forEach(printFormatReference -> {
 				PrintFormat.Builder printFormatBuilder = PrintFormat.newBuilder()
 					.setId(printFormatReference.getAD_PrintFormat_ID())
 					.setName(
@@ -2124,6 +2133,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				//	add
 				builder.addPrintFormats(printFormatBuilder);
 			});
+
 		//	Return
 		return builder;
 	}
@@ -2259,8 +2269,6 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private ChatEntry.Builder addChatEntry(CreateChatEntryRequest request) {
-		
-
 		if (Util.isEmpty(request.getTableName())) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
