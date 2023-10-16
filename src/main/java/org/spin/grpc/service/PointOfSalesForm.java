@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -139,26 +139,8 @@ import io.grpc.stub.StreamObserver;
 public class PointOfSalesForm extends StoreImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(PointOfSalesForm.class);
-	
-	@Override
-	public void getProductPrice(GetProductPriceRequest request, StreamObserver<ProductPrice> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Object Requested = " + request.getSearchValue());
-			ProductPrice.Builder productPrice = getProductPrice(request);
-			responseObserver.onNext(productPrice.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
 	@Override
 	public void createOrder(CreateOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
@@ -173,37 +155,8 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void getPointOfSales(PointOfSalesRequest request, StreamObserver<PointOfSales> responseObserver) {
-		try {
-			PointOfSales.Builder pos = getPosBuilder(request);
-			responseObserver.onNext(pos.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void listPointOfSales(ListPointOfSalesRequest request, StreamObserver<ListPointOfSalesResponse> responseObserver) {
-		try {
-			ListPointOfSalesResponse.Builder posList = convertPointOfSalesList(request);
-			responseObserver.onNext(posList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
 	@Override
 	public void createOrderLine(CreateOrderLineRequest request, StreamObserver<OrderLine> responseObserver) {
 		try {
@@ -3415,7 +3368,10 @@ public class PointOfSalesForm extends StoreImplBase {
 			}
 		}
 		// if column exists in C_POS
-		return pos.get_ValueAsBoolean(columnName);
+		if (pos.get_ColumnIndex(columnName) >= 0) {
+			return pos.get_ValueAsBoolean(columnName);
+		}
+		return false;
 	}
 
 	/**
@@ -4788,19 +4744,35 @@ public class PointOfSalesForm extends StoreImplBase {
 		BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(inOutLine.getCtx(), inOutLine.getM_Product_ID(), inOutLine.getC_UOM_ID(), quantityEntered);
 		inOutLine.setMovementQty(convertedQuantity);
 	}
+
+
 	
+	@Override
+	public void listPointOfSales(ListPointOfSalesRequest request, StreamObserver<ListPointOfSalesResponse> responseObserver) {
+		try {
+			ListPointOfSalesResponse.Builder posList = listPointOfSales(request);
+			responseObserver.onNext(posList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Get list from user
 	 * @param request
 	 * @return
 	 */
-	private ListPointOfSalesResponse.Builder convertPointOfSalesList(ListPointOfSalesRequest request) {
-		ListPointOfSalesResponse.Builder builder = ListPointOfSalesResponse.newBuilder();
-		if(request.getUserId() <= 0) {
-			throw new AdempiereException("@SalesRep_ID@ @NotFound@");
-		}
-		//	Clear cache
-		int salesRepresentativeId = request.getUserId();
+	private ListPointOfSalesResponse.Builder listPointOfSales(ListPointOfSalesRequest request) {
+		int salesRepresentativeId = Env.getAD_User_ID(Env.getCtx());
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -4827,12 +4799,17 @@ public class PointOfSalesForm extends StoreImplBase {
 				.setParameters(parameters)
 				.setOrderBy(I_C_POS.COLUMNNAME_Name);
 		int count = query.count();
+		ListPointOfSalesResponse.Builder builder = ListPointOfSalesResponse.newBuilder()
+			.setRecordCount(count)
+		;
+
 		query
 			.setLimit(limit, offset)
 			.<MPOS>list()
-			.forEach(pos -> builder.addSellingPoints(convertPointOfSales(pos)));
-		//	
-		builder.setRecordCount(count);
+			.forEach(pos -> {
+				PointOfSales.Builder posBuilder = convertPointOfSales(pos);
+				builder.addSellingPoints(posBuilder);
+			});
 		//	Set page token
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
@@ -4842,7 +4819,27 @@ public class PointOfSalesForm extends StoreImplBase {
 		);
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void getPointOfSales(PointOfSalesRequest request, StreamObserver<PointOfSales> responseObserver) {
+		try {
+			PointOfSales.Builder pos = getPosBuilder(request);
+			responseObserver.onNext(pos.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Get POS builder
 	 * @param context
@@ -4850,9 +4847,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private PointOfSales.Builder getPosBuilder(PointOfSalesRequest request) {
-		return convertPointOfSales(getPOSFromId(request.getPosId(), true));
+		return convertPointOfSales(
+			getPOSFromId(request.getId(), true)
+		);
 	}
-	
+
 	/**
 	 * Get POS from UUID
 	 * @param uuid
@@ -5569,7 +5568,31 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void getProductPrice(GetProductPriceRequest request, StreamObserver<ProductPrice> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Object Requested = " + request.getSearchValue());
+			ProductPrice.Builder productPrice = getProductPrice(request);
+			responseObserver.onNext(productPrice.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Get Product Price Method
 	 * @param request
@@ -5578,40 +5601,67 @@ public class PointOfSalesForm extends StoreImplBase {
 	private ProductPrice.Builder getProductPrice(GetProductPriceRequest request) {
 		//	Get Product
 		MProduct product = null;
-		if(!Util.isEmpty(request.getSearchValue())) {
-			product = new Query(Env.getCtx(), I_M_Product.Table_Name, 
-						"("
-						+ "UPPER(Value) = UPPER(?)"
-						+ "OR UPPER(Name) = UPPER(?)"
-						+ "OR UPPER(UPC) = UPPER(?)"
-						+ "OR UPPER(SKU) = UPPER(?)"
-						+ ")", null)
-						.setParameters(request.getSearchValue(), request.getSearchValue(), request.getSearchValue(), request.getSearchValue())
-						.setClient_ID()
-						.setOnlyActiveRecords(true)
-						.first();
-		} else if(!Util.isEmpty(request.getUpc())) {
+		if(!Util.isEmpty(request.getSearchValue(), true)) {
+			product = new Query(
+				Env.getCtx(),
+				I_M_Product.Table_Name,
+				"("
+				+ "UPPER(Value) = UPPER(?)"
+				+ "OR UPPER(Name) = UPPER(?)"
+				+ "OR UPPER(UPC) = UPPER(?)"
+				+ "OR UPPER(SKU) = UPPER(?)"
+				+ ")",
+				null
+			)
+				.setParameters(request.getSearchValue(), request.getSearchValue(), request.getSearchValue(), request.getSearchValue())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+				.first();
+		} else if(!Util.isEmpty(request.getUpc(), true)) {
 			if(product == null) {
 				Optional<MProduct> optionalProduct = MProduct.getByUPC(Env.getCtx(), request.getUpc(), null).stream().findAny();
 				if(optionalProduct.isPresent()) {
 					product = optionalProduct.get();
 				}
 			}
-		} else if(!Util.isEmpty(request.getValue())) {
+		} else if(!Util.isEmpty(request.getSku(), true)) {
 			if(product == null) {
-				product = new Query(Env.getCtx(), I_M_Product.Table_Name, "UPPER(Value) = UPPER(?)", null)
-						.setParameters(request.getValue())
-						.setClient_ID()
-						.setOnlyActiveRecords(true)
-						.first();
+				product = new Query(
+					Env.getCtx(),
+					I_M_Product.Table_Name,
+					"UPPER(SKU) = UPPER(?)",
+					null
+				)
+					.setParameters(request.getSku())
+					.setClient_ID()
+					.setOnlyActiveRecords(true)
+					.first();
 			}
-		} else if(!Util.isEmpty(request.getName())) {
+		} else if(!Util.isEmpty(request.getValue(), true)) {
 			if(product == null) {
-				product = new Query(Env.getCtx(), I_M_Product.Table_Name, "UPPER(Name) LIKE UPPER(?)", null)
-						.setParameters(request.getName())
-						.setClient_ID()
-						.setOnlyActiveRecords(true)
-						.first();
+				product = new Query(
+					Env.getCtx(),
+					I_M_Product.Table_Name,
+					"UPPER(Value) = UPPER(?)",
+					null
+				)
+					.setParameters(request.getValue())
+					.setClient_ID()
+					.setOnlyActiveRecords(true)
+					.first();
+			}
+		} else if(!Util.isEmpty(request.getName(), true)) {
+			if(product == null) {
+				product = new Query(
+					Env.getCtx(),
+					I_M_Product.Table_Name,
+					"UPPER(Name) LIKE UPPER(?)",
+					null
+				)
+					.setParameters(request.getName())
+					.setClient_ID()
+					.setOnlyActiveRecords(true)
+					.first();
 			}
 		}
 		//	Validate product
@@ -5644,15 +5694,15 @@ public class PointOfSalesForm extends StoreImplBase {
 		int displayCurrencyId = pos.get_ValueAsInt("DisplayCurrency_ID");
 		int conversionTypeId = pos.get_ValueAsInt("C_ConversionType_ID");
 		return convertProductPrice(
-				product, 
-				businessPartnerId, 
-				priceList, 
-				warehouseId.get(), 
-				validFrom.get(),
-				displayCurrencyId,
-				conversionTypeId,
-				Env.ONE
-			);
+			product,
+			businessPartnerId,
+			priceList,
+			warehouseId.get(),
+			validFrom.get(),
+			displayCurrencyId,
+			conversionTypeId,
+			Env.ONE
+		);
 	}
 
 	@Override

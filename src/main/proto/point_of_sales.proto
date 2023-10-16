@@ -44,258 +44,274 @@ service Store {
 	}
 	//	Get Product Price from Code / UPC / Name
 	rpc GetProductPrice(GetProductPriceRequest) returns (ProductPrice) {
-		option (google.api.http) = { get: "/store/point-of-sales/product-prices/{search_value}" };
+		option (google.api.http) = {
+			get: "/store/point-of-sales/{pos_id}/product-prices/{search_value}"
+			additional_bindings: {
+				get: "/store/point-of-sales/{pos_id}/product-prices/upc/{upc}"
+			}
+			additional_bindings: {
+				get: "/store/point-of-sales/{pos_id}/product-prices/sku/{sku}"
+			}
+			additional_bindings: {
+				get: "/store/point-of-sales/{pos_id}/product-prices/value/{value}"
+			}
+			additional_bindings: {
+				get: "/store/point-of-sales/{pos_id}/product-prices/name/{name}"
+			}
+		};
 	}
 	//	List Product Price
 	rpc ListProductPrice(ListProductPriceRequest) returns (ListProductPriceResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/product-prices" };
+		option (google.api.http) = {
+			get: "/store/point-of-sales/{pos_id}/product-prices"
+		};
 	}
 	//	Create Order
 	rpc CreateOrder(CreateOrderRequest) returns (Order) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/orders",
+			post: "/store/point-of-sales/{pos_id}/orders",
 			body: "*"
 		};
 	}
 	//	Delete Order
 	rpc DeleteOrder(DeleteOrderRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/store/point-of-sales/orders/{id}" };
+		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/orders/{id}" };
 	}
 	//	Create Order Line
 	rpc CreateOrderLine(CreateOrderLineRequest) returns (OrderLine) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/orders/{order_id}/lines",
+			post: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines",
 			body: "*"
 		};
 	}
 	//	Delete Order Line
 	rpc DeleteOrderLine(DeleteOrderLineRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/store/point-of-sales/orders/{order_id}/lines/{id}" };
+		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}" };
 	}
 	//	Update Order
 	rpc UpdateOrder(UpdateOrderRequest) returns (Order) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/orders/{id}",
+			put: "/store/point-of-sales/{pos_id}/orders/{id}",
 			body: "*"
 		};
 	}
 	//	Release Order
 	rpc ReleaseOrder(ReleaseOrderRequest) returns (Order) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/orders/{id}/release",
+			put: "/store/point-of-sales/{pos_id}/orders/{id}/release",
 			body: "*"
 		};
 	}
 	//	Hold Order
 	rpc HoldOrder(HoldOrderRequest) returns (Order) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/orders/{id}/hold",
+			put: "/store/point-of-sales/{pos_id}/orders/{id}/hold",
 			body: "*"
 		};
 	}
 	//	Update Order Line
 	rpc UpdateOrderLine(UpdateOrderLineRequest) returns (OrderLine) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/orders/{order_id}/lines/{id}",
+			put: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}",
 			body: "*"
 		};
 	}
 	//	Get a Order
 	rpc GetOrder(GetOrderRequest) returns (Order) {
-		option (google.api.http) = { get: "/store/point-of-sales/orders/{id}" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders/{id}" };
 	}
 	//	List Orders
 	rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/orders" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders" };
 	}
 	//	List Order Lines
 	rpc ListOrderLines(ListOrderLinesRequest) returns (ListOrderLinesResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/orders/{order_id}/lines" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines" };
 	}
 	//	Get a Key Layout
 	rpc GetKeyLayout(GetKeyLayoutRequest) returns (KeyLayout) {
-		option (google.api.http) = { get: "/store/point-of-sales/key-layouts" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/key-layouts" };
 	}
 	//	Payments
 	//	Create Payment
 	rpc CreatePayment(CreatePaymentRequest) returns (Payment) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/payments",
+			post: "/store/point-of-sales/{pos_id}/payments",
 			body: "*"
 		};
 	}
 	//	Update Payment
 	rpc UpdatePayment(UpdatePaymentRequest) returns (Payment) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/payments/{id}",
+			put: "/store/point-of-sales/{pos_id}/payments/{id}",
 			body: "*"
 		};
 	}
 	//	Delete Payment
 	rpc DeletePayment(DeletePaymentRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/store/point-of-sales/payments/{id}" };
+		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/payments/{id}" };
 	}
 	//	List Payments
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/payments" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/payments" };
 	}
 	//	Process Order
 	rpc ProcessOrder(ProcessOrderRequest) returns (Order) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/orders/{id}/process",
+			put: "/store/point-of-sales/{pos_id}/orders/{id}/process",
 			body: "*"
 		};
 	}
 	//	Validate PIN
 	rpc ValidatePIN(ValidatePINRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/validate-pin",
+			post: "/store/point-of-sales/{pos_id}/validate-pin",
 			body: "*"
 		};
 	}
 	//	List of Available Warehouses
 	rpc ListAvailableWarehouses(ListAvailableWarehousesRequest) returns (ListAvailableWarehousesResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/warehouses" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/warehouses" };
 	}
 	//	List of Available Tender Types
 	rpc ListAvailablePaymentMethods(ListAvailablePaymentMethodsRequest) returns (ListAvailablePaymentMethodsResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/payment-methods" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/payment-methods" };
 	}
 	//	List of Available Price List
 	rpc ListAvailablePriceList(ListAvailablePriceListRequest) returns (ListAvailablePriceListResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/price-lists" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/price-lists" };
 	}
 	//	List of Available Currencies
 	rpc ListAvailableCurrencies(ListAvailableCurrenciesRequest) returns (ListAvailableCurrenciesResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/currencies" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/currencies" };
 	}
 	//	List of Available Document Types
 	rpc ListAvailableDocumentTypes(ListAvailableDocumentTypesRequest) returns (ListAvailableDocumentTypesResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/document-types" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/document-types" };
 	}
 	//	List of Available Discounts
 	rpc ListAvailableDiscounts(ListAvailableDiscountsRequest) returns (ListAvailableDiscountsResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/discounts" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/discounts" };
 	}
 	//	List of Available Sellers
 	rpc ListAvailableSellers(ListAvailableSellersRequest) returns (ListAvailableSellersResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/selers" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/sellers" };
 	}
 	//	Customer
 	//	Create Customer
 	rpc CreateCustomer(CreateCustomerRequest) returns (Customer) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/customers",
+			post: "/store/point-of-sales/{pos_id}/customers",
 			body: "*"
 		};
 	}
 	//	Update Customer Info
 	rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/customers/{id}",
+			put: "/store/point-of-sales/{pos_id}/customers/{id}",
 			body: "*"
 		};
 	}
 	//	Get Customer from search
 	rpc GetCustomer(GetCustomerRequest) returns (Customer) {
-		option (google.api.http) = { get: "/store/point-of-sales/customers/{search_value}" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/customers/{search_value}" };
 	}
 	//	Get Daily Refund
 	rpc GetAvailableRefund(GetAvailableRefundRequest) returns (AvailableRefund) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/available-refunds" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/available-refunds" };
 	}
 	//	Print Ticket
 	rpc PrintTicket(PrintTicketRequest) returns (PrintTicketResponse) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/terminals/{pos_id}/print-ticket",
+			post: "/store/point-of-sales/{pos_id}/print-ticket",
 			body: "*"
 		};
 	}
 	//	Print Preview
 	rpc PrintPreview(PrintPreviewRequest) returns (PrintPreviewResponse) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/terminals/{pos_id}/print-preview",
-			body: "*"
-		};
-	}
-	//	Print Preview for Shipment
-	rpc PrintShipmentPreview(PrintShipmentPreviewRequest) returns (PrintShipmentPreviewResponse) {
-		option (google.api.http) = {
-			post: "/store/point-of-sales/shipments/{shipment_id}/print-preview",
+			post: "/store/point-of-sales/{pos_id}/print-preview",
 			body: "*"
 		};
 	}
 	// Bank
 	rpc ListBanks(ListBanksRequest) returns (ListBanksResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/banks" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/banks" };
 	}
 	rpc ListBankAccounts(ListBankAccountsRequest) returns (ListBankAccountsResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/bank-accounts" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/bank-accounts" };
 	}
 	//	Create Customer Account
 	rpc CreateCustomerBankAccount(CreateCustomerBankAccountRequest) returns (CustomerBankAccount) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/customers/{customer_id}/bank-accounts",
+			post: "/store/point-of-sales/{pos_id}/customers/{customer_id}/bank-accounts",
 			body: "*"
 		};
 	}
 	//	Update Customer Account
 	rpc UpdateCustomerBankAccount(UpdateCustomerBankAccountRequest) returns (CustomerBankAccount) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/customers/{customer_id}/bank-accounts/{id}",
+			put: "/store/point-of-sales/{pos_id}/customers/{customer_id}/bank-accounts/{id}",
 			body: "*"
 		};
 	}
 	//	Get Customer Account
 	rpc GetCustomerBankAccount(GetCustomerBankAccountRequest) returns (CustomerBankAccount) {
-		option (google.api.http) = { get: "/store/point-of-sales/customers/{customer_id}/bank-accounts/{id}" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/customers/{customer_id}/bank-accounts/{id}" };
 	}
 	//	Delete Customer Account
 	rpc DeleteCustomerBankAccount(DeleteCustomerBankAccountRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/store/point-of-sales/customers/{customer_id}/bank-accounts/{id}" };
+		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/customers/{customer_id}/bank-accounts/{id}" };
 	}
 	//	List Customer Accounts
 	rpc ListCustomerBankAccounts(ListCustomerBankAccountsRequest) returns (ListCustomerBankAccountsResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/customers/{customer_id}/bank-accounts" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/customers/{customer_id}/bank-accounts" };
 	}
 	//	shipment
 	//	Create Shipment
 	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/shipments",
+			post: "/store/point-of-sales/{pos_id}/shipments",
+			body: "*"
+		};
+	}
+	//	Print Preview for Shipment
+	rpc PrintShipmentPreview(PrintShipmentPreviewRequest) returns (PrintShipmentPreviewResponse) {
+		option (google.api.http) = {
+			post: "/store/point-of-sales/{pos_id}/shipments/{shipment_id}/print-preview",
 			body: "*"
 		};
 	}
 	//	Delete Shipment
 	rpc DeleteShipment(DeleteShipmentRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/store/point-of-sales/shipments" };
+		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/shipments" };
 	}
 	//	Create Shipment Line
 	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/shipments/{shipment_id}/lines",
+			post: "/store/point-of-sales/{pos_id}/shipments/{shipment_id}/lines",
 			body: "*"
 		};
 	}
 	//	Delete Shipment Line
 	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/store/point-of-sales/shipments/{shipment_id}/lines/{id}" };
+		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/shipments/{shipment_id}/lines/{id}" };
 	}
 	//	Update Order Line
 	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/shipments/{shipment_id}/lines/{id}",
+			put: "/store/point-of-sales/{pos_id}/shipments/{shipment_id}/lines/{id}",
 			body: "*"
 		};
 	}
 	//	List Shipment Line
 	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/shipments/{shipment_id}/lines" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/shipments/{shipment_id}/lines" };
 	}
 	//	Process Shipment
 	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/shipments/{id}/process",
+			put: "/store/point-of-sales/{pos_id}/shipments/{id}/process",
 			body: "*"
 		};
 	}
@@ -303,14 +319,14 @@ service Store {
 	//	Reverse Sales Transaction
 	rpc ReverseSales(ReverseSalesRequest) returns (Order) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/orders/{id}/reverse",
+			put: "/store/point-of-sales/{pos_id}/orders/{id}/reverse",
 			body: "*"
 		};
 	}
 	//	Cash Management
 	rpc ProcessCashOpening(CashOpeningRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/cash/process-opening",
+			put: "/store/point-of-sales/{pos_id}/cash/process-opening",
 			body: "*"
 		};
 	}
@@ -1366,13 +1382,11 @@ message ListPointOfSalesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 pos_id = 8;
-	int32 user_id = 9;
 }
 
 // Point of Sales request
 message PointOfSalesRequest {
-	int32 pos_id = 1;
+	int32 id = 1;
 }
 
 // Point of Sales definition
@@ -1712,15 +1726,16 @@ message OrderLine {
 
 // Request Product Price
 message GetProductPriceRequest {
-	string search_value = 1;
-	string upc = 2;
-	string value = 3;
-	string name = 4;
-	int32 business_partner_id = 5;
-	string valid_from = 6;
-	int32 pos_id = 7;
-	int32 price_list_id = 8;
-	int32 warehouse_id = 9;
+	int32 pos_id = 1;
+	string search_value = 2;
+	string upc = 3;
+	string sku = 4;
+	string value = 6;
+	string name = 7;
+	int32 business_partner_id = 8;
+	string valid_from = 9;
+	int32 price_list_id = 10;
+	int32 warehouse_id = 11;
 }
 
 // Layout for POS

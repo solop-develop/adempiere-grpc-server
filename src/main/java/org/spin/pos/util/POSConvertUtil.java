@@ -121,6 +121,7 @@ public class POSConvertUtil {
 	}
 
 
+
 	public static CommandShortcut.Builder convertCommandShorcut(PO commandShortcut) {
 		CommandShortcut.Builder builder = CommandShortcut.newBuilder();
 		if (commandShortcut == null) {
