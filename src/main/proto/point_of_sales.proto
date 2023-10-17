@@ -197,25 +197,27 @@ service Store {
 	rpc ListAvailableSellers(ListAvailableSellersRequest) returns (ListAvailableSellersResponse) {
 		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/sellers" };
 	}
+
 	//	Customer
-	//	Create Customer
 	rpc CreateCustomer(CreateCustomerRequest) returns (Customer) {
 		option (google.api.http) = {
-			post: "/store/point-of-sales/{pos_id}/customers",
+			post: "/store/point-of-sales/customers",
 			body: "*"
 		};
 	}
-	//	Update Customer Info
 	rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer) {
 		option (google.api.http) = {
-			put: "/store/point-of-sales/{pos_id}/customers/{id}",
+			put: "/store/point-of-sales/customers/{id}",
 			body: "*"
 		};
 	}
-	//	Get Customer from search
-	rpc GetCustomer(GetCustomerRequest) returns (Customer) {
-		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/customers/{search_value}" };
+	rpc ListCustomers(ListCustomersRequest) returns (ListCustomersResponse) {
+		option (google.api.http) = { get: "/store/point-of-sales/customers" };
 	}
+	rpc GetCustomer(GetCustomerRequest) returns (Customer) {
+		option (google.api.http) = { get: "/store/point-of-sales/customers/{search_value}" };
+	}
+
 	//	Get Daily Refund
 	rpc GetAvailableRefund(GetAvailableRefundRequest) returns (AvailableRefund) {
 		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/available-refunds" };
@@ -1060,7 +1062,6 @@ message GetCustomerRequest {
 	string email = 5;
 	string postal_code = 6;
 	string phone = 7;
-	int32 pos_id = 8;
 }
 
 // Customer
@@ -1075,6 +1076,28 @@ message Customer {
 	string description = 8;
 	repeated Address addresses = 9;
 	google.protobuf.Struct additional_attributes = 10;
+}
+
+message ListCustomersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string value = 8;
+	string name = 9;
+	string contact_name = 10;
+	string email = 11;
+	string postal_code = 12;
+	string phone = 13;
+}
+
+message ListCustomersResponse {
+	int64 record_count = 1;
+	repeated Customer customers = 2;
+	string next_page_token = 3;
 }
 
 //	Address

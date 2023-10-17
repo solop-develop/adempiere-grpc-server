@@ -396,14 +396,15 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			parameters.add(request.getContactName());
 		}
 		//	EMail
-		if(!Util.isEmpty(request.getEmail())) {
+		if(!Util.isEmpty(request.getEmail(), true)) {
 			if(whereClause.length() > 0) {
 				whereClause.append(" AND ");
 			}
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-				
-			}
+			whereClause.append(
+				"(EXISTS(SELECT 1 FROM AD_User u "
+				+ "WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID "
+				+ "AND UPPER(u.EMail) LIKE UPPER(?)))"
+			);
 		}
 		//	Phone
 		if(!Util.isEmpty(request.getPhone())) {

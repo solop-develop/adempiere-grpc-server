@@ -38,7 +38,6 @@ import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
-import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
@@ -107,6 +106,7 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
+import org.spin.pos.service.POSLogic;
 import org.spin.pos.service.bank.BankManagement;
 import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
@@ -561,22 +561,44 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
 	@Override
-	public void getCustomer(GetCustomerRequest request, StreamObserver<Customer> responseObserver) {
+	public void listCustomers(ListCustomersRequest request, StreamObserver<ListCustomersResponse> responseObserver) {
 		try {
-			Customer.Builder customer = getCustomer(request);
+			ListCustomersResponse.Builder customer = POSLogic.listCustomers(request);
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+	@Override
+	public void getCustomer(GetCustomerRequest request, StreamObserver<Customer> responseObserver) {
+		try {
+			Customer.Builder customer = POSLogic.getCustomer(request);
+			responseObserver.onNext(customer.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
 	@Override
 	public void printTicket(PrintTicketRequest request, StreamObserver<PrintTicketResponse> responseObserver) {
 		try {
@@ -2545,103 +2567,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			}
 		});
 	}
-	
-	/**
-	 * Get Customer
-	 * @param request
-	 * @return
-	 */
-	private Customer.Builder getCustomer(GetCustomerRequest request) {
-		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer();
-		//	Parameters
-		List<Object> parameters = new ArrayList<Object>();
-		//	For search value
-		if(!Util.isEmpty(request.getSearchValue())) {
-			whereClause.append("("
-				+ "UPPER(Value) = UPPER(?) "
-				+ "OR UPPER(Name) = UPPER(?)"
-				+ ")");
-			//	Add parameters
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-		}
-		//	For value
-		if(!Util.isEmpty(request.getValue())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-				+ "UPPER(Value) = UPPER(?)"
-				+ ")");
-			//	Add parameters
-			parameters.add(request.getValue());
-		}
-		//	For name
-		if(!Util.isEmpty(request.getName())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-				+ "UPPER(Name) = UPPER(?)"
-				+ ")");
-			//	Add parameters
-			parameters.add(request.getName());
-		}
-		//	for contact name
-		if(!Util.isEmpty(request.getContactName())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("(EXISTS(SELECT 1 FROM AD_User u WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(u.Name) = UPPER(?)))");
-			//	Add parameters
-			parameters.add(request.getContactName());
-		}
-		//	EMail
-		if(!Util.isEmpty(request.getEmail())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("(EXISTS(SELECT 1 FROM AD_User u WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(u.EMail) = UPPER(?)))");
-			//	Add parameters
-			parameters.add(request.getEmail());
-		}
-		//	Phone
-		if(!Util.isEmpty(request.getPhone())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-					+ "EXISTS(SELECT 1 FROM AD_User u WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(u.Phone) = UPPER(?)) "
-					+ "OR EXISTS(SELECT 1 FROM C_BPartner_Location bpl WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(bpl.Phone) = UPPER(?))"
-					+ ")");
-			//	Add parameters
-			parameters.add(request.getPhone());
-			parameters.add(request.getPhone());
-		}
-		//	Postal Code
-		if(!Util.isEmpty(request.getPostalCode())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("(EXISTS(SELECT 1 FROM C_BPartner_Location bpl "
-					+ "INNER JOIN C_Location l ON(l.C_Location_ID = bpl.C_Location_ID) "
-					+ "WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-					+ "AND UPPER(l.Postal) = UPPER(?)))");
-			//	Add parameters
-			parameters.add(request.getPostalCode());
-		}
-		//	Get business partner
-		MBPartner businessPartner = new Query(Env.getCtx(), I_C_BPartner.Table_Name, 
-				whereClause.toString(), null)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.first();
-		//	Default return
-		return ConvertUtil.convertCustomer(businessPartner);
-	}
-	
+
+
 	/**
 	 * Create Customer
 	 * @param request
@@ -2721,7 +2648,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			});
 		});
 		//	Default return
-		return ConvertUtil.convertCustomer(businessPartner);
+		return POSConvertUtil.convertCustomer(
+			businessPartner
+		);
 	}
 	
 	/**
@@ -2982,7 +2911,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			});
 		});
 		//	Default return
-		return ConvertUtil.convertCustomer(customer.get());
+		return POSConvertUtil.convertCustomer(
+			customer.get()
+		);
 	}
 	
 	/**
@@ -4887,7 +4818,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			.setIsModifyPrice(pos.isModifyPrice())
 			.setIsPosRequiredPin(pos.isPOSRequiredPIN())
 			.setSalesRepresentative(ConvertUtil.convertSalesRepresentative(MUser.get(pos.getCtx(), pos.getSalesRep_ID())))
-			.setTemplateCustomer(ConvertUtil.convertCustomer(pos.getBPartner()))
+			.setTemplateCustomer(
+				POSConvertUtil.convertCustomer(
+					pos.getBPartner()
+				)
+			)
 			.setKeyLayoutId(pos.getC_POSKeyLayout_ID())
 			.setIsAisleSeller(pos.get_ValueAsBoolean("IsAisleSeller"))
 			.setIsSharedPos(pos.get_ValueAsBoolean("IsSharedPOS"))
