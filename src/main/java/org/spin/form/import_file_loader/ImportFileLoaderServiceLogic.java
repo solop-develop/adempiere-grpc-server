@@ -66,6 +66,7 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.util.ValueManager;
+import org.spin.util.ASPUtil;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
@@ -574,7 +575,7 @@ public class ImportFileLoaderServiceLogic {
 		filtersLit.add(table.getAD_Table_ID());
 		filtersLit.add(table.getAD_Table_ID());
 
-		List<MProcess> processFromColumnsList = new Query(
+		List<Integer> processFromColumnsList = new Query(
 			Env.getCtx(),
 			I_AD_Process.Table_Name,
 			whereClause,
@@ -582,11 +583,16 @@ public class ImportFileLoaderServiceLogic {
 		)
 			.setParameters(filtersLit)
 			.setOnlyActiveRecords(true)
-			.<MProcess>list()
+			.getIDsAsList()
 		;
 
-		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder();
-		processFromColumnsList.forEach(processDefinition -> {
+		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder()
+			.setRecordCount(
+				processFromColumnsList.size()
+			)
+		;
+		processFromColumnsList.forEach(processId -> {
+			MProcess processDefinition = ASPUtil.getInstance().getProcess(processId);
 			String displayedValue = processDefinition.getValue() + " - " + processDefinition.getName();
 			if (!Env.isBaseLanguage(Env.getCtx(), "")) {
 				// set translated values
