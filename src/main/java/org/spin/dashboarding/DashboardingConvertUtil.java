@@ -264,7 +264,11 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueManager.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark1Percent()))
+				ValueManager.getValueFromBigDecimal(
+					new BigDecimal(
+						colorSchema.getMark1Percent()
+					)
+				)
 			)
 			.setColor(
 				getColorAsHex(
@@ -281,7 +285,11 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueManager.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark2Percent()))
+				ValueManager.getValueFromBigDecimal(
+					new BigDecimal(
+						colorSchema.getMark2Percent()
+					)
+				)
 			)
 			.setColor(
 				getColorAsHex(
@@ -298,7 +306,11 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueManager.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark3Percent()))
+				ValueManager.getValueFromBigDecimal(
+					new BigDecimal(
+						colorSchema.getMark3Percent()
+					)
+				)
 			)
 			.setColor(
 				getColorAsHex(
@@ -315,7 +327,11 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueManager.getDecimalFromBigDecimal(new BigDecimal(colorSchema.getMark4Percent()))
+				ValueManager.getValueFromBigDecimal(
+					new BigDecimal(
+						colorSchema.getMark4Percent()
+						)
+					)
 			)
 			.setColor(
 				getColorAsHex(
@@ -369,8 +385,10 @@ public class DashboardingConvertUtil {
 				)
 			)
 			.setValue(
-				ValueManager.getDecimalFromBigDecimal(
-					new BigDecimal(grapColumn.getValue())
+				ValueManager.getValueFromBigDecimal(
+					new BigDecimal(
+						grapColumn.getValue()
+					)
 				)
 			)
 		;

@@ -244,7 +244,7 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 				)
 			)
 			.setCurrentBalance(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					bankAccount.getCurrentBalance()
 				)
 			)
@@ -503,19 +503,19 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 				)
 			)
 			.setGrandTotal(
-				ValueManager.getDecimalFromBigDecimal(grandTotal)
+				ValueManager.getValueFromBigDecimal(grandTotal)
 			)
 			.setPaymentAmount(
-				ValueManager.getDecimalFromBigDecimal(paymentAmount)
+				ValueManager.getValueFromBigDecimal(paymentAmount)
 			)
 			.setOpenAmount(
-				ValueManager.getDecimalFromBigDecimal(openAmount)
+				ValueManager.getValueFromBigDecimal(openAmount)
 			)
 			.setOverUnderAmount(
-				ValueManager.getDecimalFromBigDecimal(overUnderAmount)
+				ValueManager.getValueFromBigDecimal(overUnderAmount)
 			)
 			.setFinalBalance(
-				ValueManager.getDecimalFromBigDecimal(finalBalance)
+				ValueManager.getValueFromBigDecimal(finalBalance)
 			)
 		;
 

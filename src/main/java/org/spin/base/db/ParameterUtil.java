@@ -119,7 +119,7 @@ public class ParameterUtil {
 		if(value instanceof Integer) {
 			pstmt.setInt(index, ValueManager.getIntegerFromValue(grpcValue));
 		} else if(value instanceof BigDecimal) {
-			pstmt.setBigDecimal(index, ValueManager.getDecimalFromValue(grpcValue));
+			pstmt.setBigDecimal(index, ValueManager.getBigDecimalFromValue(grpcValue));
 		} else if(value instanceof Boolean) {
 			// pstmt.setBoolean(index, ValueManager.getBooleanFromValue(grpcValue));
 			String boolValue = ValueManager.booleanToString((Boolean) value);

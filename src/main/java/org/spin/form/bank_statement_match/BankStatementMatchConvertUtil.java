@@ -81,7 +81,9 @@ public class BankStatementMatchConvertUtil {
 				currencyBuilder
 			)
 			.setCurrentBalance(
-				ValueManager.getDecimalFromBigDecimal(bankAccount.getCurrentBalance())
+				ValueManager.getValueFromBigDecimal(
+					bankAccount.getCurrentBalance()
+				)
 			)
 		;
 
@@ -143,17 +145,17 @@ public class BankStatementMatchConvertUtil {
 			.setIsManual(bankStatement.isManual())
 			.setIsProcessed(bankStatement.isProcessed())
 			.setBeginningBalance(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					bankStatement.getBeginningBalance()
 				)
 			)
 			.setStatementDifference(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					bankStatement.getStatementDifference()
 				)
 			)
 			.setEndingBalance(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					bankStatement.getEndingBalance()
 				)
 			)
@@ -310,7 +312,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setAmount(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					paymentAmount
 				)
 			)
@@ -354,7 +356,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setAmount(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					bankStatemet.getTrxAmt()
 				)
 			)
@@ -429,7 +431,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setAmount(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					bankStatemet.getTrxAmt()
 				)
 			)
@@ -449,7 +451,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentAmount(
-					ValueManager.getDecimalFromBigDecimal(
+					ValueManager.getValueFromBigDecimal(
 						payment.getPayAmt()
 					)
 				)
@@ -511,7 +513,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setAmount(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					bankStatemet.getTrxAmt()
 				)
 			)
@@ -559,7 +561,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentAmount(
-					ValueManager.getDecimalFromBigDecimal(
+					ValueManager.getValueFromBigDecimal(
 						payment.getPayAmt()
 					)
 				)

@@ -145,7 +145,9 @@ public class Dashboarding extends DashboardingImplBase {
 						ChartData.Builder chartDataBuilder = ChartData.newBuilder()
 								.setName(dataSet.getName())
 								.setValue(
-									ValueManager.getDecimalFromBigDecimal(dataSet.getAmount())
+									ValueManager.getValueFromBigDecimal(
+										dataSet.getAmount()
+									)
 								)
 							;
 						serieStub.add(chartDataBuilder.build());
@@ -193,7 +195,9 @@ public class Dashboarding extends DashboardingImplBase {
 		}
 
 		builder.setMeasureTarget(
-			ValueManager.getDecimalFromBigDecimal(goal.getMeasureTarget())
+			ValueManager.getValueFromBigDecimal(
+				goal.getMeasureTarget()
+			)
 		);
 
 		//	Add measure color
@@ -981,7 +985,9 @@ public class Dashboarding extends DashboardingImplBase {
 					ChartData.Builder chartDataBuilder = ChartData.newBuilder()
 						.setName(dataSet.getName())
 						.setValue(
-							ValueManager.getDecimalFromBigDecimal(dataSet.getAmount())
+							ValueManager.getValueFromBigDecimal(
+								dataSet.getAmount()
+							)
 						)
 					;
 					serieStub.add(chartDataBuilder.build());

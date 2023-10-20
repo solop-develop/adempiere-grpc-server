@@ -213,10 +213,10 @@ public abstract class BankStatementMatchServiceLogic {
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -285,10 +285,10 @@ public abstract class BankStatementMatchServiceLogic {
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -345,10 +345,10 @@ public abstract class BankStatementMatchServiceLogic {
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -501,10 +501,10 @@ public abstract class BankStatementMatchServiceLogic {
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 
@@ -620,10 +620,10 @@ public abstract class BankStatementMatchServiceLogic {
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
 			request.getPaymentAmountTo()
 		);
 

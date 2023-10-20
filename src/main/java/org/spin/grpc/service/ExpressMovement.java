@@ -535,7 +535,9 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getBigDecimalFromValue(
+					request.getQuantity()
+				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -654,7 +656,9 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				throw new AdempiereException("@M_MovementLine_ID@ @Processed@");
 			}
 
-			BigDecimal quantity = ValueManager.getDecimalFromValue(request.getQuantity());
+			BigDecimal quantity = ValueManager.getBigDecimalFromValue(
+				request.getQuantity()
+			);
 			if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 				quantity = BigDecimal.ONE;
 			}
@@ -711,7 +715,9 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				ValueManager.validateNull(movementLine.getDescription())
 			)
 			.setQuantity(
-				ValueManager.getDecimalFromBigDecimal(movementLine.getMovementQty())
+				ValueManager.getValueFromBigDecimal(
+					movementLine.getMovementQty()
+				)
 			)
 			.setLine(movementLine.getLine())
 		;

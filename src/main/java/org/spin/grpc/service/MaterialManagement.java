@@ -538,7 +538,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 				)
 			)
 			.setValueNumber(
-				ValueManager.getDecimalFromBigDecimal(valueNumber)
+				ValueManager.getValueFromBigDecimal(valueNumber)
 			)
 			.setProductAttributeId(attributeInstance.getM_Attribute_ID())
 			.setProductAttributeValueId(attributeInstance.getM_AttributeValue_ID())

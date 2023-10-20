@@ -702,7 +702,9 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getBigDecimalFromValue(
+					request.getQuantity()
+				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -840,7 +842,9 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getBigDecimalFromValue(
+					request.getQuantity()
+				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -907,7 +911,9 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				ValueManager.validateNull(receiptLine.getDescription())
 			)
 			.setQuantity(
-				ValueManager.getDecimalFromBigDecimal(receiptLine.getQtyEntered())
+				ValueManager.getValueFromBigDecimal(
+					receiptLine.getQtyEntered()
+				)
 			)
 			.setLine(receiptLine.getLine())
 		;

@@ -314,7 +314,9 @@ public class FileManagement extends FileManagementImplBase {
 						MADAttachmentReference resourceReference = validateAttachmentReferenceById(fileUploadRequest.getId());
 
 						resourceUuid.set(resourceReference.getUUID());
-						BigDecimal size = ValueManager.getBigDecimalFromDecimal(fileUploadRequest.getFileSize());
+						BigDecimal size = ValueManager.getBigDecimalFromValue(
+							fileUploadRequest.getFileSize()
+						);
 						if (size != null && fileUploadRequest.getData() != null) {
 							byte[] initByte = new byte[size.intValue()];
 							buffer.set(ByteBuffer.wrap(initByte));
@@ -478,7 +480,9 @@ public class FileManagement extends FileManagementImplBase {
 				)
 			)
 			.setFileSize(
-				ValueManager.getDecimalFromBigDecimal(reference.getFileSize())
+				ValueManager.getValueFromBigDecimal(
+					reference.getFileSize()
+				)
 			)
 			.setCreated(
 				ValueManager.getTimestampFromDate(reference.getCreated())

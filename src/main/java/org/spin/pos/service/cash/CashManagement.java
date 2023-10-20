@@ -112,7 +112,7 @@ public class CashManagement {
         }
         payment.setC_Charge_ID(defaultChargeId);
         //	Amount
-		BigDecimal paymentAmount = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmount = ValueManager.getBigDecimalFromValue(
 			request.getAmount()
 		);
         payment.setPayAmt(paymentAmount);

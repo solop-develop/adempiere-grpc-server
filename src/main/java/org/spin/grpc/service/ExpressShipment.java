@@ -701,7 +701,9 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getBigDecimalFromValue(
+					request.getQuantity()
+				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -842,7 +844,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getDecimalFromValue(request.getQuantity());
+				quantity = ValueManager.getBigDecimalFromValue(request.getQuantity());
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -905,7 +907,9 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				ValueManager.validateNull(shipmentLine.getDescription())
 			)
 			.setQuantity(
-				ValueManager.getDecimalFromBigDecimal(shipmentLine.getQtyEntered())
+				ValueManager.getValueFromBigDecimal(
+					shipmentLine.getQtyEntered()
+				)
 			)
 			.setLine(shipmentLine.getLine())
 		;

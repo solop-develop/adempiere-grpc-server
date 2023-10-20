@@ -655,7 +655,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		if (request.getIsSameQuantity()) {
 			final String quantityColumn = org.spin.form.match_po_receipt_invoice.Util.getQuantityColumn(matchFromType);
 			Matched.Builder matchedFromSelected = org.spin.form.match_po_receipt_invoice.Util.getMatchedSelectedFrom(matchFromSelectedId, isMatched, matchFromType, matchToType);
-			BigDecimal quantity = ValueManager.getDecimalFromValue(
+			BigDecimal quantity = ValueManager.getBigDecimalFromValue(
 				matchedFromSelected.getQuantity()
 			);
 			whereClause += " AND " + quantityColumn + " = " + quantity;
@@ -729,7 +729,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		Trx.run(transactionName -> {
 			boolean isMatchMode = MatchMode.MODE_MATCHED == request.getMatchMode();
-			final BigDecimal quantity = ValueManager.getDecimalFromValue(
+			final BigDecimal quantity = ValueManager.getBigDecimalFromValue(
 				request.getQuantity()
 			);
 			boolean isMatchFromOder = MatchType.PURCHASE_ORDER == request.getMatchFromType();
@@ -745,10 +745,10 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			);
 
 			request.getMatchedToSelectionsList().forEach(lineMatchedTo -> {
-				BigDecimal mathcedQuantity = ValueManager.getDecimalFromValue(
+				BigDecimal mathcedQuantity = ValueManager.getBigDecimalFromValue(
 					lineMatchedTo.getMatchedQuantity()
 				);
-				BigDecimal documentQuantity = ValueManager.getDecimalFromValue(
+				BigDecimal documentQuantity = ValueManager.getBigDecimalFromValue(
 					lineMatchedTo.getQuantity()
 				);
 

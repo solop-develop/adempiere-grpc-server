@@ -415,7 +415,7 @@ public class TimeRecord extends TimeRecordImplBase {
 		}
 		builder.setIsConfirmed(resourceAssignment.isConfirmed());
 		builder.setQuantity(
-			ValueManager.getDecimalFromBigDecimal(
+			ValueManager.getValueFromBigDecimal(
 				resourceAssignment.getQty()
 			)
 		);
@@ -474,7 +474,7 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (Util.isEmpty(request.getName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @Name@");
 		}
-		BigDecimal quantity = ValueManager.getBigDecimalFromDecimal(
+		BigDecimal quantity = ValueManager.getBigDecimalFromValue(
 			request.getQuantity()
 		);
 		if (quantity == null) {

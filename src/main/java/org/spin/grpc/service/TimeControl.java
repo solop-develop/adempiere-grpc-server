@@ -161,7 +161,7 @@ public class TimeControl extends TimeControlImplBase {
 		}
 		builder.setIsConfirmed(resourceAssignment.isConfirmed())
 			.setQuantity(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					resourceAssignment.getQty()
 				)
 			)

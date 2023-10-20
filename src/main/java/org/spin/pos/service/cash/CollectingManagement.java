@@ -66,7 +66,7 @@ public class CollectingManagement {
 			throw new AdempiereException("@NoCashBook@");
 		}
 		//	Amount
-		BigDecimal paymentAmount = ValueManager.getDecimalFromValue(
+		BigDecimal paymentAmount = ValueManager.getBigDecimalFromValue(
 			request.getAmount()
 		);
 		if(paymentAmount == null || paymentAmount.compareTo(Env.ZERO) == 0) {

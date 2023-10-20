@@ -571,17 +571,17 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 						)
 					)
 					.setPaymentAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal(I_C_Payment.COLUMNNAME_PayAmt)
 						)
 					)
 					.setConvertedAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("ConvertedAmt")
 						)
 					)
 					.setOpenAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("AvailableAmt")
 						)
 					)
@@ -736,22 +736,22 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 						)
 					)
 					.setOriginalAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("OriginalAmt")
 						)
 					)
 					.setConvertedAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("ConvertedAmt")
 						)
 					)
 					.setOpenAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("OpenAmt")
 						)
 					)
 					.setDiscountAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("DiscountAmt")
 						)
 					)
@@ -839,7 +839,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				)
 			)
 			.setAmount(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					charge.getChargeAmt()
 				)
 			)
@@ -915,7 +915,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				);
 			}
 
-			BigDecimal totalDifference = ValueManager.getDecimalFromValue(
+			BigDecimal totalDifference = ValueManager.getBigDecimalFromValue(
 				request.getTotalDifference()
 			);
 			String status = saveData(
@@ -970,7 +970,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		// Sum up the payment and applied amounts.
 		BigDecimal paymentAppliedAmt = Env.ZERO;
 		for (PaymentSelection payment : paymentSelection) {
-			BigDecimal paymentAmt = ValueManager.getDecimalFromValue(
+			BigDecimal paymentAmt = ValueManager.getBigDecimalFromValue(
 				payment.getAppliedAmount()
 			);
 			amountList.add(paymentAmt);
@@ -1000,17 +1000,17 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		for (InvoiceSelection invoice : invoiceSelection) {
 			//  Invoice variables
 			int C_Invoice_ID = invoice.getId();
-			BigDecimal AppliedAmt = ValueManager.getBigDecimalFromDecimal(
+			BigDecimal AppliedAmt = ValueManager.getBigDecimalFromValue(
 				invoice.getAppliedAmount()
 			);
 			//  semi-fixed fields (reset after first invoice)
-			BigDecimal DiscountAmt = ValueManager.getBigDecimalFromDecimal(
+			BigDecimal DiscountAmt = ValueManager.getBigDecimalFromValue(
 				invoice.getDiscountAmount()
 			);
-			BigDecimal WriteOffAmt = ValueManager.getBigDecimalFromDecimal(
+			BigDecimal WriteOffAmt = ValueManager.getBigDecimalFromValue(
 				invoice.getWriteOffAmount()
 			);
-			BigDecimal invoiceOpen = ValueManager.getBigDecimalFromDecimal(
+			BigDecimal invoiceOpen = ValueManager.getBigDecimalFromValue(
 				invoice.getOpenAmount()
 			);
 			//	OverUnderAmt needs to be in Allocation Currency
@@ -1027,7 +1027,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				PaymentSelection payment = paymentSelection.get(j);
 
 				int paymentId = payment.getId();
-				BigDecimal paymentAmt = ValueManager.getBigDecimalFromDecimal(
+				BigDecimal paymentAmt = ValueManager.getBigDecimalFromValue(
 					payment.getAppliedAmount()
 				);
 

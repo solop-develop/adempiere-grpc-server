@@ -108,12 +108,12 @@ public class Util {
 				resultSet.getInt(I_C_InvoiceLine.COLUMNNAME_Line)
 			)
 			.setQuantity(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					resultSet.getBigDecimal("Quantity")
 				)
 			)
 			.setMatchedQuantity(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					resultSet.getBigDecimal("MatchedQuantity")
 				)
 			)
