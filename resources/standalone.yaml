@@ -41,9 +41,16 @@ server:
     # Default 24 hours
     expiration: 86400000
 database:
+    # host: 20.12.0.23
+    # port: 5432
+    # name: '#OF'
+    # name: '#PROSEIN'
     host: localhost
-    port: 5432
-    name: adempiere
+    port: 5415
+    # name: dashboard
+    name: prosein
+    # name: solop_uy
+    # name: solop6
     user: adempiere
     password: adempiere
     type: PostgreSQL

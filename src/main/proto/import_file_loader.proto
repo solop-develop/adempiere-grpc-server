@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -36,24 +36,24 @@ service ImportFileLoader {
 		option (google.api.http) = { get: "/import-loader/tables" };
 	}
 	rpc ListImportFormats(ListImportFormatsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/import-loader/formats" };
+		option (google.api.http) = { get: "/import-loader/formats/{table_name}" };
 	}
 	rpc GetImportFromat(GetImportFromatRequest) returns (ImportFormat) {
-		option (google.api.http) = { get: "/import-loader/formats/{id}" };
+		option (google.api.http) = { get: "/import-loader/formats/get/{id}" };
 	}
 	// Manage File
 	rpc SaveRecords(SaveRecordsRequest) returns (SaveRecordsResponse) {
-		option (google.api.http) = { 
-			post: "/import-loader/imports",
+		option (google.api.http) = {
+			post: "/import-loader/imports/{import_format_id}/{resource_id}",
 			body: "*"
 		};
 	}
 	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/import-loader/preview" };
+		option (google.api.http) = { get: "/import-loader/imports/{import_format_id}/{resource_id}/preview" };
 	}
 	// Process
 	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/import-loader/imports" };
+		option (google.api.http) = { get: "/import-loader/processes/{table_name}" };
 	}
 }
 
@@ -110,8 +110,7 @@ message ListImportFormatsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 table_id = 8;
-	string table_name = 9;
+	string table_name = 8;
 }
 
 message ListClientImportFormatsRequest {
@@ -122,8 +121,7 @@ message ListClientImportFormatsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 table_id = 8;
-	string table_name = 9;
+	string table_name = 8;
 }
 
 message ImportFormat {
@@ -202,6 +200,5 @@ message ListImportProcessesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 table_id = 8;
 	string table_name = 9;
 }
