@@ -4,7 +4,8 @@
 # Set server values
 sed -i "s|50059|$SERVER_PORT|g" env.yaml
 sed -i "s|WARNING|$SERVER_LOG_LEVEL|g" env.yaml
-sed -i "s|fill_secret_key|$SECRET_KEY|g" env.yaml
+sed -i "s|fill_secret_key|$JWT_SECRET_KEY|g" env.yaml
+sed -i "s|fill_expiration_time|$JWT_EXPIRATION_TIME|g" env.yaml
 sed -i "s|fill_is_is_enabled_all_services|$IS_ENABLED_ALL_SERVICES|g" env.yaml
 
 export DEFAULT_JAVA_OPTIONS='"-Xms64M" "-Xmx1512M"'

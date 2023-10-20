@@ -1,6 +1,6 @@
 FROM eclipse-temurin:11-jdk-focal
 
-LABEL maintainer="ysenih@erpya.com; EdwinBetanc0urt@outlook.com" \
+LABEL maintainer="ySenih@erpya.com; EdwinBetanc0urt@outlook.com" \
 	description="ADempiere gRPC All In One Server used as ADempiere adempiere-grpc-server"
 
 # Init ENV with default values
@@ -9,7 +9,8 @@ ENV \
 	IS_ENABLED_ALL_SERVICES="true" \
 	SERVICES_ENABLED="bank_statement_match; business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; import_file_loader; in_out; invoice; issue_management; log; match_po_receipt_invoice; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; record_management; security; store; time_control; time_record; ui; user_customization; workflow;" \
 	SERVER_LOG_LEVEL="WARNING" \
-	SECRET_KEY="A42CF908019918B1D9D9E04E596658345D162D4C0127A4C8365E8BDF6B015CC7" \
+	JWT_SECRET_KEY="2C51599F5B1248F945B93E05EFC43B3A15D8EB0707C0F02FD97028786C40976F" \
+	JWT_EXPIRATION_TIME=86400000 \
 	DB_HOST="localhost" \
 	DB_PORT="5432" \
 	DB_NAME="adempiere" \

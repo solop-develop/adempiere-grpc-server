@@ -99,7 +99,8 @@ Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igu
  * `DB_NAME`: Nombre de la base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
  * `DB_USER`: Usuario de base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
  * `DB_PASSWORD`: Contraseña de la base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
- * `SECRET_KEY`: Clave secreta, para el hash de encriptado del Json Web Token, el valor por defecto es `98D8032045502303C1F97FE5A5D40750A6D16D97C20A7BD9C757D2E957F2CA6E` esta debe ser cambiada obligatoriamente por seguridad.
+ * `JWT_SECRET_KEY`: Clave secreta, para el hash de encriptado del JSON Web Token, el valor por defecto es `2C51599F5B1248F945B93E05EFC43B3A15D8EB0707C0F02FD97028786C40976F` esta debe ser cambiada obligatoriamente por seguridad.
+ * `JWT_EXPIRATION_TIME`: Tiempo de expiración en milisegundos, vida util del JSON Web Token desde que se genera, el valor por defecto es `86400000` milisegundos, es decir 24 horas.
  * `ADEMPIERE_APPS_TYPE`: Tipo de aplicación para la conexión de gestión de bases de datos. Por defecto: `wildfly`.
  * `SERVER_PORT`: Puerto para acceder a Adempiere-Backend desde fuera del contenedor. Por defecto: `50059`.
  * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `bank_statement_match; business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; import_file_loader; in_out; invoice; issue_management; log; match_po_receipt_invoice; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; record_management; security; store; time_control; time_record; ui; user_customization; workflow;`.

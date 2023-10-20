@@ -1,6 +1,6 @@
 /*************************************************************************************
  * Product: ADempiere GRPC Server                                                    *
- * Copyright (C) 2012-2019 E.R.P. Consultores y Asociados, C.A.                      *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                   *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                      *
  * This program is free software: you can redistribute it and/or modify              *
  * it under the terms of the GNU General Public License as published by              *
@@ -8,10 +8,10 @@
  * (at your option) any later version.                                               *
  * This program is distributed in the hope that it will be useful,                   *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                    *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                      *
  * GNU General Public License for more details.                                      *
  * You should have received a copy of the GNU General Public License                 *
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.             *
  ************************************************************************************/
 package org.spin.base.setup;
 
@@ -35,10 +35,11 @@ public class Server {
 	private String trust_certificate_collection_file;
 	/**	Log Level	*/
 	private String log_level;
-	/**	ASecret Key	*/
-	private String secret_key;
-	/**	Time expiration	*/
-	private long expiration;
+
+	/**	A JWT Secret Key	*/
+	private String jwt_secret_key;
+	/**	JWT Expiration Time	*/
+	private long jwt_expiration_time;
 
 	/**	Is Enabled All Services	*/
 	private boolean is_enabled_all_services;
@@ -52,15 +53,15 @@ public class Server {
 	 * @param certificate_chain_file
 	 * @param private_key_file
 	 * @param trust_certificate_collection_file
-	 * @param secret_key
-	 * @param expiration
+	 * @param jwt_secret_key
+	 * @param jwt_expiration
 	 * @param log_level
 	 * @param services
 	 */
 	public Server(
 		String host, int port, String log_level,
 		String certificate_chain_file, String private_key_file, String trust_certificate_collection_file,
-		String secret_key, long expiration,
+		String jwt_secret_key, long jwt_expiration_time,
 		boolean is_enabled_all_services, List<String> services
 	) {
 		this.host = host;
@@ -69,8 +70,8 @@ public class Server {
 		this.private_key_file = private_key_file;
 		this.trust_certificate_collection_file = trust_certificate_collection_file;
 		this.log_level = log_level;
-		this.secret_key = secret_key;
-		this.expiration= expiration;
+		this.jwt_secret_key = jwt_secret_key;
+		this.jwt_expiration_time = jwt_expiration_time;
 		this.is_enabled_all_services = is_enabled_all_services;
 		this.services = services;
 		if(this.log_level == null
@@ -153,16 +154,20 @@ public class Server {
 		return log_level;
 	}
 
-	/**	
-	 * Secret key
+	/**
+	 * JSON Web Token Secret Key
 	 * @return
 	 */
-	public String getSecret_key() {
-		return secret_key;
+	public String getJwt_secret_key() {
+		return this.jwt_secret_key;
 	}
-	
-	public long getExpiration() {
-		return expiration;
+
+	/**
+	 * JSON Web Token Expiration Time
+	 * @return
+	 */
+	public long getJwt_expiration_time() {
+		return this.jwt_expiration_time;
 	}
 
 	/**

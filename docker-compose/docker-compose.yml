@@ -21,7 +21,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     networks:
       - adempiere_network
-            
+
   adempiere-grpc-server:
     image: solopcloud/adempiere-backend:alpine-experimental-1.8.1
     container_name: ${ADEMPIERE_GRPC_SERVER_HOST}
@@ -36,18 +36,18 @@ services:
       timeout: 10s
     environment:
       DB_HOST: ${POSTGRES_NAME}
-      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       SERVICES_ENABLED: ${SERVICES_ENABLED}
     depends_on:
       adempiere.db:
         condition: service_healthy
     networks:
       - adempiere_network
-      
+
 networks:
   adempiere_network:
     name: ${ADEMPIERE_NETWORK}
-    
+
 volumes:
   volume_postgres:
     name: ${POSTGRES_NETWORK}

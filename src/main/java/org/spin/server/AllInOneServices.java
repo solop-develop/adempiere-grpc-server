@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -16,12 +16,12 @@ package org.spin.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.compiere.util.Env;
-import org.spin.authentication.AuthorizationServerInterceptor;
 import org.spin.base.setup.SetupLoader;
-import org.spin.base.util.ServiceContextProvider;
 import org.spin.base.util.Services;
 import org.spin.grpc.service.BankStatementMatch;
 import org.spin.grpc.service.BusinessData;
@@ -58,6 +58,8 @@ import org.spin.grpc.service.UserCustomization;
 import org.spin.grpc.service.UserInterface;
 import org.spin.grpc.service.WebStore;
 import org.spin.grpc.service.Workflow;
+import org.spin.service.grpc.authentication.AuthorizationServerInterceptor;
+import org.spin.service.grpc.context.ServiceContextProvider;
 
 import io.grpc.Server;
 import io.grpc.netty.GrpcSslContexts;
@@ -72,8 +74,32 @@ public class AllInOneServices {
 	private Server server;
 
 	private static String defaultFileConnection = "resources/standalone.yaml";
-	private ServiceContextProvider contextProvider =  new ServiceContextProvider();
-	
+	private ServiceContextProvider contextProvider = new ServiceContextProvider();
+
+
+	/** Services/Methods allow request without Bearer token validation */
+	private List<String> ALLOW_REQUESTS_WITHOUT_TOKEN = Arrays.asList(
+		"data.CoreFunctionality/GetSystemInfo",
+		"security.Security/RunLogin",
+		"security.Security/ListServices",
+		"security.Security/RunLoginOpenID"
+	);
+
+	/**	Revoke session	*/
+	private List<String> REVOKE_TOKEN_SERVICES = Arrays.asList(
+		"security.Security/RunChangeRole",
+		"security.Security/SetSessionAttribute",
+		"security.Security/RunLogout"
+	);
+
+	private AuthorizationServerInterceptor getInterceptor() {
+		AuthorizationServerInterceptor interceptor = new AuthorizationServerInterceptor();
+		interceptor.setAllowRequestsWithoutToken(this.ALLOW_REQUESTS_WITHOUT_TOKEN);
+		interceptor.setRevokeTokenServices(this.REVOKE_TOKEN_SERVICES);
+		return interceptor;
+	}
+
+
 	/**
 	  * Get SSL / TLS context
 	  * @return
@@ -90,7 +116,7 @@ public class AllInOneServices {
 
 	private void start() throws IOException {
 		//	Start based on provider
-        Env.setContextProvider(contextProvider);
+		Env.setContextProvider(contextProvider);
 		ServerBuilder<?> serverBuilder;
 		if(SetupLoader.getInstance().getServer().isTlsEnabled()) {
 			serverBuilder = NettyServerBuilder.forPort(SetupLoader.getInstance().getServer().getPort())
@@ -100,7 +126,8 @@ public class AllInOneServices {
 		}
 
 		// Validate JWT on all requests
-		serverBuilder.intercept(new AuthorizationServerInterceptor());
+		AuthorizationServerInterceptor interceptor = getInterceptor();
+		serverBuilder.intercept(interceptor);
 
 		//	Bank Statement Match
 		if (SetupLoader.getInstance().getServer().isValidService(Services.BANK_STATEMENT_MATCH.getServiceName())) {
