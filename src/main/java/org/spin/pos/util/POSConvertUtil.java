@@ -30,6 +30,7 @@ import org.compiere.model.MCity;
 import org.compiere.model.MCountry;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MLocation;
+import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MProduct;
 import org.compiere.model.MRegion;
@@ -46,6 +47,7 @@ import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.City;
 import org.spin.backend.grpc.pos.CommandShortcut;
 import org.spin.backend.grpc.pos.Customer;
+import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.base.util.ConvertUtil;
@@ -141,6 +143,24 @@ public class POSConvertUtil {
 
 
 
+	/**
+	 * Convert Order from entity
+	 * @param orderId
+	 * @return
+	 */
+	public static Order.Builder convertOder(int orderId) {
+		Order.Builder builder = Order.newBuilder();
+		if(orderId <= 0) {
+			return builder;
+		}
+		MOrder order = new MOrder(Env.getCtx(), orderId, null);
+		return ConvertUtil.convertOrder(
+			order
+		);
+	}
+
+
+
 	public static CommandShortcut.Builder convertCommandShorcut(PO commandShortcut) {
 		CommandShortcut.Builder builder = CommandShortcut.newBuilder();
 		if (commandShortcut == null) {
@@ -222,12 +242,12 @@ public class POSConvertUtil {
 				)
 			)
 			.setQuantity(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					shipmentLine.getQtyEntered()
 				)
 			)
 			.setMovementQuantity(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					shipmentLine.getMovementQty()
 				)
 			)

@@ -1058,10 +1058,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -1194,10 +1197,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -1313,7 +1319,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			MOrderLine rmaLine = ReturnSalesOrder.createRMALineFromOrder(
 				request.getRmaId(),
 				request.getSourceOrderLineId(),
-				ValueManager.getBigDecimalFromDecimal(
+				ValueManager.getBigDecimalFromValue(
 					request.getQuantity()
 				),
 				request.getDescription()
@@ -1323,10 +1329,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -1335,7 +1344,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		try {
 			MOrderLine rmaLine = ReturnSalesOrder.updateRMALine(
 				request.getId(),
-				ValueManager.getBigDecimalFromDecimal(
+				ValueManager.getBigDecimalFromValue(
 					request.getQuantity()
 				),
 				request.getDescription()
@@ -1345,10 +1354,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -1450,10 +1462,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -1543,12 +1558,12 @@ public class PointOfSalesForm extends StoreImplBase {
 						)
 					)
 					.setAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("GrandTotal")
 						)
 					)
 					.setOpenAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("OpenAmount")
 						)
 					)
@@ -1844,7 +1859,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					.setCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), rs.getInt("C_Currency_ID"))))
 					.setIsRefund(rs.getString("IsReceipt").equals("Y")? false: true)
 					.setAmount(
-						ValueManager.getDecimalFromBigDecimal(
+						ValueManager.getValueFromBigDecimal(
 							rs.getBigDecimal("PaymentAmount")
 						)
 					)
@@ -1901,13 +1916,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			GenericPO refundReferenceToCreate = new GenericPO("C_POSPaymentReference", Env.getCtx(), 0, transactionName);
 			refundReferenceToCreate.set_ValueOfColumn(
 				"Amount",
-				ValueManager.getBigDecimalFromDecimal(
+				ValueManager.getBigDecimalFromValue(
 					request.getAmount()
 				)
 			);
 			refundReferenceToCreate.set_ValueOfColumn(
 				"AmtSource",
-				ValueManager.getBigDecimalFromDecimal(
+				ValueManager.getBigDecimalFromValue(
 					request.getSourceAmount()
 				)
 			);
@@ -2295,7 +2310,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				.setScale(presicion, RoundingMode.HALF_UP);
 
 			builder.setAmount(
-					ValueManager.getDecimalFromBigDecimal(amount)
+					ValueManager.getValueFromBigDecimal(amount)
 				)
 				.setDescription(
 					ValueManager.validateNull(
@@ -2337,7 +2352,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					paymentReference.get_ValueAsBoolean("Processed")
 				)
 				.setConvertedAmount(
-					ValueManager.getDecimalFromBigDecimal(convertedAmount)
+					ValueManager.getValueFromBigDecimal(convertedAmount)
 				)
 			;
 		}
@@ -2408,7 +2423,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				.filter(shipmentLineTofind -> shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID())
 				.findFirst();
 		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
-		BigDecimal quantity = ValueManager.getBigDecimalFromDecimal(
+		BigDecimal quantity = ValueManager.getBigDecimalFromValue(
 			request.getQuantity()
 		);
 		//	Validate available
@@ -3120,12 +3135,12 @@ public class PointOfSalesForm extends StoreImplBase {
 					availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefundOpen")
 				)
 				.setMaximumRefundAllowed(
-					ValueManager.getDecimalFromBigDecimal(
+					ValueManager.getValueFromBigDecimal(
 						(BigDecimal) availablePaymentMethod.get_Value("MaximumRefundAllowed")
 					)
 				)
 				.setMaximumDailyRefundAllowed(
-					ValueManager.getDecimalFromBigDecimal(
+					ValueManager.getValueFromBigDecimal(
 						(BigDecimal) availablePaymentMethod.get_Value("MaximumDailyRefundAllowed")
 					)
 				)
@@ -3372,11 +3387,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(request.getSalesRepresentativeId() <= 0) {
 			throw new AdempiereException("@SalesRep_ID@ @IsMandatory@");
 		}
-		ListOrdersResponse.Builder builder = ListOrdersResponse.newBuilder();
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
 
 		//	Dynamic where clause
 		MPOS pos = getPOSFromId(request.getPosId(), true);
@@ -3385,16 +3395,16 @@ public class PointOfSalesForm extends StoreImplBase {
 		int orgId = pos.getAD_Org_ID();
 		MUser salesRepresentative = MUser.get(Env.getCtx(), salesRepresentativeId);
 
-		final String whereClauseWithoutProposal = " AND NOT EXISTS(SELECT 1 FROM C_DocType dt "
-			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
-			+ "AND dt.DocSubTypeSO IN('ON', 'OB'))"
-		;
-
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<Object>();
 		whereClause.append("(C_Order.AD_Org_ID = ? OR C_Order.C_POS_ID = ?)");
 		parameters.add(orgId);
 		parameters.add(posId);
+
+		final String whereClauseWithoutProposal = " AND NOT EXISTS(SELECT 1 FROM C_DocType dt "
+			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
+			+ "AND dt.DocSubTypeSO IN('ON', 'OB'))"
+		;
 		if(!salesRepresentative.get_ValueAsBoolean("IsPOSManager")) {
 			if(pos.get_ValueAsBoolean("IsConfidentialInfo")) {
 				whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR C_Order.AssignedSalesRep_ID = ?) AND C_Order.C_POS_ID = ?)");
@@ -3432,7 +3442,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(businessPartnerId);
 		}
 		//	Grand Total
-		BigDecimal grandTotal = ValueManager.getBigDecimalFromDecimal(
+		BigDecimal grandTotal = ValueManager.getBigDecimalFromValue(
 			request.getGrandTotal()
 		);
 		if(grandTotal != null
@@ -3441,7 +3451,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(grandTotal);
 		}
 		//	Support Open Amount
-		BigDecimal openAmount = ValueManager.getBigDecimalFromDecimal(
+		BigDecimal openAmount = ValueManager.getBigDecimalFromValue(
 			request.getOpenAmount()
 		);
 		if(openAmount != null
@@ -3517,33 +3527,50 @@ public class PointOfSalesForm extends StoreImplBase {
 				)
 			);
 		}
-		whereClause.append(" AND AD_Org_ID = ? ");
-		parameters.add(orgId);
+
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), I_C_Order.Table_Name, whereClause.toString(), null)
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_Order.Table_Name,
+			whereClause.toString(),
+			null
+		)
 				.setParameters(parameters)
 				.setClient_ID()
 				.setOnlyActiveRecords(true)
-				.setOrderBy(I_C_Order.COLUMNNAME_DateOrdered + " DESC, " + I_C_Order.COLUMNNAME_Updated + " DESC");
+				.setOrderBy(
+					I_C_Order.COLUMNNAME_DateOrdered + " DESC, "
+					+ I_C_Order.COLUMNNAME_Updated + " DESC"
+				);
+
 		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.<MOrder>list()
-		.forEach(order -> {
-			builder.addOrders(ConvertUtil.convertOrder(order));
-		});
-		//	
-		builder.setRecordCount(count);
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		//	Set page token
+		String nexPageToken = null;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
-		);
+
+		ListOrdersResponse.Builder builder = ListOrdersResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				ValueManager.validateNull(nexPageToken)
+			)
+		;
+
+		query.setLimit(limit, offset)
+			.getIDsAsList()
+			.forEach(orderId -> {
+				Order.Builder orderBuilder = POSConvertUtil.convertOder(orderId);
+				builder.addOrders(orderBuilder);
+			});
+
 		return builder;
 	}
-	
+
+
 	/**
 	 * List Payments from POS UUID
 	 * @param request
@@ -3707,122 +3734,117 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 	
 	/**
-	 * Update Order from UUID
+	 * Update Order from ID
 	 * @param request
 	 * @return
 	 */
 	private MOrder updateOrder(UpdateOrderRequest request) {
-		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
-		if(request.getId() > 0) {
-			Trx.run(transactionName -> {
-				MOrder salesOrder = getOrder(request.getId(), transactionName);
-				if(salesOrder == null) {
-					throw new AdempiereException("@C_Order_ID@ @NotFound@");
-				}
-				if(!DocumentUtil.isDrafted(salesOrder)) {
-					throw new AdempiereException("@C_Order_ID@ @Processed@");
-				}
-				OrderManagement.validateOrderReleased(salesOrder);
-				//	Update Date Ordered
-				Timestamp now = TimeUtil.getDay(System.currentTimeMillis());
-				salesOrder.setDateOrdered(now);
-				salesOrder.setDateAcct(now);
-				salesOrder.setDatePromised(now);
-				//	POS
-				if(request.getPosId() > 0 && salesOrder.getC_POS_ID() <= 0) {
-					salesOrder.setC_POS_ID(request.getPosId());
-				}
-				//	Document Type
-				if(request.getDocumentTypeId() > 0) {
-					int documentTypeId = request.getDocumentTypeId();
-					if(documentTypeId > 0
-							&& documentTypeId != salesOrder.getC_DocTypeTarget_ID()) {
-						salesOrder.setC_DocTypeTarget_ID(documentTypeId);
-						salesOrder.setC_DocType_ID(documentTypeId);
-						//	Set Sequenced No
-						String value = DB.getDocumentNo(documentTypeId, transactionName, false, salesOrder);
-						if (value != null) {
-							salesOrder.setDocumentNo(value);
-						}
-					}
-				}
-				//	Business partner
-				if(request.getCustomerId() <= 0) {
-					int businessPartnerId = request.getCustomerId();
-					if(businessPartnerId > 0
-							&& salesOrder.getC_POS_ID() > 0) {
-						configureBPartner(salesOrder, businessPartnerId, transactionName);
-					}
-				}
-				//	Description
-				if(!Util.isEmpty(request.getDescription())) {
-					salesOrder.setDescription(request.getDescription());
-				}
-				//	Warehouse
-				int warehouseId = request.getWarehouseId();
-				int campaignId = request.getCampaignId();
-				if(campaignId > 0 && campaignId != salesOrder.getC_Campaign_ID()) {
-					salesOrder.setC_Campaign_ID(campaignId);
-					// update campaign on lines
-					for (MOrderLine orderLine: salesOrder.getLines()) {
-						orderLine.setC_Campaign_ID(campaignId);
-						orderLine.saveEx(transactionName);
-					}
-				}
-				//	Price List
-				int priceListId = request.getPriceListId();
-				if(priceListId > 0 && priceListId != salesOrder.getM_PriceList_ID()) {
-					salesOrder.setM_PriceList_ID(priceListId);
-					salesOrder.saveEx(transactionName);
-					configurePriceList(salesOrder);
-				}
-				if(warehouseId > 0) {
-					salesOrder.setM_Warehouse_ID(warehouseId);
-					salesOrder.saveEx(transactionName);
-					configureWarehouse(salesOrder);
-				}
-				//	Discount Amount
-				BigDecimal discountRate = ValueManager.getBigDecimalFromDecimal(
-					request.getDiscountRate()
-				);
-				if(discountRate != null) {
-					configureDiscount(salesOrder, discountRate, transactionName);
-				}
-				//	Discount Off
-				BigDecimal discountRateOff = ValueManager.getBigDecimalFromDecimal(
-					request.getDiscountRateOff()
-				);
-				BigDecimal discountAmountOff = ValueManager.getBigDecimalFromDecimal(
-					request.getDiscountAmountOff()
-				);
-				if(discountRateOff != null) {
-					configureDiscountRateOff(salesOrder, discountRateOff, transactionName);
-				} else if(discountAmountOff != null) {
-					configureDiscountAmountOff(salesOrder, discountAmountOff, transactionName);
-				}
-
-				// Sales Representative
-				if (request.getSalesRepresentativeId() > 0) {
-					salesOrder.setSalesRep_ID(request.getSalesRepresentativeId());
-				}
-
-				//	Save
-				salesOrder.saveEx(transactionName);
-				orderReference.set(salesOrder);
-			});
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
+
+		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
+		Trx.run(transactionName -> {
+			MOrder salesOrder = getOrder(request.getId(), transactionName);
+			if(salesOrder == null) {
+				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			}
+			if(!DocumentUtil.isDrafted(salesOrder)) {
+				throw new AdempiereException("@C_Order_ID@ @Processed@");
+			}
+			OrderManagement.validateOrderReleased(salesOrder);
+			//	Update Date Ordered
+			Timestamp now = TimeUtil.getDay(System.currentTimeMillis());
+			salesOrder.setDateOrdered(now);
+			salesOrder.setDateAcct(now);
+			salesOrder.setDatePromised(now);
+			//	POS
+			if(request.getPosId() > 0 && salesOrder.getC_POS_ID() <= 0) {
+				salesOrder.setC_POS_ID(request.getPosId());
+			}
+			//	Document Type
+			if(request.getDocumentTypeId() > 0) {
+				int documentTypeId = request.getDocumentTypeId();
+				if(documentTypeId > 0 && documentTypeId != salesOrder.getC_DocTypeTarget_ID()) {
+					salesOrder.setC_DocTypeTarget_ID(documentTypeId);
+					salesOrder.setC_DocType_ID(documentTypeId);
+					//	Set Sequenced No
+					String value = DB.getDocumentNo(documentTypeId, transactionName, false, salesOrder);
+					if (value != null) {
+						salesOrder.setDocumentNo(value);
+					}
+				}
+			}
+			//	Business partner
+			if(request.getCustomerId() > 0 && salesOrder.getC_POS_ID() > 0) {
+				configureBPartner(salesOrder, request.getCustomerId(), transactionName);
+			}
+			//	Description
+			if(!Util.isEmpty(request.getDescription())) {
+				salesOrder.setDescription(request.getDescription());
+			}
+			//	Campaign
+			int campaignId = request.getCampaignId();
+			if(campaignId > 0 && campaignId != salesOrder.getC_Campaign_ID()) {
+				salesOrder.setC_Campaign_ID(campaignId);
+				// update campaign on lines
+				for (MOrderLine orderLine: salesOrder.getLines()) {
+					orderLine.setC_Campaign_ID(campaignId);
+					orderLine.saveEx(transactionName);
+				}
+			}
+			//	Price List
+			int priceListId = request.getPriceListId();
+			if(priceListId > 0 && priceListId != salesOrder.getM_PriceList_ID()) {
+				salesOrder.setM_PriceList_ID(priceListId);
+				salesOrder.saveEx(transactionName);
+				configurePriceList(salesOrder);
+			}
+			//	Warehouse
+			int warehouseId = request.getWarehouseId();
+			if(warehouseId > 0) {
+				salesOrder.setM_Warehouse_ID(warehouseId);
+				salesOrder.saveEx(transactionName);
+				configureWarehouse(salesOrder);
+			}
+			//	Discount Amount
+			BigDecimal discountRate = ValueManager.getBigDecimalFromValue(
+				request.getDiscountRate()
+			);
+			if(discountRate != null) {
+				configureDiscount(salesOrder, discountRate, transactionName);
+			}
+			//	Discount Off
+			BigDecimal discountRateOff = ValueManager.getBigDecimalFromValue(
+				request.getDiscountRateOff()
+			);
+			BigDecimal discountAmountOff = ValueManager.getBigDecimalFromValue(
+				request.getDiscountAmountOff()
+			);
+			if(discountRateOff != null) {
+				configureDiscountRateOff(salesOrder, discountRateOff, transactionName);
+			} else if(discountAmountOff != null) {
+				configureDiscountAmountOff(salesOrder, discountAmountOff, transactionName);
+			}
+
+			// Sales Representative
+			if (request.getSalesRepresentativeId() > 0) {
+				salesOrder.setSalesRep_ID(request.getSalesRepresentativeId());
+			}
+
+			//	Save
+			salesOrder.saveEx(transactionName);
+			orderReference.set(salesOrder);
+		});
 		//	Return order
 		return orderReference.get();
 	}
-	
+
 	/**
 	 * 	Set BPartner, update price list and locations
 	 *  Configuration of Business Partner has priority over POS configuration
-	 *	@param p_C_BPartner_ID id
-	 */
-	
-	/**
-	 * set BPartner and save
+	 *	@param order
+	 *	@param businessPartnerId id
 	 */
 	public void configureBPartner(MOrder order, int businessPartnerId, String transactionName) {
 		//	Valid if has a Order
@@ -3831,6 +3853,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			return;
 		log.fine( "CPOS.setC_BPartner_ID=" + businessPartnerId);
 		boolean isSamePOSPartner = false;
+		// TODO: Validate order.getC_POS_ID > 0 and pos != null
 		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), null);
 		//	Validate BPartner
 		if (businessPartnerId == 0) {
@@ -4365,9 +4388,15 @@ public class PointOfSalesForm extends StoreImplBase {
 			updateOrderLine(
 				pos,
 				orderLineId,
-				ValueManager.getBigDecimalFromDecimal(request.getQuantity()),
-				ValueManager.getBigDecimalFromDecimal(request.getPrice()),
-				ValueManager.getBigDecimalFromDecimal(request.getDiscountRate()),
+				ValueManager.getBigDecimalFromValue(
+					request.getQuantity()
+				),
+				ValueManager.getBigDecimalFromValue(
+					request.getPrice()
+				),
+				ValueManager.getBigDecimalFromValue(
+					request.getDiscountRate()
+				),
 				request.getIsAddQuantity(),
 				request.getWarehouseId(),
 				request.getUomId()
@@ -4405,7 +4434,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				request.getProductId(),
 				request.getChargeId(),
 				request.getWarehouseId(),
-				ValueManager.getBigDecimalFromDecimal(
+				ValueManager.getBigDecimalFromValue(
 					request.getQuantity()
 				)
 			);
@@ -4833,33 +4862,53 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Special values
 		builder
 			.setMaximumRefundAllowed(
-				ValueManager.getDecimalFromBigDecimal(
-					getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumRefundAllowed)
+				ValueManager.getValueFromBigDecimal(
+					getBigDecimalValueFromPOS(
+						pos,
+						userId,
+						ColumnsAdded.COLUMNNAME_MaximumRefundAllowed
+					)
 				)
 			)
 			.setMaximumDailyRefundAllowed(
-				ValueManager.getDecimalFromBigDecimal(
-					getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumDailyRefundAllowed)
+				ValueManager.getValueFromBigDecimal(
+					getBigDecimalValueFromPOS(
+						pos,
+						userId,
+						ColumnsAdded.COLUMNNAME_MaximumDailyRefundAllowed
+					)
 				)
 			)
 			.setMaximumDiscountAllowed(
-				ValueManager.getDecimalFromBigDecimal(
-					getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed)
+				ValueManager.getValueFromBigDecimal(
+					getBigDecimalValueFromPOS(
+						pos,
+						userId,
+						ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed
+					)
 				)
 			)
 			.setMaximumLineDiscountAllowed(
-				ValueManager.getDecimalFromBigDecimal(
-					getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumLineDiscountAllowed)
+				ValueManager.getValueFromBigDecimal(
+					getBigDecimalValueFromPOS(
+						pos,
+						userId,
+						ColumnsAdded.COLUMNNAME_MaximumLineDiscountAllowed
+					)
 				)
 			)
 			.setWriteOffAmountTolerance(
-				ValueManager.getDecimalFromBigDecimal(
+				ValueManager.getValueFromBigDecimal(
 					getWriteOffAmtTolerance(pos)
 				)
 			)
 			.setWriteOffPercentageTolerance(
-				ValueManager.getDecimalFromBigDecimal(
-					getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumLineDiscountAllowed)
+				ValueManager.getValueFromBigDecimal(
+					getBigDecimalValueFromPOS(
+						pos,
+						userId,
+						ColumnsAdded.COLUMNNAME_MaximumLineDiscountAllowed
+					)
 				)
 			)
 			.setIsAllowsModifyQuantity(getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsModifyQuantity))
@@ -5225,7 +5274,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				payment.addDescription(request.getDescription());
 			}
 			//	Amount
-			BigDecimal paymentAmount = ValueManager.getBigDecimalFromDecimal(
+			BigDecimal paymentAmount = ValueManager.getBigDecimalFromValue(
 				request.getAmount()
 			);
 	        payment.setPayAmt(paymentAmount);
@@ -5423,18 +5472,20 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Prices
 		if(Optional.ofNullable(productPricing.getPriceStd()).orElse(Env.ZERO).signum() > 0) {
 			builder.setPriceList(
-					ValueManager.getDecimalFromBigDecimal(
+					ValueManager.getValueFromBigDecimal(
 						Optional.ofNullable(productPricing.getPriceList()).orElse(Env.ZERO)
 					)
 				)
 				.setPriceStandard(
-					ValueManager.getDecimalFromBigDecimal(
+					ValueManager.getValueFromBigDecimal(
 						Optional.ofNullable(productPricing.getPriceStd()).orElse(Env.ZERO)
 					)
 				)
 				.setPriceLimit(
-					ValueManager.getDecimalFromBigDecimal(
-						Optional.ofNullable(productPricing.getPriceLimit()).orElse(Env.ZERO)
+					ValueManager.getValueFromBigDecimal(
+						Optional.ofNullable(
+							productPricing.getPriceLimit()
+						).orElse(Env.ZERO)
 					)
 				)
 			;
@@ -5449,18 +5500,30 @@ public class PointOfSalesForm extends StoreImplBase {
 					if(conversionRate != null) {
 						BigDecimal multiplyRate = conversionRate.getMultiplyRate();
 						builder.setDisplayPriceList(
-								ValueManager.getDecimalFromBigDecimal(
-									Optional.ofNullable(productPricing.getPriceList()).orElse(Env.ZERO).multiply(multiplyRate, MathContext.DECIMAL128)
+								ValueManager.getValueFromBigDecimal(
+									Optional.ofNullable(
+										productPricing.getPriceList()
+									)
+										.orElse(Env.ZERO)
+										.multiply(multiplyRate, MathContext.DECIMAL128)
 								)
 							)
 							.setDisplayPriceStandard(
-								ValueManager.getDecimalFromBigDecimal(
-									Optional.ofNullable(productPricing.getPriceStd()).orElse(Env.ZERO).multiply(multiplyRate, MathContext.DECIMAL128)
+								ValueManager.getValueFromBigDecimal(
+									Optional.ofNullable(
+										productPricing.getPriceStd()
+									)
+										.orElse(Env.ZERO)
+										.multiply(multiplyRate, MathContext.DECIMAL128)
 								)
 							)
 							.setDisplayPriceLimit(
-								ValueManager.getDecimalFromBigDecimal(
-									Optional.ofNullable(productPricing.getPriceLimit()).orElse(Env.ZERO).multiply(multiplyRate, MathContext.DECIMAL128)
+								ValueManager.getValueFromBigDecimal(
+									Optional.ofNullable(
+										productPricing.getPriceLimit()
+									)
+										.orElse(Env.ZERO)
+										.multiply(multiplyRate, MathContext.DECIMAL128)
 								)
 							)
 							.setConversionRate(
@@ -5488,16 +5551,24 @@ public class PointOfSalesForm extends StoreImplBase {
 					quantityAvailable.updateAndGet(quantity -> quantity.add(storage.getQtyOnHand().subtract(storage.getQtyReserved())));
 				});
 			builder.setQuantityOnHand(
-					ValueManager.getDecimalFromBigDecimal(quantityOnHand.get())
+					ValueManager.getValueFromBigDecimal(
+						quantityOnHand.get()
+					)
 				)
 				.setQuantityReserved(
-					ValueManager.getDecimalFromBigDecimal(quantityReserved.get())
+					ValueManager.getValueFromBigDecimal(
+						quantityReserved.get()
+					)
 				)
 				.setQuantityOrdered(
-					ValueManager.getDecimalFromBigDecimal(quantityOrdered.get())
+					ValueManager.getValueFromBigDecimal(
+						quantityOrdered.get()
+					)
 				)
 				.setQuantityAvailable(
-					ValueManager.getDecimalFromBigDecimal(quantityAvailable.get())
+					ValueManager.getValueFromBigDecimal(
+						quantityAvailable.get()
+					)
 				)
 			;
 		}
