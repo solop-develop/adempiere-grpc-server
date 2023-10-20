@@ -170,7 +170,7 @@ public class OrderUtil {
 	 * @param amount
 	 * @return
 	 */
-	public static BigDecimal getConvetedAmount(MPOS pos, int fromCurrencyId, BigDecimal amount) {
+	public static BigDecimal getConvertedAmount(MPOS pos, int fromCurrencyId, BigDecimal amount) {
 		int toCurrencyId = pos.getM_PriceList().getC_Currency_ID();
 		if(fromCurrencyId == toCurrencyId
 				|| amount == null
@@ -189,13 +189,49 @@ public class OrderUtil {
 	 * @return
 	 * @return BigDecimal
 	 */
-	public static BigDecimal getConvetedAmount(MOrder order, int fromCurrencyId, BigDecimal amount) {
+	public static BigDecimal getConvertedAmountFrom(MOrder order, int fromCurrencyId, BigDecimal amount) {
 		if(fromCurrencyId == order.getC_Currency_ID()
 				|| amount == null
 				|| amount.compareTo(Env.ZERO) == 0) {
 			return amount;
 		}
-		BigDecimal convertedAmount = MConversionRate.convert(order.getCtx(), amount, fromCurrencyId, order.getC_Currency_ID(), order.getDateAcct(), order.get_ValueAsInt("C_ConversionType_ID"), order.getAD_Client_ID(), order.getAD_Org_ID());
+		BigDecimal convertedAmount = MConversionRate.convert(
+			order.getCtx(),
+			amount,
+			fromCurrencyId,
+			order.getC_Currency_ID(),
+			order.getDateAcct(),
+			order.get_ValueAsInt("C_ConversionType_ID"),
+			order.getAD_Client_ID(),
+			order.getAD_Org_ID()
+		);
+		//	
+		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
+	}
+
+	/**
+	 * Get Converted Amount based on Order currency and optional currency id
+	 * @param order
+	 * @param payment
+	 * @return
+	 * @return BigDecimal
+	 */
+	public static BigDecimal getConvertedAmountTo(MOrder order, int toCurrencyId, BigDecimal amount) {
+		if(toCurrencyId == order.getC_Currency_ID()
+				|| amount == null
+				|| amount.compareTo(Env.ZERO) == 0) {
+			return amount;
+		}
+		BigDecimal convertedAmount = MConversionRate.convert(
+			order.getCtx(),
+			amount,
+			order.getC_Currency_ID(),
+			toCurrencyId,
+			order.getDateAcct(),
+			order.get_ValueAsInt("C_ConversionType_ID"),
+			order.getAD_Client_ID(),
+			order.getAD_Org_ID()
+		);
 		//	
 		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
 	}

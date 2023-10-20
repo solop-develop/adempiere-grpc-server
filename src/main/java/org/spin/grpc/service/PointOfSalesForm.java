@@ -105,7 +105,6 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
 import org.spin.pos.service.POSLogic;
 import org.spin.pos.service.bank.BankManagement;
 import org.spin.pos.service.cash.CashManagement;
@@ -121,6 +120,7 @@ import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.pos.util.TicketHandler;
 import org.spin.pos.util.TicketResult;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
@@ -3369,7 +3369,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		BigDecimal writeOffAmtTolerance = getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
 		int currencyId = getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
 		if(currencyId > 0) {
-			writeOffAmtTolerance = OrderUtil.getConvetedAmount(pos, currencyId, writeOffAmtTolerance);
+			writeOffAmtTolerance = OrderUtil.getConvertedAmount(pos, currencyId, writeOffAmtTolerance);
 		}
 		return writeOffAmtTolerance;
 	}
@@ -4163,7 +4163,11 @@ public class PointOfSalesForm extends StoreImplBase {
 						MPriceList posPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
 						allowedCurrencyId = posPriceList.getC_Currency_ID();
 					}
-					allowedAmount = OrderUtil.getConvetedAmount(order, allowedCurrencyId, allowedAmount);
+					allowedAmount = OrderUtil.getConvertedAmountFrom(
+						order,
+						allowedCurrencyId,
+						allowedAmount
+					);
 					//	Validate Here
 					if(allowedAmount.compareTo(Env.ZERO) == 0
 							|| allowedAmount.compareTo(writeOffAmount) >= 0) {

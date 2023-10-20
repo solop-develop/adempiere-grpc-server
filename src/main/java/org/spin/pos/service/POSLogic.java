@@ -30,8 +30,8 @@ import org.spin.backend.grpc.pos.ListCustomersRequest;
 import org.spin.backend.grpc.pos.ListCustomersResponse;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.WhereClauseUtil;
-import org.spin.base.util.SessionManager;
 import org.spin.pos.util.POSConvertUtil;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 
 public class POSLogic {

@@ -1689,24 +1689,25 @@ message Order {
 	Warehouse warehouse = 7;
 	google.protobuf.Value total_lines = 8;
 	google.protobuf.Value grand_total = 9;
-	google.protobuf.Value tax_amount = 10;
-	google.protobuf.Value discount_amount = 11;
-	google.protobuf.Timestamp date_ordered = 12;
-	Customer customer = 13;
-	bool is_delivered = 14;
-	string order_reference = 15;
-	string description = 16;
-	Campaign campaign = 17;
-	google.protobuf.Value display_currency_rate = 18;
-	google.protobuf.Value open_amount = 19;
-	google.protobuf.Value payment_amount = 20;
-	google.protobuf.Value refund_amount = 21;
-	google.protobuf.Value charge_amount = 22;
-	google.protobuf.Value credit_amount = 23;
-	int32 source_rma_id = 24;
-	bool is_rma = 25;
-	bool is_binding_offer = 26;
-	bool is_order = 27;
+	google.protobuf.Value grand_total_converted = 10;
+	google.protobuf.Value tax_amount = 11;
+	google.protobuf.Value discount_amount = 12;
+	google.protobuf.Timestamp date_ordered = 13;
+	Customer customer = 14;
+	bool is_delivered = 15;
+	string order_reference = 16;
+	string description = 17;
+	Campaign campaign = 18;
+	google.protobuf.Value display_currency_rate = 19;
+	google.protobuf.Value open_amount = 20;
+	google.protobuf.Value payment_amount = 21;
+	google.protobuf.Value refund_amount = 22;
+	google.protobuf.Value charge_amount = 23;
+	google.protobuf.Value credit_amount = 24;
+	int32 source_rma_id = 25;
+	bool is_rma = 26;
+	bool is_binding_offer = 27;
+	bool is_order = 28;
 }
 
 // Sales Order Line
@@ -1739,12 +1740,14 @@ message OrderLine {
 	google.protobuf.Value total_base_amount = 25;
 	google.protobuf.Value total_base_amount_with_tax = 26;
 	google.protobuf.Value total_amount = 27;
-	google.protobuf.Value total_amount_with_tax = 28;
-	int32 line = 29;
-	ProductConversion uom = 30;
-	ProductConversion product_uom = 31;
-	time_control.ResourceAssignment resource_assignment = 32;
-	int32 source_rma_line_id = 33;
+	google.protobuf.Value total_amount_converted = 28;
+	google.protobuf.Value total_amount_with_tax = 29;
+	google.protobuf.Value total_amount_with_tax_converted = 30;
+	int32 line = 31;
+	ProductConversion uom = 32;
+	ProductConversion product_uom = 33;
+	time_control.ResourceAssignment resource_assignment = 34;
+	int32 source_rma_line_id = 35;
 }
 
 // Request Product Price
