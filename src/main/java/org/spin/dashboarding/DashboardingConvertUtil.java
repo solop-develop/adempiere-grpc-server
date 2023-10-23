@@ -48,8 +48,8 @@ import org.spin.backend.grpc.dashboarding.Favorite;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dictionary.Reference;
-import org.spin.base.dictionary.DictionaryConvertUtil;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.dictionary.util.DictionaryConvertUtil;
 import org.spin.service.grpc.util.ValueManager;
 
 /**

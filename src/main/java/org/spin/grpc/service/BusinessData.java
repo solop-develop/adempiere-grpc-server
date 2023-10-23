@@ -77,13 +77,13 @@ import org.spin.backend.grpc.common.UpdateEntityRequest;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereClauseUtil;
-import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.query.SortingManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
 import org.spin.base.workflow.WorkflowUtil;
+import org.spin.dictionary.util.DictionaryUtil;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.ByteString;

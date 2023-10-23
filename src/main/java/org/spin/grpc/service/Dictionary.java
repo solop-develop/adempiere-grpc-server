@@ -21,7 +21,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
 import org.adempiere.core.domains.models.I_AD_Form;
@@ -83,13 +82,13 @@ import org.spin.backend.grpc.dictionary.Window;
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
-import org.spin.base.dictionary.DictionaryConvertUtil;
-import org.spin.base.dictionary.WindowUtil;
-import org.spin.base.dictionary.custom.BrowseFieldCustomUtil;
-import org.spin.base.dictionary.custom.FieldCustomUtil;
-import org.spin.base.dictionary.custom.ProcessParaCustomUtil;
 import org.spin.base.util.DictionaryUtil;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.dictionary.custom.BrowseFieldCustomUtil;
+import org.spin.dictionary.custom.FieldCustomUtil;
+import org.spin.dictionary.custom.ProcessParaCustomUtil;
+import org.spin.dictionary.util.DictionaryConvertUtil;
+import org.spin.dictionary.util.WindowUtil;
 import org.spin.grpc.logic.DictionaryServiceLogic;
 import org.spin.model.MADContextInfo;
 import org.spin.model.MADFieldCondition;
@@ -327,7 +326,7 @@ public class Dictionary extends DictionaryImplBase {
 			;
 		}
 		//	Add to recent Item
-		org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
 			MMenu.ACTION_Form,
 			form.getAD_Form_ID()
 		);
@@ -406,7 +405,7 @@ public class Dictionary extends DictionaryImplBase {
 //			}
 		}
 		//	Add to recent Item
-		org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
 			MMenu.ACTION_Window,
 			window.getAD_Window_ID()
 		);
@@ -772,12 +771,12 @@ public class Dictionary extends DictionaryImplBase {
 
 		//	Add to recent Item
 		if (process.isReport()) {
-			org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+			org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
 				MMenu.ACTION_Report,
 				process.getAD_Process_ID()
 			);
 		} else {
-			org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+			org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
 				MMenu.ACTION_Process,
 				process.getAD_Process_ID()
 			);
@@ -869,7 +868,7 @@ public class Dictionary extends DictionaryImplBase {
 			}
 		}
 		//	Add to recent Item
-		org.spin.base.dictionary.DictionaryUtil.addToRecentItem(
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
 			MMenu.ACTION_SmartBrowse,
 			browser.getAD_Browse_ID()
 		);
@@ -969,11 +968,11 @@ public class Dictionary extends DictionaryImplBase {
 		MProcessParaCustom processParaCustom = ProcessParaCustomUtil.getProcessParaCustom(processParameter.getAD_Process_Para_ID());
 		if (processParaCustom != null && processParaCustom.isActive()) {
 			// ASP default displayed field as panel
-			if (processParaCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
+			if (processParaCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsPanel(
 					ValueManager.validateNull(
 						processParaCustom.get_ValueAsString(
-							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
+							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
 						)
 					)
 				);
@@ -1152,21 +1151,21 @@ public class Dictionary extends DictionaryImplBase {
 		MBrowseFieldCustom browseFieldCustom = BrowseFieldCustomUtil.getBrowseFieldCustom(browseField.getAD_Browse_Field_ID());
 		if (browseFieldCustom != null && browseFieldCustom.isActive()) {
 			// ASP default displayed field as panel
-			if (browseFieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
+			if (browseFieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsPanel(
 					ValueManager.validateNull(
 						browseFieldCustom.get_ValueAsString(
-							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
+							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
 						)
 					)
 				);
 			}
 			// ASP default displayed field as table
-			if (browseFieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
+			if (browseFieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsTable(
 					ValueManager.validateNull(
 						browseFieldCustom.get_ValueAsString(
-							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
+							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
 						)
 					)
 				);
@@ -1259,24 +1258,30 @@ public class Dictionary extends DictionaryImplBase {
 		Field.Builder builder = Field.newBuilder();
 		//	For UUID
 		if(request.getId() > 0) {
-			builder = convertField(Env.getCtx(), request.getId());
+			builder = convertFieldById(Env.getCtx(), request.getId());
 		} else if(request.getColumnId() > 0) {
-			builder = convertField(Env.getCtx(), MColumn.get(Env.getCtx(), request.getColumnId()));
-		} else if(request.getElementId() > 0) {
-			builder = convertField(Env.getCtx(), new M_Element(Env.getCtx(), request.getElementId(), null));
-		} else if(!Util.isEmpty(request.getElementColumnName())) {
-			M_Element element = new Query(Env.getCtx(), I_AD_Element.Table_Name, I_AD_Element.COLUMNNAME_ColumnName+ " = ?", null)
-					.setParameters(request.getElementColumnName())
-					.setOnlyActiveRecords(true)
-					.first();
-			builder = convertField(Env.getCtx(), element);
-		} else if(!Util.isEmpty(request.getTableName()) 
-				&& !Util.isEmpty(request.getColumnName())) {
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if(table != null) {
-				MColumn column = table.getColumn(request.getColumnName());
-				builder = convertField(Env.getCtx(), column);
+			MColumn column = MColumn.get(Env.getCtx(), request.getColumnId());
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				throw new AdempiereException("@AD_Column_ID@ @NotFound@");
 			}
+			builder = convertFieldByColumn(Env.getCtx(), column);
+		} else if(request.getElementId() > 0) {
+			M_Element element = new M_Element(Env.getCtx(), request.getElementId(), null);
+			builder = convertFieldByElemnt(Env.getCtx(), element);
+		} else if(!Util.isEmpty(request.getElementColumnName())) {
+			M_Element element = M_Element.get(Env.getCtx(), request.getElementColumnName());
+			builder = convertFieldByElemnt(Env.getCtx(), element);
+		} else if(!Util.isEmpty(request.getTableName(), true)
+				&& !Util.isEmpty(request.getColumnName(), true)) {
+			MTable table = MTable.get(Env.getCtx(), request.getTableName());
+			if (table == null || table.getAD_Table_ID() <= 0) {
+				throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+			}
+			MColumn column = table.getColumn(request.getColumnName());
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				throw new AdempiereException("@AD_Column_ID@ @NotFound@");
+			}
+			builder = convertFieldByColumn(Env.getCtx(), column);
 		}
 		return builder;
 	}
@@ -1286,7 +1291,7 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param id
 	 * @return
 	 */
-	private Field.Builder convertField(Properties context, int id) {
+	private Field.Builder convertFieldById(Properties context, int id) {
 		MField field = new Query(context, I_AD_Field.Table_Name, I_AD_Field.COLUMNNAME_AD_Field_ID + " = ?", null)
 				.setParameters(id)
 				.setOnlyActiveRecords(true)
@@ -1329,7 +1334,7 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param language
 	 * @return
 	 */
-	public static Field.Builder convertField(Properties context, MColumn column) {
+	public static Field.Builder convertFieldByColumn(Properties context, MColumn column) {
 		if (column == null) {
 			return Field.newBuilder();
 		}
@@ -1499,7 +1504,7 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param element
 	 * @return
 	 */
-	private Field.Builder convertField(Properties context, M_Element element) {
+	private Field.Builder convertFieldByElemnt(Properties context, M_Element element) {
 		if (element == null) {
 			return Field.newBuilder();
 		}
@@ -1530,6 +1535,7 @@ public class Dictionary extends DictionaryImplBase {
 			.setColumnName(
 				ValueManager.validateNull(element.getColumnName())
 			)
+			.setElementId(element.getAD_Element_ID())
 			.setElementName(
 				ValueManager.validateNull(element.getColumnName())
 			)
@@ -1720,21 +1726,21 @@ public class Dictionary extends DictionaryImplBase {
 		MFieldCustom fieldCustom = FieldCustomUtil.getFieldCustom(field.getAD_Field_ID());
 		if (fieldCustom != null && fieldCustom.isActive()) {
 			// ASP default displayed field as panel
-			if (fieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
+			if (fieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsPanel(
 					ValueManager.validateNull(
 						fieldCustom.get_ValueAsString(
-							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
+							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
 						)
 					)
 				);
 			}
 			// ASP default displayed field as table
-			if (fieldCustom.get_ColumnIndex(org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
+			if (fieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsTable(
 					ValueManager.validateNull(
 						fieldCustom.get_ValueAsString(
-							org.spin.base.dictionary.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
+							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
 						)
 					)
 				);
@@ -1995,7 +2001,7 @@ public class Dictionary extends DictionaryImplBase {
 			while(resultSet.next()) {
 				MColumn column = MColumn.get(context, resultSet.getInt(MColumn.COLUMNNAME_AD_Column_ID));
 				if (column != null) {
-					Field.Builder fieldBuilder = convertField(context, column);
+					Field.Builder fieldBuilder = convertFieldByColumn(context, column);
 					fieldsListBuilder.addFields(fieldBuilder.build());
 				}
 				recordCount++;

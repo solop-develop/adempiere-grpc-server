@@ -14,7 +14,7 @@
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                     *
  *************************************************************************************/
 
-package org.spin.base.dictionary;
+package org.spin.dictionary.util;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package org.spin.base.dictionary;
+package org.spin.dictionary.util;
 
 import java.util.Arrays;
 import java.util.List;

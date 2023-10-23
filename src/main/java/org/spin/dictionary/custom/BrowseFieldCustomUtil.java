@@ -12,50 +12,50 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.base.dictionary.custom;
+package org.spin.dictionary.custom;
 
-import org.adempiere.core.domains.models.I_AD_ProcessParaCustom;
-import org.compiere.model.MProcessParaCustom;
+import org.adempiere.core.domains.models.I_AD_BrowseFieldCustom;
+import org.compiere.model.MBrowseFieldCustom;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 
 /**
- * Class for handle Process Para Custom
+ * Class for handle Browse Field Custom
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
-public class ProcessParaCustomUtil {
+public class BrowseFieldCustomUtil {
 
-	public static MProcessParaCustom getProcessParaCustom(int processParameterId) {
+	public static MBrowseFieldCustom getBrowseFieldCustom(int browseFieldId) {
 		final int userId = Env.getAD_User_ID(Env.getCtx());
-		final String whereClauseUser = "AD_Process_Para_ID = ? AND EXISTS( "
-			+ "SELECT 1 FROM AD_ProcessCustom AS pc "
-			+ "WHERE pc.AD_User_ID = ? "
-			+ "AND pc.AD_ProcessCustom_ID = AD_ProcessParaCustom.AD_ProcessCustom_ID"
+		final String whereClauseUser = "AD_Browse_Field_ID = ? AND EXISTS( "
+			+ "SELECT 1 FROM AD_BrowseCustom AS bc "
+			+ "WHERE bc.AD_User_ID = ? "
+			+ "AND bc.AD_BrowseCustom_ID = AD_BrowseFieldCustom.AD_BrowseCustom_ID"
 		+ ")";
-		MProcessParaCustom browseFieldCustom = new Query(
+		MBrowseFieldCustom browseFieldCustom = new Query(
 			Env.getCtx(),
-			I_AD_ProcessParaCustom.Table_Name,
+			I_AD_BrowseFieldCustom.Table_Name,
 			whereClauseUser,
 			null
 		)
-			.setParameters(processParameterId, userId)
+			.setParameters(browseFieldId, userId)
 			.setOnlyActiveRecords(true)
 			.first()
 		;
 		if (browseFieldCustom == null) {
 			final int roleId = Env.getAD_Role_ID(Env.getCtx());
-			final String whereClauseRole = "AD_Process_Para_ID = ? AND EXISTS( "
-				+ "SELECT 1 FROM AD_ProcessCustom AS pc "
-				+ "WHERE pc.AD_Role_ID = ? "
-				+ "AND pc.AD_ProcessCustom_ID = AD_ProcessParaCustom.AD_ProcessCustom_ID"
+			final String whereClauseRole = "AD_Browse_Field_ID = ? AND EXISTS( "
+				+ "SELECT 1 FROM AD_BrowseCustom AS bc "
+				+ "WHERE bc.AD_Role_ID = ? "
+				+ "AND bc.AD_BrowseCustom_ID = AD_BrowseFieldCustom.AD_BrowseCustom_ID"
 			+ ")";
 			browseFieldCustom = new Query(
 				Env.getCtx(),
-				I_AD_ProcessParaCustom.Table_Name,
+				I_AD_BrowseFieldCustom.Table_Name,
 				whereClauseRole,
 				null
 			)
-				.setParameters(processParameterId, roleId)
+				.setParameters(browseFieldId, roleId)
 				.setOnlyActiveRecords(true)
 				.first()
 			;

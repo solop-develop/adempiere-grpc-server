@@ -68,9 +68,9 @@ import org.spin.backend.grpc.user_customization.SaveWindowCustomizationRequest;
 import org.spin.backend.grpc.user_customization.User;
 import org.spin.backend.grpc.user_customization.UserCustomizationGrpc.UserCustomizationImplBase;
 import org.spin.base.db.LimitUtil;
-import org.spin.base.dictionary.DictionaryUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.dictionary.util.DictionaryUtil;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.Empty;

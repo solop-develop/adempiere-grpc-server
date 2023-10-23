@@ -289,9 +289,10 @@ jobs:
             ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:${{ github.event.release.tag_name }}
             ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:latest
 
+
   # Publish docker image multiplatform in Docker Hub Registry to application
-  push-envoy-imame-dhr:
-    name: Push envoy docker image to Docker Hub
+  push-grpc-proxy-imame-dhr:
+    name: Push grpc-proxy docker image to Docker Hub
     needs:
       - check-docker-secrets
     # Skip step based on secret
@@ -324,7 +325,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: docker/envoy.Dockerfile
+          file: docker/grpc_proxy.Dockerfile
           platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true
           tags: |

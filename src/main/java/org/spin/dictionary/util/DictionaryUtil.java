@@ -13,7 +13,7 @@
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
  * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
-package org.spin.base.dictionary;
+package org.spin.dictionary.util;
 
 import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Form;

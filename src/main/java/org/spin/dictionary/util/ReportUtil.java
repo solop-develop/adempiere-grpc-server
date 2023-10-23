@@ -13,7 +13,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 
-package org.spin.base.dictionary;
+package org.spin.dictionary.util;
 
 import java.io.File;
 import java.io.FileInputStream;

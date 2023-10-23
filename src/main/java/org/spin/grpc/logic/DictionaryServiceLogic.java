@@ -69,7 +69,7 @@ public class DictionaryServiceLogic {
 				if (column == null || column.getAD_Column_ID() <= 0) {
 					continue;
 				}
-				Field.Builder fieldBuilder = Dictionary.convertField(context, column);
+				Field.Builder fieldBuilder = Dictionary.convertFieldByColumn(context, column);
 				int sequence = (recordCount + 1) * 10;
 				fieldBuilder.setSequence(sequence);
 				fieldBuilder.setIsDisplayed(true);

@@ -12,57 +12,69 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.base.dictionary.custom;
+package org.spin.dictionary.custom;
 
-import org.adempiere.core.domains.models.I_AD_BrowseFieldCustom;
-import org.compiere.model.MBrowseFieldCustom;
+import org.adempiere.core.domains.models.I_AD_FieldCustom;
+import org.compiere.model.MFieldCustom;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 
 /**
- * Class for handle Browse Field Custom
+ * Class for handle Field Custom
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
-public class BrowseFieldCustomUtil {
+public class FieldCustomUtil {
 
-	public static MBrowseFieldCustom getBrowseFieldCustom(int browseFieldId) {
+	public static MFieldCustom getFieldCustom(int fieldId) {
 		final int userId = Env.getAD_User_ID(Env.getCtx());
-		final String whereClauseUser = "AD_Browse_Field_ID = ? AND EXISTS( "
-			+ "SELECT 1 FROM AD_BrowseCustom AS bc "
-			+ "WHERE bc.AD_User_ID = ? "
-			+ "AND bc.AD_BrowseCustom_ID = AD_BrowseFieldCustom.AD_BrowseCustom_ID"
+
+		// final String sql = "SELECT AD_Window_ID FROM AD_Window "
+		// 	+ "WHERE EXISTS( "
+		// 	+ "	SELECT 1 FROM AD_Tab t "
+		// 	+ "	INNER JOIN AD_Field f "
+		// 	+ "	ON t.AD_Tab_ID = f.AD_Tab_ID "
+		// 	+ "	AND t.AD_Window_ID = ad_window.AD_Window_ID "
+		// 	+ "	WHERE f.AD_Field_ID = ? "
+		// 	+")";
+		// int windowId = DB.getSQLValueEx(null, sql, fieldId);
+		// ASPUtil.getInstance().getWindow(windowId);
+
+		final String whereClauseUser = "AD_Field_ID = ? AND EXISTS( "
+			+ "SELECT 1 FROM AD_WindowCustom AS wc "
+			+ "INNER JOIN AD_TabCustom AS tc "
+			+ "	ON tc.AD_WindowCustom_ID = wc.AD_WindowCustom_ID "
+			+ "	AND tc.AD_TabCustom_ID = AD_FieldCustom.AD_TabCustom_ID "
+			+ "WHERE wc.AD_User_ID = ? "
 		+ ")";
-		MBrowseFieldCustom browseFieldCustom = new Query(
+		MFieldCustom fieldCustom = new Query(
 			Env.getCtx(),
-			I_AD_BrowseFieldCustom.Table_Name,
+			I_AD_FieldCustom.Table_Name,
 			whereClauseUser,
 			null
 		)
-			.setParameters(browseFieldId, userId)
-			.setOnlyActiveRecords(true)
-			.first()
-		;
-		if (browseFieldCustom == null) {
+		.setParameters(fieldId, userId)
+		.first();
+		if (fieldCustom == null) {
 			final int roleId = Env.getAD_Role_ID(Env.getCtx());
-			final String whereClauseRole = "AD_Browse_Field_ID = ? AND EXISTS( "
-				+ "SELECT 1 FROM AD_BrowseCustom AS bc "
-				+ "WHERE bc.AD_Role_ID = ? "
-				+ "AND bc.AD_BrowseCustom_ID = AD_BrowseFieldCustom.AD_BrowseCustom_ID"
+			final String whereClauseRole = "AD_Field_ID = ? AND EXISTS( "
+				+ "SELECT 1 FROM AD_WindowCustom AS wc "
+				+ "INNER JOIN AD_TabCustom AS tc "
+				+ "	ON tc.AD_WindowCustom_ID = wc.AD_WindowCustom_ID "
+				+ "	AND tc.AD_TabCustom_ID = AD_FieldCustom.AD_TabCustom_ID "
+				+ "WHERE wc.AD_Role_ID = ? "
 			+ ")";
-			browseFieldCustom = new Query(
+			fieldCustom = new Query(
 				Env.getCtx(),
-				I_AD_BrowseFieldCustom.Table_Name,
+				I_AD_FieldCustom.Table_Name,
 				whereClauseRole,
 				null
 			)
-				.setParameters(browseFieldId, roleId)
-				.setOnlyActiveRecords(true)
-				.first()
-			;
+			.setParameters(fieldId, roleId)
+			.first();
 		}
 		// TODO: Add to ASP_Level
 
-		return browseFieldCustom;
+		return fieldCustom;
 	}
 
 }

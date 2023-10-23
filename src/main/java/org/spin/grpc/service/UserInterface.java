@@ -184,7 +184,6 @@ import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
-import org.spin.base.dictionary.ReportUtil;
 import org.spin.base.query.FilterManager;
 import org.spin.base.query.SortingManager;
 import org.spin.base.ui.UserInterfaceConvertUtil;
@@ -195,8 +194,9 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.dictionary.util.ReportUtil;
 import org.spin.model.MADContextInfo;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.ASPUtil;
 
@@ -343,7 +343,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 			String columnName = MColumn.getColumnName(Env.getCtx(), viewColumn.getAD_Column_ID());
 
-			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), columnName);
+			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(entity.get_Table_ID(), columnName);
 
 			Object value = null;
 			if (referenceId > 0) {
@@ -1171,7 +1171,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 		attributes.entrySet().forEach(attribute -> {
-			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if (referenceId > 0) {
 				value = ValueManager.getObjectFromReference(
@@ -1270,7 +1270,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		PO currentEntity = entity;
 		attributes.entrySet().forEach(attribute -> {
-			int referenceId = org.spin.base.dictionary.DictionaryUtil.getReferenceId(
+			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(
 				currentEntity.get_Table_ID(),
 				attribute.getKey()
 			);
