@@ -94,6 +94,7 @@ import org.compiere.util.MimeType;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.common.Currency;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ProductPrice;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
@@ -105,6 +106,7 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
+import org.spin.base.util.convert.ConvertCommon;
 import org.spin.pos.service.POSLogic;
 import org.spin.pos.service.bank.BankManagement;
 import org.spin.pos.service.cash.CashManagement;
@@ -1553,8 +1555,8 @@ public class PointOfSalesForm extends StoreImplBase {
 						)
 					)
 					.setCurrency(
-						ConvertUtil.convertCurrency(
-							MCurrency.get(Env.getCtx(), rs.getInt("C_Currency_ID"))
+						ConvertCommon.convertCurrency(
+							rs.getInt("C_Currency_ID")
 						)
 					)
 					.setAmount(
@@ -1856,7 +1858,11 @@ public class PointOfSalesForm extends StoreImplBase {
 							rs.getString("TenderTypeCode")
 						)
 					)
-					.setCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), rs.getInt("C_Currency_ID"))))
+					.setCurrency(
+						ConvertCommon.convertCurrency(
+							rs.getInt("C_Currency_ID")
+						)
+					)
 					.setIsRefund(rs.getString("IsReceipt").equals("Y")? false: true)
 					.setAmount(
 						ValueManager.getValueFromBigDecimal(
@@ -2326,8 +2332,8 @@ public class PointOfSalesForm extends StoreImplBase {
 					)
 				)
 				.setCurrency(
-					ConvertUtil.convertCurrency(
-						MCurrency.get(Env.getCtx(), paymentReference.get_ValueAsInt("C_Currency_ID"))
+					ConvertCommon.convertCurrency(
+						paymentReference.get_ValueAsInt("C_Currency_ID")
 					)
 				)
 				.setCustomerBankAccountId(paymentReference.get_ValueAsInt("C_BP_BankAccount_ID"))
@@ -3154,15 +3160,15 @@ public class PointOfSalesForm extends StoreImplBase {
 			;
 			if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
 				tenderTypeValue.setRefundReferenceCurrency(
-					ConvertUtil.convertCurrency(
-						MCurrency.get(Env.getCtx(), availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID"))
+					ConvertCommon.convertCurrency(
+						availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID")
 					)
 				);
 			}
 			if(availablePaymentMethod.get_ValueAsInt("ReferenceCurrency_ID") > 0) {
 				tenderTypeValue.setReferenceCurrency(
-					ConvertUtil.convertCurrency(
-						MCurrency.get(Env.getCtx(), availablePaymentMethod.get_ValueAsInt("ReferenceCurrency_ID"))
+					ConvertCommon.convertCurrency(
+						availablePaymentMethod.get_ValueAsInt("ReferenceCurrency_ID")
 					)
 				);
 			}
@@ -3265,12 +3271,12 @@ public class PointOfSalesForm extends StoreImplBase {
 				.setParameters(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), now, now)
 				.setOnlyActiveRecords(true);
 		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.<MCurrency>list()
-		.forEach(currency -> {
-			builder.addCurrencies(ConvertUtil.convertCurrency(currency));
-		});
+		query.setLimit(limit, offset)
+			.getIDsAsList()
+			.forEach(currencyId -> {
+				Currency.Builder currencyBuilder = ConvertCommon.convertCurrency(currencyId);
+				builder.addCurrencies(currencyBuilder);
+			});
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -4941,7 +4947,11 @@ public class PointOfSalesForm extends StoreImplBase {
 		;
 
 		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_RefundReferenceCurrency_ID) > 0) {
-			builder.setRefundReferenceCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_RefundReferenceCurrency_ID))));
+			builder.setRefundReferenceCurrency(
+				ConvertCommon.convertCurrency(
+					pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_RefundReferenceCurrency_ID)
+				)
+			);
 		}
 		//	Set Price List and currency
 		if(pos.getM_PriceList_ID() != 0) {
@@ -4953,11 +4963,17 @@ public class PointOfSalesForm extends StoreImplBase {
 			MBankAccount cashAccount = MBankAccount.get(Env.getCtx(), pos.getC_BankAccount_ID());
 			builder.setDefaultOpeningChargeId(cashAccount.get_ValueAsInt("DefaultOpeningCharge_ID"))
 				.setDefaultWithdrawalChargeId(cashAccount.get_ValueAsInt("DefaultWithdrawalCharge_ID"))
-				.setCashBankAccount(ConvertUtil.convertBankAccount(cashAccount));
+				.setCashBankAccount(
+					ConvertCommon.convertBankAccount(cashAccount)
+				);
 		}
 		//	Bank Account to transfer
 		if(pos.getCashTransferBankAccount_ID() != 0) {
-			builder.setCashBankAccount(ConvertUtil.convertBankAccount(MBankAccount.get(Env.getCtx(), pos.getCashTransferBankAccount_ID())));
+			builder.setCashBankAccount(
+				ConvertCommon.convertBankAccount(
+					pos.getCashTransferBankAccount_ID()
+				)
+			);
 		}
 		//	Warehouse
 		if(pos.getM_Warehouse_ID() > 0) {
@@ -4966,8 +4982,11 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		//	Price List
 		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DisplayCurrency_ID) > 0) {
-			MCurrency displayCurency = MCurrency.get(Env.getCtx(), pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DisplayCurrency_ID));
-			builder.setDisplayCurrency(ConvertUtil.convertCurrency(displayCurency));
+			builder.setDisplayCurrency(
+				ConvertCommon.convertCurrency(
+					pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DisplayCurrency_ID)
+				)
+			);
 		}
 		//	Document Type
 		if(pos.getC_DocType_ID() > 0) {
@@ -5455,7 +5474,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			builder.setTaxRate(ConvertUtil.convertTaxRate(optionalTax.get()));
 		}
 		//	Set currency
-		builder.setCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), priceList.getC_Currency_ID())));
+		builder.setCurrency(
+			ConvertCommon.convertCurrency(
+				priceList.getC_Currency_ID()
+			)
+		);
 		//	Price List Attributes
 		builder.setIsTaxIncluded(priceList.isTaxIncluded())
 			.setValidFrom(
@@ -5495,7 +5518,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			;
 			//	Get from schema
 			if(displayCurrencyId > 0) {
-				builder.setDisplayCurrency(ConvertUtil.convertCurrency(MCurrency.get(Env.getCtx(), displayCurrencyId)));
+				builder.setDisplayCurrency(
+					ConvertCommon.convertCurrency(
+						displayCurrencyId
+					)
+				);
 				//	Get
 				int conversionRateId = MConversionRate.getConversionRateId(priceList.getC_Currency_ID(), displayCurrencyId, RecordUtil.getDate(), conversionTypeId, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()));
 				if(conversionRateId > 0) {
@@ -5973,7 +6000,11 @@ public class PointOfSalesForm extends StoreImplBase {
 						)
 					)
 					.setIsPosRequiredPin(availableCash.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
-					.setBankAccount(ConvertUtil.convertBankAccount(bankAccount))
+					.setBankAccount(
+						ConvertCommon.convertBankAccount(
+							bankAccount
+						)
+					)
 				;
 
 				builder.addCash(availableCashBuilder);

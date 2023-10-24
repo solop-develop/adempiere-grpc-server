@@ -54,7 +54,6 @@ import org.compiere.util.MimeType;
 import org.compiere.util.PaymentExport;
 import org.compiere.util.PaymentExportList;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Currency;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.common.ReportOutput;
@@ -80,10 +79,10 @@ import org.spin.backend.grpc.payment_print_export.PrintResponse;
 import org.spin.backend.grpc.payment_print_export.ProcessRequest;
 import org.spin.backend.grpc.payment_print_export.ProcessResponse;
 import org.spin.base.db.LimitUtil;
-import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
 // import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.base.util.convert.ConvertCommon;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 
 import com.google.protobuf.ByteString;
@@ -157,7 +156,9 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 				)
 			)
 			.setCurrency(
-				convertCurrency(paymentSelection.getC_Currency_ID())
+				ConvertCommon.convertCurrency(
+					paymentSelection.getC_Currency_ID()
+				)
 			)
 			.setBankAccount(
 				convertBankAccount(paymentSelection.getC_BankAccount_ID())
@@ -198,14 +199,6 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 	}
 
 
-
-	private Currency.Builder convertCurrency(int currencyId) {
-		if (currencyId > 0) {
-			MCurrency currency = MCurrency.get(Env.getCtx(), currencyId);
-			return ConvertUtil.convertCurrency(currency);
-		}
-		return Currency.newBuilder();
-	}
 
 	private BankAccount.Builder convertBankAccount(int bankAccountId) {
 		if (bankAccountId > 0) {

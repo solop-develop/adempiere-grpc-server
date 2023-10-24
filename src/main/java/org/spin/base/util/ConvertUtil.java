@@ -32,7 +32,6 @@ import org.adempiere.core.domains.models.I_C_UOM;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
-import org.compiere.model.MBankAccount;
 import org.compiere.model.MCharge;
 import org.compiere.model.MChatEntry;
 import org.compiere.model.MClientInfo;
@@ -67,8 +66,6 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.BankAccount;
-import org.spin.backend.grpc.common.BusinessPartner;
 import org.spin.backend.grpc.common.Charge;
 import org.spin.backend.grpc.common.ChatEntry;
 import org.spin.backend.grpc.common.ChatEntry.ModeratorStatus;
@@ -99,6 +96,7 @@ import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.RMA;
 import org.spin.backend.grpc.pos.RMALine;
 import org.spin.backend.grpc.pos.Shipment;
+import org.spin.base.util.convert.ConvertCommon;
 import org.spin.grpc.service.FileManagement;
 import org.spin.grpc.service.TimeControl;
 import org.spin.model.MADAttachmentReference;
@@ -294,28 +292,8 @@ public class ConvertUtil {
 			.setPrintName(ValueManager.validateNull(documentType.getPrintName())
 		);
 	}
-	
-	/**
-	 * Convert business partner
-	 * @param businessPartner
-	 * @return
-	 */
-	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
-		if(businessPartner == null) {
-			return BusinessPartner.newBuilder();
-		}
-		return BusinessPartner.newBuilder()
-			.setId(businessPartner.getC_BPartner_ID())
-			.setValue(ValueManager.validateNull(businessPartner.getValue()))
-			.setTaxId(ValueManager.validateNull(businessPartner.getTaxID()))
-			.setDuns(ValueManager.validateNull(businessPartner.getDUNS()))
-			.setNaics(ValueManager.validateNull(businessPartner.getNAICS()))
-			.setName(ValueManager.validateNull(businessPartner.getName()))
-			.setLastName(ValueManager.validateNull(businessPartner.getName2()))
-			.setDescription(ValueManager.validateNull(businessPartner.getDescription())
-		);
-	}
-	
+
+
 	/**
 	 * Convert charge from 
 	 * @param chargeId
@@ -349,8 +327,16 @@ public class ConvertUtil {
 			.setId(conversionRate.getC_Conversion_Rate_ID())
 			.setValidFrom(fromMillis(conversionRate.getValidFrom().getTime()))
 			.setConversionTypeId(conversionRate.getC_ConversionType_ID())
-			.setCurrencyFrom(convertCurrency(MCurrency.get(Env.getCtx(), conversionRate.getC_Currency_ID())))
-			.setCurrencyTo(convertCurrency(MCurrency.get(Env.getCtx(), conversionRate.getC_Currency_ID_To())))
+			.setCurrencyFrom(
+				ConvertCommon.convertCurrency(
+					conversionRate.getC_Currency_ID()
+				)
+			)
+			.setCurrencyTo(
+				ConvertCommon.convertCurrency(
+					conversionRate.getC_Currency_ID_To()
+				)
+			)
 			.setMultiplyRate(ValueManager.getValueFromBigDecimal(conversionRate.getMultiplyRate()))
 			.setDivideRate(ValueManager.getValueFromBigDecimal(conversionRate.getDivideRate()));
 		if(conversionRate.getValidTo() != null) {
@@ -490,32 +476,17 @@ public class ConvertUtil {
 		);
 		//	Set Currency
 		if(country.getC_Currency_ID() != 0) {
-			builder.setCurrency(convertCurrency(MCurrency.get(context, country.getC_Currency_ID())));
+			builder.setCurrency(
+				ConvertCommon.convertCurrency(
+					country.getC_Currency_ID()
+				)
+			);
 		}
 		//	
 		return builder;
 	}
-	
-	/**
-	 * Convert Currency
-	 * @param currency
-	 * @return
-	 */
-	public static Currency.Builder convertCurrency(MCurrency currency) {
-		Currency.Builder builder = Currency.newBuilder();
-		if(currency == null) {
-			return builder;
-		}
-		//	Set values
-		return builder.setId(currency.getC_Currency_ID())
-			.setIsoCode(ValueManager.validateNull(currency.getISO_Code()))
-			.setCurSymbol(ValueManager.validateNull(currency.getCurSymbol()))
-			.setDescription(ValueManager.validateNull(currency.getDescription()))
-			.setStandardPrecision(currency.getStdPrecision())
-			.setCostingPrecision(currency.getCostingPrecision()
-		);
-	}
-	
+
+
 	/**
 	 * Convert Price List
 	 * @param priceList
@@ -530,7 +501,11 @@ public class ConvertUtil {
 		return builder.setId(priceList.getM_PriceList_ID())
 			.setName(ValueManager.validateNull(priceList.getName()))
 			.setDescription(ValueManager.validateNull(priceList.getDescription()))
-			.setCurrency(convertCurrency(MCurrency.get(priceList.getCtx(), priceList.getC_Currency_ID())))
+			.setCurrency(
+				ConvertCommon.convertCurrency(
+					priceList.getC_Currency_ID()
+				)
+			)
 			.setIsDefault(priceList.isDefault())
 			.setIsTaxIncluded(priceList.isTaxIncluded())
 			.setIsEnforcePriceLimit(priceList.isEnforcePriceLimit())
@@ -917,8 +892,9 @@ public class ConvertUtil {
 		MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), payment.get_ValueAsInt("C_PaymentMethod_ID"), null);
 		PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
 		
-		MCurrency currency = MCurrency.get(Env.getCtx(), payment.getC_Currency_ID());
-		Currency.Builder currencyBuilder = convertCurrency(currency);
+		Currency.Builder currencyBuilder = ConvertCommon.convertCurrency(
+			payment.getC_Currency_ID()
+		);
 		MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
 		BigDecimal convertedAmount = getConvetedAmount(order, payment, paymentAmount)
 			.setScale(presicion, RoundingMode.HALF_UP);
@@ -958,8 +934,16 @@ public class ConvertUtil {
 			.setPaymentMethod(paymentMethodBuilder)
 			.setCharge(convertCharge(payment.getC_Charge_ID()))
 			.setDocumentType(convertDocumentType(MDocType.get(Env.getCtx(), payment.getC_DocType_ID())))
-			.setBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.getC_BankAccount_ID())))
-			.setReferenceBankAccount(convertBankAccount(MBankAccount.get(Env.getCtx(), payment.get_ValueAsInt("POSReferenceBankAccount_ID"))))
+			.setBankAccount(
+				ConvertCommon.convertBankAccount(
+					payment.getC_BankAccount_ID()
+				)
+			)
+			.setReferenceBankAccount(
+				ConvertCommon.convertBankAccount(
+					payment.get_ValueAsInt("POSReferenceBankAccount_ID")
+				)
+			)
 			.setIsProcessed(payment.isProcessed())
 		;
 		if(payment.getCollectingAgent_ID() > 0) {
@@ -1485,45 +1469,7 @@ public class ConvertUtil {
 		;
 	}
 
-	/**
-	 * Convert Bank Account to gRPC stub class
-	 * @param bankAccount
-	 * @return
-	 */
-	public static BankAccount.Builder convertBankAccount(int bankAccountId) {
-		if(bankAccountId <= 0) {
-			return BankAccount.newBuilder();
-		}
-		MBankAccount bankAccount = MBankAccount.get(Env.getCtx(), bankAccountId);
-		return convertBankAccount(bankAccount);
-	}
-	/**
-	 * Convert Bank Account to gRPC stub class
-	 * @param bankAccount
-	 * @return
-	 */
-	public static BankAccount.Builder convertBankAccount(MBankAccount bankAccount) {
-		BankAccount.Builder builder = BankAccount.newBuilder();
-		if(bankAccount == null) {
-			return builder;
-		}
-		//	
-		return builder.setId(bankAccount.getAD_Org_ID())
-			.setAccountNo(ValueManager.validateNull(bankAccount.getAccountNo()))
-			.setName(ValueManager.validateNull(bankAccount.getName()))
-			.setDescription(ValueManager.validateNull(bankAccount.getDescription()))
-			.setIsDefault(bankAccount.isDefault())
-			.setBban(ValueManager.validateNull(bankAccount.getBBAN()))
-			.setIban(ValueManager.validateNull(bankAccount.getIBAN()))
-			.setBankAccountType(bankAccount.getBankAccountType().equals(MBankAccount.BANKACCOUNTTYPE_Checking)? BankAccount.BankAccountType.CHECKING: BankAccount.BankAccountType.SAVINGS)
-			.setCreditLimit(ValueManager.getValueFromBigDecimal(bankAccount.getCreditLimit()))
-			.setCurrentBalance(ValueManager.getValueFromBigDecimal(bankAccount.getCurrentBalance()))
-			//	Foreign
-			.setCurrency(convertCurrency(MCurrency.get(bankAccount.getCtx(), bankAccount.getC_Currency_ID())))
-			.setBusinessPartner(ConvertUtil.convertBusinessPartner(MBPartner.get(Env.getCtx(), bankAccount.getC_BPartner_ID())))
-		;
-	}
-	
+
 	/**
 	 * Convert organization
 	 * @param organization

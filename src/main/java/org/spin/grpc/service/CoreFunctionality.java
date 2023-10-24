@@ -74,7 +74,8 @@ import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.base.util.convert.ConvertCommon;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.Status;
@@ -450,10 +451,13 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.<MBPartner>list()
-		.forEach(businessPartner -> builder.addBusinessPartners(ConvertUtil.convertBusinessPartner(businessPartner)));
+
+		query.setLimit(limit, offset)
+			.getIDsAsList()
+			.forEach(businessPartnerId -> {
+				BusinessPartner.Builder businessPartnerBuilder = ConvertCommon.convertBusinessPartner(businessPartnerId);
+				builder.addBusinessPartners(businessPartnerBuilder);
+			});
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -605,7 +609,9 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			});
 		});
 		//	Default return
-		return ConvertUtil.convertBusinessPartner(businessPartner);
+		return ConvertCommon.convertBusinessPartner(
+			businessPartner
+		);
 	}
 	
 	/**
@@ -707,7 +713,9 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				.setOnlyActiveRecords(true)
 				.first();
 		//	Default return
-		return ConvertUtil.convertBusinessPartner(businessPartner);
+		return ConvertCommon.convertBusinessPartner(
+			businessPartner
+		);
 	}
 	
 	/**
