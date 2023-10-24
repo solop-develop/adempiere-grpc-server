@@ -46,16 +46,21 @@ service PaymentAllocation {
 	rpc ListTransactionTypes(ListTransactionTypesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/payment-allocation/transaction-types" };
 	}
+
 	// list result
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
-		option (google.api.http) = { get: "/payment-allocation/payments" };
+		option (google.api.http) = { get: "/payment-allocation/payments/{business_partner_id}" };
 	}
 	rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse) {
-		option (google.api.http) = { get: "/payment-allocation/invoices" };
+		option (google.api.http) = { get: "/payment-allocation/invoices/{business_partner_id}" };
 	}
+
 	// process
 	rpc ListCharges(ListChargesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/payment-allocation/charges" };
+	}
+	rpc ListTransactionOrganizations(ListTransactionOrganizationsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/payment-allocation/organizations/transactions" };
 	}
 	rpc Process(ProcessRequest) returns (ProcessResponse) {
 		option (google.api.http) = { 

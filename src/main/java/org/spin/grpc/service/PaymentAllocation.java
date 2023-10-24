@@ -70,6 +70,7 @@ import org.spin.backend.grpc.form.payment_allocation.ListInvoicesResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListOrganizationsRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListPaymentsRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListPaymentsResponse;
+import org.spin.backend.grpc.form.payment_allocation.ListTransactionOrganizationsRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListTransactionTypesRequest;
 import org.spin.backend.grpc.form.payment_allocation.Organization;
 import org.spin.backend.grpc.form.payment_allocation.Payment;
@@ -107,6 +108,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -174,6 +176,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -274,6 +277,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -375,6 +379,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -847,6 +852,52 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		return builder;
 	}
+
+
+
+	@Override
+	public void listTransactionOrganizations(ListTransactionOrganizationsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListLookupItemsResponse.Builder builder = listTransactionOrganizations(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private ListLookupItemsResponse.Builder listTransactionOrganizations(ListTransactionOrganizationsRequest request) {
+		// Organization to overwrite
+		int columnId = 3863; // C_Period.AD_Org_ID
+		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			null,
+			null, null, null,
+			columnUuid,
+			null, null
+		);
+
+		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+			reference,
+			null,
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue()
+		);
+
+		return builderList;
+	}
+
 
 	private Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
 		AtomicReference<Timestamp> transactionDateReference = new AtomicReference<Timestamp>();
