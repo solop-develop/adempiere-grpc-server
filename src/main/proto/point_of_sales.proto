@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -466,7 +466,7 @@ service Store {
 	//	Credit Memo as Payment Method
 	//	List Refund References
 	rpc ListCustomerCredits(ListCustomerCreditsRequest) returns (ListCustomerCreditsResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/customers/{customer_id}/credits" };
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/customers/{customer_id}/credits" };
 	}
 }
 
