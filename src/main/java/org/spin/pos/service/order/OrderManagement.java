@@ -62,11 +62,11 @@ import org.spin.pos.util.ColumnsAdded;
 public class OrderManagement {
 	
 	public static MOrder processOrder(MPOS pos, int orderId, boolean isRefundOpen) {
+		if(orderId <= 0) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
-			if(orderId <= 0) {
-				throw new AdempiereException("@C_Order_ID@ @NotFound@");
-			}
 			MOrder salesOrder = new MOrder(Env.getCtx(), orderId, transactionName);
 			List<PO> paymentReferences = getPaymentReferences(salesOrder);
 			if(!OrderUtil.isValidOrder(salesOrder)) {

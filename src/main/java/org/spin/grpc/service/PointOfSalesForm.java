@@ -427,11 +427,14 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void processOrder(ProcessOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(processOrder(request));
+			Order.Builder order = ConvertUtil.convertOrder(
+				processOrder(request)
+			);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
@@ -3295,11 +3298,12 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private MOrder processOrder(ProcessOrderRequest request) {
-		if(request.getPosId() <= 0) {
-			MPOS pos = getPOSFromId(request.getPosId(), true);
-			OrderManagement.processOrder(pos, request.getId(), request.getIsOpenRefund());
-		}
-		return null;
+		MPOS pos = getPOSFromId(request.getPosId(), true);
+		return OrderManagement.processOrder(
+			pos,
+			request.getId(),
+			request.getIsOpenRefund()
+		);
 	}
 	
 	/**
