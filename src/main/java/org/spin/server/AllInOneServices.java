@@ -21,8 +21,10 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.compiere.util.Env;
+import org.compiere.util.Ini;
 import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.Services;
+import org.spin.eca52.util.JWTUtil;
 import org.spin.grpc.service.BankStatementMatch;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.BusinessPartner;
@@ -116,7 +118,12 @@ public class AllInOneServices {
 
 	private void start() throws IOException {
 		//	Start based on provider
-		Env.setContextProvider(contextProvider);
+		Env.setContextProvider(this.contextProvider);
+		Ini.setProperty(
+			JWTUtil.ECA52_JWT_SECRET_KEY,
+			SetupLoader.getInstance().getServer().getJwt_secret_key()
+		);
+
 		ServerBuilder<?> serverBuilder;
 		if(SetupLoader.getInstance().getServer().isTlsEnabled()) {
 			serverBuilder = NettyServerBuilder.forPort(SetupLoader.getInstance().getServer().getPort())
@@ -305,7 +312,7 @@ public class AllInOneServices {
 			logger.info("Service " + Services.UI.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Add Server
-		server = serverBuilder.build().start();
+		this.server = serverBuilder.build().start();
 		logger.info("Server started, listening on " + SetupLoader.getInstance().getServer().getPort());
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -318,20 +325,20 @@ public class AllInOneServices {
 		});
 	  }
 
-	  private void stop() {
-	    if (server != null) {
-	      server.shutdown();
-	    }
-	  }
+	private void stop() {
+		if (this.server != null) {
+			this.server.shutdown();
+		}
+	}
 
-	  /**
-	   * Await termination on the main thread since the grpc library uses daemon threads.
-	   */
-	  private void blockUntilShutdown() throws InterruptedException {
-	    if (server != null) {
-	      server.awaitTermination();
-	    }
-	  }
+	/**
+	 * Await termination on the main thread since the grpc library uses daemon threads.
+	 */
+	private void blockUntilShutdown() throws InterruptedException {
+		if (this.server != null) {
+			this.server.awaitTermination();
+		}
+	}
 
 	/**
 	 * Main launches the server from the command line.
