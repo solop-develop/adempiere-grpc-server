@@ -123,6 +123,12 @@ public class AllInOneServices {
 			JWTUtil.ECA52_JWT_SECRET_KEY,
 			SetupLoader.getInstance().getServer().getJwt_secret_key()
 		);
+		Ini.setProperty(
+			"JWT_EXPIRATION_TIME",
+			String.valueOf(
+				SetupLoader.getInstance().getServer().getJwt_expiration_time()
+			)
+		);
 
 		ServerBuilder<?> serverBuilder;
 		if(SetupLoader.getInstance().getServer().isTlsEnabled()) {
