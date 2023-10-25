@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -3171,11 +3171,9 @@ public class UserInterface extends UserInterfaceImplBase {
 	@Override
 	public void runCallout(RunCalloutRequest request, StreamObserver<org.spin.backend.grpc.common.Callout> responseObserver) {
 		try {
-			if(request == null
-					|| Util.isEmpty(request.getCallout())) {
+			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			log.fine("Callout Requested = " + request.getCallout());
 			org.spin.backend.grpc.common.Callout.Builder calloutResponse = runcallout(request);
 			responseObserver.onNext(calloutResponse.build());
 			responseObserver.onCompleted();
@@ -3196,6 +3194,12 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private org.spin.backend.grpc.common.Callout.Builder runcallout(RunCalloutRequest request) {
+		if (Util.isEmpty(request.getCallout(), true)) {
+			throw new AdempiereException("@FillMandatory@ @Callout@");
+		}
+		if (Util.isEmpty(request.getColumnName(), true)) {
+			throw new AdempiereException("@FillMandatory@ @ColumnName@");
+		}
 		org.spin.backend.grpc.common.Callout.Builder calloutBuilder = org.spin.backend.grpc.common.Callout.newBuilder();
 		Trx.run(transactionName -> {
 			if (request.getTabId() <= 0) {
@@ -3230,12 +3234,26 @@ public class UserInterface extends UserInterfaceImplBase {
 			ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), attributes);
 
 			//
-			Object oldValue = ValueManager.getObjectFromValue(
-				request.getOldValue()
-			);
-			Object value = ValueManager.getObjectFromValue(
-				request.getValue()
-			);
+			Object oldValue = null;
+			Object value = null;
+			if (field != null && field.getAD_Field_ID() > 0) {
+				int displayTypeId = field.getAD_Column().getAD_Reference_ID();
+				oldValue = ValueManager.getObjectFromReference(
+					request.getOldValue(),
+					displayTypeId
+				);
+				value = ValueManager.getObjectFromReference(
+					request.getValue(),
+					displayTypeId
+				);
+			} else {
+				oldValue = ValueManager.getObjectFromValue(
+					request.getOldValue()
+				);
+				value = ValueManager.getObjectFromValue(
+					request.getValue()
+				);
+			}
 			ContextManager.setTabContextByObject(Env.getCtx(), windowNo, tabNo, request.getColumnName(), value);
 
 			//	Initial load for callout wrapper
