@@ -1126,10 +1126,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -2097,24 +2100,29 @@ public class PointOfSalesForm extends StoreImplBase {
 		});
 		return Empty.newBuilder();
 	}
-	
+
 	/**
-	 * Process a Shipment
-	 * @param request
-	 * @return
-	 * @return Shipment.Builder
+	 * Reverse Sales Transaction
+	 * @param request ReverseSalesRequest
+	 * @return Order.Builder
 	 */
 	private Order.Builder reverseSalesTransaction(ReverseSalesRequest request) {
 		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @C_POS_ID@");
 		}
-		int orderId = request.getPosId();
 		MPOS pos = getPOSFromId(request.getPosId(), true);
+		if (pos == null || pos.getC_POS_ID() <= 0) {
+			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+		}
+		int orderId = request.getId();
+		if (orderId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
+		}
 		MOrder returnOrder = ReverseSalesTransaction.returnCompleteOrder(pos, orderId, request.getDescription());
 		//	Default
 		return ConvertUtil.convertOrder(returnOrder);
 	}
-	
+
 	/**
 	 * Process a Shipment
 	 * @param request
@@ -5355,7 +5363,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		AtomicReference<Timestamp> validFrom = new AtomicReference<>();
 		if(!Util.isEmpty(request.getValidFrom())) {
 			validFrom.set(
-				ValueManager.convertStringToDate(
+				ValueManager.getTimestampFromString(
 					request.getValidFrom()
 				)
 			);
@@ -5724,7 +5732,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		AtomicReference<Timestamp> validFrom = new AtomicReference<>();
 		if(!Util.isEmpty(request.getValidFrom())) {
 			validFrom.set(
-				ValueManager.convertStringToDate(
+				ValueManager.getTimestampFromString(
 					request.getValidFrom()
 				)
 			);
