@@ -1611,7 +1611,7 @@ message Payment {
 
 // Request for delete a order
 message DeleteOrderRequest {
-	int32 order_id = 1;
+	int32 id = 1;
 	int32 pos_id = 2;
 }
 

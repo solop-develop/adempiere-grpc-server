@@ -188,22 +188,8 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void deleteOrder(DeleteOrderRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			Empty.Builder order = deleteOrder(request);
-			responseObserver.onNext(order.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
 	@Override
 	public void updateOrderLine(UpdateOrderLineRequest request, StreamObserver<OrderLine> responseObserver) {
 		try {
@@ -1435,15 +1421,24 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void copyOrder(CopyOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder salesOrder = ConvertUtil.convertOrder(OrderManagement.createOrderFromOther(request.getPosId(), request.getSalesRepresentativeId(), request.getSourceOrderId()));
+			Order.Builder salesOrder = ConvertUtil.convertOrder(
+				OrderManagement.createOrderFromOther(
+					request.getPosId(),
+					request.getSalesRepresentativeId(),
+					request.getSourceOrderId()
+				)
+			);
 			responseObserver.onNext(salesOrder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -4316,24 +4311,39 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Return
 		return Empty.newBuilder();
 	}
-	
-	
+
+
+
+	@Override
+	public void deleteOrder(DeleteOrderRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			Empty.Builder order = deleteOrder(request);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
-	 * Delete order from uuid
+	 * Delete order from id
 	 * @param request
 	 * @return
 	 */
 	private Empty.Builder deleteOrder(DeleteOrderRequest request) {
-		int orderId = request.getOrderId();
+		int orderId = request.getId();
 		if(orderId <= 0) {
-			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
-		MOrder order = new Query(Env.getCtx(), I_C_Order.Table_Name, I_C_Order.COLUMNNAME_C_Order_ID + " = ?", null)
-				.setParameters(orderId)
-				.setClient_ID()
-				.first();
-		if(order == null
-				|| order.getC_Order_ID() == 0) {
+		MOrder order = new MOrder(Env.getCtx(), orderId, null);
+		if(order == null || order.getC_Order_ID() <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 		//	Validate drafted
@@ -4344,12 +4354,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(order.isProcessed()) {
 			throw new AdempiereException("@C_Order_ID@ @Processed@");
 		}
-		//	
-		if(order != null
-				&& order.getC_Order_ID() >= 0) {
-			OrderManagement.validateOrderReleased(order);
-			order.deleteEx(true);
-		}
+		//
+		OrderManagement.validateOrderReleased(order);
+		order.deleteEx(true);
+
 		//	Return
 		return Empty.newBuilder();
 	}
