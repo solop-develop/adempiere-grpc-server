@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -29,6 +29,7 @@ import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.form.bank_statement_match.Bank;
 import org.spin.backend.grpc.form.bank_statement_match.BankAccount;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
 import org.spin.backend.grpc.form.bank_statement_match.BusinessPartner;
@@ -46,6 +47,39 @@ import org.spin.service.grpc.util.ValueManager;
  */
 public class BankStatementMatchConvertUtil {
 
+	public static Bank.Builder convertBank(int bankId) {
+		if (bankId > 0) {
+			MBank bankAccount = MBank.get(Env.getCtx(), bankId);
+			return convertBank(bankAccount);
+		}
+		return Bank.newBuilder();
+	}
+	public static Bank.Builder convertBank(MBank bank) {
+		Bank.Builder builder = Bank.newBuilder();
+		if (bank == null) {
+			return builder;
+		}
+		builder.setId(bank.getC_Bank_ID())
+			.setName(
+				ValueManager.validateNull(
+					bank.getName()
+				)
+			)
+			.setRoutingNo(
+				ValueManager.validateNull(
+					bank.getRoutingNo()
+				)
+			)
+			.setSwiftCode(
+				ValueManager.validateNull(
+					bank.getSwiftCode()
+				)
+			)
+		;
+		return builder;
+	}
+
+
 	public static BankAccount.Builder convertBankAccount(int bankAccountId) {
 		if (bankAccountId > 0) {
 			MBankAccount bankAccount = MBankAccount.get(Env.getCtx(), bankAccountId);
@@ -58,8 +92,6 @@ public class BankStatementMatchConvertUtil {
 		if (bankAccount == null || bankAccount.getC_BankAccount_ID() <= 0) {
 			return builder;
 		}
-		
-		MBank bank = MBank.get(Env.getCtx(), bankAccount.getC_Bank_ID());
 
 		String accountNo = ValueManager.validateNull(bankAccount.getAccountNo());
 		int accountNoLength = accountNo.length();
@@ -70,12 +102,25 @@ public class BankStatementMatchConvertUtil {
 
 		Currency.Builder currencyBuilder = convertCurrency(bankAccount.getC_Currency_ID());
 		builder.setId(bankAccount.getC_BankAccount_ID())
-			.setAccountNo(accountNo)
-			.setAccountName(
-				ValueManager.validateNull(bankAccount.getName())
+			.setAccountNo(
+				ValueManager.validateNull(
+					bankAccount.getAccountNo()
+				)
 			)
-			.setBankName(
-				ValueManager.validateNull(bank.getName())
+			.setAccountNoMask(
+				ValueManager.validateNull(
+					accountNo
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					bankAccount.getName()
+				)
+			)
+			.setBank(
+				convertBank(
+					bankAccount.getC_Bank_ID()
+				)
 			)
 			.setCurrency(
 				currencyBuilder

@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -37,6 +37,9 @@ service BankStatementMatch {
 	rpc GetBankStatement(GetBankStatementRequest) returns (BankStatement) {
 		option (google.api.http) = { get: "/bank-statement-match/bank-statements/{id}" };
 	}
+	rpc ListBankStatements(ListBankStatementsRequest) returns (ListBankStatementsResponse) {
+		option (google.api.http) = { get: "/bank-statement-match/bank-statements" };
+	}
 	rpc ListBankAccounts(ListBankAccountsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/bank-statement-match/accounts" };
 	}
@@ -72,9 +75,6 @@ service BankStatementMatch {
 			body: "*"
 		};
 	}
-	rpc ListBankStatements(ListBankStatementsRequest) returns (ListBankStatementsResponse) {
-		option (google.api.http) = { get: "/bank-statement-match/bank-statements" };
-	}
 	rpc ProcessMovements(ProcessMovementsRequest) returns (ProcessMovementsResponse) {
 		option (google.api.http) = { 
 			post: "/bank-statement-match/process-movements",
@@ -83,14 +83,23 @@ service BankStatementMatch {
 	}
 }
 
+// Bank
+message Bank {
+	int32 id = 1;
+	string name = 2;
+	string routing_no = 3;
+	string swift_code = 4;
+}
+
 //	Bank Account
 message BankAccount {
 	int32 id = 1;
-	string account_no = 2;
-	string account_name = 3;
-	string bank_name = 4;
-	Currency currency = 5;
-	google.protobuf.Value current_balance = 6;
+	string name = 2;
+	string account_no = 3;
+	string account_no_mask = 4;
+	Bank bank = 5;
+	Currency currency = 6;
+	google.protobuf.Value current_balance = 7;
 }
 
 // Bank Statement
@@ -120,8 +129,7 @@ message ListBankStatementsRequest {
 	repeated string select_columns = 4;
 	int32 page_size = 5;
 	string page_token = 6;
-	int32 bank_account_id = 7;
-	string search_value = 8;
+	string search_value = 7;
 }
 
 message ListBankStatementsResponse {
