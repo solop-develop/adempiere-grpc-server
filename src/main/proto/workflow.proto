@@ -41,11 +41,11 @@ service Workflow {
 	}
 	//	List Document Actions
 	rpc ListDocumentActions(ListDocumentActionsRequest) returns (ListDocumentActionsResponse) {
-		option (google.api.http) = { get: "/workflow/workflows/{id}/actions" };
+		option (google.api.http) = { get: "/workflow/actions/{table_name}/{id}" };
 	}
 	//	List Document Statuses
 	rpc ListDocumentStatuses(ListDocumentStatusesRequest) returns (ListDocumentStatusesResponse) {
-		option (google.api.http) = { get: "/workflow/workflows/{id}/statuses" };
+		option (google.api.http) = { get: "/workflow/statuses/{table_name}/{id}" };
 	}
 	//	Workflow Activities
 	rpc ListWorkflowActivities(ListWorkflowActivitiesRequest) returns (ListWorkflowActivitiesResponse) {
@@ -213,8 +213,6 @@ message ListDocumentActionsRequest {
 	string search_value = 7;
 	string table_name = 8;
 	int32 id = 9;
-	string document_status = 10;
-	string document_action = 11;
 }
 
 //	Document Actions List
@@ -236,7 +234,6 @@ message ListDocumentStatusesRequest {
 	string search_value = 7;
 	string table_name = 8;
 	int32 id = 9;
-	string document_status = 10;
 }
 
 //	Document Actions List
