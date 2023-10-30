@@ -65,10 +65,10 @@ import org.spin.backend.grpc.wf.WorkflowProcess;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
 import org.spin.base.util.WorkflowUtil;
 import org.spin.log.LogsConvertUtil;
 import org.spin.log.LogsServiceLogic;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 
 import io.grpc.Status;
@@ -121,27 +121,8 @@ public class LogsInfo extends LogsImplBase {
 			);
 		}
 	}
-	
-	@Override
-	public void listWorkflowLogs(ListWorkflowLogsRequest request,
-			StreamObserver<ListWorkflowLogsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Workflow Logs Requested is Null");
-			}
-			log.fine("Object List Requested = " + request);
-			ListWorkflowLogsResponse.Builder entityValueList = convertWorkflowLogs(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
 	@Override
 	public void listEntityChats(ListEntityChatsRequest request,
 			StreamObserver<ListEntityChatsResponse> responseObserver) {
@@ -243,23 +224,47 @@ public class LogsInfo extends LogsImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+	@Override
+	public void listWorkflowLogs(ListWorkflowLogsRequest request,
+			StreamObserver<ListWorkflowLogsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Workflow Logs Requested is Null");
+			}
+			log.fine("Object List Requested = " + request);
+			ListWorkflowLogsResponse.Builder entityValueList = listWorkflowLogs(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException())
+			;
+		}
+	}
+
 	/**
 	 * Convert request for workflow log to builder
 	 * @param request
 	 * @return
 	 */
-	private ListWorkflowLogsResponse.Builder convertWorkflowLogs(ListWorkflowLogsRequest request) {
+	private ListWorkflowLogsResponse.Builder listWorkflowLogs(ListWorkflowLogsRequest request) {
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<>();
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		if(Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 		//	
 		MTable table = MTable.get(Env.getCtx(), request.getTableName());
 		if(table == null
 				|| table.getAD_Table_ID() == 0) {
-			throw new AdempiereException("@AD_Table_ID@ @Invalid@");
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
 		whereClause
 			.append(I_AD_WF_Process.COLUMNNAME_AD_Table_ID).append(" = ?")
@@ -274,22 +279,28 @@ public class LogsInfo extends LogsImplBase {
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		Query query = new Query(Env.getCtx(), I_AD_WF_Process.Table_Name, whereClause.toString(), null)
-				.setParameters(parameters);
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_WF_Process.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters);
 		int count = query.count();
 		List<MWFProcess> workflowProcessLogList = query
 				.setLimit(limit, offset)
 				.setOrderBy(I_AD_WF_Process.COLUMNNAME_Updated + " DESC")
 				.<MWFProcess>list();
 		//	
-		ListWorkflowLogsResponse.Builder builder = ListWorkflowLogsResponse.newBuilder();
+		ListWorkflowLogsResponse.Builder builder = ListWorkflowLogsResponse.newBuilder()
+			.setRecordCount(count)
+		;
 		//	Convert Record Log
 		for(MWFProcess workflowProcessLog : workflowProcessLogList) {
 			WorkflowProcess.Builder valueObject = WorkflowUtil.convertWorkflowProcess(workflowProcessLog);
 			builder.addWorkflowLogs(valueObject.build());
 		}
-		//	
-		builder.setRecordCount(count);
+
 		//	Set page token
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
