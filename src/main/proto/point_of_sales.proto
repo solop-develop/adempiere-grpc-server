@@ -389,7 +389,7 @@ service Store {
 	}
 	//  List Available Cash 
 	rpc ListAvailableCash(ListAvailableCashRequest) returns (ListAvailableCashResponse) {
-
+		option (google.api.http) = { get: "/store/point-of-sales/terminals/{pos_id}/cashs" };
 	}
 	// Command Shortcut
 	rpc SaveCommandShortcut(SaveCommandShortcutRequest) returns (CommandShortcut) {
@@ -663,7 +663,6 @@ message CashWithdrawalRequest {
 	int32 pos_id = 1;
 	int32 collecting_agent_id = 2;
 	string description = 3;
-	repeated CreatePaymentRequest payments = 4;
 }
 
 //	Request for create cash opening
@@ -671,7 +670,6 @@ message CashOpeningRequest {
 	int32 pos_id = 1;
 	int32 collecting_agent_id = 2;
 	string description = 3;
-	repeated CreatePaymentRequest payments = 4;
 }
 
 // Request for create a Shipment from Order

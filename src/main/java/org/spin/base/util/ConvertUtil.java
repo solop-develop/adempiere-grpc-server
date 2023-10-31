@@ -37,7 +37,6 @@ import org.compiere.model.MChatEntry;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCountry;
-import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInvoice;
@@ -71,7 +70,6 @@ import org.spin.backend.grpc.common.ChatEntry;
 import org.spin.backend.grpc.common.ChatEntry.ModeratorStatus;
 import org.spin.backend.grpc.common.ConversionRate;
 import org.spin.backend.grpc.common.Country;
-import org.spin.backend.grpc.common.Currency;
 import org.spin.backend.grpc.common.DocumentAction;
 import org.spin.backend.grpc.common.DocumentStatus;
 import org.spin.backend.grpc.common.DocumentType;
@@ -91,8 +89,6 @@ import org.spin.backend.grpc.pos.Key;
 import org.spin.backend.grpc.pos.KeyLayout;
 import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.OrderLine;
-import org.spin.backend.grpc.pos.Payment;
-import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.RMA;
 import org.spin.backend.grpc.pos.RMALine;
 import org.spin.backend.grpc.pos.Shipment;
@@ -104,7 +100,6 @@ import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.util.ValueManager;
-import org.spin.store.model.MCPaymentMethod;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
@@ -277,19 +272,13 @@ public class ConvertUtil {
 	
 	/**
 	 * Convert Document Type
+	 * @deprecated {@link #ConvertCommon.convertDocumentType}
 	 * @param documentType
 	 * @return
 	 */
 	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
-		if (documentType == null) {
-			return DocumentType.newBuilder();
-		}
-
-		return DocumentType.newBuilder()
-			.setId(documentType.getC_DocType_ID())
-			.setName(ValueManager.validateNull(documentType.getName()))
-			.setDescription(ValueManager.validateNull(documentType.getDescription()))
-			.setPrintName(ValueManager.validateNull(documentType.getPrintName())
+		return ConvertCommon.convertDocumentType(
+			documentType
 		);
 	}
 
@@ -848,109 +837,7 @@ public class ConvertUtil {
 		//	
 		return Optional.ofNullable(conversionRate).orElse(Env.ZERO);
 	}
-	
-	public static PaymentMethod.Builder convertPaymentMethod(MCPaymentMethod paymentMethod) {
-		PaymentMethod.Builder paymentMethodBuilder = PaymentMethod.newBuilder();
-		if(paymentMethod == null) {
-			return paymentMethodBuilder;
-		}
-		paymentMethodBuilder
-			.setId(paymentMethod.getC_PaymentMethod_ID())
-			.setName(ValueManager.validateNull(paymentMethod.getName()))
-			.setValue(ValueManager.validateNull(paymentMethod.getValue()))
-			.setDescription(ValueManager.validateNull(paymentMethod.getDescription()))
-			.setTenderType(ValueManager.validateNull(paymentMethod.getTenderType()))
-			.setIsActive(paymentMethod.isActive()
-		);
 
-		return paymentMethodBuilder;
-	}
-	
-	/**
-	 * Convert payment
-	 * @param payment
-	 * @return
-	 */
-	public static Payment.Builder convertPayment(MPayment payment) {
-		Payment.Builder builder = Payment.newBuilder();
-		if(payment == null) {
-			return builder;
-		}
-		//	
-		MRefList reference = MRefList.get(Env.getCtx(), MPayment.DOCSTATUS_AD_REFERENCE_ID, payment.getDocStatus(), payment.get_TrxName());
-		int presicion = MCurrency.getStdPrecision(payment.getCtx(), payment.getC_Currency_ID());
-		BigDecimal paymentAmount = payment.getPayAmt();
-		if(payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)
-				&& paymentAmount.compareTo(Env.ZERO) == 0) {
-			MInvoice creditMemo = new Query(payment.getCtx(), MInvoice.Table_Name, "C_Payment_ID = ?", payment.get_TrxName()).setParameters(payment.getC_Payment_ID()).first();
-			if(creditMemo != null) {
-				paymentAmount = creditMemo.getGrandTotal();
-			}
-		}
-		paymentAmount = paymentAmount.setScale(presicion, RoundingMode.HALF_UP);
-
-		MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), payment.get_ValueAsInt("C_PaymentMethod_ID"), null);
-		PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
-		
-		Currency.Builder currencyBuilder = ConvertCommon.convertCurrency(
-			payment.getC_Currency_ID()
-		);
-		MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
-		BigDecimal convertedAmount = getConvetedAmount(order, payment, paymentAmount)
-			.setScale(presicion, RoundingMode.HALF_UP);
-		String invoiceNo = null;
-		if(payment.getC_Invoice_ID() > 0) {
-			invoiceNo = payment.getC_Invoice().getDocumentNo();
-		}
-		
-		//	Convert
-		builder
-			.setId(payment.getC_Payment_ID())
-			.setOrderId(payment.getC_Order_ID())
-			.setDocumentNo(ValueManager.validateNull(payment.getDocumentNo()))
-			.setOrderDocumentNo(ValueManager.validateNull(order.getDocumentNo()))
-			.setInvoiceDocumentNo(ValueManager.validateNull(invoiceNo))
-			.setTenderTypeCode(ValueManager.validateNull(payment.getTenderType()))
-			.setReferenceNo(ValueManager.validateNull(Optional.ofNullable(payment.getCheckNo()).orElse(payment.getDocumentNo())))
-			.setDescription(ValueManager.validateNull(payment.getDescription()))
-			.setAmount(ValueManager.getValueFromBigDecimal(paymentAmount))
-			.setConvertedAmount(ValueManager.getValueFromBigDecimal(convertedAmount))
-			.setBankId(payment.getC_Bank_ID())
-			.setCustomer(
-				POSConvertUtil.convertCustomer(
-					(MBPartner) payment.getC_BPartner()
-				)
-			)
-			.setCurrency(currencyBuilder)
-			.setPaymentDate(ValueManager.getTimestampFromDate(payment.getDateTrx()))
-			.setIsRefund(!payment.isReceipt())
-			.setPaymentAccountDate(ValueManager.getTimestampFromDate(payment.getDateAcct()))
-			.setDocumentStatus(
-				ConvertUtil.convertDocumentStatus(ValueManager.validateNull(payment.getDocStatus()),
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
-				)
-			)
-			.setPaymentMethod(paymentMethodBuilder)
-			.setCharge(convertCharge(payment.getC_Charge_ID()))
-			.setDocumentType(convertDocumentType(MDocType.get(Env.getCtx(), payment.getC_DocType_ID())))
-			.setBankAccount(
-				ConvertCommon.convertBankAccount(
-					payment.getC_BankAccount_ID()
-				)
-			)
-			.setReferenceBankAccount(
-				ConvertCommon.convertBankAccount(
-					payment.get_ValueAsInt("POSReferenceBankAccount_ID")
-				)
-			)
-			.setIsProcessed(payment.isProcessed())
-		;
-		if(payment.getCollectingAgent_ID() > 0) {
-			builder.setCollectingAgent(ConvertUtil.convertSalesRepresentative(MUser.get(payment.getCtx(), payment.getCollectingAgent_ID())));
-		}
-		return builder;
-	}
 	
 	/**
 	 * Get Order conversion rate for payment

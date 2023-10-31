@@ -17,10 +17,12 @@ package org.spin.base.util.convert;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MCurrency;
+import org.compiere.model.MDocType;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.BankAccount;
 import org.spin.backend.grpc.common.BusinessPartner;
 import org.spin.backend.grpc.common.Currency;
+import org.spin.backend.grpc.common.DocumentType;
 import org.spin.service.grpc.util.ValueManager;
 
 /**
@@ -62,6 +64,38 @@ public class ConvertCommon {
 			.setDescription(ValueManager.validateNull(currency.getDescription()))
 			.setStandardPrecision(currency.getStdPrecision())
 			.setCostingPrecision(currency.getCostingPrecision()
+		);
+	}
+
+
+	/**
+	 * Convert Document Type
+	 * @param documentTypeId
+	 * @return
+	 */
+	public static DocumentType.Builder convertDocumentType(int documentTypeId) {
+		DocumentType.Builder builder = DocumentType.newBuilder();
+		if (documentTypeId <= 0) {
+			return builder;
+		}
+		MDocType documenType = MDocType.get(Env.getCtx(), documentTypeId);
+		return convertDocumentType(documenType);
+	}
+	/**
+	 * Convert Document Type
+	 * @param documentType
+	 * @return
+	 */
+	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
+		if (documentType == null) {
+			return DocumentType.newBuilder();
+		}
+
+		return DocumentType.newBuilder()
+			.setId(documentType.getC_DocType_ID())
+			.setName(ValueManager.validateNull(documentType.getName()))
+			.setDescription(ValueManager.validateNull(documentType.getDescription()))
+			.setPrintName(ValueManager.validateNull(documentType.getPrintName())
 		);
 	}
 
