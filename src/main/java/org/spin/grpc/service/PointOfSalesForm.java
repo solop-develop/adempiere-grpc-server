@@ -2130,10 +2130,6 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@CollectingAgent_ID@ @NotFound@");
 		}
 		Trx.run(transactionName -> {
-			if(request.getPaymentsList().size() == 0) {
-				throw new AdempiereException("@C_Payment_ID@ @NotFound@");
-			}
-			//	
 			if(pos.getC_BankAccount_ID() <= 0) {
 				throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
 			}
