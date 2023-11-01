@@ -33,14 +33,17 @@ service CoreFunctionality {
 	rpc GetCountry(GetCountryRequest) returns (Country) {
 		option (google.api.http) = { get: "/core-functionality/countries/{id}" };
 	}
+	// TODO: Verify Organizations (duplicated on security)
 	//	List Organizations
 	rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
 		option (google.api.http) = { get: "/core-functionality/organizations" };
 	}
+	// TODO: Verify Warehouses (duplicated on security)
 	//	Warehouses
 	rpc ListWarehouses(ListWarehousesRequest) returns (ListWarehousesResponse) {
 		option (google.api.http) = { get: "/core-functionality/warehouses" };
 	}
+	// TODO: Verify Languages (duplicated on security)
 	//	Request Language List
 	rpc ListLanguages(ListLanguagesRequest) returns (ListLanguagesResponse) {
 		option (google.api.http) = { get: "/core-functionality/languages" };

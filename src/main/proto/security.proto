@@ -65,6 +65,18 @@ service Security {
 	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
 		option (google.api.http) = { get: "/security/roles" };
 	}
+	//	List Organizations
+	rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
+		option (google.api.http) = { get: "/security/organizations" };
+	}
+	//	Warehouses
+	rpc ListWarehouses(ListWarehousesRequest) returns (ListWarehousesResponse) {
+		option (google.api.http) = { get: "/security/warehouses" };
+	}
+	//	Request Language List
+	rpc ListLanguages(ListLanguagesRequest) returns (ListLanguagesResponse) {
+		option (google.api.http) = { get: "/security/languages" };
+	}
 	// List Available Services
 	rpc ListServices(ListServicesRequest) returns (ListServicesResponse) {
 		option (google.api.http) = { get: "/security/services" };
@@ -84,23 +96,6 @@ message Session {
 	string token = 1;
 }
 
-// List Roles Request
-message ListRolesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-}
-
-//	Roles List
-message ListRolesResponse {
-	int64 record_count = 1;
-	repeated Role roles = 2;
-	string next_page_token = 3;
-}
 
 // Request a Login SessionInfo
 message LoginRequest {
@@ -121,6 +116,37 @@ message LogoutRequest {
 // Request a SessionInfo
 message SessionInfoRequest {
 }
+
+
+// Language Item
+message Language {
+	string language = 1;
+	string language_name = 2;
+	string language_iso = 3;
+	string country_code = 4;
+	bool is_base_language = 5;
+	bool is_system_language = 6;
+	bool is_decimal_point = 7;
+	string date_pattern = 8;
+	string time_pattern = 9;
+}
+
+message ListLanguagesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListLanguagesResponse {
+	int64 record_count = 1;
+	repeated Language languages = 2;
+	string next_page_token = 3;
+}
+
 
 // Request a Change Role
 message ChangeRoleRequest {
@@ -183,7 +209,7 @@ message Client {
 	string logo_web = 6;
 }
 
-// Role Definition
+// Role
 message Role {
 	int32 id = 1;
 	string name = 2;
@@ -209,6 +235,80 @@ message Role {
 	bool is_allow_info_crp = 22;
 	bool is_allow_xls_view = 23;
 }
+
+message ListRolesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListRolesResponse {
+	int64 record_count = 1;
+	repeated Role roles = 2;
+	string next_page_token = 3;
+}
+
+
+// Organization
+message Organization {
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+	bool is_read_only = 4;
+	string duns = 5;
+	string tax_id = 6;
+	string phone = 7;
+	string phone2 = 8;
+	string fax = 9;
+	string corporate_branding_image = 10;
+}
+
+message ListOrganizationsResponse {
+	int64 record_count = 1;
+	repeated Organization organizations = 2;
+	string next_page_token = 4;
+}
+
+message ListOrganizationsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 role_id = 8;
+}
+
+
+// Warehouse
+message Warehouse {
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+}
+
+message ListWarehousesResponse {
+	int64 record_count = 1;
+	repeated Warehouse warehouses = 2;
+	string next_page_token = 3;
+}
+
+message ListWarehousesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 organization_id = 8;
+}
+
 
 // Menu
 message Menu {

@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -14,15 +14,20 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_AD_Menu;
+import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Role;
+import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.compiere.model.MClient;
@@ -30,13 +35,17 @@ import org.compiere.model.MClientInfo;
 import org.compiere.model.MCountry;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MForm;
+import org.compiere.model.MLanguage;
 import org.compiere.model.MMenu;
+import org.compiere.model.MOrg;
+import org.compiere.model.MOrgInfo;
 import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MSession;
 import org.compiere.model.MTree;
 import org.compiere.model.MTreeNode;
 import org.compiere.model.MUser;
+import org.compiere.model.MWarehouse;
 import org.compiere.model.MWindow;
 import org.compiere.model.Query;
 import org.compiere.util.CCache;
@@ -50,15 +59,23 @@ import org.compiere.wf.MWorkflow;
 import org.spin.authentication.services.OpenIDUtil;
 import org.spin.backend.grpc.security.ChangeRoleRequest;
 import org.spin.backend.grpc.security.Client;
+import org.spin.backend.grpc.security.Language;
+import org.spin.backend.grpc.security.ListLanguagesRequest;
+import org.spin.backend.grpc.security.ListLanguagesResponse;
+import org.spin.backend.grpc.security.ListOrganizationsRequest;
+import org.spin.backend.grpc.security.ListOrganizationsResponse;
 import org.spin.backend.grpc.security.ListRolesRequest;
 import org.spin.backend.grpc.security.ListRolesResponse;
 import org.spin.backend.grpc.security.ListServicesRequest;
 import org.spin.backend.grpc.security.ListServicesResponse;
+import org.spin.backend.grpc.security.ListWarehousesRequest;
+import org.spin.backend.grpc.security.ListWarehousesResponse;
 import org.spin.backend.grpc.security.LoginOpenIDRequest;
 import org.spin.backend.grpc.security.LoginRequest;
 import org.spin.backend.grpc.security.LogoutRequest;
 import org.spin.backend.grpc.security.Menu;
 import org.spin.backend.grpc.security.MenuRequest;
+import org.spin.backend.grpc.security.Organization;
 import org.spin.backend.grpc.security.Role;
 import org.spin.backend.grpc.security.SecurityGrpc.SecurityImplBase;
 import org.spin.backend.grpc.security.Service;
@@ -68,11 +85,12 @@ import org.spin.backend.grpc.security.SessionInfoRequest;
 import org.spin.backend.grpc.security.SetSessionAttributeRequest;
 import org.spin.backend.grpc.security.UserInfo;
 import org.spin.backend.grpc.security.UserInfoRequest;
+import org.spin.backend.grpc.security.Warehouse;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ContextManager;
-import org.spin.base.util.SessionManager;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -81,6 +99,7 @@ import com.google.protobuf.Value;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+
 /**
  * @author Yamel Senih, ysenih@erpya.com, ERPCyA http://www.erpya.com
  * Security service
@@ -102,47 +121,126 @@ public class Security extends SecurityImplBase {
 	private static CCache<String, Menu.Builder> menuCache = new CCache<String, Menu.Builder>("Menu_for_User", 30, 0);
 
 
-	boolean isSessionContext(String contextKey) {
-		return contextKey.startsWith("#") || contextKey.startsWith("$");
-	}
-
 
 	@Override
-	public void runLogin(LoginRequest request, StreamObserver<Session> responseObserver) {
+	public void listLanguages(ListLanguagesRequest request, StreamObserver<ListLanguagesResponse> responseObserver) {
 		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			log.fine("Session Requested = " + request.getUserName());
-			Session.Builder sessionBuilder = runLogin(request, true);
-			responseObserver.onNext(sessionBuilder.build());
+			ListLanguagesResponse.Builder languagesList = listLanguages(request);
+			responseObserver.onNext(languagesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getMessage())
+					.augmentDescription(e.getMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
-	@Override
-	public void runLoginOpenID(LoginOpenIDRequest request, StreamObserver<Session> responseObserver) {
-		try {
-			log.fine("Run Login Open ID");
-			Session.Builder sessionBuilder = createSessionFromOpenID(request);
-			responseObserver.onNext(sessionBuilder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
+
+	/**
+	 * Convert languages to gRPC
+	 * @param request
+	 * @return
+	 */
+	private ListLanguagesResponse.Builder listLanguages(ListLanguagesRequest request) {
+		final String whereClause = "(IsSystemLanguage = ? OR IsBaseLanguage = ?)";
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_Language.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(true, true)
+			.setOnlyActiveRecords(true)
+		;
+
+		ListLanguagesResponse.Builder builder = ListLanguagesResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
+
+		query.getIDsAsList()
+			.forEach(languageId -> {
+				MLanguage language = new MLanguage(Env.getCtx(), languageId, null);
+				Language.Builder languaBuilder = convertLanguage(language);
+				builder.addLanguages(languaBuilder);
+			});
+		//	Return
+		return builder;
 	}
-	
+
+	private static Language.Builder convertLanguage(MLanguage language) {
+		Language.Builder languaBuilder = Language.newBuilder();
+		if (language == null) {
+			return languaBuilder;
+		}
+
+		String datePattern = language.getDatePattern();
+		String timePattern = language.getTimePattern();
+		if(Util.isEmpty(datePattern, true)) {
+			org.compiere.util.Language staticLanguage = org.compiere.util.Language.getLanguage(
+				language.getAD_Language()
+			);
+			if(staticLanguage != null) {
+				datePattern = staticLanguage.getDateFormat().toPattern();
+			}
+			//	Validate
+			if(Util.isEmpty(datePattern)) {
+				datePattern = language.getDateFormat().toPattern();
+			}
+		}
+		if(Util.isEmpty(timePattern, true)) {
+			org.compiere.util.Language staticLanguage = org.compiere.util.Language.getLanguage(
+				language.getAD_Language()
+			);
+			if(staticLanguage != null) {
+				timePattern = staticLanguage.getTimeFormat().toPattern();
+			}
+		}
+		languaBuilder.setLanguage(
+				ValueManager.validateNull(
+					language.getAD_Language()
+				)
+			)
+			.setCountryCode(
+				ValueManager.validateNull(
+					language.getCountryCode()
+				)
+			)
+			.setLanguageIso(
+				ValueManager.validateNull(
+					language.getLanguageISO()
+				)
+			)
+			.setLanguageName(
+				ValueManager.validateNull(
+					language.getName()
+				)
+			)
+			.setDatePattern(
+				ValueManager.validateNull(datePattern)
+			)
+			.setTimePattern(
+				ValueManager.validateNull(timePattern)
+			)
+			.setIsBaseLanguage(
+				language.isBaseLanguage()
+			)
+			.setIsSystemLanguage(
+				language.isSystemLanguage())
+			.setIsDecimalPoint(
+				language.isDecimalPoint()
+			)
+		;
+		return languaBuilder;
+	}
+
+
 	@Override
 	public void listServices(ListServicesRequest request, StreamObserver<ListServicesResponse> responseObserver) {
 		try {
@@ -169,10 +267,13 @@ public class Security extends SecurityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -187,10 +288,13 @@ public class Security extends SecurityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -206,10 +310,12 @@ public class Security extends SecurityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -226,10 +332,12 @@ public class Security extends SecurityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -239,13 +347,20 @@ public class Security extends SecurityImplBase {
 		//	Language
 		String language = Env.getAD_Language(context);
 		int warehouseId = Env.getContextAsInt(context, "#M_Warehouse_ID");
-		if (!Util.isEmpty(request.getLanguage())) {
+		if (!Util.isEmpty(request.getLanguage(), true)) {
 			language = ContextManager.getDefaultLanguage(request.getLanguage());
 		}
 		MSession currentSession = MSession.get(context, false);
 		// Session values
 		Session.Builder builder = Session.newBuilder();
-		final String bearerToken = SessionManager.createSession(currentSession.getWebSession(), language, currentSession.getAD_Role_ID(), currentSession.getCreatedBy(), currentSession.getAD_Org_ID(), warehouseId);
+		final String bearerToken = SessionManager.createSession(
+			currentSession.getWebSession(),
+			language,
+			currentSession.getAD_Role_ID(),
+			currentSession.getCreatedBy(),
+			currentSession.getAD_Org_ID(),
+			warehouseId
+		);
 		builder.setToken(bearerToken);
 		return builder;
 	}
@@ -262,10 +377,13 @@ public class Security extends SecurityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -303,7 +421,8 @@ public class Security extends SecurityImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException()
@@ -375,7 +494,292 @@ public class Security extends SecurityImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listOrganizations(ListOrganizationsRequest request,
+			StreamObserver<ListOrganizationsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListOrganizationsResponse.Builder organizationsList = listOrganizations(request);
+			responseObserver.onNext(organizationsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	/**
+	 * Convert Organization to list
+	 * @param request
+	 * @return
+	 */
+	private ListOrganizationsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
+		final int roleId = request.getRoleId();
+		if(roleId < 0) {
+			throw new AdempiereException("@AD_Role_ID@ @NotFound@");
+		}
+		MRole role = MRole.get(Env.getCtx(), roleId);
+
+		//	get from role access
+		if (role == null || !role.isActive()) {
+			throw new AdempiereException("@AD_Role_ID@ @NotFound@");
+		}
+
+		List<Object> parameters = new ArrayList<Object>();
+		String whereClause = "1 = 2";
+		//	get from role access
+		if (role.isAccessAllOrgs()) {
+			whereClause = "(EXISTS(SELECT 1 FROM AD_Role r "
+				+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
+				+ "AND r.AD_Role_ID = ? "
+				+ "AND r.IsActive = 'Y') "
+				+ "OR AD_Org_ID = 0) "
+			;
+			parameters.add(role.getAD_Role_ID());
+		} else {
+			if(role.isUseUserOrgAccess()) {
+				whereClause = "EXISTS(SELECT 1 FROM AD_User_OrgAccess ua "
+					+ "WHERE ua.AD_Org_ID = AD_Org.AD_Org_ID "
+					+ "AND ua.AD_User_ID = ? "
+					+ "AND ua.IsActive = 'Y')";
+				parameters.add(Env.getAD_User_ID(Env.getCtx()));
+			} else {
+				whereClause = "EXISTS(SELECT 1 FROM AD_Role_OrgAccess ra "
+					+ "WHERE ra.AD_Org_ID = AD_Org.AD_Org_ID "
+					+ "AND ra.AD_Role_ID = ? "
+					+ "AND ra.IsActive = 'Y')";
+				parameters.add(role.getAD_Role_ID());
+			}
+		}
+		whereClause += " AND IsSummary = ? ";
+		parameters.add(false);
+
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_Org.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(parameters)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
+
+		//	Get page and count
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		int count = query.count();
+		//	Set page token
+		if(count > limit) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListOrganizationsResponse.Builder builder = ListOrganizationsResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				ValueManager.validateNull(nexPageToken)
+			)
+		;
+		//	Get List
+		query.setLimit(limit, offset)
+			.getIDsAsList()
+			.forEach(organizationId -> {
+				MOrg organization = MOrg.get(Env.getCtx(), organizationId);
+				Organization.Builder organizationBuilder = convertOrganization(organization);
+				builder.addOrganizations(organizationBuilder);
+			});
+		//	
+		return builder;
+	}
+
+	/**
+	 * Convert organization
+	 * @param organization
+	 * @return
+	 */
+	public static Organization.Builder convertOrganization(MOrg organization) {
+		Organization.Builder organizationBuilder = Organization.newBuilder();
+		if (organization == null) {
+			return organizationBuilder;
+		}
+		MOrgInfo organizationInfo = MOrgInfo.get(Env.getCtx(), organization.getAD_Org_ID(), null);
+		AtomicReference<String> corporateImageBranding = new AtomicReference<String>();
+		if(organizationInfo.getCorporateBrandingImage_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(organizationInfo.getAD_Client_ID())) {
+			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), organizationInfo.getAD_Client_ID());
+			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(Env.getCtx(), clientInfo.getFileHandler_ID(), organizationInfo.getCorporateBrandingImage_ID(), null);
+			if(attachmentReference != null
+					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
+				corporateImageBranding.set(attachmentReference.getValidFileName());
+			}
+		}
+		
+		organizationBuilder.setId(
+				organization.getAD_Org_ID()
+			)
+			.setCorporateBrandingImage(
+				ValueManager.validateNull(
+					corporateImageBranding.get()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					organization.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					organization.getDescription()
+				)
+			)
+			.setDuns(
+				ValueManager.validateNull(
+					organizationInfo.getDUNS()
+				)
+			)
+			.setTaxId(
+				ValueManager.validateNull(
+					organizationInfo.getTaxID()
+				)
+			)
+			.setPhone(
+				ValueManager.validateNull(
+					organizationInfo.getPhone()
+				)
+			)
+			.setPhone2(
+				ValueManager.validateNull(
+					organizationInfo.getPhone2()
+				)
+			)
+			.setFax(
+				ValueManager.validateNull(
+					organizationInfo.getFax()
+				)
+			)
+			.setIsReadOnly(false)
+		;
+		return organizationBuilder;
+	}
+
+
+
+	@Override
+	public void listWarehouses(ListWarehousesRequest request, StreamObserver<ListWarehousesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListWarehousesResponse.Builder organizationsList = listWarehouses(request);
+			responseObserver.onNext(organizationsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	/**
+	 * Convert warehouses list
+	 * @param request
+	 * @return
+	 */
+	private ListWarehousesResponse.Builder listWarehouses(ListWarehousesRequest request) {
+		int organizationId = request.getOrganizationId();
+		final String whereClause = "AD_Org_ID = ? AND IsInTransit = ? ";
+		Query query = new Query(
+			Env.getCtx(),
+			I_M_Warehouse.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(organizationId, false)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
+
+		//	Get page and count
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		// int offset = (pageNumber - 1) * limit;
+		int count = query.count();
+		//	Set page token
+		if(count > limit) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListWarehousesResponse.Builder builder = ListWarehousesResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				ValueManager.validateNull(
+					nexPageToken
+				)
+			)
+		;
+
+		//	Get List
+		// TODO: Fix .setLimit combined with .setApplyAccessFilter and with access record (ROWNUM error)
+		query //.setLimit(limit, offset)
+			.getIDsAsList()
+			.forEach(warehouseId -> {
+				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+				Warehouse.Builder warehousBuilder = convertWarehouse(warehouse);
+				builder.addWarehouses(
+					warehousBuilder
+				);
+			});
+		//	
+		return builder;
+	}
+
+	/**
+	 * Convert warehouse
+	 * @param warehouse
+	 * @return
+	 */
+	public static Warehouse.Builder convertWarehouse(MWarehouse warehouse) {
+		Warehouse.Builder warehousBuilder = Warehouse.newBuilder();
+		if (warehouse == null) {
+			return warehousBuilder;
+		}
+		warehousBuilder.setId(
+				warehouse.getM_Warehouse_ID()
+			)
+			.setName(
+				ValueManager.validateNull(
+					warehouse.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					warehouse.getDescription()
+				)
+			)
+		;
+		return warehousBuilder;
+	}
+
+
+
 	/**
 	 * Get User ID
 	 * @param userName
@@ -386,7 +790,31 @@ public class Security extends SecurityImplBase {
 		Login login = new Login(Env.getCtx());
 		return login.getAuthenticatedUserId(userName, userPass);
 	}
-	
+
+
+
+	@Override
+	public void runLogin(LoginRequest request, StreamObserver<Session> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			log.fine("Session Requested = " + request.getUserName());
+			Session.Builder sessionBuilder = runLogin(request, true);
+			responseObserver.onNext(sessionBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Get and convert session
 	 * @param request
@@ -472,7 +900,28 @@ public class Security extends SecurityImplBase {
 			//	Return session
 			return builder;
 	}
-	
+
+
+
+	@Override
+	public void runLoginOpenID(LoginOpenIDRequest request, StreamObserver<Session> responseObserver) {
+		try {
+			log.fine("Run Login Open ID");
+			Session.Builder sessionBuilder = createSessionFromOpenID(request);
+			responseObserver.onNext(sessionBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Get and convert session
 	 * @param request
@@ -523,10 +972,11 @@ public class Security extends SecurityImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -631,7 +1081,13 @@ public class Security extends SecurityImplBase {
 		//	Set default context
 		Struct.Builder contextValues = Struct.newBuilder();
 		Env.getCtx().entrySet().stream()
-			.filter(keyValue -> isSessionContext(String.valueOf(keyValue.getKey())))
+			.filter(keyValue -> {
+				return ContextManager.isSessionContext(
+					String.valueOf(
+						keyValue.getKey()
+					)
+				);
+			})
 			.forEach(contextKeyValue -> {
 				contextValues.putFields(
 					contextKeyValue.getKey().toString(),
@@ -655,7 +1111,7 @@ public class Security extends SecurityImplBase {
 			builder.setBoolValue(booleanValue);
 		} else if(ValueManager.isDate(value)) {
 			return ValueManager.getValueFromDate(
-				ValueManager.convertStringToDate(value)
+				ValueManager.getTimestampFromString(value)
 			);
 		} else {
 			builder.setStringValue(
