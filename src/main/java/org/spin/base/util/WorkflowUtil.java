@@ -52,7 +52,7 @@ import org.spin.backend.grpc.wf.WorkflowProcess;
 import org.spin.backend.grpc.wf.WorkflowState;
 import org.spin.backend.grpc.wf.WorkflowTransition;
 import org.spin.backend.grpc.wf.ZoomWindow;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
 /**

@@ -28,7 +28,7 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.ZoomWindow;
 import org.spin.base.util.DictionaryUtil;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
 public class DictionaryConvertUtil {

@@ -26,7 +26,7 @@ import org.spin.backend.grpc.form.import_file_loader.FormatField;
 import org.spin.backend.grpc.form.import_file_loader.ImportColumn;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
 import org.spin.backend.grpc.form.import_file_loader.ImportTable;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 public class ImportFileLoaderConvertUtil {
 

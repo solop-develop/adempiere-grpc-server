@@ -69,7 +69,7 @@ import org.spin.base.util.WorkflowUtil;
 import org.spin.log.LogsConvertUtil;
 import org.spin.log.LogsServiceLogic;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

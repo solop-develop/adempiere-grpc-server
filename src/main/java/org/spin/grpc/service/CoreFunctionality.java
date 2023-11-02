@@ -76,7 +76,8 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.convert.ConvertCommon;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -139,11 +140,11 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				)
 			;
 		}
-
+		
 		// backend info
 		builder.setBackendDateVersion(
 				ValueManager.getTimestampFromDate(
-					ValueManager.convertStringToDate(Version.DATE_VERSION)
+					TimeManager.getTimestampFromString(Version.DATE_VERSION)
 				)
 			)
 			.setBackendMainVersion(

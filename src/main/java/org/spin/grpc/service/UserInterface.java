@@ -197,7 +197,7 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.util.ReportUtil;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
 import com.google.protobuf.ByteString;

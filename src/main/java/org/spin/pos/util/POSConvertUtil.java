@@ -51,7 +51,7 @@ import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.base.util.ConvertUtil;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.Struct;

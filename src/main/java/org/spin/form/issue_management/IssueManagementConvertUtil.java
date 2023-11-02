@@ -40,7 +40,7 @@ import org.spin.backend.grpc.issue_management.Priority;
 import org.spin.backend.grpc.issue_management.RequestType;
 import org.spin.backend.grpc.issue_management.User;
 import org.spin.model.MADAttachmentReference;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 import static com.google.protobuf.util.Timestamps.fromMillis;
 

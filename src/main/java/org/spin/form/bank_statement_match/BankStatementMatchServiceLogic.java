@@ -74,7 +74,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
 

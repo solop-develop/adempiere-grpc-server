@@ -44,7 +44,7 @@ import org.spin.backend.grpc.update.StepValue;
 import org.spin.backend.grpc.update.Update;
 import org.spin.backend.grpc.update.UpdateCenterGrpc.UpdateCenterImplBase;
 import org.spin.base.db.LimitUtil;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

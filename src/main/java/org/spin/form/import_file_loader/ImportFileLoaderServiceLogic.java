@@ -65,7 +65,7 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.UserInterface;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 import org.spin.util.AttachmentUtil;
 
@@ -525,7 +525,7 @@ public class ImportFileLoaderServiceLogic {
 				Value.Builder valueBuilder = Value.newBuilder();
 				if (row.isDate()) {
 					Timestamp dateValue = Timestamp.valueOf(entry);
-					valueBuilder = ValueManager.getValueFromDate(dateValue);
+					valueBuilder = ValueManager.getValueFromTimestamp(dateValue);
 				} else if (row.isNumber()) {
 					BigDecimal numberValue = null;
 					if (!Util.isEmpty(entry, true)) {

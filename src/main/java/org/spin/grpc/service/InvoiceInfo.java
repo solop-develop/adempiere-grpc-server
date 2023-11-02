@@ -33,7 +33,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.backend.grpc.invoice.InvoiceGrpc.InvoiceImplBase;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.invoice.ListInvoiceInfoRequest;

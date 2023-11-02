@@ -71,7 +71,8 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -548,7 +549,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 				if (customField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0 && !Util.isEmpty(fieldAttributes.getIsDefaultDisplayedAsPanel(), true)) {
 					customField.set_ValueOfColumn(
 						DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
-						ValueManager.booleanToString(
+						BooleanManager.getBooleanFromString(
 							fieldAttributes.getIsDefaultDisplayedAsPanel()
 						)
 					);
@@ -560,7 +561,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 				if (customField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 					customField.set_ValueOfColumn(
 						DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME,
-						ValueManager.booleanToString(
+						BooleanManager.getBooleanToString(
 							fieldAttributes.getIsDefaultDisplayedAsTable()
 						)
 					);
@@ -698,7 +699,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			if (customBrowseField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				customBrowseField.set_ValueOfColumn(
 					DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
-					ValueManager.booleanToString(
+					BooleanManager.getBooleanToString(
 						fieldAttributes.getIsDefaultDisplayedAsPanel()
 					)
 				);
@@ -710,7 +711,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			if (customBrowseField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 				customBrowseField.set_ValueOfColumn(
 					DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME,
-					ValueManager.booleanToString(
+					BooleanManager.getBooleanToString(
 						fieldAttributes.getIsDefaultDisplayedAsTable()
 					)
 				);
@@ -828,7 +829,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			if (customProcessParameter.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				customProcessParameter.set_ValueOfColumn(
 					DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
-					ValueManager.booleanToString(
+					BooleanManager.getBooleanToString(
 						fieldAttributes.getIsDefaultDisplayedAsPanel()
 					)
 				);

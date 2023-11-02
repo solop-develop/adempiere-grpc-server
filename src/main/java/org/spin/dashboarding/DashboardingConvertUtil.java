@@ -50,7 +50,7 @@ import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.convert.DictionaryConvertUtil;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * This class was created for add all convert methods for POS form

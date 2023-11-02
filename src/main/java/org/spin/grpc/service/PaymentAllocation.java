@@ -81,7 +81,8 @@ import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.PaymentAllocationImplBase;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -507,7 +508,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		String transactionType = request.getTransactionType();
 		if (!Util.isEmpty(transactionType, true) && !transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesPayables)) {
-			String isReceipt = ValueManager.booleanToString(
+			String isReceipt = BooleanManager.getBooleanToString(
 				transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesOnly)
 			);
 			sql.append(" AND p.IsReceipt= '" + isReceipt +"'" );
@@ -550,7 +551,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
-				boolean isReceipt = ValueManager.stringToBoolean(
+				boolean isReceipt = BooleanManager.getBooleanFromString(
 					rs.getString("IsReceipt")
 				);
 				TransactionType.Builder transactionTypeBuilder = convertTransactionType(
@@ -671,7 +672,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		String transactionType = request.getTransactionType();
 		if (!Util.isEmpty(transactionType, true) && !transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesPayables)) {
-			String isReceipt = ValueManager.booleanToString(
+			String isReceipt = BooleanManager.getBooleanToString(
 				transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesOnly)
 			);
 			sql.append(" AND i.IsSOTrx= '" + isReceipt +"'" );
@@ -716,7 +717,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
-				boolean isSalesTransaction = ValueManager.stringToBoolean(
+				boolean isSalesTransaction = BooleanManager.getBooleanFromString(
 					rs.getString(I_C_Invoice.COLUMNNAME_IsSOTrx)
 				);
 				TransactionType.Builder transactionTypeBuilder = convertTransactionType(

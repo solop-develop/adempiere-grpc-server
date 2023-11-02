@@ -125,7 +125,8 @@ import org.spin.pos.util.PaymentConvertUtil;
 import org.spin.pos.util.TicketHandler;
 import org.spin.pos.util.TicketResult;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -5389,7 +5390,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		AtomicReference<Timestamp> validFrom = new AtomicReference<>();
 		if(!Util.isEmpty(request.getValidFrom())) {
 			validFrom.set(
-				ValueManager.getTimestampFromString(
+				TimeManager.getTimestampFromString(
 					request.getValidFrom()
 				)
 			);
@@ -5521,7 +5522,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		builder.setIsTaxIncluded(priceList.isTaxIncluded())
 			.setValidFrom(
 				ValueManager.validateNull(
-					ValueManager.convertDateToString(
+					TimeManager.getTimestampToString(
 						productPricing.getPriceDate()
 					)
 				)
@@ -5758,7 +5759,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		AtomicReference<Timestamp> validFrom = new AtomicReference<>();
 		if(!Util.isEmpty(request.getValidFrom())) {
 			validFrom.set(
-				ValueManager.getTimestampFromString(
+				TimeManager.getTimestampFromString(
 					request.getValidFrom()
 				)
 			);

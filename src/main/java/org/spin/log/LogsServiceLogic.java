@@ -37,7 +37,8 @@ import org.spin.backend.grpc.logs.UserActivity;
 import org.spin.backend.grpc.logs.UserActivityType;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import static com.google.protobuf.util.Timestamps.toMillis;
 
@@ -140,7 +141,7 @@ public class LogsServiceLogic {
 					u1.getEntityLog().getLogDate()
 				);
 			} else {
-				from = ValueManager.getTimestampFromLong(
+				from = TimeManager.getTimestampFromLong(
 					toMillis(u1.getProcessLog().getLastRun())
 				);
 			}
@@ -151,7 +152,7 @@ public class LogsServiceLogic {
 					u2.getEntityLog().getLogDate()
 				);
 			} else {
-				to = ValueManager.getTimestampFromLong(
+				to = TimeManager.getTimestampFromLong(
 					toMillis((u2.getProcessLog().getLastRun())));
 			}
 

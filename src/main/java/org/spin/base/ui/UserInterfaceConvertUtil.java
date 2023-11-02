@@ -22,7 +22,7 @@ import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.TreeType;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * This class was created for add all convert methods for User Interface service

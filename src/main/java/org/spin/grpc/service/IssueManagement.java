@@ -66,7 +66,8 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.SessionManager;
 import org.spin.form.issue_management.IssueManagementConvertUtil;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -630,7 +631,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			ValueManager.validateNull(request.getPriorityValue())
 		);
 		requestRecord.setDateNextAction(
-			ValueManager.convertStringToDate(request.getDateNextAction())
+			TimeManager.getTimestampFromString(request.getDateNextAction())
 		);
 		requestRecord.saveEx();
 

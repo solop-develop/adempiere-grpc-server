@@ -20,7 +20,7 @@ import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.LookupItem;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
 

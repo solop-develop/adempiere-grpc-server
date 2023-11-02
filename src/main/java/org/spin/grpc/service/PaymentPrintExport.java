@@ -83,7 +83,7 @@ import org.spin.base.util.LookupUtil;
 // import org.spin.base.util.RecordUtil;
 import org.spin.base.util.convert.ConvertCommon;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.ByteString;
 

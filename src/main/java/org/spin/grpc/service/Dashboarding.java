@@ -86,7 +86,7 @@ import org.spin.base.util.SessionManager;
 import org.spin.dashboarding.DashboardingConvertUtil;
 import org.spin.eca50.controller.ChartBuilder;
 import org.spin.eca50.data.ChartValue;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Value;
 

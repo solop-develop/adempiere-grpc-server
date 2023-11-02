@@ -70,7 +70,8 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.WorkflowUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -306,7 +307,7 @@ public class Workflow extends WorkflowImplBase {
 			documentStatus = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocStatus);
 			documentAction = entity.get_ValueAsString(I_C_Order.COLUMNNAME_DocAction);
 			//
-			isProcessing = ValueManager.booleanToString(
+			isProcessing = BooleanManager.getBooleanToString(
 				entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_Processing)
 			);
 			documentTypeId = entity.get_ValueAsInt(I_C_Order.COLUMNNAME_C_DocTypeTarget_ID);
@@ -321,7 +322,7 @@ public class Workflow extends WorkflowImplBase {
 				}
 			}
 			if (entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
-				isSOTrx = ValueManager.booleanToString(
+				isSOTrx = BooleanManager.getBooleanToString(
 					entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)
 				);
 			}
@@ -590,7 +591,7 @@ public class Workflow extends WorkflowImplBase {
 
 		String isSOTrx = "Y";
 		if (entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
-			isSOTrx = ValueManager.booleanToString(
+			isSOTrx = BooleanManager.getBooleanToString(
 				entity.get_ValueAsBoolean(I_C_Order.COLUMNNAME_IsSOTrx)
 			);
 		}
@@ -749,7 +750,7 @@ public class Workflow extends WorkflowImplBase {
 			if (MWFNode.ACTION_UserChoice.equals(node.getAction())) {
 				MColumn column = MColumn.get(Env.getCtx(), node.getAD_Column_ID());
 				int displayTypeId = column.getAD_Reference_ID();
-				String isApproved = ValueManager.booleanToString(
+				String isApproved = BooleanManager.getBooleanToString(
 					request.getIsApproved());
 				try {
 					workActivity.setUserChoice(userId, isApproved, displayTypeId, message);

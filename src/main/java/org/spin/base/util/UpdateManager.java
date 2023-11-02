@@ -25,7 +25,7 @@ import org.spin.backend.grpc.update.ListStepsResponse;
 import org.spin.backend.grpc.update.ListUpdatesRequest;
 import org.spin.backend.grpc.update.ListUpdatesResponse;
 import org.spin.backend.grpc.update.UpdateCenterGrpc;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

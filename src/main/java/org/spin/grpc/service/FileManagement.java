@@ -52,7 +52,7 @@ import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.model.MADAttachmentReference;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.ByteString;

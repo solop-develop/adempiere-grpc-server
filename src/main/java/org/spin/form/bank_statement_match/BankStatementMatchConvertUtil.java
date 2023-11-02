@@ -39,7 +39,10 @@ import org.spin.backend.grpc.form.bank_statement_match.MatchingMovement;
 import org.spin.backend.grpc.form.bank_statement_match.Payment;
 import org.spin.backend.grpc.form.bank_statement_match.ResultMovement;
 import org.spin.backend.grpc.form.bank_statement_match.TenderType;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TimeManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * This class was created for add all convert methods for Issue Management form
@@ -481,7 +484,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setIsAutomatic(
-				ValueManager.stringToBoolean(
+				BooleanManager.getBooleanFromString(
 					bankStatemet.getEftMemo()
 				)
 			)
@@ -532,7 +535,6 @@ public class BankStatementMatchConvertUtil {
 		if (bankStatemet == null || bankStatemet.getI_BankStatement_ID() <= 0) {
 			return builder;
 		}
-
 		builder.setId(bankStatemet.getI_BankStatement_ID())
 			.setReferenceNo(
 				ValueManager.validateNull(
@@ -553,17 +555,17 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueManager.getTimestampFromDate(
+				TimeManager.convertDateToValue(
 					bankStatemet.getStatementLineDate()
 				)
 			)
 			.setAmount(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.convertFromDecimalToValue(
 					bankStatemet.getTrxAmt()
 				)
 			)
 			.setIsAutomatic(
-				ValueManager.stringToBoolean(
+				BooleanManager.getBooleanFromString(
 					bankStatemet.getEftMemo()
 				)
 			)

@@ -99,7 +99,7 @@ import org.spin.model.MADAttachmentReference;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;

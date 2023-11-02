@@ -93,7 +93,7 @@ import org.spin.grpc.logic.DictionaryServiceLogic;
 import org.spin.model.MADContextInfo;
 import org.spin.model.MADFieldCondition;
 import org.spin.model.MADFieldDefinition;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 import org.spin.util.AbstractExportFormat;
 import org.spin.util.ReportExportHandler;

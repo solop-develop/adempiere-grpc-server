@@ -32,7 +32,7 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 public class POSLogic {
 

@@ -51,7 +51,7 @@ import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.base.db.FromUtil;
 import org.spin.base.db.ParameterUtil;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;

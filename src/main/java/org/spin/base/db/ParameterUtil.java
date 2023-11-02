@@ -28,7 +28,9 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.TimeManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Value;
 
@@ -80,7 +82,7 @@ public class ParameterUtil {
 			pstmt.setDate(index, (Date) value);
 		} else if(value instanceof Boolean) {
 			// pstmt.setString(index, ((Boolean) value) ? "Y" : "N");
-			String boolValue = ValueManager.booleanToString((Boolean) value);
+			String boolValue = BooleanManager.getBooleanToString((Boolean) value);
 			pstmt.setString(index, boolValue);
 		} else {
 			pstmt.setObject(index, null);
@@ -122,12 +124,12 @@ public class ParameterUtil {
 			pstmt.setBigDecimal(index, ValueManager.getBigDecimalFromValue(grpcValue));
 		} else if(value instanceof Boolean) {
 			// pstmt.setBoolean(index, ValueManager.getBooleanFromValue(grpcValue));
-			String boolValue = ValueManager.booleanToString((Boolean) value);
+			String boolValue = BooleanManager.getBooleanToString((Boolean) value);
 			pstmt.setString(index, boolValue);
 		} else if(value instanceof String) {
 			pstmt.setString(index, ValueManager.getStringFromValue(grpcValue));
 		} else if(value instanceof Timestamp) {
-			pstmt.setTimestamp(index, ValueManager.getDateFromValue(grpcValue));
+			pstmt.setTimestamp(index, TimeManager.getTimestampFromObject(grpcValue));
 		} else {
 			pstmt.setObject(index, value);
 		}
@@ -149,7 +151,7 @@ public class ParameterUtil {
 		} else if (value instanceof String) {
 			sqlValue = value.toString();
 		} else if (value instanceof Boolean) {
-			sqlValue = " '" + ValueManager.booleanToString((Boolean) value, false) + "' ";
+			sqlValue = " '" + BooleanManager.getBooleanToString((Boolean) value, false) + "' ";
 		} else if(value instanceof Timestamp) {
 			sqlValue = DB.TO_DATE((Timestamp) value, displayType == DisplayType.Date);
 		}

@@ -59,7 +59,7 @@ import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityEventType;
 import org.spin.backend.grpc.logs.EntityLog;
 import org.spin.backend.grpc.logs.ListEntityLogsResponse;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -438,11 +438,11 @@ public class LogsConvertUtil {
 				//	Validate
 				if(number != null && !number.equals(Env.ZERO)) {
 					hasFromParameter = true;
-					parameterBuilder = ValueManager.getValueFromDecimal(number);
+					parameterBuilder = ValueManager.getValueFromBigDecimal(number);
 				}
 				if(numberTo != null && !numberTo.equals(Env.ZERO)) {
 					hasToParameter = true;
-					parameterBuilder = ValueManager.getValueFromDecimal(numberTo);
+					parameterBuilder = ValueManager.getValueFromBigDecimal(numberTo);
 				}
 			} else if(DisplayType.isDate(displayType)) {
 				Timestamp date = parameter.getP_Date();
@@ -450,11 +450,11 @@ public class LogsConvertUtil {
 				//	Validate
 				if(date != null) {
 					hasFromParameter = true;
-					parameterBuilder = ValueManager.getValueFromDate(date);
+					parameterBuilder = ValueManager.getValueFromTimestamp(date);
 				}
 				if(dateTo != null) {
 					hasToParameter = true;
-					parameterBuilder = ValueManager.getValueFromDate(dateTo);
+					parameterBuilder = ValueManager.getValueFromTimestamp(dateTo);
 				}
 			} else if(DisplayType.YesNo == displayType) {
 				String value = parameter.getP_String();
@@ -552,11 +552,11 @@ public class LogsConvertUtil {
 			//	Validate
 			if(number != null && !number.equals(Env.ZERO)) {
 				hasFromParameter = true;
-				parameterBuilder = ValueManager.getValueFromDecimal(number);
+				parameterBuilder = ValueManager.getValueFromBigDecimal(number);
 			}
 			if(numberTo != null && !numberTo.equals(Env.ZERO)) {
 				hasToParameter = true;
-				parameterBuilder = ValueManager.getValueFromDecimal(numberTo);
+				parameterBuilder = ValueManager.getValueFromBigDecimal(numberTo);
 			}
 		} else if(DisplayType.isDate(displayType)) {
 			Timestamp date = instancePara.getP_Date();
@@ -564,11 +564,11 @@ public class LogsConvertUtil {
 			//	Validate
 			if(date != null) {
 				hasFromParameter = true;
-				parameterBuilder = ValueManager.getValueFromDate(date);
+				parameterBuilder = ValueManager.getValueFromTimestamp(date);
 			}
 			if(dateTo != null) {
 				hasToParameter = true;
-				parameterBuilder = ValueManager.getValueFromDate(dateTo);
+				parameterBuilder = ValueManager.getValueFromTimestamp(dateTo);
 			}
 		} else if(DisplayType.YesNo == displayType) {
 			String value = instancePara.getP_String();

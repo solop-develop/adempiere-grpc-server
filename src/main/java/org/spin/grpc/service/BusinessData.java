@@ -84,7 +84,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;

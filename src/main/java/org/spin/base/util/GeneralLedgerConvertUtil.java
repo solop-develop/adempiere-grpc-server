@@ -18,7 +18,7 @@ package org.spin.base.util;
 import org.compiere.model.MTable;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.general_ledger.AccountingDocument;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * This class was created for add all convert methods for General Ledger service

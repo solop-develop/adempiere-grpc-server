@@ -46,7 +46,7 @@ import org.spin.backend.grpc.time_control.UpdateResourceAssignmentRequest;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 

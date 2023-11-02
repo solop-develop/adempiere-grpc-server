@@ -91,7 +91,10 @@ import org.spin.base.util.ContextManager;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TimeManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
@@ -1104,14 +1107,14 @@ public class Security extends SecurityImplBase {
 		if (Util.isEmpty(value)) {
 			return builder;
 		}
-		if (ValueManager.isNumeric(value)) {
-			builder.setNumberValue(ValueManager.getIntegerFromString(value));
-		} else if (ValueManager.isBoolean(value)) {
-			boolean booleanValue = ValueManager.stringToBoolean(value.trim());
+		if (NumberManager.isNumeric(value)) {
+			builder.setNumberValue(NumberManager.getIntFromString(value));
+		} else if (BooleanManager.isBoolean(value)) {
+			boolean booleanValue = BooleanManager.getBooleanFromString(value.trim());
 			builder.setBoolValue(booleanValue);
-		} else if(ValueManager.isDate(value)) {
-			return ValueManager.getValueFromDate(
-				ValueManager.getTimestampFromString(value)
+		} else if(TimeManager.isDate(value)) {
+			return ValueManager.getValueFromTimestamp(
+				TimeManager.getTimestampFromString(value)
 			);
 		} else {
 			builder.setStringValue(

@@ -42,7 +42,7 @@ import org.spin.base.db.LimitUtil;
 import org.spin.base.util.GeneralLedgerConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.SessionManager;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt

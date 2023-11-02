@@ -36,7 +36,7 @@ import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.base.util.RecordUtil;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt

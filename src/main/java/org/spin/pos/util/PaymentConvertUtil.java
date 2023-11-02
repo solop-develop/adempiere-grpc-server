@@ -37,7 +37,7 @@ import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.PaymentReference;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.convert.ConvertCommon;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 
 /**

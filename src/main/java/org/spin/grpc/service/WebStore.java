@@ -149,7 +149,7 @@ import org.spin.base.util.SessionManager;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.model.MWDeliveryViaRuleAllocation;
 import org.spin.store.util.VueStoreFrontUtil;

@@ -23,7 +23,7 @@ import org.spin.backend.grpc.common.BankAccount;
 import org.spin.backend.grpc.common.BusinessPartner;
 import org.spin.backend.grpc.common.Currency;
 import org.spin.backend.grpc.common.DocumentType;
-import org.spin.service.grpc.util.ValueManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * This class was created for add all convert methods for Common proto definition
