@@ -15,8 +15,11 @@
 package org.spin.grpc.service.field.location_address;
 
 import org.adempiere.core.domains.models.I_C_Country;
+import org.compiere.model.MCity;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLocation;
+import org.compiere.model.MRegion;
+import org.compiere.util.Env;
 import org.spin.backend.grpc.field.location_address.Address;
 import org.spin.backend.grpc.field.location_address.Country;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -104,6 +107,23 @@ public class LocationAddressConvertUtil {
 		if (address == null) {
 			return builder;
 		}
+		MCountry country = MCountry.get(Env.getCtx(), address.getC_Country_ID());
+
+		String regionName = null;
+		if (address.getC_Region_ID() > 0) {
+			MRegion region = MRegion.get(Env.getCtx(), address.getC_Region_ID());
+			if (region != null) {
+				regionName = region.getName();
+			}
+		}
+		String cityName = null;
+		if (address.getC_City_ID() > 0) {
+			MCity city = MCity.get(Env.getCtx(), address.getC_City_ID());
+			if (city != null) {
+				cityName = city.getName();
+			}
+		}
+
 		builder.setId(address.getC_Location_ID())
 			.setUuid(
 				ValueManager.validateNull(
@@ -113,11 +133,26 @@ public class LocationAddressConvertUtil {
 			.setCountryId(
 				address.getC_Country_ID()
 			)
+			.setCountryName(
+				ValueManager.validateNull(
+					country.getName()
+				)
+			)
 			.setRegionId(
 				address.getC_Region_ID()
 			)
+			.setRegionName(
+				ValueManager.validateNull(
+					regionName
+				)
+			)
 			.setCityId(
 				address.getC_City_ID()
+			)
+			.setCityName(
+				ValueManager.validateNull(
+					cityName
+				)
 			)
 			.setCity(
 				ValueManager.validateNull(

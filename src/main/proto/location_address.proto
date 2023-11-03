@@ -158,19 +158,22 @@ message Address {
 	int32 id = 1;
 	string uuid = 2;
 	int32 country_id = 3;
-	int32 region_id = 4;
-	int32 city_id = 5;
-	string city = 6;
-	string address1 = 7;
-	string address2 = 8;
-	string address3 = 9;
-	string address4 = 10;
-	string postal_code = 11;
-	string postal_code_additional = 12;
-	string latitude = 13;
-	string longitude = 14;
-	string altitude = 15;
-	string reference = 16;
+	string country_name = 4;
+	int32 region_id = 5;
+	string region_name = 6;
+	int32 city_id = 7;
+	string city_name = 8;
+	string city = 9;
+	string address1 = 10;
+	string address2 = 11;
+	string address3 = 12;
+	string address4 = 13;
+	string postal_code = 14;
+	string postal_code_additional = 15;
+	string latitude = 16;
+	string longitude = 17;
+	string altitude = 18;
+	string reference = 19;
 }
 
 message GetAddressRequest {
