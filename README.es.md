@@ -103,7 +103,7 @@ Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igu
  * `JWT_EXPIRATION_TIME`: Tiempo de expiración en milisegundos, vida util del JSON Web Token desde que se genera, el valor por defecto es `86400000` milisegundos, es decir 24 horas.
  * `ADEMPIERE_APPS_TYPE`: Tipo de aplicación para la conexión de gestión de bases de datos. Por defecto: `wildfly`.
  * `SERVER_PORT`: Puerto para acceder a Adempiere-Backend desde fuera del contenedor. Por defecto: `50059`.
- * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `bank_statement_match; business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; import_file_loader; in_out; invoice; issue_management; log; match_po_receipt_invoice; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; record_management; security; store; time_control; time_record; ui; user_customization; workflow;`.
+ * `SERVICES_ENABLED`: Servicios habilitados. Por defecto: `bank_statement_match; business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; import_file_loader; in_out; invoice; issue_management; location_address; log; match_po_receipt_invoice; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; record_management; security; store; time_control; time_record; ui; user_customization; workflow;`.
  * `IS_ENABLED_ALL_SERVICES`: Si esta en verdadero, omite el valor de `SERVICES_ENABLED` y arranca todos los servicios, el valor por defecto es `true`.
  * `SERVER_LOG_LEVEL`: Nivel de Bitácora. Por defecto: `WARNING`.
  * `TZ`: (Time Zone) Indica la zona horaria a establecer en el contenedor basado en nginx, el valor por defecto es `America/Caracas` (UTC -4:00).
@@ -138,6 +138,7 @@ docker run -it -d \
 	-e DB_PORT="5432" \
 	-e DB_NAME=\"adempiere\" \
 	-e DB_PASSWORD="adempiere" \
+	-e JWT_SECRET_KEY="your-json-web-token-secret-key" \
 	-e TZ="America/Caracas" \
 	solopcloud/adempiere-backend:alpine
 ```

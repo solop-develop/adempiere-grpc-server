@@ -60,6 +60,7 @@ import org.spin.grpc.service.UserCustomization;
 import org.spin.grpc.service.UserInterface;
 import org.spin.grpc.service.WebStore;
 import org.spin.grpc.service.Workflow;
+import org.spin.grpc.service.field.location_address.LocationAddress;
 import org.spin.service.grpc.authentication.AuthorizationServerInterceptor;
 import org.spin.service.grpc.context.ServiceContextProvider;
 
@@ -212,6 +213,11 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.IMPORT_FILE_LOADER.getServiceName())) {
 			serverBuilder.addService(new ImportFileLoader());
 			logger.info("Service " + Services.IMPORT_FILE_LOADER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Location Address
+		if(SetupLoader.getInstance().getServer().isValidService(Services.LOCATION_ADDRESS.getServiceName())) {
+			serverBuilder.addService(new LocationAddress());
+			logger.info("Service " + Services.LOCATION_ADDRESS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Log
 		if(SetupLoader.getInstance().getServer().isValidService(Services.LOG.getServiceName())) {

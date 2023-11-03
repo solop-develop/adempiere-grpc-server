@@ -16,8 +16,8 @@ ENV \
 		enrollment.Register; express_movement.ExpressMovement; \
 		express_receipt.ExpressReceipt; express_shipment.ExpressShipment; \
 		file_management.FileManagement; general_ledger.GeneralLedger; \
-		import_file_loader.ImportFileLoader; in_out.InOut; \
-		invoice.Invoice; issue_management.IssueManagement; \
+		import_file_loader.ImportFileLoader; in_out.InOut; invoice.Invoice; \
+		issue_management.IssueManagement; location_address.LocationAddress; \
 		logs.Logs; match_po_receipt_invoice.MatchPORReceiptInvoice; \
 		material_management.MaterialManagement; \
 		order.Order; payment_allocation.PaymentAllocation; \

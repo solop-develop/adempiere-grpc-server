@@ -103,7 +103,7 @@ To use this Docker image you must have your Docker engine version greater than o
  * `JWT_EXPIRATION_TIME`: Expiration time in milliseconds, lifetime of the JSON Web Token since it is generated, the default value is `86400000` milliseconds, that is 24 hours.
  * `ADEMPIERE_APPS_TYPE`: Application Type for Database Management Connection. Default: `wildfly`.
  * `SERVER_PORT`: Port to access Adempiere-Backend from outside of the container. Default: `50059`.
- * `SERVICES_ENABLED`: Services enabled. Default: `bank_statement_match; business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; import_file_loader; in_out; invoice; issue_management; log; match_po_receipt_invoice; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; record_management; security; store; time_control; time_record; ui; user_customization; workflow;`.
+ * `SERVICES_ENABLED`: Services enabled. Default: `bank_statement_match; business; business_partner; core; dashboarding; dictionary; enrollment; express_movement; express_receipt; express_shipment; file_management; general_ledger; import_file_loader; in_out; invoice; issue_management; location_address; log; match_po_receipt_invoice; material_management; order; payment; payment_allocation; payment_print_export; payroll_action_notice; pos; product; record_management; security; store; time_control; time_record; ui; user_customization; workflow;`.
  * `IS_ENABLED_ALL_SERVICES`: If it is true, omit the value of `SERVICES_ENABLED` and start all services, the default value is `true`.
  * `SERVER_LOG_LEVEL`: Log Level. Default: `WARNING`.
  * `TZ`: (Time Zone) Indicates the time zone to set in the nginx-based container, the default value is `America/Caracas` (UTC -4:00).
@@ -138,6 +138,7 @@ docker run -it -d \
 	-e DB_PORT="5432" \
 	-e DB_NAME=\"adempiere\" \
 	-e DB_PASSWORD="adempiere" \
+	-e JWT_SECRET_KEY="your-json-web-token-secret-key" \
 	-e TZ="America/Caracas" \
 	solopcloud/adempiere-backend:alpine
 ```

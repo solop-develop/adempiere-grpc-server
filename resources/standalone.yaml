@@ -14,6 +14,7 @@ server:
        - express_shipment
        - file_management
        - general_ledger
+       - location_address
        - log
        - import_file_loader
        - in_out

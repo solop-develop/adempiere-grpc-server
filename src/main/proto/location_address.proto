@@ -1,0 +1,213 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                     *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.field.location_address";
+option java_outer_classname = "ADempiereLocationAddress";
+
+import "google/api/annotations.proto";
+
+package location_address;
+
+service LocationAddress {
+	// Country
+	rpc ListCountries(ListCountriesRequest) returns (ListCountriesResponse) {
+		option (google.api.http) = { get: "/location-address/countries" };
+	}
+	rpc GetCountry(GetCountryRequest) returns (Country) {
+		option (google.api.http) = {
+			get: "/location-address/countries/{id}"
+			additional_bindings: {
+				get: "/location-address/countries/code/{country_code}"
+			}
+		};
+	}
+	// Region
+	rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse) {
+		option (google.api.http) = { get: "/location-address/countries/{country_id}/regions" };
+	}
+	// Cities
+	rpc ListCities(ListCitiesRequest) returns (ListCitiesResponse) {
+		option (google.api.http) = {
+			get: "/location-address/countries/{country_id}/cities"
+			additional_bindings: {
+				get: "/location-address/countries/{country_id}/{region_id}/cities"
+			}
+		};
+	}
+	// Location
+	rpc GetAddress(GetAddressRequest) returns (Address) {
+		option (google.api.http) = { get: "/location-address/addresses/{id}" };
+	}
+	rpc CreateAddress(CreateAddressRequest) returns (Address) {
+		option (google.api.http) = {
+			post: "/location-address/addresses",
+			body: "*"
+		};
+	}
+	rpc UpdateAddress(UpdateAddressRequest) returns (Address) {
+		option (google.api.http) = {
+			patch: "/location-address/addresses/{id}",
+			body: "*"
+		};
+	}
+ }
+
+
+message ListItem {
+	int32 id = 1;
+	string name = 2;
+}
+
+
+// Country
+message Country {
+	int32 id = 1;
+	string uuid = 2;
+	string country_code = 3;
+	string name = 4;
+	bool is_has_region = 5;
+	string region_name = 6;
+	string display_sequence = 7;
+	bool is_address_lines_reverse = 8;
+	string capture_sequence = 9;
+	string display_sequence_local = 10;
+	bool is_address_lines_local_reverse = 11;
+	string expression_postal_code = 12;
+	bool is_has_postal_code_additional = 13;
+	string expression_postal_code_additional = 14;
+	bool is_allow_cities_out_of_list = 15;
+}
+
+message GetCountryRequest {
+	int32 id = 1;
+	string country_code = 2;
+}
+
+message ListCountriesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListCountriesResponse {
+	int64 record_count = 1;
+	repeated ListItem countries = 2;
+	string next_page_token = 3;
+}
+
+
+// Region
+message ListRegionsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 country_id = 8;
+}
+
+message ListRegionsResponse {
+	int64 record_count = 1;
+	repeated ListItem regions = 2;
+	string next_page_token = 3;
+}
+
+
+// Cities
+message ListCitiesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 country_id = 8;
+	int32 region_id = 9;
+}
+
+message ListCitiesResponse {
+	int64 record_count = 1;
+	repeated ListItem cities = 2;
+	string next_page_token = 3;
+}
+
+
+// Address Location
+message Address {
+	int32 id = 1;
+	string uuid = 2;
+	int32 country_id = 3;
+	int32 region_id = 4;
+	int32 city_id = 5;
+	string city = 6;
+	string address1 = 7;
+	string address2 = 8;
+	string address3 = 9;
+	string address4 = 10;
+	string postal_code = 11;
+	string postal_code_additional = 12;
+	string latitude = 13;
+	string longitude = 14;
+	string altitude = 15;
+	string reference = 16;
+}
+
+message GetAddressRequest {
+	int32 id = 1;
+}
+
+message CreateAddressRequest {
+	int32 country_id = 1;
+	int32 region_id = 2;
+	int32 city_id = 3;
+	string city = 4;
+	string address1 = 5;
+	string address2 = 6;
+	string address3 = 7;
+	string address4 = 8;
+	string postal_code = 9;
+	string posal_code_additional = 10;
+	string latitude = 11;
+	string longitude = 12;
+	string altitude = 13;
+	string reference = 14;
+}
+
+message UpdateAddressRequest {
+	int32 id = 1;
+	int32 country_id = 2;
+	int32 region_id = 3;
+	int32 city_id = 4;
+	string city = 5;
+	string address1 = 6;
+	string address2 = 7;
+	string address3 = 8;
+	string address4 = 9;
+	string postal_code = 10;
+	string posal_code_additional = 11;
+	string latitude = 12;
+	string longitude = 13;
+	string altitude = 14;
+	string reference = 15;
+}
