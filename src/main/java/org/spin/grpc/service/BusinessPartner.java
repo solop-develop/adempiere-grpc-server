@@ -32,7 +32,7 @@ import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.backend.grpc.bpartner.BusinessPartnerGrpc.BusinessPartnerImplBase;
 import org.spin.backend.grpc.bpartner.ListBusinessPartnerInfoRequest;

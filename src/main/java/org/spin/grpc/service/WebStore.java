@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -145,10 +145,10 @@ import org.spin.backend.grpc.store.UpdateCustomerRequest;
 import org.spin.backend.grpc.store.WebStoreGrpc.WebStoreImplBase;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
-import org.spin.base.util.SessionManager;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.model.MWDeliveryViaRuleAllocation;

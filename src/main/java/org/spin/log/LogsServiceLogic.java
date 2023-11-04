@@ -36,7 +36,7 @@ import org.spin.backend.grpc.logs.ListUserActivitesResponse;
 import org.spin.backend.grpc.logs.UserActivity;
 import org.spin.backend.grpc.logs.UserActivityType;
 import org.spin.base.db.LimitUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
