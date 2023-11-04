@@ -151,7 +151,7 @@ message CreateMovementLineRequest {
 	int32 warehouse_to_id = 3;
 	string description = 4;
 	int32 product_id = 5;
-	google.protobuf.Value quantity = 6;
+	string quantity = 6;
 }
 
 message MovementLine {
@@ -160,7 +160,7 @@ message MovementLine {
 	int32 warehouse_to_id = 3;
 	Product product = 4;
 	string description = 5;
-	google.protobuf.Value quantity = 6;
+	string quantity = 6;
 	int32 line = 7;
 }
 
@@ -188,5 +188,5 @@ message DeleteMovementLineRequest {
 message UpdateMovementLineRequest {
 	int32 id = 1;
 	string description = 2;
-	google.protobuf.Value quantity = 3;
+	string quantity = 3;
 }

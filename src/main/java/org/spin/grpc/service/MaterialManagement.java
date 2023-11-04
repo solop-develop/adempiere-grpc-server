@@ -84,7 +84,8 @@ import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -538,7 +539,9 @@ public class MaterialManagement extends MaterialManagementImplBase {
 				)
 			)
 			.setValueNumber(
-				ValueManager.getValueFromBigDecimal(valueNumber)
+				NumberManager.getBigDecimalToString(
+					valueNumber
+				)
 			)
 			.setProductAttributeId(attributeInstance.getM_Attribute_ID())
 			.setProductAttributeValueId(attributeInstance.getM_AttributeValue_ID())

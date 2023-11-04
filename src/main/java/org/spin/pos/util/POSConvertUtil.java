@@ -51,10 +51,12 @@ import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.base.util.ConvertUtil;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 /**
  * This class was created for add all convert methods for POS form
@@ -242,12 +244,12 @@ public class POSConvertUtil {
 				)
 			)
 			.setQuantity(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					shipmentLine.getQtyEntered()
 				)
 			)
 			.setMovementQuantity(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					shipmentLine.getMovementQty()
 				)
 			)
@@ -291,8 +293,8 @@ public class POSConvertUtil {
 		//	Additional Attributes
 		Struct.Builder customerAdditionalAttributes = Struct.newBuilder();
 		MTable.get(Env.getCtx(), businessPartner.get_Table_ID()).getColumnsAsList().stream()
-		.map(column -> column.getColumnName())
-		.filter(columnName -> {
+		.filter(column -> {
+			String columnName = column.getColumnName();
 			return !columnName.equals(MBPartner.COLUMNNAME_UUID)
 				&& !columnName.equals(MBPartner.COLUMNNAME_Value)
 				&& !columnName.equals(MBPartner.COLUMNNAME_TaxID)
@@ -302,12 +304,15 @@ public class POSConvertUtil {
 				&& !columnName.equals(MBPartner.COLUMNNAME_Name2)
 				&& !columnName.equals(MBPartner.COLUMNNAME_Description)
 			;
-		}).forEach(columnName -> {
+		}).forEach(column -> {
+			String columnName = column.getColumnName();
+			Value value = ValueManager.getValueFromReference(
+					businessPartner.get_Value(columnName),
+					column.getAD_Reference_ID()
+				).build();
 			customerAdditionalAttributes.putFields(
 				columnName,
-				ValueManager.getValueFromObject(
-					businessPartner.get_Value(columnName)
-				).build()
+				value
 			);
 		});
 		customer.setAdditionalAttributes(customerAdditionalAttributes);

@@ -82,6 +82,7 @@ import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.Payme
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -578,17 +579,17 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 						)
 					)
 					.setPaymentAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal(I_C_Payment.COLUMNNAME_PayAmt)
 						)
 					)
 					.setConvertedAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("ConvertedAmt")
 						)
 					)
 					.setOpenAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("AvailableAmt")
 						)
 					)
@@ -744,22 +745,22 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 						)
 					)
 					.setOriginalAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("OriginalAmt")
 						)
 					)
 					.setConvertedAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("ConvertedAmt")
 						)
 					)
 					.setOpenAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("OpenAmt")
 						)
 					)
 					.setDiscountAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("DiscountAmt")
 						)
 					)
@@ -848,7 +849,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				)
 			)
 			.setAmount(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					charge.getChargeAmt()
 				)
 			)
@@ -971,7 +972,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				);
 			}
 
-			BigDecimal totalDifference = ValueManager.getBigDecimalFromValue(
+			BigDecimal totalDifference = NumberManager.getBigDecimalFromString(
 				request.getTotalDifference()
 			);
 			String status = saveData(
@@ -1026,7 +1027,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		// Sum up the payment and applied amounts.
 		BigDecimal paymentAppliedAmt = Env.ZERO;
 		for (PaymentSelection payment : paymentSelection) {
-			BigDecimal paymentAmt = ValueManager.getBigDecimalFromValue(
+			BigDecimal paymentAmt = NumberManager.getBigDecimalFromString(
 				payment.getAppliedAmount()
 			);
 			amountList.add(paymentAmt);
@@ -1056,17 +1057,17 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		for (InvoiceSelection invoice : invoiceSelection) {
 			//  Invoice variables
 			int C_Invoice_ID = invoice.getId();
-			BigDecimal AppliedAmt = ValueManager.getBigDecimalFromValue(
+			BigDecimal AppliedAmt = NumberManager.getBigDecimalFromString(
 				invoice.getAppliedAmount()
 			);
 			//  semi-fixed fields (reset after first invoice)
-			BigDecimal DiscountAmt = ValueManager.getBigDecimalFromValue(
+			BigDecimal DiscountAmt = NumberManager.getBigDecimalFromString(
 				invoice.getDiscountAmount()
 			);
-			BigDecimal WriteOffAmt = ValueManager.getBigDecimalFromValue(
+			BigDecimal WriteOffAmt = NumberManager.getBigDecimalFromString(
 				invoice.getWriteOffAmount()
 			);
-			BigDecimal invoiceOpen = ValueManager.getBigDecimalFromValue(
+			BigDecimal invoiceOpen = NumberManager.getBigDecimalFromString(
 				invoice.getOpenAmount()
 			);
 			//	OverUnderAmt needs to be in Allocation Currency
@@ -1083,7 +1084,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				PaymentSelection payment = paymentSelection.get(j);
 
 				int paymentId = payment.getId();
-				BigDecimal paymentAmt = ValueManager.getBigDecimalFromValue(
+				BigDecimal paymentAmt = NumberManager.getBigDecimalFromString(
 					payment.getAppliedAmount()
 				);
 

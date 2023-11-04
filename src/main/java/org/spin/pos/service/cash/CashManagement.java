@@ -37,6 +37,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.CreatePaymentRequest;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -112,7 +113,7 @@ public class CashManagement {
         }
         payment.setC_Charge_ID(defaultChargeId);
         //	Amount
-		BigDecimal paymentAmount = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmount = NumberManager.getBigDecimalFromString(
 			request.getAmount()
 		);
         payment.setPayAmt(paymentAmount);

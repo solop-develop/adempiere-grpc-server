@@ -125,7 +125,7 @@ message ProductAttributeSet {
 message ProductAttributeInstance {
 	int32 id = 1;
 	string value = 2;
-	google.protobuf.Value value_number = 3;
+	string value_number = 3;
 	int32 product_attribute_set_instance_id = 4;
 	int32 product_attribute_id = 5;
 	int32 product_attribute_value_id = 6;

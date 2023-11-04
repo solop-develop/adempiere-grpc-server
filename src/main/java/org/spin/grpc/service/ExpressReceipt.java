@@ -67,7 +67,8 @@ import org.spin.backend.grpc.form.express_receipt.ExpressReceiptGrpc.ExpressRece
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -702,7 +703,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getBigDecimalFromValue(
+				quantity = NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
@@ -842,7 +843,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getBigDecimalFromValue(
+				quantity = NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
@@ -911,7 +912,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				ValueManager.validateNull(receiptLine.getDescription())
 			)
 			.setQuantity(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					receiptLine.getQtyEntered()
 				)
 			)

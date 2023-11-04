@@ -525,8 +525,8 @@ message CreatePaymentReferenceRequest {
 	int32 pos_id = 1;
 	int32 sales_representative_id = 2;
 	string description = 3;
-	google.protobuf.Value source_amount = 4;
-	google.protobuf.Value amount = 5;
+	string source_amount = 4;
+	string amount = 5;
 	google.protobuf.Timestamp payment_date = 6;
 	string tender_type_code = 7;
 	int32 currency_id = 8;
@@ -546,7 +546,7 @@ message PaymentReference {
 	int32 pos_id = 2;
 	SalesRepresentative sales_representative = 3;
 	string description = 4;
-	google.protobuf.Value amount = 5;
+	string amount = 5;
 	google.protobuf.Timestamp payment_date = 6;
 	string tender_type_code = 7;
 	Currency currency = 8;
@@ -556,10 +556,10 @@ message PaymentReference {
 	int32 order_id = 12;
 	bool is_paid = 13;
 	bool is_receipt = 14;
-	google.protobuf.Value source_amount = 15;
+	string source_amount = 15;
 	bool is_automatic = 16;
 	bool is_processed = 17;
-	google.protobuf.Value converted_amount = 18;
+	string converted_amount = 18;
 	int32 invoice_reference_id = 19;
 }
 
@@ -591,7 +591,7 @@ message PaymentSummary {
 	string tender_type_code = 3;
 	Currency currency = 4;
 	bool is_refund = 5;
-	google.protobuf.Value amount = 6;
+	string amount = 6;
 }
 
 //	List Cash Movements Request
@@ -704,7 +704,7 @@ message UpdateShipmentLineRequest {
 	int32 shipment_id = 1;
 	int32 id = 2;
 	string description = 3;
-	google.protobuf.Value quantity = 4;
+	string quantity = 4;
 	int32 pos_id = 5;
 }
 
@@ -713,7 +713,7 @@ message CreateShipmentLineRequest {
 	int32 shipment_id = 1;
 	int32 order_line_id = 2;
 	string description = 3;
-	google.protobuf.Value quantity = 4;	
+	string quantity = 4;
 	int32 pos_id = 5;
 }
 
@@ -771,8 +771,8 @@ message ShipmentLine {
 	Product product = 3;
 	Charge charge = 4;
 	string description = 5;
-	google.protobuf.Value quantity = 6;
-	google.protobuf.Value movement_quantity = 7;
+	string quantity = 6;
+	string movement_quantity = 7;
 	int32 line = 8;
 	ProductConversion uom = 9;
 	ProductConversion product_uom = 10;
@@ -984,14 +984,14 @@ message GetAvailableRefundRequest {
 
 //	Daily Refund
 message AvailableRefund {
-	google.protobuf.Value refund = 1;
+	string refund = 1;
 	repeated TenderTypeRefund tender_type_refunds = 2;
 }
 
 //	Tender Type Refund
 message TenderTypeRefund {
 	string tender_type = 1;
-	google.protobuf.Value refund = 2;
+	string refund = 2;
 }
 
 //	Address information for request
@@ -1152,8 +1152,8 @@ message AvailablePaymentMethod {
 	bool is_pos_required_pin = 5;
 	bool is_allowed_to_refund = 6;
 	bool is_allowed_to_refund_open = 7;
-	google.protobuf.Value maximum_refund_allowed = 8;
-	google.protobuf.Value maximum_daily_refund_allowed = 9;
+	string maximum_refund_allowed = 8;
+	string maximum_daily_refund_allowed = 9;
 	Currency refund_reference_currency = 10;
 	Currency reference_currency = 11;
 	bool is_payment_reference = 12;
@@ -1342,8 +1342,8 @@ message ListOrdersRequest {
 	string document_no = 9;
 	string document_status = 10;
 	int32 business_partner_id = 11;
-	google.protobuf.Value grand_total = 12;
-	google.protobuf.Value open_amount = 13;
+	string grand_total = 12;
+	string open_amount = 13;
 	bool is_waiting_for_pay = 14;
 	bool is_only_processed = 15;
 	bool is_only_aisle_seller = 16;
@@ -1437,15 +1437,15 @@ message PointOfSales {
 	bool is_allows_confirm_shipment = 23;
 	bool is_display_tax_amount = 24;
 	bool is_display_discount = 25;
-	google.protobuf.Value maximum_refund_allowed = 26;
-	google.protobuf.Value maximum_daily_refund_allowed = 27;
+	string maximum_refund_allowed = 26;
+	string maximum_daily_refund_allowed = 27;
 	Currency refund_reference_currency = 28;
 	DocumentType return_document_type = 29;
 	Campaign default_campaign = 30;
 	int32 default_opening_charge_id = 31;
 	int32 default_withdrawal_charge_id = 32;
-	google.protobuf.Value maximum_discount_allowed = 33;
-	google.protobuf.Value write_off_amount_tolerance = 34;
+	string maximum_discount_allowed = 33;
+	string write_off_amount_tolerance = 34;
 	bool is_allows_allocate_seller = 35;
 	bool is_allows_concurrent_use = 36;
 	bool is_confirm_complete_shipment = 37;
@@ -1459,10 +1459,10 @@ message PointOfSales {
 	bool is_pos_manager = 45;
 	bool is_allows_modify_discount = 46;
 	bool is_keep_price_from_customer = 47;
-	google.protobuf.Value maximum_line_discount_allowed = 48;
+	string maximum_line_discount_allowed = 48;
 	bool is_allows_modify_customer = 49;
 	bool is_allows_detail_cash_closing = 50;
-	google.protobuf.Value write_off_percentage_tolerance = 51;
+	string write_off_percentage_tolerance = 51;
 	bool is_write_off_by_percent = 52;
 	bool is_allows_write_off_amount = 53;
 }
@@ -1509,7 +1509,7 @@ message CreatePaymentRequest {
 	int32 bank_id = 4;
 	string reference_no = 5;
 	string description = 6;
-	google.protobuf.Value amount = 7;
+	string amount = 7;
 	google.protobuf.Timestamp payment_date = 8;
 	string tender_type_code = 9;
 	int32 currency_id = 10;
@@ -1529,7 +1529,7 @@ message UpdatePaymentRequest {
 	int32 bank_id = 2;
 	string reference_no = 3;
 	string description = 4;
-	google.protobuf.Value amount = 5;
+	string amount = 5;
 	google.protobuf.Timestamp payment_date = 6;
 	string tender_type_code = 7;
 	int32 payment_method_id = 8;
@@ -1565,7 +1565,7 @@ message ValidatePINRequest {
 	int32 pos_id = 1;
 	string pin = 2;
 	string requested_access = 3;
-	google.protobuf.Value requested_amount = 4;
+	string requested_amount = 4;
 	int32 order_id = 5;
 }
 
@@ -1589,14 +1589,14 @@ message Payment {
 	int32 bank_id = 9;
 	string reference_no = 10;
 	string description = 11;
-	google.protobuf.Value amount = 12;
+	string amount = 12;
 	google.protobuf.Timestamp payment_date = 13;
 	google.protobuf.Timestamp payment_account_date = 14;
 	string tender_type_code = 15;
 	Currency currency = 16;
 	bool is_refund = 17;
 	string name = 18;
-	google.protobuf.Value converted_amount = 19;
+	string converted_amount = 19;
 	PaymentMethod payment_method = 20;
 	BankAccount bank_account = 21;
 	BankAccount reference_bank_account = 22;
@@ -1626,9 +1626,9 @@ message CreateOrderLineRequest {
 	int32 product_id = 2;
 	int32 charge_id = 3;
 	string description = 4;
-	google.protobuf.Value quantity = 5;
-	google.protobuf.Value price = 6;
-	google.protobuf.Value discount_rate = 7;
+	string quantity = 5;
+	string price = 6;
+	string discount_rate = 7;
 	int32 warehouse_id = 8;
 	int32 pos_id = 9;
 	int32 resource_assignment_id = 10;
@@ -1644,9 +1644,9 @@ message UpdateOrderRequest {
 	int32 warehouse_id = 6;
 	string description = 7;
 	int32 campaign_id = 8;
-	google.protobuf.Value discount_rate = 9;
-	google.protobuf.Value discount_rate_off = 10;
-	google.protobuf.Value discount_amount_off = 11;
+	string discount_rate = 9;
+	string discount_rate_off = 10;
+	string discount_amount_off = 11;
 	int32 sales_representative_id = 12;
 }
 
@@ -1655,10 +1655,10 @@ message UpdateOrderLineRequest {
 	int32 order_id = 1;
 	int32 id = 2;
 	string description = 3;
-	google.protobuf.Value quantity = 4;
-	google.protobuf.Value price = 5;
+	string quantity = 4;
+	string price = 5;
 	int32 uom_id = 6;
-	google.protobuf.Value discount_rate = 7;
+	string discount_rate = 7;
 	bool is_add_quantity = 8;
 	int32 warehouse_id = 9;
 	int32 pos_id = 10;
@@ -1685,23 +1685,23 @@ message Order {
 	DocumentStatus document_status = 5;
 	PriceList price_list = 6;
 	Warehouse warehouse = 7;
-	google.protobuf.Value total_lines = 8;
-	google.protobuf.Value grand_total = 9;
-	google.protobuf.Value grand_total_converted = 10;
-	google.protobuf.Value tax_amount = 11;
-	google.protobuf.Value discount_amount = 12;
+	string total_lines = 8;
+	string grand_total = 9;
+	string grand_total_converted = 10;
+	string tax_amount = 11;
+	string discount_amount = 12;
 	google.protobuf.Timestamp date_ordered = 13;
 	Customer customer = 14;
 	bool is_delivered = 15;
 	string order_reference = 16;
 	string description = 17;
 	Campaign campaign = 18;
-	google.protobuf.Value display_currency_rate = 19;
-	google.protobuf.Value open_amount = 20;
-	google.protobuf.Value payment_amount = 21;
-	google.protobuf.Value refund_amount = 22;
-	google.protobuf.Value charge_amount = 23;
-	google.protobuf.Value credit_amount = 24;
+	string display_currency_rate = 19;
+	string open_amount = 20;
+	string payment_amount = 21;
+	string refund_amount = 22;
+	string charge_amount = 23;
+	string credit_amount = 24;
 	int32 source_rma_id = 25;
 	bool is_rma = 26;
 	bool is_binding_offer = 27;
@@ -1717,30 +1717,30 @@ message OrderLine {
 	string line_description = 5;
 	string description = 6;
 	Warehouse warehouse = 7;
-	google.protobuf.Value quantity = 8;
-	google.protobuf.Value quantity_ordered = 9;
-	google.protobuf.Value available_quantity = 10;
-	google.protobuf.Value price = 11;
-	google.protobuf.Value price_with_tax = 12;
-	google.protobuf.Value price_base = 13;
-	google.protobuf.Value price_base_with_tax = 14;
-	google.protobuf.Value price_list = 15;
-	google.protobuf.Value price_list_with_tax = 16;
-	google.protobuf.Value discount_rate = 17;
-	google.protobuf.Value discount_amount = 18;
-	google.protobuf.Value tax_amount = 19;
-	google.protobuf.Value base_tax_amount = 20;
-	google.protobuf.Value list_tax_amount = 21;
+	string quantity = 8;
+	string quantity_ordered = 9;
+	string available_quantity = 10;
+	string price = 11;
+	string price_with_tax = 12;
+	string price_base = 13;
+	string price_base_with_tax = 14;
+	string price_list = 15;
+	string price_list_with_tax = 16;
+	string discount_rate = 17;
+	string discount_amount = 18;
+	string tax_amount = 19;
+	string base_tax_amount = 20;
+	string list_tax_amount = 21;
 	TaxRate tax_rate = 22;
 	//	Totals
-	google.protobuf.Value total_discount_amount = 23;
-	google.protobuf.Value total_tax_amount = 24;
-	google.protobuf.Value total_base_amount = 25;
-	google.protobuf.Value total_base_amount_with_tax = 26;
-	google.protobuf.Value total_amount = 27;
-	google.protobuf.Value total_amount_converted = 28;
-	google.protobuf.Value total_amount_with_tax = 29;
-	google.protobuf.Value total_amount_with_tax_converted = 30;
+	string total_discount_amount = 23;
+	string total_tax_amount = 24;
+	string total_base_amount = 25;
+	string total_base_amount_with_tax = 26;
+	string total_amount = 27;
+	string total_amount_converted = 28;
+	string total_amount_with_tax = 29;
+	string total_amount_with_tax_converted = 30;
 	int32 line = 31;
 	ProductConversion uom = 32;
 	ProductConversion product_uom = 33;
@@ -1785,7 +1785,7 @@ message Key {
 	int32 span_x = 7;
 	int32 span_y = 8;
 	string product_value = 9;
-	google.protobuf.Value quantity = 10;
+	string quantity = 10;
 	file_management.ResourceReference resource_reference = 11;
 }
 
@@ -1972,7 +1972,7 @@ message DeleteRMALineRequest {
 message UpdateRMALineRequest {
 	int32 id = 1;
 	string description = 2;
-	google.protobuf.Value quantity = 3;
+	string quantity = 3;
 	int32 pos_id = 4;
 	int32 rma_id = 5;
 }
@@ -1982,7 +1982,7 @@ message CreateRMALineRequest {
 	int32 rma_id = 1;
 	int32 source_order_line_id = 2;
 	string description = 3;
-	google.protobuf.Value quantity = 4;	
+	string quantity = 4;
 	int32 pos_id = 5;
 }
 
@@ -2030,22 +2030,22 @@ message RMA {
 	DocumentStatus document_status = 5;
 	PriceList price_list = 6;
 	Warehouse warehouse = 7;
-	google.protobuf.Value total_lines = 8;
-	google.protobuf.Value grand_total = 9;
-	google.protobuf.Value tax_amount = 10;
-	google.protobuf.Value discount_amount = 11;
+	string total_lines = 8;
+	string grand_total = 9;
+	string tax_amount = 10;
+	string discount_amount = 11;
 	google.protobuf.Timestamp date_ordered = 12;
 	Customer customer = 13;
 	bool is_delivered = 14;
 	string order_reference = 15;
 	string description = 16;
 	Campaign campaign = 17;
-	google.protobuf.Value display_currency_rate = 18;
-	google.protobuf.Value open_amount = 19;
-	google.protobuf.Value payment_amount = 20;
-	google.protobuf.Value refund_amount = 21;
-	google.protobuf.Value charge_amount = 22;
-	google.protobuf.Value credit_amount = 23;
+	string display_currency_rate = 18;
+	string open_amount = 19;
+	string payment_amount = 20;
+	string refund_amount = 21;
+	string charge_amount = 22;
+	string credit_amount = 23;
 	int32 source_order_id = 24;
 }
 
@@ -2057,28 +2057,28 @@ message RMALine {
 	string line_description = 4;
 	string description = 5;
 	Warehouse warehouse = 6;
-	google.protobuf.Value quantity = 7;
-	google.protobuf.Value quantity_ordered = 8;
-	google.protobuf.Value available_quantity = 9;
-	google.protobuf.Value price = 10;
-	google.protobuf.Value price_with_tax = 11;
-	google.protobuf.Value price_base = 12;
-	google.protobuf.Value price_base_with_tax = 13;
-	google.protobuf.Value price_list = 14;
-	google.protobuf.Value price_list_with_tax = 15;
-	google.protobuf.Value discount_rate = 16;
-	google.protobuf.Value discount_amount = 17;
-	google.protobuf.Value tax_amount = 18;
-	google.protobuf.Value base_tax_amount = 19;
-	google.protobuf.Value list_tax_amount = 20;
+	string quantity = 7;
+	string quantity_ordered = 8;
+	string available_quantity = 9;
+	string price = 10;
+	string price_with_tax = 11;
+	string price_base = 12;
+	string price_base_with_tax = 13;
+	string price_list = 14;
+	string price_list_with_tax = 15;
+	string discount_rate = 16;
+	string discount_amount = 17;
+	string tax_amount = 18;
+	string base_tax_amount = 19;
+	string list_tax_amount = 20;
 	TaxRate tax_rate = 21;
 	//	Totals
-	google.protobuf.Value total_discount_amount = 22;
-	google.protobuf.Value total_tax_amount = 23;
-	google.protobuf.Value total_base_amount = 24;
-	google.protobuf.Value total_base_amount_with_tax = 25;
-	google.protobuf.Value total_amount = 26;
-	google.protobuf.Value total_amount_with_tax = 27;
+	string total_discount_amount = 22;
+	string total_tax_amount = 23;
+	string total_base_amount = 24;
+	string total_base_amount_with_tax = 25;
+	string total_amount = 26;
+	string total_amount_with_tax = 27;
 	int32 line = 28;
 	ProductConversion uom = 29;
 	ProductConversion product_uom = 30;
@@ -2091,8 +2091,8 @@ message CreditMemo {
 	string document_no = 2;
 	string description = 3;
 	google.protobuf.Timestamp document_date = 4;
-	google.protobuf.Value amount = 5;
-	google.protobuf.Value open_amount = 6;
+	string amount = 5;
+	string open_amount = 6;
 	Currency currency = 7;
 }
 

@@ -125,6 +125,7 @@ import org.spin.pos.util.PaymentConvertUtil;
 import org.spin.pos.util.TicketHandler;
 import org.spin.pos.util.TicketResult;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
@@ -1282,7 +1283,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			MOrderLine rmaLine = ReturnSalesOrder.createRMALineFromOrder(
 				request.getRmaId(),
 				request.getSourceOrderLineId(),
-				ValueManager.getBigDecimalFromValue(
+				NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				),
 				request.getDescription()
@@ -1307,7 +1308,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		try {
 			MOrderLine rmaLine = ReturnSalesOrder.updateRMALine(
 				request.getId(),
-				ValueManager.getBigDecimalFromValue(
+				NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				),
 				request.getDescription()
@@ -1530,12 +1531,12 @@ public class PointOfSalesForm extends StoreImplBase {
 						)
 					)
 					.setAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("GrandTotal")
 						)
 					)
 					.setOpenAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("OpenAmount")
 						)
 					)
@@ -1840,7 +1841,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					)
 					.setIsRefund(rs.getString("IsReceipt").equals("Y")? false: true)
 					.setAmount(
-						ValueManager.getValueFromBigDecimal(
+						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("PaymentAmount")
 						)
 					)
@@ -1897,13 +1898,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			GenericPO refundReferenceToCreate = new GenericPO("C_POSPaymentReference", Env.getCtx(), 0, transactionName);
 			refundReferenceToCreate.set_ValueOfColumn(
 				"Amount",
-				ValueManager.getBigDecimalFromValue(
+				NumberManager.getBigDecimalFromString(
 					request.getAmount()
 				)
 			);
 			refundReferenceToCreate.set_ValueOfColumn(
 				"AmtSource",
-				ValueManager.getBigDecimalFromValue(
+				NumberManager.getBigDecimalFromString(
 					request.getSourceAmount()
 				)
 			);
@@ -2441,7 +2442,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				.filter(shipmentLineTofind -> shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID())
 				.findFirst();
 		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
-		BigDecimal quantity = ValueManager.getBigDecimalFromValue(
+		BigDecimal quantity = NumberManager.getBigDecimalFromString(
 			request.getQuantity()
 		);
 		//	Validate available
@@ -3155,12 +3156,12 @@ public class PointOfSalesForm extends StoreImplBase {
 					availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefundOpen")
 				)
 				.setMaximumRefundAllowed(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						(BigDecimal) availablePaymentMethod.get_Value("MaximumRefundAllowed")
 					)
 				)
 				.setMaximumDailyRefundAllowed(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						(BigDecimal) availablePaymentMethod.get_Value("MaximumDailyRefundAllowed")
 					)
 				)
@@ -3463,7 +3464,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(businessPartnerId);
 		}
 		//	Grand Total
-		BigDecimal grandTotal = ValueManager.getBigDecimalFromValue(
+		BigDecimal grandTotal = NumberManager.getBigDecimalFromString(
 			request.getGrandTotal()
 		);
 		if(grandTotal != null
@@ -3472,7 +3473,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(grandTotal);
 		}
 		//	Support Open Amount
-		BigDecimal openAmount = ValueManager.getBigDecimalFromValue(
+		BigDecimal openAmount = NumberManager.getBigDecimalFromString(
 			request.getOpenAmount()
 		);
 		if(openAmount != null
@@ -3832,17 +3833,17 @@ public class PointOfSalesForm extends StoreImplBase {
 				configureWarehouse(salesOrder);
 			}
 			//	Discount Amount
-			BigDecimal discountRate = ValueManager.getBigDecimalFromValue(
+			BigDecimal discountRate = NumberManager.getBigDecimalFromString(
 				request.getDiscountRate()
 			);
 			if(discountRate != null) {
 				configureDiscount(salesOrder, discountRate, transactionName);
 			}
 			//	Discount Off
-			BigDecimal discountRateOff = ValueManager.getBigDecimalFromValue(
+			BigDecimal discountRateOff = NumberManager.getBigDecimalFromString(
 				request.getDiscountRateOff()
 			);
-			BigDecimal discountAmountOff = ValueManager.getBigDecimalFromValue(
+			BigDecimal discountAmountOff = NumberManager.getBigDecimalFromString(
 				request.getDiscountAmountOff()
 			);
 			if(discountRateOff != null) {
@@ -4429,13 +4430,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			updateOrderLine(
 				pos,
 				orderLineId,
-				ValueManager.getBigDecimalFromValue(
+				NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				),
-				ValueManager.getBigDecimalFromValue(
+				NumberManager.getBigDecimalFromString(
 					request.getPrice()
 				),
-				ValueManager.getBigDecimalFromValue(
+				NumberManager.getBigDecimalFromString(
 					request.getDiscountRate()
 				),
 				request.getIsAddQuantity(),
@@ -4475,7 +4476,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				request.getProductId(),
 				request.getChargeId(),
 				request.getWarehouseId(),
-				ValueManager.getBigDecimalFromValue(
+				NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				)
 			);
@@ -4903,7 +4904,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Special values
 		builder
 			.setMaximumRefundAllowed(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					getBigDecimalValueFromPOS(
 						pos,
 						userId,
@@ -4912,7 +4913,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				)
 			)
 			.setMaximumDailyRefundAllowed(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					getBigDecimalValueFromPOS(
 						pos,
 						userId,
@@ -4921,7 +4922,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				)
 			)
 			.setMaximumDiscountAllowed(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					getBigDecimalValueFromPOS(
 						pos,
 						userId,
@@ -4930,7 +4931,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				)
 			)
 			.setMaximumLineDiscountAllowed(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					getBigDecimalValueFromPOS(
 						pos,
 						userId,
@@ -4939,12 +4940,12 @@ public class PointOfSalesForm extends StoreImplBase {
 				)
 			)
 			.setWriteOffAmountTolerance(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					getWriteOffAmtTolerance(pos)
 				)
 			)
 			.setWriteOffPercentageTolerance(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					getBigDecimalValueFromPOS(
 						pos,
 						userId,
@@ -5336,7 +5337,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				payment.addDescription(request.getDescription());
 			}
 			//	Amount
-			BigDecimal paymentAmount = ValueManager.getBigDecimalFromValue(
+			BigDecimal paymentAmount = NumberManager.getBigDecimalFromString(
 				request.getAmount()
 			);
 	        payment.setPayAmt(paymentAmount);
@@ -5456,19 +5457,16 @@ public class PointOfSalesForm extends StoreImplBase {
 		.<MProduct>list()
 		.forEach(product -> {
 			ProductPrice.Builder productPrice = convertProductPrice(
-					product, 
-					businessPartnerId, 
-					priceList, 
-					warehouseId.get(), 
-					validFrom.get(),
-					displayCurrencyId,
-					conversionTypeId,
-					null);
-			if(productPrice.hasPriceList()
-					&& productPrice.hasPriceStandard()
-					&& productPrice.hasPriceLimit()) {
-				builder.addProductPrices(productPrice);
-			}
+				product,
+				businessPartnerId,
+				priceList,
+				warehouseId.get(),
+				validFrom.get(),
+				displayCurrencyId,
+				conversionTypeId,
+				null
+			);
+			builder.addProductPrices(productPrice);
 		});
 		//	
 		builder.setRecordCount(count);
@@ -5538,17 +5536,17 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Prices
 		if(Optional.ofNullable(productPricing.getPriceStd()).orElse(Env.ZERO).signum() > 0) {
 			builder.setPriceList(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						Optional.ofNullable(productPricing.getPriceList()).orElse(Env.ZERO)
 					)
 				)
 				.setPriceStandard(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						Optional.ofNullable(productPricing.getPriceStd()).orElse(Env.ZERO)
 					)
 				)
 				.setPriceLimit(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						Optional.ofNullable(
 							productPricing.getPriceLimit()
 						).orElse(Env.ZERO)
@@ -5570,7 +5568,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					if(conversionRate != null) {
 						BigDecimal multiplyRate = conversionRate.getMultiplyRate();
 						builder.setDisplayPriceList(
-								ValueManager.getValueFromBigDecimal(
+								NumberManager.getBigDecimalToString(
 									Optional.ofNullable(
 										productPricing.getPriceList()
 									)
@@ -5579,7 +5577,7 @@ public class PointOfSalesForm extends StoreImplBase {
 								)
 							)
 							.setDisplayPriceStandard(
-								ValueManager.getValueFromBigDecimal(
+								NumberManager.getBigDecimalToString(
 									Optional.ofNullable(
 										productPricing.getPriceStd()
 									)
@@ -5588,7 +5586,7 @@ public class PointOfSalesForm extends StoreImplBase {
 								)
 							)
 							.setDisplayPriceLimit(
-								ValueManager.getValueFromBigDecimal(
+								NumberManager.getBigDecimalToString(
 									Optional.ofNullable(
 										productPricing.getPriceLimit()
 									)
@@ -5621,22 +5619,22 @@ public class PointOfSalesForm extends StoreImplBase {
 					quantityAvailable.updateAndGet(quantity -> quantity.add(storage.getQtyOnHand().subtract(storage.getQtyReserved())));
 				});
 			builder.setQuantityOnHand(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						quantityOnHand.get()
 					)
 				)
 				.setQuantityReserved(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						quantityReserved.get()
 					)
 				)
 				.setQuantityOrdered(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						quantityOrdered.get()
 					)
 				)
 				.setQuantityAvailable(
-					ValueManager.getValueFromBigDecimal(
+					NumberManager.getBigDecimalToString(
 						quantityAvailable.get()
 					)
 				)

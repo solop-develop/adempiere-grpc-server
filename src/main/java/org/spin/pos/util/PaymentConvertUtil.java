@@ -37,6 +37,7 @@ import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.PaymentReference;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.convert.ConvertCommon;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 
@@ -103,7 +104,9 @@ public class PaymentConvertUtil {
 				.setScale(presicion, RoundingMode.HALF_UP);
 
 			builder.setAmount(
-					ValueManager.getValueFromBigDecimal(amount)
+					NumberManager.getBigDecimalToString(
+						amount
+					)
 				)
 				.setDescription(
 					ValueManager.validateNull(
@@ -145,7 +148,9 @@ public class PaymentConvertUtil {
 					paymentReference.get_ValueAsBoolean("Processed")
 				)
 				.setConvertedAmount(
-					ValueManager.getValueFromBigDecimal(convertedAmount)
+					NumberManager.getBigDecimalToString(
+						convertedAmount
+					)
 				)
 			;
 		}
@@ -201,8 +206,16 @@ public class PaymentConvertUtil {
 			.setTenderTypeCode(ValueManager.validateNull(payment.getTenderType()))
 			.setReferenceNo(ValueManager.validateNull(Optional.ofNullable(payment.getCheckNo()).orElse(payment.getDocumentNo())))
 			.setDescription(ValueManager.validateNull(payment.getDescription()))
-			.setAmount(ValueManager.getValueFromBigDecimal(paymentAmount))
-			.setConvertedAmount(ValueManager.getValueFromBigDecimal(convertedAmount))
+			.setAmount(
+				NumberManager.getBigDecimalToString(
+					paymentAmount
+				)
+			)
+			.setConvertedAmount(
+				NumberManager.getBigDecimalToString(
+					convertedAmount
+				)
+			)
 			.setBankId(payment.getC_Bank_ID())
 			.setCustomer(
 				POSConvertUtil.convertCustomer(

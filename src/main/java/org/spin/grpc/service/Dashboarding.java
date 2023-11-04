@@ -82,10 +82,11 @@ import org.spin.backend.grpc.dashboarding.WindowMetrics;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
 import org.spin.dashboarding.DashboardingConvertUtil;
 import org.spin.eca50.controller.ChartBuilder;
 import org.spin.eca50.data.ChartValue;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Value;
@@ -145,7 +146,7 @@ public class Dashboarding extends DashboardingImplBase {
 						ChartData.Builder chartDataBuilder = ChartData.newBuilder()
 								.setName(dataSet.getName())
 								.setValue(
-									ValueManager.getValueFromBigDecimal(
+									NumberManager.getBigDecimalToString(
 										dataSet.getAmount()
 									)
 								)
@@ -195,7 +196,7 @@ public class Dashboarding extends DashboardingImplBase {
 		}
 
 		builder.setMeasureTarget(
-			ValueManager.getValueFromBigDecimal(
+			NumberManager.getBigDecimalToString(
 				goal.getMeasureTarget()
 			)
 		);
@@ -985,7 +986,7 @@ public class Dashboarding extends DashboardingImplBase {
 					ChartData.Builder chartDataBuilder = ChartData.newBuilder()
 						.setName(dataSet.getName())
 						.setValue(
-							ValueManager.getValueFromBigDecimal(
+							NumberManager.getBigDecimalToString(
 								dataSet.getAmount()
 							)
 						)

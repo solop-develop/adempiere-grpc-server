@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -45,7 +45,8 @@ import org.spin.backend.grpc.time_control.TimeControlGrpc.TimeControlImplBase;
 import org.spin.backend.grpc.time_control.UpdateResourceAssignmentRequest;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -161,7 +162,7 @@ public class TimeControl extends TimeControlImplBase {
 		}
 		builder.setIsConfirmed(resourceAssignment.isConfirmed())
 			.setQuantity(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					resourceAssignment.getQty()
 				)
 			)

@@ -170,8 +170,8 @@ message Matched {
 	int32 line_no = 7;
 	int32 product_id = 8;
 	string product_name = 9;
-	google.protobuf.Value quantity = 10;
-	google.protobuf.Value matched_quantity = 11;
+	string quantity = 10;
+	string matched_quantity = 11;
 	MatchType match_type = 12;
 }
 
@@ -233,7 +233,7 @@ message ProcessRequest {
 	MatchType match_to_type = 3;
 	int32 match_from_selected_id = 4;
 	repeated Matched matched_to_selections = 5;
-	google.protobuf.Value quantity = 6;
+	string quantity = 6;
 }
 
 message ProcessResponse {

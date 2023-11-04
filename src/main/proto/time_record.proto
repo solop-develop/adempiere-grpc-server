@@ -130,13 +130,13 @@ message ResourceAssignment {
 	google.protobuf.Timestamp assign_date_from = 5;
 	google.protobuf.Timestamp assign_date_to = 6;
 	bool is_confirmed = 7;
-	google.protobuf.Value quantity = 8;
+	string quantity = 8;
 }
 
 message CreateTimeRecordRequest {
 	int32 request_id = 1;
 	int32 project_id = 2;
-	google.protobuf.Value quantity = 3;
+	string quantity = 3;
 	string name = 4;
 	string description = 5;
 	google.protobuf.Timestamp date = 6;

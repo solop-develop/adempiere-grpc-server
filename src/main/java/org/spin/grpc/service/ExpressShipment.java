@@ -66,7 +66,8 @@ import org.spin.backend.grpc.form.express_shipment.ExpressShipmentGrpc.ExpressSh
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -701,7 +702,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getBigDecimalFromValue(
+				quantity = NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
@@ -844,7 +845,9 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getBigDecimalFromValue(request.getQuantity());
+				quantity = NumberManager.getBigDecimalFromString(
+					request.getQuantity()
+				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
 					quantity = BigDecimal.ONE;
 				}
@@ -907,7 +910,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				ValueManager.validateNull(shipmentLine.getDescription())
 			)
 			.setQuantity(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					shipmentLine.getQtyEntered()
 				)
 			)

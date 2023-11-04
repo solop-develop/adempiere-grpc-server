@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -50,7 +50,8 @@ import org.spin.backend.grpc.form.time_record.TimeRecordGrpc.TimeRecordImplBase;
 import org.spin.backend.grpc.form.time_record.User;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -415,7 +416,7 @@ public class TimeRecord extends TimeRecordImplBase {
 		}
 		builder.setIsConfirmed(resourceAssignment.isConfirmed());
 		builder.setQuantity(
-			ValueManager.getValueFromBigDecimal(
+			NumberManager.getBigDecimalToString(
 				resourceAssignment.getQty()
 			)
 		);
@@ -474,7 +475,7 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (Util.isEmpty(request.getName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @Name@");
 		}
-		BigDecimal quantity = ValueManager.getBigDecimalFromValue(
+		BigDecimal quantity = NumberManager.getBigDecimalFromString(
 			request.getQuantity()
 		);
 		if (quantity == null) {

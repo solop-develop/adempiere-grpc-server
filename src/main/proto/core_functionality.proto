@@ -233,8 +233,8 @@ message ConversionRate {
 	google.protobuf.Timestamp valid_to = 4;
 	Currency currency_from = 5;
 	Currency currency_to = 6;
-	google.protobuf.Value multiply_rate = 7;
-	google.protobuf.Value divide_rate = 8;
+	string multiply_rate = 7;
+	string divide_rate = 8;
 }
 
 // Organization
@@ -324,8 +324,8 @@ message ProductConversion {
 	int32 id = 1;
 	UnitOfMeasure uom = 2;
 	UnitOfMeasure product_uom = 3;
-	google.protobuf.Value multiply_rate = 4;
-	google.protobuf.Value divide_rate = 5;
+	string multiply_rate = 4;
+	string divide_rate = 5;
 }
 
 //	List Product Conversion Response
@@ -388,15 +388,15 @@ message Product {
 	string product_group_name = 14;
 	string product_class_name = 15;
 	string product_classification_name = 16;
-	google.protobuf.Value weight = 17;
-	google.protobuf.Value volume = 18;
+	string weight = 17;
+	string volume = 18;
 	string upc = 19;
 	string sku = 20;
-	int32 shelf_width = 21;
-	google.protobuf.Value shelf_height = 22;
-	int32 shelf_depth = 23;
-	int32 units_per_pack = 24;
-	google.protobuf.Value units_per_pallet = 25;
+	string shelf_width = 21;
+	string shelf_height = 22;
+	string shelf_depth = 23;
+	string units_per_pack = 24;
+	string units_per_pallet = 25;
 	int32 guarantee_days = 26;
 	string description_url = 27;
 	string version_no = 28;
@@ -410,30 +410,30 @@ message TaxRate {
 	string name = 2;
 	string description = 3;
 	string tax_indicator = 4;
-	google.protobuf.Value rate = 5;
+	string rate = 5;
 }
 
 // Product Price
 message ProductPrice {
 	Product product = 1;
-	google.protobuf.Value price_list = 2;
-	google.protobuf.Value price_standard = 3;
-	google.protobuf.Value price_limit = 4;
+	string price_list = 2;
+	string price_standard = 3;
+	string price_limit = 4;
 	string price_list_name = 5;
 	bool is_tax_included = 6;
 	string valid_from = 7;
 	Currency currency = 8;
 	TaxRate tax_rate = 9;
 	int32 price_precision = 10;
-	google.protobuf.Value quantity_on_hand = 11;
-	google.protobuf.Value quantity_reserved = 12;
-	google.protobuf.Value quantity_ordered = 13;
-	google.protobuf.Value quantity_available = 14;
+	string quantity_on_hand = 11;
+	string quantity_reserved = 12;
+	string quantity_ordered = 13;
+	string quantity_available = 14;
 	//	Schema Values
 	Currency display_currency = 15;
-	google.protobuf.Value display_price_list = 16;
-	google.protobuf.Value display_price_standard = 17;
-	google.protobuf.Value display_price_limit = 18;
+	string display_price_list = 16;
+	string display_price_standard = 17;
+	string display_price_limit = 18;
 	ConversionRate conversion_rate = 19;
 }
 
@@ -472,8 +472,8 @@ message BankAccount {
 	Currency currency = 5;
 	string bban = 6;
 	string iban = 7;
-	google.protobuf.Value credit_limit = 8;
-	google.protobuf.Value current_balance = 9;
+	string credit_limit = 8;
+	string current_balance = 9;
 	bool is_default = 10;
 	BusinessPartner business_partner = 11;
 	enum BankAccountType {

@@ -10,13 +10,12 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,           *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
  * For the text or an alternative of this public license, you may reach us           *
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
+ * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                     *
  *************************************************************************************/
 
 package org.spin.dashboarding;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,6 +49,7 @@ import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.convert.DictionaryConvertUtil;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -264,10 +264,8 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueManager.getValueFromBigDecimal(
-					new BigDecimal(
-						colorSchema.getMark1Percent()
-					)
+				String.valueOf(
+					colorSchema.getMark1Percent()
 				)
 			)
 			.setColor(
@@ -285,10 +283,8 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueManager.getValueFromBigDecimal(
-					new BigDecimal(
-						colorSchema.getMark2Percent()
-					)
+				String.valueOf(
+					colorSchema.getMark2Percent()
 				)
 			)
 			.setColor(
@@ -306,10 +302,8 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueManager.getValueFromBigDecimal(
-					new BigDecimal(
-						colorSchema.getMark3Percent()
-					)
+				String.valueOf(
+					colorSchema.getMark3Percent()
 				)
 			)
 			.setColor(
@@ -327,11 +321,9 @@ public class DashboardingConvertUtil {
 			return builder;
 		}
 		builder.setPercent(
-				ValueManager.getValueFromBigDecimal(
-					new BigDecimal(
-						colorSchema.getMark4Percent()
-						)
-					)
+				String.valueOf(
+					colorSchema.getMark4Percent()
+				)
 			)
 			.setColor(
 				getColorAsHex(
@@ -385,8 +377,8 @@ public class DashboardingConvertUtil {
 				)
 			)
 			.setValue(
-				ValueManager.getValueFromBigDecimal(
-					new BigDecimal(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromDouble(
 						grapColumn.getValue()
 					)
 				)

@@ -97,7 +97,7 @@ message BankAccount {
 	string account_no = 2;
 	string account_name = 3;
 	string bank_name = 4;
-	google.protobuf.Value current_balance = 5;
+	string current_balance = 5;
 }
 
 // Payment Selection
@@ -105,7 +105,7 @@ message PaymentSelection {
 	int32 id = 1;
 	string document_no = 2;
 	BankAccount bank_account = 3;
-	google.protobuf.Value payment_amount = 4;
+	string payment_amount = 4;
 	int32 payment_quantity = 5;
 	data.Currency currency = 6;
 }
@@ -167,11 +167,11 @@ message Payment {
 	int32 vendor_id = 3;
 	string vendor_tax_id = 4;
 	string vendor_name = 5;
-	google.protobuf.Value grand_total = 6;
-	google.protobuf.Value over_under_amount = 7;
-	google.protobuf.Value payment_amount = 8;
-	google.protobuf.Value open_amount = 9;
-	google.protobuf.Value final_balance = 10;
+	string grand_total = 6;
+	string over_under_amount = 7;
+	string payment_amount = 8;
+	string open_amount = 9;
+	string final_balance = 10;
 }
 
 message ListPaymentsResponse {

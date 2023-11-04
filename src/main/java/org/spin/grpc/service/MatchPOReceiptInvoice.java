@@ -66,7 +66,8 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchPORReceiptInvoic
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -655,7 +656,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		if (request.getIsSameQuantity()) {
 			final String quantityColumn = org.spin.form.match_po_receipt_invoice.Util.getQuantityColumn(matchFromType);
 			Matched.Builder matchedFromSelected = org.spin.form.match_po_receipt_invoice.Util.getMatchedSelectedFrom(matchFromSelectedId, isMatched, matchFromType, matchToType);
-			BigDecimal quantity = ValueManager.getBigDecimalFromValue(
+			BigDecimal quantity = NumberManager.getBigDecimalFromString(
 				matchedFromSelected.getQuantity()
 			);
 			whereClause += " AND " + quantityColumn + " = " + quantity;
@@ -729,7 +730,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		Trx.run(transactionName -> {
 			boolean isMatchMode = MatchMode.MODE_MATCHED == request.getMatchMode();
-			final BigDecimal quantity = ValueManager.getBigDecimalFromValue(
+			final BigDecimal quantity = NumberManager.getBigDecimalFromString(
 				request.getQuantity()
 			);
 			boolean isMatchFromOder = MatchType.PURCHASE_ORDER == request.getMatchFromType();
@@ -745,10 +746,10 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			);
 
 			request.getMatchedToSelectionsList().forEach(lineMatchedTo -> {
-				BigDecimal mathcedQuantity = ValueManager.getBigDecimalFromValue(
+				BigDecimal mathcedQuantity = NumberManager.getBigDecimalFromString(
 					lineMatchedTo.getMatchedQuantity()
 				);
-				BigDecimal documentQuantity = ValueManager.getBigDecimalFromValue(
+				BigDecimal documentQuantity = NumberManager.getBigDecimalFromString(
 					lineMatchedTo.getQuantity()
 				);
 

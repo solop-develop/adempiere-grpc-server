@@ -99,7 +99,7 @@ message BankAccount {
 	string account_no_mask = 4;
 	Bank bank = 5;
 	Currency currency = 6;
-	google.protobuf.Value current_balance = 7;
+	string current_balance = 7;
 }
 
 // Bank Statement
@@ -113,9 +113,9 @@ message BankStatement {
 	bool is_manual = 7;
 	string document_status = 8;
 	bool is_processed = 9;
-	google.protobuf.Value beginning_balance = 10;
-	google.protobuf.Value statement_difference = 11;
-	google.protobuf.Value ending_balance = 12;
+	string beginning_balance = 10;
+	string statement_difference = 11;
+	string ending_balance = 12;
 }
 
 message GetBankStatementRequest {
@@ -218,8 +218,8 @@ message ListImportedBankMovementsRequest {
 	string search_value = 7;
 	int32 bank_statement_id = 8;
 	int32 bank_account_id = 9;
-	google.protobuf.Value payment_amount_from = 10;
-	google.protobuf.Value payment_amount_to = 11;
+	string payment_amount_from = 10;
+	string payment_amount_to = 11;
 	google.protobuf.Timestamp transaction_date_from = 12;
 	google.protobuf.Timestamp transaction_date_to = 13;
 	MatchMode match_mode = 14;
@@ -232,7 +232,7 @@ message ImportedBankMovement {
 	string reference_no = 4;
 	BusinessPartner business_partner = 5;
 	Currency currency = 6;
-	google.protobuf.Value amount = 7;
+	string amount = 7;
 	string memo = 8;
 	int32 payment_id = 9;
 	int32 bank_statement_line_id = 10;
@@ -256,8 +256,8 @@ message ListPaymentsRequest {
 	int32 bank_statement_id = 8;
 	int32 bank_account_id = 9;
 	int32 business_partner_id = 10;
-	google.protobuf.Value payment_amount_from = 11;
-	google.protobuf.Value payment_amount_to = 12;
+	string payment_amount_from = 11;
+	string payment_amount_to = 12;
 	google.protobuf.Timestamp transaction_date_from = 13;
 	google.protobuf.Timestamp transaction_date_to = 14;
 	MatchMode match_mode = 15;
@@ -271,7 +271,7 @@ message Payment {
 	BusinessPartner business_partner = 5;
 	TenderType tender_type = 6;
 	Currency currency = 7;
-	google.protobuf.Value amount = 8;
+	string amount = 8;
 	string description = 9;
 }
 
@@ -294,8 +294,8 @@ message ListMatchingMovementsRequest {
 	int32 bank_statement_id = 8;
 	int32 bank_account_id = 9;
 	int32 business_partner_id = 10;
-	google.protobuf.Value payment_amount_from = 11;
-	google.protobuf.Value payment_amount_to = 12;
+	string payment_amount_from = 11;
+	string payment_amount_to = 12;
 	google.protobuf.Timestamp transaction_date_from = 13;
 	google.protobuf.Timestamp transaction_date_to = 14;
 	MatchMode match_mode = 15;
@@ -309,13 +309,13 @@ message MatchingMovement {
 	BusinessPartner business_partner = 5;
 	TenderType tender_type = 6;
 	Currency currency = 7;
-	google.protobuf.Value amount = 8;
+	string amount = 8;
 	string description = 9;
 	string reference_no = 10;
 	string memo = 11;
 	int32 payment_id = 12;
 	bool is_automatic = 13;
-	google.protobuf.Value payment_amount = 14;
+	string payment_amount = 14;
 	google.protobuf.Timestamp payment_date = 15;
 }
 
@@ -335,13 +335,13 @@ message ResultMovement {
 	BusinessPartner business_partner = 5;
 	TenderType tender_type = 6;
 	Currency currency = 7;
-	google.protobuf.Value amount = 8;
+	string amount = 8;
 	string description = 9;
 	string reference_no = 10;
 	string memo = 11;
 	int32 payment_id = 12;
 	bool is_automatic = 13;
-	google.protobuf.Value payment_amount = 14;
+	string payment_amount = 14;
 	google.protobuf.Timestamp payment_date = 15;
 }
 
@@ -355,8 +355,8 @@ message ListResultMovementsRequest {
 	string search_value = 7;
 	int32 bank_statement_id = 8;
 	int32 bank_account_id = 9;
-	google.protobuf.Value payment_amount_from = 10;
-	google.protobuf.Value payment_amount_to = 11;
+	string payment_amount_from = 10;
+	string payment_amount_to = 11;
 	google.protobuf.Timestamp transaction_date_from = 12;
 	google.protobuf.Timestamp transaction_date_to = 13;
 }
@@ -393,8 +393,8 @@ message UnmatchPaymentsResponse {
 message ProcessMovementsRequest {
 	int32 bank_statement_id = 1;
 	int32 bank_account_id = 2;
-	google.protobuf.Value payment_amount_from = 5;
-	google.protobuf.Value payment_amount_to = 6;
+	string payment_amount_from = 5;
+	string payment_amount_to = 6;
 	google.protobuf.Timestamp transaction_date_from = 7;
 	google.protobuf.Timestamp transaction_date_to = 8;
 }

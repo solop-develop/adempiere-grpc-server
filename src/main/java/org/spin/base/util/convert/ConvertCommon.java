@@ -23,6 +23,7 @@ import org.spin.backend.grpc.common.BankAccount;
 import org.spin.backend.grpc.common.BusinessPartner;
 import org.spin.backend.grpc.common.Currency;
 import org.spin.backend.grpc.common.DocumentType;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -134,8 +135,16 @@ public class ConvertCommon {
 				bankAccount.getBankAccountType().equals(MBankAccount.BANKACCOUNTTYPE_Checking) ?
 					BankAccount.BankAccountType.CHECKING : BankAccount.BankAccountType.SAVINGS
 			)
-			.setCreditLimit(ValueManager.getValueFromBigDecimal(bankAccount.getCreditLimit()))
-			.setCurrentBalance(ValueManager.getValueFromBigDecimal(bankAccount.getCurrentBalance()))
+			.setCreditLimit(
+				NumberManager.getBigDecimalToString(
+					bankAccount.getCreditLimit()
+				)
+			)
+			.setCurrentBalance(
+				NumberManager.getBigDecimalToString(
+					bankAccount.getCurrentBalance()
+				)
+			)
 			//	Foreign
 			.setCurrency(
 				convertCurrency(

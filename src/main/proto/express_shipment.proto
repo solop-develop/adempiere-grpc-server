@@ -185,7 +185,7 @@ message CreateShipmentLineRequest {
 	int32 shipment_id = 1;
 	string description = 2;
 	int32 product_id = 3;
-	google.protobuf.Value quantity = 4;
+	string quantity = 4;
 	bool is_quantity_from_order_line = 5;
 }
 
@@ -194,7 +194,7 @@ message ShipmentLine {
 	int32 order_line_id = 2;
 	Product product = 3;
 	string description = 4;
-	google.protobuf.Value quantity = 5;
+	string quantity = 5;
 	int32 line = 6;
 }
 
@@ -223,5 +223,5 @@ message DeleteShipmentLineRequest {
 message UpdateShipmentLineRequest {
 	int32 id = 1;
 	string description = 2;
-	google.protobuf.Value quantity = 3;
+	string quantity = 3;
 }

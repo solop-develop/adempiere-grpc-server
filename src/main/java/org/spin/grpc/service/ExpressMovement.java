@@ -57,7 +57,8 @@ import org.spin.backend.grpc.form.express_movement.ExpressMovementGrpc.ExpressMo
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.SessionManager;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -535,7 +536,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 			BigDecimal quantity = BigDecimal.ONE;
 			if (request.getQuantity() != null) {
-				quantity = ValueManager.getBigDecimalFromValue(
+				quantity = NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				);
 				if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
@@ -656,7 +657,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				throw new AdempiereException("@M_MovementLine_ID@ @Processed@");
 			}
 
-			BigDecimal quantity = ValueManager.getBigDecimalFromValue(
+			BigDecimal quantity = NumberManager.getBigDecimalFromString(
 				request.getQuantity()
 			);
 			if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
@@ -715,7 +716,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				ValueManager.validateNull(movementLine.getDescription())
 			)
 			.setQuantity(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					movementLine.getMovementQty()
 				)
 			)

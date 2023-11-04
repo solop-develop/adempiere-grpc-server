@@ -37,6 +37,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -66,7 +67,7 @@ public class CollectingManagement {
 			throw new AdempiereException("@NoCashBook@");
 		}
 		//	Amount
-		BigDecimal paymentAmount = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmount = NumberManager.getBigDecimalFromString(
 			request.getAmount()
 		);
 		if(paymentAmount == null || paymentAmount.compareTo(Env.ZERO) == 0) {

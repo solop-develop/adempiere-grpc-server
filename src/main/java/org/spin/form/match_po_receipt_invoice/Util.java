@@ -41,6 +41,7 @@ import org.compiere.util.Env;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchType;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Matched;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Vendor;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class Util {
@@ -108,12 +109,12 @@ public class Util {
 				resultSet.getInt(I_C_InvoiceLine.COLUMNNAME_Line)
 			)
 			.setQuantity(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					resultSet.getBigDecimal("Quantity")
 				)
 			)
 			.setMatchedQuantity(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					resultSet.getBigDecimal("MatchedQuantity")
 				)
 			)

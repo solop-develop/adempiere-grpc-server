@@ -52,6 +52,7 @@ import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.model.MADAttachmentReference;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -314,7 +315,7 @@ public class FileManagement extends FileManagementImplBase {
 						MADAttachmentReference resourceReference = validateAttachmentReferenceById(fileUploadRequest.getId());
 
 						resourceUuid.set(resourceReference.getUUID());
-						BigDecimal size = ValueManager.getBigDecimalFromValue(
+						BigDecimal size = NumberManager.getBigDecimalFromString(
 							fileUploadRequest.getFileSize()
 						);
 						if (size != null && fileUploadRequest.getData() != null) {
@@ -480,7 +481,7 @@ public class FileManagement extends FileManagementImplBase {
 				)
 			)
 			.setFileSize(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					reference.getFileSize()
 				)
 			)

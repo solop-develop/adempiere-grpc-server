@@ -83,6 +83,7 @@ import org.spin.base.util.LookupUtil;
 // import org.spin.base.util.RecordUtil;
 import org.spin.base.util.convert.ConvertCommon;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.ByteString;
@@ -237,7 +238,7 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 				)
 			)
 			.setCurrentBalance(
-				ValueManager.getValueFromBigDecimal(
+				NumberManager.getBigDecimalToString(
 					bankAccount.getCurrentBalance()
 				)
 			)
@@ -496,19 +497,29 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 				)
 			)
 			.setGrandTotal(
-				ValueManager.getValueFromBigDecimal(grandTotal)
+				NumberManager.getBigDecimalToString(
+					grandTotal
+				)
 			)
 			.setPaymentAmount(
-				ValueManager.getValueFromBigDecimal(paymentAmount)
+				NumberManager.getBigDecimalToString(
+					paymentAmount
+				)
 			)
 			.setOpenAmount(
-				ValueManager.getValueFromBigDecimal(openAmount)
+				NumberManager.getBigDecimalToString(
+					openAmount
+				)
 			)
 			.setOverUnderAmount(
-				ValueManager.getValueFromBigDecimal(overUnderAmount)
+				NumberManager.getBigDecimalToString(
+					overUnderAmount
+				)
 			)
 			.setFinalBalance(
-				ValueManager.getValueFromBigDecimal(finalBalance)
+				NumberManager.getBigDecimalToString(
+					finalBalance
+				)
 			)
 		;
 

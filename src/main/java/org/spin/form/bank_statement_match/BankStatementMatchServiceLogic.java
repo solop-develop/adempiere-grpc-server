@@ -74,6 +74,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -213,10 +214,10 @@ public abstract class BankStatementMatchServiceLogic {
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountTo()
 		);
 
@@ -285,10 +286,10 @@ public abstract class BankStatementMatchServiceLogic {
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountTo()
 		);
 
@@ -345,10 +346,10 @@ public abstract class BankStatementMatchServiceLogic {
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountTo()
 		);
 
@@ -501,10 +502,10 @@ public abstract class BankStatementMatchServiceLogic {
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountTo()
 		);
 
@@ -620,10 +621,10 @@ public abstract class BankStatementMatchServiceLogic {
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = ValueManager.getBigDecimalFromValue(
+		BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountTo()
 		);
 

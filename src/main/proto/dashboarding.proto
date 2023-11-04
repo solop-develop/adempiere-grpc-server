@@ -168,7 +168,7 @@ message Metrics {
 	string description = 3;
 	string x_axis_label = 4;
 	string y_axis_label = 5;
-	google.protobuf.Value measure_target = 6;
+	string measure_target = 6;
 	repeated ColorSchema color_schemas = 7;
 	repeated ChartSerie series = 8;
 }
@@ -182,14 +182,14 @@ message ChartSerie {
 //	Data of Chart
 message ChartData {
 	string name = 1;
-	google.protobuf.Value value = 2;
+	string value = 2;
 }
 
 //	Color Schema
 message ColorSchema {
 	string name = 1;
 	string color = 2;
-	google.protobuf.Value percent = 3;
+	string percent = 3;
 }
 
 enum Action {
@@ -299,7 +299,7 @@ message WindowMetrics {
 	string description = 3;
 	string x_axis_label = 4;
 	string y_axis_label = 5;
-	google.protobuf.Value measure_target = 6;
+	string measure_target = 6;
 	repeated ColorSchema color_schemas = 7;
 	repeated ChartSerie series = 8;
 }

@@ -180,9 +180,9 @@ message Payment {
 	Organization organization = 6;
 	string description = 7;
 	Currency currency = 8;
-	google.protobuf.Value payment_amount = 9;
-	google.protobuf.Value converted_amount = 10;
-	google.protobuf.Value open_amount = 11;
+	string payment_amount = 9;
+	string converted_amount = 10;
+	string open_amount = 11;
 }
 
 message ListPaymentsRequest {
@@ -219,10 +219,10 @@ message Invoice {
 	Organization organization = 6;
 	string description = 7;
 	Currency currency = 8;
-	google.protobuf.Value original_amount = 9;
-	google.protobuf.Value converted_amount = 10;
-	google.protobuf.Value open_amount = 11;
-	google.protobuf.Value discount_amount = 12;
+	string original_amount = 9;
+	string converted_amount = 10;
+	string open_amount = 11;
+	string discount_amount = 12;
 }
 
 message ListInvoicesRequest {
@@ -254,7 +254,7 @@ message Charge {
 	int32 id = 1;
 	string name = 2;
 	string description = 3;
-	google.protobuf.Value amount = 4;
+	string amount = 4;
 }
 
 message ListChargesRequest {
@@ -294,16 +294,16 @@ message ListTransactionOrganizationsResponse {
 message PaymentSelection {
 	int32 id = 1;
 	google.protobuf.Timestamp transaction_date = 2;
-	google.protobuf.Value applied_amount = 3;
+	string applied_amount = 3;
 }
 
 message InvoiceSelection {
 	int32 id = 1;
 	google.protobuf.Timestamp date_invoiced = 2;
-	google.protobuf.Value applied_amount = 3;
-	google.protobuf.Value discount_amount = 4;
-	google.protobuf.Value write_off_amount = 5;
-	google.protobuf.Value open_amount = 6;
+	string applied_amount = 3;
+	string discount_amount = 4;
+	string write_off_amount = 5;
+	string open_amount = 6;
 }
 
 // Process
@@ -315,7 +315,7 @@ message ProcessRequest {
 	int32 transaction_organization_id = 5;
 	google.protobuf.Timestamp date = 6;
 	string description = 7;
-	google.protobuf.Value total_difference = 8;
+	string total_difference = 8;
 	repeated PaymentSelection payment_selections = 9;
 	repeated InvoiceSelection invoice_selections = 10;
 }

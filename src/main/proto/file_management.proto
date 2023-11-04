@@ -128,7 +128,7 @@ message ResourceReference {
 	int32 id = 1;
 	string name = 2;
 	string file_name = 3;
-	google.protobuf.Value file_size = 4;
+	string file_size = 4;
 	string description = 5;
 	string text_message = 6;
 	string content_type = 7;
@@ -142,7 +142,7 @@ message ResourceReference {
 message LoadResourceRequest {
 	bytes data = 1;
 	int32 id = 2;
-	google.protobuf.Value file_size = 3;
+	string file_size = 3;
 }
 
 enum Operation {
