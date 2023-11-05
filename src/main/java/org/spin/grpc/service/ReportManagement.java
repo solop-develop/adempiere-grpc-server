@@ -181,7 +181,7 @@ public class ReportManagement extends ReportManagementImplBase {
 		;
 		//	Set Report Export Type
 		if(Util.isEmpty(reportType, true)) {
-			reportType = "pdf";
+			reportType = ReportUtil.DEFAULT_REPORT_TYPE;
 		}
 		builder.withReportExportFormat(reportType);
 

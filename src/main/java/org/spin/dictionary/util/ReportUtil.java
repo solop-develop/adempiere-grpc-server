@@ -49,6 +49,12 @@ import com.itextpdf.text.pdf.PdfWriter;
 public class ReportUtil {
 
 	/**
+	 * Default report type format.
+	 */
+	public static final String DEFAULT_REPORT_TYPE = "pdf";
+
+
+	/**
 	 * Get Report Query from Criteria
 	 * @param filters
 	 * @return
