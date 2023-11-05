@@ -19,9 +19,10 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.bpartner";
 option java_outer_classname = "ADempiereBusinessPartner";
 
-import "business.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
+
+import "base_data_type.proto";
 
 // Base URL
 // /business-partner/

@@ -20,7 +20,6 @@ option java_outer_classname = "ADempiereCoreFunctionality";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/struct.proto";
 
 package data;
 
@@ -464,6 +463,10 @@ message PriceList {
 }
 
 //	Bank Account
+enum BankAccountType {
+	CHECKING = 0;
+	SAVINGS = 1;
+}
 message BankAccount {
 	int32 id = 1;
 	string name = 2;
@@ -476,10 +479,6 @@ message BankAccount {
 	string current_balance = 9;
 	bool is_default = 10;
 	BusinessPartner business_partner = 11;
-	enum BankAccountType {
-		CHECKING = 0;
-		SAVINGS = 1;
-	}
 	BankAccountType bank_account_type = 12;
 	int32 bank_id = 13;
 }

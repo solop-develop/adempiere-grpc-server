@@ -18,14 +18,15 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.pos";
 option java_outer_classname = "ADempierePOS";
 
-import "core_functionality.proto";
-import "base_data_type.proto";
-import "file_management.proto";
-import "time_control.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
+
+import "base_data_type.proto";
+import "core_functionality.proto";
+import "file_management.proto";
+import "time_control.proto";
 
 // Base URL
 // /store/point-of-sales/

@@ -20,6 +20,7 @@ import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.BankAccount;
+import org.spin.backend.grpc.common.BankAccountType;
 import org.spin.backend.grpc.common.BusinessPartner;
 import org.spin.backend.grpc.common.Currency;
 import org.spin.backend.grpc.common.DocumentType;
@@ -133,7 +134,7 @@ public class ConvertCommon {
 			.setIban(ValueManager.validateNull(bankAccount.getIBAN()))
 			.setBankAccountType(
 				bankAccount.getBankAccountType().equals(MBankAccount.BANKACCOUNTTYPE_Checking) ?
-					BankAccount.BankAccountType.CHECKING : BankAccount.BankAccountType.SAVINGS
+					BankAccountType.CHECKING : BankAccountType.SAVINGS
 			)
 			.setCreditLimit(
 				NumberManager.getBigDecimalToString(

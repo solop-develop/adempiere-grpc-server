@@ -14,10 +14,6 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -53,11 +49,9 @@ import org.adempiere.core.domains.models.I_AD_Client;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Preference;
-import org.adempiere.core.domains.models.I_AD_PrintFormat;
 import org.adempiere.core.domains.models.I_AD_Private_Access;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_Record_Access;
-import org.adempiere.core.domains.models.I_AD_ReportView;
 import org.adempiere.core.domains.models.I_AD_Role;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
@@ -89,12 +83,10 @@ import org.compiere.model.MMailText;
 import org.compiere.model.MMessage;
 import org.compiere.model.MPreference;
 import org.compiere.model.MPrivateAccess;
-import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
 import org.compiere.model.MQuery;
 import org.compiere.model.MRecordAccess;
 import org.compiere.model.MRefList;
-import org.compiere.model.MReportView;
 import org.compiere.model.MRole;
 import org.compiere.model.MRule;
 import org.compiere.model.MTab;
@@ -103,81 +95,66 @@ import org.compiere.model.MTree;
 import org.compiere.model.MTreeNode;
 import org.compiere.model.MUser;
 import org.compiere.model.MWindow;
-import org.compiere.model.M_Element;
 import org.compiere.model.PO;
-import org.compiere.model.PrintInfo;
 import org.compiere.model.Query;
-import org.compiere.print.MPrintFormat;
-import org.compiere.print.ReportEngine;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.ChatEntry;
-import org.spin.backend.grpc.common.ContextInfoValue;
-import org.spin.backend.grpc.common.CreateChatEntryRequest;
-import org.spin.backend.grpc.common.CreateTabEntityRequest;
-import org.spin.backend.grpc.common.DefaultValue;
-import org.spin.backend.grpc.common.DeletePreferenceRequest;
-import org.spin.backend.grpc.common.DrillTable;
 import org.spin.backend.grpc.common.Entity;
-import org.spin.backend.grpc.common.ExistsReferencesRequest;
-import org.spin.backend.grpc.common.ExistsReferencesResponse;
-import org.spin.backend.grpc.common.GetContextInfoValueRequest;
-import org.spin.backend.grpc.common.GetDefaultValueRequest;
-import org.spin.backend.grpc.common.GetPrivateAccessRequest;
-import org.spin.backend.grpc.common.GetRecordAccessRequest;
-import org.spin.backend.grpc.common.GetReportOutputRequest;
-import org.spin.backend.grpc.common.GetTabEntityRequest;
-import org.spin.backend.grpc.common.ListBrowserItemsRequest;
-import org.spin.backend.grpc.common.ListBrowserItemsResponse;
-import org.spin.backend.grpc.common.ListDrillTablesRequest;
-import org.spin.backend.grpc.common.ListDrillTablesResponse;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
-import org.spin.backend.grpc.common.ListGeneralInfoRequest;
 import org.spin.backend.grpc.common.ListLookupItemsRequest;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
-import org.spin.backend.grpc.common.ListMailTemplatesRequest;
-import org.spin.backend.grpc.common.ListMailTemplatesResponse;
-import org.spin.backend.grpc.common.ListPrintFormatsRequest;
-import org.spin.backend.grpc.common.ListPrintFormatsResponse;
-import org.spin.backend.grpc.common.ListReferencesRequest;
-import org.spin.backend.grpc.common.ListReferencesResponse;
-import org.spin.backend.grpc.common.ListReportViewsRequest;
-import org.spin.backend.grpc.common.ListReportViewsResponse;
-import org.spin.backend.grpc.common.ListTabEntitiesRequest;
-import org.spin.backend.grpc.common.ListTabSequencesRequest;
-import org.spin.backend.grpc.common.ListTranslationsRequest;
-import org.spin.backend.grpc.common.ListTranslationsResponse;
-import org.spin.backend.grpc.common.ListTreeNodesRequest;
-import org.spin.backend.grpc.common.ListTreeNodesResponse;
-import org.spin.backend.grpc.common.LockPrivateAccessRequest;
 import org.spin.backend.grpc.common.LookupItem;
-import org.spin.backend.grpc.common.MailTemplate;
-import org.spin.backend.grpc.common.Preference;
-import org.spin.backend.grpc.common.PrintFormat;
-import org.spin.backend.grpc.common.PrivateAccess;
-import org.spin.backend.grpc.common.RecordAccess;
-import org.spin.backend.grpc.common.RecordAccessRole;
-import org.spin.backend.grpc.common.RecordReferenceInfo;
-import org.spin.backend.grpc.common.ReportOutput;
-import org.spin.backend.grpc.common.ReportView;
-import org.spin.backend.grpc.common.RollbackEntityRequest;
-import org.spin.backend.grpc.common.RunCalloutRequest;
-import org.spin.backend.grpc.common.SaveTabSequencesRequest;
-import org.spin.backend.grpc.common.SetPreferenceRequest;
-import org.spin.backend.grpc.common.SetRecordAccessRequest;
-import org.spin.backend.grpc.common.Translation;
-import org.spin.backend.grpc.common.TreeNode;
-import org.spin.backend.grpc.common.TreeType;
-import org.spin.backend.grpc.common.UnlockPrivateAccessRequest;
-import org.spin.backend.grpc.common.UpdateBrowserEntityRequest;
-import org.spin.backend.grpc.common.UpdateTabEntityRequest;
-import org.spin.backend.grpc.common.UserInterfaceGrpc.UserInterfaceImplBase;
+import org.spin.backend.grpc.user_interface.ChatEntry;
+import org.spin.backend.grpc.user_interface.ContextInfoValue;
+import org.spin.backend.grpc.user_interface.CreateChatEntryRequest;
+import org.spin.backend.grpc.user_interface.CreateTabEntityRequest;
+import org.spin.backend.grpc.user_interface.DefaultValue;
+import org.spin.backend.grpc.user_interface.DeletePreferenceRequest;
+import org.spin.backend.grpc.user_interface.ExistsReferencesRequest;
+import org.spin.backend.grpc.user_interface.ExistsReferencesResponse;
+import org.spin.backend.grpc.user_interface.GetContextInfoValueRequest;
+import org.spin.backend.grpc.user_interface.GetDefaultValueRequest;
+import org.spin.backend.grpc.user_interface.GetPrivateAccessRequest;
+import org.spin.backend.grpc.user_interface.GetRecordAccessRequest;
+import org.spin.backend.grpc.user_interface.GetTabEntityRequest;
+import org.spin.backend.grpc.user_interface.ListBrowserItemsRequest;
+import org.spin.backend.grpc.user_interface.ListBrowserItemsResponse;
+import org.spin.backend.grpc.user_interface.ListGeneralInfoRequest;
+import org.spin.backend.grpc.user_interface.ListMailTemplatesRequest;
+import org.spin.backend.grpc.user_interface.ListMailTemplatesResponse;
+import org.spin.backend.grpc.user_interface.ListReferencesRequest;
+import org.spin.backend.grpc.user_interface.ListReferencesResponse;
+import org.spin.backend.grpc.user_interface.ListTabEntitiesRequest;
+import org.spin.backend.grpc.user_interface.ListTabSequencesRequest;
+import org.spin.backend.grpc.user_interface.ListTranslationsRequest;
+import org.spin.backend.grpc.user_interface.ListTranslationsResponse;
+import org.spin.backend.grpc.user_interface.ListTreeNodesRequest;
+import org.spin.backend.grpc.user_interface.ListTreeNodesResponse;
+import org.spin.backend.grpc.user_interface.LockPrivateAccessRequest;
+import org.spin.backend.grpc.user_interface.MailTemplate;
+import org.spin.backend.grpc.user_interface.Preference;
+import org.spin.backend.grpc.user_interface.PreferenceType;
+import org.spin.backend.grpc.user_interface.PrivateAccess;
+import org.spin.backend.grpc.user_interface.RecordAccess;
+import org.spin.backend.grpc.user_interface.RecordAccessRole;
+import org.spin.backend.grpc.user_interface.RecordReferenceInfo;
+import org.spin.backend.grpc.user_interface.RollbackEntityRequest;
+import org.spin.backend.grpc.user_interface.RunCalloutRequest;
+import org.spin.backend.grpc.user_interface.SaveTabSequencesRequest;
+import org.spin.backend.grpc.user_interface.SetPreferenceRequest;
+import org.spin.backend.grpc.user_interface.SetRecordAccessRequest;
+import org.spin.backend.grpc.user_interface.Translation;
+import org.spin.backend.grpc.user_interface.TreeNode;
+import org.spin.backend.grpc.user_interface.TreeType;
+import org.spin.backend.grpc.user_interface.UnlockPrivateAccessRequest;
+import org.spin.backend.grpc.user_interface.UpdateBrowserEntityRequest;
+import org.spin.backend.grpc.user_interface.UpdateTabEntityRequest;
+import org.spin.backend.grpc.user_interface.UserInterfaceGrpc.UserInterfaceImplBase;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.OrderByUtil;
@@ -189,18 +166,15 @@ import org.spin.base.query.SortingManager;
 import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.FileUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.dictionary.util.ReportUtil;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -255,24 +229,6 @@ public class UserInterface extends UserInterfaceImplBase {
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void listBrowserItems(ListBrowserItemsRequest request, StreamObserver<ListBrowserItemsResponse> responseObserver) {
-		try {
-			log.fine("Object List Requested = " + request);
-			ListBrowserItemsResponse.Builder entityValueList = listBrowserItems(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
 		}
 	}
 
@@ -517,8 +473,6 @@ public class UserInterface extends UserInterfaceImplBase {
 	}
 
 	private ExistsReferencesResponse.Builder existsReferences(ExistsReferencesRequest request) {
-		
-
 		// validate tab
 		if (request.getTabId() <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @Mandatory@");
@@ -564,26 +518,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	}
 
 
-	@Override
-	public void getDefaultValue(GetDefaultValueRequest request, StreamObserver<DefaultValue> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			DefaultValue.Builder defaultValue = getDefaultValue(request);
-			responseObserver.onNext(defaultValue.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException())
-			;
-		}
-	}
-	
+
 	@Override
 	/**
 	 * TODO: Replace LockPrivateAccessRequest with GetPrivateAccessRequest
@@ -709,65 +644,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void listPrintFormats(ListPrintFormatsRequest request, StreamObserver<ListPrintFormatsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListPrintFormatsResponse.Builder printFormatsList = convertPrintFormatsList(Env.getCtx(), request);
-			responseObserver.onNext(printFormatsList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
 
-	@Override
-	public void listDrillTables(ListDrillTablesRequest request, StreamObserver<ListDrillTablesResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListDrillTablesResponse.Builder drillTablesList = listDrillTables(request);
-			responseObserver.onNext(drillTablesList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void getReportOutput(GetReportOutputRequest request, StreamObserver<ReportOutput> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ReportOutput.Builder reportOutput = getReportOutput(request);
-			responseObserver.onNext(reportOutput.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException())
-			;
-		}
-	}
-	
 	@Override
 	public void createChatEntry(CreateChatEntryRequest request, StreamObserver<ChatEntry> responseObserver) {
 		try {
@@ -1556,8 +1433,10 @@ public class UserInterface extends UserInterfaceImplBase {
 			});
 			//	Populate roles list
 			getRolesList(transactionName).forEach(roleToGet -> {
-				builder.addAvailableRoles(RecordAccessRole.newBuilder()
-						.setRoleId(roleToGet.getAD_Role_ID()));
+				builder.addAvailableRoles(
+					RecordAccessRole.newBuilder()
+						.setRoleId(roleToGet.getAD_Role_ID())
+				);
 			});
 		});
 		//	
@@ -1579,7 +1458,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 */
 	private Preference.Builder savePreference(MPreference preference, int preferenceType, String attribute, boolean isCurrentClient, boolean isCurrentOrganization, boolean isCurrentUser, boolean isCurrentContainer, int id, String value) {
 		Preference.Builder builder = Preference.newBuilder();
-		if(preferenceType == SetPreferenceRequest.Type.WINDOW_VALUE) {
+		if(preferenceType == PreferenceType.WINDOW_VALUE) {
 			int windowId = id;
 			int clientId = Env.getAD_Client_ID(Env.getCtx());
 			int orgId = Env.getAD_Org_ID(Env.getCtx());
@@ -1637,7 +1516,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private MPreference getPreference(int preferenceType, String attribute, boolean isCurrentClient, boolean isCurrentOrganization, boolean isCurrentUser, boolean isCurrentContainer, int id) {
-		if(preferenceType == SetPreferenceRequest.Type.WINDOW_VALUE) {
+		if(preferenceType == PreferenceType.WINDOW_VALUE) {
 			StringBuffer whereClause = new StringBuffer("Attribute = ?");
 			List<Object> parameters = new ArrayList<>();
 			parameters.add(attribute);
@@ -1675,145 +1554,6 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		//	
 		return null;
-	}
-
-	/**
-	 * Convert Object to list
-	 * @param request
-	 * @return
-	 * @throws IOException 
-	 * @throws FileNotFoundException 
-	 */
-	private ReportOutput.Builder getReportOutput(GetReportOutputRequest request) throws FileNotFoundException, IOException {
-		if (request.getProcessId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
-		}
-		int processId = request.getProcessId();
-		MProcess process = ASPUtil.getInstance().getProcess(processId);
-		if (process == null || process.getAD_Process_ID() <= 0) {
-			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
-		}
-
-		if(Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @TableName@");
-		}
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@TableName@ @NotFound@");
-		}
-		//	
-		if(!MRole.getDefault().isCanReport(table.getAD_Table_ID())) {
-			throw new AdempiereException("@AccessCannotReport@");
-		}
-
-		//	Validate print format
-		if(request.getPrintFormatId() <= 0 && request.getReportViewId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @AD_PrintFormat_ID@ / @AD_ReportView_ID@");
-		}
-
-		//	
-		PrintInfo printInformation = new PrintInfo(request.getReportName(), table.getAD_Table_ID(), 0, 0);
-		//	Get Print Format
-		MPrintFormat printFormat = null;
-		MReportView reportView = null;
-		if(request.getPrintFormatId() > 0) {
-			printFormat = new Query(Env.getCtx(), I_AD_PrintFormat.Table_Name, I_AD_PrintFormat.COLUMNNAME_AD_PrintFormat_ID + " = ?", null)
-					.setParameters(request.getPrintFormatId())
-					.first();
-		}
-		//	Get Report View
-		if(request.getReportViewId() > 0) {
-			reportView = new Query(Env.getCtx(), I_AD_ReportView.Table_Name, I_AD_ReportView.COLUMNNAME_AD_ReportView_ID + " = ?", null)
-					.setParameters(request.getReportViewId())
-					.first();
-		}
-		//	Get Default
-		if(printFormat == null) {
-			int reportViewId = 0;
-			if(reportView != null) {
-				reportViewId = reportView.getAD_ReportView_ID();
-			}
-			printFormat = MPrintFormat.get(Env.getCtx(), reportViewId, table.getAD_Table_ID());
-		}
-		//	Validate print format
-		if(printFormat == null || printFormat.getAD_PrintFont_ID() <= 0) {
-			throw new AdempiereException("@AD_PrintFormat_ID@ @NotFound@");
-		}
-		if(table.getAD_Table_ID() != printFormat.getAD_Table_ID()) {
-			table = MTable.get(Env.getCtx(), printFormat.getAD_Table_ID());
-		}
-
-		//	
-		ReportOutput.Builder builder = ReportOutput.newBuilder();
-		MQuery query = ReportUtil.getReportQueryFromCriteria(process.getAD_Process_ID(), request.getTableName(), request.getFilters());
-//		if(!Util.isEmpty(criteria.getWhereClause(), true)) {
-//			query.addRestriction(criteria.getWhereClause());
-//		}
-
-		//	Run report engine
-		ReportEngine reportEngine = new ReportEngine(Env.getCtx(), printFormat, query, printInformation);
-		//	Set report view
-		if(reportView != null) {
-			reportEngine.setAD_ReportView_ID(reportView.getAD_ReportView_ID());
-		} else {
-			reportView = MReportView.get(Env.getCtx(), reportEngine.getAD_ReportView_ID());
-		}
-		//	Set Summary
-		reportEngine.setSummary(request.getIsSummary());
-		//	
-		File reportFile = ReportUtil.createOutput(reportEngine, request.getReportType());
-		if(reportFile != null
-				&& reportFile.exists()) {
-			String validFileName = FileUtil.getValidFileName(reportFile.getName());
-			builder.setFileName(
-					ValueManager.validateNull(validFileName)
-				)
-				.setName(
-					ValueManager.validateNull(
-						reportEngine.getName()
-					)
-				)
-				.setMimeType(
-					ValueManager.validateNull(
-						MimeType.getMimeType(validFileName)
-					)
-				)
-			;
-			String headerName = Msg.getMsg(Env.getCtx(), "Report") + ": " + reportEngine.getName() + "  " + Env.getHeader(Env.getCtx(), 0);
-			builder.setHeaderName(
-				ValueManager.validateNull(headerName)
-			);
-			StringBuffer footerName = new StringBuffer ();
-			footerName.append(Msg.getMsg(Env.getCtx(), "DataCols")).append("=")
-				.append(reportEngine.getColumnCount())
-				.append(", ").append(Msg.getMsg(Env.getCtx(), "DataRows")).append("=")
-				.append(reportEngine.getRowCount());
-			builder.setFooterName(
-				ValueManager.validateNull(
-					footerName.toString()
-				)
-			);
-			//	Type
-			builder.setReportType(request.getReportType());
-			ByteString resultFile = ByteString.readFrom(new FileInputStream(reportFile));
-			if(request.getReportType().endsWith("html")
-					|| request.getReportType().endsWith("txt")) {
-				builder.setOutputBytes(resultFile);
-			}
-			if(reportView != null) {
-				builder.setReportViewId(reportView.getAD_ReportView_ID());
-			}
-			builder.setPrintFormatId(printFormat.getAD_PrintFormat_ID())
-				.setTableName(
-					ValueManager.validateNull(
-						table.getTableName()
-					)
-				)
-				.setOutputStream(resultFile)
-			;
-		}
-		//	Return
-		return builder;
 	}
 
 
@@ -1913,284 +1653,6 @@ public class UserInterface extends UserInterfaceImplBase {
 					builder.addTranslations(translationBuilder);
 				});
 		});
-		//	Return
-		return builder;
-	}
-
-
-
-	@Override
-	public void listReportViews(ListReportViewsRequest request, StreamObserver<ListReportViewsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			
-			ListReportViewsResponse.Builder reportViewsList = listReportViews(request);
-			responseObserver.onNext(reportViewsList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-	/**
-	 * Convert Report View to gRPC
-	 * @param request
-	 * @return
-	 */
-	private ListReportViewsResponse.Builder listReportViews(ListReportViewsRequest request) {
-		Properties context = Env.getCtx();
-		String whereClause = null;
-		List<Object> parameters = new ArrayList<>();
-		//	For Table Name
-		if(!Util.isEmpty(request.getTableName(), true)) {
-			MTable table = MTable.get(context, request.getTableName());
-			if(table == null || table.getAD_Table_ID() <= 0) {
-				throw new AdempiereException("@TableName@ @NotFound@");
-			}
-			whereClause = "AD_Table_ID = ?";
-			parameters.add(table.getAD_Table_ID());
-		} else if(request.getProcessId() > 0) {
-			whereClause = "EXISTS(SELECT 1 FROM AD_Process p WHERE p.AD_Process_ID = ? AND p.AD_ReportView_ID = AD_ReportView.AD_ReportView_ID)";
-			parameters.add(request.getProcessId());
-		} else {
-			throw new AdempiereException("@TableName@ / @AD_Process_ID@ @NotFound@");
-		}
-		String language = context.getProperty(Env.LANGUAGE);
-		//	Get List
-		Query query = new Query(
-			context,
-			I_AD_ReportView.Table_Name,
-			whereClause,
-			null
-		)
-			.setParameters(parameters)
-			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
-
-		ListReportViewsResponse.Builder builder = ListReportViewsResponse.newBuilder()
-			.setRecordCount(query.count())
-		;
-		query.setOrderBy(I_AD_ReportView.COLUMNNAME_PrintName + ", " + I_AD_ReportView.COLUMNNAME_Name)
-			.<MReportView>list().forEach(reportViewReference -> {
-				ReportView.Builder reportViewBuilder = ReportView.newBuilder();
-				String name = reportViewReference.getName();
-				String description = reportViewReference.getDescription();
-				
-				// add translation
-				if(!Util.isEmpty(language) && !Env.isBaseLanguage(Env.getCtx(), "")) {
-					/*
-					String translation = reportViewReference.get_Translation("Name");
-					if(!Util.isEmpty(translation)) {
-						name = translation;
-					}
-					translation = reportViewReference.get_Translation("Description");
-					if(!Util.isEmpty(translation)) {
-						description = translation;
-					}
-					*/
-
-					// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/31
-					PO translation = new Query(
-						context, 
-						I_AD_ReportView.Table_Name + "_Trl",
-						I_AD_ReportView.COLUMNNAME_AD_ReportView_ID + " = ? AND " +
-						"IsTranslated = ? AND AD_Language = ?",
-						null
-					)
-						.setParameters(reportViewReference.get_ID(), "Y", language)
-						.setOnlyActiveRecords(true)
-						.first();
-
-					if (translation != null) {
-						String nameTranslated = translation.get_ValueAsString(I_AD_ReportView.COLUMNNAME_Name);
-						if(!Util.isEmpty(nameTranslated)) {
-							name = nameTranslated;
-						}
-						String desciptionTranslated = translation.get_ValueAsString(I_AD_ReportView.COLUMNNAME_Description);
-						if(!Util.isEmpty(desciptionTranslated)) {
-							description = desciptionTranslated;
-						}
-					}
-				}
-
-				reportViewBuilder.setId(reportViewReference.getAD_ReportView_ID())
-					.setName(
-						ValueManager.validateNull(name)
-					)
-					.setDescription(
-						ValueManager.validateNull(description)
-					)
-				;
-				MTable table = MTable.get(context, reportViewReference.getAD_Table_ID());
-				reportViewBuilder.setTableName(
-					ValueManager.validateNull(
-						table.getTableName()
-					)
-				);
-				//	add
-				builder.addReportViews(reportViewBuilder);
-			});
-		//	Return
-		return builder;
-	}
-
-
-	/**
-	 * Convert Report View to gRPC
-	 * @param request
-	 * @return
-	 */
-	private ListDrillTablesResponse.Builder listDrillTables(ListDrillTablesRequest request) {
-		ListDrillTablesResponse.Builder builder = ListDrillTablesResponse.newBuilder();
-		//	Get entity
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@TableName@ @NotFound@");
-		}
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		String sql = "SELECT t.TableName, e.ColumnName, NULLIF(e.PO_PrintName,e.PrintName) "
-				+ "FROM AD_Column c "
-				+ " INNER JOIN AD_Column used ON (c.ColumnName=used.ColumnName)"
-				+ " INNER JOIN AD_Table t ON (used.AD_Table_ID=t.AD_Table_ID AND t.IsView='N' AND t.AD_Table_ID <> c.AD_Table_ID)"
-				+ " INNER JOIN AD_Column cKey ON (t.AD_Table_ID=cKey.AD_Table_ID AND cKey.IsKey='Y')"
-				+ " INNER JOIN AD_Element e ON (cKey.ColumnName=e.ColumnName) "
-				+ "WHERE c.AD_Table_ID=? AND c.IsKey='Y' "
-				+ "ORDER BY 3";
-			PreparedStatement pstmt = null;
-			ResultSet resultSet = null;
-			try {
-				pstmt = DB.prepareStatement(sql, null);
-				pstmt.setInt(1, table.getAD_Table_ID());
-				resultSet = pstmt.executeQuery();
-				int recordCount = 0;
-				while (resultSet.next()) {
-					String drillTableName = resultSet.getString("TableName");
-					String columnName = resultSet.getString("ColumnName");
-					M_Element element = M_Element.get(Env.getCtx(), columnName);
-					//	Add here
-					DrillTable.Builder drillTable = DrillTable.newBuilder();
-					drillTable.setTableName(
-						ValueManager.validateNull(drillTableName)
-					);
-					String name = element.getPrintName();
-					String poName = element.getPO_PrintName();
-					if(!Env.isBaseLanguage(Env.getCtx(), "")) {
-						String translation = element.get_Translation("PrintName");
-						if(!Util.isEmpty(translation)) {
-							name = translation;
-						}
-						translation = element.get_Translation("PO_PrintName");
-						if(!Util.isEmpty(translation)) {
-							poName = translation;
-						}
-					}
-					if(!Util.isEmpty(poName)) {
-						name = name + "/" + poName;
-					}
-					//	Print Name
-					drillTable.setPrintName(
-						ValueManager.validateNull(name)
-					);
-					recordCount++;
-					//	Add to list
-					builder.addDrillTables(drillTable);
-				}
-				builder.setRecordCount(recordCount);
-				resultSet.close();
-				pstmt.close();
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, sql, e);
-			} finally {
-				DB.close(resultSet, pstmt);
-			}
-		//	Return
-		return builder;
-	}
-	
-	/**
-	 * Convert print formats to gRPC
-	 * @param Env.getCtx()
-	 * @param request
-	 * @return
-	 */
-	private ListPrintFormatsResponse.Builder convertPrintFormatsList(Properties context, ListPrintFormatsRequest request) {
-		//	Get entity
-		if(Util.isEmpty(request.getTableName())
-				&& request.getProcessId() <= 0
-				&& request.getReportViewId() <= 0) {
-			throw new AdempiereException("@TableName@ / @AD_Process_ID@ / @AD_ReportView_ID@ @NotFound@");
-		}
-		String whereClause = null;
-		List<Object> parameters = new ArrayList<>();
-		//	For Table Name
-		if(!Util.isEmpty(request.getTableName())) {
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			whereClause = "AD_Table_ID = ?";
-			parameters.add(table.getAD_Table_ID());
-		} else if(request.getProcessId() > 0) {
-			whereClause = "EXISTS(SELECT 1 FROM AD_Process p WHERE p.AD_Process_ID = ? AND (p.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID OR p.AD_ReportView_ID = AD_PrintFormat.AD_ReportView_ID))";
-			parameters.add(request.getProcessId());
-		} else if(request.getReportViewId() > 0) {
-			MReportView reportView = new Query(Env.getCtx(), I_AD_ReportView.Table_Name, I_AD_ReportView.COLUMNNAME_AD_ReportView_ID + " = ?", null)
-				.setParameters(request.getReportViewId())
-				.first();
-			whereClause = "AD_ReportView_ID = ?";
-			parameters.add(reportView.getUUID());
-		}
-		//	Get List
-		Query query = new Query(
-			Env.getCtx(),
-			I_AD_PrintFormat.Table_Name,
-			whereClause,
-			null
-		)
-			.setParameters(parameters)
-			.setOrderBy(I_AD_PrintFormat.COLUMNNAME_Name)
-			.setClient_ID()
-			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
-		ListPrintFormatsResponse.Builder builder = ListPrintFormatsResponse.newBuilder()
-			.setRecordCount(query.count())
-		;
-
-		query.<MPrintFormat>list().forEach(printFormatReference -> {
-				PrintFormat.Builder printFormatBuilder = PrintFormat.newBuilder()
-					.setId(printFormatReference.getAD_PrintFormat_ID())
-					.setName(
-						ValueManager.validateNull(
-							printFormatReference.getName()
-						)
-					)
-					.setDescription(
-						ValueManager.validateNull(
-							printFormatReference.getDescription()
-						)
-					)
-					.setIsDefault(printFormatReference.isDefault())
-				;
-				MTable table = MTable.get(Env.getCtx(), printFormatReference.getAD_Table_ID());
-				printFormatBuilder.setTableName(
-					ValueManager.validateNull(
-						table.getTableName()
-					)
-				);
-				if(printFormatReference.getAD_ReportView_ID() != 0) {
-					printFormatBuilder.setReportViewId(printFormatReference.getAD_ReportView_ID());
-				}
-				//	add
-				builder.addPrintFormats(printFormatBuilder);
-			});
-
 		//	Return
 		return builder;
 	}
@@ -2383,33 +1845,29 @@ public class UserInterface extends UserInterfaceImplBase {
 				+ "AND ROWNUM <= 1 "
 				+ "ORDER BY Updated DESC", tableId, recordId);
 	}
-	
-	/**
-	 * Convert Default Value from query
-	 * @param sql
-	 * @return
-	 */
-	private Object convertDefaultValue(String sql) {
-		Object defaultValue = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
+
+
+
+	@Override
+	public void getDefaultValue(GetDefaultValueRequest request, StreamObserver<DefaultValue> responseObserver) {
 		try {
-			//	SELECT Key, Value, Name FROM ...
-			pstmt = DB.prepareStatement(sql, null);
-			//	Get from Query
-			rs = pstmt.executeQuery();
-			if (rs.next()) {
-				defaultValue = rs.getObject(1);
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
 			}
+			DefaultValue.Builder defaultValue = getDefaultValue(request);
+			responseObserver.onNext(defaultValue.build());
+			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-		} finally {
-			DB.close(rs, pstmt);
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException())
+			;
 		}
-		//	Return values
-		return defaultValue;
 	}
-	
+
 	/**
 	 * Get default value base on field, process parameter, browse field or column
 	 * @param request
@@ -2592,8 +2050,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		);
 		return builder;
 	}
-	
-	
+
 	/**
 	 * Get Default value, also convert it to lookup value if is necessary
 	 * @param contextAttributes
@@ -2756,6 +2213,34 @@ public class UserInterface extends UserInterfaceImplBase {
 		return builder;
 	}
 	
+	/**
+	 * Convert Default Value from query
+	 * @param sql
+	 * @return
+	 */
+	private Object convertDefaultValue(String sql) {
+		Object defaultValue = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			//	SELECT Key, Value, Name FROM ...
+			pstmt = DB.prepareStatement(sql, null);
+			//	Get from Query
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				defaultValue = rs.getObject(1);
+			}
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+		} finally {
+			DB.close(rs, pstmt);
+		}
+		//	Return values
+		return defaultValue;
+	}
+
+
+
 	/**
 	 * Convert Context Info Value from query
 	 * @param request
@@ -2970,6 +2455,24 @@ public class UserInterface extends UserInterfaceImplBase {
 	}
 
 
+	
+	@Override
+	public void listBrowserItems(ListBrowserItemsRequest request, StreamObserver<ListBrowserItemsResponse> responseObserver) {
+		try {
+			log.fine("Object List Requested = " + request);
+			ListBrowserItemsResponse.Builder entityValueList = listBrowserItems(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
 
 	/**
 	 * Convert Object to list
@@ -3169,12 +2672,12 @@ public class UserInterface extends UserInterfaceImplBase {
 	}
 
 	@Override
-	public void runCallout(RunCalloutRequest request, StreamObserver<org.spin.backend.grpc.common.Callout> responseObserver) {
+	public void runCallout(RunCalloutRequest request, StreamObserver<org.spin.backend.grpc.user_interface.Callout> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			org.spin.backend.grpc.common.Callout.Builder calloutResponse = runcallout(request);
+			org.spin.backend.grpc.user_interface.Callout.Builder calloutResponse = runcallout(request);
 			responseObserver.onNext(calloutResponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -3193,14 +2696,14 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private org.spin.backend.grpc.common.Callout.Builder runcallout(RunCalloutRequest request) {
+	private org.spin.backend.grpc.user_interface.Callout.Builder runcallout(RunCalloutRequest request) {
 		if (Util.isEmpty(request.getCallout(), true)) {
 			throw new AdempiereException("@FillMandatory@ @Callout@");
 		}
 		if (Util.isEmpty(request.getColumnName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @ColumnName@");
 		}
-		org.spin.backend.grpc.common.Callout.Builder calloutBuilder = org.spin.backend.grpc.common.Callout.newBuilder();
+		org.spin.backend.grpc.user_interface.Callout.Builder calloutBuilder = org.spin.backend.grpc.user_interface.Callout.newBuilder();
 		Trx.run(transactionName -> {
 			if (request.getTabId() <= 0) {
 				throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
@@ -3322,8 +2825,8 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param calloutBuilder
 	 * @return
 	 */
-	private org.spin.backend.grpc.common.Callout.Builder setAdditionalContext(String calloutClass, int windowNo,
-		org.spin.backend.grpc.common.Callout.Builder calloutBuilder) {
+	private org.spin.backend.grpc.user_interface.Callout.Builder setAdditionalContext(String calloutClass, int windowNo,
+		org.spin.backend.grpc.user_interface.Callout.Builder calloutBuilder) {
 		Class<CalloutOrder> clazz = org.compiere.model.CalloutOrder.class;
 		String className = clazz.getName();
 

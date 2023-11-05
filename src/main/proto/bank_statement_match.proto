@@ -18,10 +18,10 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.form.bank_statement_match";
 option java_outer_classname = "ADempiereBankStatementMatch";
 
-import "business.proto";
 import "google/api/annotations.proto";
-import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+
+import "base_data_type.proto";
 
 // Base URL
 // /bank-statement-match/

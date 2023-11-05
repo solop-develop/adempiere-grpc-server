@@ -16,8 +16,6 @@ package org.spin.grpc.service;
 
 import static com.google.protobuf.util.Timestamps.fromMillis;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -43,18 +41,15 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MMenu;
 import org.compiere.model.MPInstance;
 import org.compiere.model.MProcess;
-import org.compiere.model.MReportView;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
-import org.compiere.print.MPrintFormat;
 import org.compiere.process.DocAction;
 import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
@@ -70,7 +65,6 @@ import org.spin.backend.grpc.common.ListEntitiesRequest;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ProcessInfoLog;
 import org.spin.backend.grpc.common.ProcessLog;
-import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.common.UpdateEntityRequest;
 // import org.spin.base.db.CountUtil;
@@ -79,14 +73,12 @@ import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.query.SortingManager;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -251,9 +243,22 @@ public class BusinessData extends BusinessDataImplBase {
 			throw new AdempiereException("@AccessCannotProcess@");
 		}
 
+		if (process.isReport()) {
+			return ReportManagement.generateReport(
+				processId,
+				request.getParameters(),
+				request.getReportType(),
+				request.getPrintFormatId(),
+				request.getReportViewId(),
+				request.getIsSummary(),
+				request.getTableName(),
+				request.getRecordId()
+			);
+		}
+
 		ProcessLog.Builder response = ProcessLog.newBuilder()
 			.setId(
-					process.getAD_Process_ID()
+				process.getAD_Process_ID()
 			);
 
 		int tableId = 0;
@@ -272,11 +277,8 @@ public class BusinessData extends BusinessDataImplBase {
 			}
 		}
 		PO entity = null;
-		Map<String, Value> parameters = new HashMap<String, Value>();
-		parameters.putAll(request.getParameters().getFieldsMap());
 		int recordId = request.getRecordId();
-		if (recordId > 0
-				&& !Util.isEmpty(request.getTableName(), true)) {
+		if (recordId > 0 && !Util.isEmpty(request.getTableName(), true)) {
 			entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), recordId, null);
 			if(entity != null) {
 				recordId = entity.get_ID();
@@ -285,12 +287,12 @@ public class BusinessData extends BusinessDataImplBase {
 
 		//	Call process builder
 		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
-				.process(process.getAD_Process_ID())
-				.withRecordId(tableId, recordId)
-				.withoutPrintPreview()
-				.withoutBatchMode()
-				.withWindowNo(0)
-				.withTitle(process.getName())
+			.process(process.getAD_Process_ID())
+			.withRecordId(tableId, recordId)
+			.withoutPrintPreview()
+			.withoutBatchMode()
+			.withWindowNo(0)
+			.withTitle(process.getName())
 			.withoutTransactionClose()
 		;
 		//	Set Report Export Type
@@ -340,6 +342,8 @@ public class BusinessData extends BusinessDataImplBase {
 		//	get document action
 		String documentAction = null;
 		//	Parameters
+		Map<String, Value> parameters = new HashMap<String, Value>();
+		parameters.putAll(request.getParameters().getFieldsMap());
 		if(request.getParameters().getFieldsCount() > 0) {
 			for(Entry<String, Value> parameter : parameters.entrySet().stream().filter(parameterValue -> !parameterValue.getKey().endsWith("_To")).collect(Collectors.toList())) {
 				Object value = ValueManager.getObjectFromValue(parameter.getValue());
@@ -386,9 +390,7 @@ public class BusinessData extends BusinessDataImplBase {
 				ValueManager.validateNull(summary)
 			);
 		}
-		int reportViewReferenceId = 0;
-		int printFormatReferenceId = request.getPrintFormatId();
-		String tableName = null;
+
 		//	Get process instance from identifier
 		if(result.getAD_PInstance_ID() != 0) {
 			MPInstance instance = new Query(
@@ -402,57 +404,19 @@ public class BusinessData extends BusinessDataImplBase {
 			response.setInstanceId(instance.getAD_PInstance_ID());
 			
 			response.setLastRun(fromMillis(instance.getUpdated().getTime()));
-			if(process.isReport()) {
-				int printFormatId = 0;
-				int reportViewId = 0;
-				if(instance.getAD_PrintFormat_ID() != 0) {
-					printFormatId = instance.getAD_PrintFormat_ID();
-				} else if(process.getAD_PrintFormat_ID() != 0) {
-					printFormatId = process.getAD_PrintFormat_ID();
-				} else if(process.getAD_ReportView_ID() != 0) {
-					reportViewId = process.getAD_ReportView_ID();
-				}
-				//	Get from report view or print format
-				MPrintFormat printFormat = null;
-				if(printFormatReferenceId > 0) {
-					printFormat = MPrintFormat.get(Env.getCtx(), printFormatReferenceId, false);
-					tableName = printFormat.getAD_Table().getTableName();
-					if(printFormat.getAD_ReportView_ID() != 0) {
-						reportViewReferenceId = printFormat.getAD_ReportView_ID();
-					}
-				} else if(printFormatId != 0) {
-					printFormatReferenceId = printFormatId;
-					printFormat = MPrintFormat.get(Env.getCtx(), printFormatReferenceId, false);
-					tableName = printFormat.getAD_Table().getTableName();
-					if(printFormat.getAD_ReportView_ID() != 0) {
-						reportViewReferenceId = printFormat.getAD_ReportView_ID();
-					}
-				} else if(reportViewId != 0) {
-					MReportView reportView = MReportView.get(Env.getCtx(), reportViewId);
-					reportViewReferenceId = reportViewId;
-					tableName = reportView.getAD_Table().getTableName();
-					printFormat = MPrintFormat.get(Env.getCtx(), reportViewId, 0);
-					if(printFormat != null) {
-						printFormatReferenceId = printFormat.getAD_PrintFormat_ID();
-					}
-				}
-			}
 		}
-		//	Validate print format
-		if(printFormatReferenceId <= 0) {
-			printFormatReferenceId = request.getPrintFormatId();
-		}
-		//	Validate report view
-		if(reportViewReferenceId <= 0) {
-			reportViewReferenceId = request.getReportViewId();
-		}
+
 		//	
 		response.setIsError(result.isError());
 		if(!Util.isEmpty(result.getSummary())) {
 			response.setSummary(Msg.parseTranslation(Env.getCtx(), result.getSummary()));
 		}
 		//	
-		response.setResultTableName(ValueManager.validateNull(result.getResultTableName()));
+		response.setResultTableName(
+			ValueManager.validateNull(
+				result.getResultTableName()
+			)
+		);
 		//	Convert Log
 		if(result.getLogList() != null) {
 			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
@@ -460,56 +424,7 @@ public class BusinessData extends BusinessDataImplBase {
 				response.addLogs(infoLogBuilder.build());
 			}
 		}
-		//	Verify Output
-		if(process.isReport()) {
-			File reportFile = Optional.ofNullable(result.getReportAsFile()).orElse(result.getPDFReport());
-			if(reportFile != null
-					&& reportFile.exists()) {
-				String validFileName = FileUtil.getValidFileName(reportFile.getName());
-				ReportOutput.Builder output = ReportOutput.newBuilder();
-				output.setFileName(ValueManager.validateNull(validFileName))
-					.setName(result.getTitle())
-					.setMimeType(ValueManager.validateNull(MimeType.getMimeType(validFileName)))
-					.setDescription(ValueManager.validateNull(process.getDescription()))
-				;
-				//	Type
-				String reportType = result.getReportType();
-				if(Util.isEmpty(result.getReportType())) {
-					reportType = result.getReportType();
-				}
-				if(!Util.isEmpty(FileUtil.getExtension(validFileName))
-						&& !FileUtil.getExtension(validFileName).equals(reportType)) {
-					reportType = FileUtil.getExtension(validFileName);
-				}
-				output.setReportType(request.getReportType());
 
-				ByteString resultFile = ByteString.empty();
-				try {
-					resultFile = ByteString.readFrom(new FileInputStream(reportFile));
-				} catch (IOException e) {
-					e.printStackTrace();
-					// log.severe(e.getLocalizedMessage());
-
-					if (Util.isEmpty(response.getSummary(), true)) {
-						response.setSummary(
-							ValueManager.validateNull(
-								e.getLocalizedMessage()
-							)
-						);
-					}
-				}
-				if(reportType.endsWith("html") || reportType.endsWith("txt")) {
-					output.setOutputBytes(resultFile);
-				}
-				output.setReportType(reportType)
-					.setOutputStream(resultFile)
-					.setReportViewId(reportViewReferenceId)
-					.setPrintFormatId(printFormatReferenceId)
-					.setTableName(ValueManager.validateNull(tableName))
-				;
-				response.setOutput(output.build());
-			}
-		}
 		return response;
 	}
 	

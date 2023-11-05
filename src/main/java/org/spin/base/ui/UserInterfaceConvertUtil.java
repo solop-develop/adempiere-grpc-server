@@ -21,7 +21,7 @@ import org.adempiere.core.domains.models.X_AD_Tree;
 import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.TreeType;
+import org.spin.backend.grpc.user_interface.TreeType;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**

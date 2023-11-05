@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -18,10 +18,11 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.material_management";
 option java_outer_classname = "ADempiereMaterialManagement";
 
-import "google/protobuf/struct.proto";
-import "business.proto";
-import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+import "base_data_type.proto";
 
 // Base URL
 // /material-management/

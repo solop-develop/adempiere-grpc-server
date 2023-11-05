@@ -19,11 +19,12 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.logs";
 option java_outer_classname = "ADempiereLogs";
 
-import "base_data_type.proto";
-import "business.proto";
-import "workflow.proto";
-import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+import "base_data_type.proto";
+import "user_interface.proto";
+import "workflow.proto";
 
 // Base URL
 // /logs/
@@ -227,7 +228,7 @@ message ListChatEntriesRequest {
 //	Record Chats List
 message ListChatEntriesResponse {
 	int64 record_count = 1;
-	repeated data.ChatEntry chat_entries = 2;
+	repeated user_interface.ChatEntry chat_entries = 2;
 	string next_page_token = 3;
 }
 

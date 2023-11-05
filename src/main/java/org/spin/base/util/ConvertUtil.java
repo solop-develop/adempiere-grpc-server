@@ -66,8 +66,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Charge;
-import org.spin.backend.grpc.common.ChatEntry;
-import org.spin.backend.grpc.common.ChatEntry.ModeratorStatus;
 import org.spin.backend.grpc.common.ConversionRate;
 import org.spin.backend.grpc.common.Country;
 import org.spin.backend.grpc.common.DocumentAction;
@@ -92,6 +90,8 @@ import org.spin.backend.grpc.pos.OrderLine;
 import org.spin.backend.grpc.pos.RMA;
 import org.spin.backend.grpc.pos.RMALine;
 import org.spin.backend.grpc.pos.Shipment;
+import org.spin.backend.grpc.user_interface.ChatEntry;
+import org.spin.backend.grpc.user_interface.ModeratorStatus;
 import org.spin.base.util.convert.ConvertCommon;
 import org.spin.grpc.service.FileManagement;
 import org.spin.grpc.service.TimeControl;
@@ -177,11 +177,11 @@ public class ConvertUtil {
 		//	Confidential Type
 		if(!Util.isEmpty(chatEntry.getConfidentialType())) {
 			if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_PublicInformation)) {
-				builder.setConfidentialType(org.spin.backend.grpc.common.ChatEntry.ConfidentialType.PUBLIC);
+				builder.setConfidentialType(org.spin.backend.grpc.user_interface.ConfidentialType.PUBLIC);
 			} else if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_PartnerConfidential)) {
-				builder.setConfidentialType(org.spin.backend.grpc.common.ChatEntry.ConfidentialType.PARTER);
+				builder.setConfidentialType(org.spin.backend.grpc.user_interface.ConfidentialType.PARTER);
 			} else if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_Internal)) {
-				builder.setConfidentialType(org.spin.backend.grpc.common.ChatEntry.ConfidentialType.INTERNAL);
+				builder.setConfidentialType(org.spin.backend.grpc.user_interface.ConfidentialType.INTERNAL);
 			}
 		}
 		//	Moderator Status
@@ -199,11 +199,11 @@ public class ConvertUtil {
 		//	Chat entry type
 		if(!Util.isEmpty(chatEntry.getChatEntryType())) {
 			if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_NoteFlat)) {
-				builder.setChatEntryType(org.spin.backend.grpc.common.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.user_interface.ChatEntryType.NOTE_FLAT);
 			} else if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_ForumThreaded)) {
-				builder.setChatEntryType(org.spin.backend.grpc.common.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.user_interface.ChatEntryType.NOTE_FLAT);
 			} else if(chatEntry.getChatEntryType().equals(MChatEntry.CHATENTRYTYPE_Wiki)) {
-				builder.setChatEntryType(org.spin.backend.grpc.common.ChatEntry.ChatEntryType.NOTE_FLAT);
+				builder.setChatEntryType(org.spin.backend.grpc.user_interface.ChatEntryType.NOTE_FLAT);
 			}
 		}
   		return builder;

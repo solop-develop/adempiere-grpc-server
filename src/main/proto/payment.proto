@@ -19,7 +19,7 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.payment";
 option java_outer_classname = "ADempierePayment";
 
-import "business.proto";
+import "base_data_type.proto";
 import "google/protobuf/struct.proto";
 import "google/api/annotations.proto";
 

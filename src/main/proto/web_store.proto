@@ -17,9 +17,10 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.store";
 option java_outer_classname = "ADempiereWebStore";
+
+import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "google/api/annotations.proto";
 
 // Base URL
 // /store/web-store/

@@ -18,11 +18,12 @@ option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.wms";
 option java_outer_classname = "ADempiereWMS";
 
-import "core_functionality.proto";
-import "base_data_type.proto";
+import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "google/api/annotations.proto";
+
+import "base_data_type.proto";
+import "core_functionality.proto";
 
 // Base URL
 // /wms/

@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -17,6 +17,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "org.spin.backend.grpc.common";
 option java_outer_classname = "ADempiereBase";
+
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -37,11 +38,66 @@ message DocumentAction {
 	string description = 3;
 }
 
+// Lookup Item
+message LookupItem {
+	int32 id = 1;
+	string table_name = 2;
+	google.protobuf.Struct values = 3;
+}
+
+message ListLookupItemsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// References
+	string table_name = 8;
+	string column_name = 9;
+	int32 column_id = 10;
+	int32 field_id = 11;
+	int32 process_parameter_id = 12;
+	int32 browse_field_id = 13;
+	int32 reference_id = 14;
+	string context_attributes = 15;
+}
+
+message ListLookupItemsResponse {
+	int64 record_count = 1;
+	repeated LookupItem records = 2;
+	string next_page_token = 3;
+}
+
+//	Entities Selections
+message KeyValueSelection {
+	int32 selection_id = 1;
+	google.protobuf.Struct values = 2;
+}
+
 // Value Object from ADempiere
 message Entity {
 	int32 id = 1;
 	string table_name = 2;
 	google.protobuf.Struct values = 3;
+}
+
+message ListEntitiesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+}
+
+message ListEntitiesResponse {
+	int64 record_count = 1;
+	repeated Entity records = 2;
+	string next_page_token = 3;
 }
 
 //	Response with log and values from server
@@ -76,6 +132,7 @@ message ProcessInfoLog {
 }
 
 //	Used for get output from report / BusinessProcess like PDF, HTML another result for show to end user
+// TODO: Move to report_management
 message ReportOutput {
 	int32 id = 1;
 	string name = 2;

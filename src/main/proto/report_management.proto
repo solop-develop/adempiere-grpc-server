@@ -1,0 +1,231 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.report_management";
+option java_outer_classname = "ADempiereReportManagement";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+import "base_data_type.proto";
+
+// Base URL
+// /report-management/
+
+package report_management;
+
+// The greeting service definition.
+service ReportManagement {
+	//	Generate Report
+	rpc GenerateReport(GenerateReportRequest) returns (data.ProcessLog) {
+		option (google.api.http) = {
+			post: "/report-management/report/{id}",
+			body: "*"
+		};
+	}
+	//	Request Print Format List
+	rpc ListPrintFormats(ListPrintFormatsRequest) returns (ListPrintFormatsResponse) {
+		option (google.api.http) = {
+			get: "/report-management/print-formats/{process_id}"
+			additional_bindings: {
+				get: "/report-management/print-formats/table/{table_name}"
+			}
+			additional_bindings: {
+				get: "/report-management/print-formats/report-view/{report_view_id}"
+			}
+		};
+	}
+	//	Request Report View List
+	rpc ListReportViews(ListReportViewsRequest) returns (ListReportViewsResponse) {
+		option (google.api.http) = {
+			get: "/report-management/report-views/{process_id}"
+			additional_bindings: {
+				get: "/report-management/report-views/table/{table_name}"
+			}
+		};
+	}
+	//	Request Drill Tables List
+	rpc ListDrillTables(ListDrillTablesRequest) returns (ListDrillTablesResponse) {
+		option (google.api.http) = { get: "/report-management/drill-tables/{table_name}" };
+	}
+	//	Request Report Output
+	rpc GetReportOutput(GetReportOutputRequest) returns (data.ReportOutput) {
+		option (google.api.http) = { get: "/report-management/report-output/{process_id}/{table_name}" };
+	}
+	rpc CreateReportArchive(CreateReportArchiveRequest) returns (CreateReportArchiveResponse) {
+		option (google.api.http) = {
+			post: "/report-management/report/archive",
+			body: "*"
+		};
+	}
+	rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse) {
+		option (google.api.http) = {
+			post: "/report-management/report/send",
+			body: "*"
+		};
+	}
+}
+
+
+// Generate Report Request
+message GenerateReportRequest {
+	int32 id = 1;
+	google.protobuf.Struct parameters = 2;
+	string report_type = 3;
+	int32 print_format_id = 4;
+	int32 report_view_id = 5;
+	bool is_summary = 6;
+	// window
+	string table_name = 9;
+	int32 record_id = 10;
+}
+
+
+// Get Report Output Request
+message GetReportOutputRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 report_id = 8;
+	int32 process_instance_id = 9;
+	int32 print_format_id = 10;
+	int32 report_view_id = 11;
+	bool is_summary = 12;
+	string report_name = 13;
+	string report_type = 14;
+	string table_name = 15;
+}
+
+
+// Print Formats
+message PrintFormat {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string table_name = 5;
+	bool is_default = 6;
+	int32 report_view_id = 7;
+}
+
+message ListPrintFormatsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+	int32 report_view_id = 9;
+	int32 process_id = 10;
+}
+
+message ListPrintFormatsResponse {
+	int64 record_count = 1;
+	repeated PrintFormat print_formats = 2;
+	string next_page_token = 3;
+}
+
+
+// Report View
+message ReportView {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 4;
+	string description = 5;
+	string table_name = 6;
+}
+
+message ListReportViewsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+	int32 process_id = 9;
+}
+
+message ListReportViewsResponse {
+	int64 record_count = 1;
+	repeated ReportView report_views = 2;
+	string next_page_token = 3;
+}
+
+
+// Drill Table
+message DrillTable {
+	string table_name = 1;
+	string print_name = 2;
+}
+
+message ListDrillTablesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+}
+
+message ListDrillTablesResponse {
+	int64 record_count = 1;
+	repeated DrillTable drill_tables = 2;
+	string next_page_token = 3;
+}
+
+
+// Archive Report
+message CreateReportArchiveRequest {
+	int32 attachment_reference_id = 1;
+	int32 process_instance_id = 2;
+	string description = 3;
+	string help = 4;
+}
+
+message CreateReportArchiveResponse {
+	string summary = 1;
+	bool is_error = 2;
+}
+
+
+// Send Notification
+message SendNotificationRequest {
+	repeated string send_to = 1;
+	repeated string send_to_copy = 2;
+	string subject = 3;
+	string text = 4;
+	int32 attachment_reference_id = 5;
+	int32 process_instance_id = 14;
+}
+
+message SendNotificationResponse {
+	string summary = 1;
+	bool is_error = 2;
+}
