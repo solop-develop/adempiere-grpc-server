@@ -262,8 +262,9 @@ public class BusinessData extends BusinessDataImplBase {
 			);
 
 		int tableId = 0;
+		MTable table = null;
 		if (!Util.isEmpty(request.getTableName(), true)) {
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
+			table = MTable.get(Env.getCtx(), request.getTableName());
 			if (table != null && table.getAD_Table_ID() > 0) {
 				tableId = table.getAD_Table_ID();
 
@@ -278,8 +279,8 @@ public class BusinessData extends BusinessDataImplBase {
 		}
 		PO entity = null;
 		int recordId = request.getRecordId();
-		if (recordId > 0 && !Util.isEmpty(request.getTableName(), true)) {
-			entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), recordId, null);
+		if (table != null && RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+			entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), recordId, null);
 			if(entity != null) {
 				recordId = entity.get_ID();
 			}
@@ -295,14 +296,7 @@ public class BusinessData extends BusinessDataImplBase {
 			.withTitle(process.getName())
 			.withoutTransactionClose()
 		;
-		//	Set Report Export Type
-		if(process.isReport()) {
-			String reportType = request.getReportType();
-			if(Util.isEmpty(reportType, true)) {
-				reportType = "pdf";
-			}
-			builder.withReportExportFormat(reportType);
-		}
+
 		//	Selection
 		if(request.getBrowserId() > 0 && request.getSelectionsCount() > 0) {
 			MBrowse browse = MBrowse.get(
