@@ -157,23 +157,24 @@ message ListCitiesResponse {
 message Address {
 	int32 id = 1;
 	string uuid = 2;
-	int32 country_id = 3;
-	string country_name = 4;
-	int32 region_id = 5;
-	string region_name = 6;
-	int32 city_id = 7;
-	string city_name = 8;
-	string city = 9;
-	string address1 = 10;
-	string address2 = 11;
-	string address3 = 12;
-	string address4 = 13;
-	string postal_code = 14;
-	string postal_code_additional = 15;
-	string latitude = 16;
-	string longitude = 17;
-	string altitude = 18;
-	string reference = 19;
+	string display_value = 3;
+	int32 country_id = 4;
+	string country_name = 5;
+	int32 region_id = 6;
+	string region_name = 7;
+	int32 city_id = 8;
+	string city_name = 9;
+	string city = 10;
+	string address1 = 11;
+	string address2 = 12;
+	string address3 = 13;
+	string address4 = 14;
+	string postal_code = 15;
+	string postal_code_additional = 16;
+	string latitude = 17;
+	string longitude = 18;
+	string altitude = 19;
+	string reference = 20;
 }
 
 message GetAddressRequest {

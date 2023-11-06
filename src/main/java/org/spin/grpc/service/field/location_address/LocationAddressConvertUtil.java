@@ -130,6 +130,11 @@ public class LocationAddressConvertUtil {
 					address.getUUID()
 				)
 			)
+			.setDisplayValue(
+				ValueManager.validateNull(
+					address.toString()
+				)
+			)
 			.setCountryId(
 				address.getC_Country_ID()
 			)
