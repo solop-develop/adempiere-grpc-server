@@ -559,7 +559,7 @@ public class ReportManagement extends ReportManagementImplBase {
 	private ListPrintFormatsResponse.Builder listPrintFormats(Properties context, ListPrintFormatsRequest request) {
 		//	Get entity
 		if(Util.isEmpty(request.getTableName())
-				&& request.getProcessId() <= 0
+				&& request.getReportId() <= 0
 				&& request.getReportViewId() <= 0) {
 			throw new AdempiereException("@TableName@ / @AD_Process_ID@ / @AD_ReportView_ID@ @NotFound@");
 		}
@@ -570,9 +570,9 @@ public class ReportManagement extends ReportManagementImplBase {
 			MTable table = MTable.get(Env.getCtx(), request.getTableName());
 			whereClause = "AD_Table_ID = ?";
 			parameters.add(table.getAD_Table_ID());
-		} else if(request.getProcessId() > 0) {
+		} else if(request.getReportId() > 0) {
 			whereClause = "EXISTS(SELECT 1 FROM AD_Process p WHERE p.AD_Process_ID = ? AND (p.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID OR p.AD_ReportView_ID = AD_PrintFormat.AD_ReportView_ID))";
-			parameters.add(request.getProcessId());
+			parameters.add(request.getReportId());
 		} else if(request.getReportViewId() > 0) {
 			MReportView reportView = new Query(Env.getCtx(), I_AD_ReportView.Table_Name, I_AD_ReportView.COLUMNNAME_AD_ReportView_ID + " = ?", null)
 				.setParameters(request.getReportViewId())
@@ -672,9 +672,9 @@ public class ReportManagement extends ReportManagementImplBase {
 			}
 			whereClause = "AD_Table_ID = ?";
 			parameters.add(table.getAD_Table_ID());
-		} else if(request.getProcessId() > 0) {
+		} else if(request.getReportId() > 0) {
 			whereClause = "EXISTS(SELECT 1 FROM AD_Process p WHERE p.AD_Process_ID = ? AND p.AD_ReportView_ID = AD_ReportView.AD_ReportView_ID)";
-			parameters.add(request.getProcessId());
+			parameters.add(request.getReportId());
 		} else {
 			throw new AdempiereException("@TableName@ / @AD_Process_ID@ @NotFound@");
 		}

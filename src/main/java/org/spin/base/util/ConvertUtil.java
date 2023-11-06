@@ -37,7 +37,6 @@ import org.compiere.model.MChatEntry;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCountry;
-import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MLanguage;
@@ -70,7 +69,6 @@ import org.spin.backend.grpc.common.ConversionRate;
 import org.spin.backend.grpc.common.Country;
 import org.spin.backend.grpc.common.DocumentAction;
 import org.spin.backend.grpc.common.DocumentStatus;
-import org.spin.backend.grpc.common.DocumentType;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.Organization;
 import org.spin.backend.grpc.common.PriceList;
@@ -270,18 +268,7 @@ public class ConvertUtil {
 			.setDescription(ValueManager.validateNull(description)
 		);
 	}
-	
-	/**
-	 * Convert Document Type
-	 * @deprecated {@link #ConvertCommon.convertDocumentType}
-	 * @param documentType
-	 * @return
-	 */
-	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
-		return ConvertCommon.convertDocumentType(
-			documentType
-		);
-	}
+
 
 
 	/**
@@ -618,7 +605,11 @@ public class ConvertUtil {
 		//	Convert
 		return builder
 			.setId(order.getC_Order_ID())
-			.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(Env.getCtx(), order.getC_DocTypeTarget_ID())))
+			.setDocumentType(
+				ConvertCommon.convertDocumentType(
+					order.getC_DocTypeTarget_ID()
+				)
+			)
 			.setDocumentNo(ValueManager.validateNull(order.getDocumentNo()))
 			.setSalesRepresentative(convertSalesRepresentative(MUser.get(Env.getCtx(), order.getSalesRep_ID())))
 			.setDescription(ValueManager.validateNull(order.getDescription()))
@@ -819,7 +810,11 @@ public class ConvertUtil {
 		return builder
 			.setId(order.getC_Order_ID())
 			.setSourceOrderId(order.getRef_Order_ID())
-			.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(Env.getCtx(), order.getC_DocTypeTarget_ID())))
+			.setDocumentType(
+				ConvertCommon.convertDocumentType(
+					order.getC_DocTypeTarget_ID()
+				)
+			)
 			.setDocumentNo(ValueManager.validateNull(order.getDocumentNo()))
 			.setSalesRepresentative(convertSalesRepresentative(MUser.get(Env.getCtx(), order.getSalesRep_ID())))
 			.setDescription(ValueManager.validateNull(order.getDescription()))
@@ -1105,7 +1100,11 @@ public class ConvertUtil {
 		return builder
 			.setOrderId(order.getC_Order_ID())
 			.setId(shipment.getM_InOut_ID())
-			.setDocumentType(ConvertUtil.convertDocumentType(MDocType.get(Env.getCtx(), shipment.getC_DocType_ID())))
+			.setDocumentType(
+				ConvertCommon.convertDocumentType(
+					shipment.getC_DocType_ID()
+				)
+			)
 			.setDocumentNo(ValueManager.validateNull(shipment.getDocumentNo()))
 			.setSalesRepresentative(convertSalesRepresentative(MUser.get(Env.getCtx(), shipment.getSalesRep_ID())))
 			.setDocumentStatus(

@@ -11,8 +11,7 @@ ENV \
 	BACKEND_PORT="50059" \
 	SERVICES_ENABLED="bank_statement_match.BankStatementMatch; \
 		business_partner.BusinessPartner; data.BusinessData; \
-		data.CoreFunctionality; data.UserInterface; \
-		dashboarding.Dashboarding; dictionary.Dictionary; \
+		data.CoreFunctionality; dashboarding.Dashboarding; dictionary.Dictionary; \
 		enrollment.Register; express_movement.ExpressMovement; \
 		express_receipt.ExpressReceipt; express_shipment.ExpressShipment; \
 		file_management.FileManagement; general_ledger.GeneralLedger; \
@@ -23,11 +22,11 @@ ENV \
 		order.Order; payment_allocation.PaymentAllocation; \
 		payment_print_export.PaymentPrintExport; \
 		payment.Payment; payroll_action_notice.PayrollActionNotice; \
-		data.Store; product.Product; record_management.RecordManagement; \
-		security.Security; time_control.TimeControl; \
-		time_record.TimeRecord; updates.UpdateCenter; \
-		user_customization.UserCustomization; wms.WarehouseManagement; \
-		store.WebStore; workflow.Workflow;"
+		data.Store; product.Product; report_management.ReportManagement; \
+		record_management.RecordManagement; \ security.Security; \
+		time_control.TimeControl; time_record.TimeRecord; updates.UpdateCenter; \
+		user_customization.UserCustomization; user_interface.UserInterface; \
+		wms.WarehouseManagement; store.WebStore; workflow.Workflow;"
 
 #Expose Ports
 # EXPOSE 9901 # admin port

@@ -52,6 +52,7 @@ import org.spin.grpc.service.PayrollActionNotice;
 import org.spin.grpc.service.PointOfSalesForm;
 import org.spin.grpc.service.ProductInfo;
 import org.spin.grpc.service.RecordManagement;
+import org.spin.grpc.service.ReportManagement;
 import org.spin.grpc.service.Security;
 import org.spin.grpc.service.TimeControl;
 import org.spin.grpc.service.TimeRecord;
@@ -303,6 +304,11 @@ public class AllInOneServices {
 		if (SetupLoader.getInstance().getServer().isValidService(Services.RECORD_MANAGEMENT.getServiceName())) {
 			serverBuilder.addService(new RecordManagement());
 			logger.info("Service " + Services.RECORD_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Report Management
+		if (SetupLoader.getInstance().getServer().isValidService(Services.REPORT_MANAGEMENT.getServiceName())) {
+			serverBuilder.addService(new ReportManagement());
+			logger.info("Service " + Services.REPORT_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Time Control
 		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {

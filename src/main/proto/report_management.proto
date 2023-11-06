@@ -43,7 +43,7 @@ service ReportManagement {
 	//	Request Print Format List
 	rpc ListPrintFormats(ListPrintFormatsRequest) returns (ListPrintFormatsResponse) {
 		option (google.api.http) = {
-			get: "/report-management/print-formats/{process_id}"
+			get: "/report-management/print-formats/{report_id}"
 			additional_bindings: {
 				get: "/report-management/print-formats/table/{table_name}"
 			}
@@ -55,7 +55,7 @@ service ReportManagement {
 	//	Request Report View List
 	rpc ListReportViews(ListReportViewsRequest) returns (ListReportViewsResponse) {
 		option (google.api.http) = {
-			get: "/report-management/report-views/{process_id}"
+			get: "/report-management/report-views/{report_id}"
 			additional_bindings: {
 				get: "/report-management/report-views/table/{table_name}"
 			}
@@ -67,7 +67,7 @@ service ReportManagement {
 	}
 	//	Request Report Output
 	rpc GetReportOutput(GetReportOutputRequest) returns (data.ReportOutput) {
-		option (google.api.http) = { get: "/report-management/report-output/{process_id}/{table_name}" };
+		option (google.api.http) = { get: "/report-management/report-output/{report_id}/{table_name}" };
 	}
 	rpc CreateReportArchive(CreateReportArchiveRequest) returns (CreateReportArchiveResponse) {
 		option (google.api.http) = {
@@ -139,7 +139,7 @@ message ListPrintFormatsRequest {
 	string search_value = 7;
 	string table_name = 8;
 	int32 report_view_id = 9;
-	int32 process_id = 10;
+	int32 report_id = 10;
 }
 
 message ListPrintFormatsResponse {
@@ -167,7 +167,7 @@ message ListReportViewsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string table_name = 8;
-	int32 process_id = 9;
+	int32 report_id = 9;
 }
 
 message ListReportViewsResponse {
