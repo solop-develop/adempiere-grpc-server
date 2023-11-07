@@ -26,10 +26,10 @@ package express_movement;
 
 service ExpressMovement {
 	rpc ListWarehouses(ListWarehousesRequest) returns (ListWarehousesResponse) {
-		option (google.api.http) = { delete: "/express-movement/warehouses" };
+		option (google.api.http) = { get: "/express-movement/warehouses" };
 	}
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
-		option (google.api.http) = { delete: "/express-movement/products" };
+		option (google.api.http) = { get: "/express-movement/products" };
 	}
 	// Movement
 	rpc CreateMovement(CreateMovementRequest) returns (Movement) {
@@ -43,7 +43,7 @@ service ExpressMovement {
 	}
 	rpc ProcessMovement(ProcessMovementRequest) returns (Movement) {
 		option (google.api.http) = {
-			put: "/express-movement/movements/{id}/process",
+			post: "/express-movement/movements/{id}/process",
 			body: "*"
 		};
 	}
@@ -59,7 +59,7 @@ service ExpressMovement {
 	}
 	rpc UpdateMovementLine(UpdateMovementLineRequest) returns (MovementLine) {
 		option (google.api.http) = {
-			put: "/express-movement/movement/{movement_id}/lines/{id}",
+			patch: "/express-movement/movement/{movement_id}/lines/{id}",
 			body: "*"
 		};
 	}

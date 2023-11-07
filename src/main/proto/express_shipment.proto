@@ -49,7 +49,7 @@ service ExpressShipment {
 	}
 	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {
 		option (google.api.http) = { 
-			put: "/express-shipment/shipments/{id}/process",
+			post: "/express-shipment/shipments/{id}/process",
 			body: "*"
 		};
 	}
@@ -65,7 +65,7 @@ service ExpressShipment {
 	}
 	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {
 		option (google.api.http) = { 
-			put: "/express-shipment/shipments/{shipment_id}/lines/{id}",
+			patch: "/express-shipment/shipments/{shipment_id}/lines/{id}",
 			body: "*"
 		};
 	}

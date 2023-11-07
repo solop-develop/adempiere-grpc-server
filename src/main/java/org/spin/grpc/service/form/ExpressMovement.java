@@ -17,6 +17,8 @@ package org.spin.grpc.service.form;
 import org.adempiere.exceptions.AdempiereException;
 
 import java.math.BigDecimal;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,7 +32,6 @@ import org.compiere.model.MLocator;
 import org.compiere.model.MMovement;
 import org.compiere.model.MMovementLine;
 import org.compiere.model.MProduct;
-import org.compiere.model.MRole;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -99,7 +100,23 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	ListWarehousesResponse.Builder listWarehouses(ListWarehousesRequest request) {
-		final String whereClause = "M_Warehouse_ID > 0";
+		String whereClause = "M_Warehouse_ID > 0";
+		List<Object> parameters = new ArrayList<Object>();
+
+		//	For search value
+		if (!Util.isEmpty(request.getSearchValue(), true)) {
+			// URL decode to change characteres
+			String searchValue = URLDecoder.decode(request.getSearchValue(), StandardCharsets.UTF_8);
+
+			whereClause += " AND ("
+				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ ")"
+			;
+			//	Add parameters
+			parameters.add(searchValue);
+		}
+
 		Query query = new Query(
 			Env.getCtx(),
 			I_M_Warehouse.Table_Name,
@@ -108,7 +125,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			// .setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int count = query.count();
@@ -189,6 +206,9 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		//	For search value
 		if (!Util.isEmpty(request.getSearchValue(), true)) {
+			// URL decode to change characteres
+			String searchValue = URLDecoder.decode(request.getSearchValue(), StandardCharsets.UTF_8);
+
 			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -197,10 +217,10 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				+ ")"
 			;
 			//	Add parameters
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 
 		Query query = new Query(
@@ -211,7 +231,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			// .setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setParameters(parameters);
 
 		int count = query.count();
@@ -743,7 +763,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			.setParameters(movementId)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			// .setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		int count = query.count();
