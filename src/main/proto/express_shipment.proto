@@ -39,7 +39,7 @@ service ExpressShipment {
 	}
 	// Shipment
 	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/express-shipment/shipments",
 			body: "*"
 		};
@@ -56,7 +56,7 @@ service ExpressShipment {
 	//	Shipment Line
 	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {
 		option (google.api.http) = { 
-			post: "/express-shipment/shipments/{id}/lines",
+			post: "/express-shipment/shipments/{shipment_id}/lines",
 			body: "*"
 		};
 	}
