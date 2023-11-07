@@ -115,6 +115,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			;
 			//	Add parameters
 			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 
 		Query query = new Query(
