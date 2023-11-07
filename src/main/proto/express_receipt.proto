@@ -46,7 +46,7 @@ service ExpressReceipt {
 	}
 	rpc ProcessReceipt(ProcessReceiptRequest) returns (Receipt) {
 		option (google.api.http) = {
-			put: "/express-receipt/receipts/{id}/process",
+			post: "/express-receipt/receipts/{id}/process",
 			body: "*"
 		};
 	}
