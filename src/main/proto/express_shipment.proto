@@ -70,7 +70,7 @@ service ExpressShipment {
 		};
 	}
 	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {
-		option (google.api.http) = { get: "/express-shipment/shipments" };
+		option (google.api.http) = { get: "/express-shipment/shipments/{shipment_id}/lines" };
 	}
 }
 
