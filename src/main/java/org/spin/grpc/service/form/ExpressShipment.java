@@ -109,7 +109,25 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 	}
 
 	ListBusinessPartnersResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
-		final String whereClause = "IsCustomer='Y' ";
+		String whereClause = "IsCustomer='Y' ";
+		List<Object> parameters = new ArrayList<Object>();
+
+		//	For search value
+		if (!Util.isEmpty(request.getSearchValue(), true)) {
+			whereClause += " AND ("
+				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Name2) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%'"
+				+ ")"
+			;
+			//	Add parameters
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
+		}
+
 		Query query = new Query(
 			Env.getCtx(),
 			I_C_BPartner.Table_Name,
@@ -119,6 +137,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.setParameters(parameters)
 		;
 
 		int count = query.count();

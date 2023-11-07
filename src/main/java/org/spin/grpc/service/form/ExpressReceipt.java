@@ -110,7 +110,25 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 	ListBusinessPartnersResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
-		final String whereClause = "IsVendor='Y' ";
+		String whereClause = "IsVendor='Y' ";
+		List<Object> parameters = new ArrayList<Object>();
+
+		//	For search value
+		if (!Util.isEmpty(request.getSearchValue(), true)) {
+			whereClause += " AND ("
+				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Name2) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%'"
+				+ ")"
+			;
+			//	Add parameters
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
+			parameters.add(request.getSearchValue());
+		}
+
 		Query query = new Query(
 			Env.getCtx(),
 			I_C_BPartner.Table_Name,
@@ -120,6 +138,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 			.setOnlyActiveRecords(true)
 			.setClient_ID()
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.setParameters(parameters)
 		;
 
 		int count = query.count();
