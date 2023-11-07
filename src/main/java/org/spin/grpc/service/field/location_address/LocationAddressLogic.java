@@ -219,12 +219,12 @@ public class LocationAddressLogic {
 		;
 
 		query.getIDsAsList().forEach(cityId -> {
-			MCity region = MCity.get(Env.getCtx(), cityId);
+			MCity city = MCity.get(Env.getCtx(), cityId);
 			ListItem.Builder cityItem = ListItem.newBuilder()
-				.setId(region.getC_Region_ID())
+				.setId(city.getC_City_ID())
 				.setName(
 					ValueManager.validateNull(
-						region.getName()
+						city.getName()
 					)
 				)
 			;

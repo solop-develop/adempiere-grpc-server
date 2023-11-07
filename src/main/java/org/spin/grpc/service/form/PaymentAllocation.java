@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.form;
 
 import org.adempiere.exceptions.AdempiereException;
 
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
-import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Charge;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
@@ -81,6 +80,7 @@ import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.PaymentAllocationImplBase;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
+import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -145,16 +145,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		if (businessPartnerId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
 		}
-		MBPartner businessPartner = new Query(
-			Env.getCtx(),
-			I_C_BPartner.Table_Name,
-			" C_BPartner_ID = ? ",
-			null
-		)
-			.setParameters(businessPartnerId)
-			.setClient_ID()
-			.first()
-		;
+		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
 		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
 			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 		}
@@ -641,7 +632,9 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	private ListInvoicesResponse.Builder listInvoices(ListInvoicesRequest request) {
 		Properties context = Env.getCtx();
 		int currencyId = request.getCurrencyId();
+		validateAndGetCurrency(currencyId);
 		int businessPartnerId = request.getBusinessPartnerId();
+		validateAndGetBusinessPartner(businessPartnerId);
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getDate()
 		);

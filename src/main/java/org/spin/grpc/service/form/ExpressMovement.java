@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.form;
 
 import org.adempiere.exceptions.AdempiereException;
 
@@ -89,6 +89,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -126,9 +127,10 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		;
 
 		query.setLimit(limit, offset)
-			.list(MWarehouse.class)
-			.forEach(businessPartner -> {
-				Warehouse.Builder builder = convertWarehouse(businessPartner);
+			.getIDsAsList()
+			.forEach(warehouseId -> {
+				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+				Warehouse.Builder builder = convertWarehouse(warehouse);
 				builderList.addRecords(builder);
 			})
 		;
@@ -138,7 +140,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 	Warehouse.Builder convertWarehouse(MWarehouse warehouse) {
 		Warehouse.Builder builder = Warehouse.newBuilder();
-		if (builder == null) {
+		if (warehouse == null) {
 			return builder;
 		}
 
@@ -170,6 +172,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -229,9 +232,9 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		;
 
 		query.setLimit(limit, offset)
-			.list(MProduct.class)
-			.forEach(product -> {
-				Product.Builder builder = convertProduct(product);
+			.getIDsAsList()
+			.forEach(productId -> {
+				Product.Builder builder = convertProduct(productId);
 				builderList.addRecords(builder);
 			});
 		;
@@ -308,6 +311,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -321,7 +325,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		Trx.run(transactionName -> {
 			MMovement inventoryMovement = new MMovement(Env.getCtx(), 0, transactionName);
-			inventoryMovement.setMovementDate(RecordUtil.getDate());
+			inventoryMovement.setMovementDate(RecordUtil.getDate()); // TODO: Verfy it
 			inventoryMovement.saveEx(transactionName);
 
 			maybeMovement.set(inventoryMovement);
@@ -348,6 +352,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -357,15 +362,11 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private Empty.Builder deleteMovement(DeleteMovementRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@M_Movement_ID@ @NotFound@");
+		int movementId = request.getId();
+		if (movementId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Movement_ID@");
 		}
 		Trx.run(transactionName -> {
-			int movementId = request.getId();
-			if (movementId <= 0) {
-				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
-			}
-
 			MMovement movement = new MMovement(Env.getCtx(), movementId, transactionName);
 			if (movement == null || movement.getM_Movement_ID() <= 0) {
 				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
@@ -393,6 +394,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -402,14 +404,14 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private Movement.Builder processMovement(ProcessMovementRequest request) {
+		int movementId = request.getId();
+		if (movementId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Movement_ID@");
+		}
+
 		AtomicReference<MMovement> shipmentReference = new AtomicReference<MMovement>();
 
 		Trx.run(transactionName -> {
-			int movementId = request.getId();
-			if (movementId <= 0) {
-				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
-			}
-
 			MMovement movement = new MMovement(Env.getCtx(), movementId, transactionName);
 			if (movement == null || movement.getM_Movement_ID() <= 0) {
 				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
@@ -447,6 +449,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -456,26 +459,26 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private MovementLine.Builder createMovementLine(CreateMovementLineRequest request) {
-		if (request.getMovementId() <= 0) {
-			throw new AdempiereException("@M_Movement_ID@ @NotFound@");
+		int movementId = request.getMovementId();
+		if (movementId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Movement_ID@");
 		}
-		if (request.getProductId() <= 0) {
-			throw new AdempiereException("@M_Product_ID@ @NotFound@");
+		int productId = request.getProductId();
+		if (productId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Product_ID@");
 		}
-		if (request.getWarehouseId() <= 0) {
-			throw new AdempiereException("@M_Warehouse_ID@ @NotFound@");
+		int warehouseId = request.getWarehouseId();
+		if (warehouseId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Warehouse_ID@");
 		}
-		if (request.getWarehouseToId() <= 0) {
-			throw new AdempiereException("@M_WarehouseTo_ID@ @NotFound@");
+		int warehouseToId = request.getWarehouseToId();
+		if (warehouseToId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_WarehouseTo_ID@");
 		}
 
 		AtomicReference<MMovementLine> movementLineReference = new AtomicReference<MMovementLine>();
 
 		Trx.run(transactionName -> {
-			int movementId = request.getMovementId();
-			if (movementId <= 0) {
-				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
-			}
 			MMovement movement = new MMovement(Env.getCtx(), movementId, transactionName);
 			if (movement == null || movement.getM_Movement_ID() <= 0) {
 				throw new AdempiereException("@M_Movement_ID@ @NotFound@");
@@ -484,16 +487,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				throw new AdempiereException("@M_Movement_ID@ @Processed@");
 			}
 
-			int productId = request.getProductId();
-			if (productId <= 0) {
-				throw new AdempiereException("@M_Product_ID@ @NotFound@");
-			}
-
 			// warehouse and default locator
-			int warehouseId = request.getWarehouseId();
-			if (warehouseId <= 0) {
-				throw new AdempiereException("@M_Warehouse_ID@ @NotFound@");
-			}
 			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
 			if (warehouse == null || warehouse.getM_Warehouse_ID() <= 0) {
 				throw new AdempiereException("@M_Warehouse_ID@ @NotFound@");
@@ -504,10 +498,6 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			}
 
 			// warehouse to and default locator to
-			int warehouseToId = request.getWarehouseToId();
-			if (warehouseToId <= 0) {
-				throw new AdempiereException("@M_WarehouseTo_ID@ @NotFound@");
-			}
 			MWarehouse warehouseTo = MWarehouse.get(Env.getCtx(), warehouseToId);
 			MLocator locatorTo = warehouseTo.getDefaultLocator();
 			if (locatorTo == null || locatorTo.getM_Locator_ID() <= 0) {
@@ -530,7 +520,12 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				whereClause,
 				transactionName
 			)
-				.setParameters(productId, movement.getM_Movement_ID(), locator.getM_Locator_ID(), locatorTo.getM_Locator_ID())
+				.setParameters(
+					productId,
+					movement.getM_Movement_ID(),
+					locator.getM_Locator_ID(),
+					locatorTo.getM_Locator_ID()
+				)
 				.setClient_ID()
 				.first();
 
@@ -581,6 +576,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -590,16 +586,12 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private Empty.Builder deleteShipmentLine(DeleteMovementLineRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
+		int movementLineId = request.getId();
+		if (movementLineId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_MovementLine_ID@");
 		}
 
 		Trx.run(transactionName -> {
-			int movementLineId = request.getId();
-			if (movementLineId <= 0) {
-				throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
-			}
-
 			MMovementLine movementLine = new MMovementLine(Env.getCtx(), movementLineId, transactionName);
 			if (movementLine == null || movementLine.getM_MovementLine_ID() <= 0) {
 				throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
@@ -628,6 +620,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -637,17 +630,14 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private MovementLine.Builder updateMovementLine(UpdateMovementLineRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
+		int movementLineId = request.getId();
+		if (movementLineId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_MovementLine_ID@");
 		}
 
 		AtomicReference<MMovementLine> movementLineReference = new AtomicReference<MMovementLine>();
 
 		Trx.run(transactionName -> {
-			int movementLineId = request.getId();
-			if (movementLineId <= 0) {
-				throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
-			}
 			MMovementLine movementLine = new MMovementLine(Env.getCtx(), movementLineId, transactionName);
 			if (movementLine == null || movementLine.getM_MovementLine_ID() <= 0) {
 				throw new AdempiereException("@M_MovementLine_ID@ @NotFound@");
@@ -694,6 +684,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -739,12 +730,9 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private ListMovementLinesResponse.Builder listMovementLines(ListMovementLinesRequest request) {
-		if (request.getMovementId() <= 0) {
-			throw new AdempiereException("@M_Movement_ID@ @NotFound@");
-		}
 		int movementId = request.getMovementId();
 		if (movementId <= 0) {
-			throw new AdempiereException("@M_Movement_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @M_Movement_ID@");
 		}
 		Query query = new Query(
 			Env.getCtx(),
@@ -776,8 +764,9 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		;
 
 		query.setLimit(limit, offset)
-			.list(MMovementLine.class)
-			.forEach(movementLine -> {
+			.getIDsAsList()
+			.forEach(movementLineId -> {
+				MMovementLine movementLine = new MMovementLine(Env.getCtx(), movementLineId, null);
 				MovementLine.Builder builder = convertMovementLine(movementLine);
 				builderList.addRecords(builder);
 			});
