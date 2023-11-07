@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# @autor Yamel Senih <ysenih@erpya.com>
+# @autor Edwin Betancourt <EdwinBetanc0urt@outlook.com> https://github.com/EdwinBetanc0urt
 
 PROD_FILE=/etc/envoy/envoy.yaml
 

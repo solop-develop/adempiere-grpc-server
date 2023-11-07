@@ -1,9 +1,10 @@
 {
-	"editor.detectIndentation": false,
+	"editor.detectIndentation": true,
 	"editor.indentSize": "tabSize",
 	"editor.tabSize": 4,
 	"editor.autoIndent": "full",
-	"editor.insertSpaces": false,
+	// "editor.insertSpaces": false,
+	"editor.renderWhitespace": "boundary",
 	"files.insertFinalNewline": true,
 	"java.autobuild.enabled": true,
 	"java.compile.nullAnalysis.mode": "interactive",

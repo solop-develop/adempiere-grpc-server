@@ -35,6 +35,7 @@ static_resources:
               "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
               proto_descriptor: "/data/service_definition.pb"
               services:
+                # package.service
                 - bank_statement_match.BankStatementMatch
                 - business_partner.BusinessPartner
                 - data.BusinessData
@@ -51,6 +52,7 @@ static_resources:
                 - in_out.InOut
                 - invoice.Invoice
                 - issue_management.IssueManagement
+                - location_address.LocationAddress
                 - logs.Logs
                 - match_po_receipt_invoice.MatchPORReceiptInvoice
                 - material_management.MaterialManagement
@@ -62,11 +64,13 @@ static_resources:
                 - data.Store
                 - product.Product
                 - record_management.RecordManagement
+                - report_management.ReportManagement
                 - security.Security
                 - time_control.TimeControl
                 - time_record.TimeRecord
                 - updates.UpdateCenter
                 - user_customization.UserCustomization
+                - user_interface.UserInterface
                 - wms.WarehouseManagement
                 - store.WebStore
                 - workflow.Workflow
