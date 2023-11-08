@@ -127,6 +127,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
 			// .setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.setParameters(parameters)
 		;
 
 		int count = query.count();
