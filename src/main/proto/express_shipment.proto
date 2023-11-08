@@ -215,7 +215,7 @@ message ListShipmentLinesResponse {
 }
 
 message DeleteShipmentLineRequest {
-	int32 shipment_id = 1;	
+	int32 shipment_id = 1;
 	int32 id = 2;
 }
 

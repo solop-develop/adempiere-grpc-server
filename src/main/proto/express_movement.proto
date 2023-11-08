@@ -64,7 +64,7 @@ service ExpressMovement {
 		};
 	}
 	rpc ListMovementLines(ListMovementLinesRequest) returns (ListMovementLinesResponse) {
-		option (google.api.http) = { delete: "/express-movement/{movement_id}/movements/lines" };
+		option (google.api.http) = { get: "/express-movement/{movement_id}/movements/lines" };
 	}
 }
 
@@ -181,11 +181,13 @@ message ListMovementLinesResponse {
 }
 
 message DeleteMovementLineRequest {
-	int32 id = 1;
+	int32 movement_id = 1;
+	int32 id = 2;
 }
 
 message UpdateMovementLineRequest {
-	int32 id = 1;
-	string description = 2;
-	string quantity = 3;
+	int32 movement_id = 1;
+	int32 id = 2;
+	string description = 3;
+	string quantity = 4;
 }
