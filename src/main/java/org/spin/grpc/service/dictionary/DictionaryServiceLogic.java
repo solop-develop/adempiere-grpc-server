@@ -1,4 +1,18 @@
-package org.spin.grpc.logic;
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+package org.spin.grpc.service.dictionary;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,7 +33,6 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.ListFieldsRequest;
 import org.spin.backend.grpc.dictionary.ListFieldsResponse;
-import org.spin.grpc.service.Dictionary;
 
 import io.vavr.control.Try;
 
@@ -31,6 +44,53 @@ public class DictionaryServiceLogic {
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(DictionaryServiceLogic.class);
 
+
+	public static ListFieldsResponse.Builder listTableSearchFields(ListFieldsRequest request) {
+		if (Util.isEmpty(request.getTableName(), true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+		Properties context = Env.getCtx();
+		MTable table = MTable.get(context, request.getTableName());
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		ListFieldsResponse.Builder fieldsListBuilder = ListFieldsResponse.newBuilder();
+
+		final String sql = "SELECT f.AD_Field_ID "
+			// + ", c.ColumnName, c.AD_Reference_ID, c.IsKey, f.IsDisplayed, c.AD_Reference_Value_ID, c.ColumnSql "
+			+ " FROM AD_Column c "
+			+ " INNER JOIN AD_Table t ON (c.AD_Table_ID=t.AD_Table_ID)"
+			+ " INNER JOIN AD_Tab tab ON (t.AD_Window_ID=tab.AD_Window_ID)"
+			+ " INNER JOIN AD_Field f ON (tab.AD_Tab_ID=f.AD_Tab_ID AND f.AD_Column_ID=c.AD_Column_ID) "
+			+ " WHERE t.AD_Table_ID=? "
+			+ " AND (c.IsKey='Y' OR "
+				// + " (f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
+				+ " (f.IsEncrypted='N' AND f.ObscureType IS NULL)) "
+			+ "ORDER BY c.IsKey DESC, f.SeqNo"
+		;
+
+		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
+			int recordCount = 0;
+			while(resultSet.next()) {
+				MField field = new MField(context, resultSet.getInt(MField.COLUMNNAME_AD_Field_ID), null);
+				if (field != null) {
+					Field.Builder fieldBuilder = WindowConvertUtil.convertField(
+						context,
+						field,
+						true
+					);
+					fieldsListBuilder.addFields(fieldBuilder.build());
+				}
+				recordCount++;
+			}
+			fieldsListBuilder.setRecordCount(recordCount);
+		}).onFailure(throwable -> {
+			log.log(Level.SEVERE, sql, throwable);
+		});
+
+		return fieldsListBuilder;
+	}
 
 
 	public static ListFieldsResponse.Builder listSearchInfoFields(ListFieldsRequest request) {
@@ -69,7 +129,10 @@ public class DictionaryServiceLogic {
 				if (column == null || column.getAD_Column_ID() <= 0) {
 					continue;
 				}
-				Field.Builder fieldBuilder = Dictionary.convertFieldByColumn(context, column);
+				Field.Builder fieldBuilder = DictionaryConvertUtil.convertFieldByColumn(
+					context,
+					column
+				);
 				int sequence = (recordCount + 1) * 10;
 				fieldBuilder.setSequence(sequence);
 				fieldBuilder.setIsDisplayed(true);
@@ -115,7 +178,7 @@ public class DictionaryServiceLogic {
 			
 				Field.Builder fieldBuilder = fieldsList.get(field.getAD_Column_ID());
 				if (fieldBuilder == null) {
-					fieldBuilder = Dictionary.convertField(context, field, true);
+					fieldBuilder = WindowConvertUtil.convertField(context, field, true);
 					// disable on query
 					fieldBuilder.setSequence(0);
 					fieldBuilder.setIsDisplayed(false);

@@ -40,6 +40,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.util.AttachmentUtil;
 
 

@@ -17,8 +17,13 @@ package org.spin.base.util;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.compiere.model.MClient;
 import org.compiere.model.MCountry;
@@ -41,6 +46,77 @@ public class ContextManager {
 	
 	/**	Language */
 	private static CCache<String, String> languageCache = new CCache<String, String>("Language-gRPC-Service", 30, 0);	//	no time-out
+
+
+	/**
+	 * Get Context column names from context
+	 * @param context
+	 * @return
+	 * @return List<String>
+	 */
+	public static List<String> getContextColumnNames(String context) {
+		if (Util.isEmpty(context, true)) {
+			return new ArrayList<String>();
+		}
+		String START = "\\@";  // A literal "(" character in regex
+		String END   = "\\@";  // A literal ")" character in regex
+
+		// Captures the word(s) between the above two character(s)
+		String patternValue = START + "(#|$){0,1}(\\w+)" + END;
+
+		Pattern pattern = Pattern.compile(patternValue);
+		Matcher matcher = pattern.matcher(context);
+		Map<String, Boolean> columnNamesMap = new HashMap<String, Boolean>();
+		while(matcher.find()) {
+			columnNamesMap.put(matcher.group().replace("@", "").replace("@", ""), true);
+		}
+		return new ArrayList<String>(columnNamesMap.keySet());
+	}
+
+	/**
+	 * Determinate if columnName is used on context values
+	 * @param columnName
+	 * @param context
+	 * @return boolean
+	 */
+	public static boolean isUseParentColumnOnContext(String columnName, String context) {
+		if (Util.isEmpty(columnName, true)) {
+			return false;
+		}
+		if (Util.isEmpty(context, true)) {
+			return false;
+		}
+
+		// @ColumnName@ , @#ColumnName@ , @$ColumnName@
+		StringBuffer patternValue = new StringBuffer()
+			.append("@")
+			.append("($|#){0,1}")
+			.append(columnName)
+			.append("(@)")
+		;
+
+		Pattern pattern = Pattern.compile(
+			patternValue.toString(),
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		);
+		Matcher matcher = pattern.matcher(context);
+		boolean isUsedParentColumn = matcher.find();
+
+		// TODO: Delete this condition when fix evaluator (readonlyLogic on Client Info)
+		// TODO: https://github.com/adempiere/adempiere/pull/4124
+		if (!isUsedParentColumn) {
+			// @ColumnName , @#ColumnName , @$ColumnName
+			patternValue.append("{0,1}");
+			Pattern pattern2 = Pattern.compile(
+				patternValue.toString(),
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			);
+			Matcher matcher2 = pattern2.matcher(context);
+			isUsedParentColumn = matcher2.find();
+		}
+
+		return isUsedParentColumn;
+	}
 
 
 	/**

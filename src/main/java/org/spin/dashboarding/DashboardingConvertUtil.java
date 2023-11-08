@@ -48,7 +48,7 @@ import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.dictionary.convert.DictionaryConvertUtil;
+import org.spin.grpc.service.dictionary.DictionaryConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

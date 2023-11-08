@@ -34,6 +34,10 @@ import org.compiere.util.Util;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class DictionaryUtil {
+	
+	public static String ID_PREFIX = "_ID";
+
+	public static String TRANSLATION_SUFFIX = "_Trl";
 
 	// Show/Hidden field on panel (single record)
 	public static String IS_DISPLAYED_AS_PANEL_COLUMN_NAME = "IsDisplayedAsPanel";
