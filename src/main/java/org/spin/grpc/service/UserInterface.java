@@ -2226,8 +2226,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 		//	Return values
 		return defaultValue;
