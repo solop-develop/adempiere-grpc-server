@@ -998,26 +998,25 @@ message TenderTypeRefund {
 //	Address information for request
 message AddressRequest {
 	int32 id = 1;
-	string first_name = 2;
-	string last_name = 3;
-	string address1 = 4;
-	string address2 = 5;
-	string address3 = 6;
-	string address4 = 7;
-	int32 city_id = 8;
-	string city_name = 9;
-	string postal_code = 10;
+	string location_name = 2;
+	string address1 = 3;
+	string address2 = 4;
+	string address3 = 5;
+	string address4 = 6;
+	int32 city_id = 7;
+	string city_name = 8;
+	string postal_code = 9;
+	string postal_code_additional = 10;
 	int32 region_id = 11;
-	string region_name = 12;
-	int32 country_id = 13;
-	string description = 14;
-	bool is_default_billing = 15;
-	bool is_default_shipping = 16;
-	string contact_name = 17;
-	string email = 18;
-	string phone = 19;
-	google.protobuf.Struct additional_attributes = 20;
-	int32 pos_id = 21;
+	int32 country_id = 12;
+	string description = 13;
+	bool is_default_billing = 14;
+	bool is_default_shipping = 15;
+	string contact_name = 16;
+	string email = 17;
+	string phone = 18;
+	google.protobuf.Struct additional_attributes = 19;
+	int32 pos_id = 20;
 }
 
 // Request for create Customer
@@ -1103,24 +1102,26 @@ message ListCustomersResponse {
 message Address {
 	int32 id = 1;
 	//	Location
-	Region region = 2;
-	City city = 3;
-	string address1 = 4;
-	string address2 = 5;
-	string address3 = 6;
-	string address4 = 7;
-	string phone = 8;
-	string postal_code = 9;
-	string country_code = 10;
-	int32 country_id = 11;
-	bool is_default_shipping = 12;
-	bool is_default_billing = 13;
-	string contact_name = 14;
-	string email = 15;
-	string description = 16;
-	string first_name = 17;
-	string last_name = 18;
-	google.protobuf.Struct additional_attributes = 19;
+	string display_value = 2;
+	Region region = 3;
+	City city = 4;
+	string address1 = 5;
+	string address2 = 6;
+	string address3 = 7;
+	string address4 = 8;
+	string phone = 9;
+	string postal_code = 10;
+	string postal_code_additional = 11;
+	string country_code = 12;
+	int32 country_id = 13;
+	bool is_default_shipping = 14;
+	bool is_default_billing = 15;
+	string contact_name = 16;
+	string email = 17;
+	string location_name = 19;
+	string description = 18;
+	string reference = 20;
+	google.protobuf.Struct additional_attributes = 21;
 }
 
 //	City

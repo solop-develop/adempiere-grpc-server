@@ -338,18 +338,39 @@ public class POSConvertUtil {
 			return Address.newBuilder();
 		}
 		MLocation location = businessPartnerLocation.getLocation(true);
-		Address.Builder builder =  Address.newBuilder()
+		Address.Builder builder = Address.newBuilder()
 			.setId(businessPartnerLocation.getC_BPartner_Location_ID())
+			.setDisplayValue(
+				ValueManager.validateNull(
+					location.toString()
+				)
+			)
 			.setPostalCode(ValueManager.validateNull(location.getPostal()))
+			.setPostalCodeAdditional(
+				ValueManager.validateNull(
+					location.getPostal_Add()
+				)
+			)
 			.setAddress1(ValueManager.validateNull(location.getAddress1()))
 			.setAddress2(ValueManager.validateNull(location.getAddress2()))
 			.setAddress3(ValueManager.validateNull(location.getAddress3()))
 			.setAddress4(ValueManager.validateNull(location.getAddress4()))
 			.setPostalCode(ValueManager.validateNull(location.getPostal()))
-			// .setDescription(ValueManager.validateNull(businessPartnerLocation.get_ValueAsString("Description")))
-			// .setFirstName(ValueManager.validateNull(businessPartnerLocation.getName()))
-			// .setLastName(ValueManager.validateNull(businessPartnerLocation.get_ValueAsString("Name2")))
-			// .setContactName(ValueManager.validateNull(businessPartnerLocation.get_ValueAsString("ContactName")))
+			.setDescription(
+				ValueManager.validateNull(
+					businessPartnerLocation.getDescription()
+				)
+			)
+			.setLocationName(
+				ValueManager.validateNull(
+					businessPartnerLocation.getName()
+				)
+			)
+			.setContactName(
+				ValueManager.validateNull(
+					businessPartnerLocation.getContactPerson()
+				)
+			)
 			.setEmail(ValueManager.validateNull(businessPartnerLocation.getEMail()))
 			.setPhone(ValueManager.validateNull(businessPartnerLocation.getPhone()))
 			.setIsDefaultShipping(

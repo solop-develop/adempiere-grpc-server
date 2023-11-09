@@ -536,36 +536,8 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void createCustomer(CreateCustomerRequest request, StreamObserver<Customer> responseObserver) {
-		try {
-			Customer.Builder customer = createCustomer(Env.getCtx(), request);
-			responseObserver.onNext(customer.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void updateCustomer(UpdateCustomerRequest request, StreamObserver<Customer> responseObserver) {
-		try {
-			Customer.Builder customer = updateCustomer(request);
-			responseObserver.onNext(customer.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
+
+
 
 	@Override
 	public void listCustomers(ListCustomersRequest request, StreamObserver<ListCustomersResponse> responseObserver) {
@@ -2603,6 +2575,25 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 
+
+	@Override
+	public void createCustomer(CreateCustomerRequest request, StreamObserver<Customer> responseObserver) {
+		try {
+			Customer.Builder customer = createCustomer(Env.getCtx(), request);
+			responseObserver.onNext(customer.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Create Customer
 	 * @param request
@@ -2610,7 +2601,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private Customer.Builder createCustomer(Properties context, CreateCustomerRequest request) {
 		//	Validate name
-		if(Util.isEmpty(request.getName())) {
+		if(Util.isEmpty(request.getName(), true)) {
 			throw new AdempiereException("@Name@ @IsMandatory@");
 		}
 		//	POS Uuid
@@ -2645,7 +2636,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			//	
 			businessPartner.setValue(code);
 			//	Set Value
-			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));			
+			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));
 			//	Tax Id
 			Optional.ofNullable(request.getTaxId()).ifPresent(value -> businessPartner.setTaxID(value));
 			//	Duns
@@ -2775,10 +2766,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		businessPartnerLocation.setIsShipTo(address.getIsDefaultShipping());
 		businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping, address.getIsDefaultShipping());
 		Optional.ofNullable(address.getContactName()).ifPresent(contact -> businessPartnerLocation.setContactPerson(contact));
-		Optional.ofNullable(address.getFirstName()).ifPresent(firstName -> businessPartnerLocation.setName(firstName));
+		Optional.ofNullable(address.getLocationName()).ifPresent(locationName -> businessPartnerLocation.setName(locationName));
 		Optional.ofNullable(address.getEmail()).ifPresent(email -> businessPartnerLocation.setEMail(email));
 		Optional.ofNullable(address.getPhone()).ifPresent(phome -> businessPartnerLocation.setPhone(phome));
-		Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.set_ValueOfColumn("Description", description));
+		Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.setDescription(description));
 		if(Util.isEmpty(businessPartnerLocation.getName())) {
 			businessPartnerLocation.setName(".");
 		}
@@ -2804,7 +2795,27 @@ public class PointOfSalesForm extends StoreImplBase {
 			contact.saveEx(transactionName);
  		}
 	}
-	
+
+
+
+	@Override
+	public void updateCustomer(UpdateCustomerRequest request, StreamObserver<Customer> responseObserver) {
+		try {
+			Customer.Builder customer = updateCustomer(request);
+			responseObserver.onNext(customer.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * update Customer
 	 * @param request
@@ -2832,7 +2843,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			}
 			businessPartner.set_TrxName(transactionName);
 			//	Set Value
-			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));			
+			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));
 			//	Tax Id
 			Optional.ofNullable(request.getTaxId()).ifPresent(value -> businessPartner.setTaxID(value));
 			//	Duns
@@ -2894,13 +2905,11 @@ public class PointOfSalesForm extends StoreImplBase {
 						businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultBilling, address.getIsDefaultBilling());
 						businessPartnerLocation.setIsShipTo(address.getIsDefaultShipping());
 						businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping, address.getIsDefaultShipping());
-						Optional.ofNullable(address.getContactName()).ifPresent(contactName -> businessPartnerLocation.set_ValueOfColumn("ContactName", contactName));
 						Optional.ofNullable(address.getContactName()).ifPresent(contact -> businessPartnerLocation.setContactPerson(contact));
-						Optional.ofNullable(address.getFirstName()).ifPresent(firstName -> businessPartnerLocation.setName(firstName));
-						Optional.ofNullable(address.getLastName()).ifPresent(lastName -> businessPartnerLocation.set_ValueOfColumn("Name2", lastName));
+						Optional.ofNullable(address.getLocationName()).ifPresent(locationName -> businessPartnerLocation.setName(locationName));
 						Optional.ofNullable(address.getEmail()).ifPresent(email -> businessPartnerLocation.setEMail(email));
 						Optional.ofNullable(address.getPhone()).ifPresent(phome -> businessPartnerLocation.setPhone(phome));
-						Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.set_ValueOfColumn("Description", description));
+						Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.setDescription(description));
 						//	Additional attributes
 						setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributes().getFieldsMap());
 						businessPartnerLocation.saveEx(transactionName);
