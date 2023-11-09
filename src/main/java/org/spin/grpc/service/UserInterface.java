@@ -172,6 +172,7 @@ import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
@@ -2092,17 +2093,9 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		//	Convert value from type
 		if (DisplayType.isID(referenceId) || referenceId == DisplayType.Integer) {
-			try {
-				defaultValueAsObject = Integer.parseInt(String.valueOf(defaultValueAsObject));
-			} catch (Exception e) {
-				// log.warning(e.getLocalizedMessage());
-			}
+			defaultValueAsObject = NumberManager.getIntegerFromObject(defaultValueAsObject);
 		} else if (DisplayType.isNumeric(referenceId)) {
-			try {
-				defaultValueAsObject = new BigDecimal(String.valueOf(defaultValueAsObject));
-			} catch (Exception e) {
-				// log.warning(e.getLocalizedMessage());
-			}
+			defaultValueAsObject = NumberManager.getIntegerFromObject(defaultValueAsObject);
 		}
 		if (ReferenceUtil.validateReference(referenceId) || DisplayType.Button == referenceId) {
 			if(referenceId == DisplayType.List || columnName.equals("DocAction")) {
@@ -2153,12 +2146,13 @@ public class UserInterface extends UserInterfaceImplBase {
 				if(lookupInfo == null || Util.isEmpty(lookupInfo.QueryDirect, true)) {
 					return builder;
 				}
-				String sql = MRole.getDefault(context, false).addAccessSQL(
-					lookupInfo.QueryDirect,
-					lookupInfo.TableName,
-					MRole.SQL_FULLYQUALIFIED,
-					MRole.SQL_RO
-				);
+				final String sql = lookupInfo.QueryDirect;
+				// final String sql = MRole.getDefault(context, false).addAccessSQL(
+				// 	lookupInfo.QueryDirect,
+				// 	lookupInfo.TableName,
+				// 	MRole.SQL_FULLYQUALIFIED,
+				// 	MRole.SQL_RO
+				// );
 				PreparedStatement pstmt = null;
 				ResultSet rs = null;
 				try {
