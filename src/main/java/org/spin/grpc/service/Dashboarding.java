@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -47,6 +47,7 @@ import org.compiere.model.MGoal;
 import org.compiere.model.MMeasure;
 import org.compiere.model.MMenu;
 import org.compiere.model.MRule;
+import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -262,13 +263,18 @@ public class Dashboarding extends DashboardingImplBase {
 				ValueManager.validateNull(documentStatus.getName())
 			);
 			// for Reference
-			if(documentStatus.getAD_Window_ID() != 0) {
+			if(documentStatus.getAD_Window_ID() > 0) {
 				pendingDocument.setWindowId(documentStatus.getAD_Window_ID());
-			} else if(documentStatus.getAD_Form_ID() != 0) {
+			} else if(documentStatus.getAD_Form_ID() > 0) {
 				pendingDocument.setFormId(documentStatus.getAD_Form_ID());
 			}
 			//	Criteria
-//			MTable table = MTable.get(context, documentStatus.getAD_Table_ID());
+			MTable table = MTable.get(context, documentStatus.getAD_Table_ID());
+			pendingDocument.setTableName(
+				ValueManager.validateNull(
+					table.getTableName()
+				)
+			);
 			//	TODO: Add filter from SQL
 //			pendingDocument
 //					.setCriteria(Criteria.newBuilder()
