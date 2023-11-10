@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -7,10 +7,10 @@
  * (at your option) any later version.                                              *
  * This program is distributed in the hope that it will be useful,                  *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the                     *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
  * GNU General Public License for more details.                                     *
  * You should have received a copy of the GNU General Public License                *
- * along with this program.	If not, see <https://www.gnu.org/licenses/>.            *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
 
@@ -101,26 +101,6 @@ public class LogsInfo extends LogsImplBase {
 		}
 	}
 
-
-
-	@Override
-	public void listEntityLogs(ListEntityLogsRequest request, StreamObserver<ListEntityLogsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Record Logs Requested is Null");
-			}
-			ListEntityLogsResponse.Builder entityValueList = listEntityLogs(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
 
 
 	@Override
@@ -311,55 +291,76 @@ public class LogsInfo extends LogsImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listEntityLogs(ListEntityLogsRequest request, StreamObserver<ListEntityLogsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Record Logs Requested is Null");
+			}
+			ListEntityLogsResponse.Builder entityValueList = listEntityLogs(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert request for record log to builder
 	 * @param request
 	 * @return
 	 */
 	private ListEntityLogsResponse.Builder listEntityLogs(ListEntityLogsRequest request) {
-		StringBuffer whereClause = new StringBuffer();
-		List<Object> parameters = new ArrayList<>();
-		if(!Util.isEmpty(request.getTableName())) {
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if(table == null
-					|| table.getAD_Table_ID() == 0) {
-				throw new AdempiereException("@AD_Table_ID@ @Invalid@");
-			}
-			whereClause
-				.append(I_AD_ChangeLog.COLUMNNAME_AD_Table_ID).append(" = ?")
-				.append(" AND ")
-				.append(I_AD_ChangeLog.COLUMNNAME_Record_ID).append(" = ?");
-			//	Set parameters
-			int id = request.getId();
-			parameters.add(table.getAD_Table_ID());
-			parameters.add(id);
-		} else {
-			whereClause.append("EXISTS(SELECT 1 FROM AD_Session WHERE UUID = ? AND AD_Session_ID = AD_ChangeLog.AD_Session_ID)");
-			parameters.add(SessionManager.getSessionUuid());
+		String tableName = request.getTableName();
+		if (Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
-		//	Get page and count
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-		Query query = new Query(Env.getCtx(), I_AD_ChangeLog.Table_Name, whereClause.toString(), null)
-				.setParameters(parameters);
+		MTable table = MTable.get(Env.getCtx(), request.getTableName());
+		if (table == null || table.getAD_Table_ID() == 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		int recordId = request.getId();
+		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@");
+		}
+
+		StringBuffer whereClause = new StringBuffer()
+			.append(I_AD_ChangeLog.COLUMNNAME_AD_Table_ID).append(" = ?")
+			.append(" AND ")
+			.append(I_AD_ChangeLog.COLUMNNAME_Record_ID).append(" = ?")
+		;
+			//	Set parameters
+		List<Object> parameters = new ArrayList<>();
+		parameters.add(table.getAD_Table_ID());
+		parameters.add(recordId);
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_ChangeLog.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters);
 		int count = query.count();
+
 		List<MChangeLog> recordLogList = query
-				.setLimit(limit, offset)
-				.<MChangeLog>list();
+			.<MChangeLog>list()
+		;
+
 		//	Convert Record Log
 		ListEntityLogsResponse.Builder builder = LogsConvertUtil.convertRecordLog(recordLogList);
 		//	
 		builder.setRecordCount(count);
-		//	Set page token
-		if(count > offset && count > limit) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
-		);
+
 		//	Return
 		return builder;
 	}
