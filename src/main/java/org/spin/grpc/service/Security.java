@@ -39,6 +39,7 @@ import org.compiere.model.MLanguage;
 import org.compiere.model.MMenu;
 import org.compiere.model.MOrg;
 import org.compiere.model.MOrgInfo;
+import org.compiere.model.MPreference;
 import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MSession;
@@ -88,6 +89,7 @@ import org.spin.backend.grpc.security.UserInfoRequest;
 import org.spin.backend.grpc.security.Warehouse;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ContextManager;
+import org.spin.base.util.PreferenceUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -349,21 +351,37 @@ public class Security extends SecurityImplBase {
 		Properties context = Env.getCtx();
 		//	Language
 		String language = Env.getAD_Language(context);
-		int warehouseId = Env.getContextAsInt(context, "#M_Warehouse_ID");
 		if (!Util.isEmpty(request.getLanguage(), true)) {
 			language = ContextManager.getDefaultLanguage(request.getLanguage());
 		}
+
+		// warehouse
+		int warehouseId = Env.getContextAsInt(context, "#M_Warehouse_ID");
+		if (request.getWarehouseId() > 0) {
+			warehouseId = request.getWarehouseId();
+		}
+
 		MSession currentSession = MSession.get(context, false);
+
+		int userId = currentSession.getCreatedBy();
+		MRole role = MRole.get(context, currentSession.getAD_Role_ID());
+
 		// Session values
 		Session.Builder builder = Session.newBuilder();
 		final String bearerToken = SessionManager.createSession(
 			currentSession.getWebSession(),
 			language,
-			currentSession.getAD_Role_ID(),
-			currentSession.getCreatedBy(),
+			role.getAD_Role_ID(),
+			userId,
 			currentSession.getAD_Org_ID(),
 			warehouseId
 		);
+
+		// Update session preferences
+		PreferenceUtil.saveSessionPreferences(
+			userId, language, role.getAD_Role_ID(), role.getAD_Client_ID(), currentSession.getAD_Org_ID(), warehouseId
+		);
+
 		builder.setToken(bearerToken);
 		return builder;
 	}
@@ -847,20 +865,44 @@ public class Security extends SecurityImplBase {
 				throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 			}
 
+			List<MPreference> preferencesList = new ArrayList<MPreference>();
+			if (isDefaultRole) {
+				preferencesList = PreferenceUtil.getSessionPreferences(userId);
+				for (MPreference preference: preferencesList) {
+					String attibuteName = preference.getAttribute();
+					String attributeValue = preference.getValue();
+					if (!Util.isEmpty(attributeValue, true)) {
+						if (attibuteName.equals(PreferenceUtil.P_ROLE)) {
+							roleId = NumberManager.getIntFromString(attributeValue);
+						} else if (attibuteName.equals(PreferenceUtil.P_CLIENT)) {
+							// clientId = NumberManager.getIntFromString(attributeValue);
+						} else if (attibuteName.equals(PreferenceUtil.P_ORG)) {
+							organizationId = NumberManager.getIntFromString(attributeValue);
+						} else if (attibuteName.equals(PreferenceUtil.P_WAREHOUSE)) {
+							warehouseId = NumberManager.getIntFromString(attributeValue);
+						} else if (attibuteName.equals(PreferenceUtil.P_LANGUAGE)) {
+							// language = attributeValue;
+						}
+					}
+				}
+			}
+
 			// TODO: Validate values
-			if (request.getRoleId() >= 0) {
-				roleId = request.getRoleId();
-			}
-			if(request.getOrganizationId() >= 0) {
-				organizationId = request.getOrganizationId();
-			}
-			if(request.getWarehouseId() >= 0) {
-				warehouseId = request.getWarehouseId();
+			if (preferencesList == null || preferencesList.isEmpty()) {
+				if (request.getRoleId() >= 0) {
+					roleId = request.getRoleId();
+				}
+				if(request.getOrganizationId() >= 0) {
+					organizationId = request.getOrganizationId();
+				}
+				if(request.getWarehouseId() >= 0) {
+					warehouseId = request.getWarehouseId();
+				}
 			}
 		}
 		return createValidSession(isDefaultRole, request.getClientVersion(), request.getLanguage(), roleId, userId, organizationId, warehouseId);
 	}
-	
+
 	/**
 	 * Create Valid Session After Login
 	 * @param isDefaultRole
@@ -874,8 +916,7 @@ public class Security extends SecurityImplBase {
 	 */
 	private Session.Builder createValidSession(boolean isDefaultRole, String clientVersion, String language, int roleId, int userId, int organizationId, int warehouseId) {
 		Session.Builder builder = Session.newBuilder();
-			if(isDefaultRole
-					|| roleId <= 0) {
+			if(isDefaultRole && roleId <= 0) {
 				roleId = SessionManager.getDefaultRoleId(userId);
 			}
 			//	Get Values from role
@@ -1041,6 +1082,11 @@ public class Security extends SecurityImplBase {
 		builder.setToken(bearerToken);
 		// Logout
 		logoutSession(LogoutRequest.newBuilder().build());
+
+		// Update session preferences
+		PreferenceUtil.saveSessionPreferences(
+			userId, language, roleId, role.getAD_Client_ID(), organizationId, warehouseId
+		);
 
 		// Return session
 		return builder;
