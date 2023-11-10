@@ -353,12 +353,30 @@ public class BrowseConverUtil {
 				return false;
 			})
 			.forEach(currentBrowseField -> {
-				DependentField.Builder builder = DependentField.newBuilder();
+				DependentField.Builder builder = DependentField.newBuilder()
+					.setContainerId(
+						browse.getAD_Browse_ID()
+					)
+					.setContainerUuid(
+						ValueManager.validateNull(
+							browse.getUUID()
+						)
+					)
+					.setContainerName(
+						ValueManager.validateNull(
+							browse.getName()
+						)
+					)
+					.setId(
+						currentBrowseField.getAD_Browse_Field_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							currentBrowseField.getUUID()
+						)
+					)
+				;
 
-				builder.setContainerId(browse.getAD_Browse_ID());
-				builder.setContainerName(browse.getName());
-				builder.setId(currentBrowseField.getAD_Browse_Field_ID());
-				
 				MViewColumn currentViewColumn = MViewColumn.getById(Env.getCtx(), currentBrowseField.getAD_View_Column_ID(), null);
 				builder.setColumnName(currentViewColumn.getColumnName());
 

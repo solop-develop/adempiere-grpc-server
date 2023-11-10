@@ -232,10 +232,11 @@ message Field {
 
 message DependentField {
 	int32 container_id = 1;
-	string container_name = 2;
-	int32 id = 3;
-	string column_name = 4;
+	string container_uuid = 2;
+	string container_name = 3;
+	int32 id = 4;
 	string uuid = 5;
+	string column_name = 6;
 }
 
 // Context Info

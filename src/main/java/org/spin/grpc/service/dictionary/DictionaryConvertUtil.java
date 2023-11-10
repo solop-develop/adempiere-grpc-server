@@ -431,13 +431,30 @@ public class DictionaryConvertUtil {
 				return false;
 			})
 			.forEach(currentColumn -> {
-				DependentField.Builder builder = DependentField.newBuilder();
-
-				builder.setContainerId(table.getAD_Table_ID());
-				builder.setContainerName(table.getTableName());
-	
-				builder.setId(currentColumn.getAD_Column_ID());
-				builder.setColumnName(currentColumn.getColumnName());
+				DependentField.Builder builder = DependentField.newBuilder()
+					.setContainerId(
+						table.getAD_Table_ID()
+					)
+					.setContainerUuid(
+						ValueManager.validateNull(
+							table.getUUID()
+						)
+					)
+					.setContainerName(
+						table.getTableName()
+					)
+					.setId(
+						currentColumn.getAD_Column_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							currentColumn.getUUID()
+						)
+					)
+					.setColumnName(
+						currentColumn.getColumnName()
+					)
+				;
 
 				depenentFieldsList.add(builder.build());
 			});

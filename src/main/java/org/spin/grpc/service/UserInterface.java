@@ -2080,9 +2080,13 @@ public class UserInterface extends UserInterfaceImplBase {
 		);
 
 		if(defaultValue.trim().startsWith("@SQL=")) {
-			defaultValue = defaultValue.replace("@SQL=", "");
-			defaultValue = Env.parseContext(context, windowNo, defaultValue, false);
-			defaultValueAsObject = getDefaultValueFromSQL(defaultValue);
+			String sqlDefaultValue = defaultValue.replace("@SQL=", "");
+			sqlDefaultValue = Env.parseContext(context, windowNo, sqlDefaultValue, false);
+			if (Util.isEmpty(sqlDefaultValue, true)) {
+				log.warning("@SQL@ @Unparseable@ " + sqlDefaultValue);
+				return builder;
+			}
+			defaultValueAsObject = getDefaultValueFromSQL(sqlDefaultValue);
 		} else {
 			defaultValueAsObject = Env.parseContext(context, windowNo, defaultValue, false);
 		}

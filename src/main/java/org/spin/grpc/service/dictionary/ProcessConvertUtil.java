@@ -197,12 +197,34 @@ public class ProcessConvertUtil {
 				return false;
 			})
 			.forEach(currentParameter -> {
-				DependentField.Builder builder = DependentField.newBuilder();
-				builder.setContainerId(process.getAD_Process_ID());
-				builder.setContainerName(process.getName());
-
-				builder.setId(currentParameter.getAD_Process_Para_ID());
-				builder.setColumnName(currentParameter.getColumnName());
+				DependentField.Builder builder = DependentField.newBuilder()
+					.setContainerId(
+						process.getAD_Process_ID()
+					)
+					.setContainerUuid(
+						ValueManager.validateNull(
+							process.getUUID()
+						)
+					)
+					.setContainerName(
+						ValueManager.validateNull(
+							process.getName()
+						)
+					)
+					.setId(
+						currentParameter.getAD_Process_Para_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							currentParameter.getUUID()
+						)
+					)
+					.setColumnName(
+						ValueManager.validateNull(
+							currentParameter.getColumnName()
+						)
+					)
+				;
 
 				depenentFieldsList.add(builder.build());
 			});

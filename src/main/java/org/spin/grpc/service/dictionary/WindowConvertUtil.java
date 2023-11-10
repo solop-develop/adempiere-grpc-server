@@ -488,8 +488,8 @@ public class WindowConvertUtil {
 			}
 		}
 
-		// List<DependentField> depenentFieldsList = generateDependentFields(field);
-		// builder.addAllDependentFields(depenentFieldsList);
+		List<DependentField> depenentFieldsList = generateDependentFields(field);
+		builder.addAllDependentFields(depenentFieldsList);
 
 		return builder;
 	}
@@ -529,7 +529,7 @@ public class WindowConvertUtil {
 							return true;
 						}
 						// Default Value of Field
-						if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentField.getDisplayLogic())) {
+						if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentField.getDefaultValue())) {
 							return true;
 						}
 						// Dynamic Validation
@@ -563,14 +563,36 @@ public class WindowConvertUtil {
 						return false;
 					})
 					.forEach(currentField -> {
-						DependentField.Builder builder = DependentField.newBuilder();
-						builder.setContainerId(tab.getAD_Tab_ID());
-						builder.setContainerName(tab.getName());
+						DependentField.Builder builder = DependentField.newBuilder()
+							.setContainerId(
+								tab.getAD_Tab_ID()
+							)
+							.setContainerUuid(
+								ValueManager.validateNull(
+									tab.getUUID()
+								)
+							)
+							.setContainerName(
+								ValueManager.validateNull(
+									tab.getName()
+								)
+							)
+							.setId(
+								currentField.getAD_Field_ID()
+							)
+							.setUuid(
+								ValueManager.validateNull(
+									currentField.getUUID()
+								)
+							)
+						;
 
-						builder.setId(currentField.getAD_Field_ID());
-						
 						String currentColumnName = MColumn.getColumnName(Env.getCtx(), currentField.getAD_Column_ID());
-						builder.setColumnName(currentColumnName);
+						builder.setColumnName(
+							ValueManager.validateNull(
+								currentColumnName
+							)
+						);
 
 						depenentFieldsList.add(builder.build());
 					});
