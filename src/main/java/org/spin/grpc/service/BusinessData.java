@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -13,8 +13,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service;
-
-import static com.google.protobuf.util.Timestamps.fromMillis;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -396,8 +394,12 @@ public class BusinessData extends BusinessDataImplBase {
 				.setParameters(result.getAD_PInstance_ID())
 				.first();
 			response.setInstanceId(instance.getAD_PInstance_ID());
-			
-			response.setLastRun(fromMillis(instance.getUpdated().getTime()));
+
+			response.setLastRun(
+				ValueManager.getTimestampFromDate(
+					instance.getUpdated()
+				)
+			);
 		}
 
 		//	

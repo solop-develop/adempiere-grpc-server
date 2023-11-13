@@ -64,8 +64,6 @@ import org.spin.service.grpc.util.value.ValueManager;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 
-import static com.google.protobuf.util.Timestamps.fromMillis;
-
 /**
  * This class was created for add all convert methods for Logs service
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -354,8 +352,12 @@ public class LogsConvertUtil {
 		builder.setInstanceId(instance.getAD_PInstance_ID());
 		builder.setIsError(!instance.isOK());
 		builder.setIsProcessing(instance.isProcessing());
-		
-		builder.setLastRun(fromMillis(instance.getUpdated().getTime()));
+
+		builder.setLastRun(
+			ValueManager.getTimestampFromDate(
+				instance.getUpdated()
+			)
+		);
 		String summary = instance.getErrorMsg();
 		if(!Util.isEmpty(summary, true)) {
 			summary = Msg.parseTranslation(Env.getCtx(), summary);

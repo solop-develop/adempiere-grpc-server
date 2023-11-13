@@ -16,12 +16,14 @@ package org.spin.base.util.convert;
 
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBankAccount;
+import org.compiere.model.MConversionRate;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.BankAccount;
 import org.spin.backend.grpc.common.BankAccountType;
 import org.spin.backend.grpc.common.BusinessPartner;
+import org.spin.backend.grpc.common.ConversionRate;
 import org.spin.backend.grpc.common.Currency;
 import org.spin.backend.grpc.common.DocumentType;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -67,6 +69,58 @@ public class ConvertCommon {
 			.setStandardPrecision(currency.getStdPrecision())
 			.setCostingPrecision(currency.getCostingPrecision()
 		);
+	}
+
+
+	/**
+	 * Convert charge from 
+	 * @param chargeId
+	 * @return
+	 */
+	public static ConversionRate.Builder convertConversionRate(MConversionRate conversionRate) {
+		ConversionRate.Builder builder = ConversionRate.newBuilder();
+		if(conversionRate == null) {
+			return builder;
+		}
+		//	convert charge
+		builder
+			.setId(conversionRate.getC_Conversion_Rate_ID())
+			.setValidFrom(
+				ValueManager.getTimestampFromDate(
+					conversionRate.getValidFrom()
+				)
+			)
+			.setConversionTypeId(conversionRate.getC_ConversionType_ID())
+			.setCurrencyFrom(
+				ConvertCommon.convertCurrency(
+					conversionRate.getC_Currency_ID()
+				)
+			)
+			.setCurrencyTo(
+				ConvertCommon.convertCurrency(
+					conversionRate.getC_Currency_ID_To()
+				)
+			)
+			.setMultiplyRate(
+				NumberManager.getBigDecimalToString(
+					conversionRate.getMultiplyRate()
+				)
+			)
+			.setDivideRate(
+				NumberManager.getBigDecimalToString(
+					conversionRate.getDivideRate()
+				)
+			)
+		;
+		if(conversionRate.getValidTo() != null) {
+			builder.setValidTo(
+				ValueManager.getTimestampFromDate(
+					conversionRate.getValidTo()
+				)
+			);
+		}
+		//	
+		return builder;
 	}
 
 

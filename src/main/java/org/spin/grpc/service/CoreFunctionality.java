@@ -272,15 +272,20 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ConversionRate.Builder conversionRate = ConvertUtil.convertConversionRate(getConversionRate(request));
+			ConversionRate.Builder conversionRate = ConvertCommon.convertConversionRate(
+				getConversionRate(request)
+			);
 			responseObserver.onNext(conversionRate.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 

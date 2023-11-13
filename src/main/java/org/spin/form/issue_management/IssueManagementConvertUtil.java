@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -42,7 +42,6 @@ import org.spin.backend.grpc.issue_management.User;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
-import static com.google.protobuf.util.Timestamps.fromMillis;
 
 /**
  * This class was created for add all convert methods for Issue Management form
@@ -272,10 +271,20 @@ public class IssueManagementConvertUtil {
 			.setSummary(
 				ValueManager.validateNull(request.getSummary())
 			)
-			.setCreated(fromMillis(request.getUpdated().getTime()))
-			.setLastUpdated(fromMillis(request.getUpdated().getTime())
+			.setCreated(
+				ValueManager.getTimestampFromDate(
+					request.getUpdated()
+				)
 			)
-			.setDateNextAction(fromMillis(request.getDateNextAction().getTime())
+			.setLastUpdated(
+				ValueManager.getTimestampFromDate(
+					request.getUpdated()
+				)
+			)
+			.setDateNextAction(
+				ValueManager.getTimestampFromDate(
+					request.getDateNextAction()
+				)
 			)
 			.setDueType(
 				convertDueType(request.getDueType())
@@ -318,7 +327,9 @@ public class IssueManagementConvertUtil {
 		}
 		builder.setId(requestUpdate.getR_RequestUpdate_ID())
 			.setCreated(
-				fromMillis(requestUpdate.getCreated().getTime())
+				ValueManager.getTimestampFromDate(
+					requestUpdate.getCreated()
+				)
 			)
 			.setResult(
 				ValueManager.validateNull(requestUpdate.getResult())
@@ -347,7 +358,11 @@ public class IssueManagementConvertUtil {
 			return builder;
 		}
 		builder.setId(requestAction.getR_RequestAction_ID())
-			.setCreated(fromMillis(requestAction.getCreated().getTime()))
+			.setCreated(
+				ValueManager.getTimestampFromDate(
+					requestAction.getCreated()
+				)
+			)
 			.setIssueCommentType(IssueCommentType.LOG)
 			.setUser(
 				IssueManagementConvertUtil.convertUser(requestAction.getCreatedBy())

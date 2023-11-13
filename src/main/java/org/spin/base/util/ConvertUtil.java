@@ -15,8 +15,6 @@
  *************************************************************************************/
 package org.spin.base.util;
 
-import static com.google.protobuf.util.Timestamps.fromMillis;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -65,7 +63,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Charge;
-import org.spin.backend.grpc.common.ConversionRate;
 import org.spin.backend.grpc.common.Country;
 import org.spin.backend.grpc.common.DocumentAction;
 import org.spin.backend.grpc.common.DocumentStatus;
@@ -171,7 +168,11 @@ public class ConvertUtil {
 			builder.setUserName(ValueManager.validateNull(user.getName()));
 		}
 		
-		builder.setLogDate(fromMillis(chatEntry.getCreated().getTime()));
+		builder.setLogDate(
+			ValueManager.getTimestampFromDate(
+				chatEntry.getCreated()
+			)
+		);
 		//	Confidential Type
 		if(!Util.isEmpty(chatEntry.getConfidentialType())) {
 			if(chatEntry.getConfidentialType().equals(MChatEntry.CONFIDENTIALTYPE_PublicInformation)) {
@@ -288,50 +289,8 @@ public class ConvertUtil {
 			.setDescription(ValueManager.validateNull(charge.getDescription())
 		);
 	}
-	
-	/**
-	 * Convert charge from 
-	 * @param chargeId
-	 * @return
-	 */
-	public static ConversionRate.Builder convertConversionRate(MConversionRate conversionRate) {
-		ConversionRate.Builder builder = ConversionRate.newBuilder();
-		if(conversionRate == null) {
-			return builder;
-		}
-		//	convert charge
-		builder
-			.setId(conversionRate.getC_Conversion_Rate_ID())
-			.setValidFrom(fromMillis(conversionRate.getValidFrom().getTime()))
-			.setConversionTypeId(conversionRate.getC_ConversionType_ID())
-			.setCurrencyFrom(
-				ConvertCommon.convertCurrency(
-					conversionRate.getC_Currency_ID()
-				)
-			)
-			.setCurrencyTo(
-				ConvertCommon.convertCurrency(
-					conversionRate.getC_Currency_ID_To()
-				)
-			)
-			.setMultiplyRate(
-				NumberManager.getBigDecimalToString(
-					conversionRate.getMultiplyRate()
-				)
-			)
-			.setDivideRate(
-				NumberManager.getBigDecimalToString(
-					conversionRate.getDivideRate()
-				)
-			)
-		;
-		if(conversionRate.getValidTo() != null) {
-			builder.setValidTo(fromMillis(conversionRate.getValidTo().getTime()));
-		}
-		//	
-		return builder;
-	}
-	
+
+
 	/**
 	 * Convert Product to 
 	 * @param product

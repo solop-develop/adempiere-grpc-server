@@ -5604,7 +5604,9 @@ public class PointOfSalesForm extends StoreImplBase {
 								)
 							)
 							.setConversionRate(
-								ConvertUtil.convertConversionRate(conversionRate)
+								ConvertCommon.convertConversionRate(
+									conversionRate
+								)
 							)
 						;
 					}
