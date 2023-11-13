@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.form.bank_statement_match;
+package org.spin.grpc.service.form.bank_statement_match;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;

@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.form.bank_statement_match;
+package org.spin.grpc.service.form.bank_statement_match;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -329,7 +329,7 @@ public abstract class BankStatementMatchServiceLogic {
 		Properties context = Env.getCtx();
 		ListMatchingMovementsResponse.Builder builderList = ListMatchingMovementsResponse.newBuilder();
 
-		List<MBankStatementMatcher> matchersList = MBankStatementMatcher.getMatchersList(Env.getCtx(), bankAccount.getC_BankAccount_ID());
+		List<MBankStatementMatcher> matchersList = MBankStatementMatcher.getMatchersList(Env.getCtx(), bankAccount.getC_Bank_ID());
 		if (matchersList == null || matchersList.isEmpty()) {
 			return builderList;
 		}
@@ -377,22 +377,27 @@ public abstract class BankStatementMatchServiceLogic {
 			paymentAmountFrom,
 			paymentAmountTo
 		);
-		List<Integer> importedPaymentsId = bankMovementQuery.getIDsAsList();
-		if (importedPaymentsId == null || importedPaymentsId.isEmpty()) {
+		List<Integer> importedBankMovementsId = bankMovementQuery.getIDsAsList();
+		if (importedBankMovementsId == null || importedBankMovementsId.isEmpty()) {
 			return builderList;
 		}
 
 		Map<Integer, X_I_BankStatement> matchedPaymentHashMap = new HashMap<Integer, X_I_BankStatement>();
 		int matched = 0;
-		for (int bankStatementId: importedPaymentsId) {
+		for (int bankStatementId: importedBankMovementsId) {
 			X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(context, bankStatementId, null);
 			
-			if(currentBankStatementImport.getC_Payment_ID() != 0
+			if(currentBankStatementImport.getC_Payment_ID() > 0
 				// || currentBankStatementImport.getC_BPartner_ID() != 0
 				// || currentBankStatementImport.getC_Invoice_ID() != 0
 			) {
 				//	put on hash
 				matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
+				// if (!(currentBankStatementImport.isProcessed() || currentBankStatementImport.isProcessing())) {
+					// TODO: Change to automatic match flag
+					currentBankStatementImport.setEftMemo("Y");
+					currentBankStatementImport.save();
+				// }
 				matched++;
 				continue;
 			}
@@ -405,6 +410,8 @@ public abstract class BankStatementMatchServiceLogic {
 						matchedPaymentHashMap.keySet().stream().collect(Collectors.toList())
 					);
 					if (info == null || !info.isMatched()) {
+						currentBankStatementImport.setEftMemo("N");
+						currentBankStatementImport.save();
 						continue;
 					}
 
@@ -421,12 +428,19 @@ public abstract class BankStatementMatchServiceLogic {
 					if (info.getC_BPartner_ID() > 0) {
 						currentBankStatementImport.setC_BPartner_ID(info.getC_BPartner_ID());
 					}
-					// TODO: Change to automatic match flag
-					currentBankStatementImport.setEftMemo("Y");
+					if (!(currentBankStatementImport.isProcessed() || currentBankStatementImport.isProcessing())) {
+						// TODO: Change to automatic match flag
+						currentBankStatementImport.setEftMemo("Y");
+						currentBankStatementImport.save();
+					}
 
 					//	put on hash
 					matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
 					matched++;
+				} else {
+					// TODO: Change to automatic match flag
+					currentBankStatementImport.setEftMemo(null);
+					currentBankStatementImport.save();
 				}
 			}	//	for all matchers
 		}
@@ -446,7 +460,7 @@ public abstract class BankStatementMatchServiceLogic {
 
 
 	public static ListBankStatementsResponse.Builder listBankStatements(ListBankStatementsRequest request) {
-		final String whereClause = "Processed = 'N' ";
+		final String whereClause = "Processed = 'N' AND Processing = 'N'";
 		Query query = new Query(
 			Env.getCtx(),
 			I_C_BankStatement.Table_Name,
@@ -526,8 +540,8 @@ public abstract class BankStatementMatchServiceLogic {
 			.setRecordCount(importMovementsQuery.count())
 		;
 
-		importedBankMovementsId.forEach(bankStatementId -> {
-			X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(Env.getCtx(), bankStatementId, null);
+		importedBankMovementsId.forEach(importedBankMovementId -> {
+			X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(Env.getCtx(), importedBankMovementId, null);
 			ResultMovement.Builder importedBuilder = BankStatementMatchConvertUtil.convertResultMovement(currentBankStatementImport);
 			builderList.addRecords(importedBuilder);
 		});

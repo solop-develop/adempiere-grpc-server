@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.form.bank_statement_match;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
@@ -39,7 +39,6 @@ import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsResponse;
-import org.spin.form.bank_statement_match.BankStatementMatchServiceLogic;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -112,6 +111,7 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -134,6 +134,7 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -156,6 +157,7 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -177,6 +179,7 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -198,6 +201,7 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)

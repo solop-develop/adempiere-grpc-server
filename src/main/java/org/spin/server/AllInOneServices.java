@@ -25,7 +25,6 @@ import org.compiere.util.Ini;
 import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.Services;
 import org.spin.eca52.util.JWTUtil;
-import org.spin.grpc.service.BankStatementMatch;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.BusinessPartner;
 import org.spin.grpc.service.CoreFunctionality;
@@ -62,6 +61,7 @@ import org.spin.grpc.service.form.ExpressMovement;
 import org.spin.grpc.service.form.ExpressReceipt;
 import org.spin.grpc.service.form.ExpressShipment;
 import org.spin.grpc.service.form.PaymentAllocation;
+import org.spin.grpc.service.form.bank_statement_match.BankStatementMatch;
 import org.spin.service.grpc.authentication.AuthorizationServerInterceptor;
 import org.spin.service.grpc.context.ServiceContextProvider;
 
