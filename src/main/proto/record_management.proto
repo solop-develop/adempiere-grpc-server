@@ -19,6 +19,7 @@ option java_package = "org.spin.backend.grpc.record_management";
 option java_outer_classname = "ADempiereRecordManagement";
 
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 
 // Base URL
 // /record-management/
@@ -38,8 +39,18 @@ service RecordManagement {
 			body: "*"
 		};
 	}
+
+	// References on Record
+	rpc ExistsRecordReferences(ExistsRecordReferencesRequest) returns (ExistsRecordReferencesResponse) {
+		option (google.api.http) = { get: "/record-management/references/{tab_id}/{record_id}/exists" };
+	}
+	rpc ListRecordReferences(ListRecordReferencesRequest) returns (ListRecordReferencesResponse) {
+		option (google.api.http) = { get: "/record-management/references/{tab_id}/{record_id}" };
+	}
 }
 
+
+// Active/Inactive Record
 message ToggleIsActiveRecordRequest {
 	string table_name = 1;
 	bool is_active = 2;
@@ -61,3 +72,44 @@ message ToggleIsActiveRecordsBatchResponse {
 	int64 total_changes = 2;
 }
 
+
+// Record Reference Zoom Information
+message RecordReferenceInfo {
+	int32 id = 1;
+	string uuid = 2;
+	int32 window_id = 3;
+	int32 tab_id = 4;
+	string table_name = 5;
+	string where_clause = 6;
+	int64 record_count = 7;
+	string column_name = 8;
+	string display_name = 9;
+	google.protobuf.Value value = 10;
+}
+
+message ExistsRecordReferencesRequest {
+	int32 tab_id = 1;
+	int32 record_id = 2;
+}
+
+message ExistsRecordReferencesResponse {
+	int32 record_count = 1;
+}
+
+message ListRecordReferencesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 tab_id = 8;
+	int32 record_id = 9;
+}
+
+message ListRecordReferencesResponse {
+	int64 record_count = 1;
+	repeated RecordReferenceInfo references = 2;
+	string next_page_token = 3;
+}

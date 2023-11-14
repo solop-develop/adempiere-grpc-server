@@ -41,6 +41,7 @@ import org.compiere.model.MConversionRate;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -64,6 +65,10 @@ import com.google.protobuf.Value;
 public class RecordUtil {
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(RecordUtil.class);
+
+
+	/**	Reference cache	*/
+	public static CCache<String, String> referenceWhereClauseCache = new CCache<String, String>("Record_Reference_WhereClause", 30, 0);	//	no time-out
 
 
 	/** Table Allows Records with Zero Identifier */

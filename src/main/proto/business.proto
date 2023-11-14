@@ -106,6 +106,18 @@ message GetEntityRequest {
 	string page_token = 8;
 }
 
+message ListEntitiesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+	string record_reference_uuid = 9;
+}
+
 // Update Entity Request
 message UpdateEntityRequest {
 	string table_name = 1;

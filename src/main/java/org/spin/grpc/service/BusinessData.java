@@ -577,17 +577,19 @@ public class BusinessData extends BusinessDataImplBase {
 			//	Add
 			whereClause.append(dynamicWhere);
 		}
+
 		//	TODO: Add support to this functionality with a distinct scope
 		//	Add from reference
-//		if(!Util.isEmpty(criteria.getReferenceUuid())) {
-//			String referenceWhereClause = referenceWhereClauseCache.get(criteria.getReferenceUuid());
-//			if(!Util.isEmpty(referenceWhereClause)) {
-//				if(whereClause.length() > 0) {
-//					whereClause.append(" AND ");
-//				}
-//				whereClause.append("(").append(referenceWhereClause).append(")");
-//			}
-//		}
+		if(!Util.isEmpty(request.getRecordReferenceUuid())) {
+			String referenceWhereClause = RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
+			if(!Util.isEmpty(referenceWhereClause, true)) {
+				if(whereClause.length() > 0) {
+					whereClause.append(" AND ");
+				}
+				whereClause.append("(").append(referenceWhereClause).append(")");
+			}
+		}
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());

@@ -263,13 +263,19 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(request.getR_Request_ID())
 			.setDocumentNo(
-				ValueManager.validateNull(request.getDocumentNo())
+				ValueManager.validateNull(
+					request.getDocumentNo()
+				)
 			)
 			.setSubject(
-				ValueManager.validateNull(request.getSubject())
+				ValueManager.validateNull(
+					request.getSubject()
+				)
 			)
 			.setSummary(
-				ValueManager.validateNull(request.getSummary())
+				ValueManager.validateNull(
+					request.getSummary()
+				)
 			)
 			.setCreated(
 				ValueManager.getTimestampFromDate(
@@ -287,19 +293,27 @@ public class IssueManagementConvertUtil {
 				)
 			)
 			.setDueType(
-				convertDueType(request.getDueType())
+				convertDueType(
+					request.getDueType()
+				)
 			)
 			.setRequestType(
-				convertRequestType(request.getR_RequestType_ID())
+				convertRequestType(
+					request.getR_RequestType_ID()
+				)
 			)
 			.setSalesRepresentative(
-				IssueManagementConvertUtil.convertUser(request.getSalesRep_ID())
+				IssueManagementConvertUtil.convertUser(
+					request.getSalesRep_ID()
+				)
 			)
 			.setStatus(
 				convertStatus(request.getR_Status_ID())
 			)
 			.setUser(
-				IssueManagementConvertUtil.convertUser(request.getCreatedBy())
+				IssueManagementConvertUtil.convertUser(
+					request.getCreatedBy()
+				)
 			)
 		;
 		if (!Util.isEmpty(request.getPriority(), true)) {

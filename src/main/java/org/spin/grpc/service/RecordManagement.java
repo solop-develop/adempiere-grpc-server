@@ -14,8 +14,13 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.record_management.RecordManagementGrpc.RecordManagementImplBase;
+import org.spin.backend.grpc.record_management.ExistsRecordReferencesRequest;
+import org.spin.backend.grpc.record_management.ExistsRecordReferencesResponse;
+import org.spin.backend.grpc.record_management.ListRecordReferencesRequest;
+import org.spin.backend.grpc.record_management.ListRecordReferencesResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
@@ -64,6 +69,54 @@ public class RecordManagement extends RecordManagementImplBase {
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
 				.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void existsRecordReferences(ExistsRecordReferencesRequest request, StreamObserver<ExistsRecordReferencesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Process Activity Requested is Null");
+			}
+			log.fine("References Info Requested = " + request);
+			ExistsRecordReferencesResponse.Builder entityValueList = RecordManagementServiceLogic.existsRecordReferences(
+				request
+			);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+	// @Override
+	public void listRecordReferences(ListRecordReferencesRequest request, StreamObserver<ListRecordReferencesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("List References Requested is Null");
+			}
+			log.fine("References Info Requested = " + request);
+			ListRecordReferencesResponse.Builder entityValueList = RecordManagementServiceLogic.listRecordReferences(
+				request
+			);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}

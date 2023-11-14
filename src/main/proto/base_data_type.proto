@@ -83,17 +83,6 @@ message Entity {
 	google.protobuf.Struct values = 3;
 }
 
-message ListEntitiesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string table_name = 8;
-}
-
 message ListEntitiesResponse {
 	int64 record_count = 1;
 	repeated Entity records = 2;

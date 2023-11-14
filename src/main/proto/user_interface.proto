@@ -125,14 +125,6 @@ service UserInterface {
 			body: "*"
 		};
 	}
-	// Exists References on Record
-	rpc ExistsReferences(ExistsReferencesRequest) returns (ExistsReferencesResponse) {
-		option (google.api.http) = { get: "/user-interface/references/{tab_id}/{record_id}/exists" };
-	}
-	// List a References
-	rpc ListReferences(ListReferencesRequest) returns (ListReferencesResponse) {
-		option (google.api.http) = { get: "/user-interface/references" };
-	}
 	// Get context Info
 	rpc GetContextInfoValue(GetContextInfoValueRequest) returns (ContextInfoValue) {
 		option (google.api.http) = { get: "/user-interface/context-info/{id}" };
@@ -429,6 +421,7 @@ message ListTabEntitiesRequest {
 	int32 window_id = 8;
 	int32 tab_id = 9;
 	string context_attributes = 10;
+	string record_reference_uuid = 11;
 }
 
 // Callout Request
@@ -508,50 +501,6 @@ message ChatEntry {
 	google.protobuf.Timestamp log_date = 10;
 }
 
-// Exists References Request
-message ExistsReferencesRequest {
-	int32 tab_id = 1;
-	int32 record_id = 2;
-}
-
-// References Count
-message ExistsReferencesResponse {
-	int32 record_count = 1;
-}
-
-// List References
-message ListReferencesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	int32 id = 8;
-	string table_name = 9;
-	int32 window_id = 10;
-}
-
-// Zoom Information
-message RecordReferenceInfo {
-	int32 id = 1;
-	int32 window_id = 2;
-	int32 tab_id = 3;
-	string table_name = 4;
-	string where_clause = 5;
-	int64 record_count = 6;
-	string column_name = 7;
-	string display_name = 8;
-	google.protobuf.Value value = 9;
-}
-
-// List References Response
-message ListReferencesResponse {
-	int64 record_count = 1;
-	repeated RecordReferenceInfo references = 2;
-	string next_page_token = 3;
-}
 
 // List General Info Request
 message ListGeneralInfoRequest {

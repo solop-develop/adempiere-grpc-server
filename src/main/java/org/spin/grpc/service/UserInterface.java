@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
 
@@ -55,7 +54,6 @@ import org.adempiere.core.domains.models.I_AD_Record_Access;
 import org.adempiere.core.domains.models.I_AD_Role;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
-import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_R_MailText;
 import org.adempiere.exceptions.AdempiereException;
@@ -64,7 +62,6 @@ import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MView;
 import org.adempiere.model.MViewColumn;
 import org.adempiere.model.MViewDefinition;
-import org.adempiere.model.ZoomInfoFactory;
 import org.compiere.model.Callout;
 import org.compiere.model.CalloutOrder;
 import org.compiere.model.GridField;
@@ -84,7 +81,6 @@ import org.compiere.model.MMessage;
 import org.compiere.model.MPreference;
 import org.compiere.model.MPrivateAccess;
 import org.compiere.model.MProcessPara;
-import org.compiere.model.MQuery;
 import org.compiere.model.MRecordAccess;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
@@ -94,7 +90,6 @@ import org.compiere.model.MTable;
 import org.compiere.model.MTree;
 import org.compiere.model.MTreeNode;
 import org.compiere.model.MUser;
-import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -115,8 +110,6 @@ import org.spin.backend.grpc.user_interface.CreateChatEntryRequest;
 import org.spin.backend.grpc.user_interface.CreateTabEntityRequest;
 import org.spin.backend.grpc.user_interface.DefaultValue;
 import org.spin.backend.grpc.user_interface.DeletePreferenceRequest;
-import org.spin.backend.grpc.user_interface.ExistsReferencesRequest;
-import org.spin.backend.grpc.user_interface.ExistsReferencesResponse;
 import org.spin.backend.grpc.user_interface.GetContextInfoValueRequest;
 import org.spin.backend.grpc.user_interface.GetDefaultValueRequest;
 import org.spin.backend.grpc.user_interface.GetPrivateAccessRequest;
@@ -127,8 +120,6 @@ import org.spin.backend.grpc.user_interface.ListBrowserItemsResponse;
 import org.spin.backend.grpc.user_interface.ListGeneralInfoRequest;
 import org.spin.backend.grpc.user_interface.ListMailTemplatesRequest;
 import org.spin.backend.grpc.user_interface.ListMailTemplatesResponse;
-import org.spin.backend.grpc.user_interface.ListReferencesRequest;
-import org.spin.backend.grpc.user_interface.ListReferencesResponse;
 import org.spin.backend.grpc.user_interface.ListTabEntitiesRequest;
 import org.spin.backend.grpc.user_interface.ListTabSequencesRequest;
 import org.spin.backend.grpc.user_interface.ListTranslationsRequest;
@@ -142,7 +133,6 @@ import org.spin.backend.grpc.user_interface.PreferenceType;
 import org.spin.backend.grpc.user_interface.PrivateAccess;
 import org.spin.backend.grpc.user_interface.RecordAccess;
 import org.spin.backend.grpc.user_interface.RecordAccessRole;
-import org.spin.backend.grpc.user_interface.RecordReferenceInfo;
 import org.spin.backend.grpc.user_interface.RollbackEntityRequest;
 import org.spin.backend.grpc.user_interface.RunCalloutRequest;
 import org.spin.backend.grpc.user_interface.SaveTabSequencesRequest;
@@ -319,203 +309,6 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		//	Return
 		return ConvertUtil.convertEntity(entity);
-	}
-
-	@Override
-	public void listReferences(ListReferencesRequest request, StreamObserver<ListReferencesResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Process Activity Requested is Null");
-			}
-			log.fine("References Info Requested = " + request);
-			ListReferencesResponse.Builder entityValueList = listReferences(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-
-	/**
-	 * Convert references to gRPC
-	 * @param Env.getCtx()
-	 * @param request
-	 * @return
-	 */
-	private ListReferencesResponse.Builder listReferences(ListReferencesRequest request) {
-		ListReferencesResponse.Builder builder = ListReferencesResponse.newBuilder();
-		//	Get entity
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if (table == null || table.getAD_Table_ID() < 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		// validate multiple keys as accounting tables and translation tables
-		if (!table.isSingleKey()) {
-			return builder;
-		}
-
-		StringBuffer whereClause = new StringBuffer();
-		List<Object> params = new ArrayList<>();
-		whereClause.append(table.getTableName() + "_ID = ?");
-		params.add(request.getId());
-		PO entity = new Query(
-			Env.getCtx(),
-			table.getTableName(),
-			whereClause.toString(),
-			null
-		)
-			.setParameters(params)
-			.first();
-		if (entity == null || entity.get_ID() < 0) {
-			return builder;
-		}
-
-		MWindow window = new Query(
-			Env.getCtx(),
-			I_AD_Window.Table_Name,
-			I_AD_Window.COLUMNNAME_AD_Window_ID + " = ?",
-			null
-		)
-			.setParameters(request.getWindowId())
-			.setOnlyActiveRecords(true)
-			.first();
-		if (window != null && window.get_ID() > 0) {
-			List<ZoomInfoFactory.ZoomInfo> zoomInfos = ZoomInfoFactory.retrieveZoomInfos(entity, window.getAD_Window_ID())
-				.stream()
-				.filter(zoomInfo -> {
-					return zoomInfo.query.getRecordCount() > 0;
-				})
-				.collect(Collectors.toList());
-
-			zoomInfos.stream().forEach(zoomInfo -> {
-				MQuery zoomQuery = zoomInfo.query;
-				//
-				RecordReferenceInfo.Builder recordReferenceBuilder = RecordReferenceInfo.newBuilder();
-
-				MWindow referenceWindow = MWindow.get(Env.getCtx(), zoomInfo.windowId);
-				MTab tab = Arrays.stream(referenceWindow.getTabs(false, null))
-					.filter(tabItem -> {
-						return zoomQuery.getZoomTableName().equals(tabItem.getAD_Table().getTableName());
-					})
-					.findFirst()
-					.orElse(null)
-				;
-				recordReferenceBuilder.setWindowId(referenceWindow.getAD_Window_ID());
-				if (tab != null && tab.getAD_Tab_ID() > 0) {
-					recordReferenceBuilder.setTabId(tab.getAD_Tab_ID());
-				}
-				recordReferenceBuilder.setTableName(
-						ValueManager.validateNull(
-							zoomQuery.getZoomTableName()
-						)
-					)
-					.setWhereClause(
-						ValueManager.validateNull(
-							zoomQuery.getWhereClause()
-						)
-					)
-					.setRecordCount(
-						zoomQuery.getRecordCount()
-					)
-					.setDisplayName(
-						zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")"
-					)
-					.setColumnName(
-						ValueManager.validateNull(
-							zoomQuery.getZoomColumnName()
-						)
-					)
-					.setValue(
-						ValueManager.getValueFromObject(
-							zoomQuery.getZoomValue()
-						).build()
-					)
-				;
-
-				//	Add to list
-				builder.addReferences(recordReferenceBuilder.build());
-			});
-			builder.setRecordCount(zoomInfos.size());
-		}
-		//	Return
-		return builder;
-	}
-
-
-	@Override
-	public void existsReferences(ExistsReferencesRequest request, StreamObserver<ExistsReferencesResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Process Activity Requested is Null");
-			}
-			log.fine("References Info Requested = " + request);
-			ExistsReferencesResponse.Builder entityValueList = existsReferences(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ExistsReferencesResponse.Builder existsReferences(ExistsReferencesRequest request) {
-		// validate tab
-		if (request.getTabId() <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @Mandatory@");
-		}
-		MTab tab = (MTab) RecordUtil.getEntity(Env.getCtx(), I_AD_Tab.Table_Name, request.getTabId(), null);
-		if (tab == null || tab.getAD_Tab_ID() <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
-		}
-
-		// builder
-		ExistsReferencesResponse.Builder builder = ExistsReferencesResponse.newBuilder();
-
-		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
-		// validate multiple keys as accounting tables and translation tables
-		if (!table.isSingleKey()) {
-			return builder;
-		}
-
-		// validate record
-		if(request.getRecordId() <= 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-		PO entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), request.getRecordId(), null);
-		// if (entity == null) {
-		// 	throw new AdempiereException("@Record_ID@ @NotFound@");
-		// }
-
-		int recordCount = 0;
-		if (entity != null && entity.get_ID() >= 0) {
-			List<ZoomInfoFactory.ZoomInfo> zoomInfos = ZoomInfoFactory.retrieveZoomInfos(entity, tab.getAD_Window_ID())
-				.stream()
-				.filter(zoomInfo -> {
-					return zoomInfo.query.getRecordCount() > 0;
-				})
-				.collect(Collectors.toList());
-			if (zoomInfos != null && zoomInfos.size() > 0) {
-				recordCount = zoomInfos.size();
-			}
-		}
-
-		//	Return
-		return builder.setRecordCount(recordCount);
 	}
 
 
@@ -946,17 +739,19 @@ public class UserInterface extends UserInterfaceImplBase {
 			//	Add
 			whereClause.append(dynamicWhere);
 		}
+
 		//	Add from reference
 		//	TODO: Add support to this functionality
-//		if(!Util.isEmpty(criteria.getReferenceUuid())) {
-//			String referenceWhereClause = referenceWhereClauseCache.get(criteria.getReferenceUuid());
-//			if(!Util.isEmpty(referenceWhereClause)) {
-//				if(whereClause.length() > 0) {
-//					whereClause.append(" AND ");
-//				}
-//				whereClause.append("(").append(referenceWhereClause).append(")");
-//			}
-//		}
+		if(!Util.isEmpty(request.getRecordReferenceUuid())) {
+			String referenceWhereClause = RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
+			if(!Util.isEmpty(referenceWhereClause)) {
+				if(whereClause.length() > 0) {
+					whereClause.append(" AND ");
+				}
+				whereClause.append("(").append(referenceWhereClause).append(")");
+			}
+		}
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
