@@ -176,24 +176,8 @@ public class BusinessData extends BusinessDataImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void listEntities(ListEntitiesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
-		try {
-			ListEntitiesResponse.Builder entityValueList = convertEntitiesList(Env.getCtx(), request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-	
+
+
 	@Override
 	public void runBusinessProcess(RunBusinessProcessRequest request, StreamObserver<ProcessLog> responseObserver) {
 		try {
@@ -560,12 +544,31 @@ public class BusinessData extends BusinessDataImplBase {
 		return ConvertUtil.convertEntity(entity);
 	}
 
+
+
+	@Override
+	public void listEntities(ListEntitiesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			ListEntitiesResponse.Builder entityValueList = listEntities(Env.getCtx(), request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert Object to list
 	 * @param request
 	 * @return
 	 */
-	private ListEntitiesResponse.Builder convertEntitiesList(Properties context, ListEntitiesRequest request) {
+	private ListEntitiesResponse.Builder listEntities(Properties context, ListEntitiesRequest request) {
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> params = new ArrayList<>();
 		//	For dynamic condition
