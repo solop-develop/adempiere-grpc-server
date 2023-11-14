@@ -78,7 +78,7 @@ public class RecordManagement extends RecordManagementImplBase {
 	public void existsRecordReferences(ExistsRecordReferencesRequest request, StreamObserver<ExistsRecordReferencesResponse> responseObserver) {
 		try {
 			if(request == null) {
-				throw new AdempiereException("Process Activity Requested is Null");
+				throw new AdempiereException("Exists References Requested is Null");
 			}
 			log.fine("References Info Requested = " + request);
 			ExistsRecordReferencesResponse.Builder entityValueList = RecordManagementServiceLogic.existsRecordReferences(
