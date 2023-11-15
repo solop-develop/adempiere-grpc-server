@@ -306,7 +306,9 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: adempiere-grpc-server.pb
-          path: docker/adempiere-grpc-server.pb
+          path: docker/
+
+      - run: ls -R
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
