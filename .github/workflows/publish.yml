@@ -308,8 +308,6 @@ jobs:
           name: adempiere-grpc-server.pb
           path: docker/
 
-      - run: ls -R
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
