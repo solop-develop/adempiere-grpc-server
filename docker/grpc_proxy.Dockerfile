@@ -44,5 +44,7 @@ COPY docker/adempiere-grpc-server.pb /data/adempiere-grpc-server.pb
 COPY docker/start_grpc_proxy.sh /etc/envoy/start.sh
 
 
+RUN chmod +x *.sh
+
 # Start app
 ENTRYPOINT ["sh" , "start.sh"]
