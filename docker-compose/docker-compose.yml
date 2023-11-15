@@ -1,5 +1,7 @@
 version: "3.9"
 
+name: adempiere-grpc-server-stack
+
 services:
   adempiere.db:
     build:
@@ -23,7 +25,7 @@ services:
       - adempiere_network
 
   adempiere-grpc-server:
-    image: solopcloud/adempiere-backend:alpine-experimental-1.8.1
+    image: solopcloud/adempiere-backend:alpine-1.7.9
     container_name: ${ADEMPIERE_GRPC_SERVER_HOST}
     restart: ${GENERIC_RESTART}
     ports:

@@ -3,13 +3,13 @@
 
 PROD_FILE=/etc/envoy/envoy.yaml
 
-# copy template.json file to local.json
-cp /etc/envoy/envoy_template.yaml $PROD_FILE
+
+# copy `envoy_template.yaml` file to `envoy.yaml`
+cp -rf /etc/envoy/envoy_template.yaml $PROD_FILE
 
 
 # Set server values
 sed -i "s|5555|$SERVER_PORT|g" $PROD_FILE
-# sed -i "s|fill_is_is_enabled_all_services|$IS_ENABLED_ALL_SERVICES|g" $PROD_FILE
 
 
 # # create array to iterate
@@ -38,3 +38,7 @@ sed -i "s|5555|$SERVER_PORT|g" $PROD_FILE
 # Backend gRPC
 sed -i "s|backend_host|$BACKEND_HOST|g" $PROD_FILE
 sed -i "s|backend_port|$BACKEND_PORT|g" $PROD_FILE
+
+
+# Run app
+/usr/local/bin/envoy -c /etc/envoy/envoy.yaml
