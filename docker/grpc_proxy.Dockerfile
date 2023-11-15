@@ -33,12 +33,15 @@ ENV \
 EXPOSE ${SERVER_PORT}
 
 
+WORKDIR /etc/envoy/
+
+
 # Envoy standard configuration
 COPY docker/envoy_template.yaml /etc/envoy/envoy_template.yaml
 
 # Proto gRPC descriptor
 COPY docker/adempiere-grpc-server.pb /data/adempiere-grpc-server.pb
-COPY docker/start_grpc_proxy.sh /opt/apps/server/start.sh
+COPY docker/start_grpc_proxy.sh /etc/envoy/start.sh
 
 
 # Start app
