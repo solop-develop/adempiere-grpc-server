@@ -189,18 +189,52 @@ public class FileManagement extends FileManagementImplBase {
 	private void getResource(int resourceId, String resourceName, StreamObserver<Resource> responseObserver) throws Exception {
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
 		if (!AttachmentUtil.getInstance().isValidForClient(clientId)) {
-			responseObserver.onError(new AdempiereException("@NotFound@"));
+			responseObserver.onError(
+				new AdempiereException("@FileHandler_ID@ @NotFound@")
+			);
 			return;
 		}
 
+		MADAttachmentReference attachmentReference = null;
+		if (resourceId > 0) {
+			attachmentReference = MADAttachmentReference.getById(
+				Env.getCtx(),
+				resourceId,
+				null
+			);
+		}
 		//	Validate by name
-		int attachmentReferenceId = resourceId;
+		if (attachmentReference == null && !Util.isEmpty(resourceName, true)) {
+			String resourceUuid = getResourceUuidFromName(resourceName);
+			if (Util.isEmpty(resourceUuid, true)) {
+				responseObserver.onError(
+					new AdempiereException("@FileName@ @NotFound@")
+				);
+				return;
+			}
+			attachmentReference = MADAttachmentReference.getByUuid(
+				Env.getCtx(),
+				resourceUuid,
+				null
+			);
+		}
+
+		if (attachmentReference == null) {
+			responseObserver.onError(
+				new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@")
+			);
+			return;
+		}
+
 		byte[] data = AttachmentUtil.getInstance()
 			.withClientId(clientId)
-			.withAttachmentReferenceId(attachmentReferenceId)
+			.withAttachmentReferenceId(
+				attachmentReference.getAD_AttachmentReference_ID()
+			)
 			.getAttachment();
 		if (data == null) {
-			responseObserver.onError(new AdempiereException("@NotFound@"));
+			responseObserver.onError(
+				new AdempiereException("@BinaryData@ @NotFound@"));
 			return;
 		}
 		//	For all

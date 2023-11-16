@@ -83,6 +83,7 @@ public class AllInOneServices {
 
 	/** Services/Methods allow request without Bearer token validation */
 	private List<String> ALLOW_REQUESTS_WITHOUT_TOKEN = Arrays.asList(
+		// proto package . proto service / proto method
 		"data.CoreFunctionality/GetSystemInfo",
 		"security.Security/ListLanguages",
 		"security.Security/RunLogin",
@@ -92,6 +93,7 @@ public class AllInOneServices {
 
 	/**	Revoke session	*/
 	private List<String> REVOKE_TOKEN_SERVICES = Arrays.asList(
+		// proto package . proto service / proto method
 		"security.Security/RunChangeRole",
 		"security.Security/SetSessionAttribute",
 		"security.Security/RunLogout"

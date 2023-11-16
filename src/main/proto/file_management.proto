@@ -41,10 +41,11 @@ service FileManagement {
 		option (google.api.http) = {
 			get: "/file-management/resources/{id}"
 			additional_bindings: {
-				get: "/file-management/resources/{resource_name}"
+				get: "/file-management/resources/file-name/{resource_name}"
 			}
 		};
 	}
+
 	//	Attachment
 	rpc SetAttachmentDescription(SetAttachmentDescriptionRequest) returns (Attachment) {
 		option (google.api.http) = {
@@ -58,6 +59,7 @@ service FileManagement {
 	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {
 		option (google.api.http) = { get: "/file-management/attachments/{table_name}/{record_id}" };
 	}
+
 	//	Resource Reference
 	rpc SetResourceReference(SetResourceReferenceRequest) returns (ResourceReference) {
 		option (google.api.http) = {
@@ -83,7 +85,7 @@ service FileManagement {
 		option (google.api.http) = {
 			get: "/file-management/references/{id}"
 			additional_bindings: {
-				get: "/file-management/references/attachment/{id}/{resource_name}"
+				get: "/file-management/references/attachment/file-name/{resource_name}"
 			}
 			additional_bindings: {
 				get: "/file-management/references/image/{image_id}"
@@ -97,7 +99,7 @@ service FileManagement {
 		option (google.api.http) = {
 			delete: "/file-management/references/{id}"
 			additional_bindings: {
-				delete: "/file-management/references/{resource_name}"
+				delete: "/file-management/references/file-name/{resource_name}"
 			}
 		};
 	}
