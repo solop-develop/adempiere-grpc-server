@@ -218,7 +218,10 @@ public class BusinessData extends BusinessDataImplBase {
 		if(process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
-		if(!MRole.getDefault().getProcessAccess(process.getAD_Process_ID())) {
+
+		// Role access
+		Boolean isWithAccess = MRole.getDefault().getProcessAccess(process.getAD_Process_ID());
+		if(isWithAccess == null || !isWithAccess.booleanValue()) {
 			if (process.isReport()) {
 				throw new AdempiereException("@AccessCannotReport@");
 			}
