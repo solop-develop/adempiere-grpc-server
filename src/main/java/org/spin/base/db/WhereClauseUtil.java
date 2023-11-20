@@ -378,13 +378,22 @@ public class WhereClauseUtil {
 				if (whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
-				String columnName = tableNameAlias + "." + condition.getColumnName();
-				MColumn column = MColumn.get(
-					Env.getCtx(),
-					MColumn.getColumn_ID(table.getTableName(), columnName)
-				);
+				int displayTypeId = 0;
+				int columnId = MColumn.getColumn_ID(table.getTableName(), condition.getColumnName());
+				if (columnId > 0) {
+					MColumn column = MColumn.get(
+						Env.getCtx(),
+						columnId
+					);
+					if (column != null) {
+						displayTypeId = column.getAD_Reference_ID();
+						// set table alias to column name
+						String columnName = tableNameAlias + "." + condition.getColumnName();
+						condition.setColumnName(columnName);
+					}
+				}
 
-				String restriction = WhereClauseUtil.getRestrictionByOperator(condition, column.getAD_Reference_ID(), params);
+				String restriction = WhereClauseUtil.getRestrictionByOperator(condition, displayTypeId, params);
 
 				whereClause.append(restriction);
 		});
