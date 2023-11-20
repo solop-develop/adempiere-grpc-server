@@ -47,6 +47,7 @@ import org.compiere.util.Util;
 import org.compiere.wf.MWFActivity;
 import org.compiere.wf.MWFNode;
 import org.compiere.wf.MWorkflow;
+import org.spin.backend.grpc.common.DocumentAction;
 import org.spin.backend.grpc.common.DocumentStatus;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.wf.ForwardRequest;
@@ -159,47 +160,9 @@ public class Workflow extends WorkflowImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void listDocumentActions(ListDocumentActionsRequest request,
-			StreamObserver<ListDocumentActionsResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Document Actions is Null");
-			}
-			log.fine("Object List Requested = " + request);
-			ListDocumentActionsResponse.Builder entityValueList = convertDocumentActions(Env.getCtx(), request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void listDocumentStatuses(ListDocumentStatusesRequest request,
-			StreamObserver<ListDocumentStatusesResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Document Statuses is Null");
-			}
-			log.fine("Object List Requested = " + request);
-			ListDocumentStatusesResponse.Builder entityValueList = convertDocumentStatuses(Env.getCtx(), request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
+
 	@Override
 	public void listWorkflowActivities(ListWorkflowActivitiesRequest request,
 			StreamObserver<ListWorkflowActivitiesResponse> responseObserver) {
@@ -280,14 +243,40 @@ public class Workflow extends WorkflowImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listDocumentStatuses(ListDocumentStatusesRequest request,
+			StreamObserver<ListDocumentStatusesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Document Statuses Request is Null");
+			}
+			log.fine("Object List Requested = " + request);
+			ListDocumentStatusesResponse.Builder entityValueList = listDocumentStatuses(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert document statuses
 	 * @param context
 	 * @param request
 	 * @return
 	 */
-	private ListDocumentStatusesResponse.Builder convertDocumentStatuses(Properties context, ListDocumentStatusesRequest request) {
+	private ListDocumentStatusesResponse.Builder listDocumentStatuses(ListDocumentStatusesRequest request) {
+		Properties context = Env.getCtx();
 		/** Drafted = DR */
 		List<String> statusesList = new ArrayList<>();
 		String documentStatus = null;
@@ -385,8 +374,6 @@ public class Workflow extends WorkflowImplBase {
 			}
 		});
 		//	Get Actions
-		
-		
 		log.fine("DocStatus=" + documentStatus 
 			+ ", DocAction=" + documentAction + ", OrderType=" + orderType 
 			+ ", IsSOTrx=" + isSOTrx + ", Processing=" + isProcessing 
@@ -547,14 +534,40 @@ public class Workflow extends WorkflowImplBase {
 		//	Return
 		return builder;
 	}
-	
+
+
+
+	@Override
+	public void listDocumentActions(ListDocumentActionsRequest request,
+			StreamObserver<ListDocumentActionsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Document Actions Request is Null");
+			}
+			log.fine("Object List Requested = " + request);
+			ListDocumentActionsResponse.Builder entityValueList = listDocumentActions(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Convert document actions
 	 * @param context
 	 * @param request
 	 * @return
 	 */
-	private ListDocumentActionsResponse.Builder convertDocumentActions(Properties context, ListDocumentActionsRequest request) {
+	private ListDocumentActionsResponse.Builder listDocumentActions(ListDocumentActionsRequest request) {
+		Properties context = Env.getCtx();
 		if(request.getId() <= 0) {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
@@ -600,7 +613,19 @@ public class Workflow extends WorkflowImplBase {
 		if (documentStatus == null) {
 			throw new AdempiereException("@DocStatus@ @NotFound@");
 		}
-		
+
+		//
+		ListDocumentActionsResponse.Builder builder = ListDocumentActionsResponse.newBuilder();
+
+		boolean isEndAction = (
+			documentStatus.equals(DocumentEngine.STATUS_Closed)
+			|| documentStatus.equals(DocumentEngine.STATUS_Voided)
+			|| documentStatus.equals(DocumentEngine.STATUS_Reversed)
+		);
+		if (isEndAction) {
+			return builder;
+		}
+
 		//	Get All document Actions
 		ArrayList<String> valueList = new ArrayList<String>();
 		ArrayList<String> nameList = new ArrayList<String>();
@@ -632,22 +657,26 @@ public class Workflow extends WorkflowImplBase {
 		}
 		//	
 		documentAction = docActionHolder[0];
-		//	
-		ListDocumentActionsResponse.Builder builder = ListDocumentActionsResponse.newBuilder();
+
 		//	Get
 		Arrays.asList(options).stream().filter(option -> option != null).forEach(option -> {
 			for (int i = 0; i < valueList.size(); i++) {
 				if (option.equals(valueList.get(i))) {
-					builder.addDocumentActions(ConvertUtil.convertDocumentAction(
-							valueList.get(i), 
-							nameList.get(i), 
-							descriptionList.get(i)));
+					DocumentAction.Builder documentActionBuilder = ConvertUtil.convertDocumentAction(
+							valueList.get(i),
+							nameList.get(i),
+							descriptionList.get(i)
+					);
+					builder.addDocumentActions(documentActionBuilder);
 				}
 			}
 		});
+
 		//	setDefault
-		if (documentAction.equals("--"))		//	If None, suggest closing
+		if (documentAction.equals("--")) {
+			//	If None, suggest closing
 			documentAction = DocumentEngine.ACTION_Close;
+		}
 		String defaultValue = "";
 		String defaultName = "";
 		String defaultDescription = "";
@@ -659,17 +688,23 @@ public class Workflow extends WorkflowImplBase {
 			}
 		}
 		//	Set default value
-		if (!defaultName.equals("")) {
-			builder.setDefaultDocumentAction(ConvertUtil.convertDocumentAction(
-					defaultValue, 
-					defaultName, 
-					defaultDescription));
+		if (!Util.isEmpty(defaultName)) {
+			DocumentAction.Builder documentActionBuilder = ConvertUtil.convertDocumentAction(
+				defaultValue,
+				defaultName,
+				defaultDescription
+			);
+			builder.setDefaultDocumentAction(
+				documentActionBuilder
+			);
 		}
 		//	Add record count
 		builder.setRecordCount(builder.getDocumentActionsCount());
 		//	Return
 		return builder;
 	}
+
+
 
 	@Override
 	public void runDocumentAction(RunDocumentActionRequest request, StreamObserver<ProcessLog> responseObserver) {
