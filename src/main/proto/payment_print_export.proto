@@ -35,56 +35,56 @@ package payment_print_export;
 service PaymentPrintExport {
 	// List Payment Selections
 	rpc ListPaymentSelections(ListPaymentSelectionsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/payment-print/payment-selections" };
+		option (google.api.http) = { get: "/payment-print-export/payment-selections" };
 	}
 	// Get a Payment Selection info
 	rpc GetPaymentSelection(GetPaymentSelectionRequest) returns (PaymentSelection) {
-		option (google.api.http) = { get: "/payment-print/payment-selections/{id}" };
+		option (google.api.http) = { get: "/payment-print-export/payment-selections/{id}" };
 	}
 	// List Payment Rules
 	rpc ListPaymentRules(ListPaymentRulesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/payment-print/payment-selections/payment-rules" };
+		option (google.api.http) = { get: "/payment-print-export/payment-selections/{payment_selection_id}/payment-rules" };
 	}
 	// Get Document No
 	rpc GetDocumentNo(GetDocumentNoRequest) returns (GetDocumentNoResponse) {
-		option (google.api.http) = { get: "/payment-print/payment-selections/document-no/{payment_rule}/{bank_account_id}" };
+		option (google.api.http) = { get: "/payment-print-export/document-no/{payment_rule}/{bank_account_id}" };
 	}
 	// List Payments Check
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
-		option (google.api.http) = { get: "/payment-print/payment-selections/payments" };
+		option (google.api.http) = { get: "/payment-print-export/payment-selections/{payment_selection_id}/{payment_rule}/payments" };
 	}
 	// Process and Create EFT Payment
 	rpc Process(ProcessRequest) returns (ProcessResponse) {
-		option (google.api.http) = { 
-			post: "/payment-print/process",
+		option (google.api.http) = {
+			post: "/payment-print-export/payment-selections/{payment_selection_id}/{payment_rule}/process/{bank_account_id}",
 			body: "*"
 		};
 	}
 	// Export Payments
 	rpc Export(ExportRequest) returns (ExportResponse) {
-		option (google.api.http) = { 
-			post: "/payment-print/export",
+		option (google.api.http) = {
+			post: "/payment-print-export/payment-selections/{payment_selection_id}/{payment_rule}/export",
 			body: "*"
 		};
 	}
 	// Print Payments
 	rpc Print(PrintRequest) returns (PrintResponse) {
-		option (google.api.http) = { 
-			post: "/payment-print/print",
+		option (google.api.http) = {
+			post: "/payment-print-export/payment-selections/{payment_selection_id}/{payment_rule}/print",
 			body: "*"
 		};
 	}
 	// Confirm Payment
 	rpc ConfirmPrint(ConfirmPrintRequest) returns (ConfirmPrintResponse) {
-		option (google.api.http) = { 
-			post: "/payment-print/confirm-print",
+		option (google.api.http) = {
+			post: "/payment-print-export/payment-selections/{payment_selection_id}/{payment_rule}/confirm-print/{bank_account_id}",
 			body: "*"
 		};
 	}
 	// Print Remittance
 	rpc PrintRemittance(PrintRemittanceRequest) returns (PrintRemittanceResponse) {
-		option (google.api.http) = { 
-			post: "/payment-print/print-remittance",
+		option (google.api.http) = {
+			post: "/payment-print-export/payment-selections/{payment_selection_id}/{payment_rule}/print-remittance",
 			body: "*"
 		};
 	}
