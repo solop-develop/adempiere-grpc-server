@@ -29,6 +29,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -174,6 +175,45 @@ public class ParameterUtil {
 		}
 
 		return parametersList;
+	}
+
+
+	/**
+	 * Get value based on filter url (all is instanceof `String` data type)
+	 * @param displayTypeId
+	 * @param value
+	 * @return
+	 */
+	public static Object getValueToFilterRestriction(int displayTypeId, Object value) {
+		Object transformValue = value;
+		if (value == null) {
+			return transformValue;
+		}
+		if (DisplayType.isID(displayTypeId) || DisplayType.Integer == displayTypeId) {
+			transformValue = NumberManager.getIntegerFromObject(
+				value
+			);
+		} else if (DisplayType.isNumeric(displayTypeId)) {
+			transformValue = NumberManager.getBigDecimalFromObject(
+				value
+			);
+		} else if (DisplayType.YesNo == displayTypeId) {
+			if (value instanceof String) {
+				transformValue = BooleanManager.getBooleanFromString(
+					(String) value
+				);
+			}
+		} else if (DisplayType.isDate(displayTypeId)) {
+			transformValue = TimeManager.getTimestampFromObject(
+				value
+			);
+		} else if (DisplayType.isText(displayTypeId) || DisplayType.List == displayTypeId) {
+			transformValue = (String) value;
+		} else {
+			transformValue = (String) value;
+		}
+
+		return transformValue;
 	}
 
 }

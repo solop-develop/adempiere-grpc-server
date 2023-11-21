@@ -33,6 +33,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.base.query.Filter;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -198,6 +199,27 @@ public class ContextManager {
 			Env.setContext(context, windowNo, key, (Boolean) value);
 		} else if (value instanceof String) {
 			Env.setContext(context, windowNo, key, (String) value);
+		} else if (value instanceof ArrayList) {
+			// range values
+			List<?> values = (List<?>) value;
+			if (values != null && !values.isEmpty()) {
+				// value from
+				Object valueStart = values.get(
+					Filter.FROM
+				);
+				setWindowContextByObject(context, windowNo, key, valueStart);
+
+				// value to
+				if (values.size() == 2) {
+					Object valueEnd = values.get(
+						Filter.TO
+					);
+					setWindowContextByObject(context, windowNo, key + "_To", valueEnd);
+				} else if (values.size() > 2) {
+					// `IN` / `NOT IN` operator with multiple values
+					;
+				}
+			}
 		}
 	}
 

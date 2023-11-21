@@ -140,7 +140,12 @@ public class WhereClauseUtil {
 					sqlInValue = "UPPER(?)";
 				}
 				parameterValues.append(sqlInValue);
-				parameters.add(currentValue);
+
+				Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+					displayType,
+					currentValue
+				);
+				parameters.add(valueToFilter);
 			});
 
 			columnName = column_name.toString();
@@ -151,39 +156,46 @@ public class WhereClauseUtil {
 				}
 			}
 		} else if(operatorValue.equals(Filter.BETWEEN) || operatorValue.equals(Filter.NOT_BETWEEN)) {
-			Object valueStart = condition.getFromValue();
-			Object valueEnd = condition.getToValue();
+			// List<Object> values = condition.getValues();
+			Object valueStartToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				condition.getFromValue()
+			);
+			Object valueEndToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				condition.getToValue()
+			);
 
 			sqlValue = "";
-			if (valueStart == null) {
+			if (valueStartToFilter == null) {
 				sqlValue = " ? ";
 				sqlOperator = OperatorUtil.convertOperator(Filter.LESS_EQUAL);
-				parameters.add(valueEnd);
-			} else if (valueEnd == null) {
+				parameters.add(valueEndToFilter);
+			} else if (valueEndToFilter == null) {
 				sqlValue = " ? ";
 				sqlOperator = OperatorUtil.convertOperator(Filter.GREATER_EQUAL);
-				parameters.add(valueStart);
+				parameters.add(valueStartToFilter);
 			} else {
 				sqlValue = " ? AND ? ";
-				parameters.add(valueStart);
-				parameters.add(valueEnd);
+				parameters.add(valueStartToFilter);
+				parameters.add(valueEndToFilter);
 			}
 		} else if(operatorValue.equals(Filter.LIKE) || operatorValue.equals(Filter.NOT_LIKE)) {
 			columnName = "UPPER(" + columnName + ")";
-			String parameterValue = ValueManager.validateNull(
+			String valueToFilter = ValueManager.validateNull(
 				(String) condition.getValue()
 			);
-			// if (!Util.isEmpty(parameterValue, true)) {
-			// 	if (!parameterValue.startsWith("%")) {
-			// 		parameterValue = "%" + parameterValue;
+			// if (!Util.isEmpty(valueToFilter, true)) {
+			// 	if (!valueToFilter.startsWith("%")) {
+			// 		valueToFilter = "%" + valueToFilter;
 			// 	}
-			// 	if (!parameterValue.endsWith("%")) {
-			// 		parameterValue += "%";
+			// 	if (!valueToFilter.endsWith("%")) {
+			// 		valueToFilter += "%";
 			// 	}
 			// }
-			// parameterValue = "UPPPER(" + parameterValue + ")";
+			// valueToFilter = "UPPPER(" + valueToFilter + ")";
 			sqlValue = "'%' || UPPER(?) || '%'";
-			parameters.add(parameterValue);
+			parameters.add(valueToFilter);
 		} else if(operatorValue.equals(Filter.NULL) || operatorValue.equals(Filter.NOT_NULL)) {
 			;
 		} else if (operatorValue.equals(Filter.EQUAL) || operatorValue.equals(Filter.NOT_EQUAL)) {
@@ -206,12 +218,21 @@ public class WhereClauseUtil {
 					.append(" IS NULL ")
 				;
 			}
-			parameters.add(parameterValue);
+
+			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				parameterValue
+			);
+			parameters.add(valueToFilter);
 		} else {
 			// Greater, Greater Equal, Less, Less Equal
-			Object parameterValue = condition.getValue();
 			sqlValue = " ? ";
-			parameters.add(parameterValue);
+
+			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				condition.getValue()
+			);
+			parameters.add(valueToFilter);
 		}
 
 		String rescriction = "(" + columnName + sqlOperator + sqlValue + additionalSQL.toString() + ")";
@@ -260,12 +281,20 @@ public class WhereClauseUtil {
 				if (parameterValues.length() > 0) {
 					parameterValues.append(", ");
 				}
-				String val = ParameterUtil.getDBValue(currentValue, displayType);
-				String sqlInValue = val;
+
+				Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+					displayType,
+					currentValue
+				);
+				String dbValue = ParameterUtil.getDBValue(
+					valueToFilter,
+					displayType
+				);
+				String sqlInValue = dbValue;
 				if (isString) {
 					column_name.delete(0, column_name.length());
 					column_name.append("UPPER(").append(baseColumnName).append(")");
-					sqlInValue = "UPPER(" + val + ")";
+					sqlInValue = "UPPER(" + dbValue + ")";
 				}
 				parameterValues.append(sqlInValue);
 			});
@@ -278,43 +307,65 @@ public class WhereClauseUtil {
 				}
 			}
 		} else if(operatorValue.equals(Filter.BETWEEN) || operatorValue.equals(Filter.NOT_BETWEEN)) {
-			Object valueStart = condition.getValue();
-			Object valueEnd = condition.getToValue();
-			String dbValueStart = ParameterUtil.getDBValue(valueStart, displayType);
-			String dbValueEnd = ParameterUtil.getDBValue(valueEnd, displayType);
+			Object valueStartToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				condition.getFromValue()
+			);
+			Object valueEndToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				condition.getToValue()
+			);
+
+			String dbValueStart = ParameterUtil.getDBValue(valueStartToFilter, displayType);
+			String dbValueEnd = ParameterUtil.getDBValue(valueEndToFilter, displayType);
 
 			sqlValue = "";
-			if (valueStart == null) {
+			if (valueStartToFilter == null) {
 				sqlValue = dbValueEnd;
 				sqlOperator = OperatorUtil.convertOperator(Filter.LESS_EQUAL);
-			} else if (valueEnd == null) {
+			} else if (valueEndToFilter == null) {
 				sqlValue = dbValueStart;
 				sqlOperator = OperatorUtil.convertOperator(Filter.GREATER_EQUAL);
 			} else {
-				sqlValue = dbValueStart + " AND " +dbValueEnd;
+				sqlValue = dbValueStart + " AND " + dbValueEnd;
 			}
 		} else if(operatorValue.equals(Filter.LIKE) || operatorValue.equals(Filter.NOT_LIKE)) {
+			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				condition.getValue()
+			);
+			String dbValue = ParameterUtil.getDBValue(
+				valueToFilter,
+				displayType
+			);
+
 			columnName = "UPPER(" + columnName + ")";
-			String parameterValue = ValueManager.validateNull((String) condition.getValue());
-			sqlValue = "'%' || UPPER(" + parameterValue + ") || '%'";
+			sqlValue = "'%' || UPPER(" + dbValue + ") || '%'";
 		} else if(operatorValue.equals(Filter.NULL) || operatorValue.equals(Filter.NOT_NULL)) {
 			;
 		} else if (operatorValue.equals(Filter.EQUAL) || operatorValue.equals(Filter.NOT_EQUAL)) {
-			Object parameterValue = condition.getValue();
-			String dbValue = ParameterUtil.getDBValue(parameterValue, displayType);
+			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				condition.getValue()
+			);
+
+			String dbValue = ParameterUtil.getDBValue(
+				valueToFilter,
+				displayType
+			);
 			sqlValue = dbValue;
 
-			boolean isString = DisplayType.isText(displayType) || parameterValue instanceof String;
-			boolean isEmptyString = isString && Util.isEmpty((String) parameterValue, true);
+			boolean isString = DisplayType.isText(displayType) || valueToFilter instanceof String;
+			boolean isEmptyString = isString && Util.isEmpty((String) valueToFilter, true);
 			if (isString) {
 				if (isEmptyString) {
-					parameterValue = "";
+					valueToFilter = "";
 				} else {
 					columnName = "UPPER(" + columnName + ")";
 					sqlValue = "UPPER(" + dbValue + ")";
 				}
 			}
-			if (parameterValue == null || isEmptyString) {
+			if (valueToFilter == null || isEmptyString) {
 				additionalSQL.append(" OR ")
 					.append(columnName)
 					.append(" IS NULL ")
@@ -322,8 +373,14 @@ public class WhereClauseUtil {
 			}
 		} else {
 			// Greater, Greater Equal, Less, Less Equal
-			Object parameterValue = condition.getValue();
-			sqlValue = ParameterUtil.getDBValue(parameterValue, displayType);
+			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				condition.getValue()
+			);
+			sqlValue = ParameterUtil.getDBValue(
+				valueToFilter,
+				displayType
+			);
 		}
 
 		String rescriction = "(" + columnName + sqlOperator + sqlValue + additionalSQL.toString() + ")";

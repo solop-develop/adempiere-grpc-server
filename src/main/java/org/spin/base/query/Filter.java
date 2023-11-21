@@ -23,8 +23,7 @@ import java.util.Map;
  * A Stub class that represent a filters from request
  */
 public class Filter {
-	
-	
+
 	public static final String VOID = "void";
 	public static final String EQUAL = "equal";
 	public static final String NOT_EQUAL = "not_equal";
@@ -45,11 +44,11 @@ public class Filter {
 	public static final String OPERATOR = "operator";
 	public static final String VALUES = "values";
 	//	Values
-	private static final int FROM = 0;
-	private static final int TO = 1;
-	
+	public static final int FROM = 0;
+	public static final int TO = 1;
+
 	private Map<String, Object> condition;
-	
+
 	public Filter(Map<String, Object> condition) {
 		this.condition = condition;
 	}
@@ -61,7 +60,7 @@ public class Filter {
 	public String getColumnName() {
 		return (String) condition.get(NAME);
 	}
-	
+
 	public String getOperator() {
 		return (String) condition.get(OPERATOR);
 	}
@@ -69,7 +68,7 @@ public class Filter {
 	public Object getValue() {
 		return condition.get(VALUES);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public List<Object> getValues() {
 		Object value = condition.get(VALUES);
@@ -78,19 +77,18 @@ public class Filter {
 		}
 		return null;
 	}
-	
+
 	public Object getFromValue() {
 		List<Object> values = getValues();
-		if(values == null) {
+		if(values == null || values.isEmpty()) {
 			return null;
 		}
 		return values.get(FROM);
 	}
-	
+
 	public Object getToValue() {
 		List<Object> values = getValues();
-		if(values == null
-				|| values.size() >= 2) {
+		if(values == null || values.isEmpty() || values.size() > 2) {
 			return null;
 		}
 		return values.get(TO);
@@ -102,4 +100,5 @@ public class Filter {
 				+ getValue() + ", getValues()=" + getValues() + ", getFromValue()=" + getFromValue() + ", getToValue()="
 				+ getToValue() + "]";
 	}
+
 }
