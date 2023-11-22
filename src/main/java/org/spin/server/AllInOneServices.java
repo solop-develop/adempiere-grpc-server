@@ -42,7 +42,6 @@ import org.spin.grpc.service.MaterialManagement;
 import org.spin.grpc.service.OrderInfo;
 import org.spin.grpc.service.PaymentPrintExport;
 import org.spin.grpc.service.PaymentInfo;
-import org.spin.grpc.service.PayrollActionNotice;
 import org.spin.grpc.service.PointOfSalesForm;
 import org.spin.grpc.service.ProductInfo;
 import org.spin.grpc.service.RecordManagement;
@@ -62,6 +61,7 @@ import org.spin.grpc.service.form.ExpressReceipt;
 import org.spin.grpc.service.form.ExpressShipment;
 import org.spin.grpc.service.form.PaymentAllocation;
 import org.spin.grpc.service.form.bank_statement_match.BankStatementMatch;
+import org.spin.grpc.service.form.payroll_action_notice.PayrollActionNotice;
 import org.spin.service.grpc.authentication.AuthorizationServerInterceptor;
 import org.spin.service.grpc.context.ServiceContextProvider;
 

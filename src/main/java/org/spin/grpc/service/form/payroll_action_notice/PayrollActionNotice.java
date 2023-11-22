@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.form.payroll_action_notice;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -46,14 +46,14 @@ import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
-import org.spin.backend.grpc.form.DeletePayrollMovementsRequest;
-import org.spin.backend.grpc.form.GetPayrollConceptDefinitionRequest;
-import org.spin.backend.grpc.form.ListEmployeeValidRequest;
-import org.spin.backend.grpc.form.ListPayrollConceptsRequest;
-import org.spin.backend.grpc.form.ListPayrollMovementsRequest;
-import org.spin.backend.grpc.form.ListPayrollProcessRequest;
-import org.spin.backend.grpc.form.PayrollActionNoticeGrpc.PayrollActionNoticeImplBase;
-import org.spin.backend.grpc.form.SavePayrollMovementRequest;
+import org.spin.backend.grpc.form.payroll_action_notice.DeletePayrollMovementsRequest;
+import org.spin.backend.grpc.form.payroll_action_notice.GetPayrollConceptDefinitionRequest;
+import org.spin.backend.grpc.form.payroll_action_notice.ListPayrollConceptsRequest;
+import org.spin.backend.grpc.form.payroll_action_notice.ListPayrollMovementsRequest;
+import org.spin.backend.grpc.form.payroll_action_notice.ListPayrollProcessRequest;
+import org.spin.backend.grpc.form.payroll_action_notice.ListValidEmployeesRequest;
+import org.spin.backend.grpc.form.payroll_action_notice.PayrollActionNoticeGrpc.PayrollActionNoticeImplBase;
+import org.spin.backend.grpc.form.payroll_action_notice.SavePayrollMovementRequest;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.ParameterUtil;
@@ -77,7 +77,8 @@ import io.grpc.stub.StreamObserver;
 public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(PayrollActionNotice.class);
-	
+
+
 	@Override
 	public void listPayrollProcess(ListPayrollProcessRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
@@ -96,7 +97,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 				.asRuntimeException());
 		}
 	}
-	
+
 	private ListLookupItemsResponse.Builder convertPayrollProcessList(Properties context, ListPayrollProcessRequest request) {
 		String sql = "SELECT HR_Process_ID, DocumentNo ||'-'|| Name AS DisplayColumn, DocumentNo, Name, UUID "
 			+ "FROM HR_Process "
@@ -154,7 +155,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			rs = null;
 			pstmt = null;
 		}
-		
+
 		//	Count records
 		int count = CountUtil.countRecords(sql, MHRProcess.Table_Name, parameters);
 		lookupsList.setRecordCount(count);
@@ -165,41 +166,38 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			nextPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		lookupsList.setNextPageToken(nextPageToken);
-		
+
 		return lookupsList;
 	}
 
+
+
 	@Override
-	public void listEmployeeValid(ListEmployeeValidRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	public void listValidEmployees(ListValidEmployeesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListLookupItemsResponse.Builder lookupsList = convertEmployeeValidList(Env.getCtx(), request);
+			ListLookupItemsResponse.Builder lookupsList = listValidEmployees(Env.getCtx(), request);
 			responseObserver.onNext(lookupsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
-	private ListLookupItemsResponse.Builder convertEmployeeValidList(Properties context, ListEmployeeValidRequest request) {
-		ListLookupItemsResponse.Builder lookupsList = ListLookupItemsResponse.newBuilder();
-
-		Map<String, Object> contextAttributesList = ValueManager.convertValuesMapToObjects(
-			request.getContextAttributes().getFieldsMap()
-		);
-		int payrollProcessId = (int) contextAttributesList.get(MHRProcess.COLUMNNAME_HR_Process_ID);
-		if (contextAttributesList == null || payrollProcessId <= 0) {
-			return lookupsList;
-		}
-
+	private ListLookupItemsResponse.Builder listValidEmployees(Properties context, ListValidEmployeesRequest request) {
 		// Get Payroll Process
-		MHRProcess payrollProcess = new MHRProcess(Env.getCtx(), payrollProcessId, null);
+		MHRProcess payrollProcess = PayrollActionNoticeUtil.validateAndGetPayrollProcess(
+			request.getPayrollProcessId()
+		);
 
 		//	Get Payroll attribute
 		MHRPayroll payroll = MHRPayroll.getById(Env.getCtx(), payrollProcess.getHR_Payroll_ID(), payrollProcess.getName());
@@ -250,6 +248,8 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		//	Add Row Number
 		sql = LimitUtil.getQueryWithLimit(sql, limit, offset);
 
+		ListLookupItemsResponse.Builder lookupsList = ListLookupItemsResponse.newBuilder();
+
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
@@ -295,6 +295,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	}
 
 
+
 	@Override
 	public void listPayrollConcepts(ListPayrollConceptsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
@@ -315,34 +316,19 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	}
 
 	private ListLookupItemsResponse.Builder convertPayrollConceptsList(Properties context, ListPayrollConceptsRequest request) {
-		ListLookupItemsResponse.Builder listLookups = ListLookupItemsResponse.newBuilder();
-
-		Map<String, Object> contextAttributesList = ValueManager.convertValuesMapToObjects(
-			request.getContextAttributes().getFieldsMap()
-		);
-		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
-			return listLookups;
-		}
-
-		int payrollProcessId = (int) contextAttributesList.get(MHRProcess.COLUMNNAME_HR_Process_ID);
-		if (payrollProcessId <= 0) {
-			return listLookups;
-		}
-
-		int businessPartnerId = 0;
-		if (contextAttributesList.get(MBPartner.COLUMNNAME_C_BPartner_ID) != null) {
-			businessPartnerId = (int) contextAttributesList.get(MBPartner.COLUMNNAME_C_BPartner_ID);
-		}
-		if (businessPartnerId <= 0) {
-			throw new AdempiereException("@BPartnerNotFound@");
-		}
-		MHREmployee employee = MHREmployee.getActiveEmployee(Env.getCtx(), businessPartnerId, null);
-		if (employee == null || employee.getHR_Employee_ID() <= 0) {
-			throw new AdempiereException("@BPartnerNotFound@ on Employee");
-		}
-
 		// Get Payroll Process
-		MHRProcess payrollProcess = new MHRProcess(Env.getCtx(), payrollProcessId, null);
+		MHRProcess payrollProcess = PayrollActionNoticeUtil.validateAndGetPayrollProcess(
+			request.getPayrollProcessId()
+		);
+
+		MBPartner businessPartner = PayrollActionNoticeUtil.validateAndGetBusinessPartner(
+			request.getBusinessPartnerId()
+		);
+		MHREmployee employee = MHREmployee.getActiveEmployee(
+			context,
+			businessPartner.getC_BPartner_ID(),
+			null
+		);
 
 		List<Object> parameters = new ArrayList<>();
 		String selectQuery = "SELECT hrpc.HR_Concept_ID, "
@@ -400,6 +386,8 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		//	Add Row Number
 		sql = LimitUtil.getQueryWithLimit(sql, limit, offset);
 
+		ListLookupItemsResponse.Builder listLookups = ListLookupItemsResponse.newBuilder();
+
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
@@ -443,6 +431,8 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		return listLookups;
 	}
 
+
+
 	@Override
 	public void getPayrollConceptDefinition(GetPayrollConceptDefinitionRequest request, StreamObserver<Entity> responseObserver) {
 		try {
@@ -454,10 +444,13 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -529,8 +522,9 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 
 		return entityBuilder;
 	}
-	
-	
+
+
+
 	@Override
 	public void listPayrollMovements(ListPayrollMovementsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
@@ -538,37 +532,33 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			
-			ListEntitiesResponse.Builder entitiesList = convertListPayrollMovements(Env.getCtx(), request);
+			ListEntitiesResponse.Builder entitiesList = listPayrollMovements(Env.getCtx(), request);
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
-	private ListEntitiesResponse.Builder convertListPayrollMovements(Properties context, ListPayrollMovementsRequest request) {
-		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
-
-		Map<String, Object> contextAttributesList = ValueManager.convertValuesMapToObjects(
-			request.getContextAttributes().getFieldsMap()
+	private ListEntitiesResponse.Builder listPayrollMovements(Properties context, ListPayrollMovementsRequest request) {
+		// Get Payroll Process
+		MHRProcess payrollProcess = PayrollActionNoticeUtil.validateAndGetPayrollProcess(
+			request.getPayrollProcessId()
 		);
-		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
-			return builder;
-		}
+		int payrollProcessId = payrollProcess.getHR_Process_ID();
 
-		int payrollProcessId = (int) contextAttributesList.get(MHRProcess.COLUMNNAME_HR_Process_ID);
-		if (payrollProcessId <= 0) {
-			return builder;
-		}
-		int businessPartnerId = (int) contextAttributesList.get(MBPartner.COLUMNNAME_C_BPartner_ID);
-		if (businessPartnerId <= 0) {
-			throw new AdempiereException("@BPartnerNotFound@");
-		}
-		
+		MBPartner businessPartner = PayrollActionNoticeUtil.validateAndGetBusinessPartner(
+			request.getBusinessPartnerId()
+		);
+		int businessPartnerId = businessPartner.getC_BPartner_ID();
+
 		StringBuffer sqlQuery = new StringBuffer("SELECT o.Name as OrganizationName, hc.Name AS ConceptName, "		//	Organization Name, Concept Name
 			+ "hm.ValidFrom, cr.ColumnType, "										//	Valid From, Column Type
 			+ "hm.Qty, hm.Amount, hm.ServiceDate, hm.TextMsg, hm.Description, "		//	Quantity, Amount, Service Date, Text Message, Description
@@ -592,6 +582,8 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		//	Get page and count
 		String nexPageToken = null;
 		int rowCount = 0;
+
+		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 
 		//  Execute
 		PreparedStatement pstmt = null;
@@ -723,76 +715,57 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 		return builder;
 	}
 
+
+
 	@Override
 	public void savePayrollMovement(SavePayrollMovementRequest request, StreamObserver<Entity> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Entity.Builder entity = convertSaveMovement(Env.getCtx(), request);
+			Entity.Builder entity = savePayrollMovement(Env.getCtx(), request);
 			responseObserver.onNext(entity.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
-	private Entity.Builder convertSaveMovement(Properties context, SavePayrollMovementRequest request) {
-		Entity.Builder builder = Entity.newBuilder();
-		builder.setTableName(MHRMovement.Table_Name);
-
-		Map<String, Object> contextAttributesList = ValueManager.convertValuesMapToObjects(
-			request.getContextAttributes().getFieldsMap()
+	private Entity.Builder savePayrollMovement(Properties context, SavePayrollMovementRequest request) {
+		// Get Payroll Process
+		MHRProcess payrollProcess = PayrollActionNoticeUtil.validateAndGetPayrollProcess(
+			request.getPayrollProcessId()
 		);
-		if (contextAttributesList == null || contextAttributesList.size() <= 0) {
-			return builder;
-		}
 
-		int payrollProcessId = (int) contextAttributesList.get(MHRMovement.COLUMNNAME_HR_Process_ID);
-		if (payrollProcessId <= 0) {
-			throw new AdempiereException("Payroll Process ID Not Found");
-		}
-		MHRProcess payrollProcess = new MHRProcess(Env.getCtx(), payrollProcessId, null);
-		
-		int businessPartnerId = (int) contextAttributesList.get(MHRMovement.COLUMNNAME_C_BPartner_ID);
-		if (businessPartnerId <= 0) {
-			throw new AdempiereException("@BPartnerNotFound@");
-		}
-
-		Map<String, Object> attributesList = ValueManager.convertValuesMapToObjects(
-			request.getContextAttributes().getFieldsMap()
+		MBPartner businessPartner = PayrollActionNoticeUtil.validateAndGetBusinessPartner(
+			request.getBusinessPartnerId()
 		);
+		int businessPartnerId = businessPartner.getC_BPartner_ID();
 
 		// Concept
-		int conceptId = 0;
-		if (attributesList.get(MHRConcept.COLUMNNAME_HR_Concept_ID) != null) {
-			Object id = attributesList.get(MHRConcept.COLUMNNAME_HR_Concept_ID);
-			if (id instanceof String) {
-				conceptId = Integer.parseInt((String) id);
-			} else {
-				conceptId = (int) id;
-			}
-		}
+		int conceptId = request.getConceptId();
 		if (conceptId <= 0) {
 			throw new AdempiereException("Concept ID Not Found");
 		}
 
-		int movementId = 0;
-		if (contextAttributesList.get(MHRMovement.COLUMNNAME_HR_Movement_ID) != null
-			|| (int) contextAttributesList.get(MHRMovement.COLUMNNAME_HR_Movement_ID) > 0) {
-			movementId = (int) contextAttributesList.get(MHRMovement.COLUMNNAME_HR_Movement_ID);
-		}
-
+		int movementId = request.getId();
 		MHRMovement movement = new MHRMovement(Env.getCtx(), movementId, null);
 
 		MHRConcept concept = MHRConcept.getById(Env.getCtx(), conceptId, null);
 		movement.setSeqNo(concept.getSeqNo());
 		movement.setHR_Concept_ID(conceptId);
 
+
+		Map<String, Object> attributesList = ValueManager.convertValuesMapToObjects(
+			request.getAttributes().getFieldsMap()
+		);
 		if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Quantity)) {
 			// Quantity
 			movement.setQty(null);
@@ -903,11 +876,14 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	
 		movement.saveEx();
 
+		Entity.Builder builder = Entity.newBuilder()
+			.setTableName(MHRMovement.Table_Name)
+		;
 		builder = generateEntityBuilderFromMovement(builder, movement);
 
 		return builder;
 	}
-	
+
 	private Entity.Builder generateEntityBuilderFromMovement(Entity.Builder entityBulder, MHRMovement payrollMovement) {
 		entityBulder.setId(payrollMovement.getHR_Movement_ID());
 
@@ -1076,6 +1052,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	}
 
 
+
 	@Override
 	public void deletePayrollMovements(DeletePayrollMovementsRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -1087,33 +1064,34 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
 	Empty.Builder convertDeleteEntity(Properties context, DeletePayrollMovementsRequest request) {
 		List<Integer> ids = request.getIdsList();
 
-		if (ids.size() <= 0) {
+		if (ids == null || ids.isEmpty()) {
 			throw new AdempiereException("@NoRecordID@");
 		}
 
 		Trx.run(transactionName -> {
+			// delete with id's
 			String tableName = MHRMovement.Table_Name;
 
-			// delete with id's
-			if (ids.size() > 0) {
-				MTable table = MTable.get(Env.getCtx(), tableName);
-				ids.stream().forEach(id -> {
-					PO entity = table.getPO(id, transactionName);
-					if (entity != null && entity.get_ID() > 0) {
-						entity.deleteEx(true);
-					}
-				});
-			}
+			MTable table = MTable.get(Env.getCtx(), tableName);
+			ids.stream().forEach(id -> {
+				PO entity = table.getPO(id, transactionName);
+				if (entity != null && entity.get_ID() > 0) {
+					entity.deleteEx(true);
+				}
+			});
 		});
 		//	Return
 		return Empty.newBuilder();

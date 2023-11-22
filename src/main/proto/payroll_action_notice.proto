@@ -16,7 +16,7 @@ syntax = "proto3";
 
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.form";
+option java_package = "org.spin.backend.grpc.form.payroll_action_notice";
 option java_outer_classname = "ADempierePayrollActionNotice";
 
 import "google/api/annotations.proto";
@@ -26,7 +26,7 @@ import "google/protobuf/struct.proto";
 import "base_data_type.proto";
 
 // Base URL
-// /human-resources/
+// /payroll-action-notice/
 
 package payroll_action_notice;
 
@@ -34,35 +34,35 @@ package payroll_action_notice;
 service PayrollActionNotice {
 	// List Payroll Process
 	rpc ListPayrollProcess(ListPayrollProcessRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/human-resources/process" };
+		option (google.api.http) = { get: "/payroll-action-notice/process" };
 	}
 	// List Employee Valid
-	rpc ListEmployeeValid(ListEmployeeValidRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/human-resources/employees" };
+	rpc ListValidEmployees(ListValidEmployeesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/payroll-action-notice/process/{payroll_process_id}/employees" };
 	}
 	// List Payroll Concepts
 	rpc ListPayrollConcepts(ListPayrollConceptsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/human-resources/concepts" };
+		option (google.api.http) = { get: "/payroll-action-notice/process/{payroll_process_id}/concepts/employees/{business_partner_id}" };
 	}
 	// Get Payroll Concept Definition
 	rpc GetPayrollConceptDefinition(GetPayrollConceptDefinitionRequest) returns (data.Entity) {
-		option (google.api.http) = { get: "/human-resources/concepts/{id}" };
+		option (google.api.http) = { get: "/payroll-action-notice/process/{payroll_process_id}/concepts/{id}" };
 	}
 	// List Payroll Movements
 	rpc ListPayrollMovements(ListPayrollMovementsRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/human-resources/movements" };
+		option (google.api.http) = { get: "/payroll-action-notice/process/{payroll_process_id}/employees/{business_partner_id}/movements" };
 	}
 	// Save Payroll Movement
 	rpc SavePayrollMovement(SavePayrollMovementRequest) returns (data.Entity) {
-		option (google.api.http) = { 
-			post: "/human-resources/movements",
+		option (google.api.http) = {
+			post: "/payroll-action-notice/process/{payroll_process_id}/employees/{business_partner_id}/movements/concepts/{concept_id}",
 			body: "*"
 		};
 	}
 	// Delete Payroll Movements
 	rpc DeletePayrollMovements(DeletePayrollMovementsRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { 
-			post: "/human-resources/delete-movements",
+		option (google.api.http) = {
+			post: "/payroll-action-notice/delete-movements",
 			body: "*"
 		};
 	}
@@ -77,11 +77,11 @@ message ListPayrollProcessRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	string context_attributes = 8;
 }
 
-// List Employee Request
-message ListEmployeeValidRequest {
+// List Employees Request
+message ListValidEmployeesRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -89,7 +89,8 @@ message ListEmployeeValidRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	string context_attributes = 8;
+	int32 payroll_process_id = 9;
 }
 
 // List Payroll Conceps Request
@@ -101,12 +102,15 @@ message ListPayrollConceptsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	string context_attributes = 8;
+	int32 payroll_process_id = 9;
+	int32 business_partner_id = 10;
 }
 
 // Get Payroll Concept Definition Request
 message GetPayrollConceptDefinitionRequest {
-	int32 id = 1;
+	int32 payroll_process_id = 1;
+	int32 id = 2;
 }
 
 // List Payroll Movements Request
@@ -118,18 +122,21 @@ message ListPayrollMovementsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	string context_attributes = 8;
+	int32 payroll_process_id = 9;
+	int32 business_partner_id = 10;
 }
 
 // Save Payroll Movement Request
 message SavePayrollMovementRequest {
-	google.protobuf.Struct context_attributes = 1;
-	int32 id = 2;
-	google.protobuf.Struct attributes = 3;
+	int32 payroll_process_id = 1;
+	int32 business_partner_id = 2;
+	int32 concept_id = 3;
+	int32 id = 4;
+	google.protobuf.Struct attributes = 5;
 }
 
 // Delete Payroll Movements Request
 message DeletePayrollMovementsRequest {
-	google.protobuf.Struct context_attributes = 1;
-	repeated int32 ids = 2;
+	repeated int32 ids = 1;
 }
