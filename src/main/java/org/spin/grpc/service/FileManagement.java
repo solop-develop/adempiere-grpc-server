@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -256,6 +256,7 @@ public class FileManagement extends FileManagementImplBase {
 	}
 
 
+
 	@Override
 	public void getResourceReference(GetResourceReferenceRequest request, StreamObserver<ResourceReference> responseObserver) {
 		try {
@@ -331,6 +332,7 @@ public class FileManagement extends FileManagementImplBase {
 			resourceReference
 		);
 	}
+
 
 
 	@Override
@@ -582,6 +584,7 @@ public class FileManagement extends FileManagementImplBase {
 	}
 
 
+
 	@Override
 	public void setResourceReference(SetResourceReferenceRequest request, StreamObserver<ResourceReference> responseObserver) {
 		try {
@@ -788,7 +791,7 @@ public class FileManagement extends FileManagementImplBase {
 	}
 	
 	Empty.Builder deleteResourceReference(DeleteResourceReferenceRequest request) throws Exception {
-		if (request.getId() <= 0) {
+		if (request.getId() <= 0 && Util.isEmpty(request.getResourceName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
 		}
 
@@ -796,6 +799,11 @@ public class FileManagement extends FileManagementImplBase {
 		if (request.getId() > 0) {
 			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
 		}
+		if (resourceReference == null && !Util.isEmpty(request.getResourceName(), true)) {
+			String resourceUuid = getResourceUuidFromName(request.getResourceName());
+			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), resourceUuid, null);
+		}
+
 		if (resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
 			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
 		}
@@ -832,6 +840,8 @@ public class FileManagement extends FileManagementImplBase {
 
 		return Empty.newBuilder();
 	}
+
+
 
 	@Override
 	public void existsAttachment(ExistsAttachmentRequest request, StreamObserver<ExistsAttachmentResponse> responseObserver) {
