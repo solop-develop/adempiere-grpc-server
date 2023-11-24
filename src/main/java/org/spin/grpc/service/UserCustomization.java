@@ -190,6 +190,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 	}
 
 
+
 	@Override
 	public void listRoles(ListRolesRequest request, StreamObserver<ListRolesResponse> responseObserver) {
 		try {
@@ -285,6 +286,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 
 		return builder;
 	}
+
 
 
 	@Override
@@ -415,6 +417,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 	}
 
 
+
 	@Override
 	public void saveWindowCustomization(SaveWindowCustomizationRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -426,6 +429,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -440,6 +444,12 @@ public class UserCustomization extends UserCustomizationImplBase {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
 
+		if (request.getLevelType() == null
+			|| request.getLevelType() == LevelType.UNRECOGNIZED
+			|| request.getLevelType() == LevelType.UNKNOW) {
+			throw new AdempiereException("@FillMandatory@ @LevelType@");
+		}
+
 		Trx.run(transactionName -> {
 			MTab tab = MTab.get(Env.getCtx(), tabId);
 			if (tab == null || tab.getAD_Tab_ID() <= 0) {
@@ -451,7 +461,10 @@ public class UserCustomization extends UserCustomizationImplBase {
 			MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 
 			// validate level, role, user
-			PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId());
+			PO entity = getEntityToCustomizationType(
+				request.getLevelType().getNumber(),
+				request.getLevelValue()
+			);
 			String columnKey = entity.get_TableName() + "_ID";
 
 			// instance window
@@ -586,6 +599,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -607,8 +621,17 @@ public class UserCustomization extends UserCustomizationImplBase {
 		// 	throw new AdempiereException("@AccessTableNoUpdate@");
 		// }
 
+		if (request.getLevelType() == null
+			|| request.getLevelType() == LevelType.UNRECOGNIZED
+			|| request.getLevelType() == LevelType.UNKNOW) {
+			throw new AdempiereException("@FillMandatory@ @LevelType@");
+		}
+
 		// validate level, role, user
-		PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId());
+		PO entity = getEntityToCustomizationType(
+			request.getLevelType().getNumber(),
+			request.getLevelValue()
+		);
 		String columnKey = entity.get_TableName() + "_ID";
 
 
@@ -724,6 +747,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 	}
 
 
+
 	@Override
 	public void saveProcessCustomization(SaveProcessCustomizationRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -735,6 +759,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -756,8 +781,17 @@ public class UserCustomization extends UserCustomizationImplBase {
 		// 	throw new AdempiereException("@AccessTableNoUpdate@");
 		// }
 
+		if (request.getLevelType() == null
+			|| request.getLevelType() == LevelType.UNRECOGNIZED
+			|| request.getLevelType() == LevelType.UNKNOW) {
+			throw new AdempiereException("@FillMandatory@ @LevelType@");
+		}
+
 		// validate level, role, user
-		PO entity = getEntityToCustomizationType(request.getLevelType().getNumber(), request.getLevelId());
+		PO entity = getEntityToCustomizationType(
+			request.getLevelType().getNumber(),
+			request.getLevelValue()
+		);
 		String columnKey = entity.get_TableName() + "_ID";
 
 		// instance process

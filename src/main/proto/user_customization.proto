@@ -23,41 +23,42 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 // Base URL
-// /customizations/
+// /user-customization/
 
 package user_customization;
 
 // The User Customization service definition.
 service UserCustomization {
 	rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
-		option (google.api.http) = { get: "/customizations/users" };
+		option (google.api.http) = { get: "/user-customization/users" };
 	}
 	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
-		option (google.api.http) = { get: "/customizations/roles" };
+		option (google.api.http) = { get: "/user-customization/roles" };
 	}
 	rpc ListCustomizationsLevel(ListCustomizationsLevelRequest) returns (ListCustomizationsLevelResponse) {
-		option (google.api.http) = { get: "/customizations/levels" };
+		option (google.api.http) = { get: "/user-customization/levels" };
 	}
 	// User Customization
 	rpc SaveWindowCustomization(SaveWindowCustomizationRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { 
-			post: "/customizations/windows",
+		option (google.api.http) = {
+			post: "/user-customization/windows/{tab_id}/{level_type}/{level_value}",
 			body: "*"
 		};
 	}
 	rpc SaveBrowseCustomization(SaveBrowseCustomizationRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { 
-			post: "/customizations/brosers",
+		option (google.api.http) = {
+			post: "/user-customization/browsers/{browse_id}/{level_type}/{level_value}",
 			body: "*"
 		};
 	}
 	rpc SaveProcessCustomization(SaveProcessCustomizationRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { 
-			post: "/customizations/process",
+		option (google.api.http) = {
+			post: "/user-customization/processes/{process_id}/{level_type}/{level_value}",
 			body: "*"
 		};
 	}
 }
+
 
 // User
 message User {
@@ -83,6 +84,7 @@ message ListUsersResponse {
 	string next_page_token = 3;
 }
 
+
 // Role
 message Role {
 	int32 id = 1;
@@ -106,6 +108,7 @@ message ListRolesResponse {
 	repeated Role records = 2;
 	string next_page_token = 3;
 }
+
 
 // Level Customization
 message LevelCustomization {
@@ -132,10 +135,12 @@ message ListCustomizationsLevelResponse {
 }
 
 enum LevelType {
-	USER = 0;
-	ROLE = 1;
-	CLIENT = 2;
+	UNKNOW = 0;
+	USER = 1;
+	ROLE = 2;
+	CLIENT = 3;
 }
+
 
 message FieldAttributes {
 	string filters = 1;
@@ -158,23 +163,26 @@ message FieldAttributes {
 	string is_default_displayed_as_table = 16;
 }
 
+
 message SaveWindowCustomizationRequest {
 	int32 tab_id = 1;
 	LevelType level_type = 2;
-	int32 level_id = 3;
+	int32 level_value = 3;
 	repeated FieldAttributes field_attributes = 4;
 }
+
 
 message SaveBrowseCustomizationRequest {
 	int32 browse_id = 1;
 	LevelType level_type = 2;
-	int32 level_id = 3;
+	int32 level_value = 3;
 	repeated FieldAttributes field_attributes = 4;
 }
+
 
 message SaveProcessCustomizationRequest {
 	int32 process_id = 1;
 	LevelType level_type = 2;
-	int32 level_id = 3;
+	int32 level_value = 3;
 	repeated FieldAttributes field_attributes = 4;
 }
