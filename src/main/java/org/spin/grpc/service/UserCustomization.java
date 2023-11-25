@@ -406,8 +406,9 @@ public class UserCustomization extends UserCustomizationImplBase {
 			throw new AdempiereException("@LevelType@ @NotFound@");
 		}
 
+		MTable table = MTable.get(Env.getCtx(), tableName);
 		PO entityType = RecordUtil.getEntity(Env.getCtx(), tableName, levelId, null);
-		if (entityType == null || !RecordUtil.isValidId(entityType.get_ID(), tableName)) {
+		if (entityType == null || !RecordUtil.isValidId(entityType.get_ID(), table.getAccessLevel())) {
 			throw new AdempiereException(
 				"@" + tableName + "_ID@ @NotFound@"
 			);

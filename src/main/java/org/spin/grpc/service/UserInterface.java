@@ -2517,8 +2517,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 		//	Set record counts
 		if (builder.getRecordCount() <= 0) {
@@ -2527,6 +2530,8 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Return
 		return builder;
 	}
+
+
 
 	@Override
 	public void runCallout(RunCalloutRequest request, StreamObserver<org.spin.backend.grpc.user_interface.Callout> responseObserver) {
