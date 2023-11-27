@@ -22,21 +22,33 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_C_ValidCombination;
 import org.adempiere.core.domains.models.I_Fact_Acct;
 import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
+import org.compiere.model.GridField;
+import org.compiere.model.GridTab;
+import org.compiere.model.GridWindow;
+import org.compiere.model.GridWindowVO;
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAcctSchemaElement;
+import org.compiere.model.MColumn;
+import org.compiere.model.MField;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.base.db.CountUtil;
@@ -48,6 +60,7 @@ import org.spin.base.query.FilterManager;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.logic.GeneralLedgerServiceLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -55,12 +68,16 @@ import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.general_ledger.GeneralLedgerGrpc.GeneralLedgerImplBase;
+import org.spin.backend.grpc.general_ledger.AccoutingElement;
 import org.spin.backend.grpc.general_ledger.GetAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingCombinationsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingFactsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
+import org.spin.backend.grpc.general_ledger.ListAccoutingElementValuesRequest;
+import org.spin.backend.grpc.general_ledger.ListAccoutingElementsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccoutingElementsResponse;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.backend.grpc.general_ledger.SaveAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostRequest;
@@ -79,6 +96,220 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 	private String tableName = MAccount.Table_Name;
 
+
+	@Override
+	public void listAccoutingElements(ListAccoutingElementsRequest request, StreamObserver<ListAccoutingElementsResponse> responseObserver) {
+		try {
+			ListAccoutingElementsResponse.Builder accountingElementsList = listAccoutingElements(request);
+			responseObserver.onNext(accountingElementsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	ListAccoutingElementsResponse.Builder listAccoutingElements(ListAccoutingElementsRequest request) {
+		int accountingSchemaId = request.getAccoutingSchemaId();
+		if (accountingSchemaId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+		}
+		Properties context = Env.getCtx();
+		MAcctSchema accoutingSchema = MAcctSchema.get(context, accountingSchemaId);
+		if (accoutingSchema == null || accoutingSchema.getC_AcctSchema_ID() <= 0) {
+			throw new AdempiereException("@C_AcctSchema_ID@ @NotFound@");
+		}
+
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		int AD_Window_ID = 153; // Maintain Account Combinations
+		GridWindowVO wVO = GridWindowVO.create (context, windowNo, AD_Window_ID);
+		GridWindow m_mWindow = new GridWindow (wVO);
+		GridTab mTab = m_mWindow.getTab(0);
+		if (!mTab.isLoadComplete()) {
+			m_mWindow.initTab(0);
+		}
+
+		ListAccoutingElementsResponse.Builder builderList = ListAccoutingElementsResponse.newBuilder();
+		if (accoutingSchema.isHasAlias()) {
+			AccoutingElement.Builder elementBuilder = AccoutingElement.newBuilder()
+				.setColumnName(I_C_ValidCombination.COLUMNNAME_Combination)
+				.setSequece(0)
+				.setDisplayType(DisplayType.Text)
+				.setIsMandatory(false)
+			;
+			GridField field = mTab.getField(I_C_ValidCombination.COLUMNNAME_Combination);
+			if (field != null) {
+				elementBuilder.setName(
+						field.getHeader()
+					)
+					.setFieldId(field.getAD_Field_ID())
+				;
+			}
+
+			builderList.addAccoutingElements(elementBuilder);
+		}
+
+		List.of(accoutingSchema.getAcctSchemaElements()).forEach(accoutingElement -> {
+			String columnName = accoutingElement.getColumnName();
+			AccoutingElement.Builder elemeBuilder = AccoutingElement.newBuilder()
+				.setColumnName(
+					columnName
+				)
+				.setSequece(
+					accoutingElement.getSeqNo()
+				)
+				.setIsMandatory(
+					accoutingElement.isMandatory()
+				)
+				.setIsBalanced(
+					accoutingElement.isBalanced()
+				)
+				.setElementType(
+					ValueManager.validateNull(
+						accoutingElement.getElementType()
+					)
+				)
+			;
+
+			GridField field = mTab.getField(columnName);
+			if (field != null) {
+				elemeBuilder.setFieldId(field.getAD_Field_ID())
+					.setName(
+						field.getHeader()
+					)
+					.setDisplayType(
+						field.getDisplayType()
+					)
+				;
+				if (ReferenceUtil.validateReference(field.getDisplayType())) {
+					int columnId = MColumn.getColumn_ID(mTab.getTableName(), field.getColumnName());
+					MColumn column = MColumn.get(context, columnId);
+					MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+						field.getDisplayType(), field.getAD_Reference_Value_ID(), field.getColumnName(), column.getAD_Val_Rule_ID()
+					);
+					if (info != null) {
+						List<String> contextColumnsList = ContextManager.getContextColumnNames(
+							Optional.ofNullable(info.QueryDirect).orElse("")
+							+ Optional.ofNullable(info.Query).orElse("")
+							+ Optional.ofNullable(info.ValidationCode).orElse("")
+						);
+						elemeBuilder.addAllContextColumnNames(contextColumnsList);
+					}
+				}
+			}
+
+			builderList.addAccoutingElements(elemeBuilder);
+		});
+
+		builderList.setRecordCount(
+			builderList.getAccoutingElementsCount()
+		);
+
+		return builderList;
+	}
+
+
+
+
+	@Override
+	public void listAccoutingElementValues(ListAccoutingElementValuesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			ListLookupItemsResponse.Builder accountingElementsList = listAccoutingElementValues(request);
+			responseObserver.onNext(accountingElementsList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private ListLookupItemsResponse.Builder listAccoutingElementValues(ListAccoutingElementValuesRequest request) {
+		int accountingSchemaId = request.getAccoutingSchemaId();
+		if (accountingSchemaId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+		}
+		Properties context = Env.getCtx();
+		MAcctSchema accoutingSchema = MAcctSchema.get(context, accountingSchemaId);
+		if (accoutingSchema == null || accoutingSchema.getC_AcctSchema_ID() <= 0) {
+			throw new AdempiereException("@C_AcctSchema_ID@ @NotFound@");
+		}
+
+		String elementType = request.getElementType();
+		if (Util.isEmpty(elementType, true)) {
+			throw new AdempiereException("@C_AcctSchema_ID@ @ElementType@");
+		}
+
+		MAcctSchemaElement schemaElement = accoutingSchema.getAcctSchemaElement(elementType);
+		if (schemaElement == null || schemaElement.getC_AcctSchema_Element_ID() <= 0) {
+			throw new AdempiereException("@C_AcctSchema_Element_ID@ @NotFound@");
+		}
+		ListLookupItemsResponse.Builder accountingElementsList = ListLookupItemsResponse.newBuilder();
+
+		int columnId = MColumn.getColumn_ID(
+			I_C_ValidCombination.Table_Name,
+			schemaElement.getColumnName()
+		);
+		MColumn column = MColumn.get(context, columnId);
+		if (column == null) {
+			return accountingElementsList;
+		}
+
+		MField field = new Query(
+			Env.getCtx(),
+			I_AD_Field.Table_Name,
+			"AD_Tab_ID = ? AND AD_Column_ID = ?",
+			null
+		)
+			.setParameters(207, column.getAD_Column_ID())
+			.first()
+		;
+		if (field == null || field.getAD_Field_ID() <= 0) {
+			return accountingElementsList;
+		}
+
+		int displayTypeId = column.getAD_Reference_ID();
+		int referenceValueId = column.getAD_Reference_Value_ID();
+		int validationRuleId = column.getAD_Val_Rule_ID();
+		if (field.getAD_Reference_ID() > 0) {
+			displayTypeId = field.getAD_Reference_ID();
+		}
+		if (field.getAD_Reference_Value_ID() > 0) {
+			referenceValueId = field.getAD_Reference_Value_ID();
+		}
+		if (field.getAD_Val_Rule_ID() > 0) {
+			validationRuleId = field.getAD_Val_Rule_ID();
+		}
+		MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+			displayTypeId, referenceValueId, column.getColumnName(), validationRuleId
+		);
+
+		if (info == null) {
+			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
+		}
+
+		return UserInterface.listLookupItems(
+			info,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue()
+		);
+	}
+
+
+
 	@Override
 	public void getAccountingCombination(GetAccountingCombinationRequest request, StreamObserver<Entity> responseObserver) {
 		try {
@@ -87,10 +318,13 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -124,6 +358,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	}
 
 
+
 	@Override
 	public void listAccountingCombinations(ListAccountingCombinationsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
@@ -132,10 +367,13 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -215,10 +453,13 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -256,25 +497,30 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 		int accountingCombinationId = 0;
 		String accountingAlias = "";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(sql.toString(), null);
+			pstmt = DB.prepareStatement(sql.toString(), null);
 			pstmt.setInt(1, clientId);
 			pstmt.setInt(2, accountingSchema.getC_AcctSchema_ID());
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				accountingCombinationId = rs.getInt(1);
 				accountingAlias = ValueManager.validateNull(rs.getString(2));
 			}
-			rs.close();
-			pstmt.close();
 		}
 		catch (SQLException e) {
 			log.log(Level.SEVERE, sql.toString(), e);
 			accountingCombinationId = 0;
 		}
+		finally {
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
 
 		//	We have an account like this already - check alias
-		if (accountingCombinationId != 0) {
+		if (accountingCombinationId > 0) {
 			if (accountingSchema.isHasAlias() && !accountingCombinationAlias.equals(accountingAlias)) {
 				sql = new StringBuffer("UPDATE C_ValidCombination SET Alias = ");
 				if (Util.isEmpty(accountingCombinationAlias, true)) {
@@ -284,18 +530,21 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 				}
 				sql.append(" WHERE C_ValidCombination_ID=").append(accountingCombinationId);
 				int rowChanges = 0;
+				PreparedStatement stmt = null;
 				try {
-					PreparedStatement stmt = DB.prepareStatement(
+					stmt = DB.prepareStatement(
 						sql.toString(),
 						ResultSet.TYPE_FORWARD_ONLY,
 						ResultSet.CONCUR_UPDATABLE,
 						null
 					);
 					rowChanges = stmt.executeUpdate();
-					stmt.close();
 				}
 				catch (SQLException e) {
 					log.log(Level.SEVERE, sql.toString(), e);
+				}
+				finally {
+					DB.close(stmt);
 				}
 				if (rowChanges == 0) {
 					// FDialog.error(m_WindowNo, this, "AccountNotUpdated");
@@ -402,19 +651,21 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		acctingSchemaElements.forEach(acctingSchemaElement -> {
 			String elementType = acctingSchemaElement.getElementType();
 			String columnName = MAcctSchemaElement.getColumnName(elementType);
-			Object value = attributesList.get(columnName);
-
-			if (acctingSchemaElement.isMandatory() && (value == null || (value instanceof String && Util.isEmpty((String) value, true)))) {
-				throw new AdempiereException("@" + columnName + "@ @IsMandatory@");
-			}
 
 			// The alias does not affect the query criteria
 			if (columnName == MAccount.COLUMNNAME_Alias) {
 				return;
 			}
 
+			Object value = attributesList.get(columnName);
+
+			boolean isEmptyValue = value == null || (value instanceof String && Util.isEmpty((String) value, true));
+			if (acctingSchemaElement.isMandatory() && isEmptyValue) {
+				throw new AdempiereException("@" + columnName + "@ @IsMandatory@");
+			}
+
 			sql.append(" AND ").append(columnName);
-			if (value == null || (value instanceof String && Util.isEmpty((String) value, true))) {
+			if (isEmptyValue) {
 				sql.append(" IS NULL ");
 			} else {
 				sql.append(" = ").append(value);
@@ -439,10 +690,13 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -489,10 +743,11 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -511,10 +766,11 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -533,10 +789,11 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -554,10 +811,13 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 	

@@ -32,19 +32,33 @@ package general_ledger;
 
 // The General Ledger service definition.
 service GeneralLedger {
+	// Accouting Element
+	rpc ListAccoutingElements(ListAccoutingElementsRequest) returns (ListAccoutingElementsResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/schemas/{accouting_schema_id}/elements" };
+	}
+	rpc ListAccoutingElementValues(ListAccoutingElementValuesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/schemas/{accouting_schema_id}/elements/{element_type}" };
+	}
+
 	// Accounting Combination
 	rpc getAccountingCombination(GetAccountingCombinationRequest) returns (data.Entity) {
-		option (google.api.http) = { get: "/general-ledger/accounts/combinations" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/combinations/{id}"
+			additional_bindings: {
+				put: "/general-ledger/accounts/combinations/combination/{value}"
+			}
+		};
 	}
 	rpc ListAccountingCombinations(ListAccountingCombinationsRequest) returns (data.ListEntitiesResponse) {
 		option (google.api.http) = { get: "/general-ledger/accounts/combinations" };
 	}
 	rpc SaveAccountingCombination(SaveAccountingCombinationRequest) returns (data.Entity) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/general-ledger/accounts/combinations",
 			body: "*"
 		};
 	}
+
 	// Accounting Viewer
 	rpc ListAccountingSchemas(ListAccountingSchemasRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/general-ledger/accounts/schemas" };
@@ -52,22 +66,80 @@ service GeneralLedger {
 	rpc ListPostingTypes(ListPostingTypesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/general-ledger/accounts/posting-types" };
 	}
-	rpc ListAccountingDocuments(ListAccountingDocumentsRequest) returns (ListAccountingDocumentsResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/documents" };
-	}
 	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/general-ledger/organizations" };
+	}
+	rpc ListAccountingDocuments(ListAccountingDocumentsRequest) returns (ListAccountingDocumentsResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/documents" };
 	}
 	rpc ListAccountingFacts(ListAccountingFactsRequest) returns (data.ListEntitiesResponse) {
 		option (google.api.http) = { get: "/general-ledger/accounts/facts" };
 	}
 	rpc StartRePost(StartRePostRequest) returns (StartRePostResponse) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/general-ledger/re-post",
 			body: "*"
 		};
 	}
 }
+
+
+// Accouting Element
+message AccoutingElement {
+	string element_type = 1;
+	string column_name = 2;
+	string name = 3;
+	bool is_mandatory = 4;
+	bool is_balanced = 5;
+	int32 sequece = 6;
+	repeated string context_column_names = 7;
+	int32 display_type = 8;
+	int32 field_id = 9;
+}
+
+message ListAccoutingElementsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	google.protobuf.Struct context_attributes = 8;
+	int32 accouting_schema_id = 9;
+}
+
+message ListAccoutingElementsResponse {
+	int64 record_count = 1;
+	repeated AccoutingElement accouting_elements = 2;
+	string next_page_token = 3;
+}
+
+message AccoutingElementValue {
+	int32 id = 1;
+	string value = 2;
+	string dispay_value = 3;
+}
+
+message ListAccoutingElementValuesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	int32 accouting_schema_id = 9;
+	string element_type = 10;
+}
+
+message ListAccoutingElementValuesResponse {
+	int64 record_count = 1;
+	repeated AccoutingElementValue accouting_element_values = 2;
+	string next_page_token = 3;
+}
+
 
 // Accounting Combination
 message GetAccountingCombinationRequest {
