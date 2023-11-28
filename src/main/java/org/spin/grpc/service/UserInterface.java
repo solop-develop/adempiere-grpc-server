@@ -2223,7 +2223,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		sql = Env.parseContext(context, windowNo, sql, false);
 		if(Util.isEmpty(sql, true)
 				&& !Util.isEmpty(reference.Query, true)) {
-			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
+			throw new AdempiereException("@AD_Reference_ID@ @WhereClause@ @Unparseable@");
 		}
 		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
