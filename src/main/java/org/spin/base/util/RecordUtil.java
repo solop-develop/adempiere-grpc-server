@@ -543,7 +543,7 @@ public class RecordUtil {
 				ResultSetMetaData metaData = rs.getMetaData();
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
-						String columnName = metaData.getColumnName (index);
+						String columnName = metaData.getColumnName(index);
 						MColumn field = columnsMap.get(columnName.toUpperCase());
 						Value.Builder valueBuilder = Value.newBuilder();
 						//	Display Columns
@@ -568,6 +568,10 @@ public class RecordUtil {
 							value,
 							field.getAD_Reference_ID()
 						);
+						if(valueBuilder == null) {
+							valueBuilder = Value.newBuilder();
+							// continue;
+						}
 						values.putFields(
 							fieldColumnName,
 							valueBuilder.build()
@@ -592,4 +596,5 @@ public class RecordUtil {
 		//	Return
 		return builder;
 	}
+
 }

@@ -45,7 +45,7 @@ service GeneralLedger {
 		option (google.api.http) = {
 			get: "/general-ledger/accounts/combinations/{id}"
 			additional_bindings: {
-				put: "/general-ledger/accounts/combinations/combination/{value}"
+				get: "/general-ledger/accounts/combinations/combination/{value}"
 			}
 		};
 	}

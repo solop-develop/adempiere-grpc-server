@@ -566,7 +566,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private Entity.Builder getTabEntity(GetTabEntityRequest request, ArrayList<Object> multiKeys) {
+	public static Entity.Builder getTabEntity(GetTabEntityRequest request, ArrayList<Object> multiKeys) {
 		if (request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
@@ -607,8 +607,11 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		Entity.Builder valueObjectBuilder = Entity.newBuilder();
-		valueObjectBuilder.setTableName(table.getTableName());
+		Entity.Builder valueObjectBuilder = Entity.newBuilder()
+			.setTableName(table.getTableName())
+		;
+		CLogger log = CLogger.getCLogger(UserInterface.class);
+
 		try {
 			LinkedHashMap<String, MColumn> columnsMap = new LinkedHashMap<>();
 			//	Add field to map
@@ -629,7 +632,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				ResultSetMetaData metaData = rs.getMetaData();
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
-						String columnName = metaData.getColumnName (index);
+						String columnName = metaData.getColumnName(index);
 						MColumn field = columnsMap.get(columnName.toUpperCase());
 						Value.Builder valueBuilder = Value.newBuilder();
 						//	Display Columns
@@ -638,7 +641,10 @@ public class UserInterface extends UserInterfaceImplBase {
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueManager.getValueFromString(value);
 							}
-							values.putFields(columnName, valueBuilder.build());
+							values.putFields(
+								columnName,
+								valueBuilder.build()
+							);
 							continue;
 						}
 						if (field.isKey()) {
@@ -651,7 +657,10 @@ public class UserInterface extends UserInterfaceImplBase {
 							value,
 							field.getAD_Reference_ID()
 						);
-						values.putFields(fieldColumnName, valueBuilder.build());
+						values.putFields(
+							fieldColumnName,
+							valueBuilder.build()
+						);
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
 						e.printStackTrace();

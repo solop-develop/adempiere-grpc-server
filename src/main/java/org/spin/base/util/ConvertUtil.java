@@ -228,12 +228,19 @@ public class ConvertUtil {
 			String columnName = poInfo.getColumnName(index);
 			int referenceId = poInfo.getColumnDisplayType(index);
 			Object value = entity.get_Value(index);
-			Value.Builder builderValue = ValueManager.getValueFromReference(value, referenceId);
+			Value.Builder builderValue = ValueManager.getValueFromReference(
+				value,
+				referenceId
+			);
 			if(builderValue == null) {
-				continue;
+				builderValue = Value.newBuilder();
+				// continue;
 			}
 			//	Add
-			values.putFields(columnName, builderValue.build());
+			values.putFields(
+				columnName,
+				builderValue.build()
+			);
 		}
 		builder.setValues(values);
 		//	

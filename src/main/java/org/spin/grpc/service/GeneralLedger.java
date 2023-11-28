@@ -82,6 +82,7 @@ import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.backend.grpc.general_ledger.SaveAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostResponse;
+import org.spin.backend.grpc.user_interface.GetTabEntityRequest;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -95,6 +96,8 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	private CLogger log = CLogger.getCLogger(GeneralLedger.class);
 
 	private String tableName = MAccount.Table_Name;
+
+	private int ACCOUNT_COMBINATION_TAB = 207;
 
 
 	@Override
@@ -272,7 +275,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			"AD_Tab_ID = ? AND AD_Column_ID = ?",
 			null
 		)
-			.setParameters(207, column.getAD_Column_ID())
+			.setParameters(this.ACCOUNT_COMBINATION_TAB, column.getAD_Column_ID())
 			.first()
 		;
 		if (field == null || field.getAD_Field_ID() <= 0) {
@@ -352,7 +355,16 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			throw new AdempiereException("@Error@ @AccountCombination@ @not.found@");
 		}
 
-		Entity.Builder entityBuilder = ConvertUtil.convertEntity(accountingCombination);
+
+		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
+			.setTabId(this.ACCOUNT_COMBINATION_TAB)
+			.setId(accountingCombination.get_ID())
+		;
+
+		Entity.Builder entityBuilder = UserInterface.getTabEntity(
+			getEntityBuilder.build(),
+			new ArrayList<Object>()
+		);
 
 		return entityBuilder;
 	}
