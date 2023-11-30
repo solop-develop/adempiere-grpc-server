@@ -551,6 +551,8 @@ public class RecordUtil {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueManager.getValueFromString(value);
+							} else {
+								valueBuilder = ValueManager.getValueFromNull();
 							}
 							values.putFields(
 								columnName,

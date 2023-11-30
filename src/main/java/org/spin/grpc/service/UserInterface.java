@@ -640,6 +640,8 @@ public class UserInterface extends UserInterfaceImplBase {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueManager.getValueFromString(value);
+							} else {
+								valueBuilder = ValueManager.getValueFromNull();
 							}
 							values.putFields(
 								columnName,
@@ -2497,6 +2499,8 @@ public class UserInterface extends UserInterfaceImplBase {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueManager.getValueFromString(value);
+							} else {
+								valueBuilder = ValueManager.getValueFromNull();
 							}
 							values.putFields(
 								columnName,

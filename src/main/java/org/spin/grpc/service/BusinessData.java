@@ -706,6 +706,8 @@ public class BusinessData extends BusinessDataImplBase {
 							String value = rs.getString(index);
 							if(!Util.isEmpty(value)) {
 								valueBuilder = ValueManager.getValueFromString(value);
+							} else {
+								valueBuilder = ValueManager.getValueFromNull();
 							}
 							rowValues.putFields(
 								columnName,
