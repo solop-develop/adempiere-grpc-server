@@ -55,14 +55,17 @@ public class LocationAddressLogic {
 		String whereClause = null;
 		List<Object> parameters = new ArrayList<Object>();
 
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause = "("
 				+ "UPPER(CountryCode) = UPPER(?) "
 				+ "OR UPPER(Name) = UPPER(?) "
 				+ ")"
 			;
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 		Query query = new Query(
 			Env.getCtx(),
@@ -136,14 +139,17 @@ public class LocationAddressLogic {
 		List<Object> parameters = new ArrayList<Object>();
 		parameters.add(country.getC_Country_ID());
 
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause = "AND ("
 				+ "UPPER(CountryCode) = UPPER(?) "
 				+ "OR UPPER(Name) = UPPER(?) "
 				+ ")"
 			;
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 		Query query = new Query(
 			Env.getCtx(),
@@ -195,14 +201,18 @@ public class LocationAddressLogic {
 				parameters.add(request.getRegionId());
 			}
 		}
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += "AND ("
 				+ "UPPER(CountryCode) = UPPER(?) "
 				+ "OR UPPER(Name) = UPPER(?) "
 				+ ")"
 			;
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 		Query query = new Query(
 			Env.getCtx(),

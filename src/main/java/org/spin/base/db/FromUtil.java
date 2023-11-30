@@ -59,7 +59,7 @@ public class FromUtil {
 			patternTableWithAliases = patternOnlyTableAlias;
 		}
 
-		// if (!Util.isEmpty(patternOnlyTableAlias, false)) {
+		// if (!Util.isEmpty(patternOnlyTableAlias, true)) {
 		// 	patternTableWithAliases = patternOnlyTableAlias + "|" + patternOnlyTableName;
 		// }
 

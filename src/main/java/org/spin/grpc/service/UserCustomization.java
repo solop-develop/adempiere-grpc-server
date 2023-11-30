@@ -111,12 +111,16 @@ public class UserCustomization extends UserCustomizationImplBase {
 	private ListUsersResponse.Builder listUsers(ListUsersRequest request) {
 		String whereClause = "";
 		List<Object> parameters = new ArrayList<>();
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += "(UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%')"
 			;
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 
 		Query query = new Query(
@@ -214,12 +218,16 @@ public class UserCustomization extends UserCustomizationImplBase {
 	private ListRolesResponse.Builder listRoles(ListRolesRequest request) {
 		List<Object> parameters = new ArrayList<>();
 		String whereClause = "";
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += "(UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%')"
 			;
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 
 		Query query = new Query(
@@ -312,12 +320,16 @@ public class UserCustomization extends UserCustomizationImplBase {
 	private ListCustomizationsLevelResponse.Builder listCustomizationsLevel(ListCustomizationsLevelRequest request) {
 		List<Object> parameters = new ArrayList<>();
 		String whereClause = "";
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += "AND (UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%')"
 			;
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 
 		Query query = new Query(

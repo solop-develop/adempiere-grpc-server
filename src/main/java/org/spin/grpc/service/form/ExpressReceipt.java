@@ -17,8 +17,6 @@ package org.spin.grpc.service.form;
 import org.adempiere.exceptions.AdempiereException;
 
 import java.math.BigDecimal;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -115,10 +113,10 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			// URL decode to change characteres
-			String searchValue = URLDecoder.decode(request.getSearchValue(), StandardCharsets.UTF_8);
-
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -243,10 +241,10 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		parameters.add(businessPartnerId);
 
 		//	For search value
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			// URL decode to change characteres
-			String searchValue = URLDecoder.decode(request.getSearchValue(), StandardCharsets.UTF_8);
-
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "
 				+ ")"
@@ -351,10 +349,10 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		parameters.add(orderId);
 
 		//	For search value
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			// URL decode to change characteres
-			String searchValue = URLDecoder.decode(request.getSearchValue(), StandardCharsets.UTF_8);
-
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "

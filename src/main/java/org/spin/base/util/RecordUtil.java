@@ -15,8 +15,6 @@
  *************************************************************************************/
 package org.spin.base.util;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -333,7 +331,9 @@ public class RecordUtil {
 		}
 
 		// URL decode to change characteres
-		String searchValue = URLDecoder.decode(search_value, StandardCharsets.UTF_8);
+		final String searchValue = ValueManager.getDecodeUrl(
+			search_value
+		);
 
 		String lang = Env.getAD_Language(Env.getCtx());
 		// search on trl table

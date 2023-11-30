@@ -216,16 +216,18 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			log.fine("Add Line for Order = " + request.getSearchValue());
 			ListBusinessPartnersResponse.Builder businessPartnerList = getBusinessPartnerList(request);
 			responseObserver.onNext(businessPartnerList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -236,16 +238,18 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			log.fine("Object Requested = " + request.getSearchValue());
 			BusinessPartner.Builder businessPartner = getBusinessPartner(request);
 			responseObserver.onNext(businessPartner.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -364,8 +368,12 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 		StringBuffer whereClause = new StringBuffer();
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
+
 		//	For search value
-		if(!Util.isEmpty(request.getSearchValue())) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if(!Util.isEmpty(searchValue, true)) {
 			whereClause.append("("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -373,10 +381,10 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%'"
 				+ ")");
 			//	Add parameters
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 		//	For value
 		if(!Util.isEmpty(request.getValue())) {
@@ -637,15 +645,19 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 		StringBuffer whereClause = new StringBuffer();
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
+
 		//	For search value
-		if(!Util.isEmpty(request.getSearchValue())) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if(!Util.isEmpty(searchValue, true)) {
 			whereClause.append("("
 				+ "UPPER(Value) = UPPER(?) "
 				+ "OR UPPER(Name) = UPPER(?)"
 				+ ")");
 			//	Add parameters
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 		//	For value
 		if(!Util.isEmpty(request.getValue())) {

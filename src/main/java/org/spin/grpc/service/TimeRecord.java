@@ -601,13 +601,16 @@ public class TimeRecord extends TimeRecordImplBase {
 			whereClause += " AND AssignDateTo = ? ";
 		}
 
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%' "
 			+ ")";
-			parametersList.add(request.getSearchValue());
-			parametersList.add(request.getSearchValue());
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
 		}
 
 		Query query = new Query(

@@ -282,7 +282,7 @@ public class BankStatementMatchConvertUtil {
 
 
 	public static TenderType.Builder convertTenderType(String value) {
-		if (Util.isEmpty(value, false)) {
+		if (Util.isEmpty(value, true)) {
 			return TenderType.newBuilder();
 		}
 

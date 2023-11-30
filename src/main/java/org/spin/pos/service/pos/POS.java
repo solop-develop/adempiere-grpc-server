@@ -31,6 +31,7 @@ import org.spin.backend.grpc.pos.ListCampaignsRequest;
 import org.spin.backend.grpc.pos.ListCampaignsResponse;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.util.POSConvertUtil;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -91,8 +92,12 @@ public class POS {
 		List<Object> filtersList = new ArrayList<>();
 
 		String whereClause = null;
-		if (!Util.isEmpty(request.getSearchValue(), false)) {
-			filtersList.add(request.getSearchValue());
+
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
+			filtersList.add(searchValue);
 			whereClause = "UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
 		}
 

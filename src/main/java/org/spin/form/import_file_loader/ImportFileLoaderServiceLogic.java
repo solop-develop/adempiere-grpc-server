@@ -123,11 +123,14 @@ public class ImportFileLoaderServiceLogic {
 			.setRecordCount(charsetsList.size())
 		;
 
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
-			final String searchValue = request.getSearchValue().toLowerCase();
-
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			charsetsList = charsetsList.stream().filter(charset -> {
-				return charset.name().toLowerCase().contains(searchValue);
+				return charset.name().toLowerCase().contains(
+					searchValue.toLowerCase()
+				);
 			})
 			.collect(Collectors.toList());
 		}

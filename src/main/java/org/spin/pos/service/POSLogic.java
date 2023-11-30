@@ -46,8 +46,12 @@ public class POSLogic {
 		StringBuffer whereClause = new StringBuffer();
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
+
 		//	For search value
-		if(!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if(!Util.isEmpty(searchValue, true)) {
 			whereClause.append("("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -56,10 +60,10 @@ public class POSLogic {
 				+ ")"
 			);
 			//	Add parameters
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 		//	For value
 		if(!Util.isEmpty(request.getValue(), true)) {
@@ -201,16 +205,20 @@ public class POSLogic {
 		StringBuffer whereClause = new StringBuffer();
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
+
 		//	For search value
-		if(!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if(!Util.isEmpty(searchValue, true)) {
 			// TODO: Check if it is better with the `LIKE` operator 
 			whereClause.append(
 				"(UPPER(Value) = UPPER(?) "
 				+ "OR UPPER(Name) = UPPER(?))"
 			);
 			//	Add parameters
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 		//	For value
 		if(!Util.isEmpty(request.getValue(), true)) {

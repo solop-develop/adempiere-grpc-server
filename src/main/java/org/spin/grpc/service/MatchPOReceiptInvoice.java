@@ -413,8 +413,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		String whereClause = "IsPurchased = 'Y' AND IsSummary = 'N' ";
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
+
 		//	For search value
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -423,10 +427,10 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 				+ ")"
 			;
 			//	Add parameters
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 
 		Query query = new Query(

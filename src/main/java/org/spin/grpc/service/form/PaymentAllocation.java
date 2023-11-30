@@ -405,7 +405,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 
 	public static TransactionType.Builder convertTransactionType(String value) {
-		if (Util.isEmpty(value, false)) {
+		if (Util.isEmpty(value, true)) {
 			return TransactionType.newBuilder();
 		}
 

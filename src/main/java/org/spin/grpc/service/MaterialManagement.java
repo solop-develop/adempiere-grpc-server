@@ -414,9 +414,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		parameters.add(productAttributeSetId);
 
 		// Add search value to filter
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND (UPPER(Description) LIKE '%' || UPPER(?) || '%')";
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
 		}
 
 		Query query =  new Query(
@@ -834,15 +837,18 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		// Add search value to filter
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%'"
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%' "
 			+ ")";
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
 		}
 
 		Query query = new Query(
@@ -966,9 +972,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		// Add search value to filter
-		if (!Util.isEmpty(request.getSearchValue(), true)) {
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND (UPPER(Value) LIKE '%' || UPPER(?) || '%')";
-			parameters.add(request.getSearchValue());
+			parameters.add(searchValue);
 		}
 
 		// Add dynamic validation to filter
