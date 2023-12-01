@@ -43,9 +43,34 @@ service IssueManagement {
 	rpc ListPriorities(ListPrioritiesRequest) returns (ListPrioritiesResponse) {
 		option (google.api.http) = { get: "/issue-management/priorities" };
 	}
+	// Status Category
+	rpc ListStatusCategories(ListStatusCategoriesRequest) returns (ListStatusCategoriesResponse) {
+		option (google.api.http) = { get: "/issue-management/status-categories" };
+	}
 	// Status
 	rpc ListStatuses(ListStatusesRequest) returns (ListStatusesResponse) {
-		option (google.api.http) = { get: "/issue-management/statuses" };
+		option (google.api.http) = {
+			get: "/issue-management/statuses"
+			additional_bindings: {
+				get: "/issue-management/status-categories/{status_category_id}/statuses"
+			}
+		};
+	}
+	// Category
+	rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse) {
+		option (google.api.http) = { get: "/issue-management/categories" };
+	}
+	// Group
+	rpc ListGroups(ListGroupsRequest) returns (ListGroupsResponse) {
+		option (google.api.http) = { get: "/issue-management/groups" };
+	}	
+	// Business Partner
+	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {
+		option (google.api.http) = { get: "/issue-management/business-partners" };
+	}
+	// Project
+	rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+		option (google.api.http) = { get: "/issue-management/projects" };
 	}
 	// Issue
 	rpc ExistsIssues(ExistsIssuesRequest) returns (ExistsIssuesResponse) {
@@ -60,7 +85,7 @@ service IssueManagement {
 		};
 	}
 	rpc CreateIssue(CreateIssueRequest) returns (Issue) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/issue-management/issues",
 			body: "*"
 		};
@@ -79,13 +104,13 @@ service IssueManagement {
 		option (google.api.http) = { get: "/issue-management/issues/{issue_id}/comments" };
 	}
 	rpc CreateIssueComment(CreateIssueCommentRequest) returns (IssueComment) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/issue-management/issues/{issue_id}/comments",
 			body: "*"
 		};
 	}
 	rpc UpdateIssueComment(UpdateIssueCommentRequest) returns (IssueComment) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			put: "/issue-management/issues/{issue_id}/comments/{id}",
 			body: "*"
 		};
@@ -168,11 +193,40 @@ message ListPrioritiesResponse {
 	string next_page_token = 3;
 }
 
-// Status
-message Status {
+
+// Status Category
+message StatusCategory {
 	int32 id = 1;
 	string name = 2;
 	string description = 3;
+	bool is_default = 4;
+}
+
+message ListStatusCategoriesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListStatusCategoriesResponse {
+	int64 record_count = 1;
+	repeated StatusCategory records = 2;
+	string next_page_token = 3;
+}
+
+
+// Status
+message Status {
+	int32 id = 1;
+	string value = 2;
+	string name = 3;
+	string description = 4;
+	int32 sequence = 5;
+	bool is_default = 6;
 }
 
 message ListStatusesRequest {
@@ -192,6 +246,110 @@ message ListStatusesResponse {
 	string next_page_token = 3;
 }
 
+
+// Category
+message Category {
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+}
+
+message ListCategoriesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 request_type_id = 8;
+}
+
+message ListCategoriesResponse {
+	int64 record_count = 1;
+	repeated Category records = 2;
+	string next_page_token = 3;
+}
+
+
+// Group
+message Group {
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+}
+
+message ListGroupsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 request_type_id = 8;
+}
+
+message ListGroupsResponse {
+	int64 record_count = 1;
+	repeated Group records = 2;
+	string next_page_token = 3;
+}
+
+
+// Business Partner
+message BusinessPartner {
+	int32 id = 1;
+	string value = 2;
+	string name = 3;
+	string description = 4;
+}
+
+message ListBusinessPartnersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 request_type_id = 8;
+}
+
+message ListBusinessPartnersResponse {
+	int64 record_count = 1;
+	repeated BusinessPartner records = 2;
+	string next_page_token = 3;
+}
+
+
+// Project
+message Project {
+	int32 id = 1;
+	string value = 2;
+	string name = 3;
+	string description = 4;
+}
+
+message ListProjectsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 request_type_id = 8;
+}
+
+message ListProjectsResponse {
+	int64 record_count = 1;
+	repeated Project records = 2;
+	string next_page_token = 3;
+}
+
+
+// Issue Definition
 message DueType {
 	int32 id = 1;
 	string value = 2;
@@ -199,7 +357,6 @@ message DueType {
 	string description = 4;
 }
 
-// Issue Definition
 message Issue {
 	int32 id = 1;
 	string document_no = 2;
@@ -214,6 +371,11 @@ message Issue {
 	Priority priority = 11;
 	google.protobuf.Timestamp date_next_action = 12;
 	DueType due_type = 13;
+	Category category = 14;
+	Group group = 15;
+	BusinessPartner business_partner = 16;
+	Project project = 17;
+	Issue parent_issue = 18;
 }
 
 message ExistsIssuesRequest {
@@ -235,6 +397,8 @@ message ListIssuesRequest {
 	string search_value = 7;
 	string table_name = 8;
 	int32 record_id = 9;
+	// custom filters
+	int32 status_category_id = 10;
 }
 
 message ListIssuesReponse {

@@ -20,24 +20,35 @@ import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_R_RequestAction;
 import org.adempiere.core.domains.models.I_R_Status;
 import org.adempiere.core.domains.models.X_R_RequestUpdate;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
+import org.compiere.model.MGroup;
+import org.compiere.model.MProject;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRequest;
 import org.compiere.model.MRequestAction;
+import org.compiere.model.MRequestCategory;
 import org.compiere.model.MRequestType;
 import org.compiere.model.MRole;
 import org.compiere.model.MStatus;
+import org.compiere.model.MStatusCategory;
 import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.issue_management.BusinessPartner;
+import org.spin.backend.grpc.issue_management.Category;
 import org.spin.backend.grpc.issue_management.DueType;
+import org.spin.backend.grpc.issue_management.Group;
 import org.spin.backend.grpc.issue_management.Issue;
 import org.spin.backend.grpc.issue_management.IssueComment;
 import org.spin.backend.grpc.issue_management.IssueCommentType;
 import org.spin.backend.grpc.issue_management.Priority;
+import org.spin.backend.grpc.issue_management.Project;
 import org.spin.backend.grpc.issue_management.RequestType;
+import org.spin.backend.grpc.issue_management.Status;
+import org.spin.backend.grpc.issue_management.StatusCategory;
 import org.spin.backend.grpc.issue_management.User;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -219,17 +230,49 @@ public class IssueManagementConvertUtil {
 
 
 
-	public static org.spin.backend.grpc.issue_management.Status.Builder convertStatus(int statusId) {
-		org.spin.backend.grpc.issue_management.Status.Builder builder = org.spin.backend.grpc.issue_management.Status.newBuilder();
+	public static StatusCategory.Builder convertStatusCategory(int statusCategoryId) {
+		StatusCategory.Builder builder = StatusCategory.newBuilder();
+		if (statusCategoryId <= 0) {
+			return builder;
+		}
+
+		MStatusCategory statusCategory = MStatusCategory.get(Env.getCtx(), statusCategoryId);
+		return convertStatusCategory(statusCategory);
+	}
+	public static StatusCategory.Builder convertStatusCategory(MStatusCategory statusCategory) {
+		StatusCategory.Builder builder = StatusCategory.newBuilder();
+		if (statusCategory == null || statusCategory.getR_StatusCategory_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(statusCategory.getR_StatusCategory_ID())
+			.setName(
+				ValueManager.validateNull(statusCategory.getName())
+			)
+			.setDescription(
+				ValueManager.validateNull(statusCategory.getDescription())
+			)
+			.setIsDefault(
+				statusCategory.isDefault()
+			)
+		;
+
+		return builder;
+	}
+
+
+
+	public static Status.Builder convertStatus(int statusId) {
+		Status.Builder builder = Status.newBuilder();
 		if (statusId <= 0) {
 			return builder;
 		}
 
-		MStatus requestType = MStatus.get(Env.getCtx(), statusId);
-		return convertStatus(requestType);
+		MStatus status = MStatus.get(Env.getCtx(), statusId);
+		return convertStatus(status);
 	}
-	public static org.spin.backend.grpc.issue_management.Status.Builder convertStatus(MStatus status) {
-		org.spin.backend.grpc.issue_management.Status.Builder builder = org.spin.backend.grpc.issue_management.Status.newBuilder();
+	public static Status.Builder convertStatus(MStatus status) {
+		Status.Builder builder = Status.newBuilder();
 		if (status == null || status.getR_Status_ID() <= 0) {
 			return builder;
 		}
@@ -240,6 +283,154 @@ public class IssueManagementConvertUtil {
 			)
 			.setDescription(
 				ValueManager.validateNull(status.getDescription())
+			)
+			.setSequence(
+				status.getSeqNo()
+			)
+			.setIsDefault(
+				status.isDefault()
+			)
+		;
+
+		return builder;
+	}
+
+
+
+	public static Category.Builder convertCategory(int requestCategoryId) {
+		Category.Builder builder = Category.newBuilder();
+		if (requestCategoryId <= 0) {
+			return builder;
+		}
+
+		MRequestCategory status = MRequestCategory.get(Env.getCtx(), requestCategoryId);
+		return convertCategory(status);
+	}
+	public static Category.Builder convertCategory(MRequestCategory category) {
+		Category.Builder builder = Category.newBuilder();
+		if (category == null || category.getR_Category_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(category.getR_Category_ID())
+			.setName(
+				ValueManager.validateNull(
+					category.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					category.getDescription()
+				)
+			)
+		;
+
+		return builder;
+	}
+
+
+
+	public static Group.Builder convertGroup(int groupId) {
+		Group.Builder builder = Group.newBuilder();
+		if (groupId <= 0) {
+			return builder;
+		}
+
+		MGroup group = MGroup.get(Env.getCtx(), groupId);
+		return convertGroup(group);
+	}
+	public static Group.Builder convertGroup(MGroup group) {
+		Group.Builder builder = Group.newBuilder();
+		if (group == null || group.getR_Group_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(group.getR_Group_ID())
+			.setName(
+				ValueManager.validateNull(
+					group.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					group.getDescription()
+				)
+			)
+		;
+
+		return builder;
+	}
+
+
+
+	public static BusinessPartner.Builder convertBusinessPartner(int businessPartnerId) {
+		BusinessPartner.Builder builder = BusinessPartner.newBuilder();
+		if (businessPartnerId <= 0) {
+			return builder;
+		}
+
+		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
+		return convertBusinessPartner(businessPartner);
+	}
+	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
+		BusinessPartner.Builder builder = BusinessPartner.newBuilder();
+		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(businessPartner.getC_BPartner_ID())
+			.setValue(
+				ValueManager.validateNull(
+					businessPartner.getValue()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					businessPartner.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					businessPartner.getDescription()
+				)
+			)
+		;
+
+		return builder;
+	}
+
+
+
+	public static Project.Builder convertProject(int projectId) {
+		Project.Builder builder = Project.newBuilder();
+		if (projectId <= 0) {
+			return builder;
+		}
+
+		MProject businessPartner = MProject.getById(Env.getCtx(), projectId, null);
+		return convertProject(businessPartner);
+	}
+	public static Project.Builder convertProject(MProject project) {
+		Project.Builder builder = Project.newBuilder();
+		if (project == null || project.getC_BPartner_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(project.getC_Project_ID())
+			.setValue(
+				ValueManager.validateNull(
+					project.getValue()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					project.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					project.getDescription()
+				)
 			)
 		;
 
@@ -313,6 +504,31 @@ public class IssueManagementConvertUtil {
 			.setUser(
 				IssueManagementConvertUtil.convertUser(
 					request.getCreatedBy()
+				)
+			)
+			.setCategory(
+				IssueManagementConvertUtil.convertCategory(
+					request.getR_Category_ID()
+				)
+			)
+			.setGroup(
+				IssueManagementConvertUtil.convertGroup(
+					request.getR_Group_ID()
+				)
+			)
+			.setBusinessPartner(
+				IssueManagementConvertUtil.convertBusinessPartner(
+					request.getC_BPartner_ID()
+				)
+			)
+			.setProject(
+				IssueManagementConvertUtil.convertProject(
+					request.getC_Project_ID()
+				)
+			)
+			.setParentIssue(
+				IssueManagementConvertUtil.convertRequest(
+					request.getR_RequestRelated_ID()
 				)
 			)
 		;
