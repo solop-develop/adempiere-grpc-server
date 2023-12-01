@@ -447,13 +447,13 @@ public class ReferenceUtil {
 		if (validationRuleId > 0) {
 			validationRule = MValRule.get(Env.getCtx(), validationRuleId);
 			if (validationRule != null) {
-				if (!Util.isEmpty(validationRule.getCode())) {
+				if (!Util.isEmpty(validationRule.getCode(), true)) {
 					String dynamicValidation =  validationRule.getCode();
 					if (!validationRule.getCode().startsWith("(")) {
 						dynamicValidation = "(" + validationRule.getCode() + ")";
 					}
 					// table validation
-					if (!Util.isEmpty(lookupInformation.ValidationCode)) {
+					if (!Util.isEmpty(lookupInformation.ValidationCode, true)) {
 						dynamicValidation += " AND (" + lookupInformation.ValidationCode + ")";
 					}
 					// overwrite ValidationCode with table validation on reference and dynamic validation
@@ -469,7 +469,7 @@ public class ReferenceUtil {
 		}
 
 		// return only code without validation rule
-		if (Util.isEmpty(lookupInformation.ValidationCode)) {
+		if (Util.isEmpty(lookupInformation.ValidationCode, true)) {
 			return lookupInformation;
 		}
 
@@ -516,7 +516,7 @@ public class ReferenceUtil {
 		}
 		return lookupInformation;
 	}
-	
+
 	/**
 	 * Get Query with UUID
 	 * @param tableName
@@ -542,7 +542,33 @@ public class ReferenceUtil {
 
 		return queryWithUuid;
 	}
-	
+
+	/**
+	 * Get Query with UUID
+	 * @param tableName
+	 * @param query
+	 * @return
+	 */
+	public static String getQueryWithActiveRestriction(String tableName, String query) {
+		Matcher matcherFrom = Pattern.compile(
+			"\\s+(FROM)\\s+(" + tableName + ")",
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		).matcher(query);
+
+		List<MatchResult> fromWhereParts = matcherFrom.results()
+				.collect(Collectors.toList());
+
+		String queryWithUuid = query;
+		if (fromWhereParts != null && fromWhereParts.size() > 0) {
+			MatchResult lastFrom = fromWhereParts.get(fromWhereParts.size() - 1);
+			queryWithUuid = query.substring(0, lastFrom.start());
+			queryWithUuid += ", " + tableName + ".UUID";
+			queryWithUuid += query.substring(lastFrom.start());
+		}
+
+		return queryWithUuid;
+	}
+
 	/**
 	 * Get Lookup info from column name
 	 * @param columnName
@@ -551,4 +577,5 @@ public class ReferenceUtil {
 	private static MLookupInfo getLookupInfoFromColumnName(String columnName) {
 		return MLookupFactory.getLookupInfo(Env.getCtx(), 0, 0, DisplayType.TableDir, Language.getLanguage(Env.getAD_Language(Env.getCtx())), columnName, 0, false, null, false);
 	}
+
 }

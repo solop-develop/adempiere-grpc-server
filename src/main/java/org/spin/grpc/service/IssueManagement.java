@@ -1156,6 +1156,31 @@ public class IssueManagement extends IssueManagementImplBase {
 		requestRecord.setDateNextAction(
 			TimeManager.getTimestampFromString(request.getDateNextAction())
 		);
+		if (request.getCategoryId() > 0) {
+			requestRecord.setR_Category_ID(
+				request.getCategoryId()
+			);
+		}
+		if (request.getGroupId() > 0) {
+			requestRecord.setR_Group_ID(
+				request.getGroupId()
+			);
+		}
+		if (Util.isEmpty(request.getTaskStatusValue(), true)) {
+			requestRecord.setTaskStatus(
+				request.getTaskStatusValue()
+			);
+		}
+		if (request.getBusinessPartnerId() > 0) {
+			requestRecord.setC_BPartner_ID(
+				request.getBusinessPartnerId()
+			);
+		}
+		if (request.getProjectId() > 0) {
+			requestRecord.setC_Project_ID(
+				request.getProjectId()
+			);
+		}
 		requestRecord.saveEx();
 
 		Issue.Builder builder = IssueManagementConvertUtil.convertRequest(requestRecord);
@@ -1227,6 +1252,31 @@ public class IssueManagement extends IssueManagementImplBase {
 		if (request.getStatusId() > 0) {
 			int statusId = request.getStatusId();
 			requestRecord.setR_Status_ID(statusId);
+		}
+		if (request.getCategoryId() > 0) {
+			requestRecord.setR_Category_ID(
+				request.getCategoryId()
+			);
+		}
+		if (request.getGroupId() > 0) {
+			requestRecord.setR_Group_ID(
+				request.getGroupId()
+			);
+		}
+		if (Util.isEmpty(request.getTaskStatusValue(), true)) {
+			requestRecord.setTaskStatus(
+				request.getTaskStatusValue()
+			);
+		}
+		if (request.getBusinessPartnerId() > 0) {
+			requestRecord.setC_BPartner_ID(
+				request.getBusinessPartnerId()
+			);
+		}
+		if (request.getProjectId() > 0) {
+			requestRecord.setC_Project_ID(
+				request.getProjectId()
+			);
 		}
 
 		requestRecord.saveEx();
