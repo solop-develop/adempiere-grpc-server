@@ -700,25 +700,22 @@ public class BusinessData extends BusinessDataImplBase {
 					try {
 						String columnName = metaData.getColumnName (index);
 						MColumn field = columnsMap.get(columnName.toUpperCase());
-						com.google.protobuf.Value.Builder valueBuilder = com.google.protobuf.Value.newBuilder();
 						//	Display Columns
 						if(field == null) {
-							String value = rs.getString(index);
-							if(!Util.isEmpty(value)) {
-								valueBuilder = ValueManager.getValueFromString(value);
-							} else {
-								valueBuilder = ValueManager.getValueFromNull();
-							}
+							String displayValue = rs.getString(index);
+							Value.Builder displayValueBuilder = ValueManager.getValueFromString(displayValue);
+
 							rowValues.putFields(
 								columnName,
-								valueBuilder.build()
+								displayValueBuilder.build()
 							);
 							continue;
 						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
-						valueBuilder = ValueManager.getValueFromReference(
-							rs.getObject(index),
+						Object value = rs.getObject(index);
+						Value.Builder valueBuilder = ValueManager.getValueFromReference(
+							value,
 							field.getAD_Reference_ID()
 						);
 						if(!valueBuilder.getNullValue().equals(com.google.protobuf.NullValue.NULL_VALUE)) {

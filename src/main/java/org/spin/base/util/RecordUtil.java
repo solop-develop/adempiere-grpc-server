@@ -539,24 +539,20 @@ public class RecordUtil {
 				Entity.Builder entityBuilder = Entity.newBuilder()
 					.setTableName(table.getTableName())
 				;
-				Struct.Builder values = Struct.newBuilder();
+				Struct.Builder rowValues = Struct.newBuilder();
 				ResultSetMetaData metaData = rs.getMetaData();
 				for (int index = 1; index <= metaData.getColumnCount(); index++) {
 					try {
 						String columnName = metaData.getColumnName(index);
 						MColumn field = columnsMap.get(columnName.toUpperCase());
-						Value.Builder valueBuilder = Value.newBuilder();
 						//	Display Columns
 						if(field == null) {
-							String value = rs.getString(index);
-							if(!Util.isEmpty(value)) {
-								valueBuilder = ValueManager.getValueFromString(value);
-							} else {
-								valueBuilder = ValueManager.getValueFromNull();
-							}
-							values.putFields(
+							String displayValue = rs.getString(index);
+							Value.Builder displayValueBuilder = ValueManager.getValueFromString(displayValue);
+
+							rowValues.putFields(
 								columnName,
-								valueBuilder.build()
+								displayValueBuilder.build()
 							);
 							continue;
 						}
@@ -566,15 +562,11 @@ public class RecordUtil {
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						Object value = rs.getObject(index);
-						valueBuilder = ValueManager.getValueFromReference(
+						Value.Builder valueBuilder = ValueManager.getValueFromReference(
 							value,
 							field.getAD_Reference_ID()
 						);
-						if(valueBuilder == null) {
-							valueBuilder = Value.newBuilder();
-							// continue;
-						}
-						values.putFields(
+						rowValues.putFields(
 							fieldColumnName,
 							valueBuilder.build()
 						);
@@ -583,7 +575,7 @@ public class RecordUtil {
 					}
 				}
 				//	
-				entityBuilder.setValues(values);
+				entityBuilder.setValues(rowValues);
 				builder.addRecords(entityBuilder.build());
 				recordCount++;
 			}
