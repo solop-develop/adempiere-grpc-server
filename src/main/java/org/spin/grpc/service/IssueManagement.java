@@ -28,6 +28,7 @@ import org.adempiere.core.domains.models.I_R_RequestType;
 import org.adempiere.core.domains.models.I_R_RequestUpdate;
 import org.adempiere.core.domains.models.I_R_Status;
 import org.adempiere.core.domains.models.I_R_StatusCategory;
+import org.adempiere.core.domains.models.X_R_Request;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRequest;
@@ -74,10 +75,13 @@ import org.spin.backend.grpc.issue_management.ListStatusCategoriesRequest;
 import org.spin.backend.grpc.issue_management.ListStatusCategoriesResponse;
 import org.spin.backend.grpc.issue_management.ListStatusesRequest;
 import org.spin.backend.grpc.issue_management.ListStatusesResponse;
+import org.spin.backend.grpc.issue_management.ListTaskStatusesRequest;
+import org.spin.backend.grpc.issue_management.ListTaskStatusesResponse;
 import org.spin.backend.grpc.issue_management.Priority;
 import org.spin.backend.grpc.issue_management.Project;
 import org.spin.backend.grpc.issue_management.RequestType;
 import org.spin.backend.grpc.issue_management.StatusCategory;
+import org.spin.backend.grpc.issue_management.TaskStatus;
 import org.spin.backend.grpc.issue_management.UpdateIssueCommentRequest;
 import org.spin.backend.grpc.issue_management.UpdateIssueRequest;
 import org.spin.backend.grpc.issue_management.User;
@@ -278,14 +282,14 @@ public class IssueManagement extends IssueManagementImplBase {
 		String whereClause = "AD_Reference_ID = ?";
 
 		List<Object> filtersList = new ArrayList<>();
-		filtersList.add(MRequest.PRIORITY_AD_Reference_ID);
+		filtersList.add(X_R_Request.PRIORITY_AD_Reference_ID);
 
 		final String searchValue = ValueManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
-			filtersList.add(searchValue);
 			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+			filtersList.add(searchValue);
 		}
 
 		Query queryPriority = new Query(
@@ -360,7 +364,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		);
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
-				" AND UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				"UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 			);
 			filtersList.add(searchValue);
 		}
@@ -526,7 +530,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		);
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
-				" AND UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				"UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 			);
 			filtersList.add(searchValue);
 		}
@@ -605,7 +609,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		);
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
-				" AND UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				"UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 			);
 			filtersList.add(searchValue);
 		}
@@ -655,6 +659,82 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 	@Override
+	public void listTaskStatuses(ListTaskStatusesRequest request, StreamObserver<ListTaskStatusesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Requested is Null");
+			}
+			ListTaskStatusesResponse.Builder entityValueList = listTaskStatuses(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private ListTaskStatusesResponse.Builder listTaskStatuses(ListTaskStatusesRequest request) {
+		String whereClause = "AD_Reference_ID = ?";
+
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(X_R_Request.TASKSTATUS_AD_Reference_ID);
+
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
+			filtersList.add(searchValue);
+			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+		}
+
+		Query queryPriority = new Query(
+			Env.getCtx(),
+			MRefList.Table_Name,
+			whereClause,
+			null
+		)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO) // TODO: Fix Record access with pagination
+			.setOnlyActiveRecords(true)
+			.setParameters(filtersList)
+		;
+
+		int recordCount = queryPriority.count();
+
+		ListTaskStatusesResponse.Builder builderList = ListTaskStatusesResponse.newBuilder();
+		builderList.setRecordCount(recordCount);
+
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		// Set page token
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
+
+		queryPriority
+			// .setLimit(limit, offset)
+			.list(MRefList.class)
+			.forEach(priority -> {
+				TaskStatus.Builder builder = IssueManagementConvertUtil.convertTaskStatus(priority);
+				builderList.addRecords(builder);
+			});
+
+		return builderList;
+	}
+
+
+
+	@Override
 	public void listBusinessPartners(ListBusinessPartnersRequest request, StreamObserver<ListBusinessPartnersResponse> responseObserver) {
 		try {
 			if (request == null) {
@@ -684,10 +764,11 @@ public class IssueManagement extends IssueManagementImplBase {
 		);
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
-				" AND (UPPER(Name) LIKE '%' || UPPER(?) || '%' "
-				+ " OR (UPPER(Value) LIKE '%' || UPPER(?) || '%' )"
+				"(UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ " OR UPPER(Value) LIKE '%' || UPPER(?) || '%' )"
 
 			);
+			filtersList.add(searchValue);
 			filtersList.add(searchValue);
 		}
 
@@ -765,10 +846,10 @@ public class IssueManagement extends IssueManagementImplBase {
 		);
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
-				" AND (UPPER(Name) LIKE '%' || UPPER(?) || '%' "
-				+ " OR (UPPER(Value) LIKE '%' || UPPER(?) || '%' )"
-
+				"(UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ " OR UPPER(Value) LIKE '%' || UPPER(?) || '%' )"
 			);
+			filtersList.add(searchValue);
 			filtersList.add(searchValue);
 		}
 

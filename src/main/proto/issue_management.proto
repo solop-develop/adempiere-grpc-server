@@ -63,7 +63,11 @@ service IssueManagement {
 	// Group
 	rpc ListGroups(ListGroupsRequest) returns (ListGroupsResponse) {
 		option (google.api.http) = { get: "/issue-management/groups" };
-	}	
+	}
+	// Task Status
+	rpc ListTaskStatuses(ListTaskStatusesRequest) returns (ListTaskStatusesResponse) {
+		option (google.api.http) = { get: "/issue-management/task-statuses" };
+	}
 	// Business Partner
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {
 		option (google.api.http) = { get: "/issue-management/business-partners" };
@@ -91,7 +95,7 @@ service IssueManagement {
 		};
 	}
 	rpc UpdateIssue(UpdateIssueRequest) returns (Issue) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			put: "/issue-management/issues/{id}",
 			body: "*"
 		};
@@ -323,6 +327,31 @@ message ListBusinessPartnersResponse {
 }
 
 
+// Task Status
+message TaskStatus {
+	int32 id = 1;
+	string value = 2;
+	string name = 3;
+	string description = 4;
+}
+
+message ListTaskStatusesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 request_type_id = 8;
+}
+
+message ListTaskStatusesResponse {
+	int64 record_count = 1;
+	repeated TaskStatus records = 2;
+	string next_page_token = 3;
+}
+
 // Project
 message Project {
 	int32 id = 1;
@@ -376,6 +405,7 @@ message Issue {
 	BusinessPartner business_partner = 16;
 	Project project = 17;
 	Issue parent_issue = 18;
+	TaskStatus task_status = 19;
 }
 
 message ExistsIssuesRequest {
@@ -417,6 +447,12 @@ message CreateIssueRequest {
 	int32 status_id = 7;
 	string priority_value = 8;
 	string date_next_action = 9;
+	int32 category_id = 10;
+	int32 group_id = 11;
+	int32 business_partner_id = 12;
+	int32 project_id = 13;
+	int32 parent_issue_id = 14;
+	string task_status_value = 15;
 }
 
 message UpdateIssueRequest {
@@ -428,6 +464,12 @@ message UpdateIssueRequest {
 	int32 status_id = 6;
 	string priority_value = 7;
 	google.protobuf.Timestamp date_next_action = 8;
+	int32 category_id = 9;
+	int32 group_id = 10;
+	int32 business_partner_id = 11;
+	int32 project_id = 12;
+	int32 parent_issue_id = 13;
+	string task_status_value = 14;
 }
 
 message DeleteIssueRequest {

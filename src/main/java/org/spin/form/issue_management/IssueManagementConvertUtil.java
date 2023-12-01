@@ -19,6 +19,7 @@ import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_R_RequestAction;
 import org.adempiere.core.domains.models.I_R_Status;
+import org.adempiere.core.domains.models.X_R_Request;
 import org.adempiere.core.domains.models.X_R_RequestUpdate;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MClientInfo;
@@ -49,6 +50,7 @@ import org.spin.backend.grpc.issue_management.Project;
 import org.spin.backend.grpc.issue_management.RequestType;
 import org.spin.backend.grpc.issue_management.Status;
 import org.spin.backend.grpc.issue_management.StatusCategory;
+import org.spin.backend.grpc.issue_management.TaskStatus;
 import org.spin.backend.grpc.issue_management.User;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -86,6 +88,46 @@ public class IssueManagementConvertUtil {
 		builder.setId(priority.getAD_Ref_List_ID())
 			.setValue(
 				ValueManager.validateNull(priority.getValue())
+			)
+			.setName(
+				ValueManager.validateNull(name)
+			)
+			.setDescription(
+				ValueManager.validateNull(description)
+			)
+		;
+
+		return builder;
+	}
+
+
+
+	public static TaskStatus.Builder convertTaskStatus(String value) {
+		TaskStatus.Builder builder = TaskStatus.newBuilder();
+		if (Util.isEmpty(value, true)) {
+			return builder;
+		}
+		MRefList taskStatus = MRefList.get(Env.getCtx(), X_R_Request.TASKSTATUS_AD_Reference_ID, value, null);
+		return convertTaskStatus(taskStatus);
+	}
+	public static TaskStatus.Builder convertTaskStatus(MRefList taskStatus) {
+		TaskStatus.Builder builder = TaskStatus.newBuilder();
+		if (taskStatus == null || taskStatus.getAD_Ref_List_ID() <= 0) {
+			return builder;
+		}
+
+		String name = taskStatus.getName();
+		String description = taskStatus.getDescription();
+
+		// set translated values
+		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+			name = taskStatus.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
+			description = taskStatus.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
+		}
+
+		builder.setId(taskStatus.getAD_Ref_List_ID())
+			.setValue(
+				ValueManager.validateNull(taskStatus.getValue())
 			)
 			.setName(
 				ValueManager.validateNull(name)
