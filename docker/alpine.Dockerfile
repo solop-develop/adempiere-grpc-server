@@ -11,7 +11,7 @@ ENV \
 		dashboarding; dictionary; enrollment; express_movement; express_receipt; \
 		express_shipment; file_management; general_ledger; import_file_loader; \
 		in_out; invoice; issue_management; location_address; log; match_po_receipt_invoice; \
-		material_management; order; payment; payment_allocation; payment_print_export; \
+		material_management; notice_management; order; payment; payment_allocation; payment_print_export; \
 		payroll_action_notice; pos; product; record_management; report_management; \
 		security; store; time_control; time_record; user_customization; user_interface; workflow;" \
 	SERVER_LOG_LEVEL="WARNING" \

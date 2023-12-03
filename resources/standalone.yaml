@@ -22,6 +22,7 @@ server:
        - issue_management
        - match_po_receipt_invoice
        - material_management
+       - notice_management
        - order
        - payment
        - payment_allocation

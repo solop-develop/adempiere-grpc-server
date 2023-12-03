@@ -167,6 +167,11 @@ public class AllInOneServices {
 			serverBuilder.addService(new CoreFunctionality());
 			logger.info("Service " + Services.CORE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
+		//	Dashboarding
+		if(SetupLoader.getInstance().getServer().isValidService(Services.DASHBOARDING.getServiceName())) {
+			serverBuilder.addService(new Dashboarding());
+			logger.info("Service " + Services.DASHBOARDING.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		//	Dictionary
 		if(SetupLoader.getInstance().getServer().isValidService(Services.DICTIONARY.getServiceName())) {
 			serverBuilder.addService(new Dictionary());
@@ -197,16 +202,6 @@ public class AllInOneServices {
 			serverBuilder.addService(new FileManagement());
 			logger.info("Service " + Services.FILE_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
-		//	Dashboarding
-		if(SetupLoader.getInstance().getServer().isValidService(Services.DASHBOARDING.getServiceName())) {
-			serverBuilder.addService(new Dashboarding());
-			logger.info("Service " + Services.DASHBOARDING.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
-		//	Workflow
-		if(SetupLoader.getInstance().getServer().isValidService(Services.WORKFLOW.getServiceName())) {
-			serverBuilder.addService(new Workflow());
-			logger.info("Service " + Services.WORKFLOW.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
 		//	General Ledger
 		if(SetupLoader.getInstance().getServer().isValidService(Services.GENERAL_LEDGER.getServiceName())) {
 			serverBuilder.addService(new GeneralLedger());
@@ -216,6 +211,21 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.IMPORT_FILE_LOADER.getServiceName())) {
 			serverBuilder.addService(new ImportFileLoader());
 			logger.info("Service " + Services.IMPORT_FILE_LOADER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	In-Out
+		if(SetupLoader.getInstance().getServer().isValidService(Services.IN_OUT.getServiceName())) {
+			serverBuilder.addService(new InOutInfo());
+			logger.info("Service " + Services.IN_OUT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Invoice
+		if(SetupLoader.getInstance().getServer().isValidService(Services.INVOICE.getServiceName())) {
+			serverBuilder.addService(new InvoiceInfo());
+			logger.info("Service " + Services.INVOICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Issue Management
+		if (SetupLoader.getInstance().getServer().isValidService(Services.ISSUE_MANAGEMENT.getServiceName())) {
+			serverBuilder.addService(new IssueManagement());
+			logger.info("Service " + Services.ISSUE_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Location Address
 		if(SetupLoader.getInstance().getServer().isValidService(Services.LOCATION_ADDRESS.getServiceName())) {
@@ -237,45 +247,20 @@ public class AllInOneServices {
 			serverBuilder.addService(new MaterialManagement());
 			logger.info("Service " + Services.MATERIAL_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
-		//	For Security
-		if (SetupLoader.getInstance().getServer().isValidService(Services.SECURITY.getServiceName())) {
-			serverBuilder.addService(new Security());
-			logger.info("Service " + Services.SECURITY.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
-		//	Store
-		if(SetupLoader.getInstance().getServer().isValidService(Services.STORE.getServiceName())) {
-			serverBuilder.addService(new WebStore());
-			logger.info("Service " + Services.STORE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
-		//	POS
-		if(SetupLoader.getInstance().getServer().isValidService(Services.POS.getServiceName())) {
-			serverBuilder.addService(new PointOfSalesForm());
-			logger.info("Service " + Services.POS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
-		//	Updater
-		if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
-			serverBuilder.addService(new UpdateManagement());
-			logger.info("Service " + Services.UPDATER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
-		//	In-Out
-		if(SetupLoader.getInstance().getServer().isValidService(Services.IN_OUT.getServiceName())) {
-			serverBuilder.addService(new InOutInfo());
-			logger.info("Service " + Services.IN_OUT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
-		//	Invoice
-		if(SetupLoader.getInstance().getServer().isValidService(Services.INVOICE.getServiceName())) {
-			serverBuilder.addService(new InvoiceInfo());
-			logger.info("Service " + Services.INVOICE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		}
-		//	Issue Management
-		if (SetupLoader.getInstance().getServer().isValidService(Services.ISSUE_MANAGEMENT.getServiceName())) {
-			serverBuilder.addService(new IssueManagement());
-			logger.info("Service " + Services.ISSUE_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Notice Management
+		if(SetupLoader.getInstance().getServer().isValidService(Services.NOTICE_MANAGEMENT.getServiceName())) {
+			serverBuilder.addService(new MaterialManagement());
+			logger.info("Service " + Services.MATERIAL_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Order
 		if(SetupLoader.getInstance().getServer().isValidService(Services.ORDER.getServiceName())) {
 			serverBuilder.addService(new OrderInfo());
 			logger.info("Service " + Services.ORDER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	POS
+		if(SetupLoader.getInstance().getServer().isValidService(Services.POS.getServiceName())) {
+			serverBuilder.addService(new PointOfSalesForm());
+			logger.info("Service " + Services.POS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Payment
 		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT.getServiceName())) {
@@ -312,6 +297,11 @@ public class AllInOneServices {
 			serverBuilder.addService(new ReportManagement());
 			logger.info("Service " + Services.REPORT_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
+		//	Security
+		if (SetupLoader.getInstance().getServer().isValidService(Services.SECURITY.getServiceName())) {
+			serverBuilder.addService(new Security());
+			logger.info("Service " + Services.SECURITY.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		//	Time Control
 		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {
 			serverBuilder.addService(new TimeControl());
@@ -322,6 +312,11 @@ public class AllInOneServices {
 			serverBuilder.addService(new TimeRecord());
 			logger.info("Service " + Services.TIME_RECORD.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
+		//	Update Center
+		if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {
+			serverBuilder.addService(new UpdateManagement());
+			logger.info("Service " + Services.UPDATER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
 		//	User Customization
 		if(SetupLoader.getInstance().getServer().isValidService(Services.USER_CUSTOMIZATION.getServiceName())) {
 			serverBuilder.addService(new UserCustomization());
@@ -331,6 +326,16 @@ public class AllInOneServices {
 		if(SetupLoader.getInstance().getServer().isValidService(Services.UI.getServiceName())) {
 			serverBuilder.addService(new UserInterface());
 			logger.info("Service " + Services.UI.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Web Store
+		if(SetupLoader.getInstance().getServer().isValidService(Services.STORE.getServiceName())) {
+			serverBuilder.addService(new WebStore());
+			logger.info("Service " + Services.STORE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Workflow
+		if(SetupLoader.getInstance().getServer().isValidService(Services.WORKFLOW.getServiceName())) {
+			serverBuilder.addService(new Workflow());
+			logger.info("Service " + Services.WORKFLOW.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Add Server
 		this.server = serverBuilder.build().start();
@@ -379,12 +384,12 @@ public class AllInOneServices {
 			// throw new Exception("Setup File not found");
 		}
 
-		  SetupLoader.loadSetup(setupFileName);
-		  //	Validate load
-		  SetupLoader.getInstance().validateLoad();
-		  final AllInOneServices server = new AllInOneServices();
-		  server.start();
-		  server.blockUntilShutdown();
+		SetupLoader.loadSetup(setupFileName);
+		//	Validate load
+		SetupLoader.getInstance().validateLoad();
+		final AllInOneServices server = new AllInOneServices();
+		server.start();
+		server.blockUntilShutdown();
 	}
 
 }

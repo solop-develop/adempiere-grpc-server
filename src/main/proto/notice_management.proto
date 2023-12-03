@@ -1,0 +1,129 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.notice_management";
+option java_outer_classname = "ADempiereNoticeManagement";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+import "base_data_type.proto";
+
+// Base URL
+// /notice-management/
+
+package notice_management;
+
+// The Notice Management service definition.
+service NoticeManagement {
+	rpc ListNotices(ListNoticesRequest) returns (ListNoticesResponse) {
+		option (google.api.http) = { get: "/notice-management/notices" };
+	}
+	rpc AcknowledgeNotice(AcknowledgeNoticeRequest) returns (AcknowledgeNoticeResponse) {
+		option (google.api.http) = { patch: "/notice-management/notices/{id}/acknowledge" };
+	}
+
+	rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+		option (google.api.http) = { get: "/notice-management/notices/users" };
+	}
+	rpc DeleteNotices(DeleteNoticesRequest) returns (DeleteNoticesResponse) {
+		option (google.api.http) = { delete: "/notice-management/notices/" };
+	}
+}
+
+// User Definition
+message User {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	string avatar = 6;
+}
+
+message ListUsersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListUsersResponse {
+	int64 record_count = 1;
+	repeated User records = 2;
+	string next_page_token = 3;
+}
+
+
+// notice
+message Notice {
+	int32 id = 1;
+	string uuid = 2;
+	google.protobuf.Timestamp created = 3;
+	string message = 4;
+	User user = 5;
+	string table_name = 6;
+	int32 record_id = 7;
+	string reference = 8;
+	string text_message = 9;
+	string description = 10;
+	bool is_acknowledge = 11;
+}
+
+message ListNoticesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListNoticesResponse {
+	int64 record_count = 1;
+	repeated Notice records = 2;
+	string next_page_token = 3;
+}
+
+
+message DeleteNoticesRequest {
+	int32 user_id = 1;
+	int32 keep_log_days = 2;
+}
+
+message DeleteNoticesResponse {
+	string summary = 1;
+	repeated data.ProcessInfoLog logs = 10;
+}
+
+
+
+// Acknowledge Notice
+message AcknowledgeNoticeRequest {
+	int32 id = 1;
+}
+
+message AcknowledgeNoticeResponse {
+	string message = 1;
+}

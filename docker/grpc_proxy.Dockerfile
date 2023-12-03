@@ -18,7 +18,7 @@ ENV \
 		import_file_loader.ImportFileLoader; in_out.InOut; invoice.Invoice; \
 		issue_management.IssueManagement; location_address.LocationAddress; \
 		logs.Logs; match_po_receipt_invoice.MatchPORReceiptInvoice; \
-		material_management.MaterialManagement; \
+		material_management.MaterialManagement; notice_management.NoticeManagement; \
 		order.Order; payment_allocation.PaymentAllocation; \
 		payment_print_export.PaymentPrintExport; \
 		payment.Payment; payroll_action_notice.PayrollActionNotice; \

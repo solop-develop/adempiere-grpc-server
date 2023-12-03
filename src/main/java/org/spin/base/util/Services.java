@@ -39,6 +39,7 @@ public enum Services {
 	LOG("log"),
 	MATCH_PO_RECEIPT_INVOICE("match_po_receipt_invoice"),
 	MATERIAL_MANAGEMENT("material_management"),
+	NOTICE_MANAGEMENT("notice_management"),
 	ORDER("order"),
 	PAYMENT("payment"),
 	PAYMENT_ALLOCATION("payment_allocation"),
@@ -58,13 +59,13 @@ public enum Services {
 	WORKFLOW("workflow");
 
 	/**	Service Name	*/
-    private final String serviceName;
+	private final String serviceName;
 
-    Services(String serviceName) {
-        this.serviceName = serviceName;
-    }
+	Services(String serviceName) {
+		this.serviceName = serviceName;
+	}
 
-    public String getServiceName() {
-        return serviceName;
-    }
+	public String getServiceName() {
+		return serviceName;
+	}
 }
