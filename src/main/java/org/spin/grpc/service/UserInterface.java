@@ -795,7 +795,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (!Util.isEmpty(request.getSortBy(), true)) {
 			orderByClause = " ORDER BY " + SortingManager.newInstance(request.getSortBy()).getSotingAsSQL();
 		} else {
-			String tabOrderBy = OrderByUtil.getTabOrderByWithFields(tab);
+			String tabOrderBy = OrderByUtil.getTabOrderByClause(tab);
 			if (!Util.isEmpty(tabOrderBy, true)) {
 				String parsedTabOrderBy = Env.parseContext(context, windowNo, tabOrderBy, false);
 				if (Util.isEmpty(parsedTabOrderBy, true)) {

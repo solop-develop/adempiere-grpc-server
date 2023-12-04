@@ -45,7 +45,7 @@ public class OrderByUtil {
 		}
 
 		//	Second Prio: Fields (save it)
-		orderByClause = getTabOrderByClause(tab);
+		orderByClause = getTabOrderByWithFields(tab);
 		if (!Util.isEmpty(orderByClause, true)) {
 			return orderByClause;
 		}
