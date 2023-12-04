@@ -14,6 +14,8 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +29,8 @@ import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.notice_management.AcknowledgeNoticeRequest;
 import org.spin.backend.grpc.notice_management.AcknowledgeNoticeResponse;
 import org.spin.backend.grpc.notice_management.DeleteNoticesRequest;
@@ -41,6 +45,9 @@ import org.spin.backend.grpc.notice_management.NoticeManagementGrpc.NoticeManage
 import org.spin.base.db.LimitUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.ValueManager;
+
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -366,8 +373,40 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		}
 	}
 
-	public DeleteNoticesResponse.Builder deleteNotices(DeleteNoticesRequest request) {
-		DeleteNoticesResponse.Builder builder = DeleteNoticesResponse.newBuilder();
+	public DeleteNoticesResponse.Builder deleteNotices(DeleteNoticesRequest request) throws FileNotFoundException, IOException {
+		// AD_NoteDelete
+		final int processId = 241;
+		Struct.Builder parameters = Struct.newBuilder();
+		if (request.getUserId() > 0) {
+			Value.Builder value = ValueManager.getValueFromInt(
+				request.getUserId()
+			);
+			parameters.putFields("AD_User_ID", value.build());
+		}
+		if (request.getKeepLogDays() > 0) {
+			Value.Builder value = ValueManager.getValueFromInt(
+				request.getKeepLogDays()
+			);
+			parameters.putFields("KeepLogDays", value.build());
+		}
+		RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+			.setId(processId)
+			.setParameters(parameters)
+		;
+
+		ProcessLog.Builder processLog = BusinessData.runBusinessProcess(
+			processRequest.build()
+		);
+
+		// Response
+		DeleteNoticesResponse.Builder builder = DeleteNoticesResponse.newBuilder()
+			.setSummary(
+				processLog.getSummary()
+			)
+			.addAllLogs(
+				processLog.getLogsList()
+			)
+		;
 		return builder;
 	}
 

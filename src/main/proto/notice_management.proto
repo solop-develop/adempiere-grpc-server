@@ -44,7 +44,7 @@ service NoticeManagement {
 		option (google.api.http) = { get: "/notice-management/notices/users" };
 	}
 	rpc DeleteNotices(DeleteNoticesRequest) returns (DeleteNoticesResponse) {
-		option (google.api.http) = { delete: "/notice-management/notices/" };
+		option (google.api.http) = { delete: "/notice-management/notices" };
 	}
 }
 
