@@ -554,10 +554,11 @@ public class UserInterface extends UserInterfaceImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -712,17 +713,24 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (tabId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
-		//	
-		MTab tab = MTab.get(Env.getCtx(), tabId);
-		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+		Properties context = Env.getCtx();
+
+		MTab originalTab = MTab.get(context, tabId);
+		if (originalTab == null || originalTab.getAD_Tab_ID() <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}
+		MTab tab = ASPUtil.getInstance(context)
+			.getWindowTab(
+				originalTab.getAD_Window_ID(),
+				originalTab.getAD_Tab_ID()
+			)
+		;
 
-		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
+		//	
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
 		String tableName = table.getTableName();
 
 		//	Fill context
-		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(
 			windowNo, context, request.getContextAttributes()
@@ -786,6 +794,15 @@ public class UserInterface extends UserInterfaceImplBase {
 		String orderByClause = "";
 		if (!Util.isEmpty(request.getSortBy(), true)) {
 			orderByClause = " ORDER BY " + SortingManager.newInstance(request.getSortBy()).getSotingAsSQL();
+		} else {
+			String tabOrderBy = OrderByUtil.getTabOrderByWithFields(tab);
+			if (!Util.isEmpty(tabOrderBy, true)) {
+				String parsedTabOrderBy = Env.parseContext(context, windowNo, tabOrderBy, false);
+				if (Util.isEmpty(parsedTabOrderBy, true)) {
+					throw new AdempiereException("@AD_Tab_ID@ @OrderByClause@ @Unparseable@");
+				}
+				orderByClause = " ORDER BY " + parsedTabOrderBy;
+			}
 		}
 
 		//	Count records

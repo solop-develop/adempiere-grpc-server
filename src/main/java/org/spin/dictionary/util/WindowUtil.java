@@ -62,6 +62,34 @@ public class WindowUtil {
 	}
 
 
+	/**
+	 *	Returns true if this is a detail record
+	 *  @return true if not parent tab
+	 */
+	public static boolean isDetail(MTab tab)
+	{
+		// First Tab Level is not a detail 
+		if (tab.getTabLevel() == 0) {
+			return false;
+		}
+
+		boolean isWithParentFields = tab.getASPFields()
+			.stream()
+			.filter(field -> {
+				MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+				return column.isParent();
+			})
+			.findFirst()
+			.isPresent();
+		;
+		//	We have IsParent columns and/or a link column
+		if (isWithParentFields || tab.getAD_Column_ID() > 0) {
+			return true;
+		}
+		return false;
+	}	//	isDetail
+
+
 
 	/**
 	 * Get Direct Partent Tab by Current Tab
