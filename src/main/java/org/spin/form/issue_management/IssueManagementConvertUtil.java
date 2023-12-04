@@ -449,12 +449,12 @@ public class IssueManagementConvertUtil {
 			return builder;
 		}
 
-		MProject businessPartner = MProject.getById(Env.getCtx(), projectId, null);
-		return convertProject(businessPartner);
+		MProject project = MProject.getById(Env.getCtx(), projectId, null);
+		return convertProject(project);
 	}
 	public static Project.Builder convertProject(MProject project) {
 		Project.Builder builder = Project.newBuilder();
-		if (project == null || project.getC_BPartner_ID() <= 0) {
+		if (project == null || project.getC_Project_ID() <= 0) {
 			return builder;
 		}
 
@@ -546,6 +546,11 @@ public class IssueManagementConvertUtil {
 			.setUser(
 				IssueManagementConvertUtil.convertUser(
 					request.getCreatedBy()
+				)
+			)
+			.setTaskStatus(
+				IssueManagementConvertUtil.convertTaskStatus(
+					request.getTaskStatus()
 				)
 			)
 			.setCategory(

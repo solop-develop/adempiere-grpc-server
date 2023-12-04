@@ -828,10 +828,11 @@ public class IssueManagement extends IssueManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -1263,7 +1264,7 @@ public class IssueManagement extends IssueManagementImplBase {
 				request.getGroupId()
 			);
 		}
-		if (Util.isEmpty(request.getTaskStatusValue(), true)) {
+		if (!Util.isEmpty(request.getTaskStatusValue(), true)) {
 			requestRecord.setTaskStatus(
 				request.getTaskStatusValue()
 			);
