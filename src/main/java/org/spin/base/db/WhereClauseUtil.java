@@ -206,7 +206,7 @@ public class WhereClauseUtil {
 			Object parameterValue = condition.getValue();
 			sqlValue = " ? ";
 
-			boolean isString = DisplayType.isText(displayType) || parameterValue instanceof String;
+			boolean isString = DisplayType.isText(displayType);
 			boolean isEmptyString = isString && Util.isEmpty((String) parameterValue, true);
 			if (isString) {
 				if (isEmptyString) {
