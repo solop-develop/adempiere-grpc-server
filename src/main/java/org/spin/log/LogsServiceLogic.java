@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
+import org.adempiere.core.domains.models.I_AD_Note;
 import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MPInstance;
@@ -35,8 +36,8 @@ import org.spin.backend.grpc.logs.ListUserActivitesRequest;
 import org.spin.backend.grpc.logs.ListUserActivitesResponse;
 import org.spin.backend.grpc.logs.UserActivity;
 import org.spin.backend.grpc.logs.UserActivityType;
-import org.spin.base.db.LimitUtil;
-import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.backend.grpc.notice_management.Notice;
+import org.spin.grpc.service.NoticeManagement;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -56,7 +57,9 @@ public class LogsServiceLogic {
 			// set current date
 			date = new Timestamp(System.currentTimeMillis());
 		}
+		List<UserActivity> userActivitiesList = new ArrayList<>();
 
+		// Process Log
 		final String whereClauseProcessLog = "AD_User_ID = ? AND TRUNC(Created, 'DD') = ?";
 		Query queryProcessLogs = new Query(
 			Env.getCtx(),
@@ -68,35 +71,26 @@ public class LogsServiceLogic {
 			.setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
-
-		//	Get page and count
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
 		int count = queryProcessLogs.count();
 
-		List<MPInstance> processInstanceList = queryProcessLogs
-			.setLimit(limit, offset)
-			.setOrderBy(I_AD_PInstance.COLUMNNAME_Created + " DESC")
-			.<MPInstance>list();
-		List<ProcessLog.Builder> processLogsList = new ArrayList<>();
 		//	Convert Process Instance
-		for(MPInstance processInstance : processInstanceList) {
-			ProcessLog.Builder valueObject = LogsConvertUtil.convertProcessLog(processInstance);
-			// builderProcessLogs.addProcessLogs(valueObject.build());
-			processLogsList.add(valueObject);
-		}
+		queryProcessLogs
+			// .setLimit(limit, offset)
+			.setOrderBy(I_AD_PInstance.COLUMNNAME_Created + " DESC")
+			.getIDsAsList()
+			.forEach(processInstanceId -> {
+				MPInstance processInstance = new MPInstance(Env.getCtx(), processInstanceId, null);
+				ProcessLog.Builder processLogBuilder = LogsConvertUtil.convertProcessLog(processInstance);
 
-		List<UserActivity> userActivitiesList = new ArrayList<>();
-		processLogsList.stream().forEach(processLog -> {
-			UserActivity.Builder userBuilder = UserActivity.newBuilder();
-			userBuilder.setUserActivityType(UserActivityType.PROCESS_LOG);
-			userBuilder.setProcessLog(processLog);
-			userActivitiesList.add(userBuilder.build());
-		});
+				UserActivity.Builder userBuilder = UserActivity.newBuilder();
+				userBuilder.setUserActivityType(UserActivityType.PROCESS_LOG);
+				userBuilder.setProcessLog(processLogBuilder);
+				userActivitiesList.add(userBuilder.build());
+			})
+		;
 
 
+		// Record Log
 		String whereClauseRecordsLog = "CreatedBy = ? AND TRUNC(Created, 'DD') = ?";
 		Query queryRecordLogs = new Query(
 			Env.getCtx(),
@@ -110,17 +104,22 @@ public class LogsServiceLogic {
 		;
 		count += queryRecordLogs.count();
 		List<MChangeLog> recordLogList = queryRecordLogs
-			.setLimit(limit, offset)
 			.setOrderBy(I_AD_PInstance.COLUMNNAME_Created + " DESC")
 			.<MChangeLog>list();
 
 		ListUserActivitesResponse.Builder builderList = ListUserActivitesResponse.newBuilder();
 
-
 		//	convert changes
 		Map<Integer, EntityLog.Builder> indexMap = new HashMap<Integer, EntityLog.Builder>();
-		recordLogList.stream().filter(recordLog -> !indexMap.containsKey(recordLog.getAD_ChangeLog_ID())).forEach(recordLog -> {
-			indexMap.put(recordLog.getAD_ChangeLog_ID(), LogsConvertUtil.convertRecordLogHeader(recordLog));
+		recordLogList.stream()
+			.filter(recordLog -> {
+				return !indexMap.containsKey(recordLog.getAD_ChangeLog_ID());
+			})
+			.forEach(recordLog -> {
+				indexMap.put(
+					recordLog.getAD_ChangeLog_ID(),
+					LogsConvertUtil.convertRecordLogHeader(recordLog)
+				);
 		});
 		recordLogList.forEach(recordLog -> {
 			ChangeLog.Builder changeLog = LogsConvertUtil.convertChangeLog(recordLog);
@@ -134,15 +133,48 @@ public class LogsServiceLogic {
 			userActivitiesList.add(userBuilder.build());
 		});
 
+		// Notice
+		final String whereClause = "AD_User_ID = ? AND Processed = ? AND TRUNC(Created, 'DD') = ?";
+		Query queryNotices = new Query(
+			Env.getCtx(),
+			I_AD_Note.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(userId, false, date)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED)
+			.setOnlyActiveRecords(true)
+		;
+		count += queryNotices.count();
+
+		//	Convert Notice
+		queryNotices
+			.setOrderBy(I_AD_Note.COLUMNNAME_Created + " DESC")
+			.getIDsAsList()
+			.forEach(noticeId -> {
+				Notice.Builder noticeBuilder = NoticeManagement.convertNotice(noticeId);
+
+				UserActivity.Builder userBuilder = UserActivity.newBuilder();
+				userBuilder.setUserActivityType(UserActivityType.NOTICE);
+				userBuilder.setNotice(noticeBuilder);
+				userActivitiesList.add(userBuilder.build());
+			});
+		;
+
+		// All activities
 		List<UserActivity> recordsList = userActivitiesList.stream().sorted((u1, u2) -> {
 			Timestamp from = null;
 			if (u1.getUserActivityType() == UserActivityType.ENTITY_LOG) {
 				from = ValueManager.getDateFromTimestampDate(
 					u1.getEntityLog().getLogDate()
 				);
-			} else {
+			} else if (u1.getUserActivityType() == UserActivityType.PROCESS_LOG) {
 				from = TimeManager.getTimestampFromLong(
 					toMillis(u1.getProcessLog().getLastRun())
+				);
+			} else if (u1.getUserActivityType() == UserActivityType.NOTICE) {
+				from = TimeManager.getTimestampFromLong(
+					toMillis(u1.getNotice().getCreated())
 				);
 			}
 
@@ -151,9 +183,13 @@ public class LogsServiceLogic {
 				to = ValueManager.getDateFromTimestampDate(
 					u2.getEntityLog().getLogDate()
 				);
-			} else {
+			} else if (u2.getUserActivityType() == UserActivityType.PROCESS_LOG) {
 				to = TimeManager.getTimestampFromLong(
 					toMillis((u2.getProcessLog().getLastRun())));
+			} else if (u2.getUserActivityType() == UserActivityType.NOTICE) {
+				to = TimeManager.getTimestampFromLong(
+					toMillis(u2.getNotice().getCreated())
+				);
 			}
 
 			if (from == null || to == null) {
@@ -166,9 +202,6 @@ public class LogsServiceLogic {
 		.collect(Collectors.toList());
 
 		builderList.setRecordCount(count)
-			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
-			)
 			.addAllRecords(recordsList)
 		;
 

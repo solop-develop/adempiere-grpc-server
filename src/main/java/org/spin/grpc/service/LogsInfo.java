@@ -39,9 +39,8 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.compiere.wf.MWFProcess;
 import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.logs.ConfidentialType;
 import org.spin.backend.grpc.logs.EntityChat;
-import org.spin.backend.grpc.logs.EntityChat.ConfidentialType;
-import org.spin.backend.grpc.logs.EntityChat.ModerationType;
 import org.spin.backend.grpc.logs.ExistsChatEntriesRequest;
 import org.spin.backend.grpc.logs.ExistsChatEntriesResponse;
 import org.spin.backend.grpc.logs.ListChatEntriesRequest;
@@ -59,6 +58,7 @@ import org.spin.backend.grpc.logs.ListUserActivitesResponse;
 import org.spin.backend.grpc.logs.ListWorkflowLogsRequest;
 import org.spin.backend.grpc.logs.ListWorkflowLogsResponse;
 import org.spin.backend.grpc.logs.LogsGrpc.LogsImplBase;
+import org.spin.backend.grpc.logs.ModerationType;
 import org.spin.backend.grpc.user_interface.ChatEntry;
 import org.spin.backend.grpc.logs.RecentItem;
 import org.spin.backend.grpc.wf.WorkflowProcess;
@@ -94,10 +94,13 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -115,10 +118,12 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -136,10 +141,13 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -306,10 +314,11 @@ public class LogsInfo extends LogsImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -667,6 +676,7 @@ public class LogsInfo extends LogsImplBase {
 	}
 
 
+
 	@Override
 	public void existsChatEntries(ExistsChatEntriesRequest request, StreamObserver<ExistsChatEntriesResponse> responseObserver) {
 		try {
@@ -678,10 +688,12 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}

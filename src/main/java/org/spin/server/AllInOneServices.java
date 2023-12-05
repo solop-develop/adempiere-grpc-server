@@ -39,6 +39,7 @@ import org.spin.grpc.service.IssueManagement;
 import org.spin.grpc.service.LogsInfo;
 import org.spin.grpc.service.MatchPOReceiptInvoice;
 import org.spin.grpc.service.MaterialManagement;
+import org.spin.grpc.service.NoticeManagement;
 import org.spin.grpc.service.OrderInfo;
 import org.spin.grpc.service.PaymentPrintExport;
 import org.spin.grpc.service.PaymentInfo;
@@ -249,7 +250,7 @@ public class AllInOneServices {
 		}
 		//	Notice Management
 		if(SetupLoader.getInstance().getServer().isValidService(Services.NOTICE_MANAGEMENT.getServiceName())) {
-			serverBuilder.addService(new MaterialManagement());
+			serverBuilder.addService(new NoticeManagement());
 			logger.info("Service " + Services.MATERIAL_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Order

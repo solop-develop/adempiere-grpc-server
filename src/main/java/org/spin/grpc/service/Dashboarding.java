@@ -523,7 +523,7 @@ public class Dashboarding extends DashboardingImplBase {
 		ListNotificationsResponse.Builder builderList = ListNotificationsResponse.newBuilder();
 
 		builderList.addNotifications(getNotificationNotice());
-		builderList.addNotifications(getNoticeRequest());
+		builderList.addNotifications(getIssueRequest());
 		builderList.addNotifications(getNotificationWorkflowActivities());
 
 		return builderList;
@@ -581,7 +581,7 @@ public class Dashboarding extends DashboardingImplBase {
 		return builder;
 	}
 
-	private Notification.Builder getNoticeRequest() {
+	private Notification.Builder getIssueRequest() {
 		Notification.Builder builder = Notification.newBuilder();
 
 		final String whereClause = "Processed='N' "
