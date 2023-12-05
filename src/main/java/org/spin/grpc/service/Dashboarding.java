@@ -117,10 +117,12 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -302,10 +304,12 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -451,10 +455,12 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -499,6 +505,7 @@ public class Dashboarding extends DashboardingImplBase {
 	}
 
 
+
 	@Override
 	public void listNotifications(ListNotificationsRequest request, StreamObserver<ListNotificationsResponse> responseObserver) {
 		try {
@@ -510,6 +517,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -712,6 +720,7 @@ public class Dashboarding extends DashboardingImplBase {
 	}
 
 
+
 	private final String whereClauseWindowChart = "AD_Window_ID = ? "	//	#1
 		+ "AND (COALESCE(AD_Tab_ID, 0) = ? "	//	#2
 		+ "OR COALESCE(AD_Tab_ID, 0) = 0) "	//	#3
@@ -733,10 +742,12 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -774,6 +785,7 @@ public class Dashboarding extends DashboardingImplBase {
 	}
 
 
+
 	@Override
 	public void listWindowDashboards(ListWindowDashboardsRequest request, StreamObserver<ListWindowDashboardsResponse> responseObserver) {
 		try {
@@ -786,10 +798,12 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -897,16 +911,17 @@ public class Dashboarding extends DashboardingImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			
 			WindowMetrics.Builder chart = getWindowMetrics(request);
 			responseObserver.onNext(chart.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -1004,7 +1019,11 @@ public class Dashboarding extends DashboardingImplBase {
 		}
 
 		//	Add all
-		WindowMetrics.Builder builder = WindowMetrics.newBuilder();
+		WindowMetrics.Builder builder = WindowMetrics.newBuilder()
+			.setId(
+				windowChart.get_ID()
+			)
+		;
 		chartSeries.keySet().stream().sorted().forEach(serieKey -> {
 			ChartSerie.Builder chartSerieBuilder = ChartSerie.newBuilder()
 				.setName(serieKey)

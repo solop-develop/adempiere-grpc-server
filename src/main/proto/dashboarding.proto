@@ -31,6 +31,10 @@ service Dashboarding {
 	rpc ListDashboards(ListDashboardsRequest) returns (ListDashboardsResponse) {
 		option (google.api.http) = { get: "/dashboarding/dashboards" };
 	}
+	//	Get Metrics
+	rpc GetMetrics(GetMetricsRequest) returns (Metrics) {
+		option (google.api.http) = { get: "/dashboarding/dashboards/{id}/metrics" };
+	}
 	//	Request Favorites
 	rpc ListFavorites(ListFavoritesRequest) returns (ListFavoritesResponse) {
 		option (google.api.http) = { get: "/dashboarding/favorites" };
@@ -39,23 +43,19 @@ service Dashboarding {
 	rpc ListPendingDocuments(ListPendingDocumentsRequest) returns (ListPendingDocumentsResponse) {
 		option (google.api.http) = { get: "/dashboarding/pending-documents" };
 	}
-	//	Get Metrics
-	rpc GetMetrics(GetMetricsRequest) returns (Metrics) {
-		option (google.api.http) = { get: "/dashboarding/metrics/{id}" };
-	}
 	// NotificationWindowChart
 	rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {
 		option (google.api.http) = { get: "/dashboarding/notifications" };
 	}
 	// Custom Window Metrics
 	rpc ExistsWindowDashboards(ExistsWindowDashboardsRequest) returns (ExistsWindowDashboardsResponse) {
-		option (google.api.http) = { get: "/dashboarding/exists-window-dashboards/{window_id}" };
+		option (google.api.http) = { get: "/dashboarding/dashboards/windows/{window_id}/exists" };
 	}
 	rpc ListWindowDashboards(ListWindowDashboardsRequest) returns (ListWindowDashboardsResponse) {
-		option (google.api.http) = { get: "/dashboarding/window-dashboards/{window_id}" };
+		option (google.api.http) = { get: "/dashboarding/dashboards/windows/{window_id}" };
 	}
 	rpc GetWindowMetrics(GetWindowMetricsRequest) returns (WindowMetrics) {
-		option (google.api.http) = { get: "/dashboarding/window-metrics/{id}/{table_name}/{record_id}" };
+		option (google.api.http) = { get: "/dashboarding/dashboards/windows/metrics/{id}/{table_name}/{record_id}" };
 	}
 }
 
