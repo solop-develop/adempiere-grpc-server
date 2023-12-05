@@ -103,9 +103,13 @@ public class WhereClauseUtil {
 	 * @return
 	 */
 	public static String getRestrictionByOperator(Filter condition, int displayType, List<Object> parameters) {
+		String operatorValue = Filter.EQUAL;
+		if (!Util.isEmpty(condition.getOperator(), true)) {
+			operatorValue = condition.getOperator().toLowerCase();
+		}
 		String sqlOperator = OperatorUtil.convertOperator(condition.getOperator());
+
 		String columnName = condition.getColumnName();
-		String operatorValue = condition.getOperator().toLowerCase();
 		String sqlValue = "";
 		StringBuilder additionalSQL = new StringBuilder();
 		//	For IN or NOT IN
