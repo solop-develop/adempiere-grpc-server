@@ -954,26 +954,27 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 	@Override
-	public void listIssues(ListIssuesRequest request, StreamObserver<ListIssuesReponse> responseObserver) {
+	public void listMyIssues(ListIssuesRequest request, StreamObserver<ListIssuesReponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Process Activity Requested is Null");
 			}
-			ListIssuesReponse.Builder entityValueList = listIssues(request);
+			ListIssuesReponse.Builder entityValueList = listMyIssues(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
 
-	private ListIssuesReponse.Builder listIssues(ListIssuesRequest request) {
+	private ListIssuesReponse.Builder listMyIssues(ListIssuesRequest request) {
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = "";
 
@@ -989,7 +990,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 			// validate record
 			int recordId = request.getRecordId();
-			if (recordId < 0) {
+			if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 				throw new AdempiereException("@Record_ID@ / @NotFound@");
 			}
 			parametersList.add(table.getAD_Table_ID());
@@ -1006,6 +1007,99 @@ public class IssueManagement extends IssueManagementImplBase {
 				+ "AND (R_Status_ID IS NULL OR R_Status_ID IN (SELECT R_Status_ID FROM R_Status WHERE IsClosed='N'))"
 			;
 		}
+
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
+			whereClause += " AND (UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Subject) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Summary) LIKE '%' || UPPER(?) || '%' )"
+			;
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
+		}
+
+		// filter status by status category
+		if (request.getStatusCategoryId() > 0) {
+			whereClause += " AND EXISTS("
+				+ "SELECT 1 FROM R_Status AS sc "
+				+ "WHERE sc.R_StatusCategory_ID = ? "
+				+ "AND R_Request.R_StatusCategory_ID = sc.R_StatusCategory_ID"
+				+")"
+			;
+			parametersList.add(request.getStatusCategoryId());
+		}
+
+		Query queryRequests = new Query(
+			Env.getCtx(),
+			I_R_Request.Table_Name,
+			whereClause,
+			null
+		)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO) // TODO: Fix Record access with pagination
+			.setParameters(parametersList)
+		;
+
+		int recordCount = queryRequests.count();
+
+		ListIssuesReponse.Builder builderList = ListIssuesReponse.newBuilder();
+		builderList.setRecordCount(recordCount);
+
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		// Set page token
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builderList.setNextPageToken(
+			ValueManager.validateNull(nexPageToken)
+		);
+
+		queryRequests
+			// .setLimit(limit, offset)
+			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction + " NULLS FIRST ")
+			.getIDsAsList()
+			// .list(MRequest.class)
+			.forEach(requestRecordId -> {
+				Issue.Builder builder = IssueManagementConvertUtil.convertRequest(requestRecordId);
+				builderList.addRecords(builder);
+			});
+
+		return builderList;
+	}
+
+
+
+	@Override
+	public void listIssues(ListIssuesRequest request, StreamObserver<ListIssuesReponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("List Issues Requested is Null");
+			}
+			ListIssuesReponse.Builder builderList = listIssues(request);
+			responseObserver.onNext(builderList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private ListIssuesReponse.Builder listIssues(ListIssuesRequest request) {
+		List<Object> parametersList = new ArrayList<>();
+		String whereClause = "";
 
 		final String searchValue = ValueManager.getDecodeUrl(
 			request.getSearchValue()

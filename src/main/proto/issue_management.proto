@@ -82,6 +82,11 @@ service IssueManagement {
 	}
 	rpc ListIssues(ListIssuesRequest) returns (ListIssuesReponse) {
 		option (google.api.http) = {
+			get: "/issue-management/issues/all"
+		};
+	}
+	rpc ListMyIssues(ListIssuesRequest) returns (ListIssuesReponse) {
+		option (google.api.http) = {
 			get: "/issue-management/issues"
 			additional_bindings: {
 				get: "/issue-management/issues/{table_name}/{record_id}"
