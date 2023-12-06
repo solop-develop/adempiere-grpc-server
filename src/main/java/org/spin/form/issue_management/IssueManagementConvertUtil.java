@@ -247,7 +247,12 @@ public class IssueManagementConvertUtil {
 			.setDescription(
 				ValueManager.validateNull(requestType.getDescription())
 			)
-			.setDueDateTolerance(requestType.getDueDateTolerance())
+			.setDueDateTolerance(
+				requestType.getDueDateTolerance()
+			)
+			.setIsDefault(
+				requestType.isDefault()
+			)
 		;
 
 		final String whereClause = "R_StatusCategory_ID = ? AND IsDefault = 'Y' ";
