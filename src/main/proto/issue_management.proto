@@ -136,6 +136,7 @@ message RequestType {
 	string description = 3;
 	int32 due_date_tolerance = 4;
 	Status default_status = 5;
+	bool is_default = 6;
 }
 
 message ListRequestTypesRequest {
