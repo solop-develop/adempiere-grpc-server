@@ -1247,9 +1247,15 @@ public class Security extends SecurityImplBase {
 				)
 			)
 		;
-		if(user.getLogo_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(user.getAD_Client_ID())) {
-			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), user.getAD_Client_ID());
-			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(user.getCtx(), clientInfo.getFileHandler_ID(), user.getLogo_ID(), null);
+		int clientId = Env.getAD_Client_ID(Env.getCtx());
+		if(user.getLogo_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(clientId)) {
+			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), clientId);
+			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
+				Env.getCtx(),
+				clientInfo.getFileHandler_ID(),
+				user.getLogo_ID(),
+				null
+			);
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
 				userInfo.setImage(
