@@ -329,6 +329,11 @@ public class IssueManagementConvertUtil {
 			.setName(
 				ValueManager.validateNull(status.getName())
 			)
+			.setValue(
+				ValueManager.validateNull(
+					status.getValue()
+				)
+			)
 			.setDescription(
 				ValueManager.validateNull(status.getDescription())
 			)

@@ -487,6 +487,7 @@ public class IssueManagement extends IssueManagementImplBase {
 		);
 
 		queryRequests
+			.setOrderBy(I_R_Status.COLUMNNAME_IsDefault + " DESC, " + I_R_Status.COLUMNNAME_SeqNo)
 			// .setLimit(limit, offset)
 			.getIDsAsList()
 			// .list(MStatus.class)
