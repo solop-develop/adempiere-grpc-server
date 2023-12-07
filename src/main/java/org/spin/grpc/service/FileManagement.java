@@ -146,19 +146,27 @@ public class FileManagement extends FileManagementImplBase {
 	@Override
 	public void getResource(GetResourceRequest request, StreamObserver<Resource> responseObserver) {
 		try {
-			getResource(request.getId(), request.getResourceName(), responseObserver);
+			getResource(
+				request.getId(),
+				request.getAttachmentId(),
+				request.getResourceName(),
+				request.getImageId(),
+				request.getArchiveId(),
+				responseObserver
+			);
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
 
-	public String getResourceUuidFromName(String resourceName) {
+	public static String getResourceUuidFromName(String resourceName) {
 		if (Util.isEmpty(resourceName, true)) {
 			return null;
 		}
@@ -179,14 +187,57 @@ public class FileManagement extends FileManagementImplBase {
 		}
 		return reference.getUUID();
 	}
-	
+
+	public static MADAttachmentReference getAttachmentReference(int fileHandlerId, int id, int attachmentId, String resourceName, int imageId, int archiveId) {
+		MADAttachmentReference resourceReference = null;
+		if (id > 0) {
+			resourceReference = MADAttachmentReference.getById(Env.getCtx(), id, null);
+		}
+		if (resourceReference == null) {
+			resourceReference = MADAttachmentReference.getByAttachmentId(
+				Env.getCtx(),
+				fileHandlerId,
+				attachmentId,
+				resourceName,
+				null
+			);
+		}
+		if (resourceReference == null && !Util.isEmpty(resourceName, true)) {
+			String resourceUuid = getResourceUuidFromName(resourceName);
+			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), resourceUuid, null);
+		}
+
+		// by image
+		if (resourceReference == null && imageId > 0) {
+			resourceReference = MADAttachmentReference.getByImageId(
+				Env.getCtx(),
+				fileHandlerId,
+				imageId,
+				null
+			);
+		}
+
+		// by archive
+		if (resourceReference == null && archiveId > 0) {
+			resourceReference = MADAttachmentReference.getByArchiveId(
+				Env.getCtx(),
+				fileHandlerId,
+				archiveId,
+				null
+			);
+		}
+
+		return resourceReference;
+	}
+
 	/**
 	 * Get File from fileName
 	 * @param resourceUuid
 	 * @param responseObserver
 	 * @throws Exception 
 	 */
-	private void getResource(int resourceId, String resourceName, StreamObserver<Resource> responseObserver) throws Exception {
+	private void getResource(int resourceId, int attachmentId, String resourceName, int imageId, int archiveId,
+		StreamObserver<Resource> responseObserver) throws Exception {
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
 		if (!AttachmentUtil.getInstance().isValidForClient(clientId)) {
 			responseObserver.onError(
@@ -195,29 +246,15 @@ public class FileManagement extends FileManagementImplBase {
 			return;
 		}
 
-		MADAttachmentReference attachmentReference = null;
-		if (resourceId > 0) {
-			attachmentReference = MADAttachmentReference.getById(
-				Env.getCtx(),
-				resourceId,
-				null
-			);
-		}
-		//	Validate by name
-		if (attachmentReference == null && !Util.isEmpty(resourceName, true)) {
-			String resourceUuid = getResourceUuidFromName(resourceName);
-			if (Util.isEmpty(resourceUuid, true)) {
-				responseObserver.onError(
-					new AdempiereException("@FileName@ @NotFound@")
-				);
-				return;
-			}
-			attachmentReference = MADAttachmentReference.getByUuid(
-				Env.getCtx(),
-				resourceUuid,
-				null
-			);
-		}
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), clientId);
+		MADAttachmentReference attachmentReference = getAttachmentReference(
+			clientInfo.getFileHandler_ID(),
+			resourceId,
+			attachmentId,
+			resourceName,
+			imageId,
+			archiveId
+		);
 
 		if (attachmentReference == null) {
 			responseObserver.onError(
@@ -269,10 +306,11 @@ public class FileManagement extends FileManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -286,43 +324,14 @@ public class FileManagement extends FileManagementImplBase {
 		// validate and get client info with configured file handler
 		MClientInfo clientInfo = validateAndGetClientInfo();
 
-		MADAttachmentReference resourceReference = null;
-		if (request.getId() > 0) {
-			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
-		}
-		if (resourceReference == null) {
-			resourceReference = MADAttachmentReference.getByAttachmentId(
-				Env.getCtx(),
-				clientInfo.getFileHandler_ID(),
-				request.getId(),
-				request.getResourceName(),
-				null
-			);
-		}
-		if (resourceReference == null && !Util.isEmpty(request.getResourceName(), true)) {
-			String resourceUuid = getResourceUuidFromName(request.getResourceName());
-			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), resourceUuid, null);
-		}
-
-		int imageId = request.getImageId();
-		if (resourceReference == null && imageId > 0) {
-			resourceReference = MADAttachmentReference.getByImageId(
-				Env.getCtx(),
-				clientInfo.getFileHandler_ID(),
-				imageId,
-				null
-			);
-		}
-
-		int archiveId = request.getArchiveId();
-		if (resourceReference == null && archiveId > 0) {
-			resourceReference = MADAttachmentReference.getByArchiveId(
-				Env.getCtx(),
-				clientInfo.getFileHandler_ID(),
-				archiveId,
-				null
-			);
-		}
+		MADAttachmentReference resourceReference = getAttachmentReference(
+			clientInfo.getFileHandler_ID(),
+			request.getId(),
+			request.getAttachmentId(),
+			request.getResourceName(),
+			request.getImageId(),
+			request.getArchiveId()
+		);
 
 		if (resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
 			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
@@ -504,6 +513,11 @@ public class FileManagement extends FileManagementImplBase {
 			)
 			.setFileName(
 				ValueManager.validateNull(reference.getValidFileName())
+			)
+			.setValidFileName(
+				ValueManager.validateNull(
+					reference.getValidFileName()
+				)
 			)
 			.setDescription(
 				ValueManager.validateNull(reference.getDescription())
@@ -782,61 +796,69 @@ public class FileManagement extends FileManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
 	
 	Empty.Builder deleteResourceReference(DeleteResourceReferenceRequest request) throws Exception {
-		if (request.getId() <= 0 && Util.isEmpty(request.getResourceName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
-		}
+		// validate and get client info with configured file handler
+		MClientInfo clientInfo = validateAndGetClientInfo();
 
-		MADAttachmentReference resourceReference = null;
-		if (request.getId() > 0) {
-			resourceReference = MADAttachmentReference.getById(Env.getCtx(), request.getId(), null);
-		}
-		if (resourceReference == null && !Util.isEmpty(request.getResourceName(), true)) {
-			String resourceUuid = getResourceUuidFromName(request.getResourceName());
-			resourceReference = MADAttachmentReference.getByUuid(Env.getCtx(), resourceUuid, null);
-		}
+		MADAttachmentReference resourceReference = getAttachmentReference(
+			clientInfo.getFileHandler_ID(),
+			request.getId(),
+			request.getAttachmentId(),
+			request.getResourceName(),
+			request.getImageId(),
+			request.getArchiveId()
+		);
 
 		if (resourceReference == null || resourceReference.getAD_AttachmentReference_ID() <= 0) {
 			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
 		}
 
-		// validate and get client info with configured file handler
-		MClientInfo clientInfo = validateAndGetClientInfo();
-
-		// when delete attachmet reference, the `resourceReference` is clean values
-		final int imageId = resourceReference.getAD_Image_ID();
-		final int archiveId = resourceReference.getAD_Archive_ID();
-
 		// delete file on cloud (s3, nexcloud)
 		AttachmentUtil.getInstance()
 			.clear()
-			.withAttachmentReferenceId(resourceReference.getAD_AttachmentReference_ID())
-			.withFileName(resourceReference.getFileName())
-			.withClientId(clientInfo.getAD_Client_ID())
-			.deleteAttachment();
+			.withAttachmentReferenceId(
+				resourceReference.getAD_AttachmentReference_ID()
+			)
+			.withFileName(
+				resourceReference.getFileName()
+			)
+			.withClientId(
+				clientInfo.getAD_Client_ID()
+			)
+			.deleteAttachment()
+		;
 
+		// TODO: Support on adempiere
+		// when delete attachmet reference, the `resourceReference` is clean values
+
+		final int imageId = request.getImageId();
+		final int archiveId = request.getArchiveId();
 		if (imageId > 0) {
 			MImage image = MImage.get(Env.getCtx(), imageId, null);
 			if (image != null && image.getAD_Image_ID() > 0) {
-				image.deleteEx(false);
+				image.delete(false);
 			}
 		} else if (archiveId > 0) {
 			MArchive archive = new MArchive(Env.getCtx(), archiveId, null);
 			if (archive != null && archive.getAD_Archive_ID() > 0) {
-				archive.deleteEx(false);
+				archive.delete(false);
 			}
 		}
 
 		// reset cache
-		MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
+		MADAttachmentReference.resetAttachmentReferenceCache(
+			clientInfo.getFileHandler_ID(),
+			resourceReference
+		);
 
 		return Empty.newBuilder();
 	}
