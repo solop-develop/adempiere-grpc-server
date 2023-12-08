@@ -1243,6 +1243,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 		// fill values
 		requestRecord.setR_RequestType_ID(requestTypeId);
+		requestRecord.setR_Status_ID(request.getStatusId());
 		requestRecord.setSubject(request.getSubject());
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
