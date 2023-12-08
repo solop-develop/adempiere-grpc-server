@@ -1345,35 +1345,22 @@ public class IssueManagement extends IssueManagementImplBase {
 			ValueManager.getDateFromTimestampDate(request.getDateNextAction())
 		);
 		
-		if (request.getStatusId() > 0) {
-			int statusId = request.getStatusId();
-			requestRecord.setR_Status_ID(statusId);
-		}
-		if (request.getCategoryId() > 0) {
-			requestRecord.setR_Category_ID(
-				request.getCategoryId()
-			);
-		}
-		if (request.getGroupId() > 0) {
-			requestRecord.setR_Group_ID(
-				request.getGroupId()
-			);
-		}
-		if (!Util.isEmpty(request.getTaskStatusValue(), true)) {
-			requestRecord.setTaskStatus(
-				request.getTaskStatusValue()
-			);
-		}
-		if (request.getBusinessPartnerId() > 0) {
-			requestRecord.setC_BPartner_ID(
-				request.getBusinessPartnerId()
-			);
-		}
-		if (request.getProjectId() > 0) {
-			requestRecord.setC_Project_ID(
-				request.getProjectId()
-			);
-		}
+		requestRecord.setR_Status_ID(request.getStatusId());
+		requestRecord.setR_Category_ID(
+			request.getCategoryId()
+		);
+		requestRecord.setR_Group_ID(
+			request.getGroupId()
+		);
+		requestRecord.setTaskStatus(
+			request.getTaskStatusValue()
+		);
+		requestRecord.setC_BPartner_ID(
+			request.getBusinessPartnerId()
+		);
+		requestRecord.setC_Project_ID(
+			request.getProjectId()
+		);
 
 		requestRecord.saveEx();
 
