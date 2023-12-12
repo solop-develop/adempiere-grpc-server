@@ -14,12 +14,9 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,7 +43,9 @@ import org.adempiere.core.domains.models.I_AD_Browse_Field;
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Client;
 import org.adempiere.core.domains.models.I_AD_Element;
+import org.adempiere.core.domains.models.I_AD_EntityType;
 import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_AD_Preference;
 import org.adempiere.core.domains.models.I_AD_Private_Access;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
@@ -162,7 +161,9 @@ import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
@@ -1555,7 +1556,8 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Set value
 		entity.set_ValueOfColumn(changeLog.getAD_Column_ID(), value);
 	}
-	
+
+
 	/**
 	 * Convert string representation to appropriate object type
 	 * for column
@@ -1564,38 +1566,48 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private Object stringToObject(MColumn column, String value) {
-		if ( value == null )
+		if (value == null) {
 			return null;
-		
-		if ( DisplayType.isText(column.getAD_Reference_ID()) 
-				|| column.getAD_Reference_ID() == DisplayType.List  
-				|| column.getColumnName().equals("EntityType") 
-				|| column.getColumnName().equals("AD_Language")) {
+		}
+
+		int displayTypeId = column.getAD_Reference_ID();
+		if (DisplayType.isText(column.getAD_Reference_ID()) || displayTypeId == DisplayType.List
+				|| column.getColumnName().equals(I_AD_EntityType.COLUMNNAME_EntityType)
+				|| column.getColumnName().equals(I_AD_Language.COLUMNNAME_AD_Language)) {
 			return value;
 		}
-		else if ( DisplayType.isNumeric(column.getAD_Reference_ID()) ){
-			return new BigDecimal(value);
+		else if (DisplayType.isID(column.getAD_Reference_ID()) || DisplayType.Integer == displayTypeId) {
+			Object valueObject = NumberManager.getIntegerFromString(value);
+			if (valueObject == null && value != null
+				&& (DisplayType.Search == displayTypeId || DisplayType.Table == displayTypeId)) {
+				// EntityType, AD_Language
+				return value;
+			}
+			return valueObject;
 		}
-		else if (DisplayType.isID(column.getAD_Reference_ID()) ) {
-			return Integer.valueOf(value);
-		}	
-		else if (DisplayType.YesNo == column.getAD_Reference_ID() ) {
-			return "true".equalsIgnoreCase(value);
+		else if (DisplayType.isNumeric(displayTypeId)) {
+			return NumberManager.getBigDecimalFromString(value);
 		}
-		else if (DisplayType.Button == column.getAD_Reference_ID() && column.getAD_Reference_Value_ID() == 0) {
+		else if (DisplayType.YesNo == displayTypeId) {
+			return BooleanManager.getBooleanFromString(value);
+		}
+		else if (DisplayType.Button == displayTypeId && column.getAD_Reference_Value_ID() == 0) {
 			return "true".equalsIgnoreCase(value) ? "Y" : "N";
 		}
-		else if (DisplayType.Button == column.getAD_Reference_ID() && column.getAD_Reference_Value_ID() != 0) {
+		else if (DisplayType.Button == displayTypeId && column.getAD_Reference_Value_ID() != 0) {
 			return value;
 		}
-		else if (DisplayType.isDate(column.getAD_Reference_ID())) {
-			return Timestamp.valueOf(value);
+		else if (DisplayType.isDate(displayTypeId)) {
+			return TimeManager.getTimestampFromString(value);
 		}
-	//Binary,  Radio, RowID, Image not supported
-		else 
+		// Binary, RowID, Image not supported
+		else {
 			return null;
+		}
 	}
-	
+
+
+
 	/**
 	 * Create Chat Entry
 	 * @param Env.getCtx()
@@ -1994,7 +2006,10 @@ public class UserInterface extends UserInterfaceImplBase {
 						}
 						String uuid = null;
 						//	Validate if exist UUID
-						int uuidIndex = getColumnIndex(metaData, I_AD_Element.COLUMNNAME_UUID);
+						int uuidIndex = RecordUtil.getColumnIndex(
+							metaData,
+							I_AD_Element.COLUMNNAME_UUID
+						);
 						if(uuidIndex != -1) {
 							uuid = rs.getString(uuidIndex);
 						}
@@ -2284,7 +2299,10 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 				String uuid = null;
 				//	Validate if exist UUID
-				int uuidIndex = getColumnIndex(metaData, I_AD_Element.COLUMNNAME_UUID);
+				int uuidIndex = RecordUtil.getColumnIndex(
+					metaData,
+					I_AD_Element.COLUMNNAME_UUID
+				);
 				if(uuidIndex != -1) {
 					uuid = rs.getString(uuidIndex);
 				}
@@ -2311,24 +2329,8 @@ public class UserInterface extends UserInterfaceImplBase {
 		return builder;
 	}
 
-	/**
-	 * Verify if exist a column
-	 * @param metaData
-	 * @param columnName
-	 * @return
-	 * @throws SQLException 
-	 */
-	public static int getColumnIndex(ResultSetMetaData metaData, String columnName) throws SQLException {
-		for(int columnIndex = 1; columnIndex <= metaData.getColumnCount(); columnIndex++) {
-			if(metaData.getColumnName(columnIndex).toLowerCase().equals(columnName.toLowerCase())) {
-				return columnIndex;
-			}
-		}
-		return -1;
-	}
 
 
-	
 	@Override
 	public void listBrowserItems(ListBrowserItemsRequest request, StreamObserver<ListBrowserItemsResponse> responseObserver) {
 		try {
