@@ -62,6 +62,7 @@ import org.spin.backend.grpc.form.import_file_loader.ListImportTablesResponse;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsRequest;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.UserInterface;
@@ -99,17 +100,6 @@ public class ImportFileLoaderServiceLogic {
 			throw new AdempiereException("@AD_ImpFormat_ID@ @NotFound@");
 		}
 		return importFormat;
-	}
-
-	public static MTable validateAndGetTable(String tableName) {
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		MTable table = MTable.get(Env.getCtx(), tableName);
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		return table;
 	}
 
 
@@ -187,7 +177,7 @@ public class ImportFileLoaderServiceLogic {
 
 	public static ListLookupItemsResponse.Builder listImportFormats(ListImportFormatsRequest request) {
 		// validate and get table
-		MTable table = validateAndGetTable(
+		final MTable table = RecordUtil.validateAndGetTable(
 			request.getTableName()
 		);
 
@@ -214,7 +204,7 @@ public class ImportFileLoaderServiceLogic {
 
 	public static ListLookupItemsResponse.Builder listClientImportFormats(ListClientImportFormatsRequest request) {
 		// validate and get table
-		MTable table = validateAndGetTable(
+		final MTable table = RecordUtil.validateAndGetTable(
 			request.getTableName()
 		);
 
@@ -561,7 +551,7 @@ public class ImportFileLoaderServiceLogic {
 
 	public static ListLookupItemsResponse.Builder listImportProcesses(ListImportProcessesRequest request) {
 		// validate and get table
-		MTable table = validateAndGetTable(
+		final MTable table = RecordUtil.validateAndGetTable(
 			request.getTableName()
 		);
 

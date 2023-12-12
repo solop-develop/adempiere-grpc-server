@@ -1120,14 +1120,12 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private RecordAccess.Builder convertRecordAccess(GetRecordAccessRequest request) {
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		if(request.getId() <= 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		//	
-		int tableId = MTable.getTable_ID(request.getTableName());
+		int tableId = table.getAD_Table_ID();
 		int recordId = request.getId();
 		RecordAccess.Builder builder = RecordAccess.newBuilder()
 			.setTableName(
@@ -1200,20 +1198,21 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private RecordAccess.Builder saveRecordAccess(SetRecordAccessRequest request) {
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		if(request.getId() <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		//	
 		RecordAccess.Builder builder = RecordAccess.newBuilder();
 		Trx.run(transactionName -> {
-			int tableId = MTable.getTable_ID(request.getTableName());
+			int tableId = table.getAD_Table_ID();
 			AtomicInteger recordId = new AtomicInteger(request.getId());
 			builder.setTableName(
 					ValueManager.validateNull(
-						request.getTableName()
+						table.getTableName()
 					)
 				)
 				.setId(recordId.get())
@@ -1485,14 +1484,10 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private Entity.Builder rollbackLastEntityAction(RollbackEntityRequest request) {
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if(table == null
-				|| table.getAD_Table_ID() == 0) {
-			throw new AdempiereException("@AD_Table_ID@ @Invalid@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		AtomicReference<PO> entityWrapper = new AtomicReference<PO>();
 		Trx.run(transactionName -> {
 			int id = request.getId();
@@ -1608,17 +1603,14 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @return
 	 */
 	private ChatEntry.Builder addChatEntry(CreateChatEntryRequest request) {
-		if (Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+
 		AtomicReference<MChatEntry> entryReference = new AtomicReference<>();
 		Trx.run(transactionName -> {
-			String tableName = request.getTableName();
-			MTable table = MTable.get(Env.getCtx(), tableName);
-			if (table == null || table.getAD_Table_ID() <= 0) {
-				throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-			}
-			PO entity = RecordUtil.getEntity(Env.getCtx(), tableName, request.getId(), transactionName);
+			PO entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), request.getId(), transactionName);
 			//	
 			StringBuffer whereClause = new StringBuffer();
 			List<Object> parameters = new ArrayList<>();
@@ -3220,7 +3212,10 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 			whereClause = parsedWhereClause;
 		} else {
-			table = MTable.get(context, request.getTableName());
+			// validate and get table
+			table = RecordUtil.validateAndGetTable(
+				request.getTableName()
+			);
 		}
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");

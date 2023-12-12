@@ -25,7 +25,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MView;
@@ -38,6 +37,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.base.query.Filter;
 import org.spin.base.query.FilterManager;
+import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.WindowUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
@@ -424,11 +424,8 @@ public class WhereClauseUtil {
 	 */
 	public static String getWhereClauseFromCriteria(String filters, String tableName, String tableAlias, List<Object> params) {
 		StringBuffer whereClause = new StringBuffer();
-		final MTable table = MTable.get(Env.getCtx(), tableName);
-		//	Validate
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// Vaidate and Table
+		final MTable table = RecordUtil.validateAndGetTable(tableName);
 		if (Util.isEmpty(tableAlias, true)) {
 			tableAlias = tableName;
 		}

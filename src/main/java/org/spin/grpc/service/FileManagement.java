@@ -88,24 +88,6 @@ public class FileManagement extends FileManagementImplBase {
 
 
 	/**
-	 * Validate table exists.
-	 * @return table
-	 */
-	private static MTable validateAndGetTable(String tableName) {
-		// validate table
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		MTable table = MTable.get(Env.getCtx(), tableName);
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		return table;
-	}
-
-
-
-	/**
 	 * Validate attachment reference exists.
 	 * @return attachment reference
 	 */
@@ -484,7 +466,9 @@ public class FileManagement extends FileManagementImplBase {
 	 */
 	private Attachment.Builder getAttachmentFromEntity(GetAttachmentRequest request) {
 		// validate and get table
-		MTable table = validateAndGetTable(request.getTableName());
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 
 		int recordId = request.getRecordId();
 		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
@@ -508,6 +492,11 @@ public class FileManagement extends FileManagementImplBase {
 		}
 		builder
 			.setId(reference.getAD_AttachmentReference_ID())
+			.setUuid(
+				ValueManager.validateNull(
+					reference.getUUID()
+				)
+			)
 			.setName(
 				ValueManager.validateNull(reference.getFileName())
 			)
@@ -683,7 +672,9 @@ public class FileManagement extends FileManagementImplBase {
 				}
 			} else {
 				// validate and get table
-				MTable table = validateAndGetTable(request.getTableName());
+				final MTable table = RecordUtil.validateAndGetTable(
+					request.getTableName()
+				);
 
 				// validate record
 				int recordId = request.getRecordId();
@@ -895,7 +886,9 @@ public class FileManagement extends FileManagementImplBase {
 		}
 
 		// validate and get table
-		MTable table = validateAndGetTable(request.getTableName());
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 
 		// validate record
 		int recordId = request.getRecordId();

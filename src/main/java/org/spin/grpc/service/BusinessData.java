@@ -437,12 +437,14 @@ public class BusinessData extends BusinessDataImplBase {
 	 * @return
 	 */
 	private Empty.Builder deleteEntity(Properties context, DeleteEntityRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+
 		Trx.run(transactionName -> {
-			if(Util.isEmpty(request.getTableName())) {
-				throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-			}
 			if (request.getId() > 0) {
-				PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getId(), transactionName);
+				PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getId(), transactionName);
 				if (entity != null && entity.get_ID() > 0) {
 					entity.deleteEx(true);
 				}
@@ -459,13 +461,13 @@ public class BusinessData extends BusinessDataImplBase {
 	 * @return
 	 */
 	private Empty.Builder deleteEntities(Properties context, DeleteEntitiesBatchRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		Trx.run(transactionName -> {
-			if(Util.isEmpty(request.getTableName())) {
-				throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-			}
 			List<Integer> ids = request.getIdsList();
 			if (ids.size() > 0) {
-				MTable table = MTable.get(context, request.getTableName());
 				ids.stream().forEach(id -> {
 					PO entity = table.getPO(id, transactionName);
 					if (entity != null && entity.get_ID() > 0) {
@@ -485,11 +487,11 @@ public class BusinessData extends BusinessDataImplBase {
 	 * @return
 	 */
 	private Entity.Builder createEntity(Properties context, CreateEntityRequest request) {
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		String tableName = request.getTableName();
-		MTable table = MTable.get(context, tableName);
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+
 		PO entity = table.getPO(0, null);
 		if(entity == null) {
 			throw new AdempiereException("@Error@ PO is null");
@@ -520,11 +522,12 @@ public class BusinessData extends BusinessDataImplBase {
 	 * @return
 	 */
 	private Entity.Builder updateEntity(Properties context, UpdateEntityRequest request) {
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		
-		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getId(), null);
+		PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getId(), null);
 		if(entity != null
 				&& entity.get_ID() >= 0) {
 			Map<String, Value> attributes = request.getAttributes().getFieldsMap();

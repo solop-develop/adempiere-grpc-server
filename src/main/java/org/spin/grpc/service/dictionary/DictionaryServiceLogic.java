@@ -22,17 +22,16 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MTable;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.ListFieldsRequest;
 import org.spin.backend.grpc.dictionary.ListFieldsResponse;
+import org.spin.base.util.RecordUtil;
 
 import io.vavr.control.Try;
 
@@ -46,14 +45,11 @@ public class DictionaryServiceLogic {
 
 
 	public static ListFieldsResponse.Builder listTableSearchFields(ListFieldsRequest request) {
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		Properties context = Env.getCtx();
-		MTable table = MTable.get(context, request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
 
 		ListFieldsResponse.Builder fieldsListBuilder = ListFieldsResponse.newBuilder();
 
@@ -94,14 +90,11 @@ public class DictionaryServiceLogic {
 
 
 	public static ListFieldsResponse.Builder listSearchInfoFields(ListFieldsRequest request) {
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		Properties context = Env.getCtx();
-		MTable table = MTable.get(context, request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
 
 		Map<Integer, Field.Builder> fieldsList = new HashMap<Integer, Field.Builder>();
 		ListFieldsResponse.Builder fieldsListBuilder = ListFieldsResponse.newBuilder();

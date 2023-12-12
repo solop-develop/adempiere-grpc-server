@@ -108,13 +108,8 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static PO getEntity(Properties context, String tableName, String uuid, int recordId, String transactionName) {
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		MTable table = MTable.get(context, tableName);
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// Vaidate and get Table
+		final MTable table = RecordUtil.validateAndGetTable(tableName);
 		//	Validate ID
 		if (Util.isEmpty(uuid, true) && !isValidId(recordId, table.getAccessLevel())) {
 			throw new AdempiereException("@FillMandatory@ @Record_ID@ / @UUID@");
@@ -173,6 +168,25 @@ public class RecordUtil {
 		//	Get
 		return IDFinder.getIdFromUUID(Env.getCtx(), tableName, uuid, Env.getAD_Client_ID(Env.getCtx()), transactionName);
 	}
+
+
+
+	/**
+	 * Validate tableName and MTable, and get instance
+	 * @param tableName
+	 * @return
+	 */
+	public static MTable validateAndGetTable(String tableName) {
+		if (Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+		MTable table = MTable.get(Env.getCtx(), tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		return table;
+	}
+
 
 
 	/**

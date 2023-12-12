@@ -942,16 +942,18 @@ public class Dashboarding extends DashboardingImplBase {
 			throw new AdempiereException("@AD_Chart_ID@ @NotFound@");
 		}
 
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+
 		// validate record
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
 		int recordId = request.getRecordId();
 		if (recordId <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		Env.setContext(context, windowNo, I_AD_ChangeLog.COLUMNNAME_Record_ID, recordId);
-		Env.setContext(context, windowNo, I_AD_Table.COLUMNNAME_TableName, request.getTableName());
+		Env.setContext(context, windowNo, I_AD_Table.COLUMNNAME_TableName, table.getTableName());
 
 		Map<String, Object> filtersList = new HashMap<String, Object>();
 		attributes.entrySet().forEach(entry -> {

@@ -713,10 +713,10 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	}
 	
 	private StartRePostResponse.Builder convertStartRePost(StartRePostRequest request) {
-		String tableName = ValueManager.validateNull(request.getTableName());
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		// Validate ID
 		if (request.getRecordId() <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
@@ -725,11 +725,10 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		StartRePostResponse.Builder rePostBuilder = StartRePostResponse.newBuilder();
 
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
-		int tableId = MTable.getTable_ID(request.getTableName());
 
 		String errorMessage = DocumentEngine.postImmediate(
 			Env.getCtx(), clientId,
-			tableId,
+			table.getAD_Table_ID(),
 			recordId,
 			request.getIsForce(),
 			null

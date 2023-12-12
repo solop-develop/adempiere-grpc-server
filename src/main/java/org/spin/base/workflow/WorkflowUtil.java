@@ -98,14 +98,12 @@ public class WorkflowUtil {
 
 
 	public static ProcessLog.Builder startWorkflow(String tableName, int recordId, String documentAction) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			tableName
+		);
+
 		Properties context = Env.getCtx();
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		MTable table = MTable.get(context, tableName);
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
 		ProcessLog.Builder response = ProcessLog.newBuilder()
 			.setResultTableName(
 				ValueManager.validateNull(tableName)

@@ -488,17 +488,14 @@ public class Workflow extends WorkflowImplBase {
 	 * @return
 	 */
 	private ListWorkflowsResponse.Builder convertWorkflows(Properties context, ListWorkflowsRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<>();
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
 		//	
-		MTable table = MTable.get(context, request.getTableName());
-		if(table == null
-				|| table.getAD_Table_ID() == 0) {
-			throw new AdempiereException("@AD_Table_ID@ @Invalid@");
-		}
 		whereClause
 			.append(I_AD_Workflow.COLUMNNAME_AD_Table_ID).append(" = ?");
 		//	Set parameters
@@ -571,15 +568,12 @@ public class Workflow extends WorkflowImplBase {
 		if(request.getId() <= 0) {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		//	
-		MTable table = MTable.get(context, request.getTableName());
-		if(table == null || table.getAD_Table_ID() == 0) {
-			throw new AdempiereException("@AD_Table_ID@ @Invalid@");
-		}
-		PO entity = RecordUtil.getEntity(context, request.getTableName(), request.getId(), null);
+		PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getId(), null);
 		if (entity == null) {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}

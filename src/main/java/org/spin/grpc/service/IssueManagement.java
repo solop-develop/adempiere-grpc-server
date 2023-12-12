@@ -920,14 +920,10 @@ public class IssueManagement extends IssueManagementImplBase {
 	}
 	
 	private ExistsIssuesResponse.Builder existsIssues(ExistsIssuesRequest request) {
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 
 		// validate record
 		int recordId = request.getRecordId();
@@ -980,14 +976,10 @@ public class IssueManagement extends IssueManagementImplBase {
 		String whereClause = "";
 
 		if (!Util.isEmpty(request.getTableName(), true)) {
-			// validate table
-			if (Util.isEmpty(request.getTableName(), true)) {
-				throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-			}
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if (table == null || table.getAD_Table_ID() <= 0) {
-				throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-			}
+			// validate and get table
+			final MTable table = RecordUtil.validateAndGetTable(
+				request.getTableName()
+			);
 
 			// validate record
 			int recordId = request.getRecordId();
@@ -1195,14 +1187,10 @@ public class IssueManagement extends IssueManagementImplBase {
 
 		// create issue with record on window
 		if (!Util.isEmpty(request.getTableName(), true) || request.getRecordId() > 0) {
-			if (Util.isEmpty(request.getTableName(), true)) {
-				throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-			}
-
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if (table == null || table.getAD_Table_ID() <= 0) {
-				throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-			}
+			// validate and get table
+			final MTable table = RecordUtil.validateAndGetTable(
+				request.getTableName()
+			);
 
 			// validate record
 			if (request.getRecordId() < 0) {

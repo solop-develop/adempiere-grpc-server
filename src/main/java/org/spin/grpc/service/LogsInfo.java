@@ -243,17 +243,16 @@ public class LogsInfo extends LogsImplBase {
 	 * @return
 	 */
 	private ListWorkflowLogsResponse.Builder listWorkflowLogs(ListWorkflowLogsRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<>();
 		if(Util.isEmpty(request.getTableName(), true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 		//	
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if(table == null
-				|| table.getAD_Table_ID() == 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
 		whereClause
 			.append(I_AD_WF_Process.COLUMNNAME_AD_Table_ID).append(" = ?")
 			.append(" AND ")
@@ -329,14 +328,10 @@ public class LogsInfo extends LogsImplBase {
 	 * @return
 	 */
 	private ListEntityLogsResponse.Builder listEntityLogs(ListEntityLogsRequest request) {
-		String tableName = request.getTableName();
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if (table == null || table.getAD_Table_ID() == 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 
 		int recordId = request.getId();
 		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
@@ -568,17 +563,14 @@ public class LogsInfo extends LogsImplBase {
 	 * @return
 	 */
 	private ListEntityChatsResponse.Builder convertEntityChats(ListEntityChatsRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<>();
-		if(Util.isEmpty(request.getTableName())) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
 		//	
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if(table == null
-				|| table.getAD_Table_ID() == 0) {
-			throw new AdempiereException("@AD_Table_ID@ @Invalid@");
-		}
 		whereClause
 			.append(I_CM_Chat.COLUMNNAME_AD_Table_ID).append(" = ?")
 			.append(" AND ")
@@ -699,14 +691,10 @@ public class LogsInfo extends LogsImplBase {
 	}
 	
 	private ExistsChatEntriesResponse.Builder existsChatEntries(ExistsChatEntriesRequest request) {
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-
-		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
 
 		// validate record
 		int recordId = request.getRecordId();
