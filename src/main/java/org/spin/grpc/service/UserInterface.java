@@ -153,13 +153,14 @@ import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.query.FilterManager;
 import org.spin.base.query.SortingManager;
-import org.spin.base.ui.UserInterfaceConvertUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.grpc.service.ui.UserInterfaceConvertUtil;
+import org.spin.grpc.service.ui.UserInterfaceLogic;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -1001,119 +1002,32 @@ public class UserInterface extends UserInterfaceImplBase {
 	}
 
 
+
 	@Override
 	public void listGeneralInfo(ListGeneralInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
 			if(request == null) {
-				throw new AdempiereException("Object Request Null");
+				throw new AdempiereException("List General Info Request Null");
 			}
-			ListEntitiesResponse.Builder entityValueList = listGeneralInfo(request);
+			ListEntitiesResponse.Builder entityValueList = UserInterfaceLogic.listGeneralInfo(
+				request
+			);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
-		}
-	}
-	
-	/**
-	 * Get default value base on field, process parameter, browse field or column
-	 * @param request
-	 * @return
-	 */
-	private ListEntitiesResponse.Builder listGeneralInfo(ListGeneralInfoRequest request) {
-		String tableName = request.getTableName();
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		MTable table = MTable.get(Env.getCtx(), tableName);
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			request.getReferenceId(),
-			request.getFieldId(),
-			request.getProcessParameterId(),
-			request.getBrowseFieldId(),
-			request.getColumnId(),
-			request.getColumnName(),
-			tableName
-		);
-
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromString(
-			windowNo, Env.getCtx(), request.getContextAttributes()
-		);
-
-		//
-		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
-
-		// add where with access restriction
-		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
-			.addAccessSQL(
-				sql.toString(),
-				null,
-				MRole.SQL_FULLYQUALIFIED,
-				MRole.SQL_RO
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
-
-		StringBuffer whereClause = new StringBuffer();
-
-		// validation code of field
-		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, reference.ValidationCode);
-		String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
-		if (!Util.isEmpty(reference.ValidationCode, true)) {
-			if (Util.isEmpty(parsedValidationCode, true)) {
-				throw new AdempiereException("@WhereClause@ @Unparseable@");
-			}
-			whereClause.append(" AND ").append(parsedValidationCode);
 		}
-
-		//	For dynamic condition
-		List<Object> params = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
-		if (!Util.isEmpty(dynamicWhere, true)) {
-			//	Add includes first AND
-			whereClause.append(" AND ")
-				.append("(")
-				.append(dynamicWhere)
-				.append(")");
-		}
-
-		sqlWithRoleAccess += whereClause;
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), false, params);
-
-		//	Get page and count
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-		int count = 0;
-
-		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
-		
-		//	Count records
-		count = CountUtil.countRecords(parsedSQL, tableName, params);
-		//	Add Row Number
-		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), tableName), parsedSQL, params);
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		String nexPageToken = null;
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
-		);
-		
-		return builder;
 	}
-	
+
+
+
 	/**
 	 * Convert Record Access
 	 * @param request

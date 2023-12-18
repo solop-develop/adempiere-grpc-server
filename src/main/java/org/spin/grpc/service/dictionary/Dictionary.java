@@ -17,7 +17,6 @@ package org.spin.grpc.service.dictionary;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.logging.Level;
 
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Form;
@@ -37,7 +36,6 @@ import org.compiere.model.MWindow;
 import org.compiere.model.M_Element;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -48,8 +46,10 @@ import org.spin.backend.grpc.dictionary.EntityRequest;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.FieldRequest;
 import org.spin.backend.grpc.dictionary.Form;
-import org.spin.backend.grpc.dictionary.ListFieldsRequest;
-import org.spin.backend.grpc.dictionary.ListFieldsResponse;
+import org.spin.backend.grpc.dictionary.ListIdentifierColumnsRequest;
+import org.spin.backend.grpc.dictionary.ListIdentifierColumnsResponse;
+import org.spin.backend.grpc.dictionary.ListSearchFieldsRequest;
+import org.spin.backend.grpc.dictionary.ListSearchFieldsResponse;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.ReferenceRequest;
@@ -420,87 +420,13 @@ public class Dictionary extends DictionaryImplBase {
 	
 
 
-
 	@Override
-	public void listIdentifiersFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
+	public void listIdentifiersColumns(ListIdentifierColumnsRequest request, StreamObserver<ListIdentifierColumnsResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListFieldsResponse.Builder fielsListBuilder = getIdentifierFields(request);
-			responseObserver.onNext(fielsListBuilder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-	private ListFieldsResponse.Builder getIdentifierFields(ListFieldsRequest request) {
-		if (Util.isEmpty(request.getTableName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		Properties context = Env.getCtx();
-		MTable table = MTable.get(context, request.getTableName());
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-
-		ListFieldsResponse.Builder fieldsListBuilder = ListFieldsResponse.newBuilder();
-
-		final String sql = "SELECT c.AD_Column_ID"
-			// + ", c.ColumnName, t.AD_Table_ID, t.TableName, c.ColumnSql "
-			+ " FROM AD_Table AS t "
-			+ "	INNER JOIN AD_Column c ON (t.AD_Table_ID=c.AD_Table_ID) "
-			+ "	WHERE c.AD_Reference_ID = 10 "
-			+ " AND t.AD_Table_ID = ? "
-			//	Displayed in Window
-			+ "	AND EXISTS (SELECT * FROM AD_Field AS f "
-			+ "	WHERE f.AD_Column_ID=c.AD_Column_ID "
-			+ " AND f.IsDisplayed='Y' AND f.IsEncrypted='N' AND f.ObscureType IS NULL) "
-			+ "	ORDER BY c.IsIdentifier DESC, c.SeqNo "
-		;
-
-		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
-			int recordCount = 0;
-			while(resultSet.next()) {
-				MColumn column = MColumn.get(context, resultSet.getInt(MColumn.COLUMNNAME_AD_Column_ID));
-				if (column != null) {
-					Field.Builder fieldBuilder = DictionaryConvertUtil.convertFieldByColumn(
-						context,
-						column
-					);
-					fieldsListBuilder.addFields(fieldBuilder.build());
-				}
-				recordCount++;
-			}
-			fieldsListBuilder.setRecordCount(recordCount);
-		}).onFailure(throwable -> {
-			log.log(Level.SEVERE, sql, throwable);
-		});
-
-		//	empty general info
-		// if (fieldsListBuilder.getFieldsList().size() == 0) {
-		// }
-
-		return fieldsListBuilder;
-	}
-
-
-
-	@Override
-	public void listTableSearchFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListFieldsResponse.Builder fielsListBuilder = DictionaryServiceLogic.listTableSearchFields(request);
+			ListIdentifierColumnsResponse.Builder fielsListBuilder = DictionaryServiceLogic.getIdentifierFields(request);
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -518,12 +444,12 @@ public class Dictionary extends DictionaryImplBase {
 
 
 	@Override
-	public void listSearchInfoFields(ListFieldsRequest request, StreamObserver<ListFieldsResponse> responseObserver) {
+	public void listSearchFields(ListSearchFieldsRequest request, StreamObserver<ListSearchFieldsResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListFieldsResponse.Builder fielsListBuilder = DictionaryServiceLogic.listSearchInfoFields(request);
+			ListSearchFieldsResponse.Builder fielsListBuilder = DictionaryServiceLogic.listSearchFields(request);
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

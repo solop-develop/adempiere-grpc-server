@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.adempiere.core.domains.models.I_AD_Message;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.compiere.model.MColumn;
+import org.compiere.model.MField;
 import org.compiere.model.MForm;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMenu;
@@ -35,6 +36,7 @@ import org.compiere.model.MWindow;
 import org.compiere.model.M_Element;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.ContextInfo;
 import org.spin.backend.grpc.dictionary.DependentField;
@@ -43,6 +45,7 @@ import org.spin.backend.grpc.dictionary.Form;
 import org.spin.backend.grpc.dictionary.MessageText;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.Reference;
+import org.spin.backend.grpc.dictionary.SearchColumn;
 import org.spin.backend.grpc.dictionary.ZoomWindow;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
@@ -528,6 +531,79 @@ public class DictionaryConvertUtil {
 				builder.setDisplayType(DisplayType.String);
 			}
 		}
+		return builder;
+	}
+
+
+	public static SearchColumn.Builder convertSearchColumnByFieldId(int fieldId) {
+		SearchColumn.Builder builder = SearchColumn.newBuilder();
+		if (fieldId <= 0) {
+			return builder;
+		}
+		MField field = new MField(Env.getCtx(), fieldId, null);
+		if (field == null || field.getAD_Field_ID() <= 0) {
+			return builder;
+		}
+		MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+		int displayTypeId = column.getAD_Reference_ID();
+		if (field.getAD_Reference_ID() > 0) {
+			displayTypeId = field.getAD_Reference_ID();
+		}
+		String name = ValueManager.validateNull(
+			Msg.translate(
+				Env.getCtx(),
+				column.getColumnName()
+			)
+		);
+		if (!Util.isEmpty(name, true)) {
+			String colHeader = name;
+			int index = name.indexOf('&');
+			if (index != -1) {
+				colHeader = name.substring(0, index) + name.substring(index + 1); 
+			}
+			name = colHeader;
+		}
+		builder.setColumnName(
+				column.getColumnName()
+			)
+			.setName(
+				ValueManager.validateNull(
+					name
+				)
+			)
+			.setSequence(
+				field.getSeqNo()
+			)
+			.setDisplayType(displayTypeId)
+		;
+		return builder;
+	}
+
+
+	public static SearchColumn.Builder convertSearchColumnByColumnId(int columnId) {
+		SearchColumn.Builder builder = SearchColumn.newBuilder();
+		if (columnId <= 0) {
+			return builder;
+		}
+		MColumn column = MColumn.get(Env.getCtx(), columnId);
+		builder.setColumnName(
+				column.getColumnName()
+			)
+			.setName(
+				ValueManager.validateNull(
+					Msg.translate(
+						Env.getCtx(),
+						column.getColumnName()
+					)
+				)
+			)
+			.setSequence(
+				column.getSeqNo()
+			)
+			.setDisplayType(
+				column.getAD_Reference_ID()
+			)
+		;
 		return builder;
 	}
 

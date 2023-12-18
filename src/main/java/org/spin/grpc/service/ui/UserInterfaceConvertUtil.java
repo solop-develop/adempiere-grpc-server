@@ -14,7 +14,7 @@
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                     *
  *************************************************************************************/
 
-package org.spin.base.ui;
+package org.spin.grpc.service.ui;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.X_AD_Tree;
