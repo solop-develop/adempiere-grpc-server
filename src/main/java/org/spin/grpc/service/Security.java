@@ -1422,6 +1422,9 @@ public class Security extends SecurityImplBase {
 			.setIsAllowInfoResource(role.isAllow_Info_Resource())
 			.setIsAllowInfoSchedule(role.isAllow_Info_Schedule())
 			.setIsAllowXlsView(role.isAllow_XLS_View())
+			.setIsShowAccounting(
+				role.isShowAcct()
+			)
 		;
 
 		//	return

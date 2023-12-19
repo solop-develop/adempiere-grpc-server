@@ -50,6 +50,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
@@ -129,16 +130,31 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			throw new AdempiereException("@C_AcctSchema_ID@ @NotFound@");
 		}
 
+		ListAccoutingElementsResponse.Builder builderList = ListAccoutingElementsResponse.newBuilder();
+		MRole role = MRole.getDefault();
+		if (role == null || !role.isShowAcct()) {
+			log.warning(
+				Msg.translate(context, "@AccessTableNoView@")
+			);
+			return builderList;
+		}
+
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		int AD_Window_ID = 153; // Maintain Account Combinations
 		GridWindowVO wVO = GridWindowVO.create (context, windowNo, AD_Window_ID);
+		if (wVO == null) {
+			log.warning(
+				Msg.translate(context, "@AccessTableNoView@")
+			);
+			return builderList;
+		}
+
 		GridWindow m_mWindow = new GridWindow (wVO);
 		GridTab mTab = m_mWindow.getTab(0);
 		if (!mTab.isLoadComplete()) {
 			m_mWindow.initTab(0);
 		}
 
-		ListAccoutingElementsResponse.Builder builderList = ListAccoutingElementsResponse.newBuilder();
 		if (accoutingSchema.isHasAlias()) {
 			AccoutingElement.Builder elementBuilder = AccoutingElement.newBuilder()
 				.setColumnName(I_C_ValidCombination.COLUMNNAME_Combination)

@@ -234,6 +234,7 @@ message Role {
 	bool is_allow_info_resource = 21;
 	bool is_allow_info_crp = 22;
 	bool is_allow_xls_view = 23;
+	bool is_show_accounting = 24;
 }
 
 message ListRolesRequest {
