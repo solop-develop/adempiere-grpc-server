@@ -67,68 +67,62 @@ service Store {
 			get: "/store/point-of-sales/{pos_id}/product-prices"
 		};
 	}
-	//	Create Order
+
+	//	Order
 	rpc CreateOrder(CreateOrderRequest) returns (Order) {
 		option (google.api.http) = {
 			post: "/store/point-of-sales/{pos_id}/orders",
 			body: "*"
 		};
 	}
-	//	Delete Order
-	rpc DeleteOrder(DeleteOrderRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/orders/{id}" };
+	rpc GetOrder(GetOrderRequest) returns (Order) {
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders/{id}" };
 	}
-	//	Create Order Line
-	rpc CreateOrderLine(CreateOrderLineRequest) returns (OrderLine) {
-		option (google.api.http) = {
-			post: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines",
-			body: "*"
-		};
+	rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders" };
 	}
-	//	Delete Order Line
-	rpc DeleteOrderLine(DeleteOrderLineRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}" };
-	}
-	//	Update Order
 	rpc UpdateOrder(UpdateOrderRequest) returns (Order) {
 		option (google.api.http) = {
 			put: "/store/point-of-sales/{pos_id}/orders/{id}",
 			body: "*"
 		};
 	}
-	//	Release Order
 	rpc ReleaseOrder(ReleaseOrderRequest) returns (Order) {
 		option (google.api.http) = {
 			put: "/store/point-of-sales/{pos_id}/orders/{id}/release",
 			body: "*"
 		};
 	}
-	//	Hold Order
 	rpc HoldOrder(HoldOrderRequest) returns (Order) {
 		option (google.api.http) = {
 			put: "/store/point-of-sales/{pos_id}/orders/{id}/hold",
 			body: "*"
 		};
 	}
-	//	Update Order Line
+	rpc DeleteOrder(DeleteOrderRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/orders/{id}" };
+	}
+
+	//	Order Line
+	rpc CreateOrderLine(CreateOrderLineRequest) returns (OrderLine) {
+		option (google.api.http) = {
+			post: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines",
+			body: "*"
+		};
+	}
+	rpc ListOrderLines(ListOrderLinesRequest) returns (ListOrderLinesResponse) {
+		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines" };
+	}
 	rpc UpdateOrderLine(UpdateOrderLineRequest) returns (OrderLine) {
 		option (google.api.http) = {
 			put: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}",
 			body: "*"
 		};
 	}
-	//	Get a Order
-	rpc GetOrder(GetOrderRequest) returns (Order) {
-		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders/{id}" };
+	rpc DeleteOrderLine(DeleteOrderLineRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}" };
 	}
-	//	List Orders
-	rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders" };
-	}
-	//	List Order Lines
-	rpc ListOrderLines(ListOrderLinesRequest) returns (ListOrderLinesResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/orders/{order_id}/lines" };
-	}
+
 	//	Get a Key Layout
 	rpc GetKeyLayout(GetKeyLayoutRequest) returns (KeyLayout) {
 		option (google.api.http) = { get: "/store/point-of-sales/{pos_id}/key-layouts" };
@@ -206,17 +200,17 @@ service Store {
 			body: "*"
 		};
 	}
+	rpc GetCustomer(GetCustomerRequest) returns (Customer) {
+		option (google.api.http) = { get: "/store/point-of-sales/customers/{search_value}" };
+	}
+	rpc ListCustomers(ListCustomersRequest) returns (ListCustomersResponse) {
+		option (google.api.http) = { get: "/store/point-of-sales/customers" };
+	}
 	rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer) {
 		option (google.api.http) = {
 			put: "/store/point-of-sales/customers/{id}",
 			body: "*"
 		};
-	}
-	rpc ListCustomers(ListCustomersRequest) returns (ListCustomersResponse) {
-		option (google.api.http) = { get: "/store/point-of-sales/customers" };
-	}
-	rpc GetCustomer(GetCustomerRequest) returns (Customer) {
-		option (google.api.http) = { get: "/store/point-of-sales/customers/{search_value}" };
 	}
 
 	//	Get Daily Refund
