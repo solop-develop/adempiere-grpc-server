@@ -18,6 +18,7 @@ package org.spin.base.util;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -524,6 +525,30 @@ public class RecordUtil {
 	public static Timestamp getDate() {
 		return TimeUtil.getDay(System.currentTimeMillis());
 	}
+
+
+
+	/**
+	 * Verify if exist a column
+	 * @param metaData
+	 * @param columnName
+	 * @return
+	 * @throws SQLException
+	 */
+	public static int getColumnIndex(ResultSetMetaData metaData, String columnName) throws SQLException {
+		if (metaData == null) {
+			return -1;
+		}
+		for(int columnIndex = 0; columnIndex <= metaData.getColumnCount(); columnIndex++) {
+			String metaDataColumnName = metaData.getColumnName(columnIndex);
+			if(metaDataColumnName != null && metaDataColumnName.toLowerCase().equals(columnName.toLowerCase())) {
+				return columnIndex;
+			}
+		}
+		return -1;
+	}
+
+
 
 	/**
 	 * Convert Entities List

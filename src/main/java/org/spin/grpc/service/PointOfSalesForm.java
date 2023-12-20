@@ -353,22 +353,9 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void updateOrder(UpdateOrderRequest request, StreamObserver<Order> responseObserver) {
-		try {
-			Order.Builder order = ConvertUtil.convertOrder(updateOrder(request));
-			responseObserver.onNext(order.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
+
 	@Override
 	public void releaseOrder(ReleaseOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
@@ -3773,7 +3760,27 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Return order
 		return orderReference.get();
 	}
-	
+
+
+
+	@Override
+	public void updateOrder(UpdateOrderRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder order = ConvertUtil.convertOrder(updateOrder(request));
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Update Order from ID
 	 * @param request
@@ -5103,10 +5110,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			//	
 			List<Object> parameters = new ArrayList<Object>();
 			parameters.add(pos.getC_POS_ID());
-			if(pos.get_ValueAsBoolean("IsSharedPOS")) {
-				whereClause.append(" AND SalesRep_ID = ?");
-				parameters.add(request.getSalesRepresentativeId());
-			}
+
+			//	Fill assigned seller
+			whereClause.append(" AND AssignedSalesRep_ID = ?");
+			parameters.add(request.getSalesRepresentativeId());
+
 			//	Allocation by Seller Allocation table
 			MOrder salesOrder = new Query(Env.getCtx(), I_C_Order.Table_Name, 
 					whereClause.toString(), transactionName)
