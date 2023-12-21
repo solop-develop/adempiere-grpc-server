@@ -116,7 +116,7 @@ import org.spin.backend.grpc.user_interface.GetRecordAccessRequest;
 import org.spin.backend.grpc.user_interface.GetTabEntityRequest;
 import org.spin.backend.grpc.user_interface.ListBrowserItemsRequest;
 import org.spin.backend.grpc.user_interface.ListBrowserItemsResponse;
-import org.spin.backend.grpc.user_interface.ListGeneralInfoRequest;
+import org.spin.backend.grpc.user_interface.ListGeneralSearchRecordsRequest;
 import org.spin.backend.grpc.user_interface.ListMailTemplatesRequest;
 import org.spin.backend.grpc.user_interface.ListMailTemplatesResponse;
 import org.spin.backend.grpc.user_interface.ListTabEntitiesRequest;
@@ -1005,12 +1005,12 @@ public class UserInterface extends UserInterfaceImplBase {
 
 
 	@Override
-	public void listGeneralInfo(ListGeneralInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+	public void listGeneralSearchRecords(ListGeneralSearchRecordsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
 			if(request == null) {
-				throw new AdempiereException("List General Info Request Null");
+				throw new AdempiereException("List General Search Records Request Null");
 			}
-			ListEntitiesResponse.Builder entityValueList = UserInterfaceLogic.listGeneralInfo(
+			ListEntitiesResponse.Builder entityValueList = UserInterfaceLogic.listGeneralSearchRecords(
 				request
 			);
 			responseObserver.onNext(entityValueList.build());

@@ -27,7 +27,7 @@ import org.compiere.model.MTable;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
-import org.spin.backend.grpc.user_interface.ListGeneralInfoRequest;
+import org.spin.backend.grpc.user_interface.ListGeneralSearchRecordsRequest;
 import org.spin.base.db.CountUtil;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.db.QueryUtil;
@@ -49,10 +49,7 @@ public class UserInterfaceLogic {
 	 * @param request
 	 * @return
 	 */
-	public static ListEntitiesResponse.Builder listGeneralInfo(ListGeneralInfoRequest request) {
-		final MTable table = RecordUtil.validateAndGetTable(
-			request.getTableName()
-		);
+	public static ListEntitiesResponse.Builder listGeneralSearchRecords(ListGeneralSearchRecordsRequest request) {
 
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceId(),
@@ -61,7 +58,11 @@ public class UserInterfaceLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			table.getTableName()
+			request.getTableName()
+		);
+
+		final MTable table = RecordUtil.validateAndGetTable(
+			reference.TableName
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);

@@ -176,21 +176,21 @@ service UserInterface {
 	rpc DeletePreference(DeletePreferenceRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/user-interface/preference/{type}/{container_id}/{column_name}" };
 	}
-	//	List General Info
-	rpc ListGeneralInfo(ListGeneralInfoRequest) returns (data.ListEntitiesResponse) {
+	//	List General Search Records
+	rpc ListGeneralSearchRecords(ListGeneralSearchRecordsRequest) returns (data.ListEntitiesResponse) {
 		option (google.api.http) = {
-			get: "/user-interface/general-info/{table_name}/{column_name}"
+			get: "/user-interface/search-records/{table_name}/{column_name}"
 			additional_bindings: {
-				get: "/user-interface/general-info/column/{column_id}"
+				get: "/user-interface/search-records/column/{column_id}"
 			}
 			additional_bindings: {
-				get: "/user-interface/general-info/field/{field_id}"
+				get: "/user-interface/search-records/field/{field_id}"
 			}
 			additional_bindings: {
-				get: "/user-interface/general-info/parameter/{process_parameter_id}"
+				get: "/user-interface/search-records/parameter/{process_parameter_id}"
 			}
 			additional_bindings: {
-				get: "/user-interface/general-info/query-criteria/{browse_field_id}"
+				get: "/user-interface/search-records/query-criteria/{browse_field_id}"
 			}
 		};
 	}
@@ -502,8 +502,8 @@ message ChatEntry {
 }
 
 
-// List General Info Request
-message ListGeneralInfoRequest {
+// List Search Records Request
+message ListGeneralSearchRecordsRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
