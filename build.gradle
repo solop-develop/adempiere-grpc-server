@@ -81,6 +81,8 @@ dependencies {
 	implementation "${baseGroupId}:jasperreports:${baseVersion}"
 	//	Others
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+	implementation 'net.sf.jasperreports:jasperreports-fonts:6.21.0'
+
 	// ADempiere External Libraries
 	implementation 'com.github.jjYBdx4IL:ecs:1.4.2.1'
 	implementation 'com.itextpdf:itextpdf:5.5.13.3' // used by org.adempiere.pdf.iText7Document
