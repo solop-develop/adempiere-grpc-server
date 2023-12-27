@@ -539,7 +539,7 @@ public class RecordUtil {
 		if (metaData == null) {
 			return -1;
 		}
-		for(int columnIndex = 0; columnIndex <= metaData.getColumnCount(); columnIndex++) {
+		for(int columnIndex = 1; columnIndex <= metaData.getColumnCount(); columnIndex++) {
 			String metaDataColumnName = metaData.getColumnName(columnIndex);
 			if(metaDataColumnName != null && metaDataColumnName.toLowerCase().equals(columnName.toLowerCase())) {
 				return columnIndex;
