@@ -20,8 +20,6 @@ option java_package = "org.spin.backend.grpc.notice_management";
 option java_outer_classname = "ADempiereNoticeManagement";
 
 import "google/api/annotations.proto";
-import "google/protobuf/empty.proto";
-import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
@@ -116,7 +114,6 @@ message DeleteNoticesResponse {
 	string summary = 1;
 	repeated data.ProcessInfoLog logs = 10;
 }
-
 
 
 // Acknowledge Notice

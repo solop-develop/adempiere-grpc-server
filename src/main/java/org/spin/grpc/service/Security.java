@@ -23,10 +23,15 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.adempiere.core.domains.models.I_AD_Browse;
+import org.adempiere.core.domains.models.I_AD_Form;
 import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Org;
+import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Role;
+import org.adempiere.core.domains.models.I_AD_Window;
+import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
@@ -60,6 +65,7 @@ import org.compiere.wf.MWorkflow;
 import org.spin.authentication.services.OpenIDUtil;
 import org.spin.backend.grpc.security.ChangeRoleRequest;
 import org.spin.backend.grpc.security.Client;
+import org.spin.backend.grpc.security.DictionaryEntity;
 import org.spin.backend.grpc.security.Language;
 import org.spin.backend.grpc.security.ListLanguagesRequest;
 import org.spin.backend.grpc.security.ListLanguagesResponse;
@@ -1480,7 +1486,7 @@ public class Security extends SecurityImplBase {
 		menuCache.put(menuKey, builder);
 		return builder;
 	}
-	
+
 	/**
 	 * Convert Menu to builder
 	 * @param context
@@ -1506,6 +1512,15 @@ public class Security extends SecurityImplBase {
 		}
 		Menu.Builder builder = Menu.newBuilder()
 			.setId(menu.getAD_Menu_ID())
+			.setUuid(
+				ValueManager.validateNull(
+					menu.getUUID()
+				)
+			)
+			.setParentId(parentId)
+			// .setSequence(
+			// 	menu.getSeqNo()
+			// )
 			.setName(
 				ValueManager.validateNull(name)
 			)
@@ -1516,58 +1531,156 @@ public class Security extends SecurityImplBase {
 					menu.getAction()
 				)
 			)
-			.setIsSOTrx(menu.isSOTrx())
+			.setIsSalesTransaction(
+				menu.isSOTrx()
+			)
 			.setIsSummary(menu.isSummary())
 			.setIsReadOnly(menu.isReadOnly())
 			.setIsActive(menu.isActive())
-			.setParentId(parentId)
 		;
 		//	Supported actions
 		if(!Util.isEmpty(menu.getAction(), true)) {
-			int referenceId = 0;
-			String referenceUuid = null;
-			if(menu.getAction().equals(MMenu.ACTION_Form)) {
-				if(menu.getAD_Form_ID() > 0) {
-					referenceId = menu.getAD_Form_ID();
-					MForm form = new MForm(context, menu.getAD_Form_ID(), null);
-					referenceId = menu.getAD_Form_ID();
-					referenceUuid = form.getUUID();
-				}
-			} else if(menu.getAction().equals(MMenu.ACTION_Window)) {
-				if(menu.getAD_Window_ID() > 0) {
-					referenceId = menu.getAD_Window_ID();
-					MWindow window = new MWindow(context, menu.getAD_Window_ID(), null);
-					referenceId = menu.getAD_Window_ID();
-					referenceUuid = window.getUUID();
-				}
-			} else if(menu.getAction().equals(MMenu.ACTION_Process)
-				|| menu.getAction().equals(MMenu.ACTION_Report)) {
-				if(menu.getAD_Process_ID() > 0) {
-					referenceId = menu.getAD_Process_ID();
-					MProcess process = MProcess.get(context, menu.getAD_Process_ID());
-					referenceId = menu.getAD_Process_ID();
-					referenceUuid = process.getUUID();
-				}
-			} else if(menu.getAction().equals(MMenu.ACTION_SmartBrowse)) {
-				if(menu.getAD_Browse_ID() > 0) {
-					referenceId = menu.getAD_Browse_ID();
-					MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
-					referenceId = menu.getAD_Browse_ID();
-					referenceUuid = smartBrowser.getUUID();
-				}
-			} else if(menu.getAction().equals(MMenu.ACTION_WorkFlow)) {
-				if(menu.getAD_Workflow_ID() > 0) {
-					referenceId = menu.getAD_Workflow_ID();
-					MWorkflow workflow = MWorkflow.get(context, menu.getAD_Workflow_ID());
-					referenceId = menu.getAD_Workflow_ID();
-					referenceUuid = workflow.getUUID();
-				}
+			DictionaryEntity.Builder actionReference = DictionaryEntity.newBuilder();
+			if(menu.getAction().equals(MMenu.ACTION_Form) && menu.getAD_Form_ID() > 0) {
+				MForm form = new MForm(context, menu.getAD_Form_ID(), null);
+				actionReference.setId(
+						form.getAD_Form_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							form.getUUID()
+						)
+					)
+					.setName(
+						ValueManager.validateNull(
+							form.get_Translation(I_AD_Form.COLUMNNAME_Name)
+						)
+					)
+					.setDescription(
+						ValueManager.validateNull(
+							form.get_Translation(I_AD_Form.COLUMNNAME_Description)
+						)
+					)
+					.setHelp(
+						ValueManager.validateNull(
+							form.get_Translation(I_AD_Form.COLUMNNAME_Help)
+						)
+					)
+				;
+				builder.setForm(actionReference);
+			} else if (menu.getAction().equals(MMenu.ACTION_Window) &&menu.getAD_Window_ID() > 0) {
+				MWindow window = new MWindow(context, menu.getAD_Window_ID(), null);
+				actionReference.setId(
+						window.getAD_Window_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							window.getUUID()
+						)
+					)
+					.setName(
+						ValueManager.validateNull(
+							window.get_Translation(I_AD_Window.COLUMNNAME_Name)
+						)
+					)
+					.setDescription(
+						ValueManager.validateNull(
+							window.get_Translation(I_AD_Window.COLUMNNAME_Description)
+						)
+					)
+					.setHelp(
+						ValueManager.validateNull(
+							window.get_Translation(I_AD_Window.COLUMNNAME_Help)
+						)
+					)
+				;
+				builder.setWindow(actionReference);
+				
+			} else if ((menu.getAction().equals(MMenu.ACTION_Process) || menu.getAction().equals(MMenu.ACTION_Report))
+					&& menu.getAD_Process_ID() > 0) {
+				MProcess process = MProcess.get(context, menu.getAD_Process_ID());
+				actionReference.setId(
+						process.getAD_Process_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							process.getUUID()
+						)
+					)
+					.setName(
+						ValueManager.validateNull(
+							process.get_Translation(I_AD_Process.COLUMNNAME_Name)
+						)
+					)
+					.setDescription(
+						ValueManager.validateNull(
+							process.get_Translation(I_AD_Process.COLUMNNAME_Description)
+						)
+					)
+					.setHelp(
+						ValueManager.validateNull(
+							process.get_Translation(I_AD_Process.COLUMNNAME_Help)
+						)
+					)
+				;
+				builder.setProcess(actionReference);
+				
+			} else if (menu.getAction().equals(MMenu.ACTION_SmartBrowse) && menu.getAD_Browse_ID() > 0) {
+				MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
+				actionReference.setId(
+						smartBrowser.getAD_Window_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							smartBrowser.getUUID()
+						)
+					)
+					.setName(
+						ValueManager.validateNull(
+							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Name)
+						)
+					)
+					.setDescription(
+						ValueManager.validateNull(
+							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Description)
+						)
+					)
+					.setHelp(
+						ValueManager.validateNull(
+							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Help)
+						)
+					)
+				;
+				builder.setBrowse(actionReference);
+				
+			} else if (menu.getAction().equals(MMenu.ACTION_WorkFlow) && menu.getAD_Workflow_ID() > 0) {
+				MWorkflow workflow = MWorkflow.get(context, menu.getAD_Workflow_ID());
+				actionReference.setId(
+						workflow.getAD_Workflow_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							workflow.getUUID()
+						)
+					)
+					.setName(
+						ValueManager.validateNull(
+							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Name)
+						)
+					)
+					.setDescription(
+						ValueManager.validateNull(
+							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Description)
+						)
+					)
+					.setHelp(
+						ValueManager.validateNull(
+							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Help)
+						)
+					)
+				;
+				builder.setWorkflow(actionReference);
 			}
-			builder.setReferenceId(referenceId)
-				.setReferenceUuid(
-					ValueManager.validateNull(referenceUuid)
-				)
-			;
 		}
 		return builder;
 	}
@@ -1582,10 +1695,21 @@ public class Security extends SecurityImplBase {
 	private void addChildren(Properties context, Menu.Builder builder, MTreeNode node, String language) {
 		Enumeration<?> childrens = node.children();
 		while (childrens.hasMoreElements()) {
-			MTreeNode child = (MTreeNode)childrens.nextElement();
-			Menu.Builder childBuilder = convertMenu(context, MMenu.getFromId(context, child.getNode_ID()), child.getParent_ID(), language);
+			MTreeNode child = (MTreeNode) childrens.nextElement();
+			MMenu menuNone = MMenu.getFromId(context, child.getNode_ID());
+			Menu.Builder childBuilder = convertMenu(
+				context,
+				menuNone,
+				child.getParent_ID(),
+				language
+			);
+			childBuilder.setSequence(
+				child.getSeqNo()
+			);
 			addChildren(context, childBuilder, child, language);
-			builder.addChildren(childBuilder.build());
+			builder.addChildren(
+				childBuilder.build()
+			);
 		}
 	}
 }

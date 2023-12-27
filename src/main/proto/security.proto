@@ -311,22 +311,36 @@ message ListWarehousesRequest {
 }
 
 
+// As Window, Process, Report, Browse, Workflow
+message DictionaryEntity {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string help = 5;
+}
+
+
 // Menu
 message Menu {
 	int32 id = 1;
-	int32 parent_id = 2;
-	string name = 3;
-	string description = 4;
-	string sequence = 5;
-	bool is_active = 6;
-	bool is_read_only = 7;
+	string uuid = 2;
+	int32 parent_id = 3;
+	string sequence = 4;
+	string name = 5;
+	string description = 6;
+	bool is_active = 7;
 	bool is_summary = 8;
-	bool is_s_o_trx = 9;
-	string action = 10;
+	bool is_sales_transaction = 9;
+	bool is_read_only = 10;
+	string action = 11;
 	// Supported References
-	int32 reference_id = 11;
-	repeated Menu children = 12;
-	string reference_uuid = 13;
+	DictionaryEntity window = 12;
+	DictionaryEntity process = 13;
+	DictionaryEntity form = 14;
+	DictionaryEntity browse = 15;
+	DictionaryEntity workflow = 16;
+	repeated Menu children = 17;
 }
 
 //	Open ID
