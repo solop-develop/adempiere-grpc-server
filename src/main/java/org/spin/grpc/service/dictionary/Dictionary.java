@@ -93,10 +93,13 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param id
 	 * @param withTabs
 	 */
-	private Window.Builder getWindow(Properties context, int id, boolean withTabs) {
-		MWindow window = MWindow.get(context, id);
-		if(window == null) {
-			return Window.newBuilder();
+	private Window.Builder getWindow(Properties context, int windowId, boolean withTabs) {
+		if (windowId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Window_ID@");
+		}
+		MWindow window = MWindow.get(context, windowId);
+		if (window == null || window.getAD_Window_ID() <= 0) {
+			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
 		}
 		return WindowConvertUtil.convertWindow(
 			context,
@@ -210,10 +213,13 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param withParameters
 	 * @return
 	 */
-	private Process.Builder getProcess(Properties context, int id, boolean withParameters) {
-		MProcess process = MProcess.get(context, id);
-		if(process == null) {
-			return Process.newBuilder();
+	private Process.Builder getProcess(Properties context, int processId, boolean withParameters) {
+		if (processId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
+		}
+		MProcess process = MProcess.get(context, processId);
+		if (process == null || process.getAD_Process_ID() <= 0) {
+			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
 		//	Convert
 		return ProcessConvertUtil.convertProcess(
@@ -248,8 +254,14 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param withFields
 	 * @return
 	 */
-	private Browser.Builder getBrowser(Properties context, int id, boolean withFields) {
-		MBrowse browser = ASPUtil.getInstance(context).getBrowse(id);
+	private Browser.Builder getBrowser(Properties context, int browseId, boolean withFields) {
+		if (browseId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Browse_ID@");
+		}
+		MBrowse browser = ASPUtil.getInstance(context).getBrowse(browseId);
+		if (browser == null || browser.getAD_Browse_ID() <= 0) {
+			throw new AdempiereException("@AD_Browse_ID@ @NotFound@");
+		}
 		//	Convert
 		return BrowseConverUtil.convertBrowser(
 			context,
@@ -285,6 +297,9 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param id
 	 */
 	private Form.Builder getForm(Properties context, int formId) {
+		if (formId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Form_ID@");
+		}
 		final String whereClause = I_AD_Form.COLUMNNAME_AD_Form_ID + " = ?";
 		MForm form = new Query(
 			context,
@@ -295,6 +310,10 @@ public class Dictionary extends DictionaryImplBase {
 			.setParameters(formId)
 			.setOnlyActiveRecords(true)
 			.first();
+
+		if (form == null || form.getAD_Form_ID() <= 0) {
+			throw new AdempiereException("@AD_Form_ID@ @NotFound@");
+		}
 		return DictionaryConvertUtil.convertForm(context, form);
 	}
 

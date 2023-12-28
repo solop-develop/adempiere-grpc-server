@@ -1628,7 +1628,7 @@ public class Security extends SecurityImplBase {
 			} else if (menu.getAction().equals(MMenu.ACTION_SmartBrowse) && menu.getAD_Browse_ID() > 0) {
 				MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
 				actionReference.setId(
-						smartBrowser.getAD_Window_ID()
+						smartBrowser.getAD_Browse_ID()
 					)
 					.setUuid(
 						ValueManager.validateNull(
