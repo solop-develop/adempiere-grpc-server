@@ -63,6 +63,7 @@ import org.spin.grpc.service.form.ExpressShipment;
 import org.spin.grpc.service.form.PaymentAllocation;
 import org.spin.grpc.service.form.bank_statement_match.BankStatementMatch;
 import org.spin.grpc.service.form.payroll_action_notice.PayrollActionNotice;
+import org.spin.grpc.service.form.trial_balance_drillable.TrialBalanceDrillable;
 import org.spin.service.grpc.authentication.AuthorizationServerInterceptor;
 import org.spin.service.grpc.context.ServiceContextProvider;
 
@@ -268,7 +269,7 @@ public class AllInOneServices {
 			serverBuilder.addService(new PaymentInfo());
 			logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
-		//	Payment
+		//	Payment Allocation
 		if (SetupLoader.getInstance().getServer().isValidService(Services.PAYMENT_ALLOCATION.getServiceName())) {
 			serverBuilder.addService(new PaymentAllocation());
 			logger.info("Service " + Services.PAYMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -312,6 +313,11 @@ public class AllInOneServices {
 		if (SetupLoader.getInstance().getServer().isValidService(Services.TIME_RECORD.getServiceName())) {
 			serverBuilder.addService(new TimeRecord());
 			logger.info("Service " + Services.TIME_RECORD.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Trial Balance Drillable Report
+		if (SetupLoader.getInstance().getServer().isValidService(Services.TRIAL_BALANCE_DRILLABLE.getServiceName())) {
+			serverBuilder.addService(new TrialBalanceDrillable());
+			logger.info("Service " + Services.TRIAL_BALANCE_DRILLABLE.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Update Center
 		if(SetupLoader.getInstance().getServer().isValidService(Services.UPDATER.getServiceName())) {

@@ -1,0 +1,161 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.form.trial_balance_drillable";
+option java_outer_classname = "ADempierePaymentAllocation";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+import "base_data_type.proto";
+
+// Base URL
+// /trial-balance-drillable/
+
+package trial_balance_drillable;
+
+// The Trial Balance Drillable Report form service definition.
+// - org.adempiere.webui.apps.form.WTrialBalance
+service TrialBalanceDrillable {
+	// criteria
+	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/trial-balance-drillable/organizations" };
+	}
+	rpc ListBudgets(ListBudgetsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/trial-balance-drillable/budgets" };
+	}
+	rpc ListPeriods(ListPeriodsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/trial-balance-drillable/periods" };
+	}
+	rpc ListAccoutingKeys(ListAccoutingKeysRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/trial-balance-drillable/accouting-keys" };
+	}
+	rpc ListReportCubes(ListReportCubesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/trial-balance-drillable/report-cubes" };
+	}
+
+	// result
+	rpc ListFactAcctSummary(ListFactAcctSummaryRequest) returns (ListFactAcctSummaryResponse) {
+		option (google.api.http) = { get: "/trial-balance-drillable/accouting-fact-summary" };
+	}
+
+	// manage
+	rpc Export(ExportRequest) returns (ExportResponse) {
+		option (google.api.http) = {
+			post: "/trial-balance-drillable/export",
+			body: "*"
+		};
+	}
+}
+
+
+message ListOrganizationsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListBudgetsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListPeriodsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListAccoutingKeysRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListReportCubesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+
+
+message ListFactAcctSummaryRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 organization_id = 8;
+	int32 budget_id = 9;
+	int32 period_id = 10;
+	int32 accouting_from_id = 11;
+	int32 accouting_to_id = 12;
+	int32 report_cube_id = 13;
+}
+
+message ListFactAcctSummaryResponse {
+	int32 id = 1;
+	string value = 2;
+	string name = 3;
+	int32 user_list_id = 4;
+	string user_list_name = 5;
+	string period_actual_amount = 6;
+	string period_budget_amount = 7;
+	string period_variance_amount = 8;
+	string ytd_actual_amount = 9;
+	string ytd_budget_amount = 10;
+	string variance_amount = 11;
+}
+
+
+
+message ExportRequest {
+	string search_value = 1;
+	int32 organization_id = 2;
+	int32 budget_id = 3;
+	int32 period_id = 4;
+	int32 accouting_from_id = 5;
+	int32 accouting_to_id = 6;
+	int32 report_cube_id = 7;
+}
+
+message ExportResponse {
+}

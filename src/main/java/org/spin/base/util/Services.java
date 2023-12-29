@@ -53,6 +53,7 @@ public enum Services {
 	STORE("store"),
 	TIME_CONTROL("time_control"),
 	TIME_RECORD("time_record"),
+	TRIAL_BALANCE_DRILLABLE("trial_balance_drillable"),
 	USER_CUSTOMIZATION("user_customization"),
 	UI("user_interface"),
 	UPDATER("updater"),

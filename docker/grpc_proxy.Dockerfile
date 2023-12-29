@@ -24,7 +24,8 @@ ENV \
 		payment.Payment; payroll_action_notice.PayrollActionNotice; \
 		data.Store; product.Product; report_management.ReportManagement; \
 		record_management.RecordManagement; \ security.Security; \
-		time_control.TimeControl; time_record.TimeRecord; updates.UpdateCenter; \
+		time_control.TimeControl; time_record.TimeRecord; \
+		trial_balance_drillable.TrialBalanceDrillable; updates.UpdateCenter; \
 		user_customization.UserCustomization; user_interface.UserInterface; \
 		wms.WarehouseManagement; store.WebStore; workflow.Workflow;"
 
