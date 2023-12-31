@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_C_Charge;
@@ -78,7 +77,6 @@ import org.spin.backend.grpc.form.payment_allocation.ProcessRequest;
 import org.spin.backend.grpc.form.payment_allocation.ProcessResponse;
 import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.PaymentAllocationImplBase;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -122,11 +120,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
 		// BPartner
 		int columnId = 3499; // C_Invoice.C_BPartner_ID
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
+			0,
+			0, 0, 0,
+			columnId,
 			null, null
 		);
 
@@ -185,11 +182,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	private ListLookupItemsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
 		// Organization filter selection
 		int columnId = 839; // C_Period.AD_Org_ID (needed to allow org 0)
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
+			0,
+			0, 0, 0,
+			columnId,
 			null, null
 		);
 
@@ -282,11 +278,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	private ListLookupItemsResponse.Builder listCurrencies(ListCurrenciesRequest request) {
 		// Currency
 		int columnId = 3505; // C_Invoice.C_Currency_ID
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
+			0,
+			0, 0, 0,
+			columnId,
 			null, null
 		);
 
@@ -384,11 +379,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	private ListLookupItemsResponse.Builder listTransactionTypes(ListTransactionTypesRequest request) {
 		// APAR
 		int columnId = 14082; // T_InvoiceGL.APAR
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
+			0,
+			0, 0, 0,
+			columnId,
 			null, null
 		);
 
@@ -805,11 +799,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	private ListLookupItemsResponse.Builder listCharges(ListChargesRequest request) {
 		// Charge
 		int columnId = 61804; // C_AllocationLine.C_Charge_ID
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
+			0,
+			0, 0, 0,
+			columnId,
 			null, null
 		);
 
@@ -877,11 +870,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	private ListLookupItemsResponse.Builder listTransactionOrganizations(ListTransactionOrganizationsRequest request) {
 		// Organization to overwrite
 		int columnId = 3863; // C_Period.AD_Org_ID
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
+			0,
+			0, 0, 0,
+			columnId,
 			null, null
 		);
 

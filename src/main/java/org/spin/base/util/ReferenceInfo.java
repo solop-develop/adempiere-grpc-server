@@ -19,13 +19,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.core.domains.models.I_AD_Browse_Field;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MViewColumn;
-import org.adempiere.core.domains.models.I_AD_Column;
-import org.adempiere.core.domains.models.I_AD_Field;
-import org.adempiere.core.domains.models.I_AD_Process_Para;
-import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.X_AD_Reference;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
@@ -264,7 +259,7 @@ public class ReferenceInfo {
 		//	Return
 		return join.toString();
 	}
-	
+
 	/**
 	 * Get reference Info from request
 	 * @param request
@@ -362,11 +357,8 @@ public class ReferenceInfo {
 			referenceValueId = column.getAD_Reference_Value_ID();
 			validationRuleId = column.getAD_Val_Rule_ID();
 			columnName = column.getColumnName();
-		} else if(!Util.isEmpty(tableName)) {
-			MTable table = MTable.get(Env.getCtx(), tableName);
-			if(table == null || table.getAD_Table_ID() <= 0) {
-				throw new AdempiereException("@TableName@ @NotFound@");
-			}
+		} else if(!Util.isEmpty(tableName, true)) {
+			MTable table = RecordUtil.validateAndGetTable(tableName);
 			if(!Util.isEmpty(columnName, true)) {
 				MColumn column = table.getColumn(columnName);
 				if (column == null || column.getAD_Column_ID() <= 0) {
@@ -388,9 +380,18 @@ public class ReferenceInfo {
 				validationRuleId = column.getAD_Val_Rule_ID();
 				columnName = column.getColumnName();
 			} else {
-				//	Is force a Table Direct
-				referenceId = DisplayType.TableDir;
-				columnName = tableName + "_ID";
+				String[] keyColumns = table.getKeyColumns();
+				if (keyColumns != null && keyColumns.length > 0) {
+					if (keyColumns.length == 1) {
+						//	Single key is force a Table Direct
+						referenceId = DisplayType.TableDir;
+						columnName = tableName + "_ID";
+					} else {
+						//	Multi keys if force a Table
+						referenceId = DisplayType.Table;
+						columnName = keyColumns[0];
+					}
+				}
 			}
 		} else {
 			throw new AdempiereException(
@@ -406,122 +407,12 @@ public class ReferenceInfo {
 		);
 	}
 
-	/**
-	 * Get reference Info from request
-	 * @param request
-	 * @return
-	 */
-	static public MLookupInfo getInfoFromRequest(String referenceUuid, String fieldUuid, String processParameterUuid, String browseFieldUuid, String columnUuid, String columnName, String tableName) {
-		int referenceId = 0;
-		int referenceValueId = 0;
-		int validationRuleId = 0;
-		MField field = null;
-		if (!Util.isEmpty(fieldUuid)) {
-			field = (MField) RecordUtil.getEntity(Env.getCtx(), I_AD_Field.Table_Name, fieldUuid, 0, null);
-		}
-		if(field != null) {
-			int fieldId = field.getAD_Field_ID();
-			List<MField> customFields = ASPUtil.getInstance(Env.getCtx()).getWindowFields(field.getAD_Tab_ID());
-			if(customFields != null) {
-				Optional<MField> maybeField = customFields.stream().filter(customField -> customField.getAD_Field_ID() == fieldId).findFirst();
-				if(maybeField.isPresent()) {
-					field = maybeField.get();
-					MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
-					//	Display Type
-					referenceId = column.getAD_Reference_ID();
-					referenceValueId = column.getAD_Reference_Value_ID();
-					validationRuleId = column.getAD_Val_Rule_ID();
-					columnName = column.getColumnName();
-					if(field.getAD_Reference_ID() > 0) {
-						referenceId = field.getAD_Reference_ID();
-					}
-					if(field.getAD_Reference_Value_ID() > 0) {
-						referenceValueId = field.getAD_Reference_Value_ID();
-					}
-					if(field.getAD_Val_Rule_ID() > 0) {
-						validationRuleId = field.getAD_Val_Rule_ID();
-					}
-				}
-			}
-		} else if(!Util.isEmpty(browseFieldUuid)) {
-			MBrowseField browseField = (MBrowseField) RecordUtil.getEntity(Env.getCtx(), I_AD_Browse_Field.Table_Name, browseFieldUuid, 0, null);
-			int browseFieldId = browseField.getAD_Browse_Field_ID();
-			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
-			if(customFields != null) {
-				Optional<MBrowseField> maybeField = customFields.stream().filter(customField -> customField.getAD_Browse_Field_ID() == browseFieldId).findFirst();
-				if(maybeField.isPresent()) {
-					browseField = maybeField.get();
-					referenceId = browseField.getAD_Reference_ID();
-					referenceValueId = browseField.getAD_Reference_Value_ID();
-					validationRuleId = browseField.getAD_Val_Rule_ID();
-					MViewColumn viewColumn = browseField.getAD_View_Column();
-					if(viewColumn.getAD_Column_ID() > 0) {
-						columnName = MColumn.getColumnName(Env.getCtx(), viewColumn.getAD_Column_ID());
-					} else {
-						columnName = browseField.getAD_Element().getColumnName();
-					}
-				}
-			}
-		} else if(!Util.isEmpty(processParameterUuid)) {
-			MProcessPara processParameter = (MProcessPara) RecordUtil.getEntity(Env.getCtx(), I_AD_Process_Para.Table_Name, processParameterUuid, 0, null);
-			int processParameterId = processParameter.getAD_Process_Para_ID();
-			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
-			if(customParameters != null) {
-				Optional<MProcessPara> maybeParameter = customParameters.stream().filter(customField -> customField.getAD_Process_Para_ID() == processParameterId).findFirst();
-				if(maybeParameter.isPresent()) {
-					processParameter = maybeParameter.get();
-					referenceId = processParameter.getAD_Reference_ID();
-					referenceValueId = processParameter.getAD_Reference_Value_ID();
-					validationRuleId = processParameter.getAD_Val_Rule_ID();
-					columnName = processParameter.getColumnName();
-				}
-			}
-		} else if(!Util.isEmpty(columnUuid)) {
-			int columnId = RecordUtil.getIdFromUuid(I_AD_Column.Table_Name, columnUuid, null);
-			if(columnId > 0) {
-				MColumn column = MColumn.get(Env.getCtx(), columnId);
-				referenceId = column.getAD_Reference_ID();
-				referenceValueId = column.getAD_Reference_Value_ID();
-				validationRuleId = column.getAD_Val_Rule_ID();
-				columnName = column.getColumnName();
-			}
-		} else if(!Util.isEmpty(referenceUuid)) {
-			referenceValueId = RecordUtil.getIdFromUuid(I_AD_Reference.Table_Name, referenceUuid, null);
-			referenceId = DisplayType.Search;
-		} else if(!Util.isEmpty(tableName) && !Util.isEmpty(columnName)) {
-			int columnId = MColumn.getColumn_ID(tableName, columnName);
-			if(columnId > 0) {
-				MColumn column = MColumn.get(Env.getCtx(), columnId);
-				referenceId = column.getAD_Reference_ID();
-				if (referenceValueId <= 0) {
-					referenceValueId = column.getAD_Reference_Value_ID();
-				}
-				if (referenceId == DisplayType.ID) {
-					if (referenceValueId > 0) {
-						//	Is force a Table
-						referenceId = DisplayType.Table;
-					} else {
-						//	Is force a Table Direct
-						referenceId = DisplayType.TableDir;
-					}
-				}
-				validationRuleId = column.getAD_Val_Rule_ID();
-				columnName = column.getColumnName();
-			}
-		} else if(!Util.isEmpty(tableName)) {
-			//	Is force a Table Direct
-			referenceId = DisplayType.TableDir;
-			columnName = tableName + "_ID";
-		} else {
-			throw new AdempiereException("@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Process_Para_ID@ / @IsMandatory@");
-		}
-		return ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
-	}
-	
+
 	@Override
 	public String toString() {
 		return "ReferenceInfo [displayColumnValue=" + displayColumnValue + ", displayColumnAlias=" + displayColumnAlias
 				+ ", columnName=" + columnName + ", joinColumnName=" + joinColumnName + ", tableName=" + tableName
 				+ ", tableAlias=" + tableAlias + ", language=" + language + ", referenceId=" + referenceId + "]";
 	}
+
 }

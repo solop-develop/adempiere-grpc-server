@@ -24,7 +24,6 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_C_BankStatement;
 import org.adempiere.core.domains.models.X_I_BankStatement;
 import org.adempiere.exceptions.AdempiereException;
@@ -70,7 +69,6 @@ import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsResponse;
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -156,11 +154,10 @@ public abstract class BankStatementMatchServiceLogic {
 	public static ListLookupItemsResponse.Builder listBankAccounts(ListBankAccountsRequest request) {
 		// Bank Account
 		int columnId = 4917; // C_BankStatement.C_BankAccount_ID
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
+			0,
+			0, 0, 0,
+			columnId,
 			null, null
 		);
 
@@ -180,11 +177,10 @@ public abstract class BankStatementMatchServiceLogic {
 	public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
 		// Business Partner
 		int columnId = 3499; // C_Invoice.C_BPartner_ID
-		String columnUuid = RecordUtil.getUuidFromId(I_AD_Column.Table_Name, columnId);
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			null,
-			null, null, null,
-			columnUuid,
+			0,
+			0, 0, 0,
+			columnId,
 			null, null
 		);
 
