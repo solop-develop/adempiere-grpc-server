@@ -46,11 +46,11 @@ message ListBusinessPartnerInfoRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	string process_parameter_id = 8;
-	string field_id = 9;
-	string browse_field_id = 10;
-	string reference_id = 11;
-	string column_id = 12;
+	int32 process_parameter_id = 8;
+	int32 field_id = 9;
+	int32 browse_field_id = 10;
+	int32 reference_id = 11;
+	int32 column_id = 12;
 	string column_name = 13;
 	google.protobuf.Struct context_attributes = 14;
 }
