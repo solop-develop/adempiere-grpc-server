@@ -50,7 +50,10 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Organizations Request Null");
 			}
-			responseObserver.onNext(ListLookupItemsResponse.newBuilder().build());
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listOrganizations(request);
+			responseObserver.onNext(
+				builder.build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -73,7 +76,10 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Budgets Request Null");
 			}
-			responseObserver.onNext(ListLookupItemsResponse.newBuilder().build());
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listBudgets(request);
+			responseObserver.onNext(
+				builder.build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -96,7 +102,10 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Periods Request Null");
 			}
-			responseObserver.onNext(ListLookupItemsResponse.newBuilder().build());
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listPeriods(request);
+			responseObserver.onNext(
+				builder.build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -119,7 +128,10 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Accoutings Request Null");
 			}
-			responseObserver.onNext(ListLookupItemsResponse.newBuilder().build());
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listAccoutingKeys(request);
+			responseObserver.onNext(
+				builder.build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -142,7 +154,10 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Report Cube Request Null");
 			}
-			responseObserver.onNext(ListLookupItemsResponse.newBuilder().build());
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listReportCubes(request);
+			responseObserver.onNext(
+				builder.build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -165,7 +180,10 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Fact Acct Summary Request Null");
 			}
-			responseObserver.onNext(ListFactAcctSummaryResponse.newBuilder().build());
+			ListFactAcctSummaryResponse.Builder builder = TrialBalanceDrillableServiceLogic.listFactAcctSummary(request);
+			responseObserver.onNext(
+				builder.build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());

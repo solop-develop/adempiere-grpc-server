@@ -129,6 +129,7 @@ message ListFactAcctSummaryRequest {
 	int32 accouting_from_id = 11;
 	int32 accouting_to_id = 12;
 	int32 report_cube_id = 13;
+	int32 user1_id = 14;
 }
 
 message ListFactAcctSummaryResponse {
@@ -155,6 +156,7 @@ message ExportRequest {
 	int32 accouting_from_id = 5;
 	int32 accouting_to_id = 6;
 	int32 report_cube_id = 7;
+	int32 user1_id = 8;
 }
 
 message ExportResponse {
