@@ -38,6 +38,9 @@ service TrialBalanceDrillable {
 	rpc ListBudgets(ListBudgetsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/trial-balance-drillable/budgets" };
 	}
+	rpc ListUser1(ListUser1Request) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/trial-balance-drillable/user-1" };
+	}
 	rpc ListPeriods(ListPeriodsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/trial-balance-drillable/periods" };
 	}
@@ -74,6 +77,16 @@ message ListOrganizationsRequest {
 }
 
 message ListBudgetsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+
+message ListUser1Request {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;

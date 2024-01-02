@@ -28,6 +28,7 @@ import org.spin.backend.grpc.form.trial_balance_drillable.ListFactAcctSummaryRes
 import org.spin.backend.grpc.form.trial_balance_drillable.ListOrganizationsRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListPeriodsRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListReportCubesRequest;
+import org.spin.backend.grpc.form.trial_balance_drillable.ListUser1Request;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.UserInterface;
 
@@ -69,6 +70,33 @@ public class TrialBalanceDrillableServiceLogic {
 		MLookupInfo reference = ReferenceUtil.getReferenceLookupInfo(
 			DisplayType.TableDir,
 			0,
+			column.getColumnName(),
+			0
+		);
+
+		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+			reference,
+			null,
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue()
+		);
+
+		return builderList;
+	}
+
+
+	public static ListLookupItemsResponse.Builder listUser1(ListUser1Request request) {
+		final int columnId = 69948; // GL_JournalLine.User1_ID
+		MColumn column = MColumn.get(Env.getCtx(), columnId);
+
+		final int tableReferenceId = 134; // where clause C_ElementValue.IsActive='Y'
+		// AND C_ElementValue.IsSummary='N' AND C_ElementValue.C_Element_ID IN 
+		// (SELECT C_Element_ID FROM C_AcctSchema_Element ase WHERE ase.ElementType='U1' 
+		// AND ase.AD_Client_ID=@AD_Client_ID@)
+		MLookupInfo reference = ReferenceUtil.getReferenceLookupInfo(
+			DisplayType.TableDir,
+			tableReferenceId,
 			column.getColumnName(),
 			0
 		);

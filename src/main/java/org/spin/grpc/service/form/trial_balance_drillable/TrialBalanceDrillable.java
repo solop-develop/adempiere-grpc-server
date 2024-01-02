@@ -27,6 +27,7 @@ import org.spin.backend.grpc.form.trial_balance_drillable.ListFactAcctSummaryRes
 import org.spin.backend.grpc.form.trial_balance_drillable.ListOrganizationsRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListPeriodsRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListReportCubesRequest;
+import org.spin.backend.grpc.form.trial_balance_drillable.ListUser1Request;
 import org.spin.backend.grpc.form.trial_balance_drillable.TrialBalanceDrillableGrpc.TrialBalanceDrillableImplBase;
 
 import io.grpc.Status;
@@ -77,6 +78,32 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 				throw new AdempiereException("Budgets Request Null");
 			}
 			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listBudgets(request);
+			responseObserver.onNext(
+				builder.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listUser1(ListUser1Request request,
+			StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("User 1 Request Null");
+			}
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listUser1(request);
 			responseObserver.onNext(
 				builder.build()
 			);
