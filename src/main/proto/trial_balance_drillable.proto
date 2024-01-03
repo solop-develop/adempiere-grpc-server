@@ -145,7 +145,7 @@ message ListFactAcctSummaryRequest {
 	int32 user1_id = 14;
 }
 
-message ListFactAcctSummaryResponse {
+message FactAcctSummary {
 	int32 id = 1;
 	string value = 2;
 	string name = 3;
@@ -159,6 +159,11 @@ message ListFactAcctSummaryResponse {
 	string variance_amount = 11;
 }
 
+message ListFactAcctSummaryResponse {
+	int64 record_count = 1;
+	repeated FactAcctSummary records = 2;
+	string next_page_token = 3;
+}
 
 
 message ExportRequest {
