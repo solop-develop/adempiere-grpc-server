@@ -1934,6 +1934,8 @@ public class UserInterface extends UserInterfaceImplBase {
 							rs.getString(2),
 							rs.getString(3)
 						);
+					} else {
+						log.severe("Direct Query default value without results");
 					}
 				} catch (Exception e) {
 					log.severe(e.getLocalizedMessage());
@@ -1972,6 +1974,8 @@ public class UserInterface extends UserInterfaceImplBase {
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				defaultValue = rs.getObject(1);
+			} else {
+				log.severe("SQL default value without results");
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());

@@ -243,7 +243,6 @@ public class TrialBalanceDrillableServiceLogic {
 		filterParametersList.add(period.getEndDate());
 		filterParametersList.add(period.getStartDate());
 		filterParametersList.add(period.getEndDate());
-		
 
 
 		MPeriod yearFrom = MPeriod.getFirstInYear(context, period.getStartDate(), organizationId);
