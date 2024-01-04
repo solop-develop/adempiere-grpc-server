@@ -217,6 +217,10 @@ public class Dictionary extends DictionaryImplBase {
 		if (processId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
+		// MProcess process = ASPUtil.getInstance(context).getProcess(processId);
+		// if (process == null || process.getAD_Process_ID() <= 0) {
+		// 	throw new AdempiereException("@AD_Process_ID@ @NotFound@");
+		// }
 		MProcess process = MProcess.get(context, processId);
 		if (process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");

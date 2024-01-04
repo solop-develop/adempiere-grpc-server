@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Message;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.compiere.model.MColumn;
@@ -34,6 +35,7 @@ import org.compiere.model.MTable;
 import org.compiere.model.MValRule;
 import org.compiere.model.MWindow;
 import org.compiere.model.M_Element;
+import org.compiere.model.PO;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -55,6 +57,36 @@ import org.spin.util.ASPUtil;
 
 public class DictionaryConvertUtil {
 
+	/**
+	 * TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
+	 * Translated Name, Description and Help columns
+	 * @param entity
+	 * @return
+	 */
+	public static PO translateEntity(PO entity) {
+		String language = entity.getCtx().getProperty(Env.LANGUAGE);
+		boolean isBaseLanguage = Env.isBaseLanguage(Env.getCtx(), "");
+		if(!isBaseLanguage) {
+			//	Name
+			String name = entity.get_Translation(I_AD_Element.COLUMNNAME_Name, language);
+			if(!Util.isEmpty(name, true)) {
+				entity.set_ValueOfColumn(I_AD_Element.COLUMNNAME_Name, name);
+			}
+			//	Description
+			String description = entity.get_Translation(I_AD_Element.COLUMNNAME_Description, language);
+			if(!Util.isEmpty(description, true)) {
+				entity.set_ValueOfColumn(I_AD_Element.COLUMNNAME_Description, description);
+			}
+			//	Help
+			String help = entity.get_Translation(I_AD_Element.COLUMNNAME_Help, language);
+			if(!Util.isEmpty(help, true)) {
+				entity.set_ValueOfColumn(I_AD_Element.COLUMNNAME_Help, help);
+			}
+		}
+		return entity;
+	}
+
+	
 	/**
 	 * Convert Reference to builder
 	 * @param info
@@ -219,6 +251,10 @@ public class DictionaryConvertUtil {
 		if (form == null) {
 			return builder;
 		}
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(form);
+
 		//	
 		builder.setId(form.getAD_Form_ID())
 			.setUuid(
@@ -283,6 +319,10 @@ public class DictionaryConvertUtil {
 		if (column == null) {
 			return Field.newBuilder();
 		}
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(column);
+
 		String defaultValue = column.getDefaultValue();
 		if(Util.isEmpty(defaultValue)) {
 			defaultValue = column.getDefaultValue();

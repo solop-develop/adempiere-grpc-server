@@ -59,6 +59,10 @@ public class BrowseConverUtil {
 		if (browser == null) {
 			return Browser.newBuilder();
 		}
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(browser);
+
 		String query = QueryUtil.getBrowserQueryWithReferences(browser);
 		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
 		Browser.Builder builder = Browser.newBuilder()
@@ -92,6 +96,7 @@ public class BrowseConverUtil {
 				)
 			)
 		;
+
 		//	Set fied key
 		MBrowseField fieldKey = browser.getFieldKey();
 		if (fieldKey != null && fieldKey.get_ID() > 0) {
@@ -160,6 +165,10 @@ public class BrowseConverUtil {
 		if (browseField == null) {
 			return Field.newBuilder();
 		}
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(browseField);
+
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(browseField.getAD_Browse_Field_ID())

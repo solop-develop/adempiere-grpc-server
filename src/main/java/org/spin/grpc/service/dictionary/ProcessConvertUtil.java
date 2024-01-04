@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.adempiere.core.domains.models.I_AD_Tab;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
@@ -28,8 +27,6 @@ import org.compiere.model.MProcessParaCustom;
 import org.compiere.model.MReportView;
 import org.compiere.model.MValRule;
 import org.compiere.util.Env;
-import org.compiere.util.Language;
-import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.DependentField;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.Process;
@@ -55,6 +52,10 @@ public class ProcessConvertUtil {
 			return Process.newBuilder();
 		}
 		process = ASPUtil.getInstance(context).getProcess(process.getAD_Process_ID());
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(process);
+
 		List<MProcessPara> parametersList = ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID());
 
 		Process.Builder builder = Process.newBuilder()
@@ -116,27 +117,7 @@ public class ProcessConvertUtil {
 		}
 		//	For parameters
 		if(withParams && parametersList != null && parametersList.size() > 0) {
-			String language = context.getProperty(Env.LANGUAGE);
 			for(MProcessPara parameter : parametersList) {
-				// TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
-				if(!Language.isBaseLanguage(language)) {
-					//	Name
-					String value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Name, language);
-					if(!Util.isEmpty(value)) {
-						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Name, value);
-					}
-					//	Description
-					value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Description, language);
-					if(!Util.isEmpty(value)) {
-						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Description, value);
-					}
-					//	Help
-					value = parameter.get_Translation(I_AD_Tab.COLUMNNAME_Help, language);
-					if(!Util.isEmpty(value)) {
-						parameter.set_ValueOfColumn(I_AD_Tab.COLUMNNAME_Help, value);
-					}
-				}
-				
 				Field.Builder fieldBuilder = ProcessConvertUtil.convertProcessParameter(
 					context,
 					parameter
@@ -242,6 +223,10 @@ public class ProcessConvertUtil {
 		if (processParameter == null) {
 			return Field.newBuilder();
 		}
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(processParameter);
+
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(processParameter.getAD_Process_Para_ID())

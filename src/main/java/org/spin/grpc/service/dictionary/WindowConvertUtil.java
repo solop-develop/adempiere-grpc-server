@@ -71,13 +71,16 @@ public class WindowConvertUtil {
 			return Window.newBuilder();
 		}
 		window = ASPUtil.getInstance(context).getWindow(window.getAD_Window_ID());
-		Window.Builder builder = null;
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(window);
+
 		ContextInfo.Builder contextInfoBuilder = DictionaryConvertUtil.convertContextInfo(
 			context,
 			window.getAD_ContextInfo_ID()
 		);
 		//	
-		builder = Window.newBuilder()
+		Window.Builder builder = Window.newBuilder()
 			.setId(window.getAD_Window_ID())
 			.setUuid(
 				ValueManager.validateNull(window.getUUID())
