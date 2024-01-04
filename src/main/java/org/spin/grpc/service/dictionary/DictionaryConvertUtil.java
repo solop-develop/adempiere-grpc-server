@@ -515,6 +515,10 @@ public class DictionaryConvertUtil {
 		if (element == null) {
 			return Field.newBuilder();
 		}
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(element);
+
 		//	Display Type
 		int displayTypeId = element.getAD_Reference_ID();
 		if(element.getAD_Reference_ID() > 0) {
