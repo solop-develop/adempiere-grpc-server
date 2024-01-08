@@ -35,31 +35,33 @@ package match_po_receipt_invoice;
 service MatchPORReceiptInvoice {
 	// lists criteria
 	rpc ListMatchesTypesFrom(ListMatchesTypesFromRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/match-po/matches-types-from" };
+		option (google.api.http) = { get: "/match-po-receipt-invoice/matches-types/from" };
 	}
 	rpc ListMatchesTypesTo(ListMatchesTypesToRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/match-po/matches-types-to" };
+		option (google.api.http) = { get: "/match-po-receipt-invoice/matches-types/to" };
 	}
 	rpc ListSearchModes(ListSearchModesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/match-po/search-modes" };
+		option (google.api.http) = { get: "/match-po-receipt-invoice/search-modes" };
 	}
 	rpc ListVendors(ListVendorsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/match-po/vendors" };
+		option (google.api.http) = { get: "/match-po-receipt-invoice/vendors" };
 	}
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
-		option (google.api.http) = { get: "/match-po/products" };
+		option (google.api.http) = { get: "/match-po-receipt-invoice/products" };
 	}
+
 	// list result
 	rpc ListMatchedFrom(ListMatchedFromRequest) returns (ListMatchedFromResponse) {
-		option (google.api.http) = { get: "/match-po/matches-from" };
+		option (google.api.http) = { get: "/match-po-receipt-invoice/matches/from" };
 	}
 	rpc ListMatchedTo(ListMatchedToRequest) returns (ListMatchedToResponse) {
-		option (google.api.http) = { get: "/match-po/matches-to" };
+		option (google.api.http) = { get: "/match-po-receipt-invoice/matches/to/{vendor_id}/{product_id}" };
 	}
+
 	// process
 	rpc Process(ProcessRequest) returns (ProcessResponse) {
 		option (google.api.http) = { 
-			post: "/match-po/process",
+			post: "/match-po-receipt-invoice/process",
 			body: "*"
 		};
 	}

@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.form;
 
 import org.adempiere.exceptions.AdempiereException;
 
@@ -66,6 +66,7 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchPORReceiptInvoic
 import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -97,10 +98,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -169,7 +172,11 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 				valuesOrder
 			)
 		;
-		builderList.addRecords(lookupOrder);
+		builderList.addRecords(lookupOrder)
+			.setRecordCount(
+				builderList.getRecordsList().size()
+			)
+		;
 
 		return builderList;
 	}
@@ -188,10 +195,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -204,7 +213,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		// Receipt -> Invocie / Purchase Order
 		if (matchTypeFrom == MatchType.RECEIPT) {
-				// Invoice
+			// Invoice
 			Struct.Builder valuesInvoice = Struct.newBuilder()
 				.putFields(LookupUtil.VALUE_COLUMN_KEY,
 					ValueManager.getValueFromInt(
@@ -268,6 +277,11 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			builderList.addRecords(lookupReceipt);
 		}
 
+		builderList.setRecordCount(
+				builderList.getRecordsList().size()
+			)
+		;
+
 		return builderList;
 	}
 
@@ -283,10 +297,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -338,7 +354,11 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 				valuesMatched
 			)
 		;
-		builderList.addRecords(lookupMatched);
+		builderList.addRecords(lookupMatched)
+			.setRecordCount(
+				builderList.getRecordsList().size()
+			)
+		;
 
 		return builderList;
 	}
@@ -357,10 +377,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -400,10 +422,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -518,10 +542,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -585,6 +611,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		}
 		catch (SQLException e) {
 			log.log(Level.SEVERE, sql, e);
+			e.printStackTrace();
 		}
 		finally {
 			DB.close(rs, pstmt);
@@ -611,10 +638,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -630,15 +659,18 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		final String groupBy = org.spin.form.match_po_receipt_invoice.Util.getGroupBy(isMatched, matchFromType);
 
 		String whereClause = "";
+
+		// always same vendor
+		if (request.getVendorId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @Vendor@");
+		}
+		whereClause += " AND hdr.C_BPartner_ID = " + request.getVendorId();
+
+		// always same product
 		if (request.getProductId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_Product_ID@");
 		}
 		whereClause += " AND lin.M_Product_ID = " + request.getProductId();
-
-		if (request.getVendorId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
-		}
-		whereClause += " AND hdr.C_BPartner_ID = " + request.getVendorId();
 
 		// Date filter
 		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
@@ -691,6 +723,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		}
 		catch (SQLException e) {
 			log.log(Level.SEVERE, sql, e);
+			e.printStackTrace();
 		}
 		finally {
 			DB.close(rs, pstmt);
@@ -717,17 +750,19 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
 
 	private ProcessResponse.Builder process(ProcessRequest request) {
 		if (request.getMatchFromSelectedId() <= 0) {
-			throw new AdempiereException("");
+			throw new AdempiereException("Without @Selection@");
 		}
 
 		AtomicReference<String> atomicStatus = new AtomicReference<String>();
