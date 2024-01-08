@@ -119,38 +119,40 @@ public class WhereClauseUtil {
 			final String baseColumnName = columnName;
 			StringBuilder column_name = new StringBuilder(columnName);
 
-			condition.getValues().forEach(currentValue -> {
-				boolean isString = DisplayType.isText(displayType) || currentValue instanceof String;
+			if (condition.getValues() != null) {
+				condition.getValues().forEach(currentValue -> {
+					boolean isString = DisplayType.isText(displayType) || currentValue instanceof String;
 
-				if (currentValue == null || (isString && Util.isEmpty((String) currentValue, true))) {
-					if (Util.isEmpty(additionalSQL.toString(), true)) {
-						additionalSQL.append("(SELECT " + baseColumnName + " WHERE " + baseColumnName + " IS NULL)");
+					if (currentValue == null || (isString && Util.isEmpty((String) currentValue, true))) {
+						if (Util.isEmpty(additionalSQL.toString(), true)) {
+							additionalSQL.append("(SELECT " + baseColumnName + " WHERE " + baseColumnName + " IS NULL)");
+						}
+						if (isString) {
+							currentValue = "";
+						} else {
+							// does not add the null value to the filters, another restriction is
+							// added only for null values `additionalSQL`.
+							return;
+						}
 					}
+					if (parameterValues.length() > 0) {
+						parameterValues.append(", ");
+					}
+					String sqlInValue = "?";
 					if (isString) {
-						currentValue = "";
-					} else {
-						// does not add the null value to the filters, another restriction is
-						// added only for null values `additionalSQL`.
-						return;
+						column_name.delete(0, column_name.length());
+						column_name.append("UPPER(").append(baseColumnName).append(")");
+						sqlInValue = "UPPER(?)";
 					}
-				}
-				if (parameterValues.length() > 0) {
-					parameterValues.append(", ");
-				}
-				String sqlInValue = "?";
-				if (isString) {
-					column_name.delete(0, column_name.length());
-					column_name.append("UPPER(").append(baseColumnName).append(")");
-					sqlInValue = "UPPER(?)";
-				}
-				parameterValues.append(sqlInValue);
+					parameterValues.append(sqlInValue);
 
-				Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
-					displayType,
-					currentValue
-				);
-				parameters.add(valueToFilter);
-			});
+					Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+						displayType,
+						currentValue
+					);
+					parameters.add(valueToFilter);
+				});
+			}
 
 			columnName = column_name.toString();
 			if (!Util.isEmpty(parameterValues.toString(), true)) {
