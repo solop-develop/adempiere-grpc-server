@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2018-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2018-2024 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service.form;
+package org.spin.grpc.service.form.match_po_receipt_invoice;
 
 import org.adempiere.exceptions.AdempiereException;
 
@@ -557,9 +557,9 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		int matchFromType = request.getMatchFromTypeValue();
 		int matchToType = request.getMatchToTypeValue();
 
-		final String dateColumn = org.spin.form.match_po_receipt_invoice.Util.getDateColumn(matchFromType);
-		final String sql = org.spin.form.match_po_receipt_invoice.Util.getSQL(isMatched, matchFromType, matchToType);
-		final String groupBy = org.spin.form.match_po_receipt_invoice.Util.getGroupBy(isMatched, matchFromType);
+		final String dateColumn = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getDateColumn(matchFromType);
+		final String sql = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getSQL(isMatched, matchFromType, matchToType);
+		final String groupBy = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getGroupBy(isMatched, matchFromType);
 
 		String whereClause = "";
 		if (request.getProductId() > 0) {
@@ -605,7 +605,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			while (rs.next()) {
 				recordCount++;
 
-				Matched.Builder matchedBuilder = org.spin.form.match_po_receipt_invoice.Util.convertMatched(rs);
+				Matched.Builder matchedBuilder = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.convertMatched(rs);
 				builderList.addRecords(matchedBuilder);
 			}
 		}
@@ -654,9 +654,9 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		int matchToType = request.getMatchToTypeValue();
 		int matchFromSelectedId = request.getMatchFromSelectedId();
 
-		final String dateColumn = org.spin.form.match_po_receipt_invoice.Util.getDateColumn(matchFromType);
-		final String sql = org.spin.form.match_po_receipt_invoice.Util.getSQL(isMatched, matchFromType, matchToType);
-		final String groupBy = org.spin.form.match_po_receipt_invoice.Util.getGroupBy(isMatched, matchFromType);
+		final String dateColumn = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getDateColumn(matchFromType);
+		final String sql = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getSQL(isMatched, matchFromType, matchToType);
+		final String groupBy = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getGroupBy(isMatched, matchFromType);
 
 		String whereClause = "";
 
@@ -690,8 +690,8 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		}
 
 		if (request.getIsSameQuantity()) {
-			final String quantityColumn = org.spin.form.match_po_receipt_invoice.Util.getQuantityColumn(matchFromType);
-			Matched.Builder matchedFromSelected = org.spin.form.match_po_receipt_invoice.Util.getMatchedSelectedFrom(matchFromSelectedId, isMatched, matchFromType, matchToType);
+			final String quantityColumn = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getQuantityColumn(matchFromType);
+			Matched.Builder matchedFromSelected = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getMatchedSelectedFrom(matchFromSelectedId, isMatched, matchFromType, matchToType);
 			BigDecimal quantity = NumberManager.getBigDecimalFromString(
 				matchedFromSelected.getQuantity()
 			);
@@ -717,7 +717,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			while (rs.next()) {
 				recordCount++;
 
-				Matched.Builder matchedBuilder = org.spin.form.match_po_receipt_invoice.Util.convertMatched(rs);
+				Matched.Builder matchedBuilder = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.convertMatched(rs);
 				builderList.addRecords(matchedBuilder);
 			}
 		}
@@ -777,7 +777,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 			boolean isMatchToOrder = MatchType.PURCHASE_ORDER == request.getMatchToType();
 
-			Matched.Builder matchedFromSelected = org.spin.form.match_po_receipt_invoice.Util.getMatchedSelectedFrom(
+			Matched.Builder matchedFromSelected = org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.getMatchedSelectedFrom(
 				request.getMatchFromSelectedId(),
 				isMatchMode,
 				request.getMatchFromType().getNumber(),
@@ -828,7 +828,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 					lineId = matchedFromSelected.getId();
 				}
 
-				org.spin.form.match_po_receipt_invoice.Util.createMatchRecord(
+				org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceUtil.createMatchRecord(
 					isInvoice,
 					inOutLineId,
 					lineId,

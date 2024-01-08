@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2024 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -13,7 +13,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 
-package org.spin.form.match_po_receipt_invoice;
+package org.spin.grpc.service.form.match_po_receipt_invoice;
+
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -25,7 +26,9 @@ import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_InvoiceLine;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MClient;
+import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MMatchInv;
 import org.compiere.model.MMatchPO;
@@ -44,9 +47,9 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.Vendor;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
-public class Util {
+public class MatchPOReceiptInvoiceUtil {
 	/**	Logger			*/
-	private static CLogger log = CLogger.getCLogger(Util.class);
+	private static CLogger log = CLogger.getCLogger(MatchPOReceiptInvoiceUtil.class);
 
 
 	public static Vendor.Builder convertVendor(int businessPartnerId) {
@@ -342,7 +345,7 @@ public class Util {
 		//	Shipment - Invoice
 		if (isInvoice) {
 			//	Update Invoice Line
-			MInvoiceLine invoiceLine = new MInvoiceLine (Env.getCtx(), inOutLineId, transactionName);
+			MInvoiceLine invoiceLine = new MInvoiceLine (Env.getCtx(), lineId, transactionName);
 			invoiceLine.setM_InOutLine_ID(inOutLineId);
 			if (invoiceLine.getC_OrderLine_ID() != 0) {
 				invoiceLine.setC_OrderLine_ID(shipmentLine.getC_OrderLine_ID());
@@ -356,26 +359,30 @@ public class Util {
 					invoiceLine.getAD_Client_ID()
 				);
 				MMatchInv match = null;
-				Boolean isreceiptPeriodOpen = MPeriod.isOpen(
+
+				MInOut shipment = shipmentLine.getParent();
+				Boolean isReceiptPeriodOpen = MPeriod.isOpen(
 					Env.getCtx(),
-					shipmentLine.getParent().getDateAcct(),
-					shipmentLine.getParent().getC_DocType().getDocBaseType(),
-					shipmentLine.getParent().getAD_Org_ID(),
-					transactionName
-				);
-				Boolean isInvoicePeriodOpen = MPeriod.isOpen(
-					Env.getCtx(),
-					invoiceLine.getParent().getDateAcct(),
-					invoiceLine.getParent().getC_DocType().getDocBaseType(),
-					invoiceLine.getParent().getAD_Org_ID(),
+					shipment.getDateAcct(),
+					shipment.getC_DocType().getDocBaseType(),
+					shipment.getAD_Org_ID(),
 					transactionName
 				);
 
-				if (useReceiptDateAcct & isreceiptPeriodOpen) {
-					match= new MMatchInv(invoiceLine,shipmentLine.getParent().getDateAcct() , quantity);
+				MInvoice invoice = invoiceLine.getParent();
+				Boolean isInvoicePeriodOpen = MPeriod.isOpen(
+					Env.getCtx(),
+					invoice.getDateAcct(),
+					invoice.getC_DocType().getDocBaseType(),
+					invoice.getAD_Org_ID(),
+					transactionName
+				);
+
+				if (useReceiptDateAcct & isReceiptPeriodOpen) {
+					match= new MMatchInv(invoiceLine, shipment.getDateAcct() , quantity);
 				}
 				else if (isInvoicePeriodOpen){
-					match = new MMatchInv(invoiceLine, invoiceLine.getParent().getDateAcct(), quantity);
+					match = new MMatchInv(invoiceLine, invoice.getDateAcct(), quantity);
 				}
 				else {
 					match = new MMatchInv(invoiceLine, null, quantity);
@@ -388,10 +395,12 @@ public class Util {
 				else {
 					log.log(Level.SEVERE, "Inv Match not created: " + match);
 				}
-				if (match.getC_InvoiceLine().getC_Invoice().getDocStatus().equals("VO") ||
-						match.getC_InvoiceLine().getC_Invoice().getDocStatus().equals("RE") ||
-						match.getM_InOutLine().getM_InOut().getDocStatus().equals("VO") ||
-						match.getM_InOutLine().getM_InOut().getDocStatus().equals("RE")) {
+				String invoiceDocumentStatus = match.getC_InvoiceLine().getC_Invoice().getDocStatus();
+				String inOutDocumentStatus = match.getM_InOutLine().getM_InOut().getDocStatus();
+				if (invoiceDocumentStatus.equals("VO") ||
+						invoiceDocumentStatus.equals("RE") ||
+						inOutDocumentStatus.equals("VO") ||
+						inOutDocumentStatus.equals("RE")) {
 					match.reverseIt(match.getDateAcct());
 				}
 			}
