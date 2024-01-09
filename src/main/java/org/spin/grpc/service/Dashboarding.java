@@ -199,10 +199,21 @@ public class Dashboarding extends DashboardingImplBase {
 		}
 
 		builder.setMeasureTarget(
-			NumberManager.getBigDecimalToString(
-				goal.getMeasureTarget()
+				NumberManager.getBigDecimalToString(
+					goal.getMeasureTarget()
+				)
 			)
-		);
+			.setMeasureActual(
+				NumberManager.getBigDecimalToString(
+					goal.getMeasureActual()
+				)
+			)
+			.setPerformanceGoal(
+				NumberManager.getBigDecimalToString(
+					goal.getGoalPerformance()
+				)
+			)
+		;
 
 		//	Add measure color
 		MColorSchema colorSchema = goal.getColorSchema();

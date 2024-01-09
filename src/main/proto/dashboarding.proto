@@ -171,8 +171,10 @@ message Metrics {
 	string x_axis_label = 4;
 	string y_axis_label = 5;
 	string measure_target = 6;
-	repeated ColorSchema color_schemas = 7;
-	repeated ChartSerie series = 8;
+	string measure_actual = 7;
+	string performance_goal = 8;
+	repeated ColorSchema color_schemas = 9;
+	repeated ChartSerie series = 10;
 }
 
 //	Serie
@@ -302,8 +304,10 @@ message WindowMetrics {
 	string x_axis_label = 4;
 	string y_axis_label = 5;
 	string measure_target = 6;
-	repeated ColorSchema color_schemas = 7;
-	repeated ChartSerie series = 8;
+	string measure_actual = 7;
+	string performance_goal = 8;
+	repeated ColorSchema color_schemas = 9;
+	repeated ChartSerie series = 10;
 }
 
 message GetWindowMetricsRequest {
