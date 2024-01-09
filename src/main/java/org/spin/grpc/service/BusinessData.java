@@ -146,22 +146,9 @@ public class BusinessData extends BusinessDataImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void deleteEntity(DeleteEntityRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			Empty.Builder entityValue = deleteEntity(Env.getCtx(), request);
-			responseObserver.onNext(entityValue.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
+
 	@Override
 	public void deleteEntitiesBatch(DeleteEntitiesBatchRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -429,7 +416,27 @@ public class BusinessData extends BusinessDataImplBase {
 		//	Return
 		return ConvertUtil.convertEntity(entity);
 	}
-	
+
+
+
+	@Override
+	public void deleteEntity(DeleteEntityRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			Empty.Builder entityValue = deleteEntity(Env.getCtx(), request);
+			responseObserver.onNext(entityValue.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	/**
 	 * Delete a entity
 	 * @param context
@@ -443,11 +450,9 @@ public class BusinessData extends BusinessDataImplBase {
 		);
 
 		Trx.run(transactionName -> {
-			if (request.getId() > 0) {
-				PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getId(), transactionName);
-				if (entity != null && entity.get_ID() > 0) {
-					entity.deleteEx(true);
-				}
+			PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getId(), transactionName);
+			if (entity != null && RecordUtil.isValidId(entity.get_ID(), table.getAccessLevel())) {
+				entity.deleteEx(true);
 			}
 		});
 		//	Return

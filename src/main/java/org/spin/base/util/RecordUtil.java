@@ -111,8 +111,9 @@ public class RecordUtil {
 	public static PO getEntity(Properties context, String tableName, String uuid, int recordId, String transactionName) {
 		// Vaidate and get Table
 		final MTable table = RecordUtil.validateAndGetTable(tableName);
-		//	Validate ID
-		if (Util.isEmpty(uuid, true) && !isValidId(recordId, table.getAccessLevel())) {
+		//	Validate UUID/ID
+		boolean isId = isValidId(recordId, table.getAccessLevel());
+		if (Util.isEmpty(uuid, true) && !isId) {
 			throw new AdempiereException("@FillMandatory@ @Record_ID@ / @UUID@");
 		}
 
@@ -121,16 +122,21 @@ public class RecordUtil {
 		if (!Util.isEmpty(uuid, true)) {
 			whereClause.append(I_AD_Element.COLUMNNAME_UUID + " = ?");
 			params.add(uuid);
-		} else if (isValidId(recordId, table.getAccessLevel())) {
+		} else if (isId) {
 			whereClause.append(tableName + "_ID = ?");
 			params.add(recordId);
 		} else {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
 		//	Default
-		return new Query(context, tableName, whereClause.toString(), transactionName)
-				.setParameters(params)
-				.first();
+		return new Query(
+			context,
+			table,
+			whereClause.toString(),
+			transactionName
+		)
+			.setParameters(params)
+			.first();
 	}
 	
 	/**
@@ -147,13 +153,16 @@ public class RecordUtil {
 			throw new AdempiereException("@WhereClause@ @NotFound@");
 		}
 		
-		if(Util.isEmpty(tableName)) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
+		MTable table = validateAndGetTable(tableName);
 		//	Default
-		return new Query(context, tableName, whereClause, transactionName)
-				.setParameters(parameters)
-				.first();
+		return new Query(
+			context,
+			table,
+			whereClause,
+			transactionName
+		)
+			.setParameters(parameters)
+			.first();
 	}
 	
 	/**
