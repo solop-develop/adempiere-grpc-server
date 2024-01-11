@@ -196,7 +196,7 @@ public class LogsServiceLogic {
 				// prevent Null Pointer Exception
 				return 0;
 			}
-			return (int) (to.getTime() - from.getTime());
+			return to.compareTo(from);
 
 		})
 		.collect(Collectors.toList());

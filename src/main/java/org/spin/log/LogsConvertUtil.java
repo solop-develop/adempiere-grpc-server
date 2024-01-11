@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.adempiere.core.domains.models.I_AD_PInstance_Log;
@@ -178,31 +179,33 @@ public class LogsConvertUtil {
 			recordLogBuilder.addChangeLogs(changeLog);
 			indexMap.put(recordLog.getAD_ChangeLog_ID(), recordLogBuilder);
 		});
-		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder();
-		indexMap.values().stream()
+		List<EntityLog.Builder> entitiesListBuilder = indexMap.values().stream()
 			// .sorted(
-			// 	Comparator.comparing(EntityLog::getLogDate)
-			// 		// .thenComparing(EntityLog::getTabLevel)
-			// 		// .reversed()
+			// 	Comparator.comparing(EntityLog.Builder::getLogDate)
+			// 		.reversed()
 			// )
-			.sorted((u1, u2) -> {
+			.sorted((log1, log2) -> {
 				Timestamp from = TimeManager.convertValueToDate(
-					u1.getLogDate()
+					log1.getLogDate()
 				);
 
 				Timestamp to = TimeManager.convertValueToDate(
-					u2.getLogDate()
+					log2.getLogDate()
 				);
 
 				if (from == null || to == null) {
 					// prevent Null Pointer Exception
 					return 1;
 				}
-				return (int) (from.getTime() - to.getTime());
+				return to.compareTo(from);
 			})
-			.forEach(recordLog -> {
-				builder.addEntityLogs(recordLog);
-			});
+			.collect(Collectors.toList())
+		;
+
+		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder();
+		entitiesListBuilder.forEach(recordLog -> {
+			builder.addEntityLogs(recordLog);
+		});
 		return builder;
 	}
 
