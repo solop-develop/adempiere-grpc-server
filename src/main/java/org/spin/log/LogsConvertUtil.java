@@ -197,7 +197,22 @@ public class LogsConvertUtil {
 					// prevent Null Pointer Exception
 					return 1;
 				}
-				return to.compareTo(from);
+				int compared = to.compareTo(from);
+				if (compared == 0) {
+					// if is insert down
+					if (log1.getEventType() == EntityEventType.INSERT) {
+						return 1;
+					} else if (log2.getEventType() == EntityEventType.INSERT) {
+						return -1;
+					}
+					// if is delete up
+					if (log1.getEventType() == EntityEventType.DELETE) {
+						return -1;
+					} else if (log2.getEventType() == EntityEventType.DELETE) {
+						return 1;
+					}
+				}
+				return compared;
 			})
 			.collect(Collectors.toList())
 		;
