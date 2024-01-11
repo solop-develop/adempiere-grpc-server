@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,8 @@ import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityEventType;
 import org.spin.backend.grpc.logs.EntityLog;
 import org.spin.backend.grpc.logs.ListEntityLogsResponse;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -158,9 +161,16 @@ public class LogsConvertUtil {
 	 */
 	public static ListEntityLogsResponse.Builder convertRecordLog(List<MChangeLog> recordLogList) {
 		Map<Integer, EntityLog.Builder> indexMap = new HashMap<Integer, EntityLog.Builder>();
-		recordLogList.stream().filter(recordLog -> !indexMap.containsKey(recordLog.getAD_ChangeLog_ID())).forEach(recordLog -> {
-			indexMap.put(recordLog.getAD_ChangeLog_ID(), convertRecordLogHeader(recordLog));
-		});
+		recordLogList.stream()
+			.filter(recordLog -> {
+				return !indexMap.containsKey(recordLog.getAD_ChangeLog_ID());
+			})
+			.sorted(
+				Comparator.comparing(MChangeLog::getCreated)
+			)
+			.forEach(recordLog -> {
+				indexMap.put(recordLog.getAD_ChangeLog_ID(), convertRecordLogHeader(recordLog));
+			});
 		//	convert changes
 		recordLogList.forEach(recordLog -> {
 			ChangeLog.Builder changeLog = convertChangeLog(recordLog);
@@ -169,7 +179,30 @@ public class LogsConvertUtil {
 			indexMap.put(recordLog.getAD_ChangeLog_ID(), recordLogBuilder);
 		});
 		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder();
-		indexMap.values().stream().forEach(recordLog -> builder.addEntityLogs(recordLog));
+		indexMap.values().stream()
+			// .sorted(
+			// 	Comparator.comparing(EntityLog::getLogDate)
+			// 		// .thenComparing(EntityLog::getTabLevel)
+			// 		// .reversed()
+			// )
+			.sorted((u1, u2) -> {
+				Timestamp from = TimeManager.convertValueToDate(
+					u1.getLogDate()
+				);
+
+				Timestamp to = TimeManager.convertValueToDate(
+					u2.getLogDate()
+				);
+
+				if (from == null || to == null) {
+					// prevent Null Pointer Exception
+					return 1;
+				}
+				return (int) (from.getTime() - to.getTime());
+			})
+			.forEach(recordLog -> {
+				builder.addEntityLogs(recordLog);
+			});
 		return builder;
 	}
 
@@ -234,8 +267,8 @@ public class LogsConvertUtil {
 				;
 			} else if (column.getAD_Reference_ID() == DisplayType.YesNo) {
 				if (oldValue != null) {
-					boolean yes = oldValue.equals("true") || oldValue.equals("Y");
-					displayOldValue = Msg.getMsg(Env.getCtx(), yes ? "Y" : "N");
+					boolean yes = BooleanManager.getBooleanFromString(oldValue);
+					displayOldValue = BooleanManager.getBooleanToString(yes, true);
 				}
 				if (newValue != null) {
 					boolean yes = newValue.equals("true") || newValue.equals("Y");

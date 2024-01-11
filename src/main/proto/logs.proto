@@ -157,6 +157,12 @@ message ListEntityLogsResponse {
 	int64 record_count = 1;
 	repeated EntityLog entity_logs = 2;
 	string next_page_token = 3;
+	google.protobuf.Timestamp created = 4;
+	int32 created_by = 5;
+	string created_by_name = 6;
+	google.protobuf.Timestamp updated = 7;
+	int32 updated_by = 8;
+	string updated_by_name = 9;
 }
 
 // Exists References Request

@@ -33,6 +33,7 @@ import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.MWindow;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -69,6 +70,7 @@ import org.spin.base.util.WorkflowUtil;
 import org.spin.log.LogsConvertUtil;
 import org.spin.log.LogsServiceLogic;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -337,6 +339,12 @@ public class LogsInfo extends LogsImplBase {
 		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 			throw new AdempiereException("@FillMandatory@ @Record_ID@");
 		}
+		PO entity = RecordUtil.getEntity(
+			Env.getCtx(),
+			table.getTableName(),
+			recordId,
+			null
+		);
 
 		StringBuffer whereClause = new StringBuffer()
 			.append(I_AD_ChangeLog.COLUMNNAME_AD_Table_ID).append(" = ?")
@@ -362,8 +370,38 @@ public class LogsInfo extends LogsImplBase {
 
 		//	Convert Record Log
 		ListEntityLogsResponse.Builder builder = LogsConvertUtil.convertRecordLog(recordLogList);
+
+		// created by
+		MUser createdUser = MUser.get(entity.getCtx(), entity.getCreatedBy());
+		builder
+			.setCreated(
+				TimeManager.convertDateToValue(
+					entity.getCreated()
+				)
+			)
+			.setCreatedBy(createdUser.getAD_User_ID())
+			.setCreatedByName(
+				ValueManager.validateNull(createdUser.getName())
+			)
+		;
+
+		// updated by
+		MUser updatedUser = MUser.get(entity.getCtx(), entity.getUpdatedBy());
+		builder
+			.setUpdated(
+				TimeManager.convertDateToValue(
+					entity.getUpdated()
+				)
+			)
+			.setUpdatedBy(updatedUser.getAD_User_ID())
+			.setUpdatedByName(
+				ValueManager.validateNull(updatedUser.getName())
+			)
+		;
+
 		//	
-		builder.setRecordCount(count);
+		builder.setRecordCount(count)
+		;
 
 		//	Return
 		return builder;
