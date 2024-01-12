@@ -60,7 +60,6 @@ import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityEventType;
 import org.spin.backend.grpc.logs.EntityLog;
-import org.spin.backend.grpc.logs.ListEntityLogsResponse;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -160,15 +159,15 @@ public class LogsConvertUtil {
 	 * @param recordLog
 	 * @return
 	 */
-	public static ListEntityLogsResponse.Builder convertRecordLog(List<MChangeLog> recordLogList) {
+	public static List<EntityLog.Builder> convertRecordLog(List<MChangeLog> recordLogList) {
 		Map<Integer, EntityLog.Builder> indexMap = new HashMap<Integer, EntityLog.Builder>();
 		recordLogList.stream()
 			.filter(recordLog -> {
 				return !indexMap.containsKey(recordLog.getAD_ChangeLog_ID());
 			})
-			.sorted(
-				Comparator.comparing(MChangeLog::getCreated)
-			)
+			// .sorted(
+			// 	Comparator.comparing(MChangeLog::getCreated)
+			// )
 			.forEach(recordLog -> {
 				indexMap.put(recordLog.getAD_ChangeLog_ID(), convertRecordLogHeader(recordLog));
 			});
@@ -179,6 +178,7 @@ public class LogsConvertUtil {
 			recordLogBuilder.addChangeLogs(changeLog);
 			indexMap.put(recordLog.getAD_ChangeLog_ID(), recordLogBuilder);
 		});
+
 		List<EntityLog.Builder> entitiesListBuilder = indexMap.values().stream()
 			// .sorted(
 			// 	Comparator.comparing(EntityLog.Builder::getLogDate)
@@ -217,11 +217,7 @@ public class LogsConvertUtil {
 			.collect(Collectors.toList())
 		;
 
-		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder();
-		entitiesListBuilder.forEach(recordLog -> {
-			builder.addEntityLogs(recordLog);
-		});
-		return builder;
+		return entitiesListBuilder;
 	}
 
 	/**

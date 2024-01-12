@@ -16,9 +16,7 @@ package org.spin.log;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
@@ -30,7 +28,6 @@ import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ProcessLog;
-import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityLog;
 import org.spin.backend.grpc.logs.ListUserActivitesRequest;
 import org.spin.backend.grpc.logs.ListUserActivitesResponse;
@@ -107,29 +104,14 @@ public class LogsServiceLogic {
 			.setOrderBy(I_AD_PInstance.COLUMNNAME_Created + " DESC")
 			.<MChangeLog>list();
 
+		//	Convert Record Log
+		List<EntityLog.Builder> recordsLogsBuilderList = LogsConvertUtil.convertRecordLog(recordLogList);
+
 		ListUserActivitesResponse.Builder builderList = ListUserActivitesResponse.newBuilder();
-
-		//	convert changes
-		Map<Integer, EntityLog.Builder> indexMap = new HashMap<Integer, EntityLog.Builder>();
-		recordLogList.stream()
-			.filter(recordLog -> {
-				return !indexMap.containsKey(recordLog.getAD_ChangeLog_ID());
-			})
-			.forEach(recordLog -> {
-				indexMap.put(
-					recordLog.getAD_ChangeLog_ID(),
-					LogsConvertUtil.convertRecordLogHeader(recordLog)
-				);
-		});
-		recordLogList.forEach(recordLog -> {
-			ChangeLog.Builder changeLog = LogsConvertUtil.convertChangeLog(recordLog);
-			EntityLog.Builder recordLogBuilder = indexMap.get(recordLog.getAD_ChangeLog_ID());
-			recordLogBuilder.addChangeLogs(changeLog);
-			// indexMap.put(recordLog.getAD_ChangeLog_ID(), recordLogBuilder);
-
+		recordsLogsBuilderList.forEach(recordLog -> {
 			UserActivity.Builder userBuilder = UserActivity.newBuilder();
 			userBuilder.setUserActivityType(UserActivityType.ENTITY_LOG);
-			userBuilder.setEntityLog(recordLogBuilder);
+			userBuilder.setEntityLog(recordLog);
 			userActivitiesList.add(userBuilder.build());
 		});
 

@@ -42,6 +42,7 @@ import org.compiere.wf.MWFProcess;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.logs.ConfidentialType;
 import org.spin.backend.grpc.logs.EntityChat;
+import org.spin.backend.grpc.logs.EntityLog;
 import org.spin.backend.grpc.logs.ExistsChatEntriesRequest;
 import org.spin.backend.grpc.logs.ExistsChatEntriesResponse;
 import org.spin.backend.grpc.logs.ListChatEntriesRequest;
@@ -369,7 +370,12 @@ public class LogsInfo extends LogsImplBase {
 		;
 
 		//	Convert Record Log
-		ListEntityLogsResponse.Builder builder = LogsConvertUtil.convertRecordLog(recordLogList);
+		List<EntityLog.Builder> recordsLogsBuilderList = LogsConvertUtil.convertRecordLog(recordLogList);
+
+		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder();
+		recordsLogsBuilderList.forEach(recordLog -> {
+			builder.addEntityLogs(recordLog);
+		});
 
 		// created by
 		MUser createdUser = MUser.get(entity.getCtx(), entity.getCreatedBy());
