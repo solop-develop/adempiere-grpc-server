@@ -16,11 +16,16 @@
 
 package org.spin.grpc.service.ui;
 
+import java.util.Enumeration;
+
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.X_AD_Tree;
 import org.compiere.model.MRefList;
+import org.compiere.model.MTable;
+import org.compiere.model.MTreeNode;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.user_interface.TreeNode;
 import org.spin.backend.grpc.user_interface.TreeType;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -68,6 +73,38 @@ public class UserInterfaceConvertUtil {
 				ValueManager.validateNull(description)
 			)
 		;
+
+		return builder;
+	}
+
+	public static TreeNode.Builder convertTreeNode(MTable table, MTreeNode treeNode, boolean isWithChildrens) {
+		TreeNode.Builder builder = TreeNode.newBuilder();
+		builder.setId(treeNode.getNode_ID())
+			.setRecordId(treeNode.getNode_ID())
+			.setSequence(treeNode.getSeqNo())
+			.setName(
+				ValueManager.validateNull(
+					treeNode.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					treeNode.getDescription()
+				)
+			)
+			.setParentId(treeNode.getParent_ID())
+			.setIsSummary(treeNode.isSummary())
+			.setIsActive(true)
+		;
+
+		if (isWithChildrens) {
+			Enumeration<?> childrens = treeNode.children();
+			while (childrens.hasMoreElements()) {
+				MTreeNode child = (MTreeNode) childrens.nextElement();
+				TreeNode.Builder childBuilder = convertTreeNode(table, child, isWithChildrens);
+				builder.addChilds(childBuilder.build());
+			}
+		}
 
 		return builder;
 	}

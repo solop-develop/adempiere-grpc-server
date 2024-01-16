@@ -20,8 +20,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -86,8 +84,6 @@ import org.compiere.model.MRole;
 import org.compiere.model.MRule;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
-import org.compiere.model.MTree;
-import org.compiere.model.MTreeNode;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -138,8 +134,6 @@ import org.spin.backend.grpc.user_interface.SaveTabSequencesRequest;
 import org.spin.backend.grpc.user_interface.SetPreferenceRequest;
 import org.spin.backend.grpc.user_interface.SetRecordAccessRequest;
 import org.spin.backend.grpc.user_interface.Translation;
-import org.spin.backend.grpc.user_interface.TreeNode;
-import org.spin.backend.grpc.user_interface.TreeType;
 import org.spin.backend.grpc.user_interface.UnlockPrivateAccessRequest;
 import org.spin.backend.grpc.user_interface.UpdateBrowserEntityRequest;
 import org.spin.backend.grpc.user_interface.UpdateTabEntityRequest;
@@ -157,7 +151,6 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.grpc.service.ui.UserInterfaceConvertUtil;
 import org.spin.grpc.service.ui.UserInterfaceLogic;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -3095,6 +3088,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	}
 
 
+
 	@Override
 	public void listTreeNodes(ListTreeNodesRequest request, StreamObserver<ListTreeNodesResponse> responseObserver) {
 		try {
@@ -3102,163 +3096,21 @@ public class UserInterface extends UserInterfaceImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListTreeNodesResponse.Builder recordsListBuilder = listTreeNodes(request);
+			ListTreeNodesResponse.Builder recordsListBuilder = UserInterfaceLogic.listTreeNodes(request);
 			responseObserver.onNext(recordsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
 
-	private ListTreeNodesResponse.Builder listTreeNodes(ListTreeNodesRequest request) {
-		if (Util.isEmpty(request.getTableName(), true) && request.getTabId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
-		Properties context = Env.getCtx();
-
-		// get element id
-		int elementId = request.getElementId();
-		MTable table = null;
-		// tab where clause
-		String whereClause = null;
-		if (request.getTabId() > 0) {
-			MTab tab = MTab.get(context, request.getTabId());
-			if (tab == null || tab.getAD_Tab_ID() <= 0) {
-				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
-			}
-
-			table = MTable.get(context, tab.getAD_Table_ID());
-			final String whereTab = WhereClauseUtil.getWhereClauseFromTab(tab.getAD_Tab_ID());
-			//	Fill context
-			int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-			ContextManager.setContextWithAttributesFromStruct(windowNo, context, null);
-			String parsedWhereClause = Env.parseContext(context, windowNo, whereTab, false);
-			if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(whereTab, true)) {
-				throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
-			}
-			whereClause = parsedWhereClause;
-		} else {
-			// validate and get table
-			table = RecordUtil.validateAndGetTable(
-				request.getTableName()
-			);
-		}
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-		if (!MTree.hasTree(table.getAD_Table_ID())) {
-			throw new AdempiereException("@AD_Table_ID@ + @AD_Tree_ID@ @NotFound@");
-		}
-
-		final int clientId = Env.getAD_Client_ID(context);
-		int treeId = getDefaultTreeIdFromTableName(clientId, table.getTableName(), elementId);
-		MTree tree = new MTree(context, treeId, false, true, whereClause, null);
-
-		MTreeNode treeNode = tree.getRoot();
-
-		int treeNodeId = request.getId();
-		ListTreeNodesResponse.Builder builder = ListTreeNodesResponse.newBuilder();
-
-		TreeType.Builder treeTypeBuilder = UserInterfaceConvertUtil.convertTreeType(tree.getTreeType());
-		builder.setTreeType(treeTypeBuilder);
-
-		// list child nodes
-		Enumeration<?> childrens = Collections.emptyEnumeration();
-		if (treeNodeId <= 0) {
-			// get root children's
-			childrens = treeNode.children();
-			builder.setRecordCount(treeNode.getChildCount());
-		} else {
-			// get current node
-			MTreeNode currentNode = treeNode.findNode(treeNodeId);
-			if (currentNode == null) {
-				throw new AdempiereException("@Node_ID@ @NotFound@");
-			}
-			childrens = currentNode.children();
-			builder.setRecordCount(currentNode.getChildCount());
-		}
-
-		final boolean isWhitChilds = true;
-		while (childrens.hasMoreElements()) {
-			MTreeNode child = (MTreeNode) childrens.nextElement();
-			TreeNode.Builder childBuilder = convertTreeNode(table, child, isWhitChilds);
-			builder.addRecords(childBuilder.build());
-		}
-
-		return builder;
-	}
-
-	public TreeNode.Builder convertTreeNode(MTable table, MTreeNode treeNode, boolean isWithChildrens) {
-		TreeNode.Builder builder = TreeNode.newBuilder();
-		builder.setId(treeNode.getNode_ID())
-			.setRecordId(treeNode.getNode_ID())
-			.setSequence(treeNode.getSeqNo())
-			.setName(
-				ValueManager.validateNull(
-					treeNode.getName()
-				)
-			)
-			.setDescription(
-				ValueManager.validateNull(
-					treeNode.getDescription()
-				)
-			)
-			.setParentId(treeNode.getParent_ID())
-			.setIsSummary(treeNode.isSummary())
-			.setIsActive(true)
-		;
-
-		if (isWithChildrens) {
-			Enumeration<?> childrens = treeNode.children();
-			while (childrens.hasMoreElements()) {
-				MTreeNode child = (MTreeNode) childrens.nextElement();
-				TreeNode.Builder childBuilder = convertTreeNode(table, child, isWithChildrens);
-				builder.addChilds(childBuilder.build());
-			}
-		}
-
-		return builder;
-	}
-
-
-	public int getDefaultTreeIdFromTableName(int clientId, String tableName, int elementId) {
-		if(Util.isEmpty(tableName)) {
-			return -1;
-		}
-		//
-		Integer treeId = null;
-		String whereClause = new String();
-		//	Valid Accouting Element
-		if (elementId > 0) {
-			whereClause = " AND EXISTS ("
-				+ "SELECT 1 FROM C_Element ae "
-				+ "WHERE ae.C_Element_ID=" + elementId
-				+ " AND tr.AD_Tree_ID=ae.AD_Tree_ID) "
-			;
-		}
-		if(treeId == null || treeId == 0) {
-			String sql = "SELECT tr.AD_Tree_ID "
-				+ "FROM AD_Tree tr "
-				+ "INNER JOIN AD_Table tb ON (tr.AD_Table_ID=tb.AD_Table_ID) "
-				+ "WHERE tr.AD_Client_ID IN(0, ?) "
-				+ "AND tb.TableName=? "
-				+ "AND tr.IsActive='Y' "
-				+ "AND tr.IsAllNodes='Y' "
-				+ whereClause
-				+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID"
-			;
-			//	Get Tree
-			treeId = DB.getSQLValue(null, sql, clientId, tableName);
-		}
-		//	Default Return
-		return treeId;
-	}
 
 
 	@Override
