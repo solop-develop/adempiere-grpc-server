@@ -49,29 +49,29 @@ public class Filter {
 
 	private Map<String, Object> condition;
 
-	public Filter(Map<String, Object> condition) {
-		this.condition = condition;
+	public Filter(Map<String, Object> newCondition) {
+		this.condition = newCondition;
 	}
 
 	public void setColumnName(String columnName) {
-		condition.put(NAME, columnName);
+		this.condition.put(NAME, columnName);
 	}
 
 	public String getColumnName() {
-		return (String) condition.get(NAME);
+		return (String) this.condition.get(NAME);
 	}
 
 	public String getOperator() {
-		return (String) condition.get(OPERATOR);
+		return (String) this.condition.get(OPERATOR);
 	}
 
 	public Object getValue() {
-		return condition.get(VALUES);
+		return this.condition.get(VALUES);
 	}
 
 	@SuppressWarnings("unchecked")
 	public List<Object> getValues() {
-		Object value = condition.get(VALUES);
+		Object value = this.condition.get(VALUES);
 		if(value instanceof List) {
 			return (List<Object>) value;
 		}
@@ -79,7 +79,7 @@ public class Filter {
 	}
 
 	public Object getFromValue() {
-		List<Object> values = getValues();
+		List<Object> values = this.getValues();
 		if(values == null || values.isEmpty()) {
 			return null;
 		}
@@ -87,7 +87,7 @@ public class Filter {
 	}
 
 	public Object getToValue() {
-		List<Object> values = getValues();
+		List<Object> values = this.getValues();
 		if(values == null || values.isEmpty() || values.size() > 2) {
 			return null;
 		}
@@ -96,9 +96,10 @@ public class Filter {
 
 	@Override
 	public String toString() {
-		return "Filter [getColumnName()=" + getColumnName() + ", getOperator()=" + getOperator() + ", getValue()="
-				+ getValue() + ", getValues()=" + getValues() + ", getFromValue()=" + getFromValue() + ", getToValue()="
-				+ getToValue() + "]";
+		return "Filter [getColumnName()=" + this.getColumnName() +
+			", getOperator()=" + this.getOperator() +
+			", getValue()=" + this.getValue() + ", getValues()=" + this.getValues() +
+			", getFromValue()=" + this.getFromValue() + ", getToValue()=" + this.getToValue() + "]";
 	}
 
 }

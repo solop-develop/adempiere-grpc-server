@@ -80,6 +80,7 @@ import org.spin.backend.grpc.dashboarding.PendingDocument;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dashboarding.WindowMetrics;
+import org.spin.base.query.FilterManager;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.dashboarding.DashboardingConvertUtil;
@@ -984,30 +985,37 @@ public class Dashboarding extends DashboardingImplBase {
 				);
 			}
 		});
-//	TODO: Add support to this
-//		// prameters as client filters
-//		Map<String, Object> clientFiltersList = DashboardingConvertUtil.convertFilterValuesToObjects(
-//			request.getFiltersList()
-//		);
-//		clientFiltersList.entrySet().stream()
-//			.forEach(entry -> {
-//				PO chartParameter = new Query(
-//						context,
-//						"ECA50_WindowChartParameter",
-//						"ColumnName = ? AND ECA50_WindowChart_ID = ?",
-//						null
-//					)
-//					.setParameters(entry.getKey(), windowChart.get_ID())
-//					.first()
-//				;
-//				if (chartParameter != null) {
-//					Object value = entry.getValue();
-//					filtersList.put(
-//						chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL),
-//						value
-//					);
-//				}
-//			});
+
+		// prameters as client filters
+		Map<String, Object> clientFiltersList = new HashMap<String, Object>();
+		FilterManager.newInstance(request.getFilters())
+			.getConditions()
+			.forEach(condition -> {
+				clientFiltersList.put(
+					condition.getColumnName(),
+					condition.getValue()
+				);
+			});
+	
+		clientFiltersList.entrySet().stream()
+			.forEach(entry -> {
+				PO chartParameter = new Query(
+						context,
+						"ECA50_WindowChartParameter",
+						"ColumnName = ? AND ECA50_WindowChart_ID = ?",
+						null
+					)
+					.setParameters(entry.getKey(), windowChart.get_ID())
+					.first()
+				;
+				if (chartParameter != null) {
+					Object value = entry.getValue();
+					filtersList.put(
+						chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL),
+						value
+					);
+				}
+			});
 
 		//	Load
 		Map<String, List<ChartData>> chartSeries = new HashMap<String, List<ChartData>>();

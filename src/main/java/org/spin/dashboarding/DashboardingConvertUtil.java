@@ -85,52 +85,7 @@ public class DashboardingConvertUtil {
 		);
 	}
 
-//	/**
-//	 * Convert Filter Values from gRPC to ADempiere object values
-//	 * @param values
-//	 * @return
-//	 */
-//	public static Map<String, Object> convertFilterValuesToObjects(List<Filter> filtersList) {
-//		Map<String, Object> convertedValues = new HashMap<>();
-//		if (filtersList == null || filtersList.size() <= 0) {
-//			return convertedValues;
-//		}
-//		for (Filter filter : filtersList) {
-//			Object value = null;
-//			// to IN or NOT IN clause
-//			if (filter.getValuesList() != null && filter.getValuesList().size() > 0) {
-//				List<Object> values = new ArrayList<Object>();
-//				filter.getValuesList().forEach(valueBuilder -> {
-//					Object currentValue = ValueManager.getObjectFromValue(
-//						valueBuilder
-//					);
-//					values.add(currentValue);
-//				});
-//				value = values;
-//			}
-//			else {
-//				value = ValueManager.getObjectFromValue(filter.getValue());
-//				// to BETWEEN clause
-//				if (filter.hasValueTo()) {
-//					Object currentValue = value;
-//					List<Object> values = new ArrayList<Object>();
-//					values.add(currentValue);
-//					values.add(
-//						ValueManager.getObjectFromValue(
-//							filter.getValueTo()
-//						)
-//					);
-//					value = values;
-//				}
-//			}
-//			convertedValues.put(
-//				filter.getColumnName(),
-//				value
-//			);
-//		}
-//		//
-//		return convertedValues;
-//	}
+
 
 	@SuppressWarnings("unchecked")
 	public static void addCollectionParameters(Object objectColelction, List<Object> parameters) {

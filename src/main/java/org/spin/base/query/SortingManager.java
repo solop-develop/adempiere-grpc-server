@@ -41,12 +41,12 @@ public class SortingManager {
 	 */
 	@SuppressWarnings("unchecked")
 	private SortingManager(String sorting) {
-		if(Util.isEmpty(sorting)) {
-			fillValues = new ArrayList<>();
+		if(Util.isEmpty(sorting, true)) {
+			this.fillValues = new ArrayList<>();
 		} else {
 			ObjectMapper fileMapper = new ObjectMapper();
 			try {
-				fillValues = fileMapper.readValue(sorting, List.class);
+				this.fillValues = fileMapper.readValue(sorting, List.class);
 			} catch (JsonProcessingException e) {
 				throw new RuntimeException("Invalid filter");
 			}
@@ -56,18 +56,19 @@ public class SortingManager {
 	public static SortingManager newInstance(String filters) {
 		return new SortingManager(filters);
 	}
-	
+
 	public List<Order> getSorting() {
-		if(fillValues == null) {
+		if(this.fillValues == null) {
 			return new ArrayList<Order>();
 		}
-		return fillValues.stream().map(value -> new Order(value))
-				.collect(Collectors.toList());
+		return this.fillValues.stream()
+			.map(value -> new Order(value))
+			.collect(Collectors.toList());
 	}
-	
+
 	public String getSotingAsSQL() {
 		StringBuffer sortingAsSQL = new StringBuffer();
-		getSorting().forEach(sotring -> {
+		this.getSorting().forEach(sotring -> {
 			if(sortingAsSQL.length() > 0) {
 				sortingAsSQL.append(", ");
 			}
@@ -80,11 +81,12 @@ public class SortingManager {
 		});
 		return sortingAsSQL.toString();
 	}
-	
+
 	public static void main(String[] args) {
 		SortingManager.newInstance("[{\"name\":\"Name\", \"type\":\"asc\"}, {\"name\":\"Value\", \"type\":\"desc\"}]")
 		.getSorting().forEach(sort -> {
 			System.out.println(sort);
 		});
 	}
+
 }

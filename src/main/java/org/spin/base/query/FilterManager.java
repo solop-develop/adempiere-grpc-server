@@ -41,12 +41,12 @@ public class FilterManager {
 	 */
 	@SuppressWarnings("unchecked")
 	private FilterManager(String filter) {
-		if(Util.isEmpty(filter)) {
-			fillValues = new ArrayList<>();
+		if(Util.isEmpty(filter, true)) {
+			this.fillValues = new ArrayList<>();
 		} else {
 			ObjectMapper fileMapper = new ObjectMapper();
 			try {
-				fillValues = fileMapper.readValue(filter, List.class);
+				this.fillValues = fileMapper.readValue(filter, List.class);
 			} catch (JsonProcessingException e) {
 				throw new RuntimeException("Invalid filter");
 			}
@@ -58,11 +58,12 @@ public class FilterManager {
 	}
 
 	public List<Filter> getConditions() {
-		if(fillValues == null) {
+		if(this.fillValues == null) {
 			return new ArrayList<Filter>();
 		}
-		return fillValues.stream().map(value -> new Filter(value))
-				.collect(Collectors.toList());
+		return this.fillValues.stream()
+			.map(value -> new Filter(value))
+			.collect(Collectors.toList());
 	}
 
 	public static void main(String[] args) {
