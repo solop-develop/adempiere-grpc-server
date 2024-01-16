@@ -86,10 +86,10 @@ import org.spin.backend.grpc.issue_management.UpdateIssueCommentRequest;
 import org.spin.backend.grpc.issue_management.UpdateIssueRequest;
 import org.spin.backend.grpc.issue_management.User;
 import org.spin.backend.grpc.issue_management.BusinessPartner;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.form.issue_management.IssueManagementConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

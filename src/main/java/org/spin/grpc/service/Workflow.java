@@ -65,12 +65,12 @@ import org.spin.backend.grpc.wf.WorkflowActivity;
 import org.spin.backend.grpc.wf.WorkflowDefinition;
 import org.spin.backend.grpc.wf.WorkflowDefinitionRequest;
 import org.spin.backend.grpc.wf.WorkflowGrpc.WorkflowImplBase;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.WorkflowUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

@@ -80,13 +80,13 @@ import org.spin.backend.grpc.dashboarding.PendingDocument;
 import org.spin.backend.grpc.dashboarding.WindowDashboard;
 import org.spin.backend.grpc.dashboarding.WindowDashboardParameter;
 import org.spin.backend.grpc.dashboarding.WindowMetrics;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.dashboarding.DashboardingConvertUtil;
 import org.spin.eca50.controller.ChartBuilder;
 import org.spin.eca50.data.ChartValue;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

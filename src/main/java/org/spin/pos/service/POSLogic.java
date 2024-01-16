@@ -28,10 +28,10 @@ import org.spin.backend.grpc.pos.Customer;
 import org.spin.backend.grpc.pos.GetCustomerRequest;
 import org.spin.backend.grpc.pos.ListCustomersRequest;
 import org.spin.backend.grpc.pos.ListCustomersResponse;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class POSLogic {

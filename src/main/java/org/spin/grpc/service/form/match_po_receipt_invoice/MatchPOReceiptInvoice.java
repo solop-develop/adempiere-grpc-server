@@ -63,11 +63,11 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.ProcessRequest;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.ProcessResponse;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Product;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchPORReceiptInvoiceGrpc.MatchPORReceiptInvoiceImplBase;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

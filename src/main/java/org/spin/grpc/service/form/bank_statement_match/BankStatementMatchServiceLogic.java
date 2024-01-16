@@ -67,11 +67,11 @@ import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ResultMovement;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsResponse;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

@@ -64,10 +64,10 @@ import org.spin.backend.grpc.form.express_receipt.Receipt;
 import org.spin.backend.grpc.form.express_receipt.ReceiptLine;
 import org.spin.backend.grpc.form.express_receipt.UpdateReceiptLineRequest;
 import org.spin.backend.grpc.form.express_receipt.ExpressReceiptGrpc.ExpressReceiptImplBase;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

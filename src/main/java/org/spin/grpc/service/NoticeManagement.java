@@ -42,8 +42,8 @@ import org.spin.backend.grpc.notice_management.ListUsersResponse;
 import org.spin.backend.grpc.notice_management.Notice;
 import org.spin.backend.grpc.notice_management.User;
 import org.spin.backend.grpc.notice_management.NoticeManagementGrpc.NoticeManagementImplBase;
-import org.spin.base.db.LimitUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;

@@ -37,10 +37,10 @@ import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.GeneralLedgerConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**

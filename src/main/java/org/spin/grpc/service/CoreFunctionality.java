@@ -69,13 +69,13 @@ import org.spin.backend.grpc.common.ListWarehousesResponse;
 import org.spin.backend.grpc.common.ProductConversion;
 import org.spin.backend.grpc.common.SystemInfo;
 import org.spin.base.Version;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.convert.ConvertCommon;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

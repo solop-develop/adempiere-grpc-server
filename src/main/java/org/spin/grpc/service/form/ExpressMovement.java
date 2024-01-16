@@ -53,10 +53,10 @@ import org.spin.backend.grpc.form.express_movement.Product;
 import org.spin.backend.grpc.form.express_movement.UpdateMovementLineRequest;
 import org.spin.backend.grpc.form.express_movement.Warehouse;
 import org.spin.backend.grpc.form.express_movement.ExpressMovementGrpc.ExpressMovementImplBase;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

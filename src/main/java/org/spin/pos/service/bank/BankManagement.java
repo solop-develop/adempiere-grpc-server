@@ -32,10 +32,10 @@ import org.spin.backend.grpc.pos.ListBankAccountsRequest;
 import org.spin.backend.grpc.pos.ListBankAccountsResponse;
 import org.spin.backend.grpc.pos.ListBanksRequest;
 import org.spin.backend.grpc.pos.ListBanksResponse;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.convert.ConvertCommon;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**

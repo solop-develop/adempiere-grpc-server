@@ -66,7 +66,6 @@ import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.common.UpdateEntityRequest;
 // import org.spin.base.db.CountUtil;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.db.ParameterUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.query.SortingManager;
@@ -75,6 +74,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;

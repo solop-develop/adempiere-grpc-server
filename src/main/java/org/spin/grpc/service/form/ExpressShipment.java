@@ -63,10 +63,10 @@ import org.spin.backend.grpc.form.express_shipment.Shipment;
 import org.spin.backend.grpc.form.express_shipment.ShipmentLine;
 import org.spin.backend.grpc.form.express_shipment.UpdateShipmentLineRequest;
 import org.spin.backend.grpc.form.express_shipment.ExpressShipmentGrpc.ExpressShipmentImplBase;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

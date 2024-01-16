@@ -39,11 +39,11 @@ import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.Window;
-import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.custom.BrowseFieldCustomUtil;
+import org.spin.service.grpc.util.db.OrderByUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 

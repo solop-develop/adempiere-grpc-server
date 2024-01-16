@@ -48,9 +48,9 @@ import org.spin.backend.grpc.form.time_record.ResourceAssignment;
 import org.spin.backend.grpc.form.time_record.ResourceType;
 import org.spin.backend.grpc.form.time_record.TimeRecordGrpc.TimeRecordImplBase;
 import org.spin.backend.grpc.form.time_record.User;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

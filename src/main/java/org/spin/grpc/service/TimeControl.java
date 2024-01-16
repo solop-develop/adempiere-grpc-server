@@ -43,9 +43,9 @@ import org.spin.backend.grpc.time_control.ResourceAssignment;
 import org.spin.backend.grpc.time_control.ResourceType;
 import org.spin.backend.grpc.time_control.TimeControlGrpc.TimeControlImplBase;
 import org.spin.backend.grpc.time_control.UpdateResourceAssignmentRequest;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

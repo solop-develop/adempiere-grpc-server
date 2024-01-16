@@ -64,13 +64,13 @@ import org.spin.backend.grpc.logs.ModerationType;
 import org.spin.backend.grpc.user_interface.ChatEntry;
 import org.spin.backend.grpc.logs.RecentItem;
 import org.spin.backend.grpc.wf.WorkflowProcess;
-import org.spin.base.db.LimitUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.WorkflowUtil;
 import org.spin.log.LogsConvertUtil;
 import org.spin.log.LogsServiceLogic;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
