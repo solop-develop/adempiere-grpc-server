@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Message;
 import org.adempiere.core.domains.models.I_AD_Window;
+import org.adempiere.model.MBrowse;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MForm;
@@ -40,8 +41,10 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.dictionary.ContextInfo;
 import org.spin.backend.grpc.dictionary.DependentField;
+import org.spin.backend.grpc.dictionary.DictionaryEntity;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.Form;
 import org.spin.backend.grpc.dictionary.MessageText;
@@ -58,7 +61,7 @@ import org.spin.util.ASPUtil;
 public class DictionaryConvertUtil {
 
 	/**
-	 * TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
+	 * TODO: Remove conditional with fix the issue https://github.com/solop-develop/adempiere-grpc-server/issues/28
 	 * Translated Name, Description and Help columns
 	 * @param entity
 	 * @return
@@ -86,7 +89,58 @@ public class DictionaryConvertUtil {
 		return entity;
 	}
 
-	
+
+
+	public static DictionaryEntity.Builder getDictionaryEntity(MForm form) {
+		return getDictionaryEntity(
+			(PO) form
+		);
+	}
+	public static DictionaryEntity.Builder getDictionaryEntity(MBrowse browse) {
+		return getDictionaryEntity(
+			(PO) browse
+		);
+	}
+	public static DictionaryEntity.Builder getDictionaryEntity(MWorkflow workflow) {
+		return getDictionaryEntity(
+			(PO) workflow
+		);
+	}
+	public static DictionaryEntity.Builder getDictionaryEntity(PO entity) {
+		DictionaryEntity.Builder builder = DictionaryEntity.newBuilder();
+		if (entity == null) {
+			return builder;
+		}
+		builder
+			.setUuid(
+				ValueManager.validateNull(
+					entity.get_UUID()
+				)
+			)
+			.setId(
+				entity.get_ID()
+			)
+			.setName(
+				ValueManager.validateNull(
+					entity.get_Translation(I_AD_Element.COLUMNNAME_Name)
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					entity.get_Translation(I_AD_Element.COLUMNNAME_Description)
+				)
+			)
+			.setHelp(
+				ValueManager.validateNull(
+					entity.get_Translation(I_AD_Element.COLUMNNAME_Help)
+				)
+			)
+		;
+		return builder;
+	}
+
+
+
 	/**
 	 * Convert Reference to builder
 	 * @param info
@@ -252,7 +306,7 @@ public class DictionaryConvertUtil {
 			return builder;
 		}
 
-		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		// TODO: Remove with fix the issue https://github.com/solop-develop/adempiere-grpc-server/issues/28
 		DictionaryConvertUtil.translateEntity(form);
 
 		//	

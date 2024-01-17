@@ -289,26 +289,36 @@ message FieldCondition {
 	string uuid = 5;
 }
 
-// Process
-message Process {
+message DictionaryEntity {
 	int32 id = 1;
-	string value = 2;
+	string uuid = 2;
 	string name = 3;
 	string description = 4;
 	string help = 5;
-	bool is_report = 6;
-	int32 access_level = 7;
+}
+
+// Process
+message Process {
+	string uuid = 1;
+	int32 id = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
+	bool is_report = 7;
 	string show_help = 8;
-	bool is_direct_print = 9;
-	repeated Field parameters = 10;
-	bool is_active = 11;
+	int32 workflow_id = 9;
+	int32 form_id = 10;
+	int32 browser_id = 11;
+	int32 report_view_id = 12;
+	int32 print_format_id = 13;
+	DictionaryEntity form = 14;
+	DictionaryEntity browse = 15;
+	DictionaryEntity workflow = 16;
 	// Reporty Type
-	repeated ReportExportType report_export_types = 12;
-	int32 browser_id = 13;
-	int32 form_id = 14;
-	int32 workflow_id = 15;
-	string uuid = 16;
-	bool is_have_parameres = 17;
+	repeated ReportExportType report_export_types = 17;
+	bool has_parameters = 18;
+	repeated Field parameters = 19;
 }
 
 // Form

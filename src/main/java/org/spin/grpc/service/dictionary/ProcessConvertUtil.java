@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.adempiere.model.MBrowse;
+import org.compiere.model.MForm;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
@@ -27,6 +29,7 @@ import org.compiere.model.MProcessParaCustom;
 import org.compiere.model.MReportView;
 import org.compiere.model.MValRule;
 import org.compiere.util.Env;
+import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.dictionary.DependentField;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.Process;
@@ -53,7 +56,7 @@ public class ProcessConvertUtil {
 		}
 		process = ASPUtil.getInstance(context).getProcess(process.getAD_Process_ID());
 
-		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		// TODO: Remove with fix the issue https://github.com/solop-develop/adempiere-grpc-server/issues/28
 		DictionaryConvertUtil.translateEntity(process);
 
 		List<MProcessPara> parametersList = ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID());
@@ -61,43 +64,87 @@ public class ProcessConvertUtil {
 		Process.Builder builder = Process.newBuilder()
 			.setId(process.getAD_Process_ID())
 			.setUuid(
-				ValueManager.validateNull(process.getUUID())
+				ValueManager.validateNull(
+					process.getUUID()
+				)
 			)
 			.setValue(
-				ValueManager.validateNull(process.getValue())
+				ValueManager.validateNull(
+					process.getValue()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(process.getName())
+				ValueManager.validateNull(
+					process.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(process.getDescription())
+				ValueManager.validateNull(
+					process.getDescription()
+				)
 			)
 			.setHelp(
-				ValueManager.validateNull(process.getHelp())
+				ValueManager.validateNull(
+					process.getHelp()
+				)
 			)
-			.setAccessLevel(Integer.parseInt(process.getAccessLevel()))
-			.setIsDirectPrint(process.isDirectPrint())
 			.setIsReport(process.isReport())
-			.setIsActive(process.isActive())
-			.setIsHaveParameres(
+			.setShowHelp(
+				process.getShowHelp()
+			)
+			.setHasParameters(
 				parametersList != null && parametersList.size() > 0
 			)
 		;
 
 		if (process.getAD_Browse_ID() > 0) {
-			builder.setBrowserId(process.getAD_Browse_ID());
+			MBrowse browse = ASPUtil.getInstance(context).getBrowse(process.getAD_Browse_ID());
+			builder.setBrowserId(
+					process.getAD_Browse_ID()
+				)
+				.setBrowse(
+					DictionaryConvertUtil.getDictionaryEntity(
+						browse
+					)
+				)
+			;
+		} else if (process.getAD_Form_ID() > 0) {
+			MForm form = new MForm(context, process.getAD_Workflow_ID(), null);
+			builder.setFormId(
+					process.getAD_Form_ID()
+				)
+				.setForm(
+					DictionaryConvertUtil.getDictionaryEntity(
+						form
+					)
+				)
+			;
+		} else if (process.getAD_Workflow_ID() > 0) {
+			MWorkflow workflow = MWorkflow.get(context, process.getAD_Workflow_ID());
+			builder.setWorkflowId(
+					process.getAD_Workflow_ID()
+				)
+				.setWorkflow(
+					DictionaryConvertUtil.getDictionaryEntity(
+						workflow
+					)
+				)
+			;
 		}
-		if (process.getAD_Form_ID() > 0) {
-			builder.setFormId(process.getAD_Form_ID());
-		}
-		if (process.getAD_Workflow_ID() > 0) {
-			builder.setWorkflowId(process.getAD_Workflow_ID());
-		}
+
 		//	Report Types
 		if(process.isReport()) {
 			MReportView reportView = null;
 			if(process.getAD_ReportView_ID() > 0) {
+				builder.setReportViewId(
+					process.getAD_ReportView_ID()
+				);
 				reportView = MReportView.get(context, process.getAD_ReportView_ID());
+			}
+			if (process.getAD_PrintFormat_ID() > 0) {
+				builder.setPrintFormatId(
+					process.getAD_PrintFormat_ID()
+				);
 			}
 			ReportExportHandler exportHandler = new ReportExportHandler(Env.getCtx(), reportView);
 			for(AbstractExportFormat reportType : exportHandler.getExportFormatList()) {
