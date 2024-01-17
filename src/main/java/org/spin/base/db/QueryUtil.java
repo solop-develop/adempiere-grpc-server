@@ -34,6 +34,7 @@ import org.compiere.util.Util;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.service.grpc.util.db.FromUtil;
 import org.spin.util.ASPUtil;
 
 public class QueryUtil {

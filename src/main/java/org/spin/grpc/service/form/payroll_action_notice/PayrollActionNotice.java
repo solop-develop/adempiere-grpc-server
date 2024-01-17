@@ -54,12 +54,12 @@ import org.spin.backend.grpc.form.payroll_action_notice.ListPayrollProcessReques
 import org.spin.backend.grpc.form.payroll_action_notice.ListValidEmployeesRequest;
 import org.spin.backend.grpc.form.payroll_action_notice.PayrollActionNoticeGrpc.PayrollActionNoticeImplBase;
 import org.spin.backend.grpc.form.payroll_action_notice.SavePayrollMovementRequest;
-import org.spin.base.db.CountUtil;
-import org.spin.base.db.ParameterUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

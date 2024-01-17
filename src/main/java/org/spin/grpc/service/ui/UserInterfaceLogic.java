@@ -39,13 +39,13 @@ import org.spin.backend.grpc.user_interface.ListTreeNodesRequest;
 import org.spin.backend.grpc.user_interface.ListTreeNodesResponse;
 import org.spin.backend.grpc.user_interface.TreeNode;
 import org.spin.backend.grpc.user_interface.TreeType;
-import org.spin.base.db.CountUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 

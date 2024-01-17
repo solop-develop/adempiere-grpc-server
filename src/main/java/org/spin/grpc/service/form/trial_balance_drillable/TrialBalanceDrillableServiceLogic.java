@@ -44,9 +44,9 @@ import org.spin.backend.grpc.form.trial_balance_drillable.ListOrganizationsReque
 import org.spin.backend.grpc.form.trial_balance_drillable.ListPeriodsRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListReportCubesRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListUser1Request;
-import org.spin.base.db.ParameterUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.UserInterface;
+import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 

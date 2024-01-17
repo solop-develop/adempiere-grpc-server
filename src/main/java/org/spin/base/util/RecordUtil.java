@@ -49,9 +49,9 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
-import org.spin.base.db.FromUtil;
-import org.spin.base.db.ParameterUtil;
 import org.spin.dictionary.util.DictionaryUtil;
+import org.spin.service.grpc.util.db.FromUtil;
+import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
