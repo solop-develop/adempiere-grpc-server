@@ -47,7 +47,7 @@ dependencies {
 	implementation 'com.sun.xml.bind:jaxb-core:3.0.0-M4'
 	implementation 'javax.activation:activation:1.1.1'
 
-	implementation "${baseGroupId}:adempiere-grpc-utils:1.2.6"
+	implementation "${baseGroupId}:adempiere-grpc-utils:1.2.7"
 
 	//	ADempiere Core
 	implementation "${baseGroupId}:base:${baseVersion}"
@@ -93,9 +93,9 @@ dependencies {
 	// Point Of Sales Improvements
 	implementation "${baseGroupId}:adempiere-pos-improvements:1.0.1"
 	// Business Processors (To Task's and Schedulers)
-	implementation "${baseGroupId}:adempiere-business-processors:1.0.5"
+	implementation "${baseGroupId}:adempiere-business-processors:1.1.0"
 	// Engine as Queue
-	implementation "${baseGroupId}:adempiere-kafka-connector:1.0.8"
+	implementation "${baseGroupId}:adempiere-kafka-connector:1.1.0"
 	// Third part access using JWT
 	implementation "${baseGroupId}:adempiere-jwt-token:1.0.2"
 }
