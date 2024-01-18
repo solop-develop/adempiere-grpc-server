@@ -13,7 +13,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 
-package org.spin.form.issue_management;
+package org.spin.grpc.service.form.issue_management;
 
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
@@ -44,6 +44,7 @@ import org.spin.backend.grpc.issue_management.DueType;
 import org.spin.backend.grpc.issue_management.Group;
 import org.spin.backend.grpc.issue_management.Issue;
 import org.spin.backend.grpc.issue_management.IssueComment;
+import org.spin.backend.grpc.issue_management.IssueCommentLog;
 import org.spin.backend.grpc.issue_management.IssueCommentType;
 import org.spin.backend.grpc.issue_management.Priority;
 import org.spin.backend.grpc.issue_management.Project;
@@ -55,6 +56,8 @@ import org.spin.backend.grpc.issue_management.User;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
+
+import com.google.protobuf.Value;
 
 /**
  * This class was created for add all convert methods for Issue Management form
@@ -657,99 +660,284 @@ public class IssueManagementConvertUtil {
 			)
 		;
 
-		String columnModified = null;
 		if (!Util.isEmpty(requestAction.getNullColumns(), true)) {
-			columnModified = requestAction.getNullColumns();
-		} else {
-			if (requestAction.getR_RequestType_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_R_RequestType_ID;
-			} else if (requestAction.getR_Group_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_R_Group_ID;
-			} else if (requestAction.getR_Category_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_R_Category_ID;
-			} else if (requestAction.getR_Status_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_R_Status_ID;
-			} else if (requestAction.getR_Resolution_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_R_Resolution_ID;
-			} else if (!Util.isEmpty(requestAction.getPriority(), true)) {
-				columnModified = I_R_RequestAction.COLUMNNAME_Priority;
-			} else if (!Util.isEmpty(requestAction.getPriorityUser(), true)) {
-				columnModified = I_R_RequestAction.COLUMNNAME_PriorityUser;
-			} else if (!Util.isEmpty(requestAction.getSummary(), true)) {
-				columnModified = I_R_RequestAction.COLUMNNAME_Summary;
-			} else if (!Util.isEmpty(requestAction.getConfidentialType(), true)) {
-				columnModified = I_R_RequestAction.COLUMNNAME_Summary;
-			} else if (!Util.isEmpty(requestAction.getIsInvoiced(), true)) {
-				columnModified = I_R_RequestAction.COLUMNNAME_IsInvoiced;
-			} else if (!Util.isEmpty(requestAction.getIsEscalated(), true)) {
-				columnModified = I_R_RequestAction.COLUMNNAME_IsEscalated;
-			} else if (!Util.isEmpty(requestAction.getIsSelfService(), true)) {
-				columnModified = I_R_RequestAction.COLUMNNAME_IsSelfService;
-			} else if (requestAction.getSalesRep_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_SalesRep_ID;
-			} else if (requestAction.getAD_Role_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_AD_Role_ID;
-			} else if (requestAction.getDateNextAction() != null) {
-				columnModified = I_R_RequestAction.COLUMNNAME_DateNextAction;
-			} else if (requestAction.getC_Activity_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_C_Activity_ID;
-			} else if (requestAction.getC_BPartner_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_C_BPartner_ID;
-			} else if (requestAction.getAD_User_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_AD_User_ID;
-			} else if (requestAction.getC_Project_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_C_Project_ID;
-			} else if (requestAction.getA_Asset_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_A_Asset_ID;
-			} else if (requestAction.getC_Order_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_C_Order_ID;
-			} else if (requestAction.getC_Invoice_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_C_Invoice_ID;
-			} else if (requestAction.getM_Product_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_M_Product_ID;
-			} else if (requestAction.getC_Payment_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_C_Payment_ID;
-			} else if (requestAction.getM_InOut_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_M_InOut_ID;
-			} else if (requestAction.getM_RMA_ID() > 0) {
-				columnModified = I_R_RequestAction.COLUMNNAME_M_RMA_ID;
+			for (String columnName : requestAction.getNullColumns().split(";")) {
+				IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+					columnName,
+					null
+				);
+				builder.addChangeLogs(columnBuilder);
 			}
 		}
 
-		if (!Util.isEmpty(columnModified, true)) {
-			MColumn column = new Query(
-				Env.getCtx(),
-				I_AD_Column.Table_Name,
-				"AD_Table_ID = ? AND ColumnName = ?",
-				null
+		if (requestAction.getR_RequestType_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_R_RequestType_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getR_Group_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_R_Group_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getR_Category_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_R_Category_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getR_Status_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_R_Status_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getR_Resolution_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_R_Resolution_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (!Util.isEmpty(requestAction.getTaskStatus(), true)) {
+			String columnName = I_R_RequestAction.COLUMNNAME_TaskStatus;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (!Util.isEmpty(requestAction.getPriority(), true)) {
+			String columnName = I_R_RequestAction.COLUMNNAME_Priority;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (!Util.isEmpty(requestAction.getPriorityUser(), true)) {
+			String columnName = I_R_RequestAction.COLUMNNAME_PriorityUser;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (!Util.isEmpty(requestAction.getSummary(), true)) {
+			String columnName = I_R_RequestAction.COLUMNNAME_Summary;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (!Util.isEmpty(requestAction.getConfidentialType(), true)) {
+			String columnName = I_R_RequestAction.COLUMNNAME_ConfidentialType;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (!Util.isEmpty(requestAction.getIsInvoiced(), true)) {
+			String columnName = I_R_RequestAction.COLUMNNAME_IsInvoiced;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (!Util.isEmpty(requestAction.getIsEscalated(), true)) {
+			String columnName = I_R_RequestAction.COLUMNNAME_IsEscalated;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (!Util.isEmpty(requestAction.getIsSelfService(), true)) {
+			String columnName = I_R_RequestAction.COLUMNNAME_IsSelfService;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getSalesRep_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_SalesRep_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getAD_Role_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_AD_Role_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getC_Activity_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_C_Activity_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getC_BPartner_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_C_BPartner_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getAD_User_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_AD_User_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getC_Project_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_C_Project_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getA_Asset_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_A_Asset_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getC_Order_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_C_Order_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getC_Invoice_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_C_Invoice_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getM_Product_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_M_Product_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getC_Payment_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_C_Payment_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getM_InOut_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_M_InOut_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getM_RMA_ID() > 0) {
+			String columnName = I_R_RequestAction.COLUMNNAME_M_RMA_ID;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+		if (requestAction.getDateNextAction() != null) {
+			String columnName = I_R_RequestAction.COLUMNNAME_DateNextAction;
+			IssueCommentLog.Builder columnBuilder = convertIssueCommentLog(
+				columnName,
+				requestAction.get_Value(columnName)
+			);
+			builder.addChangeLogs(columnBuilder);
+		}
+
+		return builder;
+	}
+
+
+	public static IssueCommentLog.Builder convertIssueCommentLog(String columnName, Object value) {
+		IssueCommentLog.Builder builder = IssueCommentLog.newBuilder();
+		if (Util.isEmpty(columnName, true)) {
+			return builder;
+		}
+
+		MColumn column = new Query(
+			Env.getCtx(),
+			I_AD_Column.Table_Name,
+			"AD_Table_ID = ? AND ColumnName = ?",
+			null
+		)
+			.setParameters(I_R_RequestAction.Table_ID, columnName)
+			.first();
+		if (column == null) {
+			return builder;
+		}
+
+		String label = column.getName();
+		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
+			label = column.get_Translation(I_AD_Column.COLUMNNAME_Name);
+		}
+
+		Value.Builder valueBuilder = ValueManager.getValueFromReference(
+			value,
+			column.getAD_Reference_ID()
+		);
+		builder.setNewValue(
+			valueBuilder
+		);
+		String displayedValue = ValueManager.getDisplayedValueFromReference(
+			value,
+			column.getColumnName(),
+			column.getAD_Reference_ID(),
+			column.getAD_Reference_Value_ID()
+		);
+		builder.setDisplayedValue(
+			ValueManager.validateNull(displayedValue)
+		);
+
+		builder.setColumnName(columnName)
+			.setLabel(
+				ValueManager.validateNull(
+					label
+				)
 			)
-				.setParameters(I_R_RequestAction.Table_ID, columnModified)
-				.first();
-
-			if (column != null) {
-				String label = column.getName();
-				if (!Env.isBaseLanguage(Env.getCtx(), "")) {
-					label = column.get_Translation(I_AD_Column.COLUMNNAME_Name);
-				}
-				builder.setLabel(
-					ValueManager.validateNull(label)
-				);
-
-				Object value = requestAction.get_Value(columnModified);
-				builder.setNewValue(
-					ValueManager.getValueFromReference(value, column.getAD_Reference_ID())
-				);
-				String displayedValue = ValueManager.getDisplayedValueFromReference(
-					value,
-					columnModified,
-					column.getAD_Reference_ID(),
-					column.getAD_Reference_Value_ID()
-				);
-				builder.setDisplayedValue(
-					ValueManager.validateNull(displayedValue)
-				);
-			}
-		}
+		;
 
 		return builder;
 	}

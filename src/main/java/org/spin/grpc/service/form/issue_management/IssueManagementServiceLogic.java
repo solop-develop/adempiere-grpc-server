@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.form.issue_management;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,44 +23,29 @@ import org.adempiere.core.domains.models.I_C_Project;
 import org.adempiere.core.domains.models.I_R_Category;
 import org.adempiere.core.domains.models.I_R_Group;
 import org.adempiere.core.domains.models.I_R_Request;
-import org.adempiere.core.domains.models.I_R_RequestAction;
 import org.adempiere.core.domains.models.I_R_RequestType;
-import org.adempiere.core.domains.models.I_R_RequestUpdate;
 import org.adempiere.core.domains.models.I_R_Status;
 import org.adempiere.core.domains.models.I_R_StatusCategory;
 import org.adempiere.core.domains.models.X_R_Request;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRefList;
-import org.compiere.model.MRequest;
-import org.compiere.model.MRequestAction;
-import org.compiere.model.MRequestUpdate;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
-import org.compiere.model.PO;
 import org.compiere.model.Query;
-import org.compiere.util.CLogger;
 import org.compiere.util.Env;
-import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.issue_management.BusinessPartner;
 import org.spin.backend.grpc.issue_management.Category;
-import org.spin.backend.grpc.issue_management.CreateIssueCommentRequest;
-import org.spin.backend.grpc.issue_management.CreateIssueRequest;
-import org.spin.backend.grpc.issue_management.DeleteIssueCommentRequest;
-import org.spin.backend.grpc.issue_management.DeleteIssueRequest;
 import org.spin.backend.grpc.issue_management.ExistsIssuesRequest;
 import org.spin.backend.grpc.issue_management.ExistsIssuesResponse;
 import org.spin.backend.grpc.issue_management.Group;
 import org.spin.backend.grpc.issue_management.Issue;
-import org.spin.backend.grpc.issue_management.IssueComment;
 import org.spin.backend.grpc.issue_management.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.issue_management.ListBusinessPartnersResponse;
 import org.spin.backend.grpc.issue_management.ListCategoriesRequest;
 import org.spin.backend.grpc.issue_management.ListCategoriesResponse;
 import org.spin.backend.grpc.issue_management.ListGroupsRequest;
 import org.spin.backend.grpc.issue_management.ListGroupsResponse;
-import org.spin.backend.grpc.issue_management.IssueManagementGrpc.IssueManagementImplBase;
-import org.spin.backend.grpc.issue_management.ListIssueCommentsReponse;
-import org.spin.backend.grpc.issue_management.ListIssueCommentsRequest;
 import org.spin.backend.grpc.issue_management.ListIssuesReponse;
 import org.spin.backend.grpc.issue_management.ListIssuesRequest;
 import org.spin.backend.grpc.issue_management.ListPrioritiesRequest;
@@ -82,52 +67,19 @@ import org.spin.backend.grpc.issue_management.Project;
 import org.spin.backend.grpc.issue_management.RequestType;
 import org.spin.backend.grpc.issue_management.StatusCategory;
 import org.spin.backend.grpc.issue_management.TaskStatus;
-import org.spin.backend.grpc.issue_management.UpdateIssueCommentRequest;
-import org.spin.backend.grpc.issue_management.UpdateIssueRequest;
 import org.spin.backend.grpc.issue_management.User;
-import org.spin.backend.grpc.issue_management.BusinessPartner;
 import org.spin.base.util.RecordUtil;
-import org.spin.form.issue_management.IssueManagementConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
-
-import com.google.protobuf.Empty;
-
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Update Center
  */
-public class IssueManagement extends IssueManagementImplBase {
-	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(IssueManagement.class);
+public class IssueManagementServiceLogic {
 
-
-	@Override
-	public void listRequestTypes(ListRequestTypesRequest request, StreamObserver<ListRequestTypesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListRequestTypesResponse.Builder entityValueList = listRequestTypes(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListRequestTypesResponse.Builder listRequestTypes(ListRequestTypesRequest request) {
+	public static ListRequestTypesResponse.Builder listRequestTypes(ListRequestTypesRequest request) {
 		String whereClause = null;
 		List<Object> filtersList = new ArrayList<>();
 
@@ -181,27 +133,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listSalesRepresentatives(ListSalesRepresentativesRequest request, StreamObserver<ListSalesRepresentativesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListSalesRepresentativesResponse.Builder entityValueList = listSalesRepresentatives(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListSalesRepresentativesResponse.Builder listSalesRepresentatives(ListSalesRepresentativesRequest request) {
+	public static ListSalesRepresentativesResponse.Builder listSalesRepresentatives(ListSalesRepresentativesRequest request) {
 		String whereClause = "EXISTS("
 			+ "SELECT * FROM C_BPartner bp WHERE "
 			+ "AD_User.C_BPartner_ID=bp.C_BPartner_ID "
@@ -258,27 +190,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listPriorities(ListPrioritiesRequest request, StreamObserver<ListPrioritiesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListPrioritiesResponse.Builder entityValueList = listPriorities(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListPrioritiesResponse.Builder listPriorities(ListPrioritiesRequest request) {
+	public static ListPrioritiesResponse.Builder listPriorities(ListPrioritiesRequest request) {
 		String whereClause = "AD_Reference_ID = ?";
 
 		List<Object> filtersList = new ArrayList<>();
@@ -334,27 +246,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listStatusCategories(ListStatusCategoriesRequest request, StreamObserver<ListStatusCategoriesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListStatusCategoriesResponse.Builder entityValueList = listStatusCategories(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListStatusCategoriesResponse.Builder listStatusCategories(ListStatusCategoriesRequest request) {
+	public static ListStatusCategoriesResponse.Builder listStatusCategories(ListStatusCategoriesRequest request) {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
@@ -413,27 +305,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listStatuses(ListStatusesRequest request, StreamObserver<ListStatusesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListStatusesResponse.Builder entityValueList = listStatuses(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListStatusesResponse.Builder listStatuses(ListStatusesRequest request) {
+	public static ListStatusesResponse.Builder listStatuses(ListStatusesRequest request) {
 		int requestTypeId = request.getRequestTypeId();
 		if (requestTypeId <= 0) {
 			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
@@ -501,27 +373,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listCategories(ListCategoriesRequest request, StreamObserver<ListCategoriesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListCategoriesResponse.Builder entityValueList = listCategories(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListCategoriesResponse.Builder listCategories(ListCategoriesRequest request) {
+	public static ListCategoriesResponse.Builder listCategories(ListCategoriesRequest request) {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
@@ -580,27 +432,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listGroups(ListGroupsRequest request, StreamObserver<ListGroupsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListGroupsResponse.Builder entityValueList = listGroups(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListGroupsResponse.Builder listGroups(ListGroupsRequest request) {
+	public static ListGroupsResponse.Builder listGroups(ListGroupsRequest request) {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
@@ -659,27 +491,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listTaskStatuses(ListTaskStatusesRequest request, StreamObserver<ListTaskStatusesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListTaskStatusesResponse.Builder entityValueList = listTaskStatuses(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListTaskStatusesResponse.Builder listTaskStatuses(ListTaskStatusesRequest request) {
+	public static ListTaskStatusesResponse.Builder listTaskStatuses(ListTaskStatusesRequest request) {
 		String whereClause = "AD_Reference_ID = ?";
 
 		List<Object> filtersList = new ArrayList<>();
@@ -735,27 +547,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listBusinessPartners(ListBusinessPartnersRequest request, StreamObserver<ListBusinessPartnersResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListBusinessPartnersResponse.Builder entityValueList = listBusinessPartners(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListBusinessPartnersResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
+	public static ListBusinessPartnersResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
@@ -817,28 +609,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listProjects(ListProjectsRequest request, StreamObserver<ListProjectsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListProjectsResponse.Builder entityValueList = listProjects(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-	private ListProjectsResponse.Builder listProjects(ListProjectsRequest request) {
+	public static ListProjectsResponse.Builder listProjects(ListProjectsRequest request) {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
@@ -899,27 +670,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void existsIssues(ExistsIssuesRequest request, StreamObserver<ExistsIssuesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ExistsIssuesResponse.Builder entityValueList = existsIssues(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-	
-	private ExistsIssuesResponse.Builder existsIssues(ExistsIssuesRequest request) {
+	public static ExistsIssuesResponse.Builder existsIssues(ExistsIssuesRequest request) {
 		// validate and get table
 		final MTable table = RecordUtil.validateAndGetTable(
 			request.getTableName()
@@ -950,28 +701,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listMyIssues(ListIssuesRequest request, StreamObserver<ListIssuesReponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Process Activity Requested is Null");
-			}
-			ListIssuesReponse.Builder entityValueList = listMyIssues(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-	private ListIssuesReponse.Builder listMyIssues(ListIssuesRequest request) {
+	public static ListIssuesReponse.Builder listMyIssues(ListIssuesRequest request) {
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = "";
 
@@ -1069,28 +799,7 @@ public class IssueManagement extends IssueManagementImplBase {
 
 
 
-	@Override
-	public void listIssues(ListIssuesRequest request, StreamObserver<ListIssuesReponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("List Issues Requested is Null");
-			}
-			ListIssuesReponse.Builder builderList = listIssues(request);
-			responseObserver.onNext(builderList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-	private ListIssuesReponse.Builder listIssues(ListIssuesRequest request) {
+	public static ListIssuesReponse.Builder listIssues(ListIssuesRequest request) {
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = "";
 
@@ -1161,512 +870,5 @@ public class IssueManagement extends IssueManagementImplBase {
 	}
 
 
-
-	@Override
-	public void createIssue(CreateIssueRequest request, StreamObserver<Issue> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			Issue.Builder builder = createIssue(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private Issue.Builder createIssue(CreateIssueRequest request) {
-		MRequest requestRecord = new MRequest(Env.getCtx(), 0, null);
-
-		// create issue with record on window
-		if (!Util.isEmpty(request.getTableName(), true) || request.getRecordId() > 0) {
-			// validate and get table
-			final MTable table = RecordUtil.validateAndGetTable(
-				request.getTableName()
-			);
-
-			// validate record
-			if (request.getRecordId() < 0) {
-				throw new AdempiereException("@Record_ID@ / @NotFound@");
-			}
-			PO entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), request.getRecordId(), null);
-			if (entity == null) {
-				throw new AdempiereException("@PO@ @NotFound@");
-			}
-			PO.copyValues(entity, requestRecord, true);
-
-			// validate if entity key column exists on request to set
-			String keyColumn = entity.get_TableName() + "_ID";
-			if (requestRecord.get_ColumnIndex(keyColumn) >= 0) {
-				requestRecord.set_ValueOfColumn(keyColumn, entity.get_ID());
-			}
-			requestRecord.setRecord_ID(entity.get_ID());
-			requestRecord.setAD_Table_ID(table.getAD_Table_ID());
-		}
-
-		if (Util.isEmpty(request.getSubject(), true)) {
-			throw new AdempiereException("@FillMandatory@ @Subject@");
-		}
-
-		if (Util.isEmpty(request.getSummary(), true)) {
-			throw new AdempiereException("@FillMandatory@ @Summary@");
-		}
-
-		int requestTypeId = request.getRequestTypeId();
-		if (requestTypeId <= 0) {
-			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
-		}
-
-		int salesRepresentativeId = request.getSalesRepresentativeId();
-		if (salesRepresentativeId <= 0) {
-			throw new AdempiereException("@SalesRep_ID@ @NotFound@");
-		}
-
-		// fill values
-		requestRecord.setR_RequestType_ID(requestTypeId);
-		requestRecord.setR_Status_ID(request.getStatusId());
-		requestRecord.setSubject(request.getSubject());
-		requestRecord.setSummary(request.getSummary());
-		requestRecord.setSalesRep_ID(salesRepresentativeId);
-		requestRecord.setPriority(
-			ValueManager.validateNull(request.getPriorityValue())
-		);
-		requestRecord.setDateNextAction(
-			TimeManager.getTimestampFromString(request.getDateNextAction())
-		);
-		if (request.getCategoryId() > 0) {
-			requestRecord.setR_Category_ID(
-				request.getCategoryId()
-			);
-		}
-		if (request.getGroupId() > 0) {
-			requestRecord.setR_Group_ID(
-				request.getGroupId()
-			);
-		}
-		if (!Util.isEmpty(request.getTaskStatusValue(), true)) {
-			requestRecord.setTaskStatus(
-				request.getTaskStatusValue()
-			);
-		}
-		if (request.getBusinessPartnerId() > 0) {
-			requestRecord.setC_BPartner_ID(
-				request.getBusinessPartnerId()
-			);
-		}
-		if (request.getProjectId() > 0) {
-			requestRecord.setC_Project_ID(
-				request.getProjectId()
-			);
-		}
-		requestRecord.saveEx();
-
-		Issue.Builder builder = IssueManagementConvertUtil.convertRequest(requestRecord);
-
-		return builder;
-	}
-
-
-
-	@Override
-	public void updateIssue(UpdateIssueRequest request, StreamObserver<Issue> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			Issue.Builder builder = updateIssue(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private Issue.Builder updateIssue(UpdateIssueRequest request) {
-		// validate record
-		int recordId = request.getId();
-		if (recordId <= 0) {
-			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-		}
-		if (Util.isEmpty(request.getSubject(), true)) {
-			throw new AdempiereException("@FillMandatory@ @Subject@");
-		}
-
-		if (Util.isEmpty(request.getSummary(), true)) {
-			throw new AdempiereException("@FillMandatory@ @Summary@");
-		}
-
-		int requestTypeId = request.getRequestTypeId();
-		if (requestTypeId <= 0) {
-			throw new AdempiereException("@R_RequestType_ID@ @NotFound@");
-		}
-
-		int salesRepresentativeId = request.getSalesRepresentativeId();
-		if (salesRepresentativeId <= 0) {
-			throw new AdempiereException("@SalesRep_ID@ @NotFound@");
-		}
-
-		MRequest requestRecord = new MRequest(Env.getCtx(), recordId, null);
-		if (requestRecord == null || requestRecord.getR_Request_ID() <= 0) {
-			throw new AdempiereException("@R_Request_ID@ @NotFound@");
-		}
-		requestRecord.setR_RequestType_ID(requestTypeId);
-		requestRecord.setSubject(request.getSubject());
-		requestRecord.setSummary(request.getSummary());
-		requestRecord.setSalesRep_ID(salesRepresentativeId);
-		requestRecord.setPriority(
-			ValueManager.validateNull(request.getPriorityValue())
-		);
-		requestRecord.setDateNextAction(
-			ValueManager.getDateFromTimestampDate(request.getDateNextAction())
-		);
-		
-		requestRecord.setR_Status_ID(request.getStatusId());
-		requestRecord.setR_Category_ID(
-			request.getCategoryId()
-		);
-		requestRecord.setR_Group_ID(
-			request.getGroupId()
-		);
-		String taskStatus = null;
-		if (!Util.isEmpty(request.getTaskStatusValue(), true)) {
-			taskStatus = request.getTaskStatusValue();
-		}
-		requestRecord.setTaskStatus(
-			taskStatus
-		);
-		requestRecord.setC_BPartner_ID(
-			request.getBusinessPartnerId()
-		);
-		requestRecord.setC_Project_ID(
-			request.getProjectId()
-		);
-
-		requestRecord.saveEx();
-
-		Issue.Builder builder = IssueManagementConvertUtil.convertRequest(requestRecord);
-		return builder;
-	}
-
-
-
-	@Override
-	public void deleteIssue(DeleteIssueRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			Empty.Builder builder = deleteIssue(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private Empty.Builder deleteIssue(DeleteIssueRequest request) {
-		Trx.run(transactionName -> {
-			// validate record
-			int recordId = request.getId();
-			if (recordId < 0) {
-				throw new AdempiereException("@Record_ID@ / @NotFound@");
-			}
-			MRequest requestRecord = new MRequest(Env.getCtx(), recordId, transactionName);
-			if (requestRecord == null || requestRecord.getR_Request_ID() <= 0) {
-				throw new AdempiereException("@R_Request_ID@ @NotFound@");
-			}
-
-			final String whereClause = "R_Request_ID = ?";
-
-			// delete actions
-			new Query(
-				Env.getCtx(),
-				I_R_RequestAction.Table_Name,
-				whereClause,
-				transactionName
-			)
-				.setParameters(requestRecord.getR_Request_ID())
-				.getIDsAsList()
-				// .list(MRequestAction.class);
-				.forEach(requestActionId -> {
-					MRequestAction requestAction = new MRequestAction(Env.getCtx(), requestActionId, null);
-					requestAction.deleteEx(true);
-				});
-
-			// delete updates
-			new Query(
-				Env.getCtx(),
-				I_R_RequestUpdate.Table_Name,
-				whereClause,
-				transactionName
-			)
-				.setParameters(requestRecord.getR_Request_ID())
-				.getIDsAsList()
-				// .list(MRequestUpdate.class);
-				.forEach(requestUpdateId -> {
-					MRequestUpdate requestUpdate = new MRequestUpdate(Env.getCtx(), requestUpdateId, null);
-					requestUpdate.deleteEx(true);
-				});
-
-			// delete header
-			requestRecord.deleteEx(true);
-		});
-
-		return Empty.newBuilder();
-	}
-
-
-
-	@Override
-	public void listIssueComments(ListIssueCommentsRequest request, StreamObserver<ListIssueCommentsReponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			ListIssueCommentsReponse.Builder builder = listIssueComments(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListIssueCommentsReponse.Builder listIssueComments(ListIssueCommentsRequest request) {
-		// validate parent record
-		int recordId = request.getIssueId();
-		if (recordId < 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-		
-		MRequest requestRecord = new MRequest(Env.getCtx(), recordId, null);
-		if (requestRecord == null || requestRecord.getR_Request_ID() <= 0) {
-			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
-		}
-
-		final String whereClause = "R_Request_ID = ? ";
-		Query queryRequestsUpdate = new Query(
-			Env.getCtx(),
-			I_R_RequestUpdate.Table_Name,
-			whereClause,
-			null
-		)
-			.setOnlyActiveRecords(true)
-			.setParameters(recordId)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
-
-		Query queryRequestsLog = new Query(
-			Env.getCtx(),
-			I_R_RequestAction.Table_Name,
-			whereClause,
-			null
-		)
-			.setOnlyActiveRecords(true)
-			.setParameters(recordId)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
-
-		int recordCount = queryRequestsUpdate.count() + queryRequestsLog.count();
-
-		ListIssueCommentsReponse.Builder builderList = ListIssueCommentsReponse.newBuilder();
-		builderList.setRecordCount(recordCount);
-
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-
-		// Set page token
-		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
-		);
-
-		List<IssueComment.Builder> issueCommentsList = new ArrayList<>();
-		queryRequestsUpdate
-			// .setLimit(limit, offset)
-			.getIDsAsList()
-			// .list(X_R_RequestUpdate.class)
-			.forEach(requestUpdateId -> {
-				IssueComment.Builder builder = IssueManagementConvertUtil.convertRequestUpdate(requestUpdateId);
-				issueCommentsList.add(builder);
-				// builderList.addRecords(builder);
-			});
-
-		queryRequestsLog
-			// .setLimit(limit, offset)
-			.getIDsAsList()
-			// .list(MRequestAction.class)
-			.forEach(requestActionId -> {
-				IssueComment.Builder builder = IssueManagementConvertUtil.convertRequestAction(requestActionId);
-				issueCommentsList.add(builder);
-				// builderList.addRecords(builder);
-			});
-
-		issueCommentsList.stream()
-			// TODO: Add support here... Other way?
-			// .sorted(Comparator.comparing(IssueComment.Builder::getCreated))
-			.forEach(issueComment -> {
-				builderList.addRecords(issueComment);
-			});
-
-		return builderList;
-	}
-
-
-
-	@Override
-	public void createIssueComment(CreateIssueCommentRequest request, StreamObserver<IssueComment> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			IssueComment.Builder builder = createIssueComment(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private IssueComment.Builder createIssueComment(CreateIssueCommentRequest request) {
-		// validate parent record
-		int recordId = request.getIssueId();
-		if (recordId < 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-		MRequest requestRecord = new MRequest(Env.getCtx(), recordId, null);
-		requestRecord.setResult(
-			ValueManager.validateNull(request.getResult())
-		);
-		requestRecord.saveEx();
-
-		return IssueComment.newBuilder();
-	}
-
-
-
-	@Override
-	public void updateIssueComment(UpdateIssueCommentRequest request, StreamObserver<IssueComment> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			IssueComment.Builder builder = updateIssueComment(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private IssueComment.Builder updateIssueComment(UpdateIssueCommentRequest request) {
-		// validate parent record
-		int recordId = request.getId();
-		if (recordId <= 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-		// validate entity
-		MRequestUpdate requestUpdate = new MRequestUpdate(Env.getCtx(), recordId, null);
-		if (requestUpdate == null || requestUpdate.getR_Request_ID() <= 0) {
-			throw new AdempiereException("@R_RequestUpdate_ID@ @NotFound@");
-		}
-		int userId = Env.getAD_User_ID(Env.getCtx());
-		if (requestUpdate.getCreatedBy() != userId) {
-			throw new AdempiereException("@ActionNotAllowedHere@");
-		}
-		if (Util.isEmpty(request.getResult(), true)) {
-			throw new AdempiereException("@Result@ @NotFound@");
-		}
-
-		requestUpdate.setResult(
-			ValueManager.validateNull(request.getResult())
-		);
-		requestUpdate.saveEx();
-
-		return IssueManagementConvertUtil.convertRequestUpdate(requestUpdate);
-	}
-
-
-
-	@Override
-	public void deleteIssueComment(DeleteIssueCommentRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Requested is Null");
-			}
-			Empty.Builder builder = deleteIssueComment(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private Empty.Builder deleteIssueComment(DeleteIssueCommentRequest request) {
-		// validate record
-		int recordId = request.getId();
-		if (recordId < 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-		// validate entity
-		MRequestUpdate requestUpdate = new MRequestUpdate(Env.getCtx(), recordId, null);
-		if (requestUpdate == null || requestUpdate.getR_Request_ID() <= 0) {
-			throw new AdempiereException("@R_RequestUpdate_ID@ @NotFound@");
-		}
-		int userId = Env.getAD_User_ID(Env.getCtx());
-		if (requestUpdate.getCreatedBy() != userId) {
-			throw new AdempiereException("@ActionNotAllowedHere@");
-		}
-
-		requestUpdate.deleteEx(true);
-
-		return Empty.newBuilder();
-	}
 
 }
