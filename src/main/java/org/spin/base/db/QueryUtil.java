@@ -93,8 +93,9 @@ public class QueryUtil {
 					// int tableId = Env.getContextAsInt(Env.getCtx(), 0, I_AD_Table.COLUMNNAME_AD_Table_ID);
 					// MTable tableButton = MTable.get(Env.getCtx(), tableId);
 					// String tableKeyColumn = tableButton.getTableName() + "_ID";
-					// displayTypeId = DisplayType.TableDir;
 					// columnName = tableKeyColumn;
+					// // overwrite display type to Table Direct
+					// displayTypeId = DisplayType.TableDir;
 				}
 			}
 
@@ -192,11 +193,12 @@ public class QueryUtil {
 						}
 					}
 				} else if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
-					// displayTypeId = DisplayType.TableDir;
 					// int tableId = Env.getContextAsInt(Env.getCtx(), 0, I_AD_Table.COLUMNNAME_AD_Table_ID);
 					// MTable tableButton = MTable.get(Env.getCtx(), tableId);
 					// String tableKeyColumn = tableButton.getTableName() + "_ID";
 					// columnName = tableKeyColumn;
+					// // overwrite display type to Table Direct
+					// displayTypeId = DisplayType.TableDir;
 				}
 			}
 			if (ReferenceUtil.validateReference(displayTypeId)) {

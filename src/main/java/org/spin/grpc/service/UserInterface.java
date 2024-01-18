@@ -1867,8 +1867,9 @@ public class UserInterface extends UserInterfaceImplBase {
 						int tableId = Env.getContextAsInt(context, windowNo, I_AD_Table.COLUMNNAME_AD_Table_ID);
 						MTable table = MTable.get(context, tableId);
 						String tableKeyColumn = table.getTableName() + "_ID";
-						displayTypeId = DisplayType.TableDir;
 						columnName = tableKeyColumn;
+						// overwrite display type to Table Direct
+						displayTypeId = DisplayType.TableDir;
 					} else {
 						values.putFields(
 							columnName,
