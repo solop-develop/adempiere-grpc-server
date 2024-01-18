@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.X_AD_FieldGroup;
@@ -445,7 +446,8 @@ public class WindowConvertUtil {
 				builder.setDisplayType(DisplayType.String);
 			}
 		} else if (DisplayType.Button == displayTypeId) {
-			if (column.getColumnName().equals("Record_ID")) {
+			if (column.getColumnName().equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+				// To load default value
 				builder.addContextColumnNames(I_AD_Table.COLUMNNAME_AD_Table_ID);
 			}
 		}

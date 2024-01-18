@@ -53,6 +53,7 @@ import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_R_MailText;
+import org.adempiere.core.domains.models.X_AD_Reference;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
@@ -1480,10 +1481,10 @@ public class UserInterface extends UserInterfaceImplBase {
 		else if (DisplayType.YesNo == displayTypeId) {
 			return BooleanManager.getBooleanFromString(value);
 		}
-		else if (DisplayType.Button == displayTypeId && column.getAD_Reference_Value_ID() == 0) {
+		else if (DisplayType.Button == displayTypeId && column.getAD_Reference_Value_ID() <= 0) {
 			return "true".equalsIgnoreCase(value) ? "Y" : "N";
 		}
-		else if (DisplayType.Button == displayTypeId && column.getAD_Reference_Value_ID() != 0) {
+		else if (DisplayType.Button == displayTypeId && column.getAD_Reference_Value_ID() > 0) {
 			return value;
 		}
 		else if (DisplayType.isDate(displayTypeId)) {
@@ -1774,7 +1775,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param validationRuleId
 	 * @return
 	 */
-	private DefaultValue.Builder getDefaultKeyAndValue(String contextAttributes, String defaultValue, int referenceId, int referenceValueId, String columnName, int validationRuleId) {
+	private DefaultValue.Builder getDefaultKeyAndValue(String contextAttributes, String defaultValue, int displayTypeId, int referenceValueId, String columnName, int validationRuleId) {
 		Struct.Builder values = Struct.newBuilder();
 		DefaultValue.Builder builder = DefaultValue.newBuilder()
 			.setValues(values)
@@ -1808,20 +1809,33 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 
 		//	Convert value from type
-		if (DisplayType.isID(referenceId) || referenceId == DisplayType.Integer) {
+		if (DisplayType.isID(displayTypeId) || DisplayType.Integer == displayTypeId) {
 			Integer integerValue = NumberManager.getIntegerFromObject(defaultValueAsObject);
 			if (integerValue == null && defaultValueAsObject != null
-				&& (DisplayType.Search == referenceId || DisplayType.Table == referenceId)) {
+				&& (DisplayType.Search == displayTypeId || DisplayType.Table == displayTypeId)) {
 					// EntityType, AD_Language columns
 				;
 			} else {
 				defaultValueAsObject = integerValue;
 			}
-		} else if (DisplayType.isNumeric(referenceId)) {
+		} else if (DisplayType.isNumeric(displayTypeId)) {
 			defaultValueAsObject = NumberManager.getIntegerFromObject(defaultValueAsObject);
 		}
-		if (ReferenceUtil.validateReference(referenceId) || DisplayType.Button == referenceId) {
-			if(referenceId == DisplayType.List || columnName.equals("DocAction")) {
+		if (ReferenceUtil.validateReference(displayTypeId) || DisplayType.Button == displayTypeId) {
+			if (displayTypeId == DisplayType.Button && referenceValueId > 0) {
+				//	Reference Value
+				X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceValueId, null);
+				if (reference != null && reference.getAD_Reference_ID() > 0) {
+					// overwrite display type to Table or List
+					if (X_AD_Reference.VALIDATIONTYPE_TableValidation.equals(reference.getValidationType())) {
+						displayTypeId = DisplayType.Table;
+					} else {
+						displayTypeId = DisplayType.List;
+					}
+				}
+			}
+
+			if (DisplayType.List == displayTypeId) {
 				// (') (text) (') or (") (text) (")
 				String singleQuotesPattern = "('|\")(\\w+)('|\")";
 				// columnName = value
@@ -1847,13 +1861,13 @@ public class UserInterface extends UserInterfaceImplBase {
 				);
 				builder.setId(referenceList.getAD_Ref_List_ID());
 			} else {
-				if (DisplayType.Button == referenceId) {
-					if (columnName.equals("Record_ID")) {
+				if (DisplayType.Button == displayTypeId) {
+					if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
 						defaultValueAsObject = Integer.valueOf(defaultValueAsObject.toString());
 						int tableId = Env.getContextAsInt(context, windowNo, I_AD_Table.COLUMNNAME_AD_Table_ID);
 						MTable table = MTable.get(context, tableId);
 						String tableKeyColumn = table.getTableName() + "_ID";
-						referenceId = DisplayType.TableDir;
+						displayTypeId = DisplayType.TableDir;
 						columnName = tableKeyColumn;
 					} else {
 						values.putFields(
@@ -1865,7 +1879,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					}
 				}
 
-				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(referenceId, referenceValueId, columnName, validationRuleId);
+				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(displayTypeId, referenceValueId, columnName, validationRuleId);
 				if(lookupInfo == null || Util.isEmpty(lookupInfo.QueryDirect, true)) {
 					return builder;
 				}
@@ -1892,10 +1906,12 @@ public class UserInterface extends UserInterfaceImplBase {
 						ResultSetMetaData metaData = rs.getMetaData();
 						int keyValueType = metaData.getColumnType(1);
 						Object keyValue = null;
-						if(keyValueType == Types.VARCHAR
+						if(keyValueType == Types.CHAR
+								|| keyValueType == Types.NCHAR
+								|| keyValueType == Types.VARCHAR
+								|| keyValueType == Types.LONGVARCHAR
 								|| keyValueType == Types.NVARCHAR
-								|| keyValueType == Types.CHAR
-								|| keyValueType == Types.NCHAR) {
+								|| keyValueType == Types.LONGNVARCHAR) {
 							keyValue = rs.getString(2);
 						} else {
 							keyValue = rs.getInt(1);
