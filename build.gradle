@@ -89,7 +89,7 @@ dependencies {
 
 	// ADempiere Projects with additional features
 	// Dashboard Improvements
-	implementation "${baseGroupId}:adempiere-dashboard-improvements:1.0.7"
+	implementation "${baseGroupId}:adempiere-dashboard-improvements:1.0.8"
 	// Point Of Sales Improvements
 	implementation "${baseGroupId}:adempiere-pos-improvements:1.0.1"
 	// Business Processors (To Task's and Schedulers)

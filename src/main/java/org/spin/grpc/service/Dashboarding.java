@@ -141,9 +141,10 @@ public class Dashboarding extends DashboardingImplBase {
 		}
 		//	Load
 		Map<String, List<ChartData>> chartSeries = new HashMap<String, List<ChartData>>();
-		if(goal.get_ValueAsInt("AD_Chart_ID") > 0) {
-			ChartValue chartData = ChartBuilder.getChartData(goal.get_ValueAsInt("AD_Chart_ID"), null);
-			if(chartData.getSeries().size() > 0) {
+		int chartId = goal.get_ValueAsInt(I_AD_Chart.COLUMNNAME_AD_Chart_ID);
+		if(chartId > 0) {
+			ChartValue chartData = ChartBuilder.getChartData(chartId, null);
+			if(chartData != null && chartData.getSeries() != null && chartData.getSeries().size() > 0) {
 				chartData.getSeries().forEach(serie -> {
 					List<ChartData> serieStub = new ArrayList<ChartData>();
 					serie.getDataSet().forEach(dataSet -> {
@@ -1021,7 +1022,7 @@ public class Dashboarding extends DashboardingImplBase {
 		Map<String, List<ChartData>> chartSeries = new HashMap<String, List<ChartData>>();
 
 		ChartValue chartData = ChartBuilder.getChartData(chart.getAD_Chart_ID(), filtersList);
-		if (chartData.getSeries().size() > 0) {
+		if(chartData != null && chartData.getSeries() != null && chartData.getSeries().size() > 0) {
 			chartData.getSeries().forEach(serie -> {
 				List<ChartData> serieStub = new ArrayList<ChartData>();
 				serie.getDataSet().forEach(dataSet -> {
