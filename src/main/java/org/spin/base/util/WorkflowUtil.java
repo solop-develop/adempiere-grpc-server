@@ -10,7 +10,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,           *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
  * For the text or an alternative of this public license, you may reach us           *
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
+ * Copyright (C) 2012-2024 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
  * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
@@ -22,10 +22,12 @@ import org.adempiere.core.domains.models.I_AD_WF_NextCondition;
 import org.adempiere.core.domains.models.I_AD_WF_Node;
 import org.adempiere.core.domains.models.I_AD_WF_NodeNext;
 import org.adempiere.core.domains.models.I_AD_Window;
+import org.adempiere.core.domains.models.I_C_Order;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.MWindow;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -472,10 +474,19 @@ public class WorkflowUtil {
 			builder.setUserName(ValueManager.validateNull(user.getName()));
 		}
 		builder.setId(workflowActivity.getAD_WF_Activity_ID());
-		
+
 		// record values
 		builder.setRecordId(workflowActivity.getRecord_ID());
 		builder.setTableName(ValueManager.validateNull(table.getTableName()));
+		PO entity = table.getPO(workflowActivity.getRecord_ID(), null);
+		if (entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
+			// to zoom 
+			builder.setIsSalesTransaction(
+				entity.get_ValueAsBoolean(
+					I_C_Order.COLUMNNAME_IsSOTrx
+				)
+			);
+		}
 
 		if (table.getAD_Window_ID() > 0) {
 			ZoomWindow.Builder builderZoom = convertZoomWindow(table.getAD_Window_ID());

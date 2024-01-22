@@ -291,6 +291,7 @@ message WorkflowActivity {
 	WorkflowDefinition workflow = 14;
 	WorkflowNode node = 15;
 	repeated ZoomWindow zoom_windows = 16;
+	bool is_sales_transaction = 17;
 }
 
 enum WorkflowState {
