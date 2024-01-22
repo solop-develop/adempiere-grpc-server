@@ -479,7 +479,7 @@ public class WorkflowUtil {
 		builder.setRecordId(workflowActivity.getRecord_ID());
 		builder.setTableName(ValueManager.validateNull(table.getTableName()));
 		PO entity = table.getPO(workflowActivity.getRecord_ID(), null);
-		if (entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
+		if (entity != null && entity.get_ColumnIndex(I_C_Order.COLUMNNAME_IsSOTrx) >= 0) {
 			// to zoom 
 			builder.setIsSalesTransaction(
 				entity.get_ValueAsBoolean(
