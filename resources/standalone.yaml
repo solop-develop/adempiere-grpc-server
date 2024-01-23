@@ -34,6 +34,7 @@ server:
        - report_management
        - security
        - store
+       - task_management
        - time_control
        - time_record
        - trial_balance_drillable

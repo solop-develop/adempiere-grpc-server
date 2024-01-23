@@ -1,5 +1,5 @@
 /************************************************************************************
- * Copyright (C) 2012-2023 E.R.P. Consultores y Asociados, C.A.                     *
+ * Copyright (C) 2012-2024 E.R.P. Consultores y Asociados, C.A.                     *
  * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
@@ -51,6 +51,7 @@ public enum Services {
 	REPORT_MANAGEMENT("report_management"),
 	SECURITY("security"),
 	STORE("store"),
+	TASK_MANAGEMENT("task_management"),
 	TIME_CONTROL("time_control"),
 	TIME_RECORD("time_record"),
 	TRIAL_BALANCE_DRILLABLE("trial_balance_drillable"),

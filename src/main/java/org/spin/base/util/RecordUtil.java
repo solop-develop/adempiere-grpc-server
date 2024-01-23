@@ -22,6 +22,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -535,6 +537,27 @@ public class RecordUtil {
 		return TimeUtil.getDay(System.currentTimeMillis());
 	}
 
+
+	/**
+	 * 	Return DateTime + last time
+	 * 	@param dateTime Date and Time
+	 * 	@param offset minute offset
+	 * 	@return dateTime + offset in minutes
+	 */
+	static public Timestamp getDayLastTime(Timestamp dateTime)
+	{
+		if (dateTime == null) {
+			dateTime = new Timestamp(System.currentTimeMillis());
+		}
+		//
+		GregorianCalendar cal = new GregorianCalendar();
+		cal.setTime(dateTime);
+		cal.set(Calendar.HOUR_OF_DAY, 23);
+		cal.set(Calendar.MINUTE, 59);
+		cal.set(Calendar.SECOND, 59);
+		cal.set(Calendar.MILLISECOND, 999);
+		return new Timestamp (cal.getTimeInMillis());
+	}	//	addMinutes
 
 
 	/**

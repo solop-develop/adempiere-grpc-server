@@ -63,6 +63,7 @@ import org.spin.grpc.service.form.bank_statement_match.BankStatementMatch;
 import org.spin.grpc.service.form.issue_management.IssueManagement;
 import org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoice;
 import org.spin.grpc.service.form.payroll_action_notice.PayrollActionNotice;
+import org.spin.grpc.service.form.task_management.TaskManagement;
 import org.spin.grpc.service.form.trial_balance_drillable.TrialBalanceDrillable;
 import org.spin.service.grpc.authentication.AuthorizationServerInterceptor;
 import org.spin.service.grpc.context.ServiceContextProvider;
@@ -303,6 +304,11 @@ public class AllInOneServices {
 		if (SetupLoader.getInstance().getServer().isValidService(Services.SECURITY.getServiceName())) {
 			serverBuilder.addService(new Security());
 			logger.info("Service " + Services.SECURITY.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		}
+		//	Task Management
+		if(SetupLoader.getInstance().getServer().isValidService(Services.TASK_MANAGEMENT.getServiceName())) {
+			serverBuilder.addService(new TaskManagement());
+			logger.info("Service " + Services.TASK_MANAGEMENT.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Time Control
 		if(SetupLoader.getInstance().getServer().isValidService(Services.TIME_CONTROL.getServiceName())) {

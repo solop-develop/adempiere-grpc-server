@@ -1,0 +1,106 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.form.task_management";
+option java_outer_classname = "ADempiereTaskManagement";
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+import "core_functionality.proto";
+
+// Base URL
+// /task-management/
+
+package task_management;
+
+// The Task Management service definition
+service TaskManagement {
+	rpc ListTasks(ListTasksRequest) returns (ListTasksResponse) {
+		option (google.api.http) = { get: "/task-management/tasks" };
+	}
+}
+
+message Project {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string description = 4;
+	google.protobuf.Timestamp date_start_schedule = 5;
+	google.protobuf.Timestamp date_finish_schedule = 6;
+}
+
+message Request {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	string subject = 4;
+	string summary = 5;
+	google.protobuf.Timestamp date_start_plan = 6;
+	google.protobuf.Timestamp date_complete_plan = 7;
+}
+
+message ResourceAssignment {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string quantity = 5;
+	google.protobuf.Timestamp assign_date_form = 6;
+	google.protobuf.Timestamp assign_date_to = 7;
+	bool is_confirmed = 8;
+	int32 resource_id = 9;
+}
+
+enum TaskType {
+	UNKNOW = 0;
+	PROJECT = 1;
+	REQUEST = 2;
+	RESOURCE_ASSIGNMENT = 3;
+}
+
+message Task {
+	TaskType task_type = 1;
+	string name = 2;
+	string description = 3;
+	google.protobuf.Timestamp start_date = 4;
+	google.protobuf.Timestamp end_date = 5;
+	oneof task {
+		Project project = 6;
+		Request request = 7;
+		ResourceAssignment resource_assignment = 8;
+	}
+}
+
+message ListTasksRequest {
+	int32 page_size = 1;
+	string page_token = 2;
+	string search_value = 3;
+	// filters
+	google.protobuf.Timestamp date = 4;
+	bool is_with_projects = 5;
+	bool is_with_requests = 6;
+	bool is_with_resource_assignments = 7;
+}
+
+message ListTasksResponse {
+	int64 record_count = 1;
+	repeated Task tasks = 2;
+	string next_page_token = 3;
+}
