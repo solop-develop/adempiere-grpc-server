@@ -149,13 +149,17 @@ public class Dashboarding extends DashboardingImplBase {
 					List<ChartData> serieStub = new ArrayList<ChartData>();
 					serie.getDataSet().forEach(dataSet -> {
 						ChartData.Builder chartDataBuilder = ChartData.newBuilder()
-								.setName(dataSet.getName())
-								.setValue(
-									NumberManager.getBigDecimalToString(
-										dataSet.getAmount()
-									)
+							.setName(
+								ValueManager.validateNull(
+									dataSet.getName()
 								)
-							;
+							)
+							.setValue(
+								NumberManager.getBigDecimalToString(
+									dataSet.getAmount()
+								)
+							)
+						;
 						serieStub.add(chartDataBuilder.build());
 					});
 					chartSeries.put(serie.getName(), serieStub);
@@ -224,10 +228,18 @@ public class Dashboarding extends DashboardingImplBase {
 		);
 
 		//	Add all
-		chartSeries.keySet().stream().sorted().forEach(serie -> {
+		chartSeries.entrySet().stream().forEach(serie -> {
 			ChartSerie.Builder chartSerieBuilder = ChartSerie.newBuilder()
-				.setName(serie)
-				.addAllDataSet(chartSeries.get(serie))
+				.setName(
+					ValueManager.validateNull(
+						serie.getKey()
+					)
+				)
+				.addAllDataSet(
+					chartSeries.get(
+						serie.getKey()
+					)
+				)
 			;
 			builder.addSeries(chartSerieBuilder);
 		});
