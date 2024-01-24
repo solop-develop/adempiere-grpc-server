@@ -757,18 +757,18 @@ public class UserInterface extends UserInterfaceImplBase {
 		StringBuilder sql = new StringBuilder(QueryUtil.getTabQueryWithReferences(tab));
 		String sqlWithRoleAccess = MRole.getDefault()
 			.addAccessSQL(
-					sql.toString(),
-					tableName,
-					MRole.SQL_FULLYQUALIFIED,
-					MRole.SQL_RO
-				);
+				sql.toString(),
+				tableName,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
 		if (!Util.isEmpty(whereClause.toString(), true)) {
 			// includes first AND
 			sqlWithRoleAccess += " AND " + whereClause;
 		}
 		//
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), false, params);
-		
+
 		String orderByClause = "";
 		if (!Util.isEmpty(request.getSortBy(), true)) {
 			orderByClause = " ORDER BY " + SortingManager.newInstance(request.getSortBy()).getSotingAsSQL();
