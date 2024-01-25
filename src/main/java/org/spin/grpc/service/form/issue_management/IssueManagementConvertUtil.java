@@ -146,7 +146,7 @@ public class IssueManagementConvertUtil {
 
 
 	public static User.Builder convertUser(int userId) {
-		if (userId <= 0) {
+		if (userId < 0) {
 			return User.newBuilder();
 		}
 		MUser user = MUser.get(Env.getCtx(), userId);
@@ -154,7 +154,7 @@ public class IssueManagementConvertUtil {
 	}
 	public static User.Builder convertUser(MUser user) {
 		User.Builder builder = User.newBuilder();
-		if (user == null || user.getAD_User_ID() <= 0) {
+		if (user == null || user.getAD_User_ID() < 0) {
 			return builder;
 		}
 		builder.setId(user.getAD_User_ID())
@@ -612,7 +612,9 @@ public class IssueManagementConvertUtil {
 		return convertRequestUpdate(requestUpdate);
 	}
 	public static IssueComment.Builder convertRequestUpdate(X_R_RequestUpdate requestUpdate) {
-		IssueComment.Builder builder = IssueComment.newBuilder();
+		IssueComment.Builder builder = IssueComment.newBuilder()
+			.setIssueCommentType(IssueCommentType.COMMENT)
+		;
 		if (requestUpdate == null || requestUpdate.getR_RequestUpdate_ID() <= 0) {
 			return builder;
 		}
@@ -623,11 +625,14 @@ public class IssueManagementConvertUtil {
 				)
 			)
 			.setResult(
-				ValueManager.validateNull(requestUpdate.getResult())
+				ValueManager.validateNull(
+					requestUpdate.getResult()
+				)
 			)
-			.setIssueCommentType(IssueCommentType.COMMENT)
 			.setUser(
-				IssueManagementConvertUtil.convertUser(requestUpdate.getCreatedBy())
+				IssueManagementConvertUtil.convertUser(
+					requestUpdate.getCreatedBy()
+				)
 			)
 		;
 
@@ -644,7 +649,9 @@ public class IssueManagementConvertUtil {
 		return convertRequestAction(requestAction);
 	}
 	public static IssueComment.Builder convertRequestAction(MRequestAction requestAction) {
-		IssueComment.Builder builder = IssueComment.newBuilder();
+		IssueComment.Builder builder = IssueComment.newBuilder()
+			.setIssueCommentType(IssueCommentType.LOG)
+		;
 		if (requestAction == null || requestAction.getR_RequestAction_ID() <= 0) {
 			return builder;
 		}
@@ -654,9 +661,10 @@ public class IssueManagementConvertUtil {
 					requestAction.getCreated()
 				)
 			)
-			.setIssueCommentType(IssueCommentType.LOG)
 			.setUser(
-				IssueManagementConvertUtil.convertUser(requestAction.getCreatedBy())
+				IssueManagementConvertUtil.convertUser(
+					requestAction.getCreatedBy()
+				)
 			)
 		;
 
