@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Java JDK 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-package: 'jdk'
@@ -47,37 +47,37 @@ jobs:
           GITHUB_DEPLOY_REPOSITORY: ${{ secrets.DEPLOY_REPOSITORY }}
 
       - name: Upload descriptor file artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: adempiere-grpc-server.pb
           path: build/descriptors/adempiere-grpc-server.pb
 
       - name: Upload envoy file artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: envoy.yaml
           path: resources/envoy.yaml
 
       - name: Upload dist app zip artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: adempiere-grpc-server.zip
           path: build/release/adempiere-grpc-server.zip
 
       - name: Upload dist app zip.MD5 artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: adempiere-grpc-server.zip.MD5
           path: build/release/adempiere-grpc-server.zip.MD5
 
       - name: Upload dist app tar artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: adempiere-grpc-server.tar
           path: build/release/adempiere-grpc-server.tar
 
       - name: Upload dist app tar.MD5 artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: adempiere-grpc-server.tar.MD5
           path: build/release/adempiere-grpc-server.tar.MD5
@@ -115,10 +115,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Java JDK 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-package: 'jdk'
@@ -146,7 +146,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Upload Descriptor
         uses: skx/github-action-publish-binaries@master
@@ -224,9 +224,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download build dist app
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: adempiere-grpc-server.zip
       - name: Unzip Asset
@@ -260,9 +260,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download build dist app
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: adempiere-grpc-server.zip
       - name: Unzip Asset
@@ -301,10 +301,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download build dist app
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: adempiere-grpc-server.pb
           path: docker/
