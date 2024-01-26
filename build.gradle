@@ -47,7 +47,7 @@ dependencies {
 	implementation 'com.sun.xml.bind:jaxb-core:3.0.0-M4'
 	implementation 'javax.activation:activation:1.1.1'
 
-	implementation "${baseGroupId}:adempiere-grpc-utils:1.2.9"
+	implementation "${baseGroupId}:adempiere-grpc-utils:1.3.0"
 
 	//	ADempiere Core
 	implementation "${baseGroupId}:base:${baseVersion}"

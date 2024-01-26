@@ -2643,77 +2643,85 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param calloutBuilder
 	 * @return
 	 */
-	private org.spin.backend.grpc.user_interface.Callout.Builder setAdditionalContext(String calloutClass, int windowNo,
+	private org.spin.backend.grpc.user_interface.Callout.Builder setAdditionalContext(String callouts, int windowNo,
 		org.spin.backend.grpc.user_interface.Callout.Builder calloutBuilder) {
+		if (Util.isEmpty(callouts, true)) {
+			return calloutBuilder;
+		}
+
 		Class<CalloutOrder> clazz = org.compiere.model.CalloutOrder.class;
 		String className = clazz.getName();
 
-		if (calloutClass.startsWith(className)) {
-			Struct.Builder contextValues = calloutBuilder.getValuesBuilder();
-			if (calloutClass.equals("org.compiere.model.CalloutOrder.docType")) {
-				// - OrderType
-				String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
-				contextValues.putFields(
-					"OrderType",
-					ValueManager.getValueFromString(docSubTypeSO).build()
-				);
+		// separate `org.package.CalloutX.firstMethod; org.any.CalloutY.secondMethod`
+		List<String> calloutsList = Arrays.asList(callouts.split("\\s*(,|;)\\s*"));
+		calloutsList.forEach(calloutClass -> {
+			if (calloutClass.startsWith(className)) {
+				Struct.Builder contextValues = calloutBuilder.getValuesBuilder();
+				if (calloutClass.equals("org.compiere.model.CalloutOrder.docType")) {
+					// - OrderType
+					String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
+					contextValues.putFields(
+						"OrderType",
+						ValueManager.getValueFromString(docSubTypeSO).build()
+					);
 
-				// - HasCharges
-				String hasCharges = Env.getContext(Env.getCtx(), windowNo, "HasCharges");
-				contextValues.putFields(
-					"HasCharges",
-					ValueManager.getValueFromStringBoolean(hasCharges).build()
-				);
+					// - HasCharges
+					String hasCharges = Env.getContext(Env.getCtx(), windowNo, "HasCharges");
+					contextValues.putFields(
+						"HasCharges",
+						ValueManager.getValueFromStringBoolean(hasCharges).build()
+					);
+				}
+				else if (calloutClass.equals("org.compiere.model.CalloutOrder.priceList")) {
+					// - M_PriceList_Version_ID
+					int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
+					contextValues.putFields(
+						"M_PriceList_Version_ID",
+						ValueManager.getValueFromInteger(priceListVersionId).build()
+					);
+				}
+				else if (calloutClass.equals("org.compiere.model.CalloutOrder.product")) {
+					// - M_PriceList_Version_ID
+					int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
+					contextValues.putFields(
+						"M_PriceList_Version_ID",
+						ValueManager.getValueFromInteger(priceListVersionId).build()
+					);
+					
+					// - DiscountSchema
+					String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
+					contextValues.putFields(
+						"DiscountSchema",
+						ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+					);
+				}
+				else if (calloutClass.equals("org.compiere.model.CalloutOrder.charge")) {
+					// - DiscountSchema
+					String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
+					contextValues.putFields(
+						"DiscountSchema",
+						ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+					);
+				}
+				else if (calloutClass.equals("org.compiere.model.CalloutOrder.amt")) {
+					// - DiscountSchema
+					String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
+					contextValues.putFields(
+						"DiscountSchema",
+						ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+					);
+				}
+				else if (calloutClass.equals("org.compiere.model.CalloutOrder.qty")) {
+					// - UOMConversion
+					String isConversion = Env.getContext(Env.getCtx(), "UOMConversion");
+					contextValues.putFields(
+						"UOMConversion",
+						ValueManager.getValueFromStringBoolean(isConversion).build()
+					);
+				}
+				calloutBuilder.setValues(contextValues);
 			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.priceList")) {
-				// - M_PriceList_Version_ID
-				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				contextValues.putFields(
-					"M_PriceList_Version_ID",
-					ValueManager.getValueFromInteger(priceListVersionId).build()
-				);
-			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.product")) {
-				// - M_PriceList_Version_ID
-				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				contextValues.putFields(
-					"M_PriceList_Version_ID",
-					ValueManager.getValueFromInteger(priceListVersionId).build()
-				);
-				
-				// - DiscountSchema
-				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				contextValues.putFields(
-					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
-				);
-			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.charge")) {
-				// - DiscountSchema
-				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				contextValues.putFields(
-					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
-				);
-			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.amt")) {
-				// - DiscountSchema
-				String isDiscountSchema = Env.getContext(Env.getCtx(), "DiscountSchema");
-				contextValues.putFields(
-					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
-				);
-			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.qty")) {
-				// - UOMConversion
-				String isConversion = Env.getContext(Env.getCtx(), "UOMConversion");
-				contextValues.putFields(
-					"UOMConversion",
-					ValueManager.getValueFromStringBoolean(isConversion).build()
-				);
-			}
-			calloutBuilder.setValues(contextValues);
-		}
+		});
 
 		return calloutBuilder;
 	}
