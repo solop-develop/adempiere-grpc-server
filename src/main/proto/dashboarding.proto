@@ -61,20 +61,21 @@ service Dashboarding {
 
 // Dashboard
 message Dashboard {
-	int32 window_id = 1;
-	int32 browser_id = 2;
-	string name = 3;
-	string description = 4;
-	string html = 5;
-	int32 column_no = 6;
-	int32 line_no = 7;
-	bool is_collapsible = 8;
-	bool is_open_by_default = 9;
-	bool is_event_required = 10;
-	string file_name = 11;
-	string dashboard_type = 12;
-	string chart_type = 13;
-	int32 id = 14;
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+	string file_name = 4;
+	string dashboard_type = 5;
+	string chart_type = 6;
+	int32 sequence = 7;
+	string html = 8;
+	int32 column_no = 9;
+	int32 line_no = 10;
+	bool is_collapsible = 11;
+	bool is_open_by_default = 12;
+	bool is_event_required = 13;
+	int32 browser_id = 14;
+	int32 window_id = 15;
 }
 
 // Dashboards Request

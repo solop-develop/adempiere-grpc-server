@@ -375,18 +375,19 @@ public class Dashboarding extends DashboardingImplBase {
 		queryCharts
 			.setOrderBy(I_PA_Goal.COLUMNNAME_SeqNo)
 			.<MGoal>list()
-			.forEach(chartDefinition -> {
+			.forEach(goalDefinition -> {
 				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder()
-					.setId(chartDefinition.getPA_Goal_ID())
+					.setId(goalDefinition.getPA_Goal_ID())
 					.setName(
-						ValueManager.validateNull(chartDefinition.getName())
+						ValueManager.validateNull(goalDefinition.getName())
 					)
 					.setDescription(
-						ValueManager.validateNull(chartDefinition.getDescription())
+						ValueManager.validateNull(goalDefinition.getDescription())
 					)
+					.setSequence(goalDefinition.getSeqNo())
 					.setDashboardType("chart")
 					.setChartType(
-						ValueManager.validateNull(chartDefinition.getChartType())
+						ValueManager.validateNull(goalDefinition.getChartType())
 					)
 					.setIsCollapsible(true)
 					.setIsOpenByDefault(true)
