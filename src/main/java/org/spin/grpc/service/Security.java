@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Form;
-import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Process;
@@ -40,7 +39,6 @@ import org.compiere.model.MClientInfo;
 import org.compiere.model.MCountry;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MForm;
-import org.compiere.model.MLanguage;
 import org.compiere.model.MMenu;
 import org.compiere.model.MOrg;
 import org.compiere.model.MOrgInfo;
@@ -66,9 +64,6 @@ import org.spin.authentication.services.OpenIDUtil;
 import org.spin.backend.grpc.security.ChangeRoleRequest;
 import org.spin.backend.grpc.security.Client;
 import org.spin.backend.grpc.security.DictionaryEntity;
-import org.spin.backend.grpc.security.Language;
-import org.spin.backend.grpc.security.ListLanguagesRequest;
-import org.spin.backend.grpc.security.ListLanguagesResponse;
 import org.spin.backend.grpc.security.ListOrganizationsRequest;
 import org.spin.backend.grpc.security.ListOrganizationsResponse;
 import org.spin.backend.grpc.security.ListRolesRequest;
@@ -131,125 +126,6 @@ public class Security extends SecurityImplBase {
 	/**	Menu */
 	private static CCache<String, Menu.Builder> menuCache = new CCache<String, Menu.Builder>("Menu_for_User", 30, 0);
 
-
-
-	@Override
-	public void listLanguages(ListLanguagesRequest request, StreamObserver<ListLanguagesResponse> responseObserver) {
-		try {
-			ListLanguagesResponse.Builder languagesList = listLanguages(request);
-			responseObserver.onNext(languagesList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getMessage())
-					.augmentDescription(e.getMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-	/**
-	 * Convert languages to gRPC
-	 * @param request
-	 * @return
-	 */
-	private ListLanguagesResponse.Builder listLanguages(ListLanguagesRequest request) {
-		final String whereClause = "(IsSystemLanguage = ? OR IsBaseLanguage = ?)";
-		Query query = new Query(
-			Env.getCtx(),
-			I_AD_Language.Table_Name,
-			whereClause,
-			null
-		)
-			.setParameters(true, true)
-			.setOnlyActiveRecords(true)
-		;
-
-		ListLanguagesResponse.Builder builder = ListLanguagesResponse.newBuilder()
-			.setRecordCount(
-				query.count()
-			)
-		;
-
-		query.getIDsAsList()
-			.forEach(languageId -> {
-				MLanguage language = new MLanguage(Env.getCtx(), languageId, null);
-				Language.Builder languaBuilder = convertLanguage(language);
-				builder.addLanguages(languaBuilder);
-			});
-		//	Return
-		return builder;
-	}
-
-	private static Language.Builder convertLanguage(MLanguage language) {
-		Language.Builder languaBuilder = Language.newBuilder();
-		if (language == null) {
-			return languaBuilder;
-		}
-
-		String datePattern = language.getDatePattern();
-		String timePattern = language.getTimePattern();
-		if(Util.isEmpty(datePattern, true)) {
-			org.compiere.util.Language staticLanguage = org.compiere.util.Language.getLanguage(
-				language.getAD_Language()
-			);
-			if(staticLanguage != null) {
-				datePattern = staticLanguage.getDateFormat().toPattern();
-			}
-			//	Validate
-			if(Util.isEmpty(datePattern)) {
-				datePattern = language.getDateFormat().toPattern();
-			}
-		}
-		if(Util.isEmpty(timePattern, true)) {
-			org.compiere.util.Language staticLanguage = org.compiere.util.Language.getLanguage(
-				language.getAD_Language()
-			);
-			if(staticLanguage != null) {
-				timePattern = staticLanguage.getTimeFormat().toPattern();
-			}
-		}
-		languaBuilder.setLanguage(
-				ValueManager.validateNull(
-					language.getAD_Language()
-				)
-			)
-			.setCountryCode(
-				ValueManager.validateNull(
-					language.getCountryCode()
-				)
-			)
-			.setLanguageIso(
-				ValueManager.validateNull(
-					language.getLanguageISO()
-				)
-			)
-			.setLanguageName(
-				ValueManager.validateNull(
-					language.getName()
-				)
-			)
-			.setDatePattern(
-				ValueManager.validateNull(datePattern)
-			)
-			.setTimePattern(
-				ValueManager.validateNull(timePattern)
-			)
-			.setIsBaseLanguage(
-				language.isBaseLanguage()
-			)
-			.setIsSystemLanguage(
-				language.isSystemLanguage())
-			.setIsDecimalPoint(
-				language.isDecimalPoint()
-			)
-		;
-		return languaBuilder;
-	}
 
 
 	@Override

@@ -79,8 +79,7 @@ import org.spin.backend.grpc.payment_print_export.PrintResponse;
 import org.spin.backend.grpc.payment_print_export.ProcessRequest;
 import org.spin.backend.grpc.payment_print_export.ProcessResponse;
 import org.spin.base.util.LookupUtil;
-// import org.spin.base.util.RecordUtil;
-import org.spin.base.util.convert.ConvertCommon;
+import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -155,7 +154,7 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 				)
 			)
 			.setCurrency(
-				ConvertCommon.convertCurrency(
+				CoreFunctionalityConvert.convertCurrency(
 					paymentSelection.getC_Currency_ID()
 				)
 			)

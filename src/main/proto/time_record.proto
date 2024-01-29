@@ -20,7 +20,6 @@ option java_package = "org.spin.backend.grpc.form.time_record";
 option java_outer_classname = "ADempiereTimeRecord";
 
 import "google/api/annotations.proto";
-import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "core_functionality.proto";
@@ -105,7 +104,7 @@ message ResourceType {
 	string value = 2;
 	string name = 3;
 	string description = 4;
-	data.UnitOfMeasure unit_of_measure = 5;
+	core_functionality.UnitOfMeasure unit_of_measure = 5;
 }
 
 message User {

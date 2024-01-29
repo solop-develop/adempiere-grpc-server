@@ -48,7 +48,7 @@ import org.spin.backend.grpc.form.time_record.ResourceAssignment;
 import org.spin.backend.grpc.form.time_record.ResourceType;
 import org.spin.backend.grpc.form.time_record.TimeRecordGrpc.TimeRecordImplBase;
 import org.spin.backend.grpc.form.time_record.User;
-import org.spin.base.util.ConvertUtil;
+import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -294,7 +294,9 @@ public class TimeRecord extends TimeRecordImplBase {
 		;
 
 		MUOM unitOfMeasure = MUOM.get(Env.getCtx(), resourceType.getC_UOM_ID());
-		builder.setUnitOfMeasure(ConvertUtil.convertUnitOfMeasure(unitOfMeasure));
+		builder.setUnitOfMeasure(
+			CoreFunctionalityConvert.convertUnitOfMeasure(unitOfMeasure)
+		);
 
 		return builder;
 	}

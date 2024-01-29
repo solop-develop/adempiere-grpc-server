@@ -20,10 +20,7 @@ option java_package = "org.spin.backend.grpc.form.task_management";
 option java_outer_classname = "ADempiereTaskManagement";
 
 import "google/api/annotations.proto";
-import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
-
-import "core_functionality.proto";
 
 // Base URL
 // /task-management/

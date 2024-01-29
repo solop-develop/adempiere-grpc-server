@@ -51,6 +51,7 @@ import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.base.util.ConvertUtil;
+import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
@@ -234,12 +235,12 @@ public class POSConvertUtil {
 				ValueManager.validateNull(shipmentLine.getDescription())
 			)
 			.setProduct(
-				ConvertUtil.convertProduct(
+				CoreFunctionalityConvert.convertProduct(
 					shipmentLine.getM_Product_ID()
 				)
 			)
 			.setCharge(
-				ConvertUtil.convertCharge(
+				CoreFunctionalityConvert.convertCharge(
 					shipmentLine.getC_Charge_ID()
 				)
 			)
@@ -254,10 +255,10 @@ public class POSConvertUtil {
 				)
 			)
 			.setUom(
-				ConvertUtil.convertProductConversion(uom)
+				CoreFunctionalityConvert.convertProductConversion(uom)
 			)
 			.setProductUom(
-				ConvertUtil.convertProductConversion(productUom)
+				CoreFunctionalityConvert.convertProductConversion(productUom)
 			)
 		;
 	}

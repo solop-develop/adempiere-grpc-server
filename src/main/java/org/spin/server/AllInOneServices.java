@@ -27,7 +27,6 @@ import org.spin.base.util.Services;
 import org.spin.eca52.util.JWTUtil;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.BusinessPartner;
-import org.spin.grpc.service.CoreFunctionality;
 import org.spin.grpc.service.Dashboarding;
 import org.spin.grpc.service.Enrollment;
 import org.spin.grpc.service.FileManagement;
@@ -53,6 +52,7 @@ import org.spin.grpc.service.UserCustomization;
 import org.spin.grpc.service.UserInterface;
 import org.spin.grpc.service.WebStore;
 import org.spin.grpc.service.Workflow;
+import org.spin.grpc.service.core_functionality.CoreFunctionality;
 import org.spin.grpc.service.dictionary.Dictionary;
 import org.spin.grpc.service.field.location_address.LocationAddress;
 import org.spin.grpc.service.form.ExpressMovement;
@@ -87,8 +87,8 @@ public class AllInOneServices {
 	/** Services/Methods allow request without Bearer token validation */
 	private List<String> ALLOW_REQUESTS_WITHOUT_TOKEN = Arrays.asList(
 		// proto package . proto service / proto method
-		"data.CoreFunctionality/GetSystemInfo",
-		"security.Security/ListLanguages",
+		"core_functionality.CoreFunctionality/GetSystemInfo",
+		"core_functionality.CoreFunctionality/ListLanguages",
 		"security.Security/RunLogin",
 		"security.Security/ListServices",
 		"security.Security/RunLoginOpenID"

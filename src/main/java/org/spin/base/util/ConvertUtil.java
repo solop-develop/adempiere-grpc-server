@@ -11,7 +11,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
  * For the text or an alternative of this public license, you may reach us    		 *
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.base.util;
 
@@ -21,61 +21,40 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
-import org.adempiere.core.domains.models.I_C_UOM;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
-import org.compiere.model.MCharge;
 import org.compiere.model.MChatEntry;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MConversionRate;
-import org.compiere.model.MCountry;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInvoice;
-import org.compiere.model.MLanguage;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
-import org.compiere.model.MOrg;
-import org.compiere.model.MOrgInfo;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPOSKey;
 import org.compiere.model.MPOSKeyLayout;
 import org.compiere.model.MPayment;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MProduct;
-import org.compiere.model.MProductCategory;
 import org.compiere.model.MRefList;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTax;
-import org.compiere.model.MUOM;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
-import org.compiere.model.MWarehouse;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Charge;
-import org.spin.backend.grpc.common.Country;
 import org.spin.backend.grpc.common.DocumentAction;
 import org.spin.backend.grpc.common.DocumentStatus;
 import org.spin.backend.grpc.common.Entity;
-import org.spin.backend.grpc.common.Organization;
-import org.spin.backend.grpc.common.PriceList;
 import org.spin.backend.grpc.common.ProcessInfoLog;
-import org.spin.backend.grpc.common.Product;
-import org.spin.backend.grpc.common.ProductConversion;
-import org.spin.backend.grpc.common.SalesRepresentative;
-import org.spin.backend.grpc.common.TaxRate;
-import org.spin.backend.grpc.common.UnitOfMeasure;
-import org.spin.backend.grpc.common.Warehouse;
 import org.spin.backend.grpc.pos.AvailableSeller;
 import org.spin.backend.grpc.pos.CustomerBankAccount;
 import org.spin.backend.grpc.pos.Key;
@@ -87,9 +66,9 @@ import org.spin.backend.grpc.pos.RMALine;
 import org.spin.backend.grpc.pos.Shipment;
 import org.spin.backend.grpc.user_interface.ChatEntry;
 import org.spin.backend.grpc.user_interface.ModeratorStatus;
-import org.spin.base.util.convert.ConvertCommon;
 import org.spin.grpc.service.FileManagement;
 import org.spin.grpc.service.TimeControl;
+import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.model.MADAttachmentReference;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
@@ -285,225 +264,6 @@ public class ConvertUtil {
 	}
 
 
-
-	/**
-	 * Convert charge from 
-	 * @param chargeId
-	 * @return
-	 */
-	public static Charge.Builder convertCharge(MCharge charge) {
-		Charge.Builder builder = Charge.newBuilder();
-		if(charge == null) {
-			return builder;
-		}
-		//	convert charge
-		return builder
-			.setId(charge.getC_Charge_ID())
-			.setName(ValueManager.validateNull(charge.getName()))
-			.setDescription(ValueManager.validateNull(charge.getDescription())
-		);
-	}
-
-
-	/**
-	 * Convert Product to 
-	 * @param product
-	 * @return
-	 */
-	public static Product.Builder convertProduct(MProduct product) {
-		Product.Builder builder = Product.newBuilder();
-		if (product == null) {
-			return builder;
-		}
-		builder.setId(product.getM_Product_ID())
-			.setValue(ValueManager.validateNull(product.getValue()))
-			.setName(ValueManager.validateNull(product.getName()))
-			.setDescription(ValueManager.validateNull(product.getDescription()))
-			.setHelp(ValueManager.validateNull(product.getHelp()))
-			.setDocumentNote(ValueManager.validateNull(product.getDocumentNote()))
-			.setUomName(ValueManager.validateNull(MUOM.get(product.getCtx(), product.getC_UOM_ID()).getName()))
-			.setDescriptionUrl(ValueManager.validateNull(product.getDescriptionURL()))
-			//	Product Type
-			.setIsStocked(product.isStocked())
-			.setIsDropShip(product.isDropShip())
-			.setIsPurchased(product.isPurchased())
-			.setIsSold(product.isSold())
-			.setImageUrl(ValueManager.validateNull(product.getImageURL()))
-			.setUpc(ValueManager.validateNull(product.getUPC()))
-			.setSku(ValueManager.validateNull(product.getSKU()))
-			.setVersionNo(ValueManager.validateNull(product.getVersionNo()))
-			.setGuaranteeDays(product.getGuaranteeDays())
-			.setWeight(
-				NumberManager.getBigDecimalToString(
-					product.getWeight()
-				)
-			)
-			.setVolume(
-				NumberManager.getBigDecimalToString(
-					product.getVolume()
-				)
-			)
-			.setShelfDepth(
-				String.valueOf(
-					// TODO: is Integer reference change to Quantity reference on database
-					product.getShelfDepth()
-				)
-			)
-			.setShelfHeight(
-				NumberManager.getBigDecimalToString(
-					product.getShelfHeight()
-				)
-			)
-			.setShelfWidth(
-				String.valueOf(
-					// TODO: is Integer reference change to Quantity reference on database
-					product.getShelfWidth()
-				)
-			)
-			.setUnitsPerPallet(
-				NumberManager.getBigDecimalToString(
-					product.getUnitsPerPallet()
-				)
-			)
-			.setUnitsPerPack(
-				String.valueOf(
-					// TODO: is Integer reference change to Quantity reference on database
-					product.getUnitsPerPack()
-				)
-			)
-			.setTaxCategory(ValueManager.validateNull(product.getC_TaxCategory().getName()))
-			.setProductCategoryName(
-				ValueManager.validateNull(
-					MProductCategory.get(product.getCtx(), product.getM_Product_Category_ID()).getName()
-				)
-			);
-		//	Group
-		if(product.getM_Product_Group_ID() != 0) {
-			builder.setProductGroupName(ValueManager.validateNull(product.getM_Product_Group().getName()));
-		}
-		//	Class
-		if(product.getM_Product_Class_ID() != 0) {
-			builder.setProductClassName(ValueManager.validateNull(product.getM_Product_Class().getName()));
-		}
-		//	Classification
-		if(product.getM_Product_Classification_ID() != 0) {
-			builder.setProductClassificationName(ValueManager.validateNull(product.getM_Product_Classification().getName()));
-		}
-		return builder;
-	}
-	
-	/**
-	 * Convert Language to gRPC
-	 * @param language
-	 * @return
-	 */
-	public static org.spin.backend.grpc.common.Language.Builder convertLanguage(MLanguage language) {
-		if (language == null) {
-			return org.spin.backend.grpc.common.Language.newBuilder();
-		}
-
-		String datePattern = language.getDatePattern();
-		String timePattern = language.getTimePattern();
-		if(Util.isEmpty(datePattern)) {
-			org.compiere.util.Language staticLanguage = org.compiere.util.Language.getLanguage(language.getAD_Language());
-			if(staticLanguage != null) {
-				datePattern = staticLanguage.getDateFormat().toPattern();
-			}
-			//	Validate
-			if(Util.isEmpty(datePattern)) {
-				datePattern = language.getDateFormat().toPattern();
-			}
-		}
-		if(Util.isEmpty(timePattern)) {
-			org.compiere.util.Language staticLanguage = org.compiere.util.Language.getLanguage(language.getAD_Language());
-			if(staticLanguage != null) {
-				timePattern = staticLanguage.getTimeFormat().toPattern();
-			}
-		}
-		return org.spin.backend.grpc.common.Language.newBuilder()
-			.setLanguage(ValueManager.validateNull(language.getAD_Language()))
-			.setCountryCode(ValueManager.validateNull(language.getCountryCode()))
-			.setLanguageIso(ValueManager.validateNull(language.getLanguageISO()))
-			.setLanguageName(ValueManager.validateNull(language.getName()))
-			.setDatePattern(ValueManager.validateNull(datePattern))
-			.setTimePattern(ValueManager.validateNull(timePattern))
-			.setIsBaseLanguage(language.isBaseLanguage())
-			.setIsSystemLanguage(language.isSystemLanguage())
-			.setIsDecimalPoint(language.isDecimalPoint()
-		);
-	}
-	
-	/**
-	 * Convert Country
-	 * @param context
-	 * @param country
-	 * @return
-	 */
-	public static Country.Builder convertCountry(Properties context, MCountry country) {
-		Country.Builder builder = Country.newBuilder();
-		if(country == null) {
-			return builder;
-		}
-		builder.setId(country.getC_Country_ID())
-			.setCountryCode(ValueManager.validateNull(country.getCountryCode()))
-			.setName(ValueManager.validateNull(country.getName()))
-			.setDescription(ValueManager.validateNull(country.getDescription()))
-			.setHasRegion(country.isHasRegion())
-			.setRegionName(ValueManager.validateNull(country.getRegionName()))
-			.setDisplaySequence(ValueManager.validateNull(country.getDisplaySequence()))
-			.setIsAddressLinesReverse(country.isAddressLinesReverse())
-			.setCaptureSequence(ValueManager.validateNull(country.getCaptureSequence()))
-			.setDisplaySequenceLocal(ValueManager.validateNull(country.getDisplaySequenceLocal()))
-			.setIsAddressLinesLocalReverse(country.isAddressLinesLocalReverse())
-			.setHasPostalAdd(country.isHasPostal_Add())
-			.setExpressionPhone(ValueManager.validateNull(country.getExpressionPhone()))
-			.setMediaSize(ValueManager.validateNull(country.getMediaSize()))
-			.setExpressionBankRoutingNo(ValueManager.validateNull(country.getExpressionBankRoutingNo()))
-			.setExpressionBankAccountNo(ValueManager.validateNull(country.getExpressionBankAccountNo()))
-			.setAllowCitiesOutOfList(country.isAllowCitiesOutOfList())
-			.setIsPostcodeLookup(country.isPostcodeLookup())
-			.setLanguage(ValueManager.validateNull(country.getAD_Language())
-		);
-		//	Set Currency
-		if(country.getC_Currency_ID() != 0) {
-			builder.setCurrency(
-				ConvertCommon.convertCurrency(
-					country.getC_Currency_ID()
-				)
-			);
-		}
-		//	
-		return builder;
-	}
-
-
-	/**
-	 * Convert Price List
-	 * @param priceList
-	 * @return
-	 */
-	public static PriceList.Builder convertPriceList(MPriceList priceList) {
-		PriceList.Builder builder = PriceList.newBuilder();
-		if(priceList == null) {
-			return builder;
-		}
-		//	
-		return builder.setId(priceList.getM_PriceList_ID())
-			.setName(ValueManager.validateNull(priceList.getName()))
-			.setDescription(ValueManager.validateNull(priceList.getDescription()))
-			.setCurrency(
-				ConvertCommon.convertCurrency(
-					priceList.getC_Currency_ID()
-				)
-			)
-			.setIsDefault(priceList.isDefault())
-			.setIsTaxIncluded(priceList.isTaxIncluded())
-			.setIsEnforcePriceLimit(priceList.isEnforcePriceLimit())
-			.setIsNetPrice(priceList.isNetPrice())
-			.setPricePrecision(priceList.getPricePrecision()
-		);
-	}
-
 	/**
 	 * Convert Order from entity
 	 * @param order
@@ -579,12 +339,16 @@ public class ConvertUtil {
 		return builder
 			.setId(order.getC_Order_ID())
 			.setDocumentType(
-				ConvertCommon.convertDocumentType(
+				CoreFunctionalityConvert.convertDocumentType(
 					order.getC_DocTypeTarget_ID()
 				)
 			)
 			.setDocumentNo(ValueManager.validateNull(order.getDocumentNo()))
-			.setSalesRepresentative(convertSalesRepresentative(MUser.get(Env.getCtx(), order.getSalesRep_ID())))
+			.setSalesRepresentative(
+				CoreFunctionalityConvert.convertSalesRepresentative(
+					MUser.get(Env.getCtx(), order.getSalesRep_ID())
+				)
+			)
 			.setDescription(ValueManager.validateNull(order.getDescription()))
 			.setOrderReference(ValueManager.validateNull(order.getPOReference()))
 			.setDocumentStatus(
@@ -594,8 +358,20 @@ public class ConvertUtil {
 					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
 				)
 			)
-			.setPriceList(ConvertUtil.convertPriceList(MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName())))
-			.setWarehouse(convertWarehouse(order.getM_Warehouse_ID()))
+			.setPriceList(
+				CoreFunctionalityConvert.convertPriceList(
+					MPriceList.get(
+						Env.getCtx(),
+						order.getM_PriceList_ID(),
+						order.get_TrxName()
+					)
+				)
+			)
+			.setWarehouse(
+				CoreFunctionalityConvert.convertWarehouse(
+					order.getM_Warehouse_ID()
+				)
+			)
 			.setIsDelivered(order.isDelivered())
 			.setDiscountAmount(
 				NumberManager.getBigDecimalToString(
@@ -784,12 +560,16 @@ public class ConvertUtil {
 			.setId(order.getC_Order_ID())
 			.setSourceOrderId(order.getRef_Order_ID())
 			.setDocumentType(
-				ConvertCommon.convertDocumentType(
+				CoreFunctionalityConvert.convertDocumentType(
 					order.getC_DocTypeTarget_ID()
 				)
 			)
 			.setDocumentNo(ValueManager.validateNull(order.getDocumentNo()))
-			.setSalesRepresentative(convertSalesRepresentative(MUser.get(Env.getCtx(), order.getSalesRep_ID())))
+			.setSalesRepresentative(
+				CoreFunctionalityConvert.convertSalesRepresentative(
+					MUser.get(Env.getCtx(), order.getSalesRep_ID())
+				)
+			)
 			.setDescription(ValueManager.validateNull(order.getDescription()))
 			.setOrderReference(ValueManager.validateNull(order.getPOReference()))
 			.setDocumentStatus(
@@ -799,8 +579,20 @@ public class ConvertUtil {
 					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
 				)
 			)
-			.setPriceList(ConvertUtil.convertPriceList(MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName())))
-			.setWarehouse(convertWarehouse(order.getM_Warehouse_ID()))
+			.setPriceList(
+				CoreFunctionalityConvert.convertPriceList(
+					MPriceList.get(
+						Env.getCtx(),
+						order.getM_PriceList_ID(),
+						order.get_TrxName()
+					)
+				)
+			)
+			.setWarehouse(
+				CoreFunctionalityConvert.convertWarehouse(
+					order.getM_Warehouse_ID()
+				)
+			)
 			.setIsDelivered(order.isDelivered())
 			.setDiscountAmount(
 				NumberManager.getBigDecimalToString(
@@ -1074,12 +866,16 @@ public class ConvertUtil {
 			.setOrderId(order.getC_Order_ID())
 			.setId(shipment.getM_InOut_ID())
 			.setDocumentType(
-				ConvertCommon.convertDocumentType(
+				CoreFunctionalityConvert.convertDocumentType(
 					shipment.getC_DocType_ID()
 				)
 			)
 			.setDocumentNo(ValueManager.validateNull(shipment.getDocumentNo()))
-			.setSalesRepresentative(convertSalesRepresentative(MUser.get(Env.getCtx(), shipment.getSalesRep_ID())))
+			.setSalesRepresentative(
+				CoreFunctionalityConvert.convertSalesRepresentative(
+					MUser.get(Env.getCtx(), shipment.getSalesRep_ID())
+				)
+			)
 			.setDocumentStatus(
 				ConvertUtil.convertDocumentStatus(
 					ValueManager.validateNull(shipment.getDocStatus()), 
@@ -1087,7 +883,11 @@ public class ConvertUtil {
 					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
 				)
 			)
-			.setWarehouse(convertWarehouse(shipment.getM_Warehouse_ID()))
+			.setWarehouse(
+				CoreFunctionalityConvert.convertWarehouse(
+					shipment.getM_Warehouse_ID()
+				)
+			)
 			.setMovementDate(ValueManager.getTimestampFromDate(shipment.getMovementDate())
 		);
 	}
@@ -1180,9 +980,21 @@ public class ConvertUtil {
 			.setLine(orderLine.getLine())
 			.setDescription(ValueManager.validateNull(orderLine.getDescription()))
 			.setLineDescription(ValueManager.validateNull(orderLine.getName()))
-			.setProduct(convertProduct(orderLine.getM_Product_ID()))
-			.setCharge(convertCharge(orderLine.getC_Charge_ID()))
-			.setWarehouse(convertWarehouse(orderLine.getM_Warehouse_ID()))
+			.setProduct(
+				CoreFunctionalityConvert.convertProduct(
+					orderLine.getM_Product_ID()
+				)
+			)
+			.setCharge(
+				CoreFunctionalityConvert.convertCharge(
+					orderLine.getC_Charge_ID()
+				)
+			)
+			.setWarehouse(
+				CoreFunctionalityConvert.convertWarehouse(
+					orderLine.getM_Warehouse_ID()
+				)
+			)
 			.setQuantity(
 				NumberManager.getBigDecimalToString(
 					quantityEntered.setScale(
@@ -1298,7 +1110,9 @@ public class ConvertUtil {
 					)
 				)
 			)
-			.setTaxRate(ConvertUtil.convertTaxRate(tax))
+			.setTaxRate(
+				CoreFunctionalityConvert.convertTaxRate(tax)
+			)
 			//	Totals
 			.setTotalDiscountAmount(
 				NumberManager.getBigDecimalToString(
@@ -1364,8 +1178,12 @@ public class ConvertUtil {
 					)
 				)
 			)
-			.setUom(ConvertUtil.convertProductConversion(uom))
-			.setProductUom(ConvertUtil.convertProductConversion(productUom))
+			.setUom(
+				CoreFunctionalityConvert.convertProductConversion(uom)
+			)
+			.setProductUom(
+				CoreFunctionalityConvert.convertProductConversion(productUom)
+			)
 			.setResourceAssignment(TimeControl.convertResourceAssignment(orderLine.getS_ResourceAssignment_ID()))
 			.setSourceRmaLineId(orderLine.get_ValueAsInt("ECA14_Source_RMALine_ID"))
 		;
@@ -1440,9 +1258,21 @@ public class ConvertUtil {
 			.setLine(orderLine.getLine())
 			.setDescription(ValueManager.validateNull(orderLine.getDescription()))
 			.setLineDescription(ValueManager.validateNull(orderLine.getName()))
-			.setProduct(convertProduct(orderLine.getM_Product_ID()))
-			.setCharge(convertCharge(orderLine.getC_Charge_ID()))
-			.setWarehouse(convertWarehouse(orderLine.getM_Warehouse_ID()))
+			.setProduct(
+				CoreFunctionalityConvert.convertProduct(
+					orderLine.getM_Product_ID()
+				)
+			)
+			.setCharge(
+				CoreFunctionalityConvert.convertCharge(
+					orderLine.getC_Charge_ID()
+				)
+			)
+			.setWarehouse(
+				CoreFunctionalityConvert.convertWarehouse(
+					orderLine.getM_Warehouse_ID()
+				)
+			)
 			.setQuantity(
 				NumberManager.getBigDecimalToString(
 					quantityEntered.setScale(
@@ -1559,7 +1389,9 @@ public class ConvertUtil {
 					)
 				)
 			)
-			.setTaxRate(ConvertUtil.convertTaxRate(tax))
+			.setTaxRate(
+				CoreFunctionalityConvert.convertTaxRate(tax)
+			)
 			//	Totals
 			.setTotalDiscountAmount(
 				NumberManager.getBigDecimalToString(
@@ -1609,49 +1441,15 @@ public class ConvertUtil {
 					)
 				)
 			)
-			.setUom(ConvertUtil.convertProductConversion(uom))
-			.setProductUom(ConvertUtil.convertProductConversion(productUom))
+			.setUom(
+				CoreFunctionalityConvert.convertProductConversion(uom)
+			)
+			.setProductUom(
+				CoreFunctionalityConvert.convertProductConversion(productUom)
+			)
 		;
 	}
-
-	/**
-	 * Convert product
-	 * @param productId
-	 * @return
-	 */
-	public static Product.Builder convertProduct(int productId) {
-		Product.Builder builder = Product.newBuilder();
-		if(productId <= 0) {
-			return builder;
-		}
-		return ConvertUtil.convertProduct(MProduct.get(Env.getCtx(), productId));
-	}
 	
-	/**
-	 * Convert charge
-	 * @param chargeId
-	 * @return
-	 */
-	public static Charge.Builder convertCharge(int chargeId) {
-		Charge.Builder builder = Charge.newBuilder();
-		if(chargeId <= 0) {
-			return builder;
-		}
-		return ConvertUtil.convertCharge(MCharge.get(Env.getCtx(), chargeId));
-	}
-	
-	/**
-	 * convert warehouse from id
-	 * @param warehouseId
-	 * @return
-	 */
-	public static Warehouse.Builder convertWarehouse(int warehouseId) {
-		Warehouse.Builder builder = Warehouse.newBuilder();
-		if(warehouseId <= 0) {
-			return builder;
-		}
-		return ConvertUtil.convertWarehouse(MWarehouse.get(Env.getCtx(), warehouseId));
-	}
 	
 	/**
 	 * Convert key layout from id
@@ -1728,145 +1526,6 @@ public class ConvertUtil {
 					FileUtil.getResourceFromImageId(
 						key.getAD_Image_ID())
 					)
-			)
-		;
-	}
-
-
-	/**
-	 * Convert Sales Representative
-	 * @param salesRepresentative
-	 * @return
-	 */
-	public static SalesRepresentative.Builder convertSalesRepresentative(MUser salesRepresentative) {
-		if (salesRepresentative == null) {
-			return SalesRepresentative.newBuilder();
-		}
-		return SalesRepresentative.newBuilder()
-			.setId(salesRepresentative.getAD_User_ID())
-			.setName(ValueManager.validateNull(salesRepresentative.getName()))
-			.setDescription(ValueManager.validateNull(salesRepresentative.getDescription()))
-		;
-	}
-
-
-	/**
-	 * Convert organization
-	 * @param organization
-	 * @return
-	 */
-	public static Organization.Builder convertOrganization(MOrg organization) {
-		if (organization == null) {
-			return Organization.newBuilder();
-		}
-		MOrgInfo organizationInfo = MOrgInfo.get(Env.getCtx(), organization.getAD_Org_ID(), null);
-		AtomicReference<String> corporateImageBranding = new AtomicReference<String>();
-		if(organizationInfo.getCorporateBrandingImage_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(organizationInfo.getAD_Client_ID())) {
-			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), organizationInfo.getAD_Client_ID());
-			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(Env.getCtx(), clientInfo.getFileHandler_ID(), organizationInfo.getCorporateBrandingImage_ID(), null);
-			if(attachmentReference != null
-					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
-				corporateImageBranding.set(attachmentReference.getValidFileName());
-			}
-		}
-		return Organization.newBuilder()
-				.setCorporateBrandingImage(ValueManager.validateNull(corporateImageBranding.get()))
-				.setId(organization.getAD_Org_ID())
-				.setName(ValueManager.validateNull(organization.getName()))
-				.setDescription(ValueManager.validateNull(organization.getDescription()))
-				.setDuns(ValueManager.validateNull(organizationInfo.getDUNS()))
-				.setTaxId(ValueManager.validateNull(organizationInfo.getTaxID()))
-				.setPhone(ValueManager.validateNull(organizationInfo.getPhone()))
-				.setPhone2(ValueManager.validateNull(organizationInfo.getPhone2()))
-				.setFax(ValueManager.validateNull(organizationInfo.getFax()))
-				.setIsReadOnly(false)
-			;
-	}
-	
-	/**
-	 * Convert warehouse
-	 * @param warehouse
-	 * @return
-	 */
-	public static Warehouse.Builder convertWarehouse(MWarehouse warehouse) {
-		if (warehouse == null) {
-			return Warehouse.newBuilder();
-		}
-		return Warehouse.newBuilder()
-			.setId(warehouse.getM_Warehouse_ID())
-			.setName(ValueManager.validateNull(warehouse.getName()))
-			.setDescription(ValueManager.validateNull(warehouse.getDescription()))
-		;
-	}
-
-	/**
-	 * Convert Unit of Measure
-	 * @param uom
-	 * @return
-	 */
-	public static UnitOfMeasure.Builder convertUnitOfMeasure(MUOM unitOfMeasure) {
-		UnitOfMeasure.Builder unitOfMeasureBuilder = UnitOfMeasure.newBuilder();
-		if (unitOfMeasure == null) {
-			return unitOfMeasureBuilder;
-		}
-
-		unitOfMeasureBuilder
-			.setId(unitOfMeasure.getC_UOM_ID())
-			.setName(ValueManager.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Name)))
-			.setCode(ValueManager.validateNull(unitOfMeasure.getX12DE355()))
-			.setSymbol(ValueManager.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_UOMSymbol)))
-			.setDescription(ValueManager.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Description)))
-			.setCostingPrecision(unitOfMeasure.getCostingPrecision())
-			.setStandardPrecision(unitOfMeasure.getStdPrecision())
-		;
-		return unitOfMeasureBuilder;
-	}
-
-	/**
-	 * Convert Unit of Measure Product Conversion
-	 * @param uom
-	 * @return
-	 */
-	public static ProductConversion.Builder convertProductConversion(MUOMConversion productConversion) {
-		if (productConversion == null) {
-			return ProductConversion.newBuilder();
-		}
-		MUOM productUom = MUOM.get(Env.getCtx(), productConversion.getC_UOM_ID());
-		MUOM uomToConvert = MUOM.get(Env.getCtx(), productConversion.getC_UOM_To_ID());
-		
-		return ProductConversion.newBuilder()
-			.setId(productConversion.getC_UOM_Conversion_ID())
-			.setMultiplyRate(
-				NumberManager.getBigDecimalToString(
-					productConversion.getMultiplyRate()
-				)
-			)
-			.setDivideRate(
-				NumberManager.getBigDecimalToString(
-					productConversion.getDivideRate()
-				)
-			)
-			.setUom(convertUnitOfMeasure(uomToConvert))
-			.setProductUom(convertUnitOfMeasure(productUom))
-		;
-	}
-
-	/**
-	 * Convert tax to gRPC
-	 * @param tax
-	 * @return
-	 */
-	public static TaxRate.Builder convertTaxRate(MTax tax) {
-		if (tax == null) {
-			return TaxRate.newBuilder();
-		}
-		return TaxRate.newBuilder().setName(ValueManager.validateNull(tax.getName()))
-			.setDescription(ValueManager.validateNull(tax.getDescription()))
-			.setTaxIndicator(ValueManager.validateNull(tax.getTaxIndicator()))
-			.setRate(
-				NumberManager.getBigDecimalToString(
-					tax.getRate()
-				)
 			)
 		;
 	}

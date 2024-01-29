@@ -103,7 +103,7 @@ message ResourceType {
 	string value = 2;
 	string name = 3;
 	string description = 4;
-	data.UnitOfMeasure unit_of_measure = 5;
+	core_functionality.UnitOfMeasure unit_of_measure = 5;
 }
 
 message Resource {

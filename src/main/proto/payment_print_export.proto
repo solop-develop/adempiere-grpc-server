@@ -106,7 +106,7 @@ message PaymentSelection {
 	BankAccount bank_account = 3;
 	string payment_amount = 4;
 	int32 payment_quantity = 5;
-	data.Currency currency = 6;
+	core_functionality.Currency currency = 6;
 }
 
 // List Payment Selections Request

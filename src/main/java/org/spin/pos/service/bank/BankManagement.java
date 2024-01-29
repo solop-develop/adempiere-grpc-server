@@ -26,13 +26,13 @@ import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.BankAccount;
+import org.spin.backend.grpc.core_functionality.BankAccount;
 import org.spin.backend.grpc.pos.Bank;
 import org.spin.backend.grpc.pos.ListBankAccountsRequest;
 import org.spin.backend.grpc.pos.ListBankAccountsResponse;
 import org.spin.backend.grpc.pos.ListBanksRequest;
 import org.spin.backend.grpc.pos.ListBanksResponse;
-import org.spin.base.util.convert.ConvertCommon;
+import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -141,7 +141,7 @@ public class BankManagement {
 
 		//	Get List
 		query.getIDsAsList().forEach(bankAccountId -> {
-			BankAccount.Builder bankAccountBuilder = ConvertCommon.convertBankAccount(bankAccountId);
+			BankAccount.Builder bankAccountBuilder = CoreFunctionalityConvert.convertBankAccount(bankAccountId);
 			builderList.addRecords(bankAccountBuilder);
 		});
 		return builderList;

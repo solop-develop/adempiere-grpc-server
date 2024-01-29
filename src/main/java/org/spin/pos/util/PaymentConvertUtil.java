@@ -31,12 +31,12 @@ import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
-import org.spin.backend.grpc.common.Currency;
+import org.spin.backend.grpc.core_functionality.Currency;
 import org.spin.backend.grpc.pos.Payment;
 import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.PaymentReference;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.convert.ConvertCommon;
+import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
@@ -122,7 +122,7 @@ public class PaymentConvertUtil {
 					)
 				)
 				.setCurrency(
-					ConvertCommon.convertCurrency(
+					CoreFunctionalityConvert.convertCurrency(
 						paymentReference.get_ValueAsInt("C_Currency_ID")
 					)
 				)
@@ -130,7 +130,7 @@ public class PaymentConvertUtil {
 				.setOrderId(paymentReference.get_ValueAsInt("C_Order_ID"))
 				.setPosId(paymentReference.get_ValueAsInt("C_POS_ID"))
 				.setSalesRepresentative(
-					ConvertUtil.convertSalesRepresentative(
+					CoreFunctionalityConvert.convertSalesRepresentative(
 						MUser.get(Env.getCtx(), paymentReference.get_ValueAsInt("SalesRep_ID"))
 					)
 				)
@@ -185,7 +185,7 @@ public class PaymentConvertUtil {
 		MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), payment.get_ValueAsInt("C_PaymentMethod_ID"), null);
 		PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
 		
-		Currency.Builder currencyBuilder = ConvertCommon.convertCurrency(
+		Currency.Builder currencyBuilder = CoreFunctionalityConvert.convertCurrency(
 			payment.getC_Currency_ID()
 		);
 		MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
@@ -234,29 +234,33 @@ public class PaymentConvertUtil {
 			)
 			.setPaymentMethod(paymentMethodBuilder)
 			.setCharge(
-				ConvertUtil.convertCharge(
+				CoreFunctionalityConvert.convertCharge(
 					payment.getC_Charge_ID()
 				)
 			)
 			.setDocumentType(
-				ConvertCommon.convertDocumentType(
+				CoreFunctionalityConvert.convertDocumentType(
 					payment.getC_DocType_ID()
 				)
 			)
 			.setBankAccount(
-				ConvertCommon.convertBankAccount(
+				CoreFunctionalityConvert.convertBankAccount(
 					payment.getC_BankAccount_ID()
 				)
 			)
 			.setReferenceBankAccount(
-				ConvertCommon.convertBankAccount(
+				CoreFunctionalityConvert.convertBankAccount(
 					payment.get_ValueAsInt("POSReferenceBankAccount_ID")
 				)
 			)
 			.setIsProcessed(payment.isProcessed())
 		;
 		if(payment.getCollectingAgent_ID() > 0) {
-			builder.setCollectingAgent(ConvertUtil.convertSalesRepresentative(MUser.get(payment.getCtx(), payment.getCollectingAgent_ID())));
+			builder.setCollectingAgent(
+				CoreFunctionalityConvert.convertSalesRepresentative(
+					MUser.get(payment.getCtx(), payment.getCollectingAgent_ID())
+				)
+			);
 		}
 		return builder;
 	}

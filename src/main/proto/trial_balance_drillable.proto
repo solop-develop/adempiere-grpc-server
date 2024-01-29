@@ -19,7 +19,6 @@ option java_package = "org.spin.backend.grpc.form.trial_balance_drillable";
 option java_outer_classname = "ADempierePaymentAllocation";
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
 

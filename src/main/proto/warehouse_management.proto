@@ -26,7 +26,7 @@ import "base_data_type.proto";
 import "core_functionality.proto";
 
 // Base URL
-// /wms/
+// /warehouse-management/
 
 package wms;
 
@@ -35,21 +35,21 @@ service WarehouseManagement {
  	//	Create OutBound Order
 	rpc CreateOutBoundOrder(CreateOutBoundOrderRequest) returns (OutBoundOrder) {
 		option (google.api.http) = { 
-			post: "/wms/orders",
+			post: "/warehouse-management/orders",
 			body: "*"
 		};
 	}
 	//	Delete OutBound Order
 	rpc DeleteOutBoundOrder(DeleteOutBoundOrderRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/wms/orders/{id}" };
+		option (google.api.http) = { delete: "/warehouse-management/orders/{id}" };
 	}
 	//	Get a OutBound Order
 	rpc GetOutBoundOrder(GetOutBoundOrderRequest) returns (OutBoundOrder) {
-		option (google.api.http) = { get: "/wms/orders/{id}" };
+		option (google.api.http) = { get: "/warehouse-management/orders/{id}" };
 	}
 	//	List OutBound Orders
 	rpc ListOutBoundOrders(ListOutBoundOrdersRequest) returns (ListOutBoundOrdersResponse) {
-		option (google.api.http) = { get: "/wms/orders" };
+		option (google.api.http) = { get: "/warehouse-management/orders" };
 	}
 }
 
@@ -64,8 +64,8 @@ message CreateOutBoundOrderRequest {
 message OutBoundOrder {
 	int32 id = 1;
 	string document_no = 2;
-	data.DocumentType document_type = 3;
-	data.SalesRepresentative sales_representative = 4;
+	core_functionality.DocumentType document_type = 3;
+	core_functionality.SalesRepresentative sales_representative = 4;
 	data.DocumentStatus document_status = 5;
 	google.protobuf.Timestamp date_ordered = 6;
 }

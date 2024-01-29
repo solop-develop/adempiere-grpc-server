@@ -15,13 +15,16 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.common";
+option java_package = "org.spin.backend.grpc.core_functionality";
 option java_outer_classname = "ADempiereCoreFunctionality";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-package data;
+// Base URL
+// /core-functionality/
+
+package core_functionality;
 
 service CoreFunctionality {
 	// system information
@@ -31,16 +34,6 @@ service CoreFunctionality {
 	//	Get Country Information
 	rpc GetCountry(GetCountryRequest) returns (Country) {
 		option (google.api.http) = { get: "/core-functionality/countries/{id}" };
-	}
-	// TODO: Verify Organizations (duplicated on security)
-	//	List Organizations
-	rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
-		option (google.api.http) = { get: "/core-functionality/organizations" };
-	}
-	// TODO: Verify Warehouses (duplicated on security)
-	//	Warehouses
-	rpc ListWarehouses(ListWarehousesRequest) returns (ListWarehousesResponse) {
-		option (google.api.http) = { get: "/core-functionality/warehouses" };
 	}
 	// TODO: Verify Languages (duplicated on security)
 	//	Request Language List

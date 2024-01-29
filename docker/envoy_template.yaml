@@ -1,6 +1,6 @@
 static_resources:
   listeners:
-  - name: adempiere_grpc_server
+  - name: adempiere_grpc_proxy
     address:
       socket_address: {
         address: 0.0.0.0,
@@ -27,7 +27,7 @@ static_resources:
                   grpc: {}
                 }
                 route: {
-                  cluster: adempiere-grpc-server,
+                  cluster: adempiere-grpc-cluster,
                   timeout: 60s
                 }
           http_filters:
@@ -41,7 +41,7 @@ static_resources:
                 - bank_statement_match.BankStatementMatch
                 - business_partner.BusinessPartner
                 - data.BusinessData
-                - data.CoreFunctionality
+                - core_functionality.CoreFunctionality
                 - dashboarding.Dashboarding
                 - dictionary.Dictionary
                 - enrollment.Register
@@ -91,7 +91,7 @@ static_resources:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
-  - name: adempiere-grpc-server
+  - name: adempiere-grpc-cluster
     type: LOGICAL_DNS
     lb_policy: ROUND_ROBIN
     dns_lookup_family: V4_ONLY
@@ -101,7 +101,7 @@ static_resources:
         explicit_http_config:
           http2_protocol_options: {}
     load_assignment:
-      cluster_name: adempiere-grpc-server
+      cluster_name: adempiere-grpc-cluster
       endpoints:
       - lb_endpoints:
         - endpoint:
