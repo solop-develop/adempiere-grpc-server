@@ -770,7 +770,7 @@ public class Security extends SecurityImplBase {
 			}
 
 			// TODO: Validate values
-			if (preferencesList == null || preferencesList.isEmpty()) {
+			if ((preferencesList == null || preferencesList.isEmpty()) || (request.getRoleId() > 0 && request.getOrganizationId() > 0)) {
 				if (request.getRoleId() >= 0) {
 					roleId = request.getRoleId();
 				}
