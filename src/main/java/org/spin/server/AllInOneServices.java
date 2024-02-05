@@ -26,7 +26,6 @@ import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.Services;
 import org.spin.eca52.util.JWTUtil;
 import org.spin.grpc.service.BusinessData;
-import org.spin.grpc.service.BusinessPartner;
 import org.spin.grpc.service.Dashboarding;
 import org.spin.grpc.service.Enrollment;
 import org.spin.grpc.service.FileManagement;
@@ -54,6 +53,7 @@ import org.spin.grpc.service.WebStore;
 import org.spin.grpc.service.Workflow;
 import org.spin.grpc.service.core_functionality.CoreFunctionality;
 import org.spin.grpc.service.dictionary.Dictionary;
+import org.spin.grpc.service.field.business_partner.BusinessPartnerInfo;
 import org.spin.grpc.service.field.location_address.LocationAddress;
 import org.spin.grpc.service.form.ExpressMovement;
 import org.spin.grpc.service.form.ExpressReceipt;
@@ -160,9 +160,9 @@ public class AllInOneServices {
 			serverBuilder.addService(new BusinessData());
 			logger.info("Service " + Services.BUSINESS.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
-		//	Business Partner
+		//	Business Partner Info
 		if (SetupLoader.getInstance().getServer().isValidService(Services.BUSINESS_PARTNER.getServiceName())) {
-			serverBuilder.addService(new BusinessPartner());
+			serverBuilder.addService(new BusinessPartnerInfo());
 			logger.info("Service " + Services.BUSINESS_PARTNER.getServiceName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		}
 		//	Core Implementation
