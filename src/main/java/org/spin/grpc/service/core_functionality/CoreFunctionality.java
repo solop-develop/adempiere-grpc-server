@@ -236,15 +236,22 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 	 * @return
 	 */
 	private ListLanguagesResponse.Builder convertLanguagesList(ListLanguagesRequest request) {
-		ListLanguagesResponse.Builder builder = ListLanguagesResponse.newBuilder();
-		new Query(
+		Query query = new Query(
 			Env.getCtx(),
 			I_AD_Language.Table_Name,
 			"(IsSystemLanguage=? OR IsBaseLanguage=?)",
 			null
-		)
+			)
 			.setParameters(true, true)
 			.setOnlyActiveRecords(true)
+		;
+
+		ListLanguagesResponse.Builder builder = ListLanguagesResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
+		query
 			.<MLanguage>list()
 			.parallelStream()
 			.forEach(language -> {
