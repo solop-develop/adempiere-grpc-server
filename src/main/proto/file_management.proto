@@ -84,6 +84,12 @@ service FileManagement {
 			}
 		};
 	}
+	rpc ConfirmResourceReference(ConfirmResourceReferenceRequest) returns (ResourceReference) {
+		option (google.api.http) = {
+			put: "/file-management/references/{id}/confirm",
+			body: "*"
+		};
+	}
 	rpc SetResourceReferenceDescription(SetResourceReferenceDescriptionRequest) returns (ResourceReference) {
 		option (google.api.http) = {
 			put: "/file-management/references/{id}/description",
@@ -221,6 +227,11 @@ message SetResourceReferenceRequest {
 	int32 file_size = 6;
 	string description = 7;
 	string text_message = 8;
+}
+
+message ConfirmResourceReferenceRequest {
+	int32 id = 1;
+	string file_size = 2;
 }
 
 message SetResourceReferenceDescriptionRequest {

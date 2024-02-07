@@ -35,6 +35,7 @@ import org.compiere.util.MimeType;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.file_management.Attachment;
+import org.spin.backend.grpc.file_management.ConfirmResourceReferenceRequest;
 import org.spin.backend.grpc.file_management.DeleteResourceReferenceRequest;
 import org.spin.backend.grpc.file_management.ExistsAttachmentRequest;
 import org.spin.backend.grpc.file_management.ExistsAttachmentResponse;
@@ -498,10 +499,14 @@ public class FileManagement extends FileManagementImplBase {
 				)
 			)
 			.setName(
-				ValueManager.validateNull(reference.getFileName())
+				ValueManager.validateNull(
+					reference.getFileName()
+				)
 			)
 			.setFileName(
-				ValueManager.validateNull(reference.getValidFileName())
+				ValueManager.validateNull(
+					reference.getValidFileName()
+				)
 			)
 			.setValidFileName(
 				ValueManager.validateNull(
@@ -509,14 +514,20 @@ public class FileManagement extends FileManagementImplBase {
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(reference.getDescription())
+				ValueManager.validateNull(
+					reference.getDescription()
+				)
 			)
 			.setTextMessage(
-				ValueManager.validateNull(reference.getTextMsg())
+				ValueManager.validateNull(
+					reference.getTextMsg()
+				)
 			)
 			.setContentType(
 				ValueManager.validateNull(
-					MimeType.getMimeType(reference.getFileName())
+					MimeType.getMimeType(
+						reference.getFileName()
+					)
 				)
 			)
 			.setFileSize(
@@ -525,10 +536,14 @@ public class FileManagement extends FileManagementImplBase {
 				)
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(reference.getCreated())
+				ValueManager.getTimestampFromDate(
+					reference.getCreated()
+				)
 			)
 			.setUpdated(
-				ValueManager.getTimestampFromDate(reference.getUpdated())
+				ValueManager.getTimestampFromDate(
+					reference.getUpdated()
+				)
 			)
 		;
 
@@ -607,7 +622,7 @@ public class FileManagement extends FileManagementImplBase {
 			);
 		}
 	}
-	
+
 	private ResourceReference.Builder setResourceReference(SetResourceReferenceRequest request) {
 		// validate and get client info with configured file handler
 		MClientInfo clientInfo = validateAndGetClientInfo();
@@ -693,6 +708,7 @@ public class FileManagement extends FileManagementImplBase {
 					 * which calls the `MAttachment.saveLOBData` method but generates an error
 					 * (Null Pointer Exception) since `items` is initialized to null, when it should
 					 * be initialized with a `new ArrayList<MAttachmentEntry>()`.
+					 * fixes on https://github.com/adempiere/adempiere/pull/4177
 					 */
 					attachment.setIsDirectLoad(true);
 					attachment.saveEx();
@@ -708,6 +724,44 @@ public class FileManagement extends FileManagementImplBase {
 
 		ResourceReference.Builder builder = convertResourceReference(attachmentReferenceAtomic.get());
 
+		return builder;
+	}
+
+
+
+	@Override
+	public void confirmResourceReference(ConfirmResourceReferenceRequest request, StreamObserver<ResourceReference> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ResourceReference.Builder resourceReference = confirmResourceReference(request);
+			responseObserver.onNext(resourceReference.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private static ResourceReference.Builder confirmResourceReference(ConfirmResourceReferenceRequest request) {
+		MADAttachmentReference attachmentReference = validateAttachmentReferenceById(
+			request.getId()
+		);
+		attachmentReference.setFileSize(
+			NumberManager.getBigDecimalFromString(
+				request.getFileSize()
+			)
+		);
+		attachmentReference.saveEx();
+
+		ResourceReference.Builder builder = convertResourceReference(attachmentReference);
 		return builder;
 	}
 
