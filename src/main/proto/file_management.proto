@@ -248,6 +248,7 @@ message DeleteResourceReferenceRequest {
 	string fileName = 4;
 	int32 image_id = 5;
 	int32 archive_id = 6;
+	bool is_delete_external_file = 7; // delete external file with attachment util
 }
 
 message ExistsAttachmentRequest {

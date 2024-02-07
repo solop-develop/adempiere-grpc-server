@@ -867,26 +867,38 @@ public class FileManagement extends FileManagementImplBase {
 			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
 		}
 
-		// delete file on cloud (s3, nexcloud)
-		AttachmentUtil.getInstance()
-			.clear()
-			.withAttachmentReferenceId(
-				resourceReference.getAD_AttachmentReference_ID()
-			)
-			.withFileName(
-				resourceReference.getFileName()
-			)
-			.withClientId(
-				clientInfo.getAD_Client_ID()
-			)
-			.deleteAttachment()
-		;
+		// keep values before deleting the `MADAttachmentReference` object
+		int imageId = request.getImageId();
+		if (resourceReference.getAD_Image_ID() > 0) {
+			imageId = resourceReference.getAD_Image_ID();
+		}
+		int archiveId = request.getArchiveId();
+		if (resourceReference.getAD_Archive_ID() > 0) {
+			archiveId = resourceReference.getAD_Archive_ID();
+		}
 
-		// TODO: Support on adempiere
+		if (request.getIsDeleteExternalFile()) {
+			// delete file on cloud (s3, nexcloud)
+			AttachmentUtil.getInstance()
+				.clear()
+				.withAttachmentReferenceId(
+					resourceReference.getAD_AttachmentReference_ID()
+				)
+				.withFileName(
+					resourceReference.getFileName()
+				)
+				.withClientId(
+					clientInfo.getAD_Client_ID()
+				)
+				.deleteAttachment()
+			;
+		} else {
+			// delete only metadata on data base
+			resourceReference.deleteEx(true);
+		}
+
+		// TODO: Support on adempiere with afer change or before change
 		// when delete attachmet reference, the `resourceReference` is clean values
-
-		final int imageId = request.getImageId();
-		final int archiveId = request.getArchiveId();
 		if (imageId > 0) {
 			MImage image = MImage.get(Env.getCtx(), imageId, null);
 			if (image != null && image.getAD_Image_ID() > 0) {
