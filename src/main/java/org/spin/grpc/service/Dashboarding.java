@@ -134,11 +134,19 @@ public class Dashboarding extends DashboardingImplBase {
 	 * @return
 	 */
 	private Metrics.Builder getMetrics(GetMetricsRequest request) {
-		Metrics.Builder builder = Metrics.newBuilder();
-		MGoal goal = (MGoal) RecordUtil.getEntity(Env.getCtx(), I_PA_Goal.Table_Name, request.getId(), null);
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @PA_Goal_ID@");
+		}
+		MGoal goal = (MGoal) RecordUtil.getEntity(
+			Env.getCtx(),
+			I_PA_Goal.Table_Name,
+			request.getId(),
+			null
+		);
 		if(goal == null) {
 			throw new AdempiereException("@PA_Goal_ID@ @NotFound@");
 		}
+
 		//	Load
 		Map<String, List<ChartData>> chartSeries = new HashMap<String, List<ChartData>>();
 		int chartId = goal.get_ValueAsInt(I_AD_Chart.COLUMNNAME_AD_Chart_ID);
@@ -166,22 +174,6 @@ public class Dashboarding extends DashboardingImplBase {
 				});
 			}
 		} else {
-			//	Set values
-			builder.setName(
-					ValueManager.validateNull(goal.getName())
-				)
-				.setDescription(
-					ValueManager.validateNull(goal.getDescription())
-				)
-				.setId(goal.getPA_Goal_ID())
-				.setXAxisLabel(
-					ValueManager.validateNull(goal.getXAxisText())
-				)
-				.setYAxisLabel(
-					ValueManager.validateNull(goal.getName())
-				)
-			;
-
 			MMeasure measure = goal.getMeasure();
 			List<GraphColumn> chartData = measure.getGraphColumnList(goal);
 			chartData.forEach(data -> {
@@ -204,7 +196,32 @@ public class Dashboarding extends DashboardingImplBase {
 			});
 		}
 
-		builder.setMeasureTarget(
+		//	Set values
+		Metrics.Builder builder = Metrics.newBuilder()
+			.setId(
+				goal.getPA_Goal_ID()
+			)
+			.setName(
+				ValueManager.validateNull(
+					goal.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					goal.getDescription()
+				)
+			)
+			.setXAxisLabel(
+				ValueManager.validateNull(
+					goal.getXAxisText()
+				)
+			)
+			.setYAxisLabel(
+				ValueManager.validateNull(
+					goal.getName()
+				)
+			)
+			.setMeasureTarget(
 				NumberManager.getBigDecimalToString(
 					goal.getMeasureTarget()
 				)
@@ -975,7 +992,7 @@ public class Dashboarding extends DashboardingImplBase {
 
 		// validate record
 		int recordId = request.getRecordId();
-		if (recordId <= 0) {
+		if (RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		Env.setContext(context, windowNo, I_AD_ChangeLog.COLUMNNAME_Record_ID, recordId);
@@ -984,11 +1001,11 @@ public class Dashboarding extends DashboardingImplBase {
 		Map<String, Object> filtersList = new HashMap<String, Object>();
 		attributes.entrySet().forEach(entry -> {
 			PO chartParameter = new Query(
-					context,
-					"ECA50_WindowChartParameter",
-					"ColumnName = ? AND ECA50_WindowChart_ID = ?",
-					null
-				)
+				context,
+				"ECA50_WindowChartParameter",
+				"ColumnName = ? AND ECA50_WindowChart_ID = ?",
+				null
+			)
 				.setParameters(entry.getKey(), windowChart.get_ID())
 				.first()
 			;
@@ -1014,11 +1031,11 @@ public class Dashboarding extends DashboardingImplBase {
 		clientFiltersList.entrySet().stream()
 			.forEach(entry -> {
 				PO chartParameter = new Query(
-						context,
-						"ECA50_WindowChartParameter",
-						"ColumnName = ? AND ECA50_WindowChart_ID = ?",
-						null
-					)
+					context,
+					"ECA50_WindowChartParameter",
+					"ColumnName = ? AND ECA50_WindowChart_ID = ?",
+					null
+				)
 					.setParameters(entry.getKey(), windowChart.get_ID())
 					.first()
 				;

@@ -150,13 +150,6 @@ message PendingDocument {
 	string document_description = 5;
 	int32 sequence = 6;
 	int64 record_count = 7;
-	//	Filters
-	string filters = 8;
-	string sort_by = 9;
-	repeated string group_columns = 10;
-	repeated string select_columns = 11;
-	int32 page_size = 12;
-	string page_token = 13;
 }
 
 // Metrics Request
