@@ -33,11 +33,13 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.adempiere.core.domains.models.I_AD_PrintFormat;
+import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_ReportView;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MMenu;
 import org.compiere.model.MPInstance;
 import org.compiere.model.MProcess;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MQuery;
 import org.compiere.model.MReportView;
 import org.compiere.model.MRole;
@@ -202,14 +204,39 @@ public class ReportManagement extends ReportManagementImplBase {
 		parametersList.putAll(parameters.getFieldsMap());
 		if(parameters.getFieldsCount() > 0) {
 			for(Entry<String, Value> parameter : parametersList.entrySet().stream().filter(parameterValue -> !parameterValue.getKey().endsWith("_To")).collect(Collectors.toList())) {
-				Object value = ValueManager.getObjectFromValue(parameter.getValue());
-				Optional<Entry<String, Value>> maybeToParameter = parametersList.entrySet().stream().filter(parameterValue -> parameterValue.getKey().equals(parameter.getKey() + "_To")).findFirst();
+				final String columnName = parameter.getKey();
+				int displayTypeId = -1;
+				MProcessPara processParameter = new Query(
+					Env.getCtx(),
+					I_AD_Process_Para.Table_Name,
+					"AD_Process_ID = ? AND (ColumnName = ? OR ColumnName = ?)",
+					null
+				)
+					.setParameters(process.getAD_Process_ID(), columnName, columnName + "_To")
+					.first()
+				;
+				if (processParameter != null) {
+					displayTypeId = processParameter.getAD_Reference_ID();
+				}
+
+				Object value = null;
+				if (displayTypeId > 0) {
+					value = ValueManager.getObjectFromReference(parameter.getValue(), displayTypeId);
+				} else {
+					value = ValueManager.getObjectFromValue(parameter.getValue());
+				}
+				Optional<Entry<String, Value>> maybeToParameter = parametersList.entrySet().stream().filter(parameterValue -> parameterValue.getKey().equals(columnName + "_To")).findFirst();
 				if(value != null) {
 					if(maybeToParameter.isPresent()) {
-						Object valueTo = ValueManager.getObjectFromValue(maybeToParameter.get().getValue());
-						builder.withParameter(parameter.getKey(), value, valueTo);
+						Object valueTo = null;
+						if (displayTypeId > 0) {
+							valueTo = ValueManager.getObjectFromReference(maybeToParameter.get().getValue(), displayTypeId);
+						} else {
+							valueTo = ValueManager.getObjectFromValue(maybeToParameter.get().getValue());
+						}
+						builder.withParameter(columnName, value, valueTo);
 					} else {
-						builder.withParameter(parameter.getKey(), value);
+						builder.withParameter(columnName, value);
 					}
 				}
 			}
