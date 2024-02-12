@@ -39,6 +39,7 @@ import org.spin.base.query.Filter;
 import org.spin.base.query.FilterManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.WindowUtil;
+import org.spin.service.grpc.util.db.OperatorUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
@@ -81,6 +82,34 @@ public class WhereClauseUtil {
 	}
 
 
+	/**
+	 * Add and get sql with active records
+	 * @param tableAlias
+	 * @param dynamicValidation
+	 * @return {String}
+	 */
+	public static String addIsActiveRestriction(String tableAlias, String sql) {
+		//	Order by
+		String queryWithoutOrderBy = org.spin.service.grpc.util.db.OrderByUtil.removeOrderBy(sql);
+		String orderByClause = org.spin.service.grpc.util.db.OrderByUtil.getOnlyOrderBy(sql);
+
+		StringBuffer whereClause = new StringBuffer();
+		if(queryWithoutOrderBy.contains(" WHERE ")) {
+			whereClause.append(" AND ");
+		} else {
+			whereClause.append(" WHERE ");
+		}
+		if (!Util.isEmpty(tableAlias, true)) {
+			whereClause.append(" " + tableAlias + ".");
+		}
+		whereClause.append("IsActive = 'Y'");
+
+
+		String sqlWithActiveRecords = queryWithoutOrderBy + whereClause.toString() + orderByClause;
+
+		return sqlWithActiveRecords;
+	}
+
 
 	/**
 	 * Get sql restriction by operator
@@ -104,7 +133,7 @@ public class WhereClauseUtil {
 	 * @return
 	 */
 	public static String getRestrictionByOperator(Filter condition, int displayType, List<Object> parameters) {
-		String operatorValue = Filter.EQUAL;
+		String operatorValue = OperatorUtil.EQUAL;
 		if (!Util.isEmpty(condition.getOperator(), true)) {
 			operatorValue = condition.getOperator().toLowerCase();
 		}
@@ -114,8 +143,7 @@ public class WhereClauseUtil {
 		String sqlValue = "";
 		StringBuilder additionalSQL = new StringBuilder();
 		//	For IN or NOT IN
-		if (operatorValue.equals(Filter.IN)
-				|| operatorValue.equals(Filter.NOT_IN)) {
+		if (operatorValue.equals(OperatorUtil.IN) || operatorValue.equals(OperatorUtil.NOT_IN)) {
 			StringBuilder parameterValues = new StringBuilder();
 			final String baseColumnName = columnName;
 			StringBuilder column_name = new StringBuilder(columnName);
@@ -162,7 +190,7 @@ public class WhereClauseUtil {
 					additionalSQL.insert(0, " OR " + columnName + sqlOperator);
 				}
 			}
-		} else if(operatorValue.equals(Filter.BETWEEN) || operatorValue.equals(Filter.NOT_BETWEEN)) {
+		} else if(operatorValue.equals(OperatorUtil.BETWEEN) || operatorValue.equals(OperatorUtil.NOT_BETWEEN)) {
 			// List<Object> values = condition.getValues();
 			Object valueStartToFilter = ParameterUtil.getValueToFilterRestriction(
 				displayType,
@@ -176,18 +204,18 @@ public class WhereClauseUtil {
 			sqlValue = "";
 			if (valueStartToFilter == null) {
 				sqlValue = " ? ";
-				sqlOperator = OperatorUtil.convertOperator(Filter.LESS_EQUAL);
+				sqlOperator = OperatorUtil.convertOperator(OperatorUtil.LESS_EQUAL);
 				parameters.add(valueEndToFilter);
 			} else if (valueEndToFilter == null) {
 				sqlValue = " ? ";
-				sqlOperator = OperatorUtil.convertOperator(Filter.GREATER_EQUAL);
+				sqlOperator = OperatorUtil.convertOperator(OperatorUtil.GREATER_EQUAL);
 				parameters.add(valueStartToFilter);
 			} else {
 				sqlValue = " ? AND ? ";
 				parameters.add(valueStartToFilter);
 				parameters.add(valueEndToFilter);
 			}
-		} else if(operatorValue.equals(Filter.LIKE) || operatorValue.equals(Filter.NOT_LIKE)) {
+		} else if(operatorValue.equals(OperatorUtil.LIKE) || operatorValue.equals(OperatorUtil.NOT_LIKE)) {
 			columnName = "UPPER(" + columnName + ")";
 			String valueToFilter = ValueManager.validateNull(
 				(String) condition.getValue()
@@ -203,9 +231,9 @@ public class WhereClauseUtil {
 			// valueToFilter = "UPPPER(" + valueToFilter + ")";
 			sqlValue = "'%' || UPPER(?) || '%'";
 			parameters.add(valueToFilter);
-		} else if(operatorValue.equals(Filter.NULL) || operatorValue.equals(Filter.NOT_NULL)) {
+		} else if(operatorValue.equals(OperatorUtil.NULL) || operatorValue.equals(OperatorUtil.NOT_NULL)) {
 			;
-		} else if (operatorValue.equals(Filter.EQUAL) || operatorValue.equals(Filter.NOT_EQUAL)) {
+		} else if (operatorValue.equals(OperatorUtil.EQUAL) || operatorValue.equals(OperatorUtil.NOT_EQUAL)) {
 			Object parameterValue = condition.getValue();
 			sqlValue = " ? ";
 
@@ -264,8 +292,7 @@ public class WhereClauseUtil {
 		String sqlValue = "";
 		StringBuilder additionalSQL = new StringBuilder();
 		//	For IN or NOT IN
-		if (operatorValue.equals(Filter.IN)
-				|| operatorValue.equals(Filter.NOT_IN)) {
+		if (operatorValue.equals(OperatorUtil.IN) || operatorValue.equals(OperatorUtil.NOT_IN)) {
 			StringBuilder parameterValues = new StringBuilder();
 			final String baseColumnName = columnName;
 			StringBuilder column_name = new StringBuilder(columnName);
@@ -313,7 +340,7 @@ public class WhereClauseUtil {
 					additionalSQL.insert(0, " OR " + columnName + sqlOperator);
 				}
 			}
-		} else if(operatorValue.equals(Filter.BETWEEN) || operatorValue.equals(Filter.NOT_BETWEEN)) {
+		} else if(operatorValue.equals(OperatorUtil.BETWEEN) || operatorValue.equals(OperatorUtil.NOT_BETWEEN)) {
 			Object valueStartToFilter = ParameterUtil.getValueToFilterRestriction(
 				displayType,
 				condition.getFromValue()
@@ -329,14 +356,14 @@ public class WhereClauseUtil {
 			sqlValue = "";
 			if (valueStartToFilter == null) {
 				sqlValue = dbValueEnd;
-				sqlOperator = OperatorUtil.convertOperator(Filter.LESS_EQUAL);
+				sqlOperator = OperatorUtil.convertOperator(OperatorUtil.LESS_EQUAL);
 			} else if (valueEndToFilter == null) {
 				sqlValue = dbValueStart;
-				sqlOperator = OperatorUtil.convertOperator(Filter.GREATER_EQUAL);
+				sqlOperator = OperatorUtil.convertOperator(OperatorUtil.GREATER_EQUAL);
 			} else {
 				sqlValue = dbValueStart + " AND " + dbValueEnd;
 			}
-		} else if(operatorValue.equals(Filter.LIKE) || operatorValue.equals(Filter.NOT_LIKE)) {
+		} else if(operatorValue.equals(OperatorUtil.LIKE) || operatorValue.equals(OperatorUtil.NOT_LIKE)) {
 			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
 				displayType,
 				condition.getValue()
@@ -348,9 +375,9 @@ public class WhereClauseUtil {
 
 			columnName = "UPPER(" + columnName + ")";
 			sqlValue = "'%' || UPPER(" + dbValue + ") || '%'";
-		} else if(operatorValue.equals(Filter.NULL) || operatorValue.equals(Filter.NOT_NULL)) {
+		} else if(operatorValue.equals(OperatorUtil.NULL) || operatorValue.equals(OperatorUtil.NOT_NULL)) {
 			;
-		} else if (operatorValue.equals(Filter.EQUAL) || operatorValue.equals(Filter.NOT_EQUAL)) {
+		} else if (operatorValue.equals(OperatorUtil.EQUAL) || operatorValue.equals(OperatorUtil.NOT_EQUAL)) {
 			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
 				displayType,
 				condition.getValue()

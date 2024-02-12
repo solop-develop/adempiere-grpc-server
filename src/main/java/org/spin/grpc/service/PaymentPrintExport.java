@@ -327,7 +327,11 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 				.toString();
 	
 			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
-				paymentSelection.getC_PaySelection_ID(), paymentSelection.getUUID(), null, displayedValue
+				paymentSelection.getC_PaySelection_ID(),
+				paymentSelection.getUUID(),
+				paymentSelection.getDocumentNo(),
+				displayedValue,
+				paymentSelection.isActive()
 			);
 
 			builderItem.setTableName(I_C_PaySelection.Table_Name);
@@ -384,7 +388,11 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 		paymemntRulesList.stream().forEach(paymentRule -> {
 			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
-				paymentRule.getAD_Ref_List_ID(), paymentRule.getUUID(), paymentRule.getValue(), paymentRule.getName()
+				paymentRule.getAD_Ref_List_ID(),
+				paymentRule.getUUID(),
+				paymentRule.getValue(),
+				paymentRule.getName(),
+				paymentRule.isActive()
 			);
 
 			builderItem.setTableName(I_AD_Ref_List.Table_Name);

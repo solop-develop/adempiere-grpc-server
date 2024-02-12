@@ -61,7 +61,6 @@ public class UserInterfaceLogic {
 	 * @return
 	 */
 	public static ListEntitiesResponse.Builder listGeneralSearchRecords(ListGeneralSearchRecordsRequest request) {
-
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceId(),
 			request.getFieldId(),
@@ -83,6 +82,10 @@ public class UserInterfaceLogic {
 
 		//
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
+		if (request.getIsOnlyActiveRecords()) {
+			String newSQL = WhereClauseUtil.addIsActiveRestriction(reference.TableName, sql.toString());
+			sql = new StringBuilder(newSQL);
+		}
 
 		// add where with access restriction
 		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)

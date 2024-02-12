@@ -53,6 +53,7 @@ import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.util.db.FromUtil;
+import org.spin.service.grpc.util.db.OrderByUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -469,10 +470,9 @@ public class RecordUtil {
 		//	Validate and return
 		if(whereClause.length() > 0) {
 			//	Order by
-			Matcher matcherOrderBy = Pattern.compile(
-				"\\s+(ORDER BY)\\s+",
-				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-			).matcher(sql);
+			Matcher matcherOrderBy = OrderByUtil.SQL_ORDER_BY_PATTERN
+				.matcher(sql)
+			;
 			int positionOrderBy = -1;
 			String orderByClause = "";
 			String queryWithoutOrderBy = sql;

@@ -48,19 +48,24 @@ public class LookupUtil {
 		return new LookupUtil();
 	}
 
+
 	/**
 	 * Convert Values from result
 	 * @param keyValue
 	 * @param uuidValue
 	 * @param value
 	 * @param displayValue
+	 * @param isActive
 	 * @return
 	 */
-	public static LookupItem.Builder convertObjectFromResult(Object keyValue, String uuidValue, String value, String displayValue) {
-		LookupItem.Builder builder = LookupItem.newBuilder();
+	public static LookupItem.Builder convertObjectFromResult(Object keyValue, String uuidValue, String value, String displayValue, boolean isActive) {
 		Struct.Builder values = Struct.newBuilder();
+
+		LookupItem.Builder builder = LookupItem.newBuilder()
+			.setValues(values)
+			.setIsActive(isActive)
+		;
 		if(keyValue == null) {
-			builder.setValues(values);
 			return builder;
 		}
 

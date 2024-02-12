@@ -43,6 +43,7 @@ message LookupItem {
 	int32 id = 1;
 	string table_name = 2;
 	google.protobuf.Struct values = 3;
+	bool is_active = 4;
 }
 
 message ListLookupItemsRequest {
@@ -62,6 +63,7 @@ message ListLookupItemsRequest {
 	int32 browse_field_id = 13;
 	int32 reference_id = 14;
 	string context_attributes = 15;
+	bool is_only_active_records = 16;
 }
 
 message ListLookupItemsResponse {

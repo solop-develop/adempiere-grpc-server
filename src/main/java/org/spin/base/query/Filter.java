@@ -24,21 +24,6 @@ import java.util.Map;
  */
 public class Filter {
 
-	public static final String VOID = "void";
-	public static final String EQUAL = "equal";
-	public static final String NOT_EQUAL = "not_equal";
-	public static final String LIKE = "like";
-	public static final String NOT_LIKE = "not_like";
-	public static final String GREATER = "greater";
-	public static final String GREATER_EQUAL = "greater_equal";
-	public static final String LESS = "less";
-	public static final String LESS_EQUAL = "less_equal";
-	public static final String BETWEEN = "between";
-	public static final String NOT_BETWEEN = "not_between";
-	public static final String NOT_NULL = "not_null";
-	public static final String NULL = "null";
-	public static final String IN = "in";
-	public static final String NOT_IN = "not_in";
 	//	
 	public static final String NAME = "name";
 	public static final String OPERATOR = "operator";

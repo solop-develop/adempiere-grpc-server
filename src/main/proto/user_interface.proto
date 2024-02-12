@@ -520,6 +520,7 @@ message ListGeneralSearchRecordsRequest {
 	int32 column_id = 13;
 	string table_name = 14;
 	string column_name = 15;
+	bool is_only_active_records = 16;
 }
 
 message ListTabSequencesRequest {

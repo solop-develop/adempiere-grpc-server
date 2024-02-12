@@ -593,7 +593,11 @@ public class ImportFileLoaderServiceLogic {
 			}
 
 			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
-				processDefinition.getAD_Process_ID(), processDefinition.getUUID(), processDefinition.getValue(), displayedValue
+				processDefinition.getAD_Process_ID(),
+				processDefinition.getUUID(),
+				processDefinition.getValue(),
+				displayedValue,
+				processDefinition.isActive()
 			);
 
 			builderItem.setTableName(I_AD_Process.Table_Name);

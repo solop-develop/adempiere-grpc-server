@@ -2156,10 +2156,21 @@ public class UserInterface extends UserInterfaceImplBase {
 			request.getContextAttributes(),
 			request.getPageSize(),
 			request.getPageToken(),
-			request.getSearchValue()
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
 		);
 	}
 
+	public static ListLookupItemsResponse.Builder listLookupItems(MLookupInfo reference, String contextAttributes, int pageSize, String pageToken, String searchValue) {
+		return listLookupItems(
+			reference,
+			contextAttributes,
+			pageSize,
+			pageToken,
+			searchValue,
+			false
+		);
+	}
 	/**
 	 * Convert Object to list
 	 * @param MLookupInfo reference
@@ -2169,7 +2180,7 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param String searchValue
 	 * @return
 	 */
-	public static ListLookupItemsResponse.Builder listLookupItems(MLookupInfo reference, String contextAttributes, int pageSize, String pageToken, String searchValue) {
+	public static ListLookupItemsResponse.Builder listLookupItems(MLookupInfo reference, String contextAttributes, int pageSize, String pageToken, String searchValue, boolean isOnlyActiveRecords) {
 		if (reference == null) {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
@@ -2187,14 +2198,19 @@ public class UserInterface extends UserInterfaceImplBase {
 				&& !Util.isEmpty(reference.Query, true)) {
 			throw new AdempiereException("@AD_Reference_ID@ @WhereClause@ @Unparseable@");
 		}
+
+		if (isOnlyActiveRecords) {
+			sql = WhereClauseUtil.addIsActiveRestriction(reference.TableName, sql);
+		}
 		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
 				sql,
 				reference.TableName,
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
-			);
-		
+			)
+		;
+
 		List<Object> parameters = new ArrayList<>();
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, reference.TableName, searchValue, parameters);
 
@@ -2247,7 +2263,15 @@ public class UserInterface extends UserInterfaceImplBase {
 					uuid = rs.getString(uuidIndex);
 				}
 				//	
-				LookupItem.Builder valueObject = LookupUtil.convertObjectFromResult(keyValue, uuid, rs.getString(2), rs.getString(3));
+				LookupItem.Builder valueObject = LookupUtil.convertObjectFromResult(
+					keyValue,
+					uuid,
+					rs.getString(2),
+					rs.getString(3),
+					rs.getBoolean(
+						I_AD_Element.COLUMNNAME_IsActive
+					)
+				);
 				valueObject.setTableName(
 					ValueManager.validateNull(reference.TableName)
 				);
@@ -2367,7 +2391,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			sqlWithRoleAccess += whereClause;
 		}
 
-		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
+		String orderByClause = org.spin.service.grpc.util.db.OrderByUtil.getBrowseOrderBy(browser);
 		if (!Util.isEmpty(orderByClause, true)) {
 			orderByClause = " ORDER BY " + orderByClause;
 		}
@@ -2558,7 +2582,8 @@ public class UserInterface extends UserInterfaceImplBase {
 			Object oldValue = null;
 			Object value = null;
 			if (field != null && field.getAD_Field_ID() > 0) {
-				int displayTypeId = field.getAD_Column().getAD_Reference_ID();
+				MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+				int displayTypeId = column.getAD_Reference_ID();
 				oldValue = ValueManager.getObjectFromReference(
 					request.getOldValue(),
 					displayTypeId

@@ -65,7 +65,8 @@ public class GeneralLedgerServiceLogic {
 					accountingShema.getC_AcctSchema_ID(),
 					accountingShema.getUUID(),
 					null,
-					accountingShema.getName()
+					accountingShema.getName(),
+					accountingShema.isActive()
 				);
 				builderList.addRecords(lookupBuilder);
 			})
@@ -186,7 +187,8 @@ public class GeneralLedgerServiceLogic {
 					organization.getAD_Org_ID(),
 					organization.getUUID(),
 					organization.getValue(),
-					organization.getName()
+					organization.getName(),
+					organization.isActive()
 				);
 				builderList.addRecords(lookupBuilder);
 			})
