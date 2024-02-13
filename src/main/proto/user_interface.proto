@@ -377,6 +377,7 @@ message GetDefaultValueRequest {
 message DefaultValue {
 	int32 id = 1;
 	google.protobuf.Struct values = 2;
+	bool is_active = 3;
 }
 
 // Get Lookup Item

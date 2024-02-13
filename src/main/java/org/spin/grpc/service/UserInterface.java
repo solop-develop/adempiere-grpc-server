@@ -1857,7 +1857,8 @@ public class UserInterface extends UserInterfaceImplBase {
 					referenceList.getValue(),
 					referenceList.getUUID(),
 					referenceList.getValue(),
-					referenceList.get_Translation(MRefList.COLUMNNAME_Name)
+					referenceList.get_Translation(MRefList.COLUMNNAME_Name),
+					referenceList.isActive()
 				);
 				builder.setId(referenceList.getAD_Ref_List_ID());
 			} else {
@@ -1931,7 +1932,10 @@ public class UserInterface extends UserInterfaceImplBase {
 							keyValue,
 							uuid,
 							rs.getString(2),
-							rs.getString(3)
+							rs.getString(3),
+							rs.getBoolean(
+								I_AD_Element.COLUMNNAME_IsActive
+							)
 						);
 					} else {
 						log.severe("Direct Query default value without results");
@@ -1996,11 +2000,13 @@ public class UserInterface extends UserInterfaceImplBase {
 	 * @param displayValue
 	 * @return
 	 */
-	private DefaultValue.Builder convertDefaultValue(Object keyValue, String uuidValue, String value, String displayValue) {
-		DefaultValue.Builder builder = DefaultValue.newBuilder();
+	private DefaultValue.Builder convertDefaultValue(Object keyValue, String uuidValue, String value, String displayValue, boolean isActive) {
 		Struct.Builder values = Struct.newBuilder();
+		DefaultValue.Builder builder = DefaultValue.newBuilder()
+			.setValues(values)
+			.setIsActive(isActive)
+		;
 		if(keyValue == null) {
-			builder.setValues(values);
 			return builder;
 		}
 
