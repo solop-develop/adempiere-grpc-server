@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Form;
@@ -498,9 +497,11 @@ public class Security extends SecurityImplBase {
 		;
 		//	Get List
 		query.setLimit(limit, offset)
-			.getIDsAsList()
-			.forEach(organizationId -> {
-				MOrg organization = MOrg.get(Env.getCtx(), organizationId);
+			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
+			.<MOrg>list()
+			.forEach(organization -> {
+				// MOrg.get static method not instance the organization in 0=* (asterisk)
+				// MOrg organization = MOrg.get(Env.getCtx(), organizationId);
 				Organization.Builder organizationBuilder = convertOrganization(organization);
 				builder.addOrganizations(organizationBuilder);
 			});
@@ -519,23 +520,22 @@ public class Security extends SecurityImplBase {
 			return organizationBuilder;
 		}
 		MOrgInfo organizationInfo = MOrgInfo.get(Env.getCtx(), organization.getAD_Org_ID(), null);
-		AtomicReference<String> corporateImageBranding = new AtomicReference<String>();
+
 		if(organizationInfo.getCorporateBrandingImage_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(organizationInfo.getAD_Client_ID())) {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), organizationInfo.getAD_Client_ID());
 			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(Env.getCtx(), clientInfo.getFileHandler_ID(), organizationInfo.getCorporateBrandingImage_ID(), null);
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
-				corporateImageBranding.set(attachmentReference.getValidFileName());
+					organizationBuilder.setCorporateBrandingImage(
+					ValueManager.validateNull(
+						attachmentReference.getValidFileName()
+					)
+				);
 			}
 		}
 		
 		organizationBuilder.setId(
 				organization.getAD_Org_ID()
-			)
-			.setCorporateBrandingImage(
-				ValueManager.validateNull(
-					corporateImageBranding.get()
-				)
 			)
 			.setName(
 				ValueManager.validateNull(
