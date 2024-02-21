@@ -992,7 +992,7 @@ public class Dashboarding extends DashboardingImplBase {
 
 		// validate record
 		int recordId = request.getRecordId();
-		if (RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+		if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		Env.setContext(context, windowNo, I_AD_ChangeLog.COLUMNNAME_Record_ID, recordId);
