@@ -16,29 +16,87 @@ syntax = "proto3";
 
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.product";
-option java_outer_classname = "ADempiereProduct";
+option java_package = "org.spin.backend.grpc.field.product";
+option java_outer_classname = "ADempiereProductInfo";
 
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
 
 // Base URL
-// /info/material-management/
+// /products/
 
-package product;
+package field.product;
 
 // The product service definition.
-service Product {
-	// List Product Info Request
-	rpc ListProductInfo(ListProductInfoRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/info/material-management/products" };
+service ProductInfoService {
+	// criteria
+	rpc ListWarehouses(ListWarehousesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/warehouses" };
+	}
+	rpc ListPricesListVersions(ListPricesListVersionsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/prices-lists-versions" };
+	}
+	rpc ListAttributeSets(ListAttributeSetsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/attribute-sets" };
+	}
+	rpc ListAttributeSetInstances(ListAttributeSetInstancesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/attribute-sets/{attribute_set_id}/instances" };
+	}
+	rpc ListProductCategories(ListProductCategoriesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/categories" };
+	}
+	rpc ListProductGroups(ListProductGroupsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/groups" };
+	}
+	rpc ListProductClasses(ListProductClasessRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/clasess" };
+	}
+	rpc ListVendors(ListVendorsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/vendors" };
+	}
+
+	// result
+	rpc ListProductsInfo(ListProductsInfoRequest) returns (ListProductsInfoResponse) {
+		option (google.api.http) = {
+			get: "/field/products"
+			additional_bindings: {
+				get: "/field/products/table/{table_name}/{column_name}"
+			}
+			additional_bindings: {
+				get: "/field/products/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/field/products/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/field/products/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/field/products/query-criteria/{browse_field_id}"
+			}
+		};
+	}
+	rpc ListWarehouseStocks(ListWarehouseStocksRequest) returns (ListWarehouseStocksResponse) {
+		option (google.api.http) = {
+			get: "/field/products/{product_id}/warehouse-stocks"
+		};
+	}
+	rpc ListAvailableToPromises(ListAvailableToPromisesRequest) returns (ListAvailableToPromisesResponse) {
+		option (google.api.http) = {
+			get: "/field/products/{product_id}/available-to-promises"
+		};
+	}
+	rpc ListVendorPurchases(ListVendorPurchasesRequest) returns (ListVendorPurchasesResponse) {
+		option (google.api.http) = {
+			get: "/field/products/{product_id}/vendor-purchases"
+		};
 	}
 }
 
-// List Product Info Request
-message ListProductInfoRequest {
+message ListWarehousesRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -46,12 +104,257 @@ message ListProductInfoRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	string context_attributes = 8;
+}
+
+message ListPricesListVersionsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+}
+
+message ListAttributeSetsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+}
+
+message ListAttributeSetInstancesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// custom filters
+	int32 attribute_set_id = 9;
+}
+
+message ListProductCategoriesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+}
+
+message ListProductGroupsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+}
+
+message ListProductClasessRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+}
+
+message ListVendorsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+}
+
+
+// Product Info
+message ProductInfo {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string upc = 5;
+	string sku = 6;
+	string product_category = 7;
+	string product_group = 8;
+	string product_class = 9;
+	string uom = 10;
+	// price
+	string list_price = 11;
+	string standard_price = 12;
+	string limit_price = 13;
+	string margin = 14;
+	// storage
+	bool is_stocked = 15;
+	string available_quantity = 16;
+	string on_hand_quantity = 17;
+	string reserved_quantity = 18;
+	string ordered_quantity = 19;
+	string unconfirmed_quantity = 20;
+	string unconfirmed_move_quantity = 21;
+	//
+	string vendor = 22;
+	bool is_attribute_instance = 23;
+	// additional
+	string description = 24;
+	string document_note = 25;
+}
+
+message ListProductsInfoResponse {
+	int64 record_count = 1;
+	repeated ProductInfo records = 2;
+	string next_page_token = 3;
+}
+
+message ListProductsInfoRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
 	// references
-	int32 process_parameter_id = 9;
-	int32 field_id = 10;
-	int32 browse_field_id = 11;
-	int32 reference_id = 12;
-	int32 column_id = 13;
-	string column_name = 14;
+	string table_name = 9;
+	string column_name = 11;
+	int32 column_id = 12;
+	int32 process_parameter_id = 13;
+	int32 field_id = 14;
+	int32 browse_field_id = 15;
+	int32 reference_id = 16;
+	// custom filters
+	string value = 17;
+	string name = 18;
+	string upc = 19;
+	string sku = 20;
+	int32 warehouse_id = 21;
+	int32 price_list_id = 22;
+	int32 product_category_id = 23;
+	int32 product_group_id = 24;
+	int32 product_class_id = 25;
+	int32 attribute_set_id = 26;
+	int32 attribute_set_instance_id = 27;
+	int32 vendor_id = 28;
+	string is_only_stock = 29;
+}
+
+
+
+// Warehouse Stock
+message WarehouseStock {
+	int32 id = 1;
+	int32 uuid = 2;
+	string name = 3;
+	string available_quantity = 4;
+	string on_hand_quantity = 5;
+	string reserved_quantity = 6;
+	string ordered_quantity = 7;
+}
+
+message ListWarehouseStocksResponse {
+	int64 record_count = 1;
+	repeated WarehouseStock records = 2;
+	string next_page_token = 3;
+}
+
+message ListWarehouseStocksRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// custom filters
+	int32 product_id = 9;
+}
+
+
+
+// Available To Promise
+message AvailableToPromise {
+	int32 id = 1;
+	int32 uuid = 2;
+	string name = 3;
+	string locator = 4;
+	google.protobuf.Timestamp date = 5;
+	string available_quantity = 6;
+	string on_hand_quantity = 7;
+	string expected_change_quantity = 8;
+	string business_partner = 9;
+	string reserved_quantity = 10;
+	string attribute_set_instance = 11;
+	string document_no = 12;
+}
+
+message ListAvailableToPromisesResponse {
+	int64 record_count = 1;
+	repeated AvailableToPromise records = 2;
+	string next_page_token = 3;
+}
+
+message ListAvailableToPromisesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// custom filters
+	int32 product_id = 9;
+}
+
+
+
+// Available To Promise
+message VendorPurchase {
+	int32 id = 1;
+	int32 uuid = 2;
+	string name = 3;
+	bool is_current_vendor = 4;
+	string unit_of_measure = 5;
+	google.protobuf.Timestamp date = 11;
+}
+
+message ListVendorPurchasesResponse {
+	int64 record_count = 1;
+	repeated VendorPurchase records = 2;
+	string next_page_token = 3;
+}
+
+message ListVendorPurchasesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// custom filters
+	int32 product_id = 9;
 }
