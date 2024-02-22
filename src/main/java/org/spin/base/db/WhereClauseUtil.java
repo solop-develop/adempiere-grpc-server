@@ -110,6 +110,33 @@ public class WhereClauseUtil {
 		return sqlWithActiveRecords;
 	}
 
+	/**
+	 * Add and get sql with active records
+	 * @param tableAlias
+	 * @param dynamicValidation
+	 * @return {String}
+	 */
+	public static String removeIsActiveRestriction(String tableAlias, String sql) {
+		String SQL_WHERE_REGEX = "(WHERE|(AND|OR))(\\s+(" + tableAlias + ".IsActive|IsActive)\\s*=\\s*'(Y|N)')";
+
+		String sqlWithoutRestriction = sql;
+		// remove order by clause
+		Pattern patternWhere = Pattern.compile(
+			SQL_WHERE_REGEX,
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		);	
+		Matcher matcherWhere = patternWhere
+			.matcher(sql);
+		if(matcherWhere.find()) {
+			int startPosition = matcherWhere.start();
+			String initialPart = sql.substring(0, startPosition);
+			int endPosition = matcherWhere.end();
+			String finalPart = sql.substring(endPosition, sql.length());
+			sqlWithoutRestriction = initialPart + finalPart;
+		}
+
+		return sqlWithoutRestriction;
+	}
 
 	/**
 	 * Get sql restriction by operator

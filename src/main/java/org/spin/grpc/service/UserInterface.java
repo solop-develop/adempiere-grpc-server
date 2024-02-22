@@ -1881,11 +1881,19 @@ public class UserInterface extends UserInterfaceImplBase {
 					}
 				}
 
-				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(displayTypeId, referenceValueId, columnName, validationRuleId);
+				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(
+					displayTypeId,
+					referenceValueId,
+					columnName,
+					validationRuleId
+				);
 				if(lookupInfo == null || Util.isEmpty(lookupInfo.QueryDirect, true)) {
 					return builder;
 				}
-				final String sql = lookupInfo.QueryDirect;
+				final String sql = WhereClauseUtil.removeIsActiveRestriction(
+					lookupInfo.TableName,
+					lookupInfo.QueryDirect
+				);
 				// final String sql = MRole.getDefault(context, false).addAccessSQL(
 				// 	lookupInfo.QueryDirect,
 				// 	lookupInfo.TableName,
