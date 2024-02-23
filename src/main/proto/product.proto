@@ -84,6 +84,16 @@ service ProductInfoService {
 			get: "/field/products/{product_id}/warehouse-stocks"
 		};
 	}
+	rpc ListSubstituteProducts(ListSubstituteProductsRequest) returns (ListSubstituteProductsResponse) {
+		option (google.api.http) = {
+			get: "/field/products/{product_id}/substitutes"
+		};
+	}
+	rpc ListRelatedProducts(ListRelatedProductsRequest) returns (ListRelatedProductsResponse) {
+		option (google.api.http) = {
+			get: "/field/products/{product_id}/relateds"
+		};
+	}
 	rpc ListAvailableToPromises(ListAvailableToPromisesRequest) returns (ListAvailableToPromisesResponse) {
 		option (google.api.http) = {
 			get: "/field/products/{product_id}/available-to-promises"
@@ -279,6 +289,78 @@ message ListWarehouseStocksResponse {
 }
 
 message ListWarehouseStocksRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// custom filters
+	int32 product_id = 9;
+}
+
+
+
+// Substitute Product
+message SubstituteProduct {
+	int32 id = 1;
+	string uuid = 2;
+	string warehouse = 3;
+	string description = 4;
+	string value = 5;
+	string name = 6;
+	// quantities
+	string available_quantity = 7;
+	string on_hand_quantity = 8;
+	string reserved_quantity = 9;
+	string standard_price = 10;
+}
+
+message ListSubstituteProductsResponse {
+	int64 record_count = 1;
+	repeated RelatedProduct records = 2;
+	string next_page_token = 3;
+}
+
+message ListSubstituteProductsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// custom filters
+	int32 product_id = 9;
+}
+
+
+
+// Related Product
+message RelatedProduct {
+	int32 id = 1;
+	string uuid = 2;
+	string warehouse = 3;
+	string description = 4;
+	string value = 5;
+	string name = 6;
+	// quantities
+	string available_quantity = 7;
+	string on_hand_quantity = 8;
+	string reserved_quantity = 9;
+	string standard_price = 10;
+}
+
+message ListRelatedProductsResponse {
+	int64 record_count = 1;
+	repeated RelatedProduct records = 2;
+	string next_page_token = 3;
+}
+
+message ListRelatedProductsRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;

@@ -26,6 +26,10 @@ import org.spin.backend.grpc.field.product.ListProductClasessRequest;
 import org.spin.backend.grpc.field.product.ListProductGroupsRequest;
 import org.spin.backend.grpc.field.product.ListProductsInfoRequest;
 import org.spin.backend.grpc.field.product.ListProductsInfoResponse;
+import org.spin.backend.grpc.field.product.ListRelatedProductsRequest;
+import org.spin.backend.grpc.field.product.ListRelatedProductsResponse;
+import org.spin.backend.grpc.field.product.ListSubstituteProductsRequest;
+import org.spin.backend.grpc.field.product.ListSubstituteProductsResponse;
 import org.spin.backend.grpc.field.product.ListVendorPurchasesRequest;
 import org.spin.backend.grpc.field.product.ListVendorPurchasesResponse;
 import org.spin.backend.grpc.field.product.ListVendorsRequest;
@@ -255,6 +259,52 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 	public void listWarehouseStocks(ListWarehouseStocksRequest request, StreamObserver<ListWarehouseStocksResponse> responseObserver) {
 		try {
 			ListWarehouseStocksResponse.Builder buildersList = ProductInfoLogic.listWarehouseStocks(
+				request
+			);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void listSubstituteProducts(ListSubstituteProductsRequest request, StreamObserver<ListSubstituteProductsResponse> responseObserver) {
+		try {
+			ListSubstituteProductsResponse.Builder buildersList = ProductInfoLogic.listSubstituteProducts(
+				request
+			);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void listRelatedProducts(ListRelatedProductsRequest request, StreamObserver<ListRelatedProductsResponse> responseObserver) {
+		try {
+			ListRelatedProductsResponse.Builder buildersList = ProductInfoLogic.listRelatedProducts(
 				request
 			);
 			responseObserver.onNext(
