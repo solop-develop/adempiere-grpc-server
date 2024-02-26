@@ -550,13 +550,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
 		MTab tab = new Query(
-			Env.getCtx(),
-			MTab.Table_Name,
-			MTab.COLUMNNAME_AD_Tab_ID + " = ? ",
-			null
-		)
-		.setParameters(request.getTabId())
-		.first();
+				Env.getCtx(),
+				MTab.Table_Name,
+				MTab.COLUMNNAME_AD_Tab_ID + " = ? ",
+				null
+			)
+			.setParameters(request.getTabId())
+			.first()
+		;
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}

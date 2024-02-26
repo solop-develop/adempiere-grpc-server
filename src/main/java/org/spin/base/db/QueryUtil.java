@@ -201,7 +201,8 @@ public class QueryUtil {
 					// displayTypeId = DisplayType.TableDir;
 				}
 			}
-			if (ReferenceUtil.validateReference(displayTypeId)) {
+
+			if (ReferenceUtil.validateReference(displayTypeId) || DisplayType.ID == displayTypeId) {
 				if (!Util.isEmpty(columnSQL, true)) {
 					StringBuffer displayColumnSQL = new StringBuffer()
 						.append(", ")
