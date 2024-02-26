@@ -63,16 +63,17 @@ public class QueryUtil {
 			tableAlias = tableName;
 		}
 
-		String originalQuery = "SELECT " + tableAlias + ".* FROM " + tableName + " AS " + tableAlias + " ";
-		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
+		final String originalQuery = "SELECT " + tableAlias + ".* FROM " + tableName + " AS " + tableAlias + " ";
+		final int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
+
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
-		Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
-		List<MColumn> columnsList = table.getColumnsAsList();
 
+		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
+		final List<MColumn> columnsList = table.getColumnsAsList();
 		for (MColumn column : columnsList) {
 			int displayTypeId = column.getAD_Reference_ID();
-			String columnName = column.getColumnName();
+			final String columnName = column.getColumnName();
 
 			//	Reference Value
 			int referenceValueId = column.getAD_Reference_Value_ID();
@@ -99,9 +100,8 @@ public class QueryUtil {
 				}
 			}
 
-			if (ReferenceUtil.validateReference(displayTypeId)) {
-				//	Validation Code
-				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
+			if (ReferenceUtil.validateReference(displayTypeId) || DisplayType.ID == displayTypeId) {
+				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
 					.getReferenceInfo(
 						displayTypeId,
 						referenceValueId,
@@ -111,8 +111,10 @@ public class QueryUtil {
 					);
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
-					queryToAdd.append(referenceInfo.getDisplayValue(columnName));
-					joinsToAdd.append(referenceInfo.getJoinValue(columnName, tableAlias));
+					final String displayColumn = referenceInfo.getDisplayValue(columnName);
+					queryToAdd.append(displayColumn);
+					final String joinClause = referenceInfo.getJoinValue(columnName, tableAlias);
+					joinsToAdd.append(joinClause);
 				}
 			}
 		}
@@ -144,12 +146,15 @@ public class QueryUtil {
 			tableAlias = tableName;
 		}
 
-		String originalQuery = "SELECT " + tableAlias + ".* FROM " + tableName + " AS " + tableAlias + " ";
-		int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
+		final String originalQuery = "SELECT " + tableAlias + ".* FROM " + tableName + " AS " + tableAlias + " ";
+		final int fromIndex = originalQuery.toUpperCase().indexOf(" FROM ");
+
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
-		Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
-		for (MField field : tab.getFields(false, null)) {
+
+		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
+		final MField[] fieldsList = tab.getFields(false, null);
+		for (MField field : fieldsList) {
 			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
 			if (!field.isDisplayed()) {
 				// key column on table
@@ -157,15 +162,15 @@ public class QueryUtil {
 					continue;
 				}
 			}
-			String columnName = column.getColumnName();
+			final String columnName = column.getColumnName();
 
 			// Add virutal column
-			String columnSQL = column.getColumnSQL();
+			final String columnSQL = column.getColumnSQL();
 			if (!Util.isEmpty(columnSQL, true)) {
 				queryToAdd.append(", ")
 					.append(columnSQL)
 					.append(" AS ")
-					.append(column.getColumnName())
+					.append(columnName)
 				;
 			}
 
@@ -209,14 +214,13 @@ public class QueryUtil {
 						.append(columnSQL)
 						.append(LookupUtil.DISPLAY_COLUMN_KEY)
 						.append("_")
-						.append(column.getColumnName())
+						.append(columnName)
 					;
 					queryToAdd.append(displayColumnSQL);
 					continue;
 				}
 
-				//	Validation Code
-				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
+				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
 					Env.getCtx()
 				).getReferenceInfo(
 					displayTypeId,
@@ -227,9 +231,9 @@ public class QueryUtil {
 				);
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
-					String displayedColumn = referenceInfo.getDisplayValue(columnName);
-					queryToAdd.append(displayedColumn);
-					String joinClause = referenceInfo.getJoinValue(columnName, tableAlias);
+					final String displayColumn = referenceInfo.getDisplayValue(columnName);
+					queryToAdd.append(displayColumn);
+					final String joinClause = referenceInfo.getJoinValue(columnName, tableAlias);
 					joinsToAdd.append(joinClause);
 				}
 			}
@@ -276,20 +280,38 @@ public class QueryUtil {
 	 * @return
 	 */
 	public static String getBrowserQueryWithReferences(MBrowse browser) {
-		String originalQuery = getBrowserQuery(browser);
+		final String originalQuery = getBrowserQuery(browser);
 
-		String fromClause = FromUtil.getFromClauseByView(browser.getAD_View_ID());
-		int fromIndex = originalQuery.toUpperCase().indexOf(fromClause.toUpperCase());
+		final String fromClause = FromUtil.getFromClauseByView(browser.getAD_View_ID());
+		final int fromIndex = originalQuery.toUpperCase().indexOf(fromClause.toUpperCase());
 
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
-		for (MBrowseField browseField : ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID())) {
-			int displayTypeId = browseField.getAD_Reference_ID();
-			if (ReferenceUtil.validateReference(displayTypeId)) {
-				//	Reference Value
-				int referenceValueId = browseField.getAD_Reference_Value_ID();
-				//	Validation Code
 
+		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
+		final List<MBrowseField> browseFieldsList = ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID());
+		for (MBrowseField browseField : browseFieldsList) {
+			int displayTypeId = browseField.getAD_Reference_ID();
+
+			//	Reference Value
+			int referenceValueId = browseField.getAD_Reference_Value_ID();
+
+			if (DisplayType.Button == displayTypeId) {
+				//	Reference Value
+				if (referenceValueId > 0) {
+					X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceValueId, null);
+					if (reference != null && reference.getAD_Reference_ID() > 0) {
+						// overwrite display type to Table or List
+						if (X_AD_Reference.VALIDATIONTYPE_TableValidation.equals(reference.getValidationType())) {
+							displayTypeId = DisplayType.Table;
+						} else {
+							displayTypeId = DisplayType.List;
+						}
+					}
+				}
+			}
+
+			if (ReferenceUtil.validateReference(displayTypeId) || DisplayType.ID == displayTypeId) {
 				MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), browseField.getAD_View_Column_ID(), null);
 				MViewDefinition viewDefinition = MViewDefinition.get(Env.getCtx(), viewColumn.getAD_View_Definition_ID());
 				String tableName = viewDefinition.getTableAlias();
@@ -300,22 +322,24 @@ public class QueryUtil {
 					columnName = column.getColumnName();
 				}
 
-				ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
+				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
 					.getReferenceInfo(
 						displayTypeId,
 						referenceValueId,
 						columnName,
-						Env.getAD_Language(Env.getCtx()), tableName
+						language.getAD_Language(),
+						tableName
 					);
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
-					queryToAdd.append(referenceInfo.getDisplayValue(viewColumn.getColumnName()));
-					String joinValue = referenceInfo.getJoinValue(columnName, tableName);
+					final String displayColumn = referenceInfo.getDisplayValue(columnName);
+					queryToAdd.append(displayColumn);
+					String joinClause = referenceInfo.getJoinValue(columnName, tableName);
 					if (viewColumn.getAD_Column_ID() <= 0) {
 						// sub query
-						joinValue = referenceInfo.getJoinValue(columnName);
+						joinClause = referenceInfo.getJoinValue(columnName);
 					}
-					joinsToAdd.append(joinValue);
+					joinsToAdd.append(joinClause);
 				}
 			}
 		}
