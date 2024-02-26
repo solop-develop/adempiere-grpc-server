@@ -59,9 +59,9 @@ public class BusinessPartnerLogic {
 		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
 			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 		}
-		// if (!businessPartner.isActive()) {
-		// 	throw new AdempiereException("@C_BPartner_ID@ @NotActive@");
-		// }
+		if (!businessPartner.isActive()) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotActive@");
+		}
 		return businessPartner;
 	}
 

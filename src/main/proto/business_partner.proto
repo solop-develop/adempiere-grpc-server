@@ -20,7 +20,10 @@ option java_package = "org.spin.backend.grpc.field.business_partner";
 option java_outer_classname = "ADempiereBusinessPartner";
 
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+
+import "base_data_type.proto";
 
 // Base URL
 // /field/business-partners/
