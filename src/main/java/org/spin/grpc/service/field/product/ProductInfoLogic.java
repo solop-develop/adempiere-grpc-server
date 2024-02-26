@@ -282,7 +282,7 @@ public class ProductInfoLogic {
 
 		String sqlQuery = "SELECT "
 			+ "p.M_Product_ID, p.UUID, p.Discontinued, pc.Name AS M_Product_Category_ID, "
-			+ "p.Value, p.Name, p.UPC, p.SKU, u.name AS C_UOM_ID, bp.Name AS Vendor, "
+			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, u.name AS C_UOM_ID, bp.Name AS Vendor, "
 			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
 		String sqlFrom = "FROM M_Product p LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)"
@@ -319,21 +319,34 @@ public class ProductInfoLogic {
 			while (rs.next()) {
 				ProductInfo.Builder builder = ProductInfo.newBuilder()
 					.setId(
-						rs.getInt("M_Product_ID")
+						rs.getInt(
+							I_M_Product.COLUMNNAME_M_Product_ID
+						)
 					)
 					.setUuid(
 						ValueManager.validateNull(
-							rs.getString("UUID")
+							rs.getString(
+								I_M_Product.COLUMNNAME_UUID
+							)
 						)
 					)
 					.setValue(
 						ValueManager.validateNull(
-							rs.getString("Value")
+							rs.getString(
+								I_M_Product.COLUMNNAME_Value
+							)
 						)
 					)
 					.setName(
 						ValueManager.validateNull(
-							rs.getString("Name")
+							rs.getString(
+								I_M_Product.COLUMNNAME_Name
+							)
+						)
+					)
+					.setIsActive(
+						rs.getBoolean(
+							I_M_Product.COLUMNNAME_IsActive
 						)
 					)
 				;

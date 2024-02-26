@@ -201,33 +201,35 @@ message ListVendorsRequest {
 message ProductInfo {
 	int32 id = 1;
 	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string upc = 5;
-	string sku = 6;
-	string product_category = 7;
-	string product_group = 8;
-	string product_class = 9;
-	string uom = 10;
+	string display_value = 3;
+	string value = 4;
+	string name = 5;
+	string upc = 6;
+	string sku = 7;
+	string product_category = 8;
+	string product_group = 9;
+	string product_class = 10;
+	string uom = 11;
 	// price
-	string list_price = 11;
-	string standard_price = 12;
-	string limit_price = 13;
-	string margin = 14;
+	string list_price = 12;
+	string standard_price = 13;
+	string limit_price = 14;
+	string margin = 15;
 	// storage
-	bool is_stocked = 15;
-	string available_quantity = 16;
-	string on_hand_quantity = 17;
-	string reserved_quantity = 18;
-	string ordered_quantity = 19;
-	string unconfirmed_quantity = 20;
-	string unconfirmed_move_quantity = 21;
+	bool is_stocked = 16;
+	string available_quantity = 17;
+	string on_hand_quantity = 18;
+	string reserved_quantity = 19;
+	string ordered_quantity = 20;
+	string unconfirmed_quantity = 21;
+	string unconfirmed_move_quantity = 22;
 	//
-	string vendor = 22;
-	bool is_attribute_instance = 23;
+	string vendor = 23;
+	bool is_attribute_instance = 24;
 	// additional
-	string description = 24;
-	string document_note = 25;
+	string description = 25;
+	string document_note = 26;
+	bool is_active = 27;
 }
 
 message ListProductsInfoResponse {
