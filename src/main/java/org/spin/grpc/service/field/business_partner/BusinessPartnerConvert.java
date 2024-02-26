@@ -55,6 +55,11 @@ public class BusinessPartnerConvert {
 					businessPartner.getUUID()
 				)
 			)
+			.setDisplayValue(
+				ValueManager.validateNull(
+					businessPartner.getDisplayValue()
+				)
+			)
 			.setValue(
 				ValueManager.validateNull(
 					businessPartner.getValue()
@@ -96,6 +101,9 @@ public class BusinessPartnerConvert {
 				NumberManager.getBigDecimalToString(
 					businessPartner.getActualLifeTimeValue()
 				)
+			)
+			.setIsActive(
+				businessPartner.isActive()
 			)
 		;
 		return builder;

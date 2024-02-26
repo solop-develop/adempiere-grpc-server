@@ -149,8 +149,9 @@ public class BusinessPartnerLogic {
 			whereClause.toString(),
 			null
 		)
+			.setClient_ID()
 			.setParameters(parametersList)
-			.setOrderBy("Value")
+			.setOrderBy(I_C_BPartner.COLUMNNAME_Value)
 		;
 
 		//	Get page and count
@@ -197,7 +198,8 @@ public class BusinessPartnerLogic {
 			null
 		)
 			.setParameters(businessPartner.getC_BPartner_ID())
-			.setOrderBy("AD_User_ID")
+			.setOrderBy(I_AD_User.COLUMNNAME_AD_User_ID)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		ListBusinessPartnerContactsResponse.Builder builderList = ListBusinessPartnerContactsResponse.newBuilder()
