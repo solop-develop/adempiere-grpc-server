@@ -136,7 +136,7 @@ public class BusinessPartnerLogic {
 			request.getValue()
 		);
 		if (!Util.isEmpty(value)) {
-			whereClause.append(" AND UPPER(Value) LIKE UPPER(?) ");
+			whereClause.append(" AND UPPER(Value) LIKE '%' || UPPER(?) || '%' ");
 			parametersList.add(value);
 		}
 		// Name
@@ -144,7 +144,7 @@ public class BusinessPartnerLogic {
 			request.getName()
 		);
 		if (!Util.isEmpty(name)) {
-			whereClause.append(" AND UPPER(Name) LIKE UPPER(?) ");
+			whereClause.append(" AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ");
 			parametersList.add(name);
 		}
 		// Contact
@@ -153,7 +153,7 @@ public class BusinessPartnerLogic {
 		);
 		if (!Util.isEmpty(contact)) {
 			whereClause.append(" AND C_BPartner.C_BPartner_ID IN (SELECT C_BPartner_ID FROM AD_User AS c ")
-				.append("WHERE UPPER(c.Name) LIKE UPPER(?)) ");
+				.append("WHERE UPPER(c.Name) LIKE '%' || UPPER(?) || '%') ");
 			parametersList.add(contact);
 		}
 		// E-Mail
@@ -162,7 +162,7 @@ public class BusinessPartnerLogic {
 		);
 		if (!Util.isEmpty(eMail)) {
 			whereClause.append(" AND C_BPartner.C_BPartner_ID IN (SELECT C_BPartner_ID FROM AD_User AS c ")
-				.append("WHERE UPPER(c.EMail) LIKE UPPER(?)) ");
+				.append("WHERE UPPER(c.EMail) LIKE '%' || UPPER(?) || '%') ");
 			parametersList.add(eMail);
 		}
 		// Phone
@@ -171,7 +171,7 @@ public class BusinessPartnerLogic {
 		);
 		if (!Util.isEmpty(phone)) {
 			whereClause.append(" AND C_BPartner.C_BPartner_ID IN (SELECT C_BPartner_ID FROM AD_User AS c ")
-				.append("WHERE UPPER(c.Phone) LIKE UPPER(?)) ");
+				.append("WHERE UPPER(c.Phone) LIKE '%' || UPPER(?) || '%') ");
 			parametersList.add(phone);
 		}
 		// Postal Code
@@ -180,7 +180,7 @@ public class BusinessPartnerLogic {
 		);
 		if (!Util.isEmpty(postalCode)) {
 			whereClause.append(" AND C_BPartner_ID IN (SELECT C_BPartner_ID FROM C_BPartner_Location bpl, C_Location AS l ")
-				.append("WHERE l.C_Location_ID = bpl.C_Location_ID AND UPPER(Postal) LIKE UPPER(?)) ")
+				.append("WHERE l.C_Location_ID = bpl.C_Location_ID AND UPPER(Postal) '%' || UPPER(?) || '%') ")
 			;
 			parametersList.add(postalCode);
 		}
