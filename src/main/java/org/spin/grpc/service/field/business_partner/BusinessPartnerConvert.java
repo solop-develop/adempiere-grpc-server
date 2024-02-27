@@ -65,6 +65,11 @@ public class BusinessPartnerConvert {
 					businessPartner.getValue()
 				)
 			)
+			.setTaxId(
+				ValueManager.validateNull(
+					businessPartner.getTaxID()
+				)
+			)
 			.setName(
 				ValueManager.validateNull(
 					businessPartner.getName()
@@ -73,6 +78,11 @@ public class BusinessPartnerConvert {
 			.setName2(
 				ValueManager.validateNull(
 					businessPartner.getName2()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					businessPartner.getDescription()
 				)
 			)
 			.setBusinessPartnerGroup(

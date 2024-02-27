@@ -65,14 +65,16 @@ message BusinessPartnerInfo {
 	string uuid = 2;
 	string display_value = 3;
 	string value = 4;
-	string name = 5;
-	string name2 = 6;
-	string business_partner_group = 7;
-	string open_balance_amount = 8;
-	string credit_available_amount = 9;
-	string credit_used_amount = 10;
-	string revenue_amount = 11;
-	bool is_active = 12;
+	string tax_id = 5;
+	string name = 6;
+	string name2 = 7;
+	string description = 8;
+	string business_partner_group = 9;
+	string open_balance_amount = 10;
+	string credit_available_amount = 11;
+	string credit_used_amount = 12;
+	string revenue_amount = 13;
+	bool is_active = 14;
 }
 
 message ListBusinessPartnersInfoResponse {
