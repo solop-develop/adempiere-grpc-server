@@ -107,7 +107,7 @@ message ListBusinessPartnersInfoRequest {
 	string customer = 19;
 	string name = 20;
 	string email = 21;
-	string postal = 22;
+	string postal_code = 22;
 	string is_vendor = 23;
 	string is_customer = 24;
 }
