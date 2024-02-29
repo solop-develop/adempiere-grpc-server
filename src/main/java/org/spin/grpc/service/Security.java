@@ -537,6 +537,11 @@ public class Security extends SecurityImplBase {
 		organizationBuilder.setId(
 				organization.getAD_Org_ID()
 			)
+			.setUuid(
+				ValueManager.validateNull(
+					organization.getUUID()
+				)
+			)
 			.setName(
 				ValueManager.validateNull(
 					organization.getName()
@@ -642,12 +647,14 @@ public class Security extends SecurityImplBase {
 		//	Get List
 		// TODO: Fix .setLimit combined with .setApplyAccessFilter and with access record (ROWNUM error)
 		query //.setLimit(limit, offset)
-			.getIDsAsList()
-			.forEach(warehouseId -> {
-				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
-				Warehouse.Builder warehousBuilder = convertWarehouse(warehouse);
+			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
+			.<MWarehouse>list()
+			.forEach(warehouse -> {
+				// MWarehouse.get static method not instance the warehouse in 0=* (asterisk)
+				// MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+				Warehouse.Builder warehouseBuilder = convertWarehouse(warehouse);
 				builder.addWarehouses(
-					warehousBuilder
+					warehouseBuilder
 				);
 			});
 		//	
@@ -660,12 +667,22 @@ public class Security extends SecurityImplBase {
 	 * @return
 	 */
 	public static Warehouse.Builder convertWarehouse(MWarehouse warehouse) {
-		Warehouse.Builder warehousBuilder = Warehouse.newBuilder();
+		Warehouse.Builder warehouseBuilder = Warehouse.newBuilder();
 		if (warehouse == null) {
-			return warehousBuilder;
+			return warehouseBuilder;
 		}
-		warehousBuilder.setId(
+		warehouseBuilder.setId(
 				warehouse.getM_Warehouse_ID()
+			)
+			.setUuid(
+				ValueManager.validateNull(
+					warehouse.getUUID()
+				)
+			)
+			.setValue(
+				ValueManager.validateNull(
+					warehouse.getValue()
+				)
 			)
 			.setName(
 				ValueManager.validateNull(
@@ -678,7 +695,7 @@ public class Security extends SecurityImplBase {
 				)
 			)
 		;
-		return warehousBuilder;
+		return warehouseBuilder;
 	}
 
 
@@ -1082,7 +1099,12 @@ public class Security extends SecurityImplBase {
 		SessionManager.loadDefaultSessionValues(context, Env.getAD_Language(context));
 		//	Session values
 		SessionInfo.Builder builder = SessionInfo.newBuilder();
-		builder.setId(session.getAD_Session_ID())
+		builder.setId(
+				session.getAD_Session_ID()
+			)
+			.setUuid(
+				session.getUUID()
+			)
 			.setName(
 				ValueManager.validateNull(
 					session.getDescription()
@@ -1112,7 +1134,19 @@ public class Security extends SecurityImplBase {
 	 */
 	private UserInfo.Builder convertUserInfo(MUser user) {
 		UserInfo.Builder userInfo = UserInfo.newBuilder()
-			.setId(user.getAD_User_ID())
+			.setId(
+				user.getAD_User_ID()
+			)
+			.setUuid(
+				ValueManager.validateNull(
+					user.getUUID()
+				)
+			)
+			.setValue(
+				ValueManager.validateNull(
+					user.getValue()
+				)
+			)
 			.setName(
 				ValueManager.validateNull(
 					user.getName()
@@ -1190,7 +1224,14 @@ public class Security extends SecurityImplBase {
 		if (client == null) {
 			return builder;
 		}
-		builder.setId(client.getAD_Client_ID())
+		builder.setId(
+				client.getAD_Client_ID()
+			)
+			.setUuid(
+				ValueManager.validateNull(
+					client.getUUID()
+				)
+			)
 			.setName(
 				ValueManager.validateNull(
 					client.getName()
@@ -1271,7 +1312,14 @@ public class Security extends SecurityImplBase {
 		}
 		Client.Builder clientBuilder = convertClient(role.getAD_Client_ID());
 		builder = Role.newBuilder()
-			.setId(role.getAD_Role_ID())
+			.setId(
+				role.getAD_Role_ID()
+			)
+			.setUuid(
+				ValueManager.validateNull(
+					role.getUUID()
+				)
+			)
 			.setName(
 				ValueManager.validateNull(
 					role.getName()
