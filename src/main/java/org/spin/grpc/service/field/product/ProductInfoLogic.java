@@ -63,7 +63,11 @@ import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.UserInterface;
+import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.db.CountUtil;
+import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class ProductInfoLogic {
@@ -268,52 +272,147 @@ public class ProductInfoLogic {
 			whereClause.append(" AND ").append(parsedValidationCode);
 		}
 
-		List<Object> parametersList = new ArrayList<>();
-
-		ListProductsInfoResponse.Builder builderList = ListProductsInfoResponse.newBuilder();
-
-		// query.setLimit(limit, offset)
-		// 	.getIDsAsList()
-		// 	.stream().forEach(productId -> {
-		// 		ProductInfo.Builder builder = ProductInfo.newBuilder(); // BusinessPartnerConvert.convertBusinessPartner(businessPartnerId);
-		// 		builderList.addRecords(builder);
-		// 	})
-		// ;
-
 		String sqlQuery = "SELECT "
-			+ "p.M_Product_ID, p.UUID, p.Discontinued, pc.Name AS M_Product_Category_ID, "
+			+ "p.M_Product_ID, p.UUID, " // + "p.Discontinued, "
+			+ "pc.Name AS M_Product_Category_ID, pcl.Name AS M_Product_Class_ID, pg.Name AS M_Product_Group_ID, "
 			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, u.name AS C_UOM_ID, bp.Name AS Vendor, "
 			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
-		String sqlFrom = "FROM M_Product p LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)"
-			+ " LEFT OUTER JOIN M_Product_PO ppo ON (p.M_Product_ID=ppo.M_Product_ID and ppo.IsCurrentVendor='Y' and ppo.IsActive='Y')"
+		String sqlFrom = "FROM M_Product p"
+			+ " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)"
+			+ " LEFT OUTER JOIN M_Product_PO ppo ON (p.M_Product_ID=ppo.M_Product_ID AND ppo.IsCurrentVendor='Y' AND ppo.IsActive='Y')"
 			+ " LEFT OUTER JOIN M_Product_Category pc ON (p.M_Product_Category_ID=pc.M_Product_Category_ID)"
+			+ " LEFT OUTER JOIN M_Product_Class pcl ON (p.M_Product_Class_ID=pcl.M_Product_Class_ID)"
+			+ " LEFT OUTER JOIN M_Product_Group pg ON (p.M_Product_Group_ID=pg.M_Product_Group_ID)"
 			+ " LEFT OUTER JOIN C_BPartner bp ON (ppo.C_BPartner_ID=bp.C_BPartner_ID)"
 			+ " LEFT OUTER JOIN C_UOM u ON (p.C_UOM_ID=u.C_UOM_ID)"
 		;
 
-		String sqlWhere = " WHERE 1=1 ";
+		String sqlWhere = " WHERE p.AD_Client_ID = ? ";
+
+		List<Object> parametersList = new ArrayList<>();
+		parametersList.add(
+			Env.getAD_Client_ID(context)
+		);
+
+		// Value
+		if (!Util.isEmpty(request.getValue())) {
+			sqlWhere += " AND UPPER(p.Value) LIKE '%' || UPPER(?) || '%' ";
+			parametersList.add(
+				request.getValue()
+			);
+		}
+		// Name
+		if (!Util.isEmpty(request.getName())) {
+			sqlWhere += " AND UPPER(p.Name) LIKE '%' || UPPER(?) || '%' ";
+			parametersList.add(
+				request.getName()
+			);
+		}
+		// UPC/EAN
+		if (!Util.isEmpty(request.getUpc())) {
+			sqlWhere += " AND UPPER(p.UPC) LIKE '%' || UPPER(?) || '%' ";
+			parametersList.add(
+				request.getUpc()
+			);
+		}
+		// UPC/EAN
+		if (!Util.isEmpty(request.getSku())) {
+			sqlWhere += " AND UPPER(p.SKAU) LIKE '%' || UPPER(?) || '%' ";
+			parametersList.add(
+				request.getSku()
+			);
+		}
+		// Product Category
+		if (request.getProductCategoryId() > 0) {
+			sqlWhere += " AND p.M_Product_Category_ID = ? ";
+			parametersList.add(
+				request.getProductCategoryId()
+			);
+		}
+		// Product Group
+		if (request.getProductGroupId() > 0) {
+			sqlWhere += " AND p.M_Product_Group_ID = ? ";
+			parametersList.add(
+				request.getProductGroupId()
+			);
+		}
+		// Product Class
+		if (request.getProductClassId() > 0) {
+			sqlWhere += " AND p.M_Product_Class_ID = ? ";
+			parametersList.add(
+				request.getProductClassId()
+			);
+		}
+		// Attribute Set
+		if (request.getAttributeSetId() > 0) {
+			sqlWhere += " AND p.M_AttributeSet_ID = ? ";
+			parametersList.add(
+				request.getAttributeSetId()
+			);
+		}
+		// Attribute Set Instance
+		if (request.getAttributeSetInstanceId() > 0) {
+			sqlWhere += " AND p.M_AttributeSetInstance_ID = ? ";
+			parametersList.add(
+				request.getAttributeSetInstanceId()
+			);
+		}
+		// Is Stocked
+		if (!Util.isEmpty(request.getIsStocked())) {
+			sqlWhere += " AND p.IsStocked = ? ";
+			boolean isStocked = BooleanManager.getBooleanFromString(
+				request.getIsStocked()
+			);
+			parametersList.add(isStocked);
+		}
+
 		String sqlOrderBy = "";
 
-
 		if (request.getPriceListId() > 0) {
-			sqlFrom += " LEFT OUTER JOIN (SELECT mpp.M_Product_ID, mpp.M_PriceList_Version_id, mpp.IsActive, mpp.PriceList, mpp.PriceStd, mpp.PriceLimit" 
+			sqlFrom += " LEFT OUTER JOIN ("
+				+			"SELECT mpp.M_Product_ID, mpp.M_PriceList_Version_id, "
+				+			"mpp.IsActive, mpp.PriceList, mpp.PriceStd, mpp.PriceLimit"
 				+			" FROM M_ProductPrice mpp, M_PriceList_Version mplv "
-				+			" WHERE mplv.M_PriceList_Version_ID = mpp.M_PriceList_Version_ID AND mplv.IsActive = 'Y') pr"
+				+			" WHERE mplv.M_PriceList_Version_ID = mpp.M_PriceList_Version_ID AND mplv.IsActive = 'Y'"
+				+		") AS pr"
 				+ " ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y') "
 			;
-			
+
 			sqlWhere += " pr.M_PriceList_Version_ID = ? ";
 			parametersList.add(request.getPriceListId());
 		}
 
+		String sql = sqlQuery + sqlFrom + sqlWhere;
 
-		String sql = sqlQuery + sqlFrom + sqlWhere + sqlOrderBy;
+		//	Count records
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		int count =  CountUtil.countRecords(sql, tableName, "p", parametersList);
+		//	Set page token
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListProductsInfoResponse.Builder builderList = ListProductsInfoResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				ValueManager.validateNull(
+					nexPageToken
+				)
+			)
+		;
+
+		String parsedSQL = LimitUtil.getQueryWithLimit(sql, limit, offset);
+		//	Add Order By
+		parsedSQL = parsedSQL + sqlOrderBy;
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
-			pstmt = DB.prepareStatement(sql, null);
+			pstmt = DB.prepareStatement(parsedSQL, null);
 			ParameterUtil.setParametersFromObjectsList(pstmt, parametersList);
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
@@ -344,6 +443,60 @@ public class ProductInfoLogic {
 							)
 						)
 					)
+					.setUpc(
+						ValueManager.validateNull(
+							rs.getString(
+								I_M_Product.COLUMNNAME_UPC
+							)
+						)
+					)
+					.setSku(
+						ValueManager.validateNull(
+							rs.getString(
+								I_M_Product.COLUMNNAME_SKU
+							)
+						)
+					)
+					.setUom(
+						ValueManager.validateNull(
+							rs.getString(
+								I_M_Product.COLUMNNAME_C_UOM_ID
+							)
+						)
+					)
+					.setProductCategory(
+						ValueManager.validateNull(
+							rs.getString(
+								I_M_Product.COLUMNNAME_M_Product_Category_ID
+							)
+						)
+					)
+					.setProductClass(
+						ValueManager.validateNull(
+							rs.getString(
+								I_M_Product.COLUMNNAME_M_Product_Class_ID
+							)
+						)
+					)
+					.setProductGroup(
+						ValueManager.validateNull(
+							rs.getString(
+								I_M_Product.COLUMNNAME_M_Product_Group_ID
+							)
+						)
+					)
+					.setIsInstanceAttribute(
+						rs.getBoolean(
+							I_M_AttributeSet.COLUMNNAME_IsInstanceAttribute
+						)
+					)
+					.setVendor(
+						ValueManager.validateNull(
+							rs.getString(
+								"Vendor"
+							)
+						)
+					)
 					.setIsActive(
 						rs.getBoolean(
 							I_M_Product.COLUMNNAME_IsActive
@@ -355,14 +508,13 @@ public class ProductInfoLogic {
 		} catch (SQLException e) {
 			throw new AdempiereException(e);
 		} finally {
-			DB.close(pstmt);
-			DB.close(rs);
+			DB.close(rs, pstmt);
 		}
 
 		return builderList;
 	}
 
-	
+
 
 	/**
 	 * Validate productId and MProduct, and get instance

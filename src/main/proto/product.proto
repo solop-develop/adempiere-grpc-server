@@ -225,7 +225,7 @@ message ProductInfo {
 	string unconfirmed_move_quantity = 22;
 	//
 	string vendor = 23;
-	bool is_attribute_instance = 24;
+	bool is_instance_attribute = 24;
 	// additional
 	string description = 25;
 	string document_note = 26;
@@ -268,7 +268,7 @@ message ListProductsInfoRequest {
 	int32 attribute_set_id = 26;
 	int32 attribute_set_instance_id = 27;
 	int32 vendor_id = 28;
-	string is_only_stock = 29;
+	string is_stocked = 29;
 }
 
 
