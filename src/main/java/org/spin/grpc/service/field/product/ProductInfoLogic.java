@@ -349,7 +349,8 @@ public class ProductInfoLogic {
 			);
 		}
 		// Product Category
-		if (request.getProductCategoryId() > 0) {
+		final int productCategoryId = request.getProductCategoryId();
+		if (productCategoryId > 0) {
 			// sqlWhere += " AND p.M_Product_Category_ID = ? ";
 
 			//  Optional Product Category
@@ -359,10 +360,10 @@ public class ProductInfoLogic {
 			;
 
 			parametersList.add(
-				request.getProductCategoryId()
+				productCategoryId
 			);
 			parametersList.add(
-				request.getProductCategoryId()
+				productCategoryId
 			);
 		}
 		// Product Group
@@ -416,8 +417,6 @@ public class ProductInfoLogic {
 				request.getVendorId()
 			);
 		}
-
-		String sqlOrderBy = "";
 
 		// Price List Version
 		final int priceListVersionId = request.getPriceListVersionId();
@@ -500,7 +499,20 @@ public class ProductInfoLogic {
 		;
 
 		String parsedSQL = LimitUtil.getQueryWithLimit(sql, limit, offset);
+
 		//	Add Order By
+		String sqlOrderBy = " ORDER BY ";
+		if (productCategoryId > 0) {
+			sqlOrderBy += " pc.Name, ";
+		}
+		sqlOrderBy += " p.Value ";
+		if (warhouseId > 0) {
+			sqlOrderBy += ", QtyAvailable DESC";
+		}
+		if (priceListVersionId > 0) {
+			sqlOrderBy += ", Margin DESC";
+		}
+
 		parsedSQL = parsedSQL + sqlOrderBy;
 
 		PreparedStatement pstmt = null;
