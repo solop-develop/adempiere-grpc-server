@@ -261,7 +261,7 @@ message ListProductsInfoRequest {
 	string upc = 19;
 	string sku = 20;
 	int32 warehouse_id = 21;
-	int32 price_list_id = 22;
+	int32 price_list_version_id = 22;
 	int32 product_category_id = 23;
 	int32 product_group_id = 24;
 	int32 product_class_id = 25;

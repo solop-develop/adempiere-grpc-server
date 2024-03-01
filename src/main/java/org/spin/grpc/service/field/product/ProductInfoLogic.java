@@ -81,7 +81,9 @@ public class ProductInfoLogic {
 			DisplayType.TableDir,
 			0, 0, 0,
 			0,
-			I_M_Warehouse.COLUMNNAME_M_Warehouse_ID, I_M_Warehouse.Table_Name
+			I_M_Warehouse.COLUMNNAME_M_Warehouse_ID, I_M_Warehouse.Table_Name,
+			0,
+			" M_Warehouse.M_Warehouse_ID > 0 "
 		);
 
 		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
@@ -244,6 +246,28 @@ public class ProductInfoLogic {
 	}
 
 
+	/**
+	 * 	System has Unconfirmed records
+	 *	@return true if unconfirmed
+	 */
+	private static boolean isUnconfirmed() {
+		final int clientId = Env.getAD_Client_ID(Env.getCtx());
+		int no = DB.getSQLValue(
+			null,
+			"SELECT 1 FROM M_InOutLineConfirm WHERE AD_Client_ID = ?",
+			clientId
+		);
+		if (no > 0) {
+			return true;
+		}
+		no = DB.getSQLValue(
+			null,
+			"SELECT 1 FROM M_MovementLineConfirm WHERE AD_Client_ID = ?",
+			clientId
+		);
+		return no > 0;
+	}
+
 
 	public static ListProductsInfoResponse.Builder listProductsInfo(ListProductsInfoRequest request) {
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -274,9 +298,10 @@ public class ProductInfoLogic {
 
 		String sqlQuery = "SELECT "
 			+ "p.M_Product_ID, p.UUID, " // + "p.Discontinued, "
+			+ "p.IsStocked AS IsStocked, "
 			+ "pc.Name AS M_Product_Category_ID, pcl.Name AS M_Product_Class_ID, pg.Name AS M_Product_Group_ID, "
-			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, u.name AS C_UOM_ID, bp.Name AS Vendor, "
-			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
+			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, u.Name AS C_UOM_ID, "
+			+ "bp.Name as Vendor, pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
 		String sqlFrom = "FROM M_Product p"
 			+ " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)"
@@ -325,7 +350,17 @@ public class ProductInfoLogic {
 		}
 		// Product Category
 		if (request.getProductCategoryId() > 0) {
-			sqlWhere += " AND p.M_Product_Category_ID = ? ";
+			// sqlWhere += " AND p.M_Product_Category_ID = ? ";
+
+			//  Optional Product Category
+			sqlWhere += " AND (p.M_Product_Category_ID=? OR p.M_Product_Category_ID IN "
+				+ 		"(SELECT ppc.M_Product_Category_ID FROM M_Product_Category AS ppc "
+				+		"WHERE ppc.M_Product_Category_Parent_ID = ?))"
+			;
+
+			parametersList.add(
+				request.getProductCategoryId()
+			);
 			parametersList.add(
 				request.getProductCategoryId()
 			);
@@ -357,6 +392,14 @@ public class ProductInfoLogic {
 			parametersList.add(
 				request.getAttributeSetInstanceId()
 			);
+			
+			// String asiWhere = fASI_ID.getAttributeWhere();
+			// if (asiWhere.length() > 0)
+			// {
+			// 	if (asiWhere.startsWith(" AND "))
+			// 		asiWhere = asiWhere.substring(5);
+			// 	list.add(asiWhere);
+			// }
 		}
 		// Is Stocked
 		if (!Util.isEmpty(request.getIsStocked())) {
@@ -366,10 +409,25 @@ public class ProductInfoLogic {
 			);
 			parametersList.add(isStocked);
 		}
+		// Vendor
+		if (request.getVendorId() > 0) {
+			sqlWhere += " AND ppo.C_BPartner_ID = ? ";
+			parametersList.add(
+				request.getVendorId()
+			);
+		}
 
 		String sqlOrderBy = "";
 
-		if (request.getPriceListId() > 0) {
+		// Price List Version
+		final int priceListVersionId = request.getPriceListVersionId();
+		if (request.getPriceListVersionId() > 0) {
+			sqlQuery += ", "
+				+ "bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList, "
+				+ "bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd, "
+				+ "bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceLimit, "
+				+ "bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) - bomPriceLimit(p.M_Product_ID, pr.M_PriceList_Version_ID) AS Margin "
+			;
 			sqlFrom += " LEFT OUTER JOIN ("
 				+			"SELECT mpp.M_Product_ID, mpp.M_PriceList_Version_id, "
 				+			"mpp.IsActive, mpp.PriceList, mpp.PriceStd, mpp.PriceLimit"
@@ -378,9 +436,45 @@ public class ProductInfoLogic {
 				+		") AS pr"
 				+ " ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y') "
 			;
+			sqlWhere += " AND pr.M_PriceList_Version_ID = ? ";
+			parametersList.add(
+				priceListVersionId
+			);
+		}
 
-			sqlWhere += " pr.M_PriceList_Version_ID = ? ";
-			parametersList.add(request.getPriceListId());
+		// Warehouse
+		final int warhouseId = request.getWarehouseId();
+		boolean isUnconfirmed = false;
+		if (warhouseId > 0) {
+			sqlQuery += ", "
+				+ "CASE WHEN p.IsBOM='N' AND (p.ProductType!='I' OR p.IsStocked='N') "
+					+ "THEN to_number(get_Sysconfig('QTY_TO_SHOW_FOR_SERVICES', '99999', p.AD_Client_ID, 0), '99999999999') "
+					+ "ELSE bomQtyAvailable(p.M_Product_ID, " + warhouseId + ", 0) "
+				+ "END AS QtyAvailable, "
+				+ "CASE WHEN p.IsBOM='N' AND (p.ProductType!='I' OR p.IsStocked='N') "
+					+ "THEN to_number(get_Sysconfig('QTY_TO_SHOW_FOR_SERVICES', '99999', p.AD_Client_ID, 0), '99999999999') "
+					+ "ELSE bomQtyOnHand(p.M_Product_ID, " + warhouseId + ", 0) "
+				+ "END AS QtyOnHand, "
+				+ "bomQtyReserved(p.M_Product_ID, " + warhouseId + ", 0) AS QtyReserved, "
+				+ "bomQtyOrdered(p.M_Product_ID, " + warhouseId + ", 0) AS QtyOrdered "
+			;
+
+			isUnconfirmed = isUnconfirmed();
+			if (isUnconfirmed) {
+				sqlQuery += ", "
+					+ "(SELECT SUM(c.TargetQty) FROM M_InOutLineConfirm c "
+						+ "INNER JOIN M_InOutLine il ON (c.M_InOutLine_ID=il.M_InOutLine_ID) "
+						+ "INNER JOIN M_InOut i ON (il.M_InOut_ID=i.M_InOut_ID) "
+						+ "WHERE c.Processed='N' AND i.M_Warehouse_ID=" + warhouseId + " AND il.M_Product_ID=p.M_Product_ID) "
+					+ "AS QtyUnconfirmed, "
+					+ "(SELECT SUM(c.TargetQty) FROM M_MovementLineConfirm c "
+						+ "INNER JOIN M_MovementLine ml ON (c.M_MovementLine_ID=ml.M_MovementLine_ID) "
+						+ "INNER JOIN M_Locator l ON (ml.M_LocatorTo_ID=l.M_Locator_ID) "
+						+ "WHERE c.Processed='N' AND l.M_Warehouse_ID=" + warhouseId + " AND ml.M_Product_ID=p.M_Product_ID) "
+					+ "AS QtyUnconfirmedMove "
+				;
+			}
+			sqlWhere += " AND p.IsSummary='N' ";
 		}
 
 		String sql = sqlQuery + sqlFrom + sqlWhere;
@@ -416,93 +510,12 @@ public class ProductInfoLogic {
 			ParameterUtil.setParametersFromObjectsList(pstmt, parametersList);
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
-				ProductInfo.Builder builder = ProductInfo.newBuilder()
-					.setId(
-						rs.getInt(
-							I_M_Product.COLUMNNAME_M_Product_ID
-						)
-					)
-					.setUuid(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_UUID
-							)
-						)
-					)
-					.setValue(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_Value
-							)
-						)
-					)
-					.setName(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_Name
-							)
-						)
-					)
-					.setUpc(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_UPC
-							)
-						)
-					)
-					.setSku(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_SKU
-							)
-						)
-					)
-					.setUom(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_C_UOM_ID
-							)
-						)
-					)
-					.setProductCategory(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_M_Product_Category_ID
-							)
-						)
-					)
-					.setProductClass(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_M_Product_Class_ID
-							)
-						)
-					)
-					.setProductGroup(
-						ValueManager.validateNull(
-							rs.getString(
-								I_M_Product.COLUMNNAME_M_Product_Group_ID
-							)
-						)
-					)
-					.setIsInstanceAttribute(
-						rs.getBoolean(
-							I_M_AttributeSet.COLUMNNAME_IsInstanceAttribute
-						)
-					)
-					.setVendor(
-						ValueManager.validateNull(
-							rs.getString(
-								"Vendor"
-							)
-						)
-					)
-					.setIsActive(
-						rs.getBoolean(
-							I_M_Product.COLUMNNAME_IsActive
-						)
-					)
-				;
+				ProductInfo.Builder builder = ProductInfoConvert.convertProductInfo(
+					rs,
+					priceListVersionId,
+					warhouseId,
+					isUnconfirmed
+				);
 				builderList.addRecords(builder);
 			}
 		} catch (SQLException e) {

@@ -260,14 +260,30 @@ public class ReferenceInfo {
 		return join.toString();
 	}
 
+	static public MLookupInfo getInfoFromRequest(
+		int displayTypeId,
+		int fieldId, int processParameterId, int browseFieldId,
+		int columnId, String columnName, String tableName
+	) {
+		return getInfoFromRequest(
+			displayTypeId,
+			fieldId, processParameterId, browseFieldId,
+			columnId, columnName, tableName,
+			0, null
+		);
+	}
 	/**
 	 * Get reference Info from request
 	 * @param request
 	 * @return
 	 */
-	static public MLookupInfo getInfoFromRequest(int displayTypeId, int fieldId, int processParameterId, int browseFieldId, int columnId, String columnName, String tableName) {
+	static public MLookupInfo getInfoFromRequest(
+		int displayTypeId,
+		int fieldId, int processParameterId, int browseFieldId,
+		int columnId, String columnName, String tableName,
+		int validationRuleId, String customRestriction
+	) {
 		int referenceValueId = 0;
-		int validationRuleId = 0;
 		if(fieldId > 0) {
 			MField field = new MField(Env.getCtx(), fieldId, null);
 			if(field == null || field.getAD_Field_ID() <= 0) {
@@ -394,7 +410,8 @@ public class ReferenceInfo {
 			displayTypeId,
 			referenceValueId,
 			columnName,
-			validationRuleId
+			validationRuleId,
+			customRestriction
 		);
 	}
 
