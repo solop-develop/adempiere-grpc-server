@@ -28,6 +28,7 @@ import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Role;
+import org.adempiere.core.domains.models.I_AD_User_Authentication;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_AD_Workflow;
 import org.adempiere.core.domains.models.I_M_Warehouse;
@@ -248,14 +249,21 @@ public class Security extends SecurityImplBase {
 		MRole role = MRole.get(context, currentSession.getAD_Role_ID());
 
 		// Session values
+		boolean isOpenID = false;
+		if (currentSession.get_ColumnIndex(I_AD_User_Authentication.COLUMNNAME_AD_User_Authentication_ID) >= 0) {
+			isOpenID = currentSession.get_ValueAsInt(I_AD_User_Authentication.COLUMNNAME_AD_User_Authentication_ID) > 0;
+		}
+
+		// Session values
 		Session.Builder builder = Session.newBuilder();
-		final String bearerToken = SessionManager.createSession(
+		final String bearerToken = SessionManager.createSessionAndGetToken(
 			currentSession.getWebSession(),
 			language,
 			role.getAD_Role_ID(),
 			userId,
 			currentSession.getAD_Org_ID(),
-			warehouseId
+			warehouseId,
+			isOpenID
 		);
 
 		// Update session preferences
@@ -799,7 +807,16 @@ public class Security extends SecurityImplBase {
 				}
 			}
 		}
-		return createValidSession(isDefaultRole, request.getClientVersion(), request.getLanguage(), roleId, userId, organizationId, warehouseId);
+		return createValidSession(
+			isDefaultRole,
+			request.getClientVersion(),
+			request.getLanguage(),
+			roleId,
+			userId,
+			organizationId,
+			warehouseId,
+			false
+		);
 	}
 
 	/**
@@ -813,7 +830,7 @@ public class Security extends SecurityImplBase {
 	 * @param warehouseId
 	 * @return
 	 */
-	private Session.Builder createValidSession(boolean isDefaultRole, String clientVersion, String language, int roleId, int userId, int organizationId, int warehouseId) {
+	private Session.Builder createValidSession(boolean isDefaultRole, String clientVersion, String language, int roleId, int userId, int organizationId, int warehouseId, boolean isOpenID) {
 		Session.Builder builder = Session.newBuilder();
 			if(isDefaultRole && roleId <= 0) {
 				roleId = SessionManager.getDefaultRoleId(userId);
@@ -838,7 +855,15 @@ public class Security extends SecurityImplBase {
 			}
 
 			//	Session values
-			final String bearerToken = SessionManager.createSession(clientVersion, language, roleId, userId, organizationId, warehouseId);
+			final String bearerToken = SessionManager.createSessionAndGetToken(
+				clientVersion,
+				language,
+				roleId,
+				userId,
+				organizationId,
+				warehouseId,
+				isOpenID
+			);
 			builder.setToken(bearerToken);
 			//	Return session
 			return builder;
@@ -875,34 +900,19 @@ public class Security extends SecurityImplBase {
 		if(validUser == null) {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 		}
-		return createValidSession(true, request.getClientVersion(), request.getLanguage(), -1, validUser.getAD_User_ID(), -1, -1); 
+		return createValidSession(
+			true,
+			request.getClientVersion(),
+			request.getLanguage(),
+			-1,
+			validUser.getAD_User_ID(),
+			-1,
+			-1,
+			true
+		);
 	}
 
 
-	/**
-	 * Convert Values from Context
-	 * @param value
-	 * @return
-	 */
-//	private Value.Builder convertObjectFromContext(String value) {
-//		Value.Builder builder = Value.newBuilder();
-//		if (Util.isEmpty(value)) {
-//			return builder;
-//		}
-//		if (ValueUtil.isNumeric(value)) {
-//			builder.setIntValue(ValueUtil.getIntegerFromString(value));
-//		} else if (ValueUtil.isBoolean(value)) {
-//			boolean booleanValue = ValueUtil.stringToBoolean(value.trim());
-//			builder.setBooleanValue(booleanValue);
-//		} else if (ValueUtil.isDate(value)) {
-//			return ValueUtil.getValueFromDate(ValueUtil.getDateFromString(value));
-//		} else {
-//			builder.setStringValue(ValueUtil.validateNull(value));
-//		}
-//		//	
-//		return builder;
-//	}
-	
 	@Override
 	public void runChangeRole(ChangeRoleRequest request, StreamObserver<Session> responseObserver) {
 		try {
@@ -977,7 +987,19 @@ public class Security extends SecurityImplBase {
 
 		// Session values
 		Session.Builder builder = Session.newBuilder();
-		final String bearerToken = SessionManager.createSession(currentSession.getWebSession(), language, roleId, userId, organizationId, warehouseId);
+		boolean isOpenID = false;
+		if (currentSession.get_ColumnIndex(I_AD_User_Authentication.COLUMNNAME_AD_User_Authentication_ID) >= 0) {
+			isOpenID = currentSession.get_ValueAsInt(I_AD_User_Authentication.COLUMNNAME_AD_User_Authentication_ID) > 0;
+		}
+		final String bearerToken = SessionManager.createSessionAndGetToken(
+			currentSession.getWebSession(),
+			language,
+			roleId,
+			userId,
+			organizationId,
+			warehouseId,
+			isOpenID
+		);
 		builder.setToken(bearerToken);
 		// Logout
 		logoutSession(LogoutRequest.newBuilder().build());
@@ -1046,7 +1068,12 @@ public class Security extends SecurityImplBase {
 			});
 		session.setDefaultContext(contextValues);
 	}
-	
+
+	/**
+	 * Convert Values from Context
+	 * @param value
+	 * @return
+	 */
 	private Value.Builder convertObjectFromContext(String value) {
 		Value.Builder builder = Value.newBuilder();
 		if (Util.isEmpty(value)) {
@@ -1070,8 +1097,7 @@ public class Security extends SecurityImplBase {
 		return builder;
 	}
 
-	
-	
+
 	/**
 	 * Logout session
 	 * @param request

@@ -38,7 +38,7 @@ static_resources:
                 # package.service
                 - bank_statement_match.BankStatementMatch
                 - data.BusinessData
-                - data.CoreFunctionality
+                - core_functionality.CoreFunctionality
                 - dashboarding.Dashboarding
                 - dictionary.Dictionary
                 - enrollment.Register
@@ -57,6 +57,7 @@ static_resources:
                 - logs.Logs
                 - match_po_receipt_invoice.MatchPORReceiptInvoice
                 - material_management.MaterialManagement
+                - notice_management.NoticeManagement
                 - order.Order
                 - payment_allocation.PaymentAllocation
                 - payment_print_export.PaymentPrintExport
@@ -66,8 +67,10 @@ static_resources:
                 - record_management.RecordManagement
                 - report_management.ReportManagement
                 - security.Security
+                - task_management.TaskManagement
                 - time_control.TimeControl
                 - time_record.TimeRecord
+                - trial_balance_drillable.TrialBalanceDrillable
                 - updates.UpdateCenter
                 - user_customization.UserCustomization
                 - user_interface.UserInterface
