@@ -187,7 +187,7 @@ public class WindowUtil {
 						+ "ON(wc.AD_WindowCustom_ID = tc.AD_WindowCustom_ID AND wc.IsActive = 'Y') "
 					+ "WHERE fc.IsActive = 'Y' "
 					+ "AND fc.IsDisplayed = 'N' "
-					+ "AND fc.AD_Field_ID = f.AD_Field_ID " // test with = ?
+					+ "AND fc.AD_Field_ID = f.AD_Field_ID "
 					+ "AND (wc.AD_User_ID = ? OR wc.AD_Role_ID = ?)"
 				+ ") "
 				+ "AND f.AD_Tab_ID = ? " // #2
