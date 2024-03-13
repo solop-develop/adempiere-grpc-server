@@ -150,7 +150,8 @@ public class ReportManagement extends ReportManagementImplBase {
 		if (!process.isReport()) {
 			throw new AdempiereException("@WFA.NotReport@");
 		}
-		if(!MRole.getDefault().getProcessAccess(process.getAD_Process_ID())) {
+		Boolean isReportAccess = MRole.getDefault().getProcessAccess(process.getAD_Process_ID());
+		if(isReportAccess == null || !isReportAccess.booleanValue()) {
 			throw new AdempiereException("@AccessCannotReport@");
 		}
 

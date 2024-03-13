@@ -156,11 +156,11 @@ public class WindowUtil {
 		// to prevent duplicity of associated processes in different locations (table, column and tab).
 		HashMap<Integer, MProcess> processList = new HashMap<>();
 
+		MRole role = MRole.getDefault(tab.getCtx(), false);
 		//	First Process Tab
 		if(tab.getAD_Process_ID() > 0) {
-			MRole role = MRole.getDefault(tab.getCtx(), false);
-			Boolean processAccess = role.getProcessAccess(tab.getAD_Process_ID());
-			if (processAccess != null && processAccess.booleanValue()) {
+			Boolean isProcessAccess = role.getProcessAccess(tab.getAD_Process_ID());
+			if (isProcessAccess != null && isProcessAccess.booleanValue()) {
 				boolean isRecordAccess = role.isRecordAccess(I_AD_Process.Table_ID, tab.getAD_Process_ID(), false);
 				if (isRecordAccess) {
 					MProcess processTab = ASPUtil.getInstance(tab.getCtx()).getProcess(tab.getAD_Process_ID());
@@ -204,7 +204,7 @@ public class WindowUtil {
 		List<Object> filterList = new ArrayList<>();
 		filterList.add(tab.getAD_Process_ID());
 		filterList.add(Env.getAD_User_ID(context));
-		filterList.add(Env.getAD_Role_ID(context));
+		filterList.add(role.getAD_Role_ID());
 		filterList.add(tab.getAD_Tab_ID());
 		filterList.add(tab.getAD_Table_ID());
 		//	Process from tab
@@ -220,8 +220,14 @@ public class WindowUtil {
 			.getIDsAsList()
 		;
 		for(Integer processId : processIdList) {
-			MProcess process = ASPUtil.getInstance(tab.getCtx()).getProcess(processId);
-			processList.put(processId, process);
+			Boolean isProcessAccess = role.getProcessAccess(tab.getAD_Process_ID());
+			if (isProcessAccess != null && isProcessAccess.booleanValue()) {
+				boolean isRecordAccess = role.isRecordAccess(I_AD_Process.Table_ID, processId, false);
+				if (isRecordAccess) {
+					MProcess process = ASPUtil.getInstance(tab.getCtx()).getProcess(processId);
+					processList.put(processId, process);
+				}
+			}
 		}
 
 		return new ArrayList<MProcess>(processList.values());
