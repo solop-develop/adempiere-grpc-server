@@ -67,6 +67,7 @@ import org.spin.backend.grpc.user_customization.SaveProcessCustomizationRequest;
 import org.spin.backend.grpc.user_customization.SaveWindowCustomizationRequest;
 import org.spin.backend.grpc.user_customization.User;
 import org.spin.backend.grpc.user_customization.UserCustomizationGrpc.UserCustomizationImplBase;
+// import org.spin.base.util.AccessUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -790,7 +791,9 @@ public class UserCustomization extends UserCustomizationImplBase {
 		if (process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
-		// if(!MRole.getDefault().getProcessAccess(process.getAD_Process_ID())) {
+		// Record/Role access
+		// boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
+		// if(!isWithAccess) {
 		// 	throw new AdempiereException("@AccessTableNoUpdate@");
 		// }
 

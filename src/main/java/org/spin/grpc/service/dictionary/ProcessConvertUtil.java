@@ -44,7 +44,20 @@ import org.spin.util.AbstractExportFormat;
 import org.spin.util.ReportExportHandler;
 
 public class ProcessConvertUtil {
-	
+
+	/**
+	 * Convert process to builder
+	 * @param processId
+	 * @return
+	 */
+	public static Process.Builder convertProcess(Properties context, int processId, boolean withParams) {
+		if (processId <= 0) {
+			return Process.newBuilder();
+		}
+		MProcess process = MProcess.get(context, processId);
+		return convertProcess(context, process, withParams);
+	}
+
 	/**
 	 * Convert process to builder
 	 * @param process

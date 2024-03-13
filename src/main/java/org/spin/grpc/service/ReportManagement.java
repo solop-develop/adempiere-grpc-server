@@ -73,6 +73,7 @@ import org.spin.backend.grpc.report_management.ListReportViewsResponse;
 import org.spin.backend.grpc.report_management.PrintFormat;
 import org.spin.backend.grpc.report_management.ReportView;
 import org.spin.backend.grpc.report_management.ReportManagementGrpc.ReportManagementImplBase;
+import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
@@ -150,8 +151,9 @@ public class ReportManagement extends ReportManagementImplBase {
 		if (!process.isReport()) {
 			throw new AdempiereException("@WFA.NotReport@");
 		}
-		Boolean isReportAccess = MRole.getDefault().getProcessAccess(process.getAD_Process_ID());
-		if(isReportAccess == null || !isReportAccess.booleanValue()) {
+		// Record/Role access
+		boolean isReportAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
+		if(!isReportAccess) {
 			throw new AdempiereException("@AccessCannotReport@");
 		}
 

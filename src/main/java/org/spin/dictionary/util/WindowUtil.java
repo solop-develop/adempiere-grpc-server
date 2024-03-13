@@ -27,6 +27,7 @@ import org.compiere.model.MRole;
 import org.compiere.model.MTab;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.spin.base.util.AccessUtil;
 import org.spin.util.ASPUtil;
 
 /**
@@ -159,13 +160,11 @@ public class WindowUtil {
 		MRole role = MRole.getDefault(tab.getCtx(), false);
 		//	First Process Tab
 		if(tab.getAD_Process_ID() > 0) {
-			Boolean isProcessAccess = role.getProcessAccess(tab.getAD_Process_ID());
-			if (isProcessAccess != null && isProcessAccess.booleanValue()) {
-				boolean isRecordAccess = role.isRecordAccess(I_AD_Process.Table_ID, tab.getAD_Process_ID(), false);
-				if (isRecordAccess) {
-					MProcess processTab = ASPUtil.getInstance(tab.getCtx()).getProcess(tab.getAD_Process_ID());
-					processList.put(tab.getAD_Process_ID(), processTab);
-				}
+			// Record/Role access
+			boolean isWithAccess = AccessUtil.isProcessAccess(role, tab.getAD_Process_ID());
+			if (isWithAccess) {
+				MProcess processTab = ASPUtil.getInstance(tab.getCtx()).getProcess(tab.getAD_Process_ID());
+				processList.put(tab.getAD_Process_ID(), processTab);
 			}
 		}
 
@@ -220,13 +219,11 @@ public class WindowUtil {
 			.getIDsAsList()
 		;
 		for(Integer processId : processIdList) {
-			Boolean isProcessAccess = role.getProcessAccess(tab.getAD_Process_ID());
-			if (isProcessAccess != null && isProcessAccess.booleanValue()) {
-				boolean isRecordAccess = role.isRecordAccess(I_AD_Process.Table_ID, processId, false);
-				if (isRecordAccess) {
-					MProcess process = ASPUtil.getInstance(tab.getCtx()).getProcess(processId);
-					processList.put(processId, process);
-				}
+			// Record/Role access
+			boolean isWithAccess = AccessUtil.isProcessAccess(role, processId);
+			if (isWithAccess) {
+				MProcess process = ASPUtil.getInstance(tab.getCtx()).getProcess(processId);
+				processList.put(processId, process);
 			}
 		}
 

@@ -41,7 +41,6 @@ import org.compiere.model.MMenu;
 import org.compiere.model.MPInstance;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
-import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -69,6 +68,7 @@ import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.common.UpdateEntityRequest;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.query.SortingManager;
+import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.workflow.WorkflowUtil;
@@ -208,9 +208,9 @@ public class BusinessData extends BusinessDataImplBase {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
 		}
 
-		// Role access
-		Boolean isWithAccess = MRole.getDefault().getProcessAccess(process.getAD_Process_ID());
-		if(isWithAccess == null || !isWithAccess.booleanValue()) {
+		// Record/Role access
+		boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
+		if(!isWithAccess) {
 			if (process.isReport()) {
 				throw new AdempiereException("@AccessCannotReport@");
 			}

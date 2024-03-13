@@ -267,7 +267,11 @@ public class WindowConvertUtil {
 				builder.setSortYesNoColumnName(column.getColumnName());
 			}
 		}
+
 		//	Process
+		Process.Builder processAssociated = ProcessConvertUtil.convertProcess(context, tab.getAD_Process_ID(), false);
+		builder.setProcess(processAssociated);
+
 		List<MProcess> processList = WindowUtil.getProcessActionFromTab(context, tab);
 		if(processList != null && processList.size() > 0) {
 			for(MProcess process : processList) {
@@ -280,6 +284,8 @@ public class WindowConvertUtil {
 				builder.addProcesses(processBuilder.build());
 			}
 		}
+
+		//	Fields
 		if(withFields) {
 			for(MField field : ASPUtil.getInstance(context).getWindowFields(tab.getAD_Tab_ID())) {
 				Field.Builder fieldBuilder = WindowConvertUtil.convertField(

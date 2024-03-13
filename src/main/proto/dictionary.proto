@@ -155,12 +155,13 @@ message Tab {
 	repeated string context_column_names = 29;
 	// External Info
 	ContextInfo context_info = 30;
-	repeated Process processes = 31;
-	repeated Field fields = 32;
-	FieldGroup field_group = 33;
-	string read_only_logic = 34;
-	string uuid = 35;
-	repeated string key_columns = 36;
+	Process process = 31;
+	repeated Process processes = 32;
+	repeated Field fields = 33;
+	FieldGroup field_group = 34;
+	string read_only_logic = 35;
+	string uuid = 36;
+	repeated string key_columns = 37;
 }
 
 // Field
