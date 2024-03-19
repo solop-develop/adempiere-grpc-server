@@ -17,6 +17,7 @@ package org.spin.grpc.service.field.product;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -32,12 +33,17 @@ import org.adempiere.core.domains.models.I_M_Product_PO;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MPriceList;
+import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProduct;
+import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.field.product.GetLastPriceListVersionRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetInstancesRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetsRequest;
 import org.spin.backend.grpc.field.product.ListAvailableToPromisesRequest;
@@ -61,6 +67,7 @@ import org.spin.backend.grpc.field.product.ListWarehousesRequest;
 import org.spin.backend.grpc.field.product.ProductInfo;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
+import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -96,6 +103,73 @@ public class ProductInfoLogic {
 		);
 
 		return builderList;
+	}
+
+
+	public static LookupItem.Builder getLastPriceListVersion(GetLastPriceListVersionRequest request) {
+		int priceListId = request.getPriceListId();
+		if (priceListId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_PriceList_ID@");
+		}
+
+		MPriceList priceList = MPriceList.get(Env.getCtx(), priceListId, null);
+		if (priceList == null || priceList.getM_PriceList_ID() <= 0) {
+			throw new AdempiereException("@M_PriceList_ID@ @NotFound@");
+		}
+
+		//	Ordered Date
+		Timestamp validPriceDate = ValueManager.getDateFromTimestampDate(
+			request.getDateOrdered()
+		);
+		//	Invocied Date
+		if (validPriceDate == null) {
+			validPriceDate = ValueManager.getDateFromTimestampDate(
+				request.getDateInvoiced()
+			);
+		}
+		//	Today
+		if (validPriceDate == null) {
+			validPriceDate = new Timestamp(
+				System.currentTimeMillis()
+			);
+		}
+
+		// NOT USE, chache with loaded price list version into `m_plv` variable
+		// MPriceListVersion priceListVersion = priceList.getPriceListVersion(priceDate);
+
+		final String whereClause = "M_PriceList_ID = ? AND TRUNC(ValidFrom, 'DD') <= ?";
+		MPriceListVersion priceListVersion = new Query(
+			Env.getCtx(),
+			I_M_PriceList_Version.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(priceList.getM_PriceList_ID(), validPriceDate)
+			.setOnlyActiveRecords(true)
+			.setOrderBy("ValidFrom DESC")
+			.first()
+		;
+
+		LookupItem.Builder builder = LookupItem.newBuilder()
+			.setTableName(
+				I_M_PriceList_Version.Table_Name
+			)
+		;
+		if (priceListVersion == null || priceListVersion.getM_PriceList_Version_ID() <= 0) {
+			return builder;
+		}
+		builder = LookupUtil.convertObjectFromResult(
+			priceListVersion.getM_PriceList_Version_ID(),
+			priceListVersion.getUUID(),
+			null,
+			priceListVersion.getDisplayValue(),
+			priceListVersion.isActive()
+		);
+		builder.setTableName(
+			I_M_PriceList_Version.Table_Name
+		);
+
+		return builder;
 	}
 
 	public static ListLookupItemsResponse.Builder listPricesListVersions(ListPricesListVersionsRequest request) {

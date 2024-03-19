@@ -36,8 +36,15 @@ service ProductInfoService {
 	rpc ListWarehouses(ListWarehousesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/field/products/warehouses" };
 	}
+	rpc GetLastPriceListVersion(GetLastPriceListVersionRequest) returns (data.LookupItem) {
+		option (google.api.http) = {
+			get: "/field/products/prices-lists-versions/{price_list_id}"
+		};
+	}
 	rpc ListPricesListVersions(ListPricesListVersionsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/prices-lists-versions" };
+		option (google.api.http) = {
+			get: "/field/products/prices-lists-versions"
+		};
 	}
 	rpc ListAttributeSets(ListAttributeSetsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/field/products/attribute-sets" };
@@ -117,6 +124,11 @@ message ListWarehousesRequest {
 	string context_attributes = 8;
 }
 
+message GetLastPriceListVersionRequest {
+	int32 price_list_id = 1;
+	google.protobuf.Timestamp date_ordered = 2;
+	google.protobuf.Timestamp date_invoiced = 3;
+}
 message ListPricesListVersionsRequest {
 	string filters = 1;
 	string sort_by = 2;

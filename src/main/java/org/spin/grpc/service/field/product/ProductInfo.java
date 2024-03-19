@@ -16,6 +16,8 @@ package org.spin.grpc.service.field.product;
 
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.field.product.GetLastPriceListVersionRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetInstancesRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetsRequest;
 import org.spin.backend.grpc.field.product.ListAvailableToPromisesRequest;
@@ -54,6 +56,29 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 	public void listWarehouses(ListWarehousesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			ListLookupItemsResponse.Builder buildersList = ProductInfoLogic.listWarehouses(
+				request
+			);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void getLastPriceListVersion(GetLastPriceListVersionRequest request, StreamObserver<LookupItem> responseObserver) {
+		try {
+			LookupItem.Builder buildersList = ProductInfoLogic.getLastPriceListVersion(
 				request
 			);
 			responseObserver.onNext(
