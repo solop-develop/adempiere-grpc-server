@@ -145,44 +145,44 @@ public class ReferenceInfo {
 		this.joinColumnName = joinColumnName;
 		setHasJoinValue(true);
 	}
-	
-	private String getTableName() {
+
+	public String getTableName() {
 		return getTableName(false);
 	}
-	
-	private String getTableName(boolean translated) {
+
+	public String getTableName(boolean translated) {
 		if(translated) {
 			return tableName + "_Trl";
 		}
 		return tableName;
 	}
-	
+
 	public void setTableName(String tableName) {
 		this.tableName = tableName;
 	}
-	
-	private String getTableAlias(boolean translated) {
+
+	public String getTableAlias(boolean translated) {
 		if(translated) {
 			return tableAlias + "_Trl";
 		}
 		return tableAlias;
 	}
-	
-	private String getTableAlias() {
+
+	public String getTableAlias() {
 		return getTableAlias(false);
 	}
-	
+
 	public void setTableAlias(String tableAlias) {
 		this.tableAlias = tableAlias;
 	}
-	
+
 	/**
 	 * Without column name
 	 */
 	private void buildAlias() {
 		buildAlias(null);
 	}
-	
+
 	/**
 	 * Create alias
 	 */
@@ -200,7 +200,7 @@ public class ReferenceInfo {
 			}
 		}
 	}
-	
+
 	/**
 	 * Get display value for Query
 	 * @return

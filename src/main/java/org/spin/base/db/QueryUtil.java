@@ -75,6 +75,16 @@ public class QueryUtil {
 			int displayTypeId = column.getAD_Reference_ID();
 			final String columnName = column.getColumnName();
 
+			// Add virutal column
+			final String columnSQL = column.getColumnSQL();
+			if (!Util.isEmpty(columnSQL, true)) {
+				queryToAdd.append(", ")
+					.append(columnSQL)
+					.append(" AS ")
+					.append(columnName)
+				;
+			}
+
 			//	Reference Value
 			int referenceValueId = column.getAD_Reference_Value_ID();
 
@@ -100,7 +110,23 @@ public class QueryUtil {
 				}
 			}
 
-			if (ReferenceUtil.validateReference(displayTypeId) || DisplayType.ID == displayTypeId) {
+			if (ReferenceUtil.validateReference(displayTypeId)) {
+				if (!Util.isEmpty(columnSQL, true)) {
+					StringBuffer displayColumnSQL = new StringBuffer()
+						.append(", ")
+						.append(columnSQL)
+						.append(LookupUtil.DISPLAY_COLUMN_KEY)
+						.append("_")
+						.append(columnName)
+					;
+					queryToAdd.append(displayColumnSQL);
+					continue;
+				}
+
+				if (columnName.equals(tableName + "_ID")) {
+					// overwrite to correct sub-query table alias
+					displayTypeId = DisplayType.ID;
+				}
 				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
 					.getReferenceInfo(
 						displayTypeId,
@@ -207,7 +233,7 @@ public class QueryUtil {
 				}
 			}
 
-			if (ReferenceUtil.validateReference(displayTypeId) || DisplayType.ID == displayTypeId) {
+			if (ReferenceUtil.validateReference(displayTypeId)) {
 				if (!Util.isEmpty(columnSQL, true)) {
 					StringBuffer displayColumnSQL = new StringBuffer()
 						.append(", ")
@@ -220,6 +246,10 @@ public class QueryUtil {
 					continue;
 				}
 
+				if (columnName.equals(tableName + "_ID")) {
+					// overwrite to correct sub-query table alias
+					displayTypeId = DisplayType.ID;
+				}
 				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
 					Env.getCtx()
 				).getReferenceInfo(
@@ -311,7 +341,7 @@ public class QueryUtil {
 				}
 			}
 
-			if (ReferenceUtil.validateReference(displayTypeId) || DisplayType.ID == displayTypeId) {
+			if (ReferenceUtil.validateReference(displayTypeId)) {
 				MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), browseField.getAD_View_Column_ID(), null);
 				MViewDefinition viewDefinition = MViewDefinition.get(Env.getCtx(), viewColumn.getAD_View_Definition_ID());
 				final String tableName = viewDefinition.getTableAlias();
@@ -322,6 +352,10 @@ public class QueryUtil {
 					columnName = column.getColumnName();
 				}
 
+				if (columnName.equals(tableName + "_ID")) {
+					// overwrite to correct sub-query table alias
+					displayTypeId = DisplayType.ID;
+				}
 				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
 					.getReferenceInfo(
 						displayTypeId,

@@ -803,7 +803,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		return builder;
 	}
 
-	
+
 	@Override
 	public void createTabEntity(CreateTabEntityRequest request, StreamObserver<Entity> responseObserver) {
 		try {

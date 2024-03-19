@@ -74,21 +74,22 @@ public class ReferenceUtil {
 
 	/**
 	 * Validate reference
-	 * TODO: Improve support to ID reference to get display column
 	 * TODO: Add support to Resource Assigment reference to get display column
-	 * @param referenceId
-	 * @param referenceValueId
-	 * @param columnName
+	 * @param displayTypeId
 	 * @return
 	 */
-	public static boolean validateReference(int referenceId) {
-		if (DisplayType.isLookup(referenceId) || DisplayType.Account == referenceId
-			|| DisplayType.ID == referenceId
-			|| DisplayType.Location == referenceId || DisplayType.PAttribute == referenceId
-			|| DisplayType.Locator == referenceId) {
+	public static boolean validateReference(int displayTypeId) {
+		if (
+			DisplayType.isLookup(displayTypeId)
+			|| DisplayType.Account == displayTypeId
+			|| DisplayType.ID == displayTypeId
+			|| DisplayType.Location == displayTypeId
+			|| DisplayType.PAttribute == displayTypeId
+			|| DisplayType.Locator == displayTypeId
+		) {
 			return true;
 		}
-		if(DisplayType.Image == referenceId) {
+		if(DisplayType.Image == displayTypeId) {
 			return AttachmentUtil.getInstance()
 				.isValidForClient(
 					Env.getAD_Client_ID(Env.getCtx())
