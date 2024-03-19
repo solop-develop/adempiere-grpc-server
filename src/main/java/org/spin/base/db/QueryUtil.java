@@ -111,6 +111,7 @@ public class QueryUtil {
 			}
 
 			if (ReferenceUtil.validateReference(displayTypeId)) {
+				// Add display virutal column
 				if (!Util.isEmpty(columnSQL, true)) {
 					StringBuffer displayColumnSQL = new StringBuffer()
 						.append(", ")
@@ -234,6 +235,7 @@ public class QueryUtil {
 			}
 
 			if (ReferenceUtil.validateReference(displayTypeId)) {
+				// Add display virutal column
 				if (!Util.isEmpty(columnSQL, true)) {
 					StringBuffer displayColumnSQL = new StringBuffer()
 						.append(", ")
