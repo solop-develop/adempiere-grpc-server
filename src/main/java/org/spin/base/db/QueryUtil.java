@@ -248,10 +248,10 @@ public class QueryUtil {
 					continue;
 				}
 
-				if (columnName.equals(tableName + "_ID")) {
-					// overwrite to correct sub-query table alias
-					displayTypeId = DisplayType.ID;
-				}
+				// if (columnName.equals(tableName + "_ID")) {
+				// 	// overwrite to correct sub-query table alias
+				// 	displayTypeId = DisplayType.ID;
+				// }
 				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
 					Env.getCtx()
 				).getReferenceInfo(

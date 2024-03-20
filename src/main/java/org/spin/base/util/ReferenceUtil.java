@@ -82,7 +82,7 @@ public class ReferenceUtil {
 		if (
 			DisplayType.isLookup(displayTypeId)
 			|| DisplayType.Account == displayTypeId
-			|| DisplayType.ID == displayTypeId
+			// || DisplayType.ID == displayTypeId
 			|| DisplayType.Location == displayTypeId
 			|| DisplayType.PAttribute == displayTypeId
 			|| DisplayType.Locator == displayTypeId
