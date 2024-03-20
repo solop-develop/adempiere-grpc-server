@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -39,6 +40,7 @@ import org.spin.base.query.Filter;
 import org.spin.base.query.FilterManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.WindowUtil;
+import org.spin.service.grpc.util.db.FromUtil;
 import org.spin.service.grpc.util.db.OperatorUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -93,16 +95,33 @@ public class WhereClauseUtil {
 		String queryWithoutOrderBy = org.spin.service.grpc.util.db.OrderByUtil.removeOrderBy(sql);
 		String orderByClause = org.spin.service.grpc.util.db.OrderByUtil.getOnlyOrderBy(sql);
 
+
+		String tableWithAliases = FromUtil.getPatternTableName(tableAlias, null);
+		String regex = "\\s+(FROM)\\s+(" + tableWithAliases + ")\\s+(WHERE\\b)";
+
+		Pattern pattern = Pattern.compile(
+			regex,
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		);
+		Matcher matcherFrom = pattern
+			.matcher(sql);
+		List<MatchResult> fromWhereParts = matcherFrom.results()
+			.collect(
+				Collectors.toList()
+			)
+		;
+
 		StringBuffer whereClause = new StringBuffer();
-		if(queryWithoutOrderBy.contains(" WHERE ")) {
+		if (fromWhereParts != null && fromWhereParts.size() > 0) {
 			whereClause.append(" AND ");
 		} else {
 			whereClause.append(" WHERE ");
 		}
+
 		if (!Util.isEmpty(tableAlias, true)) {
 			whereClause.append(" " + tableAlias + ".");
 		}
-		whereClause.append("IsActive = 'Y'");
+		whereClause.append("IsActive = 'Y' ");
 
 
 		String sqlWithActiveRecords = queryWithoutOrderBy + whereClause.toString() + orderByClause;
