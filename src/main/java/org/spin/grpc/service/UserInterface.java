@@ -2213,9 +2213,10 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@AD_Reference_ID@ @WhereClause@ @Unparseable@");
 		}
 
-		if (isOnlyActiveRecords) {
-			sql = WhereClauseUtil.addIsActiveRestriction(reference.TableName, sql);
-		}
+		// TODO: Fix with list document type
+		// if (isOnlyActiveRecords) {
+		// 	sql = WhereClauseUtil.addIsActiveRestriction(reference.TableName, sql);
+		// }
 		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
 				sql,
@@ -2224,6 +2225,13 @@ public class UserInterface extends UserInterfaceImplBase {
 				MRole.SQL_RO
 			)
 		;
+		if (isOnlyActiveRecords) {
+			sqlWithRoleAccess += " AND ";
+			if (!Util.isEmpty(reference.TableName, true)) {
+				sqlWithRoleAccess += reference.TableName + ".";
+			}
+			sqlWithRoleAccess += "IsActive = 'Y' ";
+		}
 
 		List<Object> parameters = new ArrayList<>();
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, reference.TableName, searchValue, parameters);
