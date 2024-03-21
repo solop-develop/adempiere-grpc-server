@@ -2688,29 +2688,34 @@ public class UserInterface extends UserInterfaceImplBase {
 			return calloutBuilder;
 		}
 
-		List<String> calloutClassList = new ArrayList<>();
-		calloutClassList.add(
-			org.compiere.model.CalloutOrder.class.getName()
-		);
-		calloutClassList.add(
+		// separate `org.package.CalloutX.firstMethod; org.any.CalloutY.secondMethod`
+		List<String> calloutsList = Arrays.asList(callouts.split("\\s*(,|;)\\s*"));
+		if (calloutsList == null || calloutsList.isEmpty()) {
+			return calloutBuilder;
+		}
+
+		// callouts that modify the context in a customized way
+		List<String> calloutsListCustomContext = Arrays.asList(
+			org.compiere.model.CalloutOrder.class.getName(),
 			org.compiere.model.CalloutPayment.class.getName()
 		);
 
-		// separate `org.package.CalloutX.firstMethod; org.any.CalloutY.secondMethod`
-		List<String> calloutsList = Arrays.asList(callouts.split("\\s*(,|;)\\s*"));
-		calloutsList.forEach(calloutClass -> {
-			String className = null;
-			for (String calloutClassName: calloutClassList) {
-				if (calloutClass.startsWith(calloutClassName)) {
-					className = calloutClassName;
-					break;
-				}
-			}
-			if (!calloutClass.startsWith(className)) {
+		calloutsList.forEach(calloutClassAndMethod -> {
+			if (Util.isEmpty(calloutClassAndMethod, true)) {
+				// empty class name
 				return;
 			}
+			// the current callout is not in the custom context list
+			boolean isCustomContext = calloutsListCustomContext.stream()
+				.anyMatch(calloutClassNameCustomContext -> {
+					return calloutClassAndMethod.startsWith(calloutClassNameCustomContext);
+				});
+			if (isCustomContext) {
+				return;
+			}
+
 			Struct.Builder contextValues = calloutBuilder.getValuesBuilder();
-			if (calloutClass.equals("org.compiere.model.CalloutOrder.docType")) {
+			if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.docType")) {
 				// - OrderType
 				String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
 				contextValues.putFields(
@@ -2725,7 +2730,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					ValueManager.getValueFromStringBoolean(hasCharges).build()
 				);
 			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.priceList")) {
+			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.priceList")) {
 				// - M_PriceList_Version_ID
 				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
 				contextValues.putFields(
@@ -2733,14 +2738,14 @@ public class UserInterface extends UserInterfaceImplBase {
 					ValueManager.getValueFromInteger(priceListVersionId).build()
 				);
 			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.product")) {
+			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.product")) {
 				// - M_PriceList_Version_ID
 				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
 				contextValues.putFields(
 					"M_PriceList_Version_ID",
 					ValueManager.getValueFromInteger(priceListVersionId).build()
 				);
-				
+
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
 				contextValues.putFields(
@@ -2748,7 +2753,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
 				);
 			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.charge")) {
+			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.charge")) {
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
 				contextValues.putFields(
@@ -2756,7 +2761,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
 				);
 			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.amt")) {
+			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.amt")) {
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
 				contextValues.putFields(
@@ -2764,14 +2769,14 @@ public class UserInterface extends UserInterfaceImplBase {
 					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
 				);
 			}
-			else if (calloutClass.equals("org.compiere.model.CalloutOrder.qty")) {
+			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.qty")) {
 				// - UOMConversion
 				String isConversion = Env.getContext(Env.getCtx(), windowNo, "UOMConversion");
 				contextValues.putFields(
 					"UOMConversion",
 					ValueManager.getValueFromStringBoolean(isConversion).build()
 				);
-			} else if (calloutClass.equals("org.compiere.model.CalloutPayment.docType")) {
+			} else if (calloutClassAndMethod.equals("org.compiere.model.CalloutPayment.docType")) {
 				String isSalesTransaction = Env.getContext(Env.getCtx(), windowNo, "IsSOTrx");
 				contextValues.putFields(
 					"IsSOTrx",
