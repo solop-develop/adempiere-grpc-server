@@ -2225,16 +2225,33 @@ public class UserInterface extends UserInterfaceImplBase {
 				MRole.SQL_RO
 			)
 		;
+
+		String sqlWithActiveRecords = sqlWithRoleAccess;
 		if (isOnlyActiveRecords) {
-			sqlWithRoleAccess += " AND ";
+			//	Order by
+			String queryWithoutOrderBy = org.spin.service.grpc.util.db.OrderByUtil.removeOrderBy(sqlWithRoleAccess);
+			String orderByClause = org.spin.service.grpc.util.db.OrderByUtil.getOnlyOrderBy(sqlWithRoleAccess);
+	
+			StringBuffer whereClause = new StringBuffer()
+				.append(" AND ")
+			;
 			if (!Util.isEmpty(reference.TableName, true)) {
-				sqlWithRoleAccess += reference.TableName + ".";
+				whereClause.append(reference.TableName)
+					.append(".")
+				;
 			}
-			sqlWithRoleAccess += "IsActive = 'Y' ";
+			whereClause.append("IsActive = 'Y' ");
+
+			sqlWithActiveRecords = queryWithoutOrderBy + whereClause.toString() + orderByClause;
 		}
 
 		List<Object> parameters = new ArrayList<>();
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, reference.TableName, searchValue, parameters);
+		String parsedSQL = RecordUtil.addSearchValueAndGet(
+			sqlWithActiveRecords,
+			reference.TableName,
+			searchValue,
+			parameters
+		);
 
 		//	Get page and count
 		int count = CountUtil.countRecords(parsedSQL, reference.TableName, parameters);
