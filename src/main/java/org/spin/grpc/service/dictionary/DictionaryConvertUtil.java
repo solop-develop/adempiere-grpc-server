@@ -403,11 +403,9 @@ public class DictionaryConvertUtil {
 			.setCallout(
 				ValueManager.validateNull(column.getCallout())
 			)
-			.setColumnId(column.getAD_Column_ID())
 			.setColumnName(
 				ValueManager.validateNull(column.getColumnName())
 			)
-			.setElementId(element.getAD_Element_ID())
 			.setElementName(
 				ValueManager.validateNull(element.getColumnName())
 			)
@@ -600,7 +598,6 @@ public class DictionaryConvertUtil {
 			.setColumnName(
 				ValueManager.validateNull(element.getColumnName())
 			)
-			.setElementId(element.getAD_Element_ID())
 			.setElementName(
 				ValueManager.validateNull(element.getColumnName())
 			)

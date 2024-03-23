@@ -35,10 +35,9 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Browser;
 import org.spin.backend.grpc.dictionary.DependentField;
+import org.spin.backend.grpc.dictionary.DictionaryEntity;
 import org.spin.backend.grpc.dictionary.Field;
-import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.Reference;
-import org.spin.backend.grpc.dictionary.Window;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
@@ -70,8 +69,10 @@ public class BrowseConverUtil {
 			.setUuid(
 				ValueManager.validateNull(browser.getUUID())
 			)
-			.setValue(
-				ValueManager.validateNull(browser.getValue())
+			.setCode(
+				ValueManager.validateNull(
+					browser.getValue()
+				)
 			)
 			.setName(browser.getName())
 			.setDescription(
@@ -107,10 +108,6 @@ public class BrowseConverUtil {
 				)
 			);
 		}
-		//	Set View UUID
-		if(browser.getAD_View_ID() > 0) {
-			builder.setViewId(browser.getAD_View_ID());
-		}
 		// set table name
 		if (browser.getAD_Table_ID() > 0) {
 			MTable table = MTable.get(Env.getCtx(), browser.getAD_Table_ID());
@@ -121,19 +118,16 @@ public class BrowseConverUtil {
 		//	Window Reference
 		if(browser.getAD_Window_ID() > 0) {
 			MWindow window = ASPUtil.getInstance(context).getWindow(browser.getAD_Window_ID());
-			Window.Builder windowBuilder = WindowConvertUtil.convertWindow(
-				context,
-				window,
-				false
+			DictionaryEntity.Builder windowBuilder = DictionaryConvertUtil.getDictionaryEntity(
+				window
 			);
 			builder.setWindow(windowBuilder.build());
 		}
 		//	Process Reference
 		if(browser.getAD_Process_ID() > 0) {
-			Process.Builder processBuilder = ProcessConvertUtil.convertProcess(
-				context,
-				MProcess.get(context, browser.getAD_Process_ID()),
-				false
+			MProcess process = ASPUtil.getInstance(context).getProcess(browser.getAD_Process_ID());
+			DictionaryEntity.Builder processBuilder = DictionaryConvertUtil.getDictionaryEntity(
+				process
 			);
 			builder.setProcess(processBuilder.build());
 		}
@@ -230,23 +224,22 @@ public class BrowseConverUtil {
 			)
 		;
 		
-		String elementName = null;
 		MViewColumn viewColumn = MViewColumn.getById(context, browseField.getAD_View_Column_ID(), null);
 		builder.setColumnName(
 			ValueManager.validateNull(viewColumn.getColumnName())
 		);
+		String elementName = null;
 		if(viewColumn.getAD_Column_ID() != 0) {
 			MColumn column = MColumn.get(context, viewColumn.getAD_Column_ID());
 			elementName = column.getColumnName();
-			builder.setColumnId(column.getAD_Column_ID());
 		}
 
 		//	Default element
 		if(Util.isEmpty(elementName)) {
 			elementName = browseField.getAD_Element().getColumnName();
 		}
-		builder.setElementName(ValueManager.validateNull(elementName))
-			.setElementId(browseField.getAD_Element_ID())
+		builder.setElementName(
+			ValueManager.validateNull(elementName))
 		;
 
 		//	

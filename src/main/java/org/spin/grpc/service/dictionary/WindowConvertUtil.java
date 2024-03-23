@@ -76,10 +76,6 @@ public class WindowConvertUtil {
 		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
 		DictionaryConvertUtil.translateEntity(window);
 
-		ContextInfo.Builder contextInfoBuilder = DictionaryConvertUtil.convertContextInfo(
-			context,
-			window.getAD_ContextInfo_ID()
-		);
 		//	
 		Window.Builder builder = Window.newBuilder()
 			.setId(window.getAD_Window_ID())
@@ -99,9 +95,6 @@ public class WindowConvertUtil {
 			.setIsSalesTransaction(window.isSOTrx())
 			.setIsActive(window.isActive())
 		;
-		if(contextInfoBuilder != null) {
-			builder.setContextInfo(contextInfoBuilder.build());
-		}
 		//	With Tabs
 		if(withTabs) {
 			Boolean isShowAcct = MRole.getDefault(context, false).isShowAcct();
@@ -174,10 +167,6 @@ public class WindowConvertUtil {
 		//	Get table attributes
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
 		boolean isReadOnly = tab.isReadOnly() || table.isView();
-		int contextInfoId = tab.getAD_ContextInfo_ID();
-		if(contextInfoId <= 0) {
-			contextInfoId = table.getAD_ContextInfo_ID();
-		}
 
 		// get where clause including link column and parent column
 		String whereClause = WhereClauseUtil.getTabWhereClauseFromParentTabs(context, tab, tabs);
@@ -224,6 +213,9 @@ public class WindowConvertUtil {
 			.setParentTabId(parentTabId)
 			.setIsChangeLog(table.isChangeLog())
 			.setIsActive(tab.isActive())
+			.setWindowId(
+				tab.getAD_Window_ID()
+			)
 			.addAllContextColumnNames(
 				ContextManager.getContextColumnNames(
 					Optional.ofNullable(whereClause).orElse("")
@@ -237,14 +229,6 @@ public class WindowConvertUtil {
 			)
 		;
 
-		//	For link
-		if(contextInfoId > 0) {
-			ContextInfo.Builder contextInfoBuilder = DictionaryConvertUtil.convertContextInfo(
-				context,
-				contextInfoId
-			);
-			builder.setContextInfo(contextInfoBuilder.build());
-		}
 		//	Parent Link Column Name
 		if(tab.getParent_Column_ID() > 0) {
 			MColumn column = MColumn.get(context, tab.getParent_Column_ID());
@@ -346,11 +330,9 @@ public class WindowConvertUtil {
 			.setCallout(
 				ValueManager.validateNull(column.getCallout())
 			)
-			.setColumnId(column.getAD_Column_ID())
 			.setColumnName(
 				ValueManager.validateNull(column.getColumnName())
 			)
-			.setElementId(element.getAD_Element_ID())
 			.setElementName(
 				ValueManager.validateNull(element.getColumnName())
 			)
@@ -458,14 +440,14 @@ public class WindowConvertUtil {
 			}
 		}
 
-		//	Field Definition
-		if(field.getAD_FieldDefinition_ID() > 0) {
-			FieldDefinition.Builder fieldDefinitionBuilder = WindowConvertUtil.convertFieldDefinition(
-				context,
-				field.getAD_FieldDefinition_ID()
-			);
-			builder.setFieldDefinition(fieldDefinitionBuilder);
-		}
+		// //	Field Definition
+		// if(field.getAD_FieldDefinition_ID() > 0) {
+		// 	FieldDefinition.Builder fieldDefinitionBuilder = WindowConvertUtil.convertFieldDefinition(
+		// 		context,
+		// 		field.getAD_FieldDefinition_ID()
+		// 	);
+		// 	builder.setFieldDefinition(fieldDefinitionBuilder);
+		// }
 		//	Field Group
 		if(field.getAD_FieldGroup_ID() > 0) {
 			FieldGroup.Builder fieldGroup = WindowConvertUtil.convertFieldGroup(

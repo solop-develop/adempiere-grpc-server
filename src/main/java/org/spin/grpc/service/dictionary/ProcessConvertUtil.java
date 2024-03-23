@@ -81,7 +81,7 @@ public class ProcessConvertUtil {
 					process.getUUID()
 				)
 			)
-			.setValue(
+			.setCode(
 				ValueManager.validateNull(
 					process.getValue()
 				)
@@ -147,17 +147,17 @@ public class ProcessConvertUtil {
 
 		//	Report Types
 		if(process.isReport()) {
+			if (process.getAD_PrintFormat_ID() > 0) {
+				builder.setPrintFormatId(
+					process.getAD_PrintFormat_ID()
+				);
+			}
 			MReportView reportView = null;
 			if(process.getAD_ReportView_ID() > 0) {
 				builder.setReportViewId(
 					process.getAD_ReportView_ID()
 				);
 				reportView = MReportView.get(context, process.getAD_ReportView_ID());
-			}
-			if (process.getAD_PrintFormat_ID() > 0) {
-				builder.setPrintFormatId(
-					process.getAD_PrintFormat_ID()
-				);
 			}
 			ReportExportHandler exportHandler = new ReportExportHandler(Env.getCtx(), reportView);
 			for(AbstractExportFormat reportType : exportHandler.getExportFormatList()) {

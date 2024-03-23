@@ -108,126 +108,132 @@ message ReferenceRequest {
 // Window
 message Window {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string help = 4;
-	bool is_active = 5;
-	bool is_sales_transaction = 6;
-	string window_type = 7;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string help = 5;
+	bool is_active = 6;
+	bool is_sales_transaction = 7;
+	string window_type = 8;
 	//	External Info
-	ContextInfo context_info = 8;
-	repeated Tab tabs = 9;
-	string uuid = 10;
+	// ContextInfo context_info = 9;
+	repeated Tab tabs = 10;
 }
 
 // Tab
 message Tab {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string help = 4;
-	// Attributes
-	string table_name = 5;
-	int32 sequence = 6;
-	int32 tab_level = 7;
-	//
-	bool is_active = 8;
-	bool is_single_row = 9;
-	bool is_advanced_tab = 10;
-	bool is_has_tree = 11;
-	bool is_info_tab = 12;
-	bool is_sort_tab = 13;
-	bool is_translation_tab = 14;
-	bool is_read_only = 15;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string help = 5;
+	bool is_active = 6;
+	// Table attributes
+	string table_name = 7;
+	int32 access_level = 8;
+	bool is_view = 9;
+	bool is_deleteable = 10;
+	bool is_document = 11;
+	bool is_change_log = 12;
+	repeated string key_columns = 13;
+	repeated string identifier_columns = 14;
+	repeated string selection_columns = 15;
+	// Record Attributes
 	bool is_insert_record = 16;
-	bool is_view = 17;
-	bool is_deleteable = 18;
-	bool is_document = 19;
-	bool is_change_log = 20;
-	int32 access_level = 21;
-	string link_column_name = 22;
-	string sort_order_column_name = 23;
-	string sort_yes_no_column_name = 24;
-	string parent_column_name = 25;
-	string display_logic = 26;
-	string commit_warning = 27;
-	int32 parent_tab_id = 28;
-	repeated string context_column_names = 29;
+	string commit_warning = 17;
+	// Attributes
+	string display_logic = 18;
+	int32 sequence = 19;
+	int32 tab_level = 20;
+	bool is_read_only = 21;
+	string read_only_logic = 22;
+	bool is_single_row = 23;
+	bool is_advanced_tab = 24;
+	bool is_has_tree = 25;
+	bool is_info_tab = 26;
+	bool is_translation_tab = 27;
+	// Link attributes
+	string link_column_name = 28;
+	string parent_column_name = 29;
+	// Sort attributes
+	bool is_sort_tab = 30;
+	string sort_order_column_name = 31;
+	string sort_yes_no_column_name = 32;
 	// External Info
-	ContextInfo context_info = 30;
-	Process process = 31;
-	repeated Process processes = 32;
-	repeated Field fields = 33;
-	FieldGroup field_group = 34;
-	string read_only_logic = 35;
-	string uuid = 36;
-	repeated string key_columns = 37;
+	int32 window_id = 33;
+	int32 parent_tab_id = 34;
+	repeated string context_column_names = 35;
+	ContextInfo context_info = 36;
+	Process process = 37;
+	repeated Process processes = 38;
+	// Fields Attributes
+	repeated Field fields = 39;
+	// FieldGroup field_group = 40;
 }
 
 // Field
 message Field {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string help = 4;
-	int32 sequence = 5;
-	string column_name = 6;
-	string element_name = 7;
-	bool is_displayed = 8;
-	bool is_displayed_grid = 9;
-	bool is_read_only = 10;
-	bool is_allow_copy = 11;
-	bool is_encrypted = 12;
-	bool is_same_line = 13;
-	bool is_heading = 14;
-	bool is_field_only = 15;
-	bool is_quick_entry = 16;
-	bool is_mandatory = 17;
-	bool is_key = 18;
-	bool is_parent = 19;
-	bool is_updateable = 20;
-	bool is_identifier = 21;
-	bool is_allow_logging = 22;
-	bool is_selection_column = 23;
-	bool is_range = 24;
-	bool is_always_updateable = 25;
-	bool is_translated = 26;
-	int32 identifier_sequence = 27;
-	string display_logic = 28;
-	int32 display_type = 29;
-	string default_value = 30;
-	string read_only_logic = 31;
-	string mandatory_logic = 32;
-	string callout = 33;
-	string column_sql = 34;
-	string v_format = 35;
-	string value_min = 36;
-	string value_max = 37;
-	string format_pattern = 38;
+	string uuid = 2;
+	string column_name = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
+	bool is_active = 7;
+	int32 display_type = 8;
+	int32 sequence = 9;
+	bool is_displayed = 10;
+	string display_logic = 12;
+	bool is_read_only = 13;
+	string read_only_logic = 14;
+	bool is_mandatory = 15;
+	string mandatory_logic = 16;
+	bool is_key = 17;
+	bool is_range = 18;
+	string default_value = 19;
+	int32 field_length = 20;
+	string v_format = 22;
+	string value_min = 23;
+	string value_max = 24;
 	// External Info
-	ContextInfo context_info = 39;
-	FieldGroup field_group = 40;
-	FieldDefinition field_definition = 41;
-	Reference reference = 42;
-	Process process = 43;
-	// Smart Browser Field Compatibility
-	bool is_query_criteria = 44;
-	bool is_order_by = 45;
-	int32 seq_no_grid = 46;
-	int32 sort_no = 47;
-	bool is_info_only = 48;
-	bool is_active = 49;
+	ContextInfo context_info = 25;
+	Reference reference = 26;
+	repeated DependentField dependent_fields = 27;
+	repeated string context_column_names = 28;
+	string element_name = 31;
+	// Window Field Compatibility
+	string column_sql = 21;
+	bool is_displayed_grid = 32;
+	int32 seq_no_grid = 33;
+	FieldGroup field_group = 34;
+	bool is_allow_copy = 35;
+	bool is_same_line = 36;
+	bool is_heading = 37;
+	bool is_field_only = 38;
+	string callout = 39;
+	// FieldDefinition field_definition = 40;
+	string format_pattern = 41;
+	bool is_encrypted = 42;
+	bool is_selection_column = 43;
+	bool is_always_updateable = 44;
+	bool is_allow_logging = 45;
+	bool is_updateable = 46;
+	bool is_quick_entry = 47;
+	bool is_parent = 48;
+	bool is_translated = 49;
+	bool is_identifier = 50;
+	int32 identifier_sequence = 51;
+	Process process = 52;
 	// Process Parameter Compatibility
-	string default_value_to = 50;
-	int32 field_length = 51;
-	repeated string context_column_names = 52;
-	int32 column_id = 53;
-	int32 element_id = 54;
-	repeated DependentField dependent_fields = 55;
+	string default_value_to = 53;
+	bool is_info_only = 54;
+	// Smart Browser Field Compatibility
+	bool is_query_criteria = 55;
+	bool is_order_by = 56;
+	int32 sort_no = 57;
 	// ASP Custom Attributes
-	string is_displayed_as_panel = 56;
-	string is_displayed_as_table = 57;
-	string uuid = 58;
+	string is_displayed_as_panel = 58;
+	string is_displayed_as_table = 59;
 }
 
 message DependentField {
@@ -300,24 +306,28 @@ message DictionaryEntity {
 
 // Process
 message Process {
-	string uuid = 1;
-	int32 id = 2;
-	string value = 3;
+	int32 id = 1;
+	string uuid = 2;
+	string code = 3;
 	string name = 4;
 	string description = 5;
 	string help = 6;
-	bool is_report = 7;
-	string show_help = 8;
-	int32 workflow_id = 9;
-	int32 form_id = 10;
-	int32 browser_id = 11;
-	int32 report_view_id = 12;
-	int32 print_format_id = 13;
-	DictionaryEntity form = 14;
+	string show_help = 7;
+	// Report
+	bool is_report = 8;
+	int32 report_view_id = 9;
+	int32 print_format_id = 10;
+	repeated ReportExportType report_export_types = 11;
+	// From
+	int32 form_id = 12;
+	DictionaryEntity form = 13;
+	// Browse
+	int32 browser_id = 14;
 	DictionaryEntity browse = 15;
-	DictionaryEntity workflow = 16;
-	// Reporty Type
-	repeated ReportExportType report_export_types = 17;
+	// Workflow
+	int32 workflow_id = 16;
+	DictionaryEntity workflow = 17;
+	// Parameters
 	bool has_parameters = 18;
 	repeated Field parameters = 19;
 }
@@ -325,39 +335,41 @@ message Process {
 // Form
 message Form {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string help = 4;
-	int32 access_level = 5;
-	string file_name = 6;
-	bool is_active = 7;
-	string uuid = 8;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string help = 5;
+	bool is_active = 6;
+	string file_name = 7;
 }
 
 // Smart Browser
 message Browser {
 	int32 id = 1;
-	string value = 2;
-	string name = 3;
-	string description = 4;
-	string help = 5;
-	int32 access_level = 6;
-	repeated string context_column_names = 7;
-	bool is_updateable = 8;
-	bool is_deleteable = 9;
-	bool is_selected_by_default = 10;
-	bool is_collapsible_by_default = 11;
-	bool is_executed_query_by_default = 12;
-	bool is_show_total = 13;
-	int32 view_id = 14;
+	string uuid = 2;
+	string code = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
+	bool is_active = 7;
+	string field_key = 8;
+	bool is_executed_query_by_default = 9;
+	bool is_collapsible_by_default = 10;
+	bool is_selected_by_default = 11;
+	bool is_show_total = 12;
+	// Record Attributes
+	string table_name = 13;
+	int32 access_level = 14;
+	bool is_updateable = 15;
+	bool is_deleteable = 16;
 	// External Reference
-	Window window = 15;
-	Process process = 16;
-	repeated Field fields = 17;
-	bool is_active = 18;
-	string table_name = 19;
-	string uuid = 20;
-	string field_key = 21;
+	repeated string context_column_names = 17;
+	int32 window_id = 18;
+	DictionaryEntity window = 19;
+	int32 process_id = 20;
+	DictionaryEntity process = 21;
+	// Browse Fields
+	repeated Field fields = 22;
 }
 
 // Zoom Window
