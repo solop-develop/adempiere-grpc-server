@@ -1,6 +1,6 @@
 FROM envoyproxy/envoy:v1.29.2
 
-LABEL maintainer="ySenih@erpya.com; EdwinBetanc0urt@outlook.com" \
+LABEL maintainer="ySenih@erpya.com; EdwinBetanc0urt@outlook.com;" \
 	description="Proxy Transcoding gRPC to JSON via http"
 
 
