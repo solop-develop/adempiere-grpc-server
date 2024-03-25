@@ -72,6 +72,12 @@ public class QueryUtil {
 		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
 		final List<MColumn> columnsList = table.getColumnsAsList();
 		for (MColumn column : columnsList) {
+			if (!column.isActive()) {
+				// key column on table
+				if (!column.isKey()) {
+					continue;
+				}
+			}
 			int displayTypeId = column.getAD_Reference_ID();
 			final String columnName = column.getColumnName();
 
@@ -183,7 +189,7 @@ public class QueryUtil {
 		final MField[] fieldsList = tab.getFields(false, null);
 		for (MField field : fieldsList) {
 			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
-			if (!field.isDisplayed()) {
+			if (!column.isActive() || !field.isActive() || !field.isDisplayed()) {
 				// key column on table
 				if (!column.isKey()) {
 					continue;
@@ -323,6 +329,12 @@ public class QueryUtil {
 		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
 		final List<MBrowseField> browseFieldsList = ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID());
 		for (MBrowseField browseField : browseFieldsList) {
+			if (!browseField.isActive()) {
+				// key column on table
+				if (!browseField.isKey()) {
+					continue;
+				}
+			}
 			int displayTypeId = browseField.getAD_Reference_ID();
 
 			//	Reference Value
