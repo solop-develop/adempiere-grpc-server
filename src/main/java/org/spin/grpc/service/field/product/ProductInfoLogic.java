@@ -394,33 +394,54 @@ public class ProductInfoLogic {
 			Env.getAD_Client_ID(context)
 		);
 
+		final String searchValue = ValueManager.getDecodeUrl(
+			request.getSearchValue()
+		);
+		if (!Util.isEmpty(searchValue, true)) {
+			sqlWhere += " AND ("
+				+ "UPPER(p.Value) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(p.Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(p.UPC) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(p.SKU) LIKE '%' || UPPER(?) || '%' "
+				+ ") "
+			;
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
+		}
+
 		// Value
-		if (!Util.isEmpty(request.getValue())) {
+		final String value = ValueManager.getDecodeUrl(
+			request.getValue()
+		);
+		if (!Util.isEmpty(value)) {
 			sqlWhere += " AND UPPER(p.Value) LIKE '%' || UPPER(?) || '%' ";
-			parametersList.add(
-				request.getValue()
-			);
+			parametersList.add(value);
 		}
 		// Name
-		if (!Util.isEmpty(request.getName())) {
+		final String name = ValueManager.getDecodeUrl(
+			request.getName()
+		);
+		if (!Util.isEmpty(name)) {
 			sqlWhere += " AND UPPER(p.Name) LIKE '%' || UPPER(?) || '%' ";
-			parametersList.add(
-				request.getName()
-			);
+			parametersList.add(name);
 		}
 		// UPC/EAN
-		if (!Util.isEmpty(request.getUpc())) {
+		final String upc = ValueManager.getDecodeUrl(
+			request.getUpc()
+		);
+		if (!Util.isEmpty(upc)) {
 			sqlWhere += " AND UPPER(p.UPC) LIKE '%' || UPPER(?) || '%' ";
-			parametersList.add(
-				request.getUpc()
-			);
+			parametersList.add(upc);
 		}
-		// UPC/EAN
-		if (!Util.isEmpty(request.getSku())) {
-			sqlWhere += " AND UPPER(p.SKAU) LIKE '%' || UPPER(?) || '%' ";
-			parametersList.add(
-				request.getSku()
-			);
+		// SKU
+		final String sku = ValueManager.getDecodeUrl(
+			request.getSku()
+		);
+		if (!Util.isEmpty(sku)) {
+			sqlWhere += " AND UPPER(p.SKU) LIKE '%' || UPPER(?) || '%' ";
+			parametersList.add(sku);
 		}
 		// Product Category
 		final int productCategoryId = request.getProductCategoryId();
@@ -556,7 +577,7 @@ public class ProductInfoLogic {
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count =  CountUtil.countRecords(sql, tableName, "p", parametersList);
+		int count = CountUtil.countRecords(sql, tableName, "p", parametersList);
 		//	Set page token
 		String nexPageToken = null;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
