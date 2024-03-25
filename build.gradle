@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'com.google.protobuf' version '0.9.3'
+    id 'com.google.protobuf' version '0.9.4'
     id 'idea'
     id 'application'
     id 'visual-studio'
@@ -35,15 +35,15 @@ dependencies {
             '*.jar'
         ]
     )
-	implementation "io.netty:netty-handler:4.1.99.Final"
+	implementation "io.netty:netty-handler:4.1.107.Final"
     implementation "io.grpc:grpc-alts:${grpcVersion}"
 	runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-netty:${grpcVersion}"
     // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
-	implementation 'com.google.protobuf:protobuf-java:3.24.3'
-	implementation 'com.google.protobuf:protobuf-java-util:3.24.3'
+	implementation 'com.google.protobuf:protobuf-java:3.25.3'
+	implementation 'com.google.protobuf:protobuf-java-util:3.25.3'
     implementation 'javax.xml.bind:jaxb-api:2.4.0-b180830.0359'
 	implementation 'com.sun.xml.bind:jaxb-impl:3.0.0-M4'
 	implementation 'com.sun.xml.bind:jaxb-core:3.0.0-M4'
@@ -93,7 +93,7 @@ dependencies {
 	// Dashboard Improvements
 	implementation "${baseGroupId}:adempiere-dashboard-improvements:1.0.8"
 	// Point Of Sales Improvements
-	implementation "${baseGroupId}:adempiere-pos-improvements:1.0.1"
+	implementation "${baseGroupId}:adempiere-pos-improvements:1.0.2"
 	// Business Processors (To Task's and Schedulers)
 	implementation "${baseGroupId}:adempiere-business-processors:1.1.0"
 	// Engine as Queue
