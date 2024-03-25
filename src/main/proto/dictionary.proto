@@ -112,7 +112,6 @@ message Window {
 	string name = 3;
 	string description = 4;
 	string help = 5;
-	bool is_active = 6;
 	bool is_sales_transaction = 7;
 	string window_type = 8;
 	//	External Info
@@ -127,7 +126,6 @@ message Tab {
 	string name = 3;
 	string description = 4;
 	string help = 5;
-	bool is_active = 6;
 	// Table attributes
 	string table_name = 7;
 	int32 access_level = 8;
@@ -163,8 +161,7 @@ message Tab {
 	int32 window_id = 33;
 	int32 parent_tab_id = 34;
 	repeated string context_column_names = 35;
-	ContextInfo context_info = 36;
-	Process process = 37;
+	optional Process process = 37;
 	repeated Process processes = 38;
 	// Fields Attributes
 	repeated Field fields = 39;
@@ -179,7 +176,6 @@ message Field {
 	string name = 4;
 	string description = 5;
 	string help = 6;
-	bool is_active = 7;
 	int32 display_type = 8;
 	int32 sequence = 9;
 	bool is_displayed = 10;
@@ -196,8 +192,8 @@ message Field {
 	string value_min = 23;
 	string value_max = 24;
 	// External Info
-	ContextInfo context_info = 25;
-	Reference reference = 26;
+	optional ContextInfo context_info = 25;
+	optional Reference reference = 26;
 	repeated DependentField dependent_fields = 27;
 	repeated string context_column_names = 28;
 	string element_name = 31;
@@ -205,7 +201,7 @@ message Field {
 	string column_sql = 21;
 	bool is_displayed_grid = 32;
 	int32 seq_no_grid = 33;
-	FieldGroup field_group = 34;
+	optional FieldGroup field_group = 34;
 	bool is_allow_copy = 35;
 	bool is_same_line = 36;
 	bool is_heading = 37;
@@ -223,7 +219,7 @@ message Field {
 	bool is_translated = 49;
 	bool is_identifier = 50;
 	int32 identifier_sequence = 51;
-	Process process = 52;
+	optional Process process = 52;
 	// Process Parameter Compatibility
 	string default_value_to = 53;
 	bool is_info_only = 54;
@@ -248,52 +244,47 @@ message DependentField {
 // Context Info
 message ContextInfo {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	MessageText message_text = 4;
-	string sql_statement = 5;
-	bool is_active = 6;
-	string uuid = 7;
+	string uuid = 3;
+	string name = 4;
+	string description = 5;
+	optional MessageText message_text = 6;
+	string sql_statement = 7;
 }
 
 // Message
 message MessageText {
 	int32 id = 1;
-	string value = 2;
-	string message_type = 3;
-	string message_text = 4;
-	string message_tip = 5;
-	bool is_active = 6;
-	string uuid = 7;
+	string uuid = 2;
+	string value = 3;
+	string message_type = 4;
+	string message_text = 5;
+	string message_tip = 6;
 }
 
 // Context Info
 message FieldGroup {
 	int32 id = 1;
-	string name = 2;
-	string field_group_type = 3;
-	bool is_active = 4;
-	string uuid = 5;
+	string uuid = 2;
+	string name = 3;
+	string field_group_type = 4;
 }
 
 // Context Info
 message FieldDefinition {
 	int32 id = 1;
-	string value = 2;
-	string name = 3;
-	string field_group_type = 4;
-	repeated FieldCondition conditions = 5;
-	bool is_active = 6;
-	string uuid = 7;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string field_group_type = 5;
+	repeated FieldCondition conditions = 6;
 }
 
 // Field Condition
 message FieldCondition {
 	int32 id = 1;
-	string condition = 2;
-	string stylesheet = 3;
-	bool is_active = 4;
-	string uuid = 5;
+	string uuid = 2;
+	string condition = 3;
+	string stylesheet = 4;
 }
 
 message DictionaryEntity {
@@ -320,13 +311,13 @@ message Process {
 	repeated ReportExportType report_export_types = 11;
 	// From
 	int32 form_id = 12;
-	DictionaryEntity form = 13;
+	optional DictionaryEntity form = 13;
 	// Browse
 	int32 browser_id = 14;
-	DictionaryEntity browse = 15;
+	optional DictionaryEntity browse = 15;
 	// Workflow
 	int32 workflow_id = 16;
-	DictionaryEntity workflow = 17;
+	optional DictionaryEntity workflow = 17;
 	// Parameters
 	bool has_parameters = 18;
 	repeated Field parameters = 19;
@@ -339,7 +330,6 @@ message Form {
 	string name = 3;
 	string description = 4;
 	string help = 5;
-	bool is_active = 6;
 	string file_name = 7;
 }
 
@@ -351,7 +341,6 @@ message Browser {
 	string name = 4;
 	string description = 5;
 	string help = 6;
-	bool is_active = 7;
 	string field_key = 8;
 	bool is_executed_query_by_default = 9;
 	bool is_collapsible_by_default = 10;
@@ -365,9 +354,9 @@ message Browser {
 	// External Reference
 	repeated string context_column_names = 17;
 	int32 window_id = 18;
-	DictionaryEntity window = 19;
+	optional DictionaryEntity window = 19;
 	int32 process_id = 20;
-	DictionaryEntity process = 21;
+	optional DictionaryEntity process = 21;
 	// Browse Fields
 	repeated Field fields = 22;
 }
@@ -378,7 +367,6 @@ message ZoomWindow {
 	string name = 2;
 	string description = 3;
 	bool is_sales_transaction = 4;
-	bool is_active = 5;
 }
 
 // Foreign Reference

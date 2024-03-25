@@ -157,21 +157,11 @@ public class WindowUtil {
 		// to prevent duplicity of associated processes in different locations (table, column and tab).
 		HashMap<Integer, MProcess> processList = new HashMap<>();
 
-		MRole role = MRole.getDefault(tab.getCtx(), false);
-		//	First Process Tab
-		if(tab.getAD_Process_ID() > 0) {
-			// Record/Role access
-			boolean isWithAccess = AccessUtil.isProcessAccess(role, tab.getAD_Process_ID());
-			if (isWithAccess) {
-				MProcess processTab = ASPUtil.getInstance(tab.getCtx()).getProcess(tab.getAD_Process_ID());
-				processList.put(tab.getAD_Process_ID(), processTab);
-			}
-		}
-
-		// exclude first process on tab
-		final String whereClause = "AD_Process_ID <> ? " // #1
+		final String whereClause = "IsActive='Y' "
+			// first process on tab
+			+ "AND (AD_Process_ID = ? " // #1
 			// process on column
-			+ "AND (EXISTS("
+			+ "OR EXISTS("
 				+ "SELECT 1 FROM AD_Field f "
 				+ "INNER JOIN AD_Column c ON(c.AD_Column_ID = f.AD_Column_ID) "
 				+ "WHERE c.AD_Process_ID = AD_Process.AD_Process_ID "
@@ -197,12 +187,14 @@ public class WindowUtil {
 				+ "SELECT 1 FROM AD_Table_Process AS tp "
 				+ "WHERE tp.AD_Process_ID = AD_Process.AD_Process_ID "
 				+ "AND tp.AD_Table_ID = ? " // #3
-				+ "AND tp.IsActive = 'Y')"
+				+ "AND tp.IsActive = 'Y'"
+			+ ")"
 			+ ")"
 		;
 		List<Object> filterList = new ArrayList<>();
 		filterList.add(tab.getAD_Process_ID());
 		filterList.add(Env.getAD_User_ID(context));
+		MRole role = MRole.getDefault(tab.getCtx(), false);
 		filterList.add(role.getAD_Role_ID());
 		filterList.add(tab.getAD_Tab_ID());
 		filterList.add(tab.getAD_Table_ID());

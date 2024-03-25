@@ -336,7 +336,6 @@ public class ProcessConvertUtil {
 				ValueManager.validateNull(processParameter.getVFormat())
 			)
 			.setFieldLength(processParameter.getFieldLength())
-			.setIsActive(processParameter.isActive())
 			.addAllContextColumnNames(
 				ContextManager.getContextColumnNames(
 					Optional.ofNullable(processParameter.getDefaultValue()).orElse("")

@@ -243,38 +243,10 @@ public class DictionaryConvertUtil {
 			return builder;
 		}
 		MADContextInfo contextInfoValue = MADContextInfo.getById(context, contextInfoId);
-		MMessage message = MMessage.get(context, contextInfoValue.getAD_Message_ID());
-		//	Get translation
-		String msgText = null;
-		String msgTip = null;
-		String language = Env.getAD_Language(context);
-		if(!Util.isEmpty(language)) {
-			msgText = message.get_Translation(I_AD_Message.COLUMNNAME_MsgText, language);
-			msgTip = message.get_Translation(I_AD_Message.COLUMNNAME_MsgTip, language);
+		if (contextInfoValue == null) {
+			return builder;
 		}
-		//	Validate for default
-		if(Util.isEmpty(msgText)) {
-			msgText = message.getMsgText();
-		}
-		if(Util.isEmpty(msgTip)) {
-			msgTip = message.getMsgTip();
-		}
-		//	Add message text
-		MessageText.Builder messageText = MessageText.newBuilder();
-		if (message != null) {
-			messageText
-				.setId(message.getAD_Message_ID())
-				.setValue(
-					ValueManager.validateNull(message.getValue())
-				)
-				.setMessageText(
-					ValueManager.validateNull(msgText)
-				)
-				.setMessageTip(
-					ValueManager.validateNull(msgTip)
-				)
-			;
-		}
+
 		builder = ContextInfo.newBuilder()
 			.setId(contextInfoValue.getAD_ContextInfo_ID())
 			.setUuid(
@@ -286,11 +258,36 @@ public class DictionaryConvertUtil {
 			.setDescription(
 				ValueManager.validateNull(contextInfoValue.getDescription())
 			)
-			.setMessageText(messageText.build())
 			.setSqlStatement(
 				ValueManager.validateNull(contextInfoValue.getSQLStatement())
 			)
 		;
+
+		MMessage message = MMessage.get(context, contextInfoValue.getAD_Message_ID());
+		//	Add message text
+		if (message != null && message.getAD_Message_ID() > 0) {//	Get translation
+			MessageText.Builder messageText = MessageText.newBuilder()
+				.setId(message.getAD_Message_ID())
+				.setValue(
+					ValueManager.validateNull(
+						message.getValue()
+					)
+				)
+				.setMessageText(
+					ValueManager.validateNull(
+						message.get_Translation(I_AD_Message.COLUMNNAME_MsgText)
+					)
+				)
+				.setMessageTip(
+					ValueManager.validateNull(
+						message.get_Translation(I_AD_Message.COLUMNNAME_MsgTip)
+					)
+				)
+			;
+			builder.setMessageText(
+				messageText.build()
+			);
+		}
 		return builder;
 	}
 
@@ -328,7 +325,6 @@ public class DictionaryConvertUtil {
 					ValueManager.getTranslation(form, MForm.COLUMNNAME_Help)
 				)
 			)
-			.setIsActive(form.isActive())
 		;
 		//	File Name
 		String fileName = form.getClassname();
@@ -446,7 +442,6 @@ public class DictionaryConvertUtil {
 				ValueManager.validateNull(column.getValueMin())
 			)
 			.setFieldLength(column.getFieldLength())
-			.setIsActive(column.isActive())
 			.addAllContextColumnNames(
 				ContextManager.getContextColumnNames(
 					Optional.ofNullable(column.getDefaultValue()).orElse("")
@@ -603,7 +598,6 @@ public class DictionaryConvertUtil {
 			)
 			.setDisplayType(displayTypeId)
 			.setFieldLength(element.getFieldLength())
-			.setIsActive(element.isActive())
 		;
 		//	
 		if (ReferenceUtil.validateReference(displayTypeId)) {

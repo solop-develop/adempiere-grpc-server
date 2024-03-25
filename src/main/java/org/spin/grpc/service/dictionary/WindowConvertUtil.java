@@ -93,7 +93,6 @@ public class WindowConvertUtil {
 				ValueManager.validateNull(window.getWindowType())
 			)
 			.setIsSalesTransaction(window.isSOTrx())
-			.setIsActive(window.isActive())
 		;
 		//	With Tabs
 		if(withTabs) {
@@ -212,7 +211,6 @@ public class WindowConvertUtil {
 			)
 			.setParentTabId(parentTabId)
 			.setIsChangeLog(table.isChangeLog())
-			.setIsActive(tab.isActive())
 			.setWindowId(
 				tab.getAD_Window_ID()
 			)
@@ -253,8 +251,14 @@ public class WindowConvertUtil {
 		}
 
 		//	Process
-		Process.Builder processAssociated = ProcessConvertUtil.convertProcess(context, tab.getAD_Process_ID(), false);
-		builder.setProcess(processAssociated);
+		if (tab.getAD_Process_ID() > 0) {
+			Process.Builder processAssociated = ProcessConvertUtil.convertProcess(
+				context,
+				tab.getAD_Process_ID(),
+				false
+			);
+			builder.setProcess(processAssociated);
+		}
 
 		List<MProcess> processList = WindowUtil.getProcessActionFromTab(context, tab);
 		if(processList != null && processList.size() > 0) {
@@ -383,7 +387,6 @@ public class WindowConvertUtil {
 				ValueManager.validateNull(column.getValueMin())
 			)
 			.setFieldLength(column.getFieldLength())
-			.setIsActive(field.isActive())
 			.addAllContextColumnNames(
 				ContextManager.getContextColumnNames(
 					Optional.ofNullable(field.getDefaultValue()).orElse(
@@ -627,7 +630,6 @@ public class WindowConvertUtil {
 			.setFieldGroupType(
 				ValueManager.validateNull(fieldGroup.getFieldGroupType())
 			)
-			.setIsActive(fieldGroup.isActive())
 		;
 		return builder;
 	}
@@ -673,7 +675,6 @@ public class WindowConvertUtil {
 				.setStylesheet(
 					ValueManager.validateNull(condition.getStylesheet())
 				)
-				.setIsActive(fieldDefinition.isActive())
 			;
 			//	Add to parent
 			builder.addConditions(fieldConditionBuilder);

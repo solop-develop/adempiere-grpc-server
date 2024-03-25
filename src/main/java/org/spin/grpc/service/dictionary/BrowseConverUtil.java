@@ -82,7 +82,6 @@ public class BrowseConverUtil {
 				ValueManager.validateNull(browser.getHelp())
 			)
 			.setAccessLevel(Integer.parseInt(browser.getAccessLevel()))
-			.setIsActive(browser.isActive())
 			.setIsCollapsibleByDefault(browser.isCollapsibleByDefault())
 			.setIsDeleteable(browser.isDeleteable())
 			.setIsExecutedQueryByDefault(browser.isExecutedQueryByDefault())
@@ -211,7 +210,6 @@ public class BrowseConverUtil {
 			.setVFormat(
 				ValueManager.validateNull(browseField.getVFormat())
 			)
-			.setIsActive(browseField.isActive())
 			.setCallout(
 				ValueManager.validateNull(browseField.getCallout())
 			)
