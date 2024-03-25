@@ -143,8 +143,8 @@ public class ReferenceUtil {
 			}
 			final String tableAlias = tableName + "_" + columnName;
 
-			String regexMainTable = "(\\bFROM\\b)\\s+(?<table>" + tableName + "\\b)\\s+"
-				+ "(\\bWHERE\\b|\\bORDER\\s+BY\\b|((LEFT|INNER|RIGHT|FULL|SELF|CROSS)\\s+(OUTER\\s+){0,1}){0,1}JOIN)"
+			String regexMainTable = "(?<from>\\bFROM\\b)\\s+(?<table>" + tableName + "\\b)\\s+"
+				+ "(?<restriction>\\bWHERE\\b|\\bORDER\\s+BY\\b|((LEFT|INNER|RIGHT|FULL|SELF|CROSS)\\s+(OUTER\\s+){0,1}){0,1}JOIN)"
 			;
 			Pattern patternMainTable = Pattern.compile(
 				regexMainTable,
@@ -155,7 +155,8 @@ public class ReferenceUtil {
 			if (matcherMainTable.find()) {
 				displayColumn = displayColumn.replaceAll(
 					regexMainTable,
-					"FROM " + tableName + " AS " + tableAlias + " " + matcherMainTable.group(3)
+					// "FROM " + tableName + " AS " + tableAlias + " " + matcherMainTable.group(3)
+					"FROM " + tableName + " AS " + tableAlias + " " + matcherMainTable.group("restriction")
 				);
 			} else {
 				displayColumn = displayColumn.replace(
