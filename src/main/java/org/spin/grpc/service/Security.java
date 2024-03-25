@@ -77,6 +77,7 @@ import org.spin.backend.grpc.security.LoginRequest;
 import org.spin.backend.grpc.security.LogoutRequest;
 import org.spin.backend.grpc.security.Menu;
 import org.spin.backend.grpc.security.MenuRequest;
+import org.spin.backend.grpc.security.MenuResponse;
 import org.spin.backend.grpc.security.Organization;
 import org.spin.backend.grpc.security.Role;
 import org.spin.backend.grpc.security.SecurityGrpc.SecurityImplBase;
@@ -124,7 +125,7 @@ public class Security extends SecurityImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(Security.class);
 	/**	Menu */
-	private static CCache<String, Menu.Builder> menuCache = new CCache<String, Menu.Builder>("Menu_for_User", 30, 0);
+	private static CCache<String, MenuResponse.Builder> menuCache = new CCache<String, MenuResponse.Builder>("Menu_for_User", 30, 0);
 
 
 
@@ -298,12 +299,12 @@ public class Security extends SecurityImplBase {
 	}
 	
 	@Override
-	public void getMenu(MenuRequest request, StreamObserver<Menu> responseObserver) {
+	public void getMenu(MenuRequest request, StreamObserver<MenuResponse> responseObserver) {
 		try {
 			if(request == null) {
-				throw new AdempiereException("Object Request Null");
+				throw new AdempiereException("Menu Request Null");
 			}
-			Menu.Builder menuBuilder = convertMenu();
+			MenuResponse.Builder menuBuilder = convertMenu();
 			responseObserver.onNext(menuBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1392,15 +1393,15 @@ public class Security extends SecurityImplBase {
 	 * Convert Menu
 	 * @return
 	 */
-	private Menu.Builder convertMenu() {
+	private MenuResponse.Builder convertMenu() {
 		int roleId = Env.getAD_Role_ID(Env.getCtx());
 		int userId = Env.getAD_User_ID(Env.getCtx());
 		String menuKey = roleId + "|" + userId + "|" + Env.getAD_Language(Env.getCtx());
-		Menu.Builder builder = menuCache.get(menuKey);
-		if(builder != null) {
-			return builder;
+		MenuResponse.Builder builderList = menuCache.get(menuKey);
+		if(builderList != null) {
+			return builderList;
 		}
-		builder = Menu.newBuilder();
+
 		MMenu menu = new MMenu(Env.getCtx(), 0, null);
 		menu.setName(Msg.getMsg(Env.getCtx(), "Menu"));
 		//	Get Reference
@@ -1412,6 +1413,8 @@ public class Security extends SecurityImplBase {
 		if (treeId <= 0) {
 			treeId = MTree.getDefaultTreeIdFromTableId(menu.getAD_Client_ID(), I_AD_Menu.Table_ID);
 		}
+
+		Menu.Builder builder = Menu.newBuilder();
 		if(treeId != 0) {
 			MTree tree = new MTree(Env.getCtx(), treeId, false, false, null, null);
 			//	
@@ -1432,9 +1435,12 @@ public class Security extends SecurityImplBase {
 				builder.addChildren(childBuilder.build());
 			}
 		}
+
 		//	Set from DB
-		menuCache.put(menuKey, builder);
-		return builder;
+		builderList = MenuResponse.newBuilder();
+		builderList.addMenus(builder);
+		menuCache.put(menuKey, builderList);
+		return builderList;
 	}
 
 	/**

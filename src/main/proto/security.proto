@@ -44,7 +44,7 @@ service Security {
 		option (google.api.http) = { get: "/security/user-info" };
 	}
 	// Request Menu from Parent
-	rpc GetMenu(MenuRequest) returns (Menu) {
+	rpc GetMenu(MenuRequest) returns (MenuResponse) {
 		option (google.api.http) = { get: "/security/menu" };
 	}
 	// Request change role
@@ -127,10 +127,6 @@ message ChangeRoleRequest {
 
 // Request User Info
 message UserInfoRequest {
-}
-
-// Request Menu
-message MenuRequest {
 }
 
 // User information
@@ -319,6 +315,11 @@ message Menu {
 	DictionaryEntity browse = 15;
 	DictionaryEntity workflow = 16;
 	repeated Menu children = 17;
+}
+message MenuRequest {
+}
+message MenuResponse {
+	repeated Menu menus = 1;
 }
 
 //	Open ID
