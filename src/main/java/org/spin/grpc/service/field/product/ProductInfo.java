@@ -25,6 +25,7 @@ import org.spin.backend.grpc.field.product.ListAvailableToPromisesResponse;
 import org.spin.backend.grpc.field.product.ListPricesListVersionsRequest;
 import org.spin.backend.grpc.field.product.ListProductCategoriesRequest;
 import org.spin.backend.grpc.field.product.ListProductClasessRequest;
+import org.spin.backend.grpc.field.product.ListProductClassificationsRequest;
 import org.spin.backend.grpc.field.product.ListProductGroupsRequest;
 import org.spin.backend.grpc.field.product.ListProductsInfoRequest;
 import org.spin.backend.grpc.field.product.ListProductsInfoResponse;
@@ -217,6 +218,29 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 	public void listProductClasses(ListProductClasessRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			ListLookupItemsResponse.Builder buildersList = ProductInfoLogic.listProductClasses(
+				request
+			);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void listProductClassifications(ListProductClassificationsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			ListLookupItemsResponse.Builder buildersList = ProductInfoLogic.listProductClassifications(
 				request
 			);
 			responseObserver.onNext(

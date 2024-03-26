@@ -29,6 +29,8 @@ import org.adempiere.core.domains.models.I_M_PriceList_Version;
 import org.adempiere.core.domains.models.I_M_Product;
 import org.adempiere.core.domains.models.I_M_Product_Category;
 import org.adempiere.core.domains.models.I_M_Product_Class;
+import org.adempiere.core.domains.models.I_M_Product_Classification;
+import org.adempiere.core.domains.models.I_M_Product_Group;
 import org.adempiere.core.domains.models.I_M_Product_PO;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
@@ -51,6 +53,7 @@ import org.spin.backend.grpc.field.product.ListAvailableToPromisesResponse;
 import org.spin.backend.grpc.field.product.ListPricesListVersionsRequest;
 import org.spin.backend.grpc.field.product.ListProductCategoriesRequest;
 import org.spin.backend.grpc.field.product.ListProductClasessRequest;
+import org.spin.backend.grpc.field.product.ListProductClassificationsRequest;
 import org.spin.backend.grpc.field.product.ListProductGroupsRequest;
 import org.spin.backend.grpc.field.product.ListProductsInfoRequest;
 import org.spin.backend.grpc.field.product.ListProductsInfoResponse;
@@ -262,7 +265,7 @@ public class ProductInfoLogic {
 			DisplayType.TableDir,
 			0, 0, 0,
 			0,
-			I_M_Product_Category.COLUMNNAME_M_Product_Category_ID, I_M_Product_Category.Table_Name
+			I_M_Product_Group.COLUMNNAME_M_Product_Group_ID, I_M_Product_Group.Table_Name
 		);
 
 		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
@@ -284,6 +287,27 @@ public class ProductInfoLogic {
 			0, 0, 0,
 			0,
 			I_M_Product_Class.COLUMNNAME_M_Product_Class_ID, I_M_Product_Class.Table_Name
+		);
+
+		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+			reference,
+			null,
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			true
+		);
+
+		return builderList;
+	}
+
+	public static ListLookupItemsResponse.Builder listProductClassifications(ListProductClassificationsRequest request) {
+		// Warehouse
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			DisplayType.TableDir,
+			0, 0, 0,
+			0,
+			I_M_Product_Classification.COLUMNNAME_M_Product_Classification_ID, I_M_Product_Classification.Table_Name
 		);
 
 		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
@@ -473,6 +497,13 @@ public class ProductInfoLogic {
 			sqlWhere += " AND p.M_Product_Class_ID = ? ";
 			parametersList.add(
 				request.getProductClassId()
+			);
+		}
+		// Product Classification
+		if (request.getProductClassificationId() > 0) {
+			sqlWhere += " AND p.M_Product_Classification_ID = ? ";
+			parametersList.add(
+				request.getProductClassificationId()
 			);
 		}
 		// Attribute Set

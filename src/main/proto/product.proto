@@ -61,6 +61,9 @@ service ProductInfoService {
 	rpc ListProductClasses(ListProductClasessRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/field/products/clasess" };
 	}
+	rpc ListProductClassifications(ListProductClassificationsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/products/classifications" };
+	}
 	rpc ListVendors(ListVendorsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = { get: "/field/products/vendors" };
 	}
@@ -197,6 +200,17 @@ message ListProductClasessRequest {
 	string context_attributes = 8;
 }
 
+message ListProductClassificationsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+}
+
 message ListVendorsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -277,10 +291,11 @@ message ListProductsInfoRequest {
 	int32 product_category_id = 23;
 	int32 product_group_id = 24;
 	int32 product_class_id = 25;
-	int32 attribute_set_id = 26;
-	int32 attribute_set_instance_id = 27;
-	int32 vendor_id = 28;
-	string is_stocked = 29;
+	int32 product_classification_id = 26;
+	int32 attribute_set_id = 27;
+	int32 attribute_set_instance_id = 28;
+	int32 vendor_id = 29;
+	string is_stocked = 30;
 }
 
 
