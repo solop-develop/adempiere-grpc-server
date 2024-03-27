@@ -97,7 +97,7 @@ dependencies {
 	// Business Processors (To Task's and Schedulers)
 	implementation "${baseGroupId}:adempiere-business-processors:1.1.0"
 	// Engine as Queue
-	implementation "${baseGroupId}:adempiere-kafka-connector:1.1.4"
+	implementation "${baseGroupId}:adempiere-kafka-connector:1.1.5"
 	// Third part access using JWT
 	implementation "${baseGroupId}:adempiere-jwt-token:1.0.2"
 	// https://mvnrepository.com/artifact/com.nimbusds/oauth2-oidc-sdk
