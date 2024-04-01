@@ -130,8 +130,10 @@ message ListAccoutingElementValuesRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
-	int32 accouting_schema_id = 9;
-	string element_type = 10;
+	bool is_only_active_records = 9;
+	// Custom Filters
+	int32 accouting_schema_id = 10;
+	string element_type = 11;
 }
 
 message ListAccoutingElementValuesResponse {
@@ -174,6 +176,8 @@ message ListAccountingSchemasRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 // Posting Type
@@ -185,6 +189,8 @@ message ListPostingTypesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 // Accounting Document
@@ -219,6 +225,8 @@ message ListOrganizationsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 // Accounting Fact

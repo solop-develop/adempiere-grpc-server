@@ -125,6 +125,7 @@ message ListWarehousesRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message GetLastPriceListVersionRequest {
@@ -141,6 +142,7 @@ message ListPricesListVersionsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListAttributeSetsRequest {
@@ -152,6 +154,7 @@ message ListAttributeSetsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListAttributeSetInstancesRequest {
@@ -163,8 +166,9 @@ message ListAttributeSetInstancesRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 	// custom filters
-	int32 attribute_set_id = 9;
+	int32 attribute_set_id = 10;
 }
 
 message ListProductCategoriesRequest {
@@ -176,6 +180,7 @@ message ListProductCategoriesRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListProductGroupsRequest {
@@ -187,6 +192,7 @@ message ListProductGroupsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListProductClasessRequest {
@@ -198,6 +204,7 @@ message ListProductClasessRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListProductClassificationsRequest {
@@ -209,6 +216,7 @@ message ListProductClassificationsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListVendorsRequest {
@@ -220,6 +228,7 @@ message ListVendorsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 

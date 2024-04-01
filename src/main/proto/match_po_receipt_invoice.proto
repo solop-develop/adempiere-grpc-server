@@ -83,6 +83,8 @@ message ListMatchesTypesFromRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListMatchesTypesToRequest {
@@ -93,7 +95,10 @@ message ListMatchesTypesToRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	MatchType match_from_type = 8;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	MatchType match_from_type = 10;
 }
 
 
@@ -111,6 +116,8 @@ message ListSearchModesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 
@@ -131,6 +138,8 @@ message ListVendorsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 

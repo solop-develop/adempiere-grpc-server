@@ -148,6 +148,8 @@ message ListBankAccountsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 
@@ -168,6 +170,8 @@ message ListBusinessPartnersRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListBusinessPartnersResponse {
@@ -185,6 +189,8 @@ message ListSearchModesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 

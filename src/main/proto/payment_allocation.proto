@@ -88,6 +88,8 @@ message ListBusinessPartnersRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListBusinessPartnersResponse {
@@ -112,6 +114,8 @@ message ListOrganizationsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListOrganizatiosResponse {
@@ -136,6 +140,8 @@ message ListCurrenciesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListCurrenciesResponse {
@@ -161,6 +167,8 @@ message ListTransactionTypesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListTransactionTypesResponse {
@@ -265,6 +273,8 @@ message ListChargesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListChargesResponse {
@@ -283,6 +293,8 @@ message ListTransactionOrganizationsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message ListTransactionOrganizationsResponse {

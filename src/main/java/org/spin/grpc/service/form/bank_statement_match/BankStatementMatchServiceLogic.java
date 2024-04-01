@@ -163,10 +163,11 @@ public abstract class BankStatementMatchServiceLogic {
 
 		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
 			reference,
-			null,
+			request.getContextAttributes(),
 			request.getPageSize(),
 			request.getPageToken(),
-			request.getSearchValue()
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
 		);
 
 		return builderList;
@@ -186,10 +187,11 @@ public abstract class BankStatementMatchServiceLogic {
 
 		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
 			reference,
-			null,
+			request.getContextAttributes(),
 			request.getPageSize(),
 			request.getPageToken(),
-			request.getSearchValue()
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
 		);
 
 		return builderList;

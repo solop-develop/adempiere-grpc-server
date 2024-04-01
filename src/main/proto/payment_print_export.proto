@@ -118,6 +118,8 @@ message ListPaymentSelectionsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 // Get Payment Selection Request
@@ -134,7 +136,10 @@ message ListPaymentRulesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 payment_selection_id = 8;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	int32 payment_selection_id = 10;
 }
 
 // Get Document No Request

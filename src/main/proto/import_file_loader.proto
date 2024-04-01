@@ -66,6 +66,8 @@ message ListCharsetsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 
@@ -110,7 +112,10 @@ message ListImportFormatsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	string table_name = 8;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string table_name = 10;
 }
 
 message ListClientImportFormatsRequest {
@@ -121,7 +126,10 @@ message ListClientImportFormatsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	string table_name = 8;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string table_name = 10;
 }
 
 message ImportFormat {
@@ -200,5 +208,8 @@ message ListImportProcessesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	string table_name = 9;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string table_name = 10;
 }

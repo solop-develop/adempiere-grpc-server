@@ -54,16 +54,16 @@ message ListLookupItemsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 	// References
-	string table_name = 8;
-	string column_name = 9;
-	int32 column_id = 10;
-	int32 field_id = 11;
-	int32 process_parameter_id = 12;
-	int32 browse_field_id = 13;
-	int32 reference_id = 14;
-	string context_attributes = 15;
-	bool is_only_active_records = 16;
+	string table_name = 10;
+	string column_name = 11;
+	int32 column_id = 12;
+	int32 field_id = 13;
+	int32 process_parameter_id = 14;
+	int32 browse_field_id = 15;
+	int32 reference_id = 16;
 }
 
 message ListLookupItemsResponse {

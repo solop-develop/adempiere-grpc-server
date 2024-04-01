@@ -323,7 +323,8 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			request.getContextAttributes(),
 			request.getPageSize(),
 			request.getPageToken(),
-			request.getSearchValue()
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
 		);
 	}
 

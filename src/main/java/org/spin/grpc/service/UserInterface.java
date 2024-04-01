@@ -2174,17 +2174,6 @@ public class UserInterface extends UserInterfaceImplBase {
 			request.getIsOnlyActiveRecords()
 		);
 	}
-
-	public static ListLookupItemsResponse.Builder listLookupItems(MLookupInfo reference, String contextAttributes, int pageSize, String pageToken, String searchValue) {
-		return listLookupItems(
-			reference,
-			contextAttributes,
-			pageSize,
-			pageToken,
-			searchValue,
-			false
-		);
-	}
 	/**
 	 * Convert Object to list
 	 * @param MLookupInfo reference
