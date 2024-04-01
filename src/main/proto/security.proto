@@ -45,7 +45,9 @@ service Security {
 	}
 	// Request Menu from Parent
 	rpc GetMenu(MenuRequest) returns (MenuResponse) {
-		option (google.api.http) = { get: "/security/menu" };
+		option (google.api.http) = {
+			get: "/security/menus"
+		};
 	}
 	// Request change role
 	rpc RunChangeRole(ChangeRoleRequest) returns (Session) {
@@ -303,17 +305,18 @@ message Menu {
 	string sequence = 4;
 	string name = 5;
 	string description = 6;
-	bool is_active = 7;
-	bool is_summary = 8;
-	bool is_sales_transaction = 9;
-	bool is_read_only = 10;
-	string action = 11;
+	bool is_summary = 7;
+	bool is_sales_transaction = 8;
+	bool is_read_only = 9;
 	// Supported References
-	DictionaryEntity window = 12;
-	DictionaryEntity process = 13;
-	DictionaryEntity form = 14;
-	DictionaryEntity browse = 15;
-	DictionaryEntity workflow = 16;
+	optional string action = 10;
+	optional int32 action_id = 11;
+	optional DictionaryEntity window = 12;
+	optional DictionaryEntity process = 13;
+	optional DictionaryEntity form = 14;
+	optional DictionaryEntity browse = 15;
+	optional DictionaryEntity workflow = 16;
+	// Tree menu childs
 	repeated Menu children = 17;
 }
 message MenuRequest {
@@ -321,6 +324,7 @@ message MenuRequest {
 message MenuResponse {
 	repeated Menu menus = 1;
 }
+
 
 //	Open ID
 message ListServicesRequest {
