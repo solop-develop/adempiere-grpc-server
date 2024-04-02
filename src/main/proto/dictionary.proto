@@ -119,6 +119,18 @@ message Window {
 	repeated Tab tabs = 10;
 }
 
+message Table {
+	string table_name = 1;
+	int32 access_level = 2;
+	repeated string key_columns = 3;
+	bool is_view = 4;
+	bool is_deleteable = 5;
+	bool is_document = 6;
+	bool is_change_log = 7;
+	repeated string identifier_columns = 8;
+	repeated string selection_columns = 9;
+}
+
 // Tab
 message Tab {
 	int32 id = 1;
@@ -128,14 +140,7 @@ message Tab {
 	string help = 5;
 	// Table attributes
 	string table_name = 7;
-	int32 access_level = 8;
-	bool is_view = 9;
-	bool is_deleteable = 10;
-	bool is_document = 11;
-	bool is_change_log = 12;
-	repeated string key_columns = 13;
-	repeated string identifier_columns = 14;
-	repeated string selection_columns = 15;
+	Table table = 8;
 	// Record Attributes
 	bool is_insert_record = 16;
 	string commit_warning = 17;

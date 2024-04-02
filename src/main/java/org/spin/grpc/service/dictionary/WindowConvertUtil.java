@@ -16,9 +16,11 @@ package org.spin.grpc.service.dictionary;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
@@ -48,14 +50,17 @@ import org.spin.backend.grpc.dictionary.FieldGroup;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.Tab;
+import org.spin.backend.grpc.dictionary.Table;
 import org.spin.backend.grpc.dictionary.Window;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.custom.FieldCustomUtil;
 import org.spin.dictionary.util.WindowUtil;
 import org.spin.model.MADFieldCondition;
 import org.spin.model.MADFieldDefinition;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
@@ -144,6 +149,64 @@ public class WindowConvertUtil {
 	}
 
 
+	public static Table.Builder convertTable(MTable table) {
+		Table.Builder builder = Table.newBuilder();
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			return builder;
+		}
+		List<String> selectionColums = table.getColumnsAsList(true).stream()
+			.filter(column -> {
+				return column.isSelectionColumn();
+			})
+			.map(column -> {
+				return column.getColumnName();
+			})
+			.collect(Collectors.toList())
+		;
+		List<String> identifierColumns = table.getColumnsAsList(false).stream()
+			.filter(column -> {
+				return column.isIdentifier();
+			})
+			.sorted(Comparator.comparing(MColumn::getSeqNo))
+			.map(column -> {
+				return column.getColumnName();
+			})
+			.collect(Collectors.toList())
+		;
+		builder.setTableName(
+				ValueManager.validateNull(
+					table.getTableName()
+				)
+			)
+			.setAccessLevel(
+				NumberManager.getIntFromString(
+					table.getAccessLevel()
+				)
+			)
+			.addAllKeyColumns(
+				Arrays.asList(
+					table.getKeyColumns()
+				)
+			)
+			.setIsView(
+				table.isView()
+			)
+			.setIsDocument(
+				table.isDocument()
+			)
+			.setIsDeleteable(
+				table.isDeleteable()
+			)
+			.setIsChangeLog(
+				table.isChangeLog()
+			)
+			.addAllIdentifierColumns(identifierColumns)
+			.addAllSelectionColumns(selectionColums)
+		;
+
+		return builder;
+	}
+
 	/**
 	 * Convert Model tab to builder tab
 	 * @param tab
@@ -183,9 +246,21 @@ public class WindowConvertUtil {
 				ValueManager.validateNull(tab.getDescription())
 			)
 			.setHelp(ValueManager.validateNull(tab.getHelp()))
-			.setAccessLevel(Integer.parseInt(table.getAccessLevel()))
+			.setIsInsertRecord(
+				!isReadOnly && tab.isInsertRecord()
+			)
 			.setCommitWarning(
-				ValueManager.validateNull(tab.getCommitWarning())
+				ValueManager.validateNull(
+					tab.getCommitWarning()
+				)
+			)
+			.setTableName(
+				ValueManager.validateNull(
+					table.getTableName()
+				)
+			)
+			.setTable(
+				convertTable(table)
 			)
 			.setSequence(tab.getSeqNo())
 			.setDisplayLogic(
@@ -195,22 +270,14 @@ public class WindowConvertUtil {
 				ValueManager.validateNull(tab.getReadOnlyLogic())
 			)
 			.setIsAdvancedTab(tab.isAdvancedTab())
-			.setIsDeleteable(table.isDeleteable())
-			.setIsDocument(table.isDocument())
 			.setIsHasTree(tab.isHasTree())
 			.setIsInfoTab(tab.isInfoTab())
-			.setIsInsertRecord(!isReadOnly && tab.isInsertRecord())
 			.setIsReadOnly(isReadOnly)
 			.setIsSingleRow(tab.isSingleRow())
 			.setIsSortTab(tab.isSortTab())
 			.setIsTranslationTab(tab.isTranslationTab())
-			.setIsView(table.isView())
 			.setTabLevel(tab.getTabLevel())
-			.setTableName(
-				ValueManager.validateNull(table.getTableName())
-			)
 			.setParentTabId(parentTabId)
-			.setIsChangeLog(table.isChangeLog())
 			.setWindowId(
 				tab.getAD_Window_ID()
 			)
@@ -218,11 +285,6 @@ public class WindowConvertUtil {
 				ContextManager.getContextColumnNames(
 					Optional.ofNullable(whereClause).orElse("")
 					+ Optional.ofNullable(tab.getOrderByClause()).orElse("")
-				)
-			)
-			.addAllKeyColumns(
-				Arrays.asList(
-					table.getKeyColumns()
 				)
 			)
 		;
@@ -252,12 +314,16 @@ public class WindowConvertUtil {
 
 		//	Process
 		if (tab.getAD_Process_ID() > 0) {
-			Process.Builder processAssociated = ProcessConvertUtil.convertProcess(
-				context,
-				tab.getAD_Process_ID(),
-				false
-			);
-			builder.setProcess(processAssociated);
+			// Record/Role access
+			boolean isWithAccess = AccessUtil.isProcessAccess(MRole.getDefault(), tab.getAD_Process_ID());
+			if (isWithAccess) {
+				Process.Builder processAssociated = ProcessConvertUtil.convertProcess(
+					context,
+					tab.getAD_Process_ID(),
+					false
+				);
+				builder.setProcess(processAssociated);
+			}
 		}
 
 		List<MProcess> processList = WindowUtil.getProcessActionFromTab(context, tab);
