@@ -1416,11 +1416,11 @@ public class Security extends SecurityImplBase {
 			treeId = MTree.getDefaultTreeIdFromTableId(menu.getAD_Client_ID(), I_AD_Menu.Table_ID);
 		}
 
-		Menu.Builder builder = Menu.newBuilder();
-		if(treeId != 0) {
+		if(treeId > 0) {
+			builderList = MenuResponse.newBuilder();
 			MTree tree = new MTree(Env.getCtx(), treeId, false, false, null, null);
 			//	
-			builder = convertMenu(Env.getCtx(), menu, 0, Env.getAD_Language(Env.getCtx()));
+			// Menu.Builder builder = convertMenu(Env.getCtx(), menu, 0, Env.getAD_Language(Env.getCtx()));
 			//	Get main node
 			MTreeNode rootNode = tree.getRoot();
 			Enumeration<?> childrens = rootNode.children();
@@ -1434,13 +1434,12 @@ public class Security extends SecurityImplBase {
 				);
 				//	Explode child
 				addChildren(Env.getCtx(), childBuilder, child, Env.getAD_Language(Env.getCtx()));
-				builder.addChildren(childBuilder.build());
+				// builder.addChildren(childBuilder.build());
+				builderList.addMenus(childBuilder);
 			}
 		}
 
 		//	Set from DB
-		builderList = MenuResponse.newBuilder();
-		builderList.addMenus(builder);
 		menuCache.put(menuKey, builderList);
 		return builderList;
 	}
