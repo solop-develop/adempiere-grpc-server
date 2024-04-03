@@ -15,7 +15,6 @@
  ************************************************************************************/
 package org.spin.base.setup;
 
-import java.util.List;
 import java.util.logging.Level;
 
 /**
@@ -41,10 +40,6 @@ public class Server {
 	/**	JWT Expiration Time	*/
 	private long jwt_expiration_time;
 
-	/**	Is Enabled All Services	*/
-	private boolean is_enabled_all_services;
-	/**	Embedded services	*/
-	private List<String> services;
 
 	/**
 	 * Default constructor
@@ -56,13 +51,11 @@ public class Server {
 	 * @param jwt_secret_key
 	 * @param jwt_expiration
 	 * @param log_level
-	 * @param services
 	 */
 	public Server(
 		String host, int port, String log_level,
 		String certificate_chain_file, String private_key_file, String trust_certificate_collection_file,
-		String jwt_secret_key, long jwt_expiration_time,
-		boolean is_enabled_all_services, List<String> services
+		String jwt_secret_key, long jwt_expiration_time
 	) {
 		this.host = host;
 		this.port = port;
@@ -72,8 +65,6 @@ public class Server {
 		this.log_level = log_level;
 		this.jwt_secret_key = jwt_secret_key;
 		this.jwt_expiration_time = jwt_expiration_time;
-		this.is_enabled_all_services = is_enabled_all_services;
-		this.services = services;
 		if(this.log_level == null
 				|| this.log_level.trim().length() == 0) {
 			this.log_level = Level.WARNING.getName();
@@ -131,22 +122,6 @@ public class Server {
 	}
 
 	/**
-	 * Get Is Enabled All Services
-	 * @return
-	 */
-	public final boolean getIs_enabled_all_services() {
-		return this.is_enabled_all_services;
-	}
-
-	/**
-	 * Get Services
-	 * @return
-	 */
-	public final List<String> getServices() {
-		return services;
-	}
-
-	/**
 	 * Log Level
 	 * @return
 	 */
@@ -170,34 +145,12 @@ public class Server {
 		return this.jwt_expiration_time;
 	}
 
-	/**
-	 * Validate is a service is enabled
-	 * @param serviceName
-	 * @return
-	 */
-	public final boolean isValidService(String serviceName) {
-		// validate service name
-		if(serviceName == null || serviceName.trim().length() == 0) {
-			return false;
-		}
-		// overwrite services
-		if (this.is_enabled_all_services) {
-			return true;
-		}
-		// without services
-		if (this.services == null || this.services.size() <= 0) {
-			return false;
-		}
-		return getServices()
-			.stream()
-			.filter(serviceToFind -> serviceToFind != null && serviceToFind.equals(serviceName)).findFirst().isPresent();
-	}
 
 	@Override
 	public String toString() {
 		return "Server [host=" + host + ", port=" + port + ", certificate_chain_file=" + certificate_chain_file
 				+ ", private_key_file=" + private_key_file + ", trust_certificate_collection_file="
-				+ trust_certificate_collection_file + ", log_level=" + log_level + ", services=" + services + "]";
+				+ trust_certificate_collection_file + ", log_level=" + log_level + "]";
 	}
 
 }
