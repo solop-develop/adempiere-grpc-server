@@ -935,13 +935,17 @@ public class WebStore extends WebStoreImplBase {
 		List<MBPartnerLocation> businessPartnerLocations = Arrays.asList(customer.getLocations(true));
 		int businessPartnerLocationId = 0;
 		if(address.getLocationId() > 0) {
-			Optional<MBPartnerLocation> maybeLocation = businessPartnerLocations.stream().filter(bPLocation -> bPLocation.getC_Location_ID() == address.getLocationId()).findFirst();
+			Optional<MBPartnerLocation> maybeLocation = businessPartnerLocations.parallelStream()
+				.filter(bPLocation -> {
+					return bPLocation.getC_Location_ID() == address.getLocationId();
+				})
+				.findFirst();
 			if(maybeLocation.isPresent()) {
 				businessPartnerLocationId = maybeLocation.get().getC_BPartner_Location_ID();
 			}
 		} else {	//	Find Match
 			Optional<MBPartnerLocation> maybeLocation = businessPartnerLocations
-					.stream()
+					.parallelStream()
 					.filter(bPLocation -> {
 						MLocation location = MLocation.get(Env.getCtx(), bPLocation.getC_Location_ID(), transactionName);
 						MCountry country = MCountry.get(Env.getCtx(), location.getC_Country_ID());
@@ -994,7 +998,11 @@ public class WebStore extends WebStoreImplBase {
 		//	
 		int regionId = address.getRegionId();
 		if(regionId <= 0 && !Util.isEmpty(address.getRegionName())) {
-			Optional<MRegion> maybeRegion = Arrays.asList(MRegion.getDefault(Env.getCtx())).stream().filter(region -> region.getName().equals(address.getRegionName())).findFirst();
+			Optional<MRegion> maybeRegion = Arrays.asList(MRegion.getDefault(Env.getCtx())).parallelStream()
+				.filter(region -> {
+					return region.getName().equals(address.getRegionName());
+				})
+				.findFirst();
 			if(maybeRegion.isPresent()) {
 				regionId = maybeRegion.get().getC_Region_ID();
 			}
@@ -1370,7 +1378,11 @@ public class WebStore extends WebStoreImplBase {
 				defaultBPartner = MBPartner.get(Env.getCtx(), customerTemplateId);
 			}
 			List<MBPartnerLocation> businessPartnerLocations = Arrays.asList(defaultBPartner.getLocations(false));
-			Optional<MBPartnerLocation> maybeLocation = businessPartnerLocations.stream().filter(bPLocation -> bPLocation.isShipTo()).findFirst();
+			Optional<MBPartnerLocation> maybeLocation = businessPartnerLocations.parallelStream()
+				.filter(bPLocation -> {
+					return bPLocation.isShipTo();
+				})
+				.findFirst();
 			if(maybeLocation.isPresent()) {
 				return maybeLocation.get().getC_Location_ID();
 			}
@@ -1622,7 +1634,11 @@ public class WebStore extends WebStoreImplBase {
 					.setParameters(basket.getW_Basket_ID())
 					.list();
 			//	Create instead
-			Optional<X_W_BasketLine> basketLine = items.stream().filter(item -> MProduct.get(Env.getCtx(), item.getM_Product_ID()).getSKU().equals(request.getSku())).findFirst();
+			Optional<X_W_BasketLine> basketLine = items.parallelStream()
+				.filter(item -> {
+					return MProduct.get(Env.getCtx(), item.getM_Product_ID()).getSKU().equals(request.getSku());
+				})
+				.findFirst();
 			X_W_BasketLine item = null;
 			//	Set values
 			if(basketLine.isPresent()) {
@@ -2316,7 +2332,7 @@ public class WebStore extends WebStoreImplBase {
 		MProduct product = getProductFromSku(request.getSku());
 		Stock.Builder builder = Stock.newBuilder();
 		Optional<MStorage> maybeStorage = Arrays.asList(MStorage.getOfProduct(Env.getCtx(), product.getM_Product_ID(), null))
-				.stream()
+				.parallelStream()
 				.filter(storage -> storage.getQtyOnHand().signum() > 0)
 				.reduce(StockSummary::add);
 		if(maybeStorage.isPresent()) {
@@ -2471,13 +2487,16 @@ public class WebStore extends WebStoreImplBase {
 		int taxCategoryId = product.getC_TaxCategory_ID();
 		BigDecimal taxRate = Env.ZERO;
 		Optional<MTax> optionalTax = Arrays.asList(MTax.getAll(Env.getCtx()))
-		.stream()
-		.filter(tax -> tax.getC_TaxCategory_ID() == taxCategoryId 
+			.parallelStream()
+			.filter(tax -> {
+				return tax.getC_TaxCategory_ID() == taxCategoryId 
 							&& (tax.isSalesTax() 
 									|| (!Util.isEmpty(tax.getSOPOType()) 
 											&& (tax.getSOPOType().equals(MTax.SOPOTYPE_Both) 
-													|| tax.getSOPOType().equals(MTax.SOPOTYPE_SalesTax)))))
-		.findFirst();
+													|| tax.getSOPOType().equals(MTax.SOPOTYPE_SalesTax))))
+				;
+			})
+			.findFirst();
 		//	Validate
 		if(optionalTax.isPresent()) {
 			taxRate = optionalTax.get().getRate();
@@ -2683,7 +2702,12 @@ public class WebStore extends WebStoreImplBase {
 				.setClient_ID()
 				.setOnlyActiveRecords(true);
 		int count = query.count();
-		query.setLimit(limit, offset).<MStorage>list().forEach(storage -> builder.addStocks(convertStock(storage)));
+		query.setLimit(limit, offset)
+			.<MStorage>list()
+			.parallelStream()
+			.forEach(storage -> {
+				builder.addStocks(convertStock(storage));
+			});
 		//	
 		builder.setRecordCount(count);
 		//	Set page token

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.compiere.model.MProcessPara;
 import org.compiere.model.MQuery;
@@ -67,13 +68,19 @@ public class ReportUtil {
 		for (MProcessPara paramerter : reportParameters) {
 			parametersMap.put(paramerter.getColumnName(), paramerter);
 		}
-		List<Filter> conditions = FilterManager.newInstance(filters).getConditions();
+		List<Filter> conditions = FilterManager.newInstance(filters).getConditions()
+			.parallelStream()
+			.filter(condition -> {
+				return !Util.isEmpty(condition.getColumnName(), true);
+			})
+			.collect(Collectors.toList())
+		;
+
+		// TODO: Add 1=1 to remove `if (whereClause.length() > 0)` and change stream with parallelStream
 		StringBuilder whereClause = new StringBuilder();
 		HashMap<String, String> rangeAdd = new HashMap<>();
 
-		conditions.stream()
-		.filter(condition -> !Util.isEmpty(condition.getColumnName()))
-		.forEach(condition -> {
+		conditions.forEach(condition -> {
 			String columnName = condition.getColumnName();
 			MProcessPara reportParameter = parametersMap.get(columnName);
 			if (reportParameter == null && columnName.endsWith("_To")) {

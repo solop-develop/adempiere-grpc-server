@@ -890,7 +890,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 			String columnName = MAcctSchemaElement.getColumnName(acctSchemaElement.getElementType());
 
-			Filter elementAccount = conditionsList.stream()
+			Filter elementAccount = conditionsList.parallelStream()
 				.filter(condition -> {
 					return condition.getColumnName().equals(columnName);
 				})

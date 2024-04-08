@@ -408,7 +408,12 @@ public class Dictionary extends DictionaryImplBase {
 		int fieldId = field.getAD_Field_ID();
 		List<MField> customFields = ASPUtil.getInstance(context).getWindowFields(field.getAD_Tab_ID());
 		if(customFields != null) {
-			Optional<MField> maybeField = customFields.stream().filter(customField -> customField.getAD_Field_ID() == fieldId).findFirst();
+			Optional<MField> maybeField = customFields.parallelStream()
+				.filter(customField -> {
+					return customField.getAD_Field_ID() == fieldId;
+				})
+				.findFirst()
+			;
 			if(maybeField.isPresent()) {
 				field = maybeField.get();
 

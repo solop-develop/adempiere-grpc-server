@@ -368,8 +368,7 @@ public class RecordUtil {
 			null : MTable.get(Env.getCtx(), table_name + DictionaryUtil.TRANSLATION_SUFFIX);
 		final String tableAlias = Util.isEmpty(table_alias, true) ? table.getTableName() : table_alias;
 
-		StringBuffer where = new StringBuffer();
-		List<MColumn> selectionColums = table.getColumnsAsList().stream()
+		List<MColumn> selectionColums = table.getColumnsAsList().parallelStream()
 			.filter(column -> {
 				return (column.isIdentifier() || column.isSelectionColumn()
 					|| column.getColumnName().equals("Name")
@@ -380,6 +379,8 @@ public class RecordUtil {
 			})
 			.collect(Collectors.toList());
 
+		// TODO: Add 1=1 to remove `if (where.length() > 0)` and change stream with parallelStream
+		StringBuffer where = new StringBuffer();
 		selectionColums.stream()
 			.filter(column -> {
 				// "Value" is not translated for example
@@ -387,7 +388,7 @@ public class RecordUtil {
 			})
 			.forEach(column -> {
 				if(where.length() > 0) {
-				    where.append(" OR ");
+					where.append(" OR ");
 				}
 				where.append("UPPER(")
 					.append(tableAlias).append(".")
@@ -402,6 +403,7 @@ public class RecordUtil {
 		StringBuffer whereClause = where;
 		String joinTranslation = "";
 		if (tableTranslation != null) {
+			// TODO: Add 1=1 to remove `if (whereTranslation.length() > 0)` and change stream with parallelStream
 			StringBuffer whereTranslation = new StringBuffer();
 			
 			selectionColums.stream()

@@ -950,14 +950,14 @@ public class ConvertUtil {
 		if (orderLine.getM_Product_ID() > 0) {
 			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
 			List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
-			uom = productsConversion.stream()
+			uom = productsConversion.parallelStream()
 				.filter(productConversion -> {
 					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
 				})
 				.findFirst()
 				.get();
 	
-			productUom = productsConversion.stream()
+			productUom = productsConversion.parallelStream()
 				.filter(productConversion -> {
 					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
 				})
@@ -1227,14 +1227,14 @@ public class ConvertUtil {
 		if (orderLine.getM_Product_ID() > 0) {
 			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
 			List<MUOMConversion> productsConversion = Arrays.asList(MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID()));
-			uom = productsConversion.stream()
+			uom = productsConversion.parallelStream()
 				.filter(productConversion -> {
 					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
 				})
 				.findFirst()
 				.get();
-	
-			productUom = productsConversion.stream()
+
+			productUom = productsConversion.parallelStream()
 				.filter(productConversion -> {
 					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
 				})

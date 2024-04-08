@@ -499,6 +499,7 @@ public class WhereClauseUtil {
 	 * @return
 	 */
 	public static String getWhereClauseFromCriteria(String filters, String tableName, String tableAlias, List<Object> params) {
+		// TODO: Add 1=1 to remove `if (whereClause.length() > 0)` and change stream with parallelStream
 		StringBuffer whereClause = new StringBuffer();
 		// Vaidate and Table
 		final MTable table = RecordUtil.validateAndGetTable(tableName);
@@ -579,7 +580,7 @@ public class WhereClauseUtil {
 		int tabLevel = tab.getTabLevel();
 		//	Create where clause for children
 		if (tab.getTabLevel() > 0 && tabs != null) {
-			Optional<MTab> optionalTab = tabs.stream()
+			Optional<MTab> optionalTab = tabs.parallelStream()
 				.filter(parentTab -> {
 					return parentTab.getAD_Tab_ID() != tabId
 						&& parentTab.getTabLevel() == 0;
@@ -755,7 +756,7 @@ public class WhereClauseUtil {
 		if (filters == null) {
 			return null;
 		}
-		
+		// TODO: Add 1=1 to remove `if (whereClause.length() > 0)` and change stream with parallelStream
 		StringBuffer whereClause = new StringBuffer();
 		List<Filter> conditions = FilterManager.newInstance(filters).getConditions();
 //		if (!Util.isEmpty(filters.getWhereClause(), true)) {
@@ -842,6 +843,7 @@ public class WhereClauseUtil {
 			return null;
 		}
 
+		// TODO: Add 1=1 to remove `if (whereClause.length() > 0)` and change stream with parallelStream
 		StringBuffer whereClause = new StringBuffer();
 		List<Filter> conditions = FilterManager.newInstance(filters).getConditions();
 //		if (!Util.isEmpty(filters.getWhereClause(), true)) {

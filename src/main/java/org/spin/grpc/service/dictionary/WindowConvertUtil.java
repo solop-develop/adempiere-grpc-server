@@ -570,10 +570,10 @@ public class WindowConvertUtil {
 		if (tabsList == null) {
 			return depenentFieldsList;
 		}
-		tabsList.stream()
+		tabsList.parallelStream()
 			.filter(currentTab -> {
 				// transaltion tab is not rendering on client
-				return currentTab.isActive() && !currentTab.isTranslationTab();
+				return currentTab.isActive() && !currentTab.isTranslationTab() && !currentTab.isSortTab();
 			})
 			.forEach(tab -> {
 				List<MField> fieldsList = ASPUtil.getInstance().getWindowFields(tab.getAD_Tab_ID());
@@ -581,7 +581,7 @@ public class WindowConvertUtil {
 					return;
 				}
 
-				fieldsList.stream()
+				fieldsList.parallelStream()
 					.filter(currentField -> {
 						if (!currentField.isActive()) {
 							return false;

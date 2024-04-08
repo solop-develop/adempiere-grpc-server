@@ -310,10 +310,15 @@ public class BusinessData extends BusinessDataImplBase {
 		//	get document action
 		String documentAction = null;
 		//	Parameters
-		Map<String, Value> parameters = new HashMap<String, Value>();
-		parameters.putAll(request.getParameters().getFieldsMap());
+		Map<String, Value> parametersList = new HashMap<String, Value>();
+		parametersList.putAll(request.getParameters().getFieldsMap());
 		if(request.getParameters().getFieldsCount() > 0) {
-			for(Entry<String, Value> parameter : parameters.entrySet().stream().filter(parameterValue -> !parameterValue.getKey().endsWith("_To")).collect(Collectors.toList())) {
+			List<Entry<String, Value>> parametersListWithoutRange = parametersList.entrySet().parallelStream()
+				.filter(parameterValue -> {
+					return !parameterValue.getKey().endsWith("_To");
+				})
+				.collect(Collectors.toList());
+			for(Entry<String, Value> parameter : parametersListWithoutRange) {
 				final String columnName = parameter.getKey();
 				int displayTypeId = -1;
 				MProcessPara processParameter = new Query(
@@ -335,7 +340,11 @@ public class BusinessData extends BusinessDataImplBase {
 				} else {
 					value = ValueManager.getObjectFromValue(parameter.getValue());
 				}
-				Optional<Entry<String, Value>> maybeToParameter = parameters.entrySet().stream().filter(parameterValue -> parameterValue.getKey().equals(parameter.getKey() + "_To")).findFirst();
+				Optional<Entry<String, Value>> maybeToParameter = parametersList.entrySet().parallelStream()
+					.filter(parameterValue -> {
+						return parameterValue.getKey().equals(parameter.getKey() + "_To");
+					})
+					.findFirst();
 				if(value != null) {
 					if(maybeToParameter.isPresent()) {
 						Object valueTo = null;

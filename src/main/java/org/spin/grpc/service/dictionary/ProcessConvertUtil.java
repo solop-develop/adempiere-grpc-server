@@ -211,7 +211,7 @@ public class ProcessConvertUtil {
 		MProcess process = ASPUtil.getInstance().getProcess(processParameter.getAD_Process_ID());
 		List<MProcessPara> parametersList = ASPUtil.getInstance().getProcessParameters(processParameter.getAD_Process_ID());
 
-		parametersList.stream()
+		parametersList.parallelStream()
 			.filter(currentParameter -> {
 				if (!currentParameter.isActive()) {
 					return false;

@@ -117,7 +117,7 @@ public class ImportFileLoaderServiceLogic {
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
-			charsetsList = charsetsList.stream().filter(charset -> {
+			charsetsList = charsetsList.parallelStream().filter(charset -> {
 				return charset.name().toLowerCase().contains(
 					searchValue.toLowerCase()
 				);
@@ -125,7 +125,7 @@ public class ImportFileLoaderServiceLogic {
 			.collect(Collectors.toList());
 		}
 
-		charsetsList.stream().forEach(charset -> {
+		charsetsList.parallelStream().forEach(charset -> {
 			Value.Builder value = ValueManager.getValueFromString(
 				charset.name()
 			);

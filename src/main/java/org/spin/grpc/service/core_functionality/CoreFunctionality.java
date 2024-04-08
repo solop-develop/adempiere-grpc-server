@@ -601,6 +601,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 		query.setLimit(limit, offset)
 			.getIDsAsList()
+			.parallelStream()
 			.forEach(businessPartnerId -> {
 				BusinessPartner.Builder businessPartnerBuilder = CoreFunctionalityConvert.convertBusinessPartner(businessPartnerId);
 				builder.addBusinessPartners(businessPartnerBuilder);

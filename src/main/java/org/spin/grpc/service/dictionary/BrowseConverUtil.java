@@ -317,7 +317,7 @@ public class BrowseConverUtil {
 		MBrowse browse = ASPUtil.getInstance().getBrowse(browseField.getAD_Browse_ID());
 		List<MBrowseField> browseFieldsList = ASPUtil.getInstance().getBrowseFields(browseField.getAD_Browse_ID());
 
-		browseFieldsList.stream()
+		browseFieldsList.parallelStream()
 			.filter(currentBrowseField -> {
 				if(!currentBrowseField.isActive()) {
 					return false;

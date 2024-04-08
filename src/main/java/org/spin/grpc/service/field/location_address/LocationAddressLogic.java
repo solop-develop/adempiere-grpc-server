@@ -165,18 +165,20 @@ public class LocationAddressLogic {
 			.setRecordCount(query.count())
 		;
 
-		query.getIDsAsList().forEach(regionId -> {
-			MRegion region = MRegion.get(Env.getCtx(), regionId);
-			ListItem.Builder regionItem = ListItem.newBuilder()
-				.setId(region.getC_Region_ID())
-				.setName(
-					ValueManager.validateNull(
-						region.getName()
+		query.getIDsAsList()
+			.parallelStream()
+			.forEach(regionId -> {
+				MRegion region = MRegion.get(Env.getCtx(), regionId);
+				ListItem.Builder regionItem = ListItem.newBuilder()
+					.setId(region.getC_Region_ID())
+					.setName(
+						ValueManager.validateNull(
+							region.getName()
+						)
 					)
-				)
-			;
-			builder.addRegions(regionItem);
-		});
+				;
+				builder.addRegions(regionItem);
+			});
 
 		return builder;
 	}
@@ -228,18 +230,20 @@ public class LocationAddressLogic {
 			.setRecordCount(query.count())
 		;
 
-		query.getIDsAsList().forEach(cityId -> {
-			MCity city = MCity.get(Env.getCtx(), cityId);
-			ListItem.Builder cityItem = ListItem.newBuilder()
-				.setId(city.getC_City_ID())
-				.setName(
-					ValueManager.validateNull(
-						city.getName()
+		query.getIDsAsList()
+			.parallelStream()
+			.forEach(cityId -> {
+				MCity city = MCity.get(Env.getCtx(), cityId);
+				ListItem.Builder cityItem = ListItem.newBuilder()
+					.setId(city.getC_City_ID())
+					.setName(
+						ValueManager.validateNull(
+							city.getName()
+						)
 					)
-				)
-			;
-			builder.addCities(cityItem);
-		});
+				;
+				builder.addCities(cityItem);
+			});
 
 		return builder;
 	}

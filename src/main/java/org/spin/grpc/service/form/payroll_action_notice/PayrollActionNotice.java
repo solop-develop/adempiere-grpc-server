@@ -1113,7 +1113,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			String tableName = MHRMovement.Table_Name;
 
 			MTable table = MTable.get(Env.getCtx(), tableName);
-			ids.stream().forEach(id -> {
+			ids.parallelStream().forEach(id -> {
 				PO entity = table.getPO(id, transactionName);
 				if (entity != null && entity.get_ID() > 0) {
 					entity.deleteEx(true);

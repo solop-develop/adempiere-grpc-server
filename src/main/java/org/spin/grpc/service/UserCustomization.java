@@ -155,6 +155,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		query
 			.setLimit(limit, offset)
 			.getIDsAsList()
+			.parallelStream()
 			.forEach(userId -> {
 				User.Builder builder = convertUser(userId);
 				builderList.addRecords(builder);
@@ -262,6 +263,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		query
 			.setLimit(limit, offset)
 			.getIDsAsList()
+			.parallelStream()
 			.forEach(roleId -> {
 				Role.Builder builder = convertRole(roleId);
 				builderList.addRecords(builder);
@@ -364,6 +366,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		query
 			.setLimit(limit, offset)
 			.getIDsAsList()
+			.parallelStream()
 			.forEach(aspLevelId -> {
 				LevelCustomization.Builder builder = convertLevelCustomization(aspLevelId);
 				builderList.addRecords(builder);
@@ -504,7 +507,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 
 			// instance tab
 			List<MTabCustom> tabsCustomList = customWindow.getTabs();
-			MTabCustom customTab = tabsCustomList.stream()
+			MTabCustom customTab = tabsCustomList.parallelStream()
 				.filter(tabItem -> {
 					return tabItem.getAD_Tab_ID() == tab.getAD_Tab_ID();
 				})
@@ -519,7 +522,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			}
 
 			List<MFieldCustom> customFieldsList = customTab.getFields();
-			request.getFieldAttributesList().forEach(fieldAttributes -> {
+			request.getFieldAttributesList().parallelStream().forEach(fieldAttributes -> {
 				if (Util.isEmpty(fieldAttributes.getColumnName(), true)) {
 					log.warning(
 						Msg.getMsg(Env.getCtx(), "@ColumnName@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
@@ -554,7 +557,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 				}
 
 				// instance custom field
-				MFieldCustom customField = customFieldsList.stream()
+				MFieldCustom customField = customFieldsList.parallelStream()
 					.filter(fieldItem -> {
 						return fieldItem.getAD_Field_ID() == field.getAD_Field_ID();
 					})
@@ -669,7 +672,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			customBrowse = new MBrowseCustom(Env.getCtx(), customBrowseId, null);
 		}
 		List<MBrowseFieldCustom> customBrowseFieldList = customBrowse.getFields();
-		request.getFieldAttributesList().forEach(fieldAttributes -> {
+		request.getFieldAttributesList().parallelStream().forEach(fieldAttributes -> {
 			if (Util.isEmpty(fieldAttributes.getColumnName(), true)) {
 				log.warning(
 					Msg.getMsg(Env.getCtx(), "@AD_Column_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
@@ -714,7 +717,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			}
 
 			// instance browse field custom
-			MBrowseFieldCustom customBrowseField = customBrowseFieldList.stream()
+			MBrowseFieldCustom customBrowseField = customBrowseFieldList.parallelStream()
 				.filter(browseFieldItem -> {
 					return browseFieldItem.getAD_Browse_Field_ID() == browseField.getAD_Browse_Field_ID();
 				})
@@ -832,7 +835,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		}
 
 		List<MProcessParaCustom> customProcessParametersList = customProcess.getParameters();
-		request.getFieldAttributesList().forEach(fieldAttributes -> {
+		request.getFieldAttributesList().parallelStream().forEach(fieldAttributes -> {
 			if (Util.isEmpty(fieldAttributes.getColumnName(), true)) {
 				log.warning(
 					Msg.getMsg(Env.getCtx(), "@AD_Process_Para_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
@@ -858,7 +861,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			}
 
 			// instance custom process parameter
-			MProcessParaCustom customProcessParameter = customProcessParametersList.stream()
+			MProcessParaCustom customProcessParameter = customProcessParametersList.parallelStream()
 				.filter(processParameterItem -> {
 					return processParameterItem.getAD_Process_Para_ID() == processParameter.getAD_Process_Para_ID();
 				})

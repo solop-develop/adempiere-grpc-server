@@ -291,7 +291,11 @@ public class ReferenceInfo {
 			}
 			List<MField> customFields = ASPUtil.getInstance(Env.getCtx()).getWindowFields(field.getAD_Tab_ID());
 			if(customFields != null) {
-				Optional<MField> maybeField = customFields.stream().filter(customField -> customField.getAD_Field_ID() == fieldId).findFirst();
+				Optional<MField> maybeField = customFields.parallelStream()
+					.filter(customField -> {
+						return customField.getAD_Field_ID() == fieldId;
+					})
+					.findFirst();
 				if(maybeField.isPresent()) {
 					field = maybeField.get();
 					MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
@@ -318,7 +322,11 @@ public class ReferenceInfo {
 			}
 			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
 			if(customFields != null) {
-				Optional<MBrowseField> maybeField = customFields.stream().filter(customField -> customField.getAD_Browse_Field_ID() == browseFieldId).findFirst();
+				Optional<MBrowseField> maybeField = customFields.parallelStream()
+					.filter(customField -> {
+						return customField.getAD_Browse_Field_ID() == browseFieldId;
+					})
+					.findFirst();
 				if(maybeField.isPresent()) {
 					browseField = maybeField.get();
 					displayTypeId = browseField.getAD_Reference_ID();
@@ -339,7 +347,11 @@ public class ReferenceInfo {
 			}
 			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
 			if(customParameters != null) {
-				Optional<MProcessPara> maybeParameter = customParameters.stream().filter(customField -> customField.getAD_Process_Para_ID() == processParameterId).findFirst();
+				Optional<MProcessPara> maybeParameter = customParameters.parallelStream()
+					.filter(customField -> {
+						return customField.getAD_Process_Para_ID() == processParameterId;
+					})
+					.findFirst();
 				if(maybeParameter.isPresent()) {
 					processParameter = maybeParameter.get();
 					displayTypeId = processParameter.getAD_Reference_ID();

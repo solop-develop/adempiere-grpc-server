@@ -494,7 +494,7 @@ public class DictionaryConvertUtil {
 		MTable table = MTable.get(Env.getCtx(), column.getAD_Table_ID());
 		List<MColumn> columnsList = table.getColumnsAsList(false);
 
-		columnsList.stream()
+		columnsList.parallelStream()
 			.filter(currentColumn -> {
 				if(!currentColumn.isActive()) {
 					return false;

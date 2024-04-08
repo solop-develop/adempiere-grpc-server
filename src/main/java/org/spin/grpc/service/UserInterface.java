@@ -245,10 +245,10 @@ public class UserInterface extends UserInterfaceImplBase {
 		MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
 		List<MViewColumn> viewColumnsList = view.getViewColumns();
 
-		request.getAttributes().getFieldsMap().entrySet().forEach(attribute -> {
+		request.getAttributes().getFieldsMap().entrySet().parallelStream().forEach(attribute -> {
 			// find view column definition
 			MViewColumn viewColumn = viewColumnsList
-				.stream()
+				.parallelStream()
 				.filter(column -> {
 					return column.getColumnName().equals(attribute.getKey());
 				})
@@ -845,7 +845,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@Error@ PO is null");
 		}
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
-		attributes.entrySet().forEach(attribute -> {
+		attributes.entrySet().parallelStream().forEach(attribute -> {
 			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
 			Object value = null;
 			if (referenceId > 0) {
@@ -944,7 +944,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
 		PO currentEntity = entity;
-		attributes.entrySet().forEach(attribute -> {
+		attributes.entrySet().parallelStream().forEach(attribute -> {
 			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(
 				currentEntity.get_Table_ID(),
 				attribute.getKey()
@@ -1027,7 +1027,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setId(recordId)
 		;
 		//	Populate access List
-		getRecordAccess(tableId, recordId, null).forEach(recordAccess -> {
+		getRecordAccess(tableId, recordId, null).parallelStream().forEach(recordAccess -> {
 			MRole role = MRole.get(Env.getCtx(), recordAccess.getAD_Role_ID());
 			builder.addCurrentRoles(RecordAccessRole.newBuilder()
 				.setRoleId(role.getAD_Role_ID())
@@ -1042,7 +1042,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				.setIsReadOnly(recordAccess.isReadOnly()));
 		});
 		//	Populate roles list
-		getRolesList(null).forEach(role -> {
+		getRolesList(null).parallelStream().forEach(role -> {
 			builder.addAvailableRoles(
 				RecordAccessRole.newBuilder()
 					.setRoleId(role.getAD_Role_ID())
@@ -1114,7 +1114,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					+ "AND Record_ID = ? "
 					+ "AND AD_Client_ID = ?", new Object[]{tableId, recordId.get(), Env.getAD_Client_ID(Env.getCtx())}, transactionName);
 			//	Add new record access
-			request.getRecordAccessesList().forEach(recordAccessToSet -> {
+			request.getRecordAccessesList().parallelStream().forEach(recordAccessToSet -> {
 				int roleId = recordAccessToSet.getRoleId();
 				if(roleId <= 0) {
 					throw new AdempiereException("@AD_Role_ID@ @NotFound@");
@@ -1142,7 +1142,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				);
 			});
 			//	Populate roles list
-			getRolesList(transactionName).forEach(roleToGet -> {
+			getRolesList(transactionName).parallelStream().forEach(roleToGet -> {
 				builder.addAvailableRoles(
 					RecordAccessRole.newBuilder()
 						.setRoleId(roleToGet.getAD_Role_ID())
@@ -1336,12 +1336,19 @@ public class UserInterface extends UserInterfaceImplBase {
 			new Query(Env.getCtx(), tableName + "_Trl", whereClause.toString(), transactionName)
 				.setParameters(parameters)
 				.<PO>list()
+				.parallelStream()
 				.forEach(translation -> {
 					Translation.Builder translationBuilder = Translation.newBuilder();
 					Struct.Builder translationValues = Struct.newBuilder();
-					table.getColumnsAsList().stream().filter(column -> column.isTranslated()).forEach(column -> {
-						Object value = translation.get_Value(column.getColumnName());
-						if(value != null) {
+					table.getColumnsAsList().parallelStream()
+						.filter(column -> {
+							return column.isTranslated();
+						})
+						.forEach(column -> {
+							Object value = translation.get_Value(column.getColumnName());
+							if(value == null) {
+								return;
+							}
 							Value.Builder builderValue = ValueManager.getValueFromObject(value);
 							if(builderValue != null) {
 								translationValues.putFields(
@@ -1357,8 +1364,7 @@ public class UserInterface extends UserInterfaceImplBase {
 									)
 								);
 							}
-						}
-					});
+						});
 					translationBuilder.setValues(translationValues);
 					builder.addTranslations(translationBuilder);
 				});
@@ -1409,7 +1415,7 @@ public class UserInterface extends UserInterfaceImplBase {
 								|| entity.get_ID() <= 0) {
 							throw new AdempiereException("@Error@ @PO@ @NotFound@");
 						}
-						changeLogList.forEach(changeLog -> {
+						changeLogList.parallelStream().forEach(changeLog -> {
 							setValueFromChangeLog(entity, changeLog);
 						});
 						entity.saveEx(transactionName);
@@ -1601,7 +1607,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			int fieldId = field.getAD_Field_ID();
 			List<MField> customFields = ASPUtil.getInstance(Env.getCtx()).getWindowFields(field.getAD_Tab_ID());
 			if(customFields != null) {
-				Optional<MField> maybeField = customFields.stream().filter(customField -> customField.getAD_Field_ID() == fieldId).findFirst();
+				Optional<MField> maybeField = customFields.parallelStream()
+					.filter(customField -> {
+						return customField.getAD_Field_ID() == fieldId;
+					})
+					.findFirst();
 				if(maybeField.isPresent()) {
 					field = maybeField.get();
 					defaultValue = field.getDefaultValue();
@@ -1634,7 +1644,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			int browseFieldId = browseField.getAD_Browse_Field_ID();
 			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
 			if(customFields != null) {
-				Optional<MBrowseField> maybeField = customFields.stream().filter(customField -> customField.getAD_Browse_Field_ID() == browseFieldId).findFirst();
+				Optional<MBrowseField> maybeField = customFields.parallelStream()
+					.filter(customField -> {
+						return customField.getAD_Browse_Field_ID() == browseFieldId;
+					})
+					.findFirst();
 				if(maybeField.isPresent()) {
 					browseField = maybeField.get();
 					defaultValue = browseField.getDefaultValue();
@@ -1662,7 +1676,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			int browseFieldId = browseField.getAD_Browse_Field_ID();
 			List<MBrowseField> customFields = ASPUtil.getInstance(Env.getCtx()).getBrowseFields(browseField.getAD_Browse_ID());
 			if(customFields != null) {
-				Optional<MBrowseField> maybeField = customFields.stream().filter(customField -> customField.getAD_Browse_Field_ID() == browseFieldId).findFirst();
+				Optional<MBrowseField> maybeField = customFields.parallelStream()
+					.filter(customField -> {
+						return customField.getAD_Browse_Field_ID() == browseFieldId;
+					})
+					.findFirst();
 				if(maybeField.isPresent()) {
 					browseField = maybeField.get();
 					defaultValue = browseField.getDefaultValue2(); // value to
@@ -1689,7 +1707,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			int processParameterId = processParameter.getAD_Process_Para_ID();
 			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
 			if(customParameters != null) {
-				Optional<MProcessPara> maybeParameter = customParameters.stream().filter(customField -> customField.getAD_Process_Para_ID() == processParameterId).findFirst();
+				Optional<MProcessPara> maybeParameter = customParameters.parallelStream()
+					.filter(customField -> {
+						return customField.getAD_Process_Para_ID() == processParameterId;
+					})
+					.findFirst();
 				if(maybeParameter.isPresent()) {
 					processParameter = maybeParameter.get();
 					referenceId = processParameter.getAD_Reference_ID();
@@ -1707,7 +1729,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			int processParameterId = processParameter.getAD_Process_Para_ID();
 			List<MProcessPara> customParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(processParameter.getAD_Process_ID());
 			if(customParameters != null) {
-				Optional<MProcessPara> maybeParameter = customParameters.stream().filter(customField -> customField.getAD_Process_Para_ID() == processParameterId).findFirst();
+				Optional<MProcessPara> maybeParameter = customParameters.parallelStream()
+					.filter(customField -> {
+						return customField.getAD_Process_Para_ID() == processParameterId;
+					})
+					.findFirst();
 				if(maybeParameter.isPresent()) {
 					processParameter = maybeParameter.get();
 					referenceId = processParameter.getAD_Reference_ID();
@@ -2355,9 +2381,11 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		HashMap<String, Object> parameterMap = new HashMap<>();
 		//	Populate map
-		FilterManager.newInstance(request.getFilters()).getConditions().forEach(condition -> {
-			parameterMap.put(condition.getColumnName(), condition.getValue());
-		});
+		FilterManager.newInstance(request.getFilters()).getConditions()
+			.parallelStream()
+			.forEach(condition -> {
+				parameterMap.put(condition.getColumnName(), condition.getValue());
+			});
 
 		//	Fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
@@ -2584,8 +2612,10 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 
 			MField field = null;
-			Optional<MField> searchedValue = Arrays.asList(tab.getFields(false, null)).stream()
-				.filter(searchField -> searchField.getAD_Column().getColumnName().equals(request.getColumnName()))
+			Optional<MField> searchedValue = Arrays.asList(tab.getFields(false, null)).parallelStream()
+				.filter(searchField -> {
+					return searchField.getAD_Column().getColumnName().equals(request.getColumnName());
+				})
 				.findFirst();
 			if(searchedValue.isPresent()) {
 				field = searchedValue.get();
@@ -2655,8 +2685,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			//	Run it
 			String result = processCallout(windowNo, gridTab, gridField);
 			Struct.Builder contextValues = Struct.newBuilder();
-			Arrays.asList(gridTab.getFields()).stream()
-				.filter(fieldValue -> isValidChange(fieldValue))
+			Arrays.asList(gridTab.getFields())
+				.parallelStream()
+				.filter(fieldValue -> {
+					return isValidChange(fieldValue);
+				})
 				.forEach(fieldValue -> {
 					Value.Builder valueBuilder = ValueManager.getValueFromReference(
 						fieldValue.getValue(),
@@ -2714,7 +2747,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			org.compiere.model.CalloutPayment.class.getName()
 		);
 
-		calloutsList.forEach(calloutClassAndMethod -> {
+		calloutsList.parallelStream().forEach(calloutClassAndMethod -> {
 			if (Util.isEmpty(calloutClassAndMethod, true)) {
 				// empty class name
 				return;
@@ -2981,14 +3014,14 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		List<MColumn> columnsList = table.getColumnsAsList();
-		MColumn keyColumn = columnsList.stream()
+		MColumn keyColumn = columnsList.parallelStream()
 			.filter(column -> {
 				return column.isKey();
 			})
 			.findFirst()
 			.orElse(null);
 
-		MColumn parentColumn = columnsList.stream()
+		MColumn parentColumn = columnsList.parallelStream()
 			.filter(column -> {
 				return column.isParent();
 			})
@@ -3112,7 +3145,7 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		List<MColumn> columnsList = table.getColumnsAsList();
-		MColumn keyColumn = columnsList.stream()
+		MColumn keyColumn = columnsList.parallelStream()
 			.filter(column -> {
 				return column.isKey();
 			})
@@ -3125,7 +3158,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setRecordCount(request.getEntitiesList().size());
 
 		Trx.run(transacctionName -> {
-			request.getEntitiesList().stream().forEach(entitySelection -> {
+			request.getEntitiesList().parallelStream().forEach(entitySelection -> {
 				PO entity = RecordUtil.getEntity(
 					Env.getCtx(), table.getTableName(),
 					entitySelection.getSelectionId(),
@@ -3135,11 +3168,12 @@ public class UserInterface extends UserInterfaceImplBase {
 					return;
 				}
 				// set new values
-				entitySelection.getValues().getFieldsMap().entrySet().forEach(attribute -> {
-					Object value = ValueManager.getObjectFromValue(attribute.getValue());
-					entity.set_ValueOfColumn(attribute.getKey(), value);
-
-				});
+				entitySelection.getValues().getFieldsMap().entrySet()
+					.parallelStream()
+					.forEach(attribute -> {
+						Object value = ValueManager.getObjectFromValue(attribute.getValue());
+						entity.set_ValueOfColumn(attribute.getKey(), value);
+					});
 				entity.saveEx(transacctionName);
 
 				Entity.Builder entityBuilder = Entity.newBuilder()
@@ -3267,6 +3301,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		query
 			.setLimit(limit, offset)
 			.list(MMailText.class)
+			.parallelStream()
 			.forEach(requestRecord -> {
 				MailTemplate.Builder builder = convertMailTemplate(requestRecord);
 				builderList.addRecords(builder);

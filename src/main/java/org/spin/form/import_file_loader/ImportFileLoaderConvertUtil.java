@@ -49,7 +49,7 @@ public class ImportFileLoaderConvertUtil {
 			.setTableName(table.getTableName())
 		;
 
-		table.getColumnsAsList().stream().forEach(column -> {
+		table.getColumnsAsList().parallelStream().forEach(column -> {
 			String nameOfColumn = column.getName();
 			if (!isBaseLanguage) {
 				// set translated values

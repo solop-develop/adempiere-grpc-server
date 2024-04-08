@@ -243,6 +243,7 @@ public class RecordManagementServiceLogic {
 
 			MWindow referenceWindow = MWindow.get(Env.getCtx(), zoomInfo.windowId);
 			MTab referenceTab = Arrays.stream(referenceWindow.getTabs(false, null))
+				.parallel()
 				.filter(tabItem -> {
 					return zoomQuery.getZoomTableName().equals(tabItem.getAD_Table().getTableName());
 				})
