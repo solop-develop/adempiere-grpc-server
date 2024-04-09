@@ -519,7 +519,7 @@ public class Security extends SecurityImplBase {
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					organizationBuilder.setCorporateBrandingImage(
 					ValueManager.validateNull(
-						attachmentReference.getValidFileName()
+						attachmentReference.getFileName()
 					)
 				);
 			}
@@ -1186,7 +1186,7 @@ public class Security extends SecurityImplBase {
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
 				userInfo.setImage(
 					ValueManager.validateNull(
-						attachmentReference.getValidFileName()
+						attachmentReference.getFileName()
 					)
 				);
 			}
@@ -1267,7 +1267,7 @@ public class Security extends SecurityImplBase {
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogo(
 						ValueManager.validateNull(
-							attachmentReference.getValidFileName()
+							attachmentReference.getFileName()
 						)
 					);
 				}
@@ -1282,7 +1282,7 @@ public class Security extends SecurityImplBase {
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogoReport(
 						ValueManager.validateNull(
-							attachmentReference.getValidFileName()
+							attachmentReference.getFileName()
 						)
 					);
 				}
@@ -1297,7 +1297,7 @@ public class Security extends SecurityImplBase {
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogoWeb(
 						ValueManager.validateNull(
-							attachmentReference.getValidFileName()
+							attachmentReference.getFileName()
 						)
 					);
 				}

@@ -572,7 +572,7 @@ public class CoreFunctionalityConvert {
 			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(Env.getCtx(), clientInfo.getFileHandler_ID(), organizationInfo.getCorporateBrandingImage_ID(), null);
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
-				corporateImageBranding.set(attachmentReference.getValidFileName());
+				corporateImageBranding.set(attachmentReference.getFileName());
 			}
 		}
 		return Organization.newBuilder()

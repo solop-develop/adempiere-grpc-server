@@ -178,7 +178,7 @@ public class IssueManagementConvertUtil {
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setAvatar(
 						ValueManager.validateNull(
-							attachmentReference.getValidFileName()
+							attachmentReference.getFileName()
 						)
 					);
 				}
