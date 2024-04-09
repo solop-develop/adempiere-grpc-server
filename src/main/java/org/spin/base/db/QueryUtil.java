@@ -306,7 +306,9 @@ public class QueryUtil {
 				co.set(true);
 			}
 
-			sql.append(" AS \"" + viewColumn.getColumnName() + "\"");
+			sql.append(" AS ")
+				.append("\"" + viewColumn.getColumnName() + "\"")
+			;
 		});
 
 		MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
