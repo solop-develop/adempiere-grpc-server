@@ -522,7 +522,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			}
 
 			List<MFieldCustom> customFieldsList = customTab.getFields();
-			request.getFieldAttributesList().parallelStream().forEach(fieldAttributes -> {
+			request.getFieldAttributesList().forEach(fieldAttributes -> {
 				if (Util.isEmpty(fieldAttributes.getColumnName(), true)) {
 					log.warning(
 						Msg.getMsg(Env.getCtx(), "@ColumnName@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
@@ -576,10 +576,10 @@ public class UserCustomization extends UserCustomizationImplBase {
 					customField.setSeqNo(fieldAttributes.getSequencePanel());
 				}
 				// checks if the column exists in the database
-				if (customField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0 && !Util.isEmpty(fieldAttributes.getIsDefaultDisplayedAsPanel(), true)) {
+				if (customField.get_ColumnIndex(DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 					customField.set_ValueOfColumn(
 						DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME,
-						BooleanManager.getBooleanFromString(
+						BooleanManager.getBooleanToString(
 							fieldAttributes.getIsDefaultDisplayedAsPanel()
 						)
 					);
@@ -672,7 +672,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			customBrowse = new MBrowseCustom(Env.getCtx(), customBrowseId, null);
 		}
 		List<MBrowseFieldCustom> customBrowseFieldList = customBrowse.getFields();
-		request.getFieldAttributesList().parallelStream().forEach(fieldAttributes -> {
+		request.getFieldAttributesList().forEach(fieldAttributes -> {
 			if (Util.isEmpty(fieldAttributes.getColumnName(), true)) {
 				log.warning(
 					Msg.getMsg(Env.getCtx(), "@AD_Column_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
@@ -835,7 +835,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		}
 
 		List<MProcessParaCustom> customProcessParametersList = customProcess.getParameters();
-		request.getFieldAttributesList().parallelStream().forEach(fieldAttributes -> {
+		request.getFieldAttributesList().forEach(fieldAttributes -> {
 			if (Util.isEmpty(fieldAttributes.getColumnName(), true)) {
 				log.warning(
 					Msg.getMsg(Env.getCtx(), "@AD_Process_Para_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")

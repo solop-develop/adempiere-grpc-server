@@ -37,11 +37,11 @@ import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MValRule;
 import org.compiere.model.MWindow;
-import org.compiere.model.M_Element;
+// import org.compiere.model.M_Element;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.dictionary.ContextInfo;
+// import org.spin.backend.grpc.dictionary.ContextInfo;
 import org.spin.backend.grpc.dictionary.DependentField;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.FieldCondition;
@@ -101,7 +101,7 @@ public class WindowConvertUtil {
 		;
 		//	With Tabs
 		if(withTabs) {
-			Boolean isShowAcct = MRole.getDefault(context, false).isShowAcct();
+			boolean isShowAcct = MRole.getDefault(context, false).isShowAcct();
 //			List<Tab.Builder> tabListForGroup = new ArrayList<>();
 			List<MTab> tabs = ASPUtil.getInstance(context).getWindowTabs(window.getAD_Window_ID());
 			for(MTab tab : tabs) {
@@ -154,7 +154,7 @@ public class WindowConvertUtil {
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			return builder;
 		}
-		List<String> selectionColums = table.getColumnsAsList(true).stream()
+		List<String> selectionColums = table.getColumnsAsList(true).parallelStream()
 			.filter(column -> {
 				return column.isSelectionColumn();
 			})
@@ -367,7 +367,7 @@ public class WindowConvertUtil {
 
 		// Column reference
 		MColumn column = MColumn.get(context, field.getAD_Column_ID());
-		M_Element element = new M_Element(context, column.getAD_Element_ID(), null);
+		// M_Element element = new M_Element(context, column.getAD_Element_ID(), null);
 		String defaultValue = field.getDefaultValue();
 		if(Util.isEmpty(defaultValue)) {
 			defaultValue = column.getDefaultValue();
@@ -403,9 +403,9 @@ public class WindowConvertUtil {
 			.setColumnName(
 				ValueManager.validateNull(column.getColumnName())
 			)
-			.setElementName(
-				ValueManager.validateNull(element.getColumnName())
-			)
+			// .setElementName(
+			// 	ValueManager.validateNull(element.getColumnName())
+			// )
 			.setColumnSql(
 				ValueManager.validateNull(column.getColumnSQL())
 			)
@@ -446,6 +446,7 @@ public class WindowConvertUtil {
 				ValueManager.validateNull(column.getReadOnlyLogic())
 			)
 			.setSequence(field.getSeqNo())
+			.setSeqNoGrid(field.getSeqNoGrid())
 			.setValueMax(
 				ValueManager.validateNull(column.getValueMax())
 			)
@@ -463,13 +464,13 @@ public class WindowConvertUtil {
 		;
 
 		//	Context Info
-		if(field.getAD_ContextInfo_ID() > 0) {
-			ContextInfo.Builder contextInfoBuilder = DictionaryConvertUtil.convertContextInfo(
-				context,
-				field.getAD_ContextInfo_ID()
-			);
-			builder.setContextInfo(contextInfoBuilder.build());
-		}
+		// if(field.getAD_ContextInfo_ID() > 0) {
+		// 	ContextInfo.Builder contextInfoBuilder = DictionaryConvertUtil.convertContextInfo(
+		// 		context,
+		// 		field.getAD_ContextInfo_ID()
+		// 	);
+		// 	builder.setContextInfo(contextInfoBuilder.build());
+		// }
 		//	Process
 		if(column.getAD_Process_ID() > 0) {
 			MProcess process = MProcess.get(context, column.getAD_Process_ID());
