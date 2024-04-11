@@ -371,12 +371,14 @@ public class Dashboarding extends DashboardingImplBase {
 		int recordCount = 0;
 
 		//	Get from Charts
-		final String whereClauseChart = "((AD_User_ID IS NULL AND AD_Role_ID IS NULL)"
-			+ " OR AD_Role_ID=?"	//	#1
-			+ " OR EXISTS (SELECT 1 FROM AD_User_Roles ur "
-			+ "WHERE ur.AD_User_ID=PA_Goal.AD_User_ID "
-			+ "AND ur.AD_Role_ID = ? "	//	#2
-			+ "AND ur.IsActive='Y')) "
+		final String whereClauseChart = "(AD_User_ID IS NULL AND AD_Role_ID IS NULL) "
+			+ "OR AD_Role_ID = ? "	//	#1
+			+ "OR EXISTS ("
+				+ "SELECT 1 FROM AD_User_Roles ur "
+				+ "WHERE ur.AD_User_ID=PA_Goal.AD_User_ID "
+				+ "AND ur.AD_Role_ID = ? "	//	#2
+				+ "AND ur.IsActive='Y'"
+			+ ")"
 		;
 		Query queryCharts = new Query(
 			context,
@@ -414,10 +416,12 @@ public class Dashboarding extends DashboardingImplBase {
 			});
 
 		//	Get from dashboard
-		final String whereClauseDashboard = "EXISTS(SELECT 1 FROM AD_Dashboard_Access da WHERE "
+		final String whereClauseDashboard = "EXISTS("
+			+ "SELECT 1 FROM AD_Dashboard_Access da WHERE "
 			+ "da.PA_DashboardContent_ID = PA_DashboardContent.PA_DashboardContent_ID "
 			+ "AND da.IsActive = 'Y' "
-			+ "AND da.AD_Role_ID = ?)"
+			+ "AND da.AD_Role_ID = ?"
+			+ ")"
 		;
 		Query queryDashboard = new Query(
 			context,
@@ -438,9 +442,21 @@ public class Dashboarding extends DashboardingImplBase {
 			.forEach(dashboard -> {
 				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder()
 					.setId(dashboard.getPA_DashboardContent_ID())
-					.setName(ValueManager.validateNull(dashboard.getName()))
-					.setDescription(ValueManager.validateNull(dashboard.getDescription()))
-					.setHtml(ValueManager.validateNull(dashboard.getHTML()))
+					.setName(
+						ValueManager.validateNull(
+							dashboard.get_Translation(I_PA_DashboardContent.COLUMNNAME_Name)
+						)
+					)
+					.setDescription(
+						ValueManager.validateNull(
+							dashboard.get_Translation(I_PA_DashboardContent.COLUMNNAME_Description)
+						)
+					)
+					.setHtml(
+						ValueManager.validateNull(
+							dashboard.getHTML()
+						)
+					)
 					.setColumnNo(dashboard.getColumnNo())
 					.setLineNo(dashboard.getLine())
 					.setIsEventRequired(dashboard.isEventRequired())
