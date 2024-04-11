@@ -433,6 +433,8 @@ public class Dashboarding extends DashboardingImplBase {
 			.setOnlyActiveRecords(true)
 		;
 		recordCount += queryDashboard.count();
+
+		final boolean isBaseLanguage = Env.isBaseLanguage(Env.getCtx(), "");
 		queryDashboard
 			.setOrderBy(
 				I_PA_DashboardContent.COLUMNNAME_ColumnNo + ","
@@ -440,16 +442,28 @@ public class Dashboarding extends DashboardingImplBase {
 				+ I_PA_DashboardContent.COLUMNNAME_Line)
 			.<MDashboardContent>list()
 			.forEach(dashboard -> {
+				String name = dashboard.getName();
+				String description = dashboard.getDescription();
+				if (!isBaseLanguage) {
+					String nameTranslated = dashboard.get_Translation(I_PA_DashboardContent.COLUMNNAME_Name);
+					if (!Util.isEmpty(nameTranslated, true)) {
+						name = nameTranslated;
+					}
+					String descriptionTranslated = dashboard.get_Translation(I_PA_DashboardContent.COLUMNNAME_Description);
+					if (!Util.isEmpty(descriptionTranslated, true)) {
+						description = descriptionTranslated;
+					}
+				}
 				Dashboard.Builder dashboardBuilder = Dashboard.newBuilder()
 					.setId(dashboard.getPA_DashboardContent_ID())
 					.setName(
 						ValueManager.validateNull(
-							dashboard.get_Translation(I_PA_DashboardContent.COLUMNNAME_Name)
+							name
 						)
 					)
 					.setDescription(
 						ValueManager.validateNull(
-							dashboard.get_Translation(I_PA_DashboardContent.COLUMNNAME_Description)
+							description
 						)
 					)
 					.setHtml(
