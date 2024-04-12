@@ -1527,6 +1527,11 @@ public class Security extends SecurityImplBase {
 					)
 				;
 				builder.setActionId(form.getAD_Form_ID())
+					.setActionUuid(
+						ValueManager.validateNull(
+							form.getUUID()
+						)
+					)
 					.setForm(actionReference)
 				;
 			} else if (menu.getAction().equals(MMenu.ACTION_Window) && menu.getAD_Window_ID() > 0) {
@@ -1556,6 +1561,11 @@ public class Security extends SecurityImplBase {
 					)
 				;
 				builder.setActionId(window.getAD_Window_ID())
+					.setActionUuid(
+						ValueManager.validateNull(
+							window.getUUID()
+						)
+					)
 					.setWindow(actionReference)
 				;
 				
@@ -1587,6 +1597,11 @@ public class Security extends SecurityImplBase {
 					)
 				;
 				builder.setActionId(process.getAD_Process_ID())
+					.setActionUuid(
+						ValueManager.validateNull(
+							process.getUUID()
+						)
+					)
 					.setProcess(actionReference)
 				;
 			} else if (menu.getAction().equals(MMenu.ACTION_SmartBrowse) && menu.getAD_Browse_ID() > 0) {
@@ -1616,6 +1631,11 @@ public class Security extends SecurityImplBase {
 					)
 				;
 				builder.setActionId(smartBrowser.getAD_Browse_ID())
+					.setActionUuid(
+						ValueManager.validateNull(
+							smartBrowser.getUUID()
+						)
+					)
 					.setBrowse(actionReference)
 				;
 			} else if (menu.getAction().equals(MMenu.ACTION_WorkFlow) && menu.getAD_Workflow_ID() > 0) {
@@ -1645,6 +1665,11 @@ public class Security extends SecurityImplBase {
 					)
 				;
 				builder.setActionId(workflow.getAD_Workflow_ID())
+					.setActionUuid(
+						ValueManager.validateNull(
+							workflow.getUUID()
+						)
+					)
 					.setWorkflow(actionReference)
 				;
 			}
