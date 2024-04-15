@@ -14,6 +14,7 @@
  ************************************************************************************/
 package org.spin.grpc.service.form.issue_management;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -757,9 +758,29 @@ public class IssueManagement extends IssueManagementImplBase {
 				// builderList.addRecords(builder);
 			});
 
-		issueCommentsList.parallelStream()
-			// TODO: Add support here... Other way?
-			// .sorted(Comparator.comparing(IssueComment.Builder::getCreated))
+		issueCommentsList.stream()
+			.sorted((comment1, comment2) -> {
+				Timestamp from = ValueManager.getDateFromTimestampDate(
+					comment1.getCreated()
+				);
+
+				Timestamp to = ValueManager.getDateFromTimestampDate(
+					comment2.getCreated()
+				);
+
+				if (from == null || to == null) {
+					// prevent Null Pointer Exception
+					if (from == null && to == null) {
+						return 0;
+					} else if (from == null) {
+						return -1;
+					} else if (to == null) {
+						return 1;
+					}
+				}
+				int compared = to.compareTo(from);
+				return compared;
+			})
 			.forEach(issueComment -> {
 				builderList.addRecords(issueComment);
 			});
