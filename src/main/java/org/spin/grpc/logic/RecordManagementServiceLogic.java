@@ -14,7 +14,6 @@
  ************************************************************************************/
 package org.spin.grpc.logic;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -27,6 +26,7 @@ import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
@@ -242,23 +242,25 @@ public class RecordManagementServiceLogic {
 			RecordReferenceInfo.Builder recordReferenceBuilder = RecordReferenceInfo.newBuilder();
 
 			MWindow referenceWindow = MWindow.get(Env.getCtx(), zoomInfo.windowId);
-			MTab referenceTab = Arrays.stream(referenceWindow.getTabs(false, null))
-				.parallel()
-				.filter(tabItem -> {
-					return zoomQuery.getZoomTableName().equals(tabItem.getAD_Table().getTableName());
-				})
-				.findFirst()
-				.orElse(null)
-			;
-			recordReferenceBuilder.setWindowId(referenceWindow.getAD_Window_ID());
-			if (referenceTab != null && referenceTab.getAD_Tab_ID() > 0) {
-				recordReferenceBuilder.setTabId(referenceTab.getAD_Tab_ID());
-			}
+			MTable referenceTable = MTable.get(Env.getCtx(), zoomQuery.getZoomTableName());
 
-			String uuid = referenceWindow.getUUID() + '_' + zoomQuery.getZoomTableName() + '_' + zoomQuery.getZoomColumnName();
-			RecordUtil.referenceWhereClauseCache.put(uuid, zoomQuery.getWhereClause());
+			int tabId = DB.getSQLValue(
+				null,
+				"SELECT AD_Tab_ID FROM AD_Tab WHERE AD_Window_ID= ? AND AD_Table_ID = ? ORDER BY SeqNo",
+				referenceWindow.getAD_Window_ID(), referenceTable.getAD_Table_ID()
+			);
+			MTab referenceTab = MTab.get(Env.getCtx(), tabId);
 
-			recordReferenceBuilder.setUuid(uuid)
+			String uuidRerefenced = referenceWindow.getUUID() + "|" + referenceTab.getUUID() + "|" + referenceTable.getTableName() + "|" + zoomQuery.getZoomColumnName();
+			RecordUtil.referenceWhereClauseCache.put(uuidRerefenced, zoomQuery.getWhereClause());
+
+			recordReferenceBuilder.setUuid(uuidRerefenced)
+				.setWindowId(
+					referenceWindow.getAD_Window_ID()
+				)
+				.setTabId(
+					referenceTab.getAD_Tab_ID()
+				)
 				.setTableName(
 					ValueManager.validateNull(
 						zoomQuery.getZoomTableName()

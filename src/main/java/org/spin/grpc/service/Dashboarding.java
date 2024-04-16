@@ -43,15 +43,18 @@ import org.adempiere.model.MDocumentStatus;
 import org.compiere.model.MChart;
 import org.compiere.model.MColorSchema;
 import org.compiere.model.MDashboardContent;
+import org.compiere.model.MForm;
 import org.compiere.model.MGoal;
 import org.compiere.model.MMeasure;
 import org.compiere.model.MMenu;
 import org.compiere.model.MRule;
+import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.dashboarding.Action;
@@ -301,34 +304,76 @@ public class Dashboarding extends DashboardingImplBase {
 		int roleId = Env.getAD_Role_ID(context);
 
 		//	Get from document status
-		Arrays.asList(MDocumentStatus.getDocumentStatusIndicators(context, userId, roleId)).forEach(documentStatus -> {
-			PendingDocument.Builder pendingDocument = PendingDocument.newBuilder();
-			pendingDocument.setDocumentName(
-				ValueManager.validateNull(documentStatus.getName())
-			);
-			// for Reference
-			if(documentStatus.getAD_Window_ID() > 0) {
-				pendingDocument.setWindowId(documentStatus.getAD_Window_ID());
-			} else if(documentStatus.getAD_Form_ID() > 0) {
-				pendingDocument.setFormId(documentStatus.getAD_Form_ID());
-			}
-			//	Criteria
-			MTable table = MTable.get(context, documentStatus.getAD_Table_ID());
-			pendingDocument.setTableName(
-				ValueManager.validateNull(
-					table.getTableName()
-				)
-			);
-			//	TODO: Add filter from SQL
-//			pendingDocument
-//					.setCriteria(Criteria.newBuilder()
-//					.setTableName(ValueManager.validateNull(table.getTableName()))
-//					.setWhereClause(ValueManager.validateNull(documentStatus.getWhereClause())));
-			//	Set quantity
-			pendingDocument.setRecordCount(MDocumentStatus.evaluate(documentStatus));
-			//	TODO: Add description for interface
-			builder.addPendingDocuments(pendingDocument);
-		});
+		Arrays.asList(MDocumentStatus.getDocumentStatusIndicators(context, userId, roleId))
+			.parallelStream()
+			.forEach(documentStatus -> {
+				PendingDocument.Builder pendingDocumentBuilder = PendingDocument.newBuilder()
+					.setDocumentName(
+						ValueManager.validateNull(
+							documentStatus.getName()
+						)
+					)
+				;
+
+				//	Criteria
+				MTable table = MTable.get(context, documentStatus.getAD_Table_ID());
+				pendingDocumentBuilder.setTableName(
+					ValueManager.validateNull(
+						table.getTableName()
+					)
+				);
+
+				// for Reference
+				String uuidRerefenced = "";
+				if(documentStatus.getAD_Window_ID() > 0) {
+					MWindow referenceWindow = MWindow.get(context, documentStatus.getAD_Window_ID());
+					int tabId = DB.getSQLValue(
+						null,
+						"SELECT AD_Tab_ID FROM AD_Tab WHERE AD_Window_ID= ? AND AD_Table_ID = ? ORDER BY SeqNo",
+						referenceWindow.getAD_Window_ID(), table.getAD_Table_ID()
+					);
+					MTab referenceTab = MTab.get(context, tabId);
+					pendingDocumentBuilder.setWindowId(
+							referenceWindow.getAD_Window_ID()
+						)
+						.setTabId(
+							referenceTab.getAD_Tab_ID()
+						)
+					;
+					uuidRerefenced = ValueManager.validateNull(
+							referenceWindow.getUUID()
+						)
+						+ "|" +
+						ValueManager.validateNull(
+							referenceTab.getUUID()
+						)
+					;
+				} else if(documentStatus.getAD_Form_ID() > 0) {
+					MForm referenceForm = new MForm(context, documentStatus.getAD_Form_ID(), null);
+					pendingDocumentBuilder.setFormId(referenceForm.getAD_Form_ID());
+					uuidRerefenced = ValueManager.validateNull(
+						referenceForm.getUUID()
+					);
+				}
+
+				String uuid = uuidRerefenced + "|" + table.getTableName();
+				RecordUtil.referenceWhereClauseCache.put(uuid, documentStatus.getWhereClause());
+
+				//	Set quantity
+				pendingDocumentBuilder.setRecordCount(
+						MDocumentStatus.evaluate(documentStatus)
+					)
+					.setReferenceUuid(
+						ValueManager.validateNull(
+							uuid
+						)
+					)
+				;
+				//	TODO: Add description for interface
+				builder.addPendingDocuments(pendingDocumentBuilder);
+			})
+		;
+
 		//	Return
 		return builder;
 	}

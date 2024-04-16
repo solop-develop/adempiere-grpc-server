@@ -71,13 +71,14 @@ public class WhereClauseUtil {
 
 		String validationCode = dynamicValidation;
 		if (!matcherTableAliases.find()) {
+			final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY)\\b)(\\w+)(\\s+){0,1}";
 			// columnName = value
 			Pattern patternColumnName = Pattern.compile(
-				"(\\w+)(\\s+){0,1}" + OperatorUtil.SQL_OPERATORS_REGEX,
-				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+				columnsRegex + OperatorUtil.SQL_OPERATORS_REGEX,
+				Pattern.DOTALL
 			);
 			Matcher matchColumnName = patternColumnName.matcher(validationCode);
-			validationCode = matchColumnName.replaceAll(tableAlias + ".$1$2$3"); // $&
+			validationCode = matchColumnName.replaceAll(tableAlias + ".$1$2$3$4"); // $&
 		}
 
 		return validationCode;
