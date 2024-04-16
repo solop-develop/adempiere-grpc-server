@@ -285,7 +285,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (entity.is_Changed()) {
 			entity.saveEx();
 		} else {
-			log.severe("@Ignored@");
+			log.severe(
+				Msg.parseTranslation(Env.getCtx(), "@Ignored@")
+			);
 		}
 
 		//	Return
