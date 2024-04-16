@@ -234,8 +234,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (browser.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("No Table defined in the Smart Browser");
 		}
+		MTable table = MTable.get(context, browser.getAD_Table_ID());
 
-		PO entity = RecordUtil.getEntity(Env.getCtx(), browser.getAD_Table_ID(), null, request.getRecordId(), null);
+		PO entity = RecordUtil.getEntity(Env.getCtx(), table.getAD_Table_ID(), null, request.getRecordId(), null);
 		if (entity == null || entity.get_ID() <= 0) {
 			// Return
 			return ConvertUtil.convertEntity(entity);
@@ -259,13 +260,17 @@ public class UserInterface extends UserInterfaceImplBase {
 			if (viewColumn == null) {
 				return;
 			}
-			MViewDefinition viewDefinition = MViewDefinition.get(Env.getCtx(), viewColumn.getAD_View_Definition_ID());
 
+			MViewDefinition viewDefinition = MViewDefinition.get(Env.getCtx(), viewColumn.getAD_View_Definition_ID());
 			// not same table setting in smart browser and view definition
 			if (browser.getAD_Table_ID() != viewDefinition.getAD_Table_ID()) {
 				return;
 			}
 			String columnName = MColumn.getColumnName(Env.getCtx(), viewColumn.getAD_Column_ID());
+			if (table.get_ColumnIndex(columnName) < 0) {
+				// column is not present on current table
+				return;
+			}
 
 			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(entity.get_Table_ID(), columnName);
 
