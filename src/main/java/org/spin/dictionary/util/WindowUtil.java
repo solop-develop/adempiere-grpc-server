@@ -75,13 +75,13 @@ public class WindowUtil {
 		}
 
 		boolean isWithParentFields = tab.getASPFields()
-			.stream()
+			.parallelStream()
 			.filter(field -> {
 				MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
 				return column.isParent();
 			})
 			.findFirst()
-			.isPresent();
+			.isPresent()
 		;
 		//	We have IsParent columns and/or a link column
 		if (isWithParentFields || tab.getAD_Column_ID() > 0) {

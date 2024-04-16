@@ -2404,9 +2404,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Quantity
 		MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), salesOrderLineId, null);
 		Optional<MInOutLine> maybeOrderLine = Arrays.asList(shipmentHeader.getLines(true))
-				.stream()
-				.filter(shipmentLineTofind -> shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID())
-				.findFirst();
+			.parallelStream()
+			.filter(shipmentLineTofind -> shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID())
+			.findFirst()
+		;
 		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
 		BigDecimal quantity = NumberManager.getBigDecimalFromString(
 			request.getQuantity()
@@ -2518,15 +2519,16 @@ public class PointOfSalesForm extends StoreImplBase {
 		MOrder order = new MOrder(Env.getCtx(), shipmentHeader.getC_Order_ID(), transactionName);
 		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
 
-		orderLines.stream().forEach(salesOrderLine -> {
+		orderLines.forEach(salesOrderLine -> {
 			if(!DocumentUtil.isDrafted(shipmentHeader)) {
 				throw new AdempiereException("@M_InOut_ID@ @Processed@");
 			}
 			//	Quantity
 			Optional<MInOutLine> maybeOrderLine = Arrays.asList(shipmentHeader.getLines(true))
-				.stream()
+				.parallelStream()
 				.filter(shipmentLineTofind -> shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID())
-				.findFirst();
+				.findFirst()
+			;
 
 			AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
 			BigDecimal quantity = salesOrderLine.getQtyEntered();
@@ -2606,7 +2608,10 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
 		}
 		MBPartner template = MBPartner.get(context, pos.getC_BPartnerCashTrx_ID());
-		Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false)).stream().findFirst();
+		Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false))
+			.stream()
+			.findFirst()
+		;
 		if(!maybeTemplateLocation.isPresent()) {
 			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @C_BPartner_Location_ID@ @NotFound@");
 		}
@@ -2871,7 +2876,11 @@ public class PointOfSalesForm extends StoreImplBase {
 						|| cityId > 0
 						|| !Util.isEmpty(cityName)) {
 					//	Find it
-					Optional<MBPartnerLocation> maybeCustomerLocation = Arrays.asList(businessPartner.getLocations(true)).stream().filter(customerLocation -> customerLocation.getC_BPartner_Location_ID() == address.getId()).findFirst();
+					Optional<MBPartnerLocation> maybeCustomerLocation = Arrays.asList(businessPartner.getLocations(true))
+						.parallelStream()
+						.filter(customerLocation -> customerLocation.getC_BPartner_Location_ID() == address.getId())
+						.findFirst()
+					;
 					if(maybeCustomerLocation.isPresent()) {
 						MBPartnerLocation businessPartnerLocation = maybeCustomerLocation.get();
 						MLocation location = businessPartnerLocation.getLocation(true);
@@ -4122,9 +4131,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @param transactionName
 	 */
 	private void deleteDiscountLine(MPOS pos, MOrder order, String transactionName) {
-		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines()).stream()
-				.filter(ordeLine -> ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID))
-				.findFirst();
+		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines())
+			.parallelStream()
+			.filter(ordeLine -> ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID))
+			.findFirst()
+		;
 		maybeOrderLine.ifPresent(discountLine -> discountLine.deleteEx(true,transactionName));
 	}
 	
@@ -4136,9 +4147,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @param transactionName
 	 */
 	private void createDiscountLine(MPOS pos, MOrder order, BigDecimal amount, String transactionName) {
-		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines()).stream()
-				.filter(ordeLine -> ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID))
-				.findFirst();
+		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines())
+			.parallelStream()
+			.filter(ordeLine -> ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID))
+			.findFirst()
+		;
 		MOrderLine discountOrderLine = null;
 		if(maybeOrderLine.isPresent()) {
 			discountOrderLine = maybeOrderLine.get();
@@ -4523,12 +4536,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			OrderUtil.setCurrentDate(order);
 			// catch Exceptions at order.getLines()
 			Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines(true, "Line"))
-				.stream()
+				.parallelStream()
 				.filter(orderLine -> {
 					return resourceAssignmentId != 0 &&
 						resourceAssignmentId == orderLine.getS_ResourceAssignment_ID();
 				})
-				.findFirst();
+				.findFirst()
+			;
 
 			MResourceAssignment resourceAssigment = new MResourceAssignment(Env.getCtx(), resourceAssignmentId, transactionName);
 			if (!resourceAssigment.isConfirmed()) {
@@ -4619,10 +4633,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			OrderUtil.setCurrentDate(order);
 			// catch Exceptions at order.getLines()
 			Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines(true, "Line"))
-					.stream()
-					.filter(orderLine -> (productId != 0 && productId == orderLine.getM_Product_ID()) 
-							|| (chargeId != 0 && chargeId == orderLine.getC_Charge_ID()))
-					.findFirst();
+				.parallelStream()
+				.filter(orderLine -> (productId != 0 && productId == orderLine.getM_Product_ID()) 
+					|| (chargeId != 0 && chargeId == orderLine.getC_Charge_ID())
+				)
+				.findFirst()
+			;
 			if(maybeOrderLine.isPresent()) {
 				MOrderLine orderLine = maybeOrderLine.get();
 				//	Set Quantity
@@ -5301,7 +5317,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			.forEach(orderLine -> {
 				//	Verify if exist
 				if(productPrices
-					.stream()
+					.parallelStream()
 					.filter(productPrice -> productPrice.getM_Product_ID() == orderLine.getM_Product_ID())
 					.findFirst()
 					.isPresent()) {
@@ -5537,13 +5553,14 @@ public class PointOfSalesForm extends StoreImplBase {
 		);
 		int taxCategoryId = product.getC_TaxCategory_ID();
 		Optional<MTax> optionalTax = Arrays.asList(MTax.getAll(Env.getCtx()))
-		.stream()
-		.filter(tax -> tax.getC_TaxCategory_ID() == taxCategoryId 
+			.parallelStream()
+			.filter(tax -> tax.getC_TaxCategory_ID() == taxCategoryId 
 							&& (tax.isSalesTax() 
 									|| (!Util.isEmpty(tax.getSOPOType()) 
 											&& (tax.getSOPOType().equals(MTax.SOPOTYPE_Both) 
 													|| tax.getSOPOType().equals(MTax.SOPOTYPE_SalesTax)))))
-		.findFirst();
+			.findFirst()
+		;
 		//	Validate
 		if(optionalTax.isPresent()) {
 			builder.setTaxRate(

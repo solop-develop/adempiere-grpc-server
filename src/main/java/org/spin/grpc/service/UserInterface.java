@@ -49,7 +49,6 @@ import org.adempiere.core.domains.models.I_AD_Private_Access;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_Record_Access;
 import org.adempiere.core.domains.models.I_AD_Role;
-import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_R_MailText;
@@ -253,7 +252,8 @@ public class UserInterface extends UserInterfaceImplBase {
 					return column.getColumnName().equals(attribute.getKey());
 				})
 				.findFirst()
-				.get();
+				.orElse(null)
+			;
 
 			// if view aliases not exists, next element
 			if (viewColumn == null) {
@@ -282,7 +282,11 @@ public class UserInterface extends UserInterfaceImplBase {
 			entity.set_ValueOfColumn(columnName, value);
 		});
 		//	Save entity
-		entity.saveEx();
+		if (entity.is_Changed()) {
+			entity.saveEx();
+		} else {
+			log.severe("@Ignored@");
+		}
 
 		//	Return
 		return ConvertUtil.convertEntity(entity);
@@ -548,15 +552,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
-		MTab tab = new Query(
-				Env.getCtx(),
-				MTab.Table_Name,
-				MTab.COLUMNNAME_AD_Tab_ID + " = ? ",
-				null
-			)
-			.setParameters(request.getTabId())
-			.first()
-		;
+		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}
@@ -827,14 +823,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
-
-		MTab tab = new Query(
-			Env.getCtx(),
-			I_AD_Tab.Table_Name,
-			"AD_Tab_ID = ?",
-			null
-		).setParameters(request.getTabId())
-		.first();
+		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}
@@ -908,13 +897,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
 
-		MTab tab = new Query(
-			Env.getCtx(),
-			I_AD_Tab.Table_Name,
-			"AD_Tab_ID = ?",
-			null
-		).setParameters(request.getTabId())
-		.first();
+		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}

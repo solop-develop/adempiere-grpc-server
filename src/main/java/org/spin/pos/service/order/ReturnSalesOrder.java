@@ -149,9 +149,10 @@ public class ReturnSalesOrder {
 			}
 			MOrderLine sourcerOrderLine = new MOrderLine(Env.getCtx(), sourceOrderLineId, transactionName);
 			Optional<MOrderLine> maybeOrderLine = Arrays.asList(rma.getLines(true, null))
-					.stream()
-					.filter(rmaLineTofind -> rmaLineTofind.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID) == sourceOrderLineId)
-					.findFirst();
+				.parallelStream()
+				.filter(rmaLineTofind -> rmaLineTofind.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID) == sourceOrderLineId)
+				.findFirst()
+			;
 			BigDecimal availableQuantity = RMAUtil.getAvailableQuantityForReturn(sourcerOrderLine.getC_OrderLine_ID(), sourcerOrderLine.getQtyEntered(), quantity);
 			if(maybeOrderLine.isPresent()) {
 				MOrderLine rmaLine = maybeOrderLine.get();

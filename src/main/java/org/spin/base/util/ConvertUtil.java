@@ -955,14 +955,16 @@ public class ConvertUtil {
 					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
 				})
 				.findFirst()
-				.get();
+				.orElse(null)
+			;
 	
 			productUom = productsConversion.parallelStream()
 				.filter(productConversion -> {
 					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
 				})
 				.findFirst()
-				.get();
+				.orElse(null)
+			;
 		} else {
 			uom = new MUOMConversion(Env.getCtx(), 0, null);
 			uom.setC_UOM_ID(orderLine.getC_UOM_ID());
@@ -1232,14 +1234,16 @@ public class ConvertUtil {
 					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
 				})
 				.findFirst()
-				.get();
+				.orElse(null)
+			;
 
 			productUom = productsConversion.parallelStream()
 				.filter(productConversion -> {
 					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
 				})
 				.findFirst()
-				.get();
+				.orElse(null)
+			;
 		} else {
 			uom = new MUOMConversion(Env.getCtx(), 0, null);
 			uom.setC_UOM_ID(orderLine.getC_UOM_ID());

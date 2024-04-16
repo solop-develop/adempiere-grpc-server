@@ -356,13 +356,14 @@ public class OrderManagement {
 		}
 		MCharge charge = MCharge.get(payment.getCtx(), chargeId);
 		Optional<MTax> optionalTax = Arrays.asList(MTax.getAll(Env.getCtx()))
-				.stream()
-				.filter(tax -> tax.getC_TaxCategory_ID() == charge.getC_TaxCategory_ID() 
+			.parallelStream()
+			.filter(tax -> tax.getC_TaxCategory_ID() == charge.getC_TaxCategory_ID() 
 									&& (tax.isSalesTax() 
 											|| (!Util.isEmpty(tax.getSOPOType()) 
 													&& (tax.getSOPOType().equals(MTax.SOPOTYPE_Both) 
 															|| tax.getSOPOType().equals(MTax.SOPOTYPE_SalesTax)))))
-				.findFirst();
+			.findFirst()
+		;
 		creditMemoLine.setC_Charge_ID(chargeId);
 		creditMemoLine.setC_Tax_ID(optionalTax.get().getC_Tax_ID());
 		creditMemoLine.setQty(Env.ONE);
