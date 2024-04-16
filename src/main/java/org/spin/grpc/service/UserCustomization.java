@@ -17,6 +17,7 @@ package org.spin.grpc.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_AD_Browse_Field;
 import org.adempiere.core.domains.models.I_AD_Field;
@@ -507,13 +508,16 @@ public class UserCustomization extends UserCustomizationImplBase {
 
 			// instance tab
 			List<MTabCustom> tabsCustomList = customWindow.getTabs();
-			MTabCustom customTab = tabsCustomList.parallelStream()
+			MTabCustom customTab = null;
+			Optional<MTabCustom> maybeTabCustom = tabsCustomList.parallelStream()
 				.filter(tabItem -> {
 					return tabItem.getAD_Tab_ID() == tab.getAD_Tab_ID();
 				})
 				.findFirst()
-				.orElse(null)
 			;
+			if (maybeTabCustom.isPresent()) {
+				customTab = maybeTabCustom.get();
+			}
 
 			if (customTab == null) {
 				customTab = new MTabCustom(customWindow);
@@ -717,13 +721,19 @@ public class UserCustomization extends UserCustomizationImplBase {
 			}
 
 			// instance browse field custom
-			MBrowseFieldCustom customBrowseField = customBrowseFieldList.parallelStream()
+			Optional<MBrowseFieldCustom> maybeCustomBrowseField = customBrowseFieldList.parallelStream()
 				.filter(browseFieldItem -> {
 					return browseFieldItem.getAD_Browse_Field_ID() == browseField.getAD_Browse_Field_ID();
 				})
 				.findFirst()
-				.orElse(null)
 			;
+			if (!maybeCustomBrowseField.isPresent()) {
+				log.warning(
+					Msg.getMsg(Env.getCtx(), "@getAD_BrowseCustom_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
+				);
+				return;
+			}
+			MBrowseFieldCustom customBrowseField = maybeCustomBrowseField.get();
 			if (customBrowseField == null || customBrowseField.getAD_BrowseFieldCustom_ID() <= 0) {
 				log.warning(
 					Msg.getMsg(Env.getCtx(), "@getAD_BrowseCustom_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
@@ -861,13 +871,19 @@ public class UserCustomization extends UserCustomizationImplBase {
 			}
 
 			// instance custom process parameter
-			MProcessParaCustom customProcessParameter = customProcessParametersList.parallelStream()
+			Optional<MProcessParaCustom> maybeCustomProcessParameter = customProcessParametersList.parallelStream()
 				.filter(processParameterItem -> {
 					return processParameterItem.getAD_Process_Para_ID() == processParameter.getAD_Process_Para_ID();
 				})
 				.findFirst()
-				.orElse(null)
 			;
+			if (!maybeCustomProcessParameter.isPresent()) {
+				log.warning(
+					Msg.getMsg(Env.getCtx(), "@AD_ProcessParaCustom_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
+				);
+				return;
+			}
+			MProcessParaCustom customProcessParameter = maybeCustomProcessParameter.get();
 			if (customProcessParameter == null || customProcessParameter.getAD_ProcessParaCustom_ID() <= 0) {
 				log.warning(
 					Msg.getMsg(Env.getCtx(), "@AD_ProcessParaCustom_ID@ (" + fieldAttributes.getColumnName() + ") @NotFound@")
