@@ -363,7 +363,7 @@ public class Dashboarding extends DashboardingImplBase {
 				pendingDocumentBuilder.setRecordCount(
 						MDocumentStatus.evaluate(documentStatus)
 					)
-					.setReferenceUuid(
+					.setRecordReferenceUuid(
 						ValueManager.validateNull(
 							uuid
 						)
