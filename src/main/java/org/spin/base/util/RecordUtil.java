@@ -121,13 +121,21 @@ public class RecordUtil {
 		}
 
 		StringBuffer whereClause = new StringBuffer();
-		List<Object> params = new ArrayList<>();
+		List<Object> filtersList = new ArrayList<>();
 		if (!Util.isEmpty(uuid, true)) {
 			whereClause.append(I_AD_Element.COLUMNNAME_UUID + " = ?");
-			params.add(uuid);
+			filtersList.add(uuid);
 		} else if (isId) {
-			whereClause.append(tableName + "_ID = ?");
-			params.add(recordId);
+			for (final String keyColumnName: table.getKeyColumns()) {
+				MColumn column = table.getColumn(keyColumnName);
+				if (DisplayType.isID(column.getAD_Reference_ID())) {
+					if (whereClause.length() > 0) {
+						whereClause.append(" OR ");
+					}
+					whereClause.append(keyColumnName + " = ?");
+					filtersList.add(recordId);
+				}
+			}
 		} else {
 			throw new AdempiereException("@Record_ID@ / @UUID@ @NotFound@");
 		}
@@ -138,8 +146,9 @@ public class RecordUtil {
 			whereClause.toString(),
 			transactionName
 		)
-			.setParameters(params)
-			.first();
+			.setParameters(filtersList)
+			.first()
+		;
 	}
 	
 	/**
