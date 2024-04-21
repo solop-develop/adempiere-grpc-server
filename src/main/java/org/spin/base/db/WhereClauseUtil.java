@@ -511,27 +511,23 @@ public class WhereClauseUtil {
 		FilterManager.newInstance(filters).getConditions().stream()
 			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
 			.forEach(condition -> {
+				MColumn column = table.getColumn(condition.getColumnName());
+				if (column != null && column.getAD_Column_ID() > 0) {
+					// filter key does not exist as a column, next loop
+					return;
+				}
 				if (whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
-				int displayTypeId = 0;
-				int columnId = MColumn.getColumn_ID(table.getTableName(), condition.getColumnName());
-				if (columnId > 0) {
-					MColumn column = MColumn.get(
-						Env.getCtx(),
-						columnId
-					);
-					if (column != null) {
-						displayTypeId = column.getAD_Reference_ID();
-						// set table alias to column name
-						String columnName = tableNameAlias + "." + condition.getColumnName();
-						condition.setColumnName(columnName);
-					}
-				}
-
+				int displayTypeId = column.getAD_Reference_ID();
+				// set table alias to column name
+				// TODO: Evaluate support to columnSQL
+				String columnName = tableNameAlias + "." + column.getColumnName();
+				condition.setColumnName(columnName);
 				String restriction = WhereClauseUtil.getRestrictionByOperator(condition, displayTypeId, params);
 
 				whereClause.append(restriction);
+
 		});
 		//	Return where clause
 		return whereClause.toString();
