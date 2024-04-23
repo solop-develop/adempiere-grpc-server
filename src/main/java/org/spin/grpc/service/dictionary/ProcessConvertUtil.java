@@ -205,11 +205,17 @@ public class ProcessConvertUtil {
 
 	public static List<DependentField> generateDependentProcessParameters(MProcessPara processParameter) {
 		List<DependentField> depenentFieldsList = new ArrayList<>();
+		if (processParameter == null) {
+			return depenentFieldsList;
+		}
 
 		String parentColumnName = processParameter.getColumnName();
 
 		MProcess process = ASPUtil.getInstance().getProcess(processParameter.getAD_Process_ID());
 		List<MProcessPara> parametersList = ASPUtil.getInstance().getProcessParameters(processParameter.getAD_Process_ID());
+		if (parametersList == null || parametersList.isEmpty()) {
+			return depenentFieldsList;
+		}
 
 		parametersList.parallelStream()
 			.filter(currentParameter -> {

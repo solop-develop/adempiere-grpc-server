@@ -84,8 +84,8 @@ public class ReferenceUtil {
 			|| DisplayType.Account == displayTypeId
 			|| DisplayType.ID == displayTypeId
 			|| DisplayType.Location == displayTypeId
-			|| DisplayType.PAttribute == displayTypeId
 			|| DisplayType.Locator == displayTypeId
+			|| DisplayType.PAttribute == displayTypeId
 		) {
 			return true;
 		}

@@ -300,6 +300,9 @@ public class BrowseConverUtil {
 
 	public static List<DependentField> generateDependentBrowseFields(MBrowseField browseField) {
 		List<DependentField> depenentFieldsList = new ArrayList<>();
+		if (browseField == null) {
+			return depenentFieldsList;
+		}
 
 		MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), browseField.getAD_View_Column_ID(), null);
 		String parentColumnName = viewColumn.getColumnName();
@@ -316,6 +319,9 @@ public class BrowseConverUtil {
 
 		MBrowse browse = ASPUtil.getInstance().getBrowse(browseField.getAD_Browse_ID());
 		List<MBrowseField> browseFieldsList = ASPUtil.getInstance().getBrowseFields(browseField.getAD_Browse_ID());
+		if (browseFieldsList == null || browseFieldsList.isEmpty()) {
+			return depenentFieldsList;
+		}
 
 		browseFieldsList.parallelStream()
 			.filter(currentBrowseField -> {

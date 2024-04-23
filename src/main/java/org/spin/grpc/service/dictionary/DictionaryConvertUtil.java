@@ -493,6 +493,9 @@ public class DictionaryConvertUtil {
 
 		MTable table = MTable.get(Env.getCtx(), column.getAD_Table_ID());
 		List<MColumn> columnsList = table.getColumnsAsList(false);
+		if (columnsList == null || columnsList.isEmpty()) {
+			return depenentFieldsList;
+		}
 
 		columnsList.parallelStream()
 			.filter(currentColumn -> {
