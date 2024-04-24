@@ -26,6 +26,7 @@ import org.spin.service.grpc.util.db.OperatorUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+// import com.fasterxml.jackson.databind.JavaType;
 // import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -65,10 +66,11 @@ public class FilterManager {
 							"C_Invoice": 333
 						}
 					*/
-					TypeReference<HashMap<String,Object>> typeRef = new TypeReference<HashMap<String,Object>>() {};
+					TypeReference<HashMap<String,Object>> valueType = new TypeReference<HashMap<String,Object>>() {};
+					// JavaType valueType = fileMapper.getTypeFactory().constructMapLikeType(Map.class, String.class, Object.class);
 					this.fillValues = new ArrayList<>();
 
-					Map<String, Object> keyValueFilters = fileMapper.readValue(filter, typeRef);
+					Map<String, Object> keyValueFilters = fileMapper.readValue(filter, valueType);
 					if (keyValueFilters != null && !keyValueFilters.isEmpty()) {
 						keyValueFilters.entrySet().forEach(entry -> {
 							Map<String, Object> condition = new HashMap<>();
