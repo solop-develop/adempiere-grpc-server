@@ -34,21 +34,31 @@ package field.invoice;
 service InvoiceInfoService {
 	// criteria
 	rpc ListOrders(ListOrdersRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/invoices/orders" };
+		option (google.api.http) = {
+			get: "/field/invoices/orders"
+		};
 	}
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/invoices/business-partners" };
+		option (google.api.http) = {
+			get: "/field/invoices/business-partners"
+		};
 	}
 
 	// result
 	rpc ListInvoiceInfo(ListInvoicesInfoRequest) returns (ListInvoicesInfoResponse) {
-		option (google.api.http) = { get: "/field/invoices" };
+		option (google.api.http) = {
+			get: "/field/invoices"
+		};
 	}
-	rpc GetInvoiceInfo(GetInvoiceInfoRequest) returns (Invoice) {
-		option (google.api.http) = { get: "/field/invoices/{id}" };
+	rpc GetInvoiceInfo(GetInvoiceInfoRequest) returns (InvoiceInfo) {
+		option (google.api.http) = {
+			get: "/field/invoices/{id}"
+		};
 	}
 	rpc ListInvoicePaySchedules(ListInvoicePaySchedulesRequest) returns (ListInvoicePaySchedulesResponse) {
-		option (google.api.http) = { get: "/field/invoices/{invoice_id}/pay-schedules" };
+		option (google.api.http) = {
+			get: "/field/invoices/{invoice_id}/pay-schedules"
+		};
 	}
 }
 
@@ -84,7 +94,7 @@ message ListBusinessPartnersRequest {
 
 
 // List Invoice Info Request
-message Invoice {
+message InvoiceInfo {
 	int32 id = 1;
 	string uuid = 2;
 	string business_partner = 3;
@@ -107,7 +117,7 @@ message GetInvoiceInfoRequest {
 }
 message ListInvoicesInfoResponse {
 	int64 record_count = 1;
-	repeated Invoice records = 2;
+	repeated InvoiceInfo records = 2;
 	string next_page_token = 3;
 }
 message ListInvoicesInfoRequest {

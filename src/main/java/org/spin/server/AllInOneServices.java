@@ -51,7 +51,7 @@ import org.spin.grpc.service.Workflow;
 import org.spin.grpc.service.core_functionality.CoreFunctionality;
 import org.spin.grpc.service.dictionary.Dictionary;
 import org.spin.grpc.service.field.business_partner.BusinessPartnerInfo;
-import org.spin.grpc.service.field.invoice.InvoiceInfo;
+import org.spin.grpc.service.field.invoice.InvoiceInfoService;
 import org.spin.grpc.service.field.location_address.LocationAddress;
 import org.spin.grpc.service.field.product.ProductInfo;
 import org.spin.grpc.service.form.ExpressMovement;
@@ -197,9 +197,9 @@ public class AllInOneServices {
 		//	In-Out
 		serverBuilder.addService(new InOutInfo());
 		logger.info("Service " + InOutInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		//	Invoice
-		serverBuilder.addService(new InvoiceInfo());
-		logger.info("Service " + InvoiceInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Invoice Field
+		serverBuilder.addService(new InvoiceInfoService());
+		logger.info("Service " + InvoiceInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Issue Management
 		serverBuilder.addService(new IssueManagement());
 		logger.info("Service " + IssueManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
