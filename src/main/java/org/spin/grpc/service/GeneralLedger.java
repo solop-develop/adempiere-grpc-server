@@ -141,7 +141,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		int AD_Window_ID = 153; // Maintain Account Combinations
-		GridWindowVO wVO = GridWindowVO.create (context, windowNo, AD_Window_ID);
+		GridWindowVO wVO = GridWindowVO.create(context, windowNo, AD_Window_ID);
 		if (wVO == null) {
 			log.warning(
 				Msg.translate(context, "@AccessTableNoView@")
@@ -407,20 +407,20 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	}
 
 	private ListEntitiesResponse.Builder listAccountingCombinations(ListAccountingCombinationsRequest request) {
-		Map<String, Object> contextAttributesList = ValueManager.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
-		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
+		// Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
+
+		int organizationId = request.getOrganizationId();
+		if (request.getOrganizationId() <= 0) {
+			// throw new AdempiereException("@Org0NotAllowed@");
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
-		} else if ((int) contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) <= 0) {
-			throw new AdempiereException("@Org0NotAllowed@");
 		}
 
-		if (contextAttributesList.get(MAccount.COLUMNNAME_Account_ID) == null || (int) contextAttributesList.get(MAccount.COLUMNNAME_Account_ID) <= 0) {
+		int accountId = request.getAccountId();
+		if (request.getAccountId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @Account_ID@");
 		}
-
-		//
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		MTable table = MTable.get(Env.getCtx(), this.tableName);
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
@@ -439,8 +439,11 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), this.tableName, params);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			// includes first AND
-			sqlWithRoleAccess += " AND " + dynamicWhere; 
+			sqlWithRoleAccess += " AND " + dynamicWhere;
 		}
+		sqlWithRoleAccess += " AND (C_ValidCombination.AD_Org_ID = ? AND C_ValidCombination.Account_ID = ?) ";
+		params.add(organizationId);
+		params.add(accountId);
 
 		// add where with search value
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, this.tableName, request.getSearchValue(), params);
@@ -477,7 +480,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			Entity.Builder entity = convertAccountingCombination(request);
+			Entity.Builder entity = saveAccountingCombination(request);
 			responseObserver.onNext(entity.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -492,31 +495,32 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 	}
 
-	private Entity.Builder convertAccountingCombination(SaveAccountingCombinationRequest request) {
-		// set context values
+	private Entity.Builder saveAccountingCombination(SaveAccountingCombinationRequest request) {
+		// Fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		Map<String, Object> contextAttributesList = ValueManager.convertValuesMapToObjects(request.getContextAttributes().getFieldsMap());
-		ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), contextAttributesList);
-		if (contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) == null) {
-			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
-		} else if ((int) contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID) <= 0) {
-			throw new AdempiereException("@Org0NotAllowed@");
-		}
-		int organizationId = (int) contextAttributesList.get(MAccount.COLUMNNAME_AD_Org_ID);
+		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
-		if (contextAttributesList.get(MAccount.COLUMNNAME_Account_ID) == null || (int) contextAttributesList.get(MAccount.COLUMNNAME_Account_ID) <= 0) {
+		final int organizationId = request.getOrganizationId();
+		if (organizationId <= 0) {
+			// throw new AdempiereException("@Org0NotAllowed@");
+			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
+		}
+
+		final int accountId = request.getAccountId();
+		if (accountId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @Account_ID@");
 		}
-		int accountId = (int) contextAttributesList.get(MAccount.COLUMNNAME_Account_ID);
 
-		if (contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID) == null || (int) contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID) <= 0) {
+		final int accountingSchemaId = request.getAccountingSchemaId();
+		if (accountingSchemaId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
 		}
-		int accountingSchemaId = (int) contextAttributesList.get(MAccount.COLUMNNAME_C_AcctSchema_ID);
 		MAcctSchema accountingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId, null);
 
-		String accountingCombinationAlias = ValueManager.validateNull((String) contextAttributesList.get(MAccount.COLUMNNAME_Alias));
-		
+		final String accountingCombinationAlias = ValueManager.validateNull(
+			request.getAlias()
+		);
+
 		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accountingSchema.getAcctSchemaElements());
 
 		Map<String, Object> attributesList = ValueManager.convertValuesMapToObjects(request.getAttributes().getFieldsMap());
@@ -535,7 +539,9 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				accountingCombinationId = rs.getInt(1);
-				accountingAlias = ValueManager.validateNull(rs.getString(2));
+				accountingAlias = ValueManager.validateNull(
+					rs.getString(2)
+				);
 			}
 		}
 		catch (SQLException e) {
@@ -585,7 +591,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			// return;
 		}
 
-		log.config("New");
+		log.config("New Accouting Combination");
 		MAccount accountCombination = setAccountingCombinationByAttributes(clientId, organizationId, accountingSchemaId, accountId, attributesList);
 		
 		Entity.Builder builder = ConvertUtil.convertEntity(accountCombination);
