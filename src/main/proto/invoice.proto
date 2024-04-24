@@ -16,29 +16,44 @@ syntax = "proto3";
 
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.invoice";
+option java_package = "org.spin.backend.grpc.field.invoice";
 option java_outer_classname = "ADempiereInvoice";
 
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
 
 // Base URL
-// /info/sales/
+// /field/invoices/
 
-package invoice;
+package field.invoice;
 
 // The invoice service definition.
-service Invoice {
-	// List Invoice Info Request
-	rpc ListInvoiceInfo(ListInvoiceInfoRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/info/sales/invoices" };
+service InvoiceInfoService {
+	// criteria
+	rpc ListOrders(ListOrdersRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/invoices/orders" };
+	}
+	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = { get: "/field/invoices/business-partners" };
+	}
+
+	// result
+	rpc ListInvoiceInfo(ListInvoicesInfoRequest) returns (ListInvoicesInfoResponse) {
+		option (google.api.http) = { get: "/field/invoices" };
+	}
+	rpc GetInvoiceInfo(GetInvoiceInfoRequest) returns (Invoice) {
+		option (google.api.http) = { get: "/field/invoices/{id}" };
+	}
+	rpc ListInvoicePaySchedules(ListInvoicePaySchedulesRequest) returns (ListInvoicePaySchedulesResponse) {
+		option (google.api.http) = { get: "/field/invoices/{invoice_id}/pay-schedules" };
 	}
 }
 
 // List Invoice Info Request
-message ListInvoiceInfoRequest {
+message ListOrdersRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -46,7 +61,64 @@ message ListInvoiceInfoRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string is_sales_transaction = 10;
+}
+
+// Business Partners
+message ListBusinessPartnersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string is_sales_transaction = 10;
+}
+
+
+// List Invoice Info Request
+message Invoice {
+	int32 id = 1;
+	string uuid = 2;
+	string business_partner = 3;
+	google.protobuf.Timestamp date_invoiced = 4;
+	string document_no = 5;
+	string currency = 6;
+	string grand_total = 7;
+	string converted_amount = 8;
+	string open_amount = 9;
+	string payment_term = 10;
+	bool is_paid = 11;
+	bool is_sales_transaction = 12;
+	string description = 13;
+	string po_reference = 14;
+	string document_status = 15;
+}
+message GetInvoiceInfoRequest {
+	int32 id = 1;
+	string uuid = 2;
+}
+message ListInvoicesInfoResponse {
+	int64 record_count = 1;
+	repeated Invoice records = 2;
+	string next_page_token = 3;
+}
+message ListInvoicesInfoRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
 	// references
 	int32 process_parameter_id = 9;
 	int32 field_id = 10;
@@ -54,4 +126,46 @@ message ListInvoiceInfoRequest {
 	int32 reference_id = 12;
 	int32 column_id = 13;
 	string column_name = 14;
+	// custom filter
+	string document_no = 15;
+	int32 business_partner_id = 16;
+	string is_sales_transaction = 17;
+	string is_paid = 18;
+	string description = 19;
+	google.protobuf.Timestamp invoice_date_from = 20;
+	google.protobuf.Timestamp invoice_date_to = 21;
+	int32 order_id = 22;
+	string grand_total_from = 23;
+	string grand_total_to = 24;
+}
+
+
+// Invoice Pay Schedule
+message InvoicePaySchedule {
+	int32 id = 1;
+	string uuid = 2;
+	int32 payment_count = 3;
+	google.protobuf.Timestamp due_date = 4;
+	string currency = 6;
+	string grand_total = 7;
+	string converted_amount = 8;
+	string open_amount = 9;
+	bool is_paid = 10;
+}
+message ListInvoicePaySchedulesResponse {
+	int64 record_count = 1;
+	repeated InvoicePaySchedule records = 2;
+	string next_page_token = 3;
+}
+message ListInvoicePaySchedulesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// custom filters
+	int32 invoice_id = 9;
 }

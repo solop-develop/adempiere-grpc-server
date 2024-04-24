@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.field.invoice;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,9 +35,10 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.backend.grpc.invoice.InvoiceGrpc.InvoiceImplBase;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
-import org.spin.backend.grpc.invoice.ListInvoiceInfoRequest;
+import org.spin.backend.grpc.field.invoice.InvoiceInfoServiceGrpc.InvoiceInfoServiceImplBase;
+import org.spin.backend.grpc.field.invoice.ListInvoicesInfoRequest;
+import org.spin.backend.grpc.field.invoice.ListInvoicePaySchedulesRequest;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -46,28 +47,31 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Update Center
  */
-public class InvoiceInfo extends InvoiceImplBase {
+public class InvoiceInfo extends InvoiceInfoServiceImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(InvoiceInfo.class);
 	
 	public String tableName = I_C_Invoice.Table_Name;
 
+
 	@Override
-	public void listInvoiceInfo(ListInvoiceInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+	public void listInvoiceInfo(ListInvoicesInfoRequest request, StreamObserver<ListInvoicesInfoResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-
-			ListEntitiesResponse.Builder entityValueList = listInvoiceInfo(request);
-			responseObserver.onNext(entityValueList.build());
+			ListInvoicesInfoResponse.Builder entityValueList = listInvoiceInfo(request);
+			responseObserver.onNext(
+				entityValueList.build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
-				.asRuntimeException());
+				.asRuntimeException()
+			);
 		}
 	}
 	
@@ -76,7 +80,7 @@ public class InvoiceInfo extends InvoiceImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListEntitiesResponse.Builder listInvoiceInfo( ListInvoiceInfoRequest request) {
+	private ListInvoicesInfoResponse.Builder listInvoiceInfo(ListInvoicesInfoRequest request) {
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceId(),
 			request.getFieldId(),
@@ -135,13 +139,13 @@ public class InvoiceInfo extends InvoiceImplBase {
 		int offset = (pageNumber - 1) * limit;
 		int count = 0;
 
-		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
+		ListInvoicesInfoResponse.Builder builder = ListInvoicesInfoResponse.newBuilder();
 		
 		//	Count records
 		count = CountUtil.countRecords(parsedSQL, this.tableName, params);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), this.tableName), parsedSQL, params);
+		// builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), this.tableName), parsedSQL, params);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -153,6 +157,33 @@ public class InvoiceInfo extends InvoiceImplBase {
 		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
 		
 		return builder;
+	}
+
+
+
+	@Override
+	public void listInvoicePaySchedules(ListInvoicePaySchedulesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListEntitiesResponse.Builder entityValueList = listInvoicePaySchedules(request);
+			responseObserver.onNext(
+				entityValueList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+	private ListEntitiesResponse.Builder listInvoicePaySchedules(ListInvoicePaySchedulesRequest request) {
+		return ListEntitiesResponse.newBuilder();
 	}
 
 }
