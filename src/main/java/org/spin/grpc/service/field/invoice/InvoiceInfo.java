@@ -35,10 +35,11 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.field.invoice.InvoiceInfoServiceGrpc.InvoiceInfoServiceImplBase;
 import org.spin.backend.grpc.field.invoice.ListInvoicesInfoRequest;
+import org.spin.backend.grpc.field.invoice.ListInvoicesInfoResponse;
 import org.spin.backend.grpc.field.invoice.ListInvoicePaySchedulesRequest;
+import org.spin.backend.grpc.field.invoice.ListInvoicePaySchedulesResponse;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -92,7 +93,7 @@ public class InvoiceInfo extends InvoiceInfoServiceImplBase {
 		);
 
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
+		ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		//
 		MTable table = MTable.get(Env.getCtx(), this.tableName);
@@ -162,12 +163,12 @@ public class InvoiceInfo extends InvoiceInfoServiceImplBase {
 
 
 	@Override
-	public void listInvoicePaySchedules(ListInvoicePaySchedulesRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+	public void listInvoicePaySchedules(ListInvoicePaySchedulesRequest request, StreamObserver<ListInvoicePaySchedulesResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListEntitiesResponse.Builder entityValueList = listInvoicePaySchedules(request);
+			ListInvoicePaySchedulesResponse.Builder entityValueList = listInvoicePaySchedules(request);
 			responseObserver.onNext(
 				entityValueList.build()
 			);
@@ -182,8 +183,8 @@ public class InvoiceInfo extends InvoiceInfoServiceImplBase {
 		}
 	}
 
-	private ListEntitiesResponse.Builder listInvoicePaySchedules(ListInvoicePaySchedulesRequest request) {
-		return ListEntitiesResponse.newBuilder();
+	private ListInvoicePaySchedulesResponse.Builder listInvoicePaySchedules(ListInvoicePaySchedulesRequest request) {
+		return ListInvoicePaySchedulesResponse.newBuilder();
 	}
 
 }
