@@ -105,7 +105,7 @@ message ListAccoutingElementsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	string context_attributes = 8;
 	int32 accouting_schema_id = 9;
 }
 
@@ -157,13 +157,21 @@ message ListAccountingCombinationsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
+	// custom filters
+	string context_attributes = 8;
+	int32 organization_id = 9;
+	int32 account_id = 10;
 }
 
 message SaveAccountingCombinationRequest {
-	google.protobuf.Struct context_attributes = 2;
-	int32 id = 4;
-	google.protobuf.Struct attributes = 5;
+	int32 id = 1;
+	int32 client_id = 2;
+	int32 accounting_schema_id = 3;
+	int32 organization_id = 4;
+	int32 account_id = 5;
+	string alias = 6;
+	google.protobuf.Struct context_attributes = 7;
+	google.protobuf.Struct attributes = 8;
 }
 
 
