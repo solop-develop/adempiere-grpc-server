@@ -512,7 +512,7 @@ public class WhereClauseUtil {
 			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
 			.forEach(condition -> {
 				MColumn column = table.getColumn(condition.getColumnName());
-				if (column != null && column.getAD_Column_ID() > 0) {
+				if (column == null || column.getAD_Column_ID() <= 0) {
 					// filter key does not exist as a column, next loop
 					return;
 				}

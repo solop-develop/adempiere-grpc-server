@@ -43,11 +43,19 @@ public class Filter {
 	}
 
 	public String getColumnName() {
-		return (String) this.condition.get(NAME);
+		Object key = this.condition.get(OPERATOR);
+		if (key == null) {
+			return null;
+		}
+		return (String) key;
 	}
 
 	public String getOperator() {
-		return (String) this.condition.get(OPERATOR);
+		Object operator = this.condition.get(OPERATOR);
+		if (operator == null) {
+			return null;
+		}
+		return (String) operator;
 	}
 
 	public Object getValue() {
@@ -57,6 +65,9 @@ public class Filter {
 	@SuppressWarnings("unchecked")
 	public List<Object> getValues() {
 		Object value = this.condition.get(VALUES);
+		if (value == null) {
+			return null;
+		}
 		if(value instanceof List) {
 			return (List<Object>) value;
 		}
