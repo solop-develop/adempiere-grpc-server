@@ -279,12 +279,10 @@ public class LogsConvertUtil {
 				;
 			} else if (column.getAD_Reference_ID() == DisplayType.YesNo) {
 				if (oldValue != null) {
-					boolean yes = BooleanManager.getBooleanFromString(oldValue);
-					displayOldValue = BooleanManager.getBooleanToString(yes, true);
+					displayOldValue = BooleanManager.getBooleanToTranslated(oldValue);
 				}
 				if (newValue != null) {
-					boolean yes = newValue.equals("true") || newValue.equals("Y");
-					displayNewValue = Msg.getMsg(Env.getCtx(), yes ? "Y" : "N");
+					displayNewValue = BooleanManager.getBooleanToTranslated(newValue);
 				}
 			} else if (column.getAD_Reference_ID() == DisplayType.Amount) {
 				if (oldValue != null)
