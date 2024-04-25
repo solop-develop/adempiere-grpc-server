@@ -249,26 +249,42 @@ public class UserInterface extends UserInterfaceImplBase {
 			// find view column definition
 			MViewColumn viewColumn = viewColumnsList
 				.parallelStream()
-				.filter(column -> {
-					return column.getColumnName().equals(attribute.getKey());
+				.filter(currentViewColumn -> {
+					return currentViewColumn.getColumnName().equals(attribute.getKey());
 				})
 				.findFirst()
 				.orElse(null)
 			;
-
 			// if view aliases not exists, next element
-			if (viewColumn == null) {
+			if (viewColumn == null || viewColumn.getAD_View_Column_ID() <= 0) {
 				return;
 			}
 
 			MViewDefinition viewDefinition = MViewDefinition.get(context, viewColumn.getAD_View_Definition_ID());
 			// not same table setting in smart browser and view definition
 			if (browser.getAD_Table_ID() != viewDefinition.getAD_Table_ID()) {
+				log.info("Browse Table " + browser.getAD_Table_ID() + " and View Definition Table " + viewDefinition.getAD_Table_ID() + " different ");
 				return;
 			}
+
+			MBrowseField browseField = MBrowseField.get(browser, viewColumn);
+			if (browseField == null || browseField.getAD_Browse_Field_ID() <= 0) {
+				log.warning("Browse Field no found");
+				return;
+			}
+			if (!browseField.isActive() || browseField.isReadOnly()) {
+				log.warning("Browse Field not updateable: " + browseField.getName());
+				return;
+			}
+
 			MColumn column = MColumn.get(browser.getCtx(), viewColumn.getAD_Column_ID());
 			if (column == null || column.getAD_Column_ID() <= 0) {
 				// column is not present on current table
+				return;
+			}
+			if (column.isVirtualColumn() || column.isKey() || !column.isUpdateable()) {
+				// virtual column with columnSQL
+				log.warning("Column is virtual column or not updateable: " + column.getColumnName());
 				return;
 			}
 			String columnName = column.getColumnName();
