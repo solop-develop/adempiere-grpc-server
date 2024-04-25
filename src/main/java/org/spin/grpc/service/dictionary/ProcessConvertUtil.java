@@ -245,15 +245,15 @@ public class ProcessConvertUtil {
 			})
 			.forEach(currentParameter -> {
 				DependentField.Builder builder = DependentField.newBuilder()
-					.setContainerId(
+					.setParentId(
 						process.getAD_Process_ID()
 					)
-					.setContainerUuid(
+					.setParentUuid(
 						ValueManager.validateNull(
 							process.getUUID()
 						)
 					)
-					.setContainerName(
+					.setParentName(
 						ValueManager.validateNull(
 							process.getName()
 						)

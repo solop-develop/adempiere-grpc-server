@@ -627,15 +627,15 @@ public class WindowConvertUtil {
 					})
 					.forEach(currentField -> {
 						DependentField.Builder builder = DependentField.newBuilder()
-							.setContainerId(
+							.setParentId(
 								tab.getAD_Tab_ID()
 							)
-							.setContainerUuid(
+							.setParentUuid(
 								ValueManager.validateNull(
 									tab.getUUID()
 								)
 							)
-							.setContainerName(
+							.setParentName(
 								ValueManager.validateNull(
 									tab.getName()
 								)

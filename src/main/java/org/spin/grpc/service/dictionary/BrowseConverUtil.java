@@ -360,15 +360,15 @@ public class BrowseConverUtil {
 			})
 			.forEach(currentBrowseField -> {
 				DependentField.Builder builder = DependentField.newBuilder()
-					.setContainerId(
+					.setParentId(
 						browse.getAD_Browse_ID()
 					)
-					.setContainerUuid(
+					.setParentUuid(
 						ValueManager.validateNull(
 							browse.getUUID()
 						)
 					)
-					.setContainerName(
+					.setParentName(
 						ValueManager.validateNull(
 							browse.getName()
 						)

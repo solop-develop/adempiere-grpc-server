@@ -525,15 +525,15 @@ public class DictionaryConvertUtil {
 			})
 			.forEach(currentColumn -> {
 				DependentField.Builder builder = DependentField.newBuilder()
-					.setContainerId(
+					.setParentId(
 						table.getAD_Table_ID()
 					)
-					.setContainerUuid(
+					.setParentUuid(
 						ValueManager.validateNull(
 							table.getUUID()
 						)
 					)
-					.setContainerName(
+					.setParentName(
 						table.getTableName()
 					)
 					.setId(

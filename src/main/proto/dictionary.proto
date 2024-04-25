@@ -238,9 +238,9 @@ message Field {
 }
 
 message DependentField {
-	int32 container_id = 1;
-	string container_uuid = 2;
-	string container_name = 3;
+	int32 parent_id = 1;
+	string parent_uuid = 2;
+	string parent_name = 3;
 	int32 id = 4;
 	string uuid = 5;
 	string column_name = 6;
