@@ -159,6 +159,21 @@ protobuf {
 		}
 	}
 }
+// Copy proto descriptor another folder
+allprojects {
+	task copyDescriptor(type: Copy) {
+		from "${projectDir}/build/descriptors/${descriptorFile}"
+		into "${projectDir}/resources/"
+		// into "${projectDir}/docker-compose/envoy/definitions/"
+		// rename { "${descriptorFile}" }
+	}
+
+	tasks.matching {
+		it.name.startsWith('compileJava')
+	}.each { task ->
+		task.finalizedBy copyDescriptor
+	}
+}
 
 // Inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code.
 sourceSets {
@@ -199,22 +214,6 @@ jar {
 		attributes(
 			'Main-Class': javaMainClass
 		)
-	}
-}
-
-// Copy proto descriptor another folder
-allprojects {
-	task copyDescriptor(type: Copy) {
-		from "${projectDir}/build/descriptors/${descriptorFile}"
-		into "${projectDir}/resources/"
-		// into "${projectDir}/docker-compose/envoy/definitions/"
-		// rename { "${descriptorFile}" }
-	}
-
-	tasks.matching {
-		it.name.startsWith('compileJava')
-	}.each { task ->
-		task.finalizedBy copyDescriptor
 	}
 }
 
