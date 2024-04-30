@@ -1,8 +1,10 @@
 package org.spin.grpc.service.field.invoice;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -36,6 +38,7 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class InvoiceInfoLogic {
@@ -199,7 +202,7 @@ public class InvoiceInfoLogic {
 		);
 
 		//
-		final String sql = "SELECT "
+		String sql = "SELECT "
 			+ "i.C_Invoice_ID, i.UUID, "
 			+ "(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=i.C_BPartner_ID) AS BusinessPartner, "
 			+ "i.DateInvoiced, "
@@ -215,7 +218,100 @@ public class InvoiceInfoLogic {
 			+ "i.POReference, "
 			+ "i.DocStatus "
 			+ "FROM C_Invoice AS i "
+			+ "WHERE 1=1 "
 		;
+
+		List<Object> filtersList = new ArrayList<>(); // includes on filters criteria
+		// Document No
+		if (!Util.isEmpty(request.getDocumentNo(), true)) {
+			sql += "AND UPPER(i.DocumentNo) LIKE '%' || UPPER(?) || '%' ";
+			filtersList.add(
+				request.getDocumentNo()
+			);
+		}
+		// Business Partner
+		if (request.getBusinessPartnerId() > 0) {
+			sql += "AND i.C_BPartner_ID = ? ";
+			filtersList.add(
+				request.getBusinessPartnerId()
+			);
+		}
+		// Is Sales Transaction
+		if (!Util.isEmpty(request.getIsSalesTransaction(), true)) {
+			sql += "AND i.IsSOTrx = ? ";
+			filtersList.add(
+				BooleanManager.getBooleanToString(
+					request.getIsSalesTransaction()
+				)
+			);
+		}
+		// Is Paid
+		if (!Util.isEmpty(request.getIsPaid(), true)) {
+			sql += "AND i.IsPaid = ? ";
+			filtersList.add(
+				BooleanManager.getBooleanToString(
+					request.getIsPaid()
+				)
+			);
+		}
+		// Description
+		if (!Util.isEmpty(request.getDescription(), true)) {
+			sql += "AND UPPER(i.Description) LIKE '%' || UPPER(?) || '%' ";
+			filtersList.add(
+				request.getDescription()
+			);
+		}
+		// Date Invoiced
+		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+			request.getInvoiceDateFrom()
+		);
+		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+			request.getInvoiceDateTo()
+		);
+		if (dateFrom != null || dateTo != null) {
+			sql += " AND ";
+			if (dateFrom != null && dateTo != null) {
+				sql += "TRUNC(i.DateInvoiced, 'DD') BETWEEN ? AND ? ";
+				filtersList.add(dateFrom);
+				filtersList.add(dateTo);
+			}
+			else if (dateFrom != null) {
+				sql += "TRUNC(i.DateInvoiced, 'DD') >= ? ";
+				filtersList.add(dateFrom);
+			}
+			else {
+				// DateTo != null
+				sql += "TRUNC(i.DateInvoiced, 'DD') <= ? ";
+				filtersList.add(dateTo);
+			}
+		}
+		// Order
+		if (request.getOrderId() > 0) {
+			sql += "AND i.C_Order_ID = ? ";
+			filtersList.add(
+				request.getOrderId()
+			);
+		}
+		// Grand Total From
+		BigDecimal grandTotalFrom = NumberManager.getBigDecimalFromString(
+			request.getGrandTotalFrom()
+		);
+		if (grandTotalFrom != null) {
+			sql += "AND i.GrandTotal >= ? ";
+			filtersList.add(
+				grandTotalFrom
+			);
+		}
+		// Grand Total To
+		BigDecimal grandTotalTo = NumberManager.getBigDecimalFromString(
+			request.getGrandTotalTo()
+		);
+		if (grandTotalTo != null) {
+			sql += "AND i.GrandTotal <= ? ";
+			filtersList.add(
+				grandTotalTo
+			);
+		}
 
 		// add where with access restriction
 		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
@@ -239,8 +335,7 @@ public class InvoiceInfoLogic {
 		}
 
 		//	For dynamic condition
-		List<Object> filtersList = new ArrayList<>(); // includes on filters criteria
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, filtersList);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, "i", filtersList);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
 			whereClause.append(" AND ")
