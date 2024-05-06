@@ -91,17 +91,17 @@ dependencies {
 	implementation "org.codehaus.groovy:groovy-all:2.4.15"
 
 	// ADempiere Projects with additional features
-	//	ADempiere gRPC Utils Base
+	//	ADempiere gRPC Utils Base (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-grpc-utils)
 	implementation "${baseGroupId}:adempiere-grpc-utils:1.3.7"
-	// Dashboard Improvements
+	// Dashboard Improvements (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-dashboard-improvements)
 	implementation "${baseGroupId}:adempiere-dashboard-improvements:1.0.8"
-	// Point Of Sales Improvements
+	// Point Of Sales Improvements (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-pos-improvements)
 	implementation "${baseGroupId}:adempiere-pos-improvements:1.0.2"
-	// Business Processors (To Task's and Schedulers)
+	// Business Processors (To Task's and Schedulers) (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-business-processors)
 	implementation "${baseGroupId}:adempiere-business-processors:1.1.0"
-	// Engine as Queue
-	implementation "${baseGroupId}:adempiere-kafka-connector:1.2.0"
-	// Third part access using JWT
+	// Engine as Queue (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-kafka-connector)
+	implementation "${baseGroupId}:adempiere-kafka-connector:1.2.1"
+	// Third part access using JWT (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-jwt-token)
 	implementation "${baseGroupId}:adempiere-jwt-token:1.0.2"
 	// https://mvnrepository.com/artifact/com.nimbusds/oauth2-oidc-sdk
 	implementation 'com.nimbusds:oauth2-oidc-sdk:9.35'
@@ -113,8 +113,9 @@ dependencies {
 	implementation 'net.minidev:json-smart:2.4.8'
 	// https://mvnrepository.com/artifact/net.minidev/accessors-smart
 	implementation 'net.minidev:accessors-smart:2.4.8'
+
 	//	Temporary projects
-	//	Keycloak and Okta connector (Open-ID based)
+	//	Keycloak and Okta connector (Open-ID based) (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-open-id-connector)
 	implementation "${baseGroupId}:adempiere-open-id-connector:1.0.0"
 }
 
