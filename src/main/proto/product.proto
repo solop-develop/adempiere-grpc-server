@@ -266,13 +266,11 @@ message ProductInfo {
 	string document_note = 26;
 	bool is_active = 27;
 }
-
 message ListProductsInfoResponse {
 	int64 record_count = 1;
 	repeated ProductInfo records = 2;
 	string next_page_token = 3;
 }
-
 message ListProductsInfoRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -312,20 +310,18 @@ message ListProductsInfoRequest {
 // Warehouse Stock
 message WarehouseStock {
 	int32 id = 1;
-	int32 uuid = 2;
+	string uuid = 2;
 	string name = 3;
 	string available_quantity = 4;
 	string on_hand_quantity = 5;
 	string reserved_quantity = 6;
 	string ordered_quantity = 7;
 }
-
 message ListWarehouseStocksResponse {
 	int64 record_count = 1;
 	repeated WarehouseStock records = 2;
 	string next_page_token = 3;
 }
-
 message ListWarehouseStocksRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -355,13 +351,11 @@ message SubstituteProduct {
 	string reserved_quantity = 9;
 	string standard_price = 10;
 }
-
 message ListSubstituteProductsResponse {
 	int64 record_count = 1;
-	repeated RelatedProduct records = 2;
+	repeated SubstituteProduct records = 2;
 	string next_page_token = 3;
 }
-
 message ListSubstituteProductsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -373,6 +367,7 @@ message ListSubstituteProductsRequest {
 	string context_attributes = 8;
 	// custom filters
 	int32 product_id = 9;
+	int32 price_list_version_id = 10;
 }
 
 
@@ -391,13 +386,11 @@ message RelatedProduct {
 	string reserved_quantity = 9;
 	string standard_price = 10;
 }
-
 message ListRelatedProductsResponse {
 	int64 record_count = 1;
 	repeated RelatedProduct records = 2;
 	string next_page_token = 3;
 }
-
 message ListRelatedProductsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -409,6 +402,7 @@ message ListRelatedProductsRequest {
 	string context_attributes = 8;
 	// custom filters
 	int32 product_id = 9;
+	int32 price_list_version_id = 10;
 }
 
 
@@ -416,25 +410,24 @@ message ListRelatedProductsRequest {
 // Available To Promise
 message AvailableToPromise {
 	int32 id = 1;
-	int32 uuid = 2;
+	string uuid = 2;
 	string name = 3;
 	string locator = 4;
-	google.protobuf.Timestamp date = 5;
-	string available_quantity = 6;
+	string document_no = 5;
+	google.protobuf.Timestamp date = 6;
 	string on_hand_quantity = 7;
-	string expected_change_quantity = 8;
-	string business_partner = 9;
-	string reserved_quantity = 10;
-	string attribute_set_instance = 11;
-	string document_no = 12;
+	string reserved_quantity = 8;
+	string available_quantity = 9;
+	string ordered_quantity = 10;
+	string available_to_promise_quantity = 11;
+	string business_partner = 12;
+	string attribute_set_instance = 13;
 }
-
 message ListAvailableToPromisesResponse {
 	int64 record_count = 1;
 	repeated AvailableToPromise records = 2;
 	string next_page_token = 3;
 }
-
 message ListAvailableToPromisesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -446,6 +439,8 @@ message ListAvailableToPromisesRequest {
 	string context_attributes = 8;
 	// custom filters
 	int32 product_id = 9;
+	int32 warehouse_id = 10;
+	bool is_show_detail = 11;
 }
 
 
@@ -453,19 +448,26 @@ message ListAvailableToPromisesRequest {
 // Available To Promise
 message VendorPurchase {
 	int32 id = 1;
-	int32 uuid = 2;
+	string uuid = 2;
 	string name = 3;
 	bool is_current_vendor = 4;
 	string unit_of_measure = 5;
-	google.protobuf.Timestamp date = 11;
+	string currency = 6;
+	// price
+	string list_price = 7;
+	string purchase_price = 8;
+	string last_purchase_price = 9;
+	//
+	string vendor_product_key = 10;
+	string min_order_quantity = 11;
+	string promised_delivery_time = 12;
+	string actual_delivery_time = 13;
 }
-
 message ListVendorPurchasesResponse {
 	int64 record_count = 1;
 	repeated VendorPurchase records = 2;
 	string next_page_token = 3;
 }
-
 message ListVendorPurchasesRequest {
 	string filters = 1;
 	string sort_by = 2;

@@ -14,13 +14,31 @@
  ************************************************************************************/
 package org.spin.grpc.service.field.product;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
+import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_M_AttributeSet;
 import org.adempiere.core.domains.models.I_M_Product;
+import org.adempiere.core.domains.models.I_M_ProductPrice;
+import org.adempiere.core.domains.models.I_M_Storage;
+import org.adempiere.core.domains.models.I_M_Substitute;
+import org.adempiere.core.domains.models.I_M_Warehouse;
+import org.compiere.model.MBPartner;
+import org.compiere.model.MProductPO;
+import org.compiere.model.MUOM;
+import org.compiere.util.Env;
+import org.spin.backend.grpc.field.product.AvailableToPromise;
 import org.spin.backend.grpc.field.product.ProductInfo;
+import org.spin.backend.grpc.field.product.RelatedProduct;
+import org.spin.backend.grpc.field.product.SubstituteProduct;
+import org.spin.backend.grpc.field.product.VendorPurchase;
+import org.spin.backend.grpc.field.product.WarehouseStock;
+import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -208,4 +226,381 @@ public class ProductInfoConvert {
 		}
 		return builder;
 	}
+
+
+	public static WarehouseStock.Builder convertWarehouseStock(ResultSet rs) throws SQLException {
+		WarehouseStock.Builder builder = WarehouseStock.newBuilder();
+		if (rs == null) {
+			return builder;
+		}
+		int id = rs.getInt(
+			I_M_Warehouse.COLUMNNAME_M_Warehouse_ID
+		);
+
+		builder.setId(id)
+			.setUuid(
+				ValueManager.validateNull(
+					RecordUtil.getUuidFromId(
+						I_M_Warehouse.Table_Name,
+						id
+					)
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					rs.getString("WarehouseName")
+				)
+			)
+			.setAvailableQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						"QtyAvailable"
+					)
+				)
+			)
+			.setOnHandQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_Storage.COLUMNNAME_QtyOnHand
+					)
+				)
+			)
+			.setReservedQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_Storage.COLUMNNAME_QtyReserved
+					)
+				)
+			)
+			.setOrderedQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_Storage.COLUMNNAME_QtyOrdered
+					)
+				)
+			)
+		;
+
+		return builder;
+	}
+
+
+	public static SubstituteProduct.Builder convertSubstituteProduct(ResultSet rs) throws SQLException {
+		SubstituteProduct.Builder builder = SubstituteProduct.newBuilder();
+		if (rs == null) {
+			return builder;
+		}
+
+		builder.setId(
+				rs.getInt(
+					I_M_Substitute.COLUMNNAME_Substitute_ID
+				)
+			)
+			.setValue(
+				ValueManager.validateNull(
+					rs.getString(
+						I_M_Product.COLUMNNAME_Value
+					)
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					rs.getString(
+						I_M_Substitute.COLUMNNAME_Name
+					)
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					rs.getString(
+						I_M_Substitute.COLUMNNAME_Description
+					)
+				)
+			)
+			.setWarehouse(
+				ValueManager.validateNull(
+					rs.getString("Warehouse")
+				)
+			)
+			.setAvailableQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						"QtyAvailable"
+					)
+				)
+			)
+			.setOnHandQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_Storage.COLUMNNAME_QtyOnHand
+					)
+				)
+			)
+			.setReservedQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_Storage.COLUMNNAME_QtyReserved
+					)
+				)
+			)
+			.setStandardPrice(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_ProductPrice.COLUMNNAME_PriceStd
+					)
+				)
+			)
+		;
+
+		return builder;
+	}
+
+
+	public static RelatedProduct.Builder convertRelatedProduct(ResultSet rs) throws SQLException {
+		RelatedProduct.Builder builder = RelatedProduct.newBuilder();
+		if (rs == null) {
+			return builder;
+		}
+
+		builder.setId(
+				rs.getInt(
+					I_M_Substitute.COLUMNNAME_Substitute_ID
+				)
+			)
+			.setValue(
+				ValueManager.validateNull(
+					rs.getString(
+						I_M_Product.COLUMNNAME_Value
+					)
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					rs.getString(
+						I_M_Substitute.COLUMNNAME_Name
+					)
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					rs.getString(
+						I_M_Substitute.COLUMNNAME_Description
+					)
+				)
+			)
+			.setWarehouse(
+				ValueManager.validateNull(
+					rs.getString("Warehouse")
+				)
+			)
+			.setAvailableQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						"QtyAvailable"
+					)
+				)
+			)
+			.setOnHandQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_Storage.COLUMNNAME_QtyOnHand
+					)
+				)
+			)
+			.setReservedQuantity(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_Storage.COLUMNNAME_QtyReserved
+					)
+				)
+			)
+			.setStandardPrice(
+				NumberManager.getBigDecimalToString(
+					rs.getBigDecimal(
+						I_M_ProductPrice.COLUMNNAME_PriceStd
+					)
+				)
+			)
+		;
+
+		return builder;
+	}
+
+
+	public static AvailableToPromise.Builder convertAvaliableToPromise(ResultSet rs) throws SQLException {
+		AvailableToPromise.Builder builder = AvailableToPromise.newBuilder();
+		if (rs == null) {
+			return builder;
+		}
+
+		// AvailQty
+		BigDecimal onHandQuantity = Optional.ofNullable(
+			rs.getBigDecimal(6)
+		).orElse(BigDecimal.ZERO);
+
+		// // DeltaQty
+		// BigDecimal deliveredQuantity = Optional.ofNullable(
+		// 	rs.getBigDecimal(7)
+		// ).orElse(BigDecimal.ZERO);
+
+		// QtyOrdered
+		BigDecimal orderedQuantity = Optional.ofNullable(
+			rs.getBigDecimal(8)
+		).orElse(BigDecimal.ZERO);
+
+		// QtyReserved
+		BigDecimal reservedQuantity = Optional.ofNullable(
+			rs.getBigDecimal(9)
+		).orElse(BigDecimal.ZERO);
+
+		BigDecimal availableQuantiy = onHandQuantity.subtract(reservedQuantity);
+
+		BigDecimal expectedQuantity = onHandQuantity.add(orderedQuantity)
+			.subtract(reservedQuantity)
+		;
+
+		builder.setId(
+				rs.getInt(
+					I_M_Product.COLUMNNAME_M_Product_ID
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					rs.getString("Warehouse")
+				)
+			)
+			.setDocumentNo(
+				ValueManager.validateNull(
+					rs.getString(
+						I_C_Order.COLUMNNAME_DocumentNo
+					)
+				)
+			)
+			.setLocator(
+				ValueManager.validateNull(
+					rs.getString("Locator")
+				)
+			)
+			.setDate(
+				TimeManager.convertDateToValue(
+					rs.getTimestamp(5)
+				)
+			)
+			.setAvailableQuantity(
+				NumberManager.getBigDecimalToString(
+					availableQuantiy
+				)
+			)
+			.setOnHandQuantity(
+				NumberManager.getBigDecimalToString(
+					onHandQuantity
+				)
+			)
+			.setReservedQuantity(
+				NumberManager.getBigDecimalToString(
+					reservedQuantity
+				)
+			)
+			.setOrderedQuantity(
+				NumberManager.getBigDecimalToString(
+					orderedQuantity
+				)
+			)
+			.setAvailableToPromiseQuantity(
+				NumberManager.getBigDecimalToString(
+					expectedQuantity
+				)
+			)
+			.setBusinessPartner(
+				ValueManager.validateNull(
+					rs.getString("BP_Name")
+				)
+			)
+			.setAttributeSetInstance(
+				NumberManager.getIntToString(
+					rs.getInt("ASI")
+				)
+			)
+		;
+
+		return builder;
+	}
+
+
+	public static VendorPurchase.Builder convertVendorPurchase(MProductPO productVendor) {
+		VendorPurchase.Builder builder = VendorPurchase.newBuilder();
+		if (productVendor == null) {
+			return builder;
+		}
+
+		MBPartner businesPartner = MBPartner.get(Env.getCtx(), productVendor.getC_BPartner_ID());
+		if (businesPartner != null && businesPartner.getC_BPartner_ID() > 0) {
+			builder.setId(
+					businesPartner.getC_BPartner_ID()
+				)
+				.setUuid(
+					ValueManager.validateNull(
+						businesPartner.getUUID()
+					)
+				)
+				.setName(
+					ValueManager.validateNull(
+						businesPartner.getName()
+					)
+				)
+			;
+		}
+
+		MUOM unitOfMeasure = MUOM.get(Env.getCtx(), productVendor.getC_UOM_ID());
+		if (unitOfMeasure != null && unitOfMeasure.getC_UOM_ID() > 0) {
+			builder.setUnitOfMeasure(
+				ValueManager.validateNull(
+					unitOfMeasure.getName()
+				)
+			);
+		}
+
+		builder.setIsCurrentVendor(
+				productVendor.isCurrentVendor()
+			)
+			.setListPrice(
+				NumberManager.getBigDecimalToString(
+					productVendor.getPriceList()
+				)
+			)
+			.setPurchasePrice(
+				NumberManager.getBigDecimalToString(
+					productVendor.getPricePO()
+				)
+			)
+			.setLastPurchasePrice(
+				NumberManager.getBigDecimalToString(
+					productVendor.getPriceLastPO()
+				)
+			)
+			.setVendorProductKey(
+				ValueManager.validateNull(
+					productVendor.getVendorProductNo()
+				)
+			)
+			.setMinOrderQuantity(
+				NumberManager.getBigDecimalToString(
+					productVendor.getOrder_Min()
+				)
+			)
+			.setPromisedDeliveryTime(
+				NumberManager.getIntToString(
+					productVendor.getDeliveryTime_Promised()
+				)
+			)
+			.setActualDeliveryTime(
+				NumberManager.getIntToString(
+					productVendor.getDeliveryTime_Actual()
+				)
+			)
+		;
+
+		return builder;
+	}
+
 }

@@ -19,6 +19,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
@@ -38,6 +39,7 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProduct;
+import org.compiere.model.MProductPO;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -45,6 +47,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.field.product.AvailableToPromise;
 import org.spin.backend.grpc.field.product.GetLastPriceListVersionRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetInstancesRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetsRequest;
@@ -68,6 +71,10 @@ import org.spin.backend.grpc.field.product.ListWarehouseStocksRequest;
 import org.spin.backend.grpc.field.product.ListWarehouseStocksResponse;
 import org.spin.backend.grpc.field.product.ListWarehousesRequest;
 import org.spin.backend.grpc.field.product.ProductInfo;
+import org.spin.backend.grpc.field.product.RelatedProduct;
+import org.spin.backend.grpc.field.product.SubstituteProduct;
+import org.spin.backend.grpc.field.product.VendorPurchase;
+import org.spin.backend.grpc.field.product.WarehouseStock;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
@@ -529,7 +536,7 @@ public class ProductInfoLogic {
 			// }
 		}
 		// Is Stocked
-		if (!Util.isEmpty(request.getIsStocked())) {
+		if (!Util.isEmpty(request.getIsStocked(), true) && BooleanManager.isValidDataBaseBoolean(request.getIsStocked())) {
 			sqlWhere += " AND p.IsStocked = ? ";
 			boolean isStocked = BooleanManager.getBooleanFromString(
 				request.getIsStocked()
@@ -690,7 +697,43 @@ public class ProductInfoLogic {
 			request.getProductId()
 		);
 
-		ListWarehouseStocksResponse.Builder builderList = ListWarehouseStocksResponse.newBuilder();
+		final String sql = "SELECT M_Warehouse_ID, WarehouseName, "
+			+ "SUM(QtyAvailable) AS QtyAvailable, SUM(QtyOnHand) AS QtyOnHand, "
+			+ "SUM(QtyReserved) AS QtyReserved, SUM(QtyOrdered) AS QtyOrdered "
+			+ "FROM M_PRODUCT_STOCK_V "
+			+ "WHERE M_Product_ID = ? "
+			+ "AND (QtyOnHand <> 0 OR QtyAvailable <> 0 OR QtyReserved <> 0 OR QtyOrdered <> 0) "
+			+ "GROUP BY M_Warehouse_ID, WarehouseName "
+			+ "ORDER BY SUM(QtyOnHand) DESC, WarehouseName "
+		;
+
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(
+			request.getProductId()
+		);
+
+		int count = CountUtil.countRecords(sql, "M_PRODUCT_STOCK_V", filtersList);
+
+
+		ListWarehouseStocksResponse.Builder builderList = ListWarehouseStocksResponse.newBuilder()
+			.setRecordCount(count)
+		;
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				WarehouseStock.Builder builder = ProductInfoConvert.convertWarehouseStock(rs);
+				builderList.addRecords(builder);
+			}
+		} catch (SQLException e) {
+			throw new AdempiereException(e);
+		} finally {
+			DB.close(rs, pstmt);
+		}
 
 		return builderList;
 	}
@@ -698,11 +741,42 @@ public class ProductInfoLogic {
 
 
 	public static ListSubstituteProductsResponse.Builder listSubstituteProducts(ListSubstituteProductsRequest request) {
-		validateAndGetProduct(
+		ListSubstituteProductsResponse.Builder builderList = ListSubstituteProductsResponse.newBuilder();
+
+		if (request.getProductId() <= 0 || request.getPriceListVersionId() <= 0) {
+			return builderList;
+		}
+
+		final String sql = "SELECT Substitute_ID, OrgName AS Warehouse, "
+			+ "Value, Name, Description, "
+			+ "QtyAvailable, QtyOnHand, QtyReserved, PriceStd "
+			+ "FROM M_PRODUCT_SUBSTITUTERELATED_V "
+			+ "WHERE M_Product_ID = ? AND M_PriceList_Version_ID = ? AND RowType = 'S' "
+		;
+
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(
 			request.getProductId()
 		);
 
-		ListSubstituteProductsResponse.Builder builderList = ListSubstituteProductsResponse.newBuilder();
+		int count = CountUtil.countRecords(sql, "M_PRODUCT_SUBSTITUTERELATED_V", filtersList);
+		builderList.setRecordCount(count);
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				SubstituteProduct.Builder builder = ProductInfoConvert.convertSubstituteProduct(rs);
+				builderList.addRecords(builder);
+			}
+		} catch (SQLException e) {
+			throw new AdempiereException(e);
+		} finally {
+			DB.close(rs, pstmt);
+		}
 
 		return builderList;
 	}
@@ -710,11 +784,42 @@ public class ProductInfoLogic {
 
 
 	public static ListRelatedProductsResponse.Builder listRelatedProducts(ListRelatedProductsRequest request) {
-		validateAndGetProduct(
+		ListRelatedProductsResponse.Builder builderList = ListRelatedProductsResponse.newBuilder();
+
+		if (request.getProductId() <= 0 || request.getPriceListVersionId() <= 0) {
+			return builderList;
+		}
+
+		final String sql = "SELECT Substitute_ID, OrgName AS Warehouse, "
+			+ "Value, Name, Description, "
+			+ "QtyAvailable, QtyOnHand, QtyReserved, PriceStd "
+			+ "FROM M_PRODUCT_SUBSTITUTERELATED_V "
+			+ "WHERE M_Product_ID = ? AND M_PriceList_Version_ID = ? AND RowType = 'R' "
+		;
+
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(
 			request.getProductId()
 		);
 
-		ListRelatedProductsResponse.Builder builderList = ListRelatedProductsResponse.newBuilder();
+		int count = CountUtil.countRecords(sql, "M_PRODUCT_SUBSTITUTERELATED_V", filtersList);
+		builderList.setRecordCount(count);
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				RelatedProduct.Builder builder = ProductInfoConvert.convertRelatedProduct(rs);
+				builderList.addRecords(builder);
+			}
+		} catch (SQLException e) {
+			throw new AdempiereException(e);
+		} finally {
+			DB.close(rs, pstmt);
+		}
 
 		return builderList;
 	}
@@ -726,7 +831,181 @@ public class ProductInfoLogic {
 			request.getProductId()
 		);
 
+		boolean isShowDetail = request.getIsShowDetail();
+		int productId = request.getProductId();
+		int warehouseId = request.getWarehouseId();
+
+
+		//	Create the SELECT ..UNION. clause
+		//  This is done in-line rather than using prepareTable() so we can add a running sum to the data.
+		String sql;
+		if (!isShowDetail)
+			sql = "(SELECT s.M_Product_ID, w.Name AS warehouse, l.value AS locator, 0 AS ID, now() AS Date,"
+				+ " sum(s.QtyOnHand) AS AvailQty, 0 AS DeltaQty, 0 AS QtyOrdered, 0 AS QtyReserved,"
+				+ " null AS sumPASI," // " s.PASI,"
+				+ " 0 AS ASI,"
+				+ " null AS BP_Name, null AS DocumentNo, 10 AS SeqNo";
+		else
+			sql = "(SELECT s.M_Product_ID, w.Name AS warehouse, l.value AS locator, s.M_AttributeSetInstance_ID AS ID, now() AS Date,"
+				+ " s.QtyOnHand AS AvailQty, 0 AS DeltaQty, 0 AS QtyOrdered, 0 AS QtyReserved,"
+				+ " CASE WHEN s.PASI  = '' THEN '{' || COALESCE(s.M_AttributeSetInstance_ID,0) || '}' ELSE s.PASI END AS sumPASI,"
+				+ " COALESCE(M_AttributeSetInstance_ID,0) AS ASI,"
+				+ " null AS BP_Name, null AS DocumentNo,  10 AS SeqNo";
+		sql += " FROM (SELECT M_Product_ID, M_Locator_ID, QtyOnHand, QtyReserved, QtyOrdered,"
+			+ 		 " COALESCE(productAttribute(M_AttributeSetInstance_ID)::varchar, '') AS PASI,"
+			+		 " COALESCE(M_AttributeSetInstance_ID,0) AS M_AttributeSetInstance_ID FROM M_Storage) s "
+			+ " INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID)"
+			+ " INNER JOIN M_Warehouse w ON (l.M_Warehouse_ID=w.M_Warehouse_ID)"
+			+ " AND s.M_Product_ID=" + productId;
+		if (warehouseId > 0)
+			sql += " AND l.M_Warehouse_ID=" + warehouseId;
+		//if (m_M_AttributeSetInstance_ID > 0)
+		//	sql += " AND s.M_AttributeSetInstance_ID=?";
+		if (!isShowDetail) {
+			//sql += " AND (s.QtyOnHand<>0)";
+			sql += " GROUP BY s.M_Product_ID, w.Name, l.value, s.M_Locator_ID, sumPASI, ASI, BP_Name, DocumentNo, SeqNo ";
+		}
+		sql += " UNION ALL ";
+
+		//	Orders
+		sql += "SELECT ol.M_Product_ID, w.Name AS warehouse, null AS locator, ol.M_AttributeSetInstance_ID AS ID, o.DatePromised AS date,"
+			+ " 0 AS AvailQty,"
+			+ " ol.QtyDelivered  AS DeltaQty,"
+			+ " CASE WHEN o.IsSOTrx = 'N' THEN ol.QtyReserved ELSE 0 END AS QtyOrdered,"
+			+ " CASE WHEN o.IsSOTrx = 'Y' THEN ol.QtyReserved ELSE 0 END AS QtyReserved,"
+			+ " productAttribute(ol.M_AttributeSetInstance_ID) AS sumPASI,"
+			+ " ol.M_AttributeSetInstance_ID AS ASI,"
+			+ " bp.Name AS BP_Name, dt.PrintName || ' ' || o.DocumentNo AS DocumentNo, 20 AS SeqNo "
+			+ "FROM C_Order o"
+			+ " INNER JOIN C_OrderLine ol ON (o.C_Order_ID=ol.C_Order_ID)"
+			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
+			+ " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)"
+			+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID=bp.C_BPartner_ID) "
+			+ "WHERE ol.QtyReserved<>0 AND o.DocStatus in ('IP','CO')"
+			+ " AND ol.M_Product_ID=" + productId;
+		if (warehouseId > 0) {
+			sql += " AND w.M_Warehouse_ID=" + warehouseId;
+		}
+		//if (m_M_AttributeSetInstance_ID > 0)
+		//	sql += " AND ol.M_AttributeSetInstance_ID=?";
+		//sql += " ORDER BY M_Product_ID, SeqNo, ID, date, locator";
+
+		sql += " UNION ALL ";
+		//	Manufacturing Orders Ordered
+		sql += "SELECT o.M_Product_ID, w.Name AS warehouse, null AS locator, o.M_AttributeSetInstance_ID AS ID, o.DatePromised AS date,"
+				+ " 0 AS AvailQty,"
+				+ " o.QtyDelivered AS DeltaQty,"
+				+ " o.QtyOrdered AS QtyOrdered,"
+				+ " 0 AS QtyReserved,"
+				+ " productAttribute(o.M_AttributeSetInstance_ID) AS sumPASI,"
+				+ " o.M_AttributeSetInstance_ID AS ASI,"
+				+ " null AS BP_Name, dt.PrintName || ' ' || o.DocumentNo As DocumentNo, 30 AS SeqNo "
+				+ "FROM PP_Order o"
+				+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
+				+ " INNER JOIN M_Warehouse w ON (o.M_Warehouse_ID=w.M_Warehouse_ID)"
+				+ "WHERE o.DocStatus in ('IP','CO')"
+				+ " AND o.M_Product_ID=" + productId;
+		if (warehouseId > 0) {
+			sql += " AND w.M_Warehouse_ID=" + warehouseId;
+		}
+
+		sql += " UNION ALL ";
+		//	Manufacturing Order Reserved
+		sql += "SELECT ol.M_Product_ID, w.Name AS warehouse, null AS locator, ol.M_AttributeSetInstance_ID AS ID, o.DatePromised AS date,"
+				+ " 0 AS AvailQty,"
+				+ " ol.QtyDelivered  AS DeltaQty,"
+				+ " 0 AS QtyOrdered,"
+				+ " ol.QtyReserved AS QtyReserved,"
+				+ " productAttribute(ol.M_AttributeSetInstance_ID) AS sumPASI,"
+				+ " ol.M_AttributeSetInstance_ID AS ASI,"
+				+ " null AS BP_Name, dt.PrintName || ' ' || o.DocumentNo As DocumentNo, 40 AS SeqNo "
+				+ "FROM PP_Order o"
+				+ " INNER JOIN PP_Order_BOMLine ol ON (o.PP_Order_ID=ol.PP_Order_ID)"
+				+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
+				+ " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)"
+				+ "WHERE ol.QtyReserved<>0 AND o.DocStatus in ('IP','CO')"
+				+ " AND ol.M_Product_ID=" + productId;
+		if (warehouseId > 0) {
+			sql += " AND w.M_Warehouse_ID=" + warehouseId;
+		}
+
+		sql += " UNION ALL ";
+		
+		//	Distribution Orders Reserved
+		sql += "SELECT ol.M_Product_ID, wf.Name AS warehouse, lf.value AS locator, ol.M_AttributeSetInstance_ID AS ID, ol.DatePromised AS date,"
+			+ " 0 AS AvailQty,"
+			+ " ol.QtyInTransit AS DeltaQty,"
+			+ " 0 AS QtyOrdered,"
+			+ " ol.QtyReserved AS QtyReserved,"
+			+ " productAttribute(ol.M_AttributeSetInstance_ID) AS sumPASI,"
+			+ " ol.M_AttributeSetInstance_ID AS ASI,"
+			+ " bp.Name AS BP_Name, dt.PrintName || ' ' || o.DocumentNo As DocumentNo, 50 AS SeqNo "
+			+ "FROM DD_Order o"
+			+ " INNER JOIN DD_OrderLine ol ON (o.DD_Order_ID=ol.DD_Order_ID)"
+			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
+			+ " INNER JOIN M_Locator lf on (lf.M_Locator_ID = ol.M_Locator_ID)"
+			+ " INNER JOIN M_Warehouse wf ON (lf.M_Warehouse_ID=wf.M_Warehouse_ID)"
+			+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID = bp.C_BPartner_ID) "
+			+ "WHERE ol.QtyReserved<>0 AND o.DocStatus in ('IP','CO') AND o.IsDelivered = 'N'"
+			+ " AND ol.M_Product_ID=" + productId;
+		if (warehouseId > 0) {
+			sql += " AND wf.M_Warehouse_ID=" + warehouseId;
+		}
+		//if (m_M_AttributeSetInstance_ID > 0)
+		//	sql += " AND ol.M_AttributeSetInstance_ID=?";
+
+		sql += " UNION ALL ";
+		
+		//	Distribution Orders Ordered
+		sql += "SELECT ol.M_Product_ID, w.Name AS warehouse, l.value AS locator, ol.M_AttributeSetInstanceTo_ID AS ID, ol.DatePromised AS date,"
+			+ " 0 AS AvailQty,"
+			+ " ol.QtyDelivered AS DeltaQty,"
+			+ " ol.QtyOrdered AS QtyOrdered,"
+			+ " 0 AS QtyReserved,"
+			+ " productAttribute(ol.M_AttributeSetInstanceTo_ID) AS sumPASI,"
+			+ " ol.M_AttributeSetInstanceTo_ID AS ASI,"
+			+ " bp.Name AS BP_Name, dt.PrintName || ' ' || o.DocumentNo As DocumentNo, 60 AS SeqNo "
+			+ "FROM DD_Order o"
+			+ " INNER JOIN DD_OrderLine ol ON (o.DD_Order_ID=ol.DD_Order_ID)"
+			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
+			+ " INNER JOIN M_Locator l ON (l.M_Locator_ID = ol.M_LocatorTo_ID)"
+			+ " INNER JOIN M_Warehouse w ON (l.M_Warehouse_ID=w.M_Warehouse_ID)"
+			+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID = bp.C_BPartner_ID) "
+			+ "WHERE ol.QtyOrdered - ol.Qtydelivered > 0 AND o.DocStatus in ('IP','CO') AND o.IsDelivered='N'" 
+			+ " AND ol.M_Product_ID=" + productId;
+		if (warehouseId > 0) {
+			sql += " AND w.M_Warehouse_ID=" + warehouseId;
+		}
+		//if (m_M_AttributeSetInstance_ID > 0)
+		//	sql += " AND ol.M_AttributeSetInstance_ID=?";
+		sql += " ORDER BY M_Product_ID, SeqNo, ID, date, locator)";
+
+
+
+		// List<Object> filtersList = new ArrayList<>();
+		// filtersList.add(
+		// 	request.getProductId()
+		// );
+
+		// int count = CountUtil.countRecords(sql, "M_PRODUCT_STOCK_V", filtersList);
+
 		ListAvailableToPromisesResponse.Builder builderList = ListAvailableToPromisesResponse.newBuilder();
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			// ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				AvailableToPromise.Builder builder = ProductInfoConvert.convertAvaliableToPromise(rs);
+				builderList.addRecords(builder);
+			}
+		} catch (SQLException e) {
+			throw new AdempiereException(e);
+		} finally {
+			DB.close(rs, pstmt);
+		}
 
 		return builderList;
 	}
@@ -738,7 +1017,26 @@ public class ProductInfoLogic {
 			request.getProductId()
 		);
 
-		ListVendorPurchasesResponse.Builder builderList = ListVendorPurchasesResponse.newBuilder();
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(
+			request.getProductId()
+		);
+
+		List<MProductPO> productVendorsList = Arrays.asList(
+			MProductPO.getOfProduct(Env.getCtx(), request.getProductId(), null)
+		);
+		if (productVendorsList == null || productVendorsList.isEmpty()) {
+			return ListVendorPurchasesResponse.newBuilder();
+		}
+		int countRecords = productVendorsList.size();
+
+		ListVendorPurchasesResponse.Builder builderList = ListVendorPurchasesResponse.newBuilder()
+			.setRecordCount(countRecords)
+		;
+		productVendorsList.forEach(productVendor -> {
+			VendorPurchase.Builder builder = ProductInfoConvert.convertVendorPurchase(productVendor);
+			builderList.addRecords(builder);
+		});
 
 		return builderList;
 	}
