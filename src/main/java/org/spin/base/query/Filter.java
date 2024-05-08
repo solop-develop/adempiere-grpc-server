@@ -43,7 +43,7 @@ public class Filter {
 	}
 
 	public String getColumnName() {
-		Object key = this.condition.get(OPERATOR);
+		Object key = this.condition.get(NAME);
 		if (key == null) {
 			return null;
 		}
