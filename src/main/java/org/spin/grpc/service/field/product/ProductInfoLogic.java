@@ -758,6 +758,9 @@ public class ProductInfoLogic {
 		filtersList.add(
 			request.getProductId()
 		);
+		filtersList.add(
+			request.getPriceListVersionId()
+		);
 
 		int count = CountUtil.countRecords(sql, "M_PRODUCT_SUBSTITUTERELATED_V", filtersList);
 		builderList.setRecordCount(count);
@@ -800,6 +803,9 @@ public class ProductInfoLogic {
 		List<Object> filtersList = new ArrayList<>();
 		filtersList.add(
 			request.getProductId()
+		);
+		filtersList.add(
+			request.getPriceListVersionId()
 		);
 
 		int count = CountUtil.countRecords(sql, "M_PRODUCT_SUBSTITUTERELATED_V", filtersList);
