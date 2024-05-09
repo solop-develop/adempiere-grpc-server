@@ -83,7 +83,7 @@ public class LocationAddressLogic {
 		;
 
 		String sessionLanguage = Env.getAD_Language(Env.getCtx());
-		boolean isBaseLangague = Language.isBaseLanguage(sessionLanguage);
+		final boolean isBaseLangague = Language.isBaseLanguage(sessionLanguage);
 		query.getIDsAsList().forEach(countryId -> {
 			MCountry country = MCountry.get(Env.getCtx(), countryId);
 			String name = country.getName();
