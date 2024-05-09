@@ -22,6 +22,7 @@ import org.compiere.model.MRegion;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.field.location_address.Address;
 import org.spin.backend.grpc.field.location_address.Country;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class LocationAddressConvertUtil {
@@ -192,6 +193,21 @@ public class LocationAddressConvertUtil {
 			.setPostalCodeAdditional(
 				ValueManager.validateNull(
 					address.getPostal_Add()
+				)
+			)
+			.setAltitude(
+				NumberManager.getBigDecimalToString(
+					address.getAltitude()
+				)
+			)
+			.setLatitude(
+				NumberManager.getBigDecimalToString(
+					address.getLatitude()
+				)
+			)
+			.setLongitude(
+				NumberManager.getBigDecimalToString(
+					address.getLongitude()
 				)
 			)
 		;
