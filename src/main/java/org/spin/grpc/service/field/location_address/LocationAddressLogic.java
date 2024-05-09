@@ -318,11 +318,11 @@ public class LocationAddressLogic {
 			);
 			address.setLongitude(longitude);
 		}
-		if (!Util.isEmpty(request.getLatitude(), true)) {
-			BigDecimal latitude = NumberManager.getBigDecimalFromString(
-				request.getLatitude()
+		if (!Util.isEmpty(request.getAltitude(), true)) {
+			BigDecimal altitude = NumberManager.getBigDecimalFromString(
+				request.getAltitude()
 			);
-			address.setLatitude(latitude);
+			address.setAltitude(altitude);
 		}
 
 		address.saveEx();
