@@ -140,6 +140,7 @@ import org.spin.backend.grpc.user_interface.UserInterfaceGrpc.UserInterfaceImplB
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.base.interim.ContextTemporaryWorkaround;
 import org.spin.base.query.FilterManager;
 import org.spin.base.query.SortingManager;
 import org.spin.base.util.ContextManager;
@@ -148,6 +149,7 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.grpc.service.ui.CalloutLogic;
 import org.spin.grpc.service.ui.UserInterfaceLogic;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -2608,7 +2610,9 @@ public class UserInterface extends UserInterfaceImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			org.spin.backend.grpc.user_interface.Callout.Builder calloutResponse = runcallout(request);
-			responseObserver.onNext(calloutResponse.build());
+			responseObserver.onNext(
+				calloutResponse.build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -2720,7 +2724,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			Arrays.asList(gridTab.getFields())
 				.parallelStream()
 				.filter(fieldValue -> {
-					return isValidChange(fieldValue);
+					return CalloutLogic.isValidChange(fieldValue);
 				})
 				.forEach(fieldValue -> {
 					Value.Builder valueBuilder = ValueManager.getValueFromReference(
@@ -2748,159 +2752,16 @@ public class UserInterface extends UserInterfaceImplBase {
 				.setValues(contextValues)
 			;
 
-			setAdditionalContext(request.getCallout(), windowNo, calloutBuilder);
+			// TODO: Temporary Workaround
+			ContextTemporaryWorkaround.setAdditionalContext(
+				request.getCallout(),
+				windowNo,
+				calloutBuilder
+			);
 		});
 		return calloutBuilder;
 	}
 
-	/**
-	 * Set additonal Env.getCtx() used by callouts
-	 * TODO: Remove this method on future
-	 * @param calloutClass
-	 * @param windowNo
-	 * @param calloutBuilder
-	 * @return
-	 */
-	private org.spin.backend.grpc.user_interface.Callout.Builder setAdditionalContext(String callouts, int windowNo,
-		org.spin.backend.grpc.user_interface.Callout.Builder calloutBuilder) {
-		if (Util.isEmpty(callouts, true)) {
-			return calloutBuilder;
-		}
-
-		// separate `org.package.CalloutX.firstMethod; org.any.CalloutY.secondMethod`
-		List<String> calloutsList = Arrays.asList(callouts.split("\\s*(,|;)\\s*"));
-		if (calloutsList == null || calloutsList.isEmpty()) {
-			return calloutBuilder;
-		}
-
-		// callouts that modify the context in a customized way
-		List<String> calloutsListCustomContext = Arrays.asList(
-			org.compiere.model.CalloutOrder.class.getName(),
-			org.compiere.model.CalloutPayment.class.getName()
-		);
-
-		calloutsList.parallelStream().forEach(calloutClassAndMethod -> {
-			if (Util.isEmpty(calloutClassAndMethod, true)) {
-				// empty class name
-				return;
-			}
-			// the current callout is not in the custom context list
-			boolean isCustomContext = calloutsListCustomContext.stream()
-				.anyMatch(calloutClassNameCustomContext -> {
-					return calloutClassAndMethod.startsWith(calloutClassNameCustomContext);
-				});
-			if (isCustomContext) {
-				return;
-			}
-
-			Struct.Builder contextValues = calloutBuilder.getValuesBuilder();
-			if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.docType")) {
-				// - OrderType
-				String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
-				contextValues.putFields(
-					"OrderType",
-					ValueManager.getValueFromString(docSubTypeSO).build()
-				);
-
-				// - HasCharges
-				String hasCharges = Env.getContext(Env.getCtx(), windowNo, "HasCharges");
-				contextValues.putFields(
-					"HasCharges",
-					ValueManager.getValueFromStringBoolean(hasCharges).build()
-				);
-			}
-			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.priceList")) {
-				// - M_PriceList_Version_ID
-				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				contextValues.putFields(
-					"M_PriceList_Version_ID",
-					ValueManager.getValueFromInteger(priceListVersionId).build()
-				);
-			}
-			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.product")) {
-				// - M_PriceList_Version_ID
-				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
-				contextValues.putFields(
-					"M_PriceList_Version_ID",
-					ValueManager.getValueFromInteger(priceListVersionId).build()
-				);
-
-				// - DiscountSchema
-				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
-				contextValues.putFields(
-					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
-				);
-			}
-			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.charge")) {
-				// - DiscountSchema
-				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
-				contextValues.putFields(
-					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
-				);
-			}
-			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.amt")) {
-				// - DiscountSchema
-				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
-				contextValues.putFields(
-					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
-				);
-			}
-			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.qty")) {
-				// - UOMConversion
-				String isConversion = Env.getContext(Env.getCtx(), windowNo, "UOMConversion");
-				contextValues.putFields(
-					"UOMConversion",
-					ValueManager.getValueFromStringBoolean(isConversion).build()
-				);
-			} else if (calloutClassAndMethod.equals("org.compiere.model.CalloutPayment.docType")) {
-				String isSalesTransaction = Env.getContext(Env.getCtx(), windowNo, "IsSOTrx");
-				contextValues.putFields(
-					"IsSOTrx",
-					ValueManager.getValueFromStringBoolean(isSalesTransaction).build()
-				);
-			}
-			calloutBuilder.setValues(contextValues);
-		});
-
-		return calloutBuilder;
-	}
-	
-	/**
-	 * Verify if a value has been changed
-	 * @param gridField
-	 * @return
-	 */
-	private boolean isValidChange(GridField gridField) {
-		//	Standard columns
-		if(gridField.getColumnName().equals(I_AD_Element.COLUMNNAME_Created) 
-				|| gridField.getColumnName().equals(I_AD_Element.COLUMNNAME_CreatedBy) 
-				|| gridField.getColumnName().equals(I_AD_Element.COLUMNNAME_Updated) 
-				|| gridField.getColumnName().equals(I_AD_Element.COLUMNNAME_UpdatedBy) 
-				|| gridField.getColumnName().equals(I_AD_Element.COLUMNNAME_UUID)) {
-			return false;
-		}
-		//	Oly Displayed
-		if(!gridField.isDisplayed()) {
-			return false;
-		}
-		//	Key
-		if(gridField.isKey()) {
-			return false;
-		}
-
-		//	validate with old value
-		if(gridField.getOldValue() != null
-				&& gridField.getValue() != null
-				&& gridField.getValue().equals(gridField.getOldValue())) {
-			return false;
-		}
-		//	Default
-		return true;
-	}
-	
 	/**
 	 * Process Callout
 	 * @param gridTab
@@ -2991,8 +2852,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					retValue = 	"Callout Invalid: " + e.toString();
 					return retValue;
 				}
-				
-			}			
+			}
 			if (!Util.isEmpty(retValue)) {	//	interrupt on first error
 				log.severe (retValue);
 				return retValue;
