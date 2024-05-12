@@ -64,6 +64,9 @@ import org.spin.authentication.services.OpenIDUtil;
 import org.spin.backend.grpc.security.ChangeRoleRequest;
 import org.spin.backend.grpc.security.Client;
 import org.spin.backend.grpc.security.DictionaryEntity;
+import org.spin.backend.grpc.security.DictionaryType;
+import org.spin.backend.grpc.security.GetDictionaryAccessRequest;
+import org.spin.backend.grpc.security.GetDictionaryAccessResponse;
 import org.spin.backend.grpc.security.ListOrganizationsRequest;
 import org.spin.backend.grpc.security.ListOrganizationsResponse;
 import org.spin.backend.grpc.security.ListRolesRequest;
@@ -1703,6 +1706,132 @@ public class Security extends SecurityImplBase {
 				childBuilder.build()
 			);
 		}
+	}
+
+
+
+	@Override
+	public void getDictionaryAccess(GetDictionaryAccessRequest request, StreamObserver<GetDictionaryAccessResponse> responseObserver) {
+		try {
+			log.fine("Get Dictionary Access");
+			GetDictionaryAccessResponse.Builder builder = getDictionaryAccess(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	GetDictionaryAccessResponse.Builder getDictionaryAccess(GetDictionaryAccessRequest request) {
+		GetDictionaryAccessResponse.Builder builder = GetDictionaryAccessResponse.newBuilder();
+		if (request.getDictionaryType() == DictionaryType.UNKNOW) {
+			throw new AdempiereException("DictionaryType @Mandatory@");
+		}
+		int dictionaryId = request.getId();
+		if (dictionaryId <= 0) {
+			throw new AdempiereException("@Record_ID@ @Mandatory@");
+		}
+
+		MRole role = MRole.getDefault();
+
+		boolean isWithAccess = false;
+		String message = "";
+		if (request.getDictionaryTypeValue() == DictionaryType.MENU_VALUE) {
+			isWithAccess = true;
+		} else if (request.getDictionaryTypeValue() == DictionaryType.WINDOW_VALUE) {
+			isWithAccess = true;
+			Boolean isRoleAccess = role.getWindowAccess(dictionaryId);
+			if (isRoleAccess == null || !isRoleAccess.booleanValue()) {
+				message += "@AD_Window_ID@ without role access.";
+				isWithAccess = false;
+			}
+			boolean isRecordAccess = role.isRecordAccess(
+				I_AD_Window.Table_ID,
+				dictionaryId,
+				MRole.SQL_RO
+			);
+			if (!isRecordAccess) {
+				if (!Util.isEmpty(message, true)) {
+					message += " | ";
+				}
+				message += "@AD_Window_ID@ without record access.";
+				isWithAccess = false;
+			}
+		} else if (request.getDictionaryTypeValue() == DictionaryType.PROCESS_VALUE) {
+			isWithAccess = true;
+			Boolean isRoleAccess = role.getProcessAccess(dictionaryId);
+			if (isRoleAccess == null || !isRoleAccess.booleanValue()) {
+				message += "@AD_Process_ID@ without role access.";
+				isWithAccess = false;
+			}
+			boolean isRecordAccess = role.isRecordAccess(
+				I_AD_Process.Table_ID,
+				dictionaryId,
+				MRole.SQL_RO
+			);
+			if (!isRecordAccess) {
+				if (!Util.isEmpty(message, true)) {
+					message += " | ";
+				}
+				message += "@AD_Process_ID@ without record access.";
+				isWithAccess = false;
+			}
+		} else if (request.getDictionaryTypeValue() == DictionaryType.BROWSE_VALUE) {
+			isWithAccess = true;
+			Boolean isRoleAccess = role.getBrowseAccess(dictionaryId);
+			if (isRoleAccess == null || !isRoleAccess.booleanValue()) {
+				message += "@AD_Browse_ID@ without role access.";
+				isWithAccess = false;
+			}
+			boolean isRecordAccess = role.isRecordAccess(
+				I_AD_Browse.Table_ID,
+				dictionaryId,
+				MRole.SQL_RO
+			);
+			if (!isRecordAccess) {
+				if (!Util.isEmpty(message, true)) {
+					message += " | ";
+				}
+				message += "@AD_Browse_ID@ without record access.";
+				isWithAccess = false;
+			}
+		} else if (request.getDictionaryTypeValue() == DictionaryType.FORM_VALUE) {
+			isWithAccess = true;
+			Boolean isRoleAccess = role.getFormAccess(dictionaryId);
+			if (isRoleAccess == null || !isRoleAccess.booleanValue()) {
+				message += "@AD_Form_ID@ without role access.";
+				isWithAccess = false;
+			}
+			boolean isRecordAccess = role.isRecordAccess(
+				I_AD_Form.Table_ID,
+				dictionaryId,
+				MRole.SQL_RO
+			);
+			if (!isRecordAccess) {
+				if (!Util.isEmpty(message, true)) {
+					message += " | ";
+				}
+				message += "@AD_Form_ID@ without record access.";
+				isWithAccess = false;
+			}
+		}
+
+		builder.setIsAccess(isWithAccess)
+			.setMessage(
+				ValueManager.validateNull(
+					message
+				)
+			)
+		;
+
+		return builder;
 	}
 
 }

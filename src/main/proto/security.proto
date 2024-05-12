@@ -89,6 +89,13 @@ service Security {
 			body: "*"
 		};
 	}
+
+	//	Validate dictionary access
+	rpc GetDictionaryAccess(GetDictionaryAccessRequest) returns (GetDictionaryAccessResponse) {
+		option (google.api.http) = {
+			get: "/security/dictionary/{dictionary_type}/{id}"
+		};
+	}
 }
 
 
@@ -353,4 +360,21 @@ message LoginOpenIDRequest {
 	string state_parameter = 2;
 	string language = 3;
 	string client_version = 4;
+}
+
+enum DictionaryType {
+	UNKNOW = 0;
+	MENU = 1;
+	WINDOW = 2;
+	PROCESS = 3;
+	BROWSE = 4;
+	FORM = 5;
+}
+message GetDictionaryAccessRequest {
+	DictionaryType dictionary_type = 1;
+	int32 id = 2;
+}
+message GetDictionaryAccessResponse {
+	bool is_access = 1;
+	string message = 2;
 }
