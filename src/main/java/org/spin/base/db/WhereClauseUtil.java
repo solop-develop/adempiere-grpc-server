@@ -52,6 +52,31 @@ import org.spin.util.ASPUtil;
  */
 public class WhereClauseUtil {
 
+
+	/**
+	 * Add and get talbe alias to columns in validation code sql
+	 * @param tableName
+	 * @param tableAlias
+	 * @param dynamicValidation
+	 * @return {String}
+	 */
+	public static String getWhereRestrictionsWithAlias(String tableName, String tableAlias, String dynamicValidation) {
+		String validationCode = getWhereRestrictionsWithAlias(tableAlias, dynamicValidation);
+		if (Util.isEmpty(validationCode, true)) {
+		return "";
+		}
+		if (tableName.equals(tableAlias)) {
+		// ignore replace primary table with alias
+		return validationCode;
+		}
+		final String regexPrimarayTable = "\\b" + tableName + "\\.";
+		String validationWithAlias = validationCode.replaceAll(regexPrimarayTable, tableAlias + ".");
+		if (Util.isEmpty(validationWithAlias, true)) {
+		return "";
+		}
+		return validationWithAlias;
+	}
+
 	/**
 	 * Add and get talbe alias to columns in validation code sql
 	 * @param tableAlias
