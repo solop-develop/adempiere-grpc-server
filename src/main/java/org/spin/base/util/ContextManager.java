@@ -33,7 +33,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.spin.base.query.Filter;
+import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;

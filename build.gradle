@@ -92,7 +92,7 @@ dependencies {
 
 	// ADempiere Projects with additional features
 	//	ADempiere gRPC Utils Base (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-grpc-utils)
-	implementation "${baseGroupId}:adempiere-grpc-utils:1.3.7"
+	implementation "${baseGroupId}:adempiere-grpc-utils:1.3.9"
 	// Dashboard Improvements (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-dashboard-improvements)
 	implementation "${baseGroupId}:adempiere-dashboard-improvements:1.0.8"
 	// Point Of Sales Improvements (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-pos-improvements)

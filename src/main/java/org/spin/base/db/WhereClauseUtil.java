@@ -36,13 +36,13 @@ import org.compiere.model.MTable;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.base.query.Filter;
-import org.spin.base.query.FilterManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.WindowUtil;
 import org.spin.service.grpc.util.db.FromUtil;
 import org.spin.service.grpc.util.db.OperatorUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
+import org.spin.service.grpc.util.query.Filter;
+import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
