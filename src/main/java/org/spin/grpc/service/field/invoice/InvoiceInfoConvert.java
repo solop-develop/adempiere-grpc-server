@@ -19,6 +19,8 @@ import java.sql.SQLException;
 
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_InvoicePaySchedule;
+import org.compiere.model.MInvoice;
+import org.compiere.util.Env;
 import org.spin.backend.grpc.field.invoice.InvoiceInfo;
 import org.spin.backend.grpc.field.invoice.InvoicePaySchedule;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -37,6 +39,10 @@ public class InvoiceInfoConvert {
 		if (rs == null) {
 			return builder;
 		}
+		int invoiceId = rs.getInt(
+			I_C_Invoice.COLUMNNAME_C_Invoice_ID
+		);
+		MInvoice invoice = MInvoice.get(Env.getCtx(), invoiceId);
 
 		builder.setId(
 				rs.getInt(
@@ -48,6 +54,11 @@ public class InvoiceInfoConvert {
 					rs.getString(
 						I_C_Invoice.COLUMNNAME_UUID
 					)
+				)
+			)
+			.setDisplayValue(
+				ValueManager.validateNull(
+					invoice.getDisplayValue()
 				)
 			)
 			.setBusinessPartner(

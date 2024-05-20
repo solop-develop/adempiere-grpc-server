@@ -96,19 +96,20 @@ message ListBusinessPartnersRequest {
 message InvoiceInfo {
 	int32 id = 1;
 	string uuid = 2;
-	string business_partner = 3;
-	google.protobuf.Timestamp date_invoiced = 4;
-	string document_no = 5;
-	string currency = 6;
-	string grand_total = 7;
-	string converted_amount = 8;
-	string open_amount = 9;
-	string payment_term = 10;
-	bool is_paid = 11;
-	bool is_sales_transaction = 12;
-	string description = 13;
-	string po_reference = 14;
-	string document_status = 15;
+	string display_value = 3;
+	string business_partner = 4;
+	google.protobuf.Timestamp date_invoiced = 5;
+	string document_no = 6;
+	string currency = 7;
+	string grand_total = 8;
+	string converted_amount = 9;
+	string open_amount = 10;
+	string payment_term = 11;
+	bool is_paid = 12;
+	bool is_sales_transaction = 13;
+	string description = 14;
+	string po_reference = 15;
+	string document_status = 16;
 }
 message GetInvoiceInfoRequest {
 	int32 id = 1;
