@@ -145,7 +145,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		query.setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
+			// .parallelStream()
 			.forEach(warehouseId -> {
 				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
 				Warehouse.Builder builder = convertWarehouse(warehouse);
@@ -254,7 +254,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		query.setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
+			// .parallelStream()
 			.forEach(productId -> {
 				Product.Builder builder = convertProduct(productId);
 				builderList.addRecords(builder);
