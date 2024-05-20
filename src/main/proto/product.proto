@@ -243,27 +243,28 @@ message ProductInfo {
 	string product_category = 8;
 	string product_group = 9;
 	string product_class = 10;
-	string uom = 11;
+	string product_classification = 11;
+	string uom = 12;
 	// price
-	string list_price = 12;
-	string standard_price = 13;
-	string limit_price = 14;
-	string margin = 15;
+	string list_price = 13;
+	string standard_price = 14;
+	string limit_price = 15;
+	string margin = 16;
 	// storage
-	bool is_stocked = 16;
-	string available_quantity = 17;
-	string on_hand_quantity = 18;
-	string reserved_quantity = 19;
-	string ordered_quantity = 20;
-	string unconfirmed_quantity = 21;
-	string unconfirmed_move_quantity = 22;
+	bool is_stocked = 17;
+	string available_quantity = 18;
+	string on_hand_quantity = 19;
+	string reserved_quantity = 20;
+	string ordered_quantity = 21;
+	string unconfirmed_quantity = 22;
+	string unconfirmed_move_quantity = 23;
 	//
-	string vendor = 23;
-	bool is_instance_attribute = 24;
+	string vendor = 24;
+	bool is_instance_attribute = 25;
 	// additional
-	string description = 25;
-	string document_note = 26;
-	bool is_active = 27;
+	string description = 26;
+	string document_note = 27;
+	bool is_active = 28;
 }
 message ListProductsInfoResponse {
 	int64 record_count = 1;
