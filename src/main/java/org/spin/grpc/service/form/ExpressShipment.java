@@ -279,7 +279,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 		query.setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
+			// .parallelStream()
 			.forEach(salesOrderId -> {
 				MOrder salesOrder = new MOrder(context, salesOrderId, null);
 				SalesOrder.Builder builder = convertSalesOrder(salesOrder);

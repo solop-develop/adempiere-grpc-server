@@ -160,7 +160,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 		query.setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
+			// .parallelStream()
 			.forEach(businessPartnerId -> {
 				MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
 				BusinessPartner.Builder builder = convertBusinessPartner(businessPartner);
@@ -282,7 +282,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 		query.setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
+			// .parallelStream()
 			.forEach(purchaseOrderId -> {
 				MOrder purcharseOrder = new MOrder(context, purchaseOrderId, null);
 				PurchaseOrder.Builder builder = convertPurchaseOrder(
@@ -399,7 +399,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 		query.setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
+			// .parallelStream()
 			.forEach(productId -> {
 				Product.Builder builder = convertProduct(productId);
 				builderList.addRecords(builder);

@@ -36,13 +36,13 @@ import org.compiere.model.MTable;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.base.query.Filter;
-import org.spin.base.query.FilterManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.WindowUtil;
 import org.spin.service.grpc.util.db.FromUtil;
 import org.spin.service.grpc.util.db.OperatorUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
+import org.spin.service.grpc.util.query.Filter;
+import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.ASPUtil;
 
@@ -51,6 +51,31 @@ import org.spin.util.ASPUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class WhereClauseUtil {
+
+
+	/**
+	 * Add and get talbe alias to columns in validation code sql
+	 * @param tableName
+	 * @param tableAlias
+	 * @param dynamicValidation
+	 * @return {String}
+	 */
+	public static String getWhereRestrictionsWithAlias(String tableName, String tableAlias, String dynamicValidation) {
+		String validationCode = getWhereRestrictionsWithAlias(tableAlias, dynamicValidation);
+		if (Util.isEmpty(validationCode, true)) {
+		return "";
+		}
+		if (tableName.equals(tableAlias)) {
+		// ignore replace primary table with alias
+		return validationCode;
+		}
+		final String regexPrimarayTable = "\\b" + tableName + "\\.";
+		String validationWithAlias = validationCode.replaceAll(regexPrimarayTable, tableAlias + ".");
+		if (Util.isEmpty(validationWithAlias, true)) {
+		return "";
+		}
+		return validationWithAlias;
+	}
 
 	/**
 	 * Add and get talbe alias to columns in validation code sql

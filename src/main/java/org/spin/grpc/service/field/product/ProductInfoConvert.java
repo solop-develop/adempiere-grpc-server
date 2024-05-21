@@ -27,6 +27,7 @@ import org.adempiere.core.domains.models.I_M_Storage;
 import org.adempiere.core.domains.models.I_M_Substitute;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MProduct;
 import org.compiere.model.MProductPO;
 import org.compiere.model.MUOM;
 import org.compiere.util.Env;
@@ -53,16 +54,24 @@ public class ProductInfoConvert {
 			return builder;
 		}
 
+		int productId = rs.getInt(
+			I_M_Product.COLUMNNAME_M_Product_ID
+		);
+		MProduct product = MProduct.get(Env.getCtx(), productId);
+
 		builder.setId(
-				rs.getInt(
-					I_M_Product.COLUMNNAME_M_Product_ID
-				)
+				productId
 			)
 			.setUuid(
 				ValueManager.validateNull(
 					rs.getString(
 						I_M_Product.COLUMNNAME_UUID
 					)
+				)
+			)
+			.setDisplayValue(
+				ValueManager.validateNull(
+					product.getDisplayValue()
 				)
 			)
 			.setValue(
@@ -116,6 +125,13 @@ public class ProductInfoConvert {
 				ValueManager.validateNull(
 					rs.getString(
 						I_M_Product.COLUMNNAME_M_Product_Class_ID
+					)
+				)
+			)
+			.setProductClassification(
+				ValueManager.validateNull(
+					rs.getString(
+						I_M_Product.COLUMNNAME_M_Product_Classification_ID
 					)
 				)
 			)
