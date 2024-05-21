@@ -47,6 +47,21 @@ service InvoiceInfoService {
 	rpc ListInvoiceInfo(ListInvoicesInfoRequest) returns (ListInvoicesInfoResponse) {
 		option (google.api.http) = {
 			get: "/field/invoices"
+			additional_bindings: {
+				get: "/field/invoices/table/{table_name}/{column_name}"
+			}
+			additional_bindings: {
+				get: "/field/invoices/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/field/invoices/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/field/invoices/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/field/invoices/query-criteria/{browse_field_id}"
+			}
 		};
 	}
 	rpc GetInvoiceInfo(GetInvoiceInfoRequest) returns (InvoiceInfo) {
