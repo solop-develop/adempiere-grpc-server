@@ -42,6 +42,21 @@ service OrderInfoService {
 	rpc ListOrderInfo(ListOrdersInfoRequest) returns (ListOrdersInfoResponse) {
 		option (google.api.http) = {
 			get: "/field/orders"
+			additional_bindings: {
+				get: "/field/orders/table/{table_name}/{column_name}"
+			}
+			additional_bindings: {
+				get: "/field/orders/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/field/orders/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/field/orders/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/field/orders/query-criteria/{browse_field_id}"
+			}
 		};
 	}
 	rpc GetOrderInfo(GetOrderInfoRequest) returns (OrderInfo) {
