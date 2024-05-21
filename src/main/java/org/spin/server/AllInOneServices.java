@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.compiere.jr.report.ReportStarter;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
 import org.spin.base.setup.SetupLoader;
@@ -126,6 +127,9 @@ public class AllInOneServices {
 	private void start() throws IOException {
 		//	Start based on provider
 		Env.setContextProvider(this.contextProvider);
+		ReportStarter.setReportViewerProvider(
+			new ServerReportProvider()
+		);
 		Ini.setProperty(
 			JWTUtil.ECA52_JWT_SECRET_KEY,
 			SetupLoader.getInstance().getServer().getJwt_secret_key()
