@@ -19,6 +19,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.adempiere.core.domains.models.I_C_Order;
+import org.compiere.model.MOrder;
+import org.compiere.util.Env;
 import org.spin.backend.grpc.field.order.OrderInfo;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -35,6 +37,10 @@ public class OrderInfoConvert {
 		if (rs == null) {
 			return builder;
 		}
+		int orderId = rs.getInt(
+			I_C_Order.COLUMNNAME_C_Order_ID
+		);
+		MOrder order = new MOrder(Env.getCtx(), orderId, null);
 
 		builder.setId(
 				rs.getInt(
@@ -43,10 +49,14 @@ public class OrderInfoConvert {
 			)
 			.setUuid(
 				ValueManager.validateNull(
-					rs.getString("UUID")
-					// rs.getString(
-					// 	I_C_Order.COLUMNNAME_UUID
-					// )
+					rs.getString(
+						I_C_Order.COLUMNNAME_UUID
+					)
+				)
+			)
+			.setDisplayValue(
+				ValueManager.validateNull(
+					order.getDisplayValue()
 				)
 			)
 			.setBusinessPartner(
@@ -87,12 +97,13 @@ public class OrderInfoConvert {
 			)
 			.setIsSalesTransaction(
 				rs.getBoolean(
-					"IsSOTrx"
+					I_C_Order.COLUMNNAME_IsSOTrx
 				)
 			)
+			
 			.setIsDelivered(
 				rs.getBoolean(
-					"isDelivered"
+					I_C_Order.COLUMNNAME_IsDelivered
 				)
 			)
 			.setDescription(
@@ -111,7 +122,7 @@ public class OrderInfoConvert {
 			)
 			.setDocumentStatus(
 				ValueManager.validateNull(
-					rs.getString("docstatus")
+					rs.getString(I_C_Order.COLUMNNAME_DocStatus)
 					// I_C_Order.COLUMNNAME_DocStatus
 				)
 			)

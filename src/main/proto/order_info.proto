@@ -86,17 +86,18 @@ message ListBusinessPartnersOrderRequest {
 message OrderInfo {
 	int32 id = 1;
 	string uuid = 2;
-	string business_partner = 3;
-	google.protobuf.Timestamp date_ordered = 4;
-	string document_no = 5;
-	string currency = 6;
-	string grand_total = 7;
-	string converted_amount = 8;
-	bool is_sales_transaction = 9;
-	bool is_delivered = 10;
-	string description = 11;
-	string po_reference = 12;
-	string document_status = 13;
+	string display_value = 3;
+	string business_partner = 4;
+	google.protobuf.Timestamp date_ordered = 5;
+	string document_no = 6;
+	string currency = 7;
+	string grand_total = 8;
+	string converted_amount = 9;
+	bool is_sales_transaction = 10;
+	bool is_delivered = 11;
+	string description = 12;
+	string po_reference = 13;
+	string document_status = 14;
 }
 message GetOrderInfoRequest {
 	int32 id = 1;
