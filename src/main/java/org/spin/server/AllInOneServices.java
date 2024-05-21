@@ -53,6 +53,7 @@ import org.spin.grpc.service.dictionary.Dictionary;
 import org.spin.grpc.service.field.business_partner.BusinessPartnerInfo;
 import org.spin.grpc.service.field.invoice.InvoiceInfoService;
 import org.spin.grpc.service.field.location_address.LocationAddress;
+import org.spin.grpc.service.field.order.OrderInfoService;
 import org.spin.grpc.service.field.product.ProductInfo;
 import org.spin.grpc.service.form.ExpressMovement;
 import org.spin.grpc.service.form.ExpressReceipt;
@@ -200,6 +201,9 @@ public class AllInOneServices {
 		//	Invoice Field
 		serverBuilder.addService(new InvoiceInfoService());
 		logger.info("Service " + InvoiceInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Order Field
+		serverBuilder.addService(new OrderInfoService());
+		logger.info("Service " + OrderInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Issue Management
 		serverBuilder.addService(new IssueManagement());
 		logger.info("Service " + IssueManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
