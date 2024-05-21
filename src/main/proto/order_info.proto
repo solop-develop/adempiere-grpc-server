@@ -34,19 +34,19 @@ service OrderInfoService {
 	// criteria
 	rpc ListBusinessPartners(ListBusinessPartnersOrderRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/field/order/customers"
+			get: "/field/orders/customers"
 		};
 	}
 
 	// result
 	rpc ListOrderInfo(ListOrdersInfoRequest) returns (ListOrdersInfoResponse) {
 		option (google.api.http) = {
-			get: "/field/order"
+			get: "/field/orders"
 		};
 	}
 	rpc GetOrderInfo(GetOrderInfoRequest) returns (OrderInfo) {
 		option (google.api.http) = {
-			get: "/field/order/{id}"
+			get: "/field/orders/{id}"
 		};
 	}
 }

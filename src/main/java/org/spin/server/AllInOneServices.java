@@ -34,7 +34,6 @@ import org.spin.grpc.service.InOutInfo;
 import org.spin.grpc.service.LogsInfo;
 import org.spin.grpc.service.MaterialManagement;
 import org.spin.grpc.service.NoticeManagement;
-import org.spin.grpc.service.OrderInfo;
 import org.spin.grpc.service.PaymentPrintExport;
 import org.spin.grpc.service.PaymentInfo;
 import org.spin.grpc.service.PointOfSalesForm;
@@ -222,9 +221,6 @@ public class AllInOneServices {
 		//	Notice Management
 		serverBuilder.addService(new NoticeManagement());
 		logger.info("Service " + NoticeManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		//	Order
-		serverBuilder.addService(new OrderInfo());
-		logger.info("Service " + OrderInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payment
 		serverBuilder.addService(new PaymentInfo());
 		logger.info("Service " + PaymentInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
