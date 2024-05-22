@@ -66,6 +66,7 @@ import org.spin.backend.grpc.pos.RMALine;
 import org.spin.backend.grpc.pos.Shipment;
 import org.spin.backend.grpc.user_interface.ChatEntry;
 import org.spin.backend.grpc.user_interface.ModeratorStatus;
+import org.spin.base.interim.ContextTemporaryWorkaround;
 import org.spin.grpc.service.FileManagement;
 import org.spin.grpc.service.TimeControl;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
@@ -228,6 +229,13 @@ public class ConvertUtil {
 				builderValue.build()
 			);
 		}
+
+		// TODO: Temporary Workaround
+		values = ContextTemporaryWorkaround.setContextAsUnknowColumn(
+			poInfo.getTableName(),
+			values
+		);
+
 		builder.setValues(values);
 		//	
 		return builder;

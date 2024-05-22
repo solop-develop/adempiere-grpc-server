@@ -51,6 +51,7 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
+import org.spin.base.interim.ContextTemporaryWorkaround;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.util.db.FromUtil;
 import org.spin.service.grpc.util.db.OrderByUtil;
@@ -656,6 +657,12 @@ public class RecordUtil {
 						log.severe(e.getLocalizedMessage());
 					}
 				}
+
+				// TODO: Temporary Workaround
+				rowValues = ContextTemporaryWorkaround.setContextAsUnknowColumn(
+					table.getTableName(),
+					rowValues
+				);
 				//	
 				entityBuilder.setValues(rowValues);
 				builder.addRecords(entityBuilder.build());
