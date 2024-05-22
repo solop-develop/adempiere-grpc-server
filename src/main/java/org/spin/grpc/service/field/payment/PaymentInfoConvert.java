@@ -67,6 +67,11 @@ public class PaymentInfoConvert {
 					)
 				)
 			)
+			.setIsReceipt(
+				rs.getBoolean(
+					I_C_Payment.COLUMNNAME_IsReceipt
+				)
+			)
 			.setCurrency(
 				ValueManager.validateNull(
 					rs.getString("Currency")

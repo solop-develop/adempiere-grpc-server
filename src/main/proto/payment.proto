@@ -1,6 +1,6 @@
 /************************************************************************************
  * Copyright (C) 2012-2022 E.R.P. Consultores y Asociados, C.A.                     *
- * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * Contributor(s): Elsio Sanchez elsiosanches@gmail.com                             *
  * This program is free software: you can redistribute it and/or modify             *
  * it under the terms of the GNU General Public License as published by             *
  * the Free Software Foundation, either version 2 of the License, or                *
@@ -80,7 +80,8 @@ message PaymentInfo {
 	string discount_amt = 11;
 	string writeOff_amt = 12;
 	bool is_allocated = 13;
-	string document_status = 14;
+	bool is_receipt = 14;
+	string document_status = 15;
 }
 message GetPaymentInfoRequest {
 	int32 id = 1;

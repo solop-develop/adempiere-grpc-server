@@ -48,9 +48,9 @@ public class PaymentInfoService extends PaymentInfoServiceImplBase {
 	@Override
 	public void listBusinessPartners(ListBusinessPartnersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			// if(request == null) {
-			// 	throw new AdempiereException("Object ListBusinessPartnersRequest Null");
-			// }
+			if(request == null) {
+				throw new AdempiereException("Object ListBusinessPartnersRequest Null");
+			}
 			ListLookupItemsResponse.Builder entityValueList = PaymentInfoLogic.listBusinessPartners(request);
 			responseObserver.onNext(
 				entityValueList.build()
