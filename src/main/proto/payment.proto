@@ -16,24 +16,80 @@ syntax = "proto3";
 
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.payment";
+option java_package = "org.spin.backend.grpc.field.payment";
 option java_outer_classname = "ADempierePayment";
 
 import "base_data_type.proto";
 import "google/protobuf/struct.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 // Base URL
 // /info/open-items/
 
-package payment;
+package field.payment;
 
 // The payment service definition.
-service Payment {
-	// List Payment Info Request
-	rpc ListPaymentInfo(ListPaymentInfoRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/info/open-items/payments" };
+service PaymentInfoService {
+	// criteria
+	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/field/payments/business-partners"
+		};
 	}
+	rpc ListBankAccount(ListBankAccountRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/field/payments/bank-account"
+		};
+	}
+	// List Payment Info Request
+	rpc ListPaymentInfo(ListPaymentInfoRequest) returns (ListPaymentInfoResponse) {
+		option (google.api.http) = {
+			get: "/field/payments"
+			additional_bindings: {
+				get: "/field/payments/table/{table_name}/{column_name}"
+			}
+			additional_bindings: {
+				get: "/field/payments/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/field/payments/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/field/payments/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/field/payments/query-criteria/{browse_field_id}"
+			}
+		};
+	}
+}
+
+// List Payment Info Request
+message PaymentInfo {
+	int32 id = 1;
+	string uuid = 2;
+	string display_value = 3;
+	string bank_account = 4;
+	string business_partner = 5;
+	google.protobuf.Timestamp date_payment = 6;
+	string document_no = 7;
+	string currency = 8;
+	string pay_amt = 9;
+	string converted_amount = 10;
+	string discount_amt = 11;
+	string writeOff_amt = 12;
+	bool is_allocated = 13;
+	string document_status = 14;
+}
+message GetPaymentInfoRequest {
+	int32 id = 1;
+	string uuid = 2;
+}
+message ListPaymentInfoResponse {
+	int64 record_count = 1;
+	repeated PaymentInfo records = 2;
+	string next_page_token = 3;
 }
 
 // List Payment Info Request
@@ -53,4 +109,44 @@ message ListPaymentInfoRequest {
 	int32 column_id = 12;
 	string column_name = 13;
 	google.protobuf.Struct context_attributes = 14;
+	// custom filter
+	string document_no = 15;
+	int32 business_partner_id = 16;
+	string is_receipt = 17;
+	string is_payment = 18;
+	int32 bank_account_id = 19;
+	google.protobuf.Timestamp payment_date_from = 20;
+	google.protobuf.Timestamp payment_date_to = 21;
+	string grand_total_from = 22;
+	string grand_total_to = 23;
+}
+
+// Business Partners
+message ListBusinessPartnersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string is_sales_transaction = 10;
+}
+
+// Bank Account
+message ListBankAccountRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string is_sales_transaction = 10;
 }

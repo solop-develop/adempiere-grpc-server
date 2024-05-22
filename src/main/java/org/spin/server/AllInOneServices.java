@@ -36,7 +36,6 @@ import org.spin.grpc.service.MaterialManagement;
 import org.spin.grpc.service.NoticeManagement;
 import org.spin.grpc.service.OrderInfo;
 import org.spin.grpc.service.PaymentPrintExport;
-import org.spin.grpc.service.PaymentInfo;
 import org.spin.grpc.service.PointOfSalesForm;
 import org.spin.grpc.service.RecordManagement;
 import org.spin.grpc.service.ReportManagement;
@@ -53,6 +52,7 @@ import org.spin.grpc.service.dictionary.Dictionary;
 import org.spin.grpc.service.field.business_partner.BusinessPartnerInfo;
 import org.spin.grpc.service.field.invoice.InvoiceInfoService;
 import org.spin.grpc.service.field.location_address.LocationAddress;
+import org.spin.grpc.service.field.payment.PaymentInfoService;
 import org.spin.grpc.service.field.product.ProductInfo;
 import org.spin.grpc.service.form.ExpressMovement;
 import org.spin.grpc.service.form.ExpressReceipt;
@@ -221,9 +221,9 @@ public class AllInOneServices {
 		//	Order
 		serverBuilder.addService(new OrderInfo());
 		logger.info("Service " + OrderInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		//	Payment
-		serverBuilder.addService(new PaymentInfo());
-		logger.info("Service " + PaymentInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Payment Field
+		serverBuilder.addService(new PaymentInfoService());
+		logger.info("Service " + PaymentInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payment Allocation
 		serverBuilder.addService(new PaymentAllocation());
 		logger.info("Service " + PaymentAllocation.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

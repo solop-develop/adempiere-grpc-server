@@ -58,6 +58,7 @@ static_resources:
                 - express_shipment.ExpressShipment
                 - field.business_partner.BusinessPartnerInfoService
                 - field.invoice.InvoiceInfoService
+                - field.payment.PaymentInfoService
                 - field.product.ProductInfoService
                 - file_management.FileManagement
                 - general_ledger.GeneralLedger
@@ -72,7 +73,6 @@ static_resources:
                 - order.Order
                 - payment_allocation.PaymentAllocation
                 - payment_print_export.PaymentPrintExport
-                - payment.Payment
                 - payroll_action_notice.PayrollActionNotice
                 - data.Store
                 - record_management.RecordManagement
