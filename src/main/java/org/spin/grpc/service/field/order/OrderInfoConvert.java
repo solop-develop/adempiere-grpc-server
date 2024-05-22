@@ -122,8 +122,7 @@ public class OrderInfoConvert {
 			)
 			.setDocumentStatus(
 				ValueManager.validateNull(
-					rs.getString(I_C_Order.COLUMNNAME_DocStatus)
-					// I_C_Order.COLUMNNAME_DocStatus
+					order.getDocStatusName()
 				)
 			)
 		;
