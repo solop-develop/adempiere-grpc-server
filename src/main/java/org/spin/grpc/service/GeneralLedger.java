@@ -928,7 +928,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			final String postingType = request.getPostingType();
 			MRefList referenceList = MRefList.get(Env.getCtx(), X_Fact_Acct.POSTINGTYPE_AD_Reference_ID, postingType, null);
 			if (referenceList == null) {
-				throw new AdempiereException("@AD_Ref_List_ID@ @Invalid@:" + postingType);
+				throw new AdempiereException("@AD_Ref_List_ID@ @Invalid@: " + postingType);
 			}
 			whereClause.append(" AND ")
 				.append(I_Fact_Acct.Table_Name)
