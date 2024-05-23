@@ -176,22 +176,6 @@ public class PaymentInfoLogic {
 				)
 			);
 		}
-		// // Is Delivered
-		// if (!Util.isEmpty(request.getIsDelivered(), true)) {
-		// 	sql += "AND IsDelivered = ? ";
-		// 	filtersList.add(
-		// 		BooleanManager.getBooleanToString(
-		// 			request.getIsDelivered()
-		// 		)
-		// 	);
-		// }
-		// // Description
-		// if (!Util.isEmpty(request.getDescription(), true)) {
-		// 	sql += "AND UPPER(p.Description) LIKE '%' || UPPER(?) || '%' ";
-		// 	filtersList.add(
-		// 		request.getDescription()
-		// 	);
-		// }
 		// Payment Date
 		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
 			request.getPaymentDateFrom()

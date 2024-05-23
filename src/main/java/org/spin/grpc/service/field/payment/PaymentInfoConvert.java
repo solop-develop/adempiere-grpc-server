@@ -37,8 +37,8 @@ public class PaymentInfoConvert {
 			.setUuid(
 				ValueManager.validateNull(
 					rs.getString(
-                        I_C_Payment.COLUMNNAME_UUID
-                    )
+						I_C_Payment.COLUMNNAME_UUID
+					)
 				)
 			)
 			.setDisplayValue(
