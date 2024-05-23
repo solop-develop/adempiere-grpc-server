@@ -1,15 +1,12 @@
 package org.spin.grpc.service.field.payment;
 
 import org.adempiere.exceptions.AdempiereException;
-// import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
-// import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.field.payment.ListPaymentInfoRequest;
 import org.spin.backend.grpc.field.payment.ListPaymentInfoResponse;
 import org.spin.backend.grpc.field.payment.ListBankAccountRequest;
 import org.spin.backend.grpc.field.payment.ListBusinessPartnersRequest;
-// import org.spin.backend.grpc.field.payment.ListPaymentInfoResponse;
 import org.spin.backend.grpc.field.payment.PaymentInfo;
 import org.spin.backend.grpc.field.payment.PaymentInfoServiceGrpc.PaymentInfoServiceImplBase;
 

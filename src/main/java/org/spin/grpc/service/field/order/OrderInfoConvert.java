@@ -28,7 +28,7 @@ import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Elsio Sanchez elsiosanches@gmail.com, https://github.com/elsiosanchez
- * Service for backend of Product Info field
+ * Service for backend of Order Info field
  */
 public class OrderInfoConvert {
 

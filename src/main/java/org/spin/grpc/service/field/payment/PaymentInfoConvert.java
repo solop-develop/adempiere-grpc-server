@@ -10,6 +10,11 @@ import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
+/**
+ * @author Elsio Sanchez elsiosanches@gmail.com, https://github.com/elsiosanchez
+ * Service for backend of Payment Info field
+ */
+
 public class PaymentInfoConvert {
 	public static PaymentInfo.Builder convertPaymentInfo(ResultSet rs) throws SQLException {
 		PaymentInfo.Builder builder = PaymentInfo.newBuilder();
@@ -109,32 +114,9 @@ public class PaymentInfoConvert {
 					I_C_Payment.COLUMNNAME_IsAllocated
 				)
 			)
-			// .setIsDelivered(
-			// 	rs.getBoolean(
-			// 		"isDelivered"
-			// 	)
-			// )
-			// .setDescription(
-			// 	ValueManager.validateNull(
-			// 		rs.getString(
-			// 			I_C_Payment.COLUMNNAME_Description
-			// 		)
-			// 	)
-			// )
-			// .setPoReference(
-			// 	ValueManager.validateNull(
-			// 		rs.getString(
-			// 			I_C_Payment.COLUMNNAME_POReference
-			// 		)
-			// 	)
-			// )
 			.setDocumentStatus(
 				ValueManager.validateNull(
-					// rs.getString(
-					// 	I_C_Payment.COLUMNNAME_DocStatus
-					// )
 					payment.getDocStatusName()
-					// I_C_Payment.COLUMNNAME_DocStatus
 				)
 			)
 		;
