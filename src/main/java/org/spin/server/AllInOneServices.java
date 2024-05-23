@@ -226,8 +226,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new NoticeManagement());
 		logger.info("Service " + NoticeManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payment
-		serverBuilder.addService(new PaymentInfo());
-		logger.info("Service " + PaymentInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new PaymentInfoService());
+		logger.info("Service " + PaymentInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payment Allocation
 		serverBuilder.addService(new PaymentAllocation());
 		logger.info("Service " + PaymentAllocation.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
