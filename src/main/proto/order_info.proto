@@ -1,0 +1,153 @@
+/************************************************************************************
+* Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+* Contributor(s): Elsio Sanchez elsiosanches@gmail.com                     *
+* This program is free software: you can redistribute it and/or modify             *
+* it under the terms of the GNU General Public License as published by             *
+* the Free Software Foundation, either version 2 of the License, or                *
+* (at your option) any later version.                                              *
+* This program is distributed in the hope that it will be useful,                  *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+* GNU General Public License for more details.                                     *
+* You should have received a copy of the GNU General Public License                *
+* along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.field.order";
+option java_outer_classname = "ADempiereOrder";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+import "base_data_type.proto";
+
+// Base URL
+// /field/order/
+
+package field.order;
+
+// The order service definition.
+service OrderInfoService {
+	// criteria
+	rpc ListBusinessPartners(ListBusinessPartnersOrderRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/field/orders/customers"
+		};
+	}
+
+	// result
+	rpc ListOrderInfo(ListOrdersInfoRequest) returns (ListOrdersInfoResponse) {
+		option (google.api.http) = {
+			get: "/field/orders"
+			additional_bindings: {
+				get: "/field/orders/table/{table_name}/{column_name}"
+			}
+			additional_bindings: {
+				get: "/field/orders/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/field/orders/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/field/orders/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/field/orders/query-criteria/{browse_field_id}"
+			}
+		};
+	}
+	rpc GetOrderInfo(GetOrderInfoRequest) returns (OrderInfo) {
+		option (google.api.http) = {
+			get: "/field/orders/{id}"
+		};
+	}
+}
+
+// List Order Info Request
+message ListOrdersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string is_sales_transaction = 10;
+}
+
+// Business Partners
+message ListBusinessPartnersOrderRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string is_sales_transaction = 10;
+}
+
+
+// List Order Info Request
+message OrderInfo {
+	int32 id = 1;
+	string uuid = 2;
+	string display_value = 3;
+	string business_partner = 4;
+	google.protobuf.Timestamp date_ordered = 5;
+	string document_no = 6;
+	string currency = 7;
+	string grand_total = 8;
+	string converted_amount = 9;
+	bool is_sales_transaction = 10;
+	bool is_delivered = 11;
+	string description = 12;
+	string po_reference = 13;
+	string document_status = 14;
+}
+message GetOrderInfoRequest {
+	int32 id = 1;
+	string uuid = 2;
+}
+message ListOrdersInfoResponse {
+	int64 record_count = 1;
+	repeated OrderInfo records = 2;
+	string next_page_token = 3;
+}
+message ListOrdersInfoRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// references
+	int32 process_parameter_id = 9;
+	int32 field_id = 10;
+	int32 browse_field_id = 11;
+	int32 reference_id = 12;
+	int32 column_id = 13;
+	string column_name = 14;
+	// custom filter
+	string document_no = 15;
+	int32 business_partner_id = 16;
+	string is_sales_transaction = 17;
+	string description = 19;
+	google.protobuf.Timestamp order_date_from = 20;
+	google.protobuf.Timestamp order_date_to = 21;
+	string is_delivered = 22;
+	int32 order_id = 23;
+	string grand_total_from = 24;
+	string grand_total_to = 25;
+}

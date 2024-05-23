@@ -131,7 +131,7 @@ public class InvoiceInfoConvert {
 			)
 			.setDocumentStatus(
 				ValueManager.validateNull(
-					I_C_Invoice.COLUMNNAME_DocStatus
+					invoice.getDocStatusName()
 				)
 			)
 		;

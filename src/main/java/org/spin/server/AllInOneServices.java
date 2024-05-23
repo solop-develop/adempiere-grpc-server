@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.compiere.jr.report.ReportStarter;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
 import org.spin.base.setup.SetupLoader;
@@ -34,7 +35,6 @@ import org.spin.grpc.service.InOutInfo;
 import org.spin.grpc.service.LogsInfo;
 import org.spin.grpc.service.MaterialManagement;
 import org.spin.grpc.service.NoticeManagement;
-import org.spin.grpc.service.OrderInfo;
 import org.spin.grpc.service.PaymentPrintExport;
 import org.spin.grpc.service.PointOfSalesForm;
 import org.spin.grpc.service.RecordManagement;
@@ -53,6 +53,7 @@ import org.spin.grpc.service.field.business_partner.BusinessPartnerInfo;
 import org.spin.grpc.service.field.invoice.InvoiceInfoService;
 import org.spin.grpc.service.field.location_address.LocationAddress;
 import org.spin.grpc.service.field.payment.PaymentInfoService;
+import org.spin.grpc.service.field.order.OrderInfoService;
 import org.spin.grpc.service.field.product.ProductInfo;
 import org.spin.grpc.service.form.ExpressMovement;
 import org.spin.grpc.service.form.ExpressReceipt;
@@ -126,6 +127,9 @@ public class AllInOneServices {
 	private void start() throws IOException {
 		//	Start based on provider
 		Env.setContextProvider(this.contextProvider);
+		ReportStarter.setReportViewerProvider(
+			new ServerReportProvider()
+		);
 		Ini.setProperty(
 			JWTUtil.ECA52_JWT_SECRET_KEY,
 			SetupLoader.getInstance().getServer().getJwt_secret_key()
@@ -200,6 +204,9 @@ public class AllInOneServices {
 		//	Invoice Field
 		serverBuilder.addService(new InvoiceInfoService());
 		logger.info("Service " + InvoiceInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Order Field
+		serverBuilder.addService(new OrderInfoService());
+		logger.info("Service " + OrderInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Issue Management
 		serverBuilder.addService(new IssueManagement());
 		logger.info("Service " + IssueManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -218,12 +225,9 @@ public class AllInOneServices {
 		//	Notice Management
 		serverBuilder.addService(new NoticeManagement());
 		logger.info("Service " + NoticeManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		//	Order
-		serverBuilder.addService(new OrderInfo());
-		logger.info("Service " + OrderInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		//	Payment Field
-		serverBuilder.addService(new PaymentInfoService());
-		logger.info("Service " + PaymentInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Payment
+		serverBuilder.addService(new PaymentInfo());
+		logger.info("Service " + PaymentInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payment Allocation
 		serverBuilder.addService(new PaymentAllocation());
 		logger.info("Service " + PaymentAllocation.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

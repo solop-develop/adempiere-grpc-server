@@ -32,6 +32,7 @@ import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
 import org.adempiere.core.domains.models.I_Fact_Acct;
 import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
+import org.adempiere.core.domains.models.X_Fact_Acct;
 import org.compiere.model.GridField;
 import org.compiere.model.GridTab;
 import org.compiere.model.GridWindow;
@@ -42,6 +43,7 @@ import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
@@ -868,7 +870,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuilder whereClause = new StringBuilder(" WHERE 1=1 ");
 		whereClause.append(" AND ")
-			.append(table.getTableName())
+			.append(I_Fact_Acct.Table_Name)
 			.append(".")
 			.append(I_Fact_Acct.COLUMNNAME_C_AcctSchema_ID)
 			.append(" = ? ")
@@ -894,7 +896,9 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 				return;
 			}
 
-			String columnName = MAcctSchemaElement.getColumnName(acctSchemaElement.getElementType());
+			String columnName = MAcctSchemaElement.getColumnName(
+				acctSchemaElement.getElementType()
+			);
 
 			Filter elementAccount = conditionsList.parallelStream()
 				.filter(condition -> {
@@ -911,7 +915,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 				return;
 			}
 			whereClause.append(" AND ")
-				.append(table.getTableName())
+				.append(I_Fact_Acct.Table_Name)
 				.append(".")
 				.append(columnName)
 				.append(" = ? ")
@@ -921,13 +925,18 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 		// Posting Type
 		if (!Util.isEmpty(request.getPostingType(), true)) {
+			final String postingType = request.getPostingType();
+			MRefList referenceList = MRefList.get(Env.getCtx(), X_Fact_Acct.POSTINGTYPE_AD_Reference_ID, postingType, null);
+			if (referenceList == null) {
+				throw new AdempiereException("@AD_Ref_List_ID@ @Invalid@: " + postingType);
+			}
 			whereClause.append(" AND ")
-				.append(table.getTableName())
+				.append(I_Fact_Acct.Table_Name)
 				.append(".")
 				.append(I_Fact_Acct.COLUMNNAME_PostingType)
 				.append(" = ? ")
 			;
-			filtersList.add(request.getPostingType());
+			filtersList.add(postingType);
 		}
 
 		// Date
@@ -937,55 +946,62 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			whereClause.append(" AND ");
 			if (dateFrom != null && dateTo != null) {
 				whereClause.append("TRUNC(")
-					.append(table.getTableName())
-					.append(".DateAcct, 'DD') BETWEEN ? AND ? ");
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') BETWEEN ? AND ? ")
+				;
 				filtersList.add(dateFrom);
 				filtersList.add(dateTo);
 			}
 			else if (dateFrom != null) {
 				whereClause.append("TRUNC(")
-					.append(table.getTableName())
-					.append(".DateAcct, 'DD') >= ? ");
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') >= ? ")
+				;
 				filtersList.add(dateFrom);
 			}
 			else {
 				// DateTo != null
 				whereClause.append("TRUNC(")
-					.append(table.getTableName())
-					.append(".DateAcct, 'DD') <= ? ");
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') <= ? ")
+				;
 				filtersList.add(dateTo);
 			}
 		}
 
 		// Document
-		String tableName = request.getTableName();
-		if (!Util.isEmpty(tableName, true) && request.getRecordId() > 0) {
-			int tableId = MTable.getTable_ID(tableName);
+		if (!Util.isEmpty(request.getTableName(), true)) {
+			final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
+			if (documentTable == null || documentTable.getAD_Table_ID() == 0) {
+				throw new AdempiereException("@AD_Table_ID@ @Invalid@");
+			}
+			// validate record
+			final int recordId = request.getRecordId();
+			RecordUtil.validateRecordId(recordId, documentTable.getAccessLevel());
+
+			// table
 			whereClause.append(" AND ")
-				.append(table.getTableName())
+				.append(I_Fact_Acct.Table_Name)
 				.append(".")
 				.append(I_Fact_Acct.COLUMNNAME_AD_Table_ID)
 				.append(" = ? ")
 			;
-			filtersList.add(tableId);
+			filtersList.add(documentTable.getAD_Table_ID());
 
 			// record
-			int recordId = request.getRecordId();
-			if (recordId > 0) {
-				whereClause.append(" AND ")
-					.append(table.getTableName())
-					.append(".")
-					.append(I_Fact_Acct.COLUMNNAME_Record_ID)
-					.append(" = ? ")
-				;
-				filtersList.add(recordId);
-			}
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_Record_ID)
+				.append(" = ? ")
+			;
+			filtersList.add(recordId);
 		}
 
 		// Organization
 		if (request.getOrganizationId() > 0) {
 			whereClause.append(" AND ")
-				.append(table.getTableName())
+				.append(I_Fact_Acct.Table_Name)
 				.append(".")
 				.append(I_Fact_Acct.COLUMNNAME_AD_Org_ID)
 				.append(" = ? ")
@@ -997,7 +1013,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		String sqlWithRescriction = sql.toString() + whereClause.toString();
 		String parsedSQL = MRole.getDefault(Env.getCtx(), false)
 			.addAccessSQL(sqlWithRescriction,
-				table.getTableName(),
+				I_Fact_Acct.Table_Name,
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
 			);

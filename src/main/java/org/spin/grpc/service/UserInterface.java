@@ -680,6 +680,13 @@ public class UserInterface extends UserInterfaceImplBase {
 						e.printStackTrace();
 					}
 				}
+
+				// TODO: Temporary Workaround
+				rowValues = ContextTemporaryWorkaround.setContextAsUnknowColumn(
+					table.getTableName(),
+					rowValues
+				);
+
 				valueObjectBuilder.setValues(rowValues);
 			}
 		} catch (Exception e) {

@@ -56,6 +56,7 @@ static_resources:
                 - field.business_partner.BusinessPartnerInfoService
                 - field.invoice.InvoiceInfoService
                 - field.payment.PaymentInfoService
+                - field.order.OrderInfoService
                 - field.product.ProductInfoService
                 - file_management.FileManagement
                 - general_ledger.GeneralLedger
@@ -67,7 +68,6 @@ static_resources:
                 - match_po_receipt_invoice.MatchPORReceiptInvoice
                 - material_management.MaterialManagement
                 - notice_management.NoticeManagement
-                - order.Order
                 - payment_allocation.PaymentAllocation
                 - payment_print_export.PaymentPrintExport
                 - payment.Payment
