@@ -214,7 +214,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 	@Override
 	public void listLanguages(ListLanguagesRequest request, StreamObserver<ListLanguagesResponse> responseObserver) {
 		try {
-			ListLanguagesResponse.Builder languagesList = convertLanguagesList(request);
+			ListLanguagesResponse.Builder languagesList = listLanguages(request);
 			responseObserver.onNext(languagesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -235,7 +235,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 	 * @param request
 	 * @return
 	 */
-	private ListLanguagesResponse.Builder convertLanguagesList(ListLanguagesRequest request) {
+	private ListLanguagesResponse.Builder listLanguages(ListLanguagesRequest request) {
 		Query query = new Query(
 			Env.getCtx(),
 			I_AD_Language.Table_Name,
@@ -253,7 +253,6 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 		;
 		query
 			.<MLanguage>list()
-			.parallelStream()
 			.forEach(language -> {
 				Language.Builder languaBuilder = convertLanguage(language);
 				builder.addLanguages(

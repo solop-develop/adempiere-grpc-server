@@ -371,7 +371,6 @@ public class Security extends SecurityImplBase {
 		ListRolesResponse.Builder builder = ListRolesResponse.newBuilder();
 		query.setLimit(limit, offset)
 			.<MRole>list()
-			.parallelStream()
 			.forEach(role -> {
 				builder.addRoles(
 					convertRole(role)
@@ -492,7 +491,6 @@ public class Security extends SecurityImplBase {
 		query.setLimit(limit, offset)
 			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
 			.<MOrg>list()
-			.parallelStream()
 			.forEach(organization -> {
 				// MOrg.get static method not instance the organization in 0=* (asterisk)
 				// MOrg organization = MOrg.get(Env.getCtx(), organizationId);
@@ -643,7 +641,6 @@ public class Security extends SecurityImplBase {
 		query //.setLimit(limit, offset)
 			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
 			.<MWarehouse>list()
-			.parallelStream()
 			.forEach(warehouse -> {
 				// MWarehouse.get static method not instance the warehouse in 0=* (asterisk)
 				// MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
@@ -1037,7 +1034,8 @@ public class Security extends SecurityImplBase {
 			ValueManager.validateNull(ContextManager.getDefaultLanguage(Env.getAD_Language(Env.getCtx()))));
 		//	Set default context
 		Struct.Builder contextValues = Struct.newBuilder();
-		Env.getCtx().entrySet().parallelStream()
+		Env.getCtx().entrySet()
+			.stream()
 			.filter(keyValue -> {
 				return ContextManager.isSessionContext(
 					String.valueOf(

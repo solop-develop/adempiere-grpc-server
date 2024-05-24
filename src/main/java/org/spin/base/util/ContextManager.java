@@ -167,7 +167,7 @@ public class ContextManager {
 		}
 
 		//	Fill context
-		attributes.entrySet().parallelStream()
+		attributes.entrySet()
 			.forEach(attribute -> {
 				setWindowContextByObject(context, windowNo, attribute.getKey(), attribute.getValue());
 			});

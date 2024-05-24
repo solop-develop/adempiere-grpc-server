@@ -64,7 +64,7 @@ public class ContextTemporaryWorkaround {
 			org.compiere.model.CalloutPayment.class.getName()
 		);
 
-		calloutsList.parallelStream().forEach(calloutClassAndMethod -> {
+		calloutsList.forEach(calloutClassAndMethod -> {
 			if (Util.isEmpty(calloutClassAndMethod, true)) {
 				// empty class name
 				return;
