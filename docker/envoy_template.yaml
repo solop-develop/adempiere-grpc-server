@@ -56,6 +56,7 @@ static_resources:
                 - express_movement.ExpressMovement
                 - express_receipt.ExpressReceipt
                 - express_shipment.ExpressShipment
+                - field.FieldManagementService
                 - field.business_partner.BusinessPartnerInfoService
                 - field.invoice.InvoiceInfoService
                 - field.order.OrderInfoService

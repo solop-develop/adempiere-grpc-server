@@ -1,0 +1,82 @@
+/************************************************************************************
+ * Copyright (C) 2012-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Yamel Senih ysenih@erpya.com                                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+ syntax = "proto3";
+
+
+ option java_multiple_files = true;
+ option java_package = "org.spin.backend.grpc.field";
+ option java_outer_classname = "ADempiereFieldManagement";
+ 
+ import "base_data_type.proto";
+ import "google/api/annotations.proto";
+ import "google/protobuf/empty.proto";
+ import "google/protobuf/struct.proto";
+ 
+ // Base URL
+ // /field/
+ 
+ package field;
+
+//	Field Management
+service FieldManagementService {
+	// Windows To Zoom from field
+	rpc ListZoomWindows(ListZoomWindowsRequest) returns (ListZoomWindowsResponse) {
+		option (google.api.http) = {
+			get: "/field/zooms/{table_name}/{column_name}"
+			additional_bindings: {
+				get: "/field/zooms/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/field/zooms/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/field/zooms/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/field/zooms/query-criteria/{browse_field_id}"
+			}
+		};
+	}
+}
+
+//	Zoom Window
+message ListZoomWindowsRequest {
+	// references
+	int32 process_parameter_id = 1;
+	int32 field_id = 2;
+	int32 browse_field_id = 3;
+	int32 reference_id = 4;
+	int32 column_id = 5;
+	string table_name = 6;
+	string column_name = 7;
+	// current value
+	google.protobuf.Value value = 8;
+}
+message ZoomWindow {
+	int32 id = 1;
+	string name = 2;
+	string description = 3;
+	bool is_sales_transaction = 4;
+	int32 tab_id = 5;
+	string tab_uuid = 6;
+}
+message ListZoomWindowsResponse {
+	string table_name = 1;
+	string key_column_name = 2;
+	repeated string key_columns = 3;
+	string display_column_name = 4;
+	repeated string context_column_names = 5;
+	repeated ZoomWindow zoom_windows = 6;
+}

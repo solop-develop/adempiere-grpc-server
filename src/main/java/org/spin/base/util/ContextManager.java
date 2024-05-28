@@ -18,6 +18,7 @@ package org.spin.base.util;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,13 +50,34 @@ public class ContextManager {
 	private static CCache<String, String> languageCache = new CCache<String, String>("Language-gRPC-Service", 30, 0);	//	no time-out
 
 
+	public static String joinStrings(String... stringValues) {
+		// StringBuilder stringBuilder = new StringBuilder();
+		// for (String stringValue : stringValues) {
+		// 	if (!Util.isEmpty(stringValue, true)) {
+		// 		stringBuilder.append(stringValue);
+		// 	}
+		// }
+		// return stringBuilder.toString();
+		return String.join(
+			"",
+			Arrays.stream(stringValues)
+				.filter(s -> !Util.isEmpty(s, true))
+				.toArray(String[]::new)
+		);
+
+	}
+
 	/**
 	 * Get Context column names from context
 	 * @param context
 	 * @return
 	 * @return List<String>
 	 */
-	public static List<String> getContextColumnNames(String context) {
+	public static List<String> getContextColumnNames(String... values) {
+		if (values == null || values.length <= 0) {
+			return new ArrayList<String>();
+		}
+		String context = joinStrings(values);
 		if (Util.isEmpty(context, true)) {
 			return new ArrayList<String>();
 		}
@@ -63,9 +85,9 @@ public class ContextManager {
 		String END   = "\\@";  // A literal ")" character in regex
 
 		// Captures the word(s) between the above two character(s)
-		String patternValue = START + "(#|$){0,1}(\\w+)" + END;
+		final String COLUMN_NAME_PATTERN = START + "(#|$){0,1}(\\w+)" + END;
 
-		Pattern pattern = Pattern.compile(patternValue);
+		Pattern pattern = Pattern.compile(COLUMN_NAME_PATTERN);
 		Matcher matcher = pattern.matcher(context);
 		Map<String, Boolean> columnNamesMap = new HashMap<String, Boolean>();
 		while(matcher.find()) {
