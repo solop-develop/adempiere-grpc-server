@@ -366,23 +366,10 @@ message Browser {
 	repeated Field fields = 22;
 }
 
-// Zoom Window
-message ZoomWindow {
-	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	bool is_sales_transaction = 4;
-}
-
 // Foreign Reference
 message Reference {
 	string table_name = 1;
-	string key_column_name = 2;
-	string display_column_name = 3;
 	repeated string context_column_names = 4;
-	// External Info
-	repeated ZoomWindow zoom_windows = 5;
-	int32 id = 6;
 }
 
 // Report Type for Export

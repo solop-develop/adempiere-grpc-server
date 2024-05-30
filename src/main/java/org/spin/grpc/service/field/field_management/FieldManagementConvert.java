@@ -74,6 +74,9 @@ public class FieldManagementConvert {
 						tab.getUUID()
 					)
 				)
+				.setIsParentTab(
+					tab.getTabLevel() == 0
+				)
 			;
 		}
 

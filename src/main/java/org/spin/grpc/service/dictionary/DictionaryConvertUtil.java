@@ -23,7 +23,6 @@ import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Message;
-import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.model.MBrowse;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
@@ -34,7 +33,6 @@ import org.compiere.model.MMessage;
 import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
 import org.compiere.model.MValRule;
-import org.compiere.model.MWindow;
 import org.compiere.model.M_Element;
 import org.compiere.model.PO;
 import org.compiere.util.DisplayType;
@@ -51,12 +49,10 @@ import org.spin.backend.grpc.dictionary.MessageText;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.SearchColumn;
-import org.spin.backend.grpc.dictionary.ZoomWindow;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 
 public class DictionaryConvertUtil {
 
@@ -162,74 +158,15 @@ public class DictionaryConvertUtil {
 					info.TableName
 				)
 			)
-			.setKeyColumnName(
-				ValueManager.validateNull(
-					info.KeyColumn
-				)
-			)
-			.setDisplayColumnName(
-				ValueManager.validateNull(
-					info.DisplayColumn
-				)
-			)
 			.addAllContextColumnNames(
 				contextColumnsList
 			)
 		;
 
-		// reference value
-		if (info.AD_Reference_Value_ID > 0) {
-			builder.setId(info.AD_Reference_Value_ID);
-		}
-
-		//	Window Reference
-		if (info.ZoomWindow > 0) {
-			builder.addZoomWindows(
-				convertZoomWindow(context, info.ZoomWindow).build()
-			);
-		}
-		// window reference Purchase Order
-		if (info.ZoomWindowPO > 0) {
-			builder.addZoomWindows(
-				convertZoomWindow(context, info.ZoomWindowPO).build()
-			);
-		}
 		//	Return
 		return builder;
 	}
 
-
-
-	/**
-	 * Convert Zoom Window from ID
-	 * @param windowId
-	 * @return
-	 */
-	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId) {
-		MWindow window = ASPUtil.getInstance(context).getWindow(windowId); // new MWindow(context, windowId, null);
-		//	Get translation
-		String name = null;
-		String description = null;
-		String language = Env.getAD_Language(context);
-		if (!Util.isEmpty(language, true)) {
-			name = window.get_Translation(I_AD_Window.COLUMNNAME_Name, language);
-			description = window.get_Translation(I_AD_Window.COLUMNNAME_Description, language);
-		}
-		//	Validate for default
-		if (Util.isEmpty(name, true)) {
-			name = window.getName();
-		}
-		if (Util.isEmpty(description, true)) {
-			description = window.getDescription();
-		}
-		//	Return
-		return ZoomWindow.newBuilder()
-			.setId(window.getAD_Window_ID())
-			.setName(ValueManager.validateNull(name))
-			.setDescription(ValueManager.validateNull(description))
-			.setIsSalesTransaction(window.isSOTrx())
-		;
-	}
 
 
 	/**

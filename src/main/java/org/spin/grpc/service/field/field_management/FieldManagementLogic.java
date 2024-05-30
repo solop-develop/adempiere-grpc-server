@@ -15,18 +15,29 @@
 package org.spin.grpc.service.field.field_management;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_AD_Tab;
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MColumn;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MTab;
 import org.compiere.model.MTable;
+import org.compiere.model.MWindow;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
+import org.spin.backend.grpc.field.GetZoomParentRecordRequest;
+import org.spin.backend.grpc.field.GetZoomParentRecordResponse;
 import org.spin.backend.grpc.field.ListZoomWindowsRequest;
 import org.spin.backend.grpc.field.ListZoomWindowsResponse;
 import org.spin.backend.grpc.field.ZoomWindow;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.util.ASPUtil;
 
 public class FieldManagementLogic {
 
@@ -107,4 +118,109 @@ public class FieldManagementLogic {
 
 		return builderList;
 	}
+
+
+	public static GetZoomParentRecordResponse.Builder getZoomParentRecord(GetZoomParentRecordRequest request) {
+		if (request.getWindowId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Window_ID@");
+		}
+		MWindow window = ASPUtil.getInstance(Env.getCtx()).getWindow(request.getWindowId());
+		if (window == null || window.getAD_Window_ID() <= 0) {
+			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
+		}
+
+		if (request.getTabId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
+		}
+		MTab currentTab = ASPUtil.getInstance(Env.getCtx())
+			.getWindowTab(
+				window.getAD_Window_ID(),
+				request.getTabId()
+			)
+		;
+		if (currentTab == null || currentTab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
+		MTable currentTable = MTable.get(Env.getCtx(), currentTab.getAD_Table_ID());
+		String[] keys = currentTable.getKeyColumns();
+		String currentKeyColumnName = currentTable.getTableName() + "_ID";
+		if (keys != null && keys.length > 0) {
+			currentKeyColumnName = keys[0];
+		}
+		MColumn currentKeycolumn = currentTable.getColumn(currentKeyColumnName);
+		String currentLinkColumn = "";
+		if (currentTab.getParent_Column_ID() > 0) {
+			currentLinkColumn = MColumn.getColumnName(Env.getCtx(), currentTab.getParent_Column_ID());
+		} else if (currentTab.getAD_Column_ID() > 0) {
+			currentLinkColumn = MColumn.getColumnName(Env.getCtx(), currentTab.getParent_Column_ID());
+		}
+
+		List<MTab> tabsList = ASPUtil.getInstance(Env.getCtx())
+			.getWindowTabs(window.getAD_Window_ID())
+		;
+		MTab parentTab = tabsList.stream()
+			.filter(tab -> {
+				return tab.getTabLevel() == 0;
+			})
+			.sorted(
+				Comparator.comparing(MTab::getSeqNo)
+					.thenComparing(MTab::getTabLevel)
+					.reversed()
+			)
+			.findFirst()
+			.orElse(null);
+		GetZoomParentRecordResponse.Builder builder = GetZoomParentRecordResponse.newBuilder();
+		if (parentTab == null) {
+			return builder;
+		}
+
+		MTable table = MTable.get(Env.getCtx(), parentTab.getAD_Table_ID());
+		String parentKeyColum = table.getTableName() + "_ID";
+		if (Util.isEmpty(currentLinkColumn, true)) {
+			currentLinkColumn = parentKeyColum;
+		}
+
+		builder.setParentTabId(
+				parentTab.getAD_Tab_ID()
+			)
+			.setParentTabUuid(
+				ValueManager.validateNull(
+					parentTab.getUUID()
+				)
+			)
+			.setKeyColumn(
+				ValueManager.validateNull(
+					parentKeyColum
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					parentTab.get_Translation(
+						I_AD_Tab.COLUMNNAME_Name
+					)
+				)
+			)
+		;
+
+		final String sql = "SELECT parent." + parentKeyColum + " FROM " + table.getTableName() + " AS parent "
+			+ "WHERE EXISTS(SELECT 1 "
+				+ "FROM " + currentTable.getTableName() + " AS child "
+				+ "WHERE child." + currentLinkColumn + " = parent." + parentKeyColum
+				+ " AND child." + currentKeycolumn.getColumnName() + " = ?"
+			+ ")"
+		;
+		Object currentValue = ValueManager.getObjectFromReference(
+			request.getValue(),
+			currentKeycolumn.getAD_Reference_ID()
+		);
+		int recordId = DB.getSQLValue(null, sql, currentValue);
+		if (recordId >= 0) {
+			builder.setRecordId(
+				recordId
+			);
+		}
+
+		return builder;
+	}
+
 }

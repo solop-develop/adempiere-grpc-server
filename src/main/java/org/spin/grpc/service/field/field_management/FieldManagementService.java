@@ -19,6 +19,8 @@ import org.compiere.util.CLogger;
 import org.spin.backend.grpc.field.ListZoomWindowsRequest;
 import org.spin.backend.grpc.field.ListZoomWindowsResponse;
 import org.spin.backend.grpc.field.FieldManagementServiceGrpc.FieldManagementServiceImplBase;
+import org.spin.backend.grpc.field.GetZoomParentRecordRequest;
+import org.spin.backend.grpc.field.GetZoomParentRecordResponse;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -35,6 +37,28 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 				throw new AdempiereException("Object ListZoomWindowsRequest Null");
 			}
 			ListZoomWindowsResponse.Builder responseList = FieldManagementLogic.listZoomWindows(request);
+			responseObserver.onNext(
+				responseList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void getZoomParentRecord(GetZoomParentRecordRequest request, StreamObserver<GetZoomParentRecordResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object GetZoomParentRecordRequest Null");
+			}
+			GetZoomParentRecordResponse.Builder responseList = FieldManagementLogic.getZoomParentRecord(request);
 			responseObserver.onNext(
 				responseList.build()
 			);

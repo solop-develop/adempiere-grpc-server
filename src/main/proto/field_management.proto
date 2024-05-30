@@ -49,6 +49,11 @@ service FieldManagementService {
 			}
 		};
 	}
+	rpc GetZoomParentRecord(GetZoomParentRecordRequest) returns (GetZoomParentRecordResponse) {
+		option (google.api.http) = {
+			get: "/field/zooms/record/{window_id}/{tab_id}"
+		};
+	}
 }
 
 //	Zoom Window
@@ -71,6 +76,8 @@ message ZoomWindow {
 	bool is_sales_transaction = 4;
 	int32 tab_id = 5;
 	string tab_uuid = 6;
+	string tab_name = 7;
+	bool is_parent_tab = 8;
 }
 message ListZoomWindowsResponse {
 	string table_name = 1;
@@ -79,4 +86,19 @@ message ListZoomWindowsResponse {
 	string display_column_name = 4;
 	repeated string context_column_names = 5;
 	repeated ZoomWindow zoom_windows = 6;
+}
+
+message GetZoomParentRecordRequest {
+	int32 window_id = 1;
+	int32 tab_id = 2;
+	// current value
+	google.protobuf.Value value = 3;
+}
+message GetZoomParentRecordResponse {
+	int32 parent_tab_id = 1;
+	string parent_tab_uuid = 2;
+	string key_column = 3;
+	string name = 4;
+	// parent value
+	int32 record_id = 5;
 }
