@@ -293,14 +293,16 @@ public class UserInterface extends UserInterfaceImplBase {
 			int referenceId = column.getAD_Reference_ID();
 
 			Object value = null;
-			if (referenceId > 0) {
-				value = ValueManager.getObjectFromReference(
-					attribute.getValue(),
-					referenceId
-				);
-			}
-			if (value == null) {
-				value = ValueManager.getObjectFromValue(attribute.getValue());
+			if (!attribute.getValue().hasNullValue()) {
+				if (referenceId > 0) {
+					value = ValueManager.getObjectFromReference(
+						attribute.getValue(),
+						referenceId
+					);
+				}
+				if (value == null) {
+					value = ValueManager.getObjectFromValue(attribute.getValue());
+				}
 			}
 			entity.set_ValueOfColumn(columnName, value);
 		});
@@ -976,7 +978,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
 		PO currentEntity = entity;
-		attributes.entrySet().parallelStream().forEach(attribute -> {
+		attributes.entrySet().forEach(attribute -> {
 			final String columnName = attribute.getKey();
 			MColumn column = table.getColumn(columnName);
 			if (column == null || column.getAD_Column_ID() <= 0) {
@@ -989,16 +991,18 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 			int referenceId = column.getAD_Reference_ID();
 			Object value = null;
-			if (referenceId > 0) {
-				value = ValueManager.getObjectFromReference(
-					attribute.getValue(),
-					referenceId
-				);
-			} 
-			if (value == null) {
-				value = ValueManager.getObjectFromValue(
-					attribute.getValue()
-				);
+			if (!attribute.getValue().hasNullValue()) {
+				if (referenceId > 0) {
+					value = ValueManager.getObjectFromReference(
+						attribute.getValue(),
+						referenceId
+					);
+				} 
+				if (value == null) {
+					value = ValueManager.getObjectFromValue(
+						attribute.getValue()
+					);
+				}
 			}
 			currentEntity.set_ValueOfColumn(columnName, value);
 		});
