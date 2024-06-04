@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11.0.22_7-jdk-focal
+FROM eclipse-temurin:11.0.23_9-jdk-focal
 
 LABEL maintainer="ySenih@erpya.com; EdwinBetanc0urt@outlook.com;" \
 	description="ADempiere gRPC All In One Server used as ADempiere adempiere-grpc-server"
