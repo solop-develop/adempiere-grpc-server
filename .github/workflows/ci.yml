@@ -27,6 +27,7 @@ on:
     paths-ignore:
       - README.md
       - README.es.md
+      - docker/*
 
 jobs:
 
