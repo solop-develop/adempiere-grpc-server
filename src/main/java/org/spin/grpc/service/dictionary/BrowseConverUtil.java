@@ -31,7 +31,6 @@ import org.compiere.model.MTable;
 import org.compiere.model.MValRule;
 import org.compiere.model.MWindow;
 import org.compiere.util.DisplayType;
-import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Browser;
 import org.spin.backend.grpc.dictionary.DependentField;
@@ -109,7 +108,7 @@ public class BrowseConverUtil {
 		}
 		// set table name
 		if (browser.getAD_Table_ID() > 0) {
-			MTable table = MTable.get(Env.getCtx(), browser.getAD_Table_ID());
+			MTable table = MTable.get(browser.getCtx(), browser.getAD_Table_ID());
 			builder.setTableName(
 				ValueManager.validateNull(table.getTableName())
 			);
@@ -132,7 +131,11 @@ public class BrowseConverUtil {
 		}
 		//	For parameters
 		if(withFields) {
-			for(MBrowseField field : ASPUtil.getInstance(context).getBrowseFields(browser.getAD_Browse_ID())) {
+			List<MBrowseField> browseFields = ASPUtil.getInstance(context).getBrowseFields(browser.getAD_Browse_ID());
+			for(MBrowseField field : browseFields) {
+				if (field == null) {
+					continue;
+				}
 				Field.Builder fieldBuilder = BrowseConverUtil.convertBrowseField(
 					context,
 					field
@@ -304,12 +307,12 @@ public class BrowseConverUtil {
 			return depenentFieldsList;
 		}
 
-		MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), browseField.getAD_View_Column_ID(), null);
+		MViewColumn viewColumn = MViewColumn.getById(browseField.getCtx(), browseField.getAD_View_Column_ID(), null);
 		String parentColumnName = viewColumn.getColumnName();
 
 		String elementName = null;
 		if(viewColumn.getAD_Column_ID() != 0) {
-			MColumn column = MColumn.get(Env.getCtx(), viewColumn.getAD_Column_ID());
+			MColumn column = MColumn.get(browseField.getCtx(), viewColumn.getAD_Column_ID());
 			elementName = column.getColumnName();
 		}
 		if(Util.isEmpty(elementName, true)) {
@@ -325,7 +328,7 @@ public class BrowseConverUtil {
 
 		browseFieldsList.parallelStream()
 			.filter(currentBrowseField -> {
-				if(!currentBrowseField.isActive()) {
+				if(currentBrowseField == null || !currentBrowseField.isActive()) {
 					return false;
 				}
 				// Display Logic
@@ -350,7 +353,7 @@ public class BrowseConverUtil {
 				}
 				// Dynamic Validation
 				if (currentBrowseField.getAD_Val_Rule_ID() > 0) {
-					MValRule validationRule = MValRule.get(Env.getCtx(), currentBrowseField.getAD_Val_Rule_ID());
+					MValRule validationRule = MValRule.get(currentBrowseField.getCtx(), currentBrowseField.getAD_Val_Rule_ID());
 					if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())
 						|| ContextManager.isUseParentColumnOnContext(parentElementName, validationRule.getCode())) {
 						return true;
@@ -383,7 +386,7 @@ public class BrowseConverUtil {
 					)
 				;
 
-				MViewColumn currentViewColumn = MViewColumn.getById(Env.getCtx(), currentBrowseField.getAD_View_Column_ID(), null);
+				MViewColumn currentViewColumn = MViewColumn.getById(currentBrowseField.getCtx(), currentBrowseField.getAD_View_Column_ID(), null);
 				builder.setColumnName(currentViewColumn.getColumnName());
 
 				depenentFieldsList.add(builder.build());

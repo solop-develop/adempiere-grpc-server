@@ -105,7 +105,7 @@ public class WindowConvertUtil {
 //			List<Tab.Builder> tabListForGroup = new ArrayList<>();
 			List<MTab> tabs = ASPUtil.getInstance(context).getWindowTabs(window.getAD_Window_ID());
 			for(MTab tab : tabs) {
-				if(!tab.isActive()) {
+				if(tab == null || !tab.isActive()) {
 					continue;
 				}
 				// role without permission to accounting
@@ -341,7 +341,11 @@ public class WindowConvertUtil {
 
 		//	Fields
 		if(withFields) {
-			for(MField field : ASPUtil.getInstance(context).getWindowFields(tab.getAD_Tab_ID())) {
+			List<MField> fieldsList = ASPUtil.getInstance(context).getWindowFields(tab.getAD_Tab_ID());
+			for(MField field : fieldsList) {
+				if (field == null) {
+					continue;
+				}
 				Field.Builder fieldBuilder = WindowConvertUtil.convertField(
 					context,
 					field,
@@ -564,10 +568,10 @@ public class WindowConvertUtil {
 		}
 
 		int columnId = field.getAD_Column_ID();
-		String parentColumnName = MColumn.getColumnName(Env.getCtx(), columnId);
+		String parentColumnName = MColumn.getColumnName(field.getCtx(), columnId);
 
-		MTab parentTab = MTab.get(Env.getCtx(), field.getAD_Tab_ID());
-		List<MTab> tabsList = ASPUtil.getInstance(Env.getCtx()).getWindowTabs(parentTab.getAD_Window_ID());
+		MTab parentTab = MTab.get(field.getCtx(), field.getAD_Tab_ID());
+		List<MTab> tabsList = ASPUtil.getInstance(field.getCtx()).getWindowTabs(parentTab.getAD_Window_ID());
 		if (tabsList == null || tabsList.isEmpty()) {
 			return depenentFieldsList;
 		}
@@ -584,7 +588,7 @@ public class WindowConvertUtil {
 
 				fieldsList.parallelStream()
 					.filter(currentField -> {
-						if (!currentField.isActive()) {
+						if (currentField == null || !currentField.isActive()) {
 							return false;
 						}
 						// Display Logic
@@ -597,13 +601,13 @@ public class WindowConvertUtil {
 						}
 						// Dynamic Validation
 						if (currentField.getAD_Val_Rule_ID() > 0) {
-							MValRule validationRule = MValRule.get(Env.getCtx(), currentField.getAD_Val_Rule_ID());
+							MValRule validationRule = MValRule.get(currentField.getCtx(), currentField.getAD_Val_Rule_ID());
 							if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
 								return true;
 							}
 						}
 
-						MColumn currentColumn = MColumn.get(Env.getCtx(), currentField.getAD_Column_ID());
+						MColumn currentColumn = MColumn.get(currentField.getCtx(), currentField.getAD_Column_ID());
 						// Default Value of Column
 						if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentColumn.getDefaultValue())) {
 							return true;
@@ -618,7 +622,7 @@ public class WindowConvertUtil {
 						}
 						// Dynamic Validation
 						if (currentColumn.getAD_Val_Rule_ID() > 0) {
-							MValRule validationRule = MValRule.get(Env.getCtx(), currentColumn.getAD_Val_Rule_ID());
+							MValRule validationRule = MValRule.get(currentField.getCtx(), currentColumn.getAD_Val_Rule_ID());
 							if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
 								return true;
 							}
@@ -650,7 +654,7 @@ public class WindowConvertUtil {
 							)
 						;
 
-						String currentColumnName = MColumn.getColumnName(Env.getCtx(), currentField.getAD_Column_ID());
+						String currentColumnName = MColumn.getColumnName(currentField.getCtx(), currentField.getAD_Column_ID());
 						builder.setColumnName(
 							ValueManager.validateNull(
 								currentColumnName

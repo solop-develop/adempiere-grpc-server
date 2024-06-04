@@ -28,7 +28,6 @@ import org.compiere.model.MProcessPara;
 import org.compiere.model.MProcessParaCustom;
 import org.compiere.model.MReportView;
 import org.compiere.model.MValRule;
-import org.compiere.util.Env;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.dictionary.DependentField;
 import org.spin.backend.grpc.dictionary.Field;
@@ -159,7 +158,7 @@ public class ProcessConvertUtil {
 				);
 				reportView = MReportView.get(context, process.getAD_ReportView_ID());
 			}
-			ReportExportHandler exportHandler = new ReportExportHandler(Env.getCtx(), reportView);
+			ReportExportHandler exportHandler = new ReportExportHandler(context, reportView);
 			for(AbstractExportFormat reportType : exportHandler.getExportFormatList()) {
 				ReportExportType.Builder reportExportType = ReportExportType.newBuilder()
 					.setName(
@@ -178,6 +177,9 @@ public class ProcessConvertUtil {
 		//	For parameters
 		if(withParams && parametersList != null && parametersList.size() > 0) {
 			for(MProcessPara parameter : parametersList) {
+				if (parameter == null) {
+					continue;
+				}
 				Field.Builder fieldBuilder = ProcessConvertUtil.convertProcessParameter(
 					context,
 					parameter
@@ -219,7 +221,7 @@ public class ProcessConvertUtil {
 
 		parametersList.parallelStream()
 			.filter(currentParameter -> {
-				if (!currentParameter.isActive()) {
+				if (currentParameter == null || !currentParameter.isActive()) {
 					return false;
 				}
 				// Display Logic
@@ -236,7 +238,7 @@ public class ProcessConvertUtil {
 				}
 				// Dynamic Validation
 				if (currentParameter.getAD_Val_Rule_ID() > 0) {
-					MValRule validationRule = MValRule.get(Env.getCtx(), currentParameter.getAD_Val_Rule_ID());
+					MValRule validationRule = MValRule.get(currentParameter.getCtx(), currentParameter.getAD_Val_Rule_ID());
 					if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
 						return true;
 					}

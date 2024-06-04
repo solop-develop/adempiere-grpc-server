@@ -64,7 +64,7 @@ public class DictionaryConvertUtil {
 	 */
 	public static PO translateEntity(PO entity) {
 		String language = entity.getCtx().getProperty(Env.LANGUAGE);
-		boolean isBaseLanguage = Env.isBaseLanguage(Env.getCtx(), "");
+		boolean isBaseLanguage = Env.isBaseLanguage(entity.getCtx(), "");
 		if(!isBaseLanguage) {
 			//	Name
 			String name = entity.get_Translation(I_AD_Element.COLUMNNAME_Name, language);
@@ -428,7 +428,7 @@ public class DictionaryConvertUtil {
 
 		String parentColumnName = column.getColumnName();
 
-		MTable table = MTable.get(Env.getCtx(), column.getAD_Table_ID());
+		MTable table = MTable.get(column.getCtx(), column.getAD_Table_ID());
 		List<MColumn> columnsList = table.getColumnsAsList(false);
 		if (columnsList == null || columnsList.isEmpty()) {
 			return depenentFieldsList;
@@ -436,7 +436,7 @@ public class DictionaryConvertUtil {
 
 		columnsList.parallelStream()
 			.filter(currentColumn -> {
-				if(!currentColumn.isActive()) {
+				if(currentColumn == null || !currentColumn.isActive()) {
 					return false;
 				}
 				// Default Value
@@ -453,7 +453,7 @@ public class DictionaryConvertUtil {
 				}
 				// Dynamic Validation
 				if (currentColumn.getAD_Val_Rule_ID() > 0) {
-					MValRule validationRule = MValRule.get(Env.getCtx(), currentColumn.getAD_Val_Rule_ID());
+					MValRule validationRule = MValRule.get(currentColumn.getCtx(), currentColumn.getAD_Val_Rule_ID());
 					if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
 						return true;
 					}
@@ -573,14 +573,14 @@ public class DictionaryConvertUtil {
 		if (field == null || field.getAD_Field_ID() <= 0) {
 			return builder;
 		}
-		MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+		MColumn column = MColumn.get(field.getCtx(), field.getAD_Column_ID());
 		int displayTypeId = column.getAD_Reference_ID();
 		if (field.getAD_Reference_ID() > 0) {
 			displayTypeId = field.getAD_Reference_ID();
 		}
 		String name = ValueManager.validateNull(
 			Msg.translate(
-				Env.getCtx(),
+				field.getCtx(),
 				column.getColumnName()
 			)
 		);
@@ -621,7 +621,7 @@ public class DictionaryConvertUtil {
 			.setName(
 				ValueManager.validateNull(
 					Msg.translate(
-						Env.getCtx(),
+						column.getCtx(),
 						column.getColumnName()
 					)
 				)
