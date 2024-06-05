@@ -114,7 +114,7 @@ public class ProcessConvertUtil {
 			builder.setBrowserId(
 					process.getAD_Browse_ID()
 				)
-				.setBrowse(
+				.setBrowser(
 					DictionaryConvertUtil.getDictionaryEntity(
 						browse
 					)

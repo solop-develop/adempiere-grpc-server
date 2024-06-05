@@ -1637,7 +1637,7 @@ public class Security extends SecurityImplBase {
 							smartBrowser.getUUID()
 						)
 					)
-					.setBrowse(actionReference)
+					.setBrowser(actionReference)
 				;
 			} else if (menu.getAction().equals(MMenu.ACTION_WorkFlow) && menu.getAD_Workflow_ID() > 0) {
 				MWorkflow workflow = MWorkflow.get(context, menu.getAD_Workflow_ID());
@@ -1781,7 +1781,7 @@ public class Security extends SecurityImplBase {
 				message += "@AD_Process_ID@ without record access.";
 				isWithAccess = false;
 			}
-		} else if (request.getDictionaryTypeValue() == DictionaryType.BROWSE_VALUE) {
+		} else if (request.getDictionaryTypeValue() == DictionaryType.BROWSER_VALUE) {
 			isWithAccess = true;
 			Boolean isRoleAccess = role.getBrowseAccess(dictionaryId);
 			if (isRoleAccess == null || !isRoleAccess.booleanValue()) {

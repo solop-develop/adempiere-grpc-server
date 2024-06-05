@@ -322,7 +322,7 @@ message Menu {
 	optional DictionaryEntity window = 13;
 	optional DictionaryEntity process = 14;
 	optional DictionaryEntity form = 15;
-	optional DictionaryEntity browse = 16;
+	optional DictionaryEntity browser = 16;
 	optional DictionaryEntity workflow = 17;
 	// Tree menu childs
 	repeated Menu children = 18;
@@ -367,7 +367,7 @@ enum DictionaryType {
 	MENU = 1;
 	WINDOW = 2;
 	PROCESS = 3;
-	BROWSE = 4;
+	BROWSER = 4;
 	FORM = 5;
 }
 message GetDictionaryAccessRequest {
