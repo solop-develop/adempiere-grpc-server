@@ -2667,10 +2667,6 @@ public class UserInterface extends UserInterfaceImplBase {
 			if(searchedValue.isPresent()) {
 				field = searchedValue.get();
 			}
-			int tabNo = (tab.getSeqNo() / 10) - 1;
-			if(tabNo < 0) {
-				tabNo = 0;
-			}
 			//	window
 			int windowNo = request.getWindowNo();
 			if(windowNo <= 0) {
@@ -2705,16 +2701,24 @@ public class UserInterface extends UserInterfaceImplBase {
 					request.getValue()
 				);
 			}
+
+			// TODO: Correct `tabNo` with get ASP Tabs List and isActive tab
+			int tabNo = (tab.getSeqNo() / 10) - 1;
+			if(tabNo < 0) {
+				tabNo = 0;
+			}
 			ContextManager.setTabContextByObject(Env.getCtx(), windowNo, tabNo, request.getColumnName(), value);
 
 			//	Initial load for callout wrapper
 			GridWindowVO gridWindowVo = GridWindowVO.create(Env.getCtx(), windowNo, tab.getAD_Window_ID());
 			GridWindow gridWindow = new GridWindow(gridWindowVo, true);
+			// gridWindow.initTab(tabNo); // TODO: Set more precise link column
 			GridTabVO gridTabVo = GridTabVO.create(gridWindowVo, tabNo, tab, false, true);
 			GridFieldVO gridFieldVo = GridFieldVO.create(Env.getCtx(), windowNo, tabNo, tab.getAD_Window_ID(), tab.getAD_Tab_ID(), false, field);
 			GridField gridField = new GridField(gridFieldVo);
-			GridTab gridTab = new GridTab(gridTabVo, gridWindow, true);
 			//	Init tab
+			GridTab gridTab = new GridTab(gridTabVo, gridWindow, true);
+			gridTab.setLinkColumnName(null);
 			gridTab.query(false);
 			gridTab.clearSelection();
 			gridTab.dataNew(false);
