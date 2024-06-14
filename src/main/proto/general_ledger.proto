@@ -248,10 +248,10 @@ message ListOrganizationsRequest {
 // Accounting Fact
 message ExistsAccoutingDocumentRequest {
 	// mandatory filters
-	int32 accounting_schema_id = 8;
+	int32 accounting_schema_id = 1;
 	// document filters
-	string table_name = 10;
-	int32 record_id = 11;
+	string table_name = 2;
+	int32 record_id = 3;
 }
 message ExistsAccoutingDocumentResponse {
 	bool is_show_accouting = 1;
