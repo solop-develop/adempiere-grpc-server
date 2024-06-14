@@ -72,12 +72,20 @@ service GeneralLedger {
 	rpc ListAccountingDocuments(ListAccountingDocumentsRequest) returns (ListAccountingDocumentsResponse) {
 		option (google.api.http) = { get: "/general-ledger/accounts/documents" };
 	}
+	rpc ExistsAccoutingDocument(ExistsAccoutingDocumentRequest) returns (ExistsAccoutingDocumentResponse) {
+		option (google.api.http) = { get: "/general-ledger/accounts/facts/{accounting_schema_id}/document/{table_name}/{record_id}/exists" };
+	}
 	rpc ListAccountingFacts(ListAccountingFactsRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/facts" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/facts/{accounting_schema_id}"
+			additional_bindings: {
+				get: "/general-ledger/accounts/facts/{accounting_schema_id}/document/{table_name}/{record_id}"
+			}
+		};
 	}
 	rpc StartRePost(StartRePostRequest) returns (StartRePostResponse) {
 		option (google.api.http) = {
-			post: "/general-ledger/re-post",
+			post: "/general-ledger/accounts/facts/{table_name}/{record_id}",
 			body: "*"
 		};
 	}
@@ -238,6 +246,17 @@ message ListOrganizationsRequest {
 }
 
 // Accounting Fact
+message ExistsAccoutingDocumentRequest {
+	// mandatory filters
+	int32 accounting_schema_id = 8;
+	// document filters
+	string table_name = 10;
+	int32 record_id = 11;
+}
+message ExistsAccoutingDocumentResponse {
+	bool is_show_accouting = 1;
+}
+
 message ListAccountingFactsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -265,7 +284,6 @@ message StartRePostRequest {
 	int32 record_id = 2;
 	bool is_force = 3;
 }
-
 message StartRePostResponse {
-	string error_msg = 4;
+	string error_msg = 1;
 }

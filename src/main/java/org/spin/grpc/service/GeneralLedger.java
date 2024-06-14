@@ -29,6 +29,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
 import org.adempiere.core.domains.models.I_Fact_Acct;
 import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
@@ -46,6 +47,7 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.CLogger;
@@ -72,6 +74,8 @@ import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.general_ledger.GeneralLedgerGrpc.GeneralLedgerImplBase;
 import org.spin.backend.grpc.general_ledger.AccoutingElement;
+import org.spin.backend.grpc.general_ledger.ExistsAccoutingDocumentRequest;
+import org.spin.backend.grpc.general_ledger.ExistsAccoutingDocumentResponse;
 import org.spin.backend.grpc.general_ledger.GetAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingCombinationsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
@@ -720,9 +724,9 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	public void startRePost(StartRePostRequest request, StreamObserver<StartRePostResponse> responseObserver) {
 		try {
 			if(request == null) {
-				throw new AdempiereException("Object Request Null");
+				throw new AdempiereException("StartRePostRequest Null");
 			}
-			StartRePostResponse.Builder builder = convertStartRePost(request);
+			StartRePostResponse.Builder builder = startRePost(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -736,17 +740,16 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			);
 		}
 	}
-	
-	private StartRePostResponse.Builder convertStartRePost(StartRePostRequest request) {
+
+	private StartRePostResponse.Builder startRePost(StartRePostRequest request) {
 		// validate and get table
 		final MTable table = RecordUtil.validateAndGetTable(
 			request.getTableName()
 		);
+
 		// Validate ID
-		if (request.getRecordId() <= 0) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
-		}
-		int recordId = request.getRecordId();
+		final int recordId = request.getRecordId();
+		RecordUtil.validateRecordId(recordId, table.getAccessLevel());
 		StartRePostResponse.Builder rePostBuilder = StartRePostResponse.newBuilder();
 
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
@@ -761,7 +764,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		if (!Util.isEmpty(errorMessage, true)) {
 			rePostBuilder.setErrorMsg(errorMessage);
 		}
-		
+
 		return rePostBuilder;
 	}
 
@@ -837,6 +840,83 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 
 	@Override
+	public void existsAccoutingDocument(ExistsAccoutingDocumentRequest request, StreamObserver<ExistsAccoutingDocumentResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("ExistsAccoutingDocumentRequest Null");
+			}
+			ExistsAccoutingDocumentResponse.Builder builder = existsAccoutingDocument(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private ExistsAccoutingDocumentResponse.Builder existsAccoutingDocument(ExistsAccoutingDocumentRequest request) {
+		ExistsAccoutingDocumentResponse.Builder builder = ExistsAccoutingDocumentResponse.newBuilder();
+		MRole role = MRole.getDefault();
+		if (role == null || !role.isShowAcct()) {
+			return builder;
+		}
+
+		// Validate accounting schema
+		int acctSchemaId = request.getAccountingSchemaId();
+		if (acctSchemaId <= 0) {
+			// throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+			return builder;
+		}
+
+		// Validate table
+		if (Util.isEmpty(request.getTableName(), true)) {
+			// throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+			return builder;
+		}
+		final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
+		if (documentTable == null || documentTable.getAD_Table_ID() == 0 || !documentTable.isDocument()) {
+			// throw new AdempiereException("@AD_Table_ID@ @Invalid@");
+			return builder;
+		}
+
+		// Validate record
+		final int recordId = request.getRecordId();
+		if (!RecordUtil.isValidId(recordId, tableName)) {
+			// throw new AdempiereException("@FillMandatory@ @Record_ID@");
+			return builder;
+		}
+		PO record = RecordUtil.getEntity(Env.getCtx(), documentTable.getTableName(), recordId, null);
+		if (record == null || record.get_ID() <= 0) {
+			return builder;
+		}
+
+		// Validate `Posted` column
+		if (record.get_ColumnIndex(I_C_Invoice.COLUMNNAME_Posted) < 0) {
+			// without `Posted` button
+			return builder;
+		}
+
+		// Validate `Processed` column
+		if (record.get_ColumnIndex(I_C_Invoice.COLUMNNAME_Processed) < 0) {
+			return builder;
+		}
+		if (!record.get_ValueAsBoolean(I_C_Invoice.COLUMNNAME_Processed)) {
+			return builder;
+		}
+
+		builder.setIsShowAccouting(true);
+		return builder;
+	}
+
+
+
+	@Override
 	public void listAccountingFacts(ListAccountingFactsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
 			if(request == null) {
@@ -856,7 +936,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			);
 		}
 	}
-	
+
 	ListEntitiesResponse.Builder listAccountingFacts(ListAccountingFactsRequest request) {
 		int acctSchemaId = request.getAccountingSchemaId();
 		if (acctSchemaId <= 0) {
