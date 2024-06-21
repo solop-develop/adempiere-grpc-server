@@ -114,17 +114,21 @@ service UserInterface {
 			}
 		};
 	}
-	//	Request Browser Data
+
+	//	Browser Data
 	rpc ListBrowserItems(ListBrowserItemsRequest) returns (ListBrowserItemsResponse) {
 		option (google.api.http) = { get: "/user-interface/browser-items/{id}" };
 	}
-	// Update Browser Entity
+	rpc ExportBrowserItems(ExportBrowserItemsRequest) returns (ExportBrowserItemsResponse) {
+		option (google.api.http) = { get: "/user-interface/browser-items/{id}/export" };
+	}
 	rpc UpdateBrowserEntity(UpdateBrowserEntityRequest) returns (data.Entity) {
 		option (google.api.http) = {
 			patch: "/user-interface/browser-items/{id}/{record_id}",
 			body: "*"
 		};
 	}
+
 	// Get context Info
 	rpc GetContextInfoValue(GetContextInfoValueRequest) returns (ContextInfoValue) {
 		option (google.api.http) = { get: "/user-interface/context-info/{id}" };
@@ -325,7 +329,8 @@ message RollbackEntityRequest {
 	int32 log_id = 3;
 }
 
-// Browser request
+
+// Browser Items
 message ListBrowserItemsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -334,18 +339,38 @@ message ListBrowserItemsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 id = 8;
-	string context_attributes = 9;
+	string context_attributes = 8;
+	// custom filters
+	int32 id = 9;
 }
-
-// Browsers List
 message ListBrowserItemsResponse {
 	int64 record_count = 1;
 	repeated data.Entity records = 2;
 	string next_page_token = 3;
 }
-
-// Update Browser Entity Request
+message BrowserHeaderField {
+	string column_name = 1;
+	string name = 2;
+	int32 display_type = 3;
+	int32 sequence = 4;
+}
+message ExportBrowserItemsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	// custom filters
+	int32 id = 9;
+}
+message ExportBrowserItemsResponse {
+	int64 record_count = 1;
+	repeated data.Entity records = 2;
+	repeated BrowserHeaderField header_fields = 3;
+}
 message UpdateBrowserEntityRequest {
 	int32 id = 1;
 	int32 record_id = 2;

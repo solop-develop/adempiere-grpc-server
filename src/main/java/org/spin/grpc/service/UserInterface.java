@@ -104,6 +104,8 @@ import org.spin.backend.grpc.user_interface.CreateChatEntryRequest;
 import org.spin.backend.grpc.user_interface.CreateTabEntityRequest;
 import org.spin.backend.grpc.user_interface.DefaultValue;
 import org.spin.backend.grpc.user_interface.DeletePreferenceRequest;
+import org.spin.backend.grpc.user_interface.ExportBrowserItemsRequest;
+import org.spin.backend.grpc.user_interface.ExportBrowserItemsResponse;
 import org.spin.backend.grpc.user_interface.GetContextInfoValueRequest;
 import org.spin.backend.grpc.user_interface.GetDefaultValueRequest;
 import org.spin.backend.grpc.user_interface.GetPrivateAccessRequest;
@@ -147,6 +149,7 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.grpc.service.ui.CalloutLogic;
 import org.spin.grpc.service.ui.UserInterfaceLogic;
 import org.spin.model.MADContextInfo;
@@ -200,6 +203,23 @@ public class UserInterface extends UserInterfaceImplBase {
 	}
 
 
+	@Override
+	public void exportBrowserItems(ExportBrowserItemsRequest request, StreamObserver<ExportBrowserItemsResponse> responseObserver) {
+		try {
+			log.fine("Object List Requested = " + request);
+			ExportBrowserItemsResponse.Builder entityValueList = BrowserLogic.exportBrowserItems(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
 
 	@Override
 	public void updateBrowserEntity(UpdateBrowserEntityRequest request, StreamObserver<Entity> responseObserver) {
@@ -2509,105 +2529,13 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Add Order By
 		parsedSQL = parsedSQL + orderByClause;
 		//	Return
-		builder = convertBrowserResult(browser, parsedSQL, filterValues);
+		List<Entity> entitiesList = BrowserLogic.convertBrowserResult(browser, parsedSQL, filterValues);
+		builder.addAllRecords(entitiesList);
 		//	Validate page token
 		builder.setNextPageToken(
 			ValueManager.validateNull(nexPageToken)
 		);
 		builder.setRecordCount(count);
-		//	Return
-		return builder;
-	}
-	
-	/**
-	 * Convert SQL to list values
-	 * @param pagePrefix
-	 * @param browser
-	 * @param sql
-	 * @param values
-	 * @return
-	 */
-	private ListBrowserItemsResponse.Builder convertBrowserResult(MBrowse browser, String sql, List<Object> parameters) {
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		ListBrowserItemsResponse.Builder builder = ListBrowserItemsResponse.newBuilder();
-		long recordCount = 0;
-		try {
-			LinkedHashMap<String, MBrowseField> fieldsMap = new LinkedHashMap<>();
-			//	Add field to map
-			for(MBrowseField field: ASPUtil.getInstance().getBrowseFields(browser.getAD_Browse_ID())) {
-				fieldsMap.put(field.getAD_View_Column().getColumnName().toUpperCase(), field);
-			}
-			//	SELECT Key, Value, Name FROM ...
-			pstmt = DB.prepareStatement(sql, null);
-			ParameterUtil.setParametersFromObjectsList(pstmt, parameters);
-
-			MBrowseField fieldKey = browser.getFieldKey();
-			String keyColumnName = null;
-			if (fieldKey != null && fieldKey.get_ID() > 0) {
-				keyColumnName = fieldKey.getAD_View_Column().getColumnName();
-			}
-			keyColumnName = ValueManager.validateNull(keyColumnName);
-
-			//	Get from Query
-			rs = pstmt.executeQuery();
-			while(rs.next()) {
-				Struct.Builder rowValues = Struct.newBuilder();
-				ResultSetMetaData metaData = rs.getMetaData();
-
-				Entity.Builder entityBuilder = Entity.newBuilder();
-				if (!Util.isEmpty(keyColumnName, true) && rs.getObject(keyColumnName) != null) {
-					entityBuilder.setId(
-						rs.getInt(keyColumnName)
-					);
-				}
-				for (int index = 1; index <= metaData.getColumnCount(); index++) {
-					try {
-						String columnName = metaData.getColumnName(index);
-						MBrowseField field = fieldsMap.get(columnName.toUpperCase());
-						//	Display Columns
-						if(field == null) {
-							String displayValue = rs.getString(index);
-							Value.Builder displayValueBuilder = ValueManager.getValueFromString(displayValue);
-
-							rowValues.putFields(
-								columnName,
-								displayValueBuilder.build()
-							);
-							continue;
-						}
-						//	From field
-						String fieldColumnName = field.getAD_View_Column().getColumnName();
-						Object value = rs.getObject(index);
-						Value.Builder valueBuilder = ValueManager.getValueFromReference(
-							value,
-							field.getAD_Reference_ID()
-						);
-						rowValues.putFields(
-							fieldColumnName,
-							valueBuilder.build()
-						);
-					} catch (Exception e) {
-						log.severe(e.getLocalizedMessage());
-					}
-				}
-				//	
-				entityBuilder.setValues(rowValues);
-				builder.addRecords(entityBuilder.build());
-				recordCount++;
-			}
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-		} finally {
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-		//	Set record counts
-		if (builder.getRecordCount() <= 0) {
-			builder.setRecordCount(recordCount);
-		}
 		//	Return
 		return builder;
 	}

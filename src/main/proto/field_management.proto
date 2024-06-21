@@ -19,9 +19,7 @@
  option java_package = "org.spin.backend.grpc.field";
  option java_outer_classname = "ADempiereFieldManagement";
  
- import "base_data_type.proto";
  import "google/api/annotations.proto";
- import "google/protobuf/empty.proto";
  import "google/protobuf/struct.proto";
  
  // Base URL
