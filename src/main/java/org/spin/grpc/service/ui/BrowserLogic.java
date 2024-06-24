@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
@@ -36,6 +38,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Entity;
+import org.spin.backend.grpc.common.KeyValueSelection;
 import org.spin.backend.grpc.user_interface.ExportBrowserItemsRequest;
 import org.spin.backend.grpc.user_interface.ExportBrowserItemsResponse;
 import org.spin.base.db.QueryUtil;
@@ -244,5 +247,134 @@ public class BrowserLogic {
 		;
 		return builder;
 	}
-	
+
+
+	public static List<KeyValueSelection> getAllSelectionByCriteria(int browserId, String criteriaFilters, String contextAttributes) {
+		List<KeyValueSelection> selectionsList = new ArrayList<KeyValueSelection>();
+
+		Properties context = Env.getCtx();
+		MBrowse browser = ASPUtil.getInstance(context).getBrowse(browserId);
+		if (browser == null || browser.getAD_Browse_ID() <= 0) {
+			return selectionsList;
+		}
+		HashMap<String, Object> parameterMap = new HashMap<>();
+		//	Populate map
+		FilterManager.newInstance(criteriaFilters).getConditions()
+			.parallelStream()
+			.forEach(condition -> {
+				parameterMap.put(condition.getColumnName(), condition.getValue());
+			});
+
+		//	Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributesFromString(windowNo, context, contextAttributes);
+		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
+
+		//	get query columns
+		String query = QueryUtil.getBrowserQueryWithReferences(browser);
+		String sql = Env.parseContext(context, windowNo, query, false);
+		if (Util.isEmpty(sql, true)) {
+			throw new AdempiereException("@AD_Browse_ID@ @SQL@ @Unparseable@");
+		}
+
+		MView view = browser.getAD_View();
+		MViewDefinition parentDefinition = view.getParentViewDefinition();
+		String tableNameAlias = parentDefinition.getTableAlias();
+
+		String sqlWithRoleAccess = MRole.getDefault(context, false)
+			.addAccessSQL(
+				sql,
+				tableNameAlias,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
+
+		StringBuffer whereClause = new StringBuffer();
+		String where = browser.getWhereClause();
+		if (!Util.isEmpty(where, true)) {
+			String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
+			if (Util.isEmpty(parsedWhereClause, true)) {
+				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
+			}
+			whereClause
+				.append(" AND ")
+				.append(parsedWhereClause);
+		}
+
+		//	For dynamic condition
+		List<Object> filterValues = new ArrayList<Object>();
+		String dynamicWhere = WhereClauseUtil.getBrowserWhereClauseFromCriteria(
+			browser,
+			criteriaFilters,
+			filterValues
+		);
+		if (!Util.isEmpty(dynamicWhere, true)) {
+			String parsedDynamicWhere = Env.parseContext(context, windowNo, dynamicWhere, false);
+			if (Util.isEmpty(parsedDynamicWhere, true)) {
+				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
+			}
+			//	Add
+			whereClause.append(" AND (")
+				.append(parsedDynamicWhere)
+				.append(") ")
+			;
+		}
+		if (!Util.isEmpty(whereClause.toString(), true)) {
+			// includes first AND
+			sqlWithRoleAccess += whereClause;
+		}
+
+		String orderByClause = org.spin.service.grpc.util.db.OrderByUtil.getBrowseOrderBy(browser);
+		if (!Util.isEmpty(orderByClause, true)) {
+			orderByClause = " ORDER BY " + orderByClause;
+		}
+
+		//	Add Order By
+		String parsedSQL = sqlWithRoleAccess + orderByClause;
+		//	Return
+		List<Entity> entitiesList = BrowserLogic.convertBrowserResult(browser, parsedSQL, filterValues);
+
+		List<MBrowseField> browseFields = ASPUtil.getInstance(context).getBrowseFields(browser.getAD_Browse_ID())
+			.stream()
+			.filter(browserField -> {
+				return browserField.isKey() || browserField.isIdentifier() || !browserField.isReadOnly();
+			})
+			.collect(Collectors.toList());
+		;
+
+		// key column to key selection
+		MBrowseField keyField = browser.getFieldKey();
+		if (keyField == null || keyField.getAD_Browse_Field_ID() <= 0) {
+			throw new AdempiereException("@AD_Browse_ID@ @KeyColumn@ @NotFound@");
+		}
+		final String keyColumnName = keyField.getAD_View_Column().getColumnName();
+
+		entitiesList.forEach(row -> {
+			Map<String, Value> valuesRow = row.getValues().getFieldsMap();
+
+			Struct.Builder rowSelection = Struct.newBuilder();
+			browseFields.forEach(browseField -> {
+				String columnName = browseField.getAD_View_Column().getColumnName();
+				Value valueBuilder = valuesRow.get(columnName);
+				rowSelection.putFields(columnName, valueBuilder);
+			});
+
+			int selectionId = ValueManager.getIntegerFromValue(
+				valuesRow.get(
+					keyColumnName
+				)
+			);
+			KeyValueSelection.Builder selectionBuilder = KeyValueSelection.newBuilder()
+				.setSelectionId(selectionId)
+				.setValues(rowSelection)
+			;
+
+			selectionsList.add(
+				selectionBuilder.build()
+			);
+		});
+
+		return selectionsList;
+	}
+
 }

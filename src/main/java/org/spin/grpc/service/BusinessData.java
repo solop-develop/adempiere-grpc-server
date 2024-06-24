@@ -72,6 +72,7 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.DictionaryUtil;
+import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 // import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -282,7 +283,21 @@ public class BusinessData extends BusinessDataImplBase {
 			}
 			List<Integer> selectionKeys = new ArrayList<>();
 			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
-			for(KeyValueSelection selectionKey : request.getSelectionsList()) {
+
+			List<KeyValueSelection> selectionsList = request.getSelectionsList();
+			if (request.getIsAllSelection()) {
+				// get all records march with browser criteria
+				selectionsList = BrowserLogic.getAllSelectionByCriteria(
+					request.getBrowserId(),
+					request.getBrowserContextAttributes(),
+					request.getCriteriaFilters()
+				);
+			}
+			if (selectionsList == null || selectionsList.isEmpty()) {
+				throw new AdempiereException("@AD_Browse_ID@ @FillMandatory@ @Selection@");
+			}
+
+			for(KeyValueSelection selectionKey : selectionsList) {
 				selectionKeys.add(selectionKey.getSelectionId());
 				if(selectionKey.getValues().getFieldsCount() > 0) {
 					LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(

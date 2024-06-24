@@ -149,10 +149,13 @@ message RunBusinessProcessRequest {
 	// browser
 	int32 browser_id = 7;
 	repeated KeyValueSelection selections = 8;
+	bool is_all_selection = 9;
+	string browser_context_attributes = 10;
+	string criteria_filters = 11;
 	// window
-	string table_name = 9;
-	int32 record_id = 10;
+	string table_name = 12;
+	int32 record_id = 13;
 	// workflow
-	int32 workflow_id = 11;
-	string document_action = 12;
+	int32 workflow_id = 14;
+	string document_action = 15;
 }
