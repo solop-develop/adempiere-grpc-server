@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
+import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.X_AD_FieldGroup;
 import org.compiere.model.MColumn;
@@ -37,6 +38,7 @@ import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MValRule;
 import org.compiere.model.MWindow;
+import org.compiere.model.Query;
 // import org.compiere.model.M_Element;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
@@ -77,6 +79,9 @@ public class WindowConvertUtil {
 			return Window.newBuilder();
 		}
 		window = ASPUtil.getInstance(context).getWindow(window.getAD_Window_ID());
+		if (window == null) {
+			return Window.newBuilder();
+		}
 
 		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
 		DictionaryConvertUtil.translateEntity(window);
@@ -104,40 +109,42 @@ public class WindowConvertUtil {
 			boolean isShowAcct = MRole.getDefault(context, false).isShowAcct();
 //			List<Tab.Builder> tabListForGroup = new ArrayList<>();
 			List<MTab> tabs = ASPUtil.getInstance(context).getWindowTabs(window.getAD_Window_ID());
-			for(MTab tab : tabs) {
-				if(tab == null || !tab.isActive()) {
-					continue;
+			if (tabs != null) {
+				for(MTab tab : tabs) {
+					if(tab == null || !tab.isActive()) {
+						continue;
+					}
+					// role without permission to accounting
+					if (tab.isInfoTab() && !isShowAcct) {
+						continue;
+					}
+					Tab.Builder tabBuilder = WindowConvertUtil.convertTab(
+						context,
+						tab,
+						tabs,
+						withTabs
+					);
+					builder.addTabs(tabBuilder.build());
+					//	Get field group
+					// int [] fieldGroupIdArray = getFieldGroupIdsFromTab(tab.getAD_Tab_ID());
+					// if(fieldGroupIdArray != null) {
+					// 	for(int fieldGroupId : fieldGroupIdArray) {
+					// 		Tab.Builder tabFieldGroup = convertTab(context, tab, false);
+					// 		FieldGroup.Builder fieldGroup = convertFieldGroup(context, fieldGroupId);
+					// 		tabFieldGroup.setFieldGroup(fieldGroup);
+					// 		tabFieldGroup.setName(fieldGroup.getName());
+					// 		tabFieldGroup.setDescription("");
+					// 		tabFieldGroup.setUuid(tabFieldGroup.getUuid() + "---");
+					// 		//	Add to list
+					// 		tabListForGroup.add(tabFieldGroup);
+					// 	}
+					// }
 				}
-				// role without permission to accounting
-				if (tab.isInfoTab() && !isShowAcct) {
-					continue;
-				}
-				Tab.Builder tabBuilder = WindowConvertUtil.convertTab(
-					context,
-					tab,
-					tabs,
-					withTabs
-				);
-				builder.addTabs(tabBuilder.build());
-				//	Get field group
-				// int [] fieldGroupIdArray = getFieldGroupIdsFromTab(tab.getAD_Tab_ID());
-				// if(fieldGroupIdArray != null) {
-				// 	for(int fieldGroupId : fieldGroupIdArray) {
-				// 		Tab.Builder tabFieldGroup = convertTab(context, tab, false);
-				// 		FieldGroup.Builder fieldGroup = convertFieldGroup(context, fieldGroupId);
-				// 		tabFieldGroup.setFieldGroup(fieldGroup);
-				// 		tabFieldGroup.setName(fieldGroup.getName());
-				// 		tabFieldGroup.setDescription("");
-				// 		tabFieldGroup.setUuid(tabFieldGroup.getUuid() + "---");
-				// 		//	Add to list
-				// 		tabListForGroup.add(tabFieldGroup);
-				// 	}
+				//	Add Field Group Tabs
+				// for(Tab.Builder tabFieldGroup : tabListForGroup) {
+				// 	builder.addTabs(tabFieldGroup.build());
 				// }
 			}
-			//	Add Field Group Tabs
-			// for(Tab.Builder tabFieldGroup : tabListForGroup) {
-			// 	builder.addTabs(tabFieldGroup.build());
-			// }
 		}
 		//	Add to recent Item
 		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
@@ -309,6 +316,32 @@ public class WindowConvertUtil {
 			if(tab.getAD_ColumnSortYesNo_ID() > 0) {
 				MColumn column = MColumn.get(context, tab.getAD_ColumnSortYesNo_ID());
 				builder.setSortYesNoColumnName(column.getColumnName());
+			}
+
+			//	Parent Column from parent tab
+			MTab originTab = new Query(
+				tab.getCtx(),
+				I_AD_Tab.Table_Name,
+				"AD_Window_ID = ? AND AD_Table_ID = ? AND IsSortTab = ?",
+				null
+			)
+				.setParameters(tab.getAD_Window_ID(), table.getAD_Table_ID(), false)
+				.first()
+			;
+			if (originTab != null && originTab.getAD_Tab_ID() > 0) {
+				// is same table and columns
+				List<MColumn> columnsList = table.getColumnsAsList();
+				MColumn parentColumn = columnsList.parallelStream()
+					.filter(column -> {
+						return column.isParent();
+					})
+					.findFirst()
+					.orElse(null)
+				;
+				if (parentColumn != null && parentColumn.getAD_Column_ID() > 0) {
+					// filter_column_name
+					parentColumn.getColumnName();
+				}
 			}
 		}
 

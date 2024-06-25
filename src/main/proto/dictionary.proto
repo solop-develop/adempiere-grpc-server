@@ -160,12 +160,13 @@ message Tab {
 	string parent_column_name = 29;
 	// Sort attributes
 	bool is_sort_tab = 30;
-	string sort_order_column_name = 31;
-	string sort_yes_no_column_name = 32;
+	optional string sort_order_column_name = 31;
+	optional string sort_yes_no_column_name = 32;
+	optional string filter_column_name = 33;
 	// External Info
-	int32 window_id = 33;
-	int32 parent_tab_id = 34;
-	repeated string context_column_names = 35;
+	int32 window_id = 34;
+	int32 parent_tab_id = 35;
+	repeated string context_column_names = 36;
 	optional Process process = 37;
 	repeated Process processes = 38;
 	// Fields Attributes
