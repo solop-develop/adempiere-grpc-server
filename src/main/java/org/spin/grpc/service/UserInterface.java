@@ -1841,7 +1841,11 @@ public class UserInterface extends UserInterfaceImplBase {
 		// overwrite default value with user value request
 		if (Optional.ofNullable(request.getValue()).isPresent()
 			&& !Util.isEmpty(request.getValue().getStringValue())) {
-			defaultValue = request.getValue().getStringValue();
+			// URL decode to change characteres
+			final String overwriteValue = ValueManager.getDecodeUrl(
+				request.getValue().getStringValue()
+			);
+			defaultValue = overwriteValue;
 		}
 
 		//	Validate SQL
