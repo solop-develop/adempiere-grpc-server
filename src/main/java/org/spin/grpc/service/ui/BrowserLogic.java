@@ -249,7 +249,7 @@ public class BrowserLogic {
 	}
 
 
-	public static List<KeyValueSelection> getAllSelectionByCriteria(int browserId, String criteriaFilters, String contextAttributes) {
+	public static List<KeyValueSelection> getAllSelectionByCriteria(int browserId, String contextAttributes, String criteriaFilters) {
 		List<KeyValueSelection> selectionsList = new ArrayList<KeyValueSelection>();
 
 		Properties context = Env.getCtx();
