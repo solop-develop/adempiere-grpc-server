@@ -45,6 +45,10 @@ public class BrowserUtil {
 		;
 
 		Map<String, Integer> displayTypeColumns = new HashMap<>();
+
+		if (browseFields == null || browseFields.isEmpty()) {
+			return displayTypeColumns;
+		}
 		browseFields.forEach(browseField -> {
 			MViewColumn viewColumn = MViewColumn.getById(
 				browser.getCtx(),
