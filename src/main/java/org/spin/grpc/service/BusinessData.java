@@ -71,6 +71,7 @@ import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.workflow.WorkflowUtil;
+import org.spin.dictionary.util.BrowserUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -300,8 +301,12 @@ public class BusinessData extends BusinessDataImplBase {
 			for(KeyValueSelection selectionKey : selectionsList) {
 				selectionKeys.add(selectionKey.getSelectionId());
 				if(selectionKey.getValues().getFieldsCount() > 0) {
+					Map<String, Integer> displayTypeColumns = BrowserUtil.getBrowseFieldsSelectionDisplayType(browse);
 					LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
-						ValueManager.convertValuesMapToObjects(selectionKey.getValues().getFieldsMap())
+						ValueManager.convertValuesMapToObjects(
+							selectionKey.getValues().getFieldsMap(),
+							displayTypeColumns
+						)
 					);
 					selection.put(
 						selectionKey.getSelectionId(),
