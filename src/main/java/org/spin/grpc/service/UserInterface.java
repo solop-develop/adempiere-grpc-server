@@ -2984,7 +2984,7 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		List<MColumn> columnsList = table.getColumnsAsList();
-		MColumn keyColumn = columnsList.parallelStream()
+		MColumn keyColumn = columnsList.stream()
 			.filter(column -> {
 				return column.isKey();
 			})
@@ -2997,9 +2997,10 @@ public class UserInterface extends UserInterfaceImplBase {
 			.setRecordCount(request.getEntitiesList().size());
 
 		Trx.run(transacctionName -> {
-			request.getEntitiesList().parallelStream().forEach(entitySelection -> {
+			request.getEntitiesList().forEach(entitySelection -> {
 				PO entity = RecordUtil.getEntity(
-					Env.getCtx(), table.getTableName(),
+					Env.getCtx(),
+					table.getTableName(),
 					entitySelection.getSelectionId(),
 					transacctionName
 				);
@@ -3008,7 +3009,6 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 				// set new values
 				entitySelection.getValues().getFieldsMap().entrySet()
-					.parallelStream()
 					.forEach(attribute -> {
 						Object value = ValueManager.getObjectFromValue(attribute.getValue());
 						entity.set_ValueOfColumn(attribute.getKey(), value);
