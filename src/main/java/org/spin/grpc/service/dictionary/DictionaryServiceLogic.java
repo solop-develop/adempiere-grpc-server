@@ -24,9 +24,11 @@ import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MTable;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Field;
@@ -36,6 +38,8 @@ import org.spin.backend.grpc.dictionary.ListSearchFieldsRequest;
 import org.spin.backend.grpc.dictionary.ListSearchFieldsResponse;
 import org.spin.backend.grpc.dictionary.SearchColumn;
 import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ReferenceInfo;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import io.vavr.control.Try;
 
@@ -49,11 +53,24 @@ public class DictionaryServiceLogic {
 
 
 	public static ListIdentifierColumnsResponse.Builder getIdentifierFields(ListIdentifierColumnsRequest request) {
-		if (Util.isEmpty(request.getTableName(), true)) {
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			DisplayType.Search,
+			request.getFieldId(),
+			request.getProcessParameterId(),
+			request.getBrowseFieldId(),
+			request.getColumnId(),
+			request.getColumnName(),
+			request.getTableName()
+		);
+		if (reference == null) {
+			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
+		}
+		final String tableName = reference.TableName;
+		if (Util.isEmpty(tableName, true)) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
 		}
 		Properties context = Env.getCtx();
-		MTable table = MTable.get(context, request.getTableName());
+		MTable table = MTable.get(context, tableName);
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
 		}
@@ -124,13 +141,36 @@ public class DictionaryServiceLogic {
 	public static ListSearchFieldsResponse.Builder listSearchFields(ListSearchFieldsRequest request) {
 		ListSearchFieldsResponse.Builder responseBuilder = ListSearchFieldsResponse.newBuilder();
 
-		List<Field> queryFieldsList = listQuerySearchFields(
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			DisplayType.Search,
+			request.getFieldId(),
+			request.getProcessParameterId(),
+			request.getBrowseFieldId(),
+			request.getColumnId(),
+			request.getColumnName(),
 			request.getTableName()
+		);
+		if (reference == null) {
+			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
+		}
+		final String tableName = reference.TableName;
+		if (Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@AD_Reference_ID@ @AD_Table_ID@ @NotFound@");
+		}
+
+		responseBuilder.setTableName(
+			ValueManager.validateNull(
+				tableName
+			)
+		);
+
+		List<Field> queryFieldsList = listQuerySearchFields(
+			tableName
 		);
 		responseBuilder.addAllQueryFields(queryFieldsList);
 
 		List<SearchColumn> searchColumnsList = listSearchColumns(
-			request.getTableName()
+			tableName
 		);
 		responseBuilder.addAllTableColumns(searchColumnsList);
 
