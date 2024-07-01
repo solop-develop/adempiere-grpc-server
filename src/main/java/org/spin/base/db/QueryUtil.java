@@ -392,6 +392,9 @@ public class QueryUtil {
 					if (viewColumn.getAD_Column_ID() <= 0) {
 						// sub query
 						joinClause = referenceInfo.getJoinValue(columnName);
+						if (!Util.isEmpty(viewColumn.getColumnSQL(), true) && viewColumn.getColumnSQL().contains("(")) {
+							joinClause = referenceInfo.getJoinValue(viewColumn.getColumnSQL());
+						}
 					}
 					joinsToAdd.append(joinClause);
 				}
