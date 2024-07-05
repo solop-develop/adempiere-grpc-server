@@ -434,7 +434,7 @@ public class DictionaryConvertUtil {
 			return depenentFieldsList;
 		}
 
-		columnsList.parallelStream()
+		columnsList.stream()
 			.filter(currentColumn -> {
 				if(currentColumn == null || !currentColumn.isActive()) {
 					return false;

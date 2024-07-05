@@ -161,7 +161,7 @@ public class WindowConvertUtil {
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			return builder;
 		}
-		List<String> selectionColums = table.getColumnsAsList(true).parallelStream()
+		List<String> selectionColums = table.getColumnsAsList(true).stream()
 			.filter(column -> {
 				return column.isSelectionColumn();
 			})
@@ -340,7 +340,11 @@ public class WindowConvertUtil {
 				;
 				if (parentColumn != null && parentColumn.getAD_Column_ID() > 0) {
 					// filter_column_name
-					parentColumn.getColumnName();
+					builder.setFilterColumnName(
+						ValueManager.validateNull(
+							parentColumn.getColumnName()
+						)
+					);
 				}
 			}
 		}
@@ -608,7 +612,7 @@ public class WindowConvertUtil {
 		if (tabsList == null || tabsList.isEmpty()) {
 			return depenentFieldsList;
 		}
-		tabsList.parallelStream()
+		tabsList.stream()
 			.filter(currentTab -> {
 				// transaltion tab is not rendering on client
 				return currentTab.isActive() && !currentTab.isTranslationTab() && !currentTab.isSortTab();
@@ -619,7 +623,7 @@ public class WindowConvertUtil {
 					return;
 				}
 
-				fieldsList.parallelStream()
+				fieldsList.stream()
 					.filter(currentField -> {
 						if (currentField == null || !currentField.isActive()) {
 							return false;

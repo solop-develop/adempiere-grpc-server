@@ -2860,22 +2860,31 @@ public class UserInterface extends UserInterfaceImplBase {
 			.findFirst()
 			.orElse(null);
 
-		MColumn parentColumn = columnsList.parallelStream()
-			.filter(column -> {
-				return column.isParent();
-			})
-			.findFirst()
-			.orElse(null);
+		String filterColumnName = request.getFilterColumnName();
+		if (Util.isEmpty(filterColumnName, true)) {
+			MColumn parentColumn = columnsList.parallelStream()
+				.filter(column -> {
+					return column.isParent();
+				})
+				.findFirst()
+				.orElse(null);
+			if (parentColumn != null && parentColumn.getAD_Column_ID() > 0) {
+				filterColumnName = parentColumn.getColumnName();
+			}
+		}
 
-		int parentRecordId = Env.getContextAsInt(Env.getCtx(), windowNo, parentColumn.getColumnName());
+		int filterRecordId = request.getFilterRecordId();
+		if (filterRecordId <= 0) {
+			filterRecordId = Env.getContextAsInt(Env.getCtx(), windowNo, filterColumnName);
+		}
 
 		Query query = new Query(
 				Env.getCtx(),
 				table.getTableName(),
-				parentColumn.getColumnName() + " = ?",
+				filterColumnName + " = ?",
 				null
 			)
-			.setParameters(parentRecordId)
+			.setParameters(filterRecordId)
 			.setOrderBy(sortColumnName + " ASC")
 		;
 

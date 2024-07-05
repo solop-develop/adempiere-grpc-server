@@ -557,9 +557,13 @@ message ListTabSequencesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	int32 window_id = 8;
-	int32 tab_id = 9;
-	string context_attributes = 10;
+	string context_attributes = 9;
+	// dictinary attributes
+	int32 window_id = 10;
+	int32 tab_id = 11;
+	// record attributes
+	string filter_column_name = 12;
+	int32 filter_record_id = 13;
 }
 
 message SaveTabSequencesRequest {
