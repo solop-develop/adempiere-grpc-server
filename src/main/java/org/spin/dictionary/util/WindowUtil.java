@@ -17,11 +17,13 @@ package org.spin.dictionary.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.compiere.model.MColumn;
+import org.compiere.model.MField;
 import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MTab;
@@ -35,6 +37,38 @@ import org.spin.util.ASPUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class WindowUtil {
+
+	/**
+	 * Get Tabs Fields to display type
+	 * @param tab
+	 * @return
+	 */
+	public static Map<String, Integer> getTabFieldsDisplayType(MTab tab) {
+		List<MField> tabFields = tab.getASPFields();
+
+		Map<String, Integer> displayTypeColumns = new HashMap<>();
+
+		if (tabFields == null || tabFields.isEmpty()) {
+			return displayTypeColumns;
+		}
+		tabFields.forEach(tabField -> {
+			MColumn column = MColumn.get(
+				tab.getCtx(),
+				tabField.getAD_Column_ID()
+			);
+			int displayTypeId = tabField.getAD_Reference_ID();
+			if (displayTypeId <= 0) {
+				displayTypeId = column.getAD_Reference_ID();
+			}
+			displayTypeColumns.put(
+				column.getColumnName(),
+				displayTypeId
+			);
+		});
+
+		return displayTypeColumns;
+	}
+
 
 	/**
 	 * Get Parent column name from tab

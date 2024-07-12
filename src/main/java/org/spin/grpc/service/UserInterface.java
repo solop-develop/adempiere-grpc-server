@@ -149,6 +149,7 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.dictionary.util.WindowUtil;
 import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.grpc.service.ui.CalloutLogic;
 import org.spin.grpc.service.ui.UserInterfaceLogic;
@@ -2612,10 +2613,16 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 
 			// set values on Env.getCtx()
+			Map<String, Integer> displayTypeColumns = WindowUtil.getTabFieldsDisplayType(tab);
 			Map<String, Object> attributes = ValueManager.convertValuesMapToObjects(
-				request.getContextAttributes().getFieldsMap()
+				request.getContextAttributes().getFieldsMap(),
+				displayTypeColumns
 			);
-			ContextManager.setContextWithAttributesFromObjectMap(windowNo, Env.getCtx(), attributes);
+			ContextManager.setContextWithAttributesFromObjectMap(
+				windowNo,
+				Env.getCtx(),
+				attributes
+			);
 
 			//
 			Object oldValue = null;
@@ -2663,7 +2670,12 @@ public class UserInterface extends UserInterfaceImplBase {
 
 			//	load values
 			for (Entry<String, Object> attribute : attributes.entrySet()) {
-				gridTab.setValue(attribute.getKey(), attribute.getValue());
+				String columnNameEntity = attribute.getKey();
+				Object valueEntity = attribute.getValue();
+				gridTab.setValue(
+					columnNameEntity,
+					valueEntity
+				);
 			}
 			gridTab.setValue(request.getColumnName(), value);
 
@@ -2675,7 +2687,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			String result = processCallout(windowNo, gridTab, gridField);
 			Struct.Builder contextValues = Struct.newBuilder();
 			Arrays.asList(gridTab.getFields())
-				.parallelStream()
+				.stream()
 				.filter(fieldValue -> {
 					return CalloutLogic.isValidChange(fieldValue);
 				})
