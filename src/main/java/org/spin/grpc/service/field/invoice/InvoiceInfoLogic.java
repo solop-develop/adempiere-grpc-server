@@ -231,10 +231,11 @@ public class InvoiceInfoLogic {
 			);
 		}
 		// Business Partner
-		if (request.getBusinessPartnerId() > 0) {
+		int businessPartnerId = request.getBusinessPartnerId();
+		if (businessPartnerId > 0) {
 			sql += "AND i.C_BPartner_ID = ? ";
 			filtersList.add(
-				request.getBusinessPartnerId()
+				businessPartnerId
 			);
 		}
 		// Is Sales Transaction
@@ -326,7 +327,7 @@ public class InvoiceInfoLogic {
 		StringBuffer whereClause = new StringBuffer();
 
 		// validation code of field
-		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(reference.TableName, "i", reference.ValidationCode);
+		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, "i", reference.ValidationCode);
 		String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
 		if (!Util.isEmpty(reference.ValidationCode, true)) {
 			if (Util.isEmpty(parsedValidationCode, true)) {

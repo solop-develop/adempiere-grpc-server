@@ -155,10 +155,11 @@ public class PaymentInfoLogic {
 			);
 		}
 		// Business Partner
-		if (request.getBusinessPartnerId() > 0) {
+		int businessPartnerId = request.getBusinessPartnerId();
+		if (businessPartnerId > 0) {
 			sql += "AND p.C_BPartner_ID = ? ";
 			filtersList.add(
-				request.getBusinessPartnerId()
+				businessPartnerId
 			);
 		}
 		// Business Partner
@@ -234,7 +235,7 @@ public class PaymentInfoLogic {
 		StringBuffer whereClause = new StringBuffer();
 
 		// validation code of field
-		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias("p", reference.ValidationCode);
+		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, "p", reference.ValidationCode);
 		String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
 		if (!Util.isEmpty(reference.ValidationCode, true)) {
 			if (Util.isEmpty(parsedValidationCode, true)) {
