@@ -92,24 +92,27 @@ message ListBusinessPartnersInfoRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 	// references
-	string table_name = 9;
-	string column_name = 10;
-	int32 column_id = 11;
-	int32 process_parameter_id = 12;
-	int32 field_id = 13;
-	int32 browse_field_id = 14;
-	int32 reference_id = 15;
+	int32 process_parameter_id = 10;
+	int32 field_id = 11;
+	int32 browse_field_id = 12;
+	int32 reference_id = 13;
+	int32 column_id = 14;
+	string table_name = 15;
+	string column_name = 16;
+	//
+	bool is_without_validation = 17;
 	// custom filters
-	string value = 16;
-	string contact = 17;
-	string phone = 18;
-	string customer = 19;
-	string name = 20;
-	string email = 21;
-	string postal_code = 22;
-	string is_vendor = 23;
-	string is_customer = 24;
+	string value = 18;
+	string contact = 19;
+	string phone = 20;
+	string customer = 21;
+	string name = 22;
+	string email = 23;
+	string postal_code = 24;
+	string is_vendor = 25;
+	string is_customer = 26;
 }
 
 

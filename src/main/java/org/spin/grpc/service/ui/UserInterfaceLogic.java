@@ -68,7 +68,8 @@ public class UserInterfaceLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			request.getTableName()
+			request.getTableName(),
+			request.getIsWithoutValidation()
 		);
 
 		final MTable table = RecordUtil.validateAndGetTable(

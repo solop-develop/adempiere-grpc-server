@@ -102,24 +102,28 @@ message ListPaymentInfoRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 	// references
-	int32 process_parameter_id = 8;
-	int32 field_id = 9;
-	int32 browse_field_id = 10;
-	int32 reference_id = 11;
-	int32 column_id = 12;
-	string column_name = 13;
-	google.protobuf.Struct context_attributes = 14;
+	int32 process_parameter_id = 10;
+	int32 field_id = 11;
+	int32 browse_field_id = 12;
+	int32 reference_id = 13;
+	int32 column_id = 14;
+	string table_name = 15;
+	string column_name = 16;
+	//
+	bool is_without_validation = 17;
 	// custom filter
-	string document_no = 15;
-	int32 business_partner_id = 16;
-	string is_receipt = 17;
-	string is_payment = 18;
-	int32 bank_account_id = 19;
-	google.protobuf.Timestamp payment_date_from = 20;
-	google.protobuf.Timestamp payment_date_to = 21;
-	string grand_total_from = 22;
-	string grand_total_to = 23;
+	string document_no = 18;
+	int32 business_partner_id = 19;
+	string is_receipt = 20;
+	string is_payment = 21;
+	int32 bank_account_id = 22;
+	google.protobuf.Timestamp payment_date_from = 23;
+	google.protobuf.Timestamp payment_date_to = 24;
+	string grand_total_from = 25;
+	string grand_total_to = 26;
 }
 
 // Business Partners

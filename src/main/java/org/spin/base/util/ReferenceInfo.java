@@ -269,9 +269,24 @@ public class ReferenceInfo {
 			displayTypeId,
 			fieldId, processParameterId, browseFieldId,
 			columnId, columnName, tableName,
-			0, null
+			0, null, false
 		);
 	}
+
+	static public MLookupInfo getInfoFromRequest(
+		int displayTypeId,
+		int fieldId, int processParameterId, int browseFieldId,
+		int columnId, String columnName, String tableName,
+		boolean isWithoutValidation
+	) {
+		return getInfoFromRequest(
+			displayTypeId,
+			fieldId, processParameterId, browseFieldId,
+			columnId, columnName, tableName,
+			0, null, isWithoutValidation
+		);
+	}
+
 	/**
 	 * Get reference Info from request
 	 * @param request
@@ -282,6 +297,25 @@ public class ReferenceInfo {
 		int fieldId, int processParameterId, int browseFieldId,
 		int columnId, String columnName, String tableName,
 		int validationRuleId, String customRestriction
+	) {
+		return getInfoFromRequest(
+			displayTypeId,
+			fieldId, processParameterId, browseFieldId,
+			columnId, columnName, tableName,
+			0, null, false
+		);
+	}
+
+	/**
+	 * Get reference Info from request
+	 * @param request
+	 * @return
+	 */
+	static public MLookupInfo getInfoFromRequest(
+		int displayTypeId,
+		int fieldId, int processParameterId, int browseFieldId,
+		int columnId, String columnName, String tableName,
+		int validationRuleId, String customRestriction, boolean isWithoutValidation
 	) {
 		int referenceValueId = 0;
 		if(fieldId > 0) {
@@ -416,6 +450,11 @@ public class ReferenceInfo {
 			throw new AdempiereException(
 				"@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Field_ID@ / @AD_Process_Para_ID@ / @AD_Browse_Field_ID@ / @IsMandatory@"
 			);
+		}
+
+		// wihtout dynamic validation restriction
+		if (isWithoutValidation) {
+			validationRuleId = 0;
 		}
 
 		return ReferenceUtil.getReferenceLookupInfo(

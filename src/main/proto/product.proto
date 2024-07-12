@@ -280,29 +280,32 @@ message ListProductsInfoRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 	// references
-	string table_name = 9;
-	string column_name = 11;
-	int32 column_id = 12;
-	int32 process_parameter_id = 13;
-	int32 field_id = 14;
-	int32 browse_field_id = 15;
-	int32 reference_id = 16;
+	int32 process_parameter_id = 10;
+	int32 field_id = 11;
+	int32 browse_field_id = 12;
+	int32 reference_id = 13;
+	int32 column_id = 14;
+	string table_name = 15;
+	string column_name = 16;
+	//
+	bool is_without_validation = 17;
 	// custom filters
-	string value = 17;
-	string name = 18;
-	string upc = 19;
-	string sku = 20;
-	int32 warehouse_id = 21;
-	int32 price_list_version_id = 22;
-	int32 product_category_id = 23;
-	int32 product_group_id = 24;
-	int32 product_class_id = 25;
-	int32 product_classification_id = 26;
-	int32 attribute_set_id = 27;
-	int32 attribute_set_instance_id = 28;
-	int32 vendor_id = 29;
-	string is_stocked = 30;
+	string value = 18;
+	string name = 19;
+	string upc = 20;
+	string sku = 21;
+	int32 warehouse_id = 22;
+	int32 price_list_version_id = 23;
+	int32 product_category_id = 24;
+	int32 product_group_id = 25;
+	int32 product_class_id = 26;
+	int32 product_classification_id = 27;
+	int32 attribute_set_id = 28;
+	int32 attribute_set_instance_id = 29;
+	int32 vendor_id = 30;
+	string is_stocked = 31;
 }
 
 

@@ -198,7 +198,8 @@ public class InvoiceInfoLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			tableName
+			tableName,
+			request.getIsWithoutValidation()
 		);
 
 		//

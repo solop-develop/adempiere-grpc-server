@@ -538,15 +538,17 @@ message ListGeneralSearchRecordsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
 	// references
-	int32 process_parameter_id = 9;
-	int32 field_id = 10;
-	int32 browse_field_id = 11;
-	int32 reference_id = 12;
-	int32 column_id = 13;
-	string table_name = 14;
-	string column_name = 15;
-	bool is_only_active_records = 16;
+	int32 process_parameter_id = 10;
+	int32 field_id = 11;
+	int32 browse_field_id = 12;
+	int32 reference_id = 13;
+	int32 column_id = 14;
+	string table_name = 15;
+	string column_name = 16;
+	//
+	bool is_without_validation = 17;
 }
 
 message ListTabSequencesRequest {

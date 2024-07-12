@@ -141,7 +141,8 @@ public class OrderInfoLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			tableName = "C_Order"
+			tableName = "C_Order",
+			request.getIsWithoutValidation()
 		);
 
 		//

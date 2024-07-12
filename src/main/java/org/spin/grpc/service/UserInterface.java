@@ -2254,7 +2254,8 @@ public class UserInterface extends UserInterfaceImplBase {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			request.getTableName()
+			request.getTableName(),
+			request.getIsWithoutValidation()
 		);
 		if (reference == null) {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");

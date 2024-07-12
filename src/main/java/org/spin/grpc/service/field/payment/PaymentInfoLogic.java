@@ -123,7 +123,8 @@ public class PaymentInfoLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			tableName = "C_Payment"
+			tableName = "C_Payment",
+			request.getIsWithoutValidation()
 		);
 
 		//
