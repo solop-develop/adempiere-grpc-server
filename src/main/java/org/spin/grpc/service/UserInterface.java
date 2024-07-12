@@ -904,9 +904,14 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (entity == null) {
 			throw new AdempiereException("@Error@ PO is null");
 		}
+
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
-		attributes.entrySet().parallelStream().forEach(attribute -> {
-			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(entity.get_Table_ID(), attribute.getKey());
+		attributes.entrySet().stream().forEach(attribute -> {
+			String columnName = attribute.getKey();
+			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(
+				entity.get_Table_ID(),
+				columnName
+			);
 			Object value = null;
 			if (referenceId > 0) {
 				value = ValueManager.getObjectFromReference(
@@ -917,7 +922,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			if (value == null) {
 				value = ValueManager.getObjectFromValue(attribute.getValue());
 			}
-			entity.set_ValueOfColumn(attribute.getKey(), value);
+			entity.set_ValueOfColumn(columnName, value);
 		});
 		//	Save entity
 		entity.saveEx();
