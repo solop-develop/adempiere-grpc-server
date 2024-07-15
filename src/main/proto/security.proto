@@ -185,6 +185,7 @@ message Client {
 	string logo = 5;
 	string logo_report = 6;
 	string logo_web = 7;
+	string dictionary_code = 8;
 }
 
 // Role

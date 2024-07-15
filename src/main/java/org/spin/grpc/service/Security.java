@@ -1255,6 +1255,18 @@ public class Security extends SecurityImplBase {
 			)
 		;
 
+		// System client info
+		MClientInfo clientInfoSystem = MClientInfo.get(client.getCtx(), 0);
+		String dictionaryCode = "";
+		if (clientInfoSystem.get_ColumnIndex("ECA56_DictionaryCode") >= 0) {
+			dictionaryCode = clientInfoSystem.get_ValueAsString(dictionaryCode);
+		}
+		builder.setDictionaryCode(
+			ValueManager.validateNull(
+				dictionaryCode
+			)
+		);
+
 		// Add client logo
 		if (AttachmentUtil.getInstance().isValidForClient(client.getAD_Client_ID())) {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), client.getAD_Client_ID());
@@ -1321,7 +1333,9 @@ public class Security extends SecurityImplBase {
 		if(role == null) {
 			return builder;
 		}
-		Client.Builder clientBuilder = convertClient(role.getAD_Client_ID());
+		Client.Builder clientBuilder = convertClient(
+			role.getAD_Client_ID()
+		);
 		builder = Role.newBuilder()
 			.setId(
 				role.getAD_Role_ID()
