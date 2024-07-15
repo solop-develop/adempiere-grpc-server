@@ -85,6 +85,7 @@ import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
+import org.compiere.model.POAdapter;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -1004,6 +1005,8 @@ public class UserInterface extends UserInterfaceImplBase {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
 		PO currentEntity = entity;
+		POAdapter adapter = new POAdapter(currentEntity);
+
 		attributes.entrySet().forEach(attribute -> {
 			final String columnName = attribute.getKey();
 			MColumn column = table.getColumn(columnName);
@@ -1030,15 +1033,14 @@ public class UserInterface extends UserInterfaceImplBase {
 					);
 				}
 			}
-			currentEntity.set_ValueOfColumn(columnName, value);
+			adapter.set_ValueNoCheck(columnName, value);
 		});
 		//	Save entity
 		currentEntity.saveEx();
 
-
 		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
 			.setTabId(request.getTabId())
-			.setId(currentEntity.get_ID())
+			.setId(entity.get_ID())
 		;
 
 		Entity.Builder builder = getTabEntity(
