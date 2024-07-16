@@ -1259,7 +1259,7 @@ public class Security extends SecurityImplBase {
 		MClientInfo clientInfoSystem = MClientInfo.get(client.getCtx(), 0);
 		String dictionaryCode = "";
 		if (clientInfoSystem.get_ColumnIndex("ECA56_DictionaryCode") >= 0) {
-			dictionaryCode = clientInfoSystem.get_ValueAsString(dictionaryCode);
+			dictionaryCode = clientInfoSystem.get_ValueAsString("ECA56_DictionaryCode");
 		}
 		builder.setDictionaryCode(
 			ValueManager.validateNull(

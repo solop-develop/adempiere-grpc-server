@@ -18,9 +18,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Form;
+import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Tab;
+import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.X_AD_Reference;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
@@ -42,6 +45,7 @@ import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Browser;
 import org.spin.backend.grpc.dictionary.DictionaryGrpc.DictionaryImplBase;
+import org.spin.base.util.RecordUtil;
 import org.spin.backend.grpc.dictionary.EntityRequest;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.FieldRequest;
@@ -93,7 +97,11 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param id
 	 * @param withTabs
 	 */
-	private Window.Builder getWindow(Properties context, int windowId, boolean withTabs) {
+	private Window.Builder getWindow(Properties context, String windowUuid, boolean withTabs) {
+		if (Util.isEmpty(windowUuid, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Window_ID@ / @UUID@");
+		}
+		int windowId = RecordUtil.getIdFromUuid(I_AD_Window.Table_Name, windowUuid, null);
 		if (windowId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Window_ID@");
 		}
@@ -134,10 +142,25 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param withFields
 	 * @return
 	 */
-	private Tab.Builder getTab(Properties context, int id, boolean withFields) {
-		MTab tab = MTab.get(context, id);
+	private Tab.Builder getTab(Properties context, String tabUuid, boolean withFields) {
+		if (Util.isEmpty(tabUuid, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@ / @UUID@");
+		}
+		int tabId = RecordUtil.getIdFromUuid(I_AD_Window.Table_Name, tabUuid, null);
+		if (tabId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@ ");
+		}
+		MTab tab = MTab.get(context, tabId);
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+		}
 		//	Convert
-		return WindowConvertUtil.convertTab(context, tab, null, withFields);
+		return WindowConvertUtil.convertTab(
+			context,
+			tab,
+			null,
+			withFields
+		);
 	}
 
 
@@ -213,7 +236,11 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param withParameters
 	 * @return
 	 */
-	private Process.Builder getProcess(Properties context, int processId, boolean withParameters) {
+	private Process.Builder getProcess(Properties context, String processUuid, boolean withParameters) {
+		if (Util.isEmpty(processUuid, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@ / @UUID@");
+		}
+		int processId = RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, processUuid, null);
 		if (processId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
@@ -258,7 +285,11 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param withFields
 	 * @return
 	 */
-	private Browser.Builder getBrowser(Properties context, int browseId, boolean withFields) {
+	private Browser.Builder getBrowser(Properties context, String browseUuid, boolean withFields) {
+		if (Util.isEmpty(browseUuid, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Browse_ID@ / @UUID@");
+		}
+		int browseId = RecordUtil.getIdFromUuid(I_AD_Browse.Table_Name, browseUuid, null);
 		if (browseId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Browse_ID@");
 		}
@@ -300,7 +331,11 @@ public class Dictionary extends DictionaryImplBase {
 	 * @param uuid
 	 * @param id
 	 */
-	private Form.Builder getForm(Properties context, int formId) {
+	private Form.Builder getForm(Properties context, String formUuid) {
+		if (Util.isEmpty(formUuid, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Form_ID@ / @UUID@");
+		}
+		int formId = RecordUtil.getIdFromUuid(I_AD_Form.Table_Name, formUuid, null);
 		if (formId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Form_ID@");
 		}
@@ -318,7 +353,10 @@ public class Dictionary extends DictionaryImplBase {
 		if (form == null || form.getAD_Form_ID() <= 0) {
 			throw new AdempiereException("@AD_Form_ID@ @NotFound@");
 		}
-		return DictionaryConvertUtil.convertForm(context, form);
+		return DictionaryConvertUtil.convertForm(
+			context,
+			form
+		);
 	}
 
 
