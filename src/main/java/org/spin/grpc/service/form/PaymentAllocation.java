@@ -232,8 +232,11 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	}
 
 	public static MOrg validateAndGetOrganization(int organizationId) {
-		if (organizationId <= 0) {
+		if (organizationId < 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
+		}
+		if (organizationId == 0) {
+			throw new AdempiereException("@Org0NotAllowed@");
 		}
 		MOrg organization = new Query(
 			Env.getCtx(),
@@ -1000,6 +1003,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	) {
 		if (paymentSelection == null || invoiceSelection == null || (paymentSelection.size() + invoiceSelection.size() == 0)) {
 			return "";
+		}
+
+		if (organizationId <= 0) {
+			throw new AdempiereException("@Org0NotAllowed@");
 		}
 
 		final int orderId = 0;

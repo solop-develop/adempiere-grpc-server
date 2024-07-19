@@ -326,7 +326,7 @@ public class BrowseConverUtil {
 			return depenentFieldsList;
 		}
 
-		browseFieldsList.parallelStream()
+		browseFieldsList.stream()
 			.filter(currentBrowseField -> {
 				if(currentBrowseField == null || !currentBrowseField.isActive()) {
 					return false;
