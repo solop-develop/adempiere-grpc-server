@@ -116,21 +116,22 @@ enum PublishStatus {
 // Workflow Definition
 message WorkflowDefinition {
 	int32 id = 1;
-	string value = 2;
-	string name = 3;
-	string description = 4;
-	string help = 5;
-	string table_name = 6;
-	int32 responsible_id = 7;
-	string responsible_name = 8;
-	int32 priority = 9;
-	google.protobuf.Timestamp valid_from = 10;
-	bool is_default = 11;
-	bool is_valid = 12;
-	PublishStatus publish_status = 13;
-	DurationUnit duration_unit = 14;
-	WorkflowNode start_node = 15;
-	repeated WorkflowNode workflow_nodes = 16;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
+	string table_name = 7;
+	int32 responsible_id = 8;
+	string responsible_name = 9;
+	int32 priority = 10;
+	google.protobuf.Timestamp valid_from = 11;
+	bool is_default = 12;
+	bool is_valid = 13;
+	PublishStatus publish_status = 14;
+	DurationUnit duration_unit = 15;
+	WorkflowNode start_node = 16;
+	repeated WorkflowNode workflow_nodes = 17;
 }
 
 enum Action {
@@ -152,28 +153,30 @@ enum Action {
 // Workflow Node
 message WorkflowNode {
 	int32 id = 1;
-	string value = 2;
-	string name = 3;
-	string description = 4;
-	string help = 5;
-	int32 responsible_id = 6;
-	string responsible_name = 7;
-	string document_action_value = 8;
-	string document_action_name = 9;
-	int32 priority = 10;
-	Action action = 11;
-	repeated WorkflowTransition transitions = 12;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
+	int32 responsible_id = 7;
+	string responsible_name = 8;
+	string document_action_value = 9;
+	string document_action_name = 10;
+	int32 priority = 11;
+	Action action = 12;
+	repeated WorkflowTransition transitions = 13;
 }
 
 //	Workflow Transition
 message WorkflowTransition {
 	int32 id = 1;
-	string description = 2;
-	bool is_std_user_workflow = 3;
-	int32 sequence = 4;
-	int32 node_next_id = 5;
-	string node_next_name = 6;
-	repeated WorkflowCondition workflow_conditions = 7;
+	string uuid = 2;
+	string description = 3;
+	bool is_std_user_workflow = 4;
+	int32 sequence = 5;
+	int32 node_next_id = 6;
+	string node_next_name = 7;
+	repeated WorkflowCondition workflow_conditions = 8;
 }
 
 enum ConditionType {
@@ -196,11 +199,12 @@ enum Operation {
 //	Condition for transition
 message WorkflowCondition {
 	int32 id = 1;
-	int32 sequence = 2;
-	string column_name = 3;
-	string value = 4;
-	ConditionType condition_type = 5;
-	Operation operation = 6;
+	string uuid = 2;
+	int32 sequence = 3;
+	string column_name = 4;
+	string value = 5;
+	ConditionType condition_type = 6;
+	Operation operation = 7;
 }
 
 // Valid Document Actions Request
@@ -267,31 +271,33 @@ message ListWorkflowActivitiesResponse {
 // Zoom Window
 message ZoomWindow {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	bool is_sales_transaction = 4;
-	bool is_active = 5;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	bool is_sales_transaction = 5;
+	bool is_active = 6;
 }
 
 //	Workflow Activity
 message WorkflowActivity {
 	int32 id = 1;
-	string table_name = 2;
-	int32 record_id = 3;
-	int32 user_id = 4;
-	string user_name = 5;
-	int32 responsible_id = 6;
-	string responsible_name = 7;
-	string text_message = 8;
-	bool processed = 9;
-	int32 priority = 10;
-	google.protobuf.Timestamp created = 11;
-	google.protobuf.Timestamp last_alert = 12;
-	WorkflowProcess workflow_process = 13;
-	WorkflowDefinition workflow = 14;
-	WorkflowNode node = 15;
-	repeated ZoomWindow zoom_windows = 16;
-	bool is_sales_transaction = 17;
+	string uuid = 2;
+	string table_name = 3;
+	int32 record_id = 4;
+	int32 user_id = 5;
+	string user_name = 6;
+	int32 responsible_id = 7;
+	string responsible_name = 8;
+	string text_message = 9;
+	bool processed = 10;
+	int32 priority = 11;
+	google.protobuf.Timestamp created = 12;
+	google.protobuf.Timestamp last_alert = 13;
+	WorkflowProcess workflow_process = 14;
+	WorkflowDefinition workflow = 15;
+	WorkflowNode node = 16;
+	repeated ZoomWindow zoom_windows = 17;
+	bool is_sales_transaction = 18;
 }
 
 enum WorkflowState {
@@ -313,21 +319,22 @@ enum Priority {
 
 // Workflow Process
 message WorkflowProcess {
-	int32 process_id = 1;
-	int32 workflow_id = 2;
-	string workflow_name = 3;
-	int32 id = 4;
-	string table_name = 5;
-	int32 user_id = 6;
-	string user_name = 7;
-	int32 responsible_id = 8;
-	string responsible_name = 9;
-	string text_message = 10;
-	bool processed = 11;
-	WorkflowState workflow_state = 12;
-	Priority priority = 13;
-	repeated WorkflowEvent workflow_events = 14;
-	google.protobuf.Timestamp log_date = 15;
+	int32 id = 1;
+	string uuid = 2;
+	int32 process_id = 3;
+	int32 workflow_id = 4;
+	string workflow_name = 5;
+	string table_name = 6;
+	int32 user_id = 7;
+	string user_name = 8;
+	int32 responsible_id = 9;
+	string responsible_name = 10;
+	string text_message = 11;
+	bool processed = 12;
+	WorkflowState workflow_state = 13;
+	Priority priority = 14;
+	repeated WorkflowEvent workflow_events = 15;
+	google.protobuf.Timestamp log_date = 16;
 }
 
 enum EventType {
@@ -338,22 +345,23 @@ enum EventType {
 
 // Workflow Event Audit
 message WorkflowEvent {
-	int32 node_id = 1;
-	string node_name = 2;
-	int32 id = 3;
-	string table_name = 4;
-	int32 user_id = 5;
-	string user_name = 6;
-	int32 responsible_id = 7;
-	string responsible_name = 8;
-	string text_message = 9;
-	int64 time_elapsed = 10;
-	string attribute_name = 11;
-	string old_value = 12;
-	string new_value = 13;
-	WorkflowState workflow_state = 14;
-	EventType event_type = 15;
-	google.protobuf.Timestamp log_date = 16;
+	int32 id = 1;
+	string uuid = 2;
+	int32 node_id = 3;
+	string node_name = 4;
+	string table_name = 5;
+	int32 user_id = 6;
+	string user_name = 7;
+	int32 responsible_id = 8;
+	string responsible_name = 9;
+	string text_message = 10;
+	int64 time_elapsed = 11;
+	string attribute_name = 12;
+	string old_value = 13;
+	string new_value = 14;
+	WorkflowState workflow_state = 15;
+	EventType event_type = 16;
+	google.protobuf.Timestamp log_date = 17;
 }
 
 // Run Document Action Request
