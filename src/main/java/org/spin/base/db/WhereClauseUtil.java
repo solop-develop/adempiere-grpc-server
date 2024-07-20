@@ -63,16 +63,16 @@ public class WhereClauseUtil {
 	public static String getWhereRestrictionsWithAlias(String tableName, String tableAlias, String dynamicValidation) {
 		String validationCode = getWhereRestrictionsWithAlias(tableAlias, dynamicValidation);
 		if (Util.isEmpty(validationCode, true)) {
-		return "";
+			return "";
 		}
 		if (tableName.equals(tableAlias)) {
-		// ignore replace primary table with alias
-		return validationCode;
+			// ignore replace primary table with alias
+			return validationCode;
 		}
 		final String regexPrimarayTable = "\\b" + tableName + "\\.";
 		String validationWithAlias = validationCode.replaceAll(regexPrimarayTable, tableAlias + ".");
 		if (Util.isEmpty(validationWithAlias, true)) {
-		return "";
+			return "";
 		}
 		return validationWithAlias;
 	}
