@@ -66,6 +66,7 @@ service Security {
 			body: "*"
 		};
 	}
+
 	// List Roles
 	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
 		option (google.api.http) = { get: "/security/roles" };
@@ -78,6 +79,7 @@ service Security {
 	rpc ListWarehouses(ListWarehousesRequest) returns (ListWarehousesResponse) {
 		option (google.api.http) = { get: "/security/warehouses" };
 	}
+
 	// List Available Services
 	rpc ListServices(ListServicesRequest) returns (ListServicesResponse) {
 		option (google.api.http) = { get: "/security/services" };
@@ -215,7 +217,6 @@ message Role {
 	bool is_allow_xls_view = 24;
 	bool is_show_accounting = 25;
 }
-
 message ListRolesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -225,7 +226,6 @@ message ListRolesRequest {
 	string page_token = 6;
 	string search_value = 7;
 }
-
 message ListRolesResponse {
 	int64 record_count = 1;
 	repeated Role roles = 2;
@@ -248,13 +248,11 @@ message Organization {
 	string fax = 11;
 	string corporate_branding_image = 12;
 }
-
 message ListOrganizationsResponse {
 	int64 record_count = 1;
 	repeated Organization organizations = 2;
 	string next_page_token = 4;
 }
-
 message ListOrganizationsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -275,13 +273,11 @@ message Warehouse {
 	string name = 4;
 	string description = 5;
 }
-
 message ListWarehousesResponse {
 	int64 record_count = 1;
 	repeated Warehouse warehouses = 2;
 	string next_page_token = 3;
 }
-
 message ListWarehousesRequest {
 	string filters = 1;
 	string sort_by = 2;

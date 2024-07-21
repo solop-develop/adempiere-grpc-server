@@ -31,35 +31,27 @@ service CoreFunctionality {
 	rpc GetSystemInfo(GetSystemInfoRequest) returns (SystemInfo) {
 		option (google.api.http) = { get: "/core-functionality/system-info" };
 	}
+
 	//	Get Country Information
 	rpc GetCountry(GetCountryRequest) returns (Country) {
 		option (google.api.http) = { get: "/core-functionality/countries/{id}" };
 	}
-	// TODO: Verify Languages (duplicated on security)
 	//	Request Language List
 	rpc ListLanguages(ListLanguagesRequest) returns (ListLanguagesResponse) {
 		option (google.api.http) = { get: "/core-functionality/languages" };
 	}
-	//	Get Business Partner from search
-	rpc GetBusinessPartner(GetBusinessPartnerRequest) returns (BusinessPartner) {
-		option (google.api.http) = { get: "/core-functionality/business-partners/{search_value}" };
-	}
-	//	Create Business Partner
-	rpc CreateBusinessPartner(CreateBusinessPartnerRequest) returns (BusinessPartner) {
-		option (google.api.http) = {
-			post: "/core-functionality/business-partners",
-			body: "*"
-		};
-	}
+
 	//	List Business Partner
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {
 		option (google.api.http) = { get: "/core-functionality/business-partners" };
 	}
+
 	//	Get Currency Rate
 	rpc GetConversionRate(GetConversionRateRequest) returns (ConversionRate) {
 		option (google.api.http) = { get: "/core-functionality/conversion-rates" };
 	}
-	//	List Product Conversion UOM
+
+	//	Product Conversion UOM
 	rpc ListProductConversion(ListProductConversionRequest) returns (ListProductConversionResponse) {
 		option (google.api.http) = { get: "/core-functionality/product-conversions/{id}" };
 	}
@@ -87,14 +79,12 @@ message GetCountryRequest {
 	int32 id = 1;
 }
 
-//	List Business Partner Response
+//	List Business Partner
 message ListBusinessPartnersResponse {
 	int64 record_count = 1;
 	repeated BusinessPartner business_partners = 2;
 	string next_page_token = 3;
 }
-
-// List Business Partner Request
 message ListBusinessPartnersRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -111,50 +101,6 @@ message ListBusinessPartnersRequest {
 	string phone = 13;
 }
 
-// Request Business Partner
-message GetBusinessPartnerRequest {
-	string search_value = 2;
-	string value = 3;
-	string name = 4;
-	string contact_name = 6;
-	string email = 7;
-	string postal_code = 8;
-	string phone = 9;
-	//	Filters
-	string filters = 10;
-	string sort_by = 11;
-	repeated string group_columns = 12;
-	repeated string select_columns = 13;
-	int32 page_size = 14;
-	string page_token = 15;
-}
-
-// Request Business Partner
-message CreateBusinessPartnerRequest {
-	string value = 2;
-	string tax_id = 3;
-	string duns = 4;
-	string naics = 5;
-	string name = 6;
-	string last_name = 7;
-	string description = 8;
-	string contact_name = 9;
-	string email = 10;
-	string phone = 11;
-	int32 business_partner_group_id = 12;
-	//	Location
-	string address1 = 13;
-	string address2 = 14;
-	string address3 = 15;
-	string address4 = 16;
-	int32 city_id = 17;
-	string city_name = 18;
-	string postal_code = 19;
-	int32 region_id = 20;
-	string region_name = 21;
-	int32 country_id = 22;
-	int32 pos_id = 23;
-}
 
 // Languages Request
 message ListLanguagesRequest {
@@ -243,25 +189,6 @@ message Organization {
 	string corporate_branding_image = 10;
 }
 
-//	List Organizations Response
-message ListOrganizationsResponse {
-	int64 record_count = 1;
-	repeated Organization organizations = 2;
-	string next_page_token = 4;
-}
-
-// Organization from Role
-message ListOrganizationsRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	int32 role_id = 8;
-}
-
 // Warehouse
 message Warehouse {
 	int32 id = 1;
@@ -269,26 +196,7 @@ message Warehouse {
 	string description = 3;
 }
 
-//	Lost Warehouses Response
-message ListWarehousesResponse {
-	int64 record_count = 1;
-	repeated Warehouse warehouses = 2;
-	string next_page_token = 3;
-}
-
-// Warehouses Request
-message ListWarehousesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	int32 organization_id = 8;
-}
-
-// Unit of Measure
+// Product Unit of Measure
 message UnitOfMeasure {
 	int32 id = 1;
 	string code = 2;
@@ -298,8 +206,13 @@ message UnitOfMeasure {
 	int32 standard_precision = 6;
 	int32 costing_precision = 7;
 }
-
-// List Product UOM Conversion Request
+message ProductConversion {
+	int32 id = 1;
+	UnitOfMeasure uom = 2;
+	UnitOfMeasure product_uom = 3;
+	string multiply_rate = 4;
+	string divide_rate = 5;
+}
 message ListProductConversionRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -310,22 +223,12 @@ message ListProductConversionRequest {
 	string search_value = 7;
 	int32 id = 8;
 }
-
-// Product UOM Conversion
-message ProductConversion {
-	int32 id = 1;
-	UnitOfMeasure uom = 2;
-	UnitOfMeasure product_uom = 3;
-	string multiply_rate = 4;
-	string divide_rate = 5;
-}
-
-//	List Product Conversion Response
 message ListProductConversionResponse {
 	int64 record_count = 1;
 	repeated ProductConversion product_conversion = 2;
 	string next_page_token = 3;
 }
+
 
 // Charge definition
 message Charge {

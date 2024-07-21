@@ -18,36 +18,27 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Country;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MBPartner;
-import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLanguage;
-import org.compiere.model.MLocation;
 import org.compiere.model.MRole;
 import org.compiere.model.MSystem;
 import org.compiere.model.MUOMConversion;
-import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
-import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.core_functionality.BusinessPartner;
 import org.spin.backend.grpc.core_functionality.ConversionRate;
 import org.spin.backend.grpc.core_functionality.Country;
-import org.spin.backend.grpc.core_functionality.CreateBusinessPartnerRequest;
-import org.spin.backend.grpc.core_functionality.GetBusinessPartnerRequest;
 import org.spin.backend.grpc.core_functionality.GetConversionRateRequest;
 import org.spin.backend.grpc.core_functionality.GetCountryRequest;
 import org.spin.backend.grpc.core_functionality.GetSystemInfoRequest;
@@ -355,46 +346,8 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			);
 		}
 	}
-	
-	@Override
-	public void getBusinessPartner(GetBusinessPartnerRequest request,
-			StreamObserver<BusinessPartner> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			BusinessPartner.Builder businessPartner = getBusinessPartner(request);
-			responseObserver.onNext(businessPartner.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-	
-	@Override
-	public void createBusinessPartner(CreateBusinessPartnerRequest request,
-			StreamObserver<BusinessPartner> responseObserver) {
-		try {
-			log.fine("Object Requested = " + request.getValue());
-			BusinessPartner.Builder businessPartner = createBusinessPartner(request);
-			responseObserver.onNext(businessPartner.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
 	@Override
 	public void getConversionRate(GetConversionRateRequest request, StreamObserver<ConversionRate> responseObserver) {
 		try {
@@ -616,257 +569,6 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			ValueManager.validateNull(nexPageToken)
 		);
 		return builder;
-	}
-	
-	/**
-	 * Create business partner
-	 * @param request
-	 * @return
-	 */
-	private BusinessPartner.Builder createBusinessPartner(CreateBusinessPartnerRequest request) {
-		//	Validate name
-		if(Util.isEmpty(request.getName())) {
-			throw new AdempiereException("@Name@ @IsMandatory@");
-		}
-		//	POS Uuid
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
-		}
-		MBPartner businessPartner = MBPartner.getTemplate(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()), request.getPosId());
-		Trx.run(transactionName -> {
-			//	Create it
-			businessPartner.setAD_Org_ID(0);
-			businessPartner.setIsCustomer (true);
-			businessPartner.setIsVendor (false);
-			businessPartner.set_TrxName(transactionName);
-			//	Set Value
-			String value = request.getValue();
-			if(Util.isEmpty(value)) {
-				value = DB.getDocumentNo(Env.getAD_Client_ID(Env.getCtx()), "C_BPartner", transactionName, businessPartner);
-			}
-			//	
-			businessPartner.setValue(value);
-			//	Tax Id
-			if(!Util.isEmpty(request.getTaxId())) {
-				businessPartner.setTaxID(request.getTaxId());
-			}
-			//	Duns
-			if(!Util.isEmpty(request.getDuns())) {
-				businessPartner.setDUNS(request.getDuns());
-			}
-			//	Naics
-			if(!Util.isEmpty(request.getNaics())) {
-				businessPartner.setNAICS(request.getNaics());
-			}
-			//	Name
-			businessPartner.setName(request.getName());
-			//	Last name
-			if(!Util.isEmpty(request.getLastName())) {
-				businessPartner.setName2(request.getLastName());
-			}
-			//	Description
-			if(!Util.isEmpty(request.getDescription())) {
-				businessPartner.setDescription(request.getDescription());
-			}
-			//	Business partner group
-			if(request.getBusinessPartnerGroupId() > 0) {
-				businessPartner.setC_BP_Group_ID(request.getBusinessPartnerGroupId());
-			}
-			//	Save it
-			businessPartner.saveEx(transactionName);
-			MUser contact = null;
-			//	Contact
-			if(!Util.isEmpty(request.getContactName()) || !Util.isEmpty(request.getEmail()) || !Util.isEmpty(request.getPhone())) {
-				contact = new MUser(businessPartner);
-				//	Name
-				if(!Util.isEmpty(request.getContactName())) {
-					contact.setName(request.getContactName());
-				}
-				//	EMail
-				if(!Util.isEmpty(request.getEmail())) {
-					contact.setEMail(request.getEmail());
-				}
-				//	Phone
-				if(!Util.isEmpty(request.getPhone())) {
-					contact.setPhone(request.getPhone());
-				}
-				//	Description
-				if(!Util.isEmpty(request.getDescription())) {
-					contact.setDescription(request.getDescription());
-				}
-				//	Save
-				contact.saveEx(transactionName);
-	 		}
-			//	Location
-			int countryId = 0;
-			if(request.getCountryId() > 0) {
-				countryId = request.getCountryId();
-			}
-			if(countryId <= 0) {
-				countryId = Env.getContextAsInt(Env.getCtx(), "#C_Country_ID");
-			}
-			//	
-			int regionId = 0;
-			if(request.getRegionId() > 0) {
-				regionId = request.getRegionId();
-			}
-			String cityName = null;
-			int cityId = 0;
-			//	City Name
-			if(!Util.isEmpty(request.getCityName())) {
-				cityName = request.getCityName();
-			}
-			//	City Reference
-			if(request.getCityId() > 0) {
-				cityId = request.getCityId();
-			}
-			//	Instance it
-			MLocation location = new MLocation(Env.getCtx(), countryId, regionId, cityName, transactionName);
-			if(cityId > 0) {
-				location.setC_City_ID(cityId);
-			}
-			//	Postal Code
-			if(!Util.isEmpty(request.getPostalCode())) {
-				location.setPostal(request.getPostalCode());
-			}
-			//	Address
-			Optional.ofNullable(request.getAddress1()).ifPresent(address -> location.setAddress1(address));
-			Optional.ofNullable(request.getAddress2()).ifPresent(address -> location.setAddress2(address));
-			Optional.ofNullable(request.getAddress3()).ifPresent(address -> location.setAddress3(address));
-			Optional.ofNullable(request.getAddress4()).ifPresent(address -> location.setAddress4(address));
-			//	
-			location.saveEx(transactionName);
-			//	Create BP location
-			MBPartnerLocation businessPartnerLocation = new MBPartnerLocation(businessPartner);
-			businessPartnerLocation.setC_Location_ID(location.getC_Location_ID());
-			//	Phone
-			if(!Util.isEmpty(request.getPhone())) {
-				businessPartnerLocation.setPhone(request.getPhone());
-			}
-			//	Contact
-			if(!Util.isEmpty(request.getContactName())) {
-				businessPartnerLocation.setContactPerson(request.getContactName());
-			}
-			//	Save
-			businessPartnerLocation.saveEx(transactionName);
-			//	Set Location
-			Optional.ofNullable(contact).ifPresent(contactToSave -> {
-				contactToSave.setC_BPartner_Location_ID(businessPartnerLocation.getC_BPartner_Location_ID());
-				contactToSave.saveEx(transactionName);
-			});
-		});
-		//	Default return
-		return CoreFunctionalityConvert.convertBusinessPartner(
-			businessPartner
-		);
-	}
-	
-	/**
-	 * Get business partner
-	 * @param request
-	 * @return
-	 */
-	private BusinessPartner.Builder getBusinessPartner(GetBusinessPartnerRequest request) {
-		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer();
-		//	Parameters
-		List<Object> parameters = new ArrayList<Object>();
-
-		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
-			request.getSearchValue()
-		);
-		if(!Util.isEmpty(searchValue, true)) {
-			whereClause.append("("
-				+ "UPPER(Value) = UPPER(?) "
-				+ "OR UPPER(Name) = UPPER(?)"
-				+ ")");
-			//	Add parameters
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-		}
-		//	For value
-		if(!Util.isEmpty(request.getValue())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-				+ "UPPER(Value) = UPPER(?)"
-				+ ")");
-			//	Add parameters
-			parameters.add(request.getValue());
-		}
-		//	For name
-		if(!Util.isEmpty(request.getName())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-				+ "UPPER(Name) = UPPER(?)"
-				+ ")");
-			//	Add parameters
-			parameters.add(request.getName());
-		}
-		//	for contact name
-		if(!Util.isEmpty(request.getContactName())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("(EXISTS(SELECT 1 FROM AD_User u WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(u.Name) = UPPER(?)))");
-			//	Add parameters
-			parameters.add(request.getContactName());
-		}
-		//	EMail
-		if(!Util.isEmpty(request.getEmail())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("(EXISTS(SELECT 1 FROM AD_User u WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(u.EMail) = UPPER(?)))");
-			//	Add parameters
-			parameters.add(request.getEmail());
-		}
-		//	Phone
-		if(!Util.isEmpty(request.getPhone())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-					+ "EXISTS(SELECT 1 FROM AD_User u WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(u.Phone) = UPPER(?)) "
-					+ "OR EXISTS(SELECT 1 FROM C_BPartner_Location bpl WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(bpl.Phone) = UPPER(?))"
-					+ ")");
-			//	Add parameters
-			parameters.add(request.getPhone());
-			parameters.add(request.getPhone());
-		}
-		//	Postal Code
-		if(!Util.isEmpty(request.getPostalCode())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("(EXISTS(SELECT 1 FROM C_BPartner_Location bpl "
-					+ "INNER JOIN C_Location l ON(l.C_Location_ID = bpl.C_Location_ID) "
-					+ "WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-					+ "AND UPPER(l.Postal) = UPPER(?)))");
-			//	Add parameters
-			parameters.add(request.getPostalCode());
-		}
-		//	
-		String criteriaWhereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), parameters);
-		if(whereClause.length() > 0
-				&& !Util.isEmpty(criteriaWhereClause)) {
-			whereClause.append(" AND (").append(criteriaWhereClause).append(")");
-		}
-		//	Get business partner
-		MBPartner businessPartner = new Query(Env.getCtx(), I_C_BPartner.Table_Name, 
-				whereClause.toString(), null)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.first();
-		//	Default return
-		return CoreFunctionalityConvert.convertBusinessPartner(
-			businessPartner
-		);
 	}
 
 }
