@@ -194,7 +194,35 @@ public class WhereClauseUtil {
 	 * @return
 	 */
 	public static String getRestrictionByOperator(Filter condition, List<Object> params) {
-		return getRestrictionByOperator(condition, 0, params);
+		return getRestrictionByOperator(null, condition, 0, params);
+	}
+
+	/**
+	 * Get sql restriction by operator
+	 * @param columnName
+	 * @param operatorValue
+	 * @param value
+	 * @param valueTo
+	 * @param valuesList
+	 * @param params
+	 * @return
+	 */
+	public static String getRestrictionByOperator(Filter condition, int displayType, List<Object> params) {
+		return getRestrictionByOperator(null, condition, displayType, params);
+	}
+
+	/**
+	 * Get sql restriction by operator
+	 * @param columnName
+	 * @param operatorValue
+	 * @param value
+	 * @param valueTo
+	 * @param valuesList
+	 * @param params
+	 * @return
+	 */
+	public static String getRestrictionByOperator(String tableAlias, Filter condition, List<Object> params) {
+		return getRestrictionByOperator(tableAlias, condition, 0, params);
 	}
 
 	/**
@@ -204,7 +232,7 @@ public class WhereClauseUtil {
 	 * @param parameters
 	 * @return
 	 */
-	public static String getRestrictionByOperator(Filter condition, int displayType, List<Object> parameters) {
+	public static String getRestrictionByOperator(String tableAlias, Filter condition, int displayType, List<Object> parameters) {
 		String operatorValue = OperatorUtil.EQUAL;
 		if (!Util.isEmpty(condition.getOperator(), true)) {
 			operatorValue = condition.getOperator().toLowerCase();
@@ -212,6 +240,9 @@ public class WhereClauseUtil {
 		String sqlOperator = OperatorUtil.convertOperator(condition.getOperator());
 
 		String columnName = condition.getColumnName();
+		if (!Util.isEmpty(tableAlias, true)) {
+			columnName = tableAlias + "." + columnName;
+		}
 		String sqlValue = "";
 		StringBuilder additionalSQL = new StringBuilder();
 		//	For IN or NOT IN
@@ -347,6 +378,20 @@ public class WhereClauseUtil {
 		return rescriction;
 	}
 
+
+	/**
+	 * Get sql restriction by operator
+	 * @param columnName
+	 * @param operatorValue
+	 * @param value
+	 * @param valueTo
+	 * @param valuesList
+	 * @return
+	 */
+	public static String getRestrictionByOperatorWithoutParameters(Filter condition, int displayType) {
+		return getRestrictionByOperatorWithoutParameters(null, condition, displayType);
+	}
+
 	/**
 	 * Get sql restriction by operator without manage filters
 	 * @param columnName
@@ -354,12 +399,16 @@ public class WhereClauseUtil {
 	 * @param value
 	 * @param valueTo
 	 * @param valuesList
-	 * @param params
 	 * @return
 	 */
-	public static String getRestrictionByOperator(Filter condition, int displayType) {
+	public static String getRestrictionByOperatorWithoutParameters(String tableAlias, Filter condition, int displayType) {
 		String sqlOperator = OperatorUtil.convertOperator(condition.getOperator());
+
 		String columnName = condition.getColumnName();
+		if (!Util.isEmpty(tableAlias, true)) {
+			columnName = tableAlias + "." + columnName;
+		}
+
 		String operatorValue = condition.getOperator();
 		String sqlValue = "";
 		StringBuilder additionalSQL = new StringBuilder();

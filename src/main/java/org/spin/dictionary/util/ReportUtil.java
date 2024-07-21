@@ -93,7 +93,11 @@ public class ReportUtil {
 			if (rangeAdd.containsKey(reportParameter.getColumnName())) {
 				return;
 			}
-			String restriction = WhereClauseUtil.getRestrictionByOperator(condition, reportParameter.getAD_Reference_ID());
+			String restriction = WhereClauseUtil.getRestrictionByOperatorWithoutParameters(
+				table.getTableName(),
+				condition,
+				reportParameter.getAD_Reference_ID()
+			);
 
 			if (whereClause.length() > 0) {
 				whereClause.append(" AND ");
