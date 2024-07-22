@@ -35,7 +35,7 @@ service ExpressShipment {
 		option (google.api.http) = { get: "/express-shipment/orders" };
 	}
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
-		option (google.api.http) = { get: "/express-shipment/products" };
+		option (google.api.http) = { get: "/express-shipment/orders/{order_id}/products" };
 	}
 	// Shipment
 	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {

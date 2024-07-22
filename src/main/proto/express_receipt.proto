@@ -32,7 +32,7 @@ service ExpressReceipt {
 		option (google.api.http) = { get: "/express-receipt/orders" };
 	}
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
-		option (google.api.http) = { get: "/express-receipt/products" };
+		option (google.api.http) = { get: "/express-receipt/orders/{order_id}/products" };
 	}
 	// Receipt
 	rpc CreateReceipt(CreateReceiptRequest) returns (Receipt) {
