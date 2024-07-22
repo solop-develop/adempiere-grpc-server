@@ -89,18 +89,30 @@ public class BusinessPartnerLogic {
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
 
-		StringBuffer whereClause = new StringBuffer("1=1");
-		// validation code of field
-		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, reference.ValidationCode);
-		String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
-		if (!Util.isEmpty(reference.ValidationCode, true)) {
-			if (Util.isEmpty(parsedValidationCode, true)) {
-				throw new AdempiereException("@WhereClause@ @Unparseable@");
-			}
-			whereClause.append(" AND ").append(parsedValidationCode);
+		StringBuffer whereClause = new StringBuffer(" 1=1 ");
+		List<Object> parametersList = new ArrayList<>();
+
+		// validate is active record
+		if (request.getIsOnlyActiveRecords()) {
+			whereClause.append("AND IsActive = ? ");
+			parametersList.add(true);
 		}
 
-		List<Object> parametersList = new ArrayList<>();
+		// validation code of field
+		if (!request.getIsWithoutValidation()) {
+			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
+				tableName,
+				reference.ValidationCode
+			);
+			if (!Util.isEmpty(reference.ValidationCode, true)) {
+				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+				if (Util.isEmpty(parsedValidationCode, true)) {
+					throw new AdempiereException("@WhereClause@ @Unparseable@");
+				}
+				whereClause.append(" AND ").append(parsedValidationCode);
+			}
+		}
+
 		//	For search value
 		final String searchValue = ValueManager.getDecodeUrl(
 			request.getSearchValue()

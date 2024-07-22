@@ -327,13 +327,19 @@ public class InvoiceInfoLogic {
 		StringBuffer whereClause = new StringBuffer();
 
 		// validation code of field
-		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, "i", reference.ValidationCode);
-		String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
-		if (!Util.isEmpty(reference.ValidationCode, true)) {
-			if (Util.isEmpty(parsedValidationCode, true)) {
-				throw new AdempiereException("@WhereClause@ @Unparseable@");
+		if (!request.getIsWithoutValidation()) {
+			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
+				tableName,
+				"i",
+				reference.ValidationCode
+			);
+			if (!Util.isEmpty(reference.ValidationCode, true)) {
+				String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
+				if (Util.isEmpty(parsedValidationCode, true)) {
+					throw new AdempiereException("@WhereClause@ @Unparseable@");
+				}
+				whereClause.append(" AND ").append(parsedValidationCode);
 			}
-			whereClause.append(" AND ").append(parsedValidationCode);
 		}
 
 		//	For dynamic condition

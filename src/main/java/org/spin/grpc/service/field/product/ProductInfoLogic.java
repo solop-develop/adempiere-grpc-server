@@ -412,11 +412,16 @@ public class ProductInfoLogic {
 		;
 
 		String sqlWhere = " WHERE p.AD_Client_ID = ? ";
-
 		List<Object> parametersList = new ArrayList<>();
 		parametersList.add(
 			Env.getAD_Client_ID(context)
 		);
+
+		// validate is active record
+		if (request.getIsOnlyActiveRecords()) {
+			sqlWhere += "AND p.IsActive = ? ";
+			parametersList.add(true);
+		}
 
 		final String searchValue = ValueManager.getDecodeUrl(
 			request.getSearchValue()
@@ -614,13 +619,19 @@ public class ProductInfoLogic {
 			);
 
 		// validation code of field
-		String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, "p", reference.ValidationCode);
-		String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
-		if (!Util.isEmpty(reference.ValidationCode, true)) {
-			if (Util.isEmpty(parsedValidationCode, true)) {
-				throw new AdempiereException("@WhereClause@ @Unparseable@");
+		if (!request.getIsWithoutValidation()) {
+			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
+				tableName,
+				"p",
+				reference.ValidationCode
+			);
+			if (!Util.isEmpty(reference.ValidationCode, true)) {
+				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+				if (Util.isEmpty(parsedValidationCode, true)) {
+					throw new AdempiereException("@WhereClause@ @Unparseable@");
+				}
+				sqlWithRoleAccess += " AND " + parsedValidationCode;
 			}
-			sqlWithRoleAccess += " AND " + parsedValidationCode;
 		}
 
 		//	Count records
