@@ -958,29 +958,52 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(request.getCustomerId() <= 0) {
 				throw new AdempiereException("@C_BPartner_ID@ @IsMandatory@");
 			}
-			//	For data
-			ListCustomerBankAccountsResponse.Builder builder = ListCustomerBankAccountsResponse.newBuilder();
 			int customerId = request.getCustomerId();
+
+			//	For data
 			String nexPageToken = null;
 			int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 			int limit = LimitUtil.getPageSize(request.getPageSize());
 			int offset = (pageNumber - 1) * limit;
 
-			//	Dynamic where clause
-			//	Get Product list
-			Query query = new Query(Env.getCtx(), I_C_BP_BankAccount.Table_Name, I_C_BP_BankAccount.COLUMNNAME_C_BPartner_ID + " = ?", null)
-					.setParameters(customerId)
-					.setClient_ID()
-					.setOnlyActiveRecords(true);
+			String whereClause = I_C_BP_BankAccount.COLUMNNAME_C_BPartner_ID + " = ?";
+			List<Object> filtersList = new ArrayList<Object>();
+			filtersList.add(customerId);
+			if (request.getBankId() > 0) {
+				whereClause += " " + I_C_BP_BankAccount.COLUMNNAME_C_Bank_ID + " = ?";
+				filtersList.add(request.getBankId());
+			}
+			
+			// if (request.get)
+			Query query = new Query(
+				Env.getCtx(),
+				I_C_BP_BankAccount.Table_Name,
+				whereClause,
+				null
+			)
+				.setParameters(filtersList)
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+			;
+
 			int count = query.count();
+			ListCustomerBankAccountsResponse.Builder builder = ListCustomerBankAccountsResponse.newBuilder()
+				.setRecordCount(
+					count
+				)
+			;
 			query
-			.setLimit(limit, offset)
-			.<MBPBankAccount>list()
-			.forEach(customerBankAccount -> {
-				builder.addCustomerBankAccounts(ConvertUtil.convertCustomerBankAccount(customerBankAccount));
-			});
+				.setLimit(limit, offset)
+				.<MBPBankAccount>list()
+				.forEach(customerBankAccount -> {
+					builder.addCustomerBankAccounts(
+						ConvertUtil.convertCustomerBankAccount(
+							customerBankAccount
+						)
+					);
+				});
 			//	
-			builder.setRecordCount(count);
+
 			//	Set page token
 			if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 				nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
@@ -992,10 +1015,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
 		}
 	}
 	

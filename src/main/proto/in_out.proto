@@ -20,7 +20,6 @@ option java_package = "org.spin.backend.grpc.inout";
 option java_outer_classname = "ADempiereInOut";
 
 import "google/api/annotations.proto";
-import "google/protobuf/struct.proto";
 
 import "base_data_type.proto";
 
