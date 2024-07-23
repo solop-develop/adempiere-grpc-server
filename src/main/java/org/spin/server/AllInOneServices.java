@@ -40,6 +40,7 @@ import org.spin.grpc.service.PointOfSalesForm;
 import org.spin.grpc.service.RecordManagement;
 import org.spin.grpc.service.ReportManagement;
 import org.spin.grpc.service.Security;
+import org.spin.grpc.service.SendNotifications;
 import org.spin.grpc.service.TimeControl;
 import org.spin.grpc.service.TimeRecord;
 import org.spin.grpc.service.UpdateManagement;
@@ -229,6 +230,9 @@ public class AllInOneServices {
 		//	Notice Management
 		serverBuilder.addService(new NoticeManagement());
 		logger.info("Service " + NoticeManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Send Notifications
+		serverBuilder.addService(new SendNotifications());
+		logger.info("Service " + SendNotifications.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payment
 		serverBuilder.addService(new PaymentInfoService());
 		logger.info("Service " + PaymentInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
