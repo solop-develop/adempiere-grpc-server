@@ -8,6 +8,7 @@ import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -22,6 +23,7 @@ import org.spin.backend.grpc.send_notifications.NotifcationResponse;
 import org.spin.backend.grpc.send_notifications.NotifcationType;
 import org.spin.backend.grpc.send_notifications.SendNotificationRequest;
 import org.spin.backend.grpc.send_notifications.SendNotificationsGrpc.SendNotificationsImplBase;
+import org.spin.base.util.AccessUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.queue.notification.DefaultNotifier;
 import org.spin.queue.util.QueueLoader;
@@ -195,18 +197,26 @@ public class SendNotifications extends  SendNotificationsImplBase{
 
 	private NotifcationResponse.Builder sendNotification(SendNotificationRequest request) {
 
+		if(Util.isEmpty(request.getNotificationType(), true)) {
+			throw new AdempiereException("@NotifcationType@ @NotFound@");
+		}
+
+		//	Validate print format
+		if(request.getUserId() <= 0 && request.getUserId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @User_ID@");
+		}
+
 		//	Get instance for notifier
 		DefaultNotifier notifier = (DefaultNotifier) QueueLoader.getInstance().getQueueManager(DefaultNotifier.QUEUETYPE_DefaultNotifier)
 				.withContext(Env.getCtx());
 
 		//	Send notification to queue
-
 		notifier
 			.clearMessage()
 			.withApplicationType(request.getNotificationType())
 			.withUserId(request.getUserId())
-			.withText(request.getSubject())
-			.withDescription(request.getMessage());
+			.withText(request.getBody())
+			.withDescription(request.getTitle());
 
 			notifier.withUserId(request.getUserId());
 
@@ -215,7 +225,10 @@ public class SendNotifications extends  SendNotificationsImplBase{
 			if(currentUser.getEMail() != null) {
 				notifier.addRecipient(currentUser.getEMail());
 			}
+			//	Attachment
+			// notifier.addAttachment(request.getAttachments());
 
+			//	Add to queue
 			notifier.addToQueue();
 		return NotifcationResponse.newBuilder();
 	}
