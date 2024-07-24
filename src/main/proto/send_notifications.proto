@@ -41,7 +41,7 @@
 		};
 	}
 
-	rpc SendNotification(SendNotificationRequest) returns (NotifcationResponse) {
+	rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse ) {
 		option (google.api.http) = {
             post: "/send_notifications/notification",
 			body: "*"
@@ -90,16 +90,16 @@ message SendNotificationRequest {
 	string notification_type = 2;
 	string title = 3;
 	string body = 4;
-	repeated  receiveds recipients = 5;
-	repeated  string received_registered = 6;
+	repeated Recipinets recipients = 5;
+	repeated string recipient_registered = 6;
 	string attachments = 7;
 }
 
-message receiveds {
+message Recipinets {
 	int32 contact_id = 1;
 	string account_name = 2;
 }
 
-message NotifcationResponse {
+message SendNotificationResponse {
 	string message = 1;
 }

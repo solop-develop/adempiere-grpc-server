@@ -1,14 +1,12 @@
 package org.spin.grpc.service;
 
 import java.util.List;
-import java.util.StringTokenizer;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
-import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -19,7 +17,7 @@ import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.send_notifications.ListNotificationsTypesRequest;
 import org.spin.backend.grpc.send_notifications.ListNotificationsTypesResponse;
 import org.spin.backend.grpc.send_notifications.ListUsersRequest;
-import org.spin.backend.grpc.send_notifications.NotifcationResponse;
+import org.spin.backend.grpc.send_notifications.SendNotificationResponse;
 import org.spin.backend.grpc.send_notifications.NotifcationType;
 import org.spin.backend.grpc.send_notifications.SendNotificationRequest;
 import org.spin.backend.grpc.send_notifications.SendNotificationsGrpc.SendNotificationsImplBase;
@@ -31,6 +29,7 @@ import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import io.vavr.collection.Array;
 
 public class SendNotifications extends  SendNotificationsImplBase{
     /**	Logger			*/
@@ -59,7 +58,7 @@ public class SendNotifications extends  SendNotificationsImplBase{
 	
 	private ListLookupItemsResponse.Builder ListUsers(ListUsersRequest request) {
 		//	Add DocStatus for validation
-		final String validationCode = "Email IS NOT NULL ";
+		final String validationCode = "NotificationType <> 'X' ";
 		Query query = new Query(
 			Env.getCtx(),
 			I_AD_User.Table_Name,
@@ -175,12 +174,12 @@ public class SendNotifications extends  SendNotificationsImplBase{
 		return builderList;
 	}
 
-	public void sendNotification(SendNotificationRequest request, StreamObserver<NotifcationResponse> responseObserver) {
+	public void sendNotification(SendNotificationRequest request, StreamObserver<SendNotificationResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			NotifcationResponse.Builder builder = sendNotification(request);
+			SendNotificationResponse.Builder builder = sendNotification(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -195,16 +194,50 @@ public class SendNotifications extends  SendNotificationsImplBase{
 		}
 	}
 
-	private NotifcationResponse.Builder sendNotification(SendNotificationRequest request) {
+	private SendNotificationResponse.Builder sendNotification(SendNotificationRequest request) {
+		MUser currentUser = MUser.get(Env.getCtx());
+
+		int userId = request.getUserId();
+
+		//	Validate user
+		if(userId <= 0 && request.getUserId() <= 0) {
+			userId = currentUser.getAD_User_ID();
+		}
 
 		if(Util.isEmpty(request.getNotificationType(), true)) {
 			throw new AdempiereException("@NotifcationType@ @NotFound@");
 		}
-
-		//	Validate print format
-		if(request.getUserId() <= 0 && request.getUserId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @User_ID@");
+		
+		// Validate the Body
+		if(Util.isEmpty(request.getBody(), true)) {
+			throw new AdempiereException("@Body@ @Mandatory@");
 		}
+
+		// Validate the Title
+		if(Util.isEmpty(request.getTitle(), true)) {
+			throw new AdempiereException("@Title@ @Mandatory@");
+		}
+
+		// Validate the list of recipients
+		if (request.getRecipientsList() == null || request.getRecipientsList().isEmpty() && request.getRecipientRegisteredCount() <= 0) {
+			throw new AdempiereException("@Recipinets@ @Mandatory@");
+		}
+		StringBuffer error = new StringBuffer();
+		if (request.getRecipientsCount() > 0) {
+			request.getRecipientsList().forEach(recipient -> {
+				if (recipient.getContactId() <= 0) {
+					error.append("Recipient does not have a valid Contact ID (" + recipient.getContactId() + ") Account Name (" + recipient.getAccountName() + ") ");
+				}
+				if(Util.isEmpty(recipient.getAccountName(), true)) {
+					error.append("Recipient does not have a valid Account Name (" + recipient.getContactId()  + ") Contact ID (" + recipient.getAccountName() + ") ");
+				}
+			});
+		}
+
+		if (error.length() > 0 && request.getRecipientRegisteredCount() <= 0) {
+			throw new AdempiereException("Errors in the recipient list:\n" + error.toString());
+		}
+
 
 		//	Get instance for notifier
 		DefaultNotifier notifier = (DefaultNotifier) QueueLoader.getInstance().getQueueManager(DefaultNotifier.QUEUETYPE_DefaultNotifier)
@@ -214,22 +247,27 @@ public class SendNotifications extends  SendNotificationsImplBase{
 		notifier
 			.clearMessage()
 			.withApplicationType(request.getNotificationType())
-			.withUserId(request.getUserId())
+			.withUserId(userId)
 			.withText(request.getBody())
 			.withDescription(request.getTitle());
 
-			notifier.withUserId(request.getUserId());
-
-			MUser currentUser = MUser.get(Env.getCtx());
-
-			if(currentUser.getEMail() != null) {
-				notifier.addRecipient(currentUser.getEMail());
+			// Add Recipient to Notification
+			if (request.getRecipientsCount() > 0) {
+				request.getRecipientsList().forEach(recipients -> {
+					notifier.addRecipient(recipients.getContactId(),recipients.getAccountName());
+				});
+			}
+			// Add unregistered Recipient to Notification
+			if (request.getRecipientRegisteredCount() > 0) {
+				request.getRecipientRegisteredList().forEach(recipients -> {
+					notifier.addRecipient(recipients);
+				});
 			}
 			//	Attachment
 			// notifier.addAttachment(request.getAttachments());
 
 			//	Add to queue
 			notifier.addToQueue();
-		return NotifcationResponse.newBuilder();
+		return SendNotificationResponse.newBuilder();
 	}
 }
