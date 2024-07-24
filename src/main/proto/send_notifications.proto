@@ -101,5 +101,5 @@ message Recipinets {
 }
 
 message SendNotificationResponse {
-	string message = 1;
+	int32 notification_id = 1;
 }
