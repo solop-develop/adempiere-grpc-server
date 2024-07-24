@@ -35,33 +35,22 @@
 		};
 	}
 
-    rpc ListAppSupports(ListAppSupportsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = {
-			get: "/send_notifications/app_supports"
-		};
-	}
-
 	rpc ListNotificationsTypes(ListNotificationsTypesRequest) returns (ListNotificationsTypesResponse) {
 		option (google.api.http) = {
 			get: "/send_notifications/notifications_types"
 		};
 	}
+
+	rpc SendNotification(SendNotificationRequest) returns (NotifcationResponse) {
+		option (google.api.http) = {
+            post: "/send_notifications/notification",
+			body: "*"
+        };
+	}
  }
  
  // User List
  message ListUsersRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-}
-
- // App Support List
-message ListAppSupportsRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -95,3 +84,17 @@ message NotifcationType {
 	string description = 3;
 }
  
+
+message SendNotificationRequest {
+	int32 user_id = 1;
+    int32 app_support_id = 2;
+    string notification_type = 3;
+	string message = 4;
+	string subject = 5;
+	repeated  string received = 6;
+	repeated  int32 received_registered = 7;
+}
+
+message NotifcationResponse {
+	string message = 1;
+}

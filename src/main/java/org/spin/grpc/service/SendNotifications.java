@@ -7,26 +7,18 @@ import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
-import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
-import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
-import org.spin.backend.grpc.field.order.ListOrdersInfoRequest;
-import org.spin.backend.grpc.field.order.ListOrdersInfoResponse;
-import org.spin.backend.grpc.payment_print_export.ListPaymentsRequest;
-import org.spin.backend.grpc.payment_print_export.ListPaymentsResponse;
-import org.spin.backend.grpc.send_notifications.ListAppSupportsRequest;
 import org.spin.backend.grpc.send_notifications.ListNotificationsTypesRequest;
 import org.spin.backend.grpc.send_notifications.ListNotificationsTypesResponse;
 import org.spin.backend.grpc.send_notifications.ListUsersRequest;
 import org.spin.backend.grpc.send_notifications.NotifcationType;
 import org.spin.backend.grpc.send_notifications.SendNotificationsGrpc.SendNotificationsImplBase;
 import org.spin.base.util.LookupUtil;
-import org.spin.model.MADAppRegistration;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -114,7 +106,7 @@ public class SendNotifications extends  SendNotificationsImplBase{
 	}
 	
 	private ListNotificationsTypesResponse.Builder listNotificationsTypes(ListNotificationsTypesRequest request) {
-        final String whereClause = "AD_Reference_ID = 54081"
+        final String whereClause = "AD_Reference_ID = 54081 "
 			+ "AND Value IN('STW', 'SFA', 'SYT', 'SIG', 'SSK', 'SIN', 'SSN', 'STG', 'SWH', 'SDC', 'EMA', 'NTE') "
 			+ "AND EXISTS("
 				+ "SELECT 1 FROM AD_AppRegistration AS a "
