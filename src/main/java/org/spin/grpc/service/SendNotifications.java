@@ -76,9 +76,6 @@ public class SendNotifications extends  SendNotificationsImplBase{
 
 		List<MUser> userList = query.list();
 		userList.stream().forEach(userSelection -> {
-
-			//	Display column
-	
 			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
 				userSelection.getAD_User_ID(),
 				userSelection.getUUID(),
@@ -87,9 +84,9 @@ public class SendNotifications extends  SendNotificationsImplBase{
 				userSelection.isActive()
 			);
 
-			// builderItem.setId(paymentSelection.getC_PaySelection_ID());
-			
-			builderList.addRecords(builderItem.build());
+			builderList.addRecords(
+				builderItem.build()
+			);
 		});
 
 		return builderList;
@@ -119,7 +116,13 @@ public class SendNotifications extends  SendNotificationsImplBase{
 	private ListNotificationsTypesResponse.Builder listNotificationsTypes(ListNotificationsTypesRequest request) {
         final String whereClause = "AD_Reference_ID = 54081"
 			+ "AND Value IN('STW', 'SFA', 'SYT', 'SIG', 'SSK', 'SIN', 'SSN', 'STG', 'SWH', 'SDC', 'EMA', 'NTE') "
-			+ "AND EXISTS(SELECT 1 FROM AD_AppRegistration a WHERE a.ApplicationType = AD_Ref_List.Value AND a.AD_Client_ID in(0, ?))";
+			+ "AND EXISTS("
+				+ "SELECT 1 FROM AD_AppRegistration AS a "
+				+ "WHERE a.ApplicationType = AD_Ref_List.Value "
+				+ "AND a.AD_Client_ID IN(0, ?) "
+				+ "ORDER BY a.AD_Client_ID DESC "
+			+ ")"
+		;
 
 		final int clientId = Env.getAD_Client_ID((Env.getCtx()));
 		Query query = new Query(
@@ -131,12 +134,15 @@ public class SendNotifications extends  SendNotificationsImplBase{
 			.setParameters(clientId)
 		;
 
-
 		MRefList.getList(Env.getCtx(), 54081, false);
 
 		int count = query.count();
 
-		ListNotificationsTypesResponse.Builder builderList = ListNotificationsTypesResponse.newBuilder();
+		ListNotificationsTypesResponse.Builder builderList = ListNotificationsTypesResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
 
 		List<MRefList> appList = query.list();                         
 		appList.stream().forEach(refList -> {
@@ -150,15 +156,15 @@ public class SendNotifications extends  SendNotificationsImplBase{
 					)
 				)
 				.setValue(
-                    ValueManager.validateNull(
-                        value
-                    )
-                )
+					ValueManager.validateNull(
+						value
+					)
+				)
 				.setDescription(
-                    ValueManager.validateNull(
-                        description
-                    )
-                )
+					ValueManager.validateNull(
+						description
+					)
+				)
 			;
 
 			builderList.addRecords(
