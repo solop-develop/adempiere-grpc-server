@@ -2,8 +2,12 @@ package org.spin.grpc.service;
 
 import java.util.List;
 
+import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -11,12 +15,19 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
+import org.spin.backend.grpc.field.order.ListOrdersInfoRequest;
+import org.spin.backend.grpc.field.order.ListOrdersInfoResponse;
+import org.spin.backend.grpc.payment_print_export.ListPaymentsRequest;
+import org.spin.backend.grpc.payment_print_export.ListPaymentsResponse;
 import org.spin.backend.grpc.send_notifications.ListAppSupportsRequest;
-import org.spin.backend.grpc.send_notifications.ListUserRequest;
+import org.spin.backend.grpc.send_notifications.ListNotificationsTypesRequest;
+import org.spin.backend.grpc.send_notifications.ListNotificationsTypesResponse;
+import org.spin.backend.grpc.send_notifications.ListUsersRequest;
+import org.spin.backend.grpc.send_notifications.NotifcationType;
 import org.spin.backend.grpc.send_notifications.SendNotificationsGrpc.SendNotificationsImplBase;
 import org.spin.base.util.LookupUtil;
 import org.spin.model.MADAppRegistration;
-
+import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -26,12 +37,12 @@ public class SendNotifications extends  SendNotificationsImplBase{
 	private CLogger log = CLogger.getCLogger(ImportFileLoader.class);
 
     @Override
-	public void listUser(ListUserRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	public void listUsers(ListUsersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = ListUser(request, "AD_User");
+			ListLookupItemsResponse.Builder builder = ListUsers(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -46,12 +57,12 @@ public class SendNotifications extends  SendNotificationsImplBase{
 		}
 	}
 	
-	private ListLookupItemsResponse.Builder ListUser(ListUserRequest request, String tableName) {
+	private ListLookupItemsResponse.Builder ListUsers(ListUsersRequest request) {
 		//	Add DocStatus for validation
-		final String validationCode = " Email IS NOT null ";
+		final String validationCode = "Email IS NOT NULL ";
 		Query query = new Query(
 			Env.getCtx(),
-			tableName,
+			I_AD_User.Table_Name,
 			validationCode,
 			null
 		)
@@ -65,30 +76,17 @@ public class SendNotifications extends  SendNotificationsImplBase{
 
 		List<MUser> userList = query.list();
 		userList.stream().forEach(userSelection -> {
-			// BigDecimal totalAmount = Env.ZERO;
-			// if (paymentSelection.getTotalAmt() != null) {
-			// 	totalAmount = paymentSelection.getTotalAmt();
-			// }
 
 			//	Display column
-			String displayedValue = new StringBuffer()
-				.append(Util.isEmpty(userSelection.getName(), true) ? "-1" : userSelection.getName())
-				.append("_")
-                .append(Util.isEmpty(userSelection.getEMail(), true) ? "-1" : userSelection.getEMail())
-				// .append(MCurrency.getISO_Code(Env.getCtx(), userSelection.getC_Currency_ID()))
-				// .append("_")
-				// .append(DisplayType.getNumberFormat(DisplayType.Amount).format(totalAmount))
-				.toString();
 	
 			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
 				userSelection.getAD_User_ID(),
 				userSelection.getUUID(),
 				userSelection.getEMail(),
-				displayedValue,
+				userSelection.getDisplayValue(),
 				userSelection.isActive()
 			);
 
-			builderItem.setTableName(tableName);
 			// builderItem.setId(paymentSelection.getC_PaySelection_ID());
 			
 			builderList.addRecords(builderItem.build());
@@ -98,12 +96,12 @@ public class SendNotifications extends  SendNotificationsImplBase{
 	}
 
     @Override
-	public void listAppSupports(ListAppSupportsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	public void listNotificationsTypes(ListNotificationsTypesRequest request, StreamObserver<ListNotificationsTypesResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = ListAppSupports(request, "AD_AppRegistration");
+			ListNotificationsTypesResponse.Builder builder = listNotificationsTypes(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -118,42 +116,54 @@ public class SendNotifications extends  SendNotificationsImplBase{
 		}
 	}
 	
-	private ListLookupItemsResponse.Builder ListAppSupports(ListAppSupportsRequest request, String tableName) {
-        final String validationCode = "EXISTS ( SELECT 1 FROM ad_appsupport AS sp where sp.applicationtype = 'EMA' AND sp.AD_AppSupport_ID = AD_AppRegistration.AD_AppSupport_ID )";
+	private ListNotificationsTypesResponse.Builder listNotificationsTypes(ListNotificationsTypesRequest request) {
+        final String whereClause = "AD_Reference_ID = 54081"
+			+ "AND Value IN('STW', 'SFA', 'SYT', 'SIG', 'SSK', 'SIN', 'SSN', 'STG', 'SWH', 'SDC', 'EMA', 'NTE') "
+			+ "AND EXISTS(SELECT 1 FROM AD_AppRegistration a WHERE a.ApplicationType = AD_Ref_List.Value AND a.AD_Client_ID in(0, ?))";
+
+		final int clientId = Env.getAD_Client_ID((Env.getCtx()));
 		Query query = new Query(
 			Env.getCtx(),
-			tableName,
-			validationCode,
+			I_AD_Ref_List.Table_Name,
+			whereClause,
 			null
 		)
+			.setParameters(clientId)
 		;
 
+
+		MRefList.getList(Env.getCtx(), 54081, false);
+
 		int count = query.count();
-		ListLookupItemsResponse.Builder builderList = ListLookupItemsResponse.newBuilder()
-			.setRecordCount(count);
 
-		List<MADAppRegistration> appList = query.list();
-		appList.stream().forEach(appSelection -> {
+		ListNotificationsTypesResponse.Builder builderList = ListNotificationsTypesResponse.newBuilder();
 
-			//	Display column
-			String displayedValue = new StringBuffer()
-				.append(Util.isEmpty(appSelection.getName(), true) ? "-1" : appSelection.getName())
-				.append("_")
-                .append(Util.isEmpty(appSelection.getDescription(), true) ? "-1" : appSelection.getDescription())
-				.toString();
-	
-			LookupItem.Builder builderItem = LookupUtil.convertObjectFromResult(
-				appSelection.getAD_User_ID(),
-				appSelection.getUUID(),
-				appSelection.getApplicationType(),
-				// appSelection.getValue(),
-				displayedValue,
-				appSelection.isActive()
+		List<MRefList> appList = query.list();                         
+		appList.stream().forEach(refList -> {
+			String value = refList.getValue();
+			String name = refList.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
+			String description = refList.get_Translation(I_AD_Ref_List.COLUMNNAME_Value);
+			NotifcationType.Builder builder = NotifcationType.newBuilder()
+				.setName(
+					ValueManager.validateNull(
+						name
+					)
+				)
+				.setValue(
+                    ValueManager.validateNull(
+                        value
+                    )
+                )
+				.setDescription(
+                    ValueManager.validateNull(
+                        description
+                    )
+                )
+			;
+
+			builderList.addRecords(
+				builder.build()
 			);
-
-			builderItem.setTableName(tableName);
-			
-			builderList.addRecords(builderItem.build());
 		});
 
 		return builderList;

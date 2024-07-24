@@ -263,7 +263,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 	private ListLookupItemsResponse.Builder listAccoutingElementValues(ListAccoutingElementValuesRequest request) {
 		int accountingSchemaId = request.getAccoutingSchemaId();
 		if (accountingSchemaId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+			throw new AdempiereException("@	FillMandatory@ @C_AcctSchema_ID@");
 		}
 		Properties context = Env.getCtx();
 		MAcctSchema accoutingSchema = MAcctSchema.get(context, accountingSchemaId);

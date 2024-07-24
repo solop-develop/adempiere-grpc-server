@@ -29,7 +29,7 @@
  package send_notifications;
  
  service SendNotifications {
-	rpc ListUser(ListUserRequest) returns (data.ListLookupItemsResponse) {
+	rpc ListUsers(ListUsersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/send_notifications/user"
 		};
@@ -40,10 +40,16 @@
 			get: "/send_notifications/app_supports"
 		};
 	}
+
+	rpc ListNotificationsTypes(ListNotificationsTypesRequest) returns (ListNotificationsTypesResponse) {
+		option (google.api.http) = {
+			get: "/send_notifications/notifications_types"
+		};
+	}
  }
  
  // User List
- message ListUserRequest {
+ message ListUsersRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -65,5 +71,27 @@ message ListAppSupportsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 }
+
+message ListNotificationsTypesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+}
  
+message ListNotificationsTypesResponse {
+	int64 record_count = 1;
+	repeated NotifcationType records = 2;
+	string next_page_token = 3;
+}
+
+message NotifcationType {
+	string value = 1;
+	string name = 2;
+	string description = 3;
+}
  
