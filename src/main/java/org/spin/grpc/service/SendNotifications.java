@@ -1,6 +1,7 @@
 package org.spin.grpc.service;
 
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
@@ -11,14 +12,19 @@ import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.send_notifications.ListNotificationsTypesRequest;
 import org.spin.backend.grpc.send_notifications.ListNotificationsTypesResponse;
 import org.spin.backend.grpc.send_notifications.ListUsersRequest;
+import org.spin.backend.grpc.send_notifications.NotifcationResponse;
 import org.spin.backend.grpc.send_notifications.NotifcationType;
+import org.spin.backend.grpc.send_notifications.SendNotificationRequest;
 import org.spin.backend.grpc.send_notifications.SendNotificationsGrpc.SendNotificationsImplBase;
 import org.spin.base.util.LookupUtil;
+import org.spin.queue.notification.DefaultNotifier;
+import org.spin.queue.util.QueueLoader;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -165,5 +171,52 @@ public class SendNotifications extends  SendNotificationsImplBase{
 		});
 
 		return builderList;
+	}
+
+	public void sendNotification(SendNotificationRequest request, StreamObserver<NotifcationResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			NotifcationResponse.Builder builder = sendNotification(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private NotifcationResponse.Builder sendNotification(SendNotificationRequest request) {
+
+		//	Get instance for notifier
+		DefaultNotifier notifier = (DefaultNotifier) QueueLoader.getInstance().getQueueManager(DefaultNotifier.QUEUETYPE_DefaultNotifier)
+				.withContext(Env.getCtx());
+
+		//	Send notification to queue
+
+		notifier
+			.clearMessage()
+			.withApplicationType(request.getNotificationType())
+			.withUserId(request.getUserId())
+			.withText(request.getSubject())
+			.withDescription(request.getMessage());
+
+			notifier.withUserId(request.getUserId());
+
+			MUser currentUser = MUser.get(Env.getCtx());
+
+			if(currentUser.getEMail() != null) {
+				notifier.addRecipient(currentUser.getEMail());
+			}
+
+			notifier.addToQueue();
+		return NotifcationResponse.newBuilder();
 	}
 }

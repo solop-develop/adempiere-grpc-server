@@ -87,12 +87,11 @@ message NotifcationType {
 
 message SendNotificationRequest {
 	int32 user_id = 1;
-    int32 app_support_id = 2;
-    string notification_type = 3;
-	string message = 4;
-	string subject = 5;
-	repeated  string received = 6;
-	repeated  int32 received_registered = 7;
+	string notification_type = 2;
+	string message = 3;
+	string subject = 4;
+	repeated  string received = 5;
+	repeated  string received_registered = 6;
 }
 
 message NotifcationResponse {
