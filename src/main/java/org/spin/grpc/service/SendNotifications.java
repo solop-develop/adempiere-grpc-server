@@ -219,22 +219,17 @@ public class SendNotifications extends  SendNotificationsImplBase{
 		}
 
 		// Validate the list of recipients
-		if (request.getRecipientsList() == null || request.getRecipientsList().isEmpty() && request.getRecipientRegisteredCount() <= 0) {
+		if (request.getRecipientsList() == null || request.getRecipientsList().isEmpty()) {
 			throw new AdempiereException("@Recipinets@ @Mandatory@");
 		}
 		StringBuffer error = new StringBuffer();
-		if (request.getRecipientsCount() > 0) {
-			request.getRecipientsList().forEach(recipient -> {
-				if (recipient.getContactId() <= 0) {
-					error.append("Recipient does not have a valid Contact ID (" + recipient.getContactId() + ") Account Name (" + recipient.getAccountName() + ") ");
-				}
-				if(Util.isEmpty(recipient.getAccountName(), true)) {
-					error.append("Recipient does not have a valid Account Name (" + recipient.getContactId()  + ") Contact ID (" + recipient.getAccountName() + ") ");
-				}
-			});
-		}
+		request.getRecipientsList().forEach(recipient -> {
+			if (recipient.getContactId() <= 0 && Util.isEmpty(recipient.getAccountName(), true)) {
+				error.append("Recipient does not have a valid Contact ID (" + recipient.getContactId() + ") Account Name (" + recipient.getAccountName() + ") ");
+			}
+		});
 
-		if (error.length() > 0 && request.getRecipientRegisteredCount() <= 0) {
+		if (error.length() > 0) {
 			throw new AdempiereException("Errors in the recipient list:\n" + error.toString());
 		}
 
@@ -252,17 +247,9 @@ public class SendNotifications extends  SendNotificationsImplBase{
 			.withDescription(request.getTitle());
 
 			// Add Recipient to Notification
-			if (request.getRecipientsCount() > 0) {
-				request.getRecipientsList().forEach(recipients -> {
-					notifier.addRecipient(recipients.getContactId(),recipients.getAccountName());
-				});
-			}
-			// Add unregistered Recipient to Notification
-			if (request.getRecipientRegisteredCount() > 0) {
-				request.getRecipientRegisteredList().forEach(recipients -> {
-					notifier.addRecipient(recipients);
-				});
-			}
+			request.getRecipientsList().forEach(recipients -> {
+				notifier.addRecipient(recipients.getContactId(),recipients.getAccountName());
+			});
 			//	Attachment
 			// notifier.addAttachment(request.getAttachments());
 

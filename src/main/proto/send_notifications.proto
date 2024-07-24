@@ -91,8 +91,7 @@ message SendNotificationRequest {
 	string title = 3;
 	string body = 4;
 	repeated Recipinets recipients = 5;
-	repeated string recipient_registered = 6;
-	string attachments = 7;
+	string attachments = 8;
 }
 
 message Recipinets {
