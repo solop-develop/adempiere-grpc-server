@@ -92,7 +92,7 @@ dependencies {
 
 	// ADempiere Projects with additional features
 	//	ADempiere gRPC Utils Base (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-grpc-utils)
-	implementation "${baseGroupId}:adempiere-grpc-utils:1.4.2"
+	implementation "${baseGroupId}:adempiere-grpc-utils:1.4.6"
 	// Dashboard Improvements (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-dashboard-improvements)
 	implementation "${baseGroupId}:adempiere-dashboard-improvements:1.0.8"
 	// Point Of Sales Improvements (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-pos-improvements)
@@ -101,7 +101,7 @@ dependencies {
 	implementation "${baseGroupId}:adempiere-business-processors:1.1.0"
 	// Engine as Queue (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-kafka-connector)
 	implementation "${baseGroupId}:adempiere-kafka-connector:1.3.0"
-	// AWS3 Connector to use as File Storage
+	// AWS3 Connector to use as File Storagee (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-s3-connector)
 	implementation 'io.github.adempiere:adempiere-s3-connector:1.0.2'
 	// Third part access using JWT (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-jwt-token)
 	implementation "${baseGroupId}:adempiere-jwt-token:1.0.2"
