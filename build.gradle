@@ -113,6 +113,7 @@ dependencies {
 	implementation 'net.minidev:json-smart:2.4.8'
 	// https://mvnrepository.com/artifact/net.minidev/accessors-smart
 	implementation 'net.minidev:accessors-smart:2.4.8'
+	implementation "io.github.adempiere:adempiere-s3-connector:1.0.2"
 
 	//	Temporary projects
 	//	Keycloak and Okta connector (Open-ID based) (https://central.sonatype.com/artifact/io.github.adempiere/adempiere-open-id-connector)
