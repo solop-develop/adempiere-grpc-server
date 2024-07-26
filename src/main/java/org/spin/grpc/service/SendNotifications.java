@@ -207,11 +207,6 @@ public class SendNotifications extends  SendNotificationsImplBase{
 		if(Util.isEmpty(request.getNotificationType(), true)) {
 			throw new AdempiereException("@NotifcationType@ @NotFound@");
 		}
-		
-		// Validate the Body
-		if(Util.isEmpty(request.getBody(), true)) {
-			throw new AdempiereException("@Body@ @Mandatory@");
-		}
 
 		// Validate the Title
 		if(Util.isEmpty(request.getTitle(), true)) {
