@@ -24,11 +24,23 @@ repositories {
 	mavenLocal()
     mavenCentral()
     maven {
-    	url = System.getenv("GITHUB_DEPLOY_REPOSITORY") ?: System.properties['deploy.repository'] ?: 'https://maven.pkg.github.com/solop-develop/adempiere_customizations'
-        credentials {
+		url = System.getenv("GITHUB_DEPLOY_REPOSITORY") ?: System.properties['deploy.repository'] ?: findProperty("deployRepository") ?: 'https://maven.pkg.github.com/solop-develop/adempiere_customizations'
+		println "url env " + System.getenv("GITHUB_DEPLOY_REPOSITORY")
+		println "url prop " + System.properties['deploy.repository']
+		println "url proj " + findProperty("deployRepository")
+		println "url " + url
+		credentials {
 			// enviroment variable, system properrty, project property
 			username = System.getenv("GITHUB_DEPLOY_USER") ?: System.properties['deploy.user'] ?: findProperty("deployUsername")
+			println "username env " + System.getenv("GITHUB_DEPLOY_USER")
+			println "username prop " + System.properties['deploy.user']
+			println "username proj " + findProperty("deployUsername")
+			println "username " + username
 			password = System.getenv("GITHUB_DEPLOY_TOKEN") ?: System.properties['deploy.token'] ?: findProperty("deployToken")
+			println "password env " + System.getenv("GITHUB_DEPLOY_TOKEN")
+			println "password prop " + System.properties['deploy.passwtokenord']
+			println "password proj " + findProperty("deployToken")
+			println "password " + password
 		}
 	}
 }
@@ -119,8 +131,10 @@ allprojects {
 	task copyDescriptor(type: Copy) {
 		from "${projectDir}/build/descriptors/${descriptorFile}"
 		into "${projectDir}/resources/"
-		// into "${projectDir}/docker-compose/envoy/definitions/"
-		// rename { "${descriptorFile}" }
+
+		// docker compose
+		from "${projectDir}/build/descriptors/${descriptorFile}"
+		into "${projectDir}/docker-compose/envoy/definitions/"
 	}
 
 	tasks.matching {

@@ -54,6 +54,7 @@ jobs:
           GITHUB_DEPLOY_REPOSITORY: ${{ secrets.DEPLOY_REPOSITORY }}
           ORG_GRADLE_PROJECT_deployUsername: "${{ github.actor }}"
           ORG_GRADLE_PROJECT_deployToken: "${{ secrets.DEPLOY_TOKEN }}"
+          ORG_GRADLE_PROJECT_deploRepository: "${{ secrets.DEPLOY_REPOSITORY }}"
         with:
           gradle-version: 8.0.2
           arguments: build
