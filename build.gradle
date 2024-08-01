@@ -26,8 +26,9 @@ repositories {
     maven {
     	url = System.getenv("GITHUB_DEPLOY_REPOSITORY") ?: System.properties['deploy.repository'] ?: 'https://maven.pkg.github.com/solop-develop/adempiere_customizations'
         credentials {
-        	username = System.getenv("GITHUB_DEPLOY_USER") ?: System.properties['deploy.user']
-            password = System.getenv("GITHUB_DEPLOY_TOKEN") ?: System.properties['deploy.token'] 
+			// enviroment variable, system properrty, project property
+			username = System.getenv("GITHUB_DEPLOY_USER") ?: System.properties['deploy.user'] ?: findProperty("deployUsername")
+			password = System.getenv("GITHUB_DEPLOY_TOKEN") ?: System.properties['deploy.token'] ?: findProperty("deployToken")
 		}
 	}
 }
