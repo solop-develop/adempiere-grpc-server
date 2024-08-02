@@ -55,8 +55,9 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.2'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.2'
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0'
-	//	ADempiere Core + Patches
-    implementation 'com.solop.adempiere:adempiere-customizations.customizations_libs:3.9.4.001-1.0.1'
+	//	ADempiere Core + Patches + Features
+	implementation 'com.solop.adempiere:adempiere-customizations.customizations_libs:3.9.4.001-1.0.3'
+
 	//	Others
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 	implementation 'net.sf.jasperreports:jasperreports-fonts:6.21.0'
