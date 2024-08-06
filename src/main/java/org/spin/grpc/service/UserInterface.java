@@ -69,6 +69,7 @@ import org.compiere.model.GridWindowVO;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
+import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
@@ -699,6 +700,24 @@ public class UserInterface extends UserInterfaceImplBase {
 							fieldColumnName,
 							valueBuilder.build()
 						);
+
+						// to add client uuid by record
+						if (fieldColumnName.equals(I_AD_Element.COLUMNNAME_AD_Client_ID)) {
+							MClient entity = MClient.get(
+								table.getCtx(),
+								NumberManager.getIntegerFromObject(value)
+							);
+							if (entity != null) {
+								Value.Builder valueUuidBuilder = ValueManager.getValueFromReference(
+									entity.get_UUID(),
+									DisplayType.String
+								);
+								rowValues.putFields(
+									I_AD_Element.COLUMNNAME_AD_Client_ID + "_" + LookupUtil.UUID_COLUMN_KEY,
+									valueUuidBuilder.build()
+								);
+							}
+						}
 					} catch (Exception e) {
 						log.severe(e.getLocalizedMessage());
 						e.printStackTrace();
