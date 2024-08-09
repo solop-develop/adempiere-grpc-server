@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
 import org.compiere.model.MQuery;
 import org.compiere.model.MTable;
@@ -37,7 +38,6 @@ import org.compiere.util.Util;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
-import org.spin.util.ASPUtil;
 import org.spin.util.AbstractExportFormat;
 import org.spin.util.ReportExportHandler;
 
@@ -63,7 +63,11 @@ public class ReportUtil {
 	public static MQuery getReportQueryFromCriteria(int reportId, String tableName, String filters) {
 		MTable table = MTable.get(Env.getCtx(), tableName);
 		MQuery query = new MQuery(table.getTableName());
-		List<MProcessPara> reportParameters = ASPUtil.getInstance(Env.getCtx()).getProcessParameters(reportId);
+		MProcess reportDefinition = MProcess.get(
+			Env.getCtx(),
+			reportId
+		);
+		List<MProcessPara> reportParameters = reportDefinition.getParametersAsList();
 		HashMap<String, MProcessPara> parametersMap = new HashMap<>();
 		for (MProcessPara paramerter : reportParameters) {
 			parametersMap.put(paramerter.getColumnName(), paramerter);

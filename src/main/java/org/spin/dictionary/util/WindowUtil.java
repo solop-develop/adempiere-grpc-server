@@ -15,6 +15,7 @@
 package org.spin.dictionary.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,10 +28,10 @@ import org.compiere.model.MField;
 import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MTab;
+import org.compiere.model.MWindow;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.spin.base.util.AccessUtil;
-import org.spin.util.ASPUtil;
 
 /**
  * Class for handle Window, Tab, and Field
@@ -44,7 +45,9 @@ public class WindowUtil {
 	 * @return
 	 */
 	public static Map<String, Integer> getTabFieldsDisplayType(MTab tab) {
-		List<MField> tabFields = tab.getASPFields();
+		List<MField> tabFields = Arrays.asList(
+			tab.getFields(false, null)
+		);
 
 		Map<String, Integer> displayTypeColumns = new HashMap<>();
 
@@ -108,10 +111,16 @@ public class WindowUtil {
 			return false;
 		}
 
-		boolean isWithParentFields = tab.getASPFields()
+		List<MField> fielsList = Arrays.asList(
+			tab.getFields(false, null)
+		);
+		boolean isWithParentFields = fielsList
 			.parallelStream()
 			.filter(field -> {
-				MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+				MColumn column = MColumn.get(
+					field.getCtx(),
+					field.getAD_Column_ID()
+				);
 				return column.isParent();
 			})
 			.findFirst()
@@ -133,7 +142,10 @@ public class WindowUtil {
 	 * @return
 	 */
 	public static int getDirectParentTabId(int windowId, int tabId) {
-		MTab tab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(windowId, tabId);
+		MTab tab = MTab.get(
+			Env.getCtx(),
+			tabId
+		);
 
 		final int tabLevel = tab.getTabLevel();
 		final int tabSequence = tab.getSeqNo();
@@ -142,7 +154,13 @@ public class WindowUtil {
 		if (tabLevel > 0) {
 			AtomicReference<Integer> parentTabSequence = new AtomicReference<Integer>(-1);
 			AtomicReference<MTab> parentTabRefecence = new AtomicReference<MTab>();
-			List<MTab> tabsList = ASPUtil.getInstance(Env.getCtx()).getWindowTabs(tab.getAD_Window_ID());
+			MWindow windowDefintion = MWindow.get(
+				Env.getCtx(),
+				windowId
+			);
+			List<MTab> tabsList = Arrays.asList(
+				windowDefintion.getTabs(false, null)
+			);
 			tabsList.forEach(tabItem -> {
 				if (tabItem.getTabLevel() >= tabLevel || tabItem.getSeqNo() >= tabSequence) {
 					// it is child tab
@@ -172,7 +190,10 @@ public class WindowUtil {
 	public static List<MTab> getParentTabsList(int windowId, int currentTabId, List<MTab> tabsList) {
 		int parentTabId = getDirectParentTabId(windowId, currentTabId);
 		if (parentTabId > 0) {
-			MTab parentTab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(windowId, parentTabId);
+			MTab parentTab = MTab.get(
+				Env.getCtx(),
+				parentTabId
+			);
 			tabsList.add(parentTab);
 			getParentTabsList(windowId, parentTabId, tabsList);
 		}
@@ -202,17 +223,17 @@ public class WindowUtil {
 				+ "AND f.IsDisplayed = 'Y' "
 				// ASP filter
 				// TODO: Add filter with ASP Level
-				+ "AND NOT EXISTS("
-					+ "SELECT 1 FROM AD_FieldCustom AS fc "
-					+ "INNER JOIN AD_TabCustom AS tc "
-						+ "ON(tc.AD_TabCustom_ID = fc.AD_TabCustom_ID AND tc.IsActive = 'Y') "
-					+ "INNER JOIN AD_WindowCustom AS wc "
-						+ "ON(wc.AD_WindowCustom_ID = tc.AD_WindowCustom_ID AND wc.IsActive = 'Y') "
-					+ "WHERE fc.IsActive = 'Y' "
-					+ "AND fc.IsDisplayed = 'N' "
-					+ "AND fc.AD_Field_ID = f.AD_Field_ID "
-					+ "AND (wc.AD_User_ID = ? OR wc.AD_Role_ID = ?)"
-				+ ") "
+				// + "AND NOT EXISTS("
+				// 	+ "SELECT 1 FROM AD_FieldCustom AS fc "
+				// 	+ "INNER JOIN AD_TabCustom AS tc "
+				// 		+ "ON(tc.AD_TabCustom_ID = fc.AD_TabCustom_ID AND tc.IsActive = 'Y') "
+				// 	+ "INNER JOIN AD_WindowCustom AS wc "
+				// 		+ "ON(wc.AD_WindowCustom_ID = tc.AD_WindowCustom_ID AND wc.IsActive = 'Y') "
+				// 	+ "WHERE fc.IsActive = 'Y' "
+				// 	+ "AND fc.IsDisplayed = 'N' "
+				// 	+ "AND fc.AD_Field_ID = f.AD_Field_ID "
+				// 	+ "AND (wc.AD_User_ID = ? OR wc.AD_Role_ID = ?)"
+				// + ") "
 				+ "AND f.AD_Tab_ID = ? " // #2
 				+ "AND f.IsActive = 'Y'"
 			+ ") "
@@ -248,7 +269,10 @@ public class WindowUtil {
 			// Record/Role access
 			boolean isWithAccess = AccessUtil.isProcessAccess(role, processId);
 			if (isWithAccess) {
-				MProcess process = ASPUtil.getInstance(tab.getCtx()).getProcess(processId);
+				MProcess process = MProcess.get(
+					tab.getCtx(),
+					processId
+				);
 				processList.put(processId, process);
 			}
 		}

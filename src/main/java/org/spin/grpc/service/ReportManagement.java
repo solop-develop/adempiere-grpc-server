@@ -80,7 +80,6 @@ import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.dictionary.util.ReportUtil;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Value;
@@ -144,7 +143,10 @@ public class ReportManagement extends ReportManagementImplBase {
 			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
 		//	Get Process definition
-		MProcess process = ASPUtil.getInstance().getProcess(reportId);
+		MProcess process = MProcess.get(
+			Env.getCtx(),
+			reportId
+		);
 		if (process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@Report@ @NotFound@");
 		}
@@ -482,7 +484,10 @@ public class ReportManagement extends ReportManagementImplBase {
 			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
 		int processId = request.getReportId();
-		MProcess process = ASPUtil.getInstance().getProcess(processId);
+		MProcess process = MProcess.get(
+			Env.getCtx(),
+			processId
+		);
 		if (process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@Report@ @NotFound@");
 		}

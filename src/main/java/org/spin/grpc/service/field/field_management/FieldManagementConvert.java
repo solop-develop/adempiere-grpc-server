@@ -14,6 +14,7 @@
  ************************************************************************************/
 package org.spin.grpc.service.field.field_management;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -24,7 +25,6 @@ import org.compiere.model.MWindow;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.field.ZoomWindow;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 
 public class FieldManagementConvert {
 
@@ -37,7 +37,7 @@ public class FieldManagementConvert {
 		String language = Env.getAD_Language(context);
 		boolean isBaseLanguage = Env.isBaseLanguage(context, null);
 
-		MWindow window = ASPUtil.getInstance(context).getWindow(windowId); // new MWindow(context, windowId, null);
+		MWindow window = MWindow.get(context, windowId);
 		ZoomWindow.Builder builder = ZoomWindow.newBuilder()
 			.setId(
 				window.getAD_Window_ID()
@@ -58,7 +58,9 @@ public class FieldManagementConvert {
 		;
 
 		MTable table = MTable.get(context, tableName);
-		Optional<MTab> maybeTab = ASPUtil.getInstance(context).getWindowTabs(windowId)
+		Optional<MTab> maybeTab = Arrays.asList(
+			window.getTabs(false, null)
+		)
 			.stream().filter(currentTab -> {
 				return currentTab.getAD_Table_ID() == table.getAD_Table_ID();
 			})

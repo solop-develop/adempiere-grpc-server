@@ -37,7 +37,6 @@ import org.spin.backend.grpc.field.ZoomWindow;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 
 public class FieldManagementLogic {
 
@@ -124,7 +123,10 @@ public class FieldManagementLogic {
 		if (request.getWindowId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Window_ID@");
 		}
-		MWindow window = ASPUtil.getInstance(Env.getCtx()).getWindow(request.getWindowId());
+		MWindow window = MWindow.get(
+			Env.getCtx(),
+			request.getWindowId()
+		);
 		if (window == null || window.getAD_Window_ID() <= 0) {
 			throw new AdempiereException("@AD_Window_ID@ @NotFound@");
 		}
@@ -132,12 +134,10 @@ public class FieldManagementLogic {
 		if (request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
-		MTab currentTab = ASPUtil.getInstance(Env.getCtx())
-			.getWindowTab(
-				window.getAD_Window_ID(),
-				request.getTabId()
-			)
-		;
+		MTab currentTab = MTab.get(
+			window.getCtx(), 
+			request.getTabId()
+		);
 		if (currentTab == null || currentTab.getAD_Tab_ID() <= 0) {
 			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 		}
@@ -155,9 +155,9 @@ public class FieldManagementLogic {
 			currentLinkColumn = MColumn.getColumnName(Env.getCtx(), currentTab.getParent_Column_ID());
 		}
 
-		List<MTab> tabsList = ASPUtil.getInstance(Env.getCtx())
-			.getWindowTabs(window.getAD_Window_ID())
-		;
+		List<MTab> tabsList = Arrays.asList(
+			window.getTabs(false, null)
+		);
 		MTab parentTab = tabsList.stream()
 			.filter(tab -> {
 				return tab.getTabLevel() == 0;

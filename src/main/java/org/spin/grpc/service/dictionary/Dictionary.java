@@ -14,8 +14,6 @@
  ************************************************************************************/
 package org.spin.grpc.service.dictionary;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Field;
@@ -55,7 +53,6 @@ import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.backend.grpc.dictionary.ReferenceRequest;
 import org.spin.backend.grpc.dictionary.Tab;
 import org.spin.backend.grpc.dictionary.Window;
-import org.spin.util.ASPUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -217,10 +214,6 @@ public class Dictionary extends DictionaryImplBase {
 		if (processId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
-		// MProcess process = ASPUtil.getInstance(context).getProcess(processId);
-		// if (process == null || process.getAD_Process_ID() <= 0) {
-		// 	throw new AdempiereException("@AD_Process_ID@ @NotFound@");
-		// }
 		MProcess process = MProcess.get(context, processId);
 		if (process == null || process.getAD_Process_ID() <= 0) {
 			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
@@ -262,7 +255,10 @@ public class Dictionary extends DictionaryImplBase {
 		if (browseId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Browse_ID@");
 		}
-		MBrowse browser = ASPUtil.getInstance(context).getBrowse(browseId);
+		MBrowse browser = MBrowse.get(
+			context,
+			browseId
+		);
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			throw new AdempiereException("@AD_Browse_ID@ @NotFound@");
 		}
@@ -401,41 +397,34 @@ public class Dictionary extends DictionaryImplBase {
 	 * @return
 	 */
 	private Field.Builder convertFieldById(Properties context, int id) {
-		MField field = new Query(context, I_AD_Field.Table_Name, I_AD_Field.COLUMNNAME_AD_Field_ID + " = ?", null)
-				.setParameters(id)
-				.setOnlyActiveRecords(true)
-				.first();
-		int fieldId = field.getAD_Field_ID();
-		List<MField> customFields = ASPUtil.getInstance(context).getWindowFields(field.getAD_Tab_ID());
-		if(customFields != null) {
-			Optional<MField> maybeField = customFields.parallelStream()
-				.filter(customField -> {
-					return customField.getAD_Field_ID() == fieldId;
-				})
-				.findFirst()
-			;
-			if(maybeField.isPresent()) {
-				field = maybeField.get();
-
-				// TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
-				String language = context.getProperty(Env.LANGUAGE);
-				if(!Language.isBaseLanguage(language)) {
-					//	Name
-					String value = field.get_Translation(I_AD_Field.COLUMNNAME_Name, language);
-					if (!Util.isEmpty(value, true)) {
-						field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Name, value);
-					}
-					//	Description
-					value = field.get_Translation(I_AD_Field.COLUMNNAME_Description, language);
-					if (!Util.isEmpty(value, true)) {
-						field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Description, value);
-					}
-					//	Help
-					value = field.get_Translation(I_AD_Tab.COLUMNNAME_Help, language);
-					if (!Util.isEmpty(value, true)) {
-						field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Help, value);
-					}
-				}
+		MField field = new Query(
+			context,
+			I_AD_Field.Table_Name,
+			I_AD_Field.COLUMNNAME_AD_Field_ID + " = ?",
+			null
+		)
+			.setParameters(id)
+			.setOnlyActiveRecords(true)
+			.first()
+		;
+				
+		// TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
+		String language = context.getProperty(Env.LANGUAGE);
+		if(!Language.isBaseLanguage(language)) {
+			//	Name
+			String name = field.get_Translation(I_AD_Field.COLUMNNAME_Name, language);
+			if (!Util.isEmpty(name, true)) {
+				field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Name, name);
+			}
+			//	Description
+			String description = field.get_Translation(I_AD_Field.COLUMNNAME_Description, language);
+			if (!Util.isEmpty(description, true)) {
+				field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Description, description);
+			}
+			//	Help
+			String help = field.get_Translation(I_AD_Tab.COLUMNNAME_Help, language);
+			if (!Util.isEmpty(help, true)) {
+				field.set_ValueOfColumn(I_AD_Field.COLUMNNAME_Help, help);
 			}
 		}
 		//	Convert

@@ -48,7 +48,6 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -78,7 +77,8 @@ public class BrowserLogic {
 		try {
 			LinkedHashMap<String, MBrowseField> fieldsMap = new LinkedHashMap<>();
 			//	Add field to map
-			for(MBrowseField field: ASPUtil.getInstance().getBrowseFields(browser.getAD_Browse_ID())) {
+			List<MBrowseField> browseFieldsList = browser.getFields();
+			for(MBrowseField field: browseFieldsList) {
 				fieldsMap.put(field.getAD_View_Column().getColumnName().toUpperCase(), field);
 			}
 			//	SELECT Key, Value, Name FROM ...
@@ -157,7 +157,10 @@ public class BrowserLogic {
 		ExportBrowserItemsResponse.Builder builder = ExportBrowserItemsResponse.newBuilder();
 
 		Properties context = Env.getCtx();
-		MBrowse browser = ASPUtil.getInstance(context).getBrowse(request.getId());
+		MBrowse browser = MBrowse.get(
+			context,
+			request.getId()
+		);
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			return builder;
 		}
@@ -253,7 +256,10 @@ public class BrowserLogic {
 		List<KeyValueSelection> selectionsList = new ArrayList<KeyValueSelection>();
 
 		Properties context = Env.getCtx();
-		MBrowse browser = ASPUtil.getInstance(context).getBrowse(browserId);
+		MBrowse browser = MBrowse.get(
+			context,
+			browserId
+		);
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			return selectionsList;
 		}
@@ -334,7 +340,7 @@ public class BrowserLogic {
 		//	Return
 		List<Entity> entitiesList = BrowserLogic.convertBrowserResult(browser, parsedSQL, filterValues);
 
-		List<MBrowseField> browseFields = ASPUtil.getInstance(context).getBrowseFields(browser.getAD_Browse_ID())
+		List<MBrowseField> browseFields = browser.getFields()
 			.stream()
 			.filter(browserField -> {
 				return browserField.isKey() || browserField.isIdentifier() || !browserField.isReadOnly();

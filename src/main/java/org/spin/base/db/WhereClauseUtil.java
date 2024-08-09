@@ -15,6 +15,7 @@
 package org.spin.base.db;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import org.adempiere.model.MViewColumn;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
+import org.compiere.model.MWindow;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -44,7 +46,6 @@ import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 
 /**
  * Class for handle SQL Where Clause
@@ -621,9 +622,8 @@ public class WhereClauseUtil {
 		}
 		return getWhereClauseFromTab(tab.getAD_Window_ID(), tabId);
 	}
-
 	public static String getWhereClauseFromTab(int windowId, int tabId) {
-		MTab aspTab = ASPUtil.getInstance(Env.getCtx()).getWindowTab(windowId, tabId);
+		MTab aspTab = MTab.get(Env.getCtx(), tabId);
 		if (aspTab == null || aspTab.getAD_Tab_ID() <= 0) {
 			return null;
 		}
@@ -639,7 +639,10 @@ public class WhereClauseUtil {
 	 */
 	public static String getTabWhereClauseFromParentTabs(Properties context, MTab tab, List<MTab> tabs) {
 		if (tabs == null) {
-			tabs = ASPUtil.getInstance(context).getWindowTabs(tab.getAD_Window_ID());
+			MWindow window = MWindow.get(tab.getCtx(), tab.getAD_Window_ID());
+			tabs = Arrays.asList(
+				window.getTabs(false, null)
+			);
 		}
 
 		StringBuffer whereClause = new StringBuffer();
@@ -805,7 +808,7 @@ public class WhereClauseUtil {
 		if (browseId <= 0) {
 			return null;
 		}
-		MBrowse browse = ASPUtil.getInstance().getBrowse(browseId);
+		MBrowse browse = MBrowse.get(Env.getCtx(), browseId);
 		if (browse == null || browse.getAD_Browse_ID() <= 0) {
 			return null;
 		}
@@ -838,7 +841,7 @@ public class WhereClauseUtil {
 		}
 
  		// Add browse field to map
-		List<MBrowseField> browseFieldsList = ASPUtil.getInstance().getBrowseFields(browser.getAD_Browse_ID());
+		List<MBrowseField> browseFieldsList = browser.getFields();
 		HashMap<String, MBrowseField> browseFields = new HashMap<>();
 		for (MBrowseField browseField : browseFieldsList) {
 			browseFields.put(browseField.getAD_View_Column().getColumnName(), browseField);
