@@ -2503,7 +2503,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			sqlWithRoleAccess += whereClause;
 		}
 
-		String orderByClause = org.spin.service.grpc.util.db.OrderByUtil.getBrowseOrderBy(browser);
+		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
 		if (!Util.isEmpty(orderByClause, true)) {
 			orderByClause = " ORDER BY " + orderByClause;
 		}

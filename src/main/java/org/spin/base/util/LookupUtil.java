@@ -157,4 +157,23 @@ public class LookupUtil {
 		return builder;
 	}
 
+
+	/**
+	 * Get display column name
+	 * @param columnName
+	 * @return example DisplayColumn_AD_Client_ID
+	 */
+	public static String getDisplayColumnName(String columnName) {
+		return LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName;
+	}
+
+	/**
+	 * Get uuid column name
+	 * @param columnName
+	 * @return example AD_Client_ID_UUID
+	 */
+	public static String getUuidColumnName(String columnName) {
+		return columnName + "_" + LookupUtil.UUID_COLUMN_KEY;
+	}
+
 }
