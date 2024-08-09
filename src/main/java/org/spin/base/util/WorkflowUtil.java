@@ -55,7 +55,6 @@ import org.spin.backend.grpc.wf.WorkflowState;
 import org.spin.backend.grpc.wf.WorkflowTransition;
 import org.spin.backend.grpc.wf.ZoomWindow;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 
 /**
  * Class for handle workflow conversion values
@@ -730,8 +729,10 @@ public class WorkflowUtil {
 
 
 	public static ZoomWindow.Builder convertZoomWindow(int windowId) {
-		MWindow window = ASPUtil.getInstance(Env.getCtx()).getWindow(windowId); // new MWindow(context, windowId, null);
-
+		MWindow window = MWindow.get(
+			Env.getCtx(),
+			windowId
+		);
 		//	Return
 		return ZoomWindow.newBuilder()
 			.setId(

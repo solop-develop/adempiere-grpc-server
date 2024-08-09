@@ -67,7 +67,6 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
@@ -587,7 +586,10 @@ public class ImportFileLoaderServiceLogic {
 			)
 		;
 		processFromColumnsList.forEach(processId -> {
-			MProcess processDefinition = ASPUtil.getInstance().getProcess(processId);
+			MProcess processDefinition = MProcess.get(
+				Env.getCtx(),
+				processId
+			);
 			String displayedValue = processDefinition.getValue() + " - " + processDefinition.getName();
 			if (!Env.isBaseLanguage(Env.getCtx(), "")) {
 				// set translated values

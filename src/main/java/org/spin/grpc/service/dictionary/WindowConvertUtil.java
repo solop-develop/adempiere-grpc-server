@@ -64,7 +64,6 @@ import org.spin.model.MADFieldCondition;
 import org.spin.model.MADFieldDefinition;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 
 public class WindowConvertUtil {
 
@@ -75,10 +74,6 @@ public class WindowConvertUtil {
 	 * @return
 	 */
 	public static Window.Builder convertWindow(Properties context, MWindow window, boolean withTabs) {
-		if (window == null) {
-			return Window.newBuilder();
-		}
-		window = ASPUtil.getInstance(context).getWindow(window.getAD_Window_ID());
 		if (window == null) {
 			return Window.newBuilder();
 		}
@@ -107,8 +102,10 @@ public class WindowConvertUtil {
 		//	With Tabs
 		if(withTabs) {
 			boolean isShowAcct = MRole.getDefault(context, false).isShowAcct();
-//			List<Tab.Builder> tabListForGroup = new ArrayList<>();
-			List<MTab> tabs = ASPUtil.getInstance(context).getWindowTabs(window.getAD_Window_ID());
+			// List<Tab.Builder> tabListForGroup = new ArrayList<>();
+			List<MTab> tabs = Arrays.asList(
+				window.getTabs(false, null)
+			);
 			if (tabs != null) {
 				for(MTab tab : tabs) {
 					if(tab == null || !tab.isActive()) {
@@ -225,8 +222,6 @@ public class WindowConvertUtil {
 		}
 
 		int tabId = tab.getAD_Tab_ID();
-		tab = ASPUtil.getInstance(context).getWindowTab(tab.getAD_Window_ID(), tabId);
-
 		int parentTabId = 0;
 		// root tab has no parent
 		if (tab.getTabLevel() > 0) {
@@ -378,7 +373,9 @@ public class WindowConvertUtil {
 
 		//	Fields
 		if(withFields) {
-			List<MField> fieldsList = ASPUtil.getInstance(context).getWindowFields(tab.getAD_Tab_ID());
+			List<MField> fieldsList = Arrays.asList(
+				tab.getFields(false, whereClause)
+			);
 			for(MField field : fieldsList) {
 				if (field == null) {
 					continue;
@@ -605,10 +602,13 @@ public class WindowConvertUtil {
 		}
 
 		int columnId = field.getAD_Column_ID();
-		String parentColumnName = MColumn.getColumnName(field.getCtx(), columnId);
+		final String parentColumnName = MColumn.getColumnName(field.getCtx(), columnId);
 
 		MTab parentTab = MTab.get(field.getCtx(), field.getAD_Tab_ID());
-		List<MTab> tabsList = ASPUtil.getInstance(field.getCtx()).getWindowTabs(parentTab.getAD_Window_ID());
+		MWindow window = MWindow.get(field.getCtx(), parentTab.getAD_Window_ID());
+		List<MTab> tabsList = Arrays.asList(
+			window.getTabs(false, null)
+		);
 		if (tabsList == null || tabsList.isEmpty()) {
 			return depenentFieldsList;
 		}
@@ -618,7 +618,9 @@ public class WindowConvertUtil {
 				return currentTab.isActive() && !currentTab.isTranslationTab() && !currentTab.isSortTab();
 			})
 			.forEach(tab -> {
-				List<MField> fieldsList = ASPUtil.getInstance().getWindowFields(tab.getAD_Tab_ID());
+				List<MField> fieldsList = Arrays.asList(
+					tab.getFields(false, null)
+				);
 				if (fieldsList == null || fieldsList.isEmpty()) {
 					return;
 				}

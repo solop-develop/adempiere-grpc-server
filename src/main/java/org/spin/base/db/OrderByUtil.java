@@ -14,6 +14,9 @@
  ************************************************************************************/
 package org.spin.base.db;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
@@ -76,7 +79,10 @@ public class OrderByUtil {
 
 	public static String[] getTabOrderBysColumns(MTab tab) {
 		String orderBys[] = new String[3];
-		for (MField field : tab.getASPFields()) {
+		List<MField> fielsList = Arrays.asList(
+			tab.getFields(false, null)
+		);
+		for (MField field : fielsList) {
 			if (field.getSortNo() == null || field.getSortNo().compareTo(Env.ZERO) == 0) {
 				continue;
 			}

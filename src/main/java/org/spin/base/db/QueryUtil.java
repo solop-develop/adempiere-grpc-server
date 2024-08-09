@@ -36,7 +36,6 @@ import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.service.grpc.util.db.FromUtil;
-import org.spin.util.ASPUtil;
 
 public class QueryUtil {
 
@@ -294,22 +293,37 @@ public class QueryUtil {
 	public static String getBrowserQuery(MBrowse browser) {
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT DISTINCT ");
-		AtomicBoolean co = new AtomicBoolean(false);
-		ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID()).forEach(field -> {
-			if (co.get()) {
+		AtomicBoolean isAddFirstColumn = new AtomicBoolean(false);
+		final List<MBrowseField> browseFieldsList = browser.getFields();
+		for (MBrowseField browseField : browseFieldsList) {
+			if (!browseField.isActive()) {
+				// key column on table
+				if (!browseField.isKey()) {
+					continue;
+				}
+			}
+			// TODO: Add sort column
+			if (!(browseField.isKey() || browseField.isDisplayed() || browseField.isIdentifier())) {
+				continue;
+			}
+			if (isAddFirstColumn.get()) {
 				sql.append(",");
 			}
 
-			MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), field.getAD_View_Column_ID(), null);
+			MViewColumn viewColumn = MViewColumn.getById(
+				browseField.getCtx(),
+				browseField.getAD_View_Column_ID(),
+				null
+			);
 			if (!Util.isEmpty(viewColumn.getColumnSQL(), true)) {
 				sql.append(viewColumn.getColumnSQL());
-				co.set(true);
+				isAddFirstColumn.set(true);
 			}
 
 			sql.append(" AS ")
 				.append("\"" + viewColumn.getColumnName() + "\"")
 			;
-		});
+		}
 
 		MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
 		sql.append(" FROM").append(view.getFromClause());
@@ -331,7 +345,7 @@ public class QueryUtil {
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 
 		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
-		final List<MBrowseField> browseFieldsList = ASPUtil.getInstance().getBrowseDisplayFields(browser.getAD_Browse_ID());
+		final List<MBrowseField> browseFieldsList = browser.getFields();
 		for (MBrowseField browseField : browseFieldsList) {
 			if (!browseField.isActive()) {
 				// key column on table
@@ -339,6 +353,12 @@ public class QueryUtil {
 					continue;
 				}
 			}
+			// Only displayed or identifier
+			if (!(browseField.isKey() || browseField.isDisplayed() || browseField.isIdentifier())) {
+				// TODO: Add sort column
+				continue;
+			}
+
 			int displayTypeId = browseField.getAD_Reference_ID();
 
 			//	Reference Value

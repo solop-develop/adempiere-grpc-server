@@ -28,6 +28,7 @@ import org.compiere.model.MProcessPara;
 import org.compiere.model.MProcessParaCustom;
 import org.compiere.model.MReportView;
 import org.compiere.model.MValRule;
+import org.compiere.util.Env;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.dictionary.DependentField;
 import org.spin.backend.grpc.dictionary.Field;
@@ -38,7 +39,6 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.custom.ProcessParaCustomUtil;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.ASPUtil;
 import org.spin.util.AbstractExportFormat;
 import org.spin.util.ReportExportHandler;
 
@@ -66,12 +66,11 @@ public class ProcessConvertUtil {
 		if (process == null) {
 			return Process.newBuilder();
 		}
-		process = ASPUtil.getInstance(context).getProcess(process.getAD_Process_ID());
 
 		// TODO: Remove with fix the issue https://github.com/solop-develop/adempiere-grpc-server/issues/28
 		DictionaryConvertUtil.translateEntity(process);
 
-		List<MProcessPara> parametersList = ASPUtil.getInstance(context).getProcessParameters(process.getAD_Process_ID());
+		List<MProcessPara> parametersList = process.getParametersAsList();
 
 		Process.Builder builder = Process.newBuilder()
 			.setId(process.getAD_Process_ID())
@@ -110,7 +109,10 @@ public class ProcessConvertUtil {
 		;
 
 		if (process.getAD_Browse_ID() > 0) {
-			MBrowse browse = ASPUtil.getInstance(context).getBrowse(process.getAD_Browse_ID());
+			MBrowse browse = MBrowse.get(
+				context,
+				process.getAD_Browse_ID()
+			);
 			builder.setBrowserId(
 					process.getAD_Browse_ID()
 				)
@@ -211,15 +213,17 @@ public class ProcessConvertUtil {
 			return depenentFieldsList;
 		}
 
-		String parentColumnName = processParameter.getColumnName();
-
-		MProcess process = ASPUtil.getInstance().getProcess(processParameter.getAD_Process_ID());
-		List<MProcessPara> parametersList = ASPUtil.getInstance().getProcessParameters(processParameter.getAD_Process_ID());
+		MProcess process = MProcess.get(
+			Env.getCtx(),
+			processParameter.getAD_Process_ID()
+		);
+		List<MProcessPara> parametersList = process.getParametersAsList();
 		if (parametersList == null || parametersList.isEmpty()) {
 			return depenentFieldsList;
 		}
 
-		parametersList.parallelStream()
+		final String parentColumnName = processParameter.getColumnName();
+		parametersList.stream()
 			.filter(currentParameter -> {
 				if (currentParameter == null || !currentParameter.isActive()) {
 					return false;
