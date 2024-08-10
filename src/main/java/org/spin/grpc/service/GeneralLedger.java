@@ -418,7 +418,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		int organizationId = request.getOrganizationId();
-		if (request.getOrganizationId() <= 0) {
+		if (request.getOrganizationId() < 0) {
 			// throw new AdempiereException("@Org0NotAllowed@");
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
 		}
@@ -507,7 +507,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
 		final int organizationId = request.getOrganizationId();
-		if (organizationId <= 0) {
+		if (organizationId < 0) {
 			// throw new AdempiereException("@Org0NotAllowed@");
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
 		}
@@ -1079,7 +1079,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 
 		// Organization
-		if (request.getOrganizationId() > 0) {
+		if (request.getOrganizationId() >= 0) {
 			whereClause.append(" AND ")
 				.append(I_Fact_Acct.Table_Name)
 				.append(".")
