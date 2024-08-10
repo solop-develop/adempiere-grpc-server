@@ -22,19 +22,23 @@ def javaMainClass = "org.spin.server.AllInOneServices"
 
 repositories {
 	mavenLocal()
-    mavenCentral()
-    maven {
-    	url = 'https://maven.pkg.github.com/solop-develop/adempiere-solop'
-        credentials {
-        	username = System.getenv("GITHUB_DEPLOY_USER") ?: System.properties['deploy.user']
-            password = System.getenv("GITHUB_DEPLOY_TOKEN") ?: System.properties['deploy.token'] 
+	mavenCentral()
+	maven {
+		// Custom GitHub Organization
+		url = findProperty("deployRepository") ?: System.properties['deploy.repository'] ?: System.getenv("GITHUB_DEPLOY_REPOSITORY") ?: 'https://maven.pkg.github.com/solop-develop/adempiere-solop'
+		credentials {
+			// project property, system properrty, enviroment variable
+			username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?: System.getenv("GITHUB_DEPLOY_USER")
+			password = findProperty("deployToken") ?: System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_TOKEN")
 		}
 	}
 	maven {
-    	url = 'https://maven.pkg.github.com/adempiere/adempiere'
-        credentials {
-        	username = System.getenv("GITHUB_DEPLOY_USER") ?: System.properties['deploy.user']
-            password = System.getenv("GITHUB_DEPLOY_TOKEN") ?: System.properties['deploy.token'] 
+		// Adempiere GitHub Organization
+		url = 'https://maven.pkg.github.com/adempiere/adempiere'
+		credentials {
+			// project property, system properrty, enviroment variable
+			username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?: System.getenv("GITHUB_DEPLOY_USER")
+			password = findProperty("deployToken") ?: System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_TOKEN")
 		}
 	}
 }
