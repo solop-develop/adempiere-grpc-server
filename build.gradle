@@ -25,7 +25,9 @@ repositories {
 	mavenCentral()
 	maven {
 		// Custom GitHub Organization
-		url = findProperty("deployRepository") ?: System.properties['deploy.repository'] ?: System.getenv("GITHUB_DEPLOY_REPOSITORY") ?: 'https://maven.pkg.github.com/solop-develop/adempiere-solop'
+		// TODO: Configure correct url repository secrets
+		// url = findProperty("deployRepository") ?: eSystem.properties['deploy.repository'] ?: System.getenv("GITHUB_DEPLOY_REPOSITORY") ?: 'https://maven.pkg.github.com/solop-develop/adempiere-solop'
+		url = 'https://maven.pkg.github.com/solop-develop/adempiere-solop'
 		credentials {
 			// project property, system properrty, enviroment variable
 			username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?: System.getenv("GITHUB_DEPLOY_USER")
