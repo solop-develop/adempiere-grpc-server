@@ -152,7 +152,7 @@ public class UserInterfaceLogic {
 		int count = 0;
 
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
-		
+
 		//	Count records
 		count = CountUtil.countRecords(
 			parsedSQL,

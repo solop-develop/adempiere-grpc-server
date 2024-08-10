@@ -248,9 +248,6 @@ public class WindowUtil {
 		;
 		List<Object> filterList = new ArrayList<>();
 		filterList.add(tab.getAD_Process_ID());
-		filterList.add(Env.getAD_User_ID(context));
-		MRole role = MRole.getDefault(tab.getCtx(), false);
-		filterList.add(role.getAD_Role_ID());
 		filterList.add(tab.getAD_Tab_ID());
 		filterList.add(tab.getAD_Table_ID());
 		//	Process from tab
@@ -265,6 +262,8 @@ public class WindowUtil {
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.getIDsAsList()
 		;
+
+		MRole role = MRole.getDefault(tab.getCtx(), false);
 		for(Integer processId : processIdList) {
 			// Record/Role access
 			boolean isWithAccess = AccessUtil.isProcessAccess(role, processId);
