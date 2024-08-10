@@ -113,18 +113,22 @@ public class AllInOneServices {
 
 
 	/**
-	  * Get SSL / TLS context
-	  * @return
-	  */
-	  private SslContextBuilder getSslContextBuilder() {
-	        SslContextBuilder sslClientContextBuilder = SslContextBuilder.forServer(new File(SetupLoader.getInstance().getServer().getCertificate_chain_file()),
-	                new File(SetupLoader.getInstance().getServer().getPrivate_key_file()));
-	        if (SetupLoader.getInstance().getServer().getTrust_certificate_collection_file() != null) {
-	            sslClientContextBuilder.trustManager(new File(SetupLoader.getInstance().getServer().getTrust_certificate_collection_file()));
-	            sslClientContextBuilder.clientAuth(ClientAuth.REQUIRE);
-	        }
-	        return GrpcSslContexts.configure(sslClientContextBuilder);
-	  }
+	 * Get SSL / TLS context
+	 * @return
+	 */
+	private SslContextBuilder getSslContextBuilder() {
+		SslContextBuilder sslClientContextBuilder = SslContextBuilder.forServer(
+			new File(SetupLoader.getInstance().getServer().getCertificate_chain_file()),
+			new File(SetupLoader.getInstance().getServer().getPrivate_key_file())
+		);
+		if (SetupLoader.getInstance().getServer().getTrust_certificate_collection_file() != null) {
+			sslClientContextBuilder.trustManager(
+				new File(SetupLoader.getInstance().getServer().getTrust_certificate_collection_file())
+			);
+			sslClientContextBuilder.clientAuth(ClientAuth.REQUIRE);
+		}
+		return GrpcSslContexts.configure(sslClientContextBuilder);
+	}
 
 	private void start() throws IOException {
 		//	Start based on provider
@@ -209,9 +213,6 @@ public class AllInOneServices {
 		//	Invoice Field
 		serverBuilder.addService(new InvoiceInfoService());
 		logger.info("Service " + InvoiceInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		//	Order Field
-		serverBuilder.addService(new OrderInfoService());
-		logger.info("Service " + OrderInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Issue Management
 		serverBuilder.addService(new IssueManagement());
 		logger.info("Service " + IssueManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -230,9 +231,9 @@ public class AllInOneServices {
 		//	Notice Management
 		serverBuilder.addService(new NoticeManagement());
 		logger.info("Service " + NoticeManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		//	Send Notifications
-		serverBuilder.addService(new SendNotifications());
-		logger.info("Service " + SendNotifications.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Order Field
+		serverBuilder.addService(new OrderInfoService());
+		logger.info("Service " + OrderInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payment
 		serverBuilder.addService(new PaymentInfoService());
 		logger.info("Service " + PaymentInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -260,6 +261,9 @@ public class AllInOneServices {
 		//	Security
 		serverBuilder.addService(new Security());
 		logger.info("Service " + Security.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Send Notifications
+		serverBuilder.addService(new SendNotifications());
+		logger.info("Service " + SendNotifications.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Task Management
 		serverBuilder.addService(new TaskManagement());
 		logger.info("Service " + TaskManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -296,11 +300,11 @@ public class AllInOneServices {
 			public void run() {
 				// Use stderr here since the logger may have been reset by its JVM shutdown hook.
 				logger.info("*** shutting down gRPC server since JVM is shutting down");
-		    	  AllInOneServices.this.stop();
-		    	logger.info("*** server shut down");
+				AllInOneServices.this.stop();
+				logger.info("*** server shut down");
 			}
 		});
-	  }
+	}
 
 	private void stop() {
 		if (this.server != null) {
