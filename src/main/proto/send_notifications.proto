@@ -12,45 +12,45 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
- syntax = "proto3";
+syntax = "proto3";
 
- option java_multiple_files = true;
- option java_package = "org.spin.backend.grpc.send_notifications";
- option java_outer_classname = "ADempiereSendNotifications";
- 
- import "google/api/annotations.proto";
- import "google/protobuf/struct.proto";
- 
- import "base_data_type.proto";
- 
- // Base URL
- // /import-loader/
- 
- package send_notifications;
- 
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.send_notifications";
+option java_outer_classname = "ADempiereSendNotifications";
+
+import "google/api/annotations.proto";
+
+import "base_data_type.proto";
+
+// Base URL
+// /import-loader/
+
+package send_notifications;
+
  service SendNotifications {
 	rpc ListUsers(ListUsersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/send_notifications/user"
+			get: "/send_notifications/users"
 		};
 	}
 
 	rpc ListNotificationsTypes(ListNotificationsTypesRequest) returns (ListNotificationsTypesResponse) {
 		option (google.api.http) = {
-			get: "/send_notifications/notifications_types"
+			get: "/send_notifications/notifications-types"
 		};
 	}
 
 	rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse ) {
 		option (google.api.http) = {
-            post: "/send_notifications/notification",
+			post: "/send_notifications/notifications",
 			body: "*"
-        };
+		};
 	}
- }
- 
- // User List
- message ListUsersRequest {
+}
+
+
+// User
+message ListUsersRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -61,6 +61,13 @@
 	string context_attributes = 8;
 }
 
+
+// Notification Type
+message NotifcationType {
+	string value = 1;
+	string name = 2;
+	string description = 3;
+}
 message ListNotificationsTypesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -71,34 +78,29 @@ message ListNotificationsTypesRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 }
- 
 message ListNotificationsTypesResponse {
 	int64 record_count = 1;
 	repeated NotifcationType records = 2;
 	string next_page_token = 3;
 }
 
-message NotifcationType {
-	string value = 1;
-	string name = 2;
-	string description = 3;
-}
- 
 
+// Recipient
+message Recipient {
+	int32 contact_id = 1;
+	string account_name = 2;
+}
+
+
+// Send Notification
 message SendNotificationRequest {
 	int32 user_id = 1;
 	string notification_type = 2;
 	string title = 3;
 	string body = 4;
 	repeated Recipient recipients = 5;
-	repeated string attachments = 8;
+	repeated string attachments = 6;
 }
-
-message Recipient {
-	int32 contact_id = 1;
-	string account_name = 2;
-}
-
 message SendNotificationResponse {
 	int32 notification_id = 1;
 }

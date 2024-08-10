@@ -293,6 +293,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -364,6 +365,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -374,7 +376,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 	}
 
 	public DeleteNoticesResponse.Builder deleteNotices(DeleteNoticesRequest request) throws FileNotFoundException, IOException {
-		// AD_NoteDelete
+		// AD_NoteDelete - NoteDelete
 		final int processId = 241;
 		Struct.Builder parameters = Struct.newBuilder();
 		if (request.getUserId() > 0) {

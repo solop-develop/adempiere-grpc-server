@@ -32,17 +32,23 @@ package notice_management;
 // The Notice Management service definition.
 service NoticeManagement {
 	rpc ListNotices(ListNoticesRequest) returns (ListNoticesResponse) {
-		option (google.api.http) = { get: "/notice-management/notices" };
+		option (google.api.http) = {
+			get: "/notice-management/notices"
+		};
 	}
 	rpc AcknowledgeNotice(AcknowledgeNoticeRequest) returns (AcknowledgeNoticeResponse) {
-		option (google.api.http) = { patch: "/notice-management/notices/{id}/acknowledge" };
+		option (google.api.http) = {
+			patch: "/notice-management/notices/{id}/acknowledge"
+		};
 	}
 
 	rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
 		option (google.api.http) = { get: "/notice-management/notices/users" };
 	}
 	rpc DeleteNotices(DeleteNoticesRequest) returns (DeleteNoticesResponse) {
-		option (google.api.http) = { delete: "/notice-management/notices" };
+		option (google.api.http) = {
+			delete: "/notice-management/notices"
+		};
 	}
 }
 
@@ -55,7 +61,6 @@ message User {
 	string description = 5;
 	string avatar = 6;
 }
-
 message ListUsersRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -65,7 +70,6 @@ message ListUsersRequest {
 	string page_token = 6;
 	string search_value = 7;
 }
-
 message ListUsersResponse {
 	int64 record_count = 1;
 	repeated User records = 2;
@@ -97,7 +101,6 @@ message ListNoticesRequest {
 	string page_token = 6;
 	string search_value = 7;
 }
-
 message ListNoticesResponse {
 	int64 record_count = 1;
 	repeated Notice records = 2;
@@ -109,7 +112,6 @@ message DeleteNoticesRequest {
 	int32 user_id = 1;
 	int32 keep_log_days = 2;
 }
-
 message DeleteNoticesResponse {
 	string summary = 1;
 	repeated data.ProcessInfoLog logs = 10;
@@ -120,7 +122,6 @@ message DeleteNoticesResponse {
 message AcknowledgeNoticeRequest {
 	int32 id = 1;
 }
-
 message AcknowledgeNoticeResponse {
 	string message = 1;
 }
