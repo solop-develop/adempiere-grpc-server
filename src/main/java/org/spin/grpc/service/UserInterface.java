@@ -215,10 +215,11 @@ public class UserInterface extends UserInterfaceImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -235,10 +236,13 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -257,11 +261,15 @@ public class UserInterface extends UserInterfaceImplBase {
 			request.getId()
 		);
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
-			throw new AdempiereException("@AD_Browse_ID@ @NotFound@");
+			throw new AdempiereException(
+				"@AD_Browse_ID@ " + request.getId() + " @NotFound@"
+			);
 		}
 
 		if (!browser.isUpdateable()) {
-			throw new AdempiereException("Smart Browser not updateable records");
+			throw new AdempiereException(
+				"@AD_Browse_ID@ " + browser.getName() + " (" + request.getId() + "), not updateable records"
+			);
 		}
 
 		if (browser.getAD_Table_ID() <= 0) {
@@ -374,10 +382,13 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -612,7 +623,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+			throw new AdempiereException(
+				"@AD_Tab_ID@ " + request.getTabId() + " @NotFound@"
+			);
 		}
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		String[] keyColumns = table.getKeyColumns();
@@ -795,7 +808,9 @@ public class UserInterface extends UserInterfaceImplBase {
 			tabId
 		);
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+			throw new AdempiereException(
+				"@AD_Tab_ID@ " + tabId + " @NotFound@"
+			);
 		}
 
 		//	
@@ -812,7 +827,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		String where = WhereClauseUtil.getTabWhereClauseFromParentTabs(context, tab, null);
 		String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
 		if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(where, true)) {
-			throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
+			throw new AdempiereException(
+				"@AD_Tab_ID@ " + tab.getName() + " (" + tab.getAD_Tab_ID() + "), @WhereClause@ @Unparseable@"
+			);
 		}
 		StringBuffer whereClause = new StringBuffer(parsedWhereClause);
 		List<Object> params = new ArrayList<>();
@@ -872,7 +889,9 @@ public class UserInterface extends UserInterfaceImplBase {
 			if (!Util.isEmpty(tabOrderBy, true)) {
 				String parsedTabOrderBy = Env.parseContext(context, windowNo, tabOrderBy, false);
 				if (Util.isEmpty(parsedTabOrderBy, true)) {
-					throw new AdempiereException("@AD_Tab_ID@ @OrderByClause@ @Unparseable@");
+					throw new AdempiereException(
+						"@AD_Tab_ID@ " + tab.getName() + " (" + tab.getAD_Tab_ID() + "), @OrderByClause@ @Unparseable@"
+					);
 				}
 				orderByClause = " ORDER BY " + parsedTabOrderBy;
 			}
@@ -924,7 +943,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+			throw new AdempiereException(
+				"@AD_Tab_ID@ " + request.getTabId() + " @NotFound@"
+			);
 		}
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
@@ -2454,7 +2475,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		String query = QueryUtil.getBrowserQueryWithReferences(browser);
 		String sql = Env.parseContext(context, windowNo, query, false);
 		if (Util.isEmpty(sql, true)) {
-			throw new AdempiereException("@AD_Browse_ID@ @SQL@ @Unparseable@");
+			throw new AdempiereException(
+				"@AD_Browse_ID@ " + browser.getName() + " (" + browser.getAD_Browse_ID() + "), @SQL@ @Unparseable@"
+			);
 		}
 
 		MView view = browser.getAD_View();
@@ -2475,7 +2498,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (!Util.isEmpty(where, true)) {
 			String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
 			if (Util.isEmpty(parsedWhereClause, true)) {
-				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
+				throw new AdempiereException(
+					"@AD_Browse_ID@ " + browser.getName() + " (" + browser.getAD_Browse_ID() + "), @WhereClause@ @Unparseable@"
+				);
 			}
 			whereClause
 				.append(" AND ")
@@ -2492,7 +2517,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			String parsedDynamicWhere = Env.parseContext(context, windowNo, dynamicWhere, false);
 			if (Util.isEmpty(parsedDynamicWhere, true)) {
-				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
+				throw new AdempiereException(
+					"@AD_Browse_ID@ " + browser.getName() + " (" + browser.getAD_Browse_ID() + "), @WhereClause@ @Unparseable@"
+				);
 			}
 			//	Add
 			whereClause.append(" AND (")

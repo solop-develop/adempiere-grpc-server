@@ -115,7 +115,9 @@ public class UserInterfaceLogic {
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
 				String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
 				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
+					throw new AdempiereException(
+						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+					);
 				}
 				whereClause.append(" AND ").append(parsedValidationCode);
 			}
@@ -196,7 +198,9 @@ public class UserInterfaceLogic {
 		if (request.getTabId() > 0) {
 			MTab tab = MTab.get(context, request.getTabId());
 			if (tab == null || tab.getAD_Tab_ID() <= 0) {
-				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+				throw new AdempiereException(
+					"@AD_Tab_ID@ " + request.getTabId() + " @NotFound@"
+				);
 			}
 
 			table = MTable.get(context, tab.getAD_Table_ID());
@@ -206,7 +210,9 @@ public class UserInterfaceLogic {
 			ContextManager.setContextWithAttributesFromStruct(windowNo, context, null);
 			String parsedWhereClause = Env.parseContext(context, windowNo, whereTab, false);
 			if (Util.isEmpty(parsedWhereClause, true) && !Util.isEmpty(whereTab, true)) {
-				throw new AdempiereException("@AD_Tab_ID@ @WhereClause@ @Unparseable@");
+				throw new AdempiereException(
+					"@AD_Tab_ID@ " + tab.getName() + " (" + tab.getAD_Tab_ID() + "), @WhereClause@ @Unparseable@"
+				);
 			}
 			whereClause = parsedWhereClause;
 		} else {
@@ -216,10 +222,14 @@ public class UserInterfaceLogic {
 			);
 		}
 		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+			throw new AdempiereException(
+				"@AD_Table_ID@ " + request.getTableName() + " @NotFound@"
+			);
 		}
 		if (!MTree.hasTree(table.getAD_Table_ID())) {
-			throw new AdempiereException("@AD_Table_ID@ + @AD_Tree_ID@ @NotFound@");
+			throw new AdempiereException(
+				"@AD_Table_ID@ " + table.getName() + " (" + table.getAD_Table_ID() + "), @AD_Tree_ID@ @NotFound@"
+			);
 		}
 
 		final int clientId = Env.getAD_Client_ID(context);
@@ -244,7 +254,9 @@ public class UserInterfaceLogic {
 			// get current node
 			MTreeNode currentNode = treeNode.findNode(treeNodeId);
 			if (currentNode == null) {
-				throw new AdempiereException("@Node_ID@ @NotFound@");
+				throw new AdempiereException(
+					"@Node_ID@ " + treeNodeId + " @NotFound@"
+				);
 			}
 			childrens = currentNode.children();
 			builder.setRecordCount(currentNode.getChildCount());
