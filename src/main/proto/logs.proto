@@ -128,6 +128,7 @@ message ChangeLog {
 	string new_value = 5;
 	string new_display_value = 6;
 	string description = 7;
+	int32 display_type = 8;
 }
 
 enum EntityEventType {

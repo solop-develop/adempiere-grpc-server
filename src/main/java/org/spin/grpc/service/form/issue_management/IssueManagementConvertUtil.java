@@ -905,14 +905,16 @@ public class IssueManagementConvertUtil {
 			return builder;
 		}
 
-		MColumn column = new Query(
-			Env.getCtx(),
-			I_AD_Column.Table_Name,
-			"AD_Table_ID = ? AND ColumnName = ?",
-			null
-		)
-			.setParameters(I_R_RequestAction.Table_ID, columnName)
-			.first();
+		// MColumn column = new Query(
+		// 	Env.getCtx(),
+		// 	I_AD_Column.Table_Name,
+		// 	"AD_Table_ID = ? AND ColumnName = ?",
+		// 	null
+		// )
+		// 	.setParameters(I_R_RequestAction.Table_ID, columnName)
+		// 	.first();
+		int columnId = MColumn.getColumn_ID(I_AD_Column.Table_Name, columnName);
+		MColumn column = MColumn.get(Env.getCtx(), columnId);
 		if (column == null) {
 			return builder;
 		}
@@ -930,6 +932,7 @@ public class IssueManagementConvertUtil {
 			valueBuilder
 		);
 		String displayedValue = ValueManager.getDisplayedValueFromReference(
+			Env.getCtx(),
 			value,
 			column.getColumnName(),
 			column.getAD_Reference_ID(),

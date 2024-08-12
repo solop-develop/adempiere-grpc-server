@@ -374,7 +374,7 @@ public class WindowConvertUtil {
 		//	Fields
 		if(withFields) {
 			List<MField> fieldsList = Arrays.asList(
-				tab.getFields(false, whereClause)
+				tab.getFields(false, null)
 			);
 			for(MField field : fieldsList) {
 				if (field == null) {

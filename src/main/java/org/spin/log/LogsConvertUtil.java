@@ -16,12 +16,9 @@ package org.spin.log;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PInstance;
@@ -29,13 +26,9 @@ import org.adempiere.core.domains.models.I_AD_PInstance_Log;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_AD_Window;
-import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.X_AD_PInstance_Log;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MColumn;
-import org.compiere.model.MLookup;
-import org.compiere.model.MLookupFactory;
-import org.compiere.model.MLookupInfo;
 import org.compiere.model.MPInstance;
 import org.compiere.model.MPInstancePara;
 import org.compiere.model.MProcess;
@@ -45,12 +38,9 @@ import org.compiere.model.MUser;
 import org.compiere.model.MWindow;
 import org.compiere.model.M_Element;
 import org.compiere.model.Query;
-import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.compiere.util.NamePair;
-import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ProcesInstanceParameter;
 import org.spin.backend.grpc.common.ProcessInfoLog;
@@ -59,7 +49,6 @@ import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityEventType;
 import org.spin.backend.grpc.logs.EntityLog;
-import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -70,27 +59,6 @@ import com.google.protobuf.Value;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class LogsConvertUtil {
-	/**	Logger			*/
-	private static CLogger log = CLogger.getCLogger(LogsConvertUtil.class);
-
-
-	/** Date Time Format		*/
-	private static SimpleDateFormat	dateTimeFormat = DisplayType.getDateFormat
-		(DisplayType.DateTime, Env.getLanguage(Env.getCtx()));
-	/** Date Format			*/
-	private static SimpleDateFormat	dateFormat = DisplayType.getDateFormat
-		(DisplayType.DateTime, Env.getLanguage(Env.getCtx()));
-	/** Number Format		*/
-	private static DecimalFormat		numberFormat = DisplayType.getNumberFormat
-		(DisplayType.Number, Env.getLanguage(Env.getCtx()));
-	/** Amount Format		*/
-	private static DecimalFormat		amountFormat = DisplayType.getNumberFormat
-		(DisplayType.Amount, Env.getLanguage(Env.getCtx()));
-	/** Number Format		*/
-	private static DecimalFormat		intFormat = DisplayType.getNumberFormat
-		(DisplayType.Integer, Env.getLanguage(Env.getCtx()));
-
-
 
 	/**
 	 * Convert a change log for a set of changes to builder
@@ -151,7 +119,7 @@ public class LogsConvertUtil {
 		//	Return
 		return builder;
 	}
-	
+
 	/**
 	 * Convert PO class from change log  list to builder
 	 * @param recordLog
@@ -268,107 +236,31 @@ public class LogsConvertUtil {
 		if (oldValue != null && oldValue.equals(MChangeLog.NULL)) {
 			oldValue = null;
 		}
-		String displayOldValue = oldValue;
+		String displayOldValue = ValueManager.getDisplayedValueFromReference(
+			recordLog.getCtx(),
+			oldValue,
+			column.getColumnName(),
+			column.getAD_Reference_ID(),
+			column.getAD_Reference_Value_ID()
+		);
+		if (Util.isEmpty(displayOldValue, true)) {
+			displayOldValue = oldValue;
+		}
+		
 		if (newValue != null && newValue.equals(MChangeLog.NULL)) {
 			newValue = null;
 		}
-		String displayNewValue = newValue;
-		//
-		try {
-			if (DisplayType.isText (column.getAD_Reference_ID ())) {
-				;
-			} else if (column.getAD_Reference_ID() == DisplayType.YesNo) {
-				if (oldValue != null) {
-					displayOldValue = BooleanManager.getBooleanToTranslated(oldValue);
-				}
-				if (newValue != null) {
-					displayNewValue = BooleanManager.getBooleanToTranslated(newValue);
-				}
-			} else if (column.getAD_Reference_ID() == DisplayType.Amount) {
-				if (oldValue != null)
-					displayOldValue = amountFormat
-						.format (new BigDecimal (oldValue));
-				if (newValue != null)
-					displayNewValue = amountFormat
-						.format (new BigDecimal (newValue));
-			} else if (column.getAD_Reference_ID() == DisplayType.Integer) {
-				if (oldValue != null)
-					displayOldValue = intFormat.format(Integer.valueOf(oldValue));
-				if (newValue != null)
-					displayNewValue = intFormat.format(Integer.valueOf(newValue));
-			} else if (DisplayType.isNumeric (column.getAD_Reference_ID ())) {
-				if(column.getColumnName().equals(I_C_Order.COLUMNNAME_ProcessedOn)) {
-					if (oldValue != null) {
-						if(oldValue.indexOf(".") > 0) {
-							oldValue = oldValue.substring(0, oldValue.indexOf("."));
-						}
-						displayOldValue = TimeUtil.formatElapsed(System.currentTimeMillis() - new BigDecimal (oldValue).longValue());
-					}
-					if (newValue != null) {
-						if(newValue.indexOf(".") > 0) {
-							newValue = newValue.substring(0, newValue.indexOf("."));
-						}
-						displayNewValue = TimeUtil.formatElapsed(System.currentTimeMillis() - new BigDecimal (newValue).longValue());
-					}
-				} else {
-					if (oldValue != null)
-						displayOldValue = numberFormat.format (new BigDecimal (oldValue));
-					if (newValue != null)
-						displayNewValue = numberFormat.format (new BigDecimal (newValue));
-				}
-			} else if (column.getAD_Reference_ID() == DisplayType.Date) {
-				if (oldValue != null)
-					displayOldValue = dateFormat.format (Timestamp.valueOf (oldValue));
-				if (newValue != null)
-					displayNewValue = dateFormat.format (Timestamp.valueOf (newValue));
-			} else if (column.getAD_Reference_ID() == DisplayType.DateTime) {
-				if (oldValue != null)
-					displayOldValue = dateTimeFormat.format (Timestamp.valueOf (oldValue));
-				if (newValue != null)
-					displayNewValue = dateTimeFormat.format (Timestamp.valueOf (newValue));
-			} else if (DisplayType.isLookup(column.getAD_Reference_ID())
-					&& column.getAD_Reference_ID() != DisplayType.Button
-					&& column.getAD_Reference_ID() != DisplayType.List) {
-				MLookup lookup = MLookupFactory.get (Env.getCtx(), 0,
-						column.getAD_Column_ID(), column.getAD_Reference_ID(),
-					Env.getLanguage(Env.getCtx()), column.getColumnName(),
-					column.getAD_Reference_Value_ID(),
-					column.isParent(), null);
-				if (oldValue != null) {
-					Object key = oldValue; 
-					NamePair pp = lookup.get(key);
-					if (pp != null)
-						displayOldValue = pp.getName();
-				}
-				if (newValue != null) {
-					Object key = newValue; 
-					NamePair pp = lookup.get(key);
-					if (pp != null)
-						displayNewValue = pp.getName();
-				}
-			} else if((DisplayType.Button == column.getAD_Reference_ID()
-					|| DisplayType.List == column.getAD_Reference_ID())
-					&& column.getAD_Reference_Value_ID() != 0) {
-				MLookupInfo lookupInfo = MLookupFactory.getLookup_List(Env.getLanguage(Env.getCtx()), column.getAD_Reference_Value_ID());
-				MLookup lookup = new MLookup(lookupInfo, 0);
-				if (oldValue != null) {
-					Object key = oldValue; 
-					NamePair pp = lookup.get(key);
-					if (pp != null)
-						displayOldValue = pp.getName();
-				}
-				if (newValue != null) {
-					Object key = newValue; 
-					NamePair pp = lookup.get(key);
-					if (pp != null)
-						displayNewValue = pp.getName();
-				}
-			} else if (DisplayType.isLOB (column.getAD_Reference_ID ())) {
-				;
-			}
-		} catch (Exception e) {
-			log.log(Level.WARNING, oldValue + "->" + newValue, e);
+		String displayNewValue = ValueManager.getDisplayedValueFromReference(
+			recordLog.getCtx(),
+			newValue,
+			column.getColumnName(),
+			column.getAD_Reference_ID(),
+			column.getAD_Reference_Value_ID()
+		);
+		if (Util.isEmpty(displayOldValue, true)) {
+			displayNewValue = newValue;
 		}
+
 		//	Set display values
 		builder.setOldDisplayValue(
 				ValueManager.validateNull(displayOldValue)
