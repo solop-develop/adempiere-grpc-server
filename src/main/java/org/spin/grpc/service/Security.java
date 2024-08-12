@@ -1124,7 +1124,7 @@ public class Security extends SecurityImplBase {
 			.setUserInfo(
 				convertUserInfo(
 					MUser.get(context, session.getCreatedBy())
-				).build()
+				)
 			)
 		;
 		//	Set role
@@ -1137,7 +1137,7 @@ public class Security extends SecurityImplBase {
 		//	Return session
 		return builder;
 	}
-	
+
 	/**
 	 * Convert User entity
 	 * @param user
@@ -1174,6 +1174,15 @@ public class Security extends SecurityImplBase {
 				)
 			)
 		;
+		// client of user record
+		MClient clientUser = MClient.get(Env.getCtx(), user.getAD_Client_ID());
+		userInfo.setClientUuid(
+			ValueManager.validateNull(
+				clientUser.getUUID()
+			)
+		);
+
+		// client of session
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
 		if(user.getLogo_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(clientId)) {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), clientId);
@@ -1183,8 +1192,7 @@ public class Security extends SecurityImplBase {
 				user.getLogo_ID(),
 				null
 			);
-			if(attachmentReference != null
-					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
+			if(attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 				userInfo.setImage(
 					ValueManager.validateNull(
 						attachmentReference.getFileName()
@@ -1195,7 +1203,7 @@ public class Security extends SecurityImplBase {
 		userInfo.setConnectionTimeout(SessionManager.getSessionTimeout(user));
 		return userInfo;
 	}
-	
+
 	/**
 	 * Get User Info
 	 * @param request

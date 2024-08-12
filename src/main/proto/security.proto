@@ -150,6 +150,8 @@ message UserInfo {
 	string comments = 6;
 	string image = 7;
 	int64 connection_timeout = 8;
+	// client of user record
+	string client_uuid = 9;
 }
 
 

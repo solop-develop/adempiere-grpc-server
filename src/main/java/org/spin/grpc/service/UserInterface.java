@@ -721,7 +721,9 @@ public class UserInterface extends UserInterfaceImplBase {
 									DisplayType.String
 								);
 								rowValues.putFields(
-									I_AD_Element.COLUMNNAME_AD_Client_ID + "_" + LookupUtil.UUID_COLUMN_KEY,
+									LookupUtil.getUuidColumnName(
+										I_AD_Element.COLUMNNAME_AD_Client_ID
+									),
 									valueUuidBuilder.build()
 								);
 							}

@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pipo.IDFinder;
 import org.adempiere.core.domains.models.I_AD_Element;
+import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.X_AD_Table;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
@@ -77,13 +78,20 @@ public class RecordUtil {
 
 
 	/** Table Allows Records with Zero Identifier */
-	public static List<String> ALLOW_ZERO_ID = Arrays.asList(
+	public static final List<String> ALLOW_ZERO_ID = Arrays.asList(
 		X_AD_Table.ACCESSLEVEL_All,
 		X_AD_Table.ACCESSLEVEL_SystemPlusClient,
 		X_AD_Table.ACCESSLEVEL_ClientPlusOrganization
 	);
 
 
+	/** Column names on records to client validations */
+	public static final List<String> RECORDS_COLUMN_NAMES = Arrays.asList(
+		I_AD_Element.COLUMNNAME_AD_Client_ID,
+		I_AD_Element.COLUMNNAME_IsActive,
+		I_C_Order.COLUMNNAME_Processed,
+		I_C_Order.COLUMNNAME_Processing
+	);
 
 	/**
 	 * get Entity from Table ID and (Record UUID / Record ID)
@@ -669,7 +677,9 @@ public class RecordUtil {
 									DisplayType.String
 								);
 								rowValues.putFields(
-									I_AD_Element.COLUMNNAME_AD_Client_ID + "_" + LookupUtil.UUID_COLUMN_KEY,
+									LookupUtil.getUuidColumnName(
+										I_AD_Element.COLUMNNAME_AD_Client_ID
+									),
 									valueUuidBuilder.build()
 								);
 							}
