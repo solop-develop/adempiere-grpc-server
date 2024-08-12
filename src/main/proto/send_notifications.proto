@@ -23,26 +23,26 @@ import "google/api/annotations.proto";
 import "base_data_type.proto";
 
 // Base URL
-// /import-loader/
+// /send-notifications/
 
 package send_notifications;
 
  service SendNotifications {
 	rpc ListUsers(ListUsersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/send_notifications/users"
+			get: "/send-notifications/users"
 		};
 	}
 
 	rpc ListNotificationsTypes(ListNotificationsTypesRequest) returns (ListNotificationsTypesResponse) {
 		option (google.api.http) = {
-			get: "/send_notifications/notifications-types"
+			get: "/send-notifications/notifications-types"
 		};
 	}
 
 	rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse ) {
 		option (google.api.http) = {
-			post: "/send_notifications/notifications",
+			post: "/send-notifications/notifications",
 			body: "*"
 		};
 	}
