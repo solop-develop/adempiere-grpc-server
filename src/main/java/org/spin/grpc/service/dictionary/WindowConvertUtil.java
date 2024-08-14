@@ -640,7 +640,10 @@ public class WindowConvertUtil {
 						}
 						// Dynamic Validation
 						if (currentField.getAD_Val_Rule_ID() > 0) {
-							MValRule validationRule = MValRule.get(currentField.getCtx(), currentField.getAD_Val_Rule_ID());
+							MValRule validationRule = MValRule.get(
+								currentField.getCtx(),
+								currentField.getAD_Val_Rule_ID()
+							);
 							if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
 								return true;
 							}
@@ -661,7 +664,10 @@ public class WindowConvertUtil {
 						}
 						// Dynamic Validation
 						if (currentColumn.getAD_Val_Rule_ID() > 0) {
-							MValRule validationRule = MValRule.get(currentField.getCtx(), currentColumn.getAD_Val_Rule_ID());
+							MValRule validationRule = MValRule.get(
+								currentField.getCtx(),
+								currentColumn.getAD_Val_Rule_ID()
+							);
 							if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
 								return true;
 							}
@@ -669,7 +675,24 @@ public class WindowConvertUtil {
 						return false;
 					})
 					.forEach(currentField -> {
+						final String currentColumnName = MColumn.getColumnName(
+							currentField.getCtx(),
+							currentField.getAD_Column_ID()
+						);
 						DependentField.Builder builder = DependentField.newBuilder()
+							.setId(
+								currentField.getAD_Field_ID()
+							)
+							.setUuid(
+								ValueManager.validateNull(
+									currentField.getUUID()
+								)
+							)
+							.setColumnName(
+								ValueManager.validateNull(
+									currentColumnName
+								)
+							)
 							.setParentId(
 								tab.getAD_Tab_ID()
 							)
@@ -683,23 +706,7 @@ public class WindowConvertUtil {
 									tab.getName()
 								)
 							)
-							.setId(
-								currentField.getAD_Field_ID()
-							)
-							.setUuid(
-								ValueManager.validateNull(
-									currentField.getUUID()
-								)
-							)
 						;
-
-						String currentColumnName = MColumn.getColumnName(currentField.getCtx(), currentField.getAD_Column_ID());
-						builder.setColumnName(
-							ValueManager.validateNull(
-								currentColumnName
-							)
-						);
-
 						depenentFieldsList.add(builder.build());
 					});
 			});

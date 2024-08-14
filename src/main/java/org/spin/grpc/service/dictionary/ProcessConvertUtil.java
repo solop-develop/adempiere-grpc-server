@@ -28,7 +28,6 @@ import org.compiere.model.MProcessPara;
 import org.compiere.model.MProcessParaCustom;
 import org.compiere.model.MReportView;
 import org.compiere.model.MValRule;
-import org.compiere.util.Env;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.dictionary.DependentField;
 import org.spin.backend.grpc.dictionary.Field;
@@ -214,7 +213,7 @@ public class ProcessConvertUtil {
 		}
 
 		MProcess process = MProcess.get(
-			Env.getCtx(),
+			processParameter.getCtx(),
 			processParameter.getAD_Process_ID()
 		);
 		List<MProcessPara> parametersList = process.getParametersAsList();
@@ -236,13 +235,20 @@ public class ProcessConvertUtil {
 				if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentParameter.getDefaultValue())) {
 					return true;
 				}
+				// TODO: Validate range with `_To` suffix
+				if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentParameter.getDefaultValue2())) {
+					return true;
+				}
 				// ReadOnly Logic
 				if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentParameter.getReadOnlyLogic())) {
 					return true;
 				}
 				// Dynamic Validation
 				if (currentParameter.getAD_Val_Rule_ID() > 0) {
-					MValRule validationRule = MValRule.get(currentParameter.getCtx(), currentParameter.getAD_Val_Rule_ID());
+					MValRule validationRule = MValRule.get(
+						currentParameter.getCtx(),
+						currentParameter.getAD_Val_Rule_ID()
+					);
 					if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
 						return true;
 					}
@@ -250,7 +256,21 @@ public class ProcessConvertUtil {
 				return false;
 			})
 			.forEach(currentParameter -> {
+				final String currentColumnName = currentParameter.getColumnName();
 				DependentField.Builder builder = DependentField.newBuilder()
+					.setId(
+						currentParameter.getAD_Process_Para_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							currentParameter.getUUID()
+						)
+					)
+					.setColumnName(
+						ValueManager.validateNull(
+							currentColumnName
+						)
+					)
 					.setParentId(
 						process.getAD_Process_ID()
 					)
@@ -262,19 +282,6 @@ public class ProcessConvertUtil {
 					.setParentName(
 						ValueManager.validateNull(
 							process.getName()
-						)
-					)
-					.setId(
-						currentParameter.getAD_Process_Para_ID()
-					)
-					.setUuid(
-						ValueManager.validateNull(
-							currentParameter.getUUID()
-						)
-					)
-					.setColumnName(
-						ValueManager.validateNull(
-							currentParameter.getColumnName()
 						)
 					)
 				;

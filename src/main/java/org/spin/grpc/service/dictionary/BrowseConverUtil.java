@@ -354,6 +354,7 @@ public class BrowseConverUtil {
 					return true;
 				}
 				// Default Value 2
+				// TODO: Validate range with `_To` suffix
 				if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentBrowseField.getDefaultValue2())
 					|| ContextManager.isUseParentColumnOnContext(parentElementName, currentBrowseField.getDefaultValue2())) {
 					return true;
@@ -365,7 +366,10 @@ public class BrowseConverUtil {
 				}
 				// Dynamic Validation
 				if (currentBrowseField.getAD_Val_Rule_ID() > 0) {
-					MValRule validationRule = MValRule.get(currentBrowseField.getCtx(), currentBrowseField.getAD_Val_Rule_ID());
+					MValRule validationRule = MValRule.get(
+						currentBrowseField.getCtx(),
+						currentBrowseField.getAD_Val_Rule_ID()
+					);
 					if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())
 						|| ContextManager.isUseParentColumnOnContext(parentElementName, validationRule.getCode())) {
 						return true;
@@ -374,7 +378,24 @@ public class BrowseConverUtil {
 				return false;
 			})
 			.forEach(currentBrowseField -> {
+				MViewColumn currentViewColumn = MViewColumn.getById(
+					currentBrowseField.getCtx(),
+					currentBrowseField.getAD_View_Column_ID(),
+					null
+				);
+				final String currentColumnName = currentViewColumn.getColumnName();
 				DependentField.Builder builder = DependentField.newBuilder()
+					.setId(
+						currentBrowseField.getAD_Browse_Field_ID()
+					)
+					.setUuid(
+						ValueManager.validateNull(
+							currentBrowseField.getUUID()
+						)
+					)
+					.setColumnName(
+						currentColumnName
+					)
 					.setParentId(
 						browse.getAD_Browse_ID()
 					)
@@ -388,19 +409,7 @@ public class BrowseConverUtil {
 							browse.getName()
 						)
 					)
-					.setId(
-						currentBrowseField.getAD_Browse_Field_ID()
-					)
-					.setUuid(
-						ValueManager.validateNull(
-							currentBrowseField.getUUID()
-						)
-					)
 				;
-
-				MViewColumn currentViewColumn = MViewColumn.getById(currentBrowseField.getCtx(), currentBrowseField.getAD_View_Column_ID(), null);
-				builder.setColumnName(currentViewColumn.getColumnName());
-
 				depenentFieldsList.add(builder.build());
 			});
 

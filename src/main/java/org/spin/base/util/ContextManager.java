@@ -85,9 +85,12 @@ public class ContextManager {
 		String END   = "\\@";  // A literal ")" character in regex
 
 		// Captures the word(s) between the above two character(s)
-		final String COLUMN_NAME_PATTERN = START + "(#|$){0,1}(\\w+)" + END;
+		final String COLUMN_NAME_PATTERN = START + "(#|$|\\d|\\|){0,1}(\\w+)" + END;
 
-		Pattern pattern = Pattern.compile(COLUMN_NAME_PATTERN);
+		Pattern pattern = Pattern.compile(
+			COLUMN_NAME_PATTERN,
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+		);
 		Matcher matcher = pattern.matcher(context);
 		Map<String, Boolean> columnNamesMap = new HashMap<String, Boolean>();
 		while(matcher.find()) {
@@ -113,7 +116,7 @@ public class ContextManager {
 		// @ColumnName@ , @#ColumnName@ , @$ColumnName@
 		StringBuffer patternValue = new StringBuffer()
 			.append("@")
-			.append("($|#){0,1}")
+			.append("($|#|\\d\\|){0,1}")
 			.append(columnName)
 			.append("(@)")
 		;
