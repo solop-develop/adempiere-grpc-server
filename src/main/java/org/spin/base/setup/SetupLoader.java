@@ -25,6 +25,7 @@ import org.compiere.db.CConnection;
 import org.compiere.util.CLogMgt;
 import org.compiere.util.DB;
 import org.compiere.util.Ini;
+import org.compiere.util.Util;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -55,12 +56,20 @@ public class SetupLoader {
 	 * @throws JsonParseException 
 	 */
 	private SetupLoader(String filePath) throws Exception, JsonParseException, JsonMappingException, IOException {
+		if (Util.isEmpty(filePath, true)) {
+			throw new Exception("Fill Mandatory File Name");
+		}
 		File setupFile = new File(filePath);
 		if (setupFile == null || !setupFile.exists() || setupFile.isDirectory()) {
 			throw new Exception("Setup File not found");
 		}
-		ObjectMapper fileMapper = new ObjectMapper(new YAMLFactory());
-		setup = fileMapper.readValue(setupFile, SetupWrapper.class);
+		ObjectMapper fileMapper = new ObjectMapper(
+			new YAMLFactory()
+		);
+		setup = fileMapper.readValue(
+			setupFile,
+			SetupWrapper.class
+		);
 	}
 
 
