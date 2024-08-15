@@ -68,7 +68,7 @@ public class QueryUtil {
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 
-		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
+		final Language language = Language.getLanguage(Env.getAD_Language(table.getCtx()));
 		final List<MColumn> columnsList = table.getColumnsAsList();
 		for (MColumn column : columnsList) {
 			if (!column.isActive()) {
@@ -96,7 +96,7 @@ public class QueryUtil {
 			if (DisplayType.Button == displayTypeId) {
 				//	Reference Value
 				if (referenceValueId > 0) {
-					X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceValueId, null);
+					X_AD_Reference reference = new X_AD_Reference(column.getCtx(), referenceValueId, null);
 					if (reference != null && reference.getAD_Reference_ID() > 0) {
 						// overwrite display type to Table or List
 						if (X_AD_Reference.VALIDATIONTYPE_TableValidation.equals(reference.getValidationType())) {
@@ -106,8 +106,8 @@ public class QueryUtil {
 						}
 					}
 				} else if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
-					// int tableId = Env.getContextAsInt(Env.getCtx(), 0, I_AD_Table.COLUMNNAME_AD_Table_ID);
-					// MTable tableButton = MTable.get(Env.getCtx(), tableId);
+					// int tableId = Env.getContextAsInt(column.getCtx(), 0, I_AD_Table.COLUMNNAME_AD_Table_ID);
+					// MTable tableButton = MTable.get(column.getCtx(), tableId);
 					// String tableKeyColumn = tableButton.getTableName() + "_ID";
 					// columnName = tableKeyColumn;
 					// // overwrite display type to Table Direct
@@ -122,9 +122,11 @@ public class QueryUtil {
 						.append(", ")
 						.append(columnSQL)
 						.append(" AS ")
-						.append(LookupUtil.DISPLAY_COLUMN_KEY)
-						.append("_")
-						.append(columnName)
+						.append(
+							LookupUtil.getDisplayColumnName(
+								columnName
+							)
+						)
 					;
 					queryToAdd.append(displayColumnSQL);
 					continue;
@@ -134,7 +136,7 @@ public class QueryUtil {
 					// overwrite to correct sub-query table alias
 					displayTypeId = DisplayType.ID;
 				}
-				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
+				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(column.getCtx())
 					.getReferenceInfo(
 						displayTypeId,
 						referenceValueId,
@@ -173,7 +175,7 @@ public class QueryUtil {
 	 * @return
 	 */
 	public static String getTabQueryWithReferences(MTab tab, String tableAlias) {
-		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
+		MTable table = MTable.get(tab.getCtx(), tab.getAD_Table_ID());
 		final String tableName = table.getTableName();
 		if (Util.isEmpty(tableAlias, true)) {
 			tableAlias = tableName;
@@ -185,10 +187,10 @@ public class QueryUtil {
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 
-		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
+		final Language language = Language.getLanguage(Env.getAD_Language(tab.getCtx()));
 		final MField[] fieldsList = tab.getFields(false, null);
 		for (MField field : fieldsList) {
-			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+			MColumn column = MColumn.get(field.getCtx(), field.getAD_Column_ID());
 			if (!column.isActive() || !field.isActive() || !field.isDisplayed()) {
 				// key column on table
 				if (!column.isKey()) {
@@ -221,7 +223,7 @@ public class QueryUtil {
 			if (DisplayType.Button == displayTypeId) {
 				//	Reference Value
 				if (referenceValueId > 0) {
-					X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceValueId, null);
+					X_AD_Reference reference = new X_AD_Reference(field.getCtx(), referenceValueId, null);
 					if (reference != null && reference.getAD_Reference_ID() > 0) {
 						// overwrite display type to Table or List
 						if (X_AD_Reference.VALIDATIONTYPE_TableValidation.equals(reference.getValidationType())) {
@@ -231,8 +233,8 @@ public class QueryUtil {
 						}
 					}
 				} else if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
-					// int tableId = Env.getContextAsInt(Env.getCtx(), 0, I_AD_Table.COLUMNNAME_AD_Table_ID);
-					// MTable tableButton = MTable.get(Env.getCtx(), tableId);
+					// int tableId = Env.getContextAsInt(field.getCtx(), 0, I_AD_Table.COLUMNNAME_AD_Table_ID);
+					// MTable tableButton = MTable.get(field.getCtx(), tableId);
 					// String tableKeyColumn = tableButton.getTableName() + "_ID";
 					// columnName = tableKeyColumn;
 					// // overwrite display type to Table Direct
@@ -247,9 +249,11 @@ public class QueryUtil {
 						.append(", ")
 						.append(columnSQL)
 						.append(" AS ")
-						.append(LookupUtil.DISPLAY_COLUMN_KEY)
-						.append("_")
-						.append(columnName)
+						.append(
+							LookupUtil.getDisplayColumnName(
+								columnName
+							)
+						)
 					;
 					queryToAdd.append(displayColumnSQL);
 					continue;
@@ -260,7 +264,7 @@ public class QueryUtil {
 					displayTypeId = DisplayType.ID;
 				}
 				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
-					Env.getCtx()
+					field.getCtx()
 				).getReferenceInfo(
 					displayTypeId,
 					referenceValueId,
@@ -325,7 +329,7 @@ public class QueryUtil {
 			;
 		}
 
-		MView view = new MView(Env.getCtx(), browser.getAD_View_ID());
+		MView view = new MView(browser.getCtx(), browser.getAD_View_ID());
 		sql.append(" FROM").append(view.getFromClause());
 		return sql.toString();
 	}
@@ -344,7 +348,7 @@ public class QueryUtil {
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 
-		final Language language = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
+		final Language language = Language.getLanguage(Env.getAD_Language(browser.getCtx()));
 		final List<MBrowseField> browseFieldsList = browser.getFields();
 		for (MBrowseField browseField : browseFieldsList) {
 			if (!browseField.isActive()) {
@@ -367,7 +371,7 @@ public class QueryUtil {
 			if (DisplayType.Button == displayTypeId) {
 				//	Reference Value
 				if (referenceValueId > 0) {
-					X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceValueId, null);
+					X_AD_Reference reference = new X_AD_Reference(browseField.getCtx(), referenceValueId, null);
 					if (reference != null && reference.getAD_Reference_ID() > 0) {
 						// overwrite display type to Table or List
 						if (X_AD_Reference.VALIDATIONTYPE_TableValidation.equals(reference.getValidationType())) {
@@ -380,13 +384,13 @@ public class QueryUtil {
 			}
 
 			if (ReferenceUtil.validateReference(displayTypeId)) {
-				MViewColumn viewColumn = MViewColumn.getById(Env.getCtx(), browseField.getAD_View_Column_ID(), null);
-				MViewDefinition viewDefinition = MViewDefinition.get(Env.getCtx(), viewColumn.getAD_View_Definition_ID());
+				MViewColumn viewColumn = MViewColumn.getById(browseField.getCtx(), browseField.getAD_View_Column_ID(), null);
+				MViewDefinition viewDefinition = MViewDefinition.get(browseField.getCtx(), viewColumn.getAD_View_Definition_ID());
 				final String tableName = viewDefinition.getTableAlias();
 
 				String columnName = browseField.getAD_Element().getColumnName();
 				if (viewColumn.getAD_Column_ID() > 0) {
-					MColumn column = MColumn.get(Env.getCtx(), viewColumn.getAD_Column_ID());
+					MColumn column = MColumn.get(browseField.getCtx(), viewColumn.getAD_Column_ID());
 					columnName = column.getColumnName();
 				}
 
@@ -394,7 +398,7 @@ public class QueryUtil {
 					// overwrite to correct sub-query table alias
 					displayTypeId = DisplayType.ID;
 				}
-				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(Env.getCtx())
+				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(browseField.getCtx())
 					.getReferenceInfo(
 						displayTypeId,
 						referenceValueId,
@@ -405,7 +409,11 @@ public class QueryUtil {
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
 					final String dbColumnName = viewColumn.getColumnName();
-					referenceInfo.setDisplayColumnAlias(LookupUtil.DISPLAY_COLUMN_KEY + "_" + dbColumnName);
+					referenceInfo.setDisplayColumnAlias(
+						LookupUtil.getDisplayColumnName(
+							dbColumnName
+						)
+					);
 					final String displayColumn = referenceInfo.getDisplayValue(columnName);
 					queryToAdd.append(displayColumn);
 					String joinClause = referenceInfo.getJoinValue(columnName, tableName);

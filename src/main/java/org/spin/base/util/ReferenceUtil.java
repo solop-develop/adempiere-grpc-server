@@ -203,9 +203,15 @@ public class ReferenceUtil {
 			referenceInfo.setHasJoinValue(false);
 		} else {
 			//	Get info
-			MLookupInfo lookupInfo = MLookupFactory.getLookupInfo(context, 0, 0, referenceId, languageValue, columnName, referenceValueId, false, null, false);
+			MLookupInfo lookupInfo = MLookupFactory.getLookupInfo(
+				context, 0, 0,
+				referenceId, languageValue,
+				columnName, referenceValueId,
+				false, null, false
+			);
 			if(lookupInfo == null) {
-				return referenceInfo;
+				// Table Reference without table validation
+				return null;
 			}
 
 			String displayColumn = "";
