@@ -1,0 +1,113 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.preference_management";
+option java_outer_classname = "ADempierePreferenceManagement";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+// Base URL
+// /preference-management/
+
+package preference_management;
+
+//	Preference Management
+service PreferenceManagement {
+	//	Get Preference from field
+	rpc GetPreference(GetPreferenceRequest) returns (Preference) {
+		option (google.api.http) = {
+			get: "/preference-management/preference/{type}/{column_name}"
+			additional_bindings: {
+				get: "/preference-management/preference/{type}/{container_id}/{column_name}"
+			}
+		};
+	}
+
+	//	Set Preference from field
+	rpc SetPreference(SetPreferenceRequest) returns (Preference) {
+		option (google.api.http) = {
+			post: "/preference-management/preference/{type}/{column_name}",
+			body: "*"
+			additional_bindings: {
+				post: "/preference-management/preference/{type}/{container_id}/{column_name}",
+				body: "*"
+			}
+		};
+	}
+
+	//	Delete Preference from field
+	rpc DeletePreference(DeletePreferenceRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			delete: "/preference-management/preference/{type}/{column_name}"
+			additional_bindings: {
+				delete: "/preference-management/preference/{type}/{container_id}/{column_name}"
+			}
+		};
+	}
+}
+
+
+message GetPreferenceRequest {
+	int32 container_id = 1;
+	string column_name = 2;
+	bool is_for_current_user = 3;
+	bool is_for_current_client = 4;
+	bool is_for_current_organization = 5;
+	bool is_for_current_container = 6;
+	PreferenceType type = 7;
+}
+
+// Request for set preference
+message SetPreferenceRequest {
+	int32 container_id = 1;
+	string column_name = 2;
+	bool is_for_current_user = 3;
+	bool is_for_current_client = 4;
+	bool is_for_current_organization = 5;
+	bool is_for_current_container = 6;
+	PreferenceType type = 7;
+	string value = 8;
+}
+
+// Request for delete preference
+message DeletePreferenceRequest {
+	int32 container_id = 1;
+	string column_name = 2;
+	bool is_for_current_user = 3;
+	bool is_for_current_client = 4;
+	bool is_for_current_organization = 5;
+	bool is_for_current_container = 6;
+	PreferenceType type = 7;
+}
+
+// Preference
+enum PreferenceType {
+	CUSTOM = 0;
+	WINDOW = 1;
+	PROCESS = 2;
+	SMART_BROWSER = 3;
+}
+message Preference {
+	int32 client_id = 1;
+	int32 organization_id = 2;
+	int32 user_id = 3;
+	int32 container_id = 4;
+	string column_name = 5;
+	string value = 6;
+	PreferenceType type = 7;
+}

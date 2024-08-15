@@ -39,12 +39,10 @@ import javax.script.ScriptEngine;
 
 import org.adempiere.core.domains.models.I_AD_Browse_Field;
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
-import org.adempiere.core.domains.models.I_AD_Client;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_EntityType;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Language;
-import org.adempiere.core.domains.models.I_AD_Preference;
 import org.adempiere.core.domains.models.I_AD_Private_Access;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_Record_Access;
@@ -75,7 +73,6 @@ import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMessage;
-import org.compiere.model.MPreference;
 import org.compiere.model.MPrivateAccess;
 import org.compiere.model.MProcessPara;
 import org.compiere.model.MRecordAccess;
@@ -105,7 +102,6 @@ import org.spin.backend.grpc.user_interface.ContextInfoValue;
 import org.spin.backend.grpc.user_interface.CreateChatEntryRequest;
 import org.spin.backend.grpc.user_interface.CreateTabEntityRequest;
 import org.spin.backend.grpc.user_interface.DefaultValue;
-import org.spin.backend.grpc.user_interface.DeletePreferenceRequest;
 import org.spin.backend.grpc.user_interface.ExportBrowserItemsRequest;
 import org.spin.backend.grpc.user_interface.ExportBrowserItemsResponse;
 import org.spin.backend.grpc.user_interface.GetContextInfoValueRequest;
@@ -126,15 +122,12 @@ import org.spin.backend.grpc.user_interface.ListTreeNodesRequest;
 import org.spin.backend.grpc.user_interface.ListTreeNodesResponse;
 import org.spin.backend.grpc.user_interface.LockPrivateAccessRequest;
 import org.spin.backend.grpc.user_interface.MailTemplate;
-import org.spin.backend.grpc.user_interface.Preference;
-import org.spin.backend.grpc.user_interface.PreferenceType;
 import org.spin.backend.grpc.user_interface.PrivateAccess;
 import org.spin.backend.grpc.user_interface.RecordAccess;
 import org.spin.backend.grpc.user_interface.RecordAccessRole;
 import org.spin.backend.grpc.user_interface.RollbackEntityRequest;
 import org.spin.backend.grpc.user_interface.RunCalloutRequest;
 import org.spin.backend.grpc.user_interface.SaveTabSequencesRequest;
-import org.spin.backend.grpc.user_interface.SetPreferenceRequest;
 import org.spin.backend.grpc.user_interface.SetRecordAccessRequest;
 import org.spin.backend.grpc.user_interface.Translation;
 import org.spin.backend.grpc.user_interface.UnlockPrivateAccessRequest;
@@ -167,7 +160,6 @@ import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
-import com.google.protobuf.Empty;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 
@@ -507,53 +499,6 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 	}
 
-	@Override
-	public void setPreference(SetPreferenceRequest request, StreamObserver<Preference> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			MPreference preference = getPreference(request.getTypeValue(), request.getColumnName(), request.getIsForCurrentClient(), request.getIsForCurrentOrganization(), request.getIsForCurrentUser(), request.getIsForCurrentContainer(), request.getContainerId());
-			if(preference == null
-					|| preference.getAD_Preference_ID() <= 0) {
-				preference = new MPreference(Env.getCtx(), 0, null);
-			}
-			//	Save preference
-			Preference.Builder preferenceBuilder = savePreference(preference, request.getTypeValue(), request.getColumnName(), request.getIsForCurrentClient(), request.getIsForCurrentOrganization(), request.getIsForCurrentUser(), request.getIsForCurrentContainer(), request.getContainerId(), request.getValue());
-			responseObserver.onNext(preferenceBuilder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void deletePreference(DeletePreferenceRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			Empty.Builder empty = Empty.newBuilder();
-			MPreference preference = getPreference(request.getTypeValue(), request.getColumnName(), request.getIsForCurrentClient(), request.getIsForCurrentOrganization(), request.getIsForCurrentUser(), request.getIsForCurrentContainer(), request.getContainerId());
-			if(preference != null
-					&& preference.getAD_Preference_ID() > 0) {
-				preference.deleteEx(true);
-			}
-			responseObserver.onNext(empty.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
 	@Override
 	public void getRecordAccess(GetRecordAccessRequest request, StreamObserver<RecordAccess> responseObserver) {
 		try {
@@ -1272,120 +1217,6 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	
 		return builder;
 	}
-	
-	/**
-	 * Save preference from values
-	 * @param preference
-	 * @param preferenceType
-	 * @param attribute
-	 * @param isCurrentClient
-	 * @param isCurrentOrganization
-	 * @param isCurrentUser
-	 * @param isCurrentContainer
-	 * @param id
-	 * @param value
-	 * @return
-	 */
-	private Preference.Builder savePreference(MPreference preference, int preferenceType, String attribute, boolean isCurrentClient, boolean isCurrentOrganization, boolean isCurrentUser, boolean isCurrentContainer, int id, String value) {
-		Preference.Builder builder = Preference.newBuilder();
-		if(preferenceType == PreferenceType.WINDOW_VALUE) {
-			int windowId = id;
-			int clientId = Env.getAD_Client_ID(Env.getCtx());
-			int orgId = Env.getAD_Org_ID(Env.getCtx());
-			int userId = Env.getAD_User_ID(Env.getCtx());
-			//	For client
-			if(!isCurrentClient) {
-				clientId = 0;
-			}
-			//	For Organization
-			if(!isCurrentOrganization) {
-				orgId = 0;
-			}
-			//For User
-			if(!isCurrentUser) {
-				userId = -1;
-			}
-			//	For Window
-			if(!isCurrentContainer) {
-				windowId = -1;
-			}
-			//	Set values
-			preference.set_ValueOfColumn(I_AD_Client.COLUMNNAME_AD_Client_ID, clientId);
-			preference.setAD_Org_ID(orgId);
-			preference.setAD_User_ID(userId);
-			preference.setAD_Window_ID(windowId);
-			preference.setAttribute(attribute);
-			preference.setValue(value);
-			//	
-			preference.saveEx();
-			builder.setClientId(preference.getAD_Client_ID())
-				.setOrganizationId(preference.getAD_Org_ID())
-				.setUserId(preference.getAD_User_ID())
-				.setContainerId(id)
-				.setColumnName(
-					ValueManager.validateNull(
-						preference.getAttribute()
-					)
-				)
-				.setValue(preference.getValue())
-			;
-		}
-		//	
-		return builder;
-	}
-	
-	/**
-	 * Get preference
-	 * @param preferenceType
-	 * @param attribute
-	 * @param isCurrentClient
-	 * @param isCurrentOrganization
-	 * @param isCurrentUser
-	 * @param isCurrentContainer
-	 * @param id
-	 * @return
-	 */
-	private MPreference getPreference(int preferenceType, String attribute, boolean isCurrentClient, boolean isCurrentOrganization, boolean isCurrentUser, boolean isCurrentContainer, int id) {
-		if(preferenceType == PreferenceType.WINDOW_VALUE) {
-			StringBuffer whereClause = new StringBuffer("Attribute = ?");
-			List<Object> parameters = new ArrayList<>();
-			parameters.add(attribute);
-			//	For client
-			whereClause.append(" AND AD_Client_ID = ?");
-			if(isCurrentClient) {
-				parameters.add(Env.getAD_Client_ID(Env.getCtx()));
-			} else {
-				parameters.add(0);
-			}
-			//	For Organization
-			whereClause.append(" AND AD_Org_ID = ?");
-			if(isCurrentOrganization) {
-				parameters.add(Env.getAD_Org_ID(Env.getCtx()));
-			} else {
-				parameters.add(0);
-			}
-			//For User
-			if(isCurrentUser) {
-				parameters.add(Env.getAD_User_ID(Env.getCtx()));
-				whereClause.append(" AND AD_User_ID = ?");
-			} else {
-				whereClause.append(" AND AD_User_ID IS NULL");
-			}
-			//	For Window
-			if(isCurrentContainer) {
-				parameters.add(id);
-				whereClause.append(" AND AD_Window_ID = ?");
-			} else {
-				whereClause.append(" AND AD_Window_ID IS NULL");
-			}
-			return new Query(Env.getCtx(), I_AD_Preference.Table_Name, whereClause.toString(), null)
-					.setParameters(parameters)
-					.first();
-		}
-		//	
-		return null;
-	}
-
 
 
 	/**

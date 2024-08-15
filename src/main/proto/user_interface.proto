@@ -169,17 +169,6 @@ service UserInterface {
 			body: "*"
 		};
 	}
-	//	Set Preference from field
-	rpc SetPreference(SetPreferenceRequest) returns (Preference) {
-		option (google.api.http) = {
-			post: "/user-interface/preference/{type}/{container_id}/{column_name}",
-			body: "*"
-		};
-	}
-	//	Delete Preference from field
-	rpc DeletePreference(DeletePreferenceRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/user-interface/preference/{type}/{container_id}/{column_name}" };
-	}
 	//	List General Search Records
 	rpc ListGeneralSearchRecords(ListGeneralSearchRecordsRequest) returns (data.ListEntitiesResponse) {
 		option (google.api.http) = {
@@ -259,45 +248,6 @@ message RecordAccessRole {
 	bool is_exclude = 4;
 	bool is_read_only = 5;
 	bool is_dependent_entities = 6;
-}
-
-// Request for set preference
-message SetPreferenceRequest {
-	int32 container_id = 1;
-	string column_name = 2;
-	bool is_for_current_user = 3;
-	bool is_for_current_client = 4;
-	bool is_for_current_organization = 5;
-	bool is_for_current_container = 6;
-	PreferenceType type = 7;
-	string value = 8;
-}
-
-// Request for delete preference
-message DeletePreferenceRequest {
-	int32 container_id = 1;
-	string column_name = 2;
-	bool is_for_current_user = 3;
-	bool is_for_current_client = 4;
-	bool is_for_current_organization = 5;
-	bool is_for_current_container = 6;
-	PreferenceType type = 7;
-}
-
-// Preference from window
-enum PreferenceType {
-	WINDOW = 0;
-	PROCESS = 1;
-	SMART_BROWSER = 2;
-}
-message Preference {
-	int32 container_id = 1;
-	string column_name = 2;
-	string value = 3;
-	PreferenceType type = 4;
-	int32 user_id = 5;
-	int32 client_id = 6;
-	int32 organization_id = 7;
 }
 
 // Private Access
