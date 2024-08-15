@@ -643,7 +643,12 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 				Value.Builder organizationName = ValueManager.getValueFromString(
 					rs.getString(1)
 				);
-				rowValues.putFields(LookupUtil.DISPLAY_COLUMN_KEY + "_" + MHRMovement.COLUMNNAME_AD_Org_ID, organizationName.build());
+				rowValues.putFields(
+					LookupUtil.getDisplayColumnName(
+						MHRMovement.COLUMNNAME_AD_Org_ID
+					),
+					organizationName.build()
+				);
 
 				// HR_Movement_ID
 				Value.Builder movementId = ValueManager.getValueFromInteger(
@@ -660,7 +665,12 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 				Value.Builder movementName = ValueManager.getValueFromString(
 					rs.getString(2)
 				);
-				rowValues.putFields(LookupUtil.DISPLAY_COLUMN_KEY + "_" + MHRMovement.COLUMNNAME_HR_Movement_ID, movementName.build());
+				rowValues.putFields(
+					LookupUtil.getDisplayColumnName(
+						MHRMovement.COLUMNNAME_HR_Movement_ID
+					),
+					movementName.build()
+				);
 
 				// ValidFrom
 				Value.Builder validFrom = ValueManager.getValueFromTimestamp(

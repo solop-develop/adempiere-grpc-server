@@ -115,12 +115,14 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		// Invoice
 		Struct.Builder valuesInvoice = Struct.newBuilder()
-			.putFields(LookupUtil.VALUE_COLUMN_KEY,
+			.putFields(
+				LookupUtil.VALUE_COLUMN_KEY,
 				ValueManager.getValueFromInt(
 					MatchType.INVOICE_VALUE
 				).build()
 			)
-			.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+			.putFields(
+				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueManager.getValueFromString(
 					Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
 				).build()
@@ -134,12 +136,14 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		// Receipt
 		Struct.Builder valuesReceipt = Struct.newBuilder()
-			.putFields(LookupUtil.VALUE_COLUMN_KEY,
+			.putFields(
+				LookupUtil.VALUE_COLUMN_KEY,
 				ValueManager.getValueFromInt(
 					MatchType.RECEIPT_VALUE
 				).build()
 			)
-			.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+			.putFields(
+				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueManager.getValueFromString(
 					Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
 				).build()
@@ -155,12 +159,14 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 		// Purchase Order
 		Struct.Builder valuesOrder = Struct.newBuilder()
-			.putFields(LookupUtil.VALUE_COLUMN_KEY,
+			.putFields(
+				LookupUtil.VALUE_COLUMN_KEY,
 				ValueManager.getValueFromInt(
 					MatchType.PURCHASE_ORDER_VALUE
 				).build()
 			)
-			.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+			.putFields(
+				LookupUtil.DISPLAY_COLUMN_KEY,
 				ValueManager.getValueFromString(
 					Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
 				).build()
@@ -215,12 +221,14 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		if (matchTypeFrom == MatchType.RECEIPT) {
 			// Invoice
 			Struct.Builder valuesInvoice = Struct.newBuilder()
-				.putFields(LookupUtil.VALUE_COLUMN_KEY,
+				.putFields(
+					LookupUtil.VALUE_COLUMN_KEY,
 					ValueManager.getValueFromInt(
 						MatchType.INVOICE_VALUE
 					).build()
 				)
-				.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+				.putFields(
+					LookupUtil.DISPLAY_COLUMN_KEY,
 					ValueManager.getValueFromString(
 						Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
 					).build()
@@ -234,12 +242,14 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 
 			// Purchase Order
 			Struct.Builder valuesOrder = Struct.newBuilder()
-				.putFields(LookupUtil.VALUE_COLUMN_KEY,
+				.putFields(
+					LookupUtil.VALUE_COLUMN_KEY,
 					ValueManager.getValueFromInt(
 						MatchType.PURCHASE_ORDER_VALUE
 					).build()
 				)
-				.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+				.putFields(
+					LookupUtil.DISPLAY_COLUMN_KEY,
 					ValueManager.getValueFromString(
 						Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
 					).build()
@@ -257,12 +267,14 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 		// Invocie / Purchase Order -> Receipt
 		if (matchTypeFrom == MatchType.INVOICE || matchTypeFrom == MatchType.PURCHASE_ORDER) {
 			Struct.Builder valuesReceipt = Struct.newBuilder()
-				.putFields(LookupUtil.VALUE_COLUMN_KEY,
+				.putFields(
+					LookupUtil.VALUE_COLUMN_KEY,
 					ValueManager.getValueFromInt(
 						MatchType.RECEIPT_VALUE
 					).build()
 				)
-				.putFields(LookupUtil.DISPLAY_COLUMN_KEY,
+				.putFields(
+					LookupUtil.DISPLAY_COLUMN_KEY,
 					ValueManager.getValueFromString(
 						Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
 					).build()
