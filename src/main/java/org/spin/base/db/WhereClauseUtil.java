@@ -90,7 +90,7 @@ public class WhereClauseUtil {
 		}
 
 		Matcher matcherTableAliases = Pattern.compile(
-				tableAlias + "\\.",
+				tableAlias + ".",
 				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
 			)
 			.matcher(dynamicValidation);
