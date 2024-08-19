@@ -49,7 +49,7 @@ service ImportFileLoader {
 		};
 	}
 	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/import-loader/imports/{import_format_id}/{resource_id}/preview" };
+		option (google.api.http) = { get: "/import-loader/imports/{import_format_id}/{resource_name}/preview" };
 	}
 	// Process
 	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {
@@ -176,7 +176,7 @@ message ListFilePreviewRequest {
 	string page_token = 6;
 	string search_value = 7;
 	int32 import_format_id = 8;
-	int32 resource_id = 9;
+	string resource_name = 9;
 	string charset = 10;
 }
 

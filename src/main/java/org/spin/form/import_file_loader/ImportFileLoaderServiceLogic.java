@@ -13,17 +13,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.form.import_file_loader;
-
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_ImpFormat;
@@ -34,6 +33,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.impexp.ImpFormat;
 import org.compiere.impexp.ImpFormatRow;
 import org.compiere.impexp.MImpFormat;
+import org.compiere.model.MClientInfo;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
@@ -64,10 +64,15 @@ import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.eca62.support.IS3;
+import org.spin.eca62.support.ResourceMetadata;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.UserInterface;
+import org.spin.model.MADAppRegistration;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
+import org.spin.util.support.AppSupportHandler;
+import org.spin.util.support.IAppSupport;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -439,27 +444,39 @@ public class ImportFileLoaderServiceLogic {
 			throw new AdempiereException("@FileImportNoFormat@");
 		}
 
-		// validate attachment reference
-		int attachmentReferenceId = request.getResourceId();
-		if (attachmentReferenceId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
+		// Get File Name
+		String fileName = request.getResourceName();
+
+		if (fileName == null) {
+			throw new AdempiereException("@FileResourceName");
 		}
 
-		byte[] file = AttachmentUtil.getInstance()
-			.withClientId(Env.getAD_Client_ID(Env.getCtx()))
-			.withAttachmentReferenceId(attachmentReferenceId)
-			.getAttachment();
-		if (file == null) {
-			throw new AdempiereException("@NotFound@");
-		}
 
 		String charsetValue = request.getCharset();
 		if (Util.isEmpty(charsetValue, true) || !Charset.isSupported(charsetValue)) {
 			charsetValue = Charset.defaultCharset().name();
 		}
 		Charset charset = Charset.forName(charsetValue);
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+		// Connector S3
+		MADAppRegistration genericConnector = MADAppRegistration.getById(
+			Env.getCtx(),
+			clientInfo.getFileHandler_ID(),
+			null
+		);
+		//	Load
+		IAppSupport supportedApi = AppSupportHandler.getInstance().getAppSupport(genericConnector);
+		//	Get it
+		IS3 fileHandler = (IS3) supportedApi;
+		//  Resource 
+		ResourceMetadata resourceMetadata = ResourceMetadata.newInstance()
+					.withResourceName(fileName);
+		InputStream inputStream = fileHandler.getResource(resourceMetadata);
 
-		InputStream inputStream = new ByteArrayInputStream(file);
+		if (inputStream == null) {
+			throw new AdempiereException("@Input_Stream_Not_Found@");
+		}
+
 		InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
 		BufferedReader in = new BufferedReader(inputStreamReader, 10240);
 
