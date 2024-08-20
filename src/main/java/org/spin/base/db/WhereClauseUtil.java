@@ -88,25 +88,28 @@ public class WhereClauseUtil {
 		if (Util.isEmpty(dynamicValidation, true)) {
 			return "";
 		}
-
+	
 		Matcher matcherTableAliases = Pattern.compile(
-				tableAlias + ".",
+				tableAlias + "\\.",
 				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-			)
-			.matcher(dynamicValidation);
-
+		)
+				.matcher(dynamicValidation);
+	
 		String validationCode = dynamicValidation;
 		if (!matcherTableAliases.find()) {
 			final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY)\\b)(\\w+)(\\s+){0,1}";
 			// columnName = value
 			Pattern patternColumnName = Pattern.compile(
-				columnsRegex + OperatorUtil.SQL_OPERATORS_REGEX,
-				Pattern.DOTALL
+					columnsRegex + OperatorUtil.SQL_OPERATORS_REGEX,
+					Pattern.DOTALL
 			);
 			Matcher matchColumnName = patternColumnName.matcher(validationCode);
 			validationCode = matchColumnName.replaceAll(tableAlias + ".$1$2$3$4"); // $&
 		}
-
+		// Add the new validation to remove the prefix from the alias
+		if (validationCode.matches("(?i).*AS\\s+\\w+\\.([\\w]+).*")) {
+			validationCode = validationCode.replaceAll("(?i)AS\\s+\\w+\\.([\\w]+)", "AS $1");
+		}
 		return validationCode;
 	}
 
