@@ -194,6 +194,7 @@ public class WindowUtil {
 				Env.getCtx(),
 				parentTabId
 			);
+			// TODO: Evaluate `IsActive`
 			tabsList.add(parentTab);
 			getParentTabsList(windowId, parentTabId, tabsList);
 		}

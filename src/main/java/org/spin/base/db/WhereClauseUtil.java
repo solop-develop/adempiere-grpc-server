@@ -641,8 +641,14 @@ public class WhereClauseUtil {
 		if (tabs == null) {
 			MWindow window = MWindow.get(tab.getCtx(), tab.getAD_Window_ID());
 			tabs = Arrays.asList(
-				window.getTabs(false, null)
-			);
+					window.getTabs(false, null)
+				)
+				.stream()
+				.filter(currentTab -> {
+					return currentTab.isActive();
+				})
+				.collect(Collectors.toList())
+			;
 		}
 
 		StringBuffer whereClause = new StringBuffer();
