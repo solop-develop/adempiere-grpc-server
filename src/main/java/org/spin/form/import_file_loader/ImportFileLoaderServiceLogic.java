@@ -458,16 +458,26 @@ public class ImportFileLoaderServiceLogic {
 		}
 		Charset charset = Charset.forName(charsetValue);
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+		if (clientInfo == null) {
+			throw new AdempiereException("@ClientInfo");
+		}
 		// Connector S3
 		MADAppRegistration genericConnector = MADAppRegistration.getById(
 			Env.getCtx(),
 			clientInfo.getFileHandler_ID(),
 			null
 		);
+		if (genericConnector == null) {
+			throw new AdempiereException("@GenericConnectorNotFound");
+		}
 		//	Load
 		IAppSupport supportedApi = AppSupportHandler.getInstance().getAppSupport(genericConnector);
+		if (supportedApi == null) {
+			throw new AdempiereException("@SopportApiNotFound");
+		}
 		//	Get it
 		IS3 fileHandler = (IS3) supportedApi;
+		
 		//  Resource 
 		ResourceMetadata resourceMetadata = ResourceMetadata.newInstance()
 					.withResourceName(fileName);

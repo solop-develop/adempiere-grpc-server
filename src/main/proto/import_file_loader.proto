@@ -49,7 +49,7 @@ service ImportFileLoader {
 		};
 	}
 	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/import-loader/imports/{import_format_id}/{resource_name}/preview" };
+		option (google.api.http) = { get: "/import-loader/imports/resource/preview/{import_format_id}" };
 	}
 	// Process
 	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {
