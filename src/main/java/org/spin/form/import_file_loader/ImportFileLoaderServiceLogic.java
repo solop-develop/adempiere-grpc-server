@@ -467,13 +467,16 @@ public class ImportFileLoaderServiceLogic {
 			clientInfo.getFileHandler_ID(),
 			null
 		);
-		if (genericConnector == null) {
-			throw new AdempiereException("@GenericConnectorNotFound");
+		if (genericConnector == null || genericConnector.getAD_AppRegistration_ID() <= 0) {
+			throw new AdempiereException("@AD_AppSupport_ID@ @NotFound@");
 		}
 		//	Load
 		IAppSupport supportedApi = AppSupportHandler.getInstance().getAppSupport(genericConnector);
 		if (supportedApi == null) {
-			throw new AdempiereException("@SopportApiNotFound");
+			throw new AdempiereException("@AD_AppSupport_ID@ @NotFound@");
+		}
+		if (!IS3.class.isAssignableFrom(supportedApi.getClass())) {
+			throw new AdempiereException("@AD_AppSupport_ID@ @Unsupported@");
 		}
 		//	Get it
 		IS3 fileHandler = (IS3) supportedApi;
