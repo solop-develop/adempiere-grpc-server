@@ -1079,14 +1079,14 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 
 		// Organization
-		if (request.getOrganizationId() >= 0) {
+		if (Env.getAD_Org_ID(Env.getCtx()) >= 0) {
 			whereClause.append(" AND ")
 				.append(I_Fact_Acct.Table_Name)
 				.append(".")
 				.append(I_Fact_Acct.COLUMNNAME_AD_Org_ID)
 				.append(" = ? ")
 			;
-			filtersList.add(request.getOrganizationId());
+			filtersList.add(Env.getAD_Org_ID(Env.getCtx()));
 		}
 
 		// add where with access restriction
