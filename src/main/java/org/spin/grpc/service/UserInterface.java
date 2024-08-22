@@ -2601,8 +2601,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 				if ( !  (rule.getEventType().equals(MRule.EVENTTYPE_Callout) 
 					  && rule.getRuleType().equals(MRule.RULETYPE_JSR223ScriptingAPIs))) {
-					retValue = "Callout " + cmd
-						+ " must be of type JSR 223 and event Callout"; 
+					retValue = "Callout " + cmd + " must be of type JSR 223 and event Callout"; 
 					log.log(Level.SEVERE, retValue);
 					return retValue;
 				}
@@ -2615,7 +2614,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				// now add the callout parameters windowNo, tab, field, value, oldValue to the engine 
 				// Method arguments Env.getCtx() are A_
 				engine.put(MRule.ARGUMENTS_PREFIX + "WindowNo", windowNo);
-				engine.put(MRule.ARGUMENTS_PREFIX + "Tab", this);
+				engine.put(MRule.ARGUMENTS_PREFIX + "Tab", gridTab);
 				engine.put(MRule.ARGUMENTS_PREFIX + "Field", field);
 				engine.put(MRule.ARGUMENTS_PREFIX + "Value", value);
 				engine.put(MRule.ARGUMENTS_PREFIX + "OldValue", oldValue);
