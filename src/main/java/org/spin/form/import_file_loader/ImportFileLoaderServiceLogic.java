@@ -448,7 +448,7 @@ public class ImportFileLoaderServiceLogic {
 		String fileName = request.getResourceName();
 
 		if (fileName == null) {
-			throw new AdempiereException("@FileResourceName");
+			throw new AdempiereException("@FileName@ @NotFound@");
 		}
 
 
@@ -459,7 +459,10 @@ public class ImportFileLoaderServiceLogic {
 		Charset charset = Charset.forName(charsetValue);
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 		if (clientInfo == null) {
-			throw new AdempiereException("@ClientInfo");
+			throw new AdempiereException("@ClientInfo@");
+		}
+		if (clientInfo.getFileHandler_ID() <= 0) {
+			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
 		}
 		// Connector S3
 		MADAppRegistration genericConnector = MADAppRegistration.getById(
@@ -485,9 +488,8 @@ public class ImportFileLoaderServiceLogic {
 		ResourceMetadata resourceMetadata = ResourceMetadata.newInstance()
 					.withResourceName(fileName);
 		InputStream inputStream = fileHandler.getResource(resourceMetadata);
-
 		if (inputStream == null) {
-			throw new AdempiereException("@Input_Stream_Not_Found@");
+			throw new AdempiereException("@InputStream@ @NotFound@");
 		}
 
 		InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
