@@ -358,21 +358,22 @@ message Process {
 	string show_help = 7;
 	// Report
 	bool is_report = 8;
-	int32 report_view_id = 9;
-	int32 print_format_id = 10;
-	repeated ReportExportType report_export_types = 11;
-	// From
-	int32 form_id = 12;
-	optional DictionaryEntity form = 13;
+	bool is_process_before_launch = 9;
+	int32 report_view_id = 10;
+	int32 print_format_id = 11;
+	repeated ReportExportType report_export_types = 12;
 	// Browse
-	int32 browser_id = 14;
-	optional DictionaryEntity browser = 15;
+	int32 browser_id = 13;
+	optional DictionaryEntity browser = 14;
+	// From
+	int32 form_id = 15;
+	optional DictionaryEntity form = 16;
 	// Workflow
-	int32 workflow_id = 16;
-	optional DictionaryEntity workflow = 17;
+	int32 workflow_id = 17;
+	optional DictionaryEntity workflow = 18;
 	// Parameters
-	bool has_parameters = 18;
-	repeated Field parameters = 19;
+	bool has_parameters = 19;
+	repeated Field parameters = 20;
 }
 
 // Form
@@ -422,7 +423,6 @@ message Reference {
 // Report Type for Export
 message ReportExportType {
 	string name = 1;
-	string description = 2;
 	string type = 3;
 }
 

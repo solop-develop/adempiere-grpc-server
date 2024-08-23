@@ -28,6 +28,7 @@ import org.compiere.model.MProcessPara;
 import org.compiere.model.MProcessParaCustom;
 import org.compiere.model.MReportView;
 import org.compiere.model.MValRule;
+import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.dictionary.DependentField;
 import org.spin.backend.grpc.dictionary.Field;
@@ -107,46 +108,11 @@ public class ProcessConvertUtil {
 			)
 		;
 
-		if (process.getAD_Browse_ID() > 0) {
-			MBrowse browse = MBrowse.get(
-				context,
-				process.getAD_Browse_ID()
-			);
-			builder.setBrowserId(
-					process.getAD_Browse_ID()
-				)
-				.setBrowser(
-					DictionaryConvertUtil.getDictionaryEntity(
-						browse
-					)
-				)
-			;
-		} else if (process.getAD_Form_ID() > 0) {
-			MForm form = new MForm(context, process.getAD_Workflow_ID(), null);
-			builder.setFormId(
-					process.getAD_Form_ID()
-				)
-				.setForm(
-					DictionaryConvertUtil.getDictionaryEntity(
-						form
-					)
-				)
-			;
-		} else if (process.getAD_Workflow_ID() > 0) {
-			MWorkflow workflow = MWorkflow.get(context, process.getAD_Workflow_ID());
-			builder.setWorkflowId(
-					process.getAD_Workflow_ID()
-				)
-				.setWorkflow(
-					DictionaryConvertUtil.getDictionaryEntity(
-						workflow
-					)
-				)
-			;
-		}
-
 		//	Report Types
 		if(process.isReport()) {
+			builder.setIsProcessBeforeLaunch(
+				!Util.isEmpty(process.getClassname(), true)
+			);
 			if (process.getAD_PrintFormat_ID() > 0) {
 				builder.setPrintFormatId(
 					process.getAD_PrintFormat_ID()
@@ -163,18 +129,58 @@ public class ProcessConvertUtil {
 			for(AbstractExportFormat reportType : exportHandler.getExportFormatList()) {
 				ReportExportType.Builder reportExportType = ReportExportType.newBuilder()
 					.setName(
-						ValueManager.validateNull(reportType.getName())
-					)
-					.setDescription(
-						ValueManager.validateNull(reportType.getName())
+						ValueManager.validateNull(
+							reportType.getName()
+						)
 					)
 					.setType(
-						ValueManager.validateNull(reportType.getExtension())
+						ValueManager.validateNull(
+							reportType.getExtension()
+						)
 					)
 				;
 				builder.addReportExportTypes(reportExportType.build());
 			}
+		} else {
+			if (process.getAD_Browse_ID() > 0) {
+				MBrowse browse = MBrowse.get(
+					context,
+					process.getAD_Browse_ID()
+				);
+				builder.setBrowserId(
+						process.getAD_Browse_ID()
+					)
+					.setBrowser(
+						DictionaryConvertUtil.getDictionaryEntity(
+							browse
+						)
+					)
+				;
+			} else if (process.getAD_Form_ID() > 0) {
+				MForm form = new MForm(context, process.getAD_Workflow_ID(), null);
+				builder.setFormId(
+						process.getAD_Form_ID()
+					)
+					.setForm(
+						DictionaryConvertUtil.getDictionaryEntity(
+							form
+						)
+					)
+				;
+			} else if (process.getAD_Workflow_ID() > 0) {
+				MWorkflow workflow = MWorkflow.get(context, process.getAD_Workflow_ID());
+				builder.setWorkflowId(
+						process.getAD_Workflow_ID()
+					)
+					.setWorkflow(
+						DictionaryConvertUtil.getDictionaryEntity(
+							workflow
+						)
+					)
+				;
+			}
 		}
+
 		//	For parameters
 		if(withParams && parametersList != null && parametersList.size() > 0) {
 			for(MProcessPara parameter : parametersList) {
