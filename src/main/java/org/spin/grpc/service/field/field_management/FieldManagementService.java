@@ -18,9 +18,15 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.field.ListZoomWindowsRequest;
 import org.spin.backend.grpc.field.ListZoomWindowsResponse;
+import org.spin.backend.grpc.common.ListEntitiesResponse;
+import org.spin.backend.grpc.common.ListLookupItemsRequest;
+import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.field.DefaultValue;
 import org.spin.backend.grpc.field.FieldManagementServiceGrpc.FieldManagementServiceImplBase;
+import org.spin.backend.grpc.field.GetDefaultValueRequest;
 import org.spin.backend.grpc.field.GetZoomParentRecordRequest;
 import org.spin.backend.grpc.field.GetZoomParentRecordResponse;
+import org.spin.backend.grpc.field.ListGeneralSearchRecordsRequest;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -28,6 +34,75 @@ import io.grpc.stub.StreamObserver;
 public class FieldManagementService extends FieldManagementServiceImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(FieldManagementService.class);
+
+
+	@Override
+	public void getDefaultValue(GetDefaultValueRequest request, StreamObserver<DefaultValue> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			DefaultValue.Builder defaultValue = FieldManagementLogic.getDefaultValue(request);
+			responseObserver.onNext(defaultValue.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException())
+			;
+		}
+	}
+
+
+	@Override
+	public void listLookupItems(ListLookupItemsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Lookup Request Null");
+			}
+
+			ListLookupItemsResponse.Builder entityValueList = FieldManagementLogic.listLookupItems(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listGeneralSearchRecords(ListGeneralSearchRecordsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("List General Search Records Request Null");
+			}
+			ListEntitiesResponse.Builder entityValueList = FieldManagementLogic.listGeneralSearchRecords(
+				request
+			);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}	
 
 
 	@Override
@@ -43,6 +118,7 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
@@ -65,6 +141,7 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)

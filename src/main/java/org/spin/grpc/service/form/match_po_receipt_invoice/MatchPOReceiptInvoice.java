@@ -65,7 +65,7 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.Product;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchPORReceiptInvoiceGrpc.MatchPORReceiptInvoiceImplBase;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.grpc.service.UserInterface;
+import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -409,7 +409,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			validationRuleId
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),

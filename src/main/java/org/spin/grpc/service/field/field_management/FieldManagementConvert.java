@@ -24,10 +24,75 @@ import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
+import org.spin.backend.grpc.field.DefaultValue;
 import org.spin.backend.grpc.field.ZoomWindow;
+import org.spin.base.util.LookupUtil;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
+import com.google.protobuf.Struct;
+
 public class FieldManagementConvert {
+	/**
+	 * Convert Values from result
+	 * @param keyValue
+	 * @param uuidValue
+	 * @param value
+	 * @param displayValue
+	 * @return
+	 */
+	public static DefaultValue.Builder convertDefaultValue(Object keyValue, String uuidValue, String value, String displayValue, boolean isActive) {
+		Struct.Builder values = Struct.newBuilder();
+		DefaultValue.Builder builder = DefaultValue.newBuilder()
+			.setValues(values)
+			.setIsActive(isActive)
+		;
+		if(keyValue == null) {
+			return builder;
+		}
+
+		// Key Column
+		if(keyValue instanceof Integer) {
+			Integer integerValue = NumberManager.getIntegerFromObject(
+				keyValue
+			);
+			builder.setId(integerValue);
+			values.putFields(
+				LookupUtil.KEY_COLUMN_KEY,
+				ValueManager.getValueFromInteger(integerValue).build()
+			);
+		} else {
+			values.putFields(
+				LookupUtil.KEY_COLUMN_KEY,
+				ValueManager.getValueFromString((String) keyValue).build()
+			);
+		}
+		//	Set Value
+		if(!Util.isEmpty(value)) {
+			values.putFields(
+				LookupUtil.VALUE_COLUMN_KEY,
+				ValueManager.getValueFromString(value).build()
+			);
+		}
+		//	Display column
+		if(!Util.isEmpty(displayValue)) {
+			values.putFields(
+				LookupUtil.DISPLAY_COLUMN_KEY,
+				ValueManager.getValueFromString(displayValue).build()
+			);
+		}
+		// UUID Value
+		values.putFields(
+			LookupUtil.UUID_COLUMN_KEY,
+			ValueManager.getValueFromString(uuidValue).build()
+		);
+
+		builder.setValues(values);
+		return builder;
+	}
+
+
 
 	/**
 	 * Convert Zoom Window from ID

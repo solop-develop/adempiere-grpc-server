@@ -72,48 +72,6 @@ service UserInterface {
 	rpc ListTranslations(ListTranslationsRequest) returns (ListTranslationsResponse) {
 		option (google.api.http) = { get: "/user-interface/translations/{table_name}/{id}/{language}" };
 	}
-	// Get Default Value
-	rpc GetDefaultValue(GetDefaultValueRequest) returns (DefaultValue) {
-		option (google.api.http) = {
-			get: "/user-interface/default-value/{table_name}/{column_name}"
-			additional_bindings: {
-				get: "/user-interface/default-value/column/{column_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/default-value/field/{field_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/default-value/parameter/{process_parameter_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/default-value/parameter/{process_parameter_to_id}/to"
-			}
-			additional_bindings: {
-				get: "/user-interface/default-value/query-criteria/{browse_field_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/default-value/query-criteria/{browse_field_to_id}/to"
-			}
-		};
-	}
-	// List Lookup Item
-	rpc ListLookupItems(data.ListLookupItemsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = {
-			get: "/user-interface/lookups/{table_name}/{column_name}"
-			additional_bindings: {
-				get: "/user-interface/lookups/column/{column_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/lookups/field/{field_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/lookups/parameter/{process_parameter_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/lookups/query-criteria/{browse_field_id}"
-			}
-		};
-	}
 
 	//	Browser Data
 	rpc ListBrowserItems(ListBrowserItemsRequest) returns (ListBrowserItemsResponse) {
@@ -167,24 +125,6 @@ service UserInterface {
 		option (google.api.http) = {
 			post: "/user-interface/chat-entry/{table_name}",
 			body: "*"
-		};
-	}
-	//	List General Search Records
-	rpc ListGeneralSearchRecords(ListGeneralSearchRecordsRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = {
-			get: "/user-interface/search-records/{table_name}/{column_name}"
-			additional_bindings: {
-				get: "/user-interface/search-records/column/{column_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/search-records/field/{field_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/search-records/parameter/{process_parameter_id}"
-			}
-			additional_bindings: {
-				get: "/user-interface/search-records/query-criteria/{browse_field_id}"
-			}
 		};
 	}
 	//	List Tab Sequences
@@ -333,28 +273,6 @@ message ContextInfoValue {
 	string message_tip = 2;
 }
 
-// Get Default Value Request
-message GetDefaultValueRequest {
-	// References
-	string table_name = 1;
-	string column_name = 2;
-	int32 column_id = 3;
-	int32 field_id = 4;
-	int32 process_parameter_id = 5;
-	int32 process_parameter_to_id = 6;
-	int32 browse_field_id = 7;
-	int32 browse_field_to_id = 8;
-	string context_attributes = 9;
-	google.protobuf.Value value = 10;
-}
-
-// Default Value Response
-message DefaultValue {
-	int32 id = 1;
-	google.protobuf.Struct values = 2;
-	bool is_active = 3;
-}
-
 // Get Lookup Item
 message GetContextInfoValueRequest {
 	int32 id = 1;
@@ -478,28 +396,6 @@ message ChatEntry {
 }
 
 
-// List Search Records Request
-message ListGeneralSearchRecordsRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-	bool is_only_active_records = 9;
-	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
-	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
-	//
-	bool is_without_validation = 17;
-}
 
 message ListTabSequencesRequest {
 	string filters = 1;

@@ -78,7 +78,7 @@ import org.spin.backend.grpc.form.payment_allocation.ProcessResponse;
 import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.PaymentAllocationImplBase;
 import org.spin.base.util.ReferenceInfo;
-import org.spin.grpc.service.UserInterface;
+import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -127,7 +127,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),
@@ -190,7 +190,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),
@@ -290,7 +290,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),
@@ -392,7 +392,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),
@@ -813,7 +813,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),
@@ -885,7 +885,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),

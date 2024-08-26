@@ -69,7 +69,7 @@ import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsResponse;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceInfo;
-import org.spin.grpc.service.UserInterface;
+import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -161,7 +161,7 @@ public abstract class BankStatementMatchServiceLogic {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),
@@ -185,7 +185,7 @@ public abstract class BankStatementMatchServiceLogic {
 			null, null
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),

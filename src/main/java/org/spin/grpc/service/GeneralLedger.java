@@ -63,6 +63,7 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.logic.GeneralLedgerServiceLogic;
+import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -324,7 +325,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
 		}
 
-		return UserInterface.listLookupItems(
+		return FieldManagementLogic.listLookupItems(
 			info,
 			request.getContextAttributes(),
 			request.getPageSize(),

@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
@@ -67,10 +66,9 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.eca62.support.IS3;
 import org.spin.eca62.support.ResourceMetadata;
 import org.spin.grpc.service.BusinessData;
-import org.spin.grpc.service.UserInterface;
+import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.model.MADAppRegistration;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.AttachmentUtil;
 import org.spin.util.support.AppSupportHandler;
 import org.spin.util.support.IAppSupport;
 
@@ -194,7 +192,7 @@ public class ImportFileLoaderServiceLogic {
 			"AD_ImpFormat.AD_Table_ID = " + table.getAD_Table_ID()
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),
@@ -222,7 +220,7 @@ public class ImportFileLoaderServiceLogic {
 			"AD_ImpFormat.AD_Client_ID = @#AD_Client_ID@ AND AD_ImpFormat.AD_Table_ID = " + table.getAD_Table_ID()
 		);
 
-		ListLookupItemsResponse.Builder builderList = UserInterface.listLookupItems(
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
 			request.getContextAttributes(),
 			request.getPageSize(),
