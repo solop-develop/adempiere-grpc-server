@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
@@ -56,12 +57,34 @@ public class FieldManagementConvert {
 				window.isSOTrx()
 			)
 		;
+		if (!isBaseLanguage) {
+			builder.setName(
+					ValueManager.validateNull(
+						window.get_Translation(
+							I_AD_Window.COLUMNNAME_Name,
+							language
+						)
+					)
+				)
+				.setDescription(
+					ValueManager.validateNull(
+						window.get_Translation(
+							I_AD_Window.COLUMNNAME_Description,
+							language
+						)
+					)
+				)
+			;
+		}
 
 		MTable table = MTable.get(context, tableName);
 		Optional<MTab> maybeTab = Arrays.asList(
 			window.getTabs(false, null)
 		)
 			.stream().filter(currentTab -> {
+				if (!currentTab.isActive()) {
+					return false;
+				}
 				return currentTab.getAD_Table_ID() == table.getAD_Table_ID();
 			})
 			.findFirst()
@@ -76,24 +99,25 @@ public class FieldManagementConvert {
 						tab.getUUID()
 					)
 				)
+				.setTabName(
+					ValueManager.validateNull(
+						tab.getName()
+					)
+				)
 				.setIsParentTab(
 					tab.getTabLevel() == 0
 				)
 			;
-		}
-
-		if (!isBaseLanguage) {
-			builder.setName(
+			if (!isBaseLanguage) {
+				builder.setTabName(
 					ValueManager.validateNull(
-						window.get_Translation(I_AD_Window.COLUMNNAME_Name, language)
+						window.get_Translation(
+							I_AD_Tab.COLUMNNAME_Name,
+							language
+						)
 					)
-				)
-				.setDescription(
-					ValueManager.validateNull(
-						window.get_Translation(I_AD_Window.COLUMNNAME_Description, language)
-					)
-				)
-			;
+				);
+			}
 		}
 
 		//	Return

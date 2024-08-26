@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.exceptions.AdempiereException;
@@ -135,7 +136,7 @@ public class FieldManagementLogic {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
 		MTab currentTab = MTab.get(
-			window.getCtx(), 
+			window.getCtx(),
 			request.getTabId()
 		);
 		if (currentTab == null || currentTab.getAD_Tab_ID() <= 0) {
@@ -156,8 +157,14 @@ public class FieldManagementLogic {
 		}
 
 		List<MTab> tabsList = Arrays.asList(
-			window.getTabs(false, null)
-		);
+				window.getTabs(false, null)
+			)
+			.stream()
+			.filter(tabItem -> {
+				return tabItem.isActive();
+			})
+			.collect(Collectors.toList())
+		;
 		MTab parentTab = tabsList.stream()
 			.filter(tab -> {
 				return tab.getTabLevel() == 0;

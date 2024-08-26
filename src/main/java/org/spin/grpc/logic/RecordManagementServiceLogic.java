@@ -14,11 +14,15 @@
  ************************************************************************************/
 package org.spin.grpc.logic;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Tab;
+import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.ZoomInfoFactory;
 import org.compiere.model.MQuery;
@@ -34,11 +38,14 @@ import org.spin.backend.grpc.record_management.ExistsRecordReferencesRequest;
 import org.spin.backend.grpc.record_management.ExistsRecordReferencesResponse;
 import org.spin.backend.grpc.record_management.ListRecordReferencesRequest;
 import org.spin.backend.grpc.record_management.ListRecordReferencesResponse;
+import org.spin.backend.grpc.record_management.ListZoomWindowsRequest;
+import org.spin.backend.grpc.record_management.ListZoomWindowsResponse;
 import org.spin.backend.grpc.record_management.RecordReferenceInfo;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
+import org.spin.backend.grpc.record_management.ZoomWindow;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -138,6 +145,153 @@ public class RecordManagementServiceLogic {
 			)
 		;
 		//	Return
+		return builder;
+	}
+
+
+	/**
+	 * Convert Zoom Window from ID
+	 * @param windowId
+	 * @return
+	 */
+	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName) {
+		String language = Env.getAD_Language(context);
+		boolean isBaseLanguage = Env.isBaseLanguage(context, null);
+
+		MWindow window = MWindow.get(context, windowId);
+		ZoomWindow.Builder builder = ZoomWindow.newBuilder()
+			.setId(
+				window.getAD_Window_ID()
+			)
+			.setName(
+				ValueManager.validateNull(
+					window.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					window.getDescription()
+				)
+			)
+			.setIsSalesTransaction(
+				window.isSOTrx()
+			)
+		;
+		if (!isBaseLanguage) {
+			builder.setName(
+					ValueManager.validateNull(
+						window.get_Translation(
+							I_AD_Window.COLUMNNAME_Name,
+							language
+						)
+					)
+				)
+				.setDescription(
+					ValueManager.validateNull(
+						window.get_Translation(
+							I_AD_Window.COLUMNNAME_Description,
+							language
+						)
+					)
+				)
+			;
+		}
+
+		MTable table = MTable.get(context, tableName);
+		Optional<MTab> maybeTab = Arrays.asList(
+			window.getTabs(false, null)
+		)
+			.stream().filter(currentTab -> {
+				if (!currentTab.isActive()) {
+					return false;
+				}
+				return currentTab.getAD_Table_ID() == table.getAD_Table_ID();
+			})
+			.findFirst()
+		;
+		if (maybeTab.isPresent()) {
+			MTab tab = maybeTab.get();
+			builder.setTabId(
+					tab.getAD_Tab_ID()
+				)
+				.setTabUuid(
+					ValueManager.validateNull(
+						tab.getUUID()
+					)
+				)
+				.setTabName(
+					ValueManager.validateNull(
+						tab.getName()
+					)
+				)
+				.setIsParentTab(
+					tab.getTabLevel() == 0
+				)
+			;
+			if (!isBaseLanguage) {
+				builder.setTabName(
+					ValueManager.validateNull(
+						window.get_Translation(
+							I_AD_Tab.COLUMNNAME_Name,
+							language
+						)
+					)
+				);
+			}
+		}
+
+		//	Return
+		return builder;
+	}
+
+	public static ListZoomWindowsResponse.Builder listZoomWindows(ListZoomWindowsRequest request) {
+		MTable table = validateAndGetTable(
+			request.getTableName()
+		);
+
+		List<String> keyColumnsList = Arrays.asList(
+			table.getKeyColumns()
+		);
+		String keyColumnName = null;
+		if (keyColumnsList != null && !keyColumnsList.isEmpty()) {
+			keyColumnName = keyColumnsList.get(0);
+		}
+		ListZoomWindowsResponse.Builder builder = ListZoomWindowsResponse.newBuilder()
+			.setTableName(
+				ValueManager.validateNull(
+					table.getTableName()
+				)
+			)
+			.setKeyColumnName(
+				ValueManager.validateNull(
+					keyColumnName
+				)
+			)
+			.addAllKeyColumns(
+				keyColumnsList
+			)
+		;
+
+		if (table.getAD_Window_ID() > 0) {
+			ZoomWindow.Builder windowSalesBuilder = convertZoomWindow(
+				table.getCtx(),
+				table.getAD_Window_ID(),
+				table.getTableName()
+			);
+			builder.addZoomWindows(
+				windowSalesBuilder.build()
+			);
+		}
+		if (table.getPO_Window_ID() > 0) {
+			ZoomWindow.Builder windowPurchaseBuilder = convertZoomWindow(
+				table.getCtx(),
+				table.getPO_Window_ID(),
+				table.getTableName()
+			);
+			builder.addZoomWindows(
+				windowPurchaseBuilder.build()
+			);
+		}
 		return builder;
 	}
 

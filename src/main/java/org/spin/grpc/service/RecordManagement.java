@@ -21,6 +21,8 @@ import org.spin.backend.grpc.record_management.ExistsRecordReferencesRequest;
 import org.spin.backend.grpc.record_management.ExistsRecordReferencesResponse;
 import org.spin.backend.grpc.record_management.ListRecordReferencesRequest;
 import org.spin.backend.grpc.record_management.ListRecordReferencesResponse;
+import org.spin.backend.grpc.record_management.ListZoomWindowsRequest;
+import org.spin.backend.grpc.record_management.ListZoomWindowsResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
@@ -47,10 +49,11 @@ public class RecordManagement extends RecordManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -65,10 +68,38 @@ public class RecordManagement extends RecordManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void listZoomWindows(ListZoomWindowsRequest request, StreamObserver<ListZoomWindowsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Exists References Requested is Null");
+			}
+			log.fine("References Info Requested = " + request);
+			ListZoomWindowsResponse.Builder zoomWindowsBuild = RecordManagementServiceLogic.listZoomWindows(
+				request
+			);
+			responseObserver.onNext(
+				zoomWindowsBuild.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -89,16 +120,17 @@ public class RecordManagement extends RecordManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
 
 
-	// @Override
+	@Override
 	public void listRecordReferences(ListRecordReferencesRequest request, StreamObserver<ListRecordReferencesResponse> responseObserver) {
 		try {
 			if(request == null) {
