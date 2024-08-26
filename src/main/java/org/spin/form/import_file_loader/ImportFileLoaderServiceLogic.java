@@ -79,6 +79,7 @@ import com.google.protobuf.Value;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
+ * @author Elsio Sanchez, Elsiosanches@gmail.com, https://github.com/ElsioSanchez
  * Service logic of Import File Loader form
  */
 public class ImportFileLoaderServiceLogic {
@@ -246,10 +247,10 @@ public class ImportFileLoaderServiceLogic {
 	public static SaveRecordsResponse.Builder saveRecords(SaveRecordsRequest request) throws Exception {
 		MImpFormat importFormat = validateAndGetImportFormat(request.getImportFormatId());
 
-		// validate attachment reference
-		int attachmentReferenceId = request.getResourceId();
-		if (attachmentReferenceId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @AD_AttachmentReference_ID@");
+		// validate Get File Name reference
+		String attachmentFileName = request.getResourceName();
+		if (Util.isEmpty(attachmentFileName, true) ) {
+			throw new AdempiereException("@FileName@ @NotFound@");
 		}
 
 		//	Get class from parent
@@ -264,12 +265,39 @@ public class ImportFileLoaderServiceLogic {
 			// return;
 		}
 
-		byte[] file = AttachmentUtil.getInstance()
-			.withClientId(Env.getAD_Client_ID(Env.getCtx()))
-			.withAttachmentReferenceId(attachmentReferenceId)
-			.getAttachment();
-		if (file == null) {
-			throw new AdempiereException("@AD_AttachmentReference_ID@ @NotFound@");
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+		if (clientInfo == null) {
+			throw new AdempiereException("@ClientInfo@");
+		}
+		if (clientInfo.getFileHandler_ID() <= 0) {
+			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
+		}
+		// Connector S3
+		MADAppRegistration genericConnector = MADAppRegistration.getById(
+			Env.getCtx(),
+			clientInfo.getFileHandler_ID(),
+			null
+		);
+		if (genericConnector == null || genericConnector.getAD_AppRegistration_ID() <= 0) {
+			throw new AdempiereException("@AD_AppSupport_ID@ @NotFound@");
+		}
+		//	Load
+		IAppSupport supportedApi = AppSupportHandler.getInstance().getAppSupport(genericConnector);
+		if (supportedApi == null) {
+			throw new AdempiereException("@AD_AppSupport_ID@ @NotFound@");
+		}
+		if (!IS3.class.isAssignableFrom(supportedApi.getClass())) {
+			throw new AdempiereException("@AD_AppSupport_ID@ @Unsupported@");
+		}
+		//	Get it
+		IS3 fileHandler = (IS3) supportedApi;
+
+		//  Resource 
+		ResourceMetadata resourceMetadata = ResourceMetadata.newInstance()
+					.withResourceName(attachmentFileName);
+		InputStream inputStream = fileHandler.getResource(resourceMetadata);
+		if (inputStream == null) {
+			throw new AdempiereException("@InputStream@ @NotFound@");
 		}
 
 		String charsetValue = request.getCharset();
@@ -278,7 +306,7 @@ public class ImportFileLoaderServiceLogic {
 		}
 		Charset charset = Charset.forName(charsetValue);
 
-		InputStream inputStream = new ByteArrayInputStream(file);
+		// InputStream inputStream = new ByteArrayInputStream(file);
 		InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
 		BufferedReader in = new BufferedReader(inputStreamReader, 10240);
 
