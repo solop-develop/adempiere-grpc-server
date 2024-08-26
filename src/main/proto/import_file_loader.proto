@@ -44,7 +44,7 @@ service ImportFileLoader {
 	// Manage File
 	rpc SaveRecords(SaveRecordsRequest) returns (SaveRecordsResponse) {
 		option (google.api.http) = {
-			post: "/import-loader/imports/{import_format_id}/{resource_id}",
+			post: "/import-loader/imports/{import_format_id}",
 			body: "*"
 		};
 	}
@@ -184,7 +184,7 @@ message ListFilePreviewRequest {
 // Save Record
 message SaveRecordsRequest {
 	int32 import_format_id = 1;
-	int32 resource_id = 2;
+	string resource_name = 2;
 	string charset = 3;
 	// process before save changes
 	bool is_process = 4;
