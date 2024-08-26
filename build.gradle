@@ -160,12 +160,6 @@ run {
 application {
 	// mainClass = javaMainClass
 	mainClass.set(javaMainClass)
-
-	// JVM Arguments
-	applicationDefaultJvmArgs = [
-		"-Xmx${System.getProperty("JAVA_MAX_HEAP", "4096M")}",
-		"-XX:MaxPermSize=${System.getProperty("JAVA_MAX_PERM_SIZE", "256m")}"
-	]
 }
 jar {
 	manifest {
