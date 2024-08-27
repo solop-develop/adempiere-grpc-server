@@ -221,6 +221,9 @@ public class WindowConvertUtil {
 			return Tab.newBuilder();
 		}
 
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(tab);
+
 		int tabId = tab.getAD_Tab_ID();
 		int parentTabId = 0;
 		// root tab has no parent
@@ -402,6 +405,9 @@ public class WindowConvertUtil {
 		if (field == null) {
 			return Field.newBuilder();
 		}
+
+		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
+		DictionaryConvertUtil.translateEntity(field);
 
 		// Column reference
 		MColumn column = MColumn.get(context, field.getAD_Column_ID());
