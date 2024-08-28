@@ -163,6 +163,11 @@ public class RecordManagementServiceLogic {
 			.setId(
 				window.getAD_Window_ID()
 			)
+			.setUuid(
+				ValueManager.validateNull(
+					window.getUUID()
+				)
+			)
 			.setName(
 				ValueManager.validateNull(
 					window.getName()
@@ -245,9 +250,14 @@ public class RecordManagementServiceLogic {
 	}
 
 	public static ListZoomWindowsResponse.Builder listZoomWindows(ListZoomWindowsRequest request) {
-		MTable table = validateAndGetTable(
-			request.getTableName()
-		);
+		MTable table = null;
+		if (request.getTableId() > 0) {
+			table = MTable.get(Env.getCtx(), request.getTableId());
+		} else {
+			table = validateAndGetTable(
+				request.getTableName()
+			);
+		}
 
 		List<String> keyColumnsList = Arrays.asList(
 			table.getKeyColumns()
@@ -257,6 +267,9 @@ public class RecordManagementServiceLogic {
 			keyColumnName = keyColumnsList.get(0);
 		}
 		ListZoomWindowsResponse.Builder builder = ListZoomWindowsResponse.newBuilder()
+			.setTableId(
+				table.getAD_Table_ID()
+			)
 			.setTableName(
 				ValueManager.validateNull(
 					table.getTableName()

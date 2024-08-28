@@ -28,13 +28,13 @@ package record_management;
 
 service RecordManagement {
 	rpc ToggleIsActiveRecord(ToggleIsActiveRecordRequest) returns (ToggleIsActiveRecordResponse) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/record-management/{table_name}/{id}/toogle",
 			body: "*"
 		};
 	}
 	rpc ToggleIsActiveRecordsBatch(ToggleIsActiveRecordsBatchRequest) returns (ToggleIsActiveRecordsBatchResponse) {
-		option (google.api.http) = { 
+		option (google.api.http) = {
 			post: "/record-management/{table_name}/toogle",
 			body: "*"
 		};
@@ -42,7 +42,12 @@ service RecordManagement {
 
 	// Zoom Window on Record
 	rpc ListZoomWindows(ListZoomWindowsRequest) returns (ListZoomWindowsResponse) {
-		option (google.api.http) = { get: "/record-management/zooms/{table_name}" };
+		option (google.api.http) = {
+			get: "/record-management/zooms/{table_name}"
+			additional_bindings: {
+				get: "/record-management/zooms/id/{table_id}"
+			}
+		};
 	}
 
 	// References on Record
@@ -122,22 +127,25 @@ message ListRecordReferencesResponse {
 //	Zoom Window
 message ListZoomWindowsRequest {
 	string table_name = 1;
+	int32 table_id = 2;
 }
 message ZoomWindow {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	bool is_sales_transaction = 4;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	bool is_sales_transaction = 5;
 	// tab
-	int32 tab_id = 5;
-	string tab_uuid = 6;
-	string tab_name = 7;
-	bool is_parent_tab = 8;
+	int32 tab_id = 6;
+	string tab_uuid = 7;
+	string tab_name = 8;
+	bool is_parent_tab = 9;
 }
 message ListZoomWindowsResponse {
 	string table_name = 1;
-	string key_column_name = 2;
-	repeated string key_columns = 3;
-	string display_column_name = 4;
+	int32 table_id = 2;
+	string key_column_name = 3;
+	repeated string key_columns = 4;
+	string display_column_name = 5;
 	repeated ZoomWindow zoom_windows = 6;
 }
