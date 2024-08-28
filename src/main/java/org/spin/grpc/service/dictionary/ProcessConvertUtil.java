@@ -68,7 +68,7 @@ public class ProcessConvertUtil {
 		}
 
 		// TODO: Remove with fix the issue https://github.com/solop-develop/adempiere-grpc-server/issues/28
-		DictionaryConvertUtil.translateEntity(process);
+		DictionaryConvertUtil.translateEntity(context, process);
 
 		List<MProcessPara> parametersList = process.getParametersAsList();
 
@@ -310,7 +310,7 @@ public class ProcessConvertUtil {
 		}
 
 		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
-		DictionaryConvertUtil.translateEntity(processParameter);
+		DictionaryConvertUtil.translateEntity(context, processParameter);
 
 		//	Convert
 		Field.Builder builder = Field.newBuilder()

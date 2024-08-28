@@ -15,6 +15,7 @@
 package org.spin.base.db;
 
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
@@ -164,8 +165,8 @@ public class QueryUtil {
 	 * @param {MTab} tab
 	 * @return
 	 */
-	public static String getTabQueryWithReferences(MTab tab) {
-		return getTabQueryWithReferences(tab, null);
+	public static String getTabQueryWithReferences(Properties context, MTab tab) {
+		return getTabQueryWithReferences(context, tab, null);
 	}
 
 	/**
@@ -174,7 +175,7 @@ public class QueryUtil {
 	 * @param {String} tableAlias to reference base table name
 	 * @return
 	 */
-	public static String getTabQueryWithReferences(MTab tab, String tableAlias) {
+	public static String getTabQueryWithReferences(Properties context, MTab tab, String tableAlias) {
 		MTable table = MTable.get(tab.getCtx(), tab.getAD_Table_ID());
 		final String tableName = table.getTableName();
 		if (Util.isEmpty(tableAlias, true)) {
@@ -187,10 +188,10 @@ public class QueryUtil {
 		StringBuffer queryToAdd = new StringBuffer(originalQuery.substring(0, fromIndex));
 		StringBuffer joinsToAdd = new StringBuffer(originalQuery.substring(fromIndex, originalQuery.length() - 1));
 
-		final Language language = Language.getLanguage(Env.getAD_Language(tab.getCtx()));
+		final Language language = Language.getLanguage(Env.getAD_Language(context));
 		final MField[] fieldsList = tab.getFields(false, null);
 		for (MField field : fieldsList) {
-			MColumn column = MColumn.get(field.getCtx(), field.getAD_Column_ID());
+			MColumn column = MColumn.get(context, field.getAD_Column_ID());
 			if (!column.isActive() || !field.isActive() || !field.isDisplayed()) {
 				// key column on table
 				if (!column.isKey()) {
@@ -264,7 +265,7 @@ public class QueryUtil {
 					displayTypeId = DisplayType.ID;
 				}
 				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
-					field.getCtx()
+					context
 				).getReferenceInfo(
 					displayTypeId,
 					referenceValueId,

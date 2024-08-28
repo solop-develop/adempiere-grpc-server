@@ -58,7 +58,7 @@ public class BrowseConverUtil {
 		}
 
 		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
-		DictionaryConvertUtil.translateEntity(browser);
+		DictionaryConvertUtil.translateEntity(context, browser);
 
 		String query = QueryUtil.getBrowserQueryWithReferences(browser);
 		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
@@ -168,7 +168,7 @@ public class BrowseConverUtil {
 		}
 
 		// TODO: Remove with fix the issue https://github.com/solop-develop/backend/issues/28
-		DictionaryConvertUtil.translateEntity(browseField);
+		DictionaryConvertUtil.translateEntity(context, browseField);
 
 		//	Convert
 		Field.Builder builder = Field.newBuilder()

@@ -547,16 +547,24 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
 		}
-		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
+		Properties context = Env.getCtx();
+
+		MTab tab = MTab.get(
+			context,
+			request.getTabId()
+		);
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
 			throw new AdempiereException(
 				"@AD_Tab_ID@ " + request.getTabId() + " @NotFound@"
 			);
 		}
-		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
+		MTable table = MTable.get(context, tab.getAD_Table_ID());
 		String[] keyColumns = table.getKeyColumns();
 
-		String sql = QueryUtil.getTabQueryWithReferences(tab);
+		String sql = QueryUtil.getTabQueryWithReferences(
+			context,
+			tab
+		);
 		// add filter
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> filtersList = new ArrayList<Object>();
@@ -792,7 +800,12 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		//	
-		StringBuilder sql = new StringBuilder(QueryUtil.getTabQueryWithReferences(tab));
+		StringBuilder sql = new StringBuilder(
+			QueryUtil.getTabQueryWithReferences(
+				context,
+				tab
+			)
+		);
 		String sqlWithRoleAccess = MRole.getDefault()
 			.addAccessSQL(
 				sql.toString(),
