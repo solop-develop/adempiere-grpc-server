@@ -305,7 +305,6 @@ public class Dashboarding extends DashboardingImplBase {
 
 		//	Get from document status
 		Arrays.asList(MDocumentStatus.getDocumentStatusIndicators(context, userId, roleId))
-			.parallelStream()
 			.forEach(documentStatus -> {
 				PendingDocument.Builder pendingDocumentBuilder = PendingDocument.newBuilder()
 					.setDocumentName(
