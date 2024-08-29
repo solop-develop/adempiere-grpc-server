@@ -77,6 +77,7 @@ static_resources:
                 - payment_print_export.PaymentPrintExport
                 - payroll_action_notice.PayrollActionNotice
                 - data.Store
+                - preference_management.PreferenceManagement
                 - record_management.RecordManagement
                 - report_management.ReportManagement
                 - security.Security

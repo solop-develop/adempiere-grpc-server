@@ -11,6 +11,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.preference_management.DeletePreferenceRequest;
+import org.spin.backend.grpc.preference_management.GetPreferenceRequest;
 import org.spin.backend.grpc.preference_management.Preference;
 import org.spin.backend.grpc.preference_management.PreferenceManagementGrpc.PreferenceManagementImplBase;
 import org.spin.backend.grpc.preference_management.PreferenceType;
@@ -25,6 +26,46 @@ import io.grpc.stub.StreamObserver;
 public class PreferenceManagement extends PreferenceManagementImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(PreferenceManagement.class);
+
+
+	@Override
+	public void getPreference(GetPreferenceRequest request, StreamObserver<Preference> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object GetPreferenceRequest Null");
+			}
+			//	Save preference
+			Preference.Builder preferenceBuilder = getPreference(request);
+			responseObserver.onNext(preferenceBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+				);
+		}
+	}
+	Preference.Builder getPreference(GetPreferenceRequest request) {
+		MPreference preference = getPreference(
+			request.getTypeValue(),
+			request.getColumnName(),
+			request.getIsForCurrentClient(),
+			request.getIsForCurrentOrganization(),
+			request.getIsForCurrentUser(),
+			request.getIsForCurrentContainer(),
+			request.getContainerId()
+		);
+
+		Preference.Builder preferenceBuilder = convertPreference(
+			preference
+		);
+		return preferenceBuilder;
+	}
+
 
 
 	@Override
@@ -196,7 +237,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 	 * @param id
 	 * @return
 	 */
-	private MPreference getPreference(int preferenceType, String attributeName, boolean isCurrentClient, boolean isCurrentOrganization, boolean isCurrentUser, boolean isCurrentContainer, int id) {
+	private MPreference getPreference(int preferenceType, String attributeName, boolean isCurrentClient, boolean isCurrentOrganization, boolean isCurrentUser, boolean isCurrentContainer, int containerId) {
 		if (Util.isEmpty(attributeName, true)) {
 			throw new AdempiereException("@FillMandatory@ @Attribute@");
 		}
@@ -232,10 +273,10 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 		if(preferenceType == PreferenceType.WINDOW_VALUE) {
 			//	For Window
 			if (isCurrentContainer) {
-				if (id <= 0) {
+				if (containerId <= 0) {
 					throw new AdempiereException("@FillMandatory@ @AD_Window_ID@");
 				}
-				parameters.add(id);
+				parameters.add(containerId);
 				whereClause.append(" AND AD_Window_ID = ?");
 			}
 		} else {

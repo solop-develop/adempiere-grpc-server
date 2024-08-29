@@ -75,6 +75,7 @@ static_resources:
                 - payment.Payment
                 - payroll_action_notice.PayrollActionNotice
                 - data.Store
+                - preference_management.PreferenceManagement
                 - record_management.RecordManagement
                 - report_management.ReportManagement
                 - security.Security
