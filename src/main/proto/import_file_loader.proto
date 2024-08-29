@@ -30,16 +30,24 @@ package import_file_loader;
 
 service ImportFileLoader {
 	rpc ListCharsets(ListCharsetsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/import-loader/charsets" };
+		option (google.api.http) = {
+			get: "/import-loader/charsets"
+		};
 	}
 	rpc ListImportTables(ListImportTablesRequest) returns (ListImportTablesResponse) {
-		option (google.api.http) = { get: "/import-loader/tables" };
+		option (google.api.http) = {
+			get: "/import-loader/tables"
+		};
 	}
 	rpc ListImportFormats(ListImportFormatsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/import-loader/formats/{table_name}" };
+		option (google.api.http) = {
+			get: "/import-loader/formats/{table_name}"
+		};
 	}
 	rpc GetImportFromat(GetImportFromatRequest) returns (ImportFormat) {
-		option (google.api.http) = { get: "/import-loader/formats/get/{id}" };
+		option (google.api.http) = {
+			get: "/import-loader/formats/get/{id}"
+		};
 	}
 	// Manage File
 	rpc SaveRecords(SaveRecordsRequest) returns (SaveRecordsResponse) {
@@ -49,11 +57,15 @@ service ImportFileLoader {
 		};
 	}
 	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/import-loader/imports/resource/preview/{import_format_id}" };
+		option (google.api.http) = {
+			get: "/import-loader/imports/resource/preview/{import_format_id}"
+		};
 	}
 	// Process
 	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/import-loader/processes/{table_name}" };
+		option (google.api.http) = {
+			get: "/import-loader/processes/{table_name}"
+		};
 	}
 }
 
@@ -84,16 +96,18 @@ message ListImportTablesRequest {
 
 message ImportColumn {
 	int32 id = 1;
-	string name = 2;
-	string column_name = 3;
-	int32 display_type = 4;
+	string uuid = 2;
+	string name = 3;
+	string column_name = 4;
+	int32 display_type = 5;
 }
 
 message ImportTable {
 	int32 id = 1;
-	string name = 2;
-	string table_name = 3;
-	repeated ImportColumn import_columns = 4;
+	string uuid = 2;
+	string name = 3;
+	string table_name = 4;
+	repeated ImportColumn import_columns = 5;
 }
 
 message ListImportTablesResponse {
@@ -134,30 +148,32 @@ message ListClientImportFormatsRequest {
 
 message ImportFormat {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string table_name = 4;
-	string format_type = 5;
-	string separator_character = 6;
-	repeated FormatField format_fields = 7;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string table_name = 5;
+	string format_type = 6;
+	string separator_character = 7;
+	repeated FormatField format_fields = 8;
 }
 
 message FormatField {
 	int32 id = 1;
-	string name = 2;
-	int32 sequence = 3;
-	string column_name = 4;
-	string data_type = 5;
-	int32 start_no = 6;
-	int32 end_no = 7;
-	string default_value = 8;
+	string uuid = 2;
+	string name = 3;
+	int32 sequence = 4;
+	string column_name = 5;
+	string data_type = 6;
+	int32 start_no = 7;
+	int32 end_no = 8;
+	string default_value = 9;
 	// number
-	string defimal_point = 9;
-	bool is_divide_by_100 = 10;
+	string defimal_point = 10;
+	bool is_divide_by_100 = 11;
 	// date
-	string date_format = 11;
+	string date_format = 12;
 	// constant
-	string constant_value = 12;
+	string constant_value = 13;
 }
 
 // Format Field
