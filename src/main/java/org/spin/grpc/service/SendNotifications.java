@@ -61,7 +61,7 @@ import io.grpc.stub.StreamObserver;
  */
 public class SendNotifications extends SendNotificationsImplBase{
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(ImportFileLoader.class);
+	private CLogger log = CLogger.getCLogger(SendNotifications.class);
 
 
 	@Override

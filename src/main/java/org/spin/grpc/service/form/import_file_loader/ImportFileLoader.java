@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.form.import_file_loader;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
@@ -20,7 +20,6 @@ import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.import_file_loader.GetImportFromatRequest;
 import org.spin.backend.grpc.form.import_file_loader.ImportFileLoaderGrpc.ImportFileLoaderImplBase;
-import org.spin.form.import_file_loader.ImportFileLoaderServiceLogic;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
 import org.spin.backend.grpc.form.import_file_loader.ListCharsetsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListFilePreviewRequest;
