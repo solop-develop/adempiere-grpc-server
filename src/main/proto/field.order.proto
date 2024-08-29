@@ -25,7 +25,7 @@ import "google/protobuf/timestamp.proto";
 import "base_data_type.proto";
 
 // Base URL
-// /field/order/
+// /fields/orders/
 
 package field.order;
 
@@ -34,34 +34,34 @@ service OrderInfoService {
 	// criteria
 	rpc ListBusinessPartners(ListBusinessPartnersOrderRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/field/orders/customers"
+			get: "/fields/orders/customers"
 		};
 	}
 
 	// result
 	rpc ListOrderInfo(ListOrdersInfoRequest) returns (ListOrdersInfoResponse) {
 		option (google.api.http) = {
-			get: "/field/orders"
+			get: "/fields/orders"
 			additional_bindings: {
-				get: "/field/orders/table/{table_name}/{column_name}"
+				get: "/fields/orders/table/{table_name}/{column_name}"
 			}
 			additional_bindings: {
-				get: "/field/orders/column/{column_id}"
+				get: "/fields/orders/column/{column_id}"
 			}
 			additional_bindings: {
-				get: "/field/orders/field/{field_id}"
+				get: "/fields/orders/field/{field_id}"
 			}
 			additional_bindings: {
-				get: "/field/orders/parameter/{process_parameter_id}"
+				get: "/fields/orders/parameter/{process_parameter_id}"
 			}
 			additional_bindings: {
-				get: "/field/orders/query-criteria/{browse_field_id}"
+				get: "/fields/orders/query-criteria/{browse_field_id}"
 			}
 		};
 	}
 	rpc GetOrderInfo(GetOrderInfoRequest) returns (OrderInfo) {
 		option (google.api.http) = {
-			get: "/field/orders/{id}"
+			get: "/fields/orders/{id}"
 		};
 	}
 }

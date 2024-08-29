@@ -23,7 +23,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // Base URL
-// /field/business-partners/
+// /fields/business-partners/
 
 package field.business_partner;
 
@@ -32,29 +32,33 @@ service BusinessPartnerInfoService {
 	// Result
 	rpc ListBusinessPartnersInfo(ListBusinessPartnersInfoRequest) returns (ListBusinessPartnersInfoResponse) {
 		option (google.api.http) = {
-			get: "/field/business-partners"
+			get: "/fields/business-partners"
 			additional_bindings: {
-				get: "/field/business-partners/table/{table_name}/{column_name}"
+				get: "/fields/business-partners/table/{table_name}/{column_name}"
 			}
 			additional_bindings: {
-				get: "/field/business-partners/column/{column_id}"
+				get: "/fields/business-partners/column/{column_id}"
 			}
 			additional_bindings: {
-				get: "/field/business-partners/field/{field_id}"
+				get: "/fields/business-partners/field/{field_id}"
 			}
 			additional_bindings: {
-				get: "/field/business-partners/parameter/{process_parameter_id}"
+				get: "/fields/business-partners/parameter/{process_parameter_id}"
 			}
 			additional_bindings: {
-				get: "/field/business-partners/query-criteria/{browse_field_id}"
+				get: "/fields/business-partners/query-criteria/{browse_field_id}"
 			}
 		};
 	}
 	rpc ListBusinessPartnerContacts(ListBusinessPartnerContactsRequest) returns (ListBusinessPartnerContactsResponse) {
-		option (google.api.http) = { get: "/field/business-partners/{business_partner_id}/contacts" };
+		option (google.api.http) = {
+			get: "/fields/business-partners/{business_partner_id}/contacts"
+		};
 	}
 	rpc ListBusinessPartnerAddressLocations(ListBusinessPartnerAddressLocationsRequest) returns (ListBusinessPartnerAddressLocationsResponse) {
-		option (google.api.http) = { get: "/field/business-partners/{business_partner_id}/address-locations" };
+		option (google.api.http) = {
+			get: "/fields/business-partners/{business_partner_id}/address-locations"
+		};
 	}
 }
 

@@ -25,7 +25,7 @@ import "google/protobuf/timestamp.proto";
 import "base_data_type.proto";
 
 // Base URL
-// /products/
+// /fields/products/
 
 package field.product;
 
@@ -33,84 +33,97 @@ package field.product;
 service ProductInfoService {
 	// criteria
 	rpc ListWarehouses(ListWarehousesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/warehouses" };
+		option (google.api.http) = { get: "/fields/products/warehouses" };
 	}
 	rpc GetLastPriceListVersion(GetLastPriceListVersionRequest) returns (data.LookupItem) {
 		option (google.api.http) = {
-			get: "/field/products/prices-lists-versions/{price_list_id}"
+			get: "/fields/products/prices-lists-versions/{price_list_id}"
 		};
 	}
 	rpc ListPricesListVersions(ListPricesListVersionsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/field/products/prices-lists-versions"
+			get: "/fields/products/prices-lists-versions"
 		};
 	}
 	rpc ListAttributeSets(ListAttributeSetsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/attribute-sets" };
+		option (google.api.http) = {
+			get: "/fields/products/attribute-sets"
+		};
 	}
 	rpc ListAttributeSetInstances(ListAttributeSetInstancesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/attribute-sets/{attribute_set_id}/instances" };
+		option (google.api.http) = {
+			get: "/fields/products/attribute-sets/{attribute_set_id}/instances" };
 	}
 	rpc ListProductCategories(ListProductCategoriesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/categories" };
+		option (google.api.http) = {
+			get: "/fields/products/categories"
+		};
 	}
 	rpc ListProductGroups(ListProductGroupsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/groups" };
+		option (google.api.http) = {
+			get: "/fields/products/groups"
+		};
 	}
 	rpc ListProductClasses(ListProductClasessRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/clasess" };
+		option (google.api.http) = {
+			get: "/fields/products/clasess"
+		};
 	}
 	rpc ListProductClassifications(ListProductClassificationsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/classifications" };
+		option (google.api.http) = {
+			get: "/fields/products/classifications"
+		};
 	}
 	rpc ListVendors(ListVendorsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/field/products/vendors" };
+		option (google.api.http) = {
+			get: "/fields/products/vendors"
+		};
 	}
 
 	// result
 	rpc ListProductsInfo(ListProductsInfoRequest) returns (ListProductsInfoResponse) {
 		option (google.api.http) = {
-			get: "/field/products"
+			get: "/fields/products"
 			additional_bindings: {
-				get: "/field/products/table/{table_name}/{column_name}"
+				get: "/fields/products/table/{table_name}/{column_name}"
 			}
 			additional_bindings: {
-				get: "/field/products/column/{column_id}"
+				get: "/fields/products/column/{column_id}"
 			}
 			additional_bindings: {
-				get: "/field/products/field/{field_id}"
+				get: "/fields/products/field/{field_id}"
 			}
 			additional_bindings: {
-				get: "/field/products/parameter/{process_parameter_id}"
+				get: "/fields/products/parameter/{process_parameter_id}"
 			}
 			additional_bindings: {
-				get: "/field/products/query-criteria/{browse_field_id}"
+				get: "/fields/products/query-criteria/{browse_field_id}"
 			}
 		};
 	}
 	rpc ListWarehouseStocks(ListWarehouseStocksRequest) returns (ListWarehouseStocksResponse) {
 		option (google.api.http) = {
-			get: "/field/products/{product_id}/warehouse-stocks"
+			get: "/fields/products/{product_id}/warehouse-stocks"
 		};
 	}
 	rpc ListSubstituteProducts(ListSubstituteProductsRequest) returns (ListSubstituteProductsResponse) {
 		option (google.api.http) = {
-			get: "/field/products/{product_id}/substitutes"
+			get: "/fields/products/{product_id}/substitutes"
 		};
 	}
 	rpc ListRelatedProducts(ListRelatedProductsRequest) returns (ListRelatedProductsResponse) {
 		option (google.api.http) = {
-			get: "/field/products/{product_id}/relateds"
+			get: "/fields/products/{product_id}/relateds"
 		};
 	}
 	rpc ListAvailableToPromises(ListAvailableToPromisesRequest) returns (ListAvailableToPromisesResponse) {
 		option (google.api.http) = {
-			get: "/field/products/{product_id}/available-to-promises"
+			get: "/fields/products/{product_id}/available-to-promises"
 		};
 	}
 	rpc ListVendorPurchases(ListVendorPurchasesRequest) returns (ListVendorPurchasesResponse) {
 		option (google.api.http) = {
-			get: "/field/products/{product_id}/vendor-purchases"
+			get: "/fields/products/{product_id}/vendor-purchases"
 		};
 	}
 }

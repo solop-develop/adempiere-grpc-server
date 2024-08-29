@@ -25,7 +25,7 @@ import "google/protobuf/timestamp.proto";
 import "base_data_type.proto";
 
 // Base URL
-// /field/invoices/
+// /fields/invoices/
 
 package field.invoice;
 
@@ -34,44 +34,44 @@ service InvoiceInfoService {
 	// criteria
 	rpc ListOrders(ListOrdersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/field/invoices/orders"
+			get: "/fields/invoices/orders"
 		};
 	}
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/field/invoices/business-partners"
+			get: "/fields/invoices/business-partners"
 		};
 	}
 
 	// result
 	rpc ListInvoiceInfo(ListInvoicesInfoRequest) returns (ListInvoicesInfoResponse) {
 		option (google.api.http) = {
-			get: "/field/invoices"
+			get: "/fields/invoices"
 			additional_bindings: {
-				get: "/field/invoices/table/{table_name}/{column_name}"
+				get: "/fields/invoices/table/{table_name}/{column_name}"
 			}
 			additional_bindings: {
-				get: "/field/invoices/column/{column_id}"
+				get: "/fields/invoices/column/{column_id}"
 			}
 			additional_bindings: {
-				get: "/field/invoices/field/{field_id}"
+				get: "/fields/invoices/field/{field_id}"
 			}
 			additional_bindings: {
-				get: "/field/invoices/parameter/{process_parameter_id}"
+				get: "/fields/invoices/parameter/{process_parameter_id}"
 			}
 			additional_bindings: {
-				get: "/field/invoices/query-criteria/{browse_field_id}"
+				get: "/fields/invoices/query-criteria/{browse_field_id}"
 			}
 		};
 	}
 	rpc GetInvoiceInfo(GetInvoiceInfoRequest) returns (InvoiceInfo) {
 		option (google.api.http) = {
-			get: "/field/invoices/{id}"
+			get: "/fields/invoices/{id}"
 		};
 	}
 	rpc ListInvoicePaySchedules(ListInvoicePaySchedulesRequest) returns (ListInvoicePaySchedulesResponse) {
 		option (google.api.http) = {
-			get: "/field/invoices/{invoice_id}/pay-schedules"
+			get: "/fields/invoices/{invoice_id}/pay-schedules"
 		};
 	}
 }

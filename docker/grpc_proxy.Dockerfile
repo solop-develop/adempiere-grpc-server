@@ -1,4 +1,4 @@
-FROM envoyproxy/envoy:v1.30.1
+FROM envoyproxy/envoy:v1.31.0
 
 LABEL maintainer="ySenih@erpya.com; EdwinBetanc0urt@outlook.com;" \
 	description="Proxy Transcoding gRPC to JSON via http"
@@ -10,24 +10,26 @@ ENV \
 	BACKEND_HOST="localhost" \
 	BACKEND_PORT="50059" \
 	SERVICES_ENABLED="bank_statement_match.BankStatementMatch; \
-		business_partner.BusinessPartner; data.BusinessData; \
-		data.CoreFunctionality; dashboarding.Dashboarding; dictionary.Dictionary; \
-		enrollment.Register; express_movement.ExpressMovement; \
-		express_receipt.ExpressReceipt; express_shipment.ExpressShipment; \
+		core_functionality.CoreFunctionality; data.BusinessData; data.Store; \
+		dashboarding.Dashboarding; dictionary.Dictionary; enrollment.Register \
+		express_movement.ExpressMovement; express_receipt.ExpressReceipt; \
+		express_shipment.ExpressShipment; field.FieldManagementService; \
+		field.business_partner.BusinessPartnerInfoService; field.in_out.InOutInfoService; \
+		field.invoice.InvoiceInfoService; field.order.OrderInfoService; \
+		field.payment.PaymentInfoService; field.product.ProductInfoService; \
 		file_management.FileManagement; general_ledger.GeneralLedger; \
-		import_file_loader.ImportFileLoader; in_out.InOut; invoice.Invoice; \
-		issue_management.IssueManagement; location_address.LocationAddress; \
-		logs.Logs; match_po_receipt_invoice.MatchPORReceiptInvoice; \
+		import_file_loader.ImportFileLoader; issue_management.IssueManagement; \
+		location_address.LocationAddress; logs.Logs; \
+		match_po_receipt_invoice.MatchPORReceiptInvoice; \
 		material_management.MaterialManagement; notice_management.NoticeManagement; \
-		order.Order; payment_allocation.PaymentAllocation; \
-		payment_print_export.PaymentPrintExport; \
-		payment.Payment; payroll_action_notice.PayrollActionNotice; \
-		data.Store; product.Product; report_management.ReportManagement; \
-		record_management.RecordManagement; \ security.Security; \
-		time_control.TimeControl; time_record.TimeRecord; \
+		payment_allocation.PaymentAllocation; payment_print_export.PaymentPrintExport; \
+		payroll_action_notice.PayrollActionNotice; preference_management.PreferenceManagement; \
+		record_management.RecordManagement; report_management.ReportManagement; \
+		security.Security; send_notifications.SendNotifications; store.WebStore; \
+		task_management.TaskManagement; time_control.TimeControl; time_record.TimeRecord; \
 		trial_balance_drillable.TrialBalanceDrillable; updates.UpdateCenter; \
-		user_customization.UserCustomization; user_interface.UserInterface; \
-		wms.WarehouseManagement; store.WebStore; workflow.Workflow;"
+		user_customization.UserCustomization; user_interface.UserInterface' \
+		wms.WarehouseManagement; workflow.Workflow;"
 
 #Expose Ports
 # EXPOSE 9901 # admin port

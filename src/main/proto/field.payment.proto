@@ -24,7 +24,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // Base URL
-// /info/open-items/
+// /fields/paymnents/
 
 package field.payment;
 
@@ -33,32 +33,32 @@ service PaymentInfoService {
 	// criteria
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/field/payments/business-partners"
+			get: "/fields/payments/business-partners"
 		};
 	}
 	rpc ListBankAccount(ListBankAccountRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/field/payments/bank-account"
+			get: "/fields/payments/bank-account"
 		};
 	}
-	// List Payment Info Request
+	// result
 	rpc ListPaymentInfo(ListPaymentInfoRequest) returns (ListPaymentInfoResponse) {
 		option (google.api.http) = {
-			get: "/field/payments"
+			get: "/fields/payments"
 			additional_bindings: {
-				get: "/field/payments/table/{table_name}/{column_name}"
+				get: "/fields/payments/table/{table_name}/{column_name}"
 			}
 			additional_bindings: {
-				get: "/field/payments/column/{column_id}"
+				get: "/fields/payments/column/{column_id}"
 			}
 			additional_bindings: {
-				get: "/field/payments/field/{field_id}"
+				get: "/fields/payments/field/{field_id}"
 			}
 			additional_bindings: {
-				get: "/field/payments/parameter/{process_parameter_id}"
+				get: "/fields/payments/parameter/{process_parameter_id}"
 			}
 			additional_bindings: {
-				get: "/field/payments/query-criteria/{browse_field_id}"
+				get: "/fields/payments/query-criteria/{browse_field_id}"
 			}
 		};
 	}
