@@ -144,7 +144,7 @@ public class PaymentInfoLogic {
 		//
 		String sql = "SELECT "
 			+ "C_Payment_ID, UUID, "
-			+ "(SELECT b.Name || ' ' || ba.AccountNo FROM C_Bank AS b, C_BankAccount ba WHERE b.C_Bank_ID = ba.C_Bank_ID AND ba.C_BankAccount_ID = C_Payment.C_BankAccount_ID) AS BankAccount, "
+			+ "(SELECT b.Name || ' ' || ba.AccountNo FROM C_Bank AS b, C_BankAccount AS ba WHERE b.C_Bank_ID = ba.C_Bank_ID AND ba.C_BankAccount_ID = C_Payment.C_BankAccount_ID) AS BankAccount, "
 			+ "(SELECT Name FROM C_BPartner AS bp WHERE bp.C_BPartner_ID = C_Payment.C_BPartner_ID) AS BusinessPartner, "
 			+ "DateTrx, "
 			+ "DocumentNo, "
@@ -152,7 +152,7 @@ public class PaymentInfoLogic {
 			+ "(SELECT ISO_Code FROM C_Currency AS c WHERE c.C_Currency_ID = C_Payment.C_Currency_ID) AS Currency, "
 			+ "PayAmt, "
 			+ "(SELECT Name FROM C_DocType AS dt WHERE dt.C_DocType_ID = C_Payment.C_DocType_ID) AS DocmentType, "
-			+ "(SELECT TO_CHAR(DateTrx, 'YYYY-MM-DD') FROM C_Payment p1 WHERE p1.C_Payment_ID = C_Payment.C_Payment_ID) AS InfoTo, "
+			+ "(SELECT TO_CHAR(DateTrx, 'YYYY-MM-DD') FROM C_Payment AS p1 WHERE p1.C_Payment_ID = C_Payment.C_Payment_ID) AS InfoTo, "
 			+ "A_Name, "
 			+ "currencyBase(PayAmt, C_Currency_ID, DateTrx, AD_Client_ID, AD_Org_ID), "
 			+ "DiscountAmt, "
