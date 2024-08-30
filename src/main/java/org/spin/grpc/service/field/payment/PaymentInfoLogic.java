@@ -1,3 +1,17 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
 package org.spin.grpc.service.field.payment;
 
 import java.math.BigDecimal;
@@ -137,6 +151,9 @@ public class PaymentInfoLogic {
 			+ "IsReceipt, "
 			+ "(SELECT ISO_Code FROM C_Currency AS c WHERE c.C_Currency_ID = C_Payment.C_Currency_ID) AS Currency, "
 			+ "PayAmt, "
+			+ "(SELECT Name FROM C_DocType AS dt WHERE dt.C_DocType_ID = C_Payment.C_DocType_ID) AS DocmentType, "
+			+ "(SELECT TO_CHAR(DateTrx, 'YYYY-MM-DD') FROM C_Payment p1 WHERE p1.C_Payment_ID = C_Payment.C_Payment_ID) AS InfoTo, "
+			+ "A_Name, "
 			+ "currencyBase(PayAmt, C_Currency_ID, DateTrx, AD_Client_ID, AD_Org_ID), "
 			+ "DiscountAmt, "
 			+ "WriteOffAmt, "

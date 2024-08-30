@@ -69,18 +69,21 @@ message PaymentInfo {
 	int32 id = 1;
 	string uuid = 2;
 	string display_value = 3;
-	string bank_account = 4;
-	string business_partner = 5;
-	google.protobuf.Timestamp date_payment = 6;
-	string document_no = 7;
-	string currency = 8;
-	string pay_amt = 9;
-	string converted_amount = 10;
-	string discount_amt = 11;
-	string writeOff_amt = 12;
-	bool is_allocated = 13;
-	bool is_receipt = 14;
-	string document_status = 15;
+	string document_no = 4;
+	string document_type = 5;
+	string bank_account = 6;
+	string business_partner = 7;
+	google.protobuf.Timestamp date_payment = 8;
+	string info_to = 9;
+	string account_name = 10;
+	string currency = 11;
+	string pay_amt = 12;
+	string converted_amount = 13;
+	string discount_amt = 14;
+	string writeOff_amt = 15;
+	bool is_allocated = 16;
+	bool is_receipt = 17;
+	string document_status = 18;
 }
 message GetPaymentInfoRequest {
 	int32 id = 1;
