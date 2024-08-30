@@ -715,11 +715,13 @@ public class ReportManagement extends ReportManagementImplBase {
 				null
 			)
 				.setParameters(request.getReportViewId())
-				.first();
+				.first()
+			;
 			if (reportView != null && reportView.getAD_ReportView_ID() > 0) {
-				whereClause = "AD_ReportView_ID = ?";
-				parameters.add(reportView.getUUID());
+				throw new AdempiereException("@AD_ReportView_ID@ @NotFound@");
 			}
+			whereClause = "AD_ReportView_ID = ?";
+			parameters.add(reportView.getAD_ReportView_ID());
 		}
 
 		//	Get List
@@ -774,7 +776,7 @@ public class ReportManagement extends ReportManagementImplBase {
 						)
 					);
 				}
-				if(printFormat.getAD_ReportView_ID() != 0) {
+				if(printFormat.getAD_ReportView_ID() > 0) {
 					printFormatBuilder.setReportViewId(
 						printFormat.getAD_ReportView_ID()
 					);
