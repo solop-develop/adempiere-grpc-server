@@ -43,15 +43,6 @@ repositories {
 			password = findProperty("deployToken") ?: System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_TOKEN")
 		}
 	}
-	maven {
-		// Adempiere GitHub Organization
-		url = 'https://maven.pkg.github.com/adempiere/adempiere'
-		credentials {
-			// project property, system properrty, enviroment variable
-			username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?: System.getenv("GITHUB_DEPLOY_USER")
-			password = findProperty("deployToken") ?: System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_TOKEN")
-		}
-	}
 }
 dependencies {
     implementation fileTree(
