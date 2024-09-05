@@ -70,6 +70,7 @@ dependencies {
 	//	ADempiere Core + Patches + Features
 	implementation "com.solop:adempiere.solop_libs:3.9.4.001-1.0.6"
 
+	// TODO: Delete this dependency with merge multitenant branch
 	implementation "io.github.adempiere:adempiere-kafka-connector:1.3.8"
 }
 
