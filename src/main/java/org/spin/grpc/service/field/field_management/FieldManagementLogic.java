@@ -228,9 +228,7 @@ public class FieldManagementLogic {
 		if (Optional.ofNullable(request.getValue()).isPresent()
 			&& !Util.isEmpty(request.getValue().getStringValue())) {
 			// URL decode to change characteres
-			final String overwriteValue = ValueManager.getDecodeUrl(
-				request.getValue().getStringValue()
-			);
+			final String overwriteValue = request.getValue().getStringValue();
 			defaultValue = overwriteValue;
 		}
 
