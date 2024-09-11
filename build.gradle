@@ -43,6 +43,9 @@ repositories {
 			password = findProperty("deployToken") ?: System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_TOKEN")
 		}
 	}
+	maven {
+		url = "https://maven.google.com/"
+	}
 }
 dependencies {
     implementation fileTree(
