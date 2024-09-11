@@ -78,7 +78,6 @@ configurations.all {
 	resolutionStrategy {
 		// used by aws-java-sdk-core (storefront is joda-time-2.10.4)
 		force("joda-time:joda-time:2.8.1")
-		force("io.github.adempiere:adempiere-kafka-connector:1.4.1")
 	}
 }
 
