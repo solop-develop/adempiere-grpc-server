@@ -273,8 +273,7 @@ public class BusinessData extends BusinessDataImplBase {
 			.withoutTransactionClose()
 		;
 
-		//	Selection
-		if(request.getBrowserId() > 0 && request.getSelectionsCount() > 0) {
+		if(request.getBrowserId() > 0) {
 			MBrowse browse = MBrowse.get(
 				Env.getCtx(),
 				request.getBrowserId()
@@ -285,6 +284,7 @@ public class BusinessData extends BusinessDataImplBase {
 			List<Integer> selectionKeys = new ArrayList<>();
 			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
 
+			//	browser selection by client or generate selection by server
 			List<KeyValueSelection> selectionsList = request.getSelectionsList();
 			if (request.getIsAllSelection()) {
 				// get all records march with browser criteria
