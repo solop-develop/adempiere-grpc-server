@@ -26,6 +26,7 @@ import org.compiere.util.CLogMgt;
 import org.compiere.util.DB;
 import org.compiere.util.Ini;
 import org.compiere.util.Util;
+import org.spin.server.config.BackendDatabaseConfig;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -123,31 +124,24 @@ public class SetupLoader {
 		Ini.setClient(true);
 		//	Set Database default parameters
 		//	Close inactive connections after 5 minutes 300
-		Ini.setProperty(CONFIG_DB_IDLE_TIMEOUT, 300);
-		//	Minimum connection opening
-		Ini.setProperty(CONFIG_DB_MINIMUM_IDLE, 1);
-		Ini.setProperty(CONFIG_DB_MAXIMUM_POOL_SIZE, 10);
-		//	New connection waiting time 5 seconds
-		Ini.setProperty(CONFIG_DB_CONNECTION_TIMEOUT, 5000);
+		BackendDatabaseConfig.setIdleTimeout(dataBase.getIdle_timeout());
+		//	Minimum connection opening 1
+		BackendDatabaseConfig.setMinimumIdle(dataBase.getMinimum_idle());
+		//	10
+		BackendDatabaseConfig.setMaximumPoolSize(dataBase.getMaximum_pool_size() + 1);
+		//	New connection waiting time 5 seconds 5000
+		BackendDatabaseConfig.setConnectionTimeout(dataBase.getConnection_timeout());
 		//	Close connections after 10 minutes
-		Ini.setProperty(CONFIG_DB_MAX_LIFETIME, 600000);
-		//	Validate connection each 6 minutes
-		Ini.setProperty(CONFIG_DB_KEEPALIVE_TIME, 360000);
-		//	Test connection just make a ping to validate database
-		Ini.setProperty(CONFIG_DB_CONNECTION_TEST_QUERY, "SELECT 1");
+		BackendDatabaseConfig.setMaxLifetime(dataBase.getMaximum_lifetime());
+		//	Validate connection each 6 minutes 360000
+		BackendDatabaseConfig.setKeepaliveTime(dataBase.getKeepalive_time());
+		//	Test connection just make a ping to validate database "SELECT 1"
+		BackendDatabaseConfig.setConnectionTestQuery(dataBase.getConnection_test_query());
 		Level logLevel = Level.parse(setup.getServer().getLog_level().toUpperCase());
 		Ini.setProperty(Ini.P_TRACEFILE, logLevel.getName());
 		CLogMgt.setLevel(logLevel);
 		DB.setDBTarget(connection);
 	}
-	
-	private static final String CONFIG_DB_IDLE_TIMEOUT = "DB|CONFIG_DB_IDLE_TIMEOUT";
-	private static final String CONFIG_DB_MINIMUM_IDLE = "DB|CONFIG_DB_MINIMUM_IDLE";
-	private static final String CONFIG_DB_MAXIMUM_POOL_SIZE = "DB|CONFIG_DB_MAXIMUM_POOL_SIZE";
-	private static final String CONFIG_DB_CONNECTION_TIMEOUT = "DB|CONFIG_DB_CONNECTION_TIMEOUT";
-	private static final String CONFIG_DB_MAX_LIFETIME = "DB|CONFIG_DB_MAX_LIFETIME";
-	private static final String CONFIG_DB_CONNECTION_TEST_QUERY = "DB|CONFIG_DB_CONNECTION_TEST_QUERY";
-	private static final String CONFIG_DB_KEEPALIVE_TIME = "DB|CONFIG_DB_KEEPALIVE_TIME";
 	
 	/**
 	 * @return

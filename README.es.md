@@ -99,9 +99,13 @@ Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igu
  * `DB_NAME`: Nombre de la base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
  * `DB_USER`: Usuario de base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
  * `DB_PASSWORD`: Contraseña de la base de datos que Adempiere-Backend utilizará para conectarse con la base de datos. Por defecto: `adempiere`.
- * `JWT_SECRET_KEY`: Clave secreta, para el hash de encriptado del JSON Web Token, el valor por defecto es `4C74928D8BA93C0708D28773A6FD273F63482CF8B3FC0AD11355A8E9CD583AD5` esta debe ser cambiada obligatoriamente por seguridad. Ver https://www.grc.com/passwords.htm.
- * `JWT_EXPIRATION_TIME`: Tiempo de expiración en milisegundos, vida util del JSON Web Token desde que se genera, el valor por defecto es `86400000` milisegundos, es decir 24 horas.
- * `ADEMPIERE_APPS_TYPE`: Tipo de aplicación para la conexión de gestión de bases de datos. Por defecto: `wildfly`.
+ * `IDLE_TIMEOUT`: Establece el tiempo máximo que una conexión puede permanecer sin uso antes de cerrarse para liberar recursos. Por defecto: `300`.
+ * `MINIMUM_IDLE`: Establece la cantidad mínima de conexiones que deben mantenerse abiertas y listas para usar, incluso si no se están utilizando actualmente. Esto ayuda a mejorar el rendimiento al reducir el tiempo que lleva obtener una conexión. Por defecto: `1`.
+ * `MAXIMUM_POOL_SIZE`: Establece la cantidad máxima de conexiones que pueden estar abiertas al mismo tiempo. Esto ayuda a evitar que el grupo crezca demasiado y utilice demasiada memoria. Por defecto: `10`.
+ * `CONNECTION_TIMEOUT`: Establece el tiempo máximo que HikariCP esperará para obtener una conexión del grupo antes de darse por vencido y generar un error. Por defecto: `5000`.
+ * `MAXIMUM_LIFETIME`: Establece la cantidad máxima de tiempo que una conexión puede permanecer abierta en el pool antes de que se cierre automáticamente. Esto ayuda a mantener el pool limpio y evita problemas. Por defecto: `6000`.
+ * `KEEPALIVE_TIME`: Establece una consulta de prueba que HikariCP ejecutará en las conexiones para asegurarse de que aún funcionan correctamente. Por defecto: `360000`.
+ * `CONNECTION_TEST_QUERY`: Establece la frecuencia con la que HikariCP comprobará si una conexión sigue funcionando correctamente. Esto ayuda a evitar problemas con conexiones que podrían quedar inactivas. Por defecto: `SELECT 1`
  * `SERVER_PORT`: Puerto para acceder a Adempiere-Backend desde fuera del contenedor. Por defecto: `50059`.
  * `SERVER_LOG_LEVEL`: Nivel de Bitácora. Por defecto: `WARNING`.
  * `TZ`: (Time Zone) Indica la zona horaria a establecer en el contenedor basado en nginx, el valor por defecto es `America/Caracas` (UTC -4:00).
@@ -117,9 +121,14 @@ gradle assemble
 gradle build
 ```
 
-Construir imagen docker
+Construir imagen (alpine)
 ```shell
-docker build -t solopcloud/adempiere-backend:dev -f ./build-docker/development.Dockerfile .
+docker build -t solopcloud/adempiere-backend:alpine-dev -f ./docker/alpine.Dockerfile .
+```
+
+Construir imagen (multi-arch)
+```shell
+docker build -t solopcloud/adempiere-backend:dev -f ./docker/focal.Dockerfile .
 ```
 
 ### Descargar imagen docker:

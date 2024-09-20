@@ -27,6 +27,5 @@ hs_err_pid*
 /dependences/
 /build/
 *.properties
-
 # skip folder dependencies
 !dependencies/*.jar
