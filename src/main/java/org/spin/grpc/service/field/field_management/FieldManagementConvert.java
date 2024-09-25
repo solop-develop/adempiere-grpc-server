@@ -108,6 +108,11 @@ public class FieldManagementConvert {
 			.setId(
 				window.getAD_Window_ID()
 			)
+			.setUuid(
+				ValueManager.validateNull(
+					window.getUUID()
+				)
+			)
 			.setName(
 				ValueManager.validateNull(
 					window.getName()
