@@ -280,6 +280,9 @@ public class ContextTemporaryWorkaround {
 					quantityEntered = quantityEntered1;
 				}
 				quantityOrdered = MUOMConversion.convertProductFrom(Env.getCtx(), productId, unitOfMeasureId, quantityEntered);
+				if (quantityOrdered == null) {
+					quantityOrdered = quantityEntered;
+				}
 
 				boolean isConversion = quantityEntered.compareTo(quantityOrdered) != 0;
 				Value.Builder uomConversionBuilder = ValueManager.getValueFromBoolean(
