@@ -18,6 +18,7 @@ package org.spin.base.util;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MViewColumn;
+import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.X_AD_Reference;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
@@ -418,6 +419,11 @@ public class ReferenceInfo {
 		// wihtout dynamic validation restriction
 		if (isWithoutValidation) {
 			validationRuleId = 0;
+		}
+
+		// overwrite `Button` to `List` display type on `PaymentRule`.
+		if (displayTypeId == DisplayType.Button && I_C_Order.COLUMNNAME_PaymentRule.equals(columnName)) {
+			displayTypeId = DisplayType.List;
 		}
 
 		return ReferenceUtil.getReferenceLookupInfo(
