@@ -155,10 +155,10 @@ message ReferenceRequest {
 message Window {
 	string id = 1;
 	string uuid = 2;
-	int32 internal_id = 6;
-	string name = 3;
-	string description = 4;
-	string help = 5;
+	int32 internal_id = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
 	bool is_sales_transaction = 7;
 	string window_type = 8;
 	//	External Info
@@ -182,109 +182,109 @@ message Table {
 message Tab {
 	string id = 1;
 	string uuid = 2;
-	int32 internal_id = 6;
-	string name = 3;
-	string description = 4;
-	string help = 5;
+	int32 internal_id = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
 	// Table attributes
 	string table_name = 7;
 	Table table = 8;
 	// Record Attributes
-	bool is_insert_record = 16;
-	string commit_warning = 17;
+	bool is_insert_record = 9;
+	string commit_warning = 10;
 	// Attributes
-	string display_logic = 18;
-	int32 sequence = 19;
-	int32 tab_level = 20;
-	bool is_read_only = 21;
-	string read_only_logic = 22;
-	bool is_single_row = 23;
-	bool is_advanced_tab = 24;
-	bool is_has_tree = 25;
-	bool is_info_tab = 26;
-	bool is_translation_tab = 27;
+	string display_logic = 11;
+	int32 sequence = 12;
+	int32 tab_level = 13;
+	bool is_read_only = 14;
+	string read_only_logic = 15;
+	bool is_single_row = 16;
+	bool is_advanced_tab = 17;
+	bool is_has_tree = 18;
+	bool is_info_tab = 19;
+	bool is_translation_tab = 20;
 	// Link attributes
-	string link_column_name = 28;
-	string parent_column_name = 29;
+	string link_column_name = 21;
+	string parent_column_name = 22;
 	// Sort attributes
-	bool is_sort_tab = 30;
-	optional string sort_order_column_name = 31;
-	optional string sort_yes_no_column_name = 32;
-	optional string filter_column_name = 33;
+	bool is_sort_tab = 23;
+	optional string sort_order_column_name = 24;
+	optional string sort_yes_no_column_name = 25;
+	optional string filter_column_name = 26;
 	// External Info
-	int32 window_id = 34;
-	int32 parent_tab_id = 35;
-	repeated string context_column_names = 36;
-	optional Process process = 37;
-	repeated Process processes = 38;
+	int32 window_id = 27;
+	int32 parent_tab_id = 28;
+	repeated string context_column_names = 29;
+	optional Process process = 30;
+	repeated Process processes = 31;
 	// Fields Attributes
-	repeated Field fields = 39;
-	// FieldGroup field_group = 40;
+	repeated Field fields = 32;
+	// FieldGroup field_group = 33;
 }
 
 // Field
 message Field {
 	string id = 1;
 	string uuid = 2;
-	int32 internal_id = 7;
-	string column_name = 3;
-	string name = 4;
-	string description = 5;
-	string help = 6;
+	int32 internal_id = 3;
+	string column_name = 4;
+	string name = 5;
+	string description = 6;
+	string help = 7;
 	int32 display_type = 8;
 	int32 sequence = 9;
 	bool is_displayed = 10;
-	string display_logic = 12;
-	bool is_read_only = 13;
-	string read_only_logic = 14;
-	bool is_mandatory = 15;
-	string mandatory_logic = 16;
-	bool is_key = 17;
-	bool is_range = 18;
-	string default_value = 19;
-	int32 field_length = 20;
-	string v_format = 22;
-	string value_min = 23;
-	string value_max = 24;
+	string display_logic = 11;
+	bool is_read_only = 12;
+	string read_only_logic = 13;
+	bool is_mandatory = 14;
+	string mandatory_logic = 15;
+	bool is_key = 16;
+	bool is_range = 17;
+	string default_value = 18;
+	int32 field_length = 19;
+	string v_format = 20;
+	string value_min = 21;
+	string value_max = 22;
 	// External Info
-	optional ContextInfo context_info = 25;
-	optional Reference reference = 26;
-	repeated DependentField dependent_fields = 27;
-	repeated string context_column_names = 28;
-	string element_name = 31;
+	optional ContextInfo context_info = 23;
+	optional Reference reference = 24;
+	repeated DependentField dependent_fields = 25;
+	repeated string context_column_names = 26;
+	string element_name = 27;
 	// Window Field Compatibility
-	string column_sql = 21;
-	bool is_displayed_grid = 32;
-	int32 seq_no_grid = 33;
-	optional FieldGroup field_group = 34;
-	bool is_allow_copy = 35;
-	bool is_same_line = 36;
-	bool is_heading = 37;
-	bool is_field_only = 38;
-	string callout = 39;
-	// FieldDefinition field_definition = 40;
-	string format_pattern = 41;
-	bool is_encrypted = 42;
-	bool is_selection_column = 43;
-	bool is_always_updateable = 44;
-	bool is_allow_logging = 45;
-	bool is_updateable = 46;
-	bool is_quick_entry = 47;
-	bool is_parent = 48;
-	bool is_translated = 49;
-	bool is_identifier = 50;
-	int32 identifier_sequence = 51;
-	optional Process process = 52;
+	string column_sql = 28;
+	bool is_displayed_grid = 29;
+	int32 seq_no_grid = 30;
+	optional FieldGroup field_group = 31;
+	bool is_allow_copy = 32;
+	bool is_same_line = 33;
+	bool is_heading = 34;
+	bool is_field_only = 35;
+	string callout = 36;
+	// FieldDefinition field_definition = 37;
+	string format_pattern = 38;
+	bool is_encrypted = 39;
+	bool is_selection_column = 40;
+	bool is_always_updateable = 41;
+	bool is_allow_logging = 42;
+	bool is_updateable = 43;
+	bool is_quick_entry = 44;
+	bool is_parent = 45;
+	bool is_translated = 46;
+	bool is_identifier = 47;
+	int32 identifier_sequence = 48;
+	optional Process process = 49;
 	// Process Parameter Compatibility
-	string default_value_to = 53;
-	bool is_info_only = 54;
+	string default_value_to = 50;
+	bool is_info_only = 51;
 	// Smart Browser Field Compatibility
-	bool is_query_criteria = 55;
-	bool is_order_by = 56;
-	int32 sort_no = 57;
+	bool is_query_criteria = 52;
+	bool is_order_by = 53;
+	int32 sort_no = 54;
 	// ASP Custom Attributes
-	string is_displayed_as_panel = 58;
-	string is_displayed_as_table = 59;
+	string is_displayed_as_panel = 55;
+	string is_displayed_as_table = 56;
 }
 
 message DependentField {
@@ -293,8 +293,8 @@ message DependentField {
 	string parent_name = 3;
 	string id = 4;
 	string uuid = 5;
-	int32 internal_id = 7;
-	string column_name = 6;
+	int32 internal_id = 6;
+	string column_name = 7;
 }
 
 // Context Info
@@ -346,50 +346,51 @@ message FieldCondition {
 message DictionaryEntity {
 	string id = 1;
 	string uuid = 2;
-	int32 internal_id = 6;
-	string name = 3;
-	string description = 4;
-	string help = 5;
+	int32 internal_id = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
 }
 
 // Process
 message Process {
 	string id = 1;
 	string uuid = 2;
-	int32 internal_id = 21;
-	string code = 3;
-	string name = 4;
-	string description = 5;
-	string help = 6;
-	string show_help = 7;
+	int32 internal_id = 3;
+	string code = 4;
+	string name = 5;
+	string description = 6;
+	string help = 7;
+	string show_help = 8;
 	// Report
-	bool is_report = 8;
-	bool is_process_before_launch = 9;
-	int32 report_view_id = 10;
-	int32 print_format_id = 11;
-	repeated ReportExportType report_export_types = 12;
+	bool is_report = 9;
+	bool is_process_before_launch = 10;
+	bool is_jasper_report = 11;
+	int32 report_view_id = 12;
+	int32 print_format_id = 13;
+	repeated ReportExportType report_export_types = 14;
 	// Browse
-	int32 browser_id = 13;
-	optional DictionaryEntity browser = 14;
+	int32 browser_id = 15;
+	optional DictionaryEntity browser = 16;
 	// From
-	int32 form_id = 15;
-	optional DictionaryEntity form = 16;
+	int32 form_id = 17;
+	optional DictionaryEntity form = 18;
 	// Workflow
-	int32 workflow_id = 17;
-	optional DictionaryEntity workflow = 18;
+	int32 workflow_id = 19;
+	optional DictionaryEntity workflow = 20;
 	// Parameters
-	bool has_parameters = 19;
-	repeated Field parameters = 20;
+	bool has_parameters = 21;
+	repeated Field parameters = 22;
 }
 
 // Form
 message Form {
 	string id = 1;
 	string uuid = 2;
-	int32 internal_id = 8;
-	string name = 3;
-	string description = 4;
-	string help = 5;
+	int32 internal_id = 3;
+	string name = 4;
+	string description = 5;
+	string help = 6;
 	string file_name = 7;
 }
 
@@ -397,11 +398,11 @@ message Form {
 message Browser {
 	string id = 1;
 	string uuid = 2;
-	int32 internal_id = 7;
-	string code = 3;
-	string name = 4;
-	string description = 5;
-	string help = 6;
+	int32 internal_id = 3;
+	string code = 4;
+	string name = 5;
+	string description = 6;
+	string help = 7;
 	string field_key = 8;
 	bool is_executed_query_by_default = 9;
 	bool is_collapsible_by_default = 10;
