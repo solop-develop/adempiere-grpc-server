@@ -795,16 +795,11 @@ public class IssueManagementServiceLogic {
 		}
 
 		if (!Util.isEmpty(request.getPriorityValue(), true)) {
-			// AND EXISTS(SELECT 1 FROM AD_Ref_List AS sgroup WHERE sgroup.AD_Reference_ID = 154 AND R_Request.priority = '7')
 			whereClause += " AND EXISTS("
-				+ "SELECT 1 FROM AD_Ref_List AS scG "
-				+ "WHERE scG.AD_Reference_ID = 154"
+				+ "SELECT 1 FROM AD_Ref_List AS priority "
+				+ "WHERE priority.AD_Reference_ID = 154"
 				+ "AND R_Request.priority = ?"
 				+")"
-				// + "SELECT 1 FROM AD_Ref_List AS sgroup"
-				// + "WHERE sgroup.AD_Reference_ID = 154"
-				// + "AND R_Request.priority = ?"
-				// +")"
 			;
 			parametersList.add(request.getPriorityValue());
 		}
