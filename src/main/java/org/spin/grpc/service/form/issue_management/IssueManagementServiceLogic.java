@@ -766,7 +766,7 @@ public class IssueManagementServiceLogic {
 
 		if (request.getBusinessPartnerId() > 0) {
 			whereClause += " AND EXISTS("
-				+ "SELECT 1 FROM c_bpartner AS sc "
+				+ "SELECT 1 FROM C_BPartner AS sc "
 				+ "WHERE sc.c_bpartner_id = ? "
 				+ "AND R_Request.c_bpartner_id = sc.c_bpartner_id"
 				+")"
