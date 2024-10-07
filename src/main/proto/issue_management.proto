@@ -248,6 +248,11 @@ message ListStatusesRequest {
 	string page_token = 6;
 	string search_value = 7;
 	int32 request_type_id = 8;
+	int32 business_partner = 9;
+	int32 project = 10;
+	int32 group = 11;
+	int32 user = 12;
+	int32 category = 14;
 }
 
 message ListStatusesResponse {
@@ -435,6 +440,12 @@ message ListIssuesRequest {
 	int32 record_id = 9;
 	// custom filters
 	int32 status_category_id = 10;
+	int32 group_id = 11;
+	int32 business_partner_id = 12;
+	int32 project_id = 13;
+	string priority_value = 14;
+	int32 status_id = 15;
+	string task_status_value = 16;
 }
 
 message ListIssuesReponse {
