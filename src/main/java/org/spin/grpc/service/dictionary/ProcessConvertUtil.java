@@ -117,8 +117,12 @@ public class ProcessConvertUtil {
 		//	Report Types
 		if(process.isReport()) {
 			builder.setIsProcessBeforeLaunch(
-				!Util.isEmpty(process.getClassname(), true)
-			);
+					!Util.isEmpty(process.getClassname(), true)
+				)
+				.setIsJasperReport(
+					!Util.isEmpty(process.getJasperReport(), true)
+				)
+			;
 			if (process.getAD_PrintFormat_ID() > 0) {
 				builder.setPrintFormatId(
 					process.getAD_PrintFormat_ID()
