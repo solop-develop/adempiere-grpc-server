@@ -764,6 +764,67 @@ public class IssueManagementServiceLogic {
 			parametersList.add(request.getStatusCategoryId());
 		}
 
+		if (request.getBusinessPartnerId() > 0) {
+			whereClause += " AND EXISTS("
+				+ "SELECT 1 FROM C_BPartner AS sc "
+				+ "WHERE sc.c_bpartner_id = ? "
+				+ "AND R_Request.c_bpartner_id = sc.c_bpartner_id"
+				+")"
+			;
+			parametersList.add(request.getBusinessPartnerId());
+		}
+
+		if (request.getGroupId() > 0) {
+			whereClause += " AND EXISTS("
+				+ "SELECT 1 FROM r_group AS sc "
+				+ "WHERE sc.r_group_id = ? "
+				+ "AND R_Request.r_group_id = sc.r_group_id"
+				+")"
+			;
+			parametersList.add(request.getGroupId());
+		}
+
+		if (request.getProjectId() > 0) {
+			whereClause += " AND EXISTS("
+				+ "SELECT 1 FROM c_project AS sc "
+				+ "WHERE sc.c_project_id = ? "
+				+ "AND R_Request.c_project_id = sc.c_project_id"
+				+")"
+			;
+			parametersList.add(request.getProjectId());
+		}
+
+		if (!Util.isEmpty(request.getPriorityValue(), true)) {
+			whereClause += " AND EXISTS("
+				+ "SELECT 1 FROM AD_Ref_List AS priority "
+				+ "WHERE priority.AD_Reference_ID = 154"
+				+ "AND R_Request.priority = ?"
+				+")"
+			;
+			parametersList.add(request.getPriorityValue());
+		}
+
+		if (request.getStatusId() > 0) {
+			whereClause += " AND EXISTS("
+				+ "SELECT 1 FROM r_status AS sc "
+				+ "WHERE sc.r_status_id = ? "
+				+ "AND R_Request.r_status_id = sc.r_status_id"
+				+")"
+			;
+			parametersList.add(request.getStatusId());
+		}
+
+		if (!Util.isEmpty(request.getTaskStatusValue(), true)) {
+			// AND EXISTS(SELECT 1 FROM AD_Ref_List AS sgroup WHERE sgroup.AD_Reference_ID = 366 AND R_Request.taskstatus = '8')
+			whereClause += " AND EXISTS("
+				+ "SELECT 1 FROM AD_Ref_List AS scG "
+				+ "WHERE scG.AD_Reference_ID = 366"
+				+ "AND R_Request.taskstatus = ?"
+				+")"
+			;
+			parametersList.add(request.getTaskStatusValue());
+		}
+
 		Query queryRequests = new Query(
 			Env.getCtx(),
 			I_R_Request.Table_Name,
@@ -797,7 +858,7 @@ public class IssueManagementServiceLogic {
 			// .setLimit(limit, offset)
 			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction + " NULLS FIRST ")
 			.getIDsAsList()
-			// .list(MRequest.class)
+			// .list(MRequest.class	)
 			.forEach(requestRecordId -> {
 				Issue.Builder builder = IssueManagementConvertUtil.convertRequest(requestRecordId);
 				builderList.addRecords(builder);
@@ -877,7 +938,4 @@ public class IssueManagementServiceLogic {
 
 		return builderList;
 	}
-
-
-
 }
