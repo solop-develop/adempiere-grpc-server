@@ -319,6 +319,7 @@ message ListProductsInfoRequest {
 	int32 attribute_set_instance_id = 29;
 	int32 vendor_id = 30;
 	string is_stocked = 31;
+	bool is_only_stock_available = 32;
 }
 
 
