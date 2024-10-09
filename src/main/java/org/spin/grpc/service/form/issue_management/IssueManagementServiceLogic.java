@@ -753,15 +753,80 @@ public class IssueManagementServiceLogic {
 			parametersList.add(searchValue);
 		}
 
+		if (request.getCategoryId() > 0) {
+			whereClause += " AND (R_Category_ID = ?) ";
+			parametersList.add(
+				request.getCategoryId()
+			);
+		}
+		if (request.getTypeId() > 0) {
+			whereClause += " AND (R_RequestType_ID = ?) ";
+			parametersList.add(
+				request.getTypeId()
+			);
+		}
 		// filter status by status category
 		if (request.getStatusCategoryId() > 0) {
 			whereClause += " AND EXISTS("
 				+ "SELECT 1 FROM R_Status AS sc "
 				+ "WHERE sc.R_StatusCategory_ID = ? "
 				+ "AND R_Request.R_StatusCategory_ID = sc.R_StatusCategory_ID"
-				+")"
+				+ ")"
 			;
 			parametersList.add(request.getStatusCategoryId());
+		}
+		if (request.getStatusId() > 0) {
+			whereClause += " AND (R_Status_ID = ?) ";
+			parametersList.add(
+				request.getStatusId()
+			);
+		}
+
+		if (request.getGroupId() > 0) {
+			whereClause += " AND (R_Group_ID = ?) ";
+			parametersList.add(
+				request.getGroupId()
+			);
+		}
+
+		if (request.getBusinessPartnerId() > 0) {
+			whereClause += " AND (C_BPartner_ID = ?) ";
+			parametersList.add(
+				request.getBusinessPartnerId()
+			);
+		}
+
+		if (request.getProjectId() > 0) {
+			// TODO: Add Project Phase and Poject Task
+			whereClause += " AND ("
+				+ "C_Project_ID = ? "
+				+ "OR EXISTS( "
+					+ "SELECT 1 FROM C_ProjectLine AS pl "
+					+ "WHERE pl.C_Project_ID = ? "
+					+ "AND pl.C_ProjectLine_ID = R_Request.C_ProjectLine_ID"
+					+ ") "
+				+ ") "
+			;
+			parametersList.add(
+				request.getProjectId()
+			);
+			parametersList.add(
+				request.getProjectId()
+			);
+		}
+
+		if (!Util.isEmpty(request.getPriorityValue(), true)) {
+			whereClause += " AND (Priority = ?) ";
+			parametersList.add(
+				request.getPriorityValue()
+			);
+		}
+
+		if (!Util.isEmpty(request.getTaskStatusValue(), true)) {
+			whereClause += " AND (TaskStatus = ?) ";
+			parametersList.add(
+				request.getTaskStatusValue()
+			);
 		}
 
 		Query queryRequests = new Query(
@@ -825,15 +890,80 @@ public class IssueManagementServiceLogic {
 			parametersList.add(searchValue);
 		}
 
+		if (request.getCategoryId() > 0) {
+			whereClause += " AND (R_Category_ID = ?) ";
+			parametersList.add(
+				request.getCategoryId()
+			);
+		}
+		if (request.getTypeId() > 0) {
+			whereClause += " AND (R_RequestType_ID = ?) ";
+			parametersList.add(
+				request.getTypeId()
+			);
+		}
 		// filter status by status category
 		if (request.getStatusCategoryId() > 0) {
 			whereClause += " AND EXISTS("
 				+ "SELECT 1 FROM R_Status AS sc "
 				+ "WHERE sc.R_StatusCategory_ID = ? "
 				+ "AND R_Request.R_StatusCategory_ID = sc.R_StatusCategory_ID"
-				+")"
+				+ ")"
 			;
 			parametersList.add(request.getStatusCategoryId());
+		}
+		if (request.getStatusId() > 0) {
+			whereClause += " AND (R_Status_ID = ?) ";
+			parametersList.add(
+				request.getStatusId()
+			);
+		}
+
+		if (request.getGroupId() > 0) {
+			whereClause += " AND (R_Group_ID = ?) ";
+			parametersList.add(
+				request.getGroupId()
+			);
+		}
+
+		if (request.getBusinessPartnerId() > 0) {
+			whereClause += " AND (C_BPartner_ID = ?) ";
+			parametersList.add(
+				request.getBusinessPartnerId()
+			);
+		}
+
+		if (request.getProjectId() > 0) {
+			// TODO: Add Project Phase and Poject Task
+			whereClause += " AND ("
+				+ "C_Project_ID = ? "
+				+ "OR EXISTS( "
+					+ "SELECT 1 FROM C_ProjectLine AS pl "
+					+ "WHERE pl.C_Project_ID = ? "
+					+ "AND pl.C_ProjectLine_ID = R_Request.C_ProjectLine_ID"
+					+ ") "
+				+ ") "
+			;
+			parametersList.add(
+				request.getProjectId()
+			);
+			parametersList.add(
+				request.getProjectId()
+			);
+		}
+
+		if (!Util.isEmpty(request.getPriorityValue(), true)) {
+			whereClause += " AND (Priority = ?) ";
+			parametersList.add(
+				request.getPriorityValue()
+			);
+		}
+
+		if (!Util.isEmpty(request.getTaskStatusValue(), true)) {
+			whereClause += " AND (TaskStatus = ?) ";
+			parametersList.add(
+				request.getTaskStatusValue()
+			);
 		}
 
 		Query queryRequests = new Query(
@@ -877,7 +1007,5 @@ public class IssueManagementServiceLogic {
 
 		return builderList;
 	}
-
-
 
 }

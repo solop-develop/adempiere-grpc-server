@@ -434,7 +434,15 @@ message ListIssuesRequest {
 	string table_name = 8;
 	int32 record_id = 9;
 	// custom filters
-	int32 status_category_id = 10;
+	int32 category_id = 10;
+	int32 type_id = 11;
+	int32 status_category_id = 12;
+	int32 status_id = 13;
+	int32 group_id = 14;
+	int32 business_partner_id = 15;
+	int32 project_id = 16;
+	string priority_value = 17;
+	string task_status_value = 18;
 }
 
 message ListIssuesReponse {
