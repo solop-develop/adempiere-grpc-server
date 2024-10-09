@@ -755,11 +755,7 @@ public class IssueManagementServiceLogic {
 
 		// filter status by status category
 		if (request.getStatusCategoryId() > 0) {
-			whereClause += " AND EXISTS("
-				+ "SELECT 1 FROM R_Status AS sc "
-				+ "WHERE sc.R_StatusCategory_ID = ? "
-				+ "AND R_Request.R_StatusCategory_ID = sc.R_StatusCategory_ID"
-				+")"
+			whereClause += " AND(R_Request.r_category_id = ?)"
 			;
 			parametersList.add(request.getStatusCategoryId());
 		}
@@ -776,7 +772,7 @@ public class IssueManagementServiceLogic {
 
 		if (request.getGroupId() > 0) {
 			whereClause += " AND EXISTS("
-				+ "SELECT 1 FROM r_group AS sc "
+				+ "SELECT 1 FROM R_Group AS sc "
 				+ "WHERE sc.r_group_id = ? "
 				+ "AND R_Request.r_group_id = sc.r_group_id"
 				+")"
@@ -786,7 +782,7 @@ public class IssueManagementServiceLogic {
 
 		if (request.getProjectId() > 0) {
 			whereClause += " AND EXISTS("
-				+ "SELECT 1 FROM c_project AS sc "
+				+ "SELECT 1 FROM C_Project AS sc "
 				+ "WHERE sc.c_project_id = ? "
 				+ "AND R_Request.c_project_id = sc.c_project_id"
 				+")"
@@ -806,7 +802,7 @@ public class IssueManagementServiceLogic {
 
 		if (request.getStatusId() > 0) {
 			whereClause += " AND EXISTS("
-				+ "SELECT 1 FROM r_status AS sc "
+				+ "SELECT 1 FROM R_Status AS sc "
 				+ "WHERE sc.r_status_id = ? "
 				+ "AND R_Request.r_status_id = sc.r_status_id"
 				+")"
