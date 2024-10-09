@@ -123,7 +123,6 @@ public class IssueManagementServiceLogic {
 		queryRequestTypes
 			// .setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
 			// .list(MRequestType.class)
 			.forEach(requestTypeId -> {
 				RequestType.Builder builder = IssueManagementConvertUtil.convertRequestType(requestTypeId);
@@ -182,7 +181,6 @@ public class IssueManagementServiceLogic {
 		querySaleRepresentatives
 			// .setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
 			.forEach(userId -> {
 				User.Builder builder = IssueManagementConvertUtil.convertUser(userId);
 				builderList.addRecords(builder);
@@ -239,7 +237,6 @@ public class IssueManagementServiceLogic {
 		queryPriority
 			// .setLimit(limit, offset)
 			.list(MRefList.class)
-			.parallelStream()
 			.forEach(priority -> {
 				Priority.Builder builder = IssueManagementConvertUtil.convertPriority(priority);
 				builderList.addRecords(builder);
@@ -297,7 +294,6 @@ public class IssueManagementServiceLogic {
 		queryRequests
 			// .setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
 			.forEach(statusCategoryId -> {
 				StatusCategory.Builder builder = IssueManagementConvertUtil.convertStatusCategory(
 					statusCategoryId
@@ -425,7 +421,6 @@ public class IssueManagementServiceLogic {
 		queryRequests
 			// .setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
 			.forEach(categoryId -> {
 				Category.Builder builder = IssueManagementConvertUtil.convertCategory(
 					categoryId
@@ -485,7 +480,6 @@ public class IssueManagementServiceLogic {
 		queryRequests
 			// .setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
 			.forEach(groupId -> {
 				Group.Builder builder = IssueManagementConvertUtil.convertGroup(
 					groupId
@@ -544,7 +538,6 @@ public class IssueManagementServiceLogic {
 		queryPriority
 			// .setLimit(limit, offset)
 			.list(MRefList.class)
-			.parallelStream()
 			.forEach(priority -> {
 				TaskStatus.Builder builder = IssueManagementConvertUtil.convertTaskStatus(priority);
 				builderList.addRecords(builder);
@@ -580,6 +573,7 @@ public class IssueManagementServiceLogic {
 			null
 		)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO) // TODO: Fix Record access with pagination
+			.setClient_ID()
 			.setOnlyActiveRecords(true)
 			.setParameters(filtersList)
 		;
@@ -605,7 +599,6 @@ public class IssueManagementServiceLogic {
 		queryRequests
 			// .setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
 			.forEach(businessPartnerId -> {
 				BusinessPartner.Builder builder = IssueManagementConvertUtil.convertBusinessPartner(
 					businessPartnerId
@@ -667,7 +660,6 @@ public class IssueManagementServiceLogic {
 		queryRequests
 			.setLimit(limit, offset)
 			.getIDsAsList()
-			.parallelStream()
 			.forEach(projectId -> {
 				Project.Builder builder = IssueManagementConvertUtil.convertProject(
 					projectId
