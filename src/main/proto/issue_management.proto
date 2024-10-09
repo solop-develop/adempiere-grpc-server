@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
- syntax = "proto3";
+syntax = "proto3";
 
 
 option java_multiple_files = true;
@@ -423,7 +423,7 @@ message ExistsIssuesResponse {
 	int32 record_count = 1;
 }
 
- message ListIssuesRequest {
+message ListIssuesRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
