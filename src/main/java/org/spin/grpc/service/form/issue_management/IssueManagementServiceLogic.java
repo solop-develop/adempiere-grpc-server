@@ -763,7 +763,7 @@ public class IssueManagementServiceLogic {
 			whereClause += " AND EXISTS("
 				+ "SELECT 1 FROM R_Status AS sc "
 				+ "WHERE sc.R_StatusCategory_ID = ? "
-				+ "AND R_Request.R_StatusCategory_ID = sc.R_StatusCategory_ID"
+				+ "AND R_Request.R_Status_ID = sc.R_Status_ID"
 				+ ")"
 			;
 			parametersList.add(request.getStatusCategoryId());
