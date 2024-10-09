@@ -14,6 +14,7 @@
  ************************************************************************************/
 package org.spin.grpc.service.form.issue_management;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -664,7 +665,7 @@ public class IssueManagementServiceLogic {
 		);
 
 		queryRequests
-			// .setLimit(limit, offset)
+			.setLimit(limit, offset)
 			.getIDsAsList()
 			.parallelStream()
 			.forEach(projectId -> {
@@ -829,6 +830,48 @@ public class IssueManagementServiceLogic {
 			);
 		}
 
+		// Created Date
+		Timestamp createdFrom = ValueManager.getDateFromTimestampDate(request.getCreatedFrom());
+		Timestamp createdTo = ValueManager.getDateFromTimestampDate(request.getCreatedTo());
+		if (createdFrom != null || createdTo != null) {
+			whereClause += " AND ";
+			if (createdFrom != null && createdTo != null) {
+				whereClause += "TRUNC(Created, 'DD') BETWEEN ? AND ? ";
+				parametersList.add(createdFrom);
+				parametersList.add(createdTo);
+			}
+			else if (createdFrom != null) {
+				whereClause += "TRUNC(Created, 'DD') >= ? ";
+				parametersList.add(createdFrom);
+			}
+			else {
+				// DateTo != null
+				whereClause += "TRUNC(Created, 'DD') <= ? ";
+				parametersList.add(createdTo);
+			}
+		}
+
+		// Date Next Action
+		Timestamp dateNextActionFrom = ValueManager.getDateFromTimestampDate(request.getDateNextActionFrom());
+		Timestamp dateNextActionTo = ValueManager.getDateFromTimestampDate(request.getDateNextActionFrom());
+		if (dateNextActionFrom != null || dateNextActionTo != null) {
+			whereClause += " AND ";
+			if (dateNextActionFrom != null && dateNextActionTo != null) {
+				whereClause += "TRUNC(DateNextAction, 'DD') BETWEEN ? AND ? ";
+				parametersList.add(dateNextActionFrom);
+				parametersList.add(dateNextActionTo);
+			}
+			else if (dateNextActionFrom != null) {
+				whereClause += "TRUNC(DateNextAction, 'DD') >= ? ";
+				parametersList.add(dateNextActionFrom);
+			}
+			else {
+				// DateTo != null
+				whereClause += "TRUNC(DateNextAction, 'DD') <= ? ";
+				parametersList.add(dateNextActionTo);
+			}
+		}
+
 		Query queryRequests = new Query(
 			Env.getCtx(),
 			I_R_Request.Table_Name,
@@ -859,7 +902,7 @@ public class IssueManagementServiceLogic {
 		);
 
 		queryRequests
-			// .setLimit(limit, offset)
+			.setLimit(limit, offset)
 			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction + " NULLS FIRST ")
 			.getIDsAsList()
 			// .list(MRequest.class)
@@ -996,7 +1039,7 @@ public class IssueManagementServiceLogic {
 		);
 
 		queryRequests
-			// .setLimit(limit, offset)
+			.setLimit(limit, offset)
 			.setOrderBy(I_R_Request.COLUMNNAME_DateNextAction + " NULLS FIRST ")
 			.getIDsAsList()
 			// .list(MRequest.class)

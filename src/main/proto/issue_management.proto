@@ -443,6 +443,10 @@ message ListIssuesRequest {
 	int32 project_id = 16;
 	string priority_value = 17;
 	string task_status_value = 18;
+	google.protobuf.Timestamp date_next_action_from = 19;
+	google.protobuf.Timestamp date_next_action_to = 20;
+	google.protobuf.Timestamp created_from = 21;
+	google.protobuf.Timestamp created_to = 22;
 }
 
 message ListIssuesReponse {
