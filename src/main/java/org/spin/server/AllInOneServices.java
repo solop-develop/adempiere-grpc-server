@@ -45,7 +45,6 @@ import org.spin.grpc.service.TimeRecord;
 import org.spin.grpc.service.UpdateManagement;
 import org.spin.grpc.service.UserCustomization;
 import org.spin.grpc.service.UserInterface;
-import org.spin.grpc.service.WebStore;
 import org.spin.grpc.service.Workflow;
 import org.spin.grpc.service.core_functionality.CoreFunctionality;
 import org.spin.grpc.service.dictionary.Dictionary;
@@ -289,9 +288,6 @@ public class AllInOneServices {
 		//	User Interface
 		serverBuilder.addService(new UserInterface());
 		logger.info("Service " + UserInterface.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
-		//	Web Store
-		serverBuilder.addService(new WebStore());
-		logger.info("Service " + WebStore.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Workflow
 		serverBuilder.addService(new Workflow());
 		logger.info("Service " + Workflow.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

@@ -44,6 +44,13 @@ repositories {
 		}
 	}
 	maven {
+    	url = "https://maven.pkg.github.com/openls/adempiere-lib"
+        credentials {
+        	username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?: System.getenv("GITHUB_DEPLOY_USER")
+            password = findProperty("deployPassword") ?: System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_USER")
+		}
+	}
+	maven {
 		url = "https://maven.google.com/"
 	}
 }
@@ -71,7 +78,7 @@ dependencies {
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
 	//	ADempiere Core + Patches + Features
-	implementation "com.solop:adempiere.solop_libs:3.9.4.001-1.1.5"
+	implementation "com.solop:adempiere-solop.solop_libs:1.0.0-rc-7-1.0.0-rc-4"
 }
 
 configurations.all {
