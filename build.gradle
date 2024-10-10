@@ -47,7 +47,7 @@ repositories {
     	url = "https://maven.pkg.github.com/openls/adempiere-lib"
         credentials {
         	username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?: System.getenv("GITHUB_DEPLOY_USER")
-            password = findProperty("deployPassword") ?: System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_USER")
+            password = findProperty("deployToken") ?: System.properties['deploy.token'] ?: System.getenv("GITHUB_DEPLOY_USER")
 		}
 	}
 	maven {
