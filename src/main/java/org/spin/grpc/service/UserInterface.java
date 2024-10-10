@@ -596,7 +596,7 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		Entity.Builder valueObjectBuilder = Entity.newBuilder()
+		Entity.Builder entityBuilder = Entity.newBuilder()
 			.setTableName(
 				table.getTableName()
 			)
@@ -640,8 +640,13 @@ public class UserInterface extends UserInterfaceImplBase {
 							continue;
 						}
 						if (column.isKey()) {
-							valueObjectBuilder.setId(
-								rs.getInt(index)
+							final int identifier = rs.getInt(index);
+							entityBuilder.setId(identifier);
+						}
+						if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnName.toLowerCase())) {
+							final String uuid = rs.getString(index);
+							entityBuilder.setUuid(
+								ValueManager.validateNull(uuid)
 							);
 						}
 						//	From field
@@ -658,14 +663,15 @@ public class UserInterface extends UserInterfaceImplBase {
 
 						// to add client uuid by record
 						if (fieldColumnName.equals(I_AD_Element.COLUMNNAME_AD_Client_ID)) {
-							MClient entity = MClient.get(
+							final int clientId = NumberManager.getIntegerFromObject(value);
+							MClient clientEntity = MClient.get(
 								table.getCtx(),
-								NumberManager.getIntegerFromObject(value)
+								clientId
 							);
-							if (entity != null) {
-								Value.Builder valueUuidBuilder = ValueManager.getValueFromReference(
-									entity.get_UUID(),
-									DisplayType.String
+							if (clientEntity != null) {
+								final String clientUuid = clientEntity.get_UUID();
+								Value.Builder valueUuidBuilder = ValueManager.getValueFromString(
+									clientUuid
 								);
 								rowValues.putFields(
 									LookupUtil.getUuidColumnName(
@@ -687,7 +693,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					rowValues
 				);
 
-				valueObjectBuilder.setValues(rowValues);
+				entityBuilder.setValues(rowValues);
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -699,7 +705,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 		
 		//	Return
-		return valueObjectBuilder;
+		return entityBuilder;
 	}
 
 
