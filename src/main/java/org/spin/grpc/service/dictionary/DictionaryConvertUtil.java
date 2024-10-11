@@ -166,6 +166,12 @@ public class DictionaryConvertUtil {
 					info.TableName
 				)
 			)
+			.setReferenceId(
+				info.DisplayType
+			)
+			.setReferenceValueId(
+				info.AD_Reference_Value_ID
+			)
 			.addAllContextColumnNames(
 				contextColumnsList
 			)

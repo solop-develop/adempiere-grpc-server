@@ -36,7 +36,6 @@ import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
-import org.adempiere.core.domains.models.X_AD_Reference;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MViewColumn;
@@ -228,6 +227,7 @@ public class FieldManagementLogic {
 		if (Optional.ofNullable(request.getValue()).isPresent()
 			&& !Util.isEmpty(request.getValue().getStringValue())) {
 			// URL decode to change characteres
+			// final String overwriteValue = ValueManager.getDecodeUrl(defaultValue);
 			final String overwriteValue = request.getValue().getStringValue();
 			defaultValue = overwriteValue;
 		}
@@ -300,20 +300,31 @@ public class FieldManagementLogic {
 		} else if (DisplayType.isNumeric(displayTypeId)) {
 			defaultValueAsObject = NumberManager.getIntegerFromObject(defaultValueAsObject);
 		}
-		if (ReferenceUtil.validateReference(displayTypeId) || DisplayType.Button == displayTypeId) {
-			if (displayTypeId == DisplayType.Button && referenceValueId > 0) {
-				//	Reference Value
-				X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceValueId, null);
-				if (reference != null && reference.getAD_Reference_ID() > 0) {
-					// overwrite display type to Table or List
-					if (X_AD_Reference.VALIDATIONTYPE_TableValidation.equals(reference.getValidationType())) {
-						displayTypeId = DisplayType.Table;
-					} else {
-						displayTypeId = DisplayType.List;
-					}
-				}
-			}
 
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		displayTypeId = ReferenceUtil.overwriteDisplayType(
+			displayTypeId,
+			referenceValueId
+		);
+		if (DisplayType.Button == displayTypeId) {
+			if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+				defaultValueAsObject = Integer.valueOf(defaultValueAsObject.toString());
+				int tableId = Env.getContextAsInt(context, windowNo, I_AD_Table.COLUMNNAME_AD_Table_ID);
+				MTable table = MTable.get(context, tableId);
+				String tableKeyColumn = table.getTableName() + "_ID";
+				columnName = tableKeyColumn;
+				// overwrite display type to Table Direct
+				displayTypeId = DisplayType.TableDir;
+			} else {
+				values.putFields(
+					columnName,
+					ValueManager.getValueFromObject(defaultValueAsObject).build()
+				);
+				builder.setValues(values);
+				return builder;
+			}
+		}
+		if (ReferenceUtil.validateReference(displayTypeId)) {
 			if (DisplayType.List == displayTypeId) {
 				// (') (text) (') or (") (text) (")
 				String singleQuotesPattern = "('|\")(\\w+)('|\")";
@@ -341,25 +352,6 @@ public class FieldManagementLogic {
 				);
 				builder.setId(referenceList.getAD_Ref_List_ID());
 			} else {
-				if (DisplayType.Button == displayTypeId) {
-					if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
-						defaultValueAsObject = Integer.valueOf(defaultValueAsObject.toString());
-						int tableId = Env.getContextAsInt(context, windowNo, I_AD_Table.COLUMNNAME_AD_Table_ID);
-						MTable table = MTable.get(context, tableId);
-						String tableKeyColumn = table.getTableName() + "_ID";
-						columnName = tableKeyColumn;
-						// overwrite display type to Table Direct
-						displayTypeId = DisplayType.TableDir;
-					} else {
-						values.putFields(
-							columnName,
-							ValueManager.getValueFromObject(defaultValueAsObject).build()
-						);
-						builder.setValues(values);
-						return builder;
-					}
-				}
-
 				MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(
 					displayTypeId,
 					referenceValueId,

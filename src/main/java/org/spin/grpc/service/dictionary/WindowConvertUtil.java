@@ -551,12 +551,19 @@ public class WindowConvertUtil {
 			builder.setProcess(processBuilder.build());
 		}
 		//
+
+		//	Reference Value
+		int referenceValueId = column.getAD_Reference_Value_ID();
+		if(field.getAD_Reference_Value_ID() > 0) {
+			referenceValueId = field.getAD_Reference_Value_ID();
+		}
+
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		displayTypeId = ReferenceUtil.overwriteDisplayType(
+			displayTypeId,
+			referenceValueId
+		);
 		if (ReferenceUtil.validateReference(displayTypeId)) {
-			//	Reference Value
-			int referenceValueId = column.getAD_Reference_Value_ID();
-			if(field.getAD_Reference_Value_ID() > 0) {
-				referenceValueId = field.getAD_Reference_Value_ID();
-			}
 			//	Validation Code
 			int validationRuleId = column.getAD_Val_Rule_ID();
 			if(field.getAD_Val_Rule_ID() > 0) {

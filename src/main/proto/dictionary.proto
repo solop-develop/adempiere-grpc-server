@@ -50,10 +50,7 @@ service Dictionary {
 			}
 		};
 	}
-	// Reference Request
-	rpc GetReference(ReferenceRequest) returns (Reference) {
-		option (google.api.http) = { get: "/dictionary/references/{id}" };
-	}
+
 	// Request Process/Report
 	rpc GetProcess(EntityRequest) returns (Process) {
 		option (google.api.http) = {
@@ -142,13 +139,6 @@ message FieldRequest {
 	// Table_name + _column_name
 	string table_name = 5;
 	string column_name = 6;
-}
-
-// Reference request
-message ReferenceRequest {
-	int32 id = 1;
-	// Table_name + column_name assumed that it is Table Direct
-	string column_name = 2;
 }
 
 // Window
@@ -426,6 +416,8 @@ message Browser {
 // Foreign Reference
 message Reference {
 	string table_name = 1;
+	int32 reference_id = 2;
+	int32 reference_value_id = 3;
 	repeated string context_column_names = 4;
 }
 

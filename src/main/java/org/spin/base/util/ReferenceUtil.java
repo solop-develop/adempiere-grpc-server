@@ -99,6 +99,29 @@ public class ReferenceUtil {
 		return false;
 	}
 
+	public static int overwriteDisplayType(int displayTypeId, int referenceValueId) {
+		int newDisplayType = displayTypeId;
+		if (DisplayType.Button == displayTypeId) {
+			//	Reference Value
+			if (referenceValueId > 0) {
+				X_AD_Reference reference = new X_AD_Reference(
+					Env.getCtx(),
+					referenceValueId,
+					null
+				);
+				if (reference != null && reference.getAD_Reference_ID() > 0) {
+					// overwrite display type to Table or List
+					if (X_AD_Reference.VALIDATIONTYPE_TableValidation.equals(reference.getValidationType())) {
+						newDisplayType = DisplayType.Table;
+					} else {
+						newDisplayType = DisplayType.List;
+					}
+				}
+			}
+		}
+		return newDisplayType;
+	}
+
 	/**
 	 * Get Reference information, can return null if reference is invalid or not exists
 	 * @param referenceId
@@ -481,6 +504,8 @@ public class ReferenceUtil {
 		// set new query
 		lookupInformation.Query = queryForLookup;
 		lookupInformation.QueryDirect = directQuery;
+		lookupInformation.DisplayType = referenceId;
+		lookupInformation.AD_Reference_Value_ID = referenceValueId;
 
 		MValRule validationRule = null;
 		//	For validation rule

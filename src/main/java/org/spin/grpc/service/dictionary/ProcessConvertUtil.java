@@ -391,8 +391,12 @@ public class ProcessConvertUtil {
 				)
 			)
 		;
-		//	
-		int displayTypeId = processParameter.getAD_Reference_ID();
+
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		int displayTypeId = ReferenceUtil.overwriteDisplayType(
+			processParameter.getAD_Reference_ID(),
+			processParameter.getAD_Reference_Value_ID()
+		);
 		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = processParameter.getAD_Reference_Value_ID();
