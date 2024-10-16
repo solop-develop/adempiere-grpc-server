@@ -258,7 +258,7 @@ public class BusinessData extends BusinessDataImplBase {
 
 		PO entity = null;
 		int recordId = request.getRecordId();
-		if (isMultiSelection && selectionsList != null && !selectionsList.isEmpty()) {
+		if (isMultiSelection && selectionsList != null && !selectionsList.isEmpty() && selectionsList.size() > 1) {
 			// is window multi selection
 			;
 		} else if (table != null && RecordUtil.isValidId(recordId, table.getAccessLevel())) {
