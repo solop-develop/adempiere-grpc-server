@@ -352,25 +352,26 @@ message Process {
 	string description = 6;
 	string help = 7;
 	string show_help = 8;
+	bool is_multi_selection = 9;
 	// Report
-	bool is_report = 9;
-	bool is_process_before_launch = 10;
-	bool is_jasper_report = 11;
-	int32 report_view_id = 12;
-	int32 print_format_id = 13;
-	repeated ReportExportType report_export_types = 14;
+	bool is_report = 10;
+	bool is_process_before_launch = 11;
+	bool is_jasper_report = 12;
+	int32 report_view_id = 13;
+	int32 print_format_id = 14;
+	repeated ReportExportType report_export_types = 15;
 	// Browse
-	int32 browser_id = 15;
-	optional DictionaryEntity browser = 16;
+	int32 browser_id = 16;
+	optional DictionaryEntity browser = 17;
 	// From
-	int32 form_id = 17;
-	optional DictionaryEntity form = 18;
+	int32 form_id = 18;
+	optional DictionaryEntity form = 19;
 	// Workflow
-	int32 workflow_id = 19;
-	optional DictionaryEntity workflow = 20;
+	int32 workflow_id = 20;
+	optional DictionaryEntity workflow = 21;
 	// Parameters
-	bool has_parameters = 21;
-	repeated Field parameters = 22;
+	bool has_parameters = 22;
+	repeated Field parameters = 23;
 }
 
 // Form
