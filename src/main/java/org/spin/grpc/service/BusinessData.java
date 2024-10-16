@@ -68,6 +68,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.BrowserUtil;
 import org.spin.dictionary.util.DictionaryUtil;
+import org.spin.dictionary.util.WindowUtil;
 import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 // import org.spin.service.grpc.util.db.CountUtil;
@@ -246,9 +247,21 @@ public class BusinessData extends BusinessDataImplBase {
 				}
 			}
 		}
+
+
+		//	browser/window selection by client or generate selection by server
+		List<KeyValueSelection> selectionsList = request.getSelectionsList();
+		boolean isMultiSelection = false;
+		if (process.get_ColumnIndex("SP003_IsMultiSelection") >= 0) {
+			isMultiSelection = process.get_ValueAsBoolean("SP003_IsMultiSelection");
+		}
+
 		PO entity = null;
 		int recordId = request.getRecordId();
-		if (table != null && RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+		if (isMultiSelection && selectionsList != null && !selectionsList.isEmpty()) {
+			// is window multi selection
+			;
+		} else if (table != null && RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 			entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), recordId, null);
 			if(entity != null) {
 				recordId = entity.get_ID();
@@ -277,8 +290,6 @@ public class BusinessData extends BusinessDataImplBase {
 			List<Integer> selectionKeys = new ArrayList<>();
 			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
 
-			//	browser selection by client or generate selection by server
-			List<KeyValueSelection> selectionsList = request.getSelectionsList();
 			if (request.getIsAllSelection()) {
 				// get all records march with browser criteria
 				selectionsList = BrowserLogic.getAllSelectionByCriteria(
@@ -319,7 +330,35 @@ public class BusinessData extends BusinessDataImplBase {
 			builder.withSelectedRecordsIds(tableSelectionId, selectionKeys, selection)
 				.withSelectedRecordsIds(tableSelectionId, tableAlias, selectionKeys)
 			;
+		} else if (table != null && isMultiSelection) {
+			if (selectionsList == null || selectionsList.isEmpty()) {
+				throw new AdempiereException("@AD_Window_ID@ @FillMandatory@ @Selection@");
+			}
+
+			List<Integer> selectionKeys = new ArrayList<>();
+			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
+			for(KeyValueSelection selectionKey : selectionsList) {
+				selectionKeys.add(selectionKey.getSelectionId());
+				if(selectionKey.getValues().getFieldsCount() > 0) {
+					Map<String, Integer> displayTypeColumns = WindowUtil.getTableColumnsDisplayType(table);
+					LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
+						ValueManager.convertValuesMapToObjects(
+							selectionKey.getValues().getFieldsMap(),
+							displayTypeColumns
+						)
+					);
+					selection.put(
+						selectionKey.getSelectionId(),
+						entities
+					);
+				}
+			}
+
+			builder.withSelectedRecordsIds(table.getAD_Table_ID(), selectionKeys, selection)
+				.withSelectedRecordsIds(table.getAD_Table_ID(), table.getTableName(), selectionKeys)
+			;
 		}
+
 		//	get document action
 		String documentAction = null;
 		//	Parameters

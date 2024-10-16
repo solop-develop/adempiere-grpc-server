@@ -114,6 +114,12 @@ public class ProcessConvertUtil {
 			)
 		;
 
+		boolean isMultiSelection = false;
+		if (process.get_ColumnIndex("SP003_IsMultiSelection") >= 0) {
+			isMultiSelection = process.get_ValueAsBoolean("SP003_IsMultiSelection");
+		}
+		builder.setIsMultiSelection(isMultiSelection);
+
 		//	Report Types
 		if(process.isReport()) {
 			builder.setIsProcessBeforeLaunch(
