@@ -278,9 +278,23 @@ public class SendNotifications extends SendNotificationsImplBase{
 
 		// Add Recipient to Notification
 		request.getRecipientsList().forEach(recipients -> {
+			int contactId = -1;
+			String accountName = null;
+			if (recipients.getContactId() > 0) {
+				MUser user = MUser.get(Env.getCtx(), recipients.getContactId());
+				if (user != null) {
+					contactId = user.getAD_User_ID();
+					if (!Util.isEmpty(user.getEMail(), true)) {
+						accountName = user.getEMail();
+					}
+				}
+			}
+			if (Util.isEmpty(accountName, true)) {
+				accountName = recipients.getAccountName();
+			}
 			notifier.addRecipient(
-				recipients.getContactId(),
-				recipients.getAccountName()
+				contactId,
+				accountName
 			);
 		});
 

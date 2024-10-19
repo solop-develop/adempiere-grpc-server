@@ -653,6 +653,12 @@ public class RecordUtil {
 							final int identifier = rs.getInt(index);
 							entityBuilder.setId(identifier);
 						}
+						if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnName.toLowerCase())) {
+							final String uuid = rs.getString(index);
+							entityBuilder.setUuid(
+								ValueManager.validateNull(uuid)
+							);
+						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						Object value = rs.getObject(index);
@@ -667,14 +673,15 @@ public class RecordUtil {
 
 						// to add client uuid by record
 						if (fieldColumnName.equals(I_AD_Element.COLUMNNAME_AD_Client_ID)) {
-							MClient entity = MClient.get(
+							final int clientId = NumberManager.getIntegerFromObject(value);
+							MClient clientEntity = MClient.get(
 								table.getCtx(),
-								NumberManager.getIntegerFromObject(value)
+								clientId
 							);
-							if (entity != null) {
-								Value.Builder valueUuidBuilder = ValueManager.getValueFromReference(
-									entity.get_UUID(),
-									DisplayType.String
+							if (clientEntity != null) {
+								final String clientUuid = clientEntity.get_UUID();
+								Value.Builder valueUuidBuilder = ValueManager.getValueFromString(
+									clientUuid
 								);
 								rowValues.putFields(
 									LookupUtil.getUuidColumnName(

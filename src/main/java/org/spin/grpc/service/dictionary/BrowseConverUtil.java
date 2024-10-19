@@ -264,8 +264,11 @@ public class BrowseConverUtil {
 			ValueManager.validateNull(elementName))
 		;
 
-		//	
-		int displayTypeId = browseField.getAD_Reference_ID();
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		int displayTypeId = ReferenceUtil.overwriteDisplayType(
+			browseField.getAD_Reference_ID(),
+			browseField.getAD_Reference_Value_ID()
+		);
 		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = browseField.getAD_Reference_Value_ID();

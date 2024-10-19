@@ -114,6 +114,12 @@ public class ProcessConvertUtil {
 			)
 		;
 
+		boolean isMultiSelection = false;
+		if (process.get_ColumnIndex("SP003_IsMultiSelection") >= 0) {
+			isMultiSelection = process.get_ValueAsBoolean("SP003_IsMultiSelection");
+		}
+		builder.setIsMultiSelection(isMultiSelection);
+
 		//	Report Types
 		if(process.isReport()) {
 			builder.setIsProcessBeforeLaunch(
@@ -391,8 +397,12 @@ public class ProcessConvertUtil {
 				)
 			)
 		;
-		//	
-		int displayTypeId = processParameter.getAD_Reference_ID();
+
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		int displayTypeId = ReferenceUtil.overwriteDisplayType(
+			processParameter.getAD_Reference_ID(),
+			processParameter.getAD_Reference_Value_ID()
+		);
 		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Reference Value
 			int referenceValueId = processParameter.getAD_Reference_Value_ID();

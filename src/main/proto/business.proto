@@ -76,6 +76,10 @@ service BusinessData {
 				body: "*"
 			}
 			additional_bindings: {
+				post: "/business-data/process/{id}/window/{table_name}",
+				body: "*"
+			}
+			additional_bindings: {
 				post: "/business-data/process/{id}/window/{table_name}/{record_id}",
 				body: "*"
 			}

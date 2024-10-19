@@ -29,3 +29,4 @@ hs_err_pid*
 *.properties
 # skip folder dependencies
 !dependencies/*.jar
+*.properties

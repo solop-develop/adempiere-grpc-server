@@ -163,7 +163,8 @@ public class WhereClauseUtil {
 	 * @return {String}
 	 */
 	public static String removeIsActiveRestriction(String tableAlias, String sql) {
-		String SQL_WHERE_REGEX = "(WHERE|(AND|OR))(\\s+(" + tableAlias + ".IsActive|IsActive)\\s*=\\s*'(Y|N)')";
+		// String SQL_WHERE_REGEX = "(WHERE|(AND|OR))(\\s+(" + tableAlias + ".IsActive|IsActive)\\s*=\\s*'(Y|N)')";
+		String SQL_WHERE_REGEX = "(" + tableAlias + ".IsActive|IsActive)\\s*=\\s*'(Y|N)'";
 
 		String sqlWithoutRestriction = sql;
 		// remove order by clause
@@ -178,7 +179,7 @@ public class WhereClauseUtil {
 			String initialPart = sql.substring(0, startPosition);
 			int endPosition = matcherWhere.end();
 			String finalPart = sql.substring(endPosition, sql.length());
-			sqlWithoutRestriction = initialPart + finalPart;
+			sqlWithoutRestriction = initialPart + " 1=1 " + finalPart;
 		}
 
 		return sqlWithoutRestriction;

@@ -1079,18 +1079,6 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			filtersList.add(recordId);
 		}
 
-		// Organization
-		int organizationId = request.getOrganizationId();
-		if (organizationId > 0) {
-			whereClause.append(" AND ")
-				.append(I_Fact_Acct.Table_Name)
-				.append(".")
-				.append(I_Fact_Acct.COLUMNNAME_AD_Org_ID)
-				.append(" = ? ")
-			;
-			filtersList.add(organizationId);
-		}
-
 		// add where with access restriction
 		String sqlWithRescriction = sql.toString() + whereClause.toString();
 		String parsedSQL = MRole.getDefault(Env.getCtx(), false)
@@ -1111,6 +1099,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		int count = CountUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, filtersList);
 		//  Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
+		parsedSQL += ("ORDER BY " + I_Fact_Acct.Table_Name + ".Fact_Acct_ID");
 		builder = RecordUtil.convertListEntitiesResult(table, parsedSQL, filtersList);
 		//
 		builder.setRecordCount(count);

@@ -1,10 +1,11 @@
 server:
-    port: 50059
+    port: 50060
     log_level: WARNING
 database:
     host: localhost
     port: 5432
-    name: "adempiere"
+    name: "sp_dev"
     user: adempiere
     password: adempiere
     type: PostgreSQL
+    minimum_idle: 20

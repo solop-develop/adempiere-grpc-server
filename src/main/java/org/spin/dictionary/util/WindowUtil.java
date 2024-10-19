@@ -28,6 +28,7 @@ import org.compiere.model.MField;
 import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MTab;
+import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
@@ -38,6 +39,28 @@ import org.spin.base.util.AccessUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class WindowUtil {
+
+	/**
+	 * Get Table Columns to display type
+	 * @param tab
+	 * @return
+	 */
+	public static Map<String, Integer> getTableColumnsDisplayType(MTable table) {
+		List<MColumn> tableColumns = table.getColumnsAsList();
+
+		Map<String, Integer> displayTypeColumns = new HashMap<>();
+		if (tableColumns == null || tableColumns.isEmpty()) {
+			return displayTypeColumns;
+		}
+		tableColumns.forEach(column -> {
+			displayTypeColumns.put(
+				column.getColumnName(),
+				column.getAD_Reference_ID()
+			);
+		});
+
+		return displayTypeColumns;
+	}
 
 	/**
 	 * Get Tabs Fields to display type

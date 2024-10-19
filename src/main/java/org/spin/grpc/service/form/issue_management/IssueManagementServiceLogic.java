@@ -910,7 +910,7 @@ public class IssueManagementServiceLogic {
 
 	public static ListIssuesReponse.Builder listIssues(ListIssuesRequest request) {
 		List<Object> parametersList = new ArrayList<>();
-		String whereClause = "";
+		String whereClause = " 1=1 ";
 
 		final String searchValue = ValueManager.getDecodeUrl(
 			request.getSearchValue()
@@ -925,6 +925,7 @@ public class IssueManagementServiceLogic {
 			parametersList.add(searchValue);
 		}
 
+		
 		if (request.getCategoryId() > 0) {
 			whereClause += " AND (R_Category_ID = ?) ";
 			parametersList.add(
@@ -942,7 +943,7 @@ public class IssueManagementServiceLogic {
 			whereClause += " AND EXISTS("
 				+ "SELECT 1 FROM R_Status AS sc "
 				+ "WHERE sc.R_StatusCategory_ID = ? "
-				+ "AND R_Request.R_StatusCategory_ID = sc.R_StatusCategory_ID"
+				+ "AND R_Request.R_Status_ID = sc.R_Status_ID"
 				+ ")"
 			;
 			parametersList.add(request.getStatusCategoryId());

@@ -4536,16 +4536,21 @@ public class PointOfSalesForm extends StoreImplBase {
 				throw new AdempiereException("@C_Order_ID@ @Processed@");
 			}
 			OrderUtil.setCurrentDate(order);
-			// catch Exceptions at order.getLines()
-			Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines(true, "Line"))
-				.parallelStream()
-				.filter(orderLine -> (productId != 0 && productId == orderLine.getM_Product_ID()) 
-					|| (chargeId != 0 && chargeId == orderLine.getC_Charge_ID())
-				)
-				.findFirst()
-			;
-			if(maybeOrderLine.isPresent()) {
-				MOrderLine orderLine = maybeOrderLine.get();
+			StringBuffer whereClause = new StringBuffer(I_C_OrderLine.COLUMNNAME_C_Order_ID + " = ?");
+			List<Object> parameters = new ArrayList<>();
+			parameters.add(orderId);
+			if(productId > 0) {
+				whereClause.append(" AND M_Product_ID = ?");
+				parameters.add(productId);
+			} else if(chargeId > 0){
+				whereClause.append(" AND C_Charge_ID = ?");
+				parameters.add(chargeId);
+			}
+			MOrderLine orderLine = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, whereClause.toString(), transactionName)
+					.setParameters(parameters)
+					.first();
+			if(orderLine != null
+					&& orderLine.getC_OrderLine_ID() > 0) {
 				//	Set Quantity
 				BigDecimal quantityToOrder = quantity;
 				if(quantity == null) {
@@ -4560,7 +4565,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					quantityToOrder = Env.ONE;
 				}
 				//create new line
-				MOrderLine orderLine = new MOrderLine(order);
+				orderLine = new MOrderLine(order);
 				orderLine.setC_Campaign_ID(order.getC_Campaign_ID());
 				if(chargeId > 0) {
 					orderLine.setC_Charge_ID(chargeId);

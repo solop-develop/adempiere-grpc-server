@@ -23,11 +23,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MChatEntry;
+import org.compiere.model.MClient;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MInOut;
@@ -201,16 +203,28 @@ public class ConvertUtil {
 	 * @return
 	 */
 	public static Entity.Builder convertEntity(PO entity) {
-		Entity.Builder builder = Entity.newBuilder();
+		Entity.Builder entityBuilder = Entity.newBuilder();
 		if(entity == null) {
-			return builder;
+			return entityBuilder;
 		}
-		builder.setId(entity.get_ID());
+
+		final int identifier = entity.get_ID();
+		entityBuilder.setId(identifier);
+
+		final String uuid = entity.get_UUID();
+		entityBuilder.setUuid(
+			ValueManager.validateNull(uuid)
+		);
+
 		//	Convert attributes
 		POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), entity.get_Table_ID());
-		builder.setTableName(ValueManager.validateNull(poInfo.getTableName()));
+		entityBuilder.setTableName(
+			ValueManager.validateNull(
+				poInfo.getTableName()
+			)
+		);
 
-		Struct.Builder values = Struct.newBuilder();
+		Struct.Builder rowValues = Struct.newBuilder();
 		for(int index = 0; index < poInfo.getColumnCount(); index++) {
 			String columnName = poInfo.getColumnName(index);
 			int referenceId = poInfo.getColumnDisplayType(index);
@@ -224,21 +238,42 @@ public class ConvertUtil {
 				// continue;
 			}
 			//	Add
-			values.putFields(
+			rowValues.putFields(
 				columnName,
 				builderValue.build()
 			);
+
+			// to add client uuid by record
+			if (columnName.equals(I_AD_Element.COLUMNNAME_AD_Client_ID)) {
+				final int clientId = NumberManager.getIntegerFromObject(value);
+				MClient clientEntity = MClient.get(
+					entity.getCtx(),
+					clientId
+				);
+				if (clientEntity != null) {
+					final String clientUuid = clientEntity.get_UUID();
+					Value.Builder valueUuidBuilder = ValueManager.getValueFromString(
+						clientUuid
+					);
+					rowValues.putFields(
+						LookupUtil.getUuidColumnName(
+							I_AD_Element.COLUMNNAME_AD_Client_ID
+						),
+						valueUuidBuilder.build()
+					);
+				}
+			}
 		}
 
 		// TODO: Temporary Workaround
-		values = ContextTemporaryWorkaround.setContextAsUnknowColumn(
+		rowValues = ContextTemporaryWorkaround.setContextAsUnknowColumn(
 			poInfo.getTableName(),
-			values
+			rowValues
 		);
 
-		builder.setValues(values);
-		//	
-		return builder;
+		entityBuilder.setValues(rowValues);
+		//
+		return entityBuilder;
 	}
 	
 	/**

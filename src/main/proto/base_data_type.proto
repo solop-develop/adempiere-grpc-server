@@ -83,8 +83,9 @@ message KeyValueSelection {
 // Value Object from ADempiere
 message Entity {
 	int32 id = 1;
-	string table_name = 2;
-	google.protobuf.Struct values = 3;
+	string uuid = 2;
+	string table_name = 3;
+	google.protobuf.Struct values = 4;
 }
 
 message ListEntitiesResponse {
