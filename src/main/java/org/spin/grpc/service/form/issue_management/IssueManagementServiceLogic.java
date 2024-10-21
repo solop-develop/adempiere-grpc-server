@@ -910,7 +910,7 @@ public class IssueManagementServiceLogic {
 
 	public static ListIssuesReponse.Builder listIssues(ListIssuesRequest request) {
 		List<Object> parametersList = new ArrayList<>();
-		String whereClause = " 1=1 ";
+		String whereClause = "Processed='N' ";
 
 		final String searchValue = ValueManager.getDecodeUrl(
 			request.getSearchValue()
