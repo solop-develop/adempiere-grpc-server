@@ -539,8 +539,21 @@ public class CoreFunctionalityConvert {
 		}
 		//	
 		return builder.setId(priceList.getM_PriceList_ID())
-			.setName(ValueManager.validateNull(priceList.getName()))
-			.setDescription(ValueManager.validateNull(priceList.getDescription()))
+			.setUuid(
+				ValueManager.validateNull(
+					priceList.getUUID()
+				)
+			)
+			.setName(
+				ValueManager.validateNull(
+					priceList.getName()
+				)
+			)
+			.setDescription(
+				ValueManager.validateNull(
+					priceList.getDescription()
+				)
+			)
 			.setCurrency(
 				CoreFunctionalityConvert.convertCurrency(
 					priceList.getC_Currency_ID()
@@ -550,6 +563,9 @@ public class CoreFunctionalityConvert {
 			.setIsTaxIncluded(priceList.isTaxIncluded())
 			.setIsEnforcePriceLimit(priceList.isEnforcePriceLimit())
 			.setIsNetPrice(priceList.isNetPrice())
+			.setIsSalesTransaction(
+				priceList.isSOPriceList()
+			)
 			.setPricePrecision(priceList.getPricePrecision()
 		);
 	}

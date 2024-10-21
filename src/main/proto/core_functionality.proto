@@ -41,14 +41,14 @@ service CoreFunctionality {
 		option (google.api.http) = { get: "/core-functionality/languages" };
 	}
 
-	//	List Business Partner
-	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {
-		option (google.api.http) = { get: "/core-functionality/business-partners" };
-	}
-
 	//	Get Currency Rate
 	rpc GetConversionRate(GetConversionRateRequest) returns (ConversionRate) {
 		option (google.api.http) = { get: "/core-functionality/conversion-rates" };
+	}
+
+	//	Get Price List
+	rpc GetPriceList(GetPriceListRequest) returns (PriceList) {
+		option (google.api.http) = { get: "/core-functionality/price-lists/{id}" };
 	}
 
 	//	Product Conversion UOM
@@ -77,28 +77,6 @@ message SystemInfo {
 // Get Country Request
 message GetCountryRequest {
 	int32 id = 1;
-}
-
-//	List Business Partner
-message ListBusinessPartnersResponse {
-	int64 record_count = 1;
-	repeated BusinessPartner business_partners = 2;
-	string next_page_token = 3;
-}
-message ListBusinessPartnersRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string value = 8;
-	string name = 9;
-	string contact_name = 10;
-	string email = 11;
-	string postal_code = 12;
-	string phone = 13;
 }
 
 
@@ -348,14 +326,19 @@ message Language {
 //	Price List
 message PriceList {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	Currency currency = 4;
-	bool is_default = 5;
-	bool is_tax_included = 6;
-	bool is_enforce_price_limit = 7;
-	bool is_net_price = 8;
-	int32 price_precision = 9;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	Currency currency = 5;
+	bool is_default = 6;
+	bool is_tax_included = 7;
+	bool is_enforce_price_limit = 8;
+	bool is_net_price = 9;
+	bool is_sales_transaction = 10;
+	int32 price_precision = 11;
+}
+message GetPriceListRequest {
+	int32 id = 1;
 }
 
 //	Bank Account

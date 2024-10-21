@@ -15,19 +15,16 @@
 package org.spin.grpc.service.core_functionality;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Language;
-import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Country;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLanguage;
-import org.compiere.model.MRole;
+import org.compiere.model.MPriceList;
 import org.compiere.model.MSystem;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.Query;
@@ -36,28 +33,24 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.core_functionality.BusinessPartner;
 import org.spin.backend.grpc.core_functionality.ConversionRate;
 import org.spin.backend.grpc.core_functionality.Country;
 import org.spin.backend.grpc.core_functionality.GetConversionRateRequest;
 import org.spin.backend.grpc.core_functionality.GetCountryRequest;
+import org.spin.backend.grpc.core_functionality.GetPriceListRequest;
 import org.spin.backend.grpc.core_functionality.GetSystemInfoRequest;
 import org.spin.backend.grpc.core_functionality.Language;
-import org.spin.backend.grpc.core_functionality.ListBusinessPartnersRequest;
-import org.spin.backend.grpc.core_functionality.ListBusinessPartnersResponse;
 import org.spin.backend.grpc.core_functionality.ListLanguagesRequest;
 import org.spin.backend.grpc.core_functionality.ListLanguagesResponse;
 import org.spin.backend.grpc.core_functionality.ListProductConversionRequest;
 import org.spin.backend.grpc.core_functionality.ListProductConversionResponse;
+import org.spin.backend.grpc.core_functionality.PriceList;
 import org.spin.backend.grpc.core_functionality.ProductConversion;
 import org.spin.backend.grpc.core_functionality.SystemInfo;
 import org.spin.backend.grpc.core_functionality.CoreFunctionalityGrpc.CoreFunctionalityImplBase;
 import org.spin.base.Version;
-import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
-import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -326,29 +319,6 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 
 	@Override
-	public void listBusinessPartners(ListBusinessPartnersRequest request,
-			StreamObserver<ListBusinessPartnersResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListBusinessPartnersResponse.Builder businessPartnerList = getBusinessPartnerList(request);
-			responseObserver.onNext(businessPartnerList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-
-	@Override
 	public void getConversionRate(GetConversionRateRequest request, StreamObserver<ConversionRate> responseObserver) {
 		try {
 			if(request == null) {
@@ -394,8 +364,42 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				request.getCurrencyToId(), 
 				TimeUtil.getDay(conversionDate));
 	}
-	
-	
+
+
+
+	@Override
+	public void getPriceList(GetPriceListRequest request, StreamObserver<PriceList> responseObserver) {
+		try {
+			PriceList.Builder languagesList = getPriceList(request);
+			responseObserver.onNext(languagesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getMessage())
+					.augmentDescription(e.getMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private PriceList.Builder getPriceList(GetPriceListRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_PriceList_ID@");
+		}
+		MPriceList priceList = MPriceList.get(Env.getCtx(), request.getId(), null);
+		if (priceList == null || priceList.getM_PriceList_ID() <= 0) {
+			throw new AdempiereException("@M_PriceList_ID@ @NotFound@");
+		}
+		PriceList.Builder builder = CoreFunctionalityConvert.convertPriceList(priceList);
+		return builder;
+	}
+
+
+
 	@Override
 	public void listProductConversion(ListProductConversionRequest request, StreamObserver<ListProductConversionResponse> responseObserver) {
 		try {
@@ -426,149 +430,6 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 		});
 		
 		return productConversionListBuilder;
-	}
-
-	/**
-	 * List business partner
-	 * @param context
-	 * @param request
-	 * @return
-	 */
-	private ListBusinessPartnersResponse.Builder getBusinessPartnerList(ListBusinessPartnersRequest request) {
-		ListBusinessPartnersResponse.Builder builder = ListBusinessPartnersResponse.newBuilder();
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-
-		//	Get business partner list
-		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer();
-		//	Parameters
-		List<Object> parameters = new ArrayList<Object>();
-
-		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
-			request.getSearchValue()
-		);
-		if(!Util.isEmpty(searchValue, true)) {
-			whereClause.append("("
-				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Name2) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%'"
-				+ ")");
-			//	Add parameters
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-		}
-		//	For value
-		if(!Util.isEmpty(request.getValue())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-				+ "UPPER(Value) LIKE UPPER(?)"
-				+ ")");
-			//	Add parameters
-			parameters.add(request.getValue());
-		}
-		//	For name
-		if(!Util.isEmpty(request.getName())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-				+ "UPPER(Name) LIKE UPPER(?)"
-				+ ")");
-			//	Add parameters
-			parameters.add(request.getName());
-		}
-		//	for contact name
-		if(!Util.isEmpty(request.getContactName())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("(EXISTS(SELECT 1 FROM AD_User u WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(u.Name) LIKE UPPER(?)))");
-			//	Add parameters
-			parameters.add(request.getContactName());
-		}
-		//	EMail
-		if(!Util.isEmpty(request.getEmail(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(EXISTS(SELECT 1 FROM AD_User u "
-				+ "WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(u.EMail) LIKE UPPER(?)))"
-			);
-		}
-		//	Phone
-		if(!Util.isEmpty(request.getPhone())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("("
-					+ "EXISTS(SELECT 1 FROM AD_User u WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(u.Phone) LIKE UPPER(?)) "
-					+ "OR EXISTS(SELECT 1 FROM C_BPartner_Location bpl WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID AND UPPER(bpl.Phone) LIKE UPPER(?))"
-					+ ")");
-			//	Add parameters
-			parameters.add(request.getPhone());
-			parameters.add(request.getPhone());
-		}
-		//	Postal Code
-		if(!Util.isEmpty(request.getPostalCode())) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append("(EXISTS(SELECT 1 FROM C_BPartner_Location bpl "
-					+ "INNER JOIN C_Location l ON(l.C_Location_ID = bpl.C_Location_ID) "
-					+ "WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-					+ "AND UPPER(l.Postal) LIKE UPPER(?)))");
-			//	Add parameters
-			parameters.add(request.getPostalCode());
-		}
-		//	
-		String criteriaWhereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), I_C_BPartner.Table_Name, parameters);
-		if(whereClause.length() > 0
-				&& !Util.isEmpty(criteriaWhereClause)) {
-			whereClause.append(" AND (").append(criteriaWhereClause).append(")");
-		}
-		//	Get Product list
-		Query query = new Query(
-			Env.getCtx(),
-			I_C_BPartner.Table_Name,
-			whereClause.toString(),
-			null
-		)
-			.setParameters(parameters)
-			.setOnlyActiveRecords(true)
-			.setClient_ID()
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
-		int count = query.count();
-
-		query.setLimit(limit, offset)
-			.getIDsAsList()
-			.parallelStream()
-			.forEach(businessPartnerId -> {
-				BusinessPartner.Builder businessPartnerBuilder = CoreFunctionalityConvert.convertBusinessPartner(businessPartnerId);
-				builder.addBusinessPartners(businessPartnerBuilder);
-			});
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		if(count > limit) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		//	Set next page
-		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
-		);
-		return builder;
 	}
 
 }
