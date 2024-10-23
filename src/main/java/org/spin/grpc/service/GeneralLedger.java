@@ -531,6 +531,9 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accountingSchema.getAcctSchemaElements());
 
 		Map<String, Object> attributesList = ValueManager.convertValuesMapToObjects(request.getAttributes().getFieldsMap());
+		attributesList.put(I_C_ValidCombination.COLUMNNAME_AD_Org_ID, organizationId);
+		attributesList.put(I_C_ValidCombination.COLUMNNAME_Account_ID, accountId);
+
 		StringBuffer sql = generateSQL(acctingSchemaElements, attributesList);
 
 		int clientId = Env.getContextAsInt(Env.getCtx(), windowNo, MAccount.COLUMNNAME_AD_Client_ID);
