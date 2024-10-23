@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11.0.23_9-jdk-focal
+FROM eclipse-temurin:11.0.24_8-jdk-focal
 
 LABEL maintainer="ySenih@erpya.com; EdwinBetanc0urt@outlook.com;" \
 	description="ADempiere gRPC All In One Server used as ADempiere adempiere-grpc-server"
@@ -30,7 +30,8 @@ EXPOSE ${SERVER_PORT}
 # Add operative system dependencies
 RUN rm -rf /var/lib/apt/lists/* && \
 	rm -rf /tmp/* && \
-	apt-get update && apt-get install -y \
+	apt-get update && \
+	apt-get install -y \
 		tzdata \
 		bash \
 		fontconfig \
@@ -47,6 +48,7 @@ COPY docker/env.yaml /opt/apps/server/env.yaml
 COPY docker/start.sh /opt/apps/server/start.sh
 
 
+# Add adempiere as user
 RUN addgroup adempiere && \
 	adduser --disabled-password --gecos "" --ingroup adempiere --no-create-home adempiere && \
 	chown -R adempiere /opt/apps/server/ && \

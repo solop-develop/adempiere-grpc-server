@@ -110,6 +110,7 @@ Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igu
  * `SERVER_LOG_LEVEL`: Nivel de Bitácora. Por defecto: `WARNING`.
  * `TZ`: (Time Zone) Indica la zona horaria a establecer en el contenedor basado en nginx, el valor por defecto es `America/Caracas` (UTC -4:00).
  * `SYSTEM_LOGO_URL`: Logo de la imagen principal del sistema, mostrada en la pantalla del login.
+ * `JAVA_OPTIONS`: Configuración personalizada de la máquina virtual Java (JVM). Por defecto: `-Xms64M -Xmx1512M`.
 
 ### Construir imagen docker (sólo para desarrollo):
 Primero compile los archivos de salida.
