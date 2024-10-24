@@ -37,6 +37,7 @@ import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
 import org.compiere.model.MWarehouse;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.core_functionality.BankAccount;
 import org.spin.backend.grpc.core_functionality.BankAccountType;
 import org.spin.backend.grpc.core_functionality.BusinessPartner;
@@ -63,7 +64,7 @@ import org.spin.util.AttachmentUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  */
 public class CoreFunctionalityConvert {
-	
+
 	/**
 	 * Convert Currency
 	 * @param currency
@@ -76,6 +77,22 @@ public class CoreFunctionalityConvert {
 		}
 		//	Set values
 		MCurrency currency = MCurrency.get(Env.getCtx(), currencyId);
+		return convertCurrency(
+			currency
+		);
+	}
+	/**
+	 * Convert Currency
+	 * @param currency
+	 * @return
+	 */
+	public static Currency.Builder convertCurrency(String code) {
+		Currency.Builder builder = Currency.newBuilder();
+		if(Util.isEmpty(code, true)) {
+			return builder;
+		}
+		//	Set values
+		MCurrency currency = MCurrency.get(Env.getCtx(), code);
 		return convertCurrency(
 			currency
 		);

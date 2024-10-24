@@ -35,8 +35,10 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.core_functionality.ConversionRate;
 import org.spin.backend.grpc.core_functionality.Country;
+import org.spin.backend.grpc.core_functionality.Currency;
 import org.spin.backend.grpc.core_functionality.GetConversionRateRequest;
 import org.spin.backend.grpc.core_functionality.GetCountryRequest;
+import org.spin.backend.grpc.core_functionality.GetCurrencyRequest;
 import org.spin.backend.grpc.core_functionality.GetPriceListRequest;
 import org.spin.backend.grpc.core_functionality.GetSystemInfoRequest;
 import org.spin.backend.grpc.core_functionality.Language;
@@ -314,6 +316,45 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				language.isDecimalPoint()
 			)
 		;
+	}
+
+
+
+	@Override
+	public void getCurrency(GetCurrencyRequest request, StreamObserver<Currency> responseObserver) {
+		try {
+			Currency.Builder languagesList = getCurrency(request);
+			responseObserver.onNext(languagesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getMessage())
+					.augmentDescription(e.getMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private Currency.Builder getCurrency(GetCurrencyRequest request) {
+		if (request.getId() <= 0 && Util.isEmpty(request.getCode(), true)) {
+			throw new AdempiereException("@FillMandatory@ @C_Currency_ID@");
+		}
+		Currency.Builder builder = Currency.newBuilder();
+		if (request.getId() > 0) {
+			builder = CoreFunctionalityConvert.convertCurrency(
+				request.getId()
+			);
+		} else if (Util.isEmpty(request.getCode())) {
+			builder = CoreFunctionalityConvert.convertCurrency(
+				request.getCode()
+			);
+		}
+
+		return builder;
 	}
 
 

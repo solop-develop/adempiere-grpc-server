@@ -41,6 +41,16 @@ service CoreFunctionality {
 		option (google.api.http) = { get: "/core-functionality/languages" };
 	}
 
+	//	Get Currency
+	rpc GetCurrency(GetCurrencyRequest) returns (Currency) {
+		option (google.api.http) = {
+			get: "/core-functionality/currencies/{id}"
+			additional_bindings: {
+				get: "/core-functionality/currencies/iso/{code}"
+			}
+		};
+	}
+
 	//	Get Currency Rate
 	rpc GetConversionRate(GetConversionRateRequest) returns (ConversionRate) {
 		option (google.api.http) = { get: "/core-functionality/conversion-rates" };
@@ -140,6 +150,11 @@ message Currency {
 	int32 standard_precision = 5;
 	int32 costing_precision = 6;
 }
+message GetCurrencyRequest {
+	int32 id = 1;
+	string code = 2;
+}
+
 
 // Conversion Rate
 message ConversionRate {
