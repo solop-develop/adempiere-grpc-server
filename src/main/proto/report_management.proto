@@ -37,7 +37,7 @@ service ReportManagement {
 			post: "/report-management/report/{id}",
 			body: "*"
 			additional_bindings: {
-				post: "/business-data/report/{id}/window/{table_name}/{record_id}",
+				post: "/report-management/report/{id}/window/{table_name}/{record_id}",
 				body: "*"
 			}
 		};
