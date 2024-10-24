@@ -57,7 +57,6 @@ jobs:
           gradle-version: 8.10
 
       - name: Run build
-        working-directory: another-build
         run: gradle build
 
       - name: Upload descriptor file artifact
