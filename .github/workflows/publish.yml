@@ -108,7 +108,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: adempiere-grpc-server.pb/adempiere-grpc-server.pb
-          
+
       - name: Upload Envoy config
         uses: skx/github-action-publish-binaries@master
         env:
