@@ -842,8 +842,22 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 		}
 
+		// improves performance in the query
+		String countSQL = "SELECT COUNT(*) FROM " + tableName + " AS " + tableName;
+		if (!whereClause.toString().trim().startsWith("WHERE")) {
+			countSQL += " WHERE ";
+		}
+		countSQL += whereClause;
+		countSQL = MRole.getDefault()
+			.addAccessSQL(
+				countSQL,
+				tableName,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			);
+
 		//	Count records
-		count = CountUtil.countRecords(parsedSQL, tableName, params);
+		count = CountUtil.countRecords(countSQL, tableName, params);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
