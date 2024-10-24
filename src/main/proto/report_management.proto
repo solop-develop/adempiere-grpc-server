@@ -36,8 +36,13 @@ service ReportManagement {
 		option (google.api.http) = {
 			post: "/report-management/report/{id}",
 			body: "*"
+			additional_bindings: {
+				post: "/business-data/report/{id}/window/{table_name}/{record_id}",
+				body: "*"
+			}
 		};
 	}
+
 	//	Request Print Format List
 	rpc ListPrintFormats(ListPrintFormatsRequest) returns (ListPrintFormatsResponse) {
 		option (google.api.http) = {
@@ -50,6 +55,7 @@ service ReportManagement {
 			}
 		};
 	}
+
 	//	Request Report View List
 	rpc ListReportViews(ListReportViewsRequest) returns (ListReportViewsResponse) {
 		option (google.api.http) = {
@@ -59,27 +65,35 @@ service ReportManagement {
 			}
 		};
 	}
+
 	//	Request Drill Tables List
 	rpc ListDrillTables(ListDrillTablesRequest) returns (ListDrillTablesResponse) {
-		option (google.api.http) = { get: "/report-management/drill-tables/{table_name}" };
+		option (google.api.http) = {
+			get: "/report-management/drill-tables/{table_name}"
+		};
 	}
+
 	//	Request Report Output
 	rpc GetReportOutput(GetReportOutputRequest) returns (data.ReportOutput) {
-		option (google.api.http) = { get: "/report-management/report-output/{report_id}/{table_name}" };
+		option (google.api.http) = {
+			get: "/report-management/report-output/{report_id}/{table_name}"
+		};
 	}
+
 	rpc CreateReportArchive(CreateReportArchiveRequest) returns (CreateReportArchiveResponse) {
 		option (google.api.http) = {
 			post: "/report-management/report/archive",
 			body: "*"
 		};
 	}
+
 	rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse) {
 		option (google.api.http) = {
 			post: "/report-management/report/send",
 			body: "*"
 		};
 	}
-	
+
 	// Print Entity Request
 	rpc PrintEntitiesBatch(PrintEntitiesBatchRequest) returns (PrintEntitiesBatchResponse) {
 		option (google.api.http) = { 
