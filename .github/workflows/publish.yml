@@ -37,14 +37,16 @@ jobs:
         run: echo "IMPLEMENTATION_VERSION=${{ github.event.release.tag_name }}" >> src/main/java/org/spin/base/version.properties
 
       - name: Build with Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.0.2
-          arguments: createRelease
+        uses: gradle/actions/setup-gradle@v4
         env:
           GITHUB_DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           GITHUB_DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
           GITHUB_DEPLOY_REPOSITORY: ${{ secrets.DEPLOY_REPOSITORY }}
+        with:
+          gradle-version: 8.10
+
+      - name: Run Create Release
+        run: gradle createRelease
 
       - name: Upload descriptor file artifact
         uses: actions/upload-artifact@v4
@@ -106,7 +108,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: adempiere-grpc-server.pb/adempiere-grpc-server.pb
-          
+
       - name: Upload Envoy config
         uses: skx/github-action-publish-binaries@master
         env:
@@ -195,7 +197,7 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Push alpine image in Docker Hub
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/alpine.Dockerfile
