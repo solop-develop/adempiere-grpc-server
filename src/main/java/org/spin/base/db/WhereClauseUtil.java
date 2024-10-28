@@ -584,9 +584,13 @@ public class WhereClauseUtil {
 			tableAlias = tableName;
 		}
 		final String tableNameAlias = tableAlias;
-		FilterManager.newInstance(filters).getConditions().stream()
-			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
+		FilterManager.newInstance(filters).getConditions()
+			.stream()
+			.filter(condition -> {
+				return !Util.isEmpty(condition.getColumnName(), true);
+			})
 			.forEach(condition -> {
+				// TODO: Validate range columns `_To`
 				MColumn column = table.getColumn(condition.getColumnName());
 				if (column == null || column.getAD_Column_ID() <= 0) {
 					// filter key does not exist as a column, next loop

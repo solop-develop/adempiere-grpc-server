@@ -844,7 +844,7 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		// improves performance in the query
 		String countSQL = "SELECT COUNT(*) FROM " + tableName + " AS " + tableName;
-		if (!whereClause.toString().trim().startsWith("WHERE")) {
+		if (!Util.isEmpty(whereClause.toString(), true) && !whereClause.toString().trim().startsWith("WHERE")) {
 			countSQL += " WHERE ";
 		}
 		countSQL += whereClause;
