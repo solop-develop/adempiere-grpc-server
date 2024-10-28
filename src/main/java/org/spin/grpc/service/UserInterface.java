@@ -138,6 +138,7 @@ import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.query.SortingManager;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -646,7 +647,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnName.toLowerCase())) {
 							final String uuid = rs.getString(index);
 							entityBuilder.setUuid(
-								ValueManager.validateNull(uuid)
+								StringManager.getValidString(uuid)
 							);
 						}
 						//	From field
@@ -775,7 +776,11 @@ public class UserInterface extends UserInterfaceImplBase {
 		List<Object> params = new ArrayList<>();
 
 		//	For dynamic condition
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, params);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(
+			request.getFilters(),
+			tableName,
+			params
+		);
 		if(!Util.isEmpty(dynamicWhere, true)) {
 			if(!Util.isEmpty(whereClause.toString(), true)) {
 				whereClause.append(" AND ");
@@ -870,7 +875,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -1074,7 +1079,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		int recordId = request.getId();
 		RecordAccess.Builder builder = RecordAccess.newBuilder()
 			.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getTableName()
 				)
 			)
@@ -1086,7 +1091,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			builder.addCurrentRoles(RecordAccessRole.newBuilder()
 				.setRoleId(role.getAD_Role_ID())
 				.setRoleName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						role.getName()
 					)
 				)
@@ -1101,7 +1106,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				RecordAccessRole.newBuilder()
 					.setRoleId(role.getAD_Role_ID())
 					.setRoleName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							role.getName()
 						)
 					)
@@ -1156,7 +1161,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			int tableId = table.getAD_Table_ID();
 			AtomicInteger recordId = new AtomicInteger(request.getId());
 			builder.setTableName(
-					ValueManager.validateNull(
+				StringManager.getValidString(
 						table.getTableName()
 					)
 				)
@@ -1185,7 +1190,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					RecordAccessRole.newBuilder()
 						.setRoleId(role.getAD_Role_ID())
 						.setRoleName(
-							ValueManager.validateNull(
+							StringManager.getValidString(
 								role.getName()
 							)
 						)
@@ -1299,8 +1304,8 @@ public class UserInterface extends UserInterfaceImplBase {
 							//	Set Language
 							if(Util.isEmpty(translationBuilder.getLanguage())) {
 								translationBuilder.setLanguage(
-									ValueManager.validateNull(
-										translation.get_ValueAsString("AD_Language")
+									StringManager.getValidString(
+										translation.get_ValueAsString(I_AD_Language.COLUMNNAME_AD_Language)
 									)
 								);
 							}
@@ -1539,7 +1544,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					String messageText = Msg.getMsg(Env.getAD_Language(Env.getCtx()), message.getValue(), arguments);
 					//	Set result message
 					builder.setMessageText(
-						ValueManager.validateNull(messageText)
+						StringManager.getValidString(messageText)
 					);
 				}
 			} catch (Exception e) {
@@ -1700,7 +1705,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		builder.addAllRecords(entitiesList);
 		//	Validate page token
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		builder.setRecordCount(count);
 		//	Return
@@ -1868,7 +1873,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				);
 			}
 			calloutBuilder.setResult(
-					ValueManager.validateNull(result)
+				StringManager.getValidString(result)
 				)
 				.setValues(contextValues)
 			;
@@ -2130,7 +2135,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		return builderList;
@@ -2326,7 +2331,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		query
@@ -2347,19 +2352,23 @@ public class UserInterface extends UserInterfaceImplBase {
 			return builder;
 		}
 
-		String mailText = ValueManager.validateNull(mailTemplate.getMailText())
-			+ ValueManager.validateNull(mailTemplate.getMailText2())
-			+ ValueManager.validateNull(mailTemplate.getMailText3())
+		String mailText = StringManager.getValidString(mailTemplate.getMailText())
+			+ StringManager.getValidString(mailTemplate.getMailText2())
+			+ StringManager.getValidString(mailTemplate.getMailText3())
 		;
 		builder.setId(mailTemplate.getR_MailText_ID())
 			.setName(
-				ValueManager.validateNull(mailTemplate.getName())
+				StringManager.getValidString(
+					mailTemplate.getName()
+				)
 			)
 			.setSubject(
-				ValueManager.validateNull(mailTemplate.getMailHeader())
+				StringManager.getValidString(
+					mailTemplate.getMailHeader()
+				)
 			)
 			.setMailText(
-				ValueManager.validateNull(mailText)
+				StringManager.getValidString(mailText)
 			)
 		;
 

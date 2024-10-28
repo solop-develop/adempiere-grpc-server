@@ -45,7 +45,7 @@ import org.spin.service.grpc.util.db.OperatorUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 /**
  * Class for handle SQL Where Clause
@@ -322,8 +322,10 @@ public class WhereClauseUtil {
 			}
 		} else if(operatorValue.equals(OperatorUtil.LIKE) || operatorValue.equals(OperatorUtil.NOT_LIKE)) {
 			columnName = "UPPER(" + columnName + ")";
-			String valueToFilter = ValueManager.validateNull(
-				(String) condition.getValue()
+			String valueToFilter = StringManager.getValidString(
+				StringManager.getStringFromObject(
+					condition.getValue()
+				)
 			);
 			// if (!Util.isEmpty(valueToFilter, true)) {
 			// 	if (!valueToFilter.startsWith("%")) {
@@ -604,7 +606,11 @@ public class WhereClauseUtil {
 				// TODO: Evaluate support to columnSQL
 				String columnName = tableNameAlias + "." + column.getColumnName();
 				condition.setColumnName(columnName);
-				String restriction = WhereClauseUtil.getRestrictionByOperator(condition, displayTypeId, params);
+				String restriction = WhereClauseUtil.getRestrictionByOperator(
+					condition,
+					displayTypeId,
+					params
+				);
 
 				whereClause.append(restriction);
 
