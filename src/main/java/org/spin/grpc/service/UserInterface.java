@@ -1690,7 +1690,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 
 		//	Get page and count
-		int count = CountUtil.countRecords(sqlWithRoleAccess, tableName, tableNameAlias, filterValues);
+		int count = countRecords(sqlWithRoleAccess, tableName, tableNameAlias, filterValues);
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
@@ -1712,6 +1712,18 @@ public class UserInterface extends UserInterfaceImplBase {
 		return builder;
 	}
 
+	/**
+	 * Count records
+	 * @param sql
+	 * @param tableName
+	 * @param tableNameAlias
+	 * @param parameters
+	 * TODO: Remove when is solution on grpc-utils
+	 * @return
+	 */
+	public static int countRecords(String sql, String tableName, String tableNameAlias, List<Object> parameters) {
+		return CountUtil.countRecords(sql, tableName, tableNameAlias, parameters, null);
+	}
 
 
 	@Override
