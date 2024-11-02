@@ -63,10 +63,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
 	implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
 	implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
-    implementation 'javax.xml.bind:jaxb-api:2.4.0-b180830.0359'
-	implementation 'com.sun.xml.bind:jaxb-impl:3.0.0-M4'
-	implementation 'com.sun.xml.bind:jaxb-core:3.0.0-M4'
-	implementation 'javax.activation:activation:1.1.1'
+    implementation 'javax.activation:activation:1.1.1'
 	//	Others
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
