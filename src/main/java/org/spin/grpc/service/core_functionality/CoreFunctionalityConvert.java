@@ -56,6 +56,7 @@ import org.spin.backend.grpc.core_functionality.UnitOfMeasure;
 import org.spin.backend.grpc.core_functionality.Warehouse;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -109,9 +110,26 @@ public class CoreFunctionalityConvert {
 		}
 		//	Set values
 		return builder.setId(currency.getC_Currency_ID())
-			.setIsoCode(ValueManager.validateNull(currency.getISO_Code()))
-			.setCurSymbol(ValueManager.validateNull(currency.getCurSymbol()))
-			.setDescription(ValueManager.validateNull(currency.getDescription()))
+			.setUuid(
+				StringManager.getValidString(
+					currency.getUUID()
+				)
+			)
+			.setIsoCode(
+				StringManager.getValidString(
+					currency.getISO_Code()
+				)
+			)
+			.setCurSymbol(
+				StringManager.getValidString(
+					currency.getCurSymbol()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					currency.getDescription()
+				)
+			)
 			.setStandardPrecision(currency.getStdPrecision())
 			.setCostingPrecision(currency.getCostingPrecision()
 		);
@@ -129,25 +147,78 @@ public class CoreFunctionalityConvert {
 			return builder;
 		}
 		builder.setId(country.getC_Country_ID())
-			.setCountryCode(ValueManager.validateNull(country.getCountryCode()))
-			.setName(ValueManager.validateNull(country.getName()))
-			.setDescription(ValueManager.validateNull(country.getDescription()))
+			.setUuid(
+				StringManager.getValidString(
+					country.getUUID()
+				)
+			)
+			.setCountryCode(
+				StringManager.getValidString(
+					country.getCountryCode()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					country.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					country.getDescription()
+				)
+			)
 			.setHasRegion(country.isHasRegion())
-			.setRegionName(ValueManager.validateNull(country.getRegionName()))
-			.setDisplaySequence(ValueManager.validateNull(country.getDisplaySequence()))
+			.setRegionName(
+				StringManager.getValidString(
+					country.getRegionName()
+				)
+			)
+			.setDisplaySequence(
+				StringManager.getValidString(
+					country.getDisplaySequence()
+				)
+			)
 			.setIsAddressLinesReverse(country.isAddressLinesReverse())
-			.setCaptureSequence(ValueManager.validateNull(country.getCaptureSequence()))
-			.setDisplaySequenceLocal(ValueManager.validateNull(country.getDisplaySequenceLocal()))
+			.setCaptureSequence(
+				StringManager.getValidString(
+					country.getCaptureSequence()
+				)
+			)
+			.setDisplaySequenceLocal(
+				StringManager.getValidString(
+					country.getDisplaySequenceLocal()
+				)
+			)
 			.setIsAddressLinesLocalReverse(country.isAddressLinesLocalReverse())
 			.setHasPostalAdd(country.isHasPostal_Add())
-			.setExpressionPhone(ValueManager.validateNull(country.getExpressionPhone()))
-			.setMediaSize(ValueManager.validateNull(country.getMediaSize()))
-			.setExpressionBankRoutingNo(ValueManager.validateNull(country.getExpressionBankRoutingNo()))
-			.setExpressionBankAccountNo(ValueManager.validateNull(country.getExpressionBankAccountNo()))
+			.setExpressionPhone(
+				StringManager.getValidString(
+					country.getExpressionPhone()
+				)
+			)
+			.setMediaSize(
+				StringManager.getValidString(
+					country.getMediaSize()
+				)
+			)
+			.setExpressionBankRoutingNo(
+				StringManager.getValidString(
+					country.getExpressionBankRoutingNo()
+				)
+			)
+			.setExpressionBankAccountNo(
+				StringManager.getValidString(
+					country.getExpressionBankAccountNo()
+				)
+			)
 			.setAllowCitiesOutOfList(country.isAllowCitiesOutOfList())
 			.setIsPostcodeLookup(country.isPostcodeLookup())
-			.setLanguage(ValueManager.validateNull(country.getAD_Language())
-		);
+			.setLanguage(
+				StringManager.getValidString(
+					country.getAD_Language()
+				)
+			)
+		;
 		//	Set Currency
 		if(country.getC_Currency_ID() != 0) {
 			builder.setCurrency(
@@ -372,10 +443,31 @@ public class CoreFunctionalityConvert {
 
 		unitOfMeasureBuilder
 			.setId(unitOfMeasure.getC_UOM_ID())
-			.setName(ValueManager.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Name)))
-			.setCode(ValueManager.validateNull(unitOfMeasure.getX12DE355()))
-			.setSymbol(ValueManager.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_UOMSymbol)))
-			.setDescription(ValueManager.validateNull(unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Description)))
+			.setUuid(
+				StringManager.getValidString(
+					unitOfMeasure.getUUID()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Name)
+				)
+			)
+			.setCode(
+				StringManager.getValidString(
+					unitOfMeasure.getX12DE355()
+				)
+			)
+			.setSymbol(
+				StringManager.getValidString(
+					unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_UOMSymbol)
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Description)
+				)
+			)
 			.setCostingPrecision(unitOfMeasure.getCostingPrecision())
 			.setStandardPrecision(unitOfMeasure.getStdPrecision())
 		;
