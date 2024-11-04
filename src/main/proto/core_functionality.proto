@@ -50,7 +50,6 @@ service CoreFunctionality {
 			}
 		};
 	}
-
 	//	Get Currency Rate
 	rpc GetConversionRate(GetConversionRateRequest) returns (ConversionRate) {
 		option (google.api.http) = { get: "/core-functionality/conversion-rates" };
@@ -61,6 +60,16 @@ service CoreFunctionality {
 		option (google.api.http) = { get: "/core-functionality/price-lists/{id}" };
 	}
 
+
+	//	Get Unit Of Measure
+	rpc GetUnitOfMeasure(GetUnitOfMeasureRequest) returns (UnitOfMeasure) {
+		option (google.api.http) = {
+			get: "/core-functionality/uom/{id}"
+			additional_bindings: {
+				get: "/core-functionality/uom/code/{code}"
+			}
+		};
+	}
 	//	Product Conversion UOM
 	rpc ListProductConversion(ListProductConversionRequest) returns (ListProductConversionResponse) {
 		option (google.api.http) = { get: "/core-functionality/product-conversions/{id}" };
@@ -111,26 +120,27 @@ message ListLanguagesResponse {
 // Country
 message Country {
 	int32 id = 1;
-	string country_code = 2;
-	string name = 3;
-	string description = 4;
-	bool has_region = 5;
-	string region_name = 6;
-	string display_sequence = 7;
-	bool is_address_lines_reverse = 8;
-	string capture_sequence = 9;
-	string display_sequence_local = 10;
-	bool is_address_lines_local_reverse = 11;
-	string expression_postal = 12;
-	bool has_postal_add = 13;
-	string expression_phone = 14;
-	string media_size = 15;
-	string expression_bank_routing_no = 16;
-	string expression_bank_account_no = 17;
-	string language = 18;
-	bool allow_cities_out_of_list = 19;
-	bool is_postcode_lookup = 20;
-	Currency currency = 21;
+	string uuid = 2;
+	string country_code = 3;
+	string name = 4;
+	string description = 5;
+	bool has_region = 6;
+	string region_name = 7;
+	string display_sequence = 8;
+	bool is_address_lines_reverse = 9;
+	string capture_sequence = 10;
+	string display_sequence_local = 11;
+	bool is_address_lines_local_reverse = 12;
+	string expression_postal = 13;
+	bool has_postal_add = 14;
+	string expression_phone = 15;
+	string media_size = 16;
+	string expression_bank_routing_no = 17;
+	string expression_bank_account_no = 18;
+	string language = 19;
+	bool allow_cities_out_of_list = 20;
+	bool is_postcode_lookup = 21;
+	Currency currency = 22;
 }
 
 // Request Currency Rate
@@ -144,11 +154,12 @@ message GetConversionRateRequest {
 // Currency info
 message Currency {
 	int32 id = 1;
-	string iso_code = 2;
-	string cur_symbol = 3;
-	string description = 4;
-	int32 standard_precision = 5;
-	int32 costing_precision = 6;
+	string uuid = 2;
+	string iso_code = 3;
+	string cur_symbol = 4;
+	string description = 5;
+	int32 standard_precision = 6;
+	int32 costing_precision = 7;
 }
 message GetCurrencyRequest {
 	int32 id = 1;
@@ -189,16 +200,25 @@ message Warehouse {
 	string description = 3;
 }
 
-// Product Unit of Measure
+
+// Unit of Measure
 message UnitOfMeasure {
 	int32 id = 1;
-	string code = 2;
-	string symbol = 3;
-	string name = 4;
-	string description = 5;
-	int32 standard_precision = 6;
-	int32 costing_precision = 7;
+	string uuid = 2;
+	string code = 3;
+	string symbol = 4;
+	string name = 5;
+	string description = 6;
+	int32 standard_precision = 7;
+	int32 costing_precision = 8;
 }
+message GetUnitOfMeasureRequest {
+	int32 id = 1;
+	string code = 2;
+}
+
+
+// Product Unit of Measure
 message ProductConversion {
 	int32 id = 1;
 	UnitOfMeasure uom = 2;

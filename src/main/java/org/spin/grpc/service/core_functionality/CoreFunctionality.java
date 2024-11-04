@@ -20,12 +20,14 @@ import java.util.Properties;
 
 import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_C_Country;
+import org.adempiere.core.domains.models.I_C_UOM;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLanguage;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MSystem;
+import org.compiere.model.MUOM;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.Query;
 import org.compiere.util.CCache;
@@ -41,6 +43,7 @@ import org.spin.backend.grpc.core_functionality.GetCountryRequest;
 import org.spin.backend.grpc.core_functionality.GetCurrencyRequest;
 import org.spin.backend.grpc.core_functionality.GetPriceListRequest;
 import org.spin.backend.grpc.core_functionality.GetSystemInfoRequest;
+import org.spin.backend.grpc.core_functionality.GetUnitOfMeasureRequest;
 import org.spin.backend.grpc.core_functionality.Language;
 import org.spin.backend.grpc.core_functionality.ListLanguagesRequest;
 import org.spin.backend.grpc.core_functionality.ListLanguagesResponse;
@@ -49,10 +52,12 @@ import org.spin.backend.grpc.core_functionality.ListProductConversionResponse;
 import org.spin.backend.grpc.core_functionality.PriceList;
 import org.spin.backend.grpc.core_functionality.ProductConversion;
 import org.spin.backend.grpc.core_functionality.SystemInfo;
+import org.spin.backend.grpc.core_functionality.UnitOfMeasure;
 import org.spin.backend.grpc.core_functionality.CoreFunctionalityGrpc.CoreFunctionalityImplBase;
 import org.spin.base.Version;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -93,7 +98,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 		MSystem adempiereInfo = MSystem.get(Env.getCtx());
 		if (adempiereInfo != null) {
-			String name = ValueManager.validateNull(
+			String name = StringManager.getValidString(
 				adempiereInfo.getName()
 			);
 			if (name.trim().equals("?")) {
@@ -101,17 +106,17 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			}
 			builder.setName(name)
 				.setReleaseNo(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						adempiereInfo.getReleaseNo()
 					)
 				)
 				.setVersion(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						adempiereInfo.getVersion()
 					)
 				)
 				.setLastBuildInfo(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						adempiereInfo.getLastBuildInfo()
 					)
 				)
@@ -125,17 +130,17 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				)
 			)
 			.setBackendMainVersion(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					Version.MAIN_VERSION
 				)
 			)
 			.setBackendImplementationVersion(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					Version.IMPLEMENTATION_VERSION
 				)
 			)
 			.setLogoUrl(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					System.getenv("SYSTEM_LOGO_URL")
 				)
 			)
@@ -281,30 +286,30 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 		}
 		return languaBuilder
 			.setLanguage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					language.getAD_Language()
 				)
 			)
 			.setCountryCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					language.getCountryCode()
 				)
 			)
 			.setLanguageIso(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					language.getLanguageISO()
 				)
 			)
 			.setLanguageName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					language.getName()
 				)
 			)
 			.setDatePattern(
-				ValueManager.validateNull(datePattern)
+				StringManager.getValidString(datePattern)
 			)
 			.setTimePattern(
-				ValueManager.validateNull(timePattern)
+				StringManager.getValidString(timePattern)
 			)
 			.setIsBaseLanguage(
 				language.isBaseLanguage()
@@ -436,6 +441,56 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			throw new AdempiereException("@M_PriceList_ID@ @NotFound@");
 		}
 		PriceList.Builder builder = CoreFunctionalityConvert.convertPriceList(priceList);
+		return builder;
+	}
+
+
+
+	@Override
+	public void getUnitOfMeasure(GetUnitOfMeasureRequest request, StreamObserver<UnitOfMeasure> responseObserver) {
+		try {
+			UnitOfMeasure.Builder languagesList = getUnitOfMeasure(request);
+			responseObserver.onNext(languagesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getMessage())
+					.augmentDescription(e.getMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private UnitOfMeasure.Builder getUnitOfMeasure(GetUnitOfMeasureRequest request) {
+		if (request.getId() <= 0 && Util.isEmpty(request.getCode(), true)) {
+			throw new AdempiereException("@FillMandatory@ @C_UOM_ID@");
+		}
+
+		MUOM unitOfMeasure = null;
+		if (request.getId() > 0) {
+			unitOfMeasure = MUOM.get(Env.getCtx(), request.getId());
+		} else if (Util.isEmpty(request.getCode())) {
+			unitOfMeasure = new Query(
+				Env.getCtx(),
+				I_C_UOM.Table_Name,
+				"X12DE355 = ?",
+				null
+			)
+				.setParameters(request.getCode())
+				.first()
+			;
+		}
+		if (unitOfMeasure == null || unitOfMeasure.getC_UOM_ID() <= 0) {
+			throw new AdempiereException("@C_UOM_ID@ @NotFound@");
+		}
+	
+		UnitOfMeasure.Builder builder = CoreFunctionalityConvert.convertUnitOfMeasure(
+			unitOfMeasure
+		);
 		return builder;
 	}
 
