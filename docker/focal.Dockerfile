@@ -35,7 +35,9 @@ RUN rm -rf /var/lib/apt/lists/* && \
 		tzdata \
 		bash \
 		fontconfig \
-		ttf-dejavu && \
+		ttf-dejavu \
+		fontconfig-config \
+		ttf-mscorefonts-installer && \
 	echo "Set Timezone..." && \
 	echo $TZ > /etc/timezone
 
