@@ -49,12 +49,14 @@ jobs:
 
       - name: Build with Gradle
         uses: gradle/actions/setup-gradle@v4
-        env:
-          ORG_GRADLE_PROJECT_deployUsername: ${{ secrets.DEPLOY_USER }}
-          ORG_GRADLE_PROJECT_deployToken: ${{ secrets.DEPLOY_TOKEN }}
         with:
           gradle-version: 8.10
-          arguments: build
+
+      - name: Run build
+        run: gradle build
+        env:
+          GITHUB_DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          GITHUB_DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Upload descriptor file artifact
         uses: actions/upload-artifact@v4
