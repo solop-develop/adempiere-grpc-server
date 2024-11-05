@@ -1812,7 +1812,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					+ "WHERE p.DocStatus IN('CO', 'CL') "
 					+ "AND p.C_POS_ID = ? "
 					+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl WHERE bsl.C_Payment_ID = p.C_Payment_ID AND bsl.C_BankStatement_ID = ?) "
-					+ "GROUP BY pm.UUID, pm.Name, pm.TenderType, p.C_Currency_ID, p.IsReceipt";
+					+ "GROUP BY pm.C_PaymentMethod_ID, pm.Name, pm.TenderType, p.C_Currency_ID, p.IsReceipt";
 			//	Count records
 			List<Object> parameters = new ArrayList<Object>();
 			parameters.add(pos.getC_POS_ID());
