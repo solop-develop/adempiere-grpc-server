@@ -30,6 +30,7 @@ EXPOSE ${SERVER_PORT}
 # Add operative system dependencies
 RUN rm -rf /var/lib/apt/lists/* && \
 	rm -rf /tmp/* && \
+	echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && \
 	apt-get update && \
 	apt-get install -y \
 		tzdata \
