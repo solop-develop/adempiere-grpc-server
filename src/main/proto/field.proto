@@ -181,11 +181,12 @@ message ZoomWindow {
 	string name = 3;
 	string description = 4;
 	bool is_sales_transaction = 5;
+	bool is_purchase = 6;
 	// tab
-	int32 tab_id = 6;
-	string tab_uuid = 7;
-	string tab_name = 8;
-	bool is_parent_tab = 9;
+	int32 tab_id = 7;
+	string tab_uuid = 8;
+	string tab_name = 9;
+	bool is_parent_tab = 10;
 }
 message ListZoomWindowsResponse {
 	string table_name = 1;

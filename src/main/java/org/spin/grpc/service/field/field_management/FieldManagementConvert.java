@@ -29,6 +29,7 @@ import org.spin.backend.grpc.field.DefaultValue;
 import org.spin.backend.grpc.field.ZoomWindow;
 import org.spin.base.util.LookupUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -96,10 +97,13 @@ public class FieldManagementConvert {
 
 	/**
 	 * Convert Zoom Window from ID
+	 * @param context
 	 * @param windowId
+	 * @param tableName
+	 * @param isPurchase
 	 * @return
 	 */
-	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName) {
+	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName, boolean isPurchase) {
 		String language = Env.getAD_Language(context);
 		boolean isBaseLanguage = Env.isBaseLanguage(context, null);
 
@@ -109,27 +113,30 @@ public class FieldManagementConvert {
 				window.getAD_Window_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getUUID()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getDescription()
 				)
 			)
 			.setIsSalesTransaction(
 				window.isSOTrx()
 			)
+			.setIsPurchase(
+				isPurchase
+			)
 		;
 		if (!isBaseLanguage) {
 			builder.setName(
-					ValueManager.validateNull(
+				StringManager.getValidString(
 						window.get_Translation(
 							I_AD_Window.COLUMNNAME_Name,
 							language
@@ -137,7 +144,7 @@ public class FieldManagementConvert {
 					)
 				)
 				.setDescription(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						window.get_Translation(
 							I_AD_Window.COLUMNNAME_Description,
 							language
@@ -165,12 +172,12 @@ public class FieldManagementConvert {
 					tab.getAD_Tab_ID()
 				)
 				.setTabUuid(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						tab.getUUID()
 					)
 				)
 				.setTabName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						tab.getName()
 					)
 				)
@@ -180,7 +187,7 @@ public class FieldManagementConvert {
 			;
 			if (!isBaseLanguage) {
 				builder.setTabName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						window.get_Translation(
 							I_AD_Tab.COLUMNNAME_Name,
 							language

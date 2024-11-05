@@ -78,6 +78,7 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -629,7 +630,9 @@ public class FieldManagementLogic {
 					)
 				);
 				valueObject.setTableName(
-					ValueManager.validateNull(reference.TableName)
+					StringManager.getValidString(
+						reference.TableName
+					)
 				);
 				builder.addRecords(valueObject.build());
 			}
@@ -642,7 +645,9 @@ public class FieldManagementLogic {
 		//	
 		builder.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(
+					nexPageToken
+				)
 			)
 		;
 		//	Return
@@ -772,7 +777,9 @@ public class FieldManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(
+				nexPageToken
+			)
 		);
 
 		return builder;
@@ -810,12 +817,12 @@ public class FieldManagementLogic {
 		);
 
 		builderList.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					lookupInfo.TableName
 				)
 			)
 			.setKeyColumnName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					lookupInfo.KeyColumn
 				)
 			)
@@ -823,7 +830,7 @@ public class FieldManagementLogic {
 				keyColumnsList
 			)
 			.setDisplayColumnName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					lookupInfo.DisplayColumn
 				)
 			)
@@ -837,7 +844,8 @@ public class FieldManagementLogic {
 			ZoomWindow.Builder windowSalesBuilder = FieldManagementConvert.convertZoomWindow(
 				context,
 				lookupInfo.ZoomWindow,
-				lookupInfo.TableName
+				lookupInfo.TableName,
+				false
 			);
 			builderList.addZoomWindows(
 				windowSalesBuilder.build()
@@ -848,7 +856,8 @@ public class FieldManagementLogic {
 			ZoomWindow.Builder windowPurchaseBuilder = FieldManagementConvert.convertZoomWindow(
 				context,
 				lookupInfo.ZoomWindowPO,
-				lookupInfo.TableName
+				lookupInfo.TableName,
+				true
 			);
 			builderList.addZoomWindows(
 				windowPurchaseBuilder.build()
@@ -930,17 +939,17 @@ public class FieldManagementLogic {
 				parentTab.getAD_Tab_ID()
 			)
 			.setParentTabUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					parentTab.getUUID()
 				)
 			)
 			.setKeyColumn(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					parentKeyColum
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					parentTab.get_Translation(
 						I_AD_Tab.COLUMNNAME_Name
 					)
