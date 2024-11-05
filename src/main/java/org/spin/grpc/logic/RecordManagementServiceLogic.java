@@ -47,6 +47,7 @@ import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
 import org.spin.backend.grpc.record_management.ZoomWindow;
 import org.spin.base.util.RecordUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -100,7 +101,7 @@ public class RecordManagementServiceLogic {
 		});
 		ToggleIsActiveRecordsBatchResponse.Builder builder = ToggleIsActiveRecordsBatchResponse.newBuilder()
 			.setMessage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					errorMessage.toString()
 				)
 			)
@@ -139,7 +140,7 @@ public class RecordManagementServiceLogic {
 		});
 		ToggleIsActiveRecordResponse.Builder builder = ToggleIsActiveRecordResponse.newBuilder()
 			.setMessage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					errorMessage.toString()
 				)
 			)
@@ -151,10 +152,13 @@ public class RecordManagementServiceLogic {
 
 	/**
 	 * Convert Zoom Window from ID
+	 * @param context
 	 * @param windowId
+	 * @param tableName
+	 * @param isPurchase
 	 * @return
 	 */
-	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName) {
+	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName, boolean isPurchase) {
 		String language = Env.getAD_Language(context);
 		boolean isBaseLanguage = Env.isBaseLanguage(context, null);
 
@@ -164,27 +168,30 @@ public class RecordManagementServiceLogic {
 				window.getAD_Window_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getUUID()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getDescription()
 				)
 			)
 			.setIsSalesTransaction(
 				window.isSOTrx()
 			)
+			.setIsPurchase(
+				isPurchase
+			)
 		;
 		if (!isBaseLanguage) {
 			builder.setName(
-					ValueManager.validateNull(
+				StringManager.getValidString(
 						window.get_Translation(
 							I_AD_Window.COLUMNNAME_Name,
 							language
@@ -192,7 +199,7 @@ public class RecordManagementServiceLogic {
 					)
 				)
 				.setDescription(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						window.get_Translation(
 							I_AD_Window.COLUMNNAME_Description,
 							language
@@ -220,12 +227,12 @@ public class RecordManagementServiceLogic {
 					tab.getAD_Tab_ID()
 				)
 				.setTabUuid(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						tab.getUUID()
 					)
 				)
 				.setTabName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						tab.getName()
 					)
 				)
@@ -235,7 +242,7 @@ public class RecordManagementServiceLogic {
 			;
 			if (!isBaseLanguage) {
 				builder.setTabName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						window.get_Translation(
 							I_AD_Tab.COLUMNNAME_Name,
 							language
@@ -271,12 +278,12 @@ public class RecordManagementServiceLogic {
 				table.getAD_Table_ID()
 			)
 			.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					table.getTableName()
 				)
 			)
 			.setKeyColumnName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					keyColumnName
 				)
 			)
@@ -289,7 +296,8 @@ public class RecordManagementServiceLogic {
 			ZoomWindow.Builder windowSalesBuilder = convertZoomWindow(
 				table.getCtx(),
 				table.getAD_Window_ID(),
-				table.getTableName()
+				table.getTableName(),
+				false
 			);
 			builder.addZoomWindows(
 				windowSalesBuilder.build()
@@ -299,7 +307,8 @@ public class RecordManagementServiceLogic {
 			ZoomWindow.Builder windowPurchaseBuilder = convertZoomWindow(
 				table.getCtx(),
 				table.getPO_Window_ID(),
-				table.getTableName()
+				table.getTableName(),
+				true
 			);
 			builder.addZoomWindows(
 				windowPurchaseBuilder.build()
@@ -429,12 +438,12 @@ public class RecordManagementServiceLogic {
 					referenceTab.getAD_Tab_ID()
 				)
 				.setTableName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						zoomQuery.getZoomTableName()
 					)
 				)
 				.setWhereClause(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						zoomQuery.getWhereClause()
 					)
 				)
@@ -445,7 +454,7 @@ public class RecordManagementServiceLogic {
 					zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")"
 				)
 				.setColumnName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						zoomQuery.getZoomColumnName()
 					)
 				)

@@ -15,8 +15,12 @@
  *************************************************************************************/
 package org.spin.base.util;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_WF_EventAudit;
 import org.adempiere.core.domains.models.I_AD_WF_NextCondition;
 import org.adempiere.core.domains.models.I_AD_WF_Node;
@@ -24,6 +28,7 @@ import org.adempiere.core.domains.models.I_AD_WF_NodeNext;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.compiere.model.MColumn;
+import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.MWindow;
@@ -54,6 +59,7 @@ import org.spin.backend.grpc.wf.WorkflowProcess;
 import org.spin.backend.grpc.wf.WorkflowState;
 import org.spin.backend.grpc.wf.WorkflowTransition;
 import org.spin.backend.grpc.wf.ZoomWindow;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -79,7 +85,7 @@ public class WorkflowUtil {
 				workflowProcess.getAD_Workflow_ID()
 			)
 			.setWorkflowName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflow.get_Translation(
 						MWorkflow.COLUMNNAME_Name
 					)
@@ -89,12 +95,12 @@ public class WorkflowUtil {
 				workflowProcess.getRecord_ID()
 			)
 			.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					table.getTableName()
 				)
 			)
 			.setTextMessage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					Msg.parseTranslation(
 						workflowProcess.getCtx(),
 						workflowProcess.getTextMsg()
@@ -120,7 +126,7 @@ public class WorkflowUtil {
 					responsible.getAD_WF_Responsible_ID()
 				)
 				.setResponsibleName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						responsible.getName()
 					)
 				)
@@ -132,7 +138,7 @@ public class WorkflowUtil {
 					user.getAD_User_ID()
 				)
 				.setUserName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						user.getName()
 					)
 				)
@@ -180,31 +186,31 @@ public class WorkflowUtil {
 				workflow.getAD_Workflow_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflow.getUUID()
 				)
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflow.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflow.get_Translation(
 						MWorkflow.COLUMNNAME_Name
 					)
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflow.get_Translation(
 						MWorkflow.COLUMNNAME_Description
 					)
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflow.get_Translation(
 						MWorkflow.COLUMNNAME_Help
 					)
@@ -214,7 +220,7 @@ public class WorkflowUtil {
 				workflow.getPriority()
 			)
 			.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -232,7 +238,7 @@ public class WorkflowUtil {
 					responsible.getAD_WF_Responsible_ID()
 				)
 				.setResponsibleName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						responsible.getName()
 					)
 				)
@@ -297,21 +303,21 @@ public class WorkflowUtil {
 				node.getAD_WF_Node_ID()
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					node.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					node.get_Translation(MWFNode.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					node.get_Translation(MWFNode.COLUMNNAME_Description)
 				))
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					node.get_Translation(MWFNode.COLUMNNAME_Help)
 				)
 			)
@@ -326,7 +332,7 @@ public class WorkflowUtil {
 					responsible.getAD_WF_Responsible_ID()
 				)
 				.setResponsibleName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						responsible.getName()
 					)
 				)
@@ -407,7 +413,7 @@ public class WorkflowUtil {
 				nodeNext.getAD_WF_Node_ID()
 			)
 			.setNodeNextName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					nodeNext.getName()
 				)
 			)
@@ -415,12 +421,12 @@ public class WorkflowUtil {
 				transition.getAD_WF_NodeNext_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					transition.getUUID()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					transition.getDescription()
 				)
 			)
@@ -459,7 +465,7 @@ public class WorkflowUtil {
 				condition.getAD_WF_NextCondition_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					condition.getUUID()
 				)
 			)
@@ -467,7 +473,7 @@ public class WorkflowUtil {
 				condition.getSeqNo()
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					condition.getValue()
 				)
 			)
@@ -475,7 +481,7 @@ public class WorkflowUtil {
 
 		MColumn column = MColumn.get(condition.getCtx(), condition.getAD_Column_ID());
 		builder.setColumnName(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				column.getColumnName()
 			)
 		);
@@ -527,7 +533,7 @@ public class WorkflowUtil {
 				node.getAD_WF_Node_ID()
 			)
 			.setNodeName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					node.get_Translation(
 						MWFNode.COLUMNNAME_Name
 					)
@@ -537,12 +543,12 @@ public class WorkflowUtil {
 				workflowEventAudit.getRecord_ID()
 			)
 			.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					table.getTableName()
 				)
 			)
 			.setTextMessage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					Msg.parseTranslation(workflowEventAudit.getCtx(), workflowEventAudit.getTextMsg())
 				)
 			)
@@ -552,17 +558,17 @@ public class WorkflowUtil {
 				)
 			)
 			.setAttributeName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflowEventAudit.getAttributeName()
 				)
 			)
 			.setOldValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflowEventAudit.getOldValue()
 				)
 			)
 			.setNewValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflowEventAudit.getNewValue()
 				)
 			)
@@ -574,7 +580,7 @@ public class WorkflowUtil {
 					responsible.getAD_WF_Responsible_ID()
 				)
 				.setResponsibleName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						responsible.getName()
 					)
 				)
@@ -586,7 +592,7 @@ public class WorkflowUtil {
 					user.getAD_User_ID()
 				)
 				.setUserName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						user.getName()
 					)
 				)
@@ -646,12 +652,12 @@ public class WorkflowUtil {
 				workflowActivity.getAD_WF_Activity_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					workflowActivity.getUUID()
 				)
 			)
 			.setTextMessage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					Msg.parseTranslation(workflowActivity.getCtx(), workflowActivity.getTextMsg())
 				)
 			)
@@ -671,7 +677,7 @@ public class WorkflowUtil {
 					responsible.getAD_WF_Responsible_ID()
 				)
 				.setResponsibleName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						responsible.getName()
 					)
 				)
@@ -683,7 +689,7 @@ public class WorkflowUtil {
 					user.getAD_User_ID()
 				)
 				.setUserName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						user.getName()
 					)
 				)
@@ -695,7 +701,7 @@ public class WorkflowUtil {
 				workflowActivity.getRecord_ID()
 			)
 			.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -711,12 +717,22 @@ public class WorkflowUtil {
 		}
 
 		if (table.getAD_Window_ID() > 0) {
-			ZoomWindow.Builder builderZoom = convertZoomWindow(table.getAD_Window_ID());
+			ZoomWindow.Builder builderZoom = convertZoomWindow(
+				workflowActivity.getCtx(),
+				table.getAD_Window_ID(),
+				table.getTableName(),
+				false
+			);
 			builder.addZoomWindows(builderZoom);
 		}
 		// Purchase Window
 		if (table.getPO_Window_ID() > 0) {
-			ZoomWindow.Builder builderZoom = convertZoomWindow(table.getPO_Window_ID());
+			ZoomWindow.Builder builderZoom = convertZoomWindow(
+				workflowActivity.getCtx(),
+				table.getPO_Window_ID(),
+				table.getTableName(),
+				true
+			);
 			builder.addZoomWindows(builderZoom);
 		}
 
@@ -724,42 +740,111 @@ public class WorkflowUtil {
 			builder.setLastAlert(ValueManager.getTimestampFromDate(workflowActivity.getDateLastAlert()));
 		}
 		//	
-  		return builder;
+		return builder;
 	}
 
+	/**
+	 * Convert Zoom Window from ID
+	 * @param context
+	 * @param windowId
+	 * @param tableName
+	 * @param isPurchase
+	 * @return
+	 */
+	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName, boolean isPurchase) {
+		String language = Env.getAD_Language(context);
+		boolean isBaseLanguage = Env.isBaseLanguage(context, null);
 
-	public static ZoomWindow.Builder convertZoomWindow(int windowId) {
-		MWindow window = MWindow.get(
-			Env.getCtx(),
-			windowId
-		);
-		//	Return
-		return ZoomWindow.newBuilder()
+		MWindow window = MWindow.get(context, windowId);
+		ZoomWindow.Builder builder = ZoomWindow.newBuilder()
 			.setId(
 				window.getAD_Window_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getUUID()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
-					window.get_Translation(
-						I_AD_Window.COLUMNNAME_Name
-					)
+				StringManager.getValidString(
+					window.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
-					window.get_Translation(
-						I_AD_Window.COLUMNNAME_Description
-					)
+				StringManager.getValidString(
+					window.getDescription()
 				)
 			)
 			.setIsSalesTransaction(
 				window.isSOTrx()
 			)
+			.setIsPurchase(isPurchase)
 		;
+		if (!isBaseLanguage) {
+			builder.setName(
+				StringManager.getValidString(
+						window.get_Translation(
+							I_AD_Window.COLUMNNAME_Name,
+							language
+						)
+					)
+				)
+				.setDescription(
+					StringManager.getValidString(
+						window.get_Translation(
+							I_AD_Window.COLUMNNAME_Description,
+							language
+						)
+					)
+				)
+			;
+		}
+
+		MTable table = MTable.get(context, tableName);
+		Optional<MTab> maybeTab = Arrays.asList(
+			window.getTabs(false, null)
+		)
+			.stream().filter(currentTab -> {
+				if (!currentTab.isActive()) {
+					return false;
+				}
+				return currentTab.getAD_Table_ID() == table.getAD_Table_ID();
+			})
+			.findFirst()
+		;
+		if (maybeTab.isPresent()) {
+			MTab tab = maybeTab.get();
+			builder.setTabId(
+					tab.getAD_Tab_ID()
+				)
+				.setTabUuid(
+					StringManager.getValidString(
+						tab.getUUID()
+					)
+				)
+				.setTabName(
+					StringManager.getValidString(
+						tab.getName()
+					)
+				)
+				.setIsParentTab(
+					tab.getTabLevel() == 0
+				)
+			;
+			if (!isBaseLanguage) {
+				builder.setTabName(
+					StringManager.getValidString(
+						window.get_Translation(
+							I_AD_Tab.COLUMNNAME_Name,
+							language
+						)
+					)
+				);
+			}
+		}
+
+		//	Return
+		return builder;
 	}
+
 }
