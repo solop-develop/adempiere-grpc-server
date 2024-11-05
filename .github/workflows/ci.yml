@@ -53,7 +53,7 @@ jobs:
           gradle-version: 8.10
 
       - name: Run build
-        run: ./gradlew build
+        run: gradle build
         env:
           GITHUB_DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           GITHUB_DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
