@@ -250,6 +250,9 @@ public class CashManagement {
 	 * @param payment
 	 */
 	public static void addPaymentToCash(MPOS pos, MPayment payment) {
+		if(payment.getC_BankAccount_ID() != pos.getC_BankAccount_ID()) {
+			return;
+		}
 		//	validate document type
 		int cashClosingDocumentTypeId = pos.get_ValueAsInt("POSCashClosingDocumentType_ID");
 		//	Create Cash closing
@@ -399,7 +402,7 @@ public class CashManagement {
 		MBankStatement bankStatement = getCurrentCashClosing(pos, payment.getDateTrx(), false, payment.get_TrxName());
 		if (bankStatement == null || bankStatement.get_ID() <= 0) {
 			bankStatement = new MBankStatement(payment.getCtx() , 0 , payment.get_TrxName());
-			bankStatement.setC_BankAccount_ID(payment.getC_BankAccount_ID());
+			bankStatement.setC_BankAccount_ID(pos.getC_BankAccount_ID());
 			bankStatement.setStatementDate(payment.getDateAcct());
 			bankStatement.setC_DocType_ID(cashClosingDocumentTypeId);
 			bankStatement.setAD_Org_ID(pos.getAD_Org_ID());

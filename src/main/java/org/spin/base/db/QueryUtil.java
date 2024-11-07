@@ -85,7 +85,7 @@ public class QueryUtil {
 				queryToAdd.append(", ")
 					.append(columnSQL)
 					.append(" AS ")
-					.append(columnName)
+					.append("\"" + columnName + "\"")
 				;
 			}
 
@@ -99,39 +99,35 @@ public class QueryUtil {
 			);
 
 			if (ReferenceUtil.validateReference(displayTypeId)) {
-				// Add display virutal column
-				if (!Util.isEmpty(columnSQL, true)) {
-					StringBuffer displayColumnSQL = new StringBuffer()
-						.append(", ")
-						.append(columnSQL)
-						.append(" AS ")
-						.append(
-							LookupUtil.getDisplayColumnName(
-								columnName
-							)
-						)
-					;
-					queryToAdd.append(displayColumnSQL);
-					continue;
-				}
-
 				if (columnName.equals(tableName + "_ID")) {
 					// overwrite to correct sub-query table alias
 					displayTypeId = DisplayType.ID;
 				}
-				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(column.getCtx())
-					.getReferenceInfo(
-						displayTypeId,
-						referenceValueId,
-						columnName,
-						language.getAD_Language(),
-						tableAlias
-					);
+				final ReferenceInfo referenceInfo = ReferenceUtil.getInstance(
+					column.getCtx()
+				)
+				.getReferenceInfo(
+					displayTypeId,
+					referenceValueId,
+					columnName,
+					language.getAD_Language(),
+					tableAlias
+				);
 				if(referenceInfo != null) {
+					String joinClause = referenceInfo.getJoinValue(columnName, tableAlias);
+					String displayColumn = referenceInfo.getDisplayValue(columnName);
+				
+					// Add display virutal column
+					if (!Util.isEmpty(columnSQL, true)) {
+						if (!Util.isEmpty(joinClause, true)) {
+							joinClause = joinClause.replace(tableAlias + "." + columnName, columnSQL);
+						} else {
+							displayColumn = displayColumn.replace(tableAlias + "." + columnName, columnSQL);
+						}
+					}
+
 					queryToAdd.append(", ");
-					final String displayColumn = referenceInfo.getDisplayValue(columnName);
 					queryToAdd.append(displayColumn);
-					final String joinClause = referenceInfo.getJoinValue(columnName, tableAlias);
 					joinsToAdd.append(joinClause);
 				}
 			}
@@ -188,7 +184,7 @@ public class QueryUtil {
 				queryToAdd.append(", ")
 					.append(columnSQL)
 					.append(" AS ")
-					.append(columnName)
+					.append("\"" + columnName + "\"")
 				;
 			}
 
@@ -210,22 +206,6 @@ public class QueryUtil {
 			);
 
 			if (ReferenceUtil.validateReference(displayTypeId)) {
-				// Add display virutal column
-				if (!Util.isEmpty(columnSQL, true)) {
-					StringBuffer displayColumnSQL = new StringBuffer()
-						.append(", ")
-						.append(columnSQL)
-						.append(" AS ")
-						.append(
-							LookupUtil.getDisplayColumnName(
-								columnName
-							)
-						)
-					;
-					queryToAdd.append(displayColumnSQL);
-					continue;
-				}
-
 				if (columnName.equals(tableName + "_ID")) {
 					// overwrite to correct sub-query table alias
 					displayTypeId = DisplayType.ID;
@@ -240,10 +220,20 @@ public class QueryUtil {
 					tableAlias
 				);
 				if(referenceInfo != null) {
+					String joinClause = referenceInfo.getJoinValue(columnName, tableAlias);
+					String displayColumn = referenceInfo.getDisplayValue(columnName);
+				
+					// Add display virutal column
+					if (!Util.isEmpty(columnSQL, true)) {
+						if (!Util.isEmpty(joinClause, true)) {
+							joinClause = joinClause.replace(tableAlias + "." + columnName, columnSQL);
+						} else {
+							displayColumn = displayColumn.replace(tableAlias + "." + columnName, columnSQL);
+						}
+					}
+
 					queryToAdd.append(", ");
-					final String displayColumn = referenceInfo.getDisplayValue(columnName);
 					queryToAdd.append(displayColumn);
-					final String joinClause = referenceInfo.getJoinValue(columnName, tableAlias);
 					joinsToAdd.append(joinClause);
 				}
 			}
@@ -372,6 +362,7 @@ public class QueryUtil {
 					);
 					final String displayColumn = referenceInfo.getDisplayValue(columnName);
 					queryToAdd.append(displayColumn);
+
 					String joinClause = referenceInfo.getJoinValue(columnName, tableName);
 					if (viewColumn.getAD_Column_ID() <= 0) {
 						// sub query
