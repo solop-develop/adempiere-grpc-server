@@ -860,9 +860,10 @@ public class UserInterface extends UserInterfaceImplBase {
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
 			);
+		String parsedCountSQL = RecordUtil.addSearchValueAndGet(countSQL, tableName, request.getSearchValue(), false, new ArrayList<Object>());
 
 		//	Count records
-		count = CountUtil.countRecords(countSQL, tableName, params);
+		count = CountUtil.countRecords(parsedCountSQL, tableName, params);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
