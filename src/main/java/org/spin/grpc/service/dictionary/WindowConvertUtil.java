@@ -63,6 +63,7 @@ import org.spin.dictionary.util.WindowUtil;
 import org.spin.model.MADFieldCondition;
 import org.spin.model.MADFieldDefinition;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class WindowConvertUtil {
@@ -84,12 +85,12 @@ public class WindowConvertUtil {
 		//	
 		Window.Builder builder = Window.newBuilder()
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getUUID()
 				)
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					window.getUUID()
 				)
 			)
@@ -98,15 +99,27 @@ public class WindowConvertUtil {
 			)
 			.setName(window.getName())
 			.setDescription(
-				ValueManager.validateNull(window.getDescription())
+				StringManager.getValidString(
+					window.getDescription()
+				)
 			)
 			.setHelp(
-				ValueManager.validateNull(window.getHelp())
+				StringManager.getValidString(
+					window.getHelp()
+				)
 			)
 			.setWindowType(
-				ValueManager.validateNull(window.getWindowType())
+				StringManager.getValidString(
+					window.getWindowType()
+				)
 			)
 			.setIsSalesTransaction(window.isSOTrx())
+			.setIsActive(
+				window.isActive()
+			)
+			.setIsBetaFunctionality(
+				window.isBetaFunctionality()
+			)
 		;
 		//	With Tabs
 		if(withTabs) {
@@ -186,8 +199,21 @@ public class WindowConvertUtil {
 			})
 			.collect(Collectors.toList())
 		;
-		builder.setTableName(
-				ValueManager.validateNull(
+		builder.setId(
+				StringManager.getValidString(
+					table.getUUID()
+				)
+			)
+			.setUuid(
+				StringManager.getValidString(
+					table.getUUID()
+				)
+			)
+			.setInternalId(
+				table.getAD_Table_ID()
+			)
+			.setTableName(
+				StringManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -250,12 +276,12 @@ public class WindowConvertUtil {
 		//	create build
 		Tab.Builder builder = Tab.newBuilder()
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					tab.getUUID()
 				)
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					tab.getUUID()
 				)
 			)
@@ -263,22 +289,30 @@ public class WindowConvertUtil {
 				tab.getAD_Tab_ID()
 			)
 			.setName(
-				ValueManager.validateNull(tab.getName())
+				StringManager.getValidString(
+					tab.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(tab.getDescription())
+				StringManager.getValidString(
+					tab.getDescription()
+				)
 			)
-			.setHelp(ValueManager.validateNull(tab.getHelp()))
+			.setHelp(
+				StringManager.getValidString(
+					tab.getHelp()
+				)
+			)
 			.setIsInsertRecord(
 				!isReadOnly && tab.isInsertRecord()
 			)
 			.setCommitWarning(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					tab.getCommitWarning()
 				)
 			)
 			.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -287,10 +321,14 @@ public class WindowConvertUtil {
 			)
 			.setSequence(tab.getSeqNo())
 			.setDisplayLogic(
-				ValueManager.validateNull(tab.getDisplayLogic())
+				StringManager.getValidString(
+					tab.getDisplayLogic()
+				)
 			)
 			.setReadOnlyLogic(
-				ValueManager.validateNull(tab.getReadOnlyLogic())
+				StringManager.getValidString(
+					tab.getReadOnlyLogic()
+				)
 			)
 			.setIsAdvancedTab(tab.isAdvancedTab())
 			.setIsHasTree(tab.isHasTree())
@@ -357,7 +395,7 @@ public class WindowConvertUtil {
 				if (parentColumn != null && parentColumn.getAD_Column_ID() > 0) {
 					// filter_column_name
 					builder.setFilterColumnName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							parentColumn.getColumnName()
 						)
 					);
@@ -370,12 +408,23 @@ public class WindowConvertUtil {
 			// Record/Role access
 			boolean isWithAccess = AccessUtil.isProcessAccess(MRole.getDefault(), tab.getAD_Process_ID());
 			if (isWithAccess) {
+				MProcess process = MProcess.get(context, tab.getAD_Process_ID());
+
 				Process.Builder processAssociated = ProcessConvertUtil.convertProcess(
 					context,
-					tab.getAD_Process_ID(),
+					process,
 					false
 				);
-				builder.setProcess(processAssociated);
+				builder.setProcessId(
+						process.getAD_Process_ID()
+					)
+					.setProcessUuid(
+						StringManager.getValidString(
+							process.getUUID()
+						)
+					)
+					.setProcess(processAssociated)
+				;
 			}
 		}
 
@@ -389,6 +438,11 @@ public class WindowConvertUtil {
 					false
 				);
 				builder.addProcesses(processBuilder.build());
+				builder.addProcessesUuid(
+					StringManager.getValidString(
+						process.getUUID()
+					)
+				);
 			}
 		}
 

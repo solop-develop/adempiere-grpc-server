@@ -15,9 +15,12 @@
 package org.spin.grpc.service.dictionary;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
@@ -37,14 +40,87 @@ import org.spin.backend.grpc.dictionary.DependentField;
 import org.spin.backend.grpc.dictionary.DictionaryEntity;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.Reference;
+import org.spin.backend.grpc.dictionary.Table;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.custom.BrowseFieldCustomUtil;
 import org.spin.service.grpc.util.db.OrderByUtil;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class BrowseConverUtil {
+	public static Table.Builder convertTable(MTable table) {
+		Table.Builder builder = Table.newBuilder();
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			return builder;
+		}
+		List<String> selectionColums = table.getColumnsAsList(true).stream()
+			.filter(column -> {
+				return column.isSelectionColumn();
+			})
+			.map(column -> {
+				return column.getColumnName();
+			})
+			.collect(Collectors.toList())
+		;
+		List<String> identifierColumns = table.getColumnsAsList(false).stream()
+			.filter(column -> {
+				return column.isIdentifier();
+			})
+			.sorted(Comparator.comparing(MColumn::getSeqNo))
+			.map(column -> {
+				return column.getColumnName();
+			})
+			.collect(Collectors.toList())
+		;
+		builder.setId(
+				StringManager.getValidString(
+					table.getUUID()
+				)
+			)
+			.setUuid(
+				StringManager.getValidString(
+					table.getUUID()
+				)
+			)
+			.setInternalId(
+				table.getAD_Table_ID()
+			)
+			.setTableName(
+				StringManager.getValidString(
+					table.getTableName()
+				)
+			)
+			.setAccessLevel(
+				NumberManager.getIntFromString(
+					table.getAccessLevel()
+				)
+			)
+			.addAllKeyColumns(
+				Arrays.asList(
+					table.getKeyColumns()
+				)
+			)
+			.setIsView(
+				table.isView()
+			)
+			.setIsDocument(
+				table.isDocument()
+			)
+			.setIsDeleteable(
+				table.isDeleteable()
+			)
+			.setIsChangeLog(
+				table.isChangeLog()
+			)
+			.addAllIdentifierColumns(identifierColumns)
+			.addAllSelectionColumns(selectionColums)
+		;
+
+		return builder;
+	}
 
 	/**
 	 * Convert process to builder
@@ -64,11 +140,11 @@ public class BrowseConverUtil {
 		String orderByClause = OrderByUtil.getBrowseOrderBy(browser);
 		Browser.Builder builder = Browser.newBuilder()
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					browser.getUUID()
 				))
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					browser.getUUID()
 				)
 			)
@@ -76,16 +152,26 @@ public class BrowseConverUtil {
 				browser.getAD_Browse_ID()
 			)
 			.setCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					browser.getValue()
 				)
 			)
 			.setName(browser.getName())
 			.setDescription(
-				ValueManager.validateNull(browser.getDescription())
+				StringManager.getValidString(
+					browser.getDescription()
+				)
 			)
 			.setHelp(
-				ValueManager.validateNull(browser.getHelp())
+				StringManager.getValidString(
+					browser.getHelp()
+				)
+			)
+			.setIsActive(
+				browser.isActive()
+			)
+			.setIsBetaFunctionality(
+				browser.isBetaFunctionality()
 			)
 			.setAccessLevel(Integer.parseInt(browser.getAccessLevel()))
 			.setIsCollapsibleByDefault(browser.isCollapsibleByDefault())
@@ -108,7 +194,7 @@ public class BrowseConverUtil {
 		if (fieldKey != null && fieldKey.get_ID() > 0) {
 			MViewColumn viewColumn = MViewColumn.getById(context, fieldKey.getAD_View_Column_ID(), null);
 			builder.setFieldKey(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					viewColumn.getColumnName()
 				)
 			);
@@ -117,8 +203,16 @@ public class BrowseConverUtil {
 		if (browser.getAD_Table_ID() > 0) {
 			MTable table = MTable.get(browser.getCtx(), browser.getAD_Table_ID());
 			builder.setTableName(
-				ValueManager.validateNull(table.getTableName())
-			);
+					StringManager.getValidString(
+						table.getTableName()
+					)
+				)
+				.setTable(
+					convertTable(
+						table
+					)
+				)
+			;
 		}
 		//	Window Reference
 		if(browser.getAD_Window_ID() > 0) {
@@ -140,7 +234,18 @@ public class BrowseConverUtil {
 			DictionaryEntity.Builder processBuilder = DictionaryConvertUtil.getDictionaryEntity(
 				process
 			);
-			builder.setProcess(processBuilder.build());
+			builder.setProcessId(
+					process.getAD_Process_ID()
+				)
+				.setProcessUuid(
+					StringManager.getValidString(
+						process.getUUID()
+					)
+				)
+				.setProcess(
+					processBuilder.build()
+				)
+			;
 		}
 		//	For parameters
 		if(withFields) {

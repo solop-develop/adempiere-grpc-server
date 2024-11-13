@@ -52,6 +52,7 @@ import org.spin.backend.grpc.dictionary.SearchColumn;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.model.MADContextInfo;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class DictionaryConvertUtil {
@@ -259,12 +260,12 @@ public class DictionaryConvertUtil {
 
 		//	
 		builder.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					form.getUUID()
 				)
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					form.getUUID()
 				)
 			)
@@ -272,19 +273,25 @@ public class DictionaryConvertUtil {
 				form.getAD_Form_ID()
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					ValueManager.getTranslation(form, MForm.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					ValueManager.getTranslation(form, MForm.COLUMNNAME_Description)
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					ValueManager.getTranslation(form, MForm.COLUMNNAME_Help)
 				)
+			)
+			.setIsActive(
+				form.isActive()
+			)
+			.setIsBetaFunctionality(
+				form.isBetaFunctionality()
 			)
 		;
 		//	File Name
@@ -306,7 +313,7 @@ public class DictionaryConvertUtil {
 			}
 			//	Set
 			builder.setFileName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					fileName.substring(beginIndex, endIndex))
 				)
 			;
