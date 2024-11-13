@@ -38,6 +38,7 @@ import org.spin.backend.grpc.dictionary.ReportExportType;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.custom.ProcessParaCustomUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AbstractExportFormat;
 import org.spin.util.ReportExportHandler;
@@ -74,11 +75,11 @@ public class ProcessConvertUtil {
 
 		Process.Builder builder = Process.newBuilder()
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					process.getUUID()
 				))
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					process.getUUID()
 				)
 			)
@@ -86,28 +87,34 @@ public class ProcessConvertUtil {
 				process.getAD_Process_ID()
 			)
 			.setCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					process.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					process.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					process.getDescription()
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					process.getHelp()
 				)
 			)
 			.setIsReport(process.isReport())
+			.setIsActive(
+				process.isActive()
+			)
 			.setShowHelp(
 				process.getShowHelp()
+			)
+			.setIsBetaFunctionality(
+				process.isBetaFunctionality()
 			)
 			.setHasParameters(
 				parametersList != null && parametersList.size() > 0
@@ -145,12 +152,12 @@ public class ProcessConvertUtil {
 			for(AbstractExportFormat reportType : exportHandler.getExportFormatList()) {
 				ReportExportType.Builder reportExportType = ReportExportType.newBuilder()
 					.setName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							reportType.getName()
 						)
 					)
 					.setType(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							reportType.getExtension()
 						)
 					)

@@ -150,22 +150,27 @@ message Window {
 	string description = 5;
 	string help = 6;
 	bool is_sales_transaction = 7;
-	string window_type = 8;
+	bool is_active = 8;
+	bool is_beta_functionality = 9;
+	string window_type = 10;
 	//	External Info
 	// ContextInfo context_info = 9;
-	repeated Tab tabs = 10;
+	repeated Tab tabs = 11;
 }
 
 message Table {
-	string table_name = 1;
-	int32 access_level = 2;
-	repeated string key_columns = 3;
-	bool is_view = 4;
-	bool is_deleteable = 5;
-	bool is_document = 6;
-	bool is_change_log = 7;
-	repeated string identifier_columns = 8;
-	repeated string selection_columns = 9;
+	int32 internal_id = 1;
+	string id = 2;
+	string uuid = 3;
+	string table_name = 4;
+	int32 access_level = 5;
+	repeated string key_columns = 6;
+	bool is_view = 7;
+	bool is_deleteable = 8;
+	bool is_document = 9;
+	bool is_change_log = 10;
+	repeated string identifier_columns = 11;
+	repeated string selection_columns = 12;
 }
 
 // Tab
@@ -205,10 +210,13 @@ message Tab {
 	int32 window_id = 27;
 	int32 parent_tab_id = 28;
 	repeated string context_column_names = 29;
-	optional Process process = 30;
-	repeated Process processes = 31;
+	optional int32 process_id = 30;
+	optional string process_uuid = 31;
+	optional Process process = 32;
+	repeated string processes_uuid = 33;
+	repeated Process processes = 34;
 	// Fields Attributes
-	repeated Field fields = 32;
+	repeated Field fields = 35;
 	// FieldGroup field_group = 33;
 }
 
@@ -351,27 +359,29 @@ message Process {
 	string name = 5;
 	string description = 6;
 	string help = 7;
-	string show_help = 8;
-	bool is_multi_selection = 9;
+	bool is_active = 8;
+	string show_help = 9;
+	bool is_beta_functionality = 10;
+	bool is_multi_selection = 11;
 	// Report
-	bool is_report = 10;
-	bool is_process_before_launch = 11;
-	bool is_jasper_report = 12;
-	int32 report_view_id = 13;
-	int32 print_format_id = 14;
-	repeated ReportExportType report_export_types = 15;
+	bool is_report = 12;
+	bool is_process_before_launch = 13;
+	bool is_jasper_report = 14;
+	int32 report_view_id = 15;
+	int32 print_format_id = 16;
+	repeated ReportExportType report_export_types = 17;
 	// Browse
-	int32 browser_id = 16;
-	optional DictionaryEntity browser = 17;
+	int32 browser_id = 18;
+	optional DictionaryEntity browser = 19;
 	// From
-	int32 form_id = 18;
-	optional DictionaryEntity form = 19;
+	int32 form_id = 20;
+	optional DictionaryEntity form = 21;
 	// Workflow
-	int32 workflow_id = 20;
-	optional DictionaryEntity workflow = 21;
+	int32 workflow_id = 22;
+	optional DictionaryEntity workflow = 23;
 	// Parameters
-	bool has_parameters = 22;
-	repeated Field parameters = 23;
+	bool has_parameters = 24;
+	repeated Field parameters = 25;
 }
 
 // Form
@@ -382,7 +392,9 @@ message Form {
 	string name = 4;
 	string description = 5;
 	string help = 6;
-	string file_name = 7;
+	bool is_active = 7;
+	bool is_beta_functionality = 8;
+	string file_name = 9;
 }
 
 // Smart Browser
@@ -394,24 +406,28 @@ message Browser {
 	string name = 5;
 	string description = 6;
 	string help = 7;
-	string field_key = 8;
-	bool is_executed_query_by_default = 9;
-	bool is_collapsible_by_default = 10;
-	bool is_selected_by_default = 11;
-	bool is_show_total = 12;
+	bool is_active = 8;
+	bool is_beta_functionality = 9;
+	bool is_executed_query_by_default = 10;
+	bool is_collapsible_by_default = 11;
+	bool is_selected_by_default = 12;
+	bool is_show_total = 13;
+	string field_key = 14;
 	// Record Attributes
-	string table_name = 13;
-	int32 access_level = 14;
-	bool is_updateable = 15;
-	bool is_deleteable = 16;
+	string table_name = 15;
+	optional Table table = 16;
+	int32 access_level = 17;
+	bool is_updateable = 18;
+	bool is_deleteable = 19;
 	// External Reference
-	repeated string context_column_names = 17;
-	int32 window_id = 18;
-	optional DictionaryEntity window = 19;
-	int32 process_id = 20;
-	optional DictionaryEntity process = 21;
+	repeated string context_column_names = 20;
+	int32 window_id = 21;
+	optional DictionaryEntity window = 22;
+	optional int32 process_id = 23;
+	optional string process_uuid = 24;
+	optional DictionaryEntity process = 25;
 	// Browse Fields
-	repeated Field fields = 22;
+	repeated Field fields = 26;
 }
 
 // Foreign Reference
