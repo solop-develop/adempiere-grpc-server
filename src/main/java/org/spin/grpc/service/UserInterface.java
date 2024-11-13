@@ -1566,7 +1566,12 @@ public class UserInterface extends UserInterfaceImplBase {
 					String messageText = Msg.getMsg(Env.getAD_Language(Env.getCtx()), message.getValue(), arguments);
 					//	Set result message
 					builder.setMessageText(
-						StringManager.getValidString(messageText)
+						StringManager.getValidString(
+							Msg.parseTranslation(
+								Env.getCtx(),
+								messageText
+							)
+						)
 					);
 				}
 			} catch (Exception e) {
@@ -1895,7 +1900,12 @@ public class UserInterface extends UserInterfaceImplBase {
 				);
 			}
 			calloutBuilder.setResult(
-				StringManager.getValidString(result)
+					StringManager.getValidString(
+						Msg.parseTranslation(
+							Env.getCtx(),
+							result
+						)
+					)
 				)
 				.setValues(contextValues)
 			;

@@ -29,6 +29,7 @@ import org.compiere.model.MUser;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.notice_management.AcknowledgeNoticeRequest;
@@ -44,6 +45,7 @@ import org.spin.backend.grpc.notice_management.User;
 import org.spin.backend.grpc.notice_management.NoticeManagementGrpc.NoticeManagementImplBase;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -121,7 +123,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		}
 		builder.setId(notice.getAD_Note_ID())
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					notice.getUUID()
 				)
 			)
@@ -131,8 +133,11 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				)
 			)
 			.setMessage(
-				ValueManager.validateNull(
-					notice.getMessage()
+				StringManager.getValidString(
+					Msg.parseTranslation(
+						notice.getCtx(),
+						notice.getMessage()
+					)
 				)
 			)
 			.setUser(
@@ -150,17 +155,17 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				notice.getRecord_ID()
 			)
 			.setReference(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					notice.getReference()
 				)
 			)
 			.setTextMessage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					notice.getTextMsg()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					notice.getDescription()
 				)
 			)
@@ -403,7 +408,12 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		// Response
 		DeleteNoticesResponse.Builder builder = DeleteNoticesResponse.newBuilder()
 			.setSummary(
-				processLog.getSummary()
+				StringManager.getValidString(
+					Msg.parseTranslation(
+						Env.getCtx(),
+						processLog.getSummary()
+					)
+				)
 			)
 			.addAllLogs(
 				processLog.getLogsList()

@@ -87,6 +87,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.dictionary.util.ReportUtil;
 import org.spin.eca62.util.S3Manager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.ByteString;
@@ -274,12 +275,17 @@ public class ReportManagement extends ReportManagementImplBase {
 
 			result = builder.getProcessInfo();
 			//	Set error message
-			String summary = Msg.parseTranslation(Env.getCtx(), result.getSummary());
+			String summary = result.getSummary();
 			if(Util.isEmpty(summary, true)) {
 				summary = e.getLocalizedMessage();
 			}
 			result.setSummary(
-				ValueManager.validateNull(summary)
+				StringManager.getValidString(
+					Msg.parseTranslation(
+						Env.getCtx(),
+						summary
+					)
+				)
 			);
 		}
 
@@ -340,12 +346,19 @@ public class ReportManagement extends ReportManagementImplBase {
 
 		//	
 		response.setIsError(result.isError());
-		if(!Util.isEmpty(result.getSummary())) {
-			response.setSummary(Msg.parseTranslation(Env.getCtx(), result.getSummary()));
+		if(!Util.isEmpty(result.getSummary(), true)) {
+			response.setSummary(
+				StringManager.getValidString(
+					Msg.parseTranslation(
+						Env.getCtx(),
+						result.getSummary()
+					)
+				)
+			);
 		}
 		//	
 		response.setResultTableName(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				result.getResultTableName()
 			)
 		);
@@ -389,24 +402,24 @@ public class ReportManagement extends ReportManagementImplBase {
 					processInfo.getAD_PInstance_ID()
 				)
 				.setFileName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						validFileName
 					)
 				)
 				.setName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						processInfo.getTitle()
 					)
 				)
 				.setMimeType(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						MimeType.getMimeType(
 							validFileName
 						)
 					)
 				)
 				.setDescription(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						process.getDescription()
 					)
 				)
@@ -436,8 +449,11 @@ public class ReportManagement extends ReportManagementImplBase {
 
 				if (Util.isEmpty(processBuilder.getSummary(), true)) {
 					processBuilder.setSummary(
-						ValueManager.validateNull(
-							e.getLocalizedMessage()
+						StringManager.getValidString(
+							Msg.parseTranslation(
+								Env.getCtx(),
+								e.getLocalizedMessage()
+							)
 						)
 					);
 				}
@@ -450,7 +466,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				.setReportViewId(reportViewReferenceId)
 				.setPrintFormatId(printFormatReferenceId)
 				.setTableName(
-					ValueManager.validateNull(tableName)
+					StringManager.getValidString(tableName)
 				)
 			;
 			processBuilder.setOutput(output.build());

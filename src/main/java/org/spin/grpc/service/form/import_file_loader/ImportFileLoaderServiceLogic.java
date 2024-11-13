@@ -68,6 +68,7 @@ import org.spin.eca62.support.ResourceMetadata;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.model.MADAppRegistration;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.support.AppSupportHandler;
 import org.spin.util.support.IAppSupport;
@@ -335,9 +336,18 @@ public class ImportFileLoaderServiceLogic {
 		//	Clear
 		data.clear();
 
-		String message = Msg.parseTranslation(Env.getCtx(), "@FileImportR/I@") + " (" + totalRows + " / " + importedRows + "#)";
+		String message = Msg.parseTranslation(
+				Env.getCtx(),
+				"@FileImportR/I@"
+			)
+			+ " (" + totalRows + " / " + importedRows + "#)"
+		;
 		SaveRecordsResponse.Builder builder = SaveRecordsResponse.newBuilder()
-			.setMessage(message)
+			.setMessage(
+				StringManager.getValidString(
+					message
+				)
+			)
 			.setTotal(importedRows)
 		;
 

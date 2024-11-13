@@ -81,6 +81,7 @@ import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -984,8 +985,11 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		return ProcessResponse.newBuilder()
 			.setMessage(
-				ValueManager.validateNull(
-					atomicStatus.get()
+				StringManager.getValidString(
+					Msg.parseTranslation(
+						context,
+						atomicStatus.get()
+					)
 				)
 			)
 		;
