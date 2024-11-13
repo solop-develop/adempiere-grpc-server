@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
@@ -44,6 +46,7 @@ import org.compiere.model.MPriceList;
 import org.compiere.model.MProduct;
 import org.compiere.model.MRefList;
 import org.compiere.model.MStorage;
+import org.compiere.model.MTable;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
@@ -77,6 +80,7 @@ import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -213,13 +217,13 @@ public class ConvertUtil {
 
 		final String uuid = entity.get_UUID();
 		entityBuilder.setUuid(
-			ValueManager.validateNull(uuid)
+			StringManager.getValidString(uuid)
 		);
 
 		//	Convert attributes
 		POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), entity.get_Table_ID());
 		entityBuilder.setTableName(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				poInfo.getTableName()
 			)
 		);
@@ -261,6 +265,26 @@ public class ConvertUtil {
 						),
 						valueUuidBuilder.build()
 					);
+				}
+			} else if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+				if (entity.get_ColumnIndex(I_AD_Table.COLUMNNAME_AD_Table_ID) >= 0) {
+					MTable tableRow = MTable.get(entity.getCtx(), entity.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID));
+					if (tableRow != null) {
+						PO entityRow = tableRow.getPO(entity.get_ValueAsInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
+						if (entityRow != null) {
+							final String recordIdDisplayValue = entityRow.getDisplayValue();
+							Value.Builder recordIdDisplayBuilder = ValueManager.getValueFromString(
+								recordIdDisplayValue
+							);
+							rowValues.putFields(
+								LookupUtil.getDisplayColumnName(
+									I_AD_ChangeLog.COLUMNNAME_Record_ID
+								),
+								recordIdDisplayBuilder.build()
+							);
+						}
+
+					}
 				}
 			}
 		}

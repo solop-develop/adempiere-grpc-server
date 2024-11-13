@@ -35,7 +35,9 @@ import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.pipo.IDFinder;
+import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Element;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.X_AD_Table;
 import org.compiere.model.MClient;
@@ -59,6 +61,7 @@ import org.spin.service.grpc.util.db.FromUtil;
 import org.spin.service.grpc.util.db.OrderByUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -656,7 +659,7 @@ public class RecordUtil {
 						if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnName.toLowerCase())) {
 							final String uuid = rs.getString(index);
 							entityBuilder.setUuid(
-								ValueManager.validateNull(uuid)
+								StringManager.getValidString(uuid)
 							);
 						}
 						//	From field
@@ -689,6 +692,26 @@ public class RecordUtil {
 									),
 									valueUuidBuilder.build()
 								);
+							}
+						} else if (fieldColumnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+							if (rs.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID) > 0) {
+								MTable tableRow = MTable.get(table.getCtx(), rs.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID));
+								if (tableRow != null) {
+									PO entityRow = tableRow.getPO(rs.getInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
+									if (entityRow != null) {
+										final String recordIdDisplayValue = entityRow.getDisplayValue();
+										Value.Builder recordIdDisplayBuilder = ValueManager.getValueFromString(
+											recordIdDisplayValue
+										);
+										rowValues.putFields(
+											LookupUtil.getDisplayColumnName(
+												I_AD_ChangeLog.COLUMNNAME_Record_ID
+											),
+											recordIdDisplayBuilder.build()
+										);
+									}
+
+								}
 							}
 						}
 					} catch (Exception e) {
