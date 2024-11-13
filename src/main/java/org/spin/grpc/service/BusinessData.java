@@ -74,6 +74,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 // import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.SortingManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -436,12 +437,17 @@ public class BusinessData extends BusinessDataImplBase {
 
 			result = builder.getProcessInfo();
 			//	Set error message
-			String summary = Msg.parseTranslation(Env.getCtx(), result.getSummary());
+			String summary = result.getSummary();
 			if(Util.isEmpty(summary, true)) {
 				summary = e.getLocalizedMessage();
 			}
 			result.setSummary(
-				ValueManager.validateNull(summary)
+				StringManager.getValidString(
+					Msg.parseTranslation(
+						Env.getCtx(),
+						summary
+					)
+				)
 			);
 		}
 
@@ -466,12 +472,19 @@ public class BusinessData extends BusinessDataImplBase {
 
 		//	
 		response.setIsError(result.isError());
-		if(!Util.isEmpty(result.getSummary())) {
-			response.setSummary(Msg.parseTranslation(Env.getCtx(), result.getSummary()));
+		if(!Util.isEmpty(result.getSummary(), true)) {
+			response.setSummary(
+				StringManager.getValidString(
+					Msg.parseTranslation(
+						Env.getCtx(),
+						result.getSummary()
+					)
+				)
+			);
 		}
 		//	
 		response.setResultTableName(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				result.getResultTableName()
 			)
 		);
@@ -771,7 +784,11 @@ public class BusinessData extends BusinessDataImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set netxt page
-		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			StringManager.getValidString(
+				nexPageToken
+			)
+		);
 		//	Return
 		return builder;
 	}

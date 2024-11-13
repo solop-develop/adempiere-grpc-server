@@ -92,6 +92,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.MimeType;
+import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
@@ -126,6 +127,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
@@ -583,8 +585,11 @@ public class PointOfSalesForm extends StoreImplBase {
 				builder
 					.setIsError(ticketResult.isError())
 					.setSummary(
-						ValueManager.validateNull(
-							ticketResult.getSummary()
+						StringManager.getValidString(
+							Msg.parseTranslation(
+								Env.getCtx(),
+								ticketResult.getSummary()
+							)
 						)
 					)
 				;
@@ -603,23 +608,26 @@ public class PointOfSalesForm extends StoreImplBase {
 						log.warning(e.getLocalizedMessage());
 						builder
 							.setSummary(
-								ValueManager.validateNull(
-									e.getLocalizedMessage()
+								StringManager.getValidString(
+									Msg.parseTranslation(
+										Env.getCtx(),
+										e.getLocalizedMessage()
+									)
 								)
 							)
 							.setIsError(true);
 					}
 					builder
 						.setFileName(
-							ValueManager.validateNull(validFileName)
+							StringManager.getValidString(validFileName)
 						)
 						.setMimeType(
-							ValueManager.validateNull(
+							StringManager.getValidString(
 								MimeType.getMimeType(validFileName)
 							)
 						)
 						.setResultType(
-							ValueManager.validateNull(fileType)
+							StringManager.getValidString(fileType)
 						)
 						.setOutputStream(resultFile)
 					;

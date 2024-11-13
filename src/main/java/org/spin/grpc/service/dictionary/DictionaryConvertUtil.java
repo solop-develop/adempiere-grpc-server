@@ -217,22 +217,30 @@ public class DictionaryConvertUtil {
 
 		MMessage message = MMessage.get(context, contextInfoValue.getAD_Message_ID());
 		//	Add message text
-		if (message != null && message.getAD_Message_ID() > 0) {//	Get translation
+		if (message != null && message.getAD_Message_ID() > 0) {
 			MessageText.Builder messageText = MessageText.newBuilder()
-				.setId(message.getAD_Message_ID())
+				.setId(
+					message.getAD_Message_ID()
+				)
 				.setValue(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						message.getValue()
 					)
 				)
 				.setMessageText(
-					ValueManager.validateNull(
-						message.get_Translation(I_AD_Message.COLUMNNAME_MsgText)
+					StringManager.getValidString(
+						Msg.parseTranslation(
+							context,
+							message.get_Translation(I_AD_Message.COLUMNNAME_MsgText)
+						)
 					)
 				)
 				.setMessageTip(
-					ValueManager.validateNull(
-						message.get_Translation(I_AD_Message.COLUMNNAME_MsgTip)
+					StringManager.getValidString(
+						Msg.parseTranslation(
+							context,
+							message.get_Translation(I_AD_Message.COLUMNNAME_MsgTip)
+						)
 					)
 				)
 			;

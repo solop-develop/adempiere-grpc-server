@@ -49,6 +49,7 @@ import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityEventType;
 import org.spin.backend.grpc.logs.EntityLog;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -293,32 +294,43 @@ public class LogsConvertUtil {
 				instance.getUpdated()
 			)
 		);
-		String summary = instance.getErrorMsg();
-		if(!Util.isEmpty(summary, true)) {
-			summary = Msg.parseTranslation(Env.getCtx(), summary);
-		}
+
 		//	for report
 		MProcess process = MProcess.get(Env.getCtx(), instance.getAD_Process_ID());
 		builder.setId(instance.getAD_Process_ID())
 			.setName(
-				ValueManager.validateNull(process.getName()))
+				StringManager.getValidString(
+					process.getName()
+				)
+			)
 			.setDescription(
-				ValueManager.validateNull(process.getDescription())
+				StringManager.getValidString(
+					process.getDescription()
+				)
 			)
 		;
 		if(process.isReport()) {
 			ReportOutput.Builder outputBuilder = ReportOutput.newBuilder();
 			outputBuilder.setReportType(
-					ValueManager.validateNull(instance.getReportType())
+				StringManager.getValidString(
+					instance.getReportType()
+				)
 				)
 				.setName(
-					ValueManager.validateNull(instance.getName())
+					StringManager.getValidString(
+						instance.getName()
+					)
 				)
 			;
 			builder.setOutput(outputBuilder.build());
 		}
 		builder.setSummary(
-			ValueManager.validateNull(summary)
+			StringManager.getValidString(
+				Msg.parseTranslation(
+					Env.getCtx(),
+					instance.getErrorMsg()
+				)
+			)
 		);
 		List<X_AD_PInstance_Log> logList = new Query(
 			Env.getCtx(), I_AD_PInstance_Log.Table_Name,
@@ -336,7 +348,7 @@ public class LogsConvertUtil {
 				message = Msg.parseTranslation(Env.getCtx(), message);
 			}
 			logBuilder.setLog(
-				ValueManager.validateNull((message))
+				StringManager.getValidString(message)
 			);
 			builder.addLogs(logBuilder.build());
 		}

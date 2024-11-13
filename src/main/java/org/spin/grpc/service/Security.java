@@ -100,6 +100,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
@@ -1859,8 +1860,11 @@ public class Security extends SecurityImplBase {
 
 		builder.setIsAccess(isWithAccess)
 			.setMessage(
-				ValueManager.validateNull(
-					message
+				StringManager.getValidString(
+					Msg.parseTranslation(
+						Env.getCtx(),
+						message
+					)
 				)
 			)
 		;
