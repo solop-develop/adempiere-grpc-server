@@ -709,7 +709,7 @@ public class WhereClauseUtil {
 				String childColumn = mainColumnName;
 				if (tab.getAD_Column_ID() > 0) {
 					childColumn = MColumn.getColumnName(context, tab.getAD_Column_ID());
-					mainColumnName = childColumn;
+					// mainColumnName = childColumn;
 				}
 
 				if (table.getColumn(childColumn) != null) {
@@ -717,7 +717,7 @@ public class WhereClauseUtil {
 					if (mainColumnName != null && mainColumnName.endsWith("_ID")) {
 						whereClause.append(" = ").append("@").append(mainColumnName).append("@");
 					} else {
-						whereClause.append(" = ").append("'@").append(mainColumnName).append("@'");
+						whereClause.append(" = ").append("'@").append(childColumn).append("@'");
 					}
 				}
 				if(optionalTab.isPresent()) {
