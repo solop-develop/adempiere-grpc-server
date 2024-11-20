@@ -73,6 +73,7 @@ import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -570,7 +571,11 @@ public abstract class BankStatementMatchServiceLogic {
 		});
 
 		MatchPaymentsResponse.Builder builder = MatchPaymentsResponse.newBuilder()
-			.setMessage(String.valueOf(result.get()))
+			.setMessage(
+				String.valueOf(
+					result.get()
+				)
+			)
 		;
 
 		return builder;
@@ -593,7 +598,11 @@ public abstract class BankStatementMatchServiceLogic {
 		});
 
 		UnmatchPaymentsResponse.Builder builder = UnmatchPaymentsResponse.newBuilder()
-			.setMessage(String.valueOf(result.get()))
+			.setMessage(
+				String.valueOf(
+					result.get()
+				)
+			)
 		;
 
 		return builder;
@@ -704,7 +713,13 @@ public abstract class BankStatementMatchServiceLogic {
 			});
 
 		builder.setMessage(
-			Msg.translate(Env.getCtx(), "BankStatementMatch.MatchedProcessed") + ": " + processed
+			StringManager.getValidString(
+				Msg.parseTranslation(
+					Env.getCtx(),
+					"BankStatementMatch.MatchedProcessed"
+				)
+				+ ": " + processed
+			)
 		);
 
 		return builder;

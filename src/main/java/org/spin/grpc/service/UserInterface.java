@@ -41,6 +41,7 @@ import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_AD_Private_Access;
 import org.adempiere.core.domains.models.I_AD_Record_Access;
 import org.adempiere.core.domains.models.I_AD_Role;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_R_MailText;
 import org.adempiere.exceptions.AdempiereException;
@@ -680,6 +681,26 @@ public class UserInterface extends UserInterfaceImplBase {
 									),
 									valueUuidBuilder.build()
 								);
+							}
+						} else if (fieldColumnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+							if (rs.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID) > 0) {
+								MTable tableRow = MTable.get(table.getCtx(), rs.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID));
+								if (tableRow != null) {
+									PO entityRow = tableRow.getPO(rs.getInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
+									if (entityRow != null) {
+										final String recordIdDisplayValue = entityRow.getDisplayValue();
+										Value.Builder recordIdDisplayBuilder = ValueManager.getValueFromString(
+											recordIdDisplayValue
+										);
+										rowValues.putFields(
+											LookupUtil.getDisplayColumnName(
+												I_AD_ChangeLog.COLUMNNAME_Record_ID
+											),
+											recordIdDisplayBuilder.build()
+										);
+									}
+
+								}
 							}
 						}
 					} catch (Exception e) {
@@ -1545,7 +1566,12 @@ public class UserInterface extends UserInterfaceImplBase {
 					String messageText = Msg.getMsg(Env.getAD_Language(Env.getCtx()), message.getValue(), arguments);
 					//	Set result message
 					builder.setMessageText(
-						StringManager.getValidString(messageText)
+						StringManager.getValidString(
+							Msg.parseTranslation(
+								Env.getCtx(),
+								messageText
+							)
+						)
 					);
 				}
 			} catch (Exception e) {
@@ -1874,7 +1900,12 @@ public class UserInterface extends UserInterfaceImplBase {
 				);
 			}
 			calloutBuilder.setResult(
-				StringManager.getValidString(result)
+					StringManager.getValidString(
+						Msg.parseTranslation(
+							Env.getCtx(),
+							result
+						)
+					)
 				)
 				.setValues(contextValues)
 			;

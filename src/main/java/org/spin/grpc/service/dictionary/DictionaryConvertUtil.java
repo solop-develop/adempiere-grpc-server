@@ -52,6 +52,7 @@ import org.spin.backend.grpc.dictionary.SearchColumn;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.model.MADContextInfo;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class DictionaryConvertUtil {
@@ -216,22 +217,30 @@ public class DictionaryConvertUtil {
 
 		MMessage message = MMessage.get(context, contextInfoValue.getAD_Message_ID());
 		//	Add message text
-		if (message != null && message.getAD_Message_ID() > 0) {//	Get translation
+		if (message != null && message.getAD_Message_ID() > 0) {
 			MessageText.Builder messageText = MessageText.newBuilder()
-				.setId(message.getAD_Message_ID())
+				.setId(
+					message.getAD_Message_ID()
+				)
 				.setValue(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						message.getValue()
 					)
 				)
 				.setMessageText(
-					ValueManager.validateNull(
-						message.get_Translation(I_AD_Message.COLUMNNAME_MsgText)
+					StringManager.getValidString(
+						Msg.parseTranslation(
+							context,
+							message.get_Translation(I_AD_Message.COLUMNNAME_MsgText)
+						)
 					)
 				)
 				.setMessageTip(
-					ValueManager.validateNull(
-						message.get_Translation(I_AD_Message.COLUMNNAME_MsgTip)
+					StringManager.getValidString(
+						Msg.parseTranslation(
+							context,
+							message.get_Translation(I_AD_Message.COLUMNNAME_MsgTip)
+						)
 					)
 				)
 			;
@@ -259,12 +268,12 @@ public class DictionaryConvertUtil {
 
 		//	
 		builder.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					form.getUUID()
 				)
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					form.getUUID()
 				)
 			)
@@ -272,19 +281,25 @@ public class DictionaryConvertUtil {
 				form.getAD_Form_ID()
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					ValueManager.getTranslation(form, MForm.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					ValueManager.getTranslation(form, MForm.COLUMNNAME_Description)
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					ValueManager.getTranslation(form, MForm.COLUMNNAME_Help)
 				)
+			)
+			.setIsActive(
+				form.isActive()
+			)
+			.setIsBetaFunctionality(
+				form.isBetaFunctionality()
 			)
 		;
 		//	File Name
@@ -306,7 +321,7 @@ public class DictionaryConvertUtil {
 			}
 			//	Set
 			builder.setFileName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					fileName.substring(beginIndex, endIndex))
 				)
 			;

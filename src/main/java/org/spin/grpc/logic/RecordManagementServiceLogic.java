@@ -32,6 +32,7 @@ import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.record_management.ExistsRecordReferencesRequest;
@@ -93,7 +94,9 @@ public class RecordManagementServiceLogic {
 							recordsChanges.incrementAndGet();
 						} catch (Exception e) {
 							e.printStackTrace();
-							errorMessage.append(e.getLocalizedMessage());
+							errorMessage.append(
+								e.getLocalizedMessage()
+							);
 						}
 					}
 				});
@@ -102,10 +105,15 @@ public class RecordManagementServiceLogic {
 		ToggleIsActiveRecordsBatchResponse.Builder builder = ToggleIsActiveRecordsBatchResponse.newBuilder()
 			.setMessage(
 				StringManager.getValidString(
-					errorMessage.toString()
+					Msg.parseTranslation(
+						Env.getCtx(),
+						errorMessage.toString()
+					)
 				)
 			)
-			.setTotalChanges(recordsChanges.get())
+			.setTotalChanges(
+				recordsChanges.get()
+			)
 		;
 
 		//	Return
@@ -133,7 +141,9 @@ public class RecordManagementServiceLogic {
 						recordsChanges.incrementAndGet();
 					} catch (Exception e) {
 						e.printStackTrace();
-						errorMessage.append(e.getLocalizedMessage());
+						errorMessage.append(
+							e.getLocalizedMessage()
+						);
 					}
 				}
 			}
@@ -141,7 +151,10 @@ public class RecordManagementServiceLogic {
 		ToggleIsActiveRecordResponse.Builder builder = ToggleIsActiveRecordResponse.newBuilder()
 			.setMessage(
 				StringManager.getValidString(
-					errorMessage.toString()
+					Msg.parseTranslation(
+						Env.getCtx(),
+						errorMessage.toString()
+					)
 				)
 			)
 		;
