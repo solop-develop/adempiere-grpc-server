@@ -4,7 +4,7 @@ server:
 database:
     host: localhost
     port: 5432
-    name: "sp_dev_mabi"
+    name: "adempiere"
     user: adempiere
     password: adempiere
     type: PostgreSQL
