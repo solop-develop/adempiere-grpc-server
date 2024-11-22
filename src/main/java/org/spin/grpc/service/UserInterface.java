@@ -1847,6 +1847,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			GridWindow gridWindow = new GridWindow(gridWindowVo, true);
 			// gridWindow.initTab(tabNo); // TODO: Set more precise link column
 			GridTabVO gridTabVo = GridTabVO.create(gridWindowVo, tabNo, tab, false, true);
+			gridTabVo.WhereClause = "ROWNUM = 1";
 			GridFieldVO gridFieldVo = GridFieldVO.create(Env.getCtx(), windowNo, tabNo, tab.getAD_Window_ID(), tab.getAD_Tab_ID(), false, field);
 			GridField gridField = new GridField(gridFieldVo);
 			//	Init tab
