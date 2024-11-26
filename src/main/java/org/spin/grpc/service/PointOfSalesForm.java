@@ -52,6 +52,7 @@ import org.adempiere.core.domains.models.I_M_Storage;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.GenericPO;
+import org.adempiere.pos.process.ReverseTheSalesTransaction;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
@@ -87,6 +88,7 @@ import org.compiere.model.M_Element;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
+import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -96,6 +98,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.eevolution.services.dsl.ProcessBuilder;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.core_functionality.Currency;
@@ -1113,7 +1116,8 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void reverseSales(ReverseSalesRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = reverseSalesTransaction(request);
+			// Order.Builder order = reverseSalesTransaction(request);
+			Order.Builder order = reverseTheSalesTransaction(request);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2129,6 +2133,47 @@ public class PointOfSalesForm extends StoreImplBase {
 		MOrder returnOrder = ReverseSalesTransaction.returnCompleteOrder(pos, orderId, request.getDescription());
 		//	Default
 		return ConvertUtil.convertOrder(returnOrder);
+	}
+	/**
+	 * Reverse Sales Transaction (SPUY)
+	 * @param request ReverseSalesRequest
+	 * @return Order.Builder
+	 */
+	private Order.Builder reverseTheSalesTransaction(ReverseSalesRequest request) {
+		if(request.getPosId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_POS_ID@");
+		}
+		MPOS pos = getPOSFromId(request.getPosId(), true);
+		if (pos == null || pos.getC_POS_ID() <= 0) {
+			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+		}
+
+		final int orderId = request.getId();
+		if (orderId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
+		}
+		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
+		Trx.run(transactionName -> {
+			MOrder order = new MOrder(Env.getCtx(), orderId, transactionName);
+			ProcessInfo infoProcess = ProcessBuilder
+				.create(Env.getCtx())
+				.process(ReverseTheSalesTransaction.getProcessId())
+				.withoutTransactionClose()
+				.withRecordId(MOrder.Table_ID, orderId)
+		        .withParameter("C_Order_ID", orderId)
+		        .withParameter("Bill_BPartner_ID", order.getC_BPartner_ID())
+		        .withParameter("IsCancelled", true)
+		        .withParameter("C_DocTypeRMA_ID", pos.get_ValueAsInt("C_DocTypeRMA_ID"))
+				.execute(transactionName);
+			MOrder returnOrder = new MOrder(Env.getCtx(), infoProcess.getRecord_ID(), transactionName);
+			if(!Util.isEmpty(request.getDescription())) {
+				returnOrder.setDescription(request.getDescription());
+				returnOrder.saveEx();
+			}
+			returnOrderReference.set(returnOrder);
+		});
+		//	Default
+		return ConvertUtil.convertOrder(returnOrderReference.get());
 	}
 
 	/**
