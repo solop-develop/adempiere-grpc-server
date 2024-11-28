@@ -1852,7 +1852,26 @@ public class UserInterface extends UserInterfaceImplBase {
 			GridField gridField = new GridField(gridFieldVo);
 			//	Init tab
 			GridTab gridTab = new GridTab(gridTabVo, gridWindow, true);
+
+			// set link column name by tab
 			gridTab.setLinkColumnName(null);
+			String linkColumn = gridTab.getLinkColumnName();
+			if (Util.isEmpty(linkColumn, true)) {
+				// set link column name by parent column
+				MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
+				List<MColumn> columnsList = table.getColumnsAsList();
+				MColumn parentColumn = columnsList.parallelStream()
+					.filter(column -> {
+						return column.isParent();
+					})
+					.findFirst()
+					.orElse(null);
+				if (parentColumn != null && parentColumn.getAD_Column_ID() > 0) {
+					linkColumn = parentColumn.getColumnName();
+					gridTab.setLinkColumnName(linkColumn);
+				}
+			}
+
 			gridTab.query(false);
 			gridTab.clearSelection();
 			gridTab.dataNew(false);
