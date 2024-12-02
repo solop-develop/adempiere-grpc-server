@@ -31,6 +31,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import javax.script.ScriptEngine;
 
@@ -1847,7 +1848,8 @@ public class UserInterface extends UserInterfaceImplBase {
 			GridWindow gridWindow = new GridWindow(gridWindowVo, true);
 			// gridWindow.initTab(tabNo); // TODO: Set more precise link column
 			GridTabVO gridTabVo = GridTabVO.create(gridWindowVo, tabNo, tab, false, true);
-			gridTabVo.WhereClause = "ROWNUM = 1";
+			// TODO: Fix Convert_PostgreSQL.convertRowNum with multiple row num on first restriction as `WHERE ROWNUM >= 1 AND ROWNUM <= 1`
+			gridTabVo.WhereClause = "1=1 AND ROWNUM >= 1 AND ROWNUM <= 1";
 			GridFieldVO gridFieldVo = GridFieldVO.create(Env.getCtx(), windowNo, tabNo, tab.getAD_Window_ID(), tab.getAD_Tab_ID(), false, field);
 			GridField gridField = new GridField(gridFieldVo);
 			//	Init tab
@@ -1885,30 +1887,39 @@ public class UserInterface extends UserInterfaceImplBase {
 					valueEntity
 				);
 			}
-			gridTab.setValue(request.getColumnName(), value);
+			// gridTab.setValue(request.getColumnName(), value);
+			gridTab.setValue(gridField, value);
 
 			//	Load value for field
-			gridField.setValue(oldValue, false);
+			Object oldValueChange = oldValue;
+			if(oldValueChange != null
+					&& value != null
+					&& value.equals(oldValueChange)) {
+				oldValueChange = null;
+			}
+			gridField.setValue(oldValueChange, false);
 			gridField.setValue(value, false);
 
 			//	Run it
 			String result = processCallout(windowNo, gridTab, gridField);
 			Struct.Builder contextValues = Struct.newBuilder();
-			Arrays.asList(gridTab.getFields())
+			List<GridField> list = Arrays.asList(gridTab.getFields())
 				.stream()
 				.filter(fieldValue -> {
 					return CalloutLogic.isValidChange(fieldValue);
 				})
-				.forEach(fieldValue -> {
-					Value.Builder valueBuilder = ValueManager.getValueFromReference(
-						fieldValue.getValue(),
-						fieldValue.getDisplayType()
-					);
-					contextValues.putFields(
-						fieldValue.getColumnName(),
-						valueBuilder.build()
-					);
-				});
+				.collect(Collectors.toList())
+			;
+			list.forEach(fieldValue -> {
+				Value.Builder valueBuilder = ValueManager.getValueFromReference(
+					fieldValue.getValue(),
+					fieldValue.getDisplayType()
+				);
+				contextValues.putFields(
+					fieldValue.getColumnName(),
+					valueBuilder.build()
+				);
+			});
 
 			// always add is sales transaction on context
 			String isSalesTransaction = Env.getContext(Env.getCtx(), windowNo, "IsSOTrx", true);
