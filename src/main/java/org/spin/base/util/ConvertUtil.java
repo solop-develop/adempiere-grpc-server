@@ -1291,7 +1291,7 @@ public class ConvertUtil {
 		BigDecimal totalDiscountAmount = discountAmount.multiply(quantityOrdered);
 		BigDecimal totalAmount = orderLine.getLineNetAmt();
 		BigDecimal totalBaseAmount = totalAmount.subtract(totalDiscountAmount);
-		BigDecimal totalTaxAmount = tax.calculateTax(totalAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
+		BigDecimal totalTaxAmount = tax.calculateTax(totalAmount, !priceList.isTaxIncluded(), priceList.getStandardPrecision());
 		BigDecimal totalBaseAmountWithTax = totalBaseAmount.add(totalTaxAmount);
 		BigDecimal totalAmountWithTax = totalAmount.add(totalTaxAmount);
 
