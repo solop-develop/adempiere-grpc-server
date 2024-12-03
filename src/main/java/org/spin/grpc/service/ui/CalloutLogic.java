@@ -20,9 +20,9 @@ public class CalloutLogic {
 			return false;
 		}
 		//	Oly Displayed
-		if(!gridField.isDisplayed()) {
-			return false;
-		}
+		// if(!gridField.isDisplayed()) {
+		// 	return false;
+		// }
 		//	Key
 		if(gridField.isKey()) {
 			return false;

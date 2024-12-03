@@ -69,6 +69,7 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
@@ -197,7 +198,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 					accoutingElement.isBalanced()
 				)
 				.setElementType(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						accoutingElement.getElementType()
 					)
 				)
@@ -476,7 +477,9 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
-		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			StringManager.getValidString(nexPageToken)
+		);
 
 		return builder;
 	}
@@ -524,7 +527,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 		MAcctSchema accountingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId, null);
 
-		final String accountingCombinationAlias = ValueManager.validateNull(
+		final String accountingCombinationAlias = StringManager.getValidString(
 			request.getAlias()
 		);
 
@@ -549,7 +552,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				accountingCombinationId = rs.getInt(1);
-				accountingAlias = ValueManager.validateNull(
+				accountingAlias = StringManager.getValidString(
 					rs.getString(2)
 				);
 			}
@@ -766,7 +769,12 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			null
 		);
 		if (!Util.isEmpty(errorMessage, true)) {
-			rePostBuilder.setErrorMsg(errorMessage);
+			rePostBuilder.setErrorMsg(
+				Msg.parseTranslation(
+					Env.getCtx(),
+					errorMessage
+				)
+			);
 		}
 
 		return rePostBuilder;
@@ -1112,7 +1120,9 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//  Set next page
-		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			StringManager.getValidString(nexPageToken)
+		);
 
 		return builder;
 	}
