@@ -1008,6 +1008,7 @@ public class ConvertUtil {
 		//	Add Tax for Include Tax
 		if(isTaxIncluded) {
 			totalBaseAmount = totalBaseAmountWithTax;
+			totalAmount = totalAmount.add(totalTaxAmount);
 		}
 		BigDecimal totalAmountWithTaxConverted = OrderUtil.getConvertedAmountTo(
 			order,
@@ -1300,7 +1301,11 @@ public class ConvertUtil {
 		BigDecimal totalTaxAmount = tax.calculateTax(totalAmount, false, priceList.getStandardPrecision());
 		BigDecimal totalBaseAmountWithTax = totalBaseAmount.add(totalTaxAmount);
 		BigDecimal totalAmountWithTax = totalAmount.add(totalTaxAmount);
-
+		//	Add Tax for Include Tax
+		if(isTaxIncluded) {
+			totalBaseAmount = totalBaseAmountWithTax;
+			totalAmount = totalAmount.add(totalTaxAmount);
+		}
 		MUOMConversion uom = null;
 		MUOMConversion productUom = null;
 		if (orderLine.getM_Product_ID() > 0) {
