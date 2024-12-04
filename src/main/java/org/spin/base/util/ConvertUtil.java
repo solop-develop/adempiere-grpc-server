@@ -104,9 +104,9 @@ public class ConvertUtil {
 			return sellerInfo;
 		}
 		sellerInfo.setId(user.getAD_User_ID());
-		sellerInfo.setName(ValueManager.validateNull(user.getName()));
-		sellerInfo.setDescription(ValueManager.validateNull(user.getDescription()));
-		sellerInfo.setComments(ValueManager.validateNull(user.getComments()));
+		sellerInfo.setName(StringManager.getValidString(user.getName()));
+		sellerInfo.setDescription(StringManager.getValidString(user.getDescription()));
+		sellerInfo.setComments(StringManager.getValidString(user.getComments()));
 
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
 		if(user.getLogo_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(clientId)) {
@@ -119,7 +119,7 @@ public class ConvertUtil {
 			);
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
-				sellerInfo.setImage(ValueManager.validateNull(attachmentReference.getValidFileName()));
+				sellerInfo.setImage(StringManager.getValidString(attachmentReference.getValidFileName()));
 			}
 		}
 		return sellerInfo;
@@ -136,7 +136,7 @@ public class ConvertUtil {
 			return processLog;
 		}
 		processLog.setRecordId(log.getP_ID());
-		processLog.setLog(ValueManager.validateNull(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));
+		processLog.setLog(StringManager.getValidString(Msg.parseTranslation(Env.getCtx(), log.getP_Msg())));
 		return processLog;
 	}
 
@@ -152,13 +152,13 @@ public class ConvertUtil {
 		}
 		builder.setId(chatEntry.getCM_ChatEntry_ID());
 		builder.setChatId(chatEntry.getCM_Chat_ID());
-		builder.setSubject(ValueManager.validateNull(chatEntry.getSubject()));
-		builder.setCharacterData(ValueManager.validateNull(chatEntry.getCharacterData()));
+		builder.setSubject(StringManager.getValidString(chatEntry.getSubject()));
+		builder.setCharacterData(StringManager.getValidString(chatEntry.getCharacterData()));
 
 		if (chatEntry.getAD_User_ID() > 0) {
 			MUser user = MUser.get(chatEntry.getCtx(), chatEntry.getAD_User_ID());
 			builder.setUserId(chatEntry.getAD_User_ID());
-			builder.setUserName(ValueManager.validateNull(user.getName()));
+			builder.setUserName(StringManager.getValidString(user.getName()));
 		}
 		
 		builder.setLogDate(
@@ -309,9 +309,9 @@ public class ConvertUtil {
 	 */
 	public static DocumentAction.Builder convertDocumentAction(String value, String name, String description) {
 		return DocumentAction.newBuilder()
-			.setValue(ValueManager.validateNull(value))
-			.setName(ValueManager.validateNull(name))
-			.setDescription(ValueManager.validateNull(description)
+			.setValue(StringManager.getValidString(value))
+			.setName(StringManager.getValidString(name))
+			.setDescription(StringManager.getValidString(description)
 		);
 	}
 	
@@ -324,9 +324,9 @@ public class ConvertUtil {
 	 */
 	public static DocumentStatus.Builder convertDocumentStatus(String value, String name, String description) {
 		return DocumentStatus.newBuilder()
-			.setValue(ValueManager.validateNull(value))
-			.setName(ValueManager.validateNull(name))
-			.setDescription(ValueManager.validateNull(description)
+			.setValue(StringManager.getValidString(value))
+			.setName(StringManager.getValidString(name))
+			.setDescription(StringManager.getValidString(description)
 		);
 	}
 
@@ -410,19 +410,19 @@ public class ConvertUtil {
 					order.getC_DocTypeTarget_ID()
 				)
 			)
-			.setDocumentNo(ValueManager.validateNull(order.getDocumentNo()))
+			.setDocumentNo(StringManager.getValidString(order.getDocumentNo()))
 			.setSalesRepresentative(
 				CoreFunctionalityConvert.convertSalesRepresentative(
 					MUser.get(Env.getCtx(), order.getSalesRep_ID())
 				)
 			)
-			.setDescription(ValueManager.validateNull(order.getDescription()))
-			.setOrderReference(ValueManager.validateNull(order.getPOReference()))
+			.setDescription(StringManager.getValidString(order.getDescription()))
+			.setOrderReference(StringManager.getValidString(order.getPOReference()))
 			.setDocumentStatus(
 				ConvertUtil.convertDocumentStatus(
-					ValueManager.validateNull(order.getDocStatus()), 
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)),
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
+					StringManager.getValidString(order.getDocStatus()), 
+					StringManager.getValidString(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)),
+					StringManager.getValidString(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
 				)
 			)
 			.setPriceList(
@@ -631,19 +631,19 @@ public class ConvertUtil {
 					order.getC_DocTypeTarget_ID()
 				)
 			)
-			.setDocumentNo(ValueManager.validateNull(order.getDocumentNo()))
+			.setDocumentNo(StringManager.getValidString(order.getDocumentNo()))
 			.setSalesRepresentative(
 				CoreFunctionalityConvert.convertSalesRepresentative(
 					MUser.get(Env.getCtx(), order.getSalesRep_ID())
 				)
 			)
-			.setDescription(ValueManager.validateNull(order.getDescription()))
-			.setOrderReference(ValueManager.validateNull(order.getPOReference()))
+			.setDescription(StringManager.getValidString(order.getDescription()))
+			.setOrderReference(StringManager.getValidString(order.getPOReference()))
 			.setDocumentStatus(
 				ConvertUtil.convertDocumentStatus(
-					ValueManager.validateNull(order.getDocStatus()), 
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
+					StringManager.getValidString(order.getDocStatus()), 
+					StringManager.getValidString(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
+					StringManager.getValidString(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
 				)
 			)
 			.setPriceList(
@@ -891,27 +891,27 @@ public class ConvertUtil {
 			return builder;
 		}
 		builder.setId(customerBankAccount.getC_BP_BankAccount_ID())
-			.setCity(ValueManager.validateNull(customerBankAccount.getA_City()))
-			.setCountry(ValueManager.validateNull(customerBankAccount.getA_Country()))
-			.setEmail(ValueManager.validateNull(customerBankAccount.getA_EMail()))
-			.setDriverLicense(ValueManager.validateNull(customerBankAccount.getA_Ident_DL()))
-			.setSocialSecurityNumber(ValueManager.validateNull(customerBankAccount.getA_Ident_SSN()))
-			.setName(ValueManager.validateNull(customerBankAccount.getA_Name()))
-			.setState(ValueManager.validateNull(customerBankAccount.getA_State()))
-			.setStreet(ValueManager.validateNull(customerBankAccount.getA_Street()))
-			.setZip(ValueManager.validateNull(customerBankAccount.getA_Zip()))
-			.setBankAccountType(ValueManager.validateNull(customerBankAccount.getBankAccountType())
+			.setCity(StringManager.getValidString(customerBankAccount.getA_City()))
+			.setCountry(StringManager.getValidString(customerBankAccount.getA_Country()))
+			.setEmail(StringManager.getValidString(customerBankAccount.getA_EMail()))
+			.setDriverLicense(StringManager.getValidString(customerBankAccount.getA_Ident_DL()))
+			.setSocialSecurityNumber(StringManager.getValidString(customerBankAccount.getA_Ident_SSN()))
+			.setName(StringManager.getValidString(customerBankAccount.getA_Name()))
+			.setState(StringManager.getValidString(customerBankAccount.getA_State()))
+			.setStreet(StringManager.getValidString(customerBankAccount.getA_Street()))
+			.setZip(StringManager.getValidString(customerBankAccount.getA_Zip()))
+			.setBankAccountType(StringManager.getValidString(customerBankAccount.getBankAccountType())
 		);
 		if(customerBankAccount.getC_Bank_ID() > 0) {
 			builder.setBankId(customerBankAccount.getC_Bank_ID());
 		}
 		MBPartner customer = MBPartner.get(Env.getCtx(), customerBankAccount.getC_BPartner_ID());
 		builder.setCustomerId(customer.getC_BPartner_ID());
-		builder.setAddressVerified(ValueManager.validateNull(customerBankAccount.getR_AvsAddr()))
-			.setZipVerified(ValueManager.validateNull(customerBankAccount.getR_AvsZip()))
-			.setRoutingNo(ValueManager.validateNull(customerBankAccount.getRoutingNo()))
-			.setAccountNo(ValueManager.validateNull(customerBankAccount.getAccountNo()))
-			.setIban(ValueManager.validateNull(customerBankAccount.getIBAN())
+		builder.setAddressVerified(StringManager.getValidString(customerBankAccount.getR_AvsAddr()))
+			.setZipVerified(StringManager.getValidString(customerBankAccount.getR_AvsZip()))
+			.setRoutingNo(StringManager.getValidString(customerBankAccount.getRoutingNo()))
+			.setAccountNo(StringManager.getValidString(customerBankAccount.getAccountNo()))
+			.setIban(StringManager.getValidString(customerBankAccount.getIBAN())
 		);
 		return builder;
 	}
@@ -937,7 +937,7 @@ public class ConvertUtil {
 					shipment.getC_DocType_ID()
 				)
 			)
-			.setDocumentNo(ValueManager.validateNull(shipment.getDocumentNo()))
+			.setDocumentNo(StringManager.getValidString(shipment.getDocumentNo()))
 			.setSalesRepresentative(
 				CoreFunctionalityConvert.convertSalesRepresentative(
 					MUser.get(Env.getCtx(), shipment.getSalesRep_ID())
@@ -945,9 +945,9 @@ public class ConvertUtil {
 			)
 			.setDocumentStatus(
 				ConvertUtil.convertDocumentStatus(
-					ValueManager.validateNull(shipment.getDocStatus()), 
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
+					StringManager.getValidString(shipment.getDocStatus()), 
+					StringManager.getValidString(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
+					StringManager.getValidString(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
 				)
 			)
 			.setWarehouse(
@@ -1056,8 +1056,8 @@ public class ConvertUtil {
 		return builder.setId(orderLine.getC_OrderLine_ID())
 			.setOrderId(orderLine.getC_Order_ID())
 			.setLine(orderLine.getLine())
-			.setDescription(ValueManager.validateNull(orderLine.getDescription()))
-			.setLineDescription(ValueManager.validateNull(orderLine.getName()))
+			.setDescription(StringManager.getValidString(orderLine.getDescription()))
+			.setLineDescription(StringManager.getValidString(orderLine.getName()))
 			.setProduct(
 				CoreFunctionalityConvert.convertProduct(
 					orderLine.getM_Product_ID()
@@ -1341,8 +1341,8 @@ public class ConvertUtil {
 			.setId(orderLine.getC_OrderLine_ID())
 			.setSourceOrderLineId(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID))
 			.setLine(orderLine.getLine())
-			.setDescription(ValueManager.validateNull(orderLine.getDescription()))
-			.setLineDescription(ValueManager.validateNull(orderLine.getName()))
+			.setDescription(StringManager.getValidString(orderLine.getDescription()))
+			.setLineDescription(StringManager.getValidString(orderLine.getName()))
 			.setProduct(
 				CoreFunctionalityConvert.convertProduct(
 					orderLine.getM_Product_ID()
@@ -1561,10 +1561,10 @@ public class ConvertUtil {
 		}
 		builder
 			.setId(keyLayout.getC_POSKeyLayout_ID())
-			.setName(ValueManager.validateNull(keyLayout.getName()))
-			.setDescription(ValueManager.validateNull(keyLayout.getDescription()))
-			.setHelp(ValueManager.validateNull(keyLayout.getHelp()))
-			.setLayoutType(ValueManager.validateNull(keyLayout.getPOSKeyLayoutType()))
+			.setName(StringManager.getValidString(keyLayout.getName()))
+			.setDescription(StringManager.getValidString(keyLayout.getDescription()))
+			.setHelp(StringManager.getValidString(keyLayout.getHelp()))
+			.setLayoutType(StringManager.getValidString(keyLayout.getPOSKeyLayoutType()))
 			.setColumns(keyLayout.getColumns()
 		);
 		//	TODO: Color
@@ -1594,7 +1594,7 @@ public class ConvertUtil {
 		}
 		return Key.newBuilder()
 			.setId(key.getC_POSKeyLayout_ID())
-			.setName(ValueManager.validateNull(key.getName()))
+			.setName(StringManager.getValidString(key.getName()))
 			//	TODO: Color
 			.setSequence(key.getSeqNo())
 			.setSpanX(key.getSpanX())
@@ -1605,7 +1605,7 @@ public class ConvertUtil {
 					Optional.ofNullable(key.getQty()).orElse(Env.ZERO)
 				)
 			)
-			.setProductValue(ValueManager.validateNull(productValue))
+			.setProductValue(StringManager.getValidString(productValue))
 			.setResourceReference(
 				FileManagement.convertResourceReference(
 					FileUtil.getResourceFromImageId(
