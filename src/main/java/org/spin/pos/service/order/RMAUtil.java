@@ -240,6 +240,7 @@ public class RMAUtil {
     		return;
     	}
     	MInvoice invoice = new MInvoice (returnOrder, 0, OrderUtil.getToday());
+    	invoice.setC_POS_ID(returnOrder.getC_POS_ID());
 		invoice.saveEx();
     	//	Convert Lines
 		new Query(returnOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
@@ -274,6 +275,7 @@ public class RMAUtil {
     		return;
     	}
     	MInOut shipment = new MInOut (returnOrder, 0, OrderUtil.getToday());
+    	shipment.setC_POS_ID(returnOrder.getC_POS_ID());
 		shipment.setM_Warehouse_ID(returnOrder.getM_Warehouse_ID());	//	sets Org too
 		shipment.saveEx();
 		//	Convert Lines
