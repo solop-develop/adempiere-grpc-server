@@ -3926,15 +3926,10 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @param order
 	 */
 	private void configureDiscount(MOrder order, BigDecimal discountRate, String transactionName) {
+		MPOS pos = getPOSFromId(order.getC_POS_ID(), false);
 		Arrays.asList(order.getLines())
 		.forEach(orderLine -> {
-			BigDecimal discountAmount = orderLine.getPriceList().multiply(Optional.ofNullable(discountRate).orElse(Env.ZERO).divide(Env.ONEHUNDRED));
-			BigDecimal price = orderLine.getPriceList().subtract(discountAmount);
-			//	Set values
-			orderLine.setPrice(price); 
-			//	sets List/limit
-			orderLine.setTax();
-			orderLine.saveEx(transactionName);
+			updateOrderLine(pos, orderLine.getC_OrderLine_ID(), null, null, discountRate, false, 0, 0);
 		});
 	}
 	
