@@ -86,6 +86,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -165,7 +166,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		return builder;
@@ -458,7 +459,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		return builderList;
@@ -476,18 +477,18 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 		builder.setId(attributeSetInstance.getM_AttributeSetInstance_ID())
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSetInstance.getDescription()
 				)
 			)
 			.setLot(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSetInstance.getLot()
 				)
 			)
 			.setLotId(attributeSetInstance.getM_Lot_ID())
 			.setSerial(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSetInstance.getSerNo())
 				)
 			.setProductAttributeSet(
@@ -537,7 +538,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 
 		builder.setId(0)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeInstance.getValue()
 				)
 			)
@@ -564,12 +565,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 		builder.setId(attributeSet.getM_AttributeSet_ID())
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSet.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSet.getDescription()
 				)
 			)
@@ -578,12 +579,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			.setIsLotMandatory(attributeSet.isLotMandatory())
 			.setLotControlId(attributeSet.getM_LotCtl_ID())
 			.setLotCharStartOverwrite(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSet.getLotCharSOverwrite()
 				)
 			)
 			.setLotCharEndOverwrite(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSet.getLotCharEOverwrite()
 				)
 			)
@@ -591,12 +592,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			.setIsSerialMandatory(attributeSet.isSerNoMandatory())
 			.setSerialControlId(attributeSet.getM_SerNoCtl_ID())
 			.setSerialCharStartOverwrite(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSet.getSerNoCharSOverwrite()
 				)
 			)
 			.setSerialCharEndOverwrite(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSet.getSerNoCharEOverwrite()
 				)
 			)
@@ -604,7 +605,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			.setIsGuaranteeDateMandatory(attributeSet.isGuaranteeDateMandatory())
 			.setGuaranteeDays(attributeSet.getGuaranteeDays())
 			.setMandatoryType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attributeSet.getMandatoryType()
 				)
 			)
@@ -641,17 +642,17 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 		builder.setId(attribute.getM_Attribute_ID())
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attribute.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attribute.getDescription()
 				)
 			)
 			.setValueType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					attribute.getAttributeValueType()
 				)
 			)
@@ -690,17 +691,17 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 		builder.setId(productAttributeValue.getM_AttributeValue_ID())
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					productAttributeValue.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					productAttributeValue.getDescription()
 				)
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					productAttributeValue.getValue()
 				)
 			)
@@ -891,7 +892,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		return builderList;
@@ -909,23 +910,27 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			return builder;
 		}
 
-		builder.setId(warehouse.getM_Warehouse_ID())
+		builder.setId(
+				warehouse.getM_Warehouse_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					warehouse.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					warehouse.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					warehouse.getDescription()
 				)
 			)
-			.setIsInTransit(warehouse.isInTransit())
+			.setIsInTransit(
+				warehouse.isInTransit()
+			)
 		;
 		if (warehouse.getM_WarehouseSource_ID() > 0) {
 			Warehouse.Builder builderSource = convertAvailableWarehouse(
@@ -952,7 +957,8 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
 				.withCause(e)
-				.asRuntimeException());
+				.asRuntimeException()
+			);
 		}
 	}
 
@@ -1045,7 +1051,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		return builderList;
@@ -1058,29 +1064,39 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		builder.setId(locator.getM_Locator_ID())
+			.setUuid(
+				StringManager.getValidString(
+					locator.getUUID()
+				)
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					locator.getValue()
+				)
+			)
+			.setDisplayValue(
+				StringManager.getValidString(
+					locator.getDisplayValue()
 				)
 			)
 			.setIsDefault(locator.isDefault())
 			.setAisle(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					locator.getX()
 				)
 			)
 			.setBin(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					locator.getX()
 				)
 			)
 			.setLevel(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					locator.getZ()
 				)
 			)
 		;
-		if (locator.getM_Warehouse_ID() > 0) {
+		if (locator.getM_Warehouse_ID() >= 0) {
 			Warehouse.Builder builderWarehouse = convertAvailableWarehouse(
 				locator.getM_Warehouse_ID()
 			);

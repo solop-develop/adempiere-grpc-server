@@ -64,7 +64,7 @@ service MaterialManagement {
 		option (google.api.http) = { get: "/material-management/warehouses" };
 	}
 	rpc ListLocators(ListLocatorsRequest) returns (ListLocatorsResponse) {
-		option (google.api.http) = { get: "/material-management/locatos" };
+		option (google.api.http) = { get: "/material-management/locators" };
 	}
 }
 
@@ -240,12 +240,14 @@ message ListAvailableWarehousesResponse {
 // Locator
 message Locator {
 	int32 id = 1;
-	string value = 2;
-	bool is_default = 3;
-	string aisle = 4; // (X)
-	string bin = 5; // (Y)
-	string level = 6; // (Z)
-	Warehouse warehouse = 7;
+	string uuid = 2;
+	string value = 3;
+	string display_value = 4;
+	bool is_default = 5;
+	string aisle = 6; // (X)
+	string bin = 7; // (Y)
+	string level = 8; // (Z)
+	Warehouse warehouse = 9;
 }
 
 message ListLocatorsRequest {
