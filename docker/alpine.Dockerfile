@@ -34,7 +34,9 @@ RUN rm -rf /tmp/* && \
 		tzdata \
 		bash \
 		fontconfig \
-		ttf-dejavu && \
+		ttf-dejavu \
+		msttcorefonts-installer && \
+	fc-cache -f && \
 	echo "Set Timezone..." && \
 	echo $TZ > /etc/timezone
 
