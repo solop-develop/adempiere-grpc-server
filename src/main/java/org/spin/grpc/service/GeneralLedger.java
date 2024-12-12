@@ -769,11 +769,12 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			null
 		);
 		if (!Util.isEmpty(errorMessage, true)) {
+			errorMessage = Msg.getMsg(
+				Env.getCtx(),
+				errorMessage
+			);
 			rePostBuilder.setErrorMsg(
-				Msg.parseTranslation(
-					Env.getCtx(),
-					errorMessage
-				)
+				StringManager.getValidString(errorMessage)
 			);
 		}
 
