@@ -41,7 +41,7 @@ import org.spin.base.util.GeneralLedgerConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -102,7 +102,7 @@ public class GeneralLedgerServiceLogic {
 		ListLookupItemsResponse.Builder builder = ListLookupItemsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -142,7 +142,7 @@ public class GeneralLedgerServiceLogic {
 		ListAccountingDocumentsResponse.Builder builderList = ListAccountingDocumentsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 
