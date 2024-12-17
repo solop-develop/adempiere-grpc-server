@@ -43,6 +43,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class BusinessPartnerLogic {
@@ -223,7 +224,7 @@ public class BusinessPartnerLogic {
 		ListBusinessPartnersInfoResponse.Builder builderList = ListBusinessPartnersInfoResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					nexPageToken
 				)
 			)
@@ -304,7 +305,7 @@ public class BusinessPartnerLogic {
 		ListBusinessPartnerAddressLocationsResponse.Builder builderList = ListBusinessPartnerAddressLocationsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					nexPageToken
 				)
 			)
