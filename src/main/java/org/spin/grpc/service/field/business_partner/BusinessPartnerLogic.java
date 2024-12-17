@@ -174,7 +174,7 @@ public class BusinessPartnerLogic {
 		final String eMail = ValueManager.getDecodeUrl(
 			request.getEmail()
 		);
-		if (!Util.isEmpty(eMail)) {
+		if (!Util.isEmpty(eMail, true)) {
 			whereClause.append(" AND C_BPartner.C_BPartner_ID IN (SELECT C_BPartner_ID FROM AD_User AS c ")
 				.append("WHERE UPPER(c.EMail) LIKE '%' || UPPER(?) || '%') ");
 			parametersList.add(eMail);
@@ -194,7 +194,7 @@ public class BusinessPartnerLogic {
 		);
 		if (!Util.isEmpty(postalCode)) {
 			whereClause.append(" AND C_BPartner_ID IN (SELECT C_BPartner_ID FROM C_BPartner_Location bpl, C_Location AS l ")
-				.append("WHERE l.C_Location_ID = bpl.C_Location_ID AND UPPER(Postal) '%' || UPPER(?) || '%') ")
+				.append("WHERE l.C_Location_ID = bpl.C_Location_ID AND UPPER(Postal) LIKE '%' || UPPER(?) || '%') ")
 			;
 			parametersList.add(postalCode);
 		}
