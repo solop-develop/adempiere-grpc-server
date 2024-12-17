@@ -163,15 +163,20 @@ message ListBusinessPartnerContactsRequest {
 message BusinessPartnerAddressLocation {
 	int32 id = 1;
 	string uuid = 2;
-	string phone = 3;
-	string phone2 = 4;
-	string fax = 5;
-	string address = 6;
-	bool is_ship_to_address = 7; // Ship Adrress
-	bool is_bill_to_address = 8; // Invoice Address
-	bool is_remit_to_address = 9; // Pay-From Address
-	bool is_pay_form_address = 10; // Remit-To Address
-	bool is_active = 11;
+	string name = 3;
+	string description = 4;
+	string phone = 5;
+	string phone2 = 6;
+	string fax = 7;
+	string address = 8;
+	string map_url = 9;
+	bool is_ship_to_address = 10; // Ship Adrress
+	bool is_bill_to_address = 11; // Invoice Address
+	bool is_remit_to_address = 12; // Pay-From Address
+	bool is_pay_form_address = 13; // Remit-To Address
+	bool is_active = 14;
+	bool is_default_shipping = 15;
+	bool is_default_billing = 16;
 }
 
 message ListBusinessPartnerAddressLocationsResponse {

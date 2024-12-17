@@ -64,7 +64,6 @@ import org.spin.model.MADFieldCondition;
 import org.spin.model.MADFieldDefinition;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 public class WindowConvertUtil {
 
@@ -430,6 +429,10 @@ public class WindowConvertUtil {
 
 		List<MProcess> processList = WindowUtil.getProcessActionFromTab(context, tab);
 		if(processList != null && processList.size() > 0) {
+			processList = processList.stream()
+				.sorted(Comparator.comparing(MProcess::getName))
+				.collect(Collectors.toList())
+			;
 			for(MProcess process : processList) {
 				// get process associated without parameters
 				Process.Builder processBuilder = ProcessConvertUtil.convertProcess(
@@ -501,46 +504,66 @@ public class WindowConvertUtil {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					field.getUUID()
 				)
 			)
 			.setUuid(
-				ValueManager.validateNull(field.getUUID())
+				StringManager.getValidString(
+					field.getUUID()
+				)
 			)
 			.setInternalId(
 				field.getAD_Field_ID()
 			)
 			.setName(
-				ValueManager.validateNull(field.getName())
+				StringManager.getValidString(
+					field.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(field.getDescription())
+				StringManager.getValidString(
+					field.getDescription()
+				)
 			)
 			.setHelp(
-				ValueManager.validateNull(field.getHelp())
+				StringManager.getValidString(
+					field.getHelp()
+				)
 			)
 			.setCallout(
-				ValueManager.validateNull(column.getCallout())
+				StringManager.getValidString(
+					column.getCallout()
+				)
 			)
 			.setColumnName(
-				ValueManager.validateNull(column.getColumnName())
+				StringManager.getValidString(
+					column.getColumnName()
+				)
 			)
 			// .setElementName(
-			// 	ValueManager.validateNull(element.getColumnName())
+			// 	StringManager.getValidString(
+			// 		element.getColumnName()
+			// 	)
 			// )
 			.setColumnSql(
-				ValueManager.validateNull(column.getColumnSQL())
+				StringManager.getValidString(
+					column.getColumnSQL()
+				)
 			)
 			.setDefaultValue(
-				ValueManager.validateNull(defaultValue)
+				StringManager.getValidString(defaultValue)
 			)
 			.setDisplayLogic(
-				ValueManager.validateNull(field.getDisplayLogic())
+				StringManager.getValidString(
+					field.getDisplayLogic()
+				)
 			)
 			.setDisplayType(displayTypeId)
 			.setFormatPattern(
-				ValueManager.validateNull(column.getFormatPattern())
+				StringManager.getValidString(
+					column.getFormatPattern()
+				)
 			)
 			.setIdentifierSequence(column.getSeqNo())
 			.setIsAllowCopy(field.isAllowCopy())
@@ -563,20 +586,30 @@ public class WindowConvertUtil {
 			.setIsTranslated(column.isTranslated())
 			.setIsUpdateable(column.isUpdateable())
 			.setMandatoryLogic(
-				ValueManager.validateNull(column.getMandatoryLogic())
+				StringManager.getValidString(
+					column.getMandatoryLogic()
+				)
 			)
 			.setReadOnlyLogic(
-				ValueManager.validateNull(column.getReadOnlyLogic())
+				StringManager.getValidString(
+					column.getReadOnlyLogic()
+				)
 			)
 			.setSequence(field.getSeqNo())
 			.setSeqNoGrid(field.getSeqNoGrid())
 			.setValueMax(
-				ValueManager.validateNull(column.getValueMax())
+				StringManager.getValidString(
+					column.getValueMax()
+				)
 			)
 			.setValueMin(
-				ValueManager.validateNull(column.getValueMin())
+				StringManager.getValidString(
+					column.getValueMin()
+				)
 			)
-			.setFieldLength(column.getFieldLength())
+			.setFieldLength(
+				column.getFieldLength()
+			)
 			.addAllContextColumnNames(
 				ContextManager.getContextColumnNames(
 					Optional.ofNullable(field.getDefaultValue()).orElse(
@@ -662,7 +695,7 @@ public class WindowConvertUtil {
 			// ASP default displayed field as panel
 			if (fieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsPanel(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						fieldCustom.get_ValueAsString(
 							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
 						)
@@ -672,7 +705,7 @@ public class WindowConvertUtil {
 			// ASP default displayed field as table
 			if (fieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsTable(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						fieldCustom.get_ValueAsString(
 							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
 						)
@@ -773,12 +806,12 @@ public class WindowConvertUtil {
 						);
 						DependentField.Builder builder = DependentField.newBuilder()
 							.setId(
-								ValueManager.validateNull(
+								StringManager.getValidString(
 									currentField.getUUID()
 								)
 							)
 							.setUuid(
-								ValueManager.validateNull(
+								StringManager.getValidString(
 									currentField.getUUID()
 								)
 							)
@@ -786,7 +819,7 @@ public class WindowConvertUtil {
 								currentField.getAD_Field_ID()
 							)
 							.setColumnName(
-								ValueManager.validateNull(
+								StringManager.getValidString(
 									currentColumnName
 								)
 							)
@@ -794,12 +827,12 @@ public class WindowConvertUtil {
 								tab.getAD_Tab_ID()
 							)
 							.setParentUuid(
-								ValueManager.validateNull(
+								StringManager.getValidString(
 									tab.getUUID()
 								)
 							)
 							.setParentName(
-								ValueManager.validateNull(
+								StringManager.getValidString(
 									tab.getName()
 								)
 							)
@@ -837,12 +870,16 @@ public class WindowConvertUtil {
 		builder = FieldGroup.newBuilder()
 			.setId(fieldGroup.getAD_FieldGroup_ID())
 			.setUuid(
-				ValueManager.validateNull(fieldGroup.getUUID())
+				StringManager.getValidString(
+					fieldGroup.getUUID()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(name))
+				StringManager.getValidString(name))
 			.setFieldGroupType(
-				ValueManager.validateNull(fieldGroup.getFieldGroupType())
+				StringManager.getValidString(
+					fieldGroup.getFieldGroupType()
+				)
 			)
 		;
 		return builder;
@@ -864,13 +901,19 @@ public class WindowConvertUtil {
 		builder = FieldDefinition.newBuilder()
 			.setId(fieldDefinition.getAD_FieldDefinition_ID())
 			.setUuid(
-				ValueManager.validateNull(fieldDefinition.getUUID())
+				StringManager.getValidString(
+					fieldDefinition.getUUID()
+				)
 			)
 			.setValue(
-				ValueManager.validateNull(fieldDefinition.getValue())
+				StringManager.getValidString(
+					fieldDefinition.getValue()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(fieldDefinition.getName())
+				StringManager.getValidString(
+					fieldDefinition.getName()
+				)
 			)
 		;
 		//	Get conditions
@@ -879,15 +922,23 @@ public class WindowConvertUtil {
 				continue;
 			}
 			FieldCondition.Builder fieldConditionBuilder = FieldCondition.newBuilder()
-				.setId(condition.getAD_FieldCondition_ID())
+				.setId(
+					condition.getAD_FieldCondition_ID()
+				)
 				.setUuid(
-					ValueManager.validateNull(condition.getUUID())
+					StringManager.getValidString(
+						condition.getUUID()
+					)
 				)
 				.setCondition(
-					ValueManager.validateNull(condition.getCondition())
+					StringManager.getValidString(
+						condition.getCondition()
+					)
 				)
 				.setStylesheet(
-					ValueManager.validateNull(condition.getStylesheet())
+					StringManager.getValidString(
+						condition.getStylesheet()
+					)
 				)
 			;
 			//	Add to parent
