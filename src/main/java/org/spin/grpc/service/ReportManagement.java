@@ -102,7 +102,7 @@ public class ReportManagement extends ReportManagementImplBase {
 	private CLogger log = CLogger.getCLogger(ReportManagement.class);
 
 
-	
+
 	@Override
 	public void generateReport(GenerateReportRequest request, StreamObserver<ProcessLog> responseObserver) {
 		try {
@@ -116,10 +116,11 @@ public class ReportManagement extends ReportManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -301,9 +302,24 @@ public class ReportManagement extends ReportManagementImplBase {
 				I_AD_PInstance.COLUMNNAME_AD_PInstance_ID + " = ?",
 				null
 			)
-				.setParameters(result.getAD_PInstance_ID())
-				.first();
+				.setParameters(
+					result.getAD_PInstance_ID()
+				)
+				.first()
+			;
 			response.setInstanceId(instance.getAD_PInstance_ID());
+
+			if (!Util.isEmpty(instance.getErrorMsg(), true)) {
+				result.setError(true);
+				String errorMessage = Msg.parseTranslation(
+					Env.getCtx(),
+					instance.getErrorMsg()
+				);
+				if (!Util.isEmpty(result.getSummary(), true)) {
+					errorMessage = result.getSummary() + " " + errorMessage;
+				}
+				result.setSummary(errorMessage);
+			}
 
 			response.setLastRun(
 				ValueManager.getTimestampFromDate(
@@ -476,6 +492,7 @@ public class ReportManagement extends ReportManagementImplBase {
 	}
 
 
+
 	@Override
 	public void getReportOutput(GetReportOutputRequest request, StreamObserver<ReportOutput> responseObserver) {
 		try {
@@ -488,11 +505,12 @@ public class ReportManagement extends ReportManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException())
-			;
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -623,23 +641,26 @@ public class ReportManagement extends ReportManagementImplBase {
 				reportFile.getName()
 			);
 			builder.setFileName(
-					ValueManager.validateNull(validFileName)
+					StringManager.getValidString(validFileName)
 				)
 				.setName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						reportEngine.getName()
 					)
 				)
 				.setMimeType(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						MimeType.getMimeType(validFileName)
 					)
 				)
 			;
 			// Header
-			String headerName = Msg.getMsg(Env.getCtx(), "Report") + ": " + reportEngine.getName() + "  " + Env.getHeader(Env.getCtx(), 0);
+			String headerName = Msg.getMsg(
+				Env.getCtx(),
+				"Report"
+			) + ": " + reportEngine.getName() + " " + Env.getHeader(Env.getCtx(), 0);
 			builder.setHeaderName(
-				ValueManager.validateNull(headerName)
+				StringManager.getValidString(headerName)
 			);
 			// Footer
 			StringBuffer footerName = new StringBuffer ();
@@ -649,7 +670,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				.append(reportEngine.getRowCount())
 			;
 			builder.setFooterName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					footerName.toString()
 				)
 			);
@@ -666,7 +687,7 @@ public class ReportManagement extends ReportManagementImplBase {
 					printFormat.getAD_PrintFormat_ID()
 				)
 				.setTableName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						table.getTableName()
 					)
 				)
@@ -699,7 +720,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			);
 		}
 	}
-	
+
 	@Override
 	public void printEntitiesBatch(PrintEntitiesBatchRequest request, StreamObserver<PrintEntitiesBatchResponse> responseObserver) {
 		try {
@@ -739,7 +760,11 @@ public class ReportManagement extends ReportManagementImplBase {
 				if(fileType.equals("pdf")) {
 					File outFile = File.createTempFile("BatchPrint_", ".pdf");
 					IText7Document.mergePdf(files, outFile);
-					printResponse.setFileName(ValueManager.validateNull(S3Manager.putTemporaryFile(outFile)));
+					printResponse.setFileName(
+						StringManager.getValidString(
+							S3Manager.putTemporaryFile(outFile)
+						)
+					);
 				} else {
 					File outFile = File.createTempFile("BatchPrint_", ".zip");
 					try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(outFile))) {
@@ -748,7 +773,11 @@ public class ReportManagement extends ReportManagementImplBase {
 					        Files.copy(file.toPath(), zipOut);
 					    }
 					}
-					printResponse.setFileName(ValueManager.validateNull(S3Manager.putTemporaryFile(outFile)));
+					printResponse.setFileName(
+						StringManager.getValidString(
+							S3Manager.putTemporaryFile(outFile)
+						)
+					);
 				}
 				printResponse.setRecordCount(files.size());
 			}
@@ -756,10 +785,12 @@ public class ReportManagement extends ReportManagementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -836,17 +867,17 @@ public class ReportManagement extends ReportManagementImplBase {
 						printFormat.getAD_PrintFormat_ID()
 					)
 					.setUuid(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							printFormat.getUUID()
 						)
 					)
 					.setName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							printFormat.getName()
 						)
 					)
 					.setDescription(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							printFormat.getDescription()
 						)
 					)
@@ -858,7 +889,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				if (printFormat.getAD_Table_ID() > 0) {
 					MTable table = MTable.get(Env.getCtx(), printFormat.getAD_Table_ID());
 					printFormatBuilder.setTableName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							table.getTableName()
 						)
 					);
@@ -968,7 +999,8 @@ public class ReportManagement extends ReportManagementImplBase {
 					)
 						.setParameters(reportView.get_ID(), "Y", language)
 						.setOnlyActiveRecords(true)
-						.first();
+						.first()
+					;
 
 					if (translation != null) {
 						String nameTranslated = translation.get_ValueAsString(I_AD_ReportView.COLUMNNAME_Name);
@@ -987,22 +1019,22 @@ public class ReportManagement extends ReportManagementImplBase {
 						reportView.getAD_ReportView_ID()
 					)
 					.setUuid(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							reportView.getUUID()
 						)
 					)
 					.setName(
-						ValueManager.validateNull(name)
+						StringManager.getValidString(name)
 					)
 					.setDescription(
-						ValueManager.validateNull(description)
+						StringManager.getValidString(description)
 					)
 				;
 
 				if (reportView.getAD_ReportView_ID() > 0) {
 					MTable table = MTable.get(context, reportView.getAD_Table_ID());
 					reportViewBuilder.setTableName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							table.getTableName()
 						)
 					);
@@ -1028,10 +1060,12 @@ public class ReportManagement extends ReportManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -1069,7 +1103,7 @@ public class ReportManagement extends ReportManagementImplBase {
 					//	Add here
 					DrillTable.Builder drillTable = DrillTable.newBuilder();
 					drillTable.setTableName(
-						ValueManager.validateNull(drillTableName)
+						StringManager.getValidString(drillTableName)
 					);
 					String name = element.getPrintName();
 					String poName = element.getPO_PrintName();
@@ -1088,7 +1122,7 @@ public class ReportManagement extends ReportManagementImplBase {
 					}
 					//	Print Name
 					drillTable.setPrintName(
-						ValueManager.validateNull(name)
+						StringManager.getValidString(name)
 					);
 					recordCount++;
 					//	Add to list
@@ -1101,6 +1135,8 @@ public class ReportManagement extends ReportManagementImplBase {
 				log.log(Level.SEVERE, sql, e);
 			} finally {
 				DB.close(resultSet, pstmt);
+				resultSet = null;
+				pstmt = null;
 			}
 		//	Return
 		return builder;
