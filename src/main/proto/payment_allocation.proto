@@ -35,32 +35,48 @@ package payment_allocation;
 service PaymentAllocation {
 	// lists criteria
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/payment-allocation/business-partners" };
+		option (google.api.http) = {
+			get: "/payment-allocation/business-partners"
+		};
 	}
 	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/payment-allocation/organizations" };
+		option (google.api.http) = {
+			get: "/payment-allocation/organizations"
+		};
 	}
 	rpc ListCurrencies(ListCurrenciesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/payment-allocation/currencies" };
+		option (google.api.http) = {
+			get: "/payment-allocation/currencies"
+		};
 	}
 	rpc ListTransactionTypes(ListTransactionTypesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/payment-allocation/transaction-types" };
+		option (google.api.http) = {
+			get: "/payment-allocation/transaction-types"
+		};
 	}
 
 	// list result
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
-		option (google.api.http) = { get: "/payment-allocation/payments/{business_partner_id}" };
+		option (google.api.http) = {
+			get: "/payment-allocation/payments/{business_partner_id}"
+		};
 	}
 	rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse) {
-		option (google.api.http) = { get: "/payment-allocation/invoices/{business_partner_id}" };
+		option (google.api.http) = {
+			get: "/payment-allocation/invoices/{business_partner_id}"
+		};
 	}
 
 	// process
 	rpc ListCharges(ListChargesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/payment-allocation/charges" };
+		option (google.api.http) = {
+			get: "/payment-allocation/charges"
+		};
 	}
 	rpc ListTransactionOrganizations(ListTransactionOrganizationsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/payment-allocation/organizations/transactions" };
+		option (google.api.http) = {
+			get: "/payment-allocation/organizations/transactions"
+		};
 	}
 	rpc Process(ProcessRequest) returns (ProcessResponse) {
 		option (google.api.http) = {
@@ -74,10 +90,11 @@ service PaymentAllocation {
 // Business Partner
 message BusinessPartner {
 	int32 id = 1;
-	string value = 2;
-	string tax_id = 3;
-	string name = 4;
-	string description = 5;
+	string uuid = 2;
+	string value = 3;
+	string tax_id = 4;
+	string name = 5;
+	string description = 6;
 }
 
 message ListBusinessPartnersRequest {
@@ -102,8 +119,9 @@ message ListBusinessPartnersResponse {
 // Organization
 message Organization {
 	int32 id = 1;
-	string value = 2;
-	string name = 3;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
 }
 
 message ListOrganizationsRequest {
@@ -128,8 +146,9 @@ message ListOrganizatiosResponse {
 // Currency
 message Currency {
 	int32 id = 1;
-	string iso_code = 2;
-	string description = 3;
+	string uuid = 2;
+	string iso_code = 3;
+	string description = 4;
 }
 
 message ListCurrenciesRequest {
@@ -154,9 +173,10 @@ message ListCurrenciesResponse {
 // Transaction Type
 message TransactionType {
 	int32 id = 1;
-	string value = 2;
-	string name = 3;
-	string description = 4;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
 }
 
 message ListTransactionTypesRequest {
@@ -178,19 +198,30 @@ message ListTransactionTypesResponse {
 }
 
 
+message DocumentType {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string print_name = 4;
+	string description = 5;
+}
+
+
 // Payments Movements
 message Payment {
 	int32 id = 1;
-	google.protobuf.Timestamp transaction_date = 2;
-	bool is_receipt = 3;
-	string document_no = 4;
-	TransactionType transaction_type = 5; // AP-AR
-	Organization organization = 6;
-	string description = 7;
-	Currency currency = 8;
-	string payment_amount = 9;
-	string converted_amount = 10;
-	string open_amount = 11;
+	string uuid = 2;
+	string document_no = 3;
+	DocumentType document_type = 4;
+	google.protobuf.Timestamp transaction_date = 5;
+	bool is_receipt = 6;
+	TransactionType transaction_type = 7; // AP-AR
+	Organization organization = 8;
+	string description = 9;
+	Currency currency = 10;
+	string payment_amount = 11;
+	string converted_amount = 12;
+	string open_amount = 13;
 }
 
 message ListPaymentsRequest {
@@ -220,17 +251,19 @@ message ListPaymentsResponse {
 // Invoice
 message Invoice {
 	int32 id = 1;
-	google.protobuf.Timestamp date_invoiced = 2;
-	bool is_sales_transaction = 3;
-	string document_no = 4;
-	TransactionType transaction_type = 5; // AP-AR
-	Organization organization = 6;
-	string description = 7;
-	Currency currency = 8;
-	string original_amount = 9;
-	string converted_amount = 10;
-	string open_amount = 11;
-	string discount_amount = 12;
+	string uuid = 2;
+	string document_no = 3;
+	DocumentType target_document_type = 4;
+	google.protobuf.Timestamp date_invoiced = 5;
+	bool is_sales_transaction = 6;
+	TransactionType transaction_type = 7; // AP-AR
+	Organization organization = 8;
+	string description = 9;
+	Currency currency = 10;
+	string original_amount = 11;
+	string converted_amount = 12;
+	string open_amount = 13;
+	string discount_amount = 14;
 }
 
 message ListInvoicesRequest {
@@ -260,9 +293,10 @@ message ListInvoicesResponse {
 // Charge
 message Charge {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string amount = 4;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string amount = 5;
 }
 
 message ListChargesRequest {
