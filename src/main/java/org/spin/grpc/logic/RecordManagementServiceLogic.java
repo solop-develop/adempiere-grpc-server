@@ -21,15 +21,22 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_Private_Access;
+import org.adempiere.core.domains.models.I_AD_Record_Access;
+import org.adempiere.core.domains.models.I_AD_Role;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.ZoomInfoFactory;
+import org.compiere.model.MPrivateAccess;
 import org.compiere.model.MQuery;
+import org.compiere.model.MRecordAccess;
+import org.compiere.model.MRole;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -37,11 +44,16 @@ import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.record_management.ExistsRecordReferencesRequest;
 import org.spin.backend.grpc.record_management.ExistsRecordReferencesResponse;
+import org.spin.backend.grpc.record_management.GetRecordAccessRequest;
 import org.spin.backend.grpc.record_management.ListRecordReferencesRequest;
 import org.spin.backend.grpc.record_management.ListRecordReferencesResponse;
 import org.spin.backend.grpc.record_management.ListZoomWindowsRequest;
 import org.spin.backend.grpc.record_management.ListZoomWindowsResponse;
+import org.spin.backend.grpc.record_management.PrivateAccess;
+import org.spin.backend.grpc.record_management.RecordAccess;
+import org.spin.backend.grpc.record_management.RecordAccessRole;
 import org.spin.backend.grpc.record_management.RecordReferenceInfo;
+import org.spin.backend.grpc.record_management.SetRecordAccessRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
@@ -486,6 +498,240 @@ public class RecordManagementServiceLogic {
 
 		//	Return
 		return builder;
+	}
+
+
+	/**
+	 * Convert Context Info Value from query
+	 * @param request
+	 * @return
+	 */
+	public static PrivateAccess.Builder convertPrivateAccess(Properties context, MPrivateAccess privateAccess) {
+		PrivateAccess.Builder builder = PrivateAccess.newBuilder();
+		if(privateAccess == null) {
+			return builder;
+		}
+		//	Table
+		MTable table = MTable.get(Env.getCtx(), privateAccess.getAD_Table_ID());
+		//	Set values
+		builder.setTableName(table.getTableName());
+		builder.setRecordId(privateAccess.getRecord_ID());
+		builder.setIsLocked(privateAccess.isActive());
+		//	Return values
+		return builder;
+	}
+
+
+
+	/**
+	 * Convert Record Access
+	 * @param request
+	 * @return
+	 */
+	public static RecordAccess.Builder convertRecordAccess(GetRecordAccessRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+		//	
+		int tableId = table.getAD_Table_ID();
+		int recordId = request.getRecordId();
+		RecordAccess.Builder builder = RecordAccess.newBuilder()
+			.setTableName(
+				StringManager.getValidString(
+					request.getTableName()
+				)
+			)
+			.setRecordId(recordId)
+		;
+		//	Populate access List
+		getRecordAccess(tableId, recordId, null).parallelStream().forEach(recordAccess -> {
+			MRole role = MRole.get(Env.getCtx(), recordAccess.getAD_Role_ID());
+			builder.addCurrentRoles(RecordAccessRole.newBuilder()
+				.setId(role.getAD_Role_ID())
+				.setName(
+					StringManager.getValidString(
+						role.getName()
+					)
+				)
+				.setIsActive(recordAccess.isActive())
+				.setIsDependentEntities(recordAccess.isDependentEntities())
+				.setIsExclude(recordAccess.isExclude())
+				.setIsReadOnly(recordAccess.isReadOnly()));
+		});
+		//	Populate roles list
+		getRolesList(null).parallelStream().forEach(role -> {
+			builder.addAvailableRoles(
+				RecordAccessRole.newBuilder()
+					.setId(role.getAD_Role_ID())
+					.setName(
+						StringManager.getValidString(
+							role.getName()
+						)
+					)
+			);
+		});
+		return builder;
+	}
+	
+	/**
+	 * Get record access from client, role , table id and record id
+	 * @param tableId
+	 * @param recordId
+	 * @param transactionName
+	 * @return
+	 */
+	public static List<MRecordAccess> getRecordAccess(int tableId, int recordId, String transactionName) {
+		return new Query(
+			Env.getCtx(),
+			I_AD_Record_Access.Table_Name,
+			"AD_Table_ID = ? "
+			+ "AND Record_ID = ? "
+			+ "AND AD_Client_ID = ?",
+			transactionName
+		)
+			.setParameters(tableId, recordId, Env.getAD_Client_ID(Env.getCtx()))
+			.list()
+		;
+	}
+	
+	/**
+	 * Get role for this client
+	 * @param transactionName
+	 * @return
+	 */
+	public static List<MRole> getRolesList(String transactionName) {
+		return new Query(
+			Env.getCtx(),
+			I_AD_Role.Table_Name,
+			null,
+			transactionName
+		)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.list()
+		;
+	}
+
+	/**
+	 * save record Access
+	 * @param request
+	 * @return
+	 */
+	public static RecordAccess.Builder saveRecordAccess(SetRecordAccessRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+		if(request.getRecordId() <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		//	
+		RecordAccess.Builder builder = RecordAccess.newBuilder();
+		Trx.run(transactionName -> {
+			int tableId = table.getAD_Table_ID();
+			AtomicInteger recordId = new AtomicInteger(request.getRecordId());
+			builder.setTableName(
+				StringManager.getValidString(
+						table.getTableName()
+					)
+				)
+				.setRecordId(recordId.get())
+			;
+			//	Delete old
+			DB.executeUpdateEx("DELETE FROM AD_Record_Access "
+					+ "WHERE AD_Table_ID = ? "
+					+ "AND Record_ID = ? "
+					+ "AND AD_Client_ID = ?", new Object[]{tableId, recordId.get(), Env.getAD_Client_ID(Env.getCtx())}, transactionName);
+			//	Add new record access
+			request.getRecordAccessesList().parallelStream().forEach(recordAccessToSet -> {
+				int roleId = recordAccessToSet.getId();
+				if(roleId <= 0) {
+					throw new AdempiereException("@AD_Role_ID@ @NotFound@");
+				}
+				MRole role = MRole.get(Env.getCtx(), roleId);
+				MRecordAccess recordAccess = new MRecordAccess(Env.getCtx(), role.getAD_Role_ID(), tableId, recordId.get(), transactionName);
+				recordAccess.setIsActive(recordAccessToSet.getIsActive());
+				recordAccess.setIsExclude(recordAccessToSet.getIsExclude());
+				recordAccess.setIsDependentEntities(recordAccessToSet.getIsDependentEntities());
+				recordAccess.setIsReadOnly(recordAccessToSet.getIsReadOnly());
+				recordAccess.saveEx();
+				//	Add current roles
+				builder.addCurrentRoles(
+					RecordAccessRole.newBuilder()
+						.setId(role.getAD_Role_ID())
+						.setName(
+							StringManager.getValidString(
+								role.getName()
+							)
+						)
+						.setIsActive(recordAccess.isActive())
+						.setIsDependentEntities(recordAccess.isDependentEntities())
+						.setIsExclude(recordAccess.isExclude())
+						.setIsReadOnly(recordAccess.isReadOnly())
+				);
+			});
+			//	Populate roles list
+			getRolesList(transactionName).parallelStream().forEach(roleToGet -> {
+				builder.addAvailableRoles(
+					RecordAccessRole.newBuilder()
+						.setId(
+							roleToGet.getAD_Role_ID()
+						)
+				);
+			});
+		});
+		//	
+		return builder;
+	}
+
+
+	/**
+	 * Get private access from table, record id and user id
+	 * @param Env.getCtx()
+	 * @param tableName
+	 * @param recordId
+	 * @param userUuid
+	 * @param transactionName
+	 * @return
+	 */
+	public static MPrivateAccess getPrivateAccess(Properties context, String tableName, int recordId, int userId, String transactionName) {
+		return new Query(
+			Env.getCtx(),
+			I_AD_Private_Access.Table_Name,
+			"EXISTS(SELECT 1 FROM AD_Table t WHERE t.AD_Table_ID = AD_Private_Access.AD_Table_ID AND t.TableName = ?) "
+			+ "AND Record_ID = ? "
+			+ "AND AD_User_ID = ?",
+			transactionName
+		)
+			.setParameters(tableName, recordId, userId)
+			.first()
+		;
+	}
+
+
+	/**
+	 * Lock and unlock private access
+	 * @param Env.getCtx()
+	 * @param request
+	 * @param lock
+	 * @param transactionName
+	 * @return
+	 */
+	public static PrivateAccess.Builder lockUnlockPrivateAccess(Properties context, String tableName, int recordId, int userId, boolean lock, String transactionName) {
+		MPrivateAccess privateAccess = getPrivateAccess(Env.getCtx(), tableName, recordId, userId, transactionName);
+		//	Create new
+		if(privateAccess == null
+				|| privateAccess.getAD_Table_ID() == 0) {
+			MTable table = MTable.get(Env.getCtx(), tableName);
+			//	Set values
+			privateAccess = new MPrivateAccess(Env.getCtx(), userId, table.getAD_Table_ID(), recordId);
+		}
+		//	Set active
+		privateAccess.setIsActive(lock);
+		privateAccess.saveEx(transactionName);
+		//	Convert Private Access
+		return convertPrivateAccess(Env.getCtx(), privateAccess);
 	}
 
 }

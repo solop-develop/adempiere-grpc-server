@@ -90,35 +90,6 @@ service UserInterface {
 	rpc GetContextInfoValue(GetContextInfoValueRequest) returns (ContextInfoValue) {
 		option (google.api.http) = { get: "/user-interface/context-info/{id}" };
 	}
-	// Get Private Access
-	rpc GetPrivateAccess(GetPrivateAccessRequest) returns (PrivateAccess) {
-		option (google.api.http) = { get: "/user-interface/private-access/{table_name}/{id}" };
-	}
-	// Create Private Access
-	rpc LockPrivateAccess(LockPrivateAccessRequest) returns (PrivateAccess) {
-		option (google.api.http) = {
-			patch: "/user-interface/private-access/{table_name}/{id}/lock",
-			body: "*"
-		};
-	}
-	// Change Private Access
-	rpc UnlockPrivateAccess(UnlockPrivateAccessRequest) returns (PrivateAccess) {
-		option (google.api.http) = {
-			patch: "/user-interface/private-access/{table_name}/{id}/unlock",
-			body: "*"
-		};
-	}
-	// Get Record Access
-	rpc GetRecordAccess(GetRecordAccessRequest) returns (RecordAccess) {
-		option (google.api.http) = { get: "/user-interface/record-access/{table_name}/{id}" };
-	}
-	// Set Record Access
-	rpc SetRecordAccess(SetRecordAccessRequest) returns (RecordAccess) {
-		option (google.api.http) = {
-			patch: "/user-interface/record-access/{table_name}/{id}",
-			body: "*"
-		};
-	}
 	// Add Chat Entry
 	rpc CreateChatEntry(CreateChatEntryRequest) returns (ChatEntry) {
 		option (google.api.http) = {
@@ -158,58 +129,6 @@ message Translation {
 	google.protobuf.Struct values = 2;
 }
 
-//	Role Access Request
-message GetRecordAccessRequest {
-	string table_name = 1;
-	int32 id = 2;
-}
-
-//	Set Access Request
-message SetRecordAccessRequest {
-	string table_name = 1;
-	int32 id = 2;
-	repeated RecordAccessRole record_accesses = 3;
-}
-
-//	Record Access Definition
-message RecordAccess {
-	string table_name = 1;
-	int32 id = 2;
-	repeated RecordAccessRole available_roles = 3;
-	repeated RecordAccessRole current_roles = 4;
-}
-
-//	Record Access Stub
-message RecordAccessRole {
-	int32 role_id = 1;
-	string role_name = 2;
-	bool is_active = 3;
-	bool is_exclude = 4;
-	bool is_read_only = 5;
-	bool is_dependent_entities = 6;
-}
-
-// Private Access
-message GetPrivateAccessRequest {
-	string table_name = 1;
-	int32 id = 2;
-}
-
-message LockPrivateAccessRequest {
-	string table_name = 1;
-	int32 id = 2;
-}
-
-message UnlockPrivateAccessRequest {
-	string table_name = 1;
-	int32 id = 2;
-}
-
-message PrivateAccess {
-	string table_name = 1;
-	int32 id = 2;
-	bool is_locked = 3;
-}
 
 //  Empty message
 message RollbackEntityRequest {
