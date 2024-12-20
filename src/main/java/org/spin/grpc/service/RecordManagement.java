@@ -15,18 +15,29 @@
 package org.spin.grpc.service;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MPrivateAccess;
+import org.compiere.model.MTable;
+import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
+import org.compiere.util.Env;
 import org.spin.backend.grpc.record_management.RecordManagementGrpc.RecordManagementImplBase;
+import org.spin.backend.grpc.record_management.SetRecordAccessRequest;
 import org.spin.backend.grpc.record_management.ExistsRecordReferencesRequest;
 import org.spin.backend.grpc.record_management.ExistsRecordReferencesResponse;
+import org.spin.backend.grpc.record_management.GetPrivateAccessRequest;
+import org.spin.backend.grpc.record_management.GetRecordAccessRequest;
 import org.spin.backend.grpc.record_management.ListRecordReferencesRequest;
 import org.spin.backend.grpc.record_management.ListRecordReferencesResponse;
 import org.spin.backend.grpc.record_management.ListZoomWindowsRequest;
 import org.spin.backend.grpc.record_management.ListZoomWindowsResponse;
+import org.spin.backend.grpc.record_management.LockPrivateAccessRequest;
+import org.spin.backend.grpc.record_management.PrivateAccess;
+import org.spin.backend.grpc.record_management.RecordAccess;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
+import org.spin.backend.grpc.record_management.UnlockPrivateAccessRequest;
 import org.spin.grpc.logic.RecordManagementServiceLogic;
 
 import io.grpc.Status;
@@ -145,6 +156,166 @@ public class RecordManagement extends RecordManagementImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	/**
+	 * @param request
+	 * @param responseObserver
+	 */
+	public void lockPrivateAccess(LockPrivateAccessRequest request, StreamObserver<PrivateAccess> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			int recordId = request.getRecordId();
+			if (recordId <= 0) {
+				throw new AdempiereException("@Record_ID@ @NotFound@");
+			}
+			MUser user = MUser.get(Env.getCtx());
+			PrivateAccess.Builder privateaccess = RecordManagementServiceLogic.lockUnlockPrivateAccess(
+				Env.getCtx(),
+				request.getTableName(),
+				recordId,
+				user.getAD_User_ID(),
+				true,
+				null
+			);
+			responseObserver.onNext(privateaccess.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	/**
+	 * @param request
+	 * @param responseObserver
+	 */
+	public void unlockPrivateAccess(UnlockPrivateAccessRequest request, StreamObserver<PrivateAccess> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			int recordId = request.getRecordId();
+			if (recordId <= 0) {
+				throw new AdempiereException("@Record_ID@ @NotFound@");
+			}
+			MUser user = MUser.get(Env.getCtx());
+			PrivateAccess.Builder privateaccess = RecordManagementServiceLogic.lockUnlockPrivateAccess(
+				Env.getCtx(),
+				request.getTableName(),
+				recordId,
+				user.getAD_User_ID(),
+				false,
+				null
+			);
+			responseObserver.onNext(privateaccess.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void getPrivateAccess(GetPrivateAccessRequest request, StreamObserver<PrivateAccess> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			int recordId = request.getRecordId();
+			if (recordId <= 0) {
+				throw new AdempiereException("@Record_ID@ @NotFound@");
+			}
+			MUser user = MUser.get(Env.getCtx());
+			MPrivateAccess privateAccess = RecordManagementServiceLogic.getPrivateAccess(
+				Env.getCtx(),
+				request.getTableName(),
+				recordId,
+				user.getAD_User_ID(),
+				null
+			);
+			if(privateAccess == null
+					|| privateAccess.getAD_Table_ID() == 0) {
+				MTable table = MTable.get(Env.getCtx(), request.getTableName());
+				//	Set values
+				privateAccess = new MPrivateAccess(Env.getCtx(), user.getAD_User_ID(), table.getAD_Table_ID(), recordId);
+				privateAccess.setIsActive(false);
+			}
+			PrivateAccess.Builder privateaccess = RecordManagementServiceLogic.convertPrivateAccess(
+				Env.getCtx(),
+				privateAccess
+			);
+			responseObserver.onNext(privateaccess.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void getRecordAccess(GetRecordAccessRequest request, StreamObserver<RecordAccess> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			RecordAccess.Builder recordAccess = RecordManagementServiceLogic.convertRecordAccess(request);
+			responseObserver.onNext(recordAccess.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void setRecordAccess(SetRecordAccessRequest request, StreamObserver<RecordAccess> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			RecordAccess.Builder recordAccess = RecordManagementServiceLogic.saveRecordAccess(request);
+			responseObserver.onNext(recordAccess.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())

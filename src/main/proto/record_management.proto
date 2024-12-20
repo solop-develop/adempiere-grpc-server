@@ -57,6 +57,38 @@ service RecordManagement {
 	rpc ListRecordReferences(ListRecordReferencesRequest) returns (ListRecordReferencesResponse) {
 		option (google.api.http) = { get: "/record-management/references/{tab_id}/{record_id}" };
 	}
+
+	// Private Access
+	rpc GetPrivateAccess(GetPrivateAccessRequest) returns (PrivateAccess) {
+		option (google.api.http) = {
+			get: "/record-management/private-access/{table_name}/{record_id}"
+		};
+	}
+	rpc LockPrivateAccess(LockPrivateAccessRequest) returns (PrivateAccess) {
+		option (google.api.http) = {
+			patch: "/record-management/private-access/{table_name}/{record_id}/lock",
+			body: "*"
+		};
+	}
+	rpc UnlockPrivateAccess(UnlockPrivateAccessRequest) returns (PrivateAccess) {
+		option (google.api.http) = {
+			patch: "/record-management/private-access/{table_name}/{record_id}/unlock",
+			body: "*"
+		};
+	}
+
+	// Record Access
+	rpc GetRecordAccess(GetRecordAccessRequest) returns (RecordAccess) {
+		option (google.api.http) = {
+			get: "/record-management/record-access/{table_name}/{record_id}"
+		};
+	}
+	rpc SetRecordAccess(SetRecordAccessRequest) returns (RecordAccess) {
+		option (google.api.http) = {
+			patch: "/record-management/record-access/{table_name}/{record_id}",
+			body: "*"
+		};
+	}
 }
 
 
@@ -149,4 +181,52 @@ message ListZoomWindowsResponse {
 	repeated string key_columns = 4;
 	string display_column_name = 5;
 	repeated ZoomWindow zoom_windows = 6;
+}
+
+
+// Private Access
+message PrivateAccess {
+	string table_name = 1;
+	int32 record_id = 2;
+	bool is_locked = 3;
+}
+message GetPrivateAccessRequest {
+	string table_name = 1;
+	int32 record_id = 2;
+}
+message LockPrivateAccessRequest {
+	string table_name = 1;
+	int32 record_id = 2;
+}
+message UnlockPrivateAccessRequest {
+	string table_name = 1;
+	int32 record_id = 2;
+}
+
+
+//	Record Access
+message RecordAccessRole {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	bool is_active = 4;
+	bool is_exclude = 5;
+	bool is_read_only = 6;
+	bool is_dependent_entities = 7;
+}
+message GetRecordAccessRequest {
+	string table_name = 1;
+	int32 record_id = 2;
+}
+message SetRecordAccessRequest {
+	string table_name = 1;
+	int32 record_id = 2;
+	repeated RecordAccessRole record_accesses = 3;
+}
+message RecordAccess {
+	string table_name = 1;
+	int32 record_id = 2;
+	string record_uuid = 3;
+	repeated RecordAccessRole available_roles = 4;
+	repeated RecordAccessRole current_roles = 5;
 }
