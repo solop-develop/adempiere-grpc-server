@@ -33,6 +33,7 @@ import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_C_Charge;
 import org.adempiere.core.domains.models.I_C_Currency;
+import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
@@ -41,6 +42,7 @@ import org.compiere.model.MAllocationLine;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCharge;
 import org.compiere.model.MCurrency;
+import org.compiere.model.MDocType;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPayment;
@@ -58,6 +60,7 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.payment_allocation.Charge;
 import org.spin.backend.grpc.form.payment_allocation.Currency;
+import org.spin.backend.grpc.form.payment_allocation.DocumentType;
 import org.spin.backend.grpc.form.payment_allocation.Invoice;
 import org.spin.backend.grpc.form.payment_allocation.InvoiceSelection;
 import org.spin.backend.grpc.form.payment_allocation.ListBusinessPartnersRequest;
@@ -216,14 +219,21 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			return builder;
 		}
 
-		builder.setId(organization.getAD_Org_ID())
+		builder.setId(
+				organization.getAD_Org_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					organization.getUUID()
+				)
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					organization.getName()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					organization.getName()
 				)
 			)
@@ -323,14 +333,21 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			return builder;
 		}
 
-		builder.setId(currency.getC_Currency_ID())
+		builder.setId(
+				currency.getC_Currency_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					currency.getUUID()
+				)
+			)
 			.setIsoCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					currency.getISO_Code()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					currency.getDescription()
 				)
 			)
@@ -429,23 +446,71 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			description = transactionType.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
 		}
 
-		builder.setId(transactionType.getAD_Ref_List_ID())
+		builder.setId(
+				transactionType.getAD_Ref_List_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					transactionType.getUUID()
+				)
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					transactionType.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(name)
+				StringManager.getValidString(name)
 			)
 			.setDescription(
-				ValueManager.validateNull(description)
+				StringManager.getValidString(description)
 			)
 		;
 
 		return builder;
 	}
 
+
+	public static DocumentType.Builder convertDocumentType(int documentTypeId) {
+		if (documentTypeId < 0) {
+			return DocumentType.newBuilder();
+		}
+		MDocType documentType = MDocType.get(Env.getCtx(), documentTypeId);
+		return convertDocumentType(documentType);
+	}
+	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
+		DocumentType.Builder builder = DocumentType.newBuilder();
+		if (documentType == null || documentType.getC_DocType_ID() < 0) {
+			return builder;
+		}
+
+		builder.setId(
+				documentType.getC_DocType_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					documentType.getUUID()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					documentType.get_Translation(I_C_DocType.COLUMNNAME_Name)
+				)
+			)
+			.setPrintName(
+				StringManager.getValidString(
+					documentType.get_Translation(I_C_DocType.COLUMNNAME_PrintName)
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					documentType.get_Translation(I_C_DocType.COLUMNNAME_Description)
+				)
+			)
+		;
+
+		return builder;
+	}
 
 
 	@Override
@@ -482,6 +547,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		 *    5-ConvAmt, 6-ConvOpen, 7-Allocated
 		 */
 		StringBuffer sql = new StringBuffer("SELECT p.DateTrx, p.DocumentNo, p.C_Payment_ID,"	//	1..3
+			+ "p.UUID, p.C_DocTypeTarget_ID, "
 			+ "c.ISO_Code, p.PayAmt,"			//	4..5
 			+ "currencyConvert(p.PayAmt, p.C_Currency_ID, ?, ?, p.C_ConversionType_ID, p.AD_Client_ID, p.AD_Org_ID) AS ConvertedAmt,"//		#1, #2
 			+ "currencyConvert(paymentAvailable(C_Payment_ID), p.C_Currency_ID, ?, ?, p.C_ConversionType_ID, p.AD_Client_ID, p.AD_Org_ID) AS AvailableAmt,"	//	7   #3, #4
@@ -537,6 +603,9 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			while (rs.next()) {
 				recordCount++;
 
+				DocumentType.Builder documentTypeBuilder = convertDocumentType(
+					rs.getInt(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)
+				);
 				Organization.Builder organizationBuilder = convertOrganization(
 					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
 				);
@@ -555,19 +624,27 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				int paymentId = rs.getInt(I_C_Payment.COLUMNNAME_C_Payment_ID);
 				Payment.Builder paymentBuilder = Payment.newBuilder()
 					.setId(paymentId)
+					.setUuid(
+						StringManager.getValidString(
+							rs.getString(I_C_Payment.COLUMNNAME_UUID)
+						)
+					)
+					.setDocumentNo(
+						StringManager.getValidString(
+							rs.getString(I_C_Payment.COLUMNNAME_DocumentNo)
+						)
+					)
+					.setDocumentType(
+						documentTypeBuilder
+					)
 					.setTransactionDate(
 						ValueManager.getTimestampFromDate(
 							rs.getTimestamp(I_C_Payment.COLUMNNAME_DateTrx)
 						)
 					)
 					.setIsReceipt(isReceipt)
-					.setDocumentNo(
-						ValueManager.validateNull(
-							rs.getString(I_C_Payment.COLUMNNAME_DocumentNo)
-						)
-					)
 					.setDescription(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							rs.getString(I_C_Payment.COLUMNNAME_Description)
 						)
 					)
@@ -648,6 +725,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		 */
 		StringBuffer sql = new StringBuffer(
 			"SELECT i.DateInvoiced, i.DocumentNo, i.Description, i.C_Invoice_ID, "		//	1..3
+			+ "p.UUID, p.C_DocTypeTarget_ID, "
 			+ "c.ISO_Code, (i.GrandTotal * i.MultiplierAP) AS OriginalAmt, "		//  4..5	Orig Currency
 			+ "currencyConvert(i.GrandTotal * i.MultiplierAP, i.C_Currency_ID, ?, ?, i.C_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) AS ConvertedAmt, "		//	6   #1  Converted, #2 Date
 			+ "(currencyConvert(invoiceOpen(C_Invoice_ID,C_InvoicePaySchedule_ID), i.C_Currency_ID, ?, ?, i.C_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) * i.MultiplierAP) AS OpenAmt, "	//  7   #3, #4  Converted Open
@@ -705,6 +783,9 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			while (rs.next()) {
 				recordCount++;
 
+				DocumentType.Builder targetDocumentTypeBuilder = convertDocumentType(
+					rs.getInt(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)
+				);
 				Organization.Builder organizationBuilder = convertOrganization(
 					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
 				);
@@ -723,19 +804,27 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				int invoiceId = rs.getInt(I_C_Invoice.COLUMNNAME_C_Invoice_ID);
 				Invoice.Builder invoiceBuilder = Invoice.newBuilder()
 					.setId(invoiceId)
+					.setUuid(
+						StringManager.getValidString(
+							rs.getString(I_C_Invoice.COLUMNNAME_UUID)
+						)
+					)
+					.setDocumentNo(
+						StringManager.getValidString(
+							rs.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
+						)
+					)
+					.setTargetDocumentType(
+						targetDocumentTypeBuilder
+					)
 					.setDateInvoiced(
 						ValueManager.getTimestampFromDate(
 							rs.getTimestamp(I_C_Invoice.COLUMNNAME_DateInvoiced)
 						)
 					)
 					.setIsSalesTransaction(isSalesTransaction)
-					.setDocumentNo(
-						ValueManager.validateNull(
-							rs.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
-						)
-					)
 					.setDescription(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							rs.getString(I_C_Invoice.COLUMNNAME_Description)
 						)
 					)
@@ -832,14 +921,21 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			return builder;
 		}
 
-		builder.setId(charge.getC_Charge_ID())
+		builder.setId(
+				charge.getC_Charge_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					charge.getUUID()
+				)
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					charge.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					charge.getDescription()
 				)
 			)
