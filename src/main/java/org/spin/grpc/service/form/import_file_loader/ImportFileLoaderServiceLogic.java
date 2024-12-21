@@ -13,15 +13,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 package org.spin.grpc.service.form.import_file_loader;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_ImpFormat;
@@ -582,27 +582,32 @@ public class ImportFileLoaderServiceLogic {
 						info = "";
 					}
 				}
-				String entry = info;
-
+				String entry = row.parse(info);
+				//	TODO: Reuse ADempiere Parser
 				Value.Builder valueBuilder = Value.newBuilder();
-				if (row.isDate()) {
-					Timestamp dateValue = Timestamp.valueOf(entry);
-					valueBuilder = ValueManager.getValueFromTimestamp(dateValue);
-				} else if (row.isNumber()) {
-					BigDecimal numberValue = null;
-					if (!Util.isEmpty(entry, true)) {
-						numberValue = new BigDecimal(entry);
-						if (row.isDivideBy100()) {
-							numberValue = numberValue.divide(
-								BigDecimal.valueOf(100)
-							);
+				if(!Util.isEmpty(entry)) {
+					try {
+						if (row.isDate()) {
+							Timestamp dateValue = Timestamp.valueOf(entry);
+							valueBuilder = ValueManager.getValueFromTimestamp(dateValue);
+						} else if (row.isNumber()) {
+							BigDecimal numberValue = null;
+							if (!Util.isEmpty(entry, true)) {
+								numberValue = new BigDecimal(entry);
+								if (row.isDivideBy100()) {
+									numberValue = numberValue.divide(
+										BigDecimal.valueOf(100)
+									);
+								}
+							}
+							valueBuilder = ValueManager.getValueFromBigDecimal(numberValue);
+						} else {
+							valueBuilder = ValueManager.getValueFromString(entry);
 						}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-					valueBuilder = ValueManager.getValueFromBigDecimal(numberValue);
-				} else {
-					valueBuilder = ValueManager.getValueFromString(entry);
 				}
-
 				lineValues.putFields(
 					row.getColumnName(),
 					valueBuilder.build()
