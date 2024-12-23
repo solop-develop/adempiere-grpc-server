@@ -76,10 +76,14 @@ service Store {
 		};
 	}
 	rpc GetOrder(GetOrderRequest) returns (Order) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/orders/{id}" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{id}"
+		};
 	}
 	rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/orders" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders"
+		};
 	}
 	rpc UpdateOrder(UpdateOrderRequest) returns (Order) {
 		option (google.api.http) = {
@@ -111,7 +115,9 @@ service Store {
 		};
 	}
 	rpc ListOrderLines(ListOrderLinesRequest) returns (ListOrderLinesResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/orders/{order_id}/lines" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/lines"
+		};
 	}
 	rpc UpdateOrderLine(UpdateOrderLineRequest) returns (OrderLine) {
 		option (google.api.http) = {
@@ -1363,22 +1369,23 @@ message ListOrdersRequest {
 	string search_value = 7;
 	int32 pos_id = 8;
 	string document_no = 9;
-	string document_status = 10;
-	int32 business_partner_id = 11;
-	string grand_total = 12;
-	string open_amount = 13;
-	bool is_waiting_for_pay = 14;
-	bool is_only_processed = 15;
-	bool is_only_aisle_seller = 16;
-	bool is_waiting_for_invoice = 17;
-	bool is_waiting_for_shipment = 18;
-	bool is_binding_offer = 19;
-	bool is_closed = 20;
-	bool is_nullified = 21;
-	bool is_only_rma = 22;
-	google.protobuf.Timestamp date_ordered_from = 23;
-	google.protobuf.Timestamp date_ordered_to = 24;
-	int32 sales_representative_id = 25;
+	string invoice_no = 10;
+	string document_status = 11;
+	int32 business_partner_id = 12;
+	string grand_total = 13;
+	string open_amount = 14;
+	bool is_waiting_for_pay = 15;
+	bool is_only_processed = 16;
+	bool is_only_aisle_seller = 17;
+	bool is_waiting_for_invoice = 18;
+	bool is_waiting_for_shipment = 19;
+	bool is_binding_offer = 20;
+	bool is_closed = 21;
+	bool is_nullified = 22;
+	bool is_only_rma = 23;
+	google.protobuf.Timestamp date_ordered_from = 24;
+	google.protobuf.Timestamp date_ordered_to = 25;
+	int32 sales_representative_id = 26;
 }
 
 //	List Order Lines Response
@@ -1702,73 +1709,76 @@ message GetKeyLayoutRequest {
 // Sales Order
 message Order {
 	int32 id = 1;
-	string document_no = 2;
-	core_functionality.DocumentType document_type = 3;
-	core_functionality.SalesRepresentative sales_representative = 4;
-	DocumentStatus document_status = 5;
-	core_functionality.PriceList price_list = 6;
-	core_functionality.Warehouse warehouse = 7;
-	string total_lines = 8;
-	string grand_total = 9;
-	string grand_total_converted = 10;
-	string tax_amount = 11;
-	string discount_amount = 12;
-	google.protobuf.Timestamp date_ordered = 13;
-	Customer customer = 14;
-	bool is_delivered = 15;
-	string order_reference = 16;
-	string description = 17;
-	Campaign campaign = 18;
-	string display_currency_rate = 19;
-	string open_amount = 20;
-	string payment_amount = 21;
-	string refund_amount = 22;
-	string charge_amount = 23;
-	string credit_amount = 24;
-	int32 source_rma_id = 25;
-	bool is_rma = 26;
-	bool is_binding_offer = 27;
-	bool is_order = 28;
+	string uuid = 2;
+	string document_no = 3;
+	core_functionality.DocumentType document_type = 4;
+	core_functionality.SalesRepresentative sales_representative = 5;
+	DocumentStatus document_status = 6;
+	core_functionality.PriceList price_list = 7;
+	core_functionality.Warehouse warehouse = 8;
+	string total_lines = 9;
+	string grand_total = 10;
+	string grand_total_converted = 11;
+	string tax_amount = 12;
+	string discount_amount = 13;
+	google.protobuf.Timestamp date_ordered = 14;
+	Customer customer = 15;
+	bool is_delivered = 16;
+	string order_reference = 17;
+	string description = 18;
+	string invoice_no = 19;
+	Campaign campaign = 20;
+	string display_currency_rate = 21;
+	string open_amount = 22;
+	string payment_amount = 23;
+	string refund_amount = 24;
+	string charge_amount = 25;
+	string credit_amount = 26;
+	int32 source_rma_id = 27;
+	bool is_rma = 28;
+	bool is_binding_offer = 29;
+	bool is_order = 30;
 }
 
 // Sales Order Line
 message OrderLine {
 	int32 id = 1;
-	int32 order_id = 2;
-	core_functionality.Product product = 3;
-	core_functionality.Charge charge = 4;
-	string line_description = 5;
-	string description = 6;
-	core_functionality.Warehouse warehouse = 7;
-	string quantity = 8;
-	string quantity_ordered = 9;
-	string available_quantity = 10;
-	string price = 11;
-	string price_with_tax = 12;
-	string price_base = 13;
-	string price_base_with_tax = 14;
-	string price_list = 15;
-	string price_list_with_tax = 16;
-	string discount_rate = 17;
-	string discount_amount = 18;
-	string tax_amount = 19;
-	string base_tax_amount = 20;
-	string list_tax_amount = 21;
-	core_functionality.TaxRate tax_rate = 22;
+	string uuid = 2;
+	int32 order_id = 3;
+	core_functionality.Product product = 4;
+	core_functionality.Charge charge = 5;
+	string line_description = 6;
+	string description = 7;
+	core_functionality.Warehouse warehouse = 8;
+	string quantity = 9;
+	string quantity_ordered = 10;
+	string available_quantity = 11;
+	string price = 12;
+	string price_with_tax = 13;
+	string price_base = 14;
+	string price_base_with_tax = 15;
+	string price_list = 16;
+	string price_list_with_tax = 17;
+	string discount_rate = 18;
+	string discount_amount = 19;
+	string tax_amount = 20;
+	string base_tax_amount = 21;
+	string list_tax_amount = 22;
+	core_functionality.TaxRate tax_rate = 23;
 	//	Totals
-	string total_discount_amount = 23;
-	string total_tax_amount = 24;
-	string total_base_amount = 25;
-	string total_base_amount_with_tax = 26;
-	string total_amount = 27;
-	string total_amount_converted = 28;
-	string total_amount_with_tax = 29;
-	string total_amount_with_tax_converted = 30;
-	int32 line = 31;
-	core_functionality.ProductConversion uom = 32;
-	core_functionality.ProductConversion product_uom = 33;
-	time_control.ResourceAssignment resource_assignment = 34;
-	int32 source_rma_line_id = 35;
+	string total_discount_amount = 24;
+	string total_tax_amount = 25;
+	string total_base_amount = 26;
+	string total_base_amount_with_tax = 27;
+	string total_amount = 28;
+	string total_amount_converted = 29;
+	string total_amount_with_tax = 30;
+	string total_amount_with_tax_converted = 31;
+	int32 line = 32;
+	core_functionality.ProductConversion uom = 33;
+	core_functionality.ProductConversion product_uom = 34;
+	time_control.ResourceAssignment resource_assignment = 35;
+	int32 source_rma_line_id = 36;
 }
 
 // Request Product Price
