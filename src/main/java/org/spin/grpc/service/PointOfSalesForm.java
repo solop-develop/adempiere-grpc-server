@@ -119,6 +119,7 @@ import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.pos.util.OrderConverUtil;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.pos.util.PaymentConvertUtil;
 import org.spin.pos.util.TicketHandler;
@@ -126,6 +127,7 @@ import org.spin.pos.util.TicketResult;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -225,22 +227,31 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+
 	@Override
 	public void getOrder(GetOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(getOrder(request.getId(), null));
+			Order.Builder order = OrderConverUtil.convertOrder(
+				getOrder(
+					request.getId(),
+					null
+				)
+			);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+
 	@Override
 	public void createPayment(CreatePaymentRequest request, StreamObserver<Payment> responseObserver) {
 		try {
@@ -357,37 +368,51 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 
-
 	@Override
 	public void releaseOrder(ReleaseOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(changeOrderAssigned(request.getId()));
+			Order.Builder order = OrderConverUtil.convertOrder(
+				changeOrderAssigned(
+					request.getId()
+				)
+			);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+
 	@Override
 	public void holdOrder(HoldOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(changeOrderAssigned(request.getId(), request.getSalesRepresentativeId()));
+			Order.Builder order = OrderConverUtil.convertOrder(
+				changeOrderAssigned(
+					request.getId(),
+					request.getSalesRepresentativeId()
+				)
+			);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+
 	@Override
 	public void getAvailableRefund(GetAvailableRefundRequest request, StreamObserver<AvailableRefund> responseObserver) {
 		try {
@@ -412,11 +437,12 @@ public class PointOfSalesForm extends StoreImplBase {
 	private AvailableRefund.Builder getAvailableRefund(GetAvailableRefundRequest request) {
 		return AvailableRefund.newBuilder();
 	}
-	
+
+
 	@Override
 	public void processOrder(ProcessOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(
+			Order.Builder order = OrderConverUtil.convertOrder(
 				processOrder(request)
 			);
 			responseObserver.onNext(order.build());
@@ -424,13 +450,16 @@ public class PointOfSalesForm extends StoreImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+
 	@Override
 	public void validatePIN(ValidatePINRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -981,7 +1010,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				whereClause += " " + I_C_BP_BankAccount.COLUMNNAME_C_Bank_ID + " = ?";
 				filtersList.add(request.getBankId());
 			}
-			
+
 			// if (request.get)
 			Query query = new Query(
 				Env.getCtx(),
@@ -1024,14 +1053,16 @@ public class PointOfSalesForm extends StoreImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
-	
+
+
 	@Override
 	public void createShipment(CreateShipmentRequest request, StreamObserver<Shipment> responseObserver) {
 		try {
@@ -1414,11 +1445,12 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+
 	@Override
 	public void copyOrder(CopyOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder salesOrder = ConvertUtil.convertOrder(
+			Order.Builder salesOrder = OrderConverUtil.convertOrder(
 				OrderManagement.createOrderFromOther(
 					request.getPosId(),
 					request.getSalesRepresentativeId(),
@@ -1438,22 +1470,32 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
-	
+
+
 	@Override
 	public void createOrderFromRMA(CreateOrderFromRMARequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder salesOrder = ConvertUtil.convertOrder(OrderManagement.createOrderFromRMA(request.getPosId(), request.getSalesRepresentativeId(), request.getSourceRmaId()));
+			Order.Builder salesOrder = OrderConverUtil.convertOrder(
+				OrderManagement.createOrderFromRMA(
+					request.getPosId(),
+					request.getSalesRepresentativeId(),
+					request.getSourceRmaId()
+				)
+			);
 			responseObserver.onNext(salesOrder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+
 	@Override
 	public void listCustomerCredits(ListCustomerCreditsRequest request, StreamObserver<ListCustomerCreditsResponse> responseObserver) {
 		try {
@@ -1544,12 +1586,36 @@ public class PointOfSalesForm extends StoreImplBase {
 			while(rs.next()) {
 				CreditMemo.Builder creditMemo = CreditMemo.newBuilder()
 					.setId(rs.getInt("C_Invoice_ID"))
-					.setDocumentNo(StringManager.getValidString(rs.getString("DocumentNo")))
-					.setDescription(StringManager.getValidString(rs.getString("Description")))
-					.setDocumentDate(ValueManager.getTimestampFromDate(rs.getTimestamp("DateInvoiced")))
-					.setCurrency(CoreFunctionalityConvert.convertCurrency(rs.getInt("C_Currency_ID")))
-					.setAmount(NumberManager.getBigDecimalToString(rs.getBigDecimal("GrandTotal")))
-					.setOpenAmount(NumberManager.getBigDecimalToString(rs.getBigDecimal("OpenAmount")))
+					.setDocumentNo(
+						StringManager.getValidString(
+							rs.getString("DocumentNo")
+						)
+					)
+					.setDescription(
+						StringManager.getValidString(
+							rs.getString("Description")
+						)
+					)
+					.setDocumentDate(
+						ValueManager.getTimestampFromDate(
+							rs.getTimestamp("DateInvoiced")
+						)
+					)
+					.setCurrency(
+						CoreFunctionalityConvert.convertCurrency(
+							rs.getInt("C_Currency_ID")
+						)
+					)
+					.setAmount(
+						NumberManager.getBigDecimalToString(
+							rs.getBigDecimal("GrandTotal")
+						)
+					)
+					.setOpenAmount(
+						NumberManager.getBigDecimalToString(
+							rs.getBigDecimal("OpenAmount")
+						)
+					)
 				;
 				//	
 				builder.addRecords(creditMemo.build());
@@ -1833,11 +1899,29 @@ public class PointOfSalesForm extends StoreImplBase {
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
 				PaymentSummary.Builder paymentSummary = PaymentSummary.newBuilder()
-					.setPaymentMethodId(rs.getInt("C_PaymentMethod_ID"))
-					.setPaymentMethodName(StringManager.getValidString(rs.getString("PaymentMethodName")))
-					.setTenderTypeCode(StringManager.getValidString(rs.getString("TenderTypeCode")))
-					.setCurrency(CoreFunctionalityConvert.convertCurrency(rs.getInt("C_Currency_ID")))
-					.setIsRefund(rs.getString("IsReceipt").equals("Y")? false: true)
+					.setPaymentMethodId(
+						rs.getInt("C_PaymentMethod_ID")
+					)
+					.setPaymentMethodName(
+						StringManager.getValidString(
+							rs.getString("PaymentMethodName")
+						)
+					)
+					.setTenderTypeCode(
+						StringManager.getValidString(
+							rs.getString("TenderTypeCode")
+						)
+					)
+					.setCurrency(
+						CoreFunctionalityConvert.convertCurrency(
+							rs.getInt("C_Currency_ID")
+						)
+					)
+					.setIsRefund(
+						BooleanManager.getBooleanFromString(
+							rs.getString("IsReceipt")
+						)
+					)
 					.setAmount(NumberManager.getBigDecimalToString(rs.getBigDecimal("PaymentAmount")))
 				;
 				//	
@@ -2042,13 +2126,33 @@ public class PointOfSalesForm extends StoreImplBase {
 				throw new AdempiereException(bankStatement.getProcessMsg());
 			}
 			bankStatement.saveEx(transactionName);
-	        //	Set
-	        cashClosing
-				.setId(bankStatement.getC_BankStatement_ID())
-				.setDocumentNo(StringManager.getValidString(bankStatement.getDocumentNo()))
-				.setDescription(StringManager.getValidString(bankStatement.getDescription()))
-				.setDocumentStatus(ConvertUtil.convertDocumentStatus(bankStatement.getDocStatus(), bankStatement.getDocStatus(), bankStatement.getDocStatus()))
-				.setDocumentType(CoreFunctionalityConvert.convertDocumentType(bankStatement.getC_DocType_ID()))
+			//	Set
+			cashClosing
+				.setId(
+					bankStatement.getC_BankStatement_ID()
+				)
+				.setDocumentNo(
+					StringManager.getValidString(
+						bankStatement.getDocumentNo()
+					)
+				)
+				.setDescription(
+					StringManager.getValidString(
+						bankStatement.getDescription()
+					)
+				)
+				.setDocumentStatus(
+					ConvertUtil.convertDocumentStatus(
+						bankStatement.getDocStatus(),
+						bankStatement.getDocStatus(),
+						bankStatement.getDocStatus()
+					)
+				)
+				.setDocumentType(
+					CoreFunctionalityConvert.convertDocumentType(
+						bankStatement.getC_DocType_ID()
+					)
+				)
 			;
 		});
 		return cashClosing;
@@ -2128,7 +2232,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		MOrder returnOrder = ReverseSalesTransaction.returnCompleteOrder(pos, orderId, request.getDescription());
 		//	Default
-		return ConvertUtil.convertOrder(returnOrder);
+		return OrderConverUtil.convertOrder(returnOrder);
 	}
 
 	/**
@@ -2215,7 +2319,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		);
 		return builder;
 	}
-	
+
 	/**
 	 * List shipment Lines from Order UUID
 	 * @param request
@@ -2981,10 +3085,23 @@ public class PointOfSalesForm extends StoreImplBase {
 			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), availableWarehouse.get_ValueAsInt("M_Warehouse_ID"));
 			builder.addWarehouses(
 				AvailableWarehouse.newBuilder()
-					.setId(warehouse.getM_Warehouse_ID())
-					.setKey(StringManager.getValidString(warehouse.getValue()))
-					.setName(StringManager.getValidString(warehouse.getName()))
-					.setIsPosRequiredPin(availableWarehouse.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)));
+					.setId(
+						warehouse.getM_Warehouse_ID()
+					)
+					.setKey(
+						StringManager.getValidString(
+							warehouse.getValue()
+						)
+					)
+					.setName(
+						StringManager.getValidString(
+							warehouse.getName()
+						)
+					)
+					.setIsPosRequiredPin(
+						availableWarehouse.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+					)
+			);
 		});
 		//	
 		builder.setRecordCount(count);
@@ -3034,10 +3151,23 @@ public class PointOfSalesForm extends StoreImplBase {
 			MPriceList priceList = MPriceList.get(Env.getCtx(), availablePriceList.get_ValueAsInt("M_PriceList_ID"), null);
 			builder.addPriceList(
 				AvailablePriceList.newBuilder()
-					.setId(priceList.getM_PriceList_ID())
-					.setKey(StringManager.getValidString(priceList.getName()))
-					.setName(StringManager.getValidString(priceList.getName()))
-					.setIsPosRequiredPin(availablePriceList.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)));
+					.setId(
+						priceList.getM_PriceList_ID()
+					)
+					.setKey(
+						StringManager.getValidString(
+							priceList.getName()
+						)
+					)
+					.setName(
+						StringManager.getValidString(
+							priceList.getName()
+						)
+					)
+					.setIsPosRequiredPin(
+						availablePriceList.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+					)
+			);
 		});
 		//	
 		builder.setRecordCount(count);
@@ -3172,7 +3302,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		.forEach(availableDocumentType -> {
 			MDocType documentType = MDocType.get(Env.getCtx(), availableDocumentType.get_ValueAsInt("C_DocType_ID"));
 			builder.addDocumentTypes(AvailableDocumentType.newBuilder()
-				.setId(documentType.getC_DocType_ID())
+				.setId(
+					documentType.getC_DocType_ID()
+				)
 				.setKey(
 					StringManager.getValidString(
 						documentType.getName()
@@ -3183,7 +3315,10 @@ public class PointOfSalesForm extends StoreImplBase {
 						documentType.getPrintName()
 					)
 				)
-				.setIsPosRequiredPin(availableDocumentType.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)));
+				.setIsPosRequiredPin(
+					availableDocumentType.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+				)
+			);
 		});
 		//	
 		builder.setRecordCount(count);
@@ -3388,9 +3523,20 @@ public class PointOfSalesForm extends StoreImplBase {
 			}
 		}
 		//	Document No
-		if(!Util.isEmpty(request.getDocumentNo())) {
+		if(!Util.isEmpty(request.getDocumentNo(), true)) {
 			whereClause.append(" AND UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%'");
 			parameters.add(request.getDocumentNo());
+		}
+		//	Invoice Document No
+		if(!Util.isEmpty(request.getInvoiceNo(), true)) {
+			whereClause.append(" AND EXISTS(")
+				.append("SELECT 1 ")
+				.append("FROM C_Invoice AS i ")
+				.append("WHERE i.C_Order_ID = C_Order.C_Order_ID ")
+				.append("AND UPPER(i.DocumentNo) LIKE '%' || UPPER(?) || '%' ")
+				.append(") ")
+			;
+			parameters.add(request.getInvoiceNo());
 		}
 		//	Business Partner
 		if(request.getBusinessPartnerId() > 0) {
@@ -3411,9 +3557,8 @@ public class PointOfSalesForm extends StoreImplBase {
 		BigDecimal openAmount = NumberManager.getBigDecimalFromString(
 			request.getOpenAmount()
 		);
-		if(openAmount != null
-				&& !openAmount.equals(Env.ZERO)) {
-			whereClause.append(" (EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Order_ID = C_Order.C_Order_ID GROUP BY i.C_Order_ID HAVING(SUM(invoiceopen(i.C_Invoice_ID, 0)) = ?))"
+		if(openAmount != null && !openAmount.equals(Env.ZERO)) {
+			whereClause.append(" AND (EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Order_ID = C_Order.C_Order_ID GROUP BY i.C_Order_ID HAVING(SUM(invoiceopen(i.C_Invoice_ID, 0)) = ?))"
 					+ " OR EXISTS(SELECT 1 FROM C_Payment p WHERE C_Order_ID = C_Order.C_Order_ID GROUP BY p.C_Order_ID HAVING(SUM(p.PayAmt) = ?)"
 					+ ")");
 			parameters.add(openAmount);
@@ -3633,7 +3778,11 @@ public class PointOfSalesForm extends StoreImplBase {
 		.setOrderBy(I_C_OrderLine.COLUMNNAME_Line)
 		.<MOrderLine>list()
 		.forEach(orderLine -> {
-			builder.addOrderLines(ConvertUtil.convertOrderLine(orderLine));
+			builder.addOrderLines(
+				OrderConverUtil.convertOrderLine(
+					orderLine
+				)
+			);
 		});
 		//	
 		builder.setRecordCount(count);
@@ -3698,7 +3847,9 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void updateOrder(UpdateOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = ConvertUtil.convertOrder(updateOrder(request));
+			Order.Builder order = OrderConverUtil.convertOrder(
+				updateOrder(request)
+			);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -4380,7 +4531,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		MPOS pos = getPOSFromId(request.getPosId(), true);
 		//	Quantity
-		return ConvertUtil.convertOrderLine(
+		return OrderConverUtil.convertOrderLine(
 			updateOrderLine(
 				pos,
 				orderLineId,
@@ -4430,7 +4581,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 		//	Quantity
-		return ConvertUtil.convertOrderLine(orderLine);
+		return OrderConverUtil.convertOrderLine(orderLine);
 	}
 	
 	private MOrderLine addOrderLineFromResourceAssigment(int orderId, int resourceAssignmentId, int warehouseId) {
@@ -4499,7 +4650,11 @@ public class PointOfSalesForm extends StoreImplBase {
 				orderLine.setQty(quantityToOrder);
 				orderLine.setPrice();
 				orderLine.setTax();
-				StringBuffer description = new StringBuffer(StringManager.getValidString(resourceAssigment.getName()));
+				StringBuffer description = new StringBuffer(
+					StringManager.getValidString(
+						resourceAssigment.getName()
+					)
+				);
 				if (!Util.isEmpty(resourceAssigment.getDescription())) {
 					description.append(" (" + resourceAssigment.getDescription() + ")");
 				}
@@ -4828,18 +4983,52 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private PointOfSales.Builder convertPointOfSales(MPOS pos) {
 		PointOfSales.Builder builder = PointOfSales.newBuilder()
-			.setId(pos.getC_POS_ID())
-			.setName(StringManager.getValidString(pos.getName()))
-			.setDescription(StringManager.getValidString(pos.getDescription()))
-			.setHelp(StringManager.getValidString(pos.getHelp()))
-			.setIsModifyPrice(pos.isModifyPrice())
-			.setIsPosRequiredPin(pos.isPOSRequiredPIN())
-			.setSalesRepresentative(CoreFunctionalityConvert.convertSalesRepresentative(MUser.get(pos.getCtx(), pos.getSalesRep_ID())))
-			.setTemplateCustomer(POSConvertUtil.convertCustomer(pos.getBPartner()))
-			.setKeyLayoutId(pos.getC_POSKeyLayout_ID())
-			.setIsAisleSeller(pos.get_ValueAsBoolean("IsAisleSeller"))
-			.setIsSharedPos(pos.get_ValueAsBoolean("IsSharedPOS"))
-			.setConversionTypeId(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID))
+			.setId(
+				pos.getC_POS_ID()
+			)
+			.setName(
+				StringManager.getValidString(
+					pos.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					pos.getDescription()
+				)
+			)
+			.setHelp(
+				StringManager.getValidString(
+					pos.getHelp()
+				)
+			)
+			.setIsModifyPrice(
+				pos.isModifyPrice()
+			)
+			.setIsPosRequiredPin(
+				pos.isPOSRequiredPIN()
+			)
+			.setSalesRepresentative(
+				CoreFunctionalityConvert.convertSalesRepresentative(
+					MUser.get(pos.getCtx(), pos.getSalesRep_ID())
+				)
+			)
+			.setTemplateCustomer(
+				POSConvertUtil.convertCustomer(
+					pos.getBPartner()
+				)
+			)
+			.setKeyLayoutId(
+				pos.getC_POSKeyLayout_ID()
+			)
+			.setIsAisleSeller(
+				pos.get_ValueAsBoolean("IsAisleSeller")
+			)
+			.setIsSharedPos(
+				pos.get_ValueAsBoolean("IsSharedPOS")
+			)
+			.setConversionTypeId(
+				pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID)
+			)
 		;
 
 		int userId = Env.getAD_User_ID(pos.getCtx());
@@ -5039,7 +5228,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			maybeOrder.set(salesOrder);
 		});
 		//	Convert order
-		return ConvertUtil.convertOrder(maybeOrder.get());
+		return OrderConverUtil.convertOrder(
+			maybeOrder.get()
+		);
 	}
 	
 	/**
@@ -5393,9 +5584,22 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Set currency
 		builder.setCurrency(CoreFunctionalityConvert.convertCurrency(priceList.getC_Currency_ID()));
 		//	Price List Attributes
-		builder.setIsTaxIncluded(priceList.isTaxIncluded())
-			.setValidFrom(StringManager.getValidString(TimeManager.getTimestampToString(productPricing.getPriceDate())))
-			.setPriceListName(StringManager.getValidString(priceList.getName()));
+		builder.setIsTaxIncluded(
+				priceList.isTaxIncluded()
+			)
+			.setValidFrom(
+				StringManager.getValidString(
+					TimeManager.getTimestampToString(
+						productPricing.getPriceDate()
+					)
+				)
+			)
+			.setPriceListName(
+				StringManager.getValidString(
+					priceList.getName()
+				)
+			)
+		;
 		//	Pricing
 		builder.setPricePrecision(productPricing.getPrecision());
 		//	Prices
@@ -5844,7 +6048,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			.forEach(availableCash -> {
 				MBankAccount bankAccount = MBankAccount.get(context, availableCash.get_ValueAsInt("C_BankAccount_ID"));
 				AvailableCash.Builder availableCashBuilder = AvailableCash.newBuilder()
-					.setId(bankAccount.getC_BankAccount_ID())
+					.setId(
+						bankAccount.getC_BankAccount_ID()
+					)
 					.setName(
 						StringManager.getValidString(
 							bankAccount.getName()
@@ -5855,7 +6061,9 @@ public class PointOfSalesForm extends StoreImplBase {
 							bankAccount.getAccountNo()
 						)
 					)
-					.setIsPosRequiredPin(availableCash.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
+					.setIsPosRequiredPin(
+						availableCash.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+					)
 					.setBankAccount(
 						CoreFunctionalityConvert.convertBankAccount(
 							bankAccount
