@@ -681,6 +681,11 @@ public class ImportFileLoaderServiceLogic {
 
 			builderItem.setTableName(I_AD_Process.Table_Name);
 			builderItem.setId(processDefinition.getAD_Process_ID());
+			builderItem.setUuid(
+				StringManager.getValidString(
+					processDefinition.getUUID()
+				)
+			);
 
 			builderList.addRecords(builderItem.build());
 		});
