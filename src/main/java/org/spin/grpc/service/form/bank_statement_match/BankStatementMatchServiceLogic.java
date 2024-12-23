@@ -244,7 +244,7 @@ public abstract class BankStatementMatchServiceLogic {
 		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -483,7 +483,7 @@ public abstract class BankStatementMatchServiceLogic {
 		ListBankStatementsResponse.Builder builderList = ListBankStatementsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 
