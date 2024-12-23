@@ -41,9 +41,10 @@ message DocumentAction {
 // Lookup Item
 message LookupItem {
 	int32 id = 1;
-	string table_name = 2;
-	google.protobuf.Struct values = 3;
-	bool is_active = 4;
+	string uuid = 2;
+	string table_name = 3;
+	google.protobuf.Struct values = 4;
+	bool is_active = 5;
 }
 
 message ListLookupItemsRequest {

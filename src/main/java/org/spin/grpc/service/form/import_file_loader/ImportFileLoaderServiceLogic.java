@@ -68,7 +68,9 @@ import org.spin.eca62.support.ResourceMetadata;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.model.MADAppRegistration;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.support.AppSupportHandler;
 import org.spin.util.support.IAppSupport;
@@ -588,13 +590,13 @@ public class ImportFileLoaderServiceLogic {
 				if(!Util.isEmpty(entry)) {
 					try {
 						if (row.isDate()) {
-							Timestamp dateValue = Timestamp.valueOf(entry);
+							Timestamp dateValue = TimeManager.getTimestampFromString(entry);
 							valueBuilder = ValueManager.getValueFromTimestamp(dateValue);
 						} else if (row.isNumber()) {
 							BigDecimal numberValue = null;
 							if (!Util.isEmpty(entry, true)) {
-								numberValue = new BigDecimal(entry);
-								if (row.isDivideBy100()) {
+								numberValue = NumberManager.getBigDecimalFromString(entry);
+								if (numberValue != null && row.isDivideBy100()) {
 									numberValue = numberValue.divide(
 										BigDecimal.valueOf(100)
 									);
@@ -679,6 +681,11 @@ public class ImportFileLoaderServiceLogic {
 
 			builderItem.setTableName(I_AD_Process.Table_Name);
 			builderItem.setId(processDefinition.getAD_Process_ID());
+			builderItem.setUuid(
+				StringManager.getValidString(
+					processDefinition.getUUID()
+				)
+			);
 
 			builderList.addRecords(builderItem.build());
 		});
