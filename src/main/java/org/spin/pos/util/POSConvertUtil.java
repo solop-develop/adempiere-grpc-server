@@ -50,9 +50,9 @@ import org.spin.backend.grpc.pos.Customer;
 import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.ShipmentLine;
-import org.spin.base.util.ConvertUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -78,24 +78,26 @@ public class POSConvertUtil {
 		if (bank == null) {
 			return builder;
 		}
-		builder.setId(bank.getC_Bank_ID())
+		builder.setId(
+				bank.getC_Bank_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bank.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bank.getDescription()
 				)
 			)
 			.setRoutingNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bank.getRoutingNo()
 				)
 			)
 			.setSwiftCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bank.getSwiftCode()
 				)
 			)
@@ -119,14 +121,16 @@ public class POSConvertUtil {
 		if (campaign == null || campaign.getC_Campaign_ID() <= 0) {
 			return builder;
 		}
-		builder.setId(campaign.getC_Campaign_ID())
+		builder.setId(
+				campaign.getC_Campaign_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					campaign.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					campaign.getDescription()
 				)
 			)
@@ -157,7 +161,7 @@ public class POSConvertUtil {
 			return builder;
 		}
 		MOrder order = new MOrder(Env.getCtx(), orderId, null);
-		return ConvertUtil.convertOrder(
+		return OrderConverUtil.convertOrder(
 			order
 		);
 	}
@@ -169,17 +173,19 @@ public class POSConvertUtil {
 		if (commandShortcut == null) {
 			return builder;
 		}
-		builder.setId(commandShortcut.get_ID())
+		builder.setId(
+				commandShortcut.get_ID()
+			)
 			.setPosId(
 				commandShortcut.get_ValueAsInt(I_C_POS.COLUMNNAME_C_POS_ID)
 			)
 			.setCommand(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					commandShortcut.get_ValueAsString("ECA14_Command")
 				)
 			)
 			.setShortcut(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					commandShortcut.get_ValueAsString("ECA14_Shortcut")
 				)
 			)
@@ -234,11 +240,19 @@ public class POSConvertUtil {
 
 		//	Convert
 		return builder
-			.setOrderLineId(orderLine.getC_OrderLine_ID())
-			.setId(shipmentLine.getM_InOutLine_ID())
-			.setLine(shipmentLine.getLine())
+			.setOrderLineId(
+				orderLine.getC_OrderLine_ID()
+			)
+			.setId(
+				shipmentLine.getM_InOutLine_ID()
+			)
+			.setLine(
+				shipmentLine.getLine()
+			)
 			.setDescription(
-				ValueManager.validateNull(shipmentLine.getDescription())
+				StringManager.getValidString(
+					shipmentLine.getDescription()
+				)
 			)
 			.setProduct(
 				CoreFunctionalityConvert.convertProduct(
@@ -288,14 +302,44 @@ public class POSConvertUtil {
 			return Customer.newBuilder();
 		}
 		Customer.Builder customer = Customer.newBuilder()
-			.setId(businessPartner.getC_BPartner_ID())
-			.setValue(ValueManager.validateNull(businessPartner.getValue()))
-			.setTaxId(ValueManager.validateNull(businessPartner.getTaxID()))
-			.setDuns(ValueManager.validateNull(businessPartner.getDUNS()))
-			.setNaics(ValueManager.validateNull(businessPartner.getNAICS()))
-			.setName(ValueManager.validateNull(businessPartner.getName()))
-			.setLastName(ValueManager.validateNull(businessPartner.getName2()))
-			.setDescription(ValueManager.validateNull(businessPartner.getDescription()))
+			.setId(
+				businessPartner.getC_BPartner_ID()
+			)
+			.setValue(
+				StringManager.getValidString(
+					businessPartner.getValue()
+				)
+			)
+			.setTaxId(
+				StringManager.getValidString(
+					businessPartner.getTaxID()
+				)
+			)
+			.setDuns(
+				StringManager.getValidString(
+					businessPartner.getDUNS()
+				)
+			)
+			.setNaics(
+				StringManager.getValidString(
+					businessPartner.getNAICS()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					businessPartner.getName()
+				)
+			)
+			.setLastName(
+				StringManager.getValidString(
+					businessPartner.getName2()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					businessPartner.getDescription()
+				)
+			)
 		;
 		//	Additional Attributes
 		Struct.Builder customerAdditionalAttributes = Struct.newBuilder();
@@ -346,40 +390,74 @@ public class POSConvertUtil {
 		}
 		MLocation location = businessPartnerLocation.getLocation(true);
 		Address.Builder builder = Address.newBuilder()
-			.setId(businessPartnerLocation.getC_BPartner_Location_ID())
+			.setId(
+				businessPartnerLocation.getC_BPartner_Location_ID()
+			)
 			.setDisplayValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					location.toString()
 				)
 			)
-			.setPostalCode(ValueManager.validateNull(location.getPostal()))
+			.setPostalCode(
+				StringManager.getValidString(
+					location.getPostal()
+				)
+			)
 			.setPostalCodeAdditional(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					location.getPostal_Add()
 				)
 			)
-			.setAddress1(ValueManager.validateNull(location.getAddress1()))
-			.setAddress2(ValueManager.validateNull(location.getAddress2()))
-			.setAddress3(ValueManager.validateNull(location.getAddress3()))
-			.setAddress4(ValueManager.validateNull(location.getAddress4()))
-			.setPostalCode(ValueManager.validateNull(location.getPostal()))
+			.setAddress1(
+				StringManager.getValidString(
+					location.getAddress1()
+				)
+			)
+			.setAddress2(
+				StringManager.getValidString(
+					location.getAddress2()
+				)
+			)
+			.setAddress3(
+				StringManager.getValidString(
+					location.getAddress3()
+				)
+			)
+			.setAddress4(
+				StringManager.getValidString(
+					location.getAddress4()
+				)
+			)
+			.setPostalCode(
+				StringManager.getValidString(
+					location.getPostal()
+				)
+			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					businessPartnerLocation.getDescription()
 				)
 			)
 			.setLocationName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					businessPartnerLocation.getName()
 				)
 			)
 			.setContactName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					businessPartnerLocation.getContactPerson()
 				)
 			)
-			.setEmail(ValueManager.validateNull(businessPartnerLocation.getEMail()))
-			.setPhone(ValueManager.validateNull(businessPartnerLocation.getPhone()))
+			.setEmail(
+				StringManager.getValidString(
+					businessPartnerLocation.getEMail()
+				)
+			)
+			.setPhone(
+				StringManager.getValidString(
+					businessPartnerLocation.getPhone()
+				)
+			)
 			.setIsDefaultShipping(
 				businessPartnerLocation.get_ValueAsBoolean(
 					VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping
@@ -412,32 +490,59 @@ public class POSConvertUtil {
 		}
 		//	
 		builder.setPhone(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(Optional.ofNullable(phone).orElse(""))
 			)
 		);
 		MCountry country = MCountry.get(Env.getCtx(), location.getC_Country_ID());
-		builder.setCountryCode(ValueManager.validateNull(country.getCountryCode()))
-			.setCountryId(country.getC_Country_ID());
+		builder.setCountryCode(
+				StringManager.getValidString(
+					country.getCountryCode()
+				)
+			)
+			.setCountryId(
+				country.getC_Country_ID()
+			)
+		;
 		//	City
 		if(location.getC_City_ID() > 0) {
 			MCity city = MCity.get(Env.getCtx(), location.getC_City_ID());
-			builder.setCity(City.newBuilder()
-				.setId(city.getC_City_ID())
-				.setName(ValueManager.validateNull(city.getName())))
-			;
+			builder.setCity(
+				City.newBuilder()
+					.setId(
+						city.getC_City_ID()
+					)
+					.setName(
+						StringManager.getValidString(
+							city.getName()
+						)
+					)
+			);
 		} else {
-			builder.setCity(City.newBuilder()
-				.setName(ValueManager.validateNull(location.getCity())))
+			builder.setCity(
+				City.newBuilder()
+					.setName(
+						StringManager.getValidString(
+							location.getCity()
+						)
+					)
+				)
 			;
 		}
 		//	Region
 		if(location.getC_Region_ID() > 0) {
 			MRegion region = MRegion.get(Env.getCtx(), location.getC_Region_ID());
-			builder.setRegion(Region.newBuilder()
-				.setId(region.getC_Region_ID())
-				.setName(ValueManager.validateNull(region.getName())))
-			;
+			builder.setRegion(
+				Region.newBuilder()
+					.setId(
+						region.getC_Region_ID()
+					)
+					.setName(
+						StringManager.getValidString(
+							region.getName()
+						)
+					)
+			);
 		}
 		//	Additional Attributes
 		MTable.get(Env.getCtx(), businessPartnerLocation.get_Table_ID()).getColumnsAsList().stream()
