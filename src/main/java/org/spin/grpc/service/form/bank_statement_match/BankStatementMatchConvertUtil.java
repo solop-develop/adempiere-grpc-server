@@ -41,6 +41,7 @@ import org.spin.backend.grpc.form.bank_statement_match.ResultMovement;
 import org.spin.backend.grpc.form.bank_statement_match.TenderType;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -62,19 +63,26 @@ public class BankStatementMatchConvertUtil {
 		if (bank == null) {
 			return builder;
 		}
-		builder.setId(bank.getC_Bank_ID())
+		builder.setId(
+				bank.getC_Bank_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					bank.getUUID()
+				)
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bank.getName()
 				)
 			)
 			.setRoutingNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bank.getRoutingNo()
 				)
 			)
 			.setSwiftCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bank.getSwiftCode()
 				)
 			)
@@ -96,7 +104,9 @@ public class BankStatementMatchConvertUtil {
 			return builder;
 		}
 
-		String accountNo = ValueManager.validateNull(bankAccount.getAccountNo());
+		String accountNo = StringManager.getValidString(
+			bankAccount.getAccountNo()
+		);
 		int accountNoLength = accountNo.length();
 		if (accountNoLength > 4) {
 			accountNo = accountNo.substring(accountNoLength - 4);
@@ -104,19 +114,26 @@ public class BankStatementMatchConvertUtil {
 		accountNo = String.format("%1$" + 20 + "s", accountNo).replace(" ", "*");
 
 		Currency.Builder currencyBuilder = convertCurrency(bankAccount.getC_Currency_ID());
-		builder.setId(bankAccount.getC_BankAccount_ID())
+		builder.setId(
+				bankAccount.getC_BankAccount_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					bankAccount.getUUID()
+				)
+			)
 			.setAccountNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankAccount.getAccountNo()
 				)
 			)
 			.setAccountNoMask(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					accountNo
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankAccount.getName()
 				)
 			)
@@ -159,29 +176,36 @@ public class BankStatementMatchConvertUtil {
 			bankStatement.getDocStatus()
 		);
 
-		builder.setId(bankStatement.getC_BankStatement_ID())
+		builder.setId(
+				bankStatement.getC_BankStatement_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					bankStatement.getUUID()
+				)
+			)
 			.setBankAccount(
 				convertBankAccount(
 					bankStatement.getC_BankAccount_ID()
 				)
 			)
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatement.getDocumentNo()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatement.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatement.getDescription()
 				)
 			)
 			.setDocumentStatus(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					documentSatusName
 				)
 			)
@@ -190,8 +214,12 @@ public class BankStatementMatchConvertUtil {
 					bankStatement.getStatementDate()
 				)
 			)
-			.setIsManual(bankStatement.isManual())
-			.setIsProcessed(bankStatement.isProcessed())
+			.setIsManual(
+				bankStatement.isManual()
+			)
+			.setIsProcessed(
+				bankStatement.isProcessed()
+			)
 			.setBeginningBalance(
 				NumberManager.getBigDecimalToString(
 					bankStatement.getBeginningBalance()
@@ -227,18 +255,33 @@ public class BankStatementMatchConvertUtil {
 			return builder;
 		}
 
-		builder.setId(businessPartner.getC_BPartner_ID())
+		builder.setId(
+				businessPartner.getC_BPartner_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					businessPartner.getUUID()
+				)
+			)
 			.setValue(
-				ValueManager.validateNull(businessPartner.getValue())
+				StringManager.getValidString(
+					businessPartner.getValue()
+				)
 			)
 			.setTaxId(
-				ValueManager.validateNull(businessPartner.getTaxID())
+				StringManager.getValidString(
+					businessPartner.getTaxID()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(businessPartner.getName())
+				StringManager.getValidString(
+					businessPartner.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(businessPartner.getDescription())
+				StringManager.getValidString(
+					businessPartner.getDescription()
+				)
 			)
 		;
 
@@ -267,12 +310,23 @@ public class BankStatementMatchConvertUtil {
 			return builder;
 		}
 
-		builder.setId(currency.getC_Currency_ID())
+		builder.setId(
+				currency.getC_Currency_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					currency.getUUID()
+				)
+			)
 			.setIsoCode(
-				ValueManager.validateNull(currency.getISO_Code())
+				StringManager.getValidString(
+					currency.getISO_Code()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(currency.getDescription())
+				StringManager.getValidString(
+					currency.getDescription()
+				)
 			)
 		;
 
@@ -304,15 +358,24 @@ public class BankStatementMatchConvertUtil {
 			description = tenderType.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
 		}
 
-		builder.setId(tenderType.getAD_Ref_List_ID())
+		builder.setId(
+				tenderType.getAD_Ref_List_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					tenderType.getUUID()
+				)
+			)
 			.setValue(
-				ValueManager.validateNull(tenderType.getValue())
+				StringManager.getValidString(
+					tenderType.getValue()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(name)
+				StringManager.getValidString(name)
 			)
 			.setDescription(
-				ValueManager.validateNull(description)
+				StringManager.getValidString(description)
 			)
 		;
 
@@ -342,7 +405,14 @@ public class BankStatementMatchConvertUtil {
 			paymentAmount = paymentAmount.negate();
 		}
 
-		builder.setId(payment.getC_Payment_ID())
+		builder.setId(
+				payment.getC_Payment_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					payment.getUUID()
+				)
+			)
 			.setTransactionDate(
 				ValueManager.getTimestampFromDate(
 					payment.getDateTrx()
@@ -350,12 +420,12 @@ public class BankStatementMatchConvertUtil {
 			)
 			.setIsReceipt(isReceipt)
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					payment.getDocumentNo()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					payment.getDescription()
 				)
 			)
@@ -379,22 +449,29 @@ public class BankStatementMatchConvertUtil {
 			return builder;
 		}
 
-		builder.setId(bankStatemet.getI_BankStatement_ID())
+		builder.setId(
+				bankStatemet.getI_BankStatement_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					bankStatemet.getUUID()
+				)
+			)
 			.setReferenceNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getReferenceNo()
 				)
 			)
 			.setIsReceipt(
-				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) < 0
+				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0
 			)
 			.setReferenceNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getReferenceNo()
 				)
 			)
 			.setMemo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getMemo()
 				)
 			)
@@ -416,11 +493,11 @@ public class BankStatementMatchConvertUtil {
 		);
 		if (bankStatemet.getC_BPartner_ID() <= 0) {
 			businessPartnerBuilder.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getBPartnerValue()
 				)
 			).setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getBPartnerValue()
 				)
 			);
@@ -449,22 +526,29 @@ public class BankStatementMatchConvertUtil {
 			return builder;
 		}
 
-		builder.setId(bankStatemet.getI_BankStatement_ID())
+		builder.setId(
+				bankStatemet.getI_BankStatement_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					bankStatemet.getUUID()
+				)
+			)
 			.setReferenceNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getReferenceNo()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getDescription()
 				)
 			)
 			.setIsReceipt(
-				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) < 0
+				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0
 			)
 			.setMemo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getMemo()
 				)
 			)
@@ -492,9 +576,16 @@ public class BankStatementMatchConvertUtil {
 
 		if (bankStatemet.getC_Payment_ID() > 0) {
 			MPayment payment = new MPayment(Env.getCtx(), bankStatemet.getC_Payment_ID(), null);
-			builder.setPaymentId(payment.getC_Payment_ID())
+			builder.setPaymentId(
+					payment.getC_Payment_ID()
+				)
+				.setUuid(
+					StringManager.getValidString(
+						payment.getUUID()
+					)
+				)
 				.setDocumentNo(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						payment.getDocumentNo()
 					)
 				)
@@ -535,22 +626,29 @@ public class BankStatementMatchConvertUtil {
 		if (bankStatemet == null || bankStatemet.getI_BankStatement_ID() <= 0) {
 			return builder;
 		}
-		builder.setId(bankStatemet.getI_BankStatement_ID())
+		builder.setId(
+				bankStatemet.getI_BankStatement_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					bankStatemet.getUUID()
+				)
+			)
 			.setReferenceNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getReferenceNo()
 				)
 			)
 			.setIsReceipt(
-				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) < 0
+				bankStatemet.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0
 			)
 			.setReferenceNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getReferenceNo()
 				)
 			)
 			.setMemo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getMemo()
 				)
 			)
@@ -576,11 +674,11 @@ public class BankStatementMatchConvertUtil {
 		);
 		if (bankStatemet.getC_BPartner_ID() <= 0) {
 			businessPartnerBuilder.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getBPartnerValue()
 				)
 			).setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankStatemet.getBPartnerValue()
 				)
 			);
@@ -601,9 +699,16 @@ public class BankStatementMatchConvertUtil {
 
 		if (bankStatemet.getC_Payment_ID() > 0) {
 			MPayment payment = new MPayment(Env.getCtx(), bankStatemet.getC_Payment_ID(), null);
-			builder.setPaymentId(payment.getC_Payment_ID())
+			builder.setPaymentId(
+					payment.getC_Payment_ID()
+				)
+				.setUuid(
+					StringManager.getValidString(
+						payment.getUUID()
+					)
+				)
 				.setDocumentNo(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						payment.getDocumentNo()
 					)
 				)
