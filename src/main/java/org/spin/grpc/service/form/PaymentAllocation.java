@@ -573,7 +573,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			);
 			sql.append(" AND p.IsReceipt= '" + isReceipt +"'" );
 		}
-		sql.append(" ORDER BY p.DateTrx,p.DocumentNo");
+		sql.append(" ORDER BY p.DateTrx, p.DocumentNo");
 
 		// role security
 		sql = new StringBuffer(
@@ -624,11 +624,11 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				int paymentId = rs.getInt(I_C_Payment.COLUMNNAME_C_Payment_ID);
 				Payment.Builder paymentBuilder = Payment.newBuilder()
 					.setId(paymentId)
-					.setUuid(
-						StringManager.getValidString(
-							rs.getString(I_C_Payment.COLUMNNAME_UUID)
-						)
-					)
+					// .setUuid(
+					// 	StringManager.getValidString(
+					// 		rs.getString(I_C_Payment.COLUMNNAME_UUID)
+					// 	)
+					// )
 					.setDocumentNo(
 						StringManager.getValidString(
 							rs.getString(I_C_Payment.COLUMNNAME_DocumentNo)
@@ -804,11 +804,11 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				int invoiceId = rs.getInt(I_C_Invoice.COLUMNNAME_C_Invoice_ID);
 				Invoice.Builder invoiceBuilder = Invoice.newBuilder()
 					.setId(invoiceId)
-					.setUuid(
-						StringManager.getValidString(
-							rs.getString(I_C_Invoice.COLUMNNAME_UUID)
-						)
-					)
+					// .setUuid(
+					// 	StringManager.getValidString(
+					// 		rs.getString(I_C_Invoice.COLUMNNAME_UUID)
+					// 	)
+					// )
 					.setDocumentNo(
 						StringManager.getValidString(
 							rs.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
