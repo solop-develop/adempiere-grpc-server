@@ -604,7 +604,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 				recordCount++;
 
 				DocumentType.Builder documentTypeBuilder = convertDocumentType(
-					rs.getInt(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)
+					rs.getInt(I_C_Payment.COLUMNNAME_C_DocType_ID)
 				);
 				Organization.Builder organizationBuilder = convertOrganization(
 					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
