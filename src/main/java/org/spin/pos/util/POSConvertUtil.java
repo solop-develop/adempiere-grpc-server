@@ -30,7 +30,6 @@ import org.compiere.model.MCity;
 import org.compiere.model.MCountry;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MLocation;
-import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MProduct;
 import org.compiere.model.MRegion;
@@ -47,7 +46,6 @@ import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.City;
 import org.spin.backend.grpc.pos.CommandShortcut;
 import org.spin.backend.grpc.pos.Customer;
-import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
@@ -146,24 +144,6 @@ public class POSConvertUtil {
 			)
 		;
 		return builder;
-	}
-
-
-
-	/**
-	 * Convert Order from entity
-	 * @param orderId
-	 * @return
-	 */
-	public static Order.Builder convertOder(int orderId) {
-		Order.Builder builder = Order.newBuilder();
-		if(orderId <= 0) {
-			return builder;
-		}
-		MOrder order = new MOrder(Env.getCtx(), orderId, null);
-		return OrderConverUtil.convertOrder(
-			order
-		);
 	}
 
 
