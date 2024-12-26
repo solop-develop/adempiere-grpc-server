@@ -3665,7 +3665,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		query.setLimit(limit, offset)
 			.getIDsAsList()
 			.forEach(orderId -> {
-				Order.Builder orderBuilder = POSConvertUtil.convertOder(orderId);
+				Order.Builder orderBuilder = OrderConverUtil.convertOder(orderId);
 				builder.addOrders(orderBuilder);
 			});
 
