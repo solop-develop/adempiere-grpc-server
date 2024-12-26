@@ -34,7 +34,22 @@ import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class OrderConverUtil {
-	
+
+	/**
+	 * Convert Order from entity
+	 * @param orderId
+	 * @return
+	 */
+	public static Order.Builder convertOder(int orderId) {
+		Order.Builder builder = Order.newBuilder();
+		if(orderId <= 0) {
+			return builder;
+		}
+		MOrder order = new MOrder(Env.getCtx(), orderId, null);
+		return OrderConverUtil.convertOrder(
+			order
+		);
+	}
 	/**
 	 * Convert Order from entity
 	 * @param order
@@ -106,6 +121,16 @@ public class OrderConverUtil {
 		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
 		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount).negate());
 		BigDecimal displayCurrencyRate = ConvertUtil.getDisplayConversionRateFromOrder(order);
+
+		if (order.getC_Invoice_ID() > 0) {
+			MInvoice invoice = new MInvoice(order.getCtx(), order.getC_Invoice_ID(), order.get_TrxName());
+			builder.setInvoiceNo(
+				StringManager.getValidString(
+					invoice.getDocumentNo()
+				)
+			);
+		}
+		
 		//	Convert
 		return builder
 			.setId(
