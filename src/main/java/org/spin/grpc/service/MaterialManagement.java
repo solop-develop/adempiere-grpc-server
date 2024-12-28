@@ -992,7 +992,16 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
-			whereClause += " AND (UPPER(Value) LIKE '%' || UPPER(?) || '%')";
+			whereClause += " AND ("
+				+ "(UPPER(Value) LIKE '%' || UPPER(?) || '%')"
+				+ "OR EXISTS("
+					+ "SELECT 1 FROM M_Warehouse AS wh "
+					+ "WHERE wh.M_Warehouse_ID = M_Locator.M_Warehouse_ID "
+					+ "AND (UPPER(wh.Name) LIKE '%' || UPPER(?) || '%') "
+				+ ") "
+				+ ") "
+			;
+			parameters.add(searchValue);
 			parameters.add(searchValue);
 		}
 
