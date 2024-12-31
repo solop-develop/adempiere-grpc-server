@@ -1,0 +1,185 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+
+ syntax = "proto3";
+
+ option java_multiple_files = true;
+ option java_package = "org.spin.backend.grpc.display_definition";
+ option java_outer_classname = "ADempiereDisplayDefinition";
+ 
+ import "google/api/annotations.proto";
+ import "google/protobuf/timestamp.proto";
+ 
+ package display_definition;
+
+service DisplayDefinition {
+	// Display Definition Metadata
+	rpc ExistsDisplayDefinitionsMetadata(ExistsDisplayDefinitionMetadataRequest) returns (ExistsDisplayDefinitionMetadataResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/metadata/{table_name}/exists"
+			additional_bindings: {
+				get: "/display-definition/metadata/{table_id}/exists"
+			}
+		};
+	}
+	rpc ListDisplayDefinitionsMetadata(ListDisplayDefinitionsMetadataRequest) returns (ListDisplayDefinitionsMetadataResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/metadata/{table_name}"
+			additional_bindings: {
+				get: "/display-definition/metadata/{table_id}"
+			}
+		};
+	}
+
+	// Workflow
+	rpc ListWorkflowDefinition(ListWorkflowDefinitionRequest) returns (ListWorkflowDefinitionResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/workflow-definition"
+			additional_bindings: {
+				get: "/display-definition/workflow-definition"
+			}
+		};
+	}
+	rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/workflows"
+			additional_bindings: {
+				get: "/display-definition/workflows"
+			}
+		};
+	}
+
+	// Calendar
+	rpc ListCalendars(ListCalendarsRequest) returns (ListCalendarsResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/calendars/{table_name}/{id}"
+			additional_bindings: {
+				get: "/display-definition/calendars/{table_id}/{id}"
+			}
+		};
+	}
+}
+
+
+
+message ExistsDisplayDefinitionMetadataRequest {
+	string table_name = 1;
+	int32 table_id = 2;
+}
+message ExistsDisplayDefinitionMetadataResponse {
+	int32 record_count = 1;
+}
+message ListDisplayDefinitionsMetadataRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string table_name = 10;
+	int32 table_id = 11;
+}
+message ListDisplayDefinitionsMetadataResponse {
+	
+}
+
+
+
+// Calendar
+message Calendar {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	google.protobuf.Timestamp valid_from = 5;
+	google.protobuf.Timestamp valid_to = 6;
+	bool confirmed = 7;
+}
+message ListCalendarsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+}
+message ListCalendarsResponse {
+	int64 record_count = 1;
+	repeated Calendar records = 2;
+	string next_page_token = 3;
+}
+
+// Workflow Definition
+message WorkflowStepDefinition {
+	string value = 1;
+	string name = 2;
+	int32 sequence = 3;
+}
+message ListWorkflowDefinitionRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+}
+message ListWorkflowDefinitionResponse {
+	string name = 1;
+	string description = 2;
+	string column_name = 3;
+	repeated WorkflowStepDefinition steps = 4;
+}
+
+
+// Workflow Data
+message Workflow {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	int32 group_id = 5;
+}
+message ListWorkflowsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+}
+message ListWorkflowsResponse {
+	int64 record_count = 1;
+	repeated Workflow records = 4;
+	string next_page_token = 3;
+}
