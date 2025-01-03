@@ -49,6 +49,7 @@ import org.spin.grpc.service.WebStore;
 import org.spin.grpc.service.Workflow;
 import org.spin.grpc.service.core_functionality.CoreFunctionality;
 import org.spin.grpc.service.dictionary.Dictionary;
+import org.spin.grpc.service.display_definition.DisplayDefinition;
 import org.spin.grpc.service.field.business_partner.BusinessPartnerInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementService;
 import org.spin.grpc.service.field.in_out.InOutInfoService;
@@ -184,6 +185,9 @@ public class AllInOneServices {
 		//	Dictionary
 		serverBuilder.addService(new Dictionary());
 		logger.info("Service " + Dictionary.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Display Definition
+		serverBuilder.addService(new DisplayDefinition());
+		logger.info("Service " + DisplayDefinition.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Enrollment
 		serverBuilder.addService(new Enrollment());
 		logger.info("Service " + Enrollment.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

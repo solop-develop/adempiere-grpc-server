@@ -11,8 +11,8 @@ ENV \
 	BACKEND_PORT="50059" \
 	SERVICES_ENABLED="bank_statement_match.BankStatementMatch; \
 		core_functionality.CoreFunctionality; data.BusinessData; data.Store; \
-		dashboarding.Dashboarding; dictionary.Dictionary; enrollment.Register \
-		express_movement.ExpressMovement; express_receipt.ExpressReceipt; \
+		dashboarding.Dashboarding; dictionary.Dictionary; display_definition.DisplayDefinition; \
+		enrollment.Register; express_movement.ExpressMovement; express_receipt.ExpressReceipt; \
 		express_shipment.ExpressShipment; field.FieldManagementService; \
 		field.business_partner.BusinessPartnerInfoService; field.in_out.InOutInfoService; \
 		field.invoice.InvoiceInfoService; field.order.OrderInfoService; \
