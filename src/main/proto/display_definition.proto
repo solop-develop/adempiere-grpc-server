@@ -28,17 +28,27 @@ service DisplayDefinition {
 	// Display Definition Metadata
 	rpc ExistsDisplayDefinitionsMetadata(ExistsDisplayDefinitionMetadataRequest) returns (ExistsDisplayDefinitionMetadataResponse) {
 		option (google.api.http) = {
-			get: "/display-definition/metadata/{table_name}/exists"
+			get: "/display-definition/definitions/{table_name}/exists"
 			additional_bindings: {
-				get: "/display-definition/metadata/{table_id}/exists"
+				get: "/display-definition/definitions/{table_id}/exists"
 			}
 		};
 	}
 	rpc ListDisplayDefinitionsMetadata(ListDisplayDefinitionsMetadataRequest) returns (ListDisplayDefinitionsMetadataResponse) {
 		option (google.api.http) = {
-			get: "/display-definition/metadata/{table_name}"
+			get: "/display-definition/definitions/{table_name}"
 			additional_bindings: {
-				get: "/display-definition/metadata/{table_id}"
+				get: "/display-definition/definitions/{table_id}"
+			}
+		};
+	}
+
+	// Calendar
+	rpc ListCalendars(ListCalendarsRequest) returns (ListCalendarsResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/calendars/{table_name}/{id}"
+			additional_bindings: {
+				get: "/display-definition/calendars/{table_id}/{id}"
 			}
 		};
 	}
@@ -57,16 +67,6 @@ service DisplayDefinition {
 			get: "/display-definition/workflows"
 			additional_bindings: {
 				get: "/display-definition/workflows"
-			}
-		};
-	}
-
-	// Calendar
-	rpc ListCalendars(ListCalendarsRequest) returns (ListCalendarsResponse) {
-		option (google.api.http) = {
-			get: "/display-definition/calendars/{table_name}/{id}"
-			additional_bindings: {
-				get: "/display-definition/calendars/{table_id}/{id}"
 			}
 		};
 	}
@@ -95,8 +95,84 @@ message ListDisplayDefinitionsMetadataRequest {
 	string table_name = 10;
 	int32 table_id = 11;
 }
+
+enum DefinitionType {
+	TYPE_UNKNOW = 0;
+	CALENDAR = 1;
+	KANBAN = 2;
+	RESOURCE = 4;
+	TIMERLINE = 5;
+	WORKFLOW = 6;
+}
+
+message CalendarMetadata {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string title_column = 5;
+	string description_column = 6;
+	string valid_from_column = 7;
+	string valid_to_column = 8;
+}
+message KanbanMetadata {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string title_column = 5;
+	string description_column = 6;
+	string group_column = 7;
+	string group_sequence_column = 8;
+	string sequence_column = 9;
+}
+message WorkflowMetadata {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string title_column = 5;
+	string description_column = 6;
+	string group_column = 7;
+	string group_sequence_column = 8;
+	string sequence_column = 9;
+}
+message TimelineMetadata {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string title_column = 5;
+	string description_column = 6;
+	string date_column = 7;
+}
+message ResourceMetadata {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string title_column = 5;
+	string description_column = 6;
+	string valid_from_column = 7;
+	string valid_to_column = 8;
+	bool is_resource_reference = 9;
+	string resource_column = 10;
+	string resource_item_column = 11;
+	string resource_item_group_column = 12;
+}
+message DefinitionMetadata {
+	oneof definition {
+		CalendarMetadata calendar_metadata = 1;
+		KanbanMetadata kanban_metadata = 2;
+		ResourceMetadata resource_metadata = 3;
+		TimelineMetadata timeline_metadata = 4;
+		WorkflowMetadata workflow_metadata = 5;
+	}
+}
 message ListDisplayDefinitionsMetadataResponse {
-	
+	int64 record_count = 1;
+	repeated DefinitionMetadata records = 2;
+	string next_page_token = 3;
 }
 
 
@@ -123,6 +199,8 @@ message ListCalendarsRequest {
 	int32 tab_id = 9;
 	string context_attributes = 10;
 	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
 }
 message ListCalendarsResponse {
 	int64 record_count = 1;
@@ -148,6 +226,8 @@ message ListWorkflowDefinitionRequest {
 	int32 tab_id = 9;
 	string context_attributes = 10;
 	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
 }
 message ListWorkflowDefinitionResponse {
 	string name = 1;
@@ -177,9 +257,11 @@ message ListWorkflowsRequest {
 	int32 tab_id = 9;
 	string context_attributes = 10;
 	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
 }
 message ListWorkflowsResponse {
 	int64 record_count = 1;
-	repeated Workflow records = 4;
+	repeated Workflow records = 2;
 	string next_page_token = 3;
 }
