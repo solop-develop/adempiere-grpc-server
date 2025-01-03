@@ -30,7 +30,7 @@ service DisplayDefinition {
 		option (google.api.http) = {
 			get: "/display-definition/definitions/{table_name}/exists"
 			additional_bindings: {
-				get: "/display-definition/definitions/{table_id}/exists"
+				get: "/display-definition/definitions/id/{table_id}/exists"
 			}
 		};
 	}
@@ -38,7 +38,7 @@ service DisplayDefinition {
 		option (google.api.http) = {
 			get: "/display-definition/definitions/{table_name}"
 			additional_bindings: {
-				get: "/display-definition/definitions/{table_id}"
+				get: "/display-definition/definitions/id/{table_id}"
 			}
 		};
 	}
