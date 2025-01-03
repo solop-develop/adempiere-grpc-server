@@ -46,10 +46,7 @@ service DisplayDefinition {
 	// Calendar
 	rpc ListCalendars(ListCalendarsRequest) returns (ListCalendarsResponse) {
 		option (google.api.http) = {
-			get: "/display-definition/calendars/{table_name}/{id}"
-			additional_bindings: {
-				get: "/display-definition/calendars/{table_id}/{id}"
-			}
+			get: "/display-definition/calendars/{id}"
 		};
 	}
 
@@ -57,17 +54,11 @@ service DisplayDefinition {
 	rpc ListWorkflowDefinition(ListWorkflowDefinitionRequest) returns (ListWorkflowDefinitionResponse) {
 		option (google.api.http) = {
 			get: "/display-definition/workflow-definition"
-			additional_bindings: {
-				get: "/display-definition/workflow-definition"
-			}
 		};
 	}
 	rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse) {
 		option (google.api.http) = {
-			get: "/display-definition/workflows"
-			additional_bindings: {
-				get: "/display-definition/workflows"
-			}
+			get: "/display-definition/workflows/{id}"
 		};
 	}
 }
