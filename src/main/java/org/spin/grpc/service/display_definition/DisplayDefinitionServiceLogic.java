@@ -173,10 +173,6 @@ public class DisplayDefinitionServiceLogic {
 		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
 			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
 		}
-		String displayType = displayDefinition.get_ValueAsString(Changes.SP010_DisplayType);
-		if (!Changes.SP010_DisplayType_Calendar.equals(displayType)) {
-			throw new AdempiereException("@SP010_DisplayType@ @C@ @NotFound@");
-		}
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -234,10 +230,6 @@ public class DisplayDefinitionServiceLogic {
 		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
 			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
 		}
-		String displayType = displayDefinition.get_ValueAsString(Changes.SP010_DisplayType);
-		if (!Changes.SP010_DisplayType_Kanban.equals(displayType) && !Changes.SP010_DisplayType_Workflow.equals(displayType)) {
-			throw new AdempiereException("@SP010_DisplayType@ @K@/@W@ @NotFound@");
-		}
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -294,10 +286,6 @@ public class DisplayDefinitionServiceLogic {
 		;
 		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
 			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
-		}
-		String displayType = displayDefinition.get_ValueAsString(Changes.SP010_DisplayType);
-		if (!Changes.SP010_DisplayType_Kanban.equals(displayType) && !Changes.SP010_DisplayType_Workflow.equals(displayType)) {
-			throw new AdempiereException("@SP010_DisplayType@ @K@/@W@ @NotFound@");
 		}
 
 		//	Get page and count
