@@ -218,8 +218,62 @@ public class DisplayDefinitionServiceLogic {
 
 
 	public static ListWorkflowsDefinitionResponse.Builder listWorkflowsDefinition(ListWorkflowsDefinitionRequest request) {
-		ListWorkflowsDefinitionResponse.Builder builder = ListWorkflowsDefinitionResponse.newBuilder();
-		return builder;
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
+		}
+
+		PO displayDefinition = new Query(
+			Env.getCtx(),
+			Changes.SP010_DisplayDefinition,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(request.getId())
+			.first()
+		;
+		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
+		}
+		String displayType = displayDefinition.get_ValueAsString(Changes.SP010_DisplayType);
+		if (!Changes.SP010_DisplayType_Kanban.equals(displayType) && !Changes.SP010_DisplayType_Workflow.equals(displayType)) {
+			throw new AdempiereException("@SP010_DisplayType@ @K@/@W@ @NotFound@");
+		}
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
+		KanbanData displayData = (KanbanData) new KanbanQuery(request.getId())
+			.withConditions(conditions)
+			.withLimit(limit, offset)
+			.run()
+		;
+
+		ListWorkflowsDefinitionResponse.Builder builderList = ListWorkflowsDefinitionResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					displayData.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					displayData.getDescription()
+				)
+			)
+			.setColumnName(
+				StringManager.getValidString(
+					displayData.getColumnName()
+				)
+			)
+		;
+
+		displayData.getColumns().forEach(kanbanColumn -> {
+			WorkflowStep.Builder builder = DisplayDefinitionConvertUtil.convertWorkflowStep(kanbanColumn);
+			builderList.addSteps(builder);
+		});
+		return builderList;
 	}
 
 
