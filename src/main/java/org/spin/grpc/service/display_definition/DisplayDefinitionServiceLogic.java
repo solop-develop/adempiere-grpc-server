@@ -157,6 +157,19 @@ public class DisplayDefinitionServiceLogic {
 			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
 		}
 
+		PO displayDefinition = new Query(
+			Env.getCtx(),
+			Changes.SP010_DisplayDefinition,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(request.getId())
+			.first()
+		;
+		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
+		}
+
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
