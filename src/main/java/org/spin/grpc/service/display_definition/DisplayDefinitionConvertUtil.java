@@ -23,11 +23,15 @@ import org.spin.backend.grpc.display_definition.CalendarMetadata;
 import org.spin.backend.grpc.display_definition.KanbanMetadata;
 import org.spin.backend.grpc.display_definition.ResourceMetadata;
 import org.spin.backend.grpc.display_definition.TimelineMetadata;
+import org.spin.backend.grpc.display_definition.WorkflowData;
 import org.spin.backend.grpc.display_definition.WorkflowMetadata;
+import org.spin.backend.grpc.display_definition.WorkflowStep;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.solop.sp010.data.CalendarItem;
+import com.solop.sp010.data.KanbanColumn;
+import com.solop.sp010.data.KanbanItem;
 import com.solop.sp010.util.Changes;
 
 public class DisplayDefinitionConvertUtil {
@@ -470,6 +474,64 @@ public class DisplayDefinitionConvertUtil {
 				)
 			);
 		}
+		return builder;
+	}
+
+
+	public static WorkflowStep.Builder convertWorkflowStep(KanbanColumn kanbanColumn) {
+		WorkflowStep.Builder builder = WorkflowStep.newBuilder();
+		if (kanbanColumn == null) {
+			return builder;
+		}
+		builder
+			.setValue(
+				StringManager.getValidString(
+					kanbanColumn.getGroupCode()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					kanbanColumn.getName()
+				)
+			)
+			.setSequence(
+				kanbanColumn.getSequence()
+			)
+		;
+		return builder;
+	}
+
+
+	public static WorkflowData.Builder convertWorkflowData(KanbanItem kanbanItem) {
+		WorkflowData.Builder builder = WorkflowData.newBuilder();
+		if (kanbanItem == null) {
+			return builder;
+		}
+		builder
+			.setId(
+				kanbanItem.getId()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					kanbanItem.getUuid()
+				)
+			)
+			.setTitle(
+				StringManager.getValidString(
+					kanbanItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					kanbanItem.getDescription()
+				)
+			)
+			.setGroupId(
+				StringManager.getValidString(
+					kanbanItem.getGroupCode()
+				)
+			)
+		;
 		return builder;
 	}
 

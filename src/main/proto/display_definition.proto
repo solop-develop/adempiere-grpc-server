@@ -51,12 +51,12 @@ service DisplayDefinition {
 	}
 
 	// Workflow
-	rpc ListWorkflowDefinition(ListWorkflowDefinitionRequest) returns (ListWorkflowDefinitionResponse) {
+	rpc ListWorkflowsDefinition(ListWorkflowsDefinitionRequest) returns (ListWorkflowsDefinitionResponse) {
 		option (google.api.http) = {
-			get: "/display-definition/workflow-definition"
+			get: "/display-definition/workflows/{id}/definitions"
 		};
 	}
-	rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse) {
+	rpc ListWorkflowsData(ListWorkflowsDataRequest) returns (ListWorkflowsDataResponse) {
 		option (google.api.http) = {
 			get: "/display-definition/workflows/{id}"
 		};
@@ -200,12 +200,12 @@ message ListCalendarsResponse {
 }
 
 // Workflow Definition
-message WorkflowStepDefinition {
+message WorkflowStep {
 	string value = 1;
 	string name = 2;
 	int32 sequence = 3;
 }
-message ListWorkflowDefinitionRequest {
+message ListWorkflowsDefinitionRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -220,23 +220,23 @@ message ListWorkflowDefinitionRequest {
 	//
 	int32 id = 12;
 }
-message ListWorkflowDefinitionResponse {
+message ListWorkflowsDefinitionResponse {
 	string name = 1;
 	string description = 2;
 	string column_name = 3;
-	repeated WorkflowStepDefinition steps = 4;
+	repeated WorkflowStep steps = 4;
 }
 
 
 // Workflow Data
-message Workflow {
+message WorkflowData {
 	int32 id = 1;
 	string uuid = 2;
 	string title = 3;
 	string description = 4;
-	int32 group_id = 5;
+	string group_id = 5;
 }
-message ListWorkflowsRequest {
+message ListWorkflowsDataRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -251,8 +251,9 @@ message ListWorkflowsRequest {
 	//
 	int32 id = 12;
 }
-message ListWorkflowsResponse {
-	int64 record_count = 1;
-	repeated Workflow records = 2;
-	string next_page_token = 3;
+message ListWorkflowsDataResponse {
+	repeated WorkflowStep steps = 1;
+	int64 record_count = 2;
+	repeated WorkflowData records = 3;
+	string next_page_token = 4;
 }

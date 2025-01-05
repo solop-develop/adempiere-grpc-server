@@ -22,10 +22,10 @@ import org.spin.backend.grpc.display_definition.ListCalendarsRequest;
 import org.spin.backend.grpc.display_definition.ListCalendarsResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataRequest;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataResponse;
-import org.spin.backend.grpc.display_definition.ListWorkflowDefinitionRequest;
-import org.spin.backend.grpc.display_definition.ListWorkflowDefinitionResponse;
-import org.spin.backend.grpc.display_definition.ListWorkflowsRequest;
-import org.spin.backend.grpc.display_definition.ListWorkflowsResponse;
+import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
+import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
+import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
+import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -77,9 +77,9 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 
 
 	@Override
-	public void listWorkflowDefinition(ListWorkflowDefinitionRequest request, StreamObserver<ListWorkflowDefinitionResponse> responseObserver) {
+	public void listWorkflowsDefinition(ListWorkflowsDefinitionRequest request, StreamObserver<ListWorkflowsDefinitionResponse> responseObserver) {
 		try {
-			ListWorkflowDefinitionResponse.Builder builder = DisplayDefinitionServiceLogic.listWorkflowDefinition(request);
+			ListWorkflowsDefinitionResponse.Builder builder = DisplayDefinitionServiceLogic.listWorkflowsDefinition(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -97,9 +97,9 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 
 
 	@Override
-	public void listWorkflows(ListWorkflowsRequest request, StreamObserver<ListWorkflowsResponse> responseObserver) {
+	public void listWorkflowsData(ListWorkflowsDataRequest request, StreamObserver<ListWorkflowsDataResponse> responseObserver) {
 		try {
-			ListWorkflowsResponse.Builder builder = DisplayDefinitionServiceLogic.listWorkflows(request);
+			ListWorkflowsDataResponse.Builder builder = DisplayDefinitionServiceLogic.listWorkflowsData(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
