@@ -18,8 +18,11 @@ import org.adempiere.core.domains.models.I_AD_Element;
 import org.compiere.model.MColumn;
 import org.compiere.model.PO;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.display_definition.Calendar;
 import org.spin.backend.grpc.display_definition.CalendarMetadata;
+import org.spin.backend.grpc.display_definition.DefinitionMetadata;
+import org.spin.backend.grpc.display_definition.DefinitionType;
 import org.spin.backend.grpc.display_definition.KanbanMetadata;
 import org.spin.backend.grpc.display_definition.ResourceMetadata;
 import org.spin.backend.grpc.display_definition.TimelineMetadata;
@@ -35,6 +38,72 @@ import com.solop.sp010.data.KanbanItem;
 import com.solop.sp010.util.Changes;
 
 public class DisplayDefinitionConvertUtil {
+	
+
+	public static DefinitionMetadata.Builder convertDefinitionMetadata(PO record) {
+		DefinitionMetadata.Builder builder = DefinitionMetadata.newBuilder();
+		if (record == null || record.get_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(
+				record.get_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					record.get_UUID()
+				)
+			)
+			.setValue(
+				StringManager.getValidString(
+					record.get_ValueAsString("Value")
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					record.get_ValueAsString(
+						I_AD_Element.COLUMNNAME_Name
+					)
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					record.get_ValueAsString(
+						I_AD_Element.COLUMNNAME_Description
+					)
+				)
+			)
+		;
+		String displayType = record.get_ValueAsString(Changes.SP010_DisplayType);
+		builder.setDisplayType(
+			StringManager.getValidString(
+				displayType
+			)
+		);
+		if (!Util.isEmpty(displayType, true)) {
+			if (displayType.equals(Changes.SP010_DisplayType_Calendar)) {
+				builder.setType(
+					DefinitionType.CALENDAR
+				);
+			} else if (displayType.equals(Changes.SP010_DisplayType_Kanban)) {
+				builder.setType(
+					DefinitionType.KANBAN
+				);
+			} else if (displayType.equals(Changes.SP010_DisplayType_Resource)) {
+				builder.setType(
+					DefinitionType.RESOURCE
+				);
+			} else if (displayType.equals(Changes.SP010_DisplayType_Timeline)) {
+				builder.setType(
+					DefinitionType.TIMERLINE
+				);
+			} else if (displayType.equals(Changes.SP010_DisplayType_Workflow)) {
+				builder.setType(
+					DefinitionType.WORKFLOW
+				);
+			}
+		}
+		return builder;
+	}
 
 	public static CalendarMetadata.Builder convertCalendarMetadata(PO record) {
 		CalendarMetadata.Builder builder = CalendarMetadata.newBuilder();

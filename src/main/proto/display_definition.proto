@@ -71,6 +71,7 @@ message ExistsDisplayDefinitionMetadataRequest {
 }
 message ExistsDisplayDefinitionMetadataResponse {
 	int32 record_count = 1;
+	repeated string type_filer = 2;
 }
 message ListDisplayDefinitionsMetadataRequest {
 	string filters = 1;
@@ -85,6 +86,7 @@ message ListDisplayDefinitionsMetadataRequest {
 	// custom filters
 	string table_name = 10;
 	int32 table_id = 11;
+	repeated string type_filer = 12;
 }
 
 enum DefinitionType {
@@ -152,13 +154,13 @@ message ResourceMetadata {
 	string resource_item_group_column = 12;
 }
 message DefinitionMetadata {
-	oneof definition {
-		CalendarMetadata calendar_metadata = 1;
-		KanbanMetadata kanban_metadata = 2;
-		ResourceMetadata resource_metadata = 3;
-		TimelineMetadata timeline_metadata = 4;
-		WorkflowMetadata workflow_metadata = 5;
-	}
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	string display_type = 6;
+	DefinitionType type = 7;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
@@ -177,6 +179,7 @@ message Calendar {
 	google.protobuf.Timestamp valid_from = 5;
 	google.protobuf.Timestamp valid_to = 6;
 	bool confirmed = 7;
+	bool is_disabled = 8;
 }
 message ListCalendarsRequest {
 	string filters = 1;
@@ -235,6 +238,7 @@ message WorkflowData {
 	string title = 3;
 	string description = 4;
 	string group_id = 5;
+	bool is_disabled = 6;
 }
 message ListWorkflowsDataRequest {
 	string filters = 1;
@@ -252,8 +256,11 @@ message ListWorkflowsDataRequest {
 	int32 id = 12;
 }
 message ListWorkflowsDataResponse {
-	repeated WorkflowStep steps = 1;
-	int64 record_count = 2;
-	repeated WorkflowData records = 3;
-	string next_page_token = 4;
+	string name = 1;
+	string description = 2;
+	string column_name = 3;
+	repeated WorkflowStep steps = 4;
+	int64 record_count = 5;
+	repeated WorkflowData records = 6;
+	string next_page_token = 7;
 }

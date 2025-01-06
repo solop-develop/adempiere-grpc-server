@@ -14,6 +14,7 @@
  ************************************************************************************/
 package org.spin.grpc.service.display_definition;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -22,11 +23,9 @@ import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.display_definition.Calendar;
-import org.spin.backend.grpc.display_definition.CalendarMetadata;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
-import org.spin.backend.grpc.display_definition.KanbanMetadata;
 import org.spin.backend.grpc.display_definition.ListCalendarsRequest;
 import org.spin.backend.grpc.display_definition.ListCalendarsResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataRequest;
@@ -35,10 +34,7 @@ import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
-import org.spin.backend.grpc.display_definition.ResourceMetadata;
-import org.spin.backend.grpc.display_definition.TimelineMetadata;
 import org.spin.backend.grpc.display_definition.WorkflowData;
-import org.spin.backend.grpc.display_definition.WorkflowMetadata;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -100,56 +96,48 @@ public class DisplayDefinitionServiceLogic {
 		);
 
 		ListDisplayDefinitionsMetadataResponse.Builder builderList = ListDisplayDefinitionsMetadataResponse.newBuilder();
-		if (displayDefinitionTable != null && displayDefinitionTable.getAD_Table_ID() > 0) {
-			Query query = new Query(
-				Env.getCtx(),
-				displayDefinitionTable,
-				"AD_Table_ID = ?",
-				null
-			)
-				.setParameters(table.getAD_Table_ID())
-			;
-
-			//	Get page and count
-			String nexPageToken = null;
-			int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-			int limit = LimitUtil.getPageSize(request.getPageSize());
-			int offset = (pageNumber - 1) * limit;
-			int recordCount = query.count();
-
-			builderList
-				.setRecordCount(recordCount)
-				.setNextPageToken(
-					StringManager.getValidString(nexPageToken)
-				)
-			;
-
-			//	Get List
-			query.setLimit(limit, offset)
-				.<PO>list()
-				.forEach(record -> {
-					DefinitionMetadata.Builder builder = DefinitionMetadata.newBuilder();
-					String displayType = record.get_ValueAsString(Changes.SP010_DisplayType);
-					if (Changes.SP010_DisplayType_Calendar.equals(displayType)) {
-						CalendarMetadata.Builder calendarBuilder = DisplayDefinitionConvertUtil.convertCalendarMetadata(record);
-						builder.setCalendarMetadata(calendarBuilder);
-					} else if (Changes.SP010_DisplayType_Kanban.equals(displayType)) {
-						KanbanMetadata.Builder kanbanBuilder = DisplayDefinitionConvertUtil.convertKanbanMetadata(record);
-						builder.setKanbanMetadata(kanbanBuilder);
-					} else if (Changes.SP010_DisplayType_Resource.equals(displayType)) {
-						ResourceMetadata.Builder resourceBuilder = DisplayDefinitionConvertUtil.convertResourceMetadata(record);
-						builder.setResourceMetadata(resourceBuilder);
-					} else if (Changes.SP010_DisplayType_Timeline.equals(displayType)) {
-						TimelineMetadata.Builder timelineMetadata = DisplayDefinitionConvertUtil.convertTimelineMetadata(record);
-						builder.setTimelineMetadata(timelineMetadata);
-					} else if (Changes.SP010_DisplayType_Workflow.equals(displayType)) {
-						WorkflowMetadata.Builder workflowMetadata = DisplayDefinitionConvertUtil.convertWorkflowMetadata(record);
-						builder.setWorkflowMetadata(workflowMetadata);
-					}
-					builderList.addRecords(builder);
-				})
-			;
+		if (displayDefinitionTable == null || displayDefinitionTable.getAD_Table_ID() <= 0) {
+			return builderList;
 		}
+
+		String whereClause = "AD_Table_ID = ?";
+		List<Object> parametersList = new ArrayList<>();
+		parametersList.add(
+			table.getAD_Table_ID()
+		);
+
+		Query query = new Query(
+			Env.getCtx(),
+			displayDefinitionTable,
+			whereClause,
+			null
+		)
+			.setParameters(parametersList)
+		;
+
+		//	Get page and count
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		int recordCount = query.count();
+
+		builderList
+			.setRecordCount(recordCount)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		//	Get List
+		query.setLimit(limit, offset)
+			.<PO>list()
+			.forEach(record -> {
+				DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(record);
+
+				builderList.addRecords(builder);
+			})
+		;
 
 		return builderList;
 	}
@@ -310,6 +298,21 @@ public class DisplayDefinitionServiceLogic {
 		}
 
 		ListWorkflowsDataResponse.Builder builderList = ListWorkflowsDataResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					displayData.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					displayData.getDescription()
+				)
+			)
+			.setColumnName(
+				StringManager.getValidString(
+					displayData.getColumnName()
+				)
+			)
 			.setRecordCount(
 				count
 			)
