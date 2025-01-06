@@ -223,6 +223,11 @@ service Store {
 			body: "*"
 		};
 	}
+	rpc ListCustomerTemplates(ListCustomerTemplatesRequest) returns (ListCustomerTemplatesResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/customers/templates"
+		};
+	}
 
 	//	Get Daily Refund
 	rpc GetAvailableRefund(GetAvailableRefundRequest) returns (AvailableRefund) {
@@ -1057,6 +1062,7 @@ message CreateCustomerRequest {
 	//	Location
 	repeated AddressRequest addresses = 10;
 	google.protobuf.Struct additional_attributes = 11;
+	int32 customer_template_id = 12;
 }
 
 // Request for update Customer
@@ -1122,6 +1128,30 @@ message ListCustomersRequest {
 message ListCustomersResponse {
 	int64 record_count = 1;
 	repeated Customer customers = 2;
+	string next_page_token = 3;
+}
+
+// Customer Template
+message ListCustomerTemplatesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// custom filters
+	int32 pos_id = 8;
+}
+message CustomerTemplate {
+	int32 id = 1;
+	string key = 2;
+	string name = 3;
+	bool is_pos_required_pin = 4;
+}
+message ListCustomerTemplatesResponse {
+	int64 record_count = 1;
+	repeated CustomerTemplate customer_templates = 2;
 	string next_page_token = 3;
 }
 
@@ -1495,6 +1525,7 @@ message PointOfSales {
 	string write_off_percentage_tolerance = 51;
 	bool is_write_off_by_percent = 52;
 	bool is_allows_write_off_amount = 53;
+	bool is_allows_customer_template = 54;
 }
 
 // Request for create a order

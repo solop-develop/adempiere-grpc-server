@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_AD_User;
+import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_POS;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
@@ -46,6 +47,7 @@ import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.City;
 import org.spin.backend.grpc.pos.CommandShortcut;
 import org.spin.backend.grpc.pos.Customer;
+import org.spin.backend.grpc.pos.CustomerTemplate;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
@@ -544,6 +546,49 @@ public class POSConvertUtil {
 			builder.setAdditionalAttributes(values);
 		});
 		//	
+		return builder;
+	}
+
+
+	/**
+	 * Convert customer
+	 * @param posCustomerTemplate
+	 * @return
+	 */
+	public static CustomerTemplate.Builder convertCustomerTemplate(PO posCustomerTemplate) {
+		CustomerTemplate.Builder builder = CustomerTemplate.newBuilder();
+		if(posCustomerTemplate == null || posCustomerTemplate.get_ID() <= 0) {
+			return builder;
+		}
+		int businessPartnerId = posCustomerTemplate.get_ValueAsInt(I_C_BPartner.COLUMNNAME_C_BPartner_ID);
+		if(businessPartnerId <= 0) {
+			return builder;
+		}
+		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
+		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
+			return builder;
+		}
+		builder
+			.setId(
+				businessPartner.getC_BPartner_ID()
+			)
+			.setKey(
+				StringManager.getValidString(
+					businessPartner.getValue()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					businessPartner.getDisplayValue()
+				)
+			)
+			.setIsPosRequiredPin(
+				posCustomerTemplate.get_ValueAsBoolean(
+					I_C_POS.COLUMNNAME_IsPOSRequiredPIN
+				)
+			)
+		;
+
 		return builder;
 	}
 

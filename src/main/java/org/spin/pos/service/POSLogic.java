@@ -20,18 +20,25 @@ import java.util.List;
 
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MPOS;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.Customer;
+import org.spin.backend.grpc.pos.CustomerTemplate;
 import org.spin.backend.grpc.pos.GetCustomerRequest;
+import org.spin.backend.grpc.pos.ListCustomerTemplatesRequest;
+import org.spin.backend.grpc.pos.ListCustomerTemplatesResponse;
 import org.spin.backend.grpc.pos.ListCustomersRequest;
 import org.spin.backend.grpc.pos.ListCustomersResponse;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class POSLogic {
@@ -54,12 +61,14 @@ public class POSLogic {
 		if(!Util.isEmpty(searchValue, true)) {
 			whereClause.append("("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(TaxID) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Name2) LIKE '%' || UPPER(?) || '%' "
 				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%'"
 				+ ")"
 			);
 			//	Add parameters
+			parameters.add(searchValue);
 			parameters.add(searchValue);
 			parameters.add(searchValue);
 			parameters.add(searchValue);
@@ -177,7 +186,7 @@ public class POSLogic {
 		ListCustomersResponse.Builder builderList = ListCustomersResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -318,6 +327,88 @@ public class POSLogic {
 		return POSConvertUtil.convertCustomer(
 			businessPartner
 		);
+	}
+
+
+	/**
+	 * Get Customer
+	 * @param request
+	 * @return
+	 */
+	public static ListCustomerTemplatesResponse.Builder listCustomerTemplates(ListCustomerTemplatesRequest request) {		
+		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
+		ListCustomerTemplatesResponse.Builder builderList = ListCustomerTemplatesResponse.newBuilder();
+
+		final String TABLE_NAME = "C_POSBPTemplate";
+		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
+			// table not found
+			return builderList;
+		}
+
+		//	Dynamic where clause
+		StringBuffer whereClause = new StringBuffer();
+		//	Parameters
+		List<Object> parameters = new ArrayList<Object>();
+
+		// Add pos filter
+		whereClause.append("C_POS_ID = ? ");
+		parameters.add(
+			pos.getC_POS_ID()
+		);
+
+		// whereClause.append(
+		// 	"AND EXISTS("
+		// 	+ "SELECT 1 FROM C_BPartner AS c "
+		// 	+ "WHERE c.C_BPartner_ID = C_POSBPTemplate.C_BPartner_ID "
+		// 	+ "AND c.IsActive = ? "
+		// 	+ ")"
+		// );
+		// parameters.add(true);
+
+
+		//	Get Customer Tempates list
+		Query query = new Query(
+			Env.getCtx(),
+			TABLE_NAME,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
+			.setOnlyActiveRecords(true)
+			.setClient_ID()
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
+
+		int count = query.count();
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		//	Set page token
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		builderList
+			.setRecordCount(count)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		query.setLimit(limit, offset)
+			.list()
+			.stream()
+			.forEach(posCustomerTemplate -> {
+				CustomerTemplate.Builder customerTemplateBuilder = POSConvertUtil.convertCustomerTemplate(
+					posCustomerTemplate
+				);
+				builderList.addCustomerTemplates(customerTemplateBuilder);
+			});
+	
+		//	Default return
+		return builderList;
 	}
 
 }
