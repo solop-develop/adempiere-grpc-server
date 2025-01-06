@@ -594,6 +594,29 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 
+
+	@Override
+	public void listCustomerTemplates(ListCustomerTemplatesRequest request, StreamObserver<ListCustomerTemplatesResponse> responseObserver) {
+		try {
+			ListCustomerTemplatesResponse.Builder customerTemplatesList = POSLogic.listCustomerTemplates(request);
+			responseObserver.onNext(
+				customerTemplatesList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
 	@Override
 	public void printTicket(PrintTicketRequest request, StreamObserver<PrintTicketResponse> responseObserver) {
 		try {
@@ -2678,11 +2701,28 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	POS Uuid
 		MPOS pos = getPOSFromId(request.getPosId(), true);
 		MBPartner businessPartner = MBPartner.getTemplate(context, Env.getAD_Client_ID(Env.getCtx()), pos.getC_POS_ID());
+
 		//	Validate Template
-		if(pos.getC_BPartnerCashTrx_ID() <= 0) {
+		int customerTemplateId = request.getCustomerTemplateId();
+		if (customerTemplateId <= 0) {
+			customerTemplateId = pos.getC_BPartnerCashTrx_ID();
+		}
+		if(customerTemplateId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartnerCashTrx_ID@");
+		}
+		MBPartner template = MBPartner.get(context, customerTemplateId);
+		if (template == null || template.getC_BPartner_ID() <= 0) {
 			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
 		}
-		MBPartner template = MBPartner.get(context, pos.getC_BPartnerCashTrx_ID());
+		// copy and clear values by termplate
+		PO.copyValues(template, businessPartner);
+		businessPartner.setTaxID(null);
+		businessPartner.setValue(null);
+		businessPartner.setNAICS(null);
+		businessPartner.setName(null);
+		businessPartner.setName2(null);
+		businessPartner.setDUNS(null);
+
 		Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false))
 			.stream()
 			.findFirst()
@@ -4964,16 +5004,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	/**
 	 * Get POS from UUID
 	 * @param uuid
+	 * @deprecated
 	 * @return
 	 */
 	private MPOS getPOSFromId(int posId, boolean requery) {
-		if(posId <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
-		if(requery) {
-			return new MPOS(Env.getCtx(), posId, null);
-		}
-		return MPOS.get(Env.getCtx(), posId);
+		return POS.validateAndGetPOS(posId, requery);
 	}
 	
 	/**
@@ -5063,6 +5098,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			.setIsModifyPrice(getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsModifyPrice))
 			.setIsAllowsDetailCashClosing(getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsDetailCashClosing))
 			.setIsWriteOffByPercent(getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent))
+			.setIsAllowsCustomerTemplate(
+				getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCustomerTemplate)
+			)
 		;
 
 		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_RefundReferenceCurrency_ID) > 0) {

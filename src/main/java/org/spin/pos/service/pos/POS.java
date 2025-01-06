@@ -52,8 +52,6 @@ public class POS {
 		MPOS pos = MPOS.get(Env.getCtx(), posId);
 		if (requery) {
 			pos = new MPOS(Env.getCtx(), posId, null);
-		} else {
-			pos = MPOS.get(Env.getCtx(), posId);
 		}
 		if (pos == null || pos.getC_POS_ID() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
