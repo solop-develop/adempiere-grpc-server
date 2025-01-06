@@ -169,10 +169,12 @@ public class WorkflowUtil {
 							instance.saveEx();
 							//	Set Instance
 							processInfo.setAD_PInstance_ID(instance.getAD_PInstance_ID());
-						} catch (Exception e) { 
-							processInfo.setSummary (e.getLocalizedMessage()); 
-							processInfo.setError (true); 
-							log.warning(processInfo.toString()); 
+						} catch (Exception e) {
+							processInfo.setSummary(
+								e.getLocalizedMessage()
+							);
+							processInfo.setError(true);
+							log.warning(processInfo.toString());
 							processInfo.getSummary();
 							throw new AdempiereException(e);
 						}
@@ -184,14 +186,17 @@ public class WorkflowUtil {
 					}
 					String summary = processInfo.getSummary();
 					response.setSummary(
-						StringManager.getValidString(
-							Msg.parseTranslation(
-								context,
-								summary
+							StringManager.getValidString(
+								Msg.parseTranslation(
+									context,
+									summary
+								)
 							)
 						)
-					);
-					response.setIsError(processInfo.isError());
+						.setIsError(
+							processInfo.isError()
+						)
+					;
 				}
 			}
 		} catch (Exception e) {
