@@ -16,11 +16,13 @@ package org.spin.grpc.service.field.business_partner;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
+import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerInfoServiceGrpc.BusinessPartnerInfoServiceImplBase;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerAddressLocationsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerAddressLocationsResponse;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerContactsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerContactsResponse;
+import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerGroupsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnersInfoRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnersInfoResponse;
 
@@ -34,6 +36,30 @@ import io.grpc.stub.StreamObserver;
 public class BusinessPartnerInfo extends BusinessPartnerInfoServiceImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(BusinessPartnerInfo.class);
+
+
+	@Override
+	public void listBusinessPartnerGroups(ListBusinessPartnerGroupsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListLookupItemsResponse.Builder entityValueList = BusinessPartnerLogic.listBusinessPartnerGroups(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 
 
 	@Override

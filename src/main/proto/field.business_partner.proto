@@ -22,6 +22,8 @@ option java_outer_classname = "ADempiereBusinessPartner";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
+import "base_data_type.proto";
+
 // Base URL
 // /fields/business-partners/
 
@@ -29,6 +31,13 @@ package field.business_partner;
 
 // The business partner service definition.
 service BusinessPartnerInfoService {
+	// Filters
+	rpc ListBusinessPartnerGroups(ListBusinessPartnerGroupsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/fields/business-partners/groups"
+		};
+	}
+
 	// Result
 	rpc ListBusinessPartnersInfo(ListBusinessPartnersInfoRequest) returns (ListBusinessPartnersInfoResponse) {
 		option (google.api.http) = {
@@ -60,6 +69,19 @@ service BusinessPartnerInfoService {
 			get: "/fields/business-partners/{business_partner_id}/address-locations"
 		};
 	}
+}
+
+// Business Partner Group
+message ListBusinessPartnerGroupsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 
@@ -111,12 +133,12 @@ message ListBusinessPartnersInfoRequest {
 	string value = 18;
 	string contact = 19;
 	string phone = 20;
-	string customer = 21;
-	string name = 22;
-	string email = 23;
-	string postal_code = 24;
-	string is_vendor = 25;
-	string is_customer = 26;
+	string name = 21;
+	string email = 22;
+	string postal_code = 23;
+	string is_vendor = 24;
+	string is_customer = 25;
+	int32 business_partner_group_id = 26;
 }
 
 
