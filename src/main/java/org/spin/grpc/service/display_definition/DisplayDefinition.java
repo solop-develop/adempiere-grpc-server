@@ -26,6 +26,8 @@ import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ListResourcesDataRequest;
+import org.spin.backend.grpc.display_definition.ListResourcesDataResponse;
 import org.spin.backend.grpc.display_definition.ListTimelinesDataRequest;
 import org.spin.backend.grpc.display_definition.ListTimelinesDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
@@ -120,12 +122,30 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 		}
 	}
 
-
-
 	@Override
 	public void listKanbansData(ListKanbansDataRequest request, StreamObserver<ListKanbansDataResponse> responseObserver) {
 		try {
 			ListKanbansDataResponse.Builder builder = DisplayDefinitionServiceLogic.listKanbansData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listResourcesData(ListResourcesDataRequest request, StreamObserver<ListResourcesDataResponse> responseObserver) {
+		try {
+			ListResourcesDataResponse.Builder builder = DisplayDefinitionServiceLogic.listResourcesData(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -179,8 +199,6 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 			);
 		}
 	}
-
-
 
 	@Override
 	public void listWorkflowsData(ListWorkflowsDataRequest request, StreamObserver<ListWorkflowsDataResponse> responseObserver) {
