@@ -18,10 +18,16 @@ import org.compiere.util.CLogger;
 import org.spin.backend.grpc.display_definition.DisplayDefinitionGrpc.DisplayDefinitionImplBase;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
-import org.spin.backend.grpc.display_definition.ListCalendarsRequest;
-import org.spin.backend.grpc.display_definition.ListCalendarsResponse;
+import org.spin.backend.grpc.display_definition.ListCalendarsDataRequest;
+import org.spin.backend.grpc.display_definition.ListCalendarsDataResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataRequest;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataResponse;
+import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
+import org.spin.backend.grpc.display_definition.ListKanbansDataResponse;
+import org.spin.backend.grpc.display_definition.ListKanbansDefinitionRequest;
+import org.spin.backend.grpc.display_definition.ListKanbansDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ListTimelinesDataRequest;
+import org.spin.backend.grpc.display_definition.ListTimelinesDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
@@ -77,6 +83,86 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 
 
 	@Override
+	public void listCalendarsData(ListCalendarsDataRequest request, StreamObserver<ListCalendarsDataResponse> responseObserver) {
+		try {
+			ListCalendarsDataResponse.Builder builder = DisplayDefinitionServiceLogic.listCalendarsData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listKanbansDefinition(ListKanbansDefinitionRequest request, StreamObserver<ListKanbansDefinitionResponse> responseObserver) {
+		try {
+			ListKanbansDefinitionResponse.Builder builder = DisplayDefinitionServiceLogic.listKanbansDefinition(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listKanbansData(ListKanbansDataRequest request, StreamObserver<ListKanbansDataResponse> responseObserver) {
+		try {
+			ListKanbansDataResponse.Builder builder = DisplayDefinitionServiceLogic.listKanbansData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listTimelinesData(ListTimelinesDataRequest request, StreamObserver<ListTimelinesDataResponse> responseObserver) {
+		try {
+			ListTimelinesDataResponse.Builder builder = DisplayDefinitionServiceLogic.listTimelinesData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
 	public void listWorkflowsDefinition(ListWorkflowsDefinitionRequest request, StreamObserver<ListWorkflowsDefinitionResponse> responseObserver) {
 		try {
 			ListWorkflowsDefinitionResponse.Builder builder = DisplayDefinitionServiceLogic.listWorkflowsDefinition(request);
@@ -100,26 +186,6 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 	public void listWorkflowsData(ListWorkflowsDataRequest request, StreamObserver<ListWorkflowsDataResponse> responseObserver) {
 		try {
 			ListWorkflowsDataResponse.Builder builder = DisplayDefinitionServiceLogic.listWorkflowsData(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-
-
-	@Override
-	public void listCalendars(ListCalendarsRequest request, StreamObserver<ListCalendarsResponse> responseObserver) {
-		try {
-			ListCalendarsResponse.Builder builder = DisplayDefinitionServiceLogic.listCalendars(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

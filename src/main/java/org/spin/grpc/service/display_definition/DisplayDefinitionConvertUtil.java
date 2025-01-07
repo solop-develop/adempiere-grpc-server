@@ -15,26 +15,25 @@
 package org.spin.grpc.service.display_definition;
 
 import org.adempiere.core.domains.models.I_AD_Element;
-import org.compiere.model.MColumn;
 import org.compiere.model.PO;
-import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.display_definition.Calendar;
-import org.spin.backend.grpc.display_definition.CalendarMetadata;
+import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.DefinitionType;
-import org.spin.backend.grpc.display_definition.KanbanMetadata;
-import org.spin.backend.grpc.display_definition.ResourceMetadata;
-import org.spin.backend.grpc.display_definition.TimelineMetadata;
-import org.spin.backend.grpc.display_definition.WorkflowData;
-import org.spin.backend.grpc.display_definition.WorkflowMetadata;
+import org.spin.backend.grpc.display_definition.KanbanEntry;
+import org.spin.backend.grpc.display_definition.KanbanStep;
+import org.spin.backend.grpc.display_definition.TimelineEntry;
+import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
-import com.solop.sp010.data.CalendarItem;
-import com.solop.sp010.data.KanbanColumn;
-import com.solop.sp010.data.KanbanItem;
+import com.solop.sp010.data.calendar.CalendarItem;
+import com.solop.sp010.data.kanban.KanbanColumn;
+import com.solop.sp010.data.kanban.KanbanItem;
+import com.solop.sp010.data.timeline.TimeLineItem;
+import com.solop.sp010.data.workflow.WorkflowColumn;
+import com.solop.sp010.data.workflow.WorkflowItem;
 import com.solop.sp010.util.Changes;
 
 public class DisplayDefinitionConvertUtil {
@@ -105,93 +104,10 @@ public class DisplayDefinitionConvertUtil {
 		return builder;
 	}
 
-	public static CalendarMetadata.Builder convertCalendarMetadata(PO record) {
-		CalendarMetadata.Builder builder = CalendarMetadata.newBuilder();
-		if (record == null || record.get_ID() <= 0) {
-			return builder;
-		}
-		builder.setId(
-				record.get_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					record.get_UUID()
-				)
-			)
-			.setValue(
-				StringManager.getValidString(
-					record.get_ValueAsString("Value")
-				)
-			)
-			.setName(
-				StringManager.getValidString(
-					record.get_ValueAsString(
-						I_AD_Element.COLUMNNAME_Name
-					)
-				)
-			)
-		;
-		// title column
-		MColumn titleColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Title_ID
-			)
-		);
-		if (titleColumn != null && titleColumn.get_ID() > 0) {
-			builder.setTitleColumn(
-				StringManager.getValidString(
-					titleColumn.getColumnName()
-				)
-			);
-		}
-		// description column
-		MColumn descriptionColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Description_ID
-			)
-		);
-		if (descriptionColumn != null && descriptionColumn.get_ID() > 0) {
-			builder.setDescriptionColumn(
-				StringManager.getValidString(
-					descriptionColumn.getColumnName()
-				)
-			);
-		}
-		// valid from column
-		MColumn validFromColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_ValidFrom_ID
-			)
-		);
-		if (validFromColumn != null && validFromColumn.get_ID() > 0) {
-			builder.setValidFromColumn(
-				StringManager.getValidString(
-					validFromColumn.getColumnName()
-				)
-			);
-		}
-		// valid to column
-		MColumn validToColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_ValidTo_ID
-			)
-		);
-		if (validToColumn != null && validToColumn.get_ID() > 0) {
-			builder.setValidToColumn(
-				StringManager.getValidString(
-					validToColumn.getColumnName()
-				)
-			);
-		}
-		return builder;
-	}
 
-	public static Calendar.Builder convertCalentar(CalendarItem calendarItem) {
-		Calendar.Builder builder = Calendar.newBuilder();
+
+	public static CalendarEntry.Builder convertCalentarEntry(CalendarItem calendarItem) {
+		CalendarEntry.Builder builder = CalendarEntry.newBuilder();
 		if (calendarItem == null) {
 			return builder;
 		}
@@ -224,7 +140,7 @@ public class DisplayDefinitionConvertUtil {
 					calendarItem.getValidTo()
 				)
 			)
-			.setConfirmed(
+			.setIsConfirmed(
 				calendarItem.isConfirmed()
 			)
 		;
@@ -233,322 +149,9 @@ public class DisplayDefinitionConvertUtil {
 	}
 
 
-	public static KanbanMetadata.Builder convertKanbanMetadata(PO record) {
-		KanbanMetadata.Builder builder = KanbanMetadata.newBuilder();
-		if (record == null || record.get_ID() <= 0) {
-			return builder;
-		}
-		builder.setId(
-				record.get_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					record.get_UUID()
-				)
-			)
-			.setValue(
-				StringManager.getValidString(
-					record.get_ValueAsString("Value")
-				)
-			)
-			.setName(
-				StringManager.getValidString(
-					record.get_ValueAsString(
-						I_AD_Element.COLUMNNAME_Name
-					)
-				)
-			)
-		;
-		// title column
-		MColumn titleColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Title_ID
-			)
-		);
-		if (titleColumn != null && titleColumn.get_ID() > 0) {
-			builder.setTitleColumn(
-				StringManager.getValidString(
-					titleColumn.getColumnName()
-				)
-			);
-		}
-		// description column
-		MColumn descriptionColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Description_ID
-			)
-		);
-		if (descriptionColumn != null && descriptionColumn.get_ID() > 0) {
-			builder.setDescriptionColumn(
-				StringManager.getValidString(
-					descriptionColumn.getColumnName()
-				)
-			);
-		}
-		// group column
-		MColumn groupColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Group_ID
-			)
-		);
-		if (groupColumn != null && groupColumn.get_ID() > 0) {
-			builder.setGroupColumn(
-				StringManager.getValidString(
-					groupColumn.getColumnName()
-				)
-			);
-		}
-		// group sequence column
-		MColumn groupSequenceColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_GroupSequence_ID
-			)
-		);
-		if (groupSequenceColumn != null && groupSequenceColumn.get_ID() > 0) {
-			builder.setGroupSequenceColumn(
-				StringManager.getValidString(
-					groupSequenceColumn.getColumnName()
-				)
-			);
-		}
-		// sequence column
-		MColumn sequenceColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Sequence_ID
-			)
-		);
-		if (sequenceColumn != null && sequenceColumn.get_ID() > 0) {
-			builder.setSequenceColumn(
-				StringManager.getValidString(
-					sequenceColumn.getColumnName()
-				)
-			);
-		}
-		return builder;
-	}
 
-
-	public static ResourceMetadata.Builder convertResourceMetadata(PO record) {
-		ResourceMetadata.Builder builder = ResourceMetadata.newBuilder();
-		if (record == null || record.get_ID() <= 0) {
-			return builder;
-		}
-		builder.setId(
-				record.get_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					record.get_UUID()
-				)
-			)
-			.setValue(
-				StringManager.getValidString(
-					record.get_ValueAsString("Value")
-				)
-			)
-			.setName(
-				StringManager.getValidString(
-					record.get_ValueAsString(
-						I_AD_Element.COLUMNNAME_Name
-					)
-				)
-			)
-		;
-		// title column
-		MColumn titleColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Title_ID
-			)
-		);
-		if (titleColumn != null && titleColumn.get_ID() > 0) {
-			builder.setTitleColumn(
-				StringManager.getValidString(
-					titleColumn.getColumnName()
-				)
-			);
-		}
-		// description column
-		MColumn descriptionColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Description_ID
-			)
-		);
-		if (descriptionColumn != null && descriptionColumn.get_ID() > 0) {
-			builder.setDescriptionColumn(
-				StringManager.getValidString(
-					descriptionColumn.getColumnName()
-				)
-			);
-		}
-		// valid from column
-		MColumn validFromColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_ValidFrom_ID
-			)
-		);
-		if (validFromColumn != null && validFromColumn.get_ID() > 0) {
-			builder.setValidFromColumn(
-				StringManager.getValidString(
-					validFromColumn.getColumnName()
-				)
-			);
-		}
-		// valid to column
-		MColumn validToColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_ValidTo_ID
-			)
-		);
-		if (validToColumn != null && validToColumn.get_ID() > 0) {
-			builder.setValidToColumn(
-				StringManager.getValidString(
-					validToColumn.getColumnName()
-				)
-			);
-		}
-		// is resource column
-		MColumn isResourceColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_IsResource
-			)
-		);
-		if (isResourceColumn != null && isResourceColumn.get_ID() > 0) {
-			builder.setIsResourceReference(
-				record.get_ValueAsBoolean(
-					isResourceColumn.getColumnName()
-				)
-			);
-		}
-		// resource column
-		MColumn resourceColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Resource_ID
-			)
-		);
-		if (resourceColumn != null && resourceColumn.get_ID() > 0) {
-			builder.setResourceColumn(
-				StringManager.getValidString(
-					resourceColumn.getColumnName()
-				)
-			);
-		}
-		// resource item column
-		MColumn resourceItemColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Item_ID
-			)
-		);
-		if (resourceItemColumn != null && resourceItemColumn.get_ID() > 0) {
-			builder.setResourceItemColumn(
-				StringManager.getValidString(
-					resourceItemColumn.getColumnName()
-				)
-			);
-		}
-		// resource item group column
-		MColumn resourceItemGroupColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Item_ID
-			)
-		);
-		if (resourceItemGroupColumn != null && resourceItemGroupColumn.get_ID() > 0) {
-			builder.setResourceItemGroupColumn(
-				StringManager.getValidString(
-					resourceItemGroupColumn.getColumnName()
-				)
-			);
-		}
-		return builder;
-	}
-
-
-	public static TimelineMetadata.Builder convertTimelineMetadata(PO record) {
-		TimelineMetadata.Builder builder = TimelineMetadata.newBuilder();
-		if (record == null || record.get_ID() <= 0) {
-			return builder;
-		}
-		builder.setId(
-				record.get_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					record.get_UUID()
-				)
-			)
-			.setValue(
-				StringManager.getValidString(
-					record.get_ValueAsString("Value")
-				)
-			)
-			.setName(
-				StringManager.getValidString(
-					record.get_ValueAsString(
-						I_AD_Element.COLUMNNAME_Name
-					)
-				)
-			)
-		;
-		// title column
-		MColumn titleColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Title_ID
-			)
-		);
-		if (titleColumn != null && titleColumn.get_ID() > 0) {
-			builder.setTitleColumn(
-				StringManager.getValidString(
-					titleColumn.getColumnName()
-				)
-			);
-		}
-		// description column
-		MColumn descriptionColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Description_ID
-			)
-		);
-		if (descriptionColumn != null && descriptionColumn.get_ID() > 0) {
-			builder.setDescriptionColumn(
-				StringManager.getValidString(
-					descriptionColumn.getColumnName()
-				)
-			);
-		}
-		// date column
-		MColumn dateColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_ValidFrom_ID
-			)
-		);
-		if (dateColumn != null && dateColumn.get_ID() > 0) {
-			builder.setDateColumn(
-				StringManager.getValidString(
-					dateColumn.getColumnName()
-				)
-			);
-		}
-		return builder;
-	}
-
-
-	public static WorkflowStep.Builder convertWorkflowStep(KanbanColumn kanbanColumn) {
-		WorkflowStep.Builder builder = WorkflowStep.newBuilder();
+	public static KanbanStep.Builder convertKanbanStep(KanbanColumn kanbanColumn) {
+		KanbanStep.Builder builder = KanbanStep.newBuilder();
 		if (kanbanColumn == null) {
 			return builder;
 		}
@@ -570,9 +173,8 @@ public class DisplayDefinitionConvertUtil {
 		return builder;
 	}
 
-
-	public static WorkflowData.Builder convertWorkflowData(KanbanItem kanbanItem) {
-		WorkflowData.Builder builder = WorkflowData.newBuilder();
+	public static KanbanEntry.Builder convertKanbanEntry(KanbanItem kanbanItem) {
+		KanbanEntry.Builder builder = KanbanEntry.newBuilder();
 		if (kanbanItem == null) {
 			return builder;
 		}
@@ -595,9 +197,59 @@ public class DisplayDefinitionConvertUtil {
 					kanbanItem.getDescription()
 				)
 			)
+			.setIsActive(
+				kanbanItem.isActive()
+			)
+			.setIsReadOnly(
+				kanbanItem.isReadOnly()
+			)
 			.setGroupId(
 				StringManager.getValidString(
 					kanbanItem.getGroupCode()
+				)
+			)
+			.setSequence(
+				kanbanItem.getSequence()
+			)
+		;
+		return builder;
+	}
+
+
+
+	public static TimelineEntry.Builder convertTimelineEntry(TimeLineItem timelineItem) {
+		TimelineEntry.Builder builder = TimelineEntry.newBuilder();
+		if (timelineItem == null) {
+			return builder;
+		}
+		builder
+			.setId(
+				timelineItem.getId()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					timelineItem.getUuid()
+				)
+			)
+			.setTitle(
+				StringManager.getValidString(
+					timelineItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					timelineItem.getDescription()
+				)
+			)
+			.setIsActive(
+				timelineItem.isActive()
+			)
+			.setIsReadOnly(
+				timelineItem.isReadOnly()
+			)
+			.setDate(
+				ValueManager.getTimestampFromDate(
+					timelineItem.getDate()
 				)
 			)
 		;
@@ -605,102 +257,69 @@ public class DisplayDefinitionConvertUtil {
 	}
 
 
-	public static WorkflowMetadata.Builder convertWorkflowMetadata(PO record) {
-		WorkflowMetadata.Builder builder = WorkflowMetadata.newBuilder();
-		if (record == null || record.get_ID() <= 0) {
+
+	public static WorkflowStep.Builder convertWorkflowStep(WorkflowColumn kanbanColumn) {
+		WorkflowStep.Builder builder = WorkflowStep.newBuilder();
+		if (kanbanColumn == null) {
 			return builder;
 		}
-		builder.setId(
-				record.get_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					record.get_UUID()
-				)
-			)
+		builder
 			.setValue(
 				StringManager.getValidString(
-					record.get_ValueAsString("Value")
+					kanbanColumn.getGroupCode()
 				)
 			)
 			.setName(
 				StringManager.getValidString(
-					record.get_ValueAsString(
-						I_AD_Element.COLUMNNAME_Name
-					)
+					kanbanColumn.getName()
 				)
+			)
+			.setSequence(
+				kanbanColumn.getSequence()
 			)
 		;
-		// title column
-		MColumn titleColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Title_ID
-			)
-		);
-		if (titleColumn != null && titleColumn.get_ID() > 0) {
-			builder.setTitleColumn(
-				StringManager.getValidString(
-					titleColumn.getColumnName()
-				)
-			);
+		return builder;
+	}
+
+	public static WorkflowEntry.Builder convertWorkflowEntry(WorkflowItem kanbanItem) {
+		WorkflowEntry.Builder builder = WorkflowEntry.newBuilder();
+		if (kanbanItem == null) {
+			return builder;
 		}
-		// description column
-		MColumn descriptionColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Description_ID
+		builder
+			.setId(
+				kanbanItem.getId()
 			)
-		);
-		if (descriptionColumn != null && descriptionColumn.get_ID() > 0) {
-			builder.setDescriptionColumn(
+			.setUuid(
 				StringManager.getValidString(
-					descriptionColumn.getColumnName()
+					kanbanItem.getUuid()
 				)
-			);
-		}
-		// group column
-		MColumn groupColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Group_ID
 			)
-		);
-		if (groupColumn != null && groupColumn.get_ID() > 0) {
-			builder.setGroupColumn(
+			.setTitle(
 				StringManager.getValidString(
-					groupColumn.getColumnName()
+					kanbanItem.getTitle()
 				)
-			);
-		}
-		// group sequence column
-		MColumn groupSequenceColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_GroupSequence_ID
 			)
-		);
-		if (groupSequenceColumn != null && groupSequenceColumn.get_ID() > 0) {
-			builder.setGroupSequenceColumn(
+			.setDescription(
 				StringManager.getValidString(
-					groupSequenceColumn.getColumnName()
+					kanbanItem.getDescription()
 				)
-			);
-		}
-		// sequence column
-		MColumn sequenceColumn = MColumn.get(
-			Env.getCtx(),
-			record.get_ValueAsInt(
-				Changes.SP010_Sequence_ID
 			)
-		);
-		if (sequenceColumn != null && sequenceColumn.get_ID() > 0) {
-			builder.setSequenceColumn(
+			.setIsActive(
+				kanbanItem.isActive()
+			)
+			.setIsReadOnly(
+				kanbanItem.isReadOnly()
+			)
+			.setGroupId(
 				StringManager.getValidString(
-					sequenceColumn.getColumnName()
+					kanbanItem.getGroupCode()
 				)
-			);
-		}
+			)
+			.setSequence(
+				kanbanItem.getSequence()
+			)
+		;
 		return builder;
 	}
 
