@@ -22,19 +22,28 @@ import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
-import org.spin.backend.grpc.display_definition.Calendar;
+import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
-import org.spin.backend.grpc.display_definition.ListCalendarsRequest;
-import org.spin.backend.grpc.display_definition.ListCalendarsResponse;
+import org.spin.backend.grpc.display_definition.KanbanEntry;
+import org.spin.backend.grpc.display_definition.KanbanStep;
+import org.spin.backend.grpc.display_definition.ListCalendarsDataRequest;
+import org.spin.backend.grpc.display_definition.ListCalendarsDataResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataRequest;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataResponse;
+import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
+import org.spin.backend.grpc.display_definition.ListKanbansDataResponse;
+import org.spin.backend.grpc.display_definition.ListKanbansDefinitionRequest;
+import org.spin.backend.grpc.display_definition.ListKanbansDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ListTimelinesDataRequest;
+import org.spin.backend.grpc.display_definition.ListTimelinesDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
-import org.spin.backend.grpc.display_definition.WorkflowData;
+import org.spin.backend.grpc.display_definition.TimelineEntry;
+import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -44,10 +53,14 @@ import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 
-import com.solop.sp010.data.CalendarData;
-import com.solop.sp010.data.KanbanData;
-import com.solop.sp010.query.CalendarQuery;
-import com.solop.sp010.query.KanbanQuery;
+import com.solop.sp010.data.calendar.CalendarData;
+import com.solop.sp010.data.kanban.KanbanData;
+import com.solop.sp010.data.timeline.TimeLineData;
+import com.solop.sp010.data.workflow.WorkflowData;
+import com.solop.sp010.query.Calendar;
+import com.solop.sp010.query.Kanban;
+import com.solop.sp010.query.TimeLine;
+import com.solop.sp010.query.Workflow;
 import com.solop.sp010.util.Changes;
 
 // import com.solop.sp010.util.Changes;
@@ -144,7 +157,7 @@ public class DisplayDefinitionServiceLogic {
 
 
 
-	public static ListCalendarsResponse.Builder listCalendars(ListCalendarsRequest request) {
+	public static ListCalendarsDataResponse.Builder listCalendarsData(ListCalendarsDataRequest request) {
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
 		}
@@ -168,7 +181,7 @@ public class DisplayDefinitionServiceLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		CalendarData displayData = (CalendarData) new CalendarQuery(request.getId())
+		CalendarData displayData = (CalendarData) new Calendar(request.getId())
 			.withConditions(conditions)
 			.withLimit(limit, offset)
 			.run()
@@ -183,7 +196,7 @@ public class DisplayDefinitionServiceLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
-		ListCalendarsResponse.Builder builderList = ListCalendarsResponse.newBuilder()
+		ListCalendarsDataResponse.Builder builderList = ListCalendarsDataResponse.newBuilder()
 			.setRecordCount(
 				count
 			)
@@ -193,7 +206,195 @@ public class DisplayDefinitionServiceLogic {
 		;
 
 		displayData.getCalendars().forEach(calendarItem -> {
-			Calendar.Builder builder = DisplayDefinitionConvertUtil.convertCalentar(calendarItem);
+			CalendarEntry.Builder builder = DisplayDefinitionConvertUtil.convertCalentarEntry(calendarItem);
+			builderList.addRecords(builder);
+		});
+		return builderList;
+	}
+
+
+
+	public static ListKanbansDefinitionResponse.Builder listKanbansDefinition(ListKanbansDefinitionRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
+		}
+
+		PO displayDefinition = new Query(
+			Env.getCtx(),
+			Changes.SP010_DisplayDefinition,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(request.getId())
+			.first()
+		;
+		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
+		}
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
+		KanbanData displayData = (KanbanData) new Kanban(request.getId())
+			.withConditions(conditions)
+			.withLimit(limit, offset)
+			.run()
+		;
+
+		ListKanbansDefinitionResponse.Builder builderList = ListKanbansDefinitionResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					displayData.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					displayData.getDescription()
+				)
+			)
+			.setColumnName(
+				StringManager.getValidString(
+					displayData.getColumnName()
+				)
+			)
+		;
+
+		displayData.getColumns().forEach(kanbanColumn -> {
+			KanbanStep.Builder builder = DisplayDefinitionConvertUtil.convertKanbanStep(kanbanColumn);
+			builderList.addSteps(builder);
+		});
+		return builderList;
+	}
+
+	public static ListKanbansDataResponse.Builder listKanbansData(ListKanbansDataRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
+		}
+
+		PO displayDefinition = new Query(
+			Env.getCtx(),
+			Changes.SP010_DisplayDefinition,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(request.getId())
+			.first()
+		;
+		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
+		}
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
+		KanbanData displayData = (KanbanData) new Kanban(request.getId())
+			.withConditions(conditions)
+			.withLimit(limit, offset)
+			.run()
+		;
+
+		//	Set page token
+		int count = NumberManager.getIntegerFromLong(
+			displayData.getRecordCount()
+		);
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListKanbansDataResponse.Builder builderList = ListKanbansDataResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					displayData.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					displayData.getDescription()
+				)
+			)
+			.setColumnName(
+				StringManager.getValidString(
+					displayData.getColumnName()
+				)
+			)
+			.setRecordCount(
+				count
+			)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		displayData.getColumns().forEach(kanbanColumn -> {
+			KanbanStep.Builder builder = DisplayDefinitionConvertUtil.convertKanbanStep(kanbanColumn);
+			builderList.addSteps(builder);
+		});
+		displayData.getKanbans().forEach(kanbanItem -> {
+			KanbanEntry.Builder builder = DisplayDefinitionConvertUtil.convertKanbanEntry(kanbanItem);
+			builderList.addRecords(builder);
+		});
+		return builderList;
+	}
+
+
+
+	public static ListTimelinesDataResponse.Builder listTimelinesData(ListTimelinesDataRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
+		}
+
+		PO displayDefinition = new Query(
+			Env.getCtx(),
+			Changes.SP010_DisplayDefinition,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(request.getId())
+			.first()
+		;
+		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
+		}
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
+		TimeLineData displayData = (TimeLineData) new TimeLine(request.getId())
+			.withConditions(conditions)
+			.withLimit(limit, offset)
+			.run()
+		;
+
+		//	Set page token
+		int count = NumberManager.getIntegerFromLong(
+			displayData.getRecordCount()
+		);
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListTimelinesDataResponse.Builder builderList = ListTimelinesDataResponse.newBuilder()
+			.setRecordCount(
+				count
+			)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		displayData.gettimeLines().forEach(kanbanItem -> {
+			TimelineEntry.Builder builder = DisplayDefinitionConvertUtil.convertTimelineEntry(kanbanItem);
 			builderList.addRecords(builder);
 		});
 		return builderList;
@@ -225,7 +426,7 @@ public class DisplayDefinitionServiceLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		KanbanData displayData = (KanbanData) new KanbanQuery(request.getId())
+		WorkflowData displayData = (WorkflowData) new Workflow(request.getId())
 			.withConditions(conditions)
 			.withLimit(limit, offset)
 			.run()
@@ -282,7 +483,7 @@ public class DisplayDefinitionServiceLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		KanbanData displayData = (KanbanData) new KanbanQuery(request.getId())
+		WorkflowData displayData = (WorkflowData) new Workflow(request.getId())
 			.withConditions(conditions)
 			.withLimit(limit, offset)
 			.run()
@@ -325,8 +526,8 @@ public class DisplayDefinitionServiceLogic {
 			WorkflowStep.Builder builder = DisplayDefinitionConvertUtil.convertWorkflowStep(kanbanColumn);
 			builderList.addSteps(builder);
 		});
-		displayData.getKanbans().forEach(kanbanItem -> {
-			WorkflowData.Builder builder = DisplayDefinitionConvertUtil.convertWorkflowData(kanbanItem);
+		displayData.getWorkflows().forEach(kanbanItem -> {
+			WorkflowEntry.Builder builder = DisplayDefinitionConvertUtil.convertWorkflowEntry(kanbanItem);
 			builderList.addRecords(builder);
 		});
 		return builderList;
