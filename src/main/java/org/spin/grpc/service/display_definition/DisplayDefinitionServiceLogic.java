@@ -36,12 +36,15 @@ import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ListResourcesDataRequest;
+import org.spin.backend.grpc.display_definition.ListResourcesDataResponse;
 import org.spin.backend.grpc.display_definition.ListTimelinesDataRequest;
 import org.spin.backend.grpc.display_definition.ListTimelinesDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
@@ -55,10 +58,12 @@ import org.spin.service.grpc.util.value.StringManager;
 
 import com.solop.sp010.data.calendar.CalendarData;
 import com.solop.sp010.data.kanban.KanbanData;
+import com.solop.sp010.data.resource.ResourceData;
 import com.solop.sp010.data.timeline.TimeLineData;
 import com.solop.sp010.data.workflow.WorkflowData;
 import com.solop.sp010.query.Calendar;
 import com.solop.sp010.query.Kanban;
+import com.solop.sp010.query.Resource;
 import com.solop.sp010.query.TimeLine;
 import com.solop.sp010.query.Workflow;
 import com.solop.sp010.util.Changes;
@@ -338,6 +343,63 @@ public class DisplayDefinitionServiceLogic {
 		});
 		displayData.getKanbans().forEach(kanbanItem -> {
 			KanbanEntry.Builder builder = DisplayDefinitionConvertUtil.convertKanbanEntry(kanbanItem);
+			builderList.addRecords(builder);
+		});
+		return builderList;
+	}
+
+
+
+	public static ListResourcesDataResponse.Builder listResourcesData(ListResourcesDataRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
+		}
+
+		PO displayDefinition = new Query(
+			Env.getCtx(),
+			Changes.SP010_DisplayDefinition,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(request.getId())
+			.first()
+		;
+		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
+		}
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
+		ResourceData displayData = (ResourceData) new Resource(request.getId())
+			.withConditions(conditions)
+			.withLimit(limit, offset)
+			.run()
+		;
+
+		//	Set page token
+		int count = NumberManager.getIntegerFromLong(
+			displayData.getRecordCount()
+		);
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListResourcesDataResponse.Builder builderList = ListResourcesDataResponse.newBuilder()
+			.setRecordCount(
+				count
+			)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		displayData.getResources().forEach(calendarItem -> {
+			ResourceEntry.Builder builder = DisplayDefinitionConvertUtil.convertResourceEntry(calendarItem);
 			builderList.addRecords(builder);
 		});
 		return builderList;

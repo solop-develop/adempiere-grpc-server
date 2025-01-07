@@ -22,6 +22,7 @@ import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.DefinitionType;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
+import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
@@ -31,6 +32,7 @@ import org.spin.service.grpc.util.value.ValueManager;
 import com.solop.sp010.data.calendar.CalendarItem;
 import com.solop.sp010.data.kanban.KanbanColumn;
 import com.solop.sp010.data.kanban.KanbanItem;
+import com.solop.sp010.data.resource.ResourceItem;
 import com.solop.sp010.data.timeline.TimeLineItem;
 import com.solop.sp010.data.workflow.WorkflowColumn;
 import com.solop.sp010.data.workflow.WorkflowItem;
@@ -212,6 +214,58 @@ public class DisplayDefinitionConvertUtil {
 				kanbanItem.getSequence()
 			)
 		;
+		return builder;
+	}
+
+	public static ResourceEntry.Builder convertResourceEntry(ResourceItem resourceItem) {
+		ResourceEntry.Builder builder = ResourceEntry.newBuilder();
+		if (resourceItem == null) {
+			return builder;
+		}
+
+		builder.setId(
+				resourceItem.getId()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					resourceItem.getUuid()
+				)
+			)
+			.setTitle(
+				StringManager.getValidString(
+					resourceItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					resourceItem.getDescription()
+				)
+			)
+			.setValidFrom(
+				ValueManager.getTimestampFromDate(
+					resourceItem.getValidFrom()
+				)
+			)
+			.setValidTo(
+				ValueManager.getTimestampFromDate(
+					resourceItem.getValidTo()
+				)
+			)
+			.setIsConfirmed(
+				resourceItem.isConfirmed()
+			)
+			.setName(
+				StringManager.getValidString(
+					resourceItem.getName()
+				)
+			)
+			.setGroupName(
+				StringManager.getValidString(
+					resourceItem.getGroupName()
+				)
+			)
+		;
+
 		return builder;
 	}
 
