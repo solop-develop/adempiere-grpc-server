@@ -62,6 +62,13 @@ service DisplayDefinition {
 		};
 	}
 
+	// Resource
+	rpc ListResourcesData(ListResourcesDataRequest) returns (ListResourcesDataResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/resources/{id}"
+		};
+	}
+
 	// Timeline
 	rpc ListTimelinesData(ListTimelinesDataRequest) returns (ListTimelinesDataResponse) {
 		option (google.api.http) = {
@@ -230,6 +237,43 @@ message ListKanbansDataResponse {
 	int64 record_count = 5;
 	repeated KanbanEntry records = 6;
 	string next_page_token = 7;
+}
+
+
+
+// Resource
+message ResourceEntry {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	bool is_active = 5;
+	bool is_read_only = 6;
+	google.protobuf.Timestamp valid_from = 7;
+	google.protobuf.Timestamp valid_to = 8;
+	bool is_confirmed = 9;
+	string name = 10;
+	string group_name = 11;
+}
+message ListResourcesDataRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
+}
+message ListResourcesDataResponse {
+	int64 record_count = 1;
+	repeated ResourceEntry records = 2;
+	string next_page_token = 3;
 }
 
 
