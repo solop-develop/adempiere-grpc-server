@@ -393,7 +393,7 @@ public class DisplayDefinitionServiceLogic {
 			)
 		;
 
-		displayData.gettimeLines().forEach(kanbanItem -> {
+		displayData.getTimeLines().forEach(kanbanItem -> {
 			TimelineEntry.Builder builder = DisplayDefinitionConvertUtil.convertTimelineEntry(kanbanItem);
 			builderList.addRecords(builder);
 		});
