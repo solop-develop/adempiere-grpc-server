@@ -20,6 +20,7 @@ import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.core.domains.models.I_AD_User;
+import org.adempiere.core.domains.models.I_C_BP_Group;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_BPartner_Location;
 import org.adempiere.exceptions.AdempiereException;
@@ -27,8 +28,10 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerAddressLocation;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerContact;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerInfo;
@@ -36,11 +39,13 @@ import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerAddressLo
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerAddressLocationsResponse;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerContactsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerContactsResponse;
+import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerGroupsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnersInfoRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnersInfoResponse;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceInfo;
+import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
@@ -64,6 +69,31 @@ public class BusinessPartnerLogic {
 			throw new AdempiereException("@C_BPartner_ID@ @NotActive@");
 		}
 		return businessPartner;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listBusinessPartnerGroups(ListBusinessPartnerGroupsRequest request) {
+		// Business Partner Group
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			DisplayType.TableDir,
+			0, 0, 0,
+			0,
+			I_C_BP_Group.COLUMNNAME_C_BP_Group_ID, I_C_BP_Group.Table_Name,
+			0,
+			null
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			null,
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			true
+		);
+
+		return builderList;
 	}
 
 
@@ -197,6 +227,12 @@ public class BusinessPartnerLogic {
 				.append("WHERE l.C_Location_ID = bpl.C_Location_ID AND UPPER(Postal) LIKE '%' || UPPER(?) || '%') ")
 			;
 			parametersList.add(postalCode);
+		}
+		if (request.getBusinessPartnerGroupId() > 0) {
+			whereClause.append(" AND C_BP_Group_ID = ? ");
+			parametersList.add(
+				request.getBusinessPartnerGroupId()
+			);
 		}
 
 		Query query = new Query(
