@@ -38,6 +38,7 @@ import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
+import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
@@ -2698,9 +2699,11 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(Util.isEmpty(request.getName(), true)) {
 			throw new AdempiereException("@Name@ @IsMandatory@");
 		}
+		final int clientId = Env.getAD_Client_ID(Env.getCtx());
 		//	POS Uuid
 		MPOS pos = getPOSFromId(request.getPosId(), true);
-		MBPartner businessPartner = MBPartner.getTemplate(context, Env.getAD_Client_ID(Env.getCtx()), pos.getC_POS_ID());
+		MBPartner businessPartner = MBPartner.getTemplate(context, clientId, pos.getC_POS_ID());
+		businessPartner.isActive();
 
 		//	Validate Template
 		int customerTemplateId = request.getCustomerTemplateId();
@@ -2714,14 +2717,16 @@ public class PointOfSalesForm extends StoreImplBase {
 		if (template == null || template.getC_BPartner_ID() <= 0) {
 			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
 		}
+
 		// copy and clear values by termplate
 		PO.copyValues(template, businessPartner);
-		businessPartner.setTaxID(null);
-		businessPartner.setValue(null);
+		businessPartner.setTaxID("");
+		businessPartner.setValue("");
 		businessPartner.setNAICS(null);
-		businessPartner.setName(null);
+		businessPartner.setName("");
 		businessPartner.setName2(null);
-		businessPartner.setDUNS(null);
+		businessPartner.setDUNS("");
+		businessPartner.setIsActive(true);
 
 		Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false))
 			.stream()
@@ -2744,13 +2749,10 @@ public class PointOfSalesForm extends StoreImplBase {
 			businessPartner.set_TrxName(transactionName);
 			//	Set Value
 			String code = request.getValue();
-			if(Util.isEmpty(code)) {
-				code = DB.getDocumentNo(Env.getAD_Client_ID(Env.getCtx()), "C_BPartner", transactionName, businessPartner);
+			if(Util.isEmpty(code, true)) {
+				code = DB.getDocumentNo(clientId, I_C_BPartner.Table_Name, transactionName, businessPartner);
 			}
-			//	
 			businessPartner.setValue(code);
-			//	Set Value
-			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));
 			//	Tax Id
 			Optional.ofNullable(request.getTaxId()).ifPresent(value -> businessPartner.setTaxID(value));
 			//	Duns
