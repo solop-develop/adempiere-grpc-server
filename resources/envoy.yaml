@@ -50,6 +50,7 @@ static_resources:
                 - data.Store
                 - dashboarding.Dashboarding
                 - dictionary.Dictionary
+                - display_definition.DisplayDefinition
                 - enrollment.Register
                 - express_movement.ExpressMovement
                 - express_receipt.ExpressReceipt
