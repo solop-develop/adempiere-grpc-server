@@ -56,16 +56,12 @@ import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 
+import com.solop.sp010.controller.DisplayBuilder;
 import com.solop.sp010.data.calendar.CalendarData;
 import com.solop.sp010.data.kanban.KanbanData;
 import com.solop.sp010.data.resource.ResourceData;
 import com.solop.sp010.data.timeline.TimeLineData;
 import com.solop.sp010.data.workflow.WorkflowData;
-import com.solop.sp010.query.Calendar;
-import com.solop.sp010.query.Kanban;
-import com.solop.sp010.query.Resource;
-import com.solop.sp010.query.TimeLine;
-import com.solop.sp010.query.Workflow;
 import com.solop.sp010.util.Changes;
 
 // import com.solop.sp010.util.Changes;
@@ -185,10 +181,11 @@ public class DisplayDefinitionServiceLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		CalendarData displayData = (CalendarData) new Calendar(request.getId())
-			.withConditions(conditions)
-			.withLimit(limit, offset)
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+		CalendarData displayData = (CalendarData) DisplayBuilder.newInstance(request.getId())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
 			.run()
 		;
 
@@ -242,10 +239,11 @@ public class DisplayDefinitionServiceLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		KanbanData displayData = (KanbanData) new Kanban(request.getId())
-			.withConditions(conditions)
-			.withLimit(limit, offset)
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+		KanbanData displayData = (KanbanData) DisplayBuilder.newInstance(request.getId())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
 			.run()
 		;
 
@@ -297,10 +295,11 @@ public class DisplayDefinitionServiceLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		KanbanData displayData = (KanbanData) new Kanban(request.getId())
-			.withConditions(conditions)
-			.withLimit(limit, offset)
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+		KanbanData displayData = (KanbanData) DisplayBuilder.newInstance(request.getId())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
 			.run()
 		;
 
@@ -373,10 +372,11 @@ public class DisplayDefinitionServiceLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		ResourceData displayData = (ResourceData) new Resource(request.getId())
-			.withConditions(conditions)
-			.withLimit(limit, offset)
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+		ResourceData displayData = (ResourceData) DisplayBuilder.newInstance(request.getId())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
 			.run()
 		;
 
@@ -430,10 +430,11 @@ public class DisplayDefinitionServiceLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		TimeLineData displayData = (TimeLineData) new TimeLine(request.getId())
-			.withConditions(conditions)
-			.withLimit(limit, offset)
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+		TimeLineData displayData = (TimeLineData) DisplayBuilder.newInstance(request.getId())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
 			.run()
 		;
 
@@ -487,10 +488,11 @@ public class DisplayDefinitionServiceLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		WorkflowData displayData = (WorkflowData) new Workflow(request.getId())
-			.withConditions(conditions)
-			.withLimit(limit, offset)
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+		WorkflowData displayData = (WorkflowData) DisplayBuilder.newInstance(request.getId())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
 			.run()
 		;
 
@@ -544,10 +546,11 @@ public class DisplayDefinitionServiceLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		List<Filter> conditions = FilterManager.newInstance(request.getFilters()).getConditions();
-		WorkflowData displayData = (WorkflowData) new Workflow(request.getId())
-			.withConditions(conditions)
-			.withLimit(limit, offset)
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+		WorkflowData displayData = (WorkflowData) DisplayBuilder.newInstance(request.getId())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
 			.run()
 		;
 
