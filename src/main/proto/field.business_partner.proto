@@ -101,6 +101,8 @@ message BusinessPartnerInfo {
 	string credit_used_amount = 12;
 	string revenue_amount = 13;
 	bool is_active = 14;
+	bool is_customer = 15;
+	bool is_vendor = 16;
 }
 
 message ListBusinessPartnersInfoResponse {

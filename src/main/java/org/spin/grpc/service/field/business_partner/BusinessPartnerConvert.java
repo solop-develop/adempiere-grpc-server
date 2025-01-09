@@ -46,7 +46,7 @@ public class BusinessPartnerConvert {
 		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
 			return builder;
 		}
-		MBPGroup businessPartneGroup = MBPGroup.get(Env.getCtx(), businessPartner.getC_BP_Group_ID());
+		MBPGroup businessPartnerGroup = MBPGroup.get(Env.getCtx(), businessPartner.getC_BP_Group_ID());
 
 		builder.setId(
 				businessPartner.getC_BPartner_ID()
@@ -88,7 +88,7 @@ public class BusinessPartnerConvert {
 			)
 			.setBusinessPartnerGroup(
 				StringManager.getValidString(
-					businessPartneGroup.getName()
+					businessPartnerGroup.getName()
 				)
 			)
 			.setOpenBalanceAmount(
@@ -115,6 +115,12 @@ public class BusinessPartnerConvert {
 			)
 			.setIsActive(
 				businessPartner.isActive()
+			)
+			.setIsCustomer(
+				businessPartner.isCustomer()
+			)
+			.setIsVendor(
+				businessPartner.isVendor()
 			)
 		;
 		return builder;
