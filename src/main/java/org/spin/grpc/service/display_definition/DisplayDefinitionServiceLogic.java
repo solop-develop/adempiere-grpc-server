@@ -15,7 +15,10 @@
 package org.spin.grpc.service.display_definition;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MTable;
@@ -45,6 +48,8 @@ import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
 import org.spin.backend.grpc.display_definition.ResourceEntry;
+import org.spin.backend.grpc.display_definition.ResourceGroup;
+import org.spin.backend.grpc.display_definition.ResourceGroupChild;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
@@ -54,12 +59,11 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-
-import com.solop.sp010.controller.DisplayBuilder;
+import org.spin.service.grpc.util.value.StringManager;import com.solop.sp010.controller.DisplayBuilder;
 import com.solop.sp010.data.calendar.CalendarData;
 import com.solop.sp010.data.kanban.KanbanData;
 import com.solop.sp010.data.resource.ResourceData;
+import com.solop.sp010.data.resource.ResourceItem;
 import com.solop.sp010.data.timeline.TimeLineData;
 import com.solop.sp010.data.workflow.WorkflowData;
 import com.solop.sp010.util.Changes;
@@ -349,6 +353,7 @@ public class DisplayDefinitionServiceLogic {
 
 
 
+	@SuppressWarnings("unlikely-arg-type")
 	public static ListResourcesDataResponse.Builder listResourcesData(ListResourcesDataRequest request) {
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
@@ -397,15 +402,35 @@ public class DisplayDefinitionServiceLogic {
 				StringManager.getValidString(nexPageToken)
 			)
 		;
-
-		displayData.getResources().forEach(calendarItem -> {
-			ResourceEntry.Builder builder = DisplayDefinitionConvertUtil.convertResourceEntry(calendarItem);
+		Map<String, List<ResourceItem>> resourcesGroup = new HashMap<>();
+		displayData.getResources().forEach(resourceItem -> {
+			ResourceEntry.Builder builder = DisplayDefinitionConvertUtil.convertResourceEntry(resourceItem);
 			builderList.addRecords(builder);
+			String validGroupName = Optional.ofNullable(resourceItem.getGroupName()).orElse("");
+			List<ResourceItem> resources = new ArrayList<>();
+			if(resourcesGroup.containsValue(validGroupName)) {
+				resources = resourcesGroup.get(validGroupName);
+			} else {
+				resources.add(resourceItem);
+			}
+			resourcesGroup.put(validGroupName, resources);
+		});
+		resourcesGroup.entrySet().forEach(entry -> {
+			ResourceGroup.Builder group = ResourceGroup.newBuilder()
+					.setName(StringManager.getValidString(entry.getKey()))
+					;
+			entry.getValue().forEach(resource -> {
+				ResourceGroupChild.Builder child = ResourceGroupChild.newBuilder()
+						.setId(resource.getId())
+						.setUuid(StringManager.getValidString(resource.getUuid()))
+						.setName(StringManager.getValidString(resource.getName()))
+						;
+				group.addResources(child);
+			});
+			builderList.addGroups(group);
 		});
 		return builderList;
 	}
-
-
 
 	public static ListTimelinesDataResponse.Builder listTimelinesData(ListTimelinesDataRequest request) {
 		if (request.getId() <= 0) {

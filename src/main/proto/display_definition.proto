@@ -239,8 +239,6 @@ message ListKanbansDataResponse {
 	string next_page_token = 7;
 }
 
-
-
 // Resource
 message ResourceEntry {
 	int32 id = 1;
@@ -254,7 +252,22 @@ message ResourceEntry {
 	bool is_confirmed = 9;
 	string name = 10;
 	string group_name = 11;
+	string color = 12;
 }
+
+message ResourceGroup {
+	string name = 1;
+	string color = 2;
+	repeated ResourceGroupChild resources = 3;
+}
+
+message ResourceGroupChild {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string color = 4;
+}
+
 message ListResourcesDataRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -273,7 +286,8 @@ message ListResourcesDataRequest {
 message ListResourcesDataResponse {
 	int64 record_count = 1;
 	repeated ResourceEntry records = 2;
-	string next_page_token = 3;
+	repeated ResourceGroup groups = 3;
+	string next_page_token = 4;
 }
 
 
