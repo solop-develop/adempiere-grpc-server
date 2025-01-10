@@ -25,6 +25,7 @@
  package display_definition;
 
 service DisplayDefinition {
+
 	// Display Definition Metadata
 	rpc ExistsDisplayDefinitionsMetadata(ExistsDisplayDefinitionMetadataRequest) returns (ExistsDisplayDefinitionMetadataResponse) {
 		option (google.api.http) = {
