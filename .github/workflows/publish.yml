@@ -19,12 +19,12 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK 11
+      - name: Set up Java JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-package: 'jdk'
-          java-version: 11
+          java-version: 17
           architecture: x64
 
       - name: Set Main Version
@@ -35,11 +35,6 @@ jobs:
 
       - name: Set Implementation Version
         run: echo "IMPLEMENTATION_VERSION=${{ github.event.release.tag_name }}" >> src/main/java/org/spin/base/version.properties
-
-      - name: Build with Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 8.10
 
       - name: Run Create Release
         run: gradle createRelease

@@ -9,12 +9,13 @@ plugins {
 
 group 'com.nikhilm'
 
-sourceCompatibility = 1.11
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
-def baseVersion = '3.9.4'
-def baseGroupId = 'io.github.adempiere'
 def patchLibrary = System.properties['deploy.patchLibrary']
 
 def descriptorFile = "adempiere-grpc-server.pb"
@@ -33,7 +34,7 @@ repositories {
 	}
 	maven {
 		// Adempiere GitHub Organization
-		url = 'https://maven.pkg.github.com/adempiere/adempiere'
+		url = 'https://maven.pkg.github.com/solop-develop/adempiere-base'
 		credentials {
 			// project property, system properrty, enviroment variable
 			username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?: System.getenv("GITHUB_DEPLOY_USER")
