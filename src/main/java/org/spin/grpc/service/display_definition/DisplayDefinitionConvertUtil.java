@@ -15,7 +15,10 @@
 package org.spin.grpc.service.display_definition;
 
 import org.adempiere.core.domains.models.I_AD_Element;
+import org.compiere.model.MColumn;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
@@ -80,27 +83,99 @@ public class DisplayDefinitionConvertUtil {
 				displayType
 			)
 		);
+
+		MTable table = MTable.get(Env.getCtx(), Changes.SP010_DisplayDefinition);
 		if (!Util.isEmpty(displayType, true)) {
 			if (displayType.equals(Changes.SP010_DisplayType_Calendar)) {
 				builder.setType(
 					DefinitionType.CALENDAR
 				);
+				MColumn validFromColumn = table.getColumn(
+					Changes.SP010_ValidFrom_ID
+				);
+				if (validFromColumn != null && validFromColumn.getAD_Column_ID() > 0) {
+					builder.setValidFromColumn(
+						StringManager.getValidString(
+							validFromColumn.getColumnName()
+						)
+					);
+				}
+				MColumn validToColumn = table.getColumn(
+					Changes.SP010_ValidTo_ID
+				);
+				if (validToColumn != null && validToColumn.getAD_Column_ID() > 0) {
+					builder.setValidToColumn(
+						StringManager.getValidString(
+							validToColumn.getColumnName()
+						)
+					);
+				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Kanban)) {
 				builder.setType(
 					DefinitionType.KANBAN
 				);
+				MColumn groupColumn = table.getColumn(
+					Changes.SP010_Group_ID
+				);
+				if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
+					builder.setValidFromColumn(
+						StringManager.getValidString(
+							groupColumn.getColumnName()
+						)
+					);
+				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Resource)) {
 				builder.setType(
 					DefinitionType.RESOURCE
 				);
+				MColumn validFromColumn = table.getColumn(
+					Changes.SP010_ValidFrom_ID
+				);
+				if (validFromColumn != null && validFromColumn.getAD_Column_ID() > 0) {
+					builder.setValidFromColumn(
+						StringManager.getValidString(
+							validFromColumn.getColumnName()
+						)
+					);
+				}
+				MColumn validToColumn = table.getColumn(
+					Changes.SP010_ValidTo_ID
+				);
+				if (validToColumn != null && validToColumn.getAD_Column_ID() > 0) {
+					builder.setValidToColumn(
+						StringManager.getValidString(
+							validToColumn.getColumnName()
+						)
+					);
+				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Timeline)) {
 				builder.setType(
 					DefinitionType.TIMERLINE
 				);
+				MColumn dateColumn = table.getColumn(
+					Changes.SP010_Date_ID
+				);
+				if (dateColumn != null && dateColumn.getAD_Column_ID() > 0) {
+					builder.setDateColumn(
+						StringManager.getValidString(
+							dateColumn.getColumnName()
+						)
+					);
+				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Workflow)) {
 				builder.setType(
 					DefinitionType.WORKFLOW
 				);
+				MColumn groupColumn = table.getColumn(
+					Changes.SP010_Group_ID
+				);
+				if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
+					builder.setValidFromColumn(
+						StringManager.getValidString(
+							groupColumn.getColumnName()
+						)
+					);
+				}
 			}
 		}
 		return builder;
