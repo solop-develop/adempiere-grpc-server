@@ -18,6 +18,7 @@ package org.spin.pos.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MPOS;
@@ -359,13 +360,12 @@ public class POSLogic {
 
 		// whereClause.append(
 		// 	"AND EXISTS("
-		// 	+ "SELECT 1 FROM C_BPartner AS c "
-		// 	+ "WHERE c.C_BPartner_ID = C_POSBPTemplate.C_BPartner_ID "
-		// 	+ "AND c.IsActive = ? "
+		// 	+ "SELECT 1 FROM C_BPartner AS bp "
+		// 	+ "WHERE bp.C_BPartner_ID = C_POSBPTemplate.C_BPartner_ID "
+		// 	+ "AND bp.IsActive = ? "
 		// 	+ ")"
 		// );
 		// parameters.add(true);
-
 
 		//	Get Customer Tempates list
 		Query query = new Query(
@@ -378,6 +378,7 @@ public class POSLogic {
 			.setOnlyActiveRecords(true)
 			.setClient_ID()
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo)
 		;
 
 		int count = query.count();
