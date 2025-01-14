@@ -66,6 +66,8 @@ import com.solop.sp010.data.resource.ResourceData;
 import com.solop.sp010.data.resource.ResourceItem;
 import com.solop.sp010.data.timeline.TimeLineData;
 import com.solop.sp010.data.workflow.WorkflowData;
+import com.solop.sp010.query.Kanban;
+import com.solop.sp010.query.Workflow;
 import com.solop.sp010.util.Changes;
 
 // import com.solop.sp010.util.Changes;
@@ -190,6 +192,9 @@ public class DisplayDefinitionServiceLogic {
 			.withFilters(filtersList)
 			.withLimit(limit)
 			.withOffset(offset)
+			.withOrderBy(
+				request.getSortBy()
+			)
 			.run()
 		;
 
@@ -238,38 +243,28 @@ public class DisplayDefinitionServiceLogic {
 			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
 		}
 
-		//	Get page and count
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-
-		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
-		KanbanData displayData = (KanbanData) DisplayBuilder.newInstance(request.getId())
-			.withFilters(filtersList)
-			.withLimit(limit)
-			.withOffset(offset)
-			.run()
-		;
-
+		Kanban kanbanDefinition = new Kanban(request.getId());
 		ListKanbansDefinitionResponse.Builder builderList = ListKanbansDefinitionResponse.newBuilder()
 			.setName(
 				StringManager.getValidString(
-					displayData.getName()
+					kanbanDefinition.getName()
 				)
 			)
 			.setDescription(
 				StringManager.getValidString(
-					displayData.getDescription()
+					kanbanDefinition.getDescription()
 				)
 			)
 			.setColumnName(
 				StringManager.getValidString(
-					displayData.getColumnName()
+					kanbanDefinition.getColumnName(
+						Changes.SP010_Group_ID
+					)
 				)
 			)
 		;
 
-		displayData.getColumns().forEach(kanbanColumn -> {
+		kanbanDefinition.getColumns().forEach(kanbanColumn -> {
 			KanbanStep.Builder builder = DisplayDefinitionConvertUtil.convertKanbanStep(kanbanColumn);
 			builderList.addSteps(builder);
 		});
@@ -382,6 +377,9 @@ public class DisplayDefinitionServiceLogic {
 			.withFilters(filtersList)
 			.withLimit(limit)
 			.withOffset(offset)
+			.withOrderBy(
+				request.getSortBy()
+			)
 			.run()
 		;
 
@@ -460,6 +458,9 @@ public class DisplayDefinitionServiceLogic {
 			.withFilters(filtersList)
 			.withLimit(limit)
 			.withOffset(offset)
+			.withOrderBy(
+				request.getSortBy()
+			)
 			.run()
 		;
 
@@ -508,38 +509,29 @@ public class DisplayDefinitionServiceLogic {
 			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
 		}
 
-		//	Get page and count
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-
-		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
-		WorkflowData displayData = (WorkflowData) DisplayBuilder.newInstance(request.getId())
-			.withFilters(filtersList)
-			.withLimit(limit)
-			.withOffset(offset)
-			.run()
-		;
+		Workflow worflowDefinition = new Workflow(request.getId());
 
 		ListWorkflowsDefinitionResponse.Builder builderList = ListWorkflowsDefinitionResponse.newBuilder()
 			.setName(
 				StringManager.getValidString(
-					displayData.getName()
+					worflowDefinition.getName()
 				)
 			)
 			.setDescription(
 				StringManager.getValidString(
-					displayData.getDescription()
+					worflowDefinition.getDescription()
 				)
 			)
 			.setColumnName(
 				StringManager.getValidString(
-					displayData.getColumnName()
+					worflowDefinition.getColumnName(
+						Changes.SP010_Group_ID
+					)
 				)
 			)
 		;
 
-		displayData.getColumns().forEach(kanbanColumn -> {
+		worflowDefinition.getColumns().forEach(kanbanColumn -> {
 			WorkflowStep.Builder builder = DisplayDefinitionConvertUtil.convertWorkflowStep(kanbanColumn);
 			builderList.addSteps(builder);
 		});
@@ -576,6 +568,9 @@ public class DisplayDefinitionServiceLogic {
 			.withFilters(filtersList)
 			.withLimit(limit)
 			.withOffset(offset)
+			.withOrderBy(
+				request.getSortBy()
+			)
 			.run()
 		;
 
