@@ -166,7 +166,7 @@ public class DisplayDefinitionConvertUtil {
 					DefinitionType.TIMERLINE
 				);
 				int dateColumnId = record.get_ValueAsInt(
-					Changes.SP010_Group_ID
+					Changes.SP010_Date_ID
 				);
 				if (dateColumnId > 0 ) {
 					MColumn dateColumn = MColumn.get(Env.getCtx(), dateColumnId);
