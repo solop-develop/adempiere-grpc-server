@@ -124,7 +124,7 @@ public class DisplayDefinitionConvertUtil {
 				if (groupColumnId > 0 ) {
 					MColumn groupColumn = MColumn.get(Env.getCtx(), groupColumnId);
 					if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
-						builder.setValidFromColumn(
+						builder.setGroupColumn(
 							StringManager.getValidString(
 								groupColumn.getColumnName()
 							)
@@ -171,7 +171,7 @@ public class DisplayDefinitionConvertUtil {
 				if (dateColumnId > 0 ) {
 					MColumn dateColumn = MColumn.get(Env.getCtx(), dateColumnId);
 					if (dateColumn != null && dateColumn.getAD_Column_ID() > 0) {
-						builder.setValidFromColumn(
+						builder.setDateColumn(
 							StringManager.getValidString(
 								dateColumn.getColumnName()
 							)
@@ -188,7 +188,7 @@ public class DisplayDefinitionConvertUtil {
 				if (groupColumnId > 0 ) {
 					MColumn groupColumn = MColumn.get(Env.getCtx(), groupColumnId);
 					if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
-						builder.setValidFromColumn(
+						builder.setGroupColumn(
 							StringManager.getValidString(
 								groupColumn.getColumnName()
 							)
