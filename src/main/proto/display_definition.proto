@@ -132,6 +132,10 @@ message DefinitionMetadata {
 	string description = 5;
 	string display_type = 6;
 	DefinitionType type = 7;
+	optional string date_column = 8;
+	optional string valid_from_column = 9;
+	optional string valid_to_column = 10;
+	optional string group_column = 11;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
