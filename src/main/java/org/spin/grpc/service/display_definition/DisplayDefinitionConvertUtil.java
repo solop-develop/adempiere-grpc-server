@@ -118,7 +118,7 @@ public class DisplayDefinitionConvertUtil {
 					Changes.SP010_Group_ID
 				);
 				if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
-					builder.setValidFromColumn(
+					builder.setGroupColumn(
 						StringManager.getValidString(
 							groupColumn.getColumnName()
 						)
@@ -170,7 +170,7 @@ public class DisplayDefinitionConvertUtil {
 					Changes.SP010_Group_ID
 				);
 				if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
-					builder.setValidFromColumn(
+					builder.setGroupColumn(
 						StringManager.getValidString(
 							groupColumn.getColumnName()
 						)
