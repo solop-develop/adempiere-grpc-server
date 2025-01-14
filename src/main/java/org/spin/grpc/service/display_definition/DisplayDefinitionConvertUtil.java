@@ -16,7 +16,6 @@ package org.spin.grpc.service.display_definition;
 
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.compiere.model.MColumn;
-import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -84,97 +83,117 @@ public class DisplayDefinitionConvertUtil {
 			)
 		);
 
-		MTable table = MTable.get(Env.getCtx(), Changes.SP010_DisplayDefinition);
 		if (!Util.isEmpty(displayType, true)) {
 			if (displayType.equals(Changes.SP010_DisplayType_Calendar)) {
 				builder.setType(
 					DefinitionType.CALENDAR
 				);
-				MColumn validFromColumn = table.getColumn(
+				int validFromColumnId = record.get_ValueAsInt(
 					Changes.SP010_ValidFrom_ID
 				);
-				if (validFromColumn != null && validFromColumn.getAD_Column_ID() > 0) {
-					builder.setValidFromColumn(
-						StringManager.getValidString(
-							validFromColumn.getColumnName()
-						)
-					);
+				if (validFromColumnId > 0 ) {
+					MColumn validFromColumn = MColumn.get(Env.getCtx(), validFromColumnId);
+					if (validFromColumn != null && validFromColumn.getAD_Column_ID() > 0) {
+						builder.setValidFromColumn(
+							StringManager.getValidString(
+								validFromColumn.getColumnName()
+							)
+						);
+					}
 				}
-				MColumn validToColumn = table.getColumn(
+				int validToColumnId = record.get_ValueAsInt(
 					Changes.SP010_ValidTo_ID
 				);
-				if (validToColumn != null && validToColumn.getAD_Column_ID() > 0) {
-					builder.setValidToColumn(
-						StringManager.getValidString(
-							validToColumn.getColumnName()
-						)
-					);
+				if (validToColumnId > 0) {
+					MColumn validToColumn = MColumn.get(Env.getCtx(), validToColumnId);
+					if (validToColumn != null && validToColumn.getAD_Column_ID() > 0) {
+						builder.setValidToColumn(
+							StringManager.getValidString(
+								validToColumn.getColumnName()
+							)
+						);
+					}
 				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Kanban)) {
 				builder.setType(
 					DefinitionType.KANBAN
 				);
-				MColumn groupColumn = table.getColumn(
+				int groupColumnId = record.get_ValueAsInt(
 					Changes.SP010_Group_ID
 				);
-				if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
-					builder.setGroupColumn(
-						StringManager.getValidString(
-							groupColumn.getColumnName()
-						)
-					);
+				if (groupColumnId > 0 ) {
+					MColumn groupColumn = MColumn.get(Env.getCtx(), groupColumnId);
+					if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
+						builder.setGroupColumn(
+							StringManager.getValidString(
+								groupColumn.getColumnName()
+							)
+						);
+					}
 				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Resource)) {
 				builder.setType(
 					DefinitionType.RESOURCE
 				);
-				MColumn validFromColumn = table.getColumn(
+				int validFromColumnId = record.get_ValueAsInt(
 					Changes.SP010_ValidFrom_ID
 				);
-				if (validFromColumn != null && validFromColumn.getAD_Column_ID() > 0) {
-					builder.setValidFromColumn(
-						StringManager.getValidString(
-							validFromColumn.getColumnName()
-						)
-					);
+				if (validFromColumnId > 0 ) {
+					MColumn validFromColumn = MColumn.get(Env.getCtx(), validFromColumnId);
+					if (validFromColumn != null && validFromColumn.getAD_Column_ID() > 0) {
+						builder.setValidFromColumn(
+							StringManager.getValidString(
+								validFromColumn.getColumnName()
+							)
+						);
+					}
 				}
-				MColumn validToColumn = table.getColumn(
+				int validToColumnId = record.get_ValueAsInt(
 					Changes.SP010_ValidTo_ID
 				);
-				if (validToColumn != null && validToColumn.getAD_Column_ID() > 0) {
-					builder.setValidToColumn(
-						StringManager.getValidString(
-							validToColumn.getColumnName()
-						)
-					);
+				if (validToColumnId > 0) {
+					MColumn validToColumn = MColumn.get(Env.getCtx(), validToColumnId);
+					if (validToColumn != null && validToColumn.getAD_Column_ID() > 0) {
+						builder.setValidToColumn(
+							StringManager.getValidString(
+								validToColumn.getColumnName()
+							)
+						);
+					}
 				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Timeline)) {
 				builder.setType(
 					DefinitionType.TIMERLINE
 				);
-				MColumn dateColumn = table.getColumn(
-					Changes.SP010_Date_ID
+				int dateColumnId = record.get_ValueAsInt(
+					Changes.SP010_Group_ID
 				);
-				if (dateColumn != null && dateColumn.getAD_Column_ID() > 0) {
-					builder.setDateColumn(
-						StringManager.getValidString(
-							dateColumn.getColumnName()
-						)
-					);
+				if (dateColumnId > 0 ) {
+					MColumn dateColumn = MColumn.get(Env.getCtx(), dateColumnId);
+					if (dateColumn != null && dateColumn.getAD_Column_ID() > 0) {
+						builder.setDateColumn(
+							StringManager.getValidString(
+								dateColumn.getColumnName()
+							)
+						);
+					}
 				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Workflow)) {
 				builder.setType(
 					DefinitionType.WORKFLOW
 				);
-				MColumn groupColumn = table.getColumn(
+				int groupColumnId = record.get_ValueAsInt(
 					Changes.SP010_Group_ID
 				);
-				if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
-					builder.setGroupColumn(
-						StringManager.getValidString(
-							groupColumn.getColumnName()
-						)
-					);
+				if (groupColumnId > 0 ) {
+					MColumn groupColumn = MColumn.get(Env.getCtx(), groupColumnId);
+					if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
+						builder.setGroupColumn(
+							StringManager.getValidString(
+								groupColumn.getColumnName()
+							)
+						);
+					}
 				}
 			}
 		}
