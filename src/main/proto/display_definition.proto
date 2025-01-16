@@ -95,6 +95,7 @@ service DisplayDefinition {
 message ExistsDisplayDefinitionMetadataRequest {
 	string table_name = 1;
 	int32 table_id = 2;
+	bool only_references = 3;
 }
 message ExistsDisplayDefinitionMetadataResponse {
 	int32 record_count = 1;
@@ -114,6 +115,7 @@ message ListDisplayDefinitionsMetadataRequest {
 	string table_name = 10;
 	int32 table_id = 11;
 	repeated string type_filer = 12;
+	bool only_references = 13;
 }
 
 enum DefinitionType {

@@ -85,14 +85,20 @@ public class DisplayDefinitionServiceLogic {
 			Changes.SP010_DisplayDefinition
 		);
 		int recordCount = 0;
+		String whereclause = "AD_Table_ID = ?";
 		if (displayDefinitionTable != null && displayDefinitionTable.getAD_Table_ID() > 0) {
+			if(request.getOnlyReferences()) {
+				whereclause = "EXISTS(SELECT 1 FROM SP010_ReferenceTable r WHERE r.SP010_DisplayDefinition_ID = SP010_DisplayDefinition.SP010_DisplayDefinition_ID AND r.AD_Table_ID = ?)";
+			}
 			recordCount = new Query(
 				Env.getCtx(),
 				displayDefinitionTable,
-				"AD_Table_ID = ?",
+				whereclause,
 				null
 			)
 				.setParameters(table.getAD_Table_ID())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
 				.count()
 			;
 		}
@@ -119,7 +125,10 @@ public class DisplayDefinitionServiceLogic {
 		if (displayDefinitionTable == null || displayDefinitionTable.getAD_Table_ID() <= 0) {
 			return builderList;
 		}
-
+		String displayTableName = Changes.SP010_DisplayDefinition;
+		if(request.getOnlyReferences()) {
+			displayTableName = "SP010_ReferenceTable";
+		}
 		String whereClause = "AD_Table_ID = ?";
 		List<Object> parametersList = new ArrayList<>();
 		parametersList.add(
@@ -128,11 +137,13 @@ public class DisplayDefinitionServiceLogic {
 
 		Query query = new Query(
 			Env.getCtx(),
-			displayDefinitionTable,
+			displayTableName,
 			whereClause,
 			null
 		)
 			.setParameters(parametersList)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
 		;
 
 		//	Get page and count
@@ -148,17 +159,29 @@ public class DisplayDefinitionServiceLogic {
 				StringManager.getValidString(nexPageToken)
 			)
 		;
-
-		//	Get List
-		query.setLimit(limit, offset)
-			.<PO>list()
-			.forEach(record -> {
-				DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(record);
-
-				builderList.addRecords(builder);
-			})
-		;
-
+		MTable referenceTable = MTable.get(Env.getCtx(), displayTableName);
+		if(request.getOnlyReferences()) {
+			query.setLimit(limit, offset)
+				.getIDsAsList()
+				.forEach(recordId -> {
+					PO displayReference = referenceTable.getPO(recordId, null);
+					PO display = displayDefinitionTable.getPO(displayReference.get_ValueAsInt(Changes.SP010_DisplayDefinition_ID), null);
+					Optional.ofNullable(displayReference.get_ValueAsString("Name")).ifPresent(value -> display.set_ValueOfColumn("Name", value));
+					Optional.ofNullable(displayReference.get_ValueAsString("Description")).ifPresent(value -> display.set_ValueOfColumn("Description", value));
+					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display);
+					builderList.addRecords(builder);
+				})
+			;
+		} else {
+			query.setLimit(limit, offset)
+				.getIDsAsList()
+				.forEach(recordId -> {
+					PO display = referenceTable.getPO(recordId, null);
+					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display);
+					builderList.addRecords(builder);
+				})
+			;
+		}
 		return builderList;
 	}
 
