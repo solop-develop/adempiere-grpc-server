@@ -290,5 +290,5 @@ jobs:
           platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true
           tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:latest
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:${{ github.event.release.tag_name }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:latest
