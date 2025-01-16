@@ -47,6 +47,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.query.FilterManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -90,7 +91,7 @@ public class BrowserLogic {
 			if (fieldKey != null && fieldKey.get_ID() > 0) {
 				keyColumnName = fieldKey.getAD_View_Column().getColumnName();
 			}
-			keyColumnName = ValueManager.validateNull(keyColumnName);
+			keyColumnName = StringManager.getValidString(keyColumnName);
 
 			//	Get from Query
 			rs = pstmt.executeQuery();
