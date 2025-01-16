@@ -118,6 +118,11 @@ public class ReferenceUtil {
 					}
 				}
 			}
+		} else if (DisplayType.TableDir == displayTypeId) {
+			if (referenceValueId > 0) {
+				// overwrite display type to Table (as C_DocTypeTarget_ID > C_DocType_ID)
+				newDisplayType = DisplayType.Table;
+			}
 		}
 		return newDisplayType;
 	}
@@ -218,8 +223,7 @@ public class ReferenceUtil {
 			final String displaColumn = getDisplayColumnSQLLocation(tableName, columnName);
 			referenceInfo.setDisplayColumnValue("(" + displaColumn + ")");
 			referenceInfo.setHasJoinValue(false);
-		} else if(DisplayType.TableDir == referenceId
-				|| referenceValueId == 0) {
+		} else if(DisplayType.TableDir == referenceId && referenceValueId <= 0) {
 			//	Add Display
 			final String displayColumn = MLookupFactory.getLookup_TableDirEmbed(languageValue, columnName, tableName);
 			referenceInfo.setDisplayColumnValue("(" + displayColumn + ")");
