@@ -25,6 +25,7 @@ import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
@@ -166,8 +167,12 @@ public class DisplayDefinitionServiceLogic {
 				.forEach(recordId -> {
 					PO displayReference = referenceTable.getPO(recordId, null);
 					PO display = displayDefinitionTable.getPO(displayReference.get_ValueAsInt(Changes.SP010_DisplayDefinition_ID), null);
-					Optional.ofNullable(displayReference.get_ValueAsString("Name")).ifPresent(value -> display.set_ValueOfColumn("Name", value));
-					Optional.ofNullable(displayReference.get_ValueAsString("Description")).ifPresent(value -> display.set_ValueOfColumn("Description", value));
+					if(!Util.isEmpty(displayReference.get_ValueAsString("Name"))) {
+						display.set_ValueOfColumn("Name", displayReference.get_ValueAsString("Name"));
+					}
+					if(!Util.isEmpty(displayReference.get_ValueAsString("Description"))) {
+						display.set_ValueOfColumn("Description", displayReference.get_ValueAsString("Description"));
+					}
 					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display);
 					builderList.addRecords(builder);
 				})
