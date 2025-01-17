@@ -127,10 +127,11 @@ public class DisplayDefinitionServiceLogic {
 			return builderList;
 		}
 		String displayTableName = Changes.SP010_DisplayDefinition;
+		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType <> 'T'";
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
+			whereClause = "AD_Table_ID = ?";
 		}
-		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType <> 'T'";
 		List<Object> parametersList = new ArrayList<>();
 		parametersList.add(
 			table.getAD_Table_ID()
