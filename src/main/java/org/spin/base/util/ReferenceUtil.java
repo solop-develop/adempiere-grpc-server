@@ -223,7 +223,8 @@ public class ReferenceUtil {
 			final String displaColumn = getDisplayColumnSQLLocation(tableName, columnName);
 			referenceInfo.setDisplayColumnValue("(" + displaColumn + ")");
 			referenceInfo.setHasJoinValue(false);
-		} else if(DisplayType.TableDir == referenceId && referenceValueId <= 0) {
+		} else if((DisplayType.TableDir == referenceId || (DisplayType.Table == referenceId || DisplayType.Search == referenceId)
+			&& columnName.endsWith("_ID")) && referenceValueId <= 0) {
 			//	Add Display
 			final String displayColumn = MLookupFactory.getLookup_TableDirEmbed(languageValue, columnName, tableName);
 			referenceInfo.setDisplayColumnValue("(" + displayColumn + ")");
