@@ -86,7 +86,7 @@ public class DisplayDefinitionServiceLogic {
 			Changes.SP010_DisplayDefinition
 		);
 		int recordCount = 0;
-		String whereclause = "AD_Table_ID = ?";
+		String whereclause = "AD_Table_ID = ? AND SP010_DisplayType <> 'T'";
 		if (displayDefinitionTable != null && displayDefinitionTable.getAD_Table_ID() > 0) {
 			if(request.getOnlyReferences()) {
 				whereclause = "EXISTS(SELECT 1 FROM SP010_ReferenceTable r WHERE r.SP010_DisplayDefinition_ID = SP010_DisplayDefinition.SP010_DisplayDefinition_ID AND r.AD_Table_ID = ?)";
@@ -130,7 +130,7 @@ public class DisplayDefinitionServiceLogic {
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
 		}
-		String whereClause = "AD_Table_ID = ?";
+		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType <> 'T'";
 		List<Object> parametersList = new ArrayList<>();
 		parametersList.add(
 			table.getAD_Table_ID()
