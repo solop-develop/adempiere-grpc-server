@@ -15,7 +15,9 @@
 package org.spin.grpc.service.display_definition;
 
 import org.adempiere.core.domains.models.I_AD_Element;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.compiere.model.MColumn;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -48,6 +50,7 @@ public class DisplayDefinitionConvertUtil {
 		if (record == null || record.get_ID() <= 0) {
 			return builder;
 		}
+		MTable table = MTable.get(Env.getCtx(), record.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID));
 		builder.setId(
 				record.get_ID()
 			)
@@ -75,7 +78,9 @@ public class DisplayDefinitionConvertUtil {
 					)
 				)
 			)
-		;
+			.setTableId(table.getAD_Table_ID())
+			.setTableName(StringManager.getValidString(table.getTableName()))
+			;
 		String displayType = record.get_ValueAsString(Changes.SP010_DisplayType);
 		builder.setDisplayType(
 			StringManager.getValidString(

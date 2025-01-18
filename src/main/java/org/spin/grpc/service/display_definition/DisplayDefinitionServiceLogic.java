@@ -437,9 +437,8 @@ public class DisplayDefinitionServiceLogic {
 			List<ResourceItem> resources = new ArrayList<>();
 			if(resourcesGroup.containsValue(validGroupName)) {
 				resources = resourcesGroup.get(validGroupName);
-			} else {
-				resources.add(resourceItem);
 			}
+			resources.add(resourceItem);
 			resourcesGroup.put(validGroupName, resources);
 		});
 		resourcesGroup.entrySet().forEach(entry -> {

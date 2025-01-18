@@ -138,6 +138,8 @@ message DefinitionMetadata {
 	optional string valid_from_column = 9;
 	optional string valid_to_column = 10;
 	optional string group_column = 11;
+	string table_name = 12;
+	int32 table_id = 13;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
