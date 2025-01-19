@@ -435,7 +435,7 @@ public class DisplayDefinitionServiceLogic {
 			builderList.addRecords(builder);
 			String validGroupName = Optional.ofNullable(resourceItem.getGroupName()).orElse("");
 			List<ResourceItem> resources = new ArrayList<>();
-			if(resourcesGroup.containsValue(validGroupName)) {
+			if(resourcesGroup.containsKey(validGroupName)) {
 				resources = resourcesGroup.get(validGroupName);
 			}
 			resources.add(resourceItem);
