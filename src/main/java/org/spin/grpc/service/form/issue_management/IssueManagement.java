@@ -40,13 +40,13 @@ import org.spin.backend.grpc.issue_management.ExistsIssuesRequest;
 import org.spin.backend.grpc.issue_management.ExistsIssuesResponse;
 import org.spin.backend.grpc.issue_management.Issue;
 import org.spin.backend.grpc.issue_management.IssueComment;
+import org.spin.backend.grpc.issue_management.IssueManagementGrpc.IssueManagementImplBase;
 import org.spin.backend.grpc.issue_management.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.issue_management.ListBusinessPartnersResponse;
 import org.spin.backend.grpc.issue_management.ListCategoriesRequest;
 import org.spin.backend.grpc.issue_management.ListCategoriesResponse;
 import org.spin.backend.grpc.issue_management.ListGroupsRequest;
 import org.spin.backend.grpc.issue_management.ListGroupsResponse;
-import org.spin.backend.grpc.issue_management.IssueManagementGrpc.IssueManagementImplBase;
 import org.spin.backend.grpc.issue_management.ListIssueCommentsReponse;
 import org.spin.backend.grpc.issue_management.ListIssueCommentsRequest;
 import org.spin.backend.grpc.issue_management.ListIssuesReponse;
@@ -70,6 +70,7 @@ import org.spin.backend.grpc.issue_management.UpdateIssueRequest;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -460,7 +461,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
 		requestRecord.setPriority(
-			ValueManager.validateNull(request.getPriorityValue())
+			StringManager.getValidString(
+				request.getPriorityValue()
+			)
 		);
 		requestRecord.setDateNextAction(
 			TimeManager.getTimestampFromString(request.getDateNextAction())
@@ -552,7 +555,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
 		requestRecord.setPriority(
-			ValueManager.validateNull(request.getPriorityValue())
+			StringManager.getValidString(
+				request.getPriorityValue()
+			)
 		);
 		requestRecord.setDateNextAction(
 			ValueManager.getDateFromTimestampDate(request.getDateNextAction())
@@ -732,7 +737,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		List<IssueComment.Builder> issueCommentsList = new ArrayList<>();
@@ -740,7 +745,6 @@ public class IssueManagement extends IssueManagementImplBase {
 			// .setLimit(limit, offset)
 			.getIDsAsList()
 			// .list(X_R_RequestUpdate.class)
-			.parallelStream()
 			.forEach(requestUpdateId -> {
 				IssueComment.Builder builder = IssueManagementConvertUtil.convertRequestUpdate(requestUpdateId);
 				issueCommentsList.add(builder);
@@ -751,7 +755,6 @@ public class IssueManagement extends IssueManagementImplBase {
 			// .setLimit(limit, offset)
 			.getIDsAsList()
 			// .list(MRequestAction.class)
-			.parallelStream()
 			.forEach(requestActionId -> {
 				IssueComment.Builder builder = IssueManagementConvertUtil.convertRequestAction(requestActionId);
 				issueCommentsList.add(builder);
@@ -818,11 +821,30 @@ public class IssueManagement extends IssueManagementImplBase {
 		}
 		MRequest requestRecord = new MRequest(Env.getCtx(), recordId, null);
 		requestRecord.setResult(
-			ValueManager.validateNull(request.getResult())
+			StringManager.getValidString(
+				request.getResult()
+			)
 		);
 		requestRecord.saveEx();
 
-		return IssueComment.newBuilder();
+		// requestRecord.request
+		MRequestUpdate requestUpdate = new Query(
+			Env.getCtx(),
+			I_R_RequestUpdate.Table_Name,
+			"R_Request_ID = ?",
+			requestRecord.get_TrxName()
+		)
+			.setParameters(
+				requestRecord.getR_Request_ID()
+			)
+			.setOrderBy(
+				I_R_RequestUpdate.COLUMNNAME_Created + " DESC "
+			)
+			.first()
+		;
+		return IssueManagementConvertUtil.convertRequestUpdate(
+			requestUpdate
+		);
 	}
 
 
@@ -867,7 +889,9 @@ public class IssueManagement extends IssueManagementImplBase {
 		}
 
 		requestUpdate.setResult(
-			ValueManager.validateNull(request.getResult())
+			StringManager.getValidString(
+				request.getResult()
+			)
 		);
 		requestUpdate.saveEx();
 

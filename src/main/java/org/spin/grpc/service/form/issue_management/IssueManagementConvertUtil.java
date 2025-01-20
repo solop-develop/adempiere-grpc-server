@@ -17,6 +17,7 @@ package org.spin.grpc.service.form.issue_management;
 
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_R_Request;
 import org.adempiere.core.domains.models.I_R_RequestAction;
 import org.adempiere.core.domains.models.I_R_Status;
 import org.adempiere.core.domains.models.X_R_Request;
@@ -54,6 +55,7 @@ import org.spin.backend.grpc.issue_management.StatusCategory;
 import org.spin.backend.grpc.issue_management.TaskStatus;
 import org.spin.backend.grpc.issue_management.User;
 import org.spin.model.MADAttachmentReference;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -90,13 +92,15 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(priority.getAD_Ref_List_ID())
 			.setValue(
-				ValueManager.validateNull(priority.getValue())
+				StringManager.getValidString(
+					priority.getValue()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(name)
+				StringManager.getValidString(name)
 			)
 			.setDescription(
-				ValueManager.validateNull(description)
+				StringManager.getValidString(description)
 			)
 		;
 
@@ -130,13 +134,15 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(taskStatus.getAD_Ref_List_ID())
 			.setValue(
-				ValueManager.validateNull(taskStatus.getValue())
+				StringManager.getValidString(
+					taskStatus.getValue()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(name)
+				StringManager.getValidString(name)
 			)
 			.setDescription(
-				ValueManager.validateNull(description)
+				StringManager.getValidString(description)
 			)
 		;
 
@@ -159,10 +165,14 @@ public class IssueManagementConvertUtil {
 		}
 		builder.setId(user.getAD_User_ID())
 			.setName(
-				ValueManager.validateNull(user.getName())
+				StringManager.getValidString(
+					user.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(user.getDescription())
+				StringManager.getValidString(
+					user.getDescription()
+				)
 			)
 		;
 		if (user.getLogo_ID() > 0) {
@@ -177,7 +187,7 @@ public class IssueManagementConvertUtil {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setAvatar(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							attachmentReference.getFileName()
 						)
 					);
@@ -214,13 +224,15 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(dueType.getAD_Ref_List_ID())
 			.setValue(
-				ValueManager.validateNull(dueType.getValue())
+				StringManager.getValidString(
+					dueType.getValue()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(name)
+				StringManager.getValidString(name)
 			)
 			.setDescription(
-				ValueManager.validateNull(description)
+				StringManager.getValidString(description)
 			)
 		;
 
@@ -246,10 +258,14 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(requestType.getR_RequestType_ID())
 			.setName(
-				ValueManager.validateNull(requestType.getName())
+				StringManager.getValidString(
+					requestType.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(requestType.getDescription())
+				StringManager.getValidString(
+					requestType.getDescription()
+				)
 			)
 			.setDueDateTolerance(
 				requestType.getDueDateTolerance()
@@ -298,10 +314,14 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(statusCategory.getR_StatusCategory_ID())
 			.setName(
-				ValueManager.validateNull(statusCategory.getName())
+				StringManager.getValidString(
+					statusCategory.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(statusCategory.getDescription())
+				StringManager.getValidString(
+					statusCategory.getDescription()
+				)
 			)
 			.setIsDefault(
 				statusCategory.isDefault()
@@ -330,15 +350,19 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(status.getR_Status_ID())
 			.setName(
-				ValueManager.validateNull(status.getName())
+				StringManager.getValidString(
+					status.getName()
+				)
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					status.getValue()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(status.getDescription())
+				StringManager.getValidString(
+					status.getDescription()
+				)
 			)
 			.setSequence(
 				status.getSeqNo()
@@ -370,12 +394,12 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(category.getR_Category_ID())
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					category.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					category.getDescription()
 				)
 			)
@@ -403,12 +427,12 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(group.getR_Group_ID())
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					group.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					group.getDescription()
 				)
 			)
@@ -436,17 +460,17 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(businessPartner.getC_BPartner_ID())
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					businessPartner.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					businessPartner.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					businessPartner.getDescription()
 				)
 			)
@@ -474,17 +498,17 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(project.getC_Project_ID())
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					project.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					project.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					project.getDescription()
 				)
 			)
@@ -510,17 +534,17 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(request.getR_Request_ID())
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getDocumentNo()
 				)
 			)
 			.setSubject(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getSubject()
 				)
 			)
 			.setSummary(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getSummary()
 				)
 			)
@@ -625,7 +649,7 @@ public class IssueManagementConvertUtil {
 				)
 			)
 			.setResult(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					requestUpdate.getResult()
 				)
 			)
@@ -655,6 +679,7 @@ public class IssueManagementConvertUtil {
 		if (requestAction == null || requestAction.getR_RequestAction_ID() <= 0) {
 			return builder;
 		}
+
 		builder.setId(requestAction.getR_RequestAction_ID())
 			.setCreated(
 				ValueManager.getTimestampFromDate(
@@ -913,7 +938,10 @@ public class IssueManagementConvertUtil {
 		// )
 		// 	.setParameters(I_R_RequestAction.Table_ID, columnName)
 		// 	.first();
-		int columnId = MColumn.getColumn_ID(I_AD_Column.Table_Name, columnName);
+		int columnId = MColumn.getColumn_ID(I_R_Request.Table_Name, columnName);
+		if (columnId <= 0) {
+			return builder;
+		}
 		MColumn column = MColumn.get(Env.getCtx(), columnId);
 		if (column == null) {
 			return builder;
@@ -924,13 +952,6 @@ public class IssueManagementConvertUtil {
 			label = column.get_Translation(I_AD_Column.COLUMNNAME_Name);
 		}
 
-		Value.Builder valueBuilder = ValueManager.getValueFromReference(
-			value,
-			column.getAD_Reference_ID()
-		);
-		builder.setNewValue(
-			valueBuilder
-		);
 		String displayedValue = ValueManager.getDisplayedValueFromReference(
 			Env.getCtx(),
 			value,
@@ -938,15 +959,29 @@ public class IssueManagementConvertUtil {
 			column.getAD_Reference_ID(),
 			column.getAD_Reference_Value_ID()
 		);
-		builder.setDisplayedValue(
-			ValueManager.validateNull(displayedValue)
+		if (Util.isEmpty(displayedValue, true)) {
+			displayedValue = StringManager.getStringFromObject(
+				value
+			);
+		}
+
+		Value.Builder valueBuilder = ValueManager.getValueFromReference(
+			value,
+			column.getAD_Reference_ID()
 		);
 
-		builder.setColumnName(columnName)
+		builder
+			.setColumnName(columnName)
 			.setLabel(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					label
 				)
+			)
+			.setNewValue(
+				valueBuilder
+			)
+			.setDisplayedValue(
+				StringManager.getValidString(displayedValue)
 			)
 		;
 
