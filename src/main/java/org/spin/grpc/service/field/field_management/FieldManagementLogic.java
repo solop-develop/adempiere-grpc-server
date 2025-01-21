@@ -272,8 +272,14 @@ public class FieldManagementLogic {
 			windowNo, context, contextAttributes, true
 		);
 
-		if(defaultValue.trim().startsWith("@SQL=")) {
-			String sqlDefaultValue = defaultValue.replace("@SQL=", "");
+		final String sqlPattern = "^(@SQL)\\s*=";
+		Pattern sqlContextPattern = Pattern.compile(
+			sqlPattern,
+			Pattern.CASE_INSENSITIVE
+		);
+		Matcher sqlMatcher = sqlContextPattern.matcher(defaultValue.trim());
+		if(sqlMatcher.find()) {
+			String sqlDefaultValue = defaultValue.replaceFirst(sqlPattern, "");
 			sqlDefaultValue = Env.parseContext(context, windowNo, sqlDefaultValue, false);
 			if (Util.isEmpty(sqlDefaultValue, true)) {
 				log.warning("@SQL@ @Unparseable@ " + sqlDefaultValue);
