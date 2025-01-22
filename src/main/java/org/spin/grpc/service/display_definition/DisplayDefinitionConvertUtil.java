@@ -33,6 +33,8 @@ import org.spin.backend.grpc.display_definition.WorkflowStep;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 import com.solop.sp010.data.calendar.CalendarItem;
 import com.solop.sp010.data.kanban.KanbanColumn;
 import com.solop.sp010.data.kanban.KanbanItem;
@@ -245,7 +247,17 @@ public class DisplayDefinitionConvertUtil {
 				calendarItem.isConfirmed()
 			)
 		;
-
+		Struct.Builder fields = Struct.newBuilder();
+		calendarItem.getFields().entrySet().forEach(field -> {
+			Struct.Builder fieldValue = Struct.newBuilder();
+			fieldValue.putFields("value", ValueManager.getValueFromObject(field.getValue().getValue()).build());
+			if(!Util.isEmpty(field.getValue().getDisplayValue())) {
+				fieldValue.putFields("display_value", ValueManager.getValueFromObject(field.getValue().getDisplayValue()).build());
+				fieldValue.putFields("table_name", ValueManager.getValueFromObject(field.getValue().getTableName()).build());
+			}
+			fields.putFields(StringManager.getValidString(field.getValue().getColumnName()), Value.newBuilder().setStructValue(fieldValue.build()).build());
+		});
+		builder.setFields(fields);
 		return builder;
 	}
 
@@ -313,6 +325,17 @@ public class DisplayDefinitionConvertUtil {
 				kanbanItem.getSequence()
 			)
 		;
+		Struct.Builder fields = Struct.newBuilder();
+		kanbanItem.getFields().entrySet().forEach(field -> {
+			Struct.Builder fieldValue = Struct.newBuilder();
+			fieldValue.putFields("value", ValueManager.getValueFromObject(field.getValue().getValue()).build());
+			if(!Util.isEmpty(field.getValue().getDisplayValue())) {
+				fieldValue.putFields("display_value", ValueManager.getValueFromObject(field.getValue().getDisplayValue()).build());
+				fieldValue.putFields("table_name", ValueManager.getValueFromObject(field.getValue().getTableName()).build());
+			}
+			fields.putFields(StringManager.getValidString(field.getValue().getColumnName()), Value.newBuilder().setStructValue(fieldValue.build()).build());
+		});
+		builder.setFields(fields);
 		return builder;
 	}
 
@@ -364,7 +387,17 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 		;
-
+		Struct.Builder fields = Struct.newBuilder();
+		resourceItem.getFields().entrySet().forEach(field -> {
+			Struct.Builder fieldValue = Struct.newBuilder();
+			fieldValue.putFields("value", ValueManager.getValueFromObject(field.getValue().getValue()).build());
+			if(!Util.isEmpty(field.getValue().getDisplayValue())) {
+				fieldValue.putFields("display_value", ValueManager.getValueFromObject(field.getValue().getDisplayValue()).build());
+				fieldValue.putFields("table_name", ValueManager.getValueFromObject(field.getValue().getTableName()).build());
+			}
+			fields.putFields(StringManager.getValidString(field.getValue().getColumnName()), Value.newBuilder().setStructValue(fieldValue.build()).build());
+		});
+		builder.setFields(fields);
 		return builder;
 	}
 	
@@ -408,6 +441,16 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 		;
+		Struct.Builder fields = Struct.newBuilder();
+		timelineItem.getFields().entrySet().forEach(field -> {
+			Struct.Builder fieldValue = Struct.newBuilder();
+			fieldValue.putFields("value", ValueManager.getValueFromObject(field.getValue().getValue()).build());
+			if(!Util.isEmpty(field.getValue().getDisplayValue())) {
+				fieldValue.putFields("display_value", ValueManager.getValueFromObject(field.getValue().getDisplayValue()).build());
+				fieldValue.putFields("table_name", ValueManager.getValueFromObject(field.getValue().getTableName()).build());
+			}
+			fields.putFields(StringManager.getValidString(field.getValue().getColumnName()), Value.newBuilder().setStructValue(fieldValue.build()).build());
+		});
 		return builder;
 	}
 
@@ -436,45 +479,55 @@ public class DisplayDefinitionConvertUtil {
 		return builder;
 	}
 
-	public static WorkflowEntry.Builder convertWorkflowEntry(WorkflowItem kanbanItem) {
+	public static WorkflowEntry.Builder convertWorkflowEntry(WorkflowItem workflowItem) {
 		WorkflowEntry.Builder builder = WorkflowEntry.newBuilder();
-		if (kanbanItem == null) {
+		if (workflowItem == null) {
 			return builder;
 		}
 		builder
 			.setId(
-				kanbanItem.getId()
+				workflowItem.getId()
 			)
 			.setUuid(
 				StringManager.getValidString(
-					kanbanItem.getUuid()
+					workflowItem.getUuid()
 				)
 			)
 			.setTitle(
 				StringManager.getValidString(
-					kanbanItem.getTitle()
+					workflowItem.getTitle()
 				)
 			)
 			.setDescription(
 				StringManager.getValidString(
-					kanbanItem.getDescription()
+					workflowItem.getDescription()
 				)
 			)
 			.setIsActive(
-				kanbanItem.isActive()
+				workflowItem.isActive()
 			)
 			.setIsReadOnly(
-				kanbanItem.isReadOnly()
+				workflowItem.isReadOnly()
 			)
 			.setGroupId(
 				StringManager.getValidString(
-					kanbanItem.getGroupCode()
+					workflowItem.getGroupCode()
 				)
 			)
 			.setSequence(
-				kanbanItem.getSequence()
+				workflowItem.getSequence()
 			)
 		;
+		Struct.Builder fields = Struct.newBuilder();
+		workflowItem.getFields().entrySet().forEach(field -> {
+			Struct.Builder fieldValue = Struct.newBuilder();
+			fieldValue.putFields("value", ValueManager.getValueFromObject(field.getValue().getValue()).build());
+			if(!Util.isEmpty(field.getValue().getDisplayValue())) {
+				fieldValue.putFields("display_value", ValueManager.getValueFromObject(field.getValue().getDisplayValue()).build());
+				fieldValue.putFields("table_name", ValueManager.getValueFromObject(field.getValue().getTableName()).build());
+			}
+			fields.putFields(StringManager.getValidString(field.getValue().getColumnName()), Value.newBuilder().setStructValue(fieldValue.build()).build());
+		});
 		return builder;
 	}
 

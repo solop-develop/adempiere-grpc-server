@@ -374,10 +374,7 @@ public class DisplayDefinitionServiceLogic {
 		});
 		return builderList;
 	}
-
-
-
-	@SuppressWarnings("unlikely-arg-type")
+	
 	public static ListResourcesDataResponse.Builder listResourcesData(ListResourcesDataRequest request) {
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");

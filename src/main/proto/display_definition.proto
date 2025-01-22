@@ -21,6 +21,7 @@
  
  import "google/api/annotations.proto";
  import "google/protobuf/timestamp.proto";
+ import "google/protobuf/struct.proto";
  
  package display_definition;
 
@@ -160,6 +161,7 @@ message CalendarEntry {
 	google.protobuf.Timestamp valid_from = 7;
 	google.protobuf.Timestamp valid_to = 8;
 	bool is_confirmed = 9;
+	google.protobuf.Struct fields = 10;
 }
 message ListCalendarsDataRequest {
 	string filters = 1;
@@ -222,6 +224,7 @@ message KanbanEntry {
 	bool is_read_only = 6;
 	string group_id = 7;
 	int32 sequence = 8;
+	google.protobuf.Struct fields = 9;
 }
 message ListKanbansDataRequest {
 	string filters = 1;
@@ -262,6 +265,7 @@ message ResourceEntry {
 	string name = 10;
 	string group_name = 11;
 	string color = 12;
+	google.protobuf.Struct fields = 13;
 }
 
 message ResourceGroup {
@@ -310,6 +314,7 @@ message TimelineEntry {
 	bool is_active = 5;
 	bool is_read_only = 6;
 	google.protobuf.Timestamp date = 7;
+	google.protobuf.Struct fields = 8;
 }
 message ListTimelinesDataRequest {
 	string filters = 1;
@@ -372,6 +377,7 @@ message WorkflowEntry {
 	bool is_read_only = 6;
 	string group_id = 7;
 	int32 sequence = 8;
+	google.protobuf.Struct fields = 9;
 }
 message ListWorkflowsDataRequest {
 	string filters = 1;
