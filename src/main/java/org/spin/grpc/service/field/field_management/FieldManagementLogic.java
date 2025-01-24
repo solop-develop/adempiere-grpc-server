@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Browse_Field;
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
+import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
@@ -48,6 +49,8 @@ import org.compiere.model.MRole;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
+import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -218,6 +221,47 @@ public class FieldManagementLogic {
 			validationRuleId = column.getAD_Val_Rule_ID();
 			columnName = column.getColumnName();
 			defaultValue = column.getDefaultValue();
+		} else if (request.getDisplayDefinitionFieldId() > 0) {
+			PO fieldDefinition = new Query(
+				Env.getCtx(),
+				"SP010_Field",
+				"SP010_Field_ID = ?",
+				null
+			)
+				.setParameters(request.getDisplayDefinitionFieldId())
+				.first()
+			;
+			if (fieldDefinition == null || fieldDefinition.get_ID() <= 0) {
+				throw new AdempiereException("@SP010_DisplayDefinition_ID@ @SP010_Field_ID@ @NotFound@");
+			}
+			MColumn column = MColumn.get(
+				Env.getCtx(),
+				fieldDefinition.get_ValueAsInt(
+					I_AD_Column.COLUMNNAME_AD_Column_ID
+				)
+			);
+			columnName = column.getColumnName();
+
+			//	Display Type
+			referenceId = fieldDefinition.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Reference_ID);
+			if (referenceId <= 0) {
+				referenceId = column.getAD_Reference_ID();
+			}
+
+			referenceValueId = fieldDefinition.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Reference_Value_ID);
+			if(referenceValueId <= 0) {
+				referenceValueId = column.getAD_Reference_Value_ID();
+			}
+
+			validationRuleId = fieldDefinition.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Val_Rule_ID);
+			if (validationRuleId <= 0) {
+				validationRuleId = column.getAD_Val_Rule_ID();
+			}
+
+			defaultValue = fieldDefinition.get_ValueAsString(I_AD_Column.COLUMNNAME_DefaultValue);
+			if (Util.isEmpty(defaultValue, true)) {
+				defaultValue = column.getDefaultValue();
+			}
 		} else {
 			throw new AdempiereException(
 				"@AD_Reference_ID@ / @AD_Column_ID@ / @AD_Table_ID@ / @AD_Field_ID@ / @AD_Process_Para_ID@ / @AD_Browse_Field_ID@ / @IsMandatory@"
@@ -494,6 +538,9 @@ public class FieldManagementLogic {
 			request.getColumnId(),
 			request.getColumnName(),
 			request.getTableName(),
+			request.getDisplayDefinitionFieldId(),
+			0,
+			null,
 			request.getIsWithoutValidation()
 		);
 		if (reference == null) {
@@ -676,6 +723,9 @@ public class FieldManagementLogic {
 			request.getColumnId(),
 			request.getColumnName(),
 			request.getTableName(),
+			request.getDisplayDefinitionFieldId(),
+			0,
+			null,
 			request.getIsWithoutValidation()
 		);
 

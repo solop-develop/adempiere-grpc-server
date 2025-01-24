@@ -18,12 +18,15 @@ package org.spin.base.util;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MViewColumn;
+import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.X_AD_Reference;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcessPara;
 import org.compiere.model.MTable;
+import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -313,6 +316,26 @@ public class ReferenceInfo {
 		int columnId, String columnName, String tableName,
 		int validationRuleId, String customRestriction, boolean isWithoutValidation
 	) {
+		return getInfoFromRequest(
+			displayTypeId,
+			fieldId, processParameterId, browseFieldId,
+			columnId, columnName, tableName,
+			validationRuleId, customRestriction, isWithoutValidation
+		);
+	}
+
+	/**
+	 * Get reference Info from request
+	 * @param request
+	 * @return
+	 */
+	static public MLookupInfo getInfoFromRequest(
+		int displayTypeId,
+		int fieldId, int processParameterId, int browseFieldId,
+		int columnId, String columnName, String tableName,
+		int displayDefinitionFieldId,
+		int validationRuleId, String customRestriction, boolean isWithoutValidation
+	) {
 		int referenceValueId = 0;
 		if(fieldId > 0) {
 			MField field = new MField(Env.getCtx(), fieldId, null);
@@ -402,7 +425,44 @@ public class ReferenceInfo {
 					}
 				}
 			}
-		} else if(displayTypeId > 0) {
+		} else if (displayDefinitionFieldId > 0) {
+			PO fieldDefinition = new Query(
+				Env.getCtx(),
+				"SP010_Field",
+				"SP010_Field_ID = ?",
+				null
+			)
+				.setParameters(displayDefinitionFieldId)
+				.first()
+			;
+
+			if (fieldDefinition == null || fieldDefinition.get_ID() <= 0) {
+				throw new AdempiereException("@SP010_DisplayDefinition_ID@ @SP010_Field_ID@ @NotFound@");
+			}
+			MColumn column = MColumn.get(
+				Env.getCtx(),
+				fieldDefinition.get_ValueAsInt(
+					I_AD_Column.COLUMNNAME_AD_Column_ID
+				)
+			);
+			columnName = column.getColumnName();
+
+			//	Display Type
+			displayTypeId = fieldDefinition.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Reference_ID);
+			if (displayTypeId <= 0) {
+				displayTypeId = column.getAD_Reference_ID();
+			}
+
+			referenceValueId = fieldDefinition.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Reference_Value_ID);
+			if(referenceValueId <= 0) {
+				referenceValueId = column.getAD_Reference_Value_ID();
+			}
+
+			validationRuleId = fieldDefinition.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Val_Rule_ID);
+			if (validationRuleId <= 0) {
+				validationRuleId = column.getAD_Val_Rule_ID();
+			}
+		}else if(displayTypeId > 0) {
 			X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), displayTypeId, null);
 			if(reference == null || reference.getAD_Reference_ID() <= 0) {
 				throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
