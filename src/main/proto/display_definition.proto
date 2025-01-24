@@ -44,6 +44,11 @@ service DisplayDefinition {
 			}
 		};
 	}
+	rpc ListDisplayDefinitionFieldsMetadata(ListDisplayDefinitionFieldsMetadataRequest) returns (ListDisplayDefinitionFieldsMetadataResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/definitions/{display_definition_id}/fields"
+		};
+	}
 
 	// Calendar
 	rpc ListCalendarsData(ListCalendarsDataRequest) returns (ListCalendarsDataResponse) {
@@ -123,7 +128,7 @@ enum DefinitionType {
 	TYPE_UNKNOW = 0;
 	CALENDAR = 1;
 	KANBAN = 2;
-	RESOURCE = 4;
+	RESOURCE = 4; // As Gannt
 	TIMERLINE = 5;
 	WORKFLOW = 6;
 }
@@ -146,6 +151,51 @@ message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
 	repeated DefinitionMetadata records = 2;
 	string next_page_token = 3;
+}
+
+
+
+// Field Definition
+message FieldGroup {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string field_group_type = 4;
+}
+message FieldDefinition {
+	string id = 1;
+	string uuid = 2;
+	int32 internal_id = 3;
+	int32 display_definition_id = 4;
+	string column_name = 5;
+	string name = 6;
+	string description = 7;
+	string help = 8;
+	int32 display_type = 9;
+	int32 sequence = 10;
+	bool is_displayed = 11;
+	string display_logic = 12;
+	bool is_read_only = 13;
+	bool is_mandatory = 14;
+	string default_value = 15;
+	bool is_displayed_grid = 16;
+	int32 seq_no_grid = 30;
+	optional FieldGroup field_group = 17;
+	bool is_heading = 18;
+	bool is_field_only = 19;
+	bool is_encrypted = 20;
+	bool is_quick_entry = 21;
+	int32 sort_no = 22;
+	//
+	bool is_insert_record = 23;
+	bool is_update_record = 24;
+}
+message ListDisplayDefinitionFieldsMetadataRequest {
+	int32 display_definition_id = 1;
+}
+message ListDisplayDefinitionFieldsMetadataResponse {
+	int64 field_definitions_count = 1;
+	repeated FieldDefinition field_definitions = 2;
 }
 
 
