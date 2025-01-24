@@ -15,15 +15,20 @@
 
  syntax = "proto3";
 
- option java_multiple_files = true;
- option java_package = "org.spin.backend.grpc.display_definition";
- option java_outer_classname = "ADempiereDisplayDefinition";
- 
- import "google/api/annotations.proto";
- import "google/protobuf/timestamp.proto";
- import "google/protobuf/struct.proto";
- 
- package display_definition;
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.display_definition";
+option java_outer_classname = "ADempiereDisplayDefinition";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// import "base_data_type.proto";
+
+// Base URL
+// /display-definition/
+
+package display_definition;
 
 service DisplayDefinition {
 

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
@@ -232,7 +233,10 @@ public class DisplayDefinitionServiceLogic {
 				query.count()
 			)
 		;
-		query.getIDsAsList()
+		query.setOrderBy(
+				I_AD_Field.COLUMNNAME_SeqNo
+			)
+			.getIDsAsList()
 			.forEach(fieldId -> {
 				PO field = table.getPO(fieldId, null);
 				FieldDefinition.Builder fieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(field);

@@ -37,6 +37,7 @@ import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -270,6 +271,24 @@ public class DisplayDefinitionConvertUtil {
 				I_AD_Column.COLUMNNAME_AD_Column_ID
 			)
 		);
+		int displayTypeId = fieldDefinitionItem.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Reference_ID);
+		if (displayTypeId <= 0) {
+			displayTypeId = column.getAD_Reference_ID();
+		}
+		String defaultValue = fieldDefinitionItem.get_ValueAsString(
+			I_AD_Column.COLUMNNAME_DefaultValue
+		);
+		if (Util.isEmpty(defaultValue, true)) {
+			defaultValue = column.getDefaultValue();
+		}
+
+		String isMandatoryString = fieldDefinitionItem.get_ValueAsString(
+			I_AD_Field.COLUMNNAME_IsMandatory
+		);
+		boolean isMandatory = column.isMandatory();
+		if (!Util.isEmpty(isMandatoryString, true)) {
+			isMandatory = BooleanManager.getBooleanFromString(isMandatoryString);
+		}
 
 		builder.setId(
 				StringManager.getValidString(
@@ -316,9 +335,7 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setDisplayType(
-				fieldDefinitionItem.get_ValueAsInt(
-					I_AD_Column.COLUMNNAME_AD_Reference_ID
-				)
+				displayTypeId
 			)
 			.setSequence(
 				fieldDefinitionItem.get_ValueAsInt(
@@ -343,15 +360,11 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setIsMandatory(
-				fieldDefinitionItem.get_ValueAsBoolean(
-					I_AD_Field.COLUMNNAME_IsMandatory
-				)
+				isMandatory
 			)
 			.setDefaultValue(
 				StringManager.getValidString(
-					fieldDefinitionItem.get_ValueAsString(
-						I_AD_Column.COLUMNNAME_DefaultValue
-					)
+					defaultValue
 				)
 			)
 			.setIsDisplayedGrid(

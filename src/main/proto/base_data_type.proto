@@ -65,8 +65,9 @@ message ListLookupItemsRequest {
 	int32 column_id = 14;
 	string table_name = 15;
 	string column_name = 16;
+	int32 display_definition_field_id = 17;
 	//
-	bool is_without_validation = 17;
+	bool is_without_validation = 18;
 }
 
 message ListLookupItemsResponse {
