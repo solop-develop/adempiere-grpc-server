@@ -14,8 +14,12 @@
  ************************************************************************************/
 package org.spin.grpc.service.display_definition;
 
+import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Element;
+import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_AD_FieldGroup;
 import org.adempiere.core.domains.models.I_AD_Table;
+import org.adempiere.core.domains.models.X_AD_FieldGroup;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
@@ -24,6 +28,8 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.DefinitionType;
+import org.spin.backend.grpc.display_definition.FieldDefinition;
+import org.spin.backend.grpc.display_definition.FieldGroup;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
 import org.spin.backend.grpc.display_definition.ResourceEntry;
@@ -207,6 +213,193 @@ public class DisplayDefinitionConvertUtil {
 		return builder;
 	}
 
+
+	/**
+	 * Convert Field Group to builder
+	 * @param fieldGroupId
+	 * @return
+	 */
+	public static FieldGroup.Builder convertFieldGroup(int fieldGroupId) {
+		FieldGroup.Builder builder = FieldGroup.newBuilder();
+		if(fieldGroupId <= 0) {
+			return builder;
+		}
+		X_AD_FieldGroup fieldGroup  = new X_AD_FieldGroup(Env.getCtx(), fieldGroupId, null);
+		//	Get translation
+		String name = null;
+		String language = Env.getAD_Language(Env.getCtx());
+		if(!Util.isEmpty(language)) {
+			name = fieldGroup.get_Translation(
+				I_AD_FieldGroup.COLUMNNAME_Name,
+				language
+			);
+		}
+		//	Validate for default
+		if(Util.isEmpty(name)) {
+			name = fieldGroup.getName();
+		}
+		//	Field Group
+		builder = FieldGroup.newBuilder()
+			.setId(
+				fieldGroup.getAD_FieldGroup_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					fieldGroup.getUUID()
+				)
+			)
+			.setName(
+				StringManager.getValidString(name))
+			.setFieldGroupType(
+				StringManager.getValidString(
+					fieldGroup.getFieldGroupType()
+				)
+			)
+		;
+		return builder;
+	}
+	public static FieldDefinition.Builder convertFieldDefinition(PO fieldDefinitionItem) {
+		FieldDefinition.Builder builder = FieldDefinition.newBuilder();
+		if (fieldDefinitionItem == null || fieldDefinitionItem.get_ID() <= 0) {
+			return builder;
+		}
+		MColumn column = MColumn.get(
+			fieldDefinitionItem.getCtx(),
+			fieldDefinitionItem.get_ValueAsInt(
+				I_AD_Column.COLUMNNAME_AD_Column_ID
+			)
+		);
+
+		builder.setId(
+				StringManager.getValidString(
+					fieldDefinitionItem.get_UUID()
+				)
+			)
+			.setUuid(
+				StringManager.getValidString(
+					fieldDefinitionItem.get_UUID()
+				)
+			)
+			.setInternalId(
+				fieldDefinitionItem.get_ID()
+			)
+			.setDisplayDefinitionId(
+				fieldDefinitionItem.get_ValueAsInt(
+					Changes.SP010_DisplayDefinition_ID
+				)
+			)
+			.setColumnName(
+				StringManager.getValidString(
+					column.getColumnName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					fieldDefinitionItem.get_Translation(
+						I_AD_Column.COLUMNNAME_Description
+					)
+				)
+			)
+			.setHelp(
+				StringManager.getValidString(
+					fieldDefinitionItem.get_Translation(
+						I_AD_Column.COLUMNNAME_Help
+					)
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					fieldDefinitionItem.get_Translation(
+						I_AD_Column.COLUMNNAME_Name
+					)
+				)
+			)
+			.setDisplayType(
+				fieldDefinitionItem.get_ValueAsInt(
+					I_AD_Column.COLUMNNAME_AD_Reference_ID
+				)
+			)
+			.setSequence(
+				fieldDefinitionItem.get_ValueAsInt(
+					I_AD_Field.COLUMNNAME_SeqNo
+				)
+			)
+			.setIsDisplayed(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Field.COLUMNNAME_IsDisplayed
+				)
+			)
+			.setDisplayLogic(
+				StringManager.getValidString(
+					fieldDefinitionItem.get_ValueAsString(
+						I_AD_Field.COLUMNNAME_DisplayLogic
+					)
+				)
+			)
+			.setIsReadOnly(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Field.COLUMNNAME_IsReadOnly
+				)
+			)
+			.setIsMandatory(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Field.COLUMNNAME_IsMandatory
+				)
+			)
+			.setDefaultValue(
+				StringManager.getValidString(
+					fieldDefinitionItem.get_ValueAsString(
+						I_AD_Column.COLUMNNAME_DefaultValue
+					)
+				)
+			)
+			.setIsDisplayedGrid(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Field.COLUMNNAME_IsDisplayedGrid
+				)
+			)
+			.setSeqNoGrid(
+				fieldDefinitionItem.get_ValueAsInt(
+					I_AD_Field.COLUMNNAME_SeqNoGrid
+				)
+			)
+			.setIsHeading(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Field.COLUMNNAME_IsHeading
+				)
+			)
+			.setIsFieldOnly(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Field.COLUMNNAME_IsFieldOnly
+				)
+			)
+			.setIsEncrypted(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Field.COLUMNNAME_IsEncrypted
+				)
+			)
+			.setIsQuickEntry(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Field.COLUMNNAME_IsQuickEntry
+				)
+			)
+			.setIsDisplayedGrid(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Column.COLUMNNAME_SeqNo
+				)
+			)
+		;
+
+		final int fieldGroupId = fieldDefinitionItem.get_ValueAsInt(
+			I_AD_Field.COLUMNNAME_AD_FieldGroup_ID
+		);
+		if (fieldGroupId > 0) {
+			FieldGroup.Builder fieldGroupBuilder = convertFieldGroup(fieldGroupId);
+			builder.setFieldGroup(fieldGroupBuilder);
+		}
+
+		return builder;
+	}
 
 
 	public static CalendarEntry.Builder convertCalentarEntry(CalendarItem calendarItem) {

@@ -30,10 +30,13 @@ import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
+import org.spin.backend.grpc.display_definition.FieldDefinition;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
 import org.spin.backend.grpc.display_definition.ListCalendarsDataRequest;
 import org.spin.backend.grpc.display_definition.ListCalendarsDataResponse;
+import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetadataRequest;
+import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetadataResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataRequest;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
@@ -188,6 +191,52 @@ public class DisplayDefinitionServiceLogic {
 				})
 			;
 		}
+		return builderList;
+	}
+
+
+	public static ListDisplayDefinitionFieldsMetadataResponse.Builder listDisplayDefinitionFieldsMetadata(ListDisplayDefinitionFieldsMetadataRequest request) {
+		if (request.getDisplayDefinitionId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
+		}
+
+		PO displayDefinition = new Query(
+			Env.getCtx(),
+			Changes.SP010_DisplayDefinition,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(request.getDisplayDefinitionId())
+			.first()
+		;
+		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
+		}
+
+		Query query = new Query(
+			Env.getCtx(),
+			"SP010_Field",
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(request.getDisplayDefinitionId())
+			.setOnlyActiveRecords(true)
+		;
+
+		ListDisplayDefinitionFieldsMetadataResponse.Builder builderList = ListDisplayDefinitionFieldsMetadataResponse.newBuilder()
+			.setFieldDefinitionsCount1(
+				query.count()
+			)
+		;
+		query.list()
+			.forEach(field -> {
+				FieldDefinition.Builder fieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(field);
+				builderList.addFieldDefinitions2(
+					fieldBuilder.build()
+				);
+			})
+		;
+
 		return builderList;
 	}
 

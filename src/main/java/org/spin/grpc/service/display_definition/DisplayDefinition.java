@@ -20,6 +20,8 @@ import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataR
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
 import org.spin.backend.grpc.display_definition.ListCalendarsDataRequest;
 import org.spin.backend.grpc.display_definition.ListCalendarsDataResponse;
+import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetadataRequest;
+import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetadataResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataRequest;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
@@ -68,6 +70,26 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 	public void listDisplayDefinitionsMetadata(ListDisplayDefinitionsMetadataRequest request, StreamObserver<ListDisplayDefinitionsMetadataResponse> responseObserver) {
 		try {
 			ListDisplayDefinitionsMetadataResponse.Builder builder = DisplayDefinitionServiceLogic.listDisplayDefinitionsMetadata(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listDisplayDefinitionFieldsMetadata(ListDisplayDefinitionFieldsMetadataRequest request, StreamObserver<ListDisplayDefinitionFieldsMetadataResponse> responseObserver) {
+		try {
+			ListDisplayDefinitionFieldsMetadataResponse.Builder builder = DisplayDefinitionServiceLogic.listDisplayDefinitionFieldsMetadata(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
