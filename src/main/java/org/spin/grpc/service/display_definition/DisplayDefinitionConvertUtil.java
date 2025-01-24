@@ -18,6 +18,7 @@ import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
+import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.X_AD_FieldGroup;
 import org.compiere.model.MColumn;
@@ -386,6 +387,16 @@ public class DisplayDefinitionConvertUtil {
 			.setIsDisplayedGrid(
 				fieldDefinitionItem.get_ValueAsBoolean(
 					I_AD_Column.COLUMNNAME_SeqNo
+				)
+			)
+			.setIsInsertRecord(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					I_AD_Tab.COLUMNNAME_IsInsertRecord
+				)
+			)
+			.setIsUpdateRecord(
+				fieldDefinitionItem.get_ValueAsBoolean(
+					"SP010_IsUpdateRecord"
 				)
 			)
 		;

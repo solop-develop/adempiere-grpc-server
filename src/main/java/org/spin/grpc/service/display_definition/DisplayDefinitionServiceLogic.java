@@ -200,6 +200,10 @@ public class DisplayDefinitionServiceLogic {
 			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
 		}
 
+		MTable table =RecordUtil.validateAndGetTable(
+			"SP010_Field"
+		);
+
 		PO displayDefinition = new Query(
 			Env.getCtx(),
 			Changes.SP010_DisplayDefinition,
@@ -228,8 +232,9 @@ public class DisplayDefinitionServiceLogic {
 				query.count()
 			)
 		;
-		query.list()
-			.forEach(field -> {
+		query.getIDsAsList()
+			.forEach(fieldId -> {
+				PO field = table.getPO(fieldId, null);
 				FieldDefinition.Builder fieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(field);
 				builderList.addFieldDefinitions2(
 					fieldBuilder.build()
