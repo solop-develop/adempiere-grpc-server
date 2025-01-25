@@ -20,8 +20,9 @@ option java_package = "org.spin.backend.grpc.display_definition";
 option java_outer_classname = "ADempiereDisplayDefinition";
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 // import "base_data_type.proto";
 
@@ -97,6 +98,30 @@ service DisplayDefinition {
 	rpc ListWorkflowsData(ListWorkflowsDataRequest) returns (ListWorkflowsDataResponse) {
 		option (google.api.http) = {
 			get: "/display-definition/workflows/{id}"
+		};
+	}
+
+	// CRUD Data Entry
+	rpc CreateDataEntry(CreateDataEntryRequest) returns (DataEntry) {
+		option (google.api.http) = {
+			post: "/display-definition/{display_definition_id}/entries",
+			body: "*"
+		};
+	}
+	rpc ReadDataEntry(ReadDataEntryRequest) returns (DataEntry) {
+		option (google.api.http) = {
+			get: "/display-definition/{display_definition_id}/entries/{id}"
+		};
+	}
+	rpc UpdateDataEntry(UpdateDataEntryRequest) returns (DataEntry) {
+		option (google.api.http) = {
+			patch: "/display-definition/{display_definition_id}/entries/{id}",
+			body: "*"
+		};
+	}
+	rpc DeleteDataEntry(DeleteDataEntryRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			delete: "/display-definition/{display_definition_id}/entries/{id}"
 		};
 	}
 }
@@ -457,4 +482,35 @@ message ListWorkflowsDataResponse {
 	int64 record_count = 5;
 	repeated WorkflowEntry records = 6;
 	string next_page_token = 7;
+}
+
+
+
+// Data Entry CRUD
+message DataEntry {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	bool is_active = 5;
+	bool is_read_only = 6;
+	google.protobuf.Struct fields = 8;
+}
+message CreateDataEntryRequest {
+	int32 display_definition_id = 1;
+	google.protobuf.Struct attributes = 2;
+	string context_attributes = 3;
+}
+message ReadDataEntryRequest {
+	int32 display_definition_id = 1;
+	int32 id = 2;
+}
+message UpdateDataEntryRequest {
+	int32 display_definition_id = 1;
+	int32 id = 2;
+	google.protobuf.Struct attributes = 3;
+}
+message DeleteDataEntryRequest {
+	int32 display_definition_id = 1;
+	int32 id = 2;
 }

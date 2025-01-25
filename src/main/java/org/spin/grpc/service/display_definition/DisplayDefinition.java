@@ -15,6 +15,9 @@
 package org.spin.grpc.service.display_definition;
 
 import org.compiere.util.CLogger;
+import org.spin.backend.grpc.display_definition.CreateDataEntryRequest;
+import org.spin.backend.grpc.display_definition.DataEntry;
+import org.spin.backend.grpc.display_definition.DeleteDataEntryRequest;
 import org.spin.backend.grpc.display_definition.DisplayDefinitionGrpc.DisplayDefinitionImplBase;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
@@ -36,6 +39,10 @@ import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ReadDataEntryRequest;
+import org.spin.backend.grpc.display_definition.UpdateDataEntryRequest;
+
+import com.google.protobuf.Empty;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -226,6 +233,80 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 	public void listWorkflowsData(ListWorkflowsDataRequest request, StreamObserver<ListWorkflowsDataResponse> responseObserver) {
 		try {
 			ListWorkflowsDataResponse.Builder builder = DisplayDefinitionServiceLogic.listWorkflowsData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void createDataEntry(CreateDataEntryRequest request, StreamObserver<DataEntry> responseObserver) {
+		try {
+			DataEntry.Builder builder = DisplayDefinitionServiceLogic.createDataEntry(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void readDataEntry(ReadDataEntryRequest request, StreamObserver<DataEntry> responseObserver) {
+		try {
+			DataEntry.Builder builder = DisplayDefinitionServiceLogic.readDataEntry(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void updateDataEntry(UpdateDataEntryRequest request, StreamObserver<DataEntry> responseObserver) {
+		try {
+			DataEntry.Builder builder = DisplayDefinitionServiceLogic.updateDataEntry(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void deleteDataEntry(DeleteDataEntryRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			Empty.Builder builder = DisplayDefinitionServiceLogic.deleteDataEntry(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

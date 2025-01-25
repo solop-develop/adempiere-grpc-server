@@ -15,20 +15,29 @@
 package org.spin.grpc.service.display_definition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.POAdapter;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
+import org.spin.backend.grpc.display_definition.CreateDataEntryRequest;
+import org.spin.backend.grpc.display_definition.DataEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
+import org.spin.backend.grpc.display_definition.DeleteDataEntryRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
@@ -52,19 +61,27 @@ import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ReadDataEntryRequest;
 import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.ResourceGroup;
 import org.spin.backend.grpc.display_definition.ResourceGroupChild;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
+import org.spin.backend.grpc.display_definition.UpdateDataEntryRequest;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
+import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;import com.solop.sp010.controller.DisplayBuilder;
+import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.ValueManager;
+
+import com.google.protobuf.Empty;
+import com.google.protobuf.Value;
+import com.solop.sp010.controller.DisplayBuilder;
 import com.solop.sp010.data.calendar.CalendarData;
 import com.solop.sp010.data.kanban.KanbanData;
 import com.solop.sp010.data.resource.ResourceData;
@@ -79,6 +96,27 @@ import com.solop.sp010.util.Changes;
 
 public class DisplayDefinitionServiceLogic {
 
+	public static PO validateAndGetDisplayDefinition(int displayDefinitionId) {
+			if (displayDefinitionId <= 0) {
+				throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
+			}
+			PO displayDefinition = new Query(
+				Env.getCtx(),
+				Changes.SP010_DisplayDefinition,
+				"SP010_DisplayDefinition_ID = ?",
+				null
+			)
+				.setParameters(displayDefinitionId)
+				.first()
+			;
+			if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+				throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
+			}
+			return displayDefinition;
+		}
+	
+	
+	
 	public static ExistsDisplayDefinitionMetadataResponse.Builder existsDisplayDefinitionsMetadata(ExistsDisplayDefinitionMetadataRequest request) {
 		// validate and get table
 		final MTable table = RecordUtil.validateAndGetTable(
@@ -201,22 +239,13 @@ public class DisplayDefinitionServiceLogic {
 			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
 		}
 
-		MTable table =RecordUtil.validateAndGetTable(
+		MTable table = RecordUtil.validateAndGetTable(
 			"SP010_Field"
 		);
 
-		PO displayDefinition = new Query(
-			Env.getCtx(),
-			Changes.SP010_DisplayDefinition,
-			"SP010_DisplayDefinition_ID = ?",
-			null
-		)
-			.setParameters(request.getDisplayDefinitionId())
-			.first()
-		;
-		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
-			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
 
 		Query query = new Query(
 			Env.getCtx(),
@@ -224,7 +253,7 @@ public class DisplayDefinitionServiceLogic {
 			"SP010_DisplayDefinition_ID = ?",
 			null
 		)
-			.setParameters(request.getDisplayDefinitionId())
+			.setParameters(displayDefinition.get_ID())
 			.setOnlyActiveRecords(true)
 		;
 
@@ -252,22 +281,9 @@ public class DisplayDefinitionServiceLogic {
 
 
 	public static ListCalendarsDataResponse.Builder listCalendarsData(ListCalendarsDataRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
-		}
-
-		PO displayDefinition = new Query(
-			Env.getCtx(),
-			Changes.SP010_DisplayDefinition,
-			"SP010_DisplayDefinition_ID = ?",
-			null
-		)
-			.setParameters(request.getId())
-			.first()
-		;
-		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
-			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -275,7 +291,9 @@ public class DisplayDefinitionServiceLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
-		CalendarData displayData = (CalendarData) DisplayBuilder.newInstance(request.getId())
+		CalendarData displayData = (CalendarData) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
 			.withFilters(filtersList)
 			.withLimit(limit)
 			.withOffset(offset)
@@ -313,24 +331,11 @@ public class DisplayDefinitionServiceLogic {
 
 
 	public static ListKanbansDefinitionResponse.Builder listKanbansDefinition(ListKanbansDefinitionRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
 
-		PO displayDefinition = new Query(
-			Env.getCtx(),
-			Changes.SP010_DisplayDefinition,
-			"SP010_DisplayDefinition_ID = ?",
-			null
-		)
-			.setParameters(request.getId())
-			.first()
-		;
-		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
-			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
-		}
-
-		Kanban kanbanDefinition = new Kanban(request.getId());
+		Kanban kanbanDefinition = new Kanban(displayDefinition.get_ID());
 		ListKanbansDefinitionResponse.Builder builderList = ListKanbansDefinitionResponse.newBuilder()
 			.setName(
 				StringManager.getValidString(
@@ -359,22 +364,9 @@ public class DisplayDefinitionServiceLogic {
 	}
 
 	public static ListKanbansDataResponse.Builder listKanbansData(ListKanbansDataRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
-		}
-
-		PO displayDefinition = new Query(
-			Env.getCtx(),
-			Changes.SP010_DisplayDefinition,
-			"SP010_DisplayDefinition_ID = ?",
-			null
-		)
-			.setParameters(request.getId())
-			.first()
-		;
-		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
-			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -382,7 +374,7 @@ public class DisplayDefinitionServiceLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
-		KanbanData displayData = (KanbanData) DisplayBuilder.newInstance(request.getId())
+		KanbanData displayData = (KanbanData) DisplayBuilder.newInstance(displayDefinition.get_ID())
 			.withFilters(filtersList)
 			.withLimit(limit)
 			.withOffset(offset)
@@ -434,22 +426,9 @@ public class DisplayDefinitionServiceLogic {
 	}
 	
 	public static ListResourcesDataResponse.Builder listResourcesData(ListResourcesDataRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
-		}
-
-		PO displayDefinition = new Query(
-			Env.getCtx(),
-			Changes.SP010_DisplayDefinition,
-			"SP010_DisplayDefinition_ID = ?",
-			null
-		)
-			.setParameters(request.getId())
-			.first()
-		;
-		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
-			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -457,7 +436,9 @@ public class DisplayDefinitionServiceLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
-		ResourceData displayData = (ResourceData) DisplayBuilder.newInstance(request.getId())
+		ResourceData displayData = (ResourceData) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
 			.withFilters(filtersList)
 			.withLimit(limit)
 			.withOffset(offset)
@@ -514,22 +495,9 @@ public class DisplayDefinitionServiceLogic {
 	}
 
 	public static ListTimelinesDataResponse.Builder listTimelinesData(ListTimelinesDataRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
-		}
-
-		PO displayDefinition = new Query(
-			Env.getCtx(),
-			Changes.SP010_DisplayDefinition,
-			"SP010_DisplayDefinition_ID = ?",
-			null
-		)
-			.setParameters(request.getId())
-			.first()
-		;
-		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
-			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -537,7 +505,9 @@ public class DisplayDefinitionServiceLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
-		TimeLineData displayData = (TimeLineData) DisplayBuilder.newInstance(request.getId())
+		TimeLineData displayData = (TimeLineData) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
 			.withFilters(filtersList)
 			.withLimit(limit)
 			.withOffset(offset)
@@ -575,24 +545,11 @@ public class DisplayDefinitionServiceLogic {
 
 
 	public static ListWorkflowsDefinitionResponse.Builder listWorkflowsDefinition(ListWorkflowsDefinitionRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
 
-		PO displayDefinition = new Query(
-			Env.getCtx(),
-			Changes.SP010_DisplayDefinition,
-			"SP010_DisplayDefinition_ID = ?",
-			null
-		)
-			.setParameters(request.getId())
-			.first()
-		;
-		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
-			throw new AdempiereException("@SP010_DisplayDefinition_ID@ @NotFound@");
-		}
-
-		Workflow worflowDefinition = new Workflow(request.getId());
+		Workflow worflowDefinition = new Workflow(displayDefinition.get_ID());
 
 		ListWorkflowsDefinitionResponse.Builder builderList = ListWorkflowsDefinitionResponse.newBuilder()
 			.setName(
@@ -699,6 +656,181 @@ public class DisplayDefinitionServiceLogic {
 			builderList.addRecords(builder);
 		});
 		return builderList;
+	}
+
+
+
+	public static DataEntry.Builder createDataEntry(CreateDataEntryRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		//	Fill context
+		Properties context = Env.getCtx();
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, context, request.getContextAttributes()
+		);
+
+		MTable table = MTable.get(
+			context,
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+		PO currentEntity = table.getPO(0, null);
+		if (currentEntity == null) {
+			throw new AdempiereException("@Error@ PO is null");
+		}
+		POAdapter adapter = new POAdapter(currentEntity);
+
+		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
+		attributes.entrySet().forEach(attribute -> {
+			final String columnName = attribute.getKey();
+			MColumn column = table.getColumn(columnName);
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
+				return;
+			}
+			int referenceId = column.getAD_Reference_ID();
+			Object value = null;
+			if (!attribute.getValue().hasNullValue()) {
+				if (referenceId > 0) {
+					value = ValueManager.getObjectFromReference(
+						attribute.getValue(),
+						referenceId
+					);
+				} 
+				if (value == null) {
+					value = ValueManager.getObjectFromValue(
+						attribute.getValue()
+					);
+				}
+			}
+			if (column.isMandatory() && value == null) {
+				// fill value with context
+				String currentValue = Env.getContext(context, windowNo, columnName, false);
+				if (!Util.isEmpty(currentValue, true)) {
+					value = currentValue;
+				}
+			}
+			adapter.set_ValueNoCheck(columnName, value);
+		});
+		//	Save entity
+		currentEntity.saveEx();
+
+		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
+			displayDefinition,
+			currentEntity
+		);
+
+		return builder;
+	}
+
+	public static DataEntry.Builder readDataEntry(ReadDataEntryRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		MTable table = MTable.get(
+			Env.getCtx(),
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@");
+		}
+		PO entity = table.getPO(request.getId(), null);
+		if (entity == null || entity.get_ID() <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+
+		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
+			displayDefinition,
+			entity
+		);
+
+		return builder;
+	}
+
+	public static DataEntry.Builder updateDataEntry(UpdateDataEntryRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		MTable table = MTable.get(
+			Env.getCtx(),
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+		String[] keyColumns = table.getKeyColumns();
+
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@");
+		}
+		PO currentEntity = table.getPO(request.getId(), null);
+		if (currentEntity == null || currentEntity.get_ID() <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		POAdapter adapter = new POAdapter(currentEntity);
+
+		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
+		attributes.entrySet().forEach(attribute -> {
+			final String columnName = attribute.getKey();
+			MColumn column = table.getColumn(columnName);
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
+				return;
+			}
+			if (Arrays.stream(keyColumns).anyMatch(columnName::equals)) {
+				// prevent warning `PO.set_Value: Column not updateable`
+				return;
+			}
+			int referenceId = column.getAD_Reference_ID();
+			Object value = null;
+			if (!attribute.getValue().hasNullValue()) {
+				if (referenceId > 0) {
+					value = ValueManager.getObjectFromReference(
+						attribute.getValue(),
+						referenceId
+					);
+				} 
+				if (value == null) {
+					value = ValueManager.getObjectFromValue(
+						attribute.getValue()
+					);
+				}
+			}
+			adapter.set_ValueNoCheck(columnName, value);
+		});
+		//	Save entity
+		currentEntity.saveEx();
+
+		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
+			displayDefinition,
+			currentEntity
+		);
+
+		return builder;
+	}
+
+	public static Empty.Builder deleteDataEntry(DeleteDataEntryRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		MTable table = MTable.get(
+			Env.getCtx(),
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@");
+		}
+		PO entity = table.getPO(request.getId(), null);
+		if (entity == null || entity.get_ID() <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		entity.saveEx();
+
+		return Empty.newBuilder();
 	}
 
 }

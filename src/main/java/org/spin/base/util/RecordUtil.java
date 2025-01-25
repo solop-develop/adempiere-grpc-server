@@ -222,6 +222,21 @@ public class RecordUtil {
 		}
 		return table;
 	}
+	/**
+	 * Validate tableName and MTable, and get instance
+	 * @param tableId
+	 * @return
+	 */
+	public static MTable validateAndGetTable(int tableId) {
+		if (tableId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+		MTable table = MTable.get(Env.getCtx(), tableId);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+		return table;
+	}
 
 
 
