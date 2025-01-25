@@ -21,12 +21,15 @@ import org.adempiere.core.domains.models.I_AD_FieldGroup;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.X_AD_FieldGroup;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.POInfo;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
+import org.spin.backend.grpc.display_definition.DataEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.DefinitionType;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
@@ -745,6 +748,58 @@ public class DisplayDefinitionConvertUtil {
 			}
 			fields.putFields(StringManager.getValidString(field.getValue().getColumnName()), Value.newBuilder().setStructValue(fieldValue.build()).build());
 		});
+		return builder;
+	}
+
+
+	public static DataEntry.Builder convertDataEntry(PO displayDefinition, PO entity) {
+		if (entity == null || entity.get_ID() <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+
+		DataEntry.Builder builder = DataEntry.newBuilder()
+			.setId(
+				entity.get_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					entity.get_UUID()
+				)
+			)
+			.setIsActive(
+				entity.isActive()
+			)
+		;
+
+		MTable table = MTable.get(
+			Env.getCtx(),
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+		boolean isReadOnly = false;
+		POInfo info = POInfo.getPOInfo(Env.getCtx(), table.getAD_Table_ID());
+		if(info.getColumnIndex("Processed") > 0) {
+			isReadOnly = entity.get_ValueAsBoolean("Processed");
+		}
+		if(info.getColumnIndex("Processing") > 0 && !isReadOnly) {
+			isReadOnly = entity.get_ValueAsBoolean("Processing");
+		}
+		builder.setIsReadOnly(isReadOnly);
+
+		final String displayType = displayDefinition.get_ValueAsString(Changes.SP010_DisplayType);
+		if (!Util.isEmpty(displayType, true)) {
+			if (displayType.equals(Changes.SP010_DisplayType_Calendar)) {
+				
+			} else if (displayType.equals(Changes.SP010_DisplayType_Kanban)) {
+				
+			} else if (displayType.equals(Changes.SP010_DisplayType_Resource)) {
+				
+			} else if (displayType.equals(Changes.SP010_DisplayType_Timeline)) {
+				
+			} else if (displayType.equals(Changes.SP010_DisplayType_Workflow)) {
+				
+			}
+		}
+
 		return builder;
 	}
 
