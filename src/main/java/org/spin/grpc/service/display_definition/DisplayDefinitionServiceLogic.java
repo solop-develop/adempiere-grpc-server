@@ -665,11 +665,6 @@ public class DisplayDefinitionServiceLogic {
 			request.getDisplayDefinitionId()
 		);
 
-		MTable table = MTable.get(
-			Env.getCtx(),
-			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
-		);
-
 		//	Fill context
 		Properties context = Env.getCtx();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
@@ -677,6 +672,10 @@ public class DisplayDefinitionServiceLogic {
 			windowNo, context, request.getContextAttributes()
 		);
 
+		MTable table = MTable.get(
+			context,
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
 		PO currentEntity = table.getPO(0, null);
 		if (currentEntity == null) {
 			throw new AdempiereException("@Error@ PO is null");
@@ -704,6 +703,13 @@ public class DisplayDefinitionServiceLogic {
 					value = ValueManager.getObjectFromValue(
 						attribute.getValue()
 					);
+				}
+			}
+			if (column.isMandatory() && value == null) {
+				// fill value with context
+				String currentValue = Env.getContext(context, windowNo, columnName, false);
+				if (!Util.isEmpty(currentValue, true)) {
+					value = currentValue;
 				}
 			}
 			adapter.set_ValueNoCheck(columnName, value);
