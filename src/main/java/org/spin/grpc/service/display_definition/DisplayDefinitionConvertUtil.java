@@ -181,7 +181,7 @@ public class DisplayDefinitionConvertUtil {
 				}
 			} else if (displayType.equals(Changes.SP010_DisplayType_Timeline)) {
 				builder.setType(
-					DefinitionType.TIMERLINE
+					DefinitionType.TIMELINE
 				);
 				int dateColumnId = record.get_ValueAsInt(
 					Changes.SP010_Date_ID

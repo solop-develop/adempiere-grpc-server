@@ -159,7 +159,7 @@ enum DefinitionType {
 	CALENDAR = 1;
 	KANBAN = 2;
 	RESOURCE = 4; // As Gannt
-	TIMERLINE = 5;
+	TIMELINE = 5;
 	WORKFLOW = 6;
 }
 message DefinitionMetadata {
@@ -347,20 +347,17 @@ message ResourceEntry {
 	string color = 12;
 	google.protobuf.Struct fields = 13;
 }
-
 message ResourceGroup {
 	string name = 1;
 	string color = 2;
 	repeated ResourceGroupChild resources = 3;
 }
-
 message ResourceGroupChild {
 	int32 id = 1;
 	string uuid = 2;
 	string name = 3;
 	string color = 4;
 }
-
 message ListResourcesDataRequest {
 	string filters = 1;
 	string sort_by = 2;
