@@ -97,7 +97,7 @@ public class WhereClauseUtil {
 
 		String validationCode = dynamicValidation;
 		if (!matcherTableAliases.find()) {
-			final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY)\\b)(\\w+)(\\s+){0,1}";
+			final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY|DISTINCT)\\b)(\\w+)(\\s+){0,1}";
 			// columnName = value
 			Pattern patternColumnName = Pattern.compile(
 				columnsRegex + OperatorUtil.SQL_OPERATORS_REGEX,
