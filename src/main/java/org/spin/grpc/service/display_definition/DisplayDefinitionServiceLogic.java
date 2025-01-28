@@ -83,6 +83,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.Value;
 import com.solop.sp010.controller.DisplayBuilder;
 import com.solop.sp010.data.calendar.CalendarData;
+import com.solop.sp010.data.generic.GenericItem;
 import com.solop.sp010.data.kanban.KanbanData;
 import com.solop.sp010.data.resource.ResourceData;
 import com.solop.sp010.data.resource.ResourceItem;
@@ -717,9 +718,16 @@ public class DisplayDefinitionServiceLogic {
 		//	Save entity
 		currentEntity.saveEx();
 
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				currentEntity.get_ID()
+			)
+		;
 		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
 			displayDefinition,
-			currentEntity
+			recordItem
 		);
 
 		return builder;
@@ -743,9 +751,16 @@ public class DisplayDefinitionServiceLogic {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				entity.get_ID()
+			)
+		;
 		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
 			displayDefinition,
-			entity
+			recordItem
 		);
 
 		return builder;
@@ -803,9 +818,16 @@ public class DisplayDefinitionServiceLogic {
 		//	Save entity
 		currentEntity.saveEx();
 
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				currentEntity.get_ID()
+			)
+		;
 		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
 			displayDefinition,
-			currentEntity
+			recordItem
 		);
 
 		return builder;

@@ -25,7 +25,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
-import org.compiere.model.POInfo;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
@@ -47,6 +46,7 @@ import org.spin.service.grpc.util.value.ValueManager;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.solop.sp010.data.calendar.CalendarItem;
+import com.solop.sp010.data.generic.GenericItem;
 import com.solop.sp010.data.kanban.KanbanColumn;
 import com.solop.sp010.data.kanban.KanbanItem;
 import com.solop.sp010.data.resource.ResourceItem;
@@ -752,53 +752,96 @@ public class DisplayDefinitionConvertUtil {
 	}
 
 
-	public static DataEntry.Builder convertDataEntry(PO displayDefinition, PO entity) {
-		if (entity == null || entity.get_ID() <= 0) {
+	public static DataEntry.Builder convertDataEntry(PO displayDefinition, GenericItem baseItem) {
+		if (baseItem == null || baseItem.getId() <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 
 		DataEntry.Builder builder = DataEntry.newBuilder()
 			.setId(
-				entity.get_ID()
+				baseItem.getId()
 			)
 			.setUuid(
 				StringManager.getValidString(
-					entity.get_UUID()
+					baseItem.getUuid()
+				)
+			)
+			.setTitle(
+				StringManager.getValidString(
+					baseItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					baseItem.getDescription()
 				)
 			)
 			.setIsActive(
-				entity.isActive()
+				baseItem.isActive()
+			)
+			.setIsReadOnly(
+				baseItem.isReadOnly()
 			)
 		;
 
-		MTable table = MTable.get(
-			Env.getCtx(),
-			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
-		);
-		boolean isReadOnly = false;
-		POInfo info = POInfo.getPOInfo(Env.getCtx(), table.getAD_Table_ID());
-		if(info.getColumnIndex("Processed") > 0) {
-			isReadOnly = entity.get_ValueAsBoolean("Processed");
+		//	Additional fields
+		MTable fieldTable = MTable.get(Env.getCtx(), Changes.SP010_Field);
+		if(fieldTable == null) {
+			return builder;
 		}
-		if(info.getColumnIndex("Processing") > 0 && !isReadOnly) {
-			isReadOnly = entity.get_ValueAsBoolean("Processing");
-		}
-		builder.setIsReadOnly(isReadOnly);
 
-		final String displayType = displayDefinition.get_ValueAsString(Changes.SP010_DisplayType);
-		if (!Util.isEmpty(displayType, true)) {
-			if (displayType.equals(Changes.SP010_DisplayType_Calendar)) {
-				
-			} else if (displayType.equals(Changes.SP010_DisplayType_Kanban)) {
-				
-			} else if (displayType.equals(Changes.SP010_DisplayType_Resource)) {
-				
-			} else if (displayType.equals(Changes.SP010_DisplayType_Timeline)) {
-				
-			} else if (displayType.equals(Changes.SP010_DisplayType_Workflow)) {
-				
-			}
-		}
+		Struct.Builder additionalFields = Struct.newBuilder();
+		baseItem.getFields()
+			.forEach((fieldId, fieldEntry) -> {
+				PO field = fieldTable.getPO(fieldId, null);
+				int referenceId = field.get_ValueAsInt(
+					I_AD_Field.COLUMNNAME_AD_Reference_ID
+				);
+				MColumn column = MColumn.get(
+					Env.getCtx(),
+					field.get_ValueAsInt(
+						I_AD_Column.COLUMNNAME_AD_Column_ID
+					)
+				);
+				if(referenceId <= 0) {
+					referenceId = column.getAD_Reference_ID();
+				}
+				Struct.Builder fieldItem = Struct.newBuilder();
+
+				// value
+				Value.Builder valueBuilder = ValueManager.getValueFromReference(
+					fieldEntry.getValue(),
+					referenceId
+				);
+				fieldItem.putFields(
+					"value",
+					valueBuilder.build()
+				);
+				// display value
+				String displayValue = fieldEntry.getDisplayValue();
+				if (fieldEntry.getValue() == null || Util.isEmpty(displayValue, true)) {
+					displayValue = null;
+				}
+				Value.Builder displayValueBuilder = ValueManager.getValueFromString(
+					displayValue
+				);
+				fieldItem.putFields(
+					"display_value",
+					displayValueBuilder.build()
+				);
+
+				Value.Builder structField = Value.newBuilder().setStructValue(
+					fieldItem
+				);
+				additionalFields.putFields(
+					column.getColumnName(),
+					structField.build()
+				);
+			})
+		;
+		builder.setFields(
+			additionalFields
+		);
 
 		return builder;
 	}
