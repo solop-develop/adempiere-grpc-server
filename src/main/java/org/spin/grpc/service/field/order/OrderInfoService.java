@@ -4,7 +4,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.field.order.GetOrderInfoRequest;
-import org.spin.backend.grpc.field.order.ListBusinessPartnersOrderRequest;
+import org.spin.backend.grpc.field.order.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.field.order.ListOrdersInfoRequest;
 import org.spin.backend.grpc.field.order.ListOrdersInfoResponse;
 import org.spin.backend.grpc.field.order.OrderInfo;
@@ -29,10 +29,12 @@ public class OrderInfoService extends OrderInfoServiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -43,22 +45,24 @@ public class OrderInfoService extends OrderInfoServiceImplBase {
 	 */
 	public void getOrderInfo(GetOrderInfoRequest request, StreamObserver<OrderInfo> responseObserver) {
 		try {
-            if(request == null) {
-                throw new AdempiereException("Object GetOrderInfoRequest Null");
-            }
-            OrderInfo.Builder entityValue = OrderInfoLogic.getOrder(request);
-            responseObserver.onNext(
-                entityValue.build()
-            );
-            responseObserver.onCompleted();
-        } catch (Exception e) {
-            log.severe(e.getLocalizedMessage());
-            responseObserver.onError(Status.INTERNAL
-                .withDescription(e.getLocalizedMessage())
-                .withCause(e)
-                .asRuntimeException()
-            );
-        }
+			if(request == null) {
+				throw new AdempiereException("Object GetOrderInfoRequest Null");
+			}
+			OrderInfo.Builder entityValue = OrderInfoLogic.getOrder(request);
+			responseObserver.onNext(
+				entityValue.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
 	}
 
 
@@ -67,11 +71,8 @@ public class OrderInfoService extends OrderInfoServiceImplBase {
 	 * @param responseObserver
 	 */
 	@Override
-	public void listBusinessPartners(ListBusinessPartnersOrderRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	public void listBusinessPartners(ListBusinessPartnersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			// if(request == null) {
-			// 	throw new AdempiereException("Object ListBusinessPartnersRequest Null");
-			// }
 			ListLookupItemsResponse.Builder entityValueList = OrderInfoLogic.listBusinessPartners(request);
 			responseObserver.onNext(
 				entityValueList.build()
@@ -79,10 +80,12 @@ public class OrderInfoService extends OrderInfoServiceImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}

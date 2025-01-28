@@ -19,7 +19,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.field.order.GetOrderInfoRequest;
-import org.spin.backend.grpc.field.order.ListBusinessPartnersOrderRequest;
+import org.spin.backend.grpc.field.order.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.field.order.ListOrdersInfoRequest;
 import org.spin.backend.grpc.field.order.ListOrdersInfoResponse;
 import org.spin.backend.grpc.field.order.OrderInfo;
@@ -34,6 +34,7 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class OrderInfoLogic {
@@ -45,7 +46,7 @@ public class OrderInfoLogic {
 	 * @return
 	 */
 
-	 public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersOrderRequest request) {
+	 public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
 		String whereClause = "";
 		if (!Util.isEmpty(request.getIsSalesTransaction(), true)) {
 			boolean isSalesTransaction = BooleanManager.getBooleanFromString(
@@ -95,7 +96,7 @@ public class OrderInfoLogic {
 			+ "o.IsSOTrx, "
 			+ "o.Description, "
 			+ "o.POReference, "
-			+ "o.isdelivered, "
+			+ "o.isDelivered, "
 			+ "o.DocStatus "
 			+ "FROM C_Order AS o "
 			+ "WHERE o.C_Order_ID = ? "
@@ -157,7 +158,7 @@ public class OrderInfoLogic {
 			+ "o.IsSOTrx, "
 			+ "o.Description, "
 			+ "o.POReference, "
-			+ "o.isdelivered, "
+			+ "o.isDelivered, "
 			+ "o.DocStatus "
 			+ "FROM C_Order AS o "
 			+ "WHERE 1=1 "
@@ -228,11 +229,11 @@ public class OrderInfoLogic {
 				filtersList.add(dateTo);
 			}
 		}
-		// Order
-		if (request.getOrderId() > 0) {
-			sql += "AND o.C_Order_ID = ? ";
+		// Order Reference
+		if (Util.isEmpty(request.getOrderReference(), true)) {
+			sql += "AND UPPER(o.POReference) LIKE '%' || UPPER(?) || '%' ";
 			filtersList.add(
-				request.getOrderId()
+				request.getOrderReference()
 			);
 		}
 		// Grand Total From
@@ -315,7 +316,7 @@ public class OrderInfoLogic {
 		ListOrdersInfoResponse.Builder builderList = ListOrdersInfoResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					nexPageToken
 				)
 			)

@@ -34,7 +34,7 @@ import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.inout.InOutInfoServiceGrpc.InOutInfoServiceImplBase;
 import org.spin.backend.grpc.inout.ListInOutInfoRequest;
@@ -160,7 +160,11 @@ public class InOutInfoService extends InOutInfoServiceImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		//	Set next page
-		builder.setNextPageToken(ValueManager.validateNull(nexPageToken));
+		builder.setNextPageToken(
+			StringManager.getValidString(
+				nexPageToken
+			)
+		);
 
 		return builder;
 	}

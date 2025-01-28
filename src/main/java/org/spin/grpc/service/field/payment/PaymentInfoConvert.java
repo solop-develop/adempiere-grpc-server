@@ -21,8 +21,8 @@ import org.adempiere.core.domains.models.I_C_Payment;
 import org.compiere.model.MPayment;
 import org.spin.backend.grpc.field.payment.PaymentInfo;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Elsio Sanchez elsiosanches@gmail.com, https://github.com/elsiosanchez
@@ -49,26 +49,26 @@ public class PaymentInfoConvert {
 				)
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString(
 						I_C_Payment.COLUMNNAME_UUID
 					)
 				)
 			)
 			.setDisplayValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					payment.getDisplayValue()
 				)
 			)
 			.setBankAccount(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString(
 						"BankAccount"
 					)
 				)
 			)
 			.setBusinessPartner(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString("BusinessPartner")
 				)
 			)
@@ -80,24 +80,24 @@ public class PaymentInfoConvert {
 				)
 			)
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString(
 						I_C_Payment.COLUMNNAME_DocumentNo
 					)
 				)
 			)
 			.setDocumentType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString("DocmentType")
 				)
 			)
 			.setInfoTo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString("InfoTo")
 				)
 			)
 			.setAccountName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString(
 						I_C_Payment.COLUMNNAME_A_Name
 					)
@@ -109,7 +109,7 @@ public class PaymentInfoConvert {
 				)
 			)
 			.setCurrency(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString("Currency")
 				)
 			)
@@ -145,7 +145,7 @@ public class PaymentInfoConvert {
 				)
 			)
 			.setDocumentStatus(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					payment.getDocStatusName()
 				)
 			)

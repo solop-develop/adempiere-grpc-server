@@ -30,7 +30,7 @@ package field.payment;
 
 // The payment service definition.
 service PaymentInfoService {
-	// criteria
+	// Filters
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/fields/payments/business-partners"
@@ -41,7 +41,8 @@ service PaymentInfoService {
 			get: "/fields/payments/bank-account"
 		};
 	}
-	// result
+
+	// Result
 	rpc ListPaymentInfo(ListPaymentInfoRequest) returns (ListPaymentInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/payments"
@@ -60,9 +61,13 @@ service PaymentInfoService {
 			additional_bindings: {
 				get: "/fields/payments/query-criteria/{browse_field_id}"
 			}
+			additional_bindings: {
+				get: "/fields/payments/display-definition/{display_definition_field_id}"
+			}
 		};
 	}
 }
+
 
 // List Payment Info Request
 message PaymentInfo {
@@ -106,26 +111,26 @@ message ListPaymentInfoRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
 	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
+	int32 reference_id = 11;
+	string table_name = 12;
+	string column_name = 13;
 	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
-	//
-	bool is_without_validation = 17;
-	// custom filter
-	string document_no = 18;
-	int32 business_partner_id = 19;
-	string is_receipt = 20;
-	string is_payment = 21;
-	int32 bank_account_id = 22;
-	google.protobuf.Timestamp payment_date_from = 23;
-	google.protobuf.Timestamp payment_date_to = 24;
-	string grand_total_from = 25;
-	string grand_total_to = 26;
+	int32 field_id = 15;
+	int32 process_parameter_id = 16;
+	int32 browse_field_id = 17;
+	int32 display_definition_field_id = 18;
+	// custom filters
+	string document_no = 19;
+	int32 business_partner_id = 20;
+	string is_receipt = 21;
+	string is_payment = 22;
+	int32 bank_account_id = 23;
+	google.protobuf.Timestamp payment_date_from = 24;
+	google.protobuf.Timestamp payment_date_to = 25;
+	string pay_amount_from = 26;
+	string pay_amount_to = 27;
 }
 
 // Business Partners

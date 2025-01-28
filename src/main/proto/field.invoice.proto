@@ -31,7 +31,7 @@ package field.invoice;
 
 // The invoice service definition.
 service InvoiceInfoService {
-	// criteria
+	// Filters
 	rpc ListOrders(ListOrdersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/fields/invoices/orders"
@@ -43,7 +43,7 @@ service InvoiceInfoService {
 		};
 	}
 
-	// result
+	// Result
 	rpc ListInvoiceInfo(ListInvoicesInfoRequest) returns (ListInvoicesInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/invoices"
@@ -62,6 +62,9 @@ service InvoiceInfoService {
 			additional_bindings: {
 				get: "/fields/invoices/query-criteria/{browse_field_id}"
 			}
+			additional_bindings: {
+				get: "/fields/orders/display-definition/{display_definition_field_id}"
+			}
 		};
 	}
 	rpc GetInvoiceInfo(GetInvoiceInfoRequest) returns (InvoiceInfo) {
@@ -75,6 +78,7 @@ service InvoiceInfoService {
 		};
 	}
 }
+
 
 // List Invoice Info Request
 message ListOrdersRequest {
@@ -145,27 +149,27 @@ message ListInvoicesInfoRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
 	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
+	int32 reference_id = 11;
+	string table_name = 12;
+	string column_name = 13;
 	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
-	//
-	bool is_without_validation = 17;
-	// custom filter
-	string document_no = 18;
-	int32 business_partner_id = 19;
-	string is_sales_transaction = 20;
-	string is_paid = 21;
-	string description = 22;
-	google.protobuf.Timestamp invoice_date_from = 23;
-	google.protobuf.Timestamp invoice_date_to = 24;
-	int32 order_id = 25;
-	string grand_total_from = 26;
-	string grand_total_to = 27;
+	int32 field_id = 15;
+	int32 process_parameter_id = 16;
+	int32 browse_field_id = 17;
+	int32 display_definition_field_id = 18;
+	// custom filters
+	string document_no = 19;
+	int32 business_partner_id = 20;
+	string is_sales_transaction = 21;
+	string is_paid = 22;
+	string description = 23;
+	google.protobuf.Timestamp invoice_date_from = 24;
+	google.protobuf.Timestamp invoice_date_to = 25;
+	int32 order_id = 26;
+	string grand_total_from = 27;
+	string grand_total_to = 28;
 }
 
 

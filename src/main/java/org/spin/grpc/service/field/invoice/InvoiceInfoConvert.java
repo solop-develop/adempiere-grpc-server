@@ -25,8 +25,8 @@ import org.spin.backend.grpc.field.invoice.InvoiceInfo;
 import org.spin.backend.grpc.field.invoice.InvoicePaySchedule;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -50,19 +50,19 @@ public class InvoiceInfoConvert {
 				)
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString(
 						I_C_Invoice.COLUMNNAME_UUID
 					)
 				)
 			)
 			.setDisplayValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					invoice.getDisplayValue()
 				)
 			)
 			.setBusinessPartner(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString("BusinessPartner")
 				)
 			)
@@ -74,14 +74,14 @@ public class InvoiceInfoConvert {
 				)
 			)
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString(
 						I_C_Invoice.COLUMNNAME_DocumentNo
 					)
 				)
 			)
 			.setCurrency(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString("Currency")
 				)
 			)
@@ -103,7 +103,7 @@ public class InvoiceInfoConvert {
 				)
 			)
 			.setPaymentTerm(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString("PaymentTerm")
 				)
 			)
@@ -118,19 +118,19 @@ public class InvoiceInfoConvert {
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString(
 						I_C_Invoice.COLUMNNAME_Description
 					)
 				)
 			)
 			.setPoReference(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					I_C_Invoice.COLUMNNAME_POReference
 				)
 			)
 			.setDocumentStatus(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					invoice.getDocStatusName()
 				)
 			)
@@ -169,7 +169,7 @@ public class InvoiceInfoConvert {
 				)
 			)
 			.setCurrency(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					rs.getString("Currency")
 				)
 			)

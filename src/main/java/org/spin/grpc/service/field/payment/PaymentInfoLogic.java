@@ -47,6 +47,7 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class PaymentInfoLogic {
@@ -219,24 +220,24 @@ public class PaymentInfoLogic {
 				filtersList.add(dateTo);
 			}
 		}
-		// Grand Total From
-		BigDecimal grandTotalFrom = NumberManager.getBigDecimalFromString(
-			request.getGrandTotalFrom()
+		// Pay Amount From
+		BigDecimal payAmountFrom = NumberManager.getBigDecimalFromString(
+			request.getPayAmountFrom()
 		);
-		if (grandTotalFrom != null) {
+		if (payAmountFrom != null) {
 			sql += "AND PayAmt >= ? ";
 			filtersList.add(
-				grandTotalFrom
+				payAmountFrom
 			);
 		}
-		// Grand Total To
-		BigDecimal grandTotalTo = NumberManager.getBigDecimalFromString(
-			request.getGrandTotalTo()
+		// Pay Amount To
+		BigDecimal payAmountTo = NumberManager.getBigDecimalFromString(
+			request.getPayAmountTo()
 		);
-		if (grandTotalTo != null) {
+		if (payAmountTo != null) {
 			sql += "AND PayAmt <= ? ";
 			filtersList.add(
-				grandTotalTo
+				payAmountTo
 			);
 		}
 
@@ -299,7 +300,7 @@ public class PaymentInfoLogic {
 		ListPaymentInfoResponse.Builder builderList = ListPaymentInfoResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					nexPageToken
 				)
 			)
