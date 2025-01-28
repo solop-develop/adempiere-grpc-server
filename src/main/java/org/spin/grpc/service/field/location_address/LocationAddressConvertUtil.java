@@ -24,7 +24,7 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.field.location_address.Address;
 import org.spin.backend.grpc.field.location_address.Country;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 public class LocationAddressConvertUtil {
 
@@ -34,19 +34,21 @@ public class LocationAddressConvertUtil {
 			return builder;
 		}
 
-		builder.setId(country.getC_Country_ID())
+		builder.setId(
+				country.getC_Country_ID()
+			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.getUUID()
 				)
 			)
 			.setCountryCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.getCountryCode()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.get_Translation(
 						I_C_Country.COLUMNNAME_Name
 					)
@@ -56,19 +58,19 @@ public class LocationAddressConvertUtil {
 				country.isHasRegion()
 			)
 			.setRegionName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.get_Translation(
 						I_C_Country.COLUMNNAME_RegionName
 					)
 				)
 			)
 			.setCaptureSequence(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.getCaptureSequence()
 				)
 			)
 			.setDisplaySequence(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.getDisplaySequence()
 				)
 			)
@@ -76,7 +78,7 @@ public class LocationAddressConvertUtil {
 				country.isAddressLinesReverse()
 			)
 			.setDisplaySequenceLocal(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.getDisplaySequenceLocal()
 				)
 			)
@@ -84,7 +86,7 @@ public class LocationAddressConvertUtil {
 				country.isAddressLinesLocalReverse()
 			)
 			.setExpressionPostalCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.getExpressionPostal()
 				)
 			)
@@ -92,7 +94,7 @@ public class LocationAddressConvertUtil {
 				country.isHasPostal_Add()
 			)
 			.setExpressionPostalCodeAdditional(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					country.getExpressionPostal_Add()
 				)
 			)
@@ -137,14 +139,16 @@ public class LocationAddressConvertUtil {
 			}
 		}
 
-		builder.setId(address.getC_Location_ID())
+		builder.setId(
+				address.getC_Location_ID()
+			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.getUUID()
 				)
 			)
 			.setDisplayValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.toString()
 				)
 			)
@@ -152,7 +156,7 @@ public class LocationAddressConvertUtil {
 				address.getC_Country_ID()
 			)
 			.setCountryName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					countryName
 				)
 			)
@@ -160,7 +164,7 @@ public class LocationAddressConvertUtil {
 				address.getC_Region_ID()
 			)
 			.setRegionName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					regionName
 				)
 			)
@@ -168,42 +172,42 @@ public class LocationAddressConvertUtil {
 				address.getC_City_ID()
 			)
 			.setCityName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					cityName
 				)
 			)
 			.setCity(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.getCity()
 				)
 			)
 			.setAddress1(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.getAddress1()
 				)
 			)
 			.setAddress2(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.getAddress2()
 				)
 			)
 			.setAddress3(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.getAddress3()
 				)
 			)
 			.setAddress4(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.getAddress4()
 				)
 			)
 			.setPostalCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.getPostal()
 				)
 			)
 			.setPostalCodeAdditional(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					address.getPostal_Add()
 				)
 			)

@@ -39,6 +39,7 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class InvoiceInfoLogic {
@@ -374,7 +375,7 @@ public class InvoiceInfoLogic {
 		ListInvoicesInfoResponse.Builder builderList = ListInvoicesInfoResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					nexPageToken
 				)
 			)
@@ -456,7 +457,7 @@ public class InvoiceInfoLogic {
 		ListInvoicePaySchedulesResponse.Builder builderList = ListInvoicePaySchedulesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					nexPageToken
 				)
 			)

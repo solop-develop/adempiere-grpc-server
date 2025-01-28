@@ -57,6 +57,9 @@ service BusinessPartnerInfoService {
 			additional_bindings: {
 				get: "/fields/business-partners/query-criteria/{browse_field_id}"
 			}
+			additional_bindings: {
+				get: "/fields/business-partners/display-definition/{display_definition_field_id}"
+			}
 		};
 	}
 	rpc ListBusinessPartnerContacts(ListBusinessPartnerContactsRequest) returns (ListBusinessPartnerContactsResponse) {
@@ -70,6 +73,7 @@ service BusinessPartnerInfoService {
 		};
 	}
 }
+
 
 // Business Partner Group
 message ListBusinessPartnerGroupsRequest {
@@ -121,26 +125,26 @@ message ListBusinessPartnersInfoRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
 	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
+	int32 reference_id = 11;
+	string table_name = 12;
+	string column_name = 13;
 	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
-	//
-	bool is_without_validation = 17;
+	int32 field_id = 15;
+	int32 process_parameter_id = 16;
+	int32 browse_field_id = 17;
+	int32 display_definition_field_id = 18;
 	// custom filters
-	string value = 18;
-	string contact = 19;
-	string phone = 20;
-	string name = 21;
-	string email = 22;
-	string postal_code = 23;
-	string is_vendor = 24;
-	string is_customer = 25;
-	int32 business_partner_group_id = 26;
+	string value = 19;
+	string contact = 20;
+	string phone = 21;
+	string name = 22;
+	string email = 23;
+	string postal_code = 24;
+	string is_vendor = 25;
+	string is_customer = 26;
+	int32 business_partner_group_id = 27;
 }
 
 

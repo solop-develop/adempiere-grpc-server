@@ -31,14 +31,14 @@ package field.order;
 
 // The order service definition.
 service OrderInfoService {
-	// criteria
-	rpc ListBusinessPartners(ListBusinessPartnersOrderRequest) returns (data.ListLookupItemsResponse) {
+	// Filters
+	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/fields/orders/customers"
+			get: "/fields/orders/business-partners"
 		};
 	}
 
-	// result
+	// Result
 	rpc ListOrderInfo(ListOrdersInfoRequest) returns (ListOrdersInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/orders"
@@ -57,6 +57,9 @@ service OrderInfoService {
 			additional_bindings: {
 				get: "/fields/orders/query-criteria/{browse_field_id}"
 			}
+			additional_bindings: {
+				get: "/fields/orders/display-definition/{display_definition_field_id}"
+			}
 		};
 	}
 	rpc GetOrderInfo(GetOrderInfoRequest) returns (OrderInfo) {
@@ -65,6 +68,7 @@ service OrderInfoService {
 		};
 	}
 }
+
 
 // List Order Info Request
 message ListOrdersRequest {
@@ -82,7 +86,7 @@ message ListOrdersRequest {
 }
 
 // Business Partners
-message ListBusinessPartnersOrderRequest {
+message ListBusinessPartnersRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -133,25 +137,25 @@ message ListOrdersInfoRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
 	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
+	int32 reference_id = 11;
+	string table_name = 12;
+	string column_name = 13;
 	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
-	//
-	bool is_without_validation = 17;
-	// custom filter
-	string document_no = 18;
-	int32 business_partner_id = 19;
-	string is_sales_transaction = 20;
-	string description = 21;
-	google.protobuf.Timestamp order_date_from = 22;
-	google.protobuf.Timestamp order_date_to = 23;
-	string is_delivered = 24;
-	int32 order_id = 25;
-	string grand_total_from = 26;
-	string grand_total_to = 27;
+	int32 field_id = 15;
+	int32 process_parameter_id = 16;
+	int32 browse_field_id = 17;
+	int32 display_definition_field_id = 18;
+	// custom filters
+	string document_no = 19;
+	int32 business_partner_id = 20;
+	string is_sales_transaction = 21;
+	string description = 22;
+	google.protobuf.Timestamp order_date_from = 23;
+	google.protobuf.Timestamp order_date_to = 24;
+	string is_delivered = 25;
+	string order_reference = 26;
+	string grand_total_from = 27;
+	string grand_total_to = 28;
 }

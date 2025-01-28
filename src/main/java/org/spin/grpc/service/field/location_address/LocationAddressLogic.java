@@ -30,6 +30,7 @@ import org.spin.backend.grpc.field.location_address.ListRegionsRequest;
 import org.spin.backend.grpc.field.location_address.ListRegionsResponse;
 import org.spin.backend.grpc.field.location_address.UpdateAddressRequest;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class LocationAddressLogic {
@@ -93,9 +94,11 @@ public class LocationAddressLogic {
 				);
 			}
 			ListItem.Builder countryIntem = ListItem.newBuilder()
-				.setId(country.getC_Country_ID())
+				.setId(
+					country.getC_Country_ID()
+				)
 				.setName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						name
 					)
 				)
@@ -161,13 +164,14 @@ public class LocationAddressLogic {
 		;
 
 		query.getIDsAsList()
-			.parallelStream()
 			.forEach(regionId -> {
 				MRegion region = MRegion.get(Env.getCtx(), regionId);
 				ListItem.Builder regionItem = ListItem.newBuilder()
-					.setId(region.getC_Region_ID())
+					.setId(
+						region.getC_Region_ID()
+					)
 					.setName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							region.getName()
 						)
 					)
@@ -221,13 +225,14 @@ public class LocationAddressLogic {
 		;
 
 		query.getIDsAsList()
-			.parallelStream()
 			.forEach(cityId -> {
 				MCity city = MCity.get(Env.getCtx(), cityId);
 				ListItem.Builder cityItem = ListItem.newBuilder()
-					.setId(city.getC_City_ID())
+					.setId(
+						city.getC_City_ID()
+					)
 					.setName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							city.getName()
 						)
 					)

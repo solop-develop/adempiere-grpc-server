@@ -125,6 +125,7 @@ service FieldManagementService {
 	}
 }
 
+
 // Default Value
 message GetDefaultValueRequest {
 	google.protobuf.Value value = 1;
@@ -158,17 +159,16 @@ message ListGeneralSearchRecordsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
 	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
+	int32 reference_id = 11;
+	string table_name = 12;
+	string column_name = 13;
 	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
-	int32 display_definition_field_id = 17;
-	//
-	bool is_without_validation = 18;
+	int32 field_id = 15;
+	int32 process_parameter_id = 16;
+	int32 browse_field_id = 17;
+	int32 display_definition_field_id = 18;
 }
 
 
