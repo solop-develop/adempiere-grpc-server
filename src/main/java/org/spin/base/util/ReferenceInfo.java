@@ -268,6 +268,7 @@ public class ReferenceInfo {
 			displayTypeId,
 			fieldId, processParameterId, browseFieldId,
 			columnId, columnName, tableName,
+			0,
 			0, null, false
 		);
 	}
@@ -282,6 +283,7 @@ public class ReferenceInfo {
 			displayTypeId,
 			fieldId, processParameterId, browseFieldId,
 			columnId, columnName, tableName,
+			0,
 			0, null, isWithoutValidation
 		);
 	}
@@ -301,6 +303,7 @@ public class ReferenceInfo {
 			displayTypeId,
 			fieldId, processParameterId, browseFieldId,
 			columnId, columnName, tableName,
+			0,
 			0, null, false
 		);
 	}
@@ -320,6 +323,7 @@ public class ReferenceInfo {
 			displayTypeId,
 			fieldId, processParameterId, browseFieldId,
 			columnId, columnName, tableName,
+			0,
 			validationRuleId, customRestriction, isWithoutValidation
 		);
 	}
