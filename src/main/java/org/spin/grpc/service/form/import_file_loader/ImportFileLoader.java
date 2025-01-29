@@ -16,13 +16,13 @@ package org.spin.grpc.service.form.import_file_loader;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
-import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.import_file_loader.GetImportFromatRequest;
 import org.spin.backend.grpc.form.import_file_loader.ImportFileLoaderGrpc.ImportFileLoaderImplBase;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
 import org.spin.backend.grpc.form.import_file_loader.ListCharsetsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListFilePreviewRequest;
+import org.spin.backend.grpc.form.import_file_loader.ListFilePreviewResponse;
 import org.spin.backend.grpc.form.import_file_loader.ListImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportProcessesRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportTablesRequest;
@@ -57,10 +57,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -80,10 +81,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -103,36 +105,38 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
 
 
 
-//	@Override
-//	public void listClientImportFormats(ListClientImportFormatsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-//		try {
-//			if (request == null) {
-//				throw new AdempiereException("Object Request Null");
-//			}
-//
-//			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listClientImportFormats(request);
-//			responseObserver.onNext(builderList.build());
-//			responseObserver.onCompleted();
-//		} catch (Exception e) {
-//			log.severe(e.getLocalizedMessage());
-//			e.printStackTrace();
-//			responseObserver.onError(Status.INTERNAL
-//				.withDescription(e.getLocalizedMessage())
-//				.withCause(e)
-//				.asRuntimeException()
-//			);
-//		}
-//	}
+	// @Override
+	// public void listClientImportFormats(ListClientImportFormatsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	// 	try {
+	// 		if (request == null) {
+	// 			throw new AdempiereException("Object Request Null");
+	// 		}
+
+	// 		ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listClientImportFormats(request);
+	// 		responseObserver.onNext(builderList.build());
+	// 		responseObserver.onCompleted();
+	// 	} catch (Exception e) {
+	// 		log.severe(e.getLocalizedMessage());
+	// 		e.printStackTrace();
+	// 		responseObserver.onError(
+	// 			Status.INTERNAL
+	// 				.withDescription(e.getLocalizedMessage())
+	// 				.withCause(e)
+	// 				.asRuntimeException()
+	// 		);
+	// 	}
+	// }
 
 
 
@@ -149,10 +153,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -172,10 +177,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -183,22 +189,23 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 
 
 	@Override
-	public void listFilePreview(ListFilePreviewRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+	public void listFilePreview(ListFilePreviewRequest request, StreamObserver<ListFilePreviewResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListEntitiesResponse.Builder builderList = ImportFileLoaderServiceLogic.listFilePreview(request);
+			ListFilePreviewResponse.Builder builderList = ImportFileLoaderServiceLogic.listFilePreview(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -218,10 +225,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}

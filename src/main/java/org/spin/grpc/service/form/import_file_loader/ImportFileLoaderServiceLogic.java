@@ -42,8 +42,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Ini;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
-import org.spin.backend.grpc.common.Entity;
-import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.common.ProcessLog;
@@ -54,6 +52,7 @@ import org.spin.backend.grpc.form.import_file_loader.ImportTable;
 import org.spin.backend.grpc.form.import_file_loader.ListCharsetsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListClientImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListFilePreviewRequest;
+import org.spin.backend.grpc.form.import_file_loader.ListFilePreviewResponse;
 import org.spin.backend.grpc.form.import_file_loader.ListImportFormatsRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportProcessesRequest;
 import org.spin.backend.grpc.form.import_file_loader.ListImportTablesRequest;
@@ -388,93 +387,7 @@ public class ImportFileLoaderServiceLogic {
 
 
 
-
-	/**
-	 * TODO: Delete this redundant method with accept the changes on https://github.com/adempiere/adempiere/pull/4125
-	 *  Parse flexible line format.
-	 *  A bit inefficient as it always starts from the start
-	 *
-	 *  @param line the line to be parsed
-	 *  @param formatType Comma or Tab
-	 *  @param fieldNo number of field to be returned
-	 *  @return field in lime or ""
-	@throws IllegalArgumentException if format unknowns
-	 */
-	private static String parseFlexFormat(String line, String formatType, int fieldNo, String separatorChar)
-	{
-		final char QUOTE = '"';
-		//  check input
-		char delimiter = ' ';
-		if (formatType == null) {
-			throw new IllegalArgumentException ("ImpFormat.parseFlexFormat - @FillMandatory@ @FormatType@");
-		} else if (formatType.equals(X_AD_ImpFormat.FORMATTYPE_CommaSeparated)) {
-			delimiter = ',';
-		} else if (formatType.equals(X_AD_ImpFormat.FORMATTYPE_TabSeparated)) {
-			delimiter = '\t';
-		} else if (formatType.equals(X_AD_ImpFormat.FORMATTYPE_CustomSeparatorChar)) {
-			delimiter = separatorChar.charAt(0);
-		} else {
-			throw new IllegalArgumentException ("ImpFormat.parseFlexFormat - unknown format: " + formatType);
-		}
-		if (line == null || line.length() == 0 || fieldNo < 0) {
-			return "";
-		}
-
-		//  We need to read line sequentially as the fields may be delimited
-		//  with quotes (") when fields contain the delimiter
-		//  Example:    "Artikel,bez","Artikel,""nr""",DEM,EUR
-		//  needs to result in - Artikel,bez - Artikel,"nr" - DEM - EUR
-		int pos = 0;
-		int length = line.length();
-		for (int field = 1; field <= fieldNo && pos < length; field++) {
-			StringBuffer content = new StringBuffer();
-			//  two delimiter directly after each other
-			if (line.charAt(pos) == delimiter) {
-				pos++;
-				continue;
-			}
-			//  Handle quotes
-			if (line.charAt(pos) == QUOTE) {
-				pos++;  //  move over beginning quote
-				while (pos < length) {
-					//  double quote
-					if (line.charAt(pos) == QUOTE && pos+1 < length && line.charAt(pos+1) == QUOTE) {
-						content.append(line.charAt(pos++));
-						pos++;
-					}
-					//  end quote
-					else if (line.charAt(pos) == QUOTE) {
-						pos++;
-						break;
-					}
-					//  normal character
-					else {
-						content.append(line.charAt(pos++));
-					}
-				}
-				//  we should be at end of line or a delimiter
-				if (pos < length && line.charAt(pos) != delimiter) {
-					// log.info("Did not find delimiter at pos " + pos + " " + line);
-				}
-				pos++;  //  move over delimiter
-			}
-			// plain copy
-			else {
-				while (pos < length && line.charAt(pos) != delimiter)
-					content.append(line.charAt(pos++));
-				pos++;  //  move over delimiter
-			}
-			if (field == fieldNo) {
-				return content.toString();
-			}
-		}
-
-		//  nothing found
-		return "";
-	}   //  parseFlexFormat
-
-
-	public static ListEntitiesResponse.Builder listFilePreview(ListFilePreviewRequest request) throws Exception {
+	public static ListFilePreviewResponse.Builder listFilePreview(ListFilePreviewRequest request) throws Exception {
 		MImpFormat importFormat = validateAndGetImportFormat(request.getImportFormatId());
 		//	Get class from parent
 		ImpFormat format = ImpFormat.load(importFormat.getName());
@@ -489,12 +402,6 @@ public class ImportFileLoaderServiceLogic {
 			throw new AdempiereException("@FileName@ @NotFound@");
 		}
 
-
-		String charsetValue = request.getCharset();
-		if (Util.isEmpty(charsetValue, true) || !Charset.isSupported(charsetValue)) {
-			charsetValue = Charset.defaultCharset().name();
-		}
-		Charset charset = Charset.forName(charsetValue);
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 		if (clientInfo == null) {
 			throw new AdempiereException("@ClientInfo@");
@@ -522,13 +429,21 @@ public class ImportFileLoaderServiceLogic {
 		//	Get it
 		IS3 fileHandler = (IS3) supportedApi;
 		
-		//  Resource 
+		// Resource
 		ResourceMetadata resourceMetadata = ResourceMetadata.newInstance()
-					.withResourceName(fileName);
+			.withResourceName(fileName)
+		;
 		InputStream inputStream = fileHandler.getResource(resourceMetadata);
 		if (inputStream == null) {
 			throw new AdempiereException("@InputStream@ @NotFound@");
 		}
+
+		// Charset
+		String charsetValue = request.getCharset();
+		if (Util.isEmpty(charsetValue, true) || !Charset.isSupported(charsetValue)) {
+			charsetValue = Charset.defaultCharset().name();
+		}
+		Charset charset = Charset.forName(charsetValue);
 
 		InputStreamReader inputStreamReader = new InputStreamReader(inputStream, charset);
 		BufferedReader in = new BufferedReader(inputStreamReader, 10240);
@@ -547,16 +462,18 @@ public class ImportFileLoaderServiceLogic {
 		}
 		in.close();
 
-		ListEntitiesResponse.Builder builderList = ListEntitiesResponse.newBuilder()
-			.setRecordCount(count)
-		;
-
 		MTable table = MTable.get(Env.getCtx(), importFormat.getAD_Table_ID());
 
+		ListFilePreviewResponse.Builder builderList = ListFilePreviewResponse.newBuilder()
+			.setRecordCount(count)
+			.setTableName(
+				StringManager.getValidString(
+					table.getTableName()
+				)
+			)
+		;
+
 		data.forEach(line -> {
-			Entity.Builder entitBuilder = Entity.newBuilder()
-				.setTableName(table.getTableName())
-			;
 			Struct.Builder lineValues = Struct.newBuilder();
 
 			for (int i = 0; i < format.getRowCount(); i++) {
@@ -573,7 +490,7 @@ public class ImportFileLoaderServiceLogic {
 						info = line.substring(row.getStartNo()-1, row.getEndNo());
 					}
 				} else {
-					info = parseFlexFormat(line, format.getFormatType(), row.getStartNo(), format.getSeparatorChar());
+					info = format.parseFlexFormat(line, format.getFormatType(), row.getStartNo());
 				}
 
 				if (Util.isEmpty(info, true)) {
@@ -585,7 +502,6 @@ public class ImportFileLoaderServiceLogic {
 					}
 				}
 				String entry = row.parse(info);
-				//	TODO: Reuse ADempiere Parser
 				Value.Builder valueBuilder = Value.newBuilder();
 				if(!Util.isEmpty(entry)) {
 					try {
@@ -616,9 +532,8 @@ public class ImportFileLoaderServiceLogic {
 				);
 			}
 
-			entitBuilder.setValues(lineValues);
 			// columns.fo
-			builderList.addRecords(entitBuilder);
+			builderList.addRecords(lineValues);
 		});
 
 		return builderList;
