@@ -850,7 +850,7 @@ public class DisplayDefinitionServiceLogic {
 		if (entity == null || entity.get_ID() <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
-		entity.saveEx();
+		entity.deleteEx(false);
 
 		return Empty.newBuilder();
 	}
