@@ -29,6 +29,7 @@ import "base_data_type.proto";
 package import_file_loader;
 
 service ImportFileLoader {
+	// Import Format
 	rpc ListCharsets(ListCharsetsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/import-loader/charsets"
@@ -49,6 +50,7 @@ service ImportFileLoader {
 			get: "/import-loader/formats/get/{id}"
 		};
 	}
+
 	// Manage File
 	rpc SaveRecords(SaveRecordsRequest) returns (SaveRecordsResponse) {
 		option (google.api.http) = {
@@ -56,11 +58,12 @@ service ImportFileLoader {
 			body: "*"
 		};
 	}
-	rpc ListFilePreview(ListFilePreviewRequest) returns (data.ListEntitiesResponse) {
+	rpc ListFilePreview(ListFilePreviewRequest) returns (ListFilePreviewResponse) {
 		option (google.api.http) = {
 			get: "/import-loader/imports/resource/preview/{import_format_id}"
 		};
 	}
+
 	// Process
 	rpc ListImportProcesses(ListImportProcessesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
@@ -68,6 +71,7 @@ service ImportFileLoader {
 		};
 	}
 }
+
 
 // Charset
 message ListCharsetsRequest {
@@ -194,6 +198,13 @@ message ListFilePreviewRequest {
 	int32 import_format_id = 8;
 	string resource_name = 9;
 	string charset = 10;
+}
+message ListFilePreviewResponse {
+	int64 record_count = 1;
+	repeated google.protobuf.Struct records = 2;
+	string next_page_token = 3;
+	string table_name = 4;
+	string suggested_charset = 5;
 }
 
 
