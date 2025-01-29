@@ -1,0 +1,282 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.form.ticket_management";
+option java_outer_classname = "ADempiereTicketManagement";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// Base URL
+// /ticket-management/
+
+package ticket_management;
+
+// The Task Management service definition
+service TicketManagement {
+	// Request Info Types
+	rpc ListRequestInfoTypes(ListRequestInfoTypesRequest) returns (ListRequestInfoTypesResponse) {
+		option (google.api.http) = {
+			get: "/ticket-management/request-info-types"
+		};
+	}
+
+	// Tickets
+	rpc ExistsTickets(ExistsTicketsRequest) returns (ExistsTicketsResponse) {
+		option (google.api.http) = {
+			get: "/ticket-management/tickets/{table_name}/{record_id}/exists"
+		};
+	}
+	rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse) {
+		option (google.api.http) = {
+			get: "/ticket-management/tickets"
+			additional_bindings: {
+				get: "/ticket-management/tickets/{table_name}/{record_id}"
+			}
+		};
+	}
+	rpc ListMyTickets(ListMyTicketsRequest) returns (ListTicketsResponse) {
+		option (google.api.http) = {
+			get: "/ticket-management/tickets"
+		};
+	}
+
+	// // Notes
+	// rpc CreateNoteEntry(CreateNoteEntryRequest) returns (NoteEntry) {
+	// 	option (google.api.http) = {
+	// 		post: "/ticket-management/notes"
+	// 	};
+	// }
+	// rpc ReadNoteEntry(ReadNoteEntryRequest) returns (NoteEntry) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/notes/{id}"
+	// 	};
+	// }
+	// rpc ListNoteEntries(ListNoteEntriesRequest) returns (ListNoteEntriesResponse) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/notes/{id}"
+	// 	};
+	// }
+	// rpc UpdateNoteEntry(UpdateNoteEntryRequest) returns (NoteEntry) {
+	// 	option (google.api.http) = {
+	// 		patch: "/ticket-management/notes/{id}"
+	// 	};
+	// }
+	// rpc DeleteNoteEntry(DeleteNoteEntryRequest) returns (NoteEntry) {
+	// 	option (google.api.http) = {
+	// 		delete: "/ticket-management/notes/{id}"
+	// 	};
+	// }
+
+	// // Mail
+	// rpc CreateMailEntry(CreateMailEntryRequest) returns (MailEntry) {
+	// 	option (google.api.http) = {
+	// 		post: "/ticket-management/mails"
+	// 	};
+	// }
+	// rpc ReadMailEntry(ReadMailEntryRequest) returns (MailEntry) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/mails/{id}"
+	// 	};
+	// }
+	// rpc ListMailEntries(ListMailEntriesRequest) returns (ListMailEntriesResponse) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/mails/{id}"
+	// 	};
+	// }
+	// rpc UpdateMailEntry(UpdateMailEntryRequest) returns (MailEntry) {
+	// 	option (google.api.http) = {
+	// 		patch: "/ticket-management/mails/{id}"
+	// 	};
+	// }
+	// rpc DeleteMailEntry(DeleteMailEntryRequest) returns (MailEntry) {
+	// 	option (google.api.http) = {
+	// 		delete: "/ticket-management/mails/{id}"
+	// 	};
+	// }
+
+	// // Mail
+	// rpc CreateMailEntry(CreateMailEntryRequest) returns (MailEntry) {
+	// 	option (google.api.http) = {
+	// 		post: "/ticket-management/mails"
+	// 	};
+	// }
+	// rpc ReadMailEntry(ReadMailEntryRequest) returns (MailEntry) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/mails/{id}"
+	// 	};
+	// }
+	// rpc ListMailEntries(ListMailEntriesRequest) returns (ListMailEntriesResponse) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/mails/{id}"
+	// 	};
+	// }
+	// rpc UpdateMailEntry(UpdateMailEntryRequest) returns (MailEntry) {
+	// 	option (google.api.http) = {
+	// 		patch: "/ticket-management/mails/{id}"
+	// 	};
+	// }
+	// rpc DeleteMailEntry(DeleteMailEntryRequest) returns (MailEntry) {
+	// 	option (google.api.http) = {
+	// 		delete: "/ticket-management/mails/{id}"
+	// 	};
+	// }
+
+	// // Call
+	// rpc CreateCallEntry(CreateCallEntryRequest) returns (CallEntry) {
+	// 	option (google.api.http) = {
+	// 		post: "/ticket-management/calls"
+	// 	};
+	// }
+	// rpc ReadCallEntry(ReadCallEntryRequest) returns (CallEntry) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/calls/{id}"
+	// 	};
+	// }
+	// rpc ListCallEntries(ListCallEntriesRequest) returns (ListCallEntriesResponse) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/calls/{id}"
+	// 	};
+	// }
+	// rpc UpdateCallEntry(UpdateCallEntryRequest) returns (CallEntry) {
+	// 	option (google.api.http) = {
+	// 		patch: "/ticket-management/calls/{id}"
+	// 	};
+	// }
+	// rpc DeleteCallEntry(DeleteCallEntryRequest) returns (CallEntry) {
+	// 	option (google.api.http) = {
+	// 		delete: "/ticket-management/calls/{id}"
+	// 	};
+	// }
+
+	// // Task
+	// rpc CreateTaskEntry(CreateTaskEntryRequest) returns (TaskEntry) {
+	// 	option (google.api.http) = {
+	// 		post: "/ticket-management/tasks"
+	// 	};
+	// }
+	// rpc ReadTaskEntry(ReadTaskEntryRequest) returns (TaskEntry) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/tasks/{id}"
+	// 	};
+	// }
+	// rpc ListTaskEntries(ListTaskEntriesRequest) returns (ListTaskEntriesResponse) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/tasks/{id}"
+	// 	};
+	// }
+	// rpc UpdateTaskEntry(UpdateTaskEntryRequest) returns (TaskEntry) {
+	// 	option (google.api.http) = {
+	// 		patch: "/ticket-management/tasks/{id}"
+	// 	};
+	// }
+	// rpc DeleteTaskEntry(DeleteTaskEntryRequest) returns (TaskEntry) {
+	// 	option (google.api.http) = {
+	// 		delete: "/ticket-management/tasks/{id}"
+	// 	};
+	// }
+
+	// // Meeting
+	// rpc CreateMeetingEntry(CreateMeetingEntryRequest) returns (MeetingEntry) {
+	// 	option (google.api.http) = {
+	// 		post: "/ticket-management/meetings"
+	// 	};
+	// }
+	// rpc ReadMeetingEntry(ReadMeetingEntryRequest) returns (MeetingEntry) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/meetings/{id}"
+	// 	};
+	// }
+	// rpc ListMeetingEntries(ListMeetingEntriesRequest) returns (ListMeetingEntriesResponse) {
+	// 	option (google.api.http) = {
+	// 		get: "/ticket-management/meetings/{id}"
+	// 	};
+	// }
+	// rpc UpdateMeetingEntry(UpdateMeetingEntryRequest) returns (MeetingEntry) {
+	// 	option (google.api.http) = {
+	// 		patch: "/ticket-management/meetings/{id}"
+	// 	};
+	// }
+	// rpc DeleteMeetingEntry(DeleteMeetingEntryRequest) returns (MeetingEntry) {
+	// 	option (google.api.http) = {
+	// 		delete: "/ticket-management/meetings/{id}"
+	// 	};
+	// }
+}
+
+message ListRequestInfoTypesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+}
+message RequestInfoType {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+}
+message ListRequestInfoTypesResponse {
+	int64 record_count = 1;
+	repeated RequestInfoType records = 2;
+	string next_page_token = 3;
+}
+
+// Tickets
+message ExistsTicketsRequest {
+	string table_name = 1;
+	int32 record_id = 2;
+}
+message ExistsTicketsResponse {
+	int32 record_count = 1;
+}
+message ListTicketsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string table_name = 8;
+	int32 record_id = 9;
+}
+message ListMyTicketsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+message Ticket {
+	int32 id = 1;
+	string document_no = 2;
+	string subject = 3;
+	string summary = 4;
+}
+message ListTicketsResponse {
+	int64 record_count = 1;
+	repeated Ticket records = 2;
+	string next_page_token = 3;
+}
+

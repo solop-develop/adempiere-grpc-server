@@ -81,6 +81,7 @@ static_resources:
                 - send_notifications.SendNotifications
                 - store.WebStore
                 - task_management.TaskManagement
+                - ticket_management.TicketManagement
                 - time_control.TimeControl
                 - time_record.TimeRecord
                 - trial_balance_drillable.TrialBalanceDrillable
