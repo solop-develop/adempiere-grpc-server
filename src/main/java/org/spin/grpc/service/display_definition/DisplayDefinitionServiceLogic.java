@@ -70,6 +70,7 @@ import org.spin.backend.grpc.display_definition.UpdateDataEntryRequest;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
 import org.spin.base.util.ContextManager;
+import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -686,6 +687,9 @@ public class DisplayDefinitionServiceLogic {
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 		attributes.entrySet().forEach(attribute -> {
 			final String columnName = attribute.getKey();
+			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
+				return;
+			}
 			MColumn column = table.getColumn(columnName);
 			if (column == null || column.getAD_Column_ID() <= 0) {
 				// checks if the column exists in the database
@@ -789,13 +793,16 @@ public class DisplayDefinitionServiceLogic {
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 		attributes.entrySet().forEach(attribute -> {
 			final String columnName = attribute.getKey();
-			MColumn column = table.getColumn(columnName);
-			if (column == null || column.getAD_Column_ID() <= 0) {
-				// checks if the column exists in the database
+			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
 				return;
 			}
 			if (Arrays.stream(keyColumns).anyMatch(columnName::equals)) {
 				// prevent warning `PO.set_Value: Column not updateable`
+				return;
+			}
+			MColumn column = table.getColumn(columnName);
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
 				return;
 			}
 			int referenceId = column.getAD_Reference_ID();
