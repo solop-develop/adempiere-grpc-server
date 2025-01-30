@@ -792,18 +792,24 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
-		PO entity = table.getPO(0, null);
-		if (entity == null) {
-			throw new AdempiereException("@Error@ PO is null");
+		PO currentEntity = table.getPO(0, null);
+		if (currentEntity == null) {
+			throw new AdempiereException("@Error@ @PO@ @NotFound@");
 		}
+		POAdapter adapter = new POAdapter(currentEntity);
 
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 		attributes.entrySet().stream().forEach(attribute -> {
-			String columnName = attribute.getKey();
-			int referenceId = org.spin.dictionary.util.DictionaryUtil.getReferenceId(
-				entity.get_Table_ID(),
-				columnName
-			);
+			final String columnName = attribute.getKey();
+			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
+				return;
+			}
+			MColumn column = table.getColumn(columnName);
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
+				return;
+			}
+			int referenceId = column.getAD_Reference_ID();
 			Object value = null;
 			if (referenceId > 0) {
 				value = ValueManager.getObjectFromReference(
@@ -812,12 +818,15 @@ public class UserInterface extends UserInterfaceImplBase {
 				);
 			} 
 			if (value == null) {
-				value = ValueManager.getObjectFromValue(attribute.getValue());
+				value = ValueManager.getObjectFromValue(
+					attribute.getValue()
+				);
 			}
-			entity.set_ValueOfColumn(columnName, value);
+			// entity.set_ValueOfColumn(columnName, value);
+			adapter.set_ValueNoCheck(columnName, value);
 		});
 		//	Save entity
-		entity.saveEx();
+		currentEntity.saveEx();
 
 		String[] keyColumns = table.getKeyColumns();
 		ArrayList<Object> parametersList = new ArrayList<Object>();
@@ -830,7 +839,7 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
 			.setTabId(request.getTabId())
-			.setId(entity.get_ID())
+			.setId(currentEntity.get_ID())
 		;
 
 		Entity.Builder builder = getTabEntity(
@@ -899,13 +908,16 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		attributes.entrySet().forEach(attribute -> {
 			final String columnName = attribute.getKey();
-			MColumn column = table.getColumn(columnName);
-			if (column == null || column.getAD_Column_ID() <= 0) {
-				// checks if the column exists in the database
+			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
 				return;
 			}
 			if (Arrays.stream(keyColumns).anyMatch(columnName::equals)) {
 				// prevent warning `PO.set_Value: Column not updateable`
+				return;
+			}
+			MColumn column = table.getColumn(columnName);
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
 				return;
 			}
 			int referenceId = column.getAD_Reference_ID();
