@@ -124,6 +124,30 @@ service DisplayDefinition {
 			delete: "/display-definition/{display_definition_id}/entries/{id}"
 		};
 	}
+
+	// CRUD Data Entry with Resource
+	rpc CreateDataEntryResource(CreateDataEntryRequest) returns (DataEntry) {
+		option (google.api.http) = {
+			post: "/display-definition/{display_definition_id}/entries/resources",
+			body: "*"
+		};
+	}
+	rpc ReadDataEntryResource(ReadDataEntryRequest) returns (DataEntry) {
+		option (google.api.http) = {
+			get: "/display-definition/{display_definition_id}/entries/{id}/resources"
+		};
+	}
+	rpc UpdateDataEntryResource(UpdateDataEntryRequest) returns (DataEntry) {
+		option (google.api.http) = {
+			patch: "/display-definition/{display_definition_id}/entries/{id}/resources",
+			body: "*"
+		};
+	}
+	rpc DeleteDataEntryResource(DeleteDataEntryRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			delete: "/display-definition/{display_definition_id}/entries/{id}/resources"
+		};
+	}
 }
 
 
@@ -176,6 +200,7 @@ message DefinitionMetadata {
 	optional string group_column = 11;
 	string table_name = 12;
 	int32 table_id = 13;
+	bool is_resource = 14;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
