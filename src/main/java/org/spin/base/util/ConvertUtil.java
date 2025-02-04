@@ -45,6 +45,7 @@ import org.compiere.model.MPayment;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MProduct;
 import org.compiere.model.MRefList;
+import org.compiere.model.MRefTable;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
@@ -53,6 +54,7 @@ import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
 import org.compiere.model.Query;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
@@ -274,21 +276,55 @@ public class ConvertUtil {
 		Struct.Builder rowValues = Struct.newBuilder();
 		for(int index = 0; index < poInfo.getColumnCount(); index++) {
 			String columnName = poInfo.getColumnName(index);
-			int referenceId = poInfo.getColumnDisplayType(index);
+			int displayTypeId = poInfo.getColumnDisplayType(index);
 			Object value = entity.get_Value(index);
 			Value.Builder builderValue = ValueManager.getValueFromReference(
 				value,
-				referenceId
+				displayTypeId
 			);
-			if(builderValue == null) {
-				builderValue = Value.newBuilder();
-				// continue;
-			}
-			//	Add
+			//	add value
 			rowValues.putFields(
 				columnName,
 				builderValue.build()
 			);
+
+			// add display value
+			if (value != null) {
+				String displayValue = null;
+				if (columnName.equals(poInfo.getTableName() + "_ID")) {
+					displayValue = entity.getDisplayValue();
+				} else if (ReferenceUtil.validateReference(displayTypeId) || displayTypeId == DisplayType.Button) {
+					int referenceValueId = poInfo.getColumnReferenceValueId(index);
+					displayTypeId = ReferenceUtil.overwriteDisplayType(
+						displayTypeId,
+						referenceValueId
+					);
+					String tableName = null;
+					if(displayTypeId == DisplayType.TableDir) {
+						tableName = columnName.replace("_ID", "");
+					} else if(displayTypeId == DisplayType.Table || displayTypeId == DisplayType.Search) {
+						if(referenceValueId <= 0) {
+							tableName = columnName.replace("_ID", "");
+						} else {
+							MRefTable referenceTable = MRefTable.getById(Env.getCtx(), referenceValueId);
+							tableName = MTable.getTableName(Env.getCtx(), referenceTable.getAD_Table_ID());
+						}
+					}
+					if (!Util.isEmpty(tableName, true)) {
+						int id = NumberManager.getIntegerFromObject(value);
+						MTable referenceTable = MTable.get(Env.getCtx(), tableName);
+						PO referenceEntity = referenceTable.getPO(id, null);
+						if(referenceEntity != null) {
+							displayValue = referenceEntity.getDisplayValue();
+						}
+					}
+				}
+				Value.Builder builderDisplayValue = ValueManager.getValueFromString(displayValue);
+				rowValues.putFields(
+					LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
+					builderDisplayValue.build()
+				);
+			}
 
 			// to add client uuid by record
 			if (columnName.equals(I_AD_Element.COLUMNNAME_AD_Client_ID)) {
