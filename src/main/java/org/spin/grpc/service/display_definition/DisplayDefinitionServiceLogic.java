@@ -978,7 +978,8 @@ public class DisplayDefinitionServiceLogic {
 
 
 	public static DataEntry.Builder createDataEntryResource(CreateDataEntryRequest request) {
-		AtomicReference<DataEntry.Builder> builderAtomicReference = new AtomicReference<DataEntry.Builder>(DataEntry.newBuilder());
+		AtomicReference<PO> displayDefinitionAtomicReference = new AtomicReference<PO>();
+		AtomicReference<PO> currentEntityAtomicReference = new AtomicReference<PO>();
 		Trx.run(transationName -> {
 			PO displayDefinition = validateAndGetDisplayDefinition(
 				request.getDisplayDefinitionId()
@@ -1099,22 +1100,23 @@ public class DisplayDefinitionServiceLogic {
 			//	Save entity
 			currentEntity.saveEx(transationName);
 
-			GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
-					displayDefinition.get_ID()
-				)
-				.run(
-					currentEntity.get_ID()
-				)
-			;
-			DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
-				displayDefinition,
-				recordItem
-			);
-
-			builderAtomicReference.set(builder);
+			displayDefinitionAtomicReference.set(displayDefinition);
+			currentEntityAtomicReference.set(currentEntity);
 		});
 
-		return builderAtomicReference.get();
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+			displayDefinitionAtomicReference.get().get_ID()
+			)
+			.run(
+				currentEntityAtomicReference.get().get_ID()
+			)
+		;
+		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
+			displayDefinitionAtomicReference.get(),
+			recordItem
+		);
+
+		return builder;
 	}
 
 	public static DataEntry.Builder readDataEntryResource(ReadDataEntryRequest request) {
