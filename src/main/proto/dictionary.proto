@@ -60,6 +60,15 @@ service Dictionary {
 			}
 		};
 	}
+	rpc ListProcesses(ListProcessesRequest) returns (ListProcessesResponse) {
+		option (google.api.http) = {
+			get: "/dictionary/processes/table/{table_name}"
+			additional_bindings: {
+				get: "/dictionary/reports/table/{table_name}"
+			}
+		};
+	}
+
 	// Request Browser
 	rpc GetBrowser(EntityRequest) returns (Browser) {
 		option (google.api.http) = { get: "/dictionary/browsers/{id}" };
@@ -382,6 +391,14 @@ message Process {
 	// Parameters
 	bool has_parameters = 24;
 	repeated Field parameters = 25;
+}
+message ListProcessesRequest {
+	string table_name = 1;
+}
+message ListProcessesResponse {
+	int64 record_count = 1;
+	repeated Process processes = 2;
+	string next_page_token = 3;
 }
 
 // Form
