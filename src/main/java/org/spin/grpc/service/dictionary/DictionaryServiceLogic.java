@@ -21,11 +21,15 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.adempiere.core.domains.models.I_AD_Column;
+import org.adempiere.core.domains.models.I_AD_Process;
+import org.adempiere.core.domains.models.I_AD_Table_Process;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
+import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -34,12 +38,15 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.ListIdentifierColumnsRequest;
 import org.spin.backend.grpc.dictionary.ListIdentifierColumnsResponse;
+import org.spin.backend.grpc.dictionary.ListProcessesRequest;
+import org.spin.backend.grpc.dictionary.ListProcessesResponse;
 import org.spin.backend.grpc.dictionary.ListSearchFieldsRequest;
 import org.spin.backend.grpc.dictionary.ListSearchFieldsResponse;
+import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.SearchColumn;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 import io.vavr.control.Try;
 
@@ -50,6 +57,67 @@ import io.vavr.control.Try;
 public class DictionaryServiceLogic {
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(DictionaryServiceLogic.class);
+
+
+	/**
+	 * Convert Process from UUID
+	 * @param id
+	 * @param withParameters
+	 * @return
+	 */
+	public static Process.Builder getProcess(Properties context, String processUuid, boolean withParameters) {
+		if (Util.isEmpty(processUuid, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@ / @UUID@");
+		}
+		int processId = RecordUtil.getIdFromUuid(I_AD_Process.Table_Name, processUuid, null);
+		if (processId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
+		}
+		MProcess process = MProcess.get(context, processId);
+		if (process == null || process.getAD_Process_ID() <= 0) {
+			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
+		}
+		//	Convert
+		return ProcessConvertUtil.convertProcess(
+			context,
+			process,
+			withParameters
+		);
+	}
+
+	public static ListProcessesResponse.Builder listProcesses(ListProcessesRequest request) {
+		MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+		Properties context = Env.getCtx();
+
+		ListProcessesResponse.Builder builderList = ListProcessesResponse.newBuilder();
+		new Query(
+			context,
+			I_AD_Table_Process.Table_Name,
+			"AD_Table_ID = ?",
+			null
+		)
+			.setParameters(table.getAD_Table_ID())
+			.getIDsAsList()
+			.forEach(processId -> {
+				MProcess process = MProcess.get(context, processId);
+				if (process == null || process.getAD_Process_ID() <= 0) {
+					throw new AdempiereException("@AD_Process_ID@ @NotFound@");
+				}
+				//	Convert
+				Process.Builder processBuilder = ProcessConvertUtil.convertProcess(
+					context,
+					process,
+					false
+				);
+				builderList.addProcesses(processBuilder);
+			});
+		;
+
+		return builderList;
+	}
+
 
 
 	public static ListIdentifierColumnsResponse.Builder getIdentifierFields(ListIdentifierColumnsRequest request) {
@@ -159,7 +227,7 @@ public class DictionaryServiceLogic {
 		}
 
 		responseBuilder.setTableName(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				tableName
 			)
 		);

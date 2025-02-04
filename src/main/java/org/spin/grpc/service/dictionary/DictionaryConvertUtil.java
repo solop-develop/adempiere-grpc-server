@@ -113,12 +113,12 @@ public class DictionaryConvertUtil {
 		}
 		builder
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entity.get_UUID()
 				)
 			)
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entity.get_UUID()
 				)
 			)
@@ -126,17 +126,17 @@ public class DictionaryConvertUtil {
 				entity.get_ID()
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entity.get_Translation(I_AD_Element.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entity.get_Translation(I_AD_Element.COLUMNNAME_Description)
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entity.get_Translation(I_AD_Element.COLUMNNAME_Help)
 				)
 			)
@@ -163,7 +163,7 @@ public class DictionaryConvertUtil {
 			+ Optional.ofNullable(info.ValidationCode).orElse("")
 		);
 		builder.setTableName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					info.TableName
 				)
 			)
@@ -200,18 +200,28 @@ public class DictionaryConvertUtil {
 		}
 
 		builder = ContextInfo.newBuilder()
-			.setId(contextInfoValue.getAD_ContextInfo_ID())
+			.setId(
+				contextInfoValue.getAD_ContextInfo_ID()
+			)
 			.setUuid(
-				ValueManager.validateNull(contextInfoValue.getUUID())
+				StringManager.getValidString(
+					contextInfoValue.getUUID()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(contextInfoValue.getName())
+				StringManager.getValidString(
+					contextInfoValue.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(contextInfoValue.getDescription())
+				StringManager.getValidString(
+					contextInfoValue.getDescription()
+				)
 			)
 			.setSqlStatement(
-				ValueManager.validateNull(contextInfoValue.getSQLStatement())
+				StringManager.getValidString(
+					contextInfoValue.getSQLStatement()
+				)
 			)
 		;
 
@@ -360,11 +370,11 @@ public class DictionaryConvertUtil {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					column.getUUID()
 				))
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					column.getUUID()
 				)
 			)
@@ -372,32 +382,50 @@ public class DictionaryConvertUtil {
 				column.getAD_Column_ID()
 			)
 			.setName(
-				ValueManager.validateNull(column.getName())
+				StringManager.getValidString(
+					column.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(column.getDescription())
+				StringManager.getValidString(
+					column.getDescription()
+				)
 			)
 			.setHelp(
-				ValueManager.validateNull(column.getHelp())
+				StringManager.getValidString(
+					column.getHelp()
+				)
 			)
 			.setCallout(
-				ValueManager.validateNull(column.getCallout())
+				StringManager.getValidString(
+					column.getCallout()
+				)
 			)
 			.setColumnName(
-				ValueManager.validateNull(column.getColumnName())
+				StringManager.getValidString(
+					column.getColumnName()
+				)
 			)
 			.setElementName(
-				ValueManager.validateNull(element.getColumnName())
+				StringManager.getValidString(
+					element.getColumnName()
+				)
 			)
 			.setColumnSql(
-				ValueManager.validateNull(column.getColumnSQL())
+				StringManager.getValidString(
+					column.getColumnSQL()
+				)
 			)
 			.setDefaultValue(
-				ValueManager.validateNull(defaultValue)
+				StringManager.getValidString(
+					defaultValue
+				)
 			)
 			.setDisplayType(displayTypeId)
 			.setFormatPattern(
-				ValueManager.validateNull(column.getFormatPattern())
+				StringManager.getValidString(
+					column.getFormatPattern()
+				)
 			)
 			.setIdentifierSequence(column.getSeqNo())
 			.setIsAllowCopy(column.isAllowCopy())
@@ -413,17 +441,25 @@ public class DictionaryConvertUtil {
 			.setIsTranslated(column.isTranslated())
 			.setIsUpdateable(column.isUpdateable())
 			.setMandatoryLogic(
-				ValueManager.validateNull(column.getMandatoryLogic())
+				StringManager.getValidString(
+					column.getMandatoryLogic()
+				)
 			)
 			.setReadOnlyLogic(
-				ValueManager.validateNull(column.getReadOnlyLogic())
+				StringManager.getValidString(
+					column.getReadOnlyLogic()
+				)
 			)
 			.setSequence(column.getSeqNo())
 			.setValueMax(
-				ValueManager.validateNull(column.getValueMax())
+				StringManager.getValidString(
+					column.getValueMax()
+				)
 			)
 			.setValueMin(
-				ValueManager.validateNull(column.getValueMin())
+				StringManager.getValidString(
+					column.getValueMin()
+				)
 			)
 			.setFieldLength(column.getFieldLength())
 			.addAllContextColumnNames(
@@ -513,7 +549,7 @@ public class DictionaryConvertUtil {
 						table.getAD_Table_ID()
 					)
 					.setParentUuid(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							table.getUUID()
 						)
 					)
@@ -521,12 +557,12 @@ public class DictionaryConvertUtil {
 						table.getTableName()
 					)
 					.setId(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							currentColumn.getUUID()
 						)
 					)
 					.setUuid(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							currentColumn.getUUID()
 						)
 					)
@@ -566,11 +602,11 @@ public class DictionaryConvertUtil {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					element.getUUID()
 				))
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					element.getUUID()
 				)
 			)
@@ -578,23 +614,28 @@ public class DictionaryConvertUtil {
 				element.getAD_Element_ID()
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					ValueManager.getTranslation(element, M_Element.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					ValueManager.getTranslation(element, M_Element.COLUMNNAME_Description)
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
-					ValueManager.getTranslation(element, M_Element.COLUMNNAME_Help)))
+				StringManager.getValidString(
+					ValueManager.getTranslation(element, M_Element.COLUMNNAME_Help))
+				)
 			.setColumnName(
-				ValueManager.validateNull(element.getColumnName())
+				StringManager.getValidString(
+					element.getColumnName()
+				)
 			)
 			.setElementName(
-				ValueManager.validateNull(element.getColumnName())
+				StringManager.getValidString(
+					element.getColumnName()
+				)
 			)
 			.setDisplayType(displayTypeId)
 			.setFieldLength(element.getFieldLength())
@@ -638,7 +679,7 @@ public class DictionaryConvertUtil {
 		if (field.getAD_Reference_ID() > 0) {
 			displayTypeId = field.getAD_Reference_ID();
 		}
-		String name = ValueManager.validateNull(
+		String name = StringManager.getValidString(
 			Msg.translate(
 				field.getCtx(),
 				column.getColumnName()
@@ -656,7 +697,7 @@ public class DictionaryConvertUtil {
 				column.getColumnName()
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					name
 				)
 			)
@@ -679,7 +720,7 @@ public class DictionaryConvertUtil {
 				column.getColumnName()
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					Msg.translate(
 						column.getCtx(),
 						column.getColumnName()
