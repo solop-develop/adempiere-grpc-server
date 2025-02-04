@@ -23,8 +23,10 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Table;
+import org.adempiere.core.domains.models.I_S_ResourceAssignment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
@@ -264,12 +266,122 @@ public class DisplayDefinitionServiceLogic {
 				query.count()
 			)
 		;
+
+		HashMap<String, String> columnsMap = new HashMap<String, String>();
+		if (displayDefinition.get_ValueAsBoolean(Changes.SP010_IsResource)) {
+			MTable resourceAssignmentTable = MTable.get(Env.getCtx(), I_S_ResourceAssignment.Table_Name);
+			// Name
+			MColumn nameColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_Name);
+			FieldDefinition.Builder nameFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(nameColumn);
+			nameFieldBuilder
+				.setDisplayDefinitionId(
+					displayDefinition.get_ID()
+				)
+				.setIsDisplayed(true)
+				.setSeqNoGrid(1)
+				.setSequence(1)
+			;
+			builderList.addFieldDefinitions2(
+				nameFieldBuilder.build()
+			);
+			columnsMap.put(
+				nameColumn.getColumnName(),
+				nameColumn.getColumnName()
+			);
+			// Description
+			MColumn descriptionColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_Description);
+			FieldDefinition.Builder descriptionFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(descriptionColumn);
+			descriptionFieldBuilder
+				.setDisplayDefinitionId(
+					displayDefinition.get_ID()
+				)
+				.setIsDisplayed(true)
+				.setSeqNoGrid(2)
+				.setSequence(2)
+			;
+			builderList.addFieldDefinitions2(
+				descriptionFieldBuilder.build()
+			);
+			columnsMap.put(
+				descriptionColumn.getColumnName(),
+				descriptionColumn.getColumnName()
+			);
+			// Assign Date From
+			MColumn assignDateFromColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_AssignDateFrom);
+			FieldDefinition.Builder assignDateFromFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(assignDateFromColumn);
+			assignDateFromFieldBuilder
+				.setDisplayDefinitionId(
+					displayDefinition.get_ID()
+				)
+				.setIsDisplayed(true)
+				.setSeqNoGrid(3)
+				.setSequence(3)
+			;
+			builderList.addFieldDefinitions2(
+				assignDateFromFieldBuilder.build()
+			);
+			columnsMap.put(
+				assignDateFromColumn.getColumnName(),
+				assignDateFromColumn.getColumnName()
+			);
+			// Assign Date To
+			MColumn assignDateToColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_AssignDateTo);
+			FieldDefinition.Builder assignDateToFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(assignDateToColumn);
+			assignDateToFieldBuilder
+				.setDisplayDefinitionId(
+					displayDefinition.get_ID()
+				)
+				.setIsDisplayed(true)
+				.setSeqNoGrid(4)
+				.setSequence(4)
+			;
+			builderList.addFieldDefinitions2(
+				assignDateToFieldBuilder.build()
+			);
+			columnsMap.put(
+				assignDateToColumn.getColumnName(),
+				assignDateToColumn.getColumnName()
+			);
+			// Resource
+			MColumn resourceColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_S_Resource_ID);
+			FieldDefinition.Builder resourceFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(resourceColumn);
+			resourceFieldBuilder
+				.setDisplayDefinitionId(
+					displayDefinition.get_ID()
+				)
+				.setIsDisplayed(true)
+				.setSeqNoGrid(5)
+				.setSequence(5)
+			;
+			builderList.addFieldDefinitions2(
+				resourceFieldBuilder.build()
+			);
+			columnsMap.put(
+				resourceColumn.getColumnName(),
+				resourceColumn.getColumnName()
+			);
+
+			builderList.setFieldDefinitionsCount1(
+				builderList.getFieldDefinitionsCount1() + columnsMap.size()
+			);
+		}
+
 		query.setOrderBy(
 				I_AD_Field.COLUMNNAME_SeqNo
 			)
 			.getIDsAsList()
 			.forEach(fieldId -> {
 				PO field = table.getPO(fieldId, null);
+				MColumn column = MColumn.get(
+					field.getCtx(),
+					field.get_ValueAsInt(
+						I_AD_Column.COLUMNNAME_AD_Column_ID
+					)
+				);
+				if (columnsMap.containsKey(column.getColumnName())) {
+					// omit this column
+					return;
+				}
 				FieldDefinition.Builder fieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(field);
 				builderList.addFieldDefinitions2(
 					fieldBuilder.build()
@@ -841,6 +953,209 @@ public class DisplayDefinitionServiceLogic {
 	}
 
 	public static Empty.Builder deleteDataEntry(DeleteDataEntryRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		MTable table = MTable.get(
+			Env.getCtx(),
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@");
+		}
+		PO entity = table.getPO(request.getId(), null);
+		if (entity == null || entity.get_ID() <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		entity.deleteEx(false);
+
+		return Empty.newBuilder();
+	}
+
+
+
+
+	public static DataEntry.Builder createDataEntryResource(CreateDataEntryRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		//	Fill context
+		Properties context = Env.getCtx();
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, context, request.getContextAttributes()
+		);
+
+		MTable table = MTable.get(
+			context,
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+		PO currentEntity = table.getPO(0, null);
+		if (currentEntity == null) {
+			throw new AdempiereException("@Error@ PO is null");
+		}
+		POAdapter adapter = new POAdapter(currentEntity);
+
+		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
+		attributes.entrySet().forEach(attribute -> {
+			final String columnName = attribute.getKey();
+			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
+				return;
+			}
+			MColumn column = table.getColumn(columnName);
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
+				return;
+			}
+			int referenceId = column.getAD_Reference_ID();
+			Object value = null;
+			if (!attribute.getValue().hasNullValue()) {
+				if (referenceId > 0) {
+					value = ValueManager.getObjectFromReference(
+						attribute.getValue(),
+						referenceId
+					);
+				} 
+				if (value == null) {
+					value = ValueManager.getObjectFromValue(
+						attribute.getValue()
+					);
+				}
+			}
+			if (column.isMandatory() && value == null) {
+				// fill value with context
+				String currentValue = Env.getContext(context, windowNo, columnName, false);
+				if (!Util.isEmpty(currentValue, true)) {
+					value = currentValue;
+				}
+			}
+			adapter.set_ValueNoCheck(columnName, value);
+		});
+		//	Save entity
+		currentEntity.saveEx();
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				currentEntity.get_ID()
+			)
+		;
+		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
+			displayDefinition,
+			recordItem
+		);
+
+		return builder;
+	}
+
+	public static DataEntry.Builder readDataEntryResource(ReadDataEntryRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		MTable table = MTable.get(
+			Env.getCtx(),
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@");
+		}
+		PO entity = table.getPO(request.getId(), null);
+		if (entity == null || entity.get_ID() <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				entity.get_ID()
+			)
+		;
+		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
+			displayDefinition,
+			recordItem
+		);
+
+		return builder;
+	}
+
+	public static DataEntry.Builder updateDataEntryResource(UpdateDataEntryRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		MTable table = MTable.get(
+			Env.getCtx(),
+			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+		);
+		String[] keyColumns = table.getKeyColumns();
+
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@");
+		}
+		PO currentEntity = table.getPO(request.getId(), null);
+		if (currentEntity == null || currentEntity.get_ID() <= 0) {
+			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		POAdapter adapter = new POAdapter(currentEntity);
+
+		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
+		attributes.entrySet().forEach(attribute -> {
+			final String columnName = attribute.getKey();
+			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
+				return;
+			}
+			if (Arrays.stream(keyColumns).anyMatch(columnName::equals)) {
+				// prevent warning `PO.set_Value: Column not updateable`
+				return;
+			}
+			MColumn column = table.getColumn(columnName);
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
+				return;
+			}
+			int referenceId = column.getAD_Reference_ID();
+			Object value = null;
+			if (!attribute.getValue().hasNullValue()) {
+				if (referenceId > 0) {
+					value = ValueManager.getObjectFromReference(
+						attribute.getValue(),
+						referenceId
+					);
+				} 
+				if (value == null) {
+					value = ValueManager.getObjectFromValue(
+						attribute.getValue()
+					);
+				}
+			}
+			adapter.set_ValueNoCheck(columnName, value);
+		});
+		//	Save entity
+		currentEntity.saveEx();
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				currentEntity.get_ID()
+			)
+		;
+		DataEntry.Builder builder = DisplayDefinitionConvertUtil.convertDataEntry(
+			displayDefinition,
+			recordItem
+		);
+
+		return builder;
+	}
+
+	public static Empty.Builder deleteDataEntryResource(DeleteDataEntryRequest request) {
 		PO displayDefinition = validateAndGetDisplayDefinition(
 			request.getDisplayDefinitionId()
 		);

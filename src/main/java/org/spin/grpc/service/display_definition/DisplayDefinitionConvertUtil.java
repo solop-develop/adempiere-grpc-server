@@ -91,16 +91,27 @@ public class DisplayDefinitionConvertUtil {
 					)
 				)
 			)
-			.setTableId(table.getAD_Table_ID())
-			.setTableName(StringManager.getValidString(table.getTableName()))
-			;
+			.setTableId(
+				table.getAD_Table_ID()
+			)
+			.setTableName(
+				StringManager.getValidString(
+					table.getTableName()
+				)
+			)
+			.setIsResource(
+				record.get_ValueAsBoolean(
+					Changes.SP010_IsResource
+				)
+			)
+		;
+
 		String displayType = record.get_ValueAsString(Changes.SP010_DisplayType);
 		builder.setDisplayType(
 			StringManager.getValidString(
 				displayType
 			)
 		);
-
 		if (!Util.isEmpty(displayType, true)) {
 			if (displayType.equals(Changes.SP010_DisplayType_Calendar)) {
 				builder.setType(
