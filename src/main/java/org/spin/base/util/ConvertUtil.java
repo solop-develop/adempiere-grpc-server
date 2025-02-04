@@ -289,26 +289,34 @@ public class ConvertUtil {
 			);
 
 			// add display value
-			if (value != null && ReferenceUtil.validateReference(displayTypeId)) {
+			if (value != null) {
 				String displayValue = null;
-				String tableName = null;
-				if(displayTypeId == DisplayType.TableDir) {
-					tableName = columnName.replace("_ID", "");
-				} else if(displayTypeId == DisplayType.Table || displayTypeId == DisplayType.Search) {
+				if (columnName.equals(poInfo.getTableName() + "_ID")) {
+					displayValue = entity.getDisplayValue();
+				} else if (ReferenceUtil.validateReference(displayTypeId) || displayTypeId == DisplayType.Button) {
 					int referenceValueId = poInfo.getColumnReferenceValueId(index);
-					if(referenceValueId <= 0) {
+					displayTypeId = ReferenceUtil.overwriteDisplayType(
+						displayTypeId,
+						referenceValueId
+					);
+					String tableName = null;
+					if(displayTypeId == DisplayType.TableDir) {
 						tableName = columnName.replace("_ID", "");
-					} else {
-						MRefTable referenceTable = MRefTable.getById(Env.getCtx(), referenceValueId);
-						tableName = MTable.getTableName(Env.getCtx(), referenceTable.getAD_Table_ID());
+					} else if(displayTypeId == DisplayType.Table || displayTypeId == DisplayType.Search) {
+						if(referenceValueId <= 0) {
+							tableName = columnName.replace("_ID", "");
+						} else {
+							MRefTable referenceTable = MRefTable.getById(Env.getCtx(), referenceValueId);
+							tableName = MTable.getTableName(Env.getCtx(), referenceTable.getAD_Table_ID());
+						}
 					}
-				}
-				if (!Util.isEmpty(tableName, true)) {
-					int id = NumberManager.getIntegerFromObject(value);
-					MTable referenceTable = MTable.get(Env.getCtx(), tableName);
-					PO referenceEntity = referenceTable.getPO(id, null);
-					if(referenceEntity != null) {
-						displayValue = referenceEntity.getDisplayValue();
+					if (!Util.isEmpty(tableName, true)) {
+						int id = NumberManager.getIntegerFromObject(value);
+						MTable referenceTable = MTable.get(Env.getCtx(), tableName);
+						PO referenceEntity = referenceTable.getPO(id, null);
+						if(referenceEntity != null) {
+							displayValue = referenceEntity.getDisplayValue();
+						}
 					}
 				}
 				Value.Builder builderDisplayValue = ValueManager.getValueFromString(displayValue);
