@@ -14,18 +14,29 @@
  ************************************************************************************/
 package org.spin.grpc.service.display_definition;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.List;
+
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
+import org.adempiere.core.domains.models.I_S_ResourceAssignment;
 import org.adempiere.core.domains.models.X_AD_FieldGroup;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
+import org.compiere.model.MRefTable;
+import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.POInfo;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DataEntry;
@@ -39,7 +50,9 @@ import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
+import org.spin.base.util.ReferenceUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -411,11 +424,6 @@ public class DisplayDefinitionConvertUtil {
 					I_AD_Field.COLUMNNAME_IsQuickEntry
 				)
 			)
-			.setIsDisplayedGrid(
-				fieldDefinitionItem.get_ValueAsBoolean(
-					I_AD_Column.COLUMNNAME_SeqNo
-				)
-			)
 			.setIsInsertRecord(
 				fieldDefinitionItem.get_ValueAsBoolean(
 					I_AD_Tab.COLUMNNAME_IsInsertRecord
@@ -435,6 +443,75 @@ public class DisplayDefinitionConvertUtil {
 			FieldGroup.Builder fieldGroupBuilder = convertFieldGroup(fieldGroupId);
 			builder.setFieldGroup(fieldGroupBuilder);
 		}
+
+		return builder;
+	}
+	public static FieldDefinition.Builder convertFieldDefinitionByColumn(MColumn column) {
+		FieldDefinition.Builder builder = FieldDefinition.newBuilder();
+		if (column == null || column.getAD_Column_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(
+				StringManager.getValidString(
+					column.getUUID()
+				)
+			)
+			.setUuid(
+				StringManager.getValidString(
+					column.getUUID()
+				)
+			)
+			.setInternalId(
+				column.getAD_Column_ID()
+			)
+			.setColumnName(
+				StringManager.getValidString(
+					column.getColumnName()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					column.get_Translation(
+						I_AD_Column.COLUMNNAME_Name
+					)
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					column.get_Translation(
+						I_AD_Column.COLUMNNAME_Description
+					)
+				)
+			)
+			.setHelp(
+				StringManager.getValidString(
+					column.get_Translation(
+						I_AD_Column.COLUMNNAME_Help
+					)
+				)
+			)
+			.setDisplayType(
+				column.getAD_Reference_ID()
+			)
+			.setIsDisplayed(true)
+			.setIsMandatory(
+				column.isMandatory()
+			)
+			.setDefaultValue(
+				StringManager.getValidString(
+					column.getDefaultValue()
+				)
+			)
+			.setIsDisplayedGrid(
+				true
+			)
+			.setIsEncrypted(
+				column.isEncrypted()
+			)
+			.setIsInsertRecord(true)
+			.setIsUpdateRecord(true)
+		;
 
 		return builder;
 	}
@@ -850,9 +927,135 @@ public class DisplayDefinitionConvertUtil {
 				);
 			})
 		;
+
+		if (displayDefinition.get_ValueAsBoolean(Changes.SP010_IsResource)) {
+			MTable table = MTable.get(
+				Env.getCtx(),
+				displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
+			);
+
+			PO entity = table.getPO(baseItem.getId(), null);
+			if (entity != null) {
+				POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), table.getAD_Table_ID());
+				MTable tableResource = MTable.get(Env.getCtx(), I_S_ResourceAssignment.Table_Name);
+				final List<String> RESOURCE_ASSIGMENT_COLUMNS = Arrays.asList(
+					I_S_ResourceAssignment.COLUMNNAME_S_Resource_ID,
+					I_S_ResourceAssignment.COLUMNNAME_Name,
+					I_S_ResourceAssignment.COLUMNNAME_AssignDateFrom,
+					I_S_ResourceAssignment.COLUMNNAME_AssignDateTo
+				);
+	
+				int resourceAssignmentColumnId = displayDefinition.get_ValueAsInt(
+					Changes.SP010_Resource_ID
+				);
+				MColumn resourceAssignmentColumn = MColumn.get(Env.getCtx(), resourceAssignmentColumnId);
+				MResourceAssignment resourceAssignment = new MResourceAssignment(
+					displayDefinition.getCtx(),
+					entity.get_ValueAsInt(
+						resourceAssignmentColumn.getColumnName()
+					),
+					null
+				);
+
+				Language language = Language.getLoginLanguage();
+				tableResource.getColumnsAsList()
+					.stream()
+					.filter(column -> {
+						return RESOURCE_ASSIGMENT_COLUMNS.contains(column.getColumnName());
+					})
+					.forEach(column -> {
+						String columnName = column.getColumnName();
+						int displayTypeId = column.getAD_Reference_ID();
+						Struct.Builder fieldItem = Struct.newBuilder();
+						Object value = resourceAssignment.get_Value(
+							columnName
+						);
+						// value
+						Value.Builder valueBuilder = ValueManager.getValueFromReference(
+							value,
+							column.getAD_Reference_ID()
+						);
+						fieldItem.putFields(
+							"value",
+							valueBuilder.build()
+						);
+						// display value
+						String displayValue = null;
+
+						if (columnName.equals(poInfo.getTableName() + "_ID")) {
+							displayValue = entity.getDisplayValue();
+						} else if (ReferenceUtil.validateReference(displayTypeId) || displayTypeId == DisplayType.Button) {
+							int referenceValueId = column.getAD_Reference_Value_ID();
+							displayTypeId = ReferenceUtil.overwriteDisplayType(
+								displayTypeId,
+								referenceValueId
+							);
+							String tableName = null;
+							if(displayTypeId == DisplayType.TableDir) {
+								tableName = columnName.replace("_ID", "");
+							} else if(displayTypeId == DisplayType.Table || displayTypeId == DisplayType.Search) {
+								if(referenceValueId <= 0) {
+									tableName = columnName.replace("_ID", "");
+								} else {
+									MRefTable referenceTable = MRefTable.getById(Env.getCtx(), referenceValueId);
+									tableName = MTable.getTableName(Env.getCtx(), referenceTable.getAD_Table_ID());
+								}
+							}
+							if (!Util.isEmpty(tableName, true)) {
+								int id = NumberManager.getIntegerFromObject(value);
+								MTable referenceTable = MTable.get(Env.getCtx(), tableName);
+								PO referenceEntity = referenceTable.getPO(id, null);
+								if(referenceEntity != null) {
+									displayValue = referenceEntity.getDisplayValue();
+								}
+							}
+						} else if (DisplayType.isDate(column.getAD_Reference_ID())) {
+							if(value != null) {
+								Timestamp date = (Timestamp) value;
+								displayValue = DisplayType.getDateFormat(
+									column.getAD_Reference_ID(),
+									language,
+									column.getFormatPattern()
+								).format(date);
+							}
+						} else if (DisplayType.isNumeric(column.getAD_Reference_ID())) {
+							if(BigDecimal.class.isAssignableFrom(value.getClass())) {
+								BigDecimal number = (BigDecimal) value;
+								displayValue = DisplayType.getNumberFormat(
+									column.getAD_Reference_ID(),
+									language,
+									column.getFormatPattern()
+								).format(number);
+							}
+						}
+						if (value == null || Util.isEmpty(displayValue, true)) {
+							displayValue = null;
+						}
+						Value.Builder displayValueBuilder = ValueManager.getValueFromString(
+							displayValue
+						);
+						fieldItem.putFields(
+							"display_value",
+							displayValueBuilder.build()
+						);
+	
+						Value.Builder structField = Value.newBuilder().setStructValue(
+							fieldItem
+						);
+						additionalFields.putFields(
+							column.getColumnName(),
+							structField.build()
+						);
+					});
+				;
+
+			}
+		}
+
 		builder.setFields(
 			additionalFields
 		);
+		
 
 		return builder;
 	}

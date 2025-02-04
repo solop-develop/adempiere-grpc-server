@@ -321,4 +321,79 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 		}
 	}
 
+
+
+
+	@Override
+	public void createDataEntryResource(CreateDataEntryRequest request, StreamObserver<DataEntry> responseObserver) {
+		try {
+			DataEntry.Builder builder = DisplayDefinitionServiceLogic.createDataEntryResource(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void readDataEntryResource(ReadDataEntryRequest request, StreamObserver<DataEntry> responseObserver) {
+		try {
+			DataEntry.Builder builder = DisplayDefinitionServiceLogic.readDataEntry(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void updateDataEntryResource(UpdateDataEntryRequest request, StreamObserver<DataEntry> responseObserver) {
+		try {
+			DataEntry.Builder builder = DisplayDefinitionServiceLogic.updateDataEntryResource(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void deleteDataEntryResource(DeleteDataEntryRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			Empty.Builder builder = DisplayDefinitionServiceLogic.deleteDataEntryResource(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 }
