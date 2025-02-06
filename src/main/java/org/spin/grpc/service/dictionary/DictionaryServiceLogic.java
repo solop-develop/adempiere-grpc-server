@@ -92,8 +92,7 @@ public class DictionaryServiceLogic {
 		);
 		Properties context = Env.getCtx();
 
-		ListProcessesResponse.Builder builderList = ListProcessesResponse.newBuilder();
-		new Query(
+		Query query = new Query(
 			context,
 			I_AD_Table_Process.Table_Name,
 			"AD_Table_ID = ?",
@@ -103,7 +102,12 @@ public class DictionaryServiceLogic {
 			// .getIDsAsList()
 			.setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-			.list()
+		;
+		ListProcessesResponse.Builder builderList = ListProcessesResponse.newBuilder()
+			.setRecordCount(query.count())
+		;
+
+		query.list()
 			.forEach(processTable -> {
 				int processId = processTable.get_ValueAsInt(I_AD_Table_Process.COLUMNNAME_AD_Process_ID);
 				if (processId <= 0) {
