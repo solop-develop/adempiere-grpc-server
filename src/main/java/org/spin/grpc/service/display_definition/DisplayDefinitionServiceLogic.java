@@ -995,21 +995,30 @@ public class DisplayDefinitionServiceLogic {
 
 			MResourceAssignment resourceAssignment = new MResourceAssignment(context, 0, transationName);
 			// Name
-			String resourceName = ValueManager.getStringFromValue(
-				attributes.get(
-					I_S_ResourceAssignment.COLUMNNAME_Name
-				)
+			String resourceName = null;
+			Value nameValue = attributes.get(
+				I_S_ResourceAssignment.COLUMNNAME_Name
 			);
+			// TODO: Remove with PR https://github.com/adempiere/adempiere-grpc-utils/pull/46
+			if (nameValue != null) {
+				resourceName = ValueManager.getStringFromValue(
+					nameValue
+				);
+			}
 			if (Util.isEmpty(resourceName, true)) {
 				throw new AdempiereException("@FillMandatory@ @Name@");
 			}
 			resourceAssignment.setName(resourceName);
 			// Description
-			String resourceDescription = ValueManager.getStringFromValue(
-				attributes.get(
-					I_S_ResourceAssignment.COLUMNNAME_Description
-				)
+			String resourceDescription = null;
+			Value descriptionValue = attributes.get(
+				I_S_ResourceAssignment.COLUMNNAME_Description
 			);
+			if (descriptionValue != null) {
+				resourceDescription = ValueManager.getStringFromValue(
+					descriptionValue
+				);
+			}
 			resourceAssignment.setDescription(resourceDescription);
 			// Assign Date From
 			Timestamp resourceAssignDateFrom = ValueManager.getTimestampFromValue(
