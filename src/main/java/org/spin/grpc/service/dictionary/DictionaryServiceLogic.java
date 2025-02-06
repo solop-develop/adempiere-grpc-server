@@ -99,8 +99,13 @@ public class DictionaryServiceLogic {
 			null
 		)
 			.setParameters(table.getAD_Table_ID())
-			.getIDsAsList()
-			.forEach(processId -> {
+			// .getIDsAsList()
+			.list()
+			.forEach(processTable -> {
+				int processId = processTable.get_ValueAsInt(I_AD_Table_Process.COLUMNNAME_AD_Process_ID);
+				if (processId <= 0) {
+					throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
+				}
 				MProcess process = MProcess.get(context, processId);
 				if (process == null || process.getAD_Process_ID() <= 0) {
 					throw new AdempiereException("@AD_Process_ID@ @NotFound@");
