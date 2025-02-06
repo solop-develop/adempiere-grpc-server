@@ -1068,10 +1068,6 @@ public class DisplayDefinitionServiceLogic {
 			MColumn resourceAssignmentColumn = MColumn.get(context, resourceAssignmentColumnId);
 
 			POAdapter adapter = new POAdapter(currentEntity);
-			adapter.set_ValueNoCheck(
-				resourceAssignmentColumn.getColumnName(),
-				resourceAssignment.getS_ResourceAssignment_ID()
-			);
 			table.getColumnsAsList().forEach(column -> {
 				final String columnName = column.getColumnName();
 				int displayTypeId = column.getAD_Reference_ID();
@@ -1100,6 +1096,10 @@ public class DisplayDefinitionServiceLogic {
 				}
 				adapter.set_ValueNoCheck(columnName, value);
 			});
+			adapter.set_ValueNoCheck(
+				resourceAssignmentColumn.getColumnName(),
+				resourceAssignment.getS_ResourceAssignment_ID()
+			);
 			//	Save entity
 			currentEntity.saveEx(transationName);
 
