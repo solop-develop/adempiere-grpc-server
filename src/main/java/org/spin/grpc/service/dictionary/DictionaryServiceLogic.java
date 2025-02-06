@@ -28,6 +28,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcess;
+import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
@@ -99,8 +100,15 @@ public class DictionaryServiceLogic {
 			null
 		)
 			.setParameters(table.getAD_Table_ID())
-			.getIDsAsList()
-			.forEach(processId -> {
+			// .getIDsAsList()
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.list()
+			.forEach(processTable -> {
+				int processId = processTable.get_ValueAsInt(I_AD_Table_Process.COLUMNNAME_AD_Process_ID);
+				if (processId <= 0) {
+					throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
+				}
 				MProcess process = MProcess.get(context, processId);
 				if (process == null || process.getAD_Process_ID() <= 0) {
 					throw new AdempiereException("@AD_Process_ID@ @NotFound@");
