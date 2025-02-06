@@ -981,51 +981,50 @@ public class DisplayDefinitionConvertUtil {
 						);
 						// display value
 						String displayValue = null;
-
-						if (columnName.equals(poInfo.getTableName() + "_ID")) {
-							displayValue = entity.getDisplayValue();
-						} else if (ReferenceUtil.validateReference(displayTypeId) || displayTypeId == DisplayType.Button) {
-							int referenceValueId = column.getAD_Reference_Value_ID();
-							displayTypeId = ReferenceUtil.overwriteDisplayType(
-								displayTypeId,
-								referenceValueId
-							);
-							String tableName = null;
-							if(displayTypeId == DisplayType.TableDir) {
-								tableName = columnName.replace("_ID", "");
-							} else if(displayTypeId == DisplayType.Table || displayTypeId == DisplayType.Search) {
-								if(referenceValueId <= 0) {
+						if (value != null) {
+							if (columnName.equals(poInfo.getTableName() + "_ID")) {
+								displayValue = entity.getDisplayValue();
+							} else if (ReferenceUtil.validateReference(displayTypeId) || displayTypeId == DisplayType.Button) {
+								int referenceValueId = column.getAD_Reference_Value_ID();
+								displayTypeId = ReferenceUtil.overwriteDisplayType(
+									displayTypeId,
+									referenceValueId
+								);
+								String tableName = null;
+								if(displayTypeId == DisplayType.TableDir) {
 									tableName = columnName.replace("_ID", "");
-								} else {
-									MRefTable referenceTable = MRefTable.getById(Env.getCtx(), referenceValueId);
-									tableName = MTable.getTableName(Env.getCtx(), referenceTable.getAD_Table_ID());
+								} else if(displayTypeId == DisplayType.Table || displayTypeId == DisplayType.Search) {
+									if(referenceValueId <= 0) {
+										tableName = columnName.replace("_ID", "");
+									} else {
+										MRefTable referenceTable = MRefTable.getById(Env.getCtx(), referenceValueId);
+										tableName = MTable.getTableName(Env.getCtx(), referenceTable.getAD_Table_ID());
+									}
 								}
-							}
-							if (!Util.isEmpty(tableName, true)) {
-								int id = NumberManager.getIntegerFromObject(value);
-								MTable referenceTable = MTable.get(Env.getCtx(), tableName);
-								PO referenceEntity = referenceTable.getPO(id, null);
-								if(referenceEntity != null) {
-									displayValue = referenceEntity.getDisplayValue();
+								if (!Util.isEmpty(tableName, true)) {
+									int id = NumberManager.getIntegerFromObject(value);
+									MTable referenceTable = MTable.get(Env.getCtx(), tableName);
+									PO referenceEntity = referenceTable.getPO(id, null);
+									if(referenceEntity != null) {
+										displayValue = referenceEntity.getDisplayValue();
+									}
 								}
-							}
-						} else if (DisplayType.isDate(column.getAD_Reference_ID())) {
-							if(value != null) {
+							} else if (DisplayType.isDate(column.getAD_Reference_ID())) {
 								Timestamp date = (Timestamp) value;
 								displayValue = DisplayType.getDateFormat(
 									column.getAD_Reference_ID(),
 									language,
 									column.getFormatPattern()
 								).format(date);
-							}
-						} else if (DisplayType.isNumeric(column.getAD_Reference_ID())) {
-							if(BigDecimal.class.isAssignableFrom(value.getClass())) {
-								BigDecimal number = (BigDecimal) value;
-								displayValue = DisplayType.getNumberFormat(
-									column.getAD_Reference_ID(),
-									language,
-									column.getFormatPattern()
-								).format(number);
+							} else if (DisplayType.isNumeric(column.getAD_Reference_ID())) {
+								if (BigDecimal.class.isAssignableFrom(value.getClass())) {
+									BigDecimal number = (BigDecimal) value;
+									displayValue = DisplayType.getNumberFormat(
+										column.getAD_Reference_ID(),
+										language,
+										column.getFormatPattern()
+									).format(number);
+								}
 							}
 						}
 						if (value == null || Util.isEmpty(displayValue, true)) {
