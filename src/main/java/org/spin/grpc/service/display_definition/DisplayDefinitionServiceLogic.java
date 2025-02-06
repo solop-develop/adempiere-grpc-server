@@ -797,36 +797,30 @@ public class DisplayDefinitionServiceLogic {
 		POAdapter adapter = new POAdapter(currentEntity);
 
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
-		attributes.entrySet().forEach(attribute -> {
-			final String columnName = attribute.getKey();
-			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
-				return;
-			}
-			MColumn column = table.getColumn(columnName);
-			if (column == null || column.getAD_Column_ID() <= 0) {
-				// checks if the column exists in the database
-				return;
-			}
-			int referenceId = column.getAD_Reference_ID();
+		table.getColumnsAsList().forEach(column -> {
+			final String columnName = column.getColumnName();
+			int displayTypeId = column.getAD_Reference_ID();
+
 			Object value = null;
-			if (!attribute.getValue().hasNullValue()) {
-				if (referenceId > 0) {
+			Value attributeValue = attributes.get(columnName);
+			if (attributeValue != null && !attributeValue.hasNullValue()) {
+				if (displayTypeId > 0) {
 					value = ValueManager.getObjectFromReference(
-						attribute.getValue(),
-						referenceId
+						attributeValue,
+						displayTypeId
 					);
 				} 
 				if (value == null) {
 					value = ValueManager.getObjectFromValue(
-						attribute.getValue()
+						attributeValue
 					);
 				}
 			}
-			if (column.isMandatory() && value == null) {
+			if (value == null) {
 				// fill value with context
 				String currentValue = Env.getContext(context, windowNo, columnName, false);
 				if (!Util.isEmpty(currentValue, true)) {
-					value = currentValue;
+					value = ContextManager.getContextVaue(currentValue, displayTypeId);
 				}
 			}
 			adapter.set_ValueNoCheck(columnName, value);
@@ -1063,36 +1057,30 @@ public class DisplayDefinitionServiceLogic {
 				resourceAssignmentColumn.getColumnName(),
 				resourceAssignment.getS_ResourceAssignment_ID()
 			);
-			attributes.entrySet().forEach(attribute -> {
-				final String columnName = attribute.getKey();
-				if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
-					return;
-				}
-				MColumn column = table.getColumn(columnName);
-				if (column == null || column.getAD_Column_ID() <= 0) {
-					// checks if the column exists in the database
-					return;
-				}
-				int referenceId = column.getAD_Reference_ID();
+			table.getColumnsAsList().forEach(column -> {
+				final String columnName = column.getColumnName();
+				int displayTypeId = column.getAD_Reference_ID();
+
 				Object value = null;
-				if (!attribute.getValue().hasNullValue()) {
-					if (referenceId > 0) {
+				Value attributeValue = attributes.get(columnName);
+				if (attributeValue != null && !attributeValue.hasNullValue()) {
+					if (displayTypeId > 0) {
 						value = ValueManager.getObjectFromReference(
-							attribute.getValue(),
-							referenceId
+							attributeValue,
+							displayTypeId
 						);
 					} 
 					if (value == null) {
 						value = ValueManager.getObjectFromValue(
-							attribute.getValue()
+							attributeValue
 						);
 					}
 				}
-				if (column.isMandatory() && value == null) {
+				if (value == null) {
 					// fill value with context
 					String currentValue = Env.getContext(context, windowNo, columnName, false);
 					if (!Util.isEmpty(currentValue, true)) {
-						value = currentValue;
+						value = ContextManager.getContextVaue(currentValue, displayTypeId);
 					}
 				}
 				adapter.set_ValueNoCheck(columnName, value);

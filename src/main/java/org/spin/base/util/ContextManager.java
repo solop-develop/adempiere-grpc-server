@@ -31,10 +31,14 @@ import org.compiere.model.MCountry;
 import org.compiere.model.MLanguage;
 import org.compiere.util.CCache;
 import org.compiere.util.DB;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.spin.service.grpc.util.query.Filter;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -277,6 +281,55 @@ public class ContextManager {
 		} else if (value instanceof String) {
 			Env.setContext(context, windowNo, tabNo, key, (String) value);
 		}
+	}
+
+
+
+	/**
+	 * Set context on window by object value
+	 * @param windowNo
+	 * @param context
+	 * @param windowNo
+	 * @param key
+	 * @param value
+	 * @return {Properties} context with new values
+	 */
+	public static Object getContextVaue(String contextValue, int displayTypeId) {
+		// String contextValue = Env.getContext(context, windowNo, key, false);
+		if (contextValue == null) {
+			return null;
+		} else if (displayTypeId <= 0) {
+			return contextValue;
+		}
+
+		//	Validate values
+		if(DisplayType.isID(displayTypeId) || DisplayType.Integer == displayTypeId) {
+			if (DisplayType.Search == displayTypeId || DisplayType.Table == displayTypeId) {
+				Object lookupValue = contextValue;
+				try {
+					// casteable for integer, except `AD_Language`, `EntityType`
+					lookupValue = Integer.valueOf(
+						lookupValue.toString()
+					);
+				} catch (Exception e) {
+				}
+				return lookupValue;
+			}
+			return NumberManager.getIntegerFromString(contextValue);
+		} else if(DisplayType.isNumeric(displayTypeId)) {
+			return NumberManager.getBigDecimalFromString(contextValue);
+		} else if(DisplayType.YesNo == displayTypeId) {
+			return BooleanManager.getBooleanFromString(contextValue);
+		} else if(DisplayType.isDate(displayTypeId)) {
+			return TimeManager.getTimestampFromString(contextValue);
+		} else if(DisplayType.isText(displayTypeId) || DisplayType.List == displayTypeId) {
+			return contextValue;
+		} else if (DisplayType.Button == displayTypeId) {
+			// TODO: Validate with BigDecimal
+			return contextValue;
+		}
+		//	
+		return contextValue;
 	}
 
 
