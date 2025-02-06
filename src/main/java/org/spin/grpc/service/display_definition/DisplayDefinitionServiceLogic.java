@@ -274,6 +274,7 @@ public class DisplayDefinitionServiceLogic {
 		HashMap<String, String> columnsMap = new HashMap<String, String>();
 		if (displayDefinition.get_ValueAsBoolean(Changes.SP010_IsResource)) {
 			MTable resourceAssignmentTable = MTable.get(Env.getCtx(), I_S_ResourceAssignment.Table_Name);
+			/*
 			// Name
 			MColumn nameColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_Name);
 			FieldDefinition.Builder nameFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinitionByColumn(nameColumn);
@@ -308,6 +309,7 @@ public class DisplayDefinitionServiceLogic {
 				descriptionColumn.getColumnName(),
 				descriptionColumn.getColumnName()
 			);
+			*/
 			// Assign Date From
 			MColumn assignDateFromColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_AssignDateFrom);
 			FieldDefinition.Builder assignDateFromFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinitionByColumn(assignDateFromColumn);
@@ -994,6 +996,7 @@ public class DisplayDefinitionServiceLogic {
 			Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 
 			MResourceAssignment resourceAssignment = new MResourceAssignment(context, 0, transationName);
+
 			// Name
 			String resourceName = null;
 			Value nameValue = attributes.get(
@@ -1006,9 +1009,11 @@ public class DisplayDefinitionServiceLogic {
 				);
 			}
 			if (Util.isEmpty(resourceName, true)) {
-				throw new AdempiereException("@FillMandatory@ @Name@");
+				// Fill with default name (on zk is `.`)
+				resourceName = "-";
 			}
 			resourceAssignment.setName(resourceName);
+			/*
 			// Description
 			String resourceDescription = null;
 			Value descriptionValue = attributes.get(
@@ -1020,6 +1025,7 @@ public class DisplayDefinitionServiceLogic {
 				);
 			}
 			resourceAssignment.setDescription(resourceDescription);
+			*/
 			// Assign Date From
 			Timestamp resourceAssignDateFrom = ValueManager.getTimestampFromValue(
 				attributes.get(
