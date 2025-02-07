@@ -98,9 +98,7 @@ import com.solop.sp010.data.timeline.TimeLineData;
 import com.solop.sp010.data.workflow.WorkflowData;
 import com.solop.sp010.query.Kanban;
 import com.solop.sp010.query.Workflow;
-import com.solop.sp010.util.Changes;
-
-// import com.solop.sp010.util.Changes;
+import com.solop.sp010.util.DisplayDefinitionChanges;
 
 public class DisplayDefinitionServiceLogic {
 
@@ -110,7 +108,7 @@ public class DisplayDefinitionServiceLogic {
 			}
 			PO displayDefinition = new Query(
 				Env.getCtx(),
-				Changes.SP010_DisplayDefinition,
+				DisplayDefinitionChanges.SP010_DisplayDefinition,
 				"SP010_DisplayDefinition_ID = ?",
 				null
 			)
@@ -133,7 +131,7 @@ public class DisplayDefinitionServiceLogic {
 
 		MTable displayDefinitionTable = MTable.get(
 			Env.getCtx(),
-			Changes.SP010_DisplayDefinition
+			DisplayDefinitionChanges.SP010_DisplayDefinition
 		);
 		int recordCount = 0;
 		String whereclause = "AD_Table_ID = ? AND SP010_DisplayType NOT IN('T', 'W')";
@@ -169,14 +167,14 @@ public class DisplayDefinitionServiceLogic {
 
 		MTable displayDefinitionTable = MTable.get(
 			Env.getCtx(),
-			Changes.SP010_DisplayDefinition
+			DisplayDefinitionChanges.SP010_DisplayDefinition
 		);
 
 		ListDisplayDefinitionsMetadataResponse.Builder builderList = ListDisplayDefinitionsMetadataResponse.newBuilder();
 		if (displayDefinitionTable == null || displayDefinitionTable.getAD_Table_ID() <= 0) {
 			return builderList;
 		}
-		String displayTableName = Changes.SP010_DisplayDefinition;
+		String displayTableName = DisplayDefinitionChanges.SP010_DisplayDefinition;
 		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType NOT IN('T', 'W')";
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
@@ -217,7 +215,7 @@ public class DisplayDefinitionServiceLogic {
 				.getIDsAsList()
 				.forEach(recordId -> {
 					PO displayReference = referenceTable.getPO(recordId, null);
-					PO display = displayDefinitionTable.getPO(displayReference.get_ValueAsInt(Changes.SP010_DisplayDefinition_ID), null);
+					PO display = displayDefinitionTable.getPO(displayReference.get_ValueAsInt(DisplayDefinitionChanges.SP010_DisplayDefinition_ID), null);
 					if(!Util.isEmpty(displayReference.get_ValueAsString("Name"))) {
 						display.set_ValueOfColumn("Name", displayReference.get_ValueAsString("Name"));
 					}
@@ -272,7 +270,7 @@ public class DisplayDefinitionServiceLogic {
 		;
 
 		HashMap<String, String> columnsMap = new HashMap<String, String>();
-		if (displayDefinition.get_ValueAsBoolean(Changes.SP010_IsResource)) {
+		if (displayDefinition.get_ValueAsBoolean(DisplayDefinitionChanges.SP010_IsResource)) {
 			MTable resourceAssignmentTable = MTable.get(Env.getCtx(), I_S_ResourceAssignment.Table_Name);
 			/*
 			// Name
@@ -466,7 +464,7 @@ public class DisplayDefinitionServiceLogic {
 			.setColumnName(
 				StringManager.getValidString(
 					kanbanDefinition.getColumnName(
-						Changes.SP010_Group_ID
+						DisplayDefinitionChanges.SP010_Group_ID
 					)
 				)
 			)
@@ -681,7 +679,7 @@ public class DisplayDefinitionServiceLogic {
 			.setColumnName(
 				StringManager.getValidString(
 					worflowDefinition.getColumnName(
-						Changes.SP010_Group_ID
+						DisplayDefinitionChanges.SP010_Group_ID
 					)
 				)
 			)
@@ -703,7 +701,7 @@ public class DisplayDefinitionServiceLogic {
 
 		PO displayDefinition = new Query(
 			Env.getCtx(),
-			Changes.SP010_DisplayDefinition,
+			DisplayDefinitionChanges.SP010_DisplayDefinition,
 			"SP010_DisplayDefinition_ID = ?",
 			null
 		)
@@ -1060,7 +1058,7 @@ public class DisplayDefinitionServiceLogic {
 				throw new AdempiereException("@Error@ PO is null");
 			}
 			int resourceAssignmentColumnId = displayDefinition.get_ValueAsInt(
-				Changes.SP010_Resource_ID
+				DisplayDefinitionChanges.SP010_Resource_ID
 			);
 			if (resourceAssignmentColumnId <= 0) {
 				throw new AdempiereException("@FillMandatory@ @ColumnName@ @SP010_Resource_ID@");
@@ -1179,7 +1177,7 @@ public class DisplayDefinitionServiceLogic {
 				throw new AdempiereException("@Record_ID@ @NotFound@");
 			}
 			int resourceAssignmentColumnId = displayDefinition.get_ValueAsInt(
-				Changes.SP010_Resource_ID
+				DisplayDefinitionChanges.SP010_Resource_ID
 			);
 			if (resourceAssignmentColumnId <= 0) {
 				throw new AdempiereException("@FillMandatory@ @ColumnName@ @SP010_Resource_ID@");
@@ -1310,7 +1308,7 @@ public class DisplayDefinitionServiceLogic {
 			}
 
 			int resourceAssignmentColumnId = displayDefinition.get_ValueAsInt(
-				Changes.SP010_Resource_ID
+				DisplayDefinitionChanges.SP010_Resource_ID
 			);
 			if (resourceAssignmentColumnId <= 0) {
 				throw new AdempiereException("@FillMandatory@ @ColumnName@ @SP010_Resource_ID@");
