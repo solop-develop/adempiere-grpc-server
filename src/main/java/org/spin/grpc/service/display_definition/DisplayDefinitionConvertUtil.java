@@ -66,7 +66,7 @@ import com.solop.sp010.data.resource.ResourceItem;
 import com.solop.sp010.data.timeline.TimeLineItem;
 import com.solop.sp010.data.workflow.WorkflowColumn;
 import com.solop.sp010.data.workflow.WorkflowItem;
-import com.solop.sp010.util.Changes;
+import com.solop.sp010.util.DisplayDefinitionChanges;
 
 public class DisplayDefinitionConvertUtil {
 	
@@ -114,24 +114,24 @@ public class DisplayDefinitionConvertUtil {
 			)
 			.setIsResource(
 				record.get_ValueAsBoolean(
-					Changes.SP010_IsResource
+					DisplayDefinitionChanges.SP010_IsResource
 				)
 			)
 		;
 
-		String displayType = record.get_ValueAsString(Changes.SP010_DisplayType);
+		String displayType = record.get_ValueAsString(DisplayDefinitionChanges.SP010_DisplayType);
 		builder.setDisplayType(
 			StringManager.getValidString(
 				displayType
 			)
 		);
 		if (!Util.isEmpty(displayType, true)) {
-			if (displayType.equals(Changes.SP010_DisplayType_Calendar)) {
+			if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Calendar)) {
 				builder.setType(
 					DefinitionType.CALENDAR
 				);
 				int validFromColumnId = record.get_ValueAsInt(
-					Changes.SP010_ValidFrom_ID
+					DisplayDefinitionChanges.SP010_ValidFrom_ID
 				);
 				if (validFromColumnId > 0 ) {
 					MColumn validFromColumn = MColumn.get(Env.getCtx(), validFromColumnId);
@@ -144,7 +144,7 @@ public class DisplayDefinitionConvertUtil {
 					}
 				}
 				int validToColumnId = record.get_ValueAsInt(
-					Changes.SP010_ValidTo_ID
+					DisplayDefinitionChanges.SP010_ValidTo_ID
 				);
 				if (validToColumnId > 0) {
 					MColumn validToColumn = MColumn.get(Env.getCtx(), validToColumnId);
@@ -156,12 +156,12 @@ public class DisplayDefinitionConvertUtil {
 						);
 					}
 				}
-			} else if (displayType.equals(Changes.SP010_DisplayType_Kanban)) {
+			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)) {
 				builder.setType(
 					DefinitionType.KANBAN
 				);
 				int groupColumnId = record.get_ValueAsInt(
-					Changes.SP010_Group_ID
+					DisplayDefinitionChanges.SP010_Group_ID
 				);
 				if (groupColumnId > 0 ) {
 					MColumn groupColumn = MColumn.get(Env.getCtx(), groupColumnId);
@@ -173,12 +173,12 @@ public class DisplayDefinitionConvertUtil {
 						);
 					}
 				}
-			} else if (displayType.equals(Changes.SP010_DisplayType_Resource)) {
+			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Resource)) {
 				builder.setType(
 					DefinitionType.RESOURCE
 				);
 				int validFromColumnId = record.get_ValueAsInt(
-					Changes.SP010_ValidFrom_ID
+					DisplayDefinitionChanges.SP010_ValidFrom_ID
 				);
 				if (validFromColumnId > 0 ) {
 					MColumn validFromColumn = MColumn.get(Env.getCtx(), validFromColumnId);
@@ -191,7 +191,7 @@ public class DisplayDefinitionConvertUtil {
 					}
 				}
 				int validToColumnId = record.get_ValueAsInt(
-					Changes.SP010_ValidTo_ID
+					DisplayDefinitionChanges.SP010_ValidTo_ID
 				);
 				if (validToColumnId > 0) {
 					MColumn validToColumn = MColumn.get(Env.getCtx(), validToColumnId);
@@ -203,12 +203,12 @@ public class DisplayDefinitionConvertUtil {
 						);
 					}
 				}
-			} else if (displayType.equals(Changes.SP010_DisplayType_Timeline)) {
+			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Timeline)) {
 				builder.setType(
 					DefinitionType.TIMELINE
 				);
 				int dateColumnId = record.get_ValueAsInt(
-					Changes.SP010_Date_ID
+					DisplayDefinitionChanges.SP010_Date_ID
 				);
 				if (dateColumnId > 0 ) {
 					MColumn dateColumn = MColumn.get(Env.getCtx(), dateColumnId);
@@ -220,12 +220,12 @@ public class DisplayDefinitionConvertUtil {
 						);
 					}
 				}
-			} else if (displayType.equals(Changes.SP010_DisplayType_Workflow)) {
+			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Workflow)) {
 				builder.setType(
 					DefinitionType.WORKFLOW
 				);
 				int groupColumnId = record.get_ValueAsInt(
-					Changes.SP010_Group_ID
+					DisplayDefinitionChanges.SP010_Group_ID
 				);
 				if (groupColumnId > 0 ) {
 					MColumn groupColumn = MColumn.get(Env.getCtx(), groupColumnId);
@@ -332,7 +332,7 @@ public class DisplayDefinitionConvertUtil {
 			)
 			.setDisplayDefinitionId(
 				fieldDefinitionItem.get_ValueAsInt(
-					Changes.SP010_DisplayDefinition_ID
+					DisplayDefinitionChanges.SP010_DisplayDefinition_ID
 				)
 			)
 			.setColumnName(
@@ -873,7 +873,7 @@ public class DisplayDefinitionConvertUtil {
 		;
 
 		//	Additional fields
-		MTable fieldTable = MTable.get(Env.getCtx(), Changes.SP010_Field);
+		MTable fieldTable = MTable.get(Env.getCtx(), DisplayDefinitionChanges.SP010_Field);
 		if(fieldTable == null) {
 			return builder;
 		}
@@ -928,7 +928,7 @@ public class DisplayDefinitionConvertUtil {
 			})
 		;
 
-		if (displayDefinition.get_ValueAsBoolean(Changes.SP010_IsResource)) {
+		if (displayDefinition.get_ValueAsBoolean(DisplayDefinitionChanges.SP010_IsResource)) {
 			MTable table = MTable.get(
 				Env.getCtx(),
 				displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
@@ -946,7 +946,7 @@ public class DisplayDefinitionConvertUtil {
 				);
 	
 				int resourceAssignmentColumnId = displayDefinition.get_ValueAsInt(
-					Changes.SP010_Resource_ID
+					DisplayDefinitionChanges.SP010_Resource_ID
 				);
 				MColumn resourceAssignmentColumn = MColumn.get(Env.getCtx(), resourceAssignmentColumnId);
 				MResourceAssignment resourceAssignment = new MResourceAssignment(
