@@ -32,6 +32,8 @@ import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
 import org.adempiere.core.domains.models.I_Fact_Acct;
+import org.adempiere.core.domains.models.I_M_MatchInv;
+import org.adempiere.core.domains.models.I_M_MatchPO;
 import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
 import org.adempiere.core.domains.models.X_Fact_Acct;
 import org.compiere.model.GridField;
@@ -893,9 +895,20 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			return builder;
 		}
 		final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
-		if (documentTable == null || documentTable.getAD_Table_ID() == 0 || !documentTable.isDocument()) {
+		if (documentTable == null || documentTable.getAD_Table_ID() == 0) {
 			// throw new AdempiereException("@AD_Table_ID@ @Invalid@");
 			return builder;
+		}
+
+		if (!documentTable.isDocument() || documentTable.isView()) {
+			// TODO: Remove this condition when complete support to document table
+			final List<String> POSTED_TABLES_WITHOUT_DOCUMENT = Arrays.asList(
+				I_M_MatchInv.Table_Name,
+				I_M_MatchPO.Table_Name
+			);
+			if (!POSTED_TABLES_WITHOUT_DOCUMENT.contains(documentTable.getTableName())) {
+				return builder;
+			}
 		}
 
 		// Validate record
