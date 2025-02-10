@@ -708,31 +708,14 @@ public class IssueManagementServiceLogic {
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = "";
 
-		if (!Util.isEmpty(request.getTableName(), true)) {
-			// validate and get table
-			final MTable table = RecordUtil.validateAndGetTable(
-				request.getTableName()
-			);
+		int userId = Env.getAD_User_ID(Env.getCtx());
+		int roleId = Env.getAD_Role_ID(Env.getCtx());
 
-			// validate record
-			int recordId = request.getRecordId();
-			if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
-				throw new AdempiereException("@Record_ID@ / @NotFound@");
-			}
-			parametersList.add(table.getAD_Table_ID());
-			parametersList.add(recordId);
-			whereClause = "AD_Table_ID = ? AND Record_ID = ? ";
-		} else {
-			int userId = Env.getAD_User_ID(Env.getCtx());
-			int roleId = Env.getAD_Role_ID(Env.getCtx());
-
-			parametersList.add(userId);
-			parametersList.add(roleId);
-			whereClause = "Processed='N' "
-				+ "AND (SalesRep_ID=? OR AD_Role_ID = ?) "
-				+ "AND (R_Status_ID IS NULL OR R_Status_ID IN (SELECT R_Status_ID FROM R_Status WHERE IsClosed='N'))"
-			;
-		}
+		parametersList.add(userId);
+		parametersList.add(roleId);
+		whereClause = "Processed='N' "
+			+ "AND (SalesRep_ID=? OR AD_Role_ID = ?) "
+		;
 
 		final String searchValue = ValueManager.getDecodeUrl(
 			request.getSearchValue()
@@ -774,6 +757,10 @@ public class IssueManagementServiceLogic {
 			parametersList.add(
 				request.getStatusId()
 			);
+		} else {
+			whereClause += " AND (R_Status_ID IS NULL "
+				+ " OR R_Status_ID IN (SELECT R_Status_ID FROM R_Status WHERE IsClosed='N'))"
+			;
 		}
 
 		if (request.getGroupId() > 0) {
@@ -847,22 +834,43 @@ public class IssueManagementServiceLogic {
 		// Date Next Action
 		Timestamp dateNextActionFrom = ValueManager.getDateFromTimestampDate(request.getDateNextActionFrom());
 		Timestamp dateNextActionTo = ValueManager.getDateFromTimestampDate(request.getDateNextActionFrom());
+		whereClause += " AND (DateNextAction IS NULL ";
 		if (dateNextActionFrom != null || dateNextActionTo != null) {
-			whereClause += " AND ";
 			if (dateNextActionFrom != null && dateNextActionTo != null) {
-				whereClause += "TRUNC(DateNextAction, 'DD') BETWEEN ? AND ? ";
+				whereClause += "OR TRUNC(DateNextAction, 'DD') BETWEEN ? AND ? ";
 				parametersList.add(dateNextActionFrom);
 				parametersList.add(dateNextActionTo);
 			}
 			else if (dateNextActionFrom != null) {
-				whereClause += "TRUNC(DateNextAction, 'DD') >= ? ";
+				whereClause += "OR TRUNC(DateNextAction, 'DD') >= ? ";
 				parametersList.add(dateNextActionFrom);
 			}
 			else {
 				// DateTo != null
-				whereClause += "TRUNC(DateNextAction, 'DD') <= ? ";
+				whereClause += "OR TRUNC(DateNextAction, 'DD') <= ? ";
 				parametersList.add(dateNextActionTo);
 			}
+		} else {
+			whereClause += "OR TRUNC(DateNextAction, 'DD') <= TRUNC(SysDate, 'DD')";
+		}
+		whereClause += ") ";
+
+		// Reset all filters on window
+		if (!Util.isEmpty(request.getTableName(), true)) {
+			// validate and get table
+			final MTable table = RecordUtil.validateAndGetTable(
+				request.getTableName()
+			);
+
+			// validate record
+			int recordId = request.getRecordId();
+			if (!RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+				throw new AdempiereException("@Record_ID@ / @NotFound@");
+			}
+			parametersList.clear();
+			parametersList.add(table.getAD_Table_ID());
+			parametersList.add(recordId);
+			whereClause = "AD_Table_ID = ? AND Record_ID = ? ";
 		}
 
 		Query queryRequests = new Query(
@@ -872,7 +880,8 @@ public class IssueManagementServiceLogic {
 			null
 		)
 			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO) // TODO: Fix Record access with pagination
+			// TODO: Fix Record access with pagination
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.setParameters(parametersList)
 		;
 
