@@ -162,10 +162,17 @@ public class DisplayDefinitionConvertUtil {
 						);
 					}
 				}
-			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)) {
-				builder.setType(
-					DefinitionType.KANBAN
-				);
+			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)
+				|| displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_ExpandCollapse)) {
+				if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)) {
+					builder.setType(
+						DefinitionType.KANBAN
+					);
+				} else {
+					builder.setType(
+						DefinitionType.EXPAND_COLLAPSE
+					);
+				}
 				int groupColumnId = record.get_ValueAsInt(
 					DisplayDefinitionChanges.SP010_Group_ID
 				);
