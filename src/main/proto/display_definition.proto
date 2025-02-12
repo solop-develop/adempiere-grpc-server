@@ -213,15 +213,13 @@ message DefinitionMetadata {
 	string table_name = 12;
 	int32 table_id = 13;
 	bool is_resource = 14;
+	repeated FieldDefinition field_definitions = 215;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
 	repeated DefinitionMetadata records = 2;
 	string next_page_token = 3;
 }
-
-
-
 // Field Definition
 message FieldGroup {
 	int32 id = 1;

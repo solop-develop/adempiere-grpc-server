@@ -17,6 +17,7 @@ package org.spin.grpc.service.display_definition;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.adempiere.core.domains.models.I_AD_Column;
@@ -34,6 +35,7 @@ import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
+import org.compiere.model.Query;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -52,6 +54,7 @@ import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
+import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -242,6 +245,100 @@ public class DisplayDefinitionConvertUtil {
 				}
 			}
 		}
+
+		// Fields
+		HashMap<String, String> columnsMap = new HashMap<String, String>();
+		if (record.get_ValueAsBoolean(DisplayDefinitionChanges.SP010_IsResource)) {
+			MTable resourceAssignmentTable = MTable.get(Env.getCtx(), I_S_ResourceAssignment.Table_Name);
+
+			// Assign Date From
+			MColumn assignDateFromColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_AssignDateFrom);
+			FieldDefinition.Builder assignDateFromFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinitionByColumn(assignDateFromColumn);
+			assignDateFromFieldBuilder
+				.setDisplayDefinitionId(
+					record.get_ID()
+				)
+				.setSeqNoGrid(3)
+				.setSequence(3)
+			;
+			builder.addFieldDefinitions(
+				assignDateFromFieldBuilder.build()
+			);
+			columnsMap.put(
+				assignDateFromColumn.getColumnName(),
+				assignDateFromColumn.getColumnName()
+			);
+			// Assign Date To
+			MColumn assignDateToColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_AssignDateTo);
+			FieldDefinition.Builder assignDateToFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinitionByColumn(assignDateToColumn);
+			assignDateToFieldBuilder
+				.setDisplayDefinitionId(
+					record.get_ID()
+				)
+				.setSeqNoGrid(4)
+				.setSequence(4)
+			;
+			builder.addFieldDefinitions(
+				assignDateToFieldBuilder.build()
+			);
+			columnsMap.put(
+				assignDateToColumn.getColumnName(),
+				assignDateToColumn.getColumnName()
+			);
+			// Resource
+			MColumn resourceColumn = resourceAssignmentTable.getColumn(I_S_ResourceAssignment.COLUMNNAME_S_Resource_ID);
+			FieldDefinition.Builder resourceFieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinitionByColumn(resourceColumn);
+			resourceFieldBuilder
+				.setDisplayDefinitionId(
+					record.get_ID()
+				)
+				.setSeqNoGrid(5)
+				.setSequence(5)
+				.setIsUpdateRecord(false)
+			;
+			builder.addFieldDefinitions(
+				resourceFieldBuilder.build()
+			);
+			columnsMap.put(
+				resourceColumn.getColumnName(),
+				resourceColumn.getColumnName()
+			);
+		}
+
+		MTable fieldTable = RecordUtil.validateAndGetTable(
+			DisplayDefinitionChanges.SP010_Field
+		);
+		new Query(
+			Env.getCtx(),
+			DisplayDefinitionChanges.SP010_Field,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(record.get_ID())
+			.setOnlyActiveRecords(true)
+			.setOrderBy(
+				I_AD_Field.COLUMNNAME_SeqNo
+			)
+			.getIDsAsList()
+			.forEach(fieldId -> {
+				PO field = fieldTable.getPO(fieldId, null);
+				MColumn column = MColumn.get(
+					field.getCtx(),
+					field.get_ValueAsInt(
+						I_AD_Column.COLUMNNAME_AD_Column_ID
+					)
+				);
+				if (columnsMap.containsKey(column.getColumnName())) {
+					// omit this column
+					return;
+				}
+				FieldDefinition.Builder fieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(field);
+				builder.addFieldDefinitions(
+					fieldBuilder.build()
+				);
+			})
+		;
+
 		return builder;
 	}
 
