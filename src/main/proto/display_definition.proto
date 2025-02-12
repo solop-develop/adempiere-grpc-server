@@ -63,6 +63,18 @@ service DisplayDefinition {
 		};
 	}
 
+	// Expand/Collapse
+	rpc ListExpandCollapsesDefinition(ListExpandCollapsesDefinitionRequest) returns (ListExpandCollapsesDefinitionResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/expand-collapses/{id}/definitions"
+		};
+	}
+	rpc ListExpandCollapsesData(ListExpandCollapsesDataRequest) returns (ListExpandCollapsesDataResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/expand-collapses/{id}"
+		};
+	}
+
 	// Kanban
 	rpc ListKanbansDefinition(ListKanbansDefinitionRequest) returns (ListKanbansDefinitionResponse) {
 		option (google.api.http) = {
@@ -291,6 +303,73 @@ message ListCalendarsDataResponse {
 
 
 
+// Expand/Collapse Definition
+message ExpandCollapseGroup {
+	string value = 1;
+	string name = 2;
+	int32 sequence = 3;
+}
+message ListExpandCollapsesDefinitionRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
+}
+message ListExpandCollapsesDefinitionResponse {
+	string name = 1;
+	string description = 2;
+	string column_name = 3;
+	repeated ExpandCollapseGroup groups = 4;
+}
+
+// Expand/Collapse
+message ExpandCollapseEntry {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	bool is_active = 5;
+	bool is_read_only = 6;
+	string group_id = 7;
+	int32 sequence = 8;
+	google.protobuf.Struct fields = 9;
+}
+message ListExpandCollapsesDataRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
+}
+message ListExpandCollapsesDataResponse {
+	string name = 1;
+	string description = 2;
+	string column_name = 3;
+	repeated ExpandCollapseGroup groups = 4;
+	int64 record_count = 5;
+	repeated ExpandCollapseEntry records = 6;
+	string next_page_token = 7;
+}
+
+
+
 // Kanban Definition
 message KanbanStep {
 	string value = 1;
@@ -355,6 +434,8 @@ message ListKanbansDataResponse {
 	repeated KanbanEntry records = 6;
 	string next_page_token = 7;
 }
+
+
 
 // Resource
 message ResourceEntry {

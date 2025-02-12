@@ -27,6 +27,10 @@ import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetad
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetadataResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataRequest;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataResponse;
+import org.spin.backend.grpc.display_definition.ListExpandCollapsesDataRequest;
+import org.spin.backend.grpc.display_definition.ListExpandCollapsesDataResponse;
+import org.spin.backend.grpc.display_definition.ListExpandCollapsesDefinitionRequest;
+import org.spin.backend.grpc.display_definition.ListExpandCollapsesDefinitionResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionRequest;
@@ -71,8 +75,6 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 		}
 	}
 
-
-
 	@Override
 	public void listDisplayDefinitionsMetadata(ListDisplayDefinitionsMetadataRequest request, StreamObserver<ListDisplayDefinitionsMetadataResponse> responseObserver) {
 		try {
@@ -90,8 +92,6 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 			);
 		}
 	}
-
-
 
 	@Override
 	public void listDisplayDefinitionFieldsMetadata(ListDisplayDefinitionFieldsMetadataRequest request, StreamObserver<ListDisplayDefinitionFieldsMetadataResponse> responseObserver) {
@@ -117,6 +117,44 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 	public void listCalendarsData(ListCalendarsDataRequest request, StreamObserver<ListCalendarsDataResponse> responseObserver) {
 		try {
 			ListCalendarsDataResponse.Builder builder = DisplayDefinitionServiceLogic.listCalendarsData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listExpandCollapsesDefinition(ListExpandCollapsesDefinitionRequest request, StreamObserver<ListExpandCollapsesDefinitionResponse> responseObserver) {
+		try {
+			ListExpandCollapsesDefinitionResponse.Builder builder = DisplayDefinitionServiceLogic.listExpandCollapsesDefinition(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void listExpandCollapsesData(ListExpandCollapsesDataRequest request, StreamObserver<ListExpandCollapsesDataResponse> responseObserver) {
+		try {
+			ListExpandCollapsesDataResponse.Builder builder = DisplayDefinitionServiceLogic.listExpandCollapsesData(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

@@ -42,6 +42,8 @@ import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DataEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.DefinitionType;
+import org.spin.backend.grpc.display_definition.ExpandCollapseEntry;
+import org.spin.backend.grpc.display_definition.ExpandCollapseGroup;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
 import org.spin.backend.grpc.display_definition.FieldGroup;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
@@ -59,6 +61,7 @@ import org.spin.service.grpc.util.value.ValueManager;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.solop.sp010.data.calendar.CalendarItem;
+import com.solop.sp010.data.expand_collapse.ExpandCollapseItem;
 import com.solop.sp010.data.generic.GenericItem;
 import com.solop.sp010.data.kanban.KanbanColumn;
 import com.solop.sp010.data.kanban.KanbanItem;
@@ -557,6 +560,84 @@ public class DisplayDefinitionConvertUtil {
 		;
 		Struct.Builder fields = Struct.newBuilder();
 		calendarItem.getFields().entrySet().forEach(field -> {
+			Struct.Builder fieldValue = Struct.newBuilder();
+			fieldValue.putFields("value", ValueManager.getValueFromObject(field.getValue().getValue()).build());
+			if(!Util.isEmpty(field.getValue().getDisplayValue())) {
+				fieldValue.putFields("display_value", ValueManager.getValueFromObject(field.getValue().getDisplayValue()).build());
+				fieldValue.putFields("table_name", ValueManager.getValueFromObject(field.getValue().getTableName()).build());
+			}
+			fields.putFields(StringManager.getValidString(field.getValue().getColumnName()), Value.newBuilder().setStructValue(fieldValue.build()).build());
+		});
+		builder.setFields(fields);
+		return builder;
+	}
+
+
+
+	public static ExpandCollapseGroup.Builder convertExpandCollapseGroup(com.solop.sp010.data.expand_collapse.ExpandCollapseGroup group) {
+		ExpandCollapseGroup.Builder builder = ExpandCollapseGroup.newBuilder();
+		if (group == null) {
+			return builder;
+		}
+		builder
+			.setValue(
+				StringManager.getValidString(
+					group.getGroupCode()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					group.getName()
+				)
+			)
+			.setSequence(
+				group.getSequence()
+			)
+		;
+		return builder;
+	}
+
+	public static ExpandCollapseEntry.Builder convertExpandCollapseEntry(ExpandCollapseItem kanbanItem) {
+		ExpandCollapseEntry.Builder builder = ExpandCollapseEntry.newBuilder();
+		if (kanbanItem == null) {
+			return builder;
+		}
+		builder
+			.setId(
+				kanbanItem.getId()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					kanbanItem.getUuid()
+				)
+			)
+			.setTitle(
+				StringManager.getValidString(
+					kanbanItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					kanbanItem.getDescription()
+				)
+			)
+			.setIsActive(
+				kanbanItem.isActive()
+			)
+			.setIsReadOnly(
+				kanbanItem.isReadOnly()
+			)
+			.setGroupId(
+				StringManager.getValidString(
+					kanbanItem.getGroupCode()
+				)
+			)
+			.setSequence(
+				kanbanItem.getSequence()
+			)
+		;
+		Struct.Builder fields = Struct.newBuilder();
+		kanbanItem.getFields().entrySet().forEach(field -> {
 			Struct.Builder fieldValue = Struct.newBuilder();
 			fieldValue.putFields("value", ValueManager.getValueFromObject(field.getValue().getValue()).build());
 			if(!Util.isEmpty(field.getValue().getDisplayValue())) {
