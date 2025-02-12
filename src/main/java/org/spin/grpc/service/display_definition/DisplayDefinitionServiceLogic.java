@@ -46,6 +46,8 @@ import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.DeleteDataEntryRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
+import org.spin.backend.grpc.display_definition.ExpandCollapseEntry;
+import org.spin.backend.grpc.display_definition.ExpandCollapseGroup;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
@@ -55,6 +57,10 @@ import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetad
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetadataResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataRequest;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionsMetadataResponse;
+import org.spin.backend.grpc.display_definition.ListExpandCollapsesDataRequest;
+import org.spin.backend.grpc.display_definition.ListExpandCollapsesDataResponse;
+import org.spin.backend.grpc.display_definition.ListExpandCollapsesDefinitionRequest;
+import org.spin.backend.grpc.display_definition.ListExpandCollapsesDefinitionResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionRequest;
@@ -90,12 +96,14 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.Value;
 import com.solop.sp010.controller.DisplayBuilder;
 import com.solop.sp010.data.calendar.CalendarData;
+import com.solop.sp010.data.expand_collapse.ExpandCollapseData;
 import com.solop.sp010.data.generic.GenericItem;
 import com.solop.sp010.data.kanban.KanbanData;
 import com.solop.sp010.data.resource.ResourceData;
 import com.solop.sp010.data.resource.ResourceItem;
 import com.solop.sp010.data.timeline.TimeLineData;
 import com.solop.sp010.data.workflow.WorkflowData;
+import com.solop.sp010.query.ExpandCollapse;
 import com.solop.sp010.query.Kanban;
 import com.solop.sp010.query.Workflow;
 import com.solop.sp010.util.DisplayDefinitionChanges;
@@ -444,6 +452,104 @@ public class DisplayDefinitionServiceLogic {
 
 
 
+	public static ListExpandCollapsesDefinitionResponse.Builder listExpandCollapsesDefinition(ListExpandCollapsesDefinitionRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
+
+		ExpandCollapse expandCollapseDefinition = new ExpandCollapse(displayDefinition.get_ID());
+		ListExpandCollapsesDefinitionResponse.Builder builderList = ListExpandCollapsesDefinitionResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					expandCollapseDefinition.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					expandCollapseDefinition.getDescription()
+				)
+			)
+			.setColumnName(
+				StringManager.getValidString(
+					expandCollapseDefinition.getColumnName(
+						DisplayDefinitionChanges.SP010_Group_ID
+					)
+				)
+			)
+		;
+
+		expandCollapseDefinition.getGroups().forEach(group -> {
+			ExpandCollapseGroup.Builder builder = DisplayDefinitionConvertUtil.convertExpandCollapseGroup(group);
+			builderList.addGroups(builder);
+		});
+		return builderList;
+	}
+
+	public static ListExpandCollapsesDataResponse.Builder listExpandCollapsesData(ListExpandCollapsesDataRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+
+		ExpandCollapseData displayData = (ExpandCollapseData) DisplayBuilder.newInstance(displayDefinition.get_ID())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
+			.run()
+		;
+
+		//	Set page token
+		int count = NumberManager.getIntegerFromLong(
+			displayData.getRecordCount()
+		);
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListExpandCollapsesDataResponse.Builder builderList = ListExpandCollapsesDataResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					displayData.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					displayData.getDescription()
+				)
+			)
+			.setColumnName(
+				StringManager.getValidString(
+					displayData.getColumnName()
+				)
+			)
+			.setRecordCount(
+				count
+			)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		displayData.getGroups().forEach(group -> {
+			ExpandCollapseGroup.Builder builder = DisplayDefinitionConvertUtil.convertExpandCollapseGroup(group);
+			builderList.addGroups(builder);
+		});
+		displayData.getExpandCollapses().forEach(expandCollapseItem -> {
+			ExpandCollapseEntry.Builder builder = DisplayDefinitionConvertUtil.convertExpandCollapseEntry(expandCollapseItem);
+			builderList.addRecords(builder);
+		});
+		return builderList;
+	}
+
+
+
 	public static ListKanbansDefinitionResponse.Builder listKanbansDefinition(ListKanbansDefinitionRequest request) {
 		PO displayDefinition = validateAndGetDisplayDefinition(
 			request.getId()
@@ -539,6 +645,8 @@ public class DisplayDefinitionServiceLogic {
 		return builderList;
 	}
 
+
+
 	public static ListResourcesDataResponse.Builder listResourcesData(ListResourcesDataRequest request) {
 		PO displayDefinition = validateAndGetDisplayDefinition(
 			request.getId()
@@ -607,6 +715,8 @@ public class DisplayDefinitionServiceLogic {
 		});
 		return builderList;
 	}
+
+
 
 	public static ListTimelinesDataResponse.Builder listTimelinesData(ListTimelinesDataRequest request) {
 		PO displayDefinition = validateAndGetDisplayDefinition(
@@ -691,8 +801,6 @@ public class DisplayDefinitionServiceLogic {
 		});
 		return builderList;
 	}
-
-
 
 	public static ListWorkflowsDataResponse.Builder listWorkflowsData(ListWorkflowsDataRequest request) {
 		if (request.getId() <= 0) {
