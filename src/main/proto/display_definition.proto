@@ -193,7 +193,8 @@ message ListDisplayDefinitionsMetadataRequest {
 enum DefinitionType {
 	TYPE_UNKNOW = 0;
 	CALENDAR = 1;
-	KANBAN = 2;
+	EXPAND_COLLAPSE = 2;
+	KANBAN = 3;
 	RESOURCE = 4; // As Gannt
 	TIMELINE = 5;
 	WORKFLOW = 6;
