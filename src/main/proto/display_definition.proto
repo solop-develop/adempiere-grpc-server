@@ -307,6 +307,7 @@ message ExpandCollapseGroup {
 	string value = 1;
 	string name = 2;
 	int32 sequence = 3;
+	repeated ExpandCollapseEntry records = 4;
 }
 message ListExpandCollapsesDefinitionRequest {
 	string filters = 1;
@@ -374,6 +375,7 @@ message KanbanStep {
 	string value = 1;
 	string name = 2;
 	int32 sequence = 3;
+	repeated KanbanEntry records = 5;
 }
 message ListKanbansDefinitionRequest {
 	string filters = 1;

@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Field;
@@ -98,6 +99,7 @@ import com.solop.sp010.controller.DisplayBuilder;
 import com.solop.sp010.data.calendar.CalendarData;
 import com.solop.sp010.data.expand_collapse.ExpandCollapseData;
 import com.solop.sp010.data.generic.GenericItem;
+import com.solop.sp010.data.kanban.KanbanColumn;
 import com.solop.sp010.data.kanban.KanbanData;
 import com.solop.sp010.data.resource.ResourceData;
 import com.solop.sp010.data.resource.ResourceItem;
@@ -537,14 +539,55 @@ public class DisplayDefinitionServiceLogic {
 			)
 		;
 
-		displayData.getGroups().forEach(group -> {
-			ExpandCollapseGroup.Builder builder = DisplayDefinitionConvertUtil.convertExpandCollapseGroup(group);
-			builderList.addGroups(builder);
-		});
+		Map<String, com.solop.sp010.data.expand_collapse.ExpandCollapseGroup> groupsMap = displayData.getGroups()
+			.stream()
+			.collect(Collectors.toMap(com.solop.sp010.data.expand_collapse.ExpandCollapseGroup::getGroupCode, column -> column))
+		;
+		// Fill empty group
+		if (!groupsMap.containsKey("")) {
+			com.solop.sp010.data.expand_collapse.ExpandCollapseGroup emptyGroup = com.solop.sp010.data.expand_collapse.ExpandCollapseGroup.newInstance()
+				.withGroupCode("")
+				.withName("")
+			;
+			groupsMap.put(emptyGroup.getGroupCode(), emptyGroup);
+		}
+		Map<String, List<ExpandCollapseEntry>> groups = new HashMap<>();
 		displayData.getExpandCollapses().forEach(expandCollapseItem -> {
+			String groupId = StringManager.getValidString(
+				expandCollapseItem.getGroupCode()
+			);
+
 			ExpandCollapseEntry.Builder builder = DisplayDefinitionConvertUtil.convertExpandCollapseEntry(expandCollapseItem);
+			List<ExpandCollapseEntry> childs = new ArrayList<>();
+			if(groups.containsKey(groupId)) {
+				childs = groups.get(groupId);
+			}
+			childs.add(builder.build());
+			groups.put(groupId, childs);
 			builderList.addRecords(builder);
 		});
+		List<ExpandCollapseGroup> groupsList = new ArrayList<ExpandCollapseGroup>();
+		groupsMap.entrySet().forEach(groupEntry -> {
+			String groupId = StringManager.getValidString(
+				groupEntry.getKey()
+			);
+			ExpandCollapseGroup.Builder builderGroup = DisplayDefinitionConvertUtil.convertExpandCollapseGroup(groupEntry.getValue());
+			List<ExpandCollapseEntry> childs = groups.get(groupId);
+			if (childs == null) {
+				childs = new ArrayList<>();
+			}
+			builderGroup.addAllRecords(childs);
+			// builderList.addSteps(builderGroup);
+			groupsList.add(builderGroup.build());
+		});
+		// Sort by sequence
+		groupsList.stream()
+			.sorted((g1, g2) -> Integer.compare(g1.getSequence(), g2.getSequence()))
+			.forEach(builderGroup -> {
+				builderList.addGroups(builderGroup);
+			})
+		;
+
 		return builderList;
 	}
 
@@ -634,14 +677,55 @@ public class DisplayDefinitionServiceLogic {
 			)
 		;
 
-		displayData.getColumns().forEach(kanbanColumn -> {
-			KanbanStep.Builder builder = DisplayDefinitionConvertUtil.convertKanbanStep(kanbanColumn);
-			builderList.addSteps(builder);
-		});
+		Map<String, KanbanColumn> groupsMap = displayData.getColumns()
+			.stream()
+			.collect(Collectors.toMap(KanbanColumn::getGroupCode, column -> column))
+		;
+		// Fill empty group
+		if (!groupsMap.containsKey("")) {
+			KanbanColumn emptyColumn = KanbanColumn.newInstance()
+				.withGroupCode("")
+				.withName("")
+			;
+			groupsMap.put(emptyColumn.getGroupCode(), emptyColumn);
+		}
+		Map<String, List<KanbanEntry>> groups = new HashMap<>();
 		displayData.getKanbans().forEach(kanbanItem -> {
+			String groupId = StringManager.getValidString(
+				kanbanItem.getGroupCode()
+			);
+
 			KanbanEntry.Builder builder = DisplayDefinitionConvertUtil.convertKanbanEntry(kanbanItem);
+			List<KanbanEntry> childs = new ArrayList<>();
+			if(groups.containsKey(groupId)) {
+				childs = groups.get(groupId);
+			}
+			childs.add(builder.build());
+			groups.put(groupId, childs);
 			builderList.addRecords(builder);
 		});
+		List<KanbanStep> groupsList = new ArrayList<KanbanStep>();
+		groupsMap.entrySet().forEach(groupEntry -> {
+			String groupId = StringManager.getValidString(
+				groupEntry.getKey()
+			);
+			KanbanStep.Builder builderGroup = DisplayDefinitionConvertUtil.convertKanbanStep(groupEntry.getValue());
+			List<KanbanEntry> childs = groups.get(groupId);
+			if (childs == null) {
+				childs = new ArrayList<>();
+			}
+			builderGroup.addAllRecords(childs);
+			// builderList.addSteps(builderGroup);
+			groupsList.add(builderGroup.build());
+		});
+		// Sort by sequence
+		groupsList.stream()
+			.sorted((g1, g2) -> Integer.compare(g1.getSequence(), g2.getSequence()))
+			.forEach(builderGroup -> {
+				builderList.addSteps(builderGroup);
+			})
+		;
+
 		return builderList;
 	}
 
@@ -701,14 +785,14 @@ public class DisplayDefinitionServiceLogic {
 		});
 		resourcesGroup.entrySet().forEach(entry -> {
 			ResourceGroup.Builder group = ResourceGroup.newBuilder()
-					.setName(StringManager.getValidString(entry.getKey()))
-					;
+				.setName(StringManager.getValidString(entry.getKey()))
+			;
 			entry.getValue().forEach(resource -> {
 				ResourceGroupChild.Builder child = ResourceGroupChild.newBuilder()
-						.setId(resource.getId())
-						.setUuid(StringManager.getValidString(resource.getUuid()))
-						.setName(StringManager.getValidString(resource.getName()))
-						;
+					.setId(resource.getId())
+					.setUuid(StringManager.getValidString(resource.getUuid()))
+					.setName(StringManager.getValidString(resource.getName()))
+				;
 				group.addResources(child);
 			});
 			builderList.addGroups(group);
