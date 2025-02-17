@@ -48,8 +48,11 @@ import org.spin.backend.grpc.display_definition.ExpandCollapseEntry;
 import org.spin.backend.grpc.display_definition.ExpandCollapseGroup;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
 import org.spin.backend.grpc.display_definition.FieldGroup;
+import org.spin.backend.grpc.display_definition.GeneralEntry;
+import org.spin.backend.grpc.display_definition.HierarchyParent;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
+import org.spin.backend.grpc.display_definition.MosaicEntry;
 import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
@@ -66,9 +69,12 @@ import com.google.protobuf.Value;
 import com.solop.sp010.data.BaseFieldItem;
 import com.solop.sp010.data.calendar.CalendarItem;
 import com.solop.sp010.data.expand_collapse.ExpandCollapseItem;
+import com.solop.sp010.data.general.GeneralItem;
 import com.solop.sp010.data.generic.GenericItem;
+import com.solop.sp010.data.hierarchy.HierarchySummary;
 import com.solop.sp010.data.kanban.KanbanColumn;
 import com.solop.sp010.data.kanban.KanbanItem;
+import com.solop.sp010.data.mosaic.MosaicItem;
 import com.solop.sp010.data.resource.ResourceItem;
 import com.solop.sp010.data.timeline.TimeLineItem;
 import com.solop.sp010.data.workflow.WorkflowColumn;
@@ -791,6 +797,107 @@ public class DisplayDefinitionConvertUtil {
 		return builder;
 	}
 
+	public static GeneralEntry.Builder convertGeneralEntry(GeneralItem generalItem) {
+		GeneralEntry.Builder builder = GeneralEntry.newBuilder();
+		if (generalItem == null) {
+			return builder;
+		}
+		builder
+			.setId(
+				generalItem.getId()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					generalItem.getUuid()
+				)
+			)
+			.setTitle(
+				StringManager.getValidString(
+					generalItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					generalItem.getDescription()
+				)
+			)
+			.setIsActive(
+				generalItem.isActive()
+			)
+			.setIsReadOnly(
+				generalItem.isReadOnly()
+			)
+		;
+		Struct.Builder fields = Struct.newBuilder();
+		generalItem.getFields().entrySet().forEach(field -> {
+			BaseFieldItem fieldItem = field.getValue();
+			String columnName = StringManager.getValidString(
+				fieldItem.getColumnName()
+			);
+			Value fieldValue = convertFieldItem(fieldItem);
+			
+			fields.putFields(
+				columnName,
+				fieldValue
+			);
+		});
+		builder.setFields(fields);
+		return builder;
+	}
+
+	public static HierarchyParent.Builder convertHierarchyParent(HierarchySummary summaryItem) {
+		HierarchyParent.Builder builder = HierarchyParent.newBuilder();
+		if (summaryItem == null) {
+			return builder;
+		}
+		builder
+			.setTitle(
+				StringManager.getValidString(
+					summaryItem.getName()
+				)
+			)
+			// .setId(
+			// 	summaryItem.getId()
+			// )
+			// .setUuid(
+			// 	StringManager.getValidString(
+			// 		summaryItem.getUuid()
+			// 	)
+			// )
+			// .setTitle(
+			// 	StringManager.getValidString(
+			// 		summaryItem.getTitle()
+			// 	)
+			// )
+			// .setDescription(
+			// 	StringManager.getValidString(
+			// 		summaryItem.getDescription()
+			// 	)
+			// )
+			// .setIsActive(
+			// 	summaryItem.isActive()
+			// )
+			// .setIsReadOnly(
+			// 	summaryItem.isReadOnly()
+			// )
+		;
+		Struct.Builder fields = Struct.newBuilder();
+		// summaryItem.getFields().entrySet().forEach(field -> {
+		// 	BaseFieldItem fieldItem = field.getValue();
+		// 	String columnName = StringManager.getValidString(
+		// 		fieldItem.getColumnName()
+		// 	);
+		// 	Value fieldValue = convertFieldItem(fieldItem);
+			
+		// 	fields.putFields(
+		// 		columnName,
+		// 		fieldValue
+		// 	);
+		// });
+		builder.setFields(fields);
+		return builder;
+	}
+
 
 
 	public static KanbanStep.Builder convertKanbanStep(KanbanColumn kanbanColumn) {
@@ -871,6 +978,58 @@ public class DisplayDefinitionConvertUtil {
 		builder.setFields(fields);
 		return builder;
 	}
+
+
+
+	public static MosaicEntry.Builder convertMosaicEntry(MosaicItem mosaicItem) {
+		MosaicEntry.Builder builder = MosaicEntry.newBuilder();
+		if (mosaicItem == null) {
+			return builder;
+		}
+		builder
+			.setId(
+				mosaicItem.getId()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					mosaicItem.getUuid()
+				)
+			)
+			.setTitle(
+				StringManager.getValidString(
+					mosaicItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					mosaicItem.getDescription()
+				)
+			)
+			.setIsActive(
+				mosaicItem.isActive()
+			)
+			.setIsReadOnly(
+				mosaicItem.isReadOnly()
+			)
+		;
+		Struct.Builder fields = Struct.newBuilder();
+		mosaicItem.getFields().entrySet().forEach(field -> {
+			BaseFieldItem fieldItem = field.getValue();
+			String columnName = StringManager.getValidString(
+				fieldItem.getColumnName()
+			);
+			Value fieldValue = convertFieldItem(fieldItem);
+			
+			fields.putFields(
+				columnName,
+				fieldValue
+			);
+		});
+		builder.setFields(fields);
+		return builder;
+	}
+
+
 
 	public static ResourceEntry.Builder convertResourceEntry(ResourceItem resourceItem) {
 		ResourceEntry.Builder builder = ResourceEntry.newBuilder();
