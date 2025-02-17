@@ -169,15 +169,24 @@ public class DisplayDefinitionConvertUtil {
 						);
 					}
 				}
+			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_General)) {
+				builder.setType(
+					DefinitionType.GENERAL
+				);
 			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)
-				|| displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_ExpandCollapse)) {
+				|| displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_ExpandCollapse)
+				|| displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Workflow)) {
 				if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)) {
 					builder.setType(
 						DefinitionType.KANBAN
 					);
-				} else {
+				} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_ExpandCollapse)) {
 					builder.setType(
 						DefinitionType.EXPAND_COLLAPSE
+					);
+				} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Workflow)) {
+					builder.setType(
+						DefinitionType.WORKFLOW
 					);
 				}
 				int groupColumnId = record.get_ValueAsInt(
@@ -193,6 +202,10 @@ public class DisplayDefinitionConvertUtil {
 						);
 					}
 				}
+			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Mosaic)) {
+				builder.setType(
+					DefinitionType.MOSAIC
+				);
 			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Resource)) {
 				builder.setType(
 					DefinitionType.RESOURCE
@@ -236,23 +249,6 @@ public class DisplayDefinitionConvertUtil {
 						builder.setDateColumn(
 							StringManager.getValidString(
 								dateColumn.getColumnName()
-							)
-						);
-					}
-				}
-			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Workflow)) {
-				builder.setType(
-					DefinitionType.WORKFLOW
-				);
-				int groupColumnId = record.get_ValueAsInt(
-					DisplayDefinitionChanges.SP010_Group_ID
-				);
-				if (groupColumnId > 0 ) {
-					MColumn groupColumn = MColumn.get(Env.getCtx(), groupColumnId);
-					if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
-						builder.setGroupColumn(
-							StringManager.getValidString(
-								groupColumn.getColumnName()
 							)
 						);
 					}
@@ -547,6 +543,10 @@ public class DisplayDefinitionConvertUtil {
 				fieldDefinitionItem.get_ValueAsBoolean(
 					"SP010_IsUpdateRecord"
 				)
+			)
+			.setIsAllowCopy(
+				// TODO: Add on field definition window to override
+				column.isAllowCopy()
 			)
 		;
 

@@ -282,6 +282,7 @@ message FieldDefinition {
 	//
 	bool is_insert_record = 23;
 	bool is_update_record = 24;
+	bool is_allow_copy = 25;
 }
 message ListDisplayDefinitionFieldsMetadataRequest {
 	int32 display_definition_id = 1;
