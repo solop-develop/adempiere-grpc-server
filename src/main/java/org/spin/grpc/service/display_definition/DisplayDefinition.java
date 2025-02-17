@@ -31,10 +31,16 @@ import org.spin.backend.grpc.display_definition.ListExpandCollapsesDataRequest;
 import org.spin.backend.grpc.display_definition.ListExpandCollapsesDataResponse;
 import org.spin.backend.grpc.display_definition.ListExpandCollapsesDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListExpandCollapsesDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ListGeneralsDataRequest;
+import org.spin.backend.grpc.display_definition.ListGeneralsDataResponse;
+import org.spin.backend.grpc.display_definition.ListHierarchiesDataRequest;
+import org.spin.backend.grpc.display_definition.ListHierarchiesDataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ListMosaicsDataRequest;
+import org.spin.backend.grpc.display_definition.ListMosaicsDataResponse;
 import org.spin.backend.grpc.display_definition.ListResourcesDataRequest;
 import org.spin.backend.grpc.display_definition.ListResourcesDataResponse;
 import org.spin.backend.grpc.display_definition.ListTimelinesDataRequest;
@@ -172,6 +178,46 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 
 
 	@Override
+	public void listGeneralsData(ListGeneralsDataRequest request, StreamObserver<ListGeneralsDataResponse> responseObserver) {
+		try {
+			ListGeneralsDataResponse.Builder builder = DisplayDefinitionServiceLogic.listGeneralsData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listHierarchiesData(ListHierarchiesDataRequest request, StreamObserver<ListHierarchiesDataResponse> responseObserver) {
+		try {
+			ListHierarchiesDataResponse.Builder builder = DisplayDefinitionServiceLogic.listHierarchiesData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
 	public void listKanbansDefinition(ListKanbansDefinitionRequest request, StreamObserver<ListKanbansDefinitionResponse> responseObserver) {
 		try {
 			ListKanbansDefinitionResponse.Builder builder = DisplayDefinitionServiceLogic.listKanbansDefinition(request);
@@ -193,6 +239,26 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 	public void listKanbansData(ListKanbansDataRequest request, StreamObserver<ListKanbansDataResponse> responseObserver) {
 		try {
 			ListKanbansDataResponse.Builder builder = DisplayDefinitionServiceLogic.listKanbansData(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listMosaicsData(ListMosaicsDataRequest request, StreamObserver<ListMosaicsDataResponse> responseObserver) {
+		try {
+			ListMosaicsDataResponse.Builder builder = DisplayDefinitionServiceLogic.listMosaicsData(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

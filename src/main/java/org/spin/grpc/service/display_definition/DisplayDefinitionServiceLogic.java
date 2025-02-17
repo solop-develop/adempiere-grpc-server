@@ -50,6 +50,8 @@ import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataR
 import org.spin.backend.grpc.display_definition.ExpandCollapseEntry;
 import org.spin.backend.grpc.display_definition.ExpandCollapseGroup;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
+import org.spin.backend.grpc.display_definition.GeneralEntry;
+import org.spin.backend.grpc.display_definition.HierarchyParent;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
 import org.spin.backend.grpc.display_definition.ListCalendarsDataRequest;
@@ -62,10 +64,16 @@ import org.spin.backend.grpc.display_definition.ListExpandCollapsesDataRequest;
 import org.spin.backend.grpc.display_definition.ListExpandCollapsesDataResponse;
 import org.spin.backend.grpc.display_definition.ListExpandCollapsesDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListExpandCollapsesDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ListGeneralsDataRequest;
+import org.spin.backend.grpc.display_definition.ListGeneralsDataResponse;
+import org.spin.backend.grpc.display_definition.ListHierarchiesDataRequest;
+import org.spin.backend.grpc.display_definition.ListHierarchiesDataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDataRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDataResponse;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListKanbansDefinitionResponse;
+import org.spin.backend.grpc.display_definition.ListMosaicsDataRequest;
+import org.spin.backend.grpc.display_definition.ListMosaicsDataResponse;
 import org.spin.backend.grpc.display_definition.ListResourcesDataRequest;
 import org.spin.backend.grpc.display_definition.ListResourcesDataResponse;
 import org.spin.backend.grpc.display_definition.ListTimelinesDataRequest;
@@ -74,6 +82,7 @@ import org.spin.backend.grpc.display_definition.ListWorkflowsDataRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
+import org.spin.backend.grpc.display_definition.MosaicEntry;
 import org.spin.backend.grpc.display_definition.ReadDataEntryRequest;
 import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.ResourceGroup;
@@ -98,9 +107,12 @@ import com.google.protobuf.Value;
 import com.solop.sp010.controller.DisplayBuilder;
 import com.solop.sp010.data.calendar.CalendarData;
 import com.solop.sp010.data.expand_collapse.ExpandCollapseData;
+import com.solop.sp010.data.general.GeneralData;
 import com.solop.sp010.data.generic.GenericItem;
+import com.solop.sp010.data.hierarchy.HierarchyData;
 import com.solop.sp010.data.kanban.KanbanColumn;
 import com.solop.sp010.data.kanban.KanbanData;
+import com.solop.sp010.data.mosaic.MosaicData;
 import com.solop.sp010.data.resource.ResourceData;
 import com.solop.sp010.data.resource.ResourceItem;
 import com.solop.sp010.data.timeline.TimeLineData;
@@ -593,6 +605,118 @@ public class DisplayDefinitionServiceLogic {
 
 
 
+	public static ListGeneralsDataResponse.Builder listGeneralsData(ListGeneralsDataRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+
+		GeneralData displayData = (GeneralData) DisplayBuilder.newInstance(displayDefinition.get_ID())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
+			.run()
+		;
+
+		//	Set page token
+		int count = NumberManager.getIntegerFromLong(
+			displayData.getRecordCount()
+		);
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListGeneralsDataResponse.Builder builderList = ListGeneralsDataResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					displayData.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					displayData.getDescription()
+				)
+			)
+			.setRecordCount(
+				count
+			)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		displayData.getGenerals().stream().forEach(generalItem -> {
+			GeneralEntry.Builder builder = DisplayDefinitionConvertUtil.convertGeneralEntry(generalItem);
+			builderList.addRecords(builder);
+		});
+		return builderList;
+	}
+
+
+
+	public static ListHierarchiesDataResponse.Builder listHierarchiesData(ListHierarchiesDataRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+
+		HierarchyData displayData = (HierarchyData) DisplayBuilder.newInstance(displayDefinition.get_ID())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
+			.run()
+		;
+
+		//	Set page token
+		int count = NumberManager.getIntegerFromLong(
+			displayData.getRecordCount()
+		);
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListHierarchiesDataResponse.Builder builderList = ListHierarchiesDataResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					displayData.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					displayData.getDescription()
+				)
+			)
+			.setRecordCount(
+				count
+			)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		displayData.getSummaries().stream().forEach(summaryItem -> {
+			HierarchyParent.Builder builder = DisplayDefinitionConvertUtil.convertHierarchyParent(summaryItem);
+			builderList.addRecords(builder);
+		});
+		return builderList;
+	}
+
+
+
 	public static ListKanbansDefinitionResponse.Builder listKanbansDefinition(ListKanbansDefinitionRequest request) {
 		PO displayDefinition = validateAndGetDisplayDefinition(
 			request.getId()
@@ -726,6 +850,62 @@ public class DisplayDefinitionServiceLogic {
 			})
 		;
 
+		return builderList;
+	}
+
+
+
+	public static ListMosaicsDataResponse.Builder listMosaicsData(ListMosaicsDataRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getId()
+		);
+
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		List<Filter> filtersList = FilterManager.newInstance(request.getFilters()).getConditions();
+
+		MosaicData displayData = (MosaicData) DisplayBuilder.newInstance(displayDefinition.get_ID())
+			.withFilters(filtersList)
+			.withLimit(limit)
+			.withOffset(offset)
+			.run()
+		;
+
+		//	Set page token
+		int count = NumberManager.getIntegerFromLong(
+			displayData.getRecordCount()
+		);
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListMosaicsDataResponse.Builder builderList = ListMosaicsDataResponse.newBuilder()
+			.setName(
+				StringManager.getValidString(
+					displayData.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					displayData.getDescription()
+				)
+			)
+			.setRecordCount(
+				count
+			)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		displayData.getMosaics().stream().forEach(mosaicItem -> {
+			MosaicEntry.Builder builder = DisplayDefinitionConvertUtil.convertMosaicEntry(mosaicItem);
+			builderList.addRecords(builder);
+		});
 		return builderList;
 	}
 
@@ -991,6 +1171,10 @@ public class DisplayDefinitionServiceLogic {
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 		table.getColumnsAsList().forEach(column -> {
 			final String columnName = column.getColumnName();
+			if (column.isVirtualColumn()) {
+				return;
+			}
+
 			int displayTypeId = column.getAD_Reference_ID();
 
 			Object value = null;
@@ -1013,6 +1197,15 @@ public class DisplayDefinitionServiceLogic {
 				String currentValue = Env.getContext(context, windowNo, columnName, false);
 				if (!Util.isEmpty(currentValue, true)) {
 					value = ContextManager.getContextVaue(currentValue, displayTypeId);
+				}
+			}
+			if (value == null) {
+				if (columnName.endsWith("tedBy") || columnName.equals("Created")
+					|| columnName.equals("Updated") || columnName.equals(table.getTableName() + "_ID")
+					|| columnName.equals("IsActive") || columnName.equals("AD_Client_ID")
+					|| columnName.equals("AD_Org_ID") || columnName.equals("Processed")
+					|| columnName.equals("Processing") || columnName.equals("Posted")) {
+					return;
 				}
 			}
 			adapter.set_ValueNoCheck(columnName, value);

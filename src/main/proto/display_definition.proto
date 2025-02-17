@@ -75,6 +75,20 @@ service DisplayDefinition {
 		};
 	}
 
+	// General
+	rpc ListGeneralsData(ListGeneralsDataRequest) returns (ListGeneralsDataResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/generals/{id}"
+		};
+	}
+
+	// Hierarchies
+	rpc ListHierarchiesData(ListHierarchiesDataRequest) returns (ListHierarchiesDataResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/hierarchies/{id}"
+		};
+	}
+
 	// Kanban
 	rpc ListKanbansDefinition(ListKanbansDefinitionRequest) returns (ListKanbansDefinitionResponse) {
 		option (google.api.http) = {
@@ -84,6 +98,13 @@ service DisplayDefinition {
 	rpc ListKanbansData(ListKanbansDataRequest) returns (ListKanbansDataResponse) {
 		option (google.api.http) = {
 			get: "/display-definition/kanbans/{id}"
+		};
+	}
+
+	// Mosaic
+	rpc ListMosaicsData(ListMosaicsDataRequest) returns (ListMosaicsDataResponse) {
+		option (google.api.http) = {
+			get: "/display-definition/mosaics/{id}"
 		};
 	}
 
@@ -194,10 +215,13 @@ enum DefinitionType {
 	TYPE_UNKNOW = 0;
 	CALENDAR = 1;
 	EXPAND_COLLAPSE = 2;
-	KANBAN = 3;
-	RESOURCE = 4; // As Gannt
-	TIMELINE = 5;
-	WORKFLOW = 6;
+	GENERAL = 3;
+	HIERARCHY = 4;
+	KANBAN = 5;
+	MOSAIC = 6;
+	RESOURCE = 7; // As Gannt
+	TIMELINE = 8;
+	WORKFLOW = 9;
 }
 message DefinitionMetadata {
 	int32 id = 1;
@@ -213,8 +237,11 @@ message DefinitionMetadata {
 	optional string group_column = 11;
 	string table_name = 12;
 	int32 table_id = 13;
-	bool is_resource = 14;
-	repeated FieldDefinition field_definitions = 215;
+	int32 parent_display_definition_id = 14;
+	optional string link_column_name = 15;
+	optional string parent_column_name = 16;
+	bool is_resource = 17;
+	repeated FieldDefinition field_definitions = 18;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
@@ -370,6 +397,89 @@ message ListExpandCollapsesDataResponse {
 
 
 
+// General
+message GeneralEntry {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	bool is_active = 5;
+	bool is_read_only = 6;
+	google.protobuf.Struct fields = 7;
+}
+message ListGeneralsDataRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
+}
+message ListGeneralsDataResponse {
+	string name = 1;
+	string description = 2;
+	int64 record_count = 3;
+	repeated GeneralEntry records = 4;
+	string next_page_token = 5;
+}
+
+
+
+// Hierarchy
+message HierarchyEntry {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	bool is_active = 5;
+	bool is_read_only = 6;
+	string parent_id = 7;
+	int32 sequence = 8;
+	google.protobuf.Struct fields = 9;
+}
+message HierarchyParent {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	bool is_active = 5;
+	bool is_read_only = 6;
+	int32 sequence = 7;
+	google.protobuf.Struct fields = 8;
+	repeated HierarchyEntry records = 9;
+}
+message ListHierarchiesDataRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
+}
+message ListHierarchiesDataResponse {
+	string name = 1;
+	string description = 2;
+	int64 record_count = 3;
+	repeated HierarchyParent records = 4;
+	string next_page_token = 5;
+}
+
+
+
 // Kanban Definition
 message KanbanStep {
 	string value = 1;
@@ -434,6 +544,41 @@ message ListKanbansDataResponse {
 	int64 record_count = 5;
 	repeated KanbanEntry records = 6;
 	string next_page_token = 7;
+}
+
+
+
+// Mosaic
+message MosaicEntry {
+	int32 id = 1;
+	string uuid = 2;
+	string title = 3;
+	string description = 4;
+	bool is_active = 5;
+	bool is_read_only = 6;
+	google.protobuf.Struct fields = 8;
+}
+message ListMosaicsDataRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 window_id = 8;
+	int32 tab_id = 9;
+	string context_attributes = 10;
+	string record_reference_uuid = 11;
+	//
+	int32 id = 12;
+}
+message ListMosaicsDataResponse {
+	string name = 1;
+	string description = 2;
+	int64 record_count = 3;
+	repeated MosaicEntry records = 4;
+	string next_page_token = 5;
 }
 
 
