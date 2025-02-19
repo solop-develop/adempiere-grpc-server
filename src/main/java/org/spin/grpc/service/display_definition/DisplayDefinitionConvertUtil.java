@@ -179,6 +179,26 @@ public class DisplayDefinitionConvertUtil {
 				builder.setType(
 					DefinitionType.HIERARCHY
 				);
+
+				final String whereClause = "SP010_ParentDD_ID = ? AND SP010_DisplayType = ?";
+				PO childDisplayDefinition = new Query(
+					Env.getCtx(),
+					DisplayDefinitionChanges.SP010_DisplayDefinition,
+					whereClause,
+					null
+				)
+					.setParameters(
+						record.get_ID(),
+						DisplayDefinitionChanges.SP010_DisplayType_Hierarchy
+					)
+					.setOnlyActiveRecords(true)
+					.setOrderBy("Created DESC")
+					.first()
+				;
+				if (childDisplayDefinition != null) {
+					DefinitionMetadata.Builder childBuilder = convertDefinitionMetadata(childDisplayDefinition);
+					builder.setChildDisplayDefinition(childBuilder);
+				}
 			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)
 				|| displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_ExpandCollapse)
 				|| displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Workflow)) {
@@ -965,21 +985,21 @@ public class DisplayDefinitionConvertUtil {
 			)
 		;
 
-		// // Additional fields
-		// Struct.Builder fields = Struct.newBuilder();
-		// childItem.getFields().entrySet().forEach(field -> {
-		// 	BaseFieldItem fieldItem = field.getValue();
-		// 	String columnName = StringManager.getValidString(
-		// 		fieldItem.getColumnName()
-		// 	);
-		// 	Value fieldValue = convertFieldItem(fieldItem);
+		// Additional fields
+		Struct.Builder fields = Struct.newBuilder();
+		childItem.getFields().entrySet().forEach(field -> {
+			BaseFieldItem fieldItem = field.getValue();
+			String columnName = StringManager.getValidString(
+				fieldItem.getColumnName()
+			);
+			Value fieldValue = convertFieldItem(fieldItem);
 			
-		// 	fields.putFields(
-		// 		columnName,
-		// 		fieldValue
-		// 	);
-		// });
-		// builder.setFields(fields);
+			fields.putFields(
+				columnName,
+				fieldValue
+			);
+		});
+		builder.setFields(fields);
 
 		return builder;
 	}
