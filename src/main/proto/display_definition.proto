@@ -256,6 +256,15 @@ message FieldGroup {
 	string name = 3;
 	string field_group_type = 4;
 }
+message DependentFieldDefinition {
+	int32 parent_id = 1;
+	string parent_uuid = 2;
+	string parent_name = 3;
+	string id = 4;
+	string uuid = 5;
+	int32 internal_id = 6;
+	string column_name = 7;
+}
 message FieldDefinition {
 	string id = 1;
 	string uuid = 2;
@@ -270,21 +279,28 @@ message FieldDefinition {
 	bool is_displayed = 11;
 	string display_logic = 12;
 	bool is_read_only = 13;
-	bool is_mandatory = 14;
-	string default_value = 15;
-	bool is_displayed_grid = 16;
-	int32 seq_no_grid = 30;
-	optional FieldGroup field_group = 17;
-	bool is_heading = 18;
-	bool is_field_only = 19;
-	bool is_encrypted = 20;
-	bool is_quick_entry = 21;
-	int32 sort_no = 22;
+	string mandatory_logic = 14;
+	bool is_mandatory = 15;
+	string read_only_logic = 16;
+	string default_value = 17;
+	bool is_displayed_grid = 18;
+	int32 seq_no_grid = 19;
+	optional FieldGroup field_group = 21;
+	bool is_heading = 22;
+	bool is_field_only = 23;
+	bool is_encrypted = 24;
+	bool is_quick_entry = 25;
+	int32 sort_no = 26;
 	//
-	bool is_insert_record = 23;
-	bool is_update_record = 24;
-	bool is_allow_copy = 25;
+	bool is_insert_record = 27;
+	bool is_update_record = 28;
+	bool is_allow_copy = 29;
+	// External Info
+	repeated string context_column_names = 30;
+	repeated DependentFieldDefinition dependent_fields = 31;
 }
+
+
 message ListDisplayDefinitionFieldsMetadataRequest {
 	int32 display_definition_id = 1;
 }
