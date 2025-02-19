@@ -49,6 +49,7 @@ import org.spin.backend.grpc.display_definition.ExpandCollapseGroup;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
 import org.spin.backend.grpc.display_definition.FieldGroup;
 import org.spin.backend.grpc.display_definition.GeneralEntry;
+import org.spin.backend.grpc.display_definition.HierarchyChild;
 import org.spin.backend.grpc.display_definition.HierarchyParent;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
@@ -71,6 +72,7 @@ import com.solop.sp010.data.calendar.CalendarItem;
 import com.solop.sp010.data.expand_collapse.ExpandCollapseItem;
 import com.solop.sp010.data.general.GeneralItem;
 import com.solop.sp010.data.generic.GenericItem;
+import com.solop.sp010.data.hierarchy.HierarchyChildItem;
 import com.solop.sp010.data.hierarchy.HierarchySummary;
 import com.solop.sp010.data.kanban.KanbanColumn;
 import com.solop.sp010.data.kanban.KanbanItem;
@@ -172,6 +174,10 @@ public class DisplayDefinitionConvertUtil {
 			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_General)) {
 				builder.setType(
 					DefinitionType.GENERAL
+				);
+			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Hierarchy)) {
+				builder.setType(
+					DefinitionType.HIERARCHY
 				);
 			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)
 				|| displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_ExpandCollapse)
@@ -856,45 +862,101 @@ public class DisplayDefinitionConvertUtil {
 					summaryItem.getName()
 				)
 			)
-			// .setId(
-			// 	summaryItem.getId()
-			// )
-			// .setUuid(
-			// 	StringManager.getValidString(
-			// 		summaryItem.getUuid()
-			// 	)
-			// )
+			.setId(
+				summaryItem.getId()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					summaryItem.getUuid()
+				)
+			)
+			.setTitle(
+				StringManager.getValidString(
+					summaryItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					summaryItem.getDescription()
+				)
+			)
+			.setIsActive(
+				summaryItem.isActive()
+			)
+			.setIsReadOnly(
+				summaryItem.isReadOnly()
+			)
+			.setLinkId(
+				NumberManager.getIntFromString(
+					summaryItem.getGroupCode()
+				)
+			)
+		;
+
+		// Additional fields
+		Struct.Builder fields = Struct.newBuilder();
+		summaryItem.getFields().entrySet().forEach(field -> {
+			BaseFieldItem fieldItem = field.getValue();
+			String columnName = StringManager.getValidString(
+				fieldItem.getColumnName()
+			);
+			Value fieldValue = convertFieldItem(fieldItem);
+			
+			fields.putFields(
+				columnName,
+				fieldValue
+			);
+		});
+		builder.setFields(fields);
+
+		// childs
+		summaryItem.getChildItems().forEach(childItem -> {
+			HierarchyChild.Builder builderChild = convertHierarchyChild(childItem);
+			builder.addChilds(builderChild);
+		});
+
+		return builder;
+	}
+
+	public static HierarchyChild.Builder convertHierarchyChild(HierarchyChildItem childItem) {
+		HierarchyChild.Builder builder = HierarchyChild.newBuilder();
+		if (childItem == null) {
+			return builder;
+		}
+		builder
+			.setId(
+				childItem.getId()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					childItem.getUuid()
+				)
+			)
 			// .setTitle(
 			// 	StringManager.getValidString(
-			// 		summaryItem.getTitle()
+			// 		summaryItem.getName()
 			// 	)
 			// )
-			// .setDescription(
-			// 	StringManager.getValidString(
-			// 		summaryItem.getDescription()
-			// 	)
-			// )
-			// .setIsActive(
-			// 	summaryItem.isActive()
-			// )
-			// .setIsReadOnly(
-			// 	summaryItem.isReadOnly()
-			// )
+			.setTitle(
+				StringManager.getValidString(
+					childItem.getTitle()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					childItem.getDescription()
+				)
+			)
+			.setIsActive(
+				childItem.isActive()
+			)
+			.setIsReadOnly(
+				childItem.isReadOnly()
+			)
+			.setParentId(
+				childItem.getGroupCode()
+			)
 		;
-		Struct.Builder fields = Struct.newBuilder();
-		// summaryItem.getFields().entrySet().forEach(field -> {
-		// 	BaseFieldItem fieldItem = field.getValue();
-		// 	String columnName = StringManager.getValidString(
-		// 		fieldItem.getColumnName()
-		// 	);
-		// 	Value fieldValue = convertFieldItem(fieldItem);
-			
-		// 	fields.putFields(
-		// 		columnName,
-		// 		fieldValue
-		// 	);
-		// });
-		builder.setFields(fields);
 		return builder;
 	}
 
