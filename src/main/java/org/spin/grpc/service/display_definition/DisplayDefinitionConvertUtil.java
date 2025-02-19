@@ -16,6 +16,7 @@ package org.spin.grpc.service.display_definition;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MRefTable;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MTable;
+import org.compiere.model.MValRule;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
 import org.compiere.model.Query;
@@ -44,6 +46,7 @@ import org.spin.backend.grpc.display_definition.CalendarEntry;
 import org.spin.backend.grpc.display_definition.DataEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.DefinitionType;
+import org.spin.backend.grpc.display_definition.DependentFieldDefinition;
 import org.spin.backend.grpc.display_definition.ExpandCollapseEntry;
 import org.spin.backend.grpc.display_definition.ExpandCollapseGroup;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
@@ -58,6 +61,7 @@ import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
+import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -378,6 +382,158 @@ public class DisplayDefinitionConvertUtil {
 		return builder;
 	}
 
+	public static List<DependentFieldDefinition> generateDependentFieldDefinitions(PO field) {
+		List<DependentFieldDefinition> depenentFieldsList = new ArrayList<DependentFieldDefinition>();
+		if (field == null) {
+			return depenentFieldsList;
+		}
+
+		final int columnId = field.get_ValueAsInt(
+			I_AD_Field.COLUMNNAME_AD_Column_ID
+		);
+		final String parentColumnName = MColumn.getColumnName(field.getCtx(), columnId);
+
+		PO displayDefinition = new Query(
+			Env.getCtx(),
+			DisplayDefinitionChanges.SP010_DisplayDefinition,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(field.get_ValueAsInt(DisplayDefinitionChanges.SP010_DisplayDefinition_ID))
+			.setOnlyActiveRecords(true)
+			.first()
+		;
+		if (displayDefinition == null || displayDefinition.get_ID() <= 0) {
+			return depenentFieldsList;
+		}
+		List<PO> fieldsList = new Query(
+			Env.getCtx(),
+			DisplayDefinitionChanges.SP010_Field,
+			"SP010_DisplayDefinition_ID = ?",
+			null
+		)
+			.setParameters(displayDefinition.get_ID())
+			.setOnlyActiveRecords(true)
+			.setOrderBy(
+				I_AD_Field.COLUMNNAME_SeqNo
+			)
+			.list()
+		;
+
+		if (fieldsList == null || fieldsList.isEmpty()) {
+			return depenentFieldsList;
+		}
+
+		fieldsList.stream()
+			.filter(currentField -> {
+				if (currentField == null || !currentField.isActive()) {
+					return false;
+				}
+				// Display Logic
+				final String displayLogic = currentField.get_ValueAsString(
+					I_AD_Field.COLUMNNAME_DisplayLogic
+				);
+				if (ContextManager.isUseParentColumnOnContext(parentColumnName, displayLogic)) {
+					return true;
+				}
+				// Default Value of Field
+				final String defaultValue = currentField.get_ValueAsString(
+					I_AD_Field.COLUMNNAME_DefaultValue
+				);
+				if (ContextManager.isUseParentColumnOnContext(parentColumnName, defaultValue)) {
+					return true;
+				}
+				// Dynamic Validation
+				final int dynamicValidationId = currentField.get_ValueAsInt(
+					I_AD_Field.COLUMNNAME_AD_Val_Rule_ID
+				);
+				if (dynamicValidationId > 0) {
+					MValRule validationRule = MValRule.get(
+						currentField.getCtx(),
+						dynamicValidationId
+					);
+					if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
+						return true;
+					}
+				}
+
+				MColumn currentColumn = MColumn.get(
+					currentField.getCtx(),
+					currentField.get_ValueAsInt(
+						I_AD_Field.COLUMNNAME_AD_Column_ID
+					)
+				);
+				// Default Value of Column
+				if (Util.isEmpty(defaultValue, true) && ContextManager.isUseParentColumnOnContext(parentColumnName, currentColumn.getDefaultValue())) {
+					return true;
+				}
+				// ReadOnly Logic
+				if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentColumn.getReadOnlyLogic())) {
+					return true;
+				}
+				// Mandatory Logic
+				if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentColumn.getMandatoryLogic())) {
+					return true;
+				}
+				// Dynamic Validation
+				if (dynamicValidationId <= 0 && currentColumn.getAD_Val_Rule_ID() > 0) {
+					MValRule validationRule = MValRule.get(
+						currentField.getCtx(),
+						currentColumn.getAD_Val_Rule_ID()
+					);
+					if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
+						return true;
+					}
+				}
+				return false;
+			})
+			.forEach(currentField -> {
+				final String currentColumnName = MColumn.getColumnName(
+					currentField.getCtx(),
+					currentField.get_ValueAsInt(
+						I_AD_Field.COLUMNNAME_AD_Column_ID
+					)
+				);
+				DependentFieldDefinition.Builder builder = DependentFieldDefinition.newBuilder()
+					.setId(
+						StringManager.getValidString(
+							currentField.get_UUID()
+						)
+					)
+					.setUuid(
+						StringManager.getValidString(
+							currentField.get_UUID()
+						)
+					)
+					.setInternalId(
+						currentField.get_ID()
+					)
+					.setColumnName(
+						StringManager.getValidString(
+							currentColumnName
+						)
+					)
+					.setParentId(
+						displayDefinition.get_ID()
+					)
+					.setParentUuid(
+						StringManager.getValidString(
+							displayDefinition.get_UUID()
+						)
+					)
+					.setParentName(
+						StringManager.getValidString(
+							displayDefinition.get_ValueAsString(
+								I_AD_Field.COLUMNNAME_Name
+							)
+						)
+					)
+				;
+				depenentFieldsList.add(builder.build());
+			});
+
+		return depenentFieldsList;
+	}
 
 	/**
 	 * Convert Field Group to builder
@@ -530,8 +686,18 @@ public class DisplayDefinitionConvertUtil {
 					I_AD_Field.COLUMNNAME_IsReadOnly
 				)
 			)
+			.setReadOnlyLogic(
+				StringManager.getValidString(
+					column.getReadOnlyLogic()
+				)
+			)
 			.setIsMandatory(
 				isMandatory
+			)
+			.setMandatoryLogic(
+				StringManager.getValidString(
+					column.getMandatoryLogic()
+				)
 			)
 			.setDefaultValue(
 				StringManager.getValidString(
@@ -580,6 +746,11 @@ public class DisplayDefinitionConvertUtil {
 			)
 			.setIsAllowCopy(
 				isAllowCopy
+			)
+			.addAllContextColumnNames(
+				ContextManager.getContextColumnNames(
+					defaultValue
+				)
 			)
 		;
 
@@ -642,8 +813,14 @@ public class DisplayDefinitionConvertUtil {
 				column.getAD_Reference_ID()
 			)
 			.setIsDisplayed(true)
+			.setReadOnlyLogic(
+				column.getReadOnlyLogic()
+			)
 			.setIsMandatory(
 				column.isMandatory()
+			)
+			.setMandatoryLogic(
+				column.getMandatoryLogic()
 			)
 			.setDefaultValue(
 				StringManager.getValidString(
@@ -830,6 +1007,8 @@ public class DisplayDefinitionConvertUtil {
 		return builder;
 	}
 
+
+
 	public static GeneralEntry.Builder convertGeneralEntry(GeneralItem generalItem) {
 		GeneralEntry.Builder builder = GeneralEntry.newBuilder();
 		if (generalItem == null) {
@@ -877,6 +1056,8 @@ public class DisplayDefinitionConvertUtil {
 		builder.setFields(fields);
 		return builder;
 	}
+
+
 
 	public static HierarchyParent.Builder convertHierarchyParent(HierarchySummary summaryItem) {
 		HierarchyParent.Builder builder = HierarchyParent.newBuilder();
@@ -1201,8 +1382,6 @@ public class DisplayDefinitionConvertUtil {
 		builder.setFields(fields);
 		return builder;
 	}
-	
-	
 
 
 

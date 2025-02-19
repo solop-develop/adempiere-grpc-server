@@ -760,14 +760,16 @@ public class WindowConvertUtil {
 							return true;
 						}
 						// Default Value of Field
-						if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentField.getDefaultValue())) {
+						final String defaultValue = currentField.getDefaultValue();
+						if (ContextManager.isUseParentColumnOnContext(parentColumnName, defaultValue)) {
 							return true;
 						}
 						// Dynamic Validation
-						if (currentField.getAD_Val_Rule_ID() > 0) {
+						final int dynamicValidationId = currentField.getAD_Val_Rule_ID();
+						if (dynamicValidationId > 0) {
 							MValRule validationRule = MValRule.get(
 								currentField.getCtx(),
-								currentField.getAD_Val_Rule_ID()
+								dynamicValidationId
 							);
 							if (ContextManager.isUseParentColumnOnContext(parentColumnName, validationRule.getCode())) {
 								return true;
@@ -776,7 +778,7 @@ public class WindowConvertUtil {
 
 						MColumn currentColumn = MColumn.get(currentField.getCtx(), currentField.getAD_Column_ID());
 						// Default Value of Column
-						if (ContextManager.isUseParentColumnOnContext(parentColumnName, currentColumn.getDefaultValue())) {
+						if (Util.isEmpty(defaultValue, true) && ContextManager.isUseParentColumnOnContext(parentColumnName, currentColumn.getDefaultValue())) {
 							return true;
 						}
 						// ReadOnly Logic
@@ -788,7 +790,7 @@ public class WindowConvertUtil {
 							return true;
 						}
 						// Dynamic Validation
-						if (currentColumn.getAD_Val_Rule_ID() > 0) {
+						if (dynamicValidationId <= 0 && currentColumn.getAD_Val_Rule_ID() > 0) {
 							MValRule validationRule = MValRule.get(
 								currentField.getCtx(),
 								currentColumn.getAD_Val_Rule_ID()
