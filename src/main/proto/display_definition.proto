@@ -434,7 +434,7 @@ message ListGeneralsDataResponse {
 
 
 // Hierarchy
-message HierarchyEntry {
+message HierarchyChild {
 	int32 id = 1;
 	string uuid = 2;
 	string title = 3;
@@ -452,9 +452,9 @@ message HierarchyParent {
 	string description = 4;
 	bool is_active = 5;
 	bool is_read_only = 6;
-	int32 sequence = 7;
+	int32 link_id = 7;
 	google.protobuf.Struct fields = 8;
-	repeated HierarchyEntry records = 9;
+	repeated HierarchyChild childs = 9;
 }
 message ListHierarchiesDataRequest {
 	string filters = 1;
