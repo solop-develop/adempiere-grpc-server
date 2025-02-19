@@ -242,6 +242,7 @@ message DefinitionMetadata {
 	optional string parent_column_name = 16;
 	bool is_resource = 17;
 	repeated FieldDefinition field_definitions = 18;
+	optional DefinitionMetadata child_display_definition = 19;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
