@@ -433,6 +433,14 @@ public class DisplayDefinitionConvertUtil {
 			isMandatory = BooleanManager.getBooleanFromString(isMandatoryString);
 		}
 
+		boolean isAllowCopy = column.isAllowCopy();
+		String isAllowCopyString = fieldDefinitionItem.get_ValueAsString(
+			I_AD_Field.COLUMNNAME_IsAllowCopy
+		);
+		if (!Util.isEmpty(isAllowCopyString, true)) {
+			isAllowCopy = BooleanManager.getBooleanFromString(isAllowCopyString);
+		}
+
 		builder.setId(
 				StringManager.getValidString(
 					fieldDefinitionItem.get_UUID()
@@ -551,8 +559,7 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setIsAllowCopy(
-				// TODO: Add on field definition window to override
-				column.isAllowCopy()
+				isAllowCopy
 			)
 		;
 
@@ -957,6 +964,23 @@ public class DisplayDefinitionConvertUtil {
 				childItem.getGroupCode()
 			)
 		;
+
+		// // Additional fields
+		// Struct.Builder fields = Struct.newBuilder();
+		// childItem.getFields().entrySet().forEach(field -> {
+		// 	BaseFieldItem fieldItem = field.getValue();
+		// 	String columnName = StringManager.getValidString(
+		// 		fieldItem.getColumnName()
+		// 	);
+		// 	Value fieldValue = convertFieldItem(fieldItem);
+			
+		// 	fields.putFields(
+		// 		columnName,
+		// 		fieldValue
+		// 	);
+		// });
+		// builder.setFields(fields);
+
 		return builder;
 	}
 
