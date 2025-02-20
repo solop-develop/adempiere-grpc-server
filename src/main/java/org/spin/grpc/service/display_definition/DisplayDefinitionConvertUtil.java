@@ -893,13 +893,17 @@ public class DisplayDefinitionConvertUtil {
 			)
 			.setIsDisplayed(true)
 			.setReadOnlyLogic(
-				column.getReadOnlyLogic()
+				StringManager.getValidString(
+					column.getReadOnlyLogic()
+				)
 			)
 			.setIsMandatory(
 				column.isMandatory()
 			)
 			.setMandatoryLogic(
-				column.getMandatoryLogic()
+				StringManager.getValidString(
+					column.getMandatoryLogic()
+				)
 			)
 			.setDefaultValue(
 				StringManager.getValidString(
@@ -915,6 +919,28 @@ public class DisplayDefinitionConvertUtil {
 			.setIsInsertRecord(true)
 			.setIsUpdateRecord(true)
 		;
+
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		int displayTypeId = ReferenceUtil.overwriteDisplayType(
+			column.getAD_Reference_ID(),
+			column.getAD_Reference_Value_ID()
+		);
+		if (ReferenceUtil.validateReference(displayTypeId)) {
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, column.getAD_Reference_Value_ID(), column.getColumnName(), column.getAD_Val_Rule_ID()
+			);
+			if (info != null) {
+				Reference.Builder referenceBuilder = convertReference(column.getCtx(), info);
+				builder.setReference(referenceBuilder.build());
+			} else {
+				builder.setDisplayType(DisplayType.String);
+			}
+		} else if (DisplayType.Button == displayTypeId) {
+			if (column.getColumnName().equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+				// To load default value
+				builder.addContextColumnNames(I_AD_Table.COLUMNNAME_AD_Table_ID);
+			}
+		}
 
 		return builder;
 	}
