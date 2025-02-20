@@ -265,6 +265,12 @@ message DependentFieldDefinition {
 	int32 internal_id = 6;
 	string column_name = 7;
 }
+message Reference {
+	string table_name = 1;
+	int32 reference_id = 2;
+	int32 reference_value_id = 3;
+	repeated string context_column_names = 4;
+}
 message FieldDefinition {
 	string id = 1;
 	string uuid = 2;
@@ -298,6 +304,7 @@ message FieldDefinition {
 	// External Info
 	repeated string context_column_names = 30;
 	repeated DependentFieldDefinition dependent_fields = 31;
+	optional Reference reference = 32;
 }
 
 

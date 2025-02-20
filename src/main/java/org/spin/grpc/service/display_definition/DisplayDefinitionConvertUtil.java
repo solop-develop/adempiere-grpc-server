@@ -20,7 +20,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_Field;
@@ -31,6 +34,7 @@ import org.adempiere.core.domains.models.I_S_ResourceAssignment;
 import org.adempiere.core.domains.models.X_AD_FieldGroup;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRefTable;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MTable;
@@ -57,6 +61,7 @@ import org.spin.backend.grpc.display_definition.HierarchyParent;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
 import org.spin.backend.grpc.display_definition.MosaicEntry;
+import org.spin.backend.grpc.display_definition.Reference;
 import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
@@ -536,6 +541,42 @@ public class DisplayDefinitionConvertUtil {
 	}
 
 	/**
+	 * Convert Reference to builder
+	 * @param info
+	 * @return
+	 */
+	public static Reference.Builder convertReference(Properties context, MLookupInfo info) {
+		Reference.Builder builder = Reference.newBuilder();
+		if (info == null) {
+			return builder;
+		}
+
+		List<String> contextColumnsList = ContextManager.getContextColumnNames(
+			Optional.ofNullable(info.QueryDirect).orElse("")
+			+ Optional.ofNullable(info.Query).orElse("")
+			+ Optional.ofNullable(info.ValidationCode).orElse("")
+		);
+		builder.setTableName(
+				StringManager.getValidString(
+					info.TableName
+				)
+			)
+			.setReferenceId(
+				info.DisplayType
+			)
+			.setReferenceValueId(
+				info.AD_Reference_Value_ID
+			)
+			.addAllContextColumnNames(
+				contextColumnsList
+			)
+		;
+
+		//	Return
+		return builder;
+	}
+
+	/**
 	 * Convert Field Group to builder
 	 * @param fieldGroupId
 	 * @return
@@ -760,6 +801,44 @@ public class DisplayDefinitionConvertUtil {
 		if (fieldGroupId > 0) {
 			FieldGroup.Builder fieldGroupBuilder = convertFieldGroup(fieldGroupId);
 			builder.setFieldGroup(fieldGroupBuilder);
+		}
+
+		//	Reference Value
+		int referenceValueId = fieldDefinitionItem.get_ValueAsInt(
+			I_AD_Field.COLUMNNAME_AD_Reference_Value_ID
+		);
+		if(referenceValueId <= 0) {
+			referenceValueId = column.getAD_Reference_Value_ID();
+		}
+
+		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+		displayTypeId = ReferenceUtil.overwriteDisplayType(
+			displayTypeId,
+			referenceValueId
+		);
+		if (ReferenceUtil.validateReference(displayTypeId)) {
+			//	Validation Code
+			int validationRuleId = fieldDefinitionItem.get_ValueAsInt(
+				I_AD_Field.COLUMNNAME_AD_Val_Rule_ID
+			);
+			if(validationRuleId <= 0) {
+				validationRuleId = column.getAD_Val_Rule_ID();
+			}
+
+			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(
+				displayTypeId, referenceValueId, column.getColumnName(), validationRuleId
+			);
+			if (info != null) {
+				Reference.Builder referenceBuilder = convertReference(fieldDefinitionItem.getCtx(), info);
+				builder.setReference(referenceBuilder.build());
+			} else {
+				builder.setDisplayType(DisplayType.String);
+			}
+		} else if (DisplayType.Button == displayTypeId) {
+			if (column.getColumnName().equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+				// To load default value
+				builder.addContextColumnNames(I_AD_Table.COLUMNNAME_AD_Table_ID);
+			}
 		}
 
 		return builder;
