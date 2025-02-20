@@ -243,7 +243,8 @@ jobs:
         with:
           context: .
           file: docker/focal.Dockerfile
-          platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
+          platforms: linux/amd64,linux/amd64/v2
+          # platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true
           tags: |
             ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}
