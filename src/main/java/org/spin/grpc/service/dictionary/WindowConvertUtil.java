@@ -640,9 +640,9 @@ public class WindowConvertUtil {
 		//
 
 		//	Reference Value
-		int referenceValueId = column.getAD_Reference_Value_ID();
-		if(field.getAD_Reference_Value_ID() > 0) {
-			referenceValueId = field.getAD_Reference_Value_ID();
+		int referenceValueId = field.getAD_Reference_Value_ID();
+		if(referenceValueId <= 0) {
+			referenceValueId = column.getAD_Reference_Value_ID();
 		}
 
 		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
@@ -652,9 +652,9 @@ public class WindowConvertUtil {
 		);
 		if (ReferenceUtil.validateReference(displayTypeId)) {
 			//	Validation Code
-			int validationRuleId = column.getAD_Val_Rule_ID();
-			if(field.getAD_Val_Rule_ID() > 0) {
-				validationRuleId = field.getAD_Val_Rule_ID();
+			int validationRuleId = field.getAD_Val_Rule_ID();
+			if(validationRuleId <= 0) {
+				validationRuleId = column.getAD_Val_Rule_ID();
 			}
 
 			MLookupInfo info = ReferenceUtil.getReferenceLookupInfo(

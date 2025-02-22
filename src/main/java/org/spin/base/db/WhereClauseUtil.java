@@ -18,10 +18,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -89,6 +91,7 @@ public class WhereClauseUtil {
 			return "";
 		}
 
+		// Check if the table alias is already present in the validation
 		Matcher matcherTableAliases = Pattern.compile(
 				tableAlias + "\\.",
 				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
@@ -97,14 +100,50 @@ public class WhereClauseUtil {
 
 		String validationCode = dynamicValidation;
 		if (!matcherTableAliases.find()) {
+			// Regular expression to identify table aliases in subqueries
+			final String tableAliasRegex = "\\b(?:FROM|JOIN)\\s+(\\w+)\\s+(?:AS\\s+)?(\\w+)\\b";
+
+			// Regular expression to identify columns that do not have a table alias
 			final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)(\\w+)(\\s+){0,1}";
-			// columnName = value
+
+			// Expresión regular para operadores SQL
+			final String sqlOperatorsRegex = OperatorUtil.SQL_OPERATORS_REGEX;
+
+			// Compile regular expressions
+			Pattern patternTableAlias = Pattern.compile(
+				tableAliasRegex,
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+			);
 			Pattern patternColumnName = Pattern.compile(
-				columnsRegex + OperatorUtil.SQL_OPERATORS_REGEX,
+				columnsRegex + sqlOperatorsRegex,
 				Pattern.DOTALL
 			);
+
+			// Identify and store table aliases
+			Matcher matchTableAlias = patternTableAlias.matcher(validationCode);
+			Set<String> tableAliases = new HashSet<>();
+			while (matchTableAlias.find()) {
+				// Store the table aliases found
+				tableAliases.add(matchTableAlias.group(2)); // group(2) is the alias of table
+			}
+
+			// Replace columns that do not have table aliases and are not table aliases
 			Matcher matchColumnName = patternColumnName.matcher(validationCode);
-			validationCode = matchColumnName.replaceAll(tableAlias + ".$1$2$3$4"); // $&
+			StringBuffer sb = new StringBuffer();
+			while (matchColumnName.find()) {
+				String columnName = matchColumnName.group(1); 
+				if (columnName != null) {
+					if (!tableAliases.contains(columnName)) {
+						// If it is not a table alias, add the alias
+						matchColumnName.appendReplacement(sb, tableAlias + "." + columnName + matchColumnName.group(2));
+					} else {
+						// If it is a table alias, leave it unchanged
+						matchColumnName.appendReplacement(sb, columnName + matchColumnName.group(2));
+					}
+				}
+			}
+			matchColumnName.appendTail(sb);
+			validationCode = sb.toString();
 		}
 
 		return validationCode;
