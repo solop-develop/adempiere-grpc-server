@@ -70,6 +70,9 @@ public class QueryUtil {
 		final Language language = Language.getLanguage(Env.getAD_Language(table.getCtx()));
 		final List<MColumn> columnsList = table.getColumnsAsList();
 		for (MColumn column : columnsList) {
+			if (column == null) {
+				continue;
+			}
 			if (!column.isActive()) {
 				// key column on table
 				if (!column.isKey()) {
@@ -169,6 +172,9 @@ public class QueryUtil {
 		final Language language = Language.getLanguage(Env.getAD_Language(context));
 		final MField[] fieldsList = tab.getFields(false, null);
 		for (MField field : fieldsList) {
+			if (field == null) {
+				continue;
+			}
 			MColumn column = MColumn.get(context, field.getAD_Column_ID());
 			if (!column.isActive() || !field.isActive() || !field.isDisplayed()) {
 				// key column on table
@@ -257,6 +263,9 @@ public class QueryUtil {
 		AtomicBoolean isAddFirstColumn = new AtomicBoolean(false);
 		final List<MBrowseField> browseFieldsList = browser.getFields();
 		for (MBrowseField browseField : browseFieldsList) {
+			if (browseField == null) {
+				continue;
+			}
 			if (!browseField.isActive()) {
 				// key column on table
 				if (!browseField.isKey()) {
@@ -308,6 +317,9 @@ public class QueryUtil {
 		final Language language = Language.getLanguage(Env.getAD_Language(browser.getCtx()));
 		final List<MBrowseField> browseFieldsList = browser.getFields();
 		for (MBrowseField browseField : browseFieldsList) {
+			if (browseField == null) {
+				continue;
+			}
 			if (!browseField.isActive()) {
 				// key column on table
 				if (!browseField.isKey()) {
