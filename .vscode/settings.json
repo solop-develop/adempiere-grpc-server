@@ -5,10 +5,16 @@
 	"editor.autoIndent": "full",
 	// "editor.insertSpaces": false,
 	"editor.renderWhitespace": "boundary",
+	"files.exclude": {
+		"**/.git": true,         // this is a default value
+		"**/.DS_Store": true,    // this is a default value
+		"build": true
+	},
 	"files.insertFinalNewline": true,
 	"java.autobuild.enabled": true,
 	"java.compile.nullAnalysis.mode": "interactive",
 	"java.configuration.updateBuildConfiguration": "disabled",
 	"java.debug.settings.hotCodeReplace": "auto",
-	"java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable"
+	"java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable",
+	"java.debug.settings.onBuildFailureProceed": true
 }
