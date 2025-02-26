@@ -141,6 +141,13 @@ public class DisplayDefinitionConvertUtil {
 					DisplayDefinitionChanges.SP010_IsResource
 				)
 			)
+			.addAllContextColumnNames(
+				ContextManager.getContextColumnNames(
+					record.get_ValueAsString(
+						I_AD_Tab.COLUMNNAME_WhereClause
+					)
+				)
+			)
 		;
 
 		String displayType = record.get_ValueAsString(DisplayDefinitionChanges.SP010_DisplayType);
@@ -1471,20 +1478,20 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 		;
-		Struct.Builder fields = Struct.newBuilder();
-		resourceItem.getFields().entrySet().forEach(field -> {
-			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
-				fieldItem.getColumnName()
-			);
-			Value fieldValue = convertFieldItem(fieldItem);
+		// Struct.Builder fields = Struct.newBuilder();
+		// resourceItem.getFields().entrySet().forEach(field -> {
+		// 	BaseFieldItem fieldItem = field.getValue();
+		// 	String columnName = StringManager.getValidString(
+		// 		fieldItem.getColumnName()
+		// 	);
+		// 	Value fieldValue = convertFieldItem(fieldItem);
 			
-			fields.putFields(
-				columnName,
-				fieldValue
-			);
-		});
-		builder.setFields(fields);
+		// 	fields.putFields(
+		// 		columnName,
+		// 		fieldValue
+		// 	);
+		// });
+		// builder.setFields(fields);
 		return builder;
 	}
 
