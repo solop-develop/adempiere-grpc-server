@@ -141,6 +141,13 @@ public class DisplayDefinitionConvertUtil {
 					DisplayDefinitionChanges.SP010_IsResource
 				)
 			)
+			.addAllContextColumnNames(
+				ContextManager.getContextColumnNames(
+					record.get_ValueAsString(
+						I_AD_Tab.COLUMNNAME_WhereClause
+					)
+				)
+			)
 		;
 
 		String displayType = record.get_ValueAsString(DisplayDefinitionChanges.SP010_DisplayType);
