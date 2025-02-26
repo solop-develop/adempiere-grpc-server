@@ -66,6 +66,7 @@ import org.spin.grpc.service.form.bank_statement_match.BankStatementMatch;
 import org.spin.grpc.service.form.import_file_loader.ImportFileLoader;
 import org.spin.grpc.service.form.issue_management.IssueManagement;
 import org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoice;
+import org.spin.grpc.service.form.out_bound_order.OutBoundOrderService;
 import org.spin.grpc.service.form.payroll_action_notice.PayrollActionNotice;
 import org.spin.grpc.service.form.task_management.TaskManagement;
 import org.spin.grpc.service.form.trial_balance_drillable.TrialBalanceDrillable;
@@ -239,6 +240,9 @@ public class AllInOneServices {
 		//	Order Field
 		serverBuilder.addService(new OrderInfoService());
 		logger.info("Service " + OrderInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		//	Out Bound Order
+		serverBuilder.addService(new OutBoundOrderService());
+		logger.info("Service " + OutBoundOrderService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payment
 		serverBuilder.addService(new PaymentInfoService());
 		logger.info("Service " + PaymentInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

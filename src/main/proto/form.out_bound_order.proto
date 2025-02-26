@@ -1,0 +1,246 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt EdwinBetanc0urt@outlook.com                     *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.spin.backend.grpc.form.out_bound_order";
+option java_outer_classname = "ADempiereOutBoundOrder";
+
+import "google/api/annotations.proto";
+// import "google/protobuf/timestamp.proto";
+
+import "base_data_type.proto";
+
+// Base URL
+// /forms/out_bound_order
+
+package form.out_bound_order;
+
+// The Generate Outbound (Sales Order / Distribution Order) form service definition.
+// - org.spin.wms.form.OutBoundOrder
+// - org.spin.wms.form.VOutBoundOrder
+service OutBoundOrderService {
+	// Filters
+	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/organizations"
+		};
+	}
+	rpc ListWarehouses(ListWarehousesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/{organization_id}/warehouses"
+		};
+	}
+	rpc ListDocumentTypes(ListDocumentTypesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/document-types"
+		};
+	}
+	rpc ListTargetDocumentTypes(ListTargetDocumentTypesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/target-document-types"
+		};
+	}
+	rpc ListSalesRegions(ListSalesRegionsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/sales-regions"
+		};
+	}
+	rpc ListSalesRepresentatives(ListSalesRepresentativesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/sales-representatives"
+		};
+	}
+	rpc ListDeliveryRules(ListDeliveryRulesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/delivery-rules"
+		};
+	}
+	rpc ListDeliveryVias(ListDeliveryViasRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/delivery-vias"
+		};
+	}
+	rpc ListShippers(ListShippersRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/shippers"
+		};
+	}
+
+	// Process
+	rpc ListDocumentActions(ListDocumentActionsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/document-actions"
+		};
+	}
+	rpc ListLocators(ListLocatorsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/warehouses/{warehouse_id}/locators"
+		};
+	}
+}
+
+
+// Organization
+message ListOrganizationsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Warehouse
+message ListWarehousesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	int32 organization_id = 10;
+}
+
+// Document Type
+message ListDocumentTypesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string movement_type = 10;
+}
+
+// Target Document Type
+message ListTargetDocumentTypesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string movement_type = 10;
+}
+
+// Sales Region
+message ListSalesRegionsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Sales Representative
+message ListSalesRepresentativesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Delivery Rule
+message ListDeliveryRulesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Delivery Via
+message ListDeliveryViasRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Shipper
+message ListShippersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Document Action
+message ListDocumentActionsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Locator
+message ListLocatorsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	int32 warehouse_id = 10;
+}
+
