@@ -9,7 +9,7 @@
             "name": "ADempiere Backend",
             "request": "launch",
             "mainClass": "org.spin.server.AllInOneServices",
-            "projectName": "adempiere-grpc-server",
+            // "projectName": "adempiere-grpc-server",
             "env": {
 				"ADEMPIERE_APPS_TYPE": "wildfly",
 				"JWT_SECRET_KEY": "2C51599F5B1248F945B93E05EFC43B3A15D8EB0707C0F02FD97028786C40976F",
