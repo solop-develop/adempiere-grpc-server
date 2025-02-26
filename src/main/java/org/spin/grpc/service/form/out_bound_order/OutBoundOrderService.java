@@ -32,10 +32,10 @@ import org.spin.backend.grpc.form.out_bound_order.OutBoundOrderServiceGrpc.OutBo
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
-public class OutBoundOrder extends OutBoundOrderServiceImplBase {
+public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(OutBoundOrder.class);
+	private CLogger log = CLogger.getCLogger(OutBoundOrderService.class);
 
 
 
