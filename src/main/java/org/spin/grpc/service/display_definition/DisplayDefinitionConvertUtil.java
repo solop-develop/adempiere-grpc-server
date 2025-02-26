@@ -1478,20 +1478,20 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 		;
-		// Struct.Builder fields = Struct.newBuilder();
-		// resourceItem.getFields().entrySet().forEach(field -> {
-		// 	BaseFieldItem fieldItem = field.getValue();
-		// 	String columnName = StringManager.getValidString(
-		// 		fieldItem.getColumnName()
-		// 	);
-		// 	Value fieldValue = convertFieldItem(fieldItem);
+		Struct.Builder fields = Struct.newBuilder();
+		resourceItem.getFields().entrySet().forEach(field -> {
+			BaseFieldItem fieldItem = field.getValue();
+			String columnName = StringManager.getValidString(
+				fieldItem.getColumnName()
+			);
+			Value fieldValue = convertFieldItem(fieldItem);
 			
-		// 	fields.putFields(
-		// 		columnName,
-		// 		fieldValue
-		// 	);
-		// });
-		// builder.setFields(fields);
+			fields.putFields(
+				columnName,
+				fieldValue
+			);
+		});
+		builder.setFields(fields);
 		return builder;
 	}
 
