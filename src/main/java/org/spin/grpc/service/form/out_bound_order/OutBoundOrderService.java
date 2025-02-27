@@ -59,8 +59,6 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 		}
 	}
 
-
-
 	@Override
 	public void listWarehouses(ListWarehousesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
@@ -81,12 +79,50 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 		}
 	}
 
-
-
 	@Override
 	public void listDocumentTypes(ListDocumentTypesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listDocumentTypes(request);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void listSalesRegions(ListSalesRegionsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listSalesRegions(request);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void listSalesRepresentatives(ListSalesRepresentativesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listSalesRepresentatives(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
@@ -108,7 +144,7 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 	@Override
 	public void listTargetDocumentTypes(ListTargetDocumentTypesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listTargetDocumentTypes(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
@@ -124,57 +160,11 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 			);
 		}
 	}
-
-
-
-	@Override
-	public void listSalesRegions(ListSalesRegionsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
-			responseObserver.onNext(
-				buildersList.build()
-			);
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-
-
-	@Override
-	public void listSalesRepresentatives(ListSalesRepresentativesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
-			responseObserver.onNext(
-				buildersList.build()
-			);
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-
 
 	@Override
 	public void listDeliveryRules(ListDeliveryRulesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listDeliveryRules(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
@@ -190,13 +180,11 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 			);
 		}
 	}
-
-
 
 	@Override
 	public void listDeliveryVias(ListDeliveryViasRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listDeliveryVias(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
@@ -212,13 +200,11 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 			);
 		}
 	}
-
-
 
 	@Override
 	public void listShippers(ListShippersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listShippers(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
@@ -234,13 +220,11 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 			);
 		}
 	}
-
-
 
 	@Override
 	public void listDocumentActions(ListDocumentActionsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listDocumentActions(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
@@ -257,12 +241,10 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 		}
 	}
 
-
-
 	@Override
 	public void listLocators(ListLocatorsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = ListLookupItemsResponse.newBuilder();
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listLocators(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);

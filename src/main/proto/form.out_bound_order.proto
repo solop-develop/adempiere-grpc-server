@@ -19,7 +19,7 @@ option java_package = "org.spin.backend.grpc.form.out_bound_order";
 option java_outer_classname = "ADempiereOutBoundOrder";
 
 import "google/api/annotations.proto";
-// import "google/protobuf/timestamp.proto";
+import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
 
@@ -48,11 +48,6 @@ service OutBoundOrderService {
 			get: "/forms/out-bound-orders/document-types"
 		};
 	}
-	rpc ListTargetDocumentTypes(ListTargetDocumentTypesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = {
-			get: "/forms/out-bound-orders/target-document-types"
-		};
-	}
 	rpc ListSalesRegions(ListSalesRegionsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/out-bound-orders/sales-regions"
@@ -61,6 +56,25 @@ service OutBoundOrderService {
 	rpc ListSalesRepresentatives(ListSalesRepresentativesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/out-bound-orders/sales-representatives"
+		};
+	}
+
+	// Results
+	rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/documents/{movement_type}"
+		};
+	}
+	rpc ListDocumentLines(ListDocumentLinesRequest) returns (ListDocumentLinesResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/documents/{movement_type}/lines"
+		};
+	}
+
+	// Process
+	rpc ListTargetDocumentTypes(ListTargetDocumentTypesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/target-document-types"
 		};
 	}
 	rpc ListDeliveryRules(ListDeliveryRulesRequest) returns (data.ListLookupItemsResponse) {
@@ -78,8 +92,6 @@ service OutBoundOrderService {
 			get: "/forms/out-bound-orders/shippers"
 		};
 	}
-
-	// Process
 	rpc ListDocumentActions(ListDocumentActionsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/out-bound-orders/document-actions"
@@ -216,6 +228,98 @@ message ListShippersRequest {
 	bool is_only_active_records = 9;
 }
 
+
+
+// Document Header
+message ListDocumentsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	//
+	string movement_type = 10;
+	int32 organization_id = 11;
+	int32 warehouse_id = 12;
+	int32 sales_region_id = 13;
+	int32 sales_representative_id = 14;
+	int32 document_type_id = 15;
+}
+message Document {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	google.protobuf.Timestamp date_ordered = 4;
+	google.protobuf.Timestamp date_promised = 5;
+	string region = 6;
+	string city = 7;
+	string sales_representative = 8;
+	string business_partner = 9;
+	string address = 10;
+	string address1 = 11;
+	string address2 = 12;
+	string address3 = 13;
+	string address4 = 14;
+	string weight = 15;
+	string volume = 16;
+	string warehouse = 17;
+}
+message ListDocumentsResponse {
+	int64 record_count = 1;
+	repeated Document records = 2;
+	string next_page_token = 3;
+}
+
+// Document Line
+message ListDocumentLinesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	//
+	string movement_type = 10;
+	int32 organization_id = 11;
+	int32 warehouse_id = 12;
+	int32 sales_region_id = 13;
+	int32 sales_representative_id = 14;
+	int32 document_type_id = 15;
+}
+message DocumentLine {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	string warehouse = 4;
+	string product_id = 6;
+	string product = 7;
+	string uom = 8;
+	string on_hand_quantity = 9;
+	string quantity = 10;
+	string weight = 11;
+	string volume = 12;
+	string ordered_cuantity = 13;
+	string reserved_cuantity = 14;
+	string quantity_invoiced = 15;
+	string delivered_quantity = 16;
+	string quantity_in_transit = 17;
+	string delivery_rule = 18;
+}
+message ListDocumentLinesResponse {
+	int64 record_count = 1;
+	repeated DocumentLine records = 2;
+	string next_page_token = 3;
+}
+
+
+
 // Document Action
 message ListDocumentActionsRequest {
 	string filters = 1;
@@ -243,4 +347,3 @@ message ListLocatorsRequest {
 	// custom filters
 	int32 warehouse_id = 10;
 }
-
