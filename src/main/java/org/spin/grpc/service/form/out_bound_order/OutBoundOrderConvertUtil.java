@@ -57,7 +57,9 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setSalesRepresentative(
-				StringManager.getValidString("SalesRep")
+				StringManager.getValidString(
+					resultSet.getString("SalesRep")
+				)
 			)
 			.setRegion(
 				StringManager.getValidString(

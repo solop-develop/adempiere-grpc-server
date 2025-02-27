@@ -16,6 +16,7 @@ package org.spin.grpc.service.form.out_bound_order;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_C_DocType;
@@ -383,9 +384,11 @@ public class OutBoundOrderLogic {
 			sql.append("ORDER BY ord.C_Order_ID ASC");
 		}
 
+		AtomicInteger count = new AtomicInteger(0);
 		ListDocumentHeadersResponse.Builder builderList = ListDocumentHeadersResponse.newBuilder();
 		DB.runResultSet(null, sql.toString(), parametersList, resultSet -> {
-			if (resultSet.next()) {
+			while (resultSet.next()) {
+				count.incrementAndGet();
 				DocumentHeader.Builder builder = OutBoundOrderConvertUtil.convertDocumentHeader(resultSet);
 				builderList.addRecords(builder);
 			}
@@ -393,6 +396,10 @@ public class OutBoundOrderLogic {
 		.onFailure(throwable -> {
 			log.severe(throwable.getMessage());
 		});
+
+		builderList.setRecordCount(
+			count.get()
+		);
 
 		return builderList;
 	}
