@@ -125,7 +125,7 @@ public class OutBoundOrderLogic {
 	public static ListLookupItemsResponse.Builder listDocumentTypes(ListDocumentTypesRequest request) {
 		final String docBaseType = request.getMovementType().equals(I_DD_Order.Table_Name) ? "DOO" : "SSO";
 		final String whereClause = "C_DocType.DocBaseType = '" + docBaseType + "' "
-			+ "AND (C_DocType.DocSubTypeSO IS NULL OR doc.DocSubTypeSO NOT IN('RM', 'OB')) "
+			+ "AND (C_DocType.DocSubTypeSO IS NULL OR C_DocType.DocSubTypeSO NOT IN('RM', 'OB')) "
 		;
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
@@ -297,7 +297,7 @@ public class OutBoundOrderLogic {
 
 
 	public static ListLookupItemsResponse.Builder listDocumentActions(ListDocumentActionsRequest request) {
-		final int columnId = 58192; // WM_InOutBound.DocAction
+		final int columnId = 58208; // WM_InOutBound.DocAction
 		final String whereClause = " AD_Ref_List.Value IN ('CO','PR')";
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
@@ -322,15 +322,12 @@ public class OutBoundOrderLogic {
 
 
 	public static MWarehouse validateAndGetWarehouse(int warehouseId) {
-		if (warehouseId < 0) {
+		if (warehouseId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_Warehouse_ID@");
-		}
-		if (warehouseId == 0) {
-			throw new AdempiereException("@Org0NotAllowed@");
 		}
 		MWarehouse warehouse = new Query(
 			Env.getCtx(),
-			I_AD_Org.Table_Name,
+			I_M_Warehouse.Table_Name,
 			" M_Warehouse_ID = ? ",
 			null
 		)
@@ -348,7 +345,11 @@ public class OutBoundOrderLogic {
 	}
 
 	public static ListLookupItemsResponse.Builder listLocators(ListLocatorsRequest request) {
-		final String whereClause = " AD_Ref_List.Value IN ('CO','PR')";
+		MWarehouse warehouse = validateAndGetWarehouse(
+			request.getWarehouseId()
+		);
+		final String whereClause = "M_Locator.M_Warehouse_ID = " + warehouse.getM_Warehouse_ID();
+		// int columnId = 64658; // WM_InOutBound.M_Locator_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,

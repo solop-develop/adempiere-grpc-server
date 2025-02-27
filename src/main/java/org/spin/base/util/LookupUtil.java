@@ -104,6 +104,11 @@ public class LookupUtil {
 			LookupUtil.UUID_COLUMN_KEY,
 			ValueManager.getValueFromString(uuidValue).build()
 		);
+		builder.setUuid(
+			StringManager.getValidString(
+				uuidValue
+			)
+		);
 
 		builder.setValues(values);
 		return builder;
