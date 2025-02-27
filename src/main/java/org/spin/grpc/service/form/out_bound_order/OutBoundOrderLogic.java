@@ -17,16 +17,20 @@ package org.spin.grpc.service.form.out_bound_order;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.I_DD_Order;
+import org.adempiere.core.domains.models.I_M_Locator;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrg;
+import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryRulesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryViasRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListDocumentActionsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentTypesRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListLocatorsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListOrganizationsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListSalesRegionsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListSalesRepresentativesRequest;
@@ -35,8 +39,6 @@ import org.spin.backend.grpc.form.out_bound_order.ListTargetDocumentTypesRequest
 import org.spin.backend.grpc.form.out_bound_order.ListWarehousesRequest;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
-
-import io.grpc.stub.StreamObserver;
 
 public class OutBoundOrderLogic {
 
@@ -147,34 +149,7 @@ public class OutBoundOrderLogic {
 
 
 
-	public static ListLookupItemsResponse.Builder listTargetDocumentTypes(ListTargetDocumentTypesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		final String whereClause = "C_DocType.DocBaseType IN ('WMO') AND C_DocType.IsSOTrx = 'Y' ";
-		// C_DocType.DocBaseType IN ('WMO') AND C_DocType.IsSOTrx='@IsSOTrx@' // always Y
-		// Docyment Type filter selection
-		// final int columnId = 58203; // WM_InOutBound.C_DocType_ID
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			0,
-			0, 0, 0,
-			0,
-			I_C_DocType.COLUMNNAME_C_DocType_ID, I_C_DocType.Table_Name,
-			0, whereClause, false
-		);
-
-		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
-			reference,
-			request.getContextAttributes(),
-			request.getPageSize(),
-			request.getPageToken(),
-			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
-		);
-
-		return builderList;
-	}
-
-
-
-	public static ListLookupItemsResponse.Builder ListSalesRegions(ListSalesRegionsRequest request) {
+	public static ListLookupItemsResponse.Builder listSalesRegions(ListSalesRegionsRequest request) {
 		final int columnId = 1823; // C_SalesRegion.C_SalesRegion_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
@@ -206,6 +181,33 @@ public class OutBoundOrderLogic {
 			columnId,
 			null, null,
 			0, null, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listTargetDocumentTypes(ListTargetDocumentTypesRequest request) {
+		final String whereClause = "C_DocType.DocBaseType IN ('WMO') AND C_DocType.IsSOTrx = 'Y' ";
+		// C_DocType.DocBaseType IN ('WMO') AND C_DocType.IsSOTrx='@IsSOTrx@' // always Y
+		// Docyment Type filter selection
+		// final int columnId = 58203; // WM_InOutBound.C_DocType_ID
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			0, 0, 0,
+			0,
+			I_C_DocType.COLUMNNAME_C_DocType_ID, I_C_DocType.Table_Name,
+			0, whereClause, false
 		);
 
 		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
@@ -294,7 +296,7 @@ public class OutBoundOrderLogic {
 
 
 
-	public static ListLookupItemsResponse.Builder listDocumentActions(ListShippersRequest request) {
+	public static ListLookupItemsResponse.Builder listDocumentActions(ListDocumentActionsRequest request) {
 		final int columnId = 58192; // WM_InOutBound.DocAction
 		final String whereClause = " AD_Ref_List.Value IN ('CO','PR')";
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -302,6 +304,56 @@ public class OutBoundOrderLogic {
 			0, 0, 0,
 			columnId,
 			null, null,
+			0, whereClause, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
+	public static MWarehouse validateAndGetWarehouse(int warehouseId) {
+		if (warehouseId < 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Warehouse_ID@");
+		}
+		if (warehouseId == 0) {
+			throw new AdempiereException("@Org0NotAllowed@");
+		}
+		MWarehouse warehouse = new Query(
+			Env.getCtx(),
+			I_AD_Org.Table_Name,
+			" M_Warehouse_ID = ? ",
+			null
+		)
+			.setParameters(warehouseId)
+			.setClient_ID()
+			.first()
+		;
+		if (warehouse == null || warehouse.getM_Warehouse_ID() <= 0) {
+			throw new AdempiereException("@M_Warehouse_ID@ @NotFound@");
+		}
+		if (!warehouse.isActive()) {
+			throw new AdempiereException("@M_Warehouse_ID@ @NotActive@");
+		}
+		return warehouse;
+	}
+
+	public static ListLookupItemsResponse.Builder listLocators(ListLocatorsRequest request) {
+		final String whereClause = " AD_Ref_List.Value IN ('CO','PR')";
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			0, 0, 0,
+			0,
+			I_M_Locator.COLUMNNAME_M_Locator_ID, I_M_Locator.Table_Name,
 			0, whereClause, false
 		);
 
