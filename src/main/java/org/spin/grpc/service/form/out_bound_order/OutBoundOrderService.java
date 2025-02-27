@@ -19,6 +19,8 @@ import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryRulesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryViasRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentActionsRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListDocumentHeadersRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListDocumentHeadersResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentTypesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListLocatorsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListOrganizationsRequest;
@@ -123,6 +125,28 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 	public void listSalesRepresentatives(ListSalesRepresentativesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listSalesRepresentatives(request);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listDocumentHeaders(ListDocumentHeadersRequest request, StreamObserver<ListDocumentHeadersResponse> responseObserver) {
+		try {
+			ListDocumentHeadersResponse.Builder buildersList = OutBoundOrderLogic.listDocumentHeaders(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);

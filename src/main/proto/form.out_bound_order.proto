@@ -45,7 +45,7 @@ service OutBoundOrderService {
 	}
 	rpc ListDocumentTypes(ListDocumentTypesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/forms/out-bound-orders/document-types"
+			get: "/forms/out-bound-orders/document-types/{movement_type}"
 		};
 	}
 	rpc ListSalesRegions(ListSalesRegionsRequest) returns (data.ListLookupItemsResponse) {
@@ -60,7 +60,7 @@ service OutBoundOrderService {
 	}
 
 	// Results
-	rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse) {
+	rpc ListDocumentHeaders(ListDocumentHeadersRequest) returns (ListDocumentHeadersResponse) {
 		option (google.api.http) = {
 			get: "/forms/out-bound-orders/documents/{movement_type}"
 		};
@@ -231,7 +231,7 @@ message ListShippersRequest {
 
 
 // Document Header
-message ListDocumentsRequest {
+message ListDocumentHeadersRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -249,7 +249,7 @@ message ListDocumentsRequest {
 	int32 sales_representative_id = 14;
 	int32 document_type_id = 15;
 }
-message Document {
+message DocumentHeader {
 	int32 id = 1;
 	string uuid = 2;
 	string document_no = 3;
@@ -259,18 +259,19 @@ message Document {
 	string city = 7;
 	string sales_representative = 8;
 	string business_partner = 9;
-	string address = 10;
-	string address1 = 11;
-	string address2 = 12;
-	string address3 = 13;
-	string address4 = 14;
-	string weight = 15;
-	string volume = 16;
-	string warehouse = 17;
+	int32 location_id = 10;
+	string location = 11;
+	string address1 = 12;
+	string address2 = 13;
+	string address3 = 14;
+	string address4 = 15;
+	string weight = 16;
+	string volume = 17;
+	string warehouse = 18;
 }
-message ListDocumentsResponse {
+message ListDocumentHeadersResponse {
 	int64 record_count = 1;
-	repeated Document records = 2;
+	repeated DocumentHeader records = 2;
 	string next_page_token = 3;
 }
 

@@ -15,10 +15,105 @@
 package org.spin.grpc.service.form.out_bound_order;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.spin.backend.grpc.form.out_bound_order.DocumentHeader;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 public class OutBoundOrderConvertUtil {
-	public static void convertDocumentHeader(ResultSet resultSet) {
-
+	public static DocumentHeader.Builder convertDocumentHeader(ResultSet resultSet) throws SQLException {
+		DocumentHeader.Builder builder = DocumentHeader.newBuilder();
+		if (resultSet == null) {
+			return builder;
+		}
+		builder.setId(
+				resultSet.getInt("ID")
+			)
+			.setUuid(
+				StringManager.getValidString(
+					resultSet.getString("UUID")
+				)
+			)
+			.setDocumentNo(
+				StringManager.getValidString(
+					resultSet.getString("DocumentNo")
+				)
+			)
+			.setDateOrdered(
+				TimeManager.convertDateToValue(
+					resultSet.getTimestamp("DateOrdered")
+				)
+			)
+			.setDatePromised(
+				TimeManager.convertDateToValue(
+					resultSet.getTimestamp("DatePromised")
+				)
+			)
+			.setWarehouse(
+				StringManager.getValidString(
+					resultSet.getString("Warehouse")
+				)
+			)
+			.setSalesRepresentative(
+				StringManager.getValidString("SalesRep")
+			)
+			.setRegion(
+				StringManager.getValidString(
+					resultSet.getString("Region")
+				)
+			)
+			.setCity(
+				StringManager.getValidString(
+					resultSet.getString("City")
+				)
+			)
+			.setLocationId(
+				resultSet.getInt("C_BPartner_Location_ID")
+			)
+			.setLocation(
+				StringManager.getValidString(
+					resultSet.getString("Location")
+				)
+			)
+			.setBusinessPartner(
+				StringManager.getValidString(
+					resultSet.getString("Partner")
+				)
+			)
+			.setAddress1(
+				StringManager.getValidString(
+					resultSet.getString("Address1")
+				)
+			)
+			.setAddress2(
+				StringManager.getValidString(
+					resultSet.getString("Address2")
+				)
+			)
+			.setAddress3(
+				StringManager.getValidString(
+					resultSet.getString("Address3")
+				)
+			)
+			.setAddress4(
+				StringManager.getValidString(
+					resultSet.getString("Address4")
+				)
+			)
+			.setWeight(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("Weight")
+				)
+			)
+			.setVolume(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("Volume")
+				)
+			)
+		;
+		return builder;
 	}
 
 }
