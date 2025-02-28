@@ -17,6 +17,7 @@ package org.spin.grpc.service.form.out_bound_order;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_C_DocType;
@@ -33,11 +34,14 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.out_bound_order.DocumentHeader;
+import org.spin.backend.grpc.form.out_bound_order.DocumentLine;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryRulesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryViasRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentActionsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentHeadersRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentHeadersResponse;
+import org.spin.backend.grpc.form.out_bound_order.ListDocumentLinesRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListDocumentLinesResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentTypesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListLocatorsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListOrganizationsRequest;
@@ -390,6 +394,205 @@ public class OutBoundOrderLogic {
 			while (resultSet.next()) {
 				count.incrementAndGet();
 				DocumentHeader.Builder builder = OutBoundOrderConvertUtil.convertDocumentHeader(resultSet);
+				builderList.addRecords(builder);
+			}
+		})
+		.onFailure(throwable -> {
+			log.severe(throwable.getMessage());
+		});
+
+		builderList.setRecordCount(
+			count.get()
+		);
+
+		return builderList;
+	}
+
+	public static ListDocumentLinesResponse.Builder listDocumentLines(ListDocumentLinesRequest request) {
+		final String movementType = request.getMovementType();
+
+		if (request.getHeaderIdsList() == null || request.getHeaderIdsList().isEmpty()) {
+			throw new AdempiereException("@FillMandatory@ @Record_ID@");
+		}
+		String headerIdentifers = request.getHeaderIdsList()
+			.stream()
+			// .map(String::valueOf)
+			.map(String::valueOf)
+			.collect(Collectors.joining(","))
+		;
+
+		StringBuffer sql = null;
+		if (movementType.equals(I_DD_Order.Table_Name)) {
+			StringBuffer sqlWhere = new StringBuffer("ord.DD_Order_ID IN(0")
+				.append(headerIdentifers)
+				.append(")")
+			;
+
+			sql = new StringBuffer(
+				"SELECT alm.M_Warehouse_ID, alm.Name Warehouse, " +
+					"lord.DD_OrderLine_ID AS ID, lord.UUID, ord.DocumentNo, " +
+					"lord.M_Product_ID, (pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
+					"pro.C_UOM_ID, uomp.UOMSymbol, s.QtyOnHand, " +
+					"lord.QtyOrdered, lord.C_UOM_ID Order_UOM_ID, uom.UOMSymbol Order_UOMSymbol, lord.QtyReserved, 0 QtyInvoiced, lord.QtyDelivered, " +
+					"SUM(" +
+					"		COALESCE(CASE " +
+					"			WHEN (c.IsDelivered = 'N' AND lc.DD_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
+					"			THEN lc.MovementQty " +
+					"			ELSE 0 " +
+					"		END, 0)" +
+					") QtyLoc, " +
+					"(COALESCE(lord.QtyOrdered, 0) - COALESCE(lord.QtyInTransit, 0) - COALESCE(lord.QtyDelivered, 0) - " +
+					"	SUM(" +
+					"		COALESCE(CASE " +
+					"			WHEN (c.IsDelivered = 'N' AND lc.DD_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
+					"			THEN lc.MovementQty " +
+					"			ELSE 0 " +
+					"		END, 0)" +
+					"		)" +
+					") Qty, " +
+					"pro.Weight, pro.Volume, ord.DeliveryRule, pro.IsStocked " +
+					"FROM DD_Order ord " +
+					"INNER JOIN DD_OrderLine lord ON(lord.DD_Order_ID = ord.DD_Order_ID) " +
+					"INNER JOIN M_Locator l ON(l.M_Locator_ID = lord.M_Locator_ID) " + 
+					"INNER JOIN M_Warehouse alm ON(alm.M_Warehouse_ID = l.M_Warehouse_ID) " +
+					"INNER JOIN M_Product pro ON(pro.M_Product_ID = lord.M_Product_ID) " +
+					"INNER JOIN C_UOM uom ON(uom.C_UOM_ID = lord.C_UOM_ID) " +
+					"INNER JOIN C_UOM uomp ON(uomp.C_UOM_ID = pro.C_UOM_ID) " +
+					"LEFT JOIN WM_InOutBoundLine lc ON(lc.DD_OrderLine_ID = lord.DD_OrderLine_ID) " +
+					"LEFT JOIN WM_InOutBound c ON(c.WM_InOutBound_ID = lc.WM_InOutBound_ID) " +
+					"LEFT JOIN (" +
+					"				SELECT l.M_Warehouse_ID, st.M_Product_ID, " +
+					"					COALESCE(SUM(st.QtyOnHand), 0) QtyOnHand, " +
+					"					(CASE WHEN p.M_AttributeSet_ID IS NOT NULL THEN COALESCE(st.M_AttributeSetInstance_ID, 0) ELSE 0 END) M_AttributeSetInstance_ID " +
+					"				FROM M_Storage st " +
+					"				INNER JOIN M_Product p ON(p.M_Product_ID = st.M_Product_ID) " +
+					"				INNER JOIN M_Locator l ON(l.M_Locator_ID = st.M_Locator_ID) " +
+					"			GROUP BY l.M_Warehouse_ID, st.M_Product_ID, p.M_AttributeSet_ID, 4) s " +
+					"														ON(s.M_Product_ID = lord.M_Product_ID " +
+					"																AND s.M_Warehouse_ID = l.M_Warehouse_ID " +
+					"																AND lord.M_AttributeSetInstance_ID = s.M_AttributeSetInstance_ID) ")
+				.append("WHERE ")
+				.append(sqlWhere).append(" ")
+			;
+			//	Group By
+			sql.append("GROUP BY alm.M_Warehouse_ID, lord.DD_Order_ID, lord.DD_OrderLine_ID, " +
+					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, " + 
+					"pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
+					"pro.C_UOM_ID, uomp.UOMSymbol, lord.QtyOrdered, lord.QtyReserved, " +
+					"lord.QtyDelivered, pro.Weight, pro.Volume, ord.DeliveryRule, s.QtyOnHand,pro.IsStocked"
+				)
+				.append(" ")
+			;
+			//	Having
+			sql.append("HAVING (COALESCE(lord.QtyOrdered, 0) - COALESCE(lord.QtyInTransit, 0) - COALESCE(lord.QtyDelivered, 0) - " + 
+					"								SUM(" +
+					"									COALESCE(CASE " +
+					"										WHEN (c.IsDelivered = 'N' AND lc.DD_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
+					"											THEN lc.MovementQty " +
+					"											ELSE 0 " +
+					"										END, 0)" +
+					"								)" +
+					"			) > 0 OR pro.IsStocked = 'N' "
+				)
+				.append(" ")
+			;
+			//	Order By
+			sql.append("ORDER BY lord.DD_Order_ID ASC");
+			
+		} else {
+			StringBuffer sqlWhere = new StringBuffer("ord.C_Order_ID IN(0")
+				.append(headerIdentifers)
+				.append(")")
+			;
+
+			sql = new StringBuffer(
+					"SELECT lord.M_Warehouse_ID, alm.Name Warehouse, " +
+					"lord.C_OrderLine_ID AS ID, lord.UUID, ord.DocumentNo, " +
+					"lord.M_Product_ID, (pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
+					"pro.C_UOM_ID, uomp.UOMSymbol, s.QtyOnHand, " +
+					"lord.QtyOrdered, lord.C_UOM_ID Order_UOM_ID, uom.UOMSymbol Order_UOMSymbol, lord.QtyReserved, lord.QtyInvoiced, lord.QtyDelivered, " +
+					"SUM(" +
+					"		COALESCE(CASE " +
+					"			WHEN (c.IsDelivered = 'N' AND lc.C_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
+					"			THEN lc.MovementQty - COALESCE(iol.MovementQty, 0) " +
+					"			ELSE 0 " +
+					"		END, 0)" +
+					") QtyLoc, " +
+					"(COALESCE(lord.QtyOrdered, 0) - COALESCE(lord.QtyDelivered, 0) - " +
+					"	SUM(" +
+					"		COALESCE(CASE " +
+					"			WHEN (c.IsDelivered = 'N' AND lc.C_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
+					"			THEN lc.MovementQty - COALESCE(iol.MovementQty, 0) " +
+					"			ELSE 0 " +
+					"		END, 0)" +
+					"		)" +
+					") Qty, " +
+					"pro.Weight, pro.Volume, ord.DeliveryRule, pro.IsStocked " +
+					"FROM C_Order ord " +
+					"INNER JOIN C_OrderLine lord ON(lord.C_Order_ID = ord.C_Order_ID) " +
+					"INNER JOIN M_Warehouse alm ON(alm.M_Warehouse_ID = lord.M_Warehouse_ID) " +
+					"INNER JOIN M_Product pro ON(pro.M_Product_ID = lord.M_Product_ID) " +
+					"INNER JOIN C_UOM uom ON(uom.C_UOM_ID = lord.C_UOM_ID) " +
+					"INNER JOIN C_UOM uomp ON(uomp.C_UOM_ID = pro.C_UOM_ID) " +
+					"LEFT JOIN WM_InOutBoundLine lc ON(lc.C_OrderLine_ID = lord.C_OrderLine_ID) " +
+					"LEFT JOIN WM_InOutBound c ON(c.WM_InOutBound_ID = lc.WM_InOutBound_ID) " +
+					"LEFT JOIN (SELECT iol.WM_InOutBoundLine_ID, SUM(iol.MovementQty) MovementQty "
+					+ "						FROM M_InOut io "
+					+ "						INNER JOIN M_InOutLine iol ON(iol.M_InOut_ID = io.M_InOut_ID) "
+					+ "						WHERE io.DocStatus IN('CO', 'CL') "
+					+ "						AND iol.WM_InOutBoundLine_ID IS NOT NULL"
+					+ "				GROUP BY iol.WM_InOutBoundLine_ID) iol ON(iol.WM_InOutBoundLine_ID = lc.WM_InOutBoundLine_ID) " +
+					"LEFT JOIN (" +
+					"				SELECT l.M_Warehouse_ID, st.M_Product_ID, " +
+					"					COALESCE(SUM(st.QtyOnHand), 0) QtyOnHand, " +
+					"					(CASE WHEN p.M_AttributeSet_ID IS NOT NULL THEN COALESCE(st.M_AttributeSetInstance_ID, 0) ELSE 0 END) M_AttributeSetInstance_ID " +
+					"				FROM M_Storage st " +
+					"				INNER JOIN M_Product p ON(p.M_Product_ID = st.M_Product_ID) " + 
+					"				INNER JOIN M_Locator l ON(l.M_Locator_ID = st.M_Locator_ID) " +
+					"			GROUP BY l.M_Warehouse_ID, st.M_Product_ID, p.M_AttributeSet_ID, 4) s " +
+					"														ON(s.M_Product_ID = lord.M_Product_ID " +
+					"																AND s.M_Warehouse_ID = lord.M_Warehouse_ID " +
+					"																AND lord.M_AttributeSetInstance_ID = s.M_AttributeSetInstance_ID) "
+				)
+				.append("WHERE ")
+				.append(sqlWhere).append(" ")
+			;
+			//	Group By
+			sql.append(
+					"GROUP BY lord.M_Warehouse_ID, lord.C_Order_ID, lord.C_OrderLine_ID, " +
+					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, " + 
+					"pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
+					"pro.C_UOM_ID, uomp.UOMSymbol, lord.QtyOrdered, lord.QtyReserved, " + 
+					"lord.QtyDelivered, lord.QtyInvoiced, pro.Weight, pro.Volume, ord.DeliveryRule, s.QtyOnHand, pro.IsStocked"
+				)
+				.append(" ")
+			;
+			//	Having
+			sql.append(
+					"HAVING (COALESCE(lord.QtyOrdered, 0) - COALESCE(lord.QtyDelivered, 0) - " + 
+					"									SUM(" +
+					"										COALESCE(CASE " +
+					"											WHEN (c.IsDelivered = 'N' AND lc.C_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
+					"											THEN lc.MovementQty - COALESCE(iol.MovementQty, 0) " +
+					"											ELSE 0 " +
+					"										END, 0)" +
+					"									)" +
+					"			) > 0  OR pro.IsStocked = 'N' "
+				)
+				.append(" ")
+			;
+			//	Order By
+			sql.append("ORDER BY lord.C_Order_ID ASC");
+			
+		}
+
+		List<Object> parametersList = new ArrayList<Object>();
+		AtomicInteger count = new AtomicInteger(0);
+		ListDocumentLinesResponse.Builder builderList = ListDocumentLinesResponse.newBuilder();
+		DB.runResultSet(null, sql.toString(), parametersList, resultSet -> {
+			while (resultSet.next()) {
+				count.incrementAndGet();
+				DocumentLine.Builder builder = OutBoundOrderConvertUtil.convertDocumentLine(resultSet);
 				builderList.addRecords(builder);
 			}
 		})
