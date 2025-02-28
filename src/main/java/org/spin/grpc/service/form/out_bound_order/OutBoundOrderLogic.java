@@ -591,8 +591,13 @@ public class OutBoundOrderLogic {
 		ListDocumentLinesResponse.Builder builderList = ListDocumentLinesResponse.newBuilder();
 		DB.runResultSet(null, sql.toString(), parametersList, resultSet -> {
 			while (resultSet.next()) {
-				count.incrementAndGet();
 				DocumentLine.Builder builder = OutBoundOrderConvertUtil.convertDocumentLine(resultSet);
+				if (builder.getId() <= 0) {
+					// delivery rule no is manual or force and quantity is zero
+					return;
+				}
+
+				count.incrementAndGet();
 				builderList.addRecords(builder);
 			}
 		})

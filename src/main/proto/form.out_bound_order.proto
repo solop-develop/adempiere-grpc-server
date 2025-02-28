@@ -257,17 +257,20 @@ message DocumentHeader {
 	google.protobuf.Timestamp date_promised = 5;
 	string region = 6;
 	string city = 7;
-	string sales_representative = 8;
-	string business_partner = 9;
-	int32 location_id = 10;
-	string location = 11;
-	string address1 = 12;
-	string address2 = 13;
-	string address3 = 14;
-	string address4 = 15;
-	string weight = 16;
-	string volume = 17;
-	string warehouse = 18;
+	int32 sales_representative_id = 8;
+	string sales_representative = 9;
+	int32 business_partner_id = 10;
+	string business_partner = 11;
+	int32 location_id = 12;
+	string location = 13;
+	string address1 = 14;
+	string address2 = 15;
+	string address3 = 16;
+	string address4 = 17;
+	string weight = 18;
+	string volume = 19;
+	int32 warehouse_id = 20;
+	string warehouse = 21;
 }
 message ListDocumentHeadersResponse {
 	int64 record_count = 1;

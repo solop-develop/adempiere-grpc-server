@@ -14,9 +14,21 @@
  ************************************************************************************/
 package org.spin.grpc.service.form.out_bound_order;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
+import org.adempiere.core.domains.models.I_AD_Element;
+import org.adempiere.core.domains.models.I_C_Order;
+import org.adempiere.core.domains.models.I_C_OrderLine;
+import org.adempiere.core.domains.models.I_M_Product;
+import org.adempiere.core.domains.models.X_C_Order;
+import org.compiere.model.MRefList;
+import org.compiere.model.MUOM;
+import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.form.out_bound_order.DocumentHeader;
 import org.spin.backend.grpc.form.out_bound_order.DocumentLine;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -36,24 +48,37 @@ public class OutBoundOrderConvertUtil {
 			)
 			.setUuid(
 				StringManager.getValidString(
-					resultSet.getString("UUID")
+					resultSet.getString(
+						I_AD_Element.COLUMNNAME_UUID
+					)
 				)
 			)
 			.setDocumentNo(
 				StringManager.getValidString(
-					resultSet.getString("DocumentNo")
+					resultSet.getString(
+						I_C_Order.COLUMNNAME_DocumentNo
+					)
 				)
 			)
 			.setDateOrdered(
 				TimeManager.convertDateToValue(
-					resultSet.getTimestamp("DateOrdered")
+					resultSet.getTimestamp(
+						I_C_Order.COLUMNNAME_DateOrdered
+					)
 				)
 			)
 			.setDatePromised(
 				TimeManager.convertDateToValue(
-					resultSet.getTimestamp("DatePromised")
+					resultSet.getTimestamp(
+						I_C_Order.COLUMNNAME_DatePromised
+					)
 				)
 			)
+			// .setWarehouseId(
+			// 	resultSet.getInt(
+			// 		I_C_Order.COLUMNNAME_M_Warehouse_ID
+			// 	)
+			// )
 			.setWarehouse(
 				StringManager.getValidString(
 					resultSet.getString("Warehouse")
@@ -126,21 +151,85 @@ public class OutBoundOrderConvertUtil {
 		if (resultSet == null) {
 			return builder;
 		}
+		//	Parameter
+		int productUOMId = resultSet.getInt("C_UOM_ID");
+		BigDecimal qtyOnHand = Optional.ofNullable(
+			resultSet.getBigDecimal("QtyOnHand")
+		).orElse(
+			Env.ZERO
+		);
+		BigDecimal qty = Optional.ofNullable(
+			resultSet.getBigDecimal("Qty")
+		).orElse(
+			Env.ZERO
+		);
+		String deliveryRuleKey = StringManager.getValidString(
+			resultSet.getString("DeliveryRule")
+		);
+		if(Util.isEmpty(deliveryRuleKey, true)) {
+			deliveryRuleKey = X_C_Order.DELIVERYRULE_Availability;
+		}
+		String deliveryRule = MRefList.getListName(
+			Env.getCtx(),
+			X_C_Order.DELIVERYRULE_AD_Reference_ID,
+			deliveryRuleKey
+		);
+
+		boolean isStocked = BooleanManager.getBooleanFromString(
+			resultSet.getString("IsStocked")
+		);
+		//	Get Precision
+		int precision = MUOM.getPrecision(Env.getCtx(), productUOMId);
+
+		if (!isStocked) {
+			qtyOnHand = qty;
+		}
+
+		//	Valid Quantity On Hand
+		if(!deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Force) && !deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Manual)) {
+			//FR [ 1 ]
+			BigDecimal diff = ((BigDecimal) (isStocked ? Env.ONE : Env.ZERO))
+				.multiply(
+					qtyOnHand
+						.subtract(qty)
+						.setScale(precision, RoundingMode.HALF_UP)
+				);
+			//	Set Quantity
+			if(diff.doubleValue() < 0) {
+				qty = qty
+					.subtract(diff.abs())
+					.setScale(precision, RoundingMode.HALF_UP)
+				;
+			}
+			//	Valid Zero
+			if (qty.compareTo(Env.ZERO) <= 0) {
+				// Omit this record
+				// continue;
+				return builder;
+			}
+		}
+
 		builder.setId(
 				resultSet.getInt("ID")
 			)
 			.setUuid(
 				StringManager.getValidString(
-					resultSet.getString("UUID")
+					resultSet.getString(
+						I_AD_Element.COLUMNNAME_UUID
+					)
 				)
 			)
 			.setDocumentNo(
 				StringManager.getValidString(
-					resultSet.getString("DocumentNo")
+					resultSet.getString(
+						I_C_Order.COLUMNNAME_DocumentNo
+					)
 				)
 			)
 			.setWarehouseId(
-				resultSet.getInt("M_Warehouse_ID")
+				resultSet.getInt(
+					I_C_Order.COLUMNNAME_M_Warehouse_ID
+				)
 			)
 			.setWarehouse(
 				StringManager.getValidString(
@@ -148,7 +237,9 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setProductId(
-				resultSet.getInt("M_Product_ID")
+				resultSet.getInt(
+					I_C_OrderLine.COLUMNNAME_M_Product_ID
+				)
 			)
 			.setProduct(
 				StringManager.getStringFromObject(
@@ -156,7 +247,7 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setUomId(
-				resultSet.getInt("C_UOM_ID")
+				productUOMId
 			)
 			.setUom(
 				StringManager.getValidString(
@@ -164,51 +255,63 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setOrderUomId(
-				resultSet.getInt("C_UOM_ID")
+				resultSet.getInt("Order_UOM_ID")
 			)
 			.setOrderUom(
 				StringManager.getValidString(
-					resultSet.getString("UOMSymbol")
+					resultSet.getString("Order_UOMSymbol")
 				)
 			)
 			.setOnHandQuantity(
 				NumberManager.getBigDecimalToString(
-					resultSet.getBigDecimal("QtyOnHand")
+					qtyOnHand
 				)
 			)
 			.setQuantity(
 				NumberManager.getBigDecimalToString(
-					resultSet.getBigDecimal("Qty")
+					qty
 				)
 			)
 			.setVolume(
 				NumberManager.getBigDecimalToString(
-					resultSet.getBigDecimal("Volume")
+					resultSet.getBigDecimal(
+						I_M_Product.COLUMNNAME_Volume
+					)
 				)
 			)
 			.setWeight(
 				NumberManager.getBigDecimalToString(
-					resultSet.getBigDecimal("Weight")
+					resultSet.getBigDecimal(
+						I_M_Product.COLUMNNAME_Weight
+					)
 				)
 			)
 			.setOrderedQuantity(
 				NumberManager.getBigDecimalToString(
-					resultSet.getBigDecimal("QtyOrdered")
+					resultSet.getBigDecimal(
+						I_C_OrderLine.COLUMNNAME_QtyOrdered
+					)
 				)
 			)
 			.setReservedQuantity(
 				NumberManager.getBigDecimalToString(
-					resultSet.getBigDecimal("QtyReserved")
+					resultSet.getBigDecimal(
+						I_C_OrderLine.COLUMNNAME_QtyReserved
+					)
 				)
 			)
 			.setQuantityInvoiced(
 				NumberManager.getBigDecimalToString(
-					resultSet.getBigDecimal("QtyInvoiced")
+					resultSet.getBigDecimal(
+						I_C_OrderLine.COLUMNNAME_QtyInvoiced
+					)
 				)
 			)
 			.setDeliveredQuantity(
 				NumberManager.getBigDecimalToString(
-					resultSet.getBigDecimal("QtyDelivered")
+					resultSet.getBigDecimal(
+						I_C_OrderLine.COLUMNNAME_QtyDelivered
+					)
 				)
 			)
 			.setQuantityInTransit(
@@ -216,15 +319,16 @@ public class OutBoundOrderConvertUtil {
 					resultSet.getBigDecimal("QtyLoc")
 				)
 			)
+			.setDeliveryRuleValue(
+				deliveryRuleKey
+			)
 			.setDeliveryRule(
 				StringManager.getValidString(
-					resultSet.getString("DeliveryRule")
+					deliveryRule
 				)
 			)
 			.setIsStocked(
-				BooleanManager.getBooleanFromString(
-					resultSet.getString("IsStocked")
-				)
+				isStocked
 			)
 		;
 		return builder;
