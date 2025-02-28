@@ -18,11 +18,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.spin.backend.grpc.form.out_bound_order.DocumentHeader;
+import org.spin.backend.grpc.form.out_bound_order.DocumentLine;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 public class OutBoundOrderConvertUtil {
+
 	public static DocumentHeader.Builder convertDocumentHeader(ResultSet resultSet) throws SQLException {
 		DocumentHeader.Builder builder = DocumentHeader.newBuilder();
 		if (resultSet == null) {
@@ -112,6 +115,115 @@ public class OutBoundOrderConvertUtil {
 			.setVolume(
 				NumberManager.getBigDecimalToString(
 					resultSet.getBigDecimal("Volume")
+				)
+			)
+		;
+		return builder;
+	}
+
+	public static DocumentLine.Builder convertDocumentLine(ResultSet resultSet) throws SQLException {
+		DocumentLine.Builder builder = DocumentLine.newBuilder();
+		if (resultSet == null) {
+			return builder;
+		}
+		builder.setId(
+				resultSet.getInt("ID")
+			)
+			.setUuid(
+				StringManager.getValidString(
+					resultSet.getString("UUID")
+				)
+			)
+			.setDocumentNo(
+				StringManager.getValidString(
+					resultSet.getString("DocumentNo")
+				)
+			)
+			.setWarehouseId(
+				resultSet.getInt("M_Warehouse_ID")
+			)
+			.setWarehouse(
+				StringManager.getValidString(
+					resultSet.getString("Warehouse")
+				)
+			)
+			.setProductId(
+				resultSet.getInt("M_Product_ID")
+			)
+			.setProduct(
+				StringManager.getStringFromObject(
+					resultSet.getString("Product")
+				)
+			)
+			.setUomId(
+				resultSet.getInt("C_UOM_ID")
+			)
+			.setUom(
+				StringManager.getValidString(
+					resultSet.getString("UOMSymbol")
+				)
+			)
+			.setOrderUomId(
+				resultSet.getInt("C_UOM_ID")
+			)
+			.setOrderUom(
+				StringManager.getValidString(
+					resultSet.getString("UOMSymbol")
+				)
+			)
+			.setOnHandQuantity(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("QtyOnHand")
+				)
+			)
+			.setQuantity(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("Qty")
+				)
+			)
+			.setVolume(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("Volume")
+				)
+			)
+			.setWeight(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("Weight")
+				)
+			)
+			.setOrderedQuantity(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("QtyOrdered")
+				)
+			)
+			.setReservedQuantity(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("QtyReserved")
+				)
+			)
+			.setQuantityInvoiced(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("QtyInvoiced")
+				)
+			)
+			.setDeliveredQuantity(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("QtyDelivered")
+				)
+			)
+			.setQuantityInTransit(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("QtyLoc")
+				)
+			)
+			.setDeliveryRule(
+				StringManager.getValidString(
+					resultSet.getString("DeliveryRule")
+				)
+			)
+			.setIsStocked(
+				BooleanManager.getBooleanFromString(
+					resultSet.getString("IsStocked")
 				)
 			)
 		;

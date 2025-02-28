@@ -288,30 +288,32 @@ message ListDocumentLinesRequest {
 	bool is_only_active_records = 9;
 	//
 	string movement_type = 10;
-	int32 organization_id = 11;
-	int32 warehouse_id = 12;
-	int32 sales_region_id = 13;
-	int32 sales_representative_id = 14;
-	int32 document_type_id = 15;
+	repeated int32 header_ids = 11;
 }
 message DocumentLine {
 	int32 id = 1;
 	string uuid = 2;
 	string document_no = 3;
-	string warehouse = 4;
-	string product_id = 6;
+	int32 warehouse_id = 4;
+	string warehouse = 5;
+	int32 product_id = 6;
 	string product = 7;
-	string uom = 8;
-	string on_hand_quantity = 9;
-	string quantity = 10;
-	string weight = 11;
-	string volume = 12;
-	string ordered_cuantity = 13;
-	string reserved_cuantity = 14;
-	string quantity_invoiced = 15;
-	string delivered_quantity = 16;
-	string quantity_in_transit = 17;
-	string delivery_rule = 18;
+	int32 uom_id = 8;
+	string uom = 9;
+	int32 order_uom_id = 10;
+	string order_uom = 11;
+	string on_hand_quantity = 12;
+	string quantity = 13;
+	string weight = 14;
+	string volume = 15;
+	string ordered_quantity = 16;
+	string reserved_quantity = 17;
+	string quantity_invoiced = 18;
+	string delivered_quantity = 19;
+	string quantity_in_transit = 20;
+	string delivery_rule_value = 21;
+	string delivery_rule = 22;
+	bool is_stocked = 23;
 }
 message ListDocumentLinesResponse {
 	int64 record_count = 1;
