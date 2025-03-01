@@ -102,6 +102,12 @@ service OutBoundOrderService {
 			get: "/forms/out-bound-orders/warehouses/{warehouse_id}/locators"
 		};
 	}
+	rpc GenerateLoadOrder(GenerateLoadOrderRequest) returns (GenerateLoadOrderResponse) {
+		option (google.api.http) = {
+			post: "/forms/out-bound-orders/load-order",
+			body: "*"
+		};
+	}
 }
 
 
@@ -148,21 +154,6 @@ message ListDocumentTypesRequest {
 	string movement_type = 10;
 }
 
-// Target Document Type
-message ListTargetDocumentTypesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-	bool is_only_active_records = 9;
-	// custom filters
-	string movement_type = 10;
-}
-
 // Sales Region
 message ListSalesRegionsRequest {
 	string filters = 1;
@@ -178,45 +169,6 @@ message ListSalesRegionsRequest {
 
 // Sales Representative
 message ListSalesRepresentativesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-	bool is_only_active_records = 9;
-}
-
-// Delivery Rule
-message ListDeliveryRulesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-	bool is_only_active_records = 9;
-}
-
-// Delivery Via
-message ListDeliveryViasRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-	bool is_only_active_records = 9;
-}
-
-// Shipper
-message ListShippersRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -317,6 +269,7 @@ message DocumentLine {
 	string delivery_rule_value = 21;
 	string delivery_rule = 22;
 	bool is_stocked = 23;
+	int32 header_id = 24;
 }
 message ListDocumentLinesResponse {
 	int64 record_count = 1;
@@ -325,6 +278,60 @@ message ListDocumentLinesResponse {
 }
 
 
+
+// Target Document Type
+message ListTargetDocumentTypesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	string movement_type = 10;
+}
+
+// Delivery Rule
+message ListDeliveryRulesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Delivery Via
+message ListDeliveryViasRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
+
+// Shipper
+message ListShippersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+}
 
 // Document Action
 message ListDocumentActionsRequest {
@@ -352,4 +359,37 @@ message ListLocatorsRequest {
 	bool is_only_active_records = 9;
 	// custom filters
 	int32 warehouse_id = 10;
+}
+
+message OrderLineRequest {
+	int32 id = 1;
+	int32 header_id = 2;
+	int32 product_id = 3;
+	string quantity = 4;
+	// string quantity_ordered = 5;
+	// string quantity_in_transit = 6;
+	// string quantity_delivered = 7;
+	// int32 uom_id = 8;
+	string weight = 9;
+	string volume = 10;
+	string delivery_rule = 11;
+}
+message GenerateLoadOrderRequest {
+	string movement_type = 1;
+	int32 organization_id = 2;
+	int32 warehouse_id = 3;
+	int32 locator_id = 4;
+	int32 target_document_type_id = 5;
+	google.protobuf.Timestamp document_date = 6;
+	google.protobuf.Timestamp shipment_date = 7;
+	string delivery_rule = 8;
+	string delivery_via = 9;
+	int32 shipper_id = 10;
+	repeated OrderLineRequest lines = 11;
+	string document_action = 12;
+}
+message GenerateLoadOrderResponse {
+	int32 record_count = 1;
+	string message = 2;
+	string document_no = 3;
 }

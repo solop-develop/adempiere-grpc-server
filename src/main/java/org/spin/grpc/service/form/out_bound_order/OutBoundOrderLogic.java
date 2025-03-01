@@ -14,9 +14,14 @@
  ************************************************************************************/
 package org.spin.grpc.service.form.out_bound_order;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Org;
@@ -25,16 +30,30 @@ import org.adempiere.core.domains.models.I_DD_Order;
 import org.adempiere.core.domains.models.I_M_Locator;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.exceptions.DocTypeNotFoundException;
+import org.compiere.model.MDocType;
+import org.compiere.model.MLocator;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MOrderLine;
 import org.compiere.model.MOrg;
+import org.compiere.model.MProduct;
+import org.compiere.model.MStorage;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
+import org.compiere.util.Trx;
+import org.compiere.util.Util;
+import org.eevolution.distribution.model.MDDOrderLine;
+import org.eevolution.wms.model.MWMInOutBound;
+import org.eevolution.wms.model.MWMInOutBoundLine;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.out_bound_order.DocumentHeader;
 import org.spin.backend.grpc.form.out_bound_order.DocumentLine;
+import org.spin.backend.grpc.form.out_bound_order.GenerateLoadOrderRequest;
+import org.spin.backend.grpc.form.out_bound_order.GenerateLoadOrderResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryRulesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryViasRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentActionsRequest;
@@ -52,6 +71,9 @@ import org.spin.backend.grpc.form.out_bound_order.ListTargetDocumentTypesRequest
 import org.spin.backend.grpc.form.out_bound_order.ListWarehousesRequest;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 public class OutBoundOrderLogic {
 	/**	Logger			*/
@@ -665,7 +687,7 @@ public class OutBoundOrderLogic {
 
 
 	public static ListLookupItemsResponse.Builder listDeliveryVias(ListDeliveryViasRequest request) {
-		final int columnId = 2186; // WM_InOutBound.DeliveryViaRule
+		final int columnId = 58206; // WM_InOutBound.DeliveryViaRule
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,
@@ -784,6 +806,247 @@ public class OutBoundOrderLogic {
 		);
 
 		return builderList;
+	}
+
+	/**
+	 * Get Default locator based on stock, else default
+	 * @param warehouseId
+	 * @param productId
+	 * @param attributeSetInstanceId
+	 * @param quantity
+	 * @param transactionName
+	 * @return
+	 * @return int
+	 */
+	private static int getDefaultLocator(int warehouseId, int productId, int attributeSetInstanceId, BigDecimal quantity, String transactionName) {
+		int locatorId = MStorage.getM_Locator_ID(warehouseId, 
+				productId, 
+				attributeSetInstanceId, 
+				quantity,
+				transactionName);
+		if(locatorId > 0) {
+			return locatorId;
+		}
+		MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+		MLocator locator = MLocator.getDefault(warehouse);
+		if(locator == null) {
+			MProduct product = MProduct.get(Env.getCtx(), productId);
+			throw new AdempiereException("@M_Locator_ID@ @NotFound@ [@M_Product_ID@: " + product.getValue() + " - " + product.getName() + " @M_Warehouse_ID@: " + warehouse.getName() + "]");
+		}
+		return locator.getM_Locator_ID();
+	}
+	public static GenerateLoadOrderResponse.Builder generateLoadOrder(GenerateLoadOrderRequest request) {
+		MOrg organization = validateAndGetOrganization(
+			request.getOrganizationId()
+		);
+		MWarehouse warehouse = validateAndGetWarehouse(
+			request.getWarehouseId()
+		);
+
+		Timestamp documentDate = ValueManager.getDateFromTimestampDate(
+			request.getDocumentDate()
+		);
+		if (documentDate == null) {
+			throw new AdempiereException("@FillMandatory@ @DocumentDate@");
+		}
+
+		Timestamp shipmentDate = ValueManager.getDateFromTimestampDate(
+			request.getDocumentDate()
+		);
+		if (shipmentDate == null) {
+			throw new AdempiereException("@FillMandatory@ @ShipDate@");
+		}
+
+		if (request.getLinesList() == null || request.getLinesList().isEmpty()) {
+			throw new AdempiereException("@NoLines@");
+		}
+
+		GenerateLoadOrderResponse.Builder builder = GenerateLoadOrderResponse.newBuilder();
+		AtomicInteger linesQuantity = new AtomicInteger();
+		Trx.run(transactionName -> {
+			AtomicReference<BigDecimal> totalWeightReference = new AtomicReference<BigDecimal>(
+				Env.ZERO
+			);
+			AtomicReference<BigDecimal> totalVolumeReference = new AtomicReference<BigDecimal>(
+				Env.ZERO
+			);
+			// BigDecimal totalWeight = Env.ZERO;
+			// BigDecimal totalVolume = Env.ZERO;
+
+			MWMInOutBound outBoundOrder = new MWMInOutBound(Env.getCtx(), 0, transactionName);
+			outBoundOrder.setAD_Org_ID(
+				organization.getAD_Org_ID()
+			);
+			//	Set Warehouse
+			outBoundOrder.setM_Warehouse_ID(
+				warehouse.getM_Warehouse_ID()
+			);
+			outBoundOrder.setDateTrx(documentDate);
+			outBoundOrder.setPickDate(documentDate);
+			outBoundOrder.setShipDate(shipmentDate);
+
+			//	Set Document Type
+			int targetDocumentTypeId = request.getTargetDocumentTypeId();
+			if (targetDocumentTypeId > 0) {
+				outBoundOrder.setC_DocType_ID(targetDocumentTypeId);
+			} else {
+				Optional<MDocType> defaultDocumentType = Arrays.asList(
+						MDocType.getOfDocBaseType(
+							Env.getCtx(),
+							MDocType.DOCBASETYPE_WarehouseManagementOrder
+						)
+					)
+					.stream()
+					.filter(documentType -> documentType.isSOTrx())
+					.findFirst()
+				;
+
+				if (!defaultDocumentType.isPresent()) {
+					throw new DocTypeNotFoundException(MDocType.DOCBASETYPE_WarehouseManagementOrder, "");
+				}
+				outBoundOrder.setC_DocType_ID(defaultDocumentType.get().getC_DocType_ID());
+				targetDocumentTypeId = defaultDocumentType.get().getC_DocType_ID();
+			}
+
+			//	Delivery Rule
+			if (!Util.isEmpty(request.getDeliveryRule(), true)) {
+				outBoundOrder.setDeliveryRule(
+					request.getDeliveryRule()
+				);
+			}
+			//	Delivery Via Rule
+			if (!Util.isEmpty(request.getDeliveryVia())) {
+				outBoundOrder.setDeliveryViaRule(
+					request.getDeliveryVia()
+				);
+			}
+			//	Set Shipper
+			if (request.getShipperId() > 0) {
+				outBoundOrder.setM_Shipper_ID(
+					request.getShipperId()
+				);
+			}
+
+			//	Save Order
+			outBoundOrder.setDocStatus(MWMInOutBound.DOCSTATUS_Drafted);
+			outBoundOrder.setIsSOTrx(true);
+			outBoundOrder.saveEx();
+
+			request.getLinesList().forEach(requestLine -> {
+				int orderLineId = requestLine.getId();
+				int productId = requestLine.getProductId();
+				BigDecimal quantity = NumberManager.getBigDecimalFromString(
+					requestLine.getQuantity()
+				);
+				BigDecimal weight = NumberManager.getBigDecimalFromString(
+					requestLine.getWeight()
+				);
+				BigDecimal volume = NumberManager.getBigDecimalFromString(
+					requestLine.getVolume()
+				);
+
+				//	New Line
+				MWMInOutBoundLine outBoundOrderLine = new MWMInOutBoundLine(outBoundOrder);
+				outBoundOrderLine.setAD_Org_ID(
+					organization.getAD_Org_ID()
+				);
+				MProduct product = MProduct.get(Env.getCtx(), productId);
+				if (request.getMovementType().equals(I_DD_Order.Table_Name)) {
+					outBoundOrderLine.setDD_OrderLine_ID(orderLineId);
+					MDDOrderLine line = new MDDOrderLine(Env.getCtx(), orderLineId, transactionName);
+					outBoundOrderLine.setDD_Order_ID(line.getDD_Order_ID());
+					outBoundOrderLine.setDD_OrderLine_ID(line.getDD_OrderLine_ID());
+					outBoundOrderLine.setM_AttributeSetInstance_ID(line.getM_AttributeSetInstance_ID());
+					outBoundOrderLine.setC_UOM_ID(product.getC_UOM_ID());
+					outBoundOrderLine.setM_Locator_ID(line.getM_Locator_ID());
+					outBoundOrderLine.setM_LocatorTo_ID(line.getM_LocatorTo_ID());
+				} else {
+					outBoundOrderLine.setC_OrderLine_ID(orderLineId);
+					MOrderLine line = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
+					outBoundOrderLine.setC_Order_ID(line.getC_Order_ID());
+					outBoundOrderLine.setC_OrderLine_ID(line.getC_OrderLine_ID());
+					outBoundOrderLine.setM_AttributeSetInstance_ID(line.getM_AttributeSetInstance_ID());
+					outBoundOrderLine.setC_UOM_ID(product.getC_UOM_ID());
+
+					int locatorId = request.getLocatorId();
+					if (locatorId <= 0) {
+						locatorId = getDefaultLocator(
+							line.getM_Warehouse_ID(),
+							productId,
+							line.getM_AttributeSetInstance_ID(),
+							quantity,
+							transactionName
+						);
+					}
+
+					outBoundOrderLine.setM_LocatorTo_ID(locatorId);
+				}
+				outBoundOrderLine.setM_Product_ID(productId);
+				outBoundOrderLine.setMovementQty(quantity);
+				outBoundOrderLine.setPickedQty(quantity);
+				
+				//	Add Weight
+				BigDecimal totalWeight = totalWeightReference.get().add(weight);
+				totalWeightReference.set(totalWeight);
+				//	Add Volume
+				BigDecimal totalVolume = totalVolumeReference.get().add(volume);
+				totalVolumeReference.set(totalVolume);
+				//	Save Line
+				outBoundOrderLine.saveEx();
+				//	Add count
+				linesQuantity.incrementAndGet();
+			});
+
+			//	Set Header Weight
+			outBoundOrder.setWeight(
+				totalWeightReference.get()
+			);
+			//	Set Header Volume
+			outBoundOrder.setVolume(
+				totalVolumeReference.get()
+			);
+			//	Save Header
+			outBoundOrder.saveEx();
+
+			//	Validate Document Action
+			String documentAction = request.getDocumentAction();
+			if(Util.isEmpty(documentAction)) {
+				documentAction = MWMInOutBound.DOCACTION_Complete;
+			}
+			//	Complete Order
+			outBoundOrder.setDocAction(documentAction);
+			outBoundOrder.processIt(documentAction);
+			outBoundOrder.saveEx();
+
+			//	Valid Error
+			String errorMessage = outBoundOrder.getProcessMsg();
+			if (errorMessage != null && outBoundOrder.getDocStatus().equals(MWMInOutBound.DOCSTATUS_Invalid)) {
+				throw new AdempiereException(errorMessage);
+			}
+
+			String message = Msg.parseTranslation(
+				Env.getCtx(),
+				"@Created@ = [" + outBoundOrder.getDocumentNo()
+				+ "] || @LineNo@" + " = [" + linesQuantity.get() + "]"
+				+ (errorMessage != null ? "\n@Errors@:" + errorMessage: "")
+			);
+			builder.setRecordCount(
+					linesQuantity.get()
+				)
+				.setDocumentNo(
+					StringManager.getValidString(
+						outBoundOrder.getDocumentNo()
+					)
+				)
+				.setMessage(
+					StringManager.getValidString(
+						message
+					)
+				)
+			;
+		});
+
+		return builder;
 	}
 
 }
