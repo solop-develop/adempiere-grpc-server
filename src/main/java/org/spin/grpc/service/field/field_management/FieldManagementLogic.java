@@ -359,7 +359,7 @@ public class FieldManagementLogic {
 		);
 		if (DisplayType.Button == displayTypeId) {
 			if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
-				defaultValueAsObject = Integer.valueOf(defaultValueAsObject.toString());
+				defaultValueAsObject = NumberManager.getIntFromObject(defaultValueAsObject);
 				int tableId = Env.getContextAsInt(context, windowNo, I_AD_Table.COLUMNNAME_AD_Table_ID);
 				MTable table = MTable.get(context, tableId);
 				String tableKeyColumn = table.getTableName() + "_ID";
