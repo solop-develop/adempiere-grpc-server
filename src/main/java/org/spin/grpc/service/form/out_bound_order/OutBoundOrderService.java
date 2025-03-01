@@ -16,6 +16,8 @@ package org.spin.grpc.service.form.out_bound_order;
 
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.form.out_bound_order.GenerateLoadOrderRequest;
+import org.spin.backend.grpc.form.out_bound_order.GenerateLoadOrderResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryRulesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDeliveryViasRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentActionsRequest;
@@ -291,6 +293,26 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 	public void listLocators(ListLocatorsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listLocators(request);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void generateLoadOrder(GenerateLoadOrderRequest request, StreamObserver<GenerateLoadOrderResponse> responseObserver) {
+		try {
+			GenerateLoadOrderResponse.Builder buildersList = OutBoundOrderLogic.generateLoadOrder(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
