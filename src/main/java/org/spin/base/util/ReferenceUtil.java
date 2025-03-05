@@ -492,7 +492,7 @@ public class ReferenceUtil {
 			lookupInformation = getLookupInfoFromColumnName(columnName);
 		} else {
 			//	Get info
-			lookupInformation = getLookupInfoFromReference(referenceValueId);	
+			lookupInformation = getLookupInfoFromReference(referenceValueId);
 		}
 
 		// without lookup info
@@ -518,14 +518,14 @@ public class ReferenceUtil {
 			validationRule = MValRule.get(Env.getCtx(), validationRuleId);
 			if (validationRule != null) {
 				if (!Util.isEmpty(validationRule.getCode(), true)) {
-					String dynamicValidation =  validationRule.getCode();
+					String dynamicValidation = validationRule.getCode();
 					if (!validationRule.getCode().startsWith("(")) {
 						dynamicValidation = "(" + validationRule.getCode() + ")";
 					}
-					// table validation
-					if (!Util.isEmpty(lookupInformation.ValidationCode, true)) {
-						dynamicValidation += " AND (" + lookupInformation.ValidationCode + ")";
-					}
+					// // table validation
+					// if (!Util.isEmpty(lookupInformation.ValidationCode, true)) {
+					// 	dynamicValidation += " AND (" + lookupInformation.ValidationCode + ")";
+					// }
 					// overwrite ValidationCode with table validation on reference and dynamic validation
 					lookupInformation.ValidationCode = dynamicValidation;
 				}
