@@ -108,13 +108,13 @@ public class OutBoundOrderLogic {
 
 	public static ListLookupItemsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
 		// Organization filter selection
-		final int columnId = 58193; // WM_InOutBound.AD_Org_ID (needed to allow org 0)
+		// final int columnId = 58193; // WM_InOutBound.AD_Org_ID (needed to allow org 0)
 		final int validationRuleId = 130; // AD_Org Trx Security validation (Not Summary - Not 0)
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,
-			columnId,
-			null, null,
+			0, // columnId,
+			I_AD_Org.COLUMNNAME_AD_Org_ID, I_AD_Org.Table_Name,
 			validationRuleId, null, false
 		);
 
