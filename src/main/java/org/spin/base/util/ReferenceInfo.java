@@ -350,7 +350,7 @@ public class ReferenceInfo {
 			//	Display Type
 			displayTypeId = column.getAD_Reference_ID();
 			referenceValueId = column.getAD_Reference_Value_ID();
-			int fieldValidationRuleId = column.getAD_Val_Rule_ID();
+			validationRuleId = column.getAD_Val_Rule_ID();
 			columnName = column.getColumnName();
 			if(field.getAD_Reference_ID() > 0) {
 				displayTypeId = field.getAD_Reference_ID();
@@ -358,12 +358,12 @@ public class ReferenceInfo {
 			if(field.getAD_Reference_Value_ID() > 0) {
 				referenceValueId = field.getAD_Reference_Value_ID();
 			}
-			if(field.getAD_Val_Rule_ID() > 0) {
-				fieldValidationRuleId = field.getAD_Val_Rule_ID();
-			}
 			// not overwrite
 			if (validationRuleId <= 0) {
-				validationRuleId = fieldValidationRuleId;
+				validationRuleId = field.getAD_Val_Rule_ID();
+				if(validationRuleId <= 0) {
+					validationRuleId = column.getAD_Val_Rule_ID();
+				}
 			}
 		} else if(browseFieldId > 0) {
 			MBrowseField browseField = new MBrowseField(Env.getCtx(), browseFieldId, null);
@@ -478,9 +478,12 @@ public class ReferenceInfo {
 				referenceValueId = column.getAD_Reference_Value_ID();
 			}
 
-			validationRuleId = fieldDefinition.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Val_Rule_ID);
+			// not overwrite
 			if (validationRuleId <= 0) {
-				validationRuleId = column.getAD_Val_Rule_ID();
+				validationRuleId = fieldDefinition.get_ValueAsInt(I_AD_Column.COLUMNNAME_AD_Val_Rule_ID);
+				if (validationRuleId <= 0) {
+					validationRuleId = column.getAD_Val_Rule_ID();
+				}
 			}
 		}else if(displayTypeId > 0) {
 			X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), displayTypeId, null);
