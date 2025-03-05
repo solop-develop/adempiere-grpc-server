@@ -350,7 +350,7 @@ public class ReferenceInfo {
 			//	Display Type
 			displayTypeId = column.getAD_Reference_ID();
 			referenceValueId = column.getAD_Reference_Value_ID();
-			validationRuleId = column.getAD_Val_Rule_ID();
+			int fieldValidationRuleId = column.getAD_Val_Rule_ID();
 			columnName = column.getColumnName();
 			if(field.getAD_Reference_ID() > 0) {
 				displayTypeId = field.getAD_Reference_ID();
@@ -359,7 +359,11 @@ public class ReferenceInfo {
 				referenceValueId = field.getAD_Reference_Value_ID();
 			}
 			if(field.getAD_Val_Rule_ID() > 0) {
-				validationRuleId = field.getAD_Val_Rule_ID();
+				fieldValidationRuleId = field.getAD_Val_Rule_ID();
+			}
+			// not overwrite
+			if (validationRuleId <= 0) {
+				validationRuleId = fieldValidationRuleId;
 			}
 		} else if(browseFieldId > 0) {
 			MBrowseField browseField = new MBrowseField(Env.getCtx(), browseFieldId, null);
@@ -368,7 +372,10 @@ public class ReferenceInfo {
 			}
 			displayTypeId = browseField.getAD_Reference_ID();
 			referenceValueId = browseField.getAD_Reference_Value_ID();
-			validationRuleId = browseField.getAD_Val_Rule_ID();
+			// not overwrite
+			if (validationRuleId <= 0) {
+				validationRuleId = browseField.getAD_Val_Rule_ID();
+			}
 			MViewColumn viewColumn = browseField.getAD_View_Column();
 			if(viewColumn.getAD_Column_ID() > 0) {
 				columnName = MColumn.getColumnName(Env.getCtx(), viewColumn.getAD_Column_ID());
@@ -382,7 +389,10 @@ public class ReferenceInfo {
 			}
 			displayTypeId = processParameter.getAD_Reference_ID();
 			referenceValueId = processParameter.getAD_Reference_Value_ID();
-			validationRuleId = processParameter.getAD_Val_Rule_ID();
+			// not overwrite
+			if (validationRuleId <= 0) {
+				validationRuleId = processParameter.getAD_Val_Rule_ID();
+			}
 			columnName = processParameter.getColumnName();
 		} else if(columnId > 0) {
 			MColumn column = MColumn.get(Env.getCtx(), columnId);
@@ -391,7 +401,10 @@ public class ReferenceInfo {
 			}
 			displayTypeId = column.getAD_Reference_ID();
 			referenceValueId = column.getAD_Reference_Value_ID();
-			validationRuleId = column.getAD_Val_Rule_ID();
+			// not overwrite
+			if (validationRuleId <= 0) {
+				validationRuleId = column.getAD_Val_Rule_ID();
+			}
 			columnName = column.getColumnName();
 		} else if(!Util.isEmpty(tableName, true)) {
 			MTable table = RecordUtil.validateAndGetTable(tableName);
@@ -413,7 +426,10 @@ public class ReferenceInfo {
 						displayTypeId = DisplayType.TableDir;
 					}
 				}
-				validationRuleId = column.getAD_Val_Rule_ID();
+				// not overwrite
+				if (validationRuleId <= 0) {
+					validationRuleId = column.getAD_Val_Rule_ID();
+				}
 				columnName = column.getColumnName();
 			} else {
 				String[] keyColumns = table.getKeyColumns();
