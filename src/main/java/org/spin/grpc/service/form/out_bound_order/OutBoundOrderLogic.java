@@ -161,7 +161,7 @@ public class OutBoundOrderLogic {
 
 
 	public static ListLookupItemsResponse.Builder listDocumentTypes(ListDocumentTypesRequest request) {
-		final String docBaseType = request.getMovementType().equals(I_DD_Order.Table_Name) ? "DOO" : "SSO";
+		final String docBaseType = request.getMovementType().equals(I_DD_Order.Table_Name) ? "DOO" : "SOO";
 		final String whereClause = "C_DocType.DocBaseType = '" + docBaseType + "' "
 			+ "AND (C_DocType.DocSubTypeSO IS NULL OR C_DocType.DocSubTypeSO NOT IN('RM', 'OB')) "
 		;
