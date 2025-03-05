@@ -819,11 +819,13 @@ public class OutBoundOrderLogic {
 	 * @return int
 	 */
 	private static int getDefaultLocator(int warehouseId, int productId, int attributeSetInstanceId, BigDecimal quantity, String transactionName) {
-		int locatorId = MStorage.getM_Locator_ID(warehouseId, 
-				productId, 
-				attributeSetInstanceId, 
-				quantity,
-				transactionName);
+		int locatorId = MStorage.getM_Locator_ID(
+			warehouseId,
+			productId,
+			attributeSetInstanceId,
+			quantity,
+			transactionName
+		);
 		if(locatorId > 0) {
 			return locatorId;
 		}
