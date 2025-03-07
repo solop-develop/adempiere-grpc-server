@@ -104,7 +104,7 @@ service OutBoundOrderService {
 	}
 	rpc GenerateLoadOrder(GenerateLoadOrderRequest) returns (GenerateLoadOrderResponse) {
 		option (google.api.http) = {
-			post: "/forms/out-bound-orders/load-order",
+			post: "/forms/out-bound-orders/load-order/{movement_type}",
 			body: "*"
 		};
 	}
