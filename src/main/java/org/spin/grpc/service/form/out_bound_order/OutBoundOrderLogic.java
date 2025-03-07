@@ -263,10 +263,10 @@ public class OutBoundOrderLogic {
 			//Query for Material Movement
 			sql = new StringBuffer(
 				"SELECT " +
-				"wr.Name AS Warehouse, ord.DD_Order_ID AS ID, ord.UUID, ord.DocumentNo, " +	//	1..3
+				"wr.M_Warehouse_ID, wr.Name AS Warehouse, ord.DD_Order_ID AS ID, ord.UUID, ord.DocumentNo, " +	//	1..3
 				"ord.DateOrdered, ord.DatePromised, " +
-				"reg.Name AS Region, cit.Name AS City, sr.Name AS SalesRep, " +	//	4..8
-				"cp.Name Partner, bploc.Name AS Location, " +	//	9..10
+				"reg.Name AS Region, cit.Name AS City, ord.SalesRep_ID, sr.Name AS SalesRep, " +	//	4..8
+				"cp.C_BPartner_ID, COALESCE(cp.Value, '') AS PartnerValue, cp.Name Partner, bploc.Name AS Location, " +	//	9..10
 				"loc.Address1, loc.Address2, loc.Address3, loc.Address4, ord.C_BPartner_Location_ID, " +
 				"ord.Weight, ord.Volume " +	//	11..17
 				"FROM DD_Order ord " +
@@ -296,7 +296,7 @@ public class OutBoundOrderLogic {
 				"	GROUP BY lord.DD_Order_ID, lord.DD_OrderLine_ID, lord.QtyOrdered " +
 				"	ORDER BY lord.DD_OrderLine_ID ASC) qafl " +
 				"	ON(qafl.DD_OrderLine_ID = lord.DD_OrderLine_ID) " +
-				"WHERE  wr.IsActive = 'Y' " +
+				"WHERE wr.IsActive = 'Y' " +
 				"AND ord.DocStatus = 'CO' " +
 				"AND COALESCE(qafl.QtyAvailable, 0) > 0 " +
 				"AND ord.AD_Client_ID=? "
@@ -322,8 +322,8 @@ public class OutBoundOrderLogic {
 
 			//	Group By
 			sql.append(
-				"GROUP BY wr.Name, ord.DD_Order_ID, ord.DocumentNo, ord.DateOrdered, " +
-				"ord.DatePromised, ord.Weight, ord.Volume, sr.Name, cp.Name, bploc.Name, " +
+				"GROUP BY wr.M_Warehouse_ID, wr.Name, ord.DD_Order_ID, ord.DocumentNo, ord.DateOrdered, " +
+				"ord.DatePromised, ord.Weight, ord.Volume, sr.Name, cp.C_BPartner_ID, cp.Value, cp.Name, bploc.Name, " +
 				"reg.Name, cit.Name, loc.Address1, loc.Address2, loc.Address3, loc.Address4, ord.C_BPartner_Location_ID "
 			);
 
@@ -337,10 +337,10 @@ public class OutBoundOrderLogic {
 		} else {//Query for Sales Order
 			sql = new StringBuffer(
 				"SELECT " +
-				"wr.Name AS Warehouse, ord.C_Order_ID AS ID, ord.UUID, ord.DocumentNo, " +	//	1..3
+				"wr.M_Warehouse_ID, wr.Name AS Warehouse, ord.C_Order_ID AS ID, ord.UUID, ord.DocumentNo, " +	//	1..3
 				"ord.DateOrdered, ord.DatePromised, " +
-				"reg.Name AS Region, cit.Name AS City, sr.Name SalesRep, " +	//	4..8
-				"cp.Name Partner, bploc.Name AS Location, " +	//	9..10
+				"reg.Name AS Region, cit.Name AS City, ord.SalesRep_ID, sr.Name AS SalesRep, " +	//	4..8
+				"cp.C_BPartner_ID, COALESCE(cp.Value, '') AS PartnerValue, cp.Name Partner, bploc.Name AS Location, " +	//	9..10
 				"loc.Address1, loc.Address2, loc.Address3, loc.Address4, ord.C_BPartner_Location_ID, " +
 				"ord.Weight, ord.Volume " +	//	11..17
 				"FROM C_Order ord " +
@@ -396,8 +396,8 @@ public class OutBoundOrderLogic {
 
 			//	Group By
 			sql.append(
-				"GROUP BY wr.Name, ord.C_Order_ID, ord.DocumentNo, ord.DateOrdered, " +
-				"ord.DatePromised, ord.Weight, ord.Volume, sr.Name, cp.Name, bploc.Name, " +
+				"GROUP BY wr.M_Warehouse_ID, wr.Name, ord.C_Order_ID, ord.DocumentNo, ord.DateOrdered, " +
+				"ord.DatePromised, ord.Weight, ord.Volume, sr.Name, cp.C_BPartner_ID, cp.Value, cp.Name, bploc.Name, " +
 				"reg.Name, cit.Name, loc.Address1, loc.Address2, loc.Address3, loc.Address4, ord.C_BPartner_Location_ID "
 			);
 
@@ -440,20 +440,24 @@ public class OutBoundOrderLogic {
 			.stream()
 			// .map(String::valueOf)
 			.map(String::valueOf)
-			.collect(Collectors.joining(","))
+			.collect(Collectors.joining(", "))
 		;
+		if (Util.isEmpty(headerIdentifers, true)) {
+			headerIdentifers = "0";
+		}
 
 		StringBuffer sql = null;
 		if (movementType.equals(I_DD_Order.Table_Name)) {
-			StringBuffer sqlWhere = new StringBuffer("ord.DD_Order_ID IN(0")
+			StringBuffer sqlWhere = new StringBuffer("ord.DD_Order_ID IN(")
 				.append(headerIdentifers)
 				.append(")")
 			;
 
 			sql = new StringBuffer(
 				"SELECT alm.M_Warehouse_ID, alm.Name Warehouse, " +
-					"lord.DD_OrderLine_ID AS ID, lord.UUID, ord.DocumentNo, " +
-					"lord.M_Product_ID, (pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
+					"lord.DD_OrderLine_ID AS ID, lord.UUID, lord.DD_Order_ID AS Parent_ID, ord.DocumentNo, " +
+					"lord.M_Product_ID, COALESCE(pro.Value, '') AS ProductValue, " +
+					"(pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, s.QtyOnHand, " +
 					"lord.QtyOrdered, lord.C_UOM_ID Order_UOM_ID, uom.UOMSymbol Order_UOMSymbol, lord.QtyReserved, 0 QtyInvoiced, lord.QtyDelivered, " +
 					"SUM(" +
@@ -499,7 +503,7 @@ public class OutBoundOrderLogic {
 			//	Group By
 			sql.append("GROUP BY alm.M_Warehouse_ID, lord.DD_Order_ID, lord.DD_OrderLine_ID, " +
 					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, " + 
-					"pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
+					"pro.Value, pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, lord.QtyOrdered, lord.QtyReserved, " +
 					"lord.QtyDelivered, pro.Weight, pro.Volume, ord.DeliveryRule, s.QtyOnHand,pro.IsStocked"
 				)
@@ -522,15 +526,16 @@ public class OutBoundOrderLogic {
 			sql.append("ORDER BY lord.DD_Order_ID ASC");
 			
 		} else {
-			StringBuffer sqlWhere = new StringBuffer("ord.C_Order_ID IN(0")
+			StringBuffer sqlWhere = new StringBuffer("ord.C_Order_ID IN(")
 				.append(headerIdentifers)
 				.append(")")
 			;
 
 			sql = new StringBuffer(
 					"SELECT lord.M_Warehouse_ID, alm.Name Warehouse, " +
-					"lord.C_OrderLine_ID AS ID, lord.UUID, ord.DocumentNo, " +
-					"lord.M_Product_ID, (pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
+					"lord.C_OrderLine_ID AS ID, lord.UUID, lord.C_Order_ID AS Parent_ID, ord.DocumentNo, " +
+					"lord.M_Product_ID, COALESCE(pro.Value, '') AS ProductValue, " +
+					"(pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, s.QtyOnHand, " +
 					"lord.QtyOrdered, lord.C_UOM_ID Order_UOM_ID, uom.UOMSymbol Order_UOMSymbol, lord.QtyReserved, lord.QtyInvoiced, lord.QtyDelivered, " +
 					"SUM(" +
@@ -583,7 +588,7 @@ public class OutBoundOrderLogic {
 			sql.append(
 					"GROUP BY lord.M_Warehouse_ID, lord.C_Order_ID, lord.C_OrderLine_ID, " +
 					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, " + 
-					"pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
+					"pro.Value, pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, lord.QtyOrdered, lord.QtyReserved, " + 
 					"lord.QtyDelivered, lord.QtyInvoiced, pro.Weight, pro.Volume, ord.DeliveryRule, s.QtyOnHand, pro.IsStocked"
 				)
@@ -616,7 +621,7 @@ public class OutBoundOrderLogic {
 				DocumentLine.Builder builder = OutBoundOrderConvertUtil.convertDocumentLine(resultSet);
 				if (builder.getId() <= 0) {
 					// delivery rule no is manual or force and quantity is zero
-					return;
+					continue;
 				}
 
 				count.incrementAndGet();

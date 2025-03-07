@@ -74,19 +74,14 @@ public class OutBoundOrderConvertUtil {
 					)
 				)
 			)
-			// .setWarehouseId(
-			// 	resultSet.getInt(
-			// 		I_C_Order.COLUMNNAME_M_Warehouse_ID
-			// 	)
-			// )
+			.setWarehouseId(
+				resultSet.getInt(
+					I_C_Order.COLUMNNAME_M_Warehouse_ID
+				)
+			)
 			.setWarehouse(
 				StringManager.getValidString(
 					resultSet.getString("Warehouse")
-				)
-			)
-			.setSalesRepresentative(
-				StringManager.getValidString(
-					resultSet.getString("SalesRep")
 				)
 			)
 			.setRegion(
@@ -99,17 +94,37 @@ public class OutBoundOrderConvertUtil {
 					resultSet.getString("City")
 				)
 			)
+			.setSalesRepresentativeId(
+				resultSet.getInt(
+					I_C_Order.COLUMNNAME_SalesRep_ID
+				)
+			)
+			.setSalesRepresentative(
+				StringManager.getValidString(
+					resultSet.getString("SalesRep")
+				)
+			)
+			.setBusinessPartnerId(
+				resultSet.getInt(
+					I_C_Order.COLUMNNAME_C_BPartner_ID
+				)
+			)
+			.setBusinessPartnerValue(
+				StringManager.getValidString(
+					resultSet.getString("PartnerValue")
+				)
+			)
+			.setBusinessPartner(
+				StringManager.getValidString(
+					resultSet.getString("Partner")
+				)
+			)
 			.setLocationId(
 				resultSet.getInt("C_BPartner_Location_ID")
 			)
 			.setLocation(
 				StringManager.getValidString(
 					resultSet.getString("Location")
-				)
-			)
-			.setBusinessPartner(
-				StringManager.getValidString(
-					resultSet.getString("Partner")
 				)
 			)
 			.setAddress1(
@@ -219,6 +234,9 @@ public class OutBoundOrderConvertUtil {
 					)
 				)
 			)
+			.setHeaderId(
+				resultSet.getInt("Parent_ID")
+			)
 			.setDocumentNo(
 				StringManager.getValidString(
 					resultSet.getString(
@@ -239,6 +257,11 @@ public class OutBoundOrderConvertUtil {
 			.setProductId(
 				resultSet.getInt(
 					I_C_OrderLine.COLUMNNAME_M_Product_ID
+				)
+			)
+			.setProductValue(
+				StringManager.getStringFromObject(
+					resultSet.getString("ProductValue")
 				)
 			)
 			.setProduct(
