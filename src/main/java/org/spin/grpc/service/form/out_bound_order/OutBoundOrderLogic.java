@@ -138,7 +138,9 @@ public class OutBoundOrderLogic {
 		);
 
 		// Warehouse filter selection
-		final String whereClause = " M_Warehouse.AD_Org_ID = " + organization.getAD_Org_ID();
+		final String whereClause = " M_Warehouse.IsActive = 'Y' "
+			+ "AND M_Warehouse.AD_Org_ID = " + organization.getAD_Org_ID()
+		;
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0, 0,
@@ -457,7 +459,11 @@ public class OutBoundOrderLogic {
 				"SELECT alm.M_Warehouse_ID, alm.Name Warehouse, " +
 					"lord.DD_OrderLine_ID AS ID, lord.UUID, lord.DD_Order_ID AS Parent_ID, ord.DocumentNo, " +
 					"lord.M_Product_ID, COALESCE(pro.Value, '') AS ProductValue, " +
-					"(pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
+					"(pro.Name || (CASE " + //
+					"        WHEN attr.ProductAttribute IS NOT NULL AND attr.ProductAttribute <> '' " +
+					"        THEN ' - ' || attr.ProductAttribute " +
+					"        ELSE '' " +
+					"    END)) AS Product, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, s.QtyOnHand, " +
 					"lord.QtyOrdered, lord.C_UOM_ID Order_UOM_ID, uom.UOMSymbol Order_UOMSymbol, lord.QtyReserved, 0 QtyInvoiced, lord.QtyDelivered, " +
 					"SUM(" +
@@ -479,6 +485,10 @@ public class OutBoundOrderLogic {
 					"pro.Weight, pro.Volume, ord.DeliveryRule, pro.IsStocked " +
 					"FROM DD_Order ord " +
 					"INNER JOIN DD_OrderLine lord ON(lord.DD_Order_ID = ord.DD_Order_ID) " +
+					"LEFT JOIN " +
+					"    (SELECT lord.M_AttributeSetInstance_ID, productattribute(lord.M_AttributeSetInstance_ID) AS ProductAttribute " +
+					"    FROM DD_OrderLine lord) AS attr " +
+					"    ON lord.M_AttributeSetInstance_ID = attr.M_AttributeSetInstance_ID " +
 					"INNER JOIN M_Locator l ON(l.M_Locator_ID = lord.M_Locator_ID) " + 
 					"INNER JOIN M_Warehouse alm ON(alm.M_Warehouse_ID = l.M_Warehouse_ID) " +
 					"INNER JOIN M_Product pro ON(pro.M_Product_ID = lord.M_Product_ID) " +
@@ -502,7 +512,7 @@ public class OutBoundOrderLogic {
 			;
 			//	Group By
 			sql.append("GROUP BY alm.M_Warehouse_ID, lord.DD_Order_ID, lord.DD_OrderLine_ID, " +
-					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, " + 
+					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, attr.ProductAttribute, " + 
 					"pro.Value, pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, lord.QtyOrdered, lord.QtyReserved, " +
 					"lord.QtyDelivered, pro.Weight, pro.Volume, ord.DeliveryRule, s.QtyOnHand,pro.IsStocked"
@@ -535,7 +545,11 @@ public class OutBoundOrderLogic {
 					"SELECT lord.M_Warehouse_ID, alm.Name Warehouse, " +
 					"lord.C_OrderLine_ID AS ID, lord.UUID, lord.C_Order_ID AS Parent_ID, ord.DocumentNo, " +
 					"lord.M_Product_ID, COALESCE(pro.Value, '') AS ProductValue, " +
-					"(pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
+					"(pro.Name || (CASE " + //
+					"        WHEN attr.ProductAttribute IS NOT NULL AND attr.ProductAttribute <> '' " +
+					"        THEN ' - ' || attr.ProductAttribute " +
+					"        ELSE '' " +
+					"    END)) AS Product, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, s.QtyOnHand, " +
 					"lord.QtyOrdered, lord.C_UOM_ID Order_UOM_ID, uom.UOMSymbol Order_UOMSymbol, lord.QtyReserved, lord.QtyInvoiced, lord.QtyDelivered, " +
 					"SUM(" +
@@ -557,6 +571,10 @@ public class OutBoundOrderLogic {
 					"pro.Weight, pro.Volume, ord.DeliveryRule, pro.IsStocked " +
 					"FROM C_Order ord " +
 					"INNER JOIN C_OrderLine lord ON(lord.C_Order_ID = ord.C_Order_ID) " +
+					"LEFT JOIN " +
+					"    (SELECT lord.M_AttributeSetInstance_ID, productattribute(lord.M_AttributeSetInstance_ID) AS ProductAttribute " +
+					"    FROM C_OrderLine lord) AS attr " +
+					"    ON lord.M_AttributeSetInstance_ID = attr.M_AttributeSetInstance_ID " +
 					"INNER JOIN M_Warehouse alm ON(alm.M_Warehouse_ID = lord.M_Warehouse_ID) " +
 					"INNER JOIN M_Product pro ON(pro.M_Product_ID = lord.M_Product_ID) " +
 					"INNER JOIN C_UOM uom ON(uom.C_UOM_ID = lord.C_UOM_ID) " +
@@ -587,7 +605,7 @@ public class OutBoundOrderLogic {
 			//	Group By
 			sql.append(
 					"GROUP BY lord.M_Warehouse_ID, lord.C_Order_ID, lord.C_OrderLine_ID, " +
-					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, " + 
+					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, attr.ProductAttribute, " + 
 					"pro.Value, pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, lord.QtyOrdered, lord.QtyReserved, " + 
 					"lord.QtyDelivered, lord.QtyInvoiced, pro.Weight, pro.Volume, ord.DeliveryRule, s.QtyOnHand, pro.IsStocked"
@@ -629,6 +647,7 @@ public class OutBoundOrderLogic {
 			}
 		})
 		.onFailure(throwable -> {
+			throwable.printStackTrace();
 			log.severe(throwable.getMessage());
 		});
 
