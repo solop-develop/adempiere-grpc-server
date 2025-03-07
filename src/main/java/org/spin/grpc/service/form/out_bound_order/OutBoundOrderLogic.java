@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_C_DocType;
+import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_DD_Order;
 import org.adempiere.core.domains.models.I_M_Locator;
 import org.adempiere.core.domains.models.I_M_Warehouse;
@@ -238,8 +239,12 @@ public class OutBoundOrderLogic {
 
 
 	public static ListDocumentHeadersResponse.Builder listDocumentHeaders(ListDocumentHeadersRequest request) {
-		final int clientId = Env.getAD_Client_ID(Env.getCtx());
 		final String movementType = request.getMovementType();
+		if (Util.isEmpty(movementType, true) ||
+			!(movementType.equals(I_DD_Order.Table_Name) || movementType.equals(I_C_Order.Table_Name))
+		 ) {
+			throw new AdempiereException("@FillMandatory@ @MovementType@");
+		}
 		MOrg organization = validateAndGetOrganization(
 			request.getOrganizationId()
 		);
@@ -252,6 +257,7 @@ public class OutBoundOrderLogic {
 
 		// filters
 		List<Object> parametersList = new ArrayList<Object>();
+		final int clientId = Env.getAD_Client_ID(Env.getCtx());
 		parametersList.add(clientId);
 		parametersList.add(
 			organization.getAD_Org_ID()
@@ -434,6 +440,11 @@ public class OutBoundOrderLogic {
 
 	public static ListDocumentLinesResponse.Builder listDocumentLines(ListDocumentLinesRequest request) {
 		final String movementType = request.getMovementType();
+		if (Util.isEmpty(movementType, true) ||
+			!(movementType.equals(I_DD_Order.Table_Name) || movementType.equals(I_C_Order.Table_Name))
+		 ) {
+			throw new AdempiereException("@FillMandatory@ @MovementType@");
+		}
 
 		if (request.getHeaderIdsList() == null || request.getHeaderIdsList().isEmpty()) {
 			throw new AdempiereException("@FillMandatory@ @Record_ID@");
@@ -862,6 +873,13 @@ public class OutBoundOrderLogic {
 		return locator.getM_Locator_ID();
 	}
 	public static GenerateLoadOrderResponse.Builder generateLoadOrder(GenerateLoadOrderRequest request) {
+		final String movementType = request.getMovementType();
+		if (Util.isEmpty(movementType, true) ||
+			!(movementType.equals(I_DD_Order.Table_Name) || movementType.equals(I_C_Order.Table_Name))
+		 ) {
+			throw new AdempiereException("@FillMandatory@ @MovementType@");
+		}
+
 		MOrg organization = validateAndGetOrganization(
 			request.getOrganizationId()
 		);
@@ -977,7 +995,7 @@ public class OutBoundOrderLogic {
 					organization.getAD_Org_ID()
 				);
 				MProduct product = MProduct.get(Env.getCtx(), productId);
-				if (request.getMovementType().equals(I_DD_Order.Table_Name)) {
+				if (movementType.equals(I_DD_Order.Table_Name)) {
 					outBoundOrderLine.setDD_OrderLine_ID(orderLineId);
 					MDDOrderLine line = new MDDOrderLine(Env.getCtx(), orderLineId, transactionName);
 					outBoundOrderLine.setDD_Order_ID(line.getDD_Order_ID());
