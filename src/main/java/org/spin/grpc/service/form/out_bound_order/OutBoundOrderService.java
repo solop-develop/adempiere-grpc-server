@@ -26,12 +26,15 @@ import org.spin.backend.grpc.form.out_bound_order.ListDocumentHeadersResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentLinesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentLinesResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentTypesRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListDriversRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListFreightDocumentTypesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListLocatorsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListOrganizationsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListSalesRegionsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListSalesRepresentativesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListShippersRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListTargetDocumentTypesRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListVehiclesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListWarehousesRequest;
 import org.spin.backend.grpc.form.out_bound_order.OutBoundOrderServiceGrpc.OutBoundOrderServiceImplBase;
 
@@ -190,9 +193,49 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 
 
 	@Override
+	public void listLocators(ListLocatorsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listLocators(request);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
 	public void listTargetDocumentTypes(ListTargetDocumentTypesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
 			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listTargetDocumentTypes(request);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void listDocumentActions(ListDocumentActionsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listDocumentActions(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
@@ -270,9 +313,9 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 	}
 
 	@Override
-	public void listDocumentActions(ListDocumentActionsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	public void listFreightDocumentTypes(ListFreightDocumentTypesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listDocumentActions(request);
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listFreightDocumentTypes(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);
@@ -290,9 +333,29 @@ public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 	}
 
 	@Override
-	public void listLocators(ListLocatorsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	public void listVehicles(ListVehiclesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listLocators(request);
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listVehicles(request);
+			responseObserver.onNext(
+				buildersList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void listDrivers(ListDriversRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			ListLookupItemsResponse.Builder buildersList = OutBoundOrderLogic.listDrivers(request);
 			responseObserver.onNext(
 				buildersList.build()
 			);

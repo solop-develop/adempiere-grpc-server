@@ -32,6 +32,7 @@ import org.adempiere.core.domains.models.I_M_Locator;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DocTypeNotFoundException;
+import org.compiere.model.MClientInfo;
 import org.compiere.model.MDocType;
 import org.compiere.model.MLocator;
 import org.compiere.model.MLookupInfo;
@@ -47,6 +48,8 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.eevolution.distribution.model.MDDFreight;
+import org.eevolution.distribution.model.MDDFreightLine;
 import org.eevolution.distribution.model.MDDOrderLine;
 import org.eevolution.wms.model.MWMInOutBound;
 import org.eevolution.wms.model.MWMInOutBoundLine;
@@ -63,12 +66,15 @@ import org.spin.backend.grpc.form.out_bound_order.ListDocumentHeadersResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentLinesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentLinesResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentTypesRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListDriversRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListFreightDocumentTypesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListLocatorsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListOrganizationsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListSalesRegionsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListSalesRepresentativesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListShippersRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListTargetDocumentTypesRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListVehiclesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListWarehousesRequest;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
@@ -670,6 +676,35 @@ public class OutBoundOrderLogic {
 	}
 
 
+
+	public static ListLookupItemsResponse.Builder listLocators(ListLocatorsRequest request) {
+		MWarehouse warehouse = validateAndGetWarehouse(
+			request.getWarehouseId()
+		);
+		final String whereClause = "M_Locator.M_Warehouse_ID = " + warehouse.getM_Warehouse_ID();
+		// int columnId = 64658; // WM_InOutBound.M_Locator_ID
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			0, 0, 0,
+			0,
+			I_M_Locator.COLUMNNAME_M_Locator_ID, I_M_Locator.Table_Name,
+			0, whereClause, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
 	public static ListLookupItemsResponse.Builder listTargetDocumentTypes(ListTargetDocumentTypesRequest request) {
 		final String whereClause = "C_DocType.DocBaseType IN ('WMO') AND C_DocType.IsSOTrx = 'Y' ";
 		// C_DocType.DocBaseType IN ('WMO') AND C_DocType.IsSOTrx='@IsSOTrx@' // always Y
@@ -680,6 +715,31 @@ public class OutBoundOrderLogic {
 			0, 0, 0,
 			0,
 			I_C_DocType.COLUMNNAME_C_DocType_ID, I_C_DocType.Table_Name,
+			0, whereClause, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listDocumentActions(ListDocumentActionsRequest request) {
+		final int columnId = 58208; // WM_InOutBound.DocAction
+		final String whereClause = " AD_Ref_List.Value IN ('CO','PR')";
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			0, 0, 0,
+			columnId,
+			null, null,
 			0, whereClause, false
 		);
 
@@ -769,15 +829,84 @@ public class OutBoundOrderLogic {
 
 
 
-	public static ListLookupItemsResponse.Builder listDocumentActions(ListDocumentActionsRequest request) {
-		final int columnId = 58208; // WM_InOutBound.DocAction
-		final String whereClause = " AD_Ref_List.Value IN ('CO','PR')";
+	public static ListLookupItemsResponse.Builder listFreightDocumentTypes(ListFreightDocumentTypesRequest request) {
+		final int columnId = 83735; // DD_Freight.C_DocType_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,
 			columnId,
 			null, null,
+			0, null, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listVehicles(ListVehiclesRequest request) {
+		final int shipperId = request.getShipperId();
+		if (shipperId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
+		}
+		final String whereClause = " EXISTS(" +
+			"SELECT 1 FROM DD_VehicleAssignment AS a" +
+			"WHERE " +
+			"a.M_Shipper_ID = " + shipperId + " " +
+			"AND a.DD_Vehicle_ID = DD_Vehicle.DD_Vehicle_ID" +
+			")"
+		;
+		final int fieldId = 81789; // DD_Freight.DD_Vehicle_ID
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			fieldId, 0, 0,
+			0,
+			null, null,
 			0, whereClause, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listDrivers(ListDriversRequest request) {
+		// final int vehicleId = request.getVehicleId();
+		// if (vehicleId <= 0) {
+		// 	throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
+		// }
+		// final String whereClause = " EXISTS(" +
+		// 	"SELECT 1 FROM DD_DriverAssignment AS a" +
+		// 	"WHERE " +
+		// 	"a.DD_Vehicle_ID = " + vehicleId + " " +
+		// 	"AND a.DD_Driver_ID = DD_Driver.DD_Driver_ID" +
+		// 	")"
+		// ;
+		final int fieldId = 81790; // DD_Freight.DD_Driver_ID
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			fieldId, 0, 0,
+			0,
+			null, null,
+			0, null, false
 		);
 
 		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
@@ -815,32 +944,6 @@ public class OutBoundOrderLogic {
 			throw new AdempiereException("@M_Warehouse_ID@ @NotActive@");
 		}
 		return warehouse;
-	}
-
-	public static ListLookupItemsResponse.Builder listLocators(ListLocatorsRequest request) {
-		MWarehouse warehouse = validateAndGetWarehouse(
-			request.getWarehouseId()
-		);
-		final String whereClause = "M_Locator.M_Warehouse_ID = " + warehouse.getM_Warehouse_ID();
-		// int columnId = 64658; // WM_InOutBound.M_Locator_ID
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			0,
-			0, 0, 0,
-			0,
-			I_M_Locator.COLUMNNAME_M_Locator_ID, I_M_Locator.Table_Name,
-			0, whereClause, false
-		);
-
-		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
-			reference,
-			request.getContextAttributes(),
-			request.getPageSize(),
-			request.getPageToken(),
-			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
-		);
-
-		return builderList;
 	}
 
 	/**
@@ -903,6 +1006,42 @@ public class OutBoundOrderLogic {
 
 		if (request.getLinesList() == null || request.getLinesList().isEmpty()) {
 			throw new AdempiereException("@NoLines@");
+		}
+
+		//	Validate Document Action
+		String documentAction = request.getDocumentAction();
+		if (Util.isEmpty(documentAction, true)) {
+			documentAction = MWMInOutBound.DOCACTION_Complete;
+		}
+		AtomicReference<String> documentActionReference = new AtomicReference<String>(
+			documentAction
+		);
+
+		// if is Prepare not create Freight Order
+		final boolean isCreateFreight = request.getIsGenerateFreightOrder()
+			&& documentAction.equals(MWMInOutBound.DOCACTION_Complete)
+		;
+		if (isCreateFreight) {
+			if (request.getShipperId() <= 0) {
+				throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
+			}
+			if (request.getVehicleId() <= 0) {
+				throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
+			}
+			if (request.getDriverId() <= 0) {
+				throw new AdempiereException("@FillMandatory@ @DD_Driver_ID@");
+			}
+			if (request.getDriverId() <= 0) {
+				throw new AdempiereException("@FillMandatory@ @C_DocType_ID@");
+			}
+			// Set from client
+			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+			if (clientInfo.getC_UOM_Weight_ID() <= 0) {
+				throw new AdempiereException("@C_UOM_Weight_ID@ @NotFound@ @SeeClientInfoConfig@");
+			}
+			if (clientInfo.getC_UOM_Volume_ID() <= 0) {
+				throw new AdempiereException("@C_UOM_Volume_ID@ @NotFound@ @SeeClientInfoConfig@");
+			}
 		}
 
 		GenerateLoadOrderResponse.Builder builder = GenerateLoadOrderResponse.newBuilder();
@@ -1052,28 +1191,95 @@ public class OutBoundOrderLogic {
 			//	Save Header
 			outBoundOrder.saveEx();
 
-			//	Validate Document Action
-			String documentAction = request.getDocumentAction();
-			if(Util.isEmpty(documentAction)) {
-				documentAction = MWMInOutBound.DOCACTION_Complete;
-			}
 			//	Complete Order
-			outBoundOrder.setDocAction(documentAction);
-			outBoundOrder.processIt(documentAction);
-			outBoundOrder.saveEx();
-
-			//	Valid Error
-			String errorMessage = outBoundOrder.getProcessMsg();
-			if (errorMessage != null && outBoundOrder.getDocStatus().equals(MWMInOutBound.DOCSTATUS_Invalid)) {
-				throw new AdempiereException(errorMessage);
+			outBoundOrder.setDocAction(
+				documentActionReference.get()
+			);
+			if (!outBoundOrder.processIt(documentActionReference.get())) {
+				//	Valid Error
+				throw new AdempiereException(
+					"@Error@ " + outBoundOrder.getProcessMsg()
+				);
 			}
+			outBoundOrder.saveEx();
 
 			String message = Msg.parseTranslation(
 				Env.getCtx(),
 				"@Created@ = [" + outBoundOrder.getDocumentNo()
 				+ "] || @LineNo@" + " = [" + linesQuantity.get() + "]"
-				+ (errorMessage != null ? "\n@Errors@:" + errorMessage: "")
 			);
+
+			if (isCreateFreight) {
+				MDDFreight freightOrder = new MDDFreight(Env.getCtx(), 0, transactionName);
+				freightOrder.setWM_InOutBound_ID(
+					outBoundOrder.getWM_InOutBound_ID()
+				);
+				freightOrder.setDD_Driver_ID(
+					request.getDriverId()
+				);
+				freightOrder.setDD_Vehicle_ID(
+					request.getVehicleId()
+				);
+				freightOrder.setDateDoc(documentDate);
+				freightOrder.setDateOrdered(shipmentDate);
+				freightOrder.setM_Shipper_ID(
+					request.getShipperId()
+				);
+
+				freightOrder.setC_DocType_ID(
+					request.getFreightDocumentTypeId()
+				);
+
+				freightOrder.setDocStatus(MWMInOutBound.DOCSTATUS_Drafted);
+				freightOrder.saveEx();
+
+				// Save line
+				int lineNo = 10;
+				MDDFreightLine line = new MDDFreightLine(Env.getCtx(), 0, transactionName);
+				line.setDD_Freight_ID(freightOrder.getDD_Freight_ID());
+				line.setLine(lineNo);
+				line.setWeight(outBoundOrder.getWeight());
+				line.setVolume(outBoundOrder.getVolume());
+				MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+				line.setWeight_UOM_ID(clientInfo.getC_UOM_Weight_ID());
+				line.setVolume_UOM_ID(clientInfo.getC_UOM_Volume_ID());
+				line.saveEx();
+
+				freightOrder.setDocAction(
+					MDDFreight.ACTION_Complete
+				);
+				try {
+					if (!freightOrder.processIt(MDDFreight.ACTION_Complete)) {
+						//	Valid Error
+						throw new AdempiereException(
+							"@Error@ " + freightOrder.getProcessMsg()
+						);
+					}
+				} catch(Exception e) {
+					//	Valid Error
+					throw new AdempiereException(
+						"@Error@ " + freightOrder.getProcessMsg()
+					);
+				}
+				freightOrder.saveEx();
+
+				String freightMessage = Msg.parseTranslation(
+					Env.getCtx(),
+					"@Created@ = [" + freightOrder.getDocumentNo() + "]"
+				);
+				builder.setFreightDocumentNo(
+						StringManager.getValidString(
+							freightOrder.getDocumentNo()
+						)
+					)
+					.setFreightMessage(
+						StringManager.getValidString(
+							freightMessage
+						)
+					)
+				;
+			}
+
 			builder.setRecordCount(
 					linesQuantity.get()
 				)
