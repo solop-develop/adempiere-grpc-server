@@ -72,9 +72,19 @@ service OutBoundOrderService {
 	}
 
 	// Process
+	rpc ListLocators(ListLocatorsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/warehouses/{warehouse_id}/locators"
+		};
+	}
 	rpc ListTargetDocumentTypes(ListTargetDocumentTypesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/out-bound-orders/target-document-types"
+		};
+	}
+	rpc ListDocumentActions(ListDocumentActionsRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/document-actions"
 		};
 	}
 	rpc ListDeliveryRules(ListDeliveryRulesRequest) returns (data.ListLookupItemsResponse) {
@@ -92,14 +102,19 @@ service OutBoundOrderService {
 			get: "/forms/out-bound-orders/shippers"
 		};
 	}
-	rpc ListDocumentActions(ListDocumentActionsRequest) returns (data.ListLookupItemsResponse) {
+	rpc ListFreightDocumentTypes(ListFreightDocumentTypesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/forms/out-bound-orders/document-actions"
+			get: "/forms/out-bound-orders/freight-document-types"
 		};
 	}
-	rpc ListLocators(ListLocatorsRequest) returns (data.ListLookupItemsResponse) {
+	rpc ListVehicles(ListVehiclesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/forms/out-bound-orders/warehouses/{warehouse_id}/locators"
+			get: "/forms/out-bound-orders/shippers/{shipper_id}/vehicles"
+		};
+	}
+	rpc ListDrivers(ListDriversRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/out-bound-orders/drivers"
 		};
 	}
 	rpc GenerateLoadOrder(GenerateLoadOrderRequest) returns (GenerateLoadOrderResponse) {
@@ -281,6 +296,21 @@ message ListDocumentLinesResponse {
 
 
 
+// Locator
+message ListLocatorsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	int32 warehouse_id = 10;
+}
+
 // Target Document Type
 message ListTargetDocumentTypesRequest {
 	string filters = 1;
@@ -294,6 +324,19 @@ message ListTargetDocumentTypesRequest {
 	bool is_only_active_records = 9;
 	// custom filters
 	string movement_type = 10;
+}
+
+// Document Action
+message ListDocumentActionsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 // Delivery Rule
@@ -335,8 +378,8 @@ message ListShippersRequest {
 	bool is_only_active_records = 9;
 }
 
-// Document Action
-message ListDocumentActionsRequest {
+// Freight Document Type
+message ListFreightDocumentTypesRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -348,8 +391,8 @@ message ListDocumentActionsRequest {
 	bool is_only_active_records = 9;
 }
 
-// Locator
-message ListLocatorsRequest {
+// Vehicle
+message ListVehiclesRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -360,7 +403,20 @@ message ListLocatorsRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 	// custom filters
-	int32 warehouse_id = 10;
+	int32 shipper_id = 10;
+}
+
+// Driver
+message ListDriversRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
 }
 
 message OrderLineRequest {
@@ -381,17 +437,23 @@ message GenerateLoadOrderRequest {
 	int32 organization_id = 2;
 	int32 warehouse_id = 3;
 	int32 locator_id = 4;
-	int32 target_document_type_id = 5;
-	google.protobuf.Timestamp document_date = 6;
-	google.protobuf.Timestamp shipment_date = 7;
-	string delivery_rule = 8;
-	string delivery_via = 9;
-	int32 shipper_id = 10;
-	repeated OrderLineRequest lines = 11;
-	string document_action = 12;
+	google.protobuf.Timestamp document_date = 5;
+	google.protobuf.Timestamp shipment_date = 6;
+	int32 target_document_type_id = 7;
+	string document_action = 8;
+	repeated OrderLineRequest lines = 9;
+	string delivery_rule = 10;
+	string delivery_via = 11;
+	int32 shipper_id = 12;
+	bool is_generate_freight_order = 13;
+	int32 vehicle_id = 14;
+	int32 driver_id = 15;
+	int32 freight_document_type_id = 16;
 }
 message GenerateLoadOrderResponse {
 	int32 record_count = 1;
 	string message = 2;
 	string document_no = 3;
+	string freight_message = 4;
+	string freight_document_no = 5;
 }
