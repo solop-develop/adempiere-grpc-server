@@ -734,7 +734,7 @@ public class OutBoundOrderLogic {
 
 	public static ListLookupItemsResponse.Builder listDocumentActions(ListDocumentActionsRequest request) {
 		final int columnId = 58208; // WM_InOutBound.DocAction
-		final String whereClause = " AD_Ref_List.Value IN ('CO','PR')";
+		final String whereClause = " AD_Ref_List.Value IN ('CO', 'PR')";
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,
@@ -859,7 +859,7 @@ public class OutBoundOrderLogic {
 			throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
 		}
 		final String whereClause = " EXISTS(" +
-			"SELECT 1 FROM DD_VehicleAssignment AS a" +
+			"SELECT 1 FROM DD_VehicleAssignment AS a " +
 			"WHERE " +
 			"a.M_Shipper_ID = " + shipperId + " " +
 			"AND a.DD_Vehicle_ID = DD_Vehicle.DD_Vehicle_ID" +
@@ -1208,6 +1208,7 @@ public class OutBoundOrderLogic {
 				"@Created@ = [" + outBoundOrder.getDocumentNo()
 				+ "] || @LineNo@" + " = [" + linesQuantity.get() + "]"
 			);
+			log.severe(message);
 
 			if (isCreateFreight) {
 				MDDFreight freightOrder = new MDDFreight(Env.getCtx(), 0, transactionName);
@@ -1238,6 +1239,7 @@ public class OutBoundOrderLogic {
 				MDDFreightLine line = new MDDFreightLine(Env.getCtx(), 0, transactionName);
 				line.setDD_Freight_ID(freightOrder.getDD_Freight_ID());
 				line.setLine(lineNo);
+				line.setFreightAmt(Env.ZERO);
 				line.setWeight(outBoundOrder.getWeight());
 				line.setVolume(outBoundOrder.getVolume());
 				MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
@@ -1267,6 +1269,7 @@ public class OutBoundOrderLogic {
 					Env.getCtx(),
 					"@Created@ = [" + freightOrder.getDocumentNo() + "]"
 				);
+				log.severe(message);
 				builder.setFreightDocumentNo(
 						StringManager.getValidString(
 							freightOrder.getDocumentNo()
