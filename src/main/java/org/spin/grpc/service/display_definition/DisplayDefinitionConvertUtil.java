@@ -93,9 +93,9 @@ import com.solop.sp010.data.workflow.WorkflowItem;
 import com.solop.sp010.util.DisplayDefinitionChanges;
 
 public class DisplayDefinitionConvertUtil {
-	
 
-	public static DefinitionMetadata.Builder convertDefinitionMetadata(PO record) {
+
+	public static DefinitionMetadata.Builder convertDefinitionMetadata(PO record, boolean isWithFields) {
 		DefinitionMetadata.Builder builder = DefinitionMetadata.newBuilder();
 		if (record == null || record.get_ID() <= 0) {
 			return builder;
@@ -212,7 +212,7 @@ public class DisplayDefinitionConvertUtil {
 					.first()
 				;
 				if (childDisplayDefinition != null) {
-					DefinitionMetadata.Builder childBuilder = convertDefinitionMetadata(childDisplayDefinition);
+					DefinitionMetadata.Builder childBuilder = convertDefinitionMetadata(childDisplayDefinition, isWithFields);
 					builder.setChildDisplayDefinition(childBuilder);
 				}
 			} else if (displayType.equals(DisplayDefinitionChanges.SP010_DisplayType_Kanban)
@@ -357,39 +357,41 @@ public class DisplayDefinitionConvertUtil {
 			);
 		}
 
-		MTable fieldTable = RecordUtil.validateAndGetTable(
-			DisplayDefinitionChanges.SP010_Field
-		);
-		new Query(
-			Env.getCtx(),
-			DisplayDefinitionChanges.SP010_Field,
-			"SP010_DisplayDefinition_ID = ?",
-			null
-		)
-			.setParameters(record.get_ID())
-			.setOnlyActiveRecords(true)
-			.setOrderBy(
-				I_AD_Field.COLUMNNAME_SeqNo
+		if (isWithFields) {
+			MTable fieldTable = RecordUtil.validateAndGetTable(
+				DisplayDefinitionChanges.SP010_Field
+			);
+			new Query(
+				Env.getCtx(),
+				DisplayDefinitionChanges.SP010_Field,
+				"SP010_DisplayDefinition_ID = ?",
+				null
 			)
-			.getIDsAsList()
-			.forEach(fieldId -> {
-				PO field = fieldTable.getPO(fieldId, null);
-				MColumn column = MColumn.get(
-					field.getCtx(),
-					field.get_ValueAsInt(
-						I_AD_Column.COLUMNNAME_AD_Column_ID
-					)
-				);
-				if (columnsMap.containsKey(column.getColumnName())) {
-					// omit this column
-					return;
-				}
-				FieldDefinition.Builder fieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(field);
-				builder.addFieldDefinitions(
-					fieldBuilder.build()
-				);
-			})
-		;
+				.setParameters(record.get_ID())
+				.setOnlyActiveRecords(true)
+				.setOrderBy(
+					I_AD_Field.COLUMNNAME_SeqNo
+				)
+				.getIDsAsList()
+				.forEach(fieldId -> {
+					PO field = fieldTable.getPO(fieldId, null);
+					MColumn column = MColumn.get(
+						field.getCtx(),
+						field.get_ValueAsInt(
+							I_AD_Column.COLUMNNAME_AD_Column_ID
+						)
+					);
+					if (columnsMap.containsKey(column.getColumnName())) {
+						// omit this column
+						return;
+					}
+					FieldDefinition.Builder fieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(field);
+					builder.addFieldDefinitions(
+						fieldBuilder.build()
+					);
+				})
+			;
+		}
 
 		return builder;
 	}

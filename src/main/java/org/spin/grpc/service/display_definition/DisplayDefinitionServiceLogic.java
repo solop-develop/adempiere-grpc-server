@@ -201,6 +201,8 @@ public class DisplayDefinitionServiceLogic {
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
 			whereClause = "AD_Table_ID = ?";
+		} else if (request.getIsOnlyField()) {
+			whereClause = "AD_Table_ID = ? AND (SP010_IsInfoRecord = 'Y' OR IsInsertRecord = 'Y')";
 		}
 		List<Object> parametersList = new ArrayList<>();
 		parametersList.add(
@@ -244,7 +246,7 @@ public class DisplayDefinitionServiceLogic {
 					if(!Util.isEmpty(displayReference.get_ValueAsString("Description"))) {
 						display.set_ValueOfColumn("Description", displayReference.get_ValueAsString("Description"));
 					}
-					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display);
+					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display, true);
 					builderList.addRecords(builder);
 				})
 			;
@@ -253,7 +255,7 @@ public class DisplayDefinitionServiceLogic {
 				.getIDsAsList()
 				.forEach(recordId -> {
 					PO display = referenceTable.getPO(recordId, null);
-					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display);
+					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display, !request.getIsOnlyField());
 					builderList.addRecords(builder);
 				})
 			;

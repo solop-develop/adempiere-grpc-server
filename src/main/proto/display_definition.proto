@@ -209,6 +209,7 @@ message ListDisplayDefinitionsMetadataRequest {
 	int32 table_id = 11;
 	repeated string type_filer = 12;
 	bool only_references = 13;
+	bool is_only_field = 14;
 }
 
 enum DefinitionType {
@@ -244,6 +245,8 @@ message DefinitionMetadata {
 	repeated FieldDefinition field_definitions = 18;
 	optional DefinitionMetadata child_display_definition = 19;
 	repeated string context_column_names = 20;
+	bool is_info_record = 21;
+	bool is_insert_record = 22;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;
