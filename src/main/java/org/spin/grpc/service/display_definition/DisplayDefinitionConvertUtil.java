@@ -141,6 +141,16 @@ public class DisplayDefinitionConvertUtil {
 					DisplayDefinitionChanges.SP010_IsResource
 				)
 			)
+			.setIsInfoRecord(
+				record.get_ValueAsBoolean(
+					DisplayDefinitionChanges.SP010_IsInfoRecord
+				)
+			)
+			.setIsInsertRecord(
+				record.get_ValueAsBoolean(
+					I_AD_Tab.COLUMNNAME_IsInsertRecord
+				)
+			)
 			.addAllContextColumnNames(
 				ContextManager.getContextColumnNames(
 					record.get_ValueAsString(
@@ -629,6 +639,7 @@ public class DisplayDefinitionConvertUtil {
 		;
 		return builder;
 	}
+
 	public static FieldDefinition.Builder convertFieldDefinition(PO fieldDefinitionItem) {
 		FieldDefinition.Builder builder = FieldDefinition.newBuilder();
 		if (fieldDefinitionItem == null || fieldDefinitionItem.get_ID() <= 0) {
@@ -665,6 +676,14 @@ public class DisplayDefinitionConvertUtil {
 		);
 		if (!Util.isEmpty(isAllowCopyString, true)) {
 			isAllowCopy = BooleanManager.getBooleanFromString(isAllowCopyString);
+		}
+
+		boolean isSelectionColumn = column.isSelectionColumn();
+		String isSelectionColumnString = fieldDefinitionItem.get_ValueAsString(
+			I_AD_Column.COLUMNNAME_IsSelectionColumn
+		);
+		if (!Util.isEmpty(isSelectionColumnString, true)) {
+			isSelectionColumn = BooleanManager.getBooleanFromString(isSelectionColumnString);
 		}
 
 		builder.setId(
@@ -797,6 +816,9 @@ public class DisplayDefinitionConvertUtil {
 			.setIsAllowCopy(
 				isAllowCopy
 			)
+			.setIsSelectionColumn(
+				isSelectionColumn
+			)
 			.addAllContextColumnNames(
 				ContextManager.getContextColumnNames(
 					defaultValue
@@ -927,6 +949,14 @@ public class DisplayDefinitionConvertUtil {
 			)
 			.setIsInsertRecord(true)
 			.setIsUpdateRecord(true)
+			.setIsSelectionColumn(
+				column.isSelectionColumn()
+			)
+			.addAllContextColumnNames(
+				ContextManager.getContextColumnNames(
+					column.getDefaultValue()
+				)
+			)
 		;
 
 		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
