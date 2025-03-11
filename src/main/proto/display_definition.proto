@@ -305,10 +305,11 @@ message FieldDefinition {
 	bool is_insert_record = 27;
 	bool is_update_record = 28;
 	bool is_allow_copy = 29;
+	bool is_selection_column = 30;
 	// External Info
-	repeated string context_column_names = 30;
-	repeated DependentFieldDefinition dependent_fields = 31;
-	optional Reference reference = 32;
+	repeated string context_column_names = 31;
+	repeated DependentFieldDefinition dependent_fields = 32;
+	optional Reference reference = 33;
 }
 
 
