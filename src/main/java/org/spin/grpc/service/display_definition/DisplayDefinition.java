@@ -15,12 +15,15 @@
 package org.spin.grpc.service.display_definition;
 
 import org.compiere.util.CLogger;
+import org.spin.backend.grpc.display_definition.BusinessPartner;
+import org.spin.backend.grpc.display_definition.CreateBusinessPartnerRequest;
 import org.spin.backend.grpc.display_definition.CreateDataEntryRequest;
 import org.spin.backend.grpc.display_definition.DataEntry;
 import org.spin.backend.grpc.display_definition.DeleteDataEntryRequest;
 import org.spin.backend.grpc.display_definition.DisplayDefinitionGrpc.DisplayDefinitionImplBase;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataRequest;
 import org.spin.backend.grpc.display_definition.ExistsDisplayDefinitionMetadataResponse;
+import org.spin.backend.grpc.display_definition.GetBusinessPartnerRequest;
 import org.spin.backend.grpc.display_definition.ListCalendarsDataRequest;
 import org.spin.backend.grpc.display_definition.ListCalendarsDataResponse;
 import org.spin.backend.grpc.display_definition.ListDisplayDefinitionFieldsMetadataRequest;
@@ -50,6 +53,7 @@ import org.spin.backend.grpc.display_definition.ListWorkflowsDataResponse;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionRequest;
 import org.spin.backend.grpc.display_definition.ListWorkflowsDefinitionResponse;
 import org.spin.backend.grpc.display_definition.ReadDataEntryRequest;
+import org.spin.backend.grpc.display_definition.UpdateBusinessPartnerRequest;
 import org.spin.backend.grpc.display_definition.UpdateDataEntryRequest;
 
 import com.google.protobuf.Empty;
@@ -487,6 +491,62 @@ public class DisplayDefinition extends DisplayDefinitionImplBase {
 		try {
 			Empty.Builder builder = DisplayDefinitionServiceLogic.deleteDataEntryResource(request);
 			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void createBusinessPartner(CreateBusinessPartnerRequest request, StreamObserver<BusinessPartner> responseObserver) {
+		try {
+			BusinessPartner.Builder businessPartnerBuilder = DisplayDefinitionServiceLogic.createBusinesPartner(request);
+			responseObserver.onNext(businessPartnerBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void getBusinessPartner(GetBusinessPartnerRequest request, StreamObserver<BusinessPartner> responseObserver) {
+		try {
+			BusinessPartner.Builder businessPartnerBuilder = DisplayDefinitionServiceLogic.getBusinessPartner(request);
+			responseObserver.onNext(businessPartnerBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void updateBusinessPartner(UpdateBusinessPartnerRequest request, StreamObserver<BusinessPartner> responseObserver) {
+		try {
+			BusinessPartner.Builder businessPartnerBuilder = DisplayDefinitionServiceLogic.updateBusinessPartner(request);
+			responseObserver.onNext(businessPartnerBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
