@@ -268,7 +268,7 @@ public class DisplayDefinitionServiceLogic {
 				.getIDsAsList()
 				.forEach(recordId -> {
 					PO display = referenceTable.getPO(recordId, null);
-					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display, !request.getIsOnlyField());
+					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display, true);
 					builderList.addRecords(builder);
 				})
 			;
