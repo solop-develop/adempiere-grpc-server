@@ -1854,6 +1854,10 @@ public class DisplayDefinitionServiceLogic {
 	 * @return
 	 */
 	public static BusinessPartner.Builder createBusinesPartner(CreateBusinessPartnerRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
 		//	Validate name
 		if(Util.isEmpty(request.getName(), true)) {
 			throw new AdempiereException("@Name@ @IsMandatory@");
@@ -1948,9 +1952,19 @@ public class DisplayDefinitionServiceLogic {
 				);
 			});
 		});
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				businessPartner.getC_BPartner_ID()
+			)
+		;
+
 		//	Default return
 		return DisplayDefinitionConvertUtil.convertBusinessPartner(
-			businessPartner
+			businessPartner,
+			recordItem
 		);
 	}
 
@@ -1960,9 +1974,9 @@ public class DisplayDefinitionServiceLogic {
 	 * @return
 	 */
 	public static BusinessPartner.Builder getBusinessPartner(GetBusinessPartnerRequest request) {
-		if (request.getDisplayDefinitionId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
 
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
@@ -1982,9 +1996,19 @@ public class DisplayDefinitionServiceLogic {
 		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
 			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 		}
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				businessPartner.getC_BPartner_ID()
+			)
+		;
+
 		//	Default return
 		return DisplayDefinitionConvertUtil.convertBusinessPartner(
-			businessPartner
+			businessPartner,
+			recordItem
 		);
 	}
 
@@ -2013,15 +2037,15 @@ public class DisplayDefinitionServiceLogic {
 	 * @return
 	 */
 	public static BusinessPartner.Builder updateBusinessPartner(UpdateBusinessPartnerRequest request) {
-		if (request.getDisplayDefinitionId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @SP010_DisplayDefinition_ID@");
-		}
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
 
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
 		}
 		//	
-		AtomicReference<MBPartner> customer = new AtomicReference<MBPartner>();
+		AtomicReference<MBPartner> businessPartnerReference = new AtomicReference<MBPartner>();
 		Trx.run(transactionName -> {
 			//	Create it
 			MBPartner businessPartner = MBPartner.get(Env.getCtx(), request.getId());
@@ -2144,13 +2168,24 @@ public class DisplayDefinitionServiceLogic {
 						}
 						createCustomerAddress(businessPartner, address, templateLocation, transactionName);
 					}
-					customer.set(businessPartner);
+					businessPartnerReference.set(businessPartner);
 				}
 			});
 		});
+
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				businessPartnerReference.get().getC_BPartner_ID()
+			)
+		;
+
 		//	Default return
 		return DisplayDefinitionConvertUtil.convertBusinessPartner(
-			customer.get()
+			businessPartnerReference.get(),
+			recordItem
 		);
 	}
 

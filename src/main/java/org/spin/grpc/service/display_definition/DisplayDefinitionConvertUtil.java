@@ -1901,50 +1901,94 @@ public class DisplayDefinitionConvertUtil {
 	 * @param businessPartner
 	 * @return
 	 */
-	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
+	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner, GenericItem baseItem) {
 		if(businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
 			return BusinessPartner.newBuilder();
 		}
-		BusinessPartner.Builder customer = BusinessPartner.newBuilder()
+		BusinessPartner.Builder builder = BusinessPartner.newBuilder()
 			.setId(
 				businessPartner.getC_BPartner_ID()
 			)
-			.setValue(
+			.setUuid(
 				StringManager.getValidString(
-					businessPartner.getValue()
+					businessPartner.getUUID()
 				)
 			)
-			.setTaxId(
+			.setTitle(
 				StringManager.getValidString(
-					businessPartner.getTaxID()
-				)
-			)
-			.setDuns(
-				StringManager.getValidString(
-					businessPartner.getDUNS()
-				)
-			)
-			.setNaics(
-				StringManager.getValidString(
-					businessPartner.getNAICS()
-				)
-			)
-			.setName(
-				StringManager.getValidString(
-					businessPartner.getName()
-				)
-			)
-			.setLastName(
-				StringManager.getValidString(
-					businessPartner.getName2()
+					baseItem.getTitle()
 				)
 			)
 			.setDescription(
 				StringManager.getValidString(
-					businessPartner.getDescription()
+					baseItem.getDescription()
 				)
 			)
+			.setIsActive(
+				baseItem.isActive()
+			)
+			.setIsReadOnly(
+				baseItem.isReadOnly()
+			)
 		;
+
+		//	Additional fields
+		MTable fieldTable = MTable.get(Env.getCtx(), DisplayDefinitionChanges.SP010_Field);
+		if(fieldTable != null) {
+			Struct.Builder additionalFields = Struct.newBuilder();
+			baseItem.getFields()
+				.forEach((fieldId, fieldEntry) -> {
+					PO field = fieldTable.getPO(fieldId, null);
+					int referenceId = field.get_ValueAsInt(
+						I_AD_Field.COLUMNNAME_AD_Reference_ID
+					);
+					MColumn column = MColumn.get(
+						Env.getCtx(),
+						field.get_ValueAsInt(
+							I_AD_Column.COLUMNNAME_AD_Column_ID
+						)
+					);
+					if(referenceId <= 0) {
+						referenceId = column.getAD_Reference_ID();
+					}
+					Struct.Builder fieldItem = Struct.newBuilder();
+
+					// value
+					Value.Builder valueBuilder = ValueManager.getValueFromReference(
+						fieldEntry.getValue(),
+						referenceId
+					);
+					fieldItem.putFields(
+						"value",
+						valueBuilder.build()
+					);
+					// display value
+					String displayValue = fieldEntry.getDisplayValue();
+					if (fieldEntry.getValue() == null || Util.isEmpty(displayValue, true)) {
+						displayValue = null;
+					}
+					Value.Builder displayValueBuilder = ValueManager.getValueFromString(
+						displayValue
+					);
+					fieldItem.putFields(
+						"display_value",
+						displayValueBuilder.build()
+					);
+
+					Value.Builder structField = Value.newBuilder().setStructValue(
+						fieldItem
+					);
+					additionalFields.putFields(
+						column.getColumnName(),
+						structField.build()
+					);
+				})
+			;
+			builder.setFields(
+				additionalFields
+			);
+		}
+
 		//	Additional Attributes
 		Struct.Builder customerAdditionalAttributes = Struct.newBuilder();
 		MTable.get(Env.getCtx(), businessPartner.get_Table_ID()).getColumnsAsList().stream()
@@ -1970,16 +2014,16 @@ public class DisplayDefinitionConvertUtil {
 				value
 			);
 		});
-		customer.setAdditionalAttributes(customerAdditionalAttributes);
+		builder.setAdditionalAttributes(customerAdditionalAttributes);
 		//	Add Address
 		Arrays.asList(businessPartner.getLocations(true)).stream()
 			.filter(customerLocation -> customerLocation.isActive())
 			.forEach(address -> {
-				customer.addAddresses(
+				builder.addAddresses(
 					convertBusinessPartnerAddress(address)
 				);
 			});
-		return customer;
+		return builder;
 	}
 	/**
 	 * Convert Address
