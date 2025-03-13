@@ -309,17 +309,17 @@ public class ReportManagement extends ReportManagementImplBase {
 			;
 			response.setInstanceId(instance.getAD_PInstance_ID());
 
-			if (!Util.isEmpty(instance.getErrorMsg(), true)) {
-				result.setError(true);
-				String errorMessage = Msg.parseTranslation(
-					Env.getCtx(),
-					instance.getErrorMsg()
-				);
-				if (!Util.isEmpty(result.getSummary(), true)) {
-					errorMessage = result.getSummary() + " " + errorMessage;
-				}
-				result.setSummary(errorMessage);
-			}
+			// if (!Util.isEmpty(instance.getErrorMsg(), true)) {
+			// 	result.setError(true);
+			// 	String errorMessage = Msg.parseTranslation(
+			// 		Env.getCtx(),
+			// 		instance.getErrorMsg()
+			// 	);
+			// 	if (!Util.isEmpty(result.getSummary(), true)) {
+			// 		errorMessage = result.getSummary() + " " + errorMessage;
+			// 	}
+			// 	result.setSummary(errorMessage);
+			// }
 
 			response.setLastRun(
 				ValueManager.getTimestampFromDate(

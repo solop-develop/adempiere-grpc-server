@@ -26,11 +26,13 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_C_DocType;
+import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_DD_Order;
 import org.adempiere.core.domains.models.I_M_Locator;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DocTypeNotFoundException;
+import org.compiere.model.MClientInfo;
 import org.compiere.model.MDocType;
 import org.compiere.model.MLocator;
 import org.compiere.model.MLookupInfo;
@@ -46,6 +48,8 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.eevolution.distribution.model.MDDFreight;
+import org.eevolution.distribution.model.MDDFreightLine;
 import org.eevolution.distribution.model.MDDOrderLine;
 import org.eevolution.wms.model.MWMInOutBound;
 import org.eevolution.wms.model.MWMInOutBoundLine;
@@ -62,12 +66,15 @@ import org.spin.backend.grpc.form.out_bound_order.ListDocumentHeadersResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentLinesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentLinesResponse;
 import org.spin.backend.grpc.form.out_bound_order.ListDocumentTypesRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListDriversRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListFreightDocumentTypesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListLocatorsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListOrganizationsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListSalesRegionsRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListSalesRepresentativesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListShippersRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListTargetDocumentTypesRequest;
+import org.spin.backend.grpc.form.out_bound_order.ListVehiclesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListWarehousesRequest;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
@@ -138,7 +145,9 @@ public class OutBoundOrderLogic {
 		);
 
 		// Warehouse filter selection
-		final String whereClause = " M_Warehouse.AD_Org_ID = " + organization.getAD_Org_ID();
+		final String whereClause = " M_Warehouse.IsActive = 'Y' "
+			+ "AND M_Warehouse.AD_Org_ID = " + organization.getAD_Org_ID()
+		;
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0, 0,
@@ -236,8 +245,12 @@ public class OutBoundOrderLogic {
 
 
 	public static ListDocumentHeadersResponse.Builder listDocumentHeaders(ListDocumentHeadersRequest request) {
-		final int clientId = Env.getAD_Client_ID(Env.getCtx());
 		final String movementType = request.getMovementType();
+		if (Util.isEmpty(movementType, true) ||
+			!(movementType.equals(I_DD_Order.Table_Name) || movementType.equals(I_C_Order.Table_Name))
+		 ) {
+			throw new AdempiereException("@FillMandatory@ @MovementType@");
+		}
 		MOrg organization = validateAndGetOrganization(
 			request.getOrganizationId()
 		);
@@ -250,6 +263,7 @@ public class OutBoundOrderLogic {
 
 		// filters
 		List<Object> parametersList = new ArrayList<Object>();
+		final int clientId = Env.getAD_Client_ID(Env.getCtx());
 		parametersList.add(clientId);
 		parametersList.add(
 			organization.getAD_Org_ID()
@@ -263,10 +277,10 @@ public class OutBoundOrderLogic {
 			//Query for Material Movement
 			sql = new StringBuffer(
 				"SELECT " +
-				"wr.Name AS Warehouse, ord.DD_Order_ID AS ID, ord.UUID, ord.DocumentNo, " +	//	1..3
+				"wr.M_Warehouse_ID, wr.Name AS Warehouse, ord.DD_Order_ID AS ID, ord.UUID, ord.DocumentNo, " +	//	1..3
 				"ord.DateOrdered, ord.DatePromised, " +
-				"reg.Name AS Region, cit.Name AS City, sr.Name AS SalesRep, " +	//	4..8
-				"cp.Name Partner, bploc.Name AS Location, " +	//	9..10
+				"reg.Name AS Region, cit.Name AS City, ord.SalesRep_ID, sr.Name AS SalesRep, " +	//	4..8
+				"cp.C_BPartner_ID, COALESCE(cp.Value, '') AS PartnerValue, cp.Name Partner, bploc.Name AS Location, " +	//	9..10
 				"loc.Address1, loc.Address2, loc.Address3, loc.Address4, ord.C_BPartner_Location_ID, " +
 				"ord.Weight, ord.Volume " +	//	11..17
 				"FROM DD_Order ord " +
@@ -296,7 +310,7 @@ public class OutBoundOrderLogic {
 				"	GROUP BY lord.DD_Order_ID, lord.DD_OrderLine_ID, lord.QtyOrdered " +
 				"	ORDER BY lord.DD_OrderLine_ID ASC) qafl " +
 				"	ON(qafl.DD_OrderLine_ID = lord.DD_OrderLine_ID) " +
-				"WHERE  wr.IsActive = 'Y' " +
+				"WHERE wr.IsActive = 'Y' " +
 				"AND ord.DocStatus = 'CO' " +
 				"AND COALESCE(qafl.QtyAvailable, 0) > 0 " +
 				"AND ord.AD_Client_ID=? "
@@ -322,8 +336,8 @@ public class OutBoundOrderLogic {
 
 			//	Group By
 			sql.append(
-				"GROUP BY wr.Name, ord.DD_Order_ID, ord.DocumentNo, ord.DateOrdered, " +
-				"ord.DatePromised, ord.Weight, ord.Volume, sr.Name, cp.Name, bploc.Name, " +
+				"GROUP BY wr.M_Warehouse_ID, wr.Name, ord.DD_Order_ID, ord.DocumentNo, ord.DateOrdered, " +
+				"ord.DatePromised, ord.Weight, ord.Volume, sr.Name, cp.C_BPartner_ID, cp.Value, cp.Name, bploc.Name, " +
 				"reg.Name, cit.Name, loc.Address1, loc.Address2, loc.Address3, loc.Address4, ord.C_BPartner_Location_ID "
 			);
 
@@ -337,10 +351,10 @@ public class OutBoundOrderLogic {
 		} else {//Query for Sales Order
 			sql = new StringBuffer(
 				"SELECT " +
-				"wr.Name AS Warehouse, ord.C_Order_ID AS ID, ord.UUID, ord.DocumentNo, " +	//	1..3
+				"wr.M_Warehouse_ID, wr.Name AS Warehouse, ord.C_Order_ID AS ID, ord.UUID, ord.DocumentNo, " +	//	1..3
 				"ord.DateOrdered, ord.DatePromised, " +
-				"reg.Name AS Region, cit.Name AS City, sr.Name SalesRep, " +	//	4..8
-				"cp.Name Partner, bploc.Name AS Location, " +	//	9..10
+				"reg.Name AS Region, cit.Name AS City, ord.SalesRep_ID, sr.Name AS SalesRep, " +	//	4..8
+				"cp.C_BPartner_ID, COALESCE(cp.Value, '') AS PartnerValue, cp.Name Partner, bploc.Name AS Location, " +	//	9..10
 				"loc.Address1, loc.Address2, loc.Address3, loc.Address4, ord.C_BPartner_Location_ID, " +
 				"ord.Weight, ord.Volume " +	//	11..17
 				"FROM C_Order ord " +
@@ -396,8 +410,8 @@ public class OutBoundOrderLogic {
 
 			//	Group By
 			sql.append(
-				"GROUP BY wr.Name, ord.C_Order_ID, ord.DocumentNo, ord.DateOrdered, " +
-				"ord.DatePromised, ord.Weight, ord.Volume, sr.Name, cp.Name, bploc.Name, " +
+				"GROUP BY wr.M_Warehouse_ID, wr.Name, ord.C_Order_ID, ord.DocumentNo, ord.DateOrdered, " +
+				"ord.DatePromised, ord.Weight, ord.Volume, sr.Name, cp.C_BPartner_ID, cp.Value, cp.Name, bploc.Name, " +
 				"reg.Name, cit.Name, loc.Address1, loc.Address2, loc.Address3, loc.Address4, ord.C_BPartner_Location_ID "
 			);
 
@@ -432,6 +446,11 @@ public class OutBoundOrderLogic {
 
 	public static ListDocumentLinesResponse.Builder listDocumentLines(ListDocumentLinesRequest request) {
 		final String movementType = request.getMovementType();
+		if (Util.isEmpty(movementType, true) ||
+			!(movementType.equals(I_DD_Order.Table_Name) || movementType.equals(I_C_Order.Table_Name))
+		 ) {
+			throw new AdempiereException("@FillMandatory@ @MovementType@");
+		}
 
 		if (request.getHeaderIdsList() == null || request.getHeaderIdsList().isEmpty()) {
 			throw new AdempiereException("@FillMandatory@ @Record_ID@");
@@ -440,20 +459,28 @@ public class OutBoundOrderLogic {
 			.stream()
 			// .map(String::valueOf)
 			.map(String::valueOf)
-			.collect(Collectors.joining(","))
+			.collect(Collectors.joining(", "))
 		;
+		if (Util.isEmpty(headerIdentifers, true)) {
+			headerIdentifers = "0";
+		}
 
 		StringBuffer sql = null;
 		if (movementType.equals(I_DD_Order.Table_Name)) {
-			StringBuffer sqlWhere = new StringBuffer("ord.DD_Order_ID IN(0")
+			StringBuffer sqlWhere = new StringBuffer("ord.DD_Order_ID IN(")
 				.append(headerIdentifers)
 				.append(")")
 			;
 
 			sql = new StringBuffer(
 				"SELECT alm.M_Warehouse_ID, alm.Name Warehouse, " +
-					"lord.DD_OrderLine_ID AS ID, lord.UUID, ord.DocumentNo, " +
-					"lord.M_Product_ID, (pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
+					"lord.DD_OrderLine_ID AS ID, lord.UUID, lord.DD_Order_ID AS Parent_ID, ord.DocumentNo, " +
+					"lord.M_Product_ID, COALESCE(pro.Value, '') AS ProductValue, " +
+					"(pro.Name || (CASE " + //
+					"        WHEN attr.ProductAttribute IS NOT NULL AND attr.ProductAttribute <> '' " +
+					"        THEN ' - ' || attr.ProductAttribute " +
+					"        ELSE '' " +
+					"    END)) AS Product, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, s.QtyOnHand, " +
 					"lord.QtyOrdered, lord.C_UOM_ID Order_UOM_ID, uom.UOMSymbol Order_UOMSymbol, lord.QtyReserved, 0 QtyInvoiced, lord.QtyDelivered, " +
 					"SUM(" +
@@ -475,6 +502,10 @@ public class OutBoundOrderLogic {
 					"pro.Weight, pro.Volume, ord.DeliveryRule, pro.IsStocked " +
 					"FROM DD_Order ord " +
 					"INNER JOIN DD_OrderLine lord ON(lord.DD_Order_ID = ord.DD_Order_ID) " +
+					"LEFT JOIN " +
+					"    (SELECT lord.M_AttributeSetInstance_ID, productattribute(lord.M_AttributeSetInstance_ID) AS ProductAttribute " +
+					"    FROM DD_OrderLine lord) AS attr " +
+					"    ON lord.M_AttributeSetInstance_ID = attr.M_AttributeSetInstance_ID " +
 					"INNER JOIN M_Locator l ON(l.M_Locator_ID = lord.M_Locator_ID) " + 
 					"INNER JOIN M_Warehouse alm ON(alm.M_Warehouse_ID = l.M_Warehouse_ID) " +
 					"INNER JOIN M_Product pro ON(pro.M_Product_ID = lord.M_Product_ID) " +
@@ -498,8 +529,8 @@ public class OutBoundOrderLogic {
 			;
 			//	Group By
 			sql.append("GROUP BY alm.M_Warehouse_ID, lord.DD_Order_ID, lord.DD_OrderLine_ID, " +
-					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, " + 
-					"pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
+					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, attr.ProductAttribute, " + 
+					"pro.Value, pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, lord.QtyOrdered, lord.QtyReserved, " +
 					"lord.QtyDelivered, pro.Weight, pro.Volume, ord.DeliveryRule, s.QtyOnHand,pro.IsStocked"
 				)
@@ -522,15 +553,20 @@ public class OutBoundOrderLogic {
 			sql.append("ORDER BY lord.DD_Order_ID ASC");
 			
 		} else {
-			StringBuffer sqlWhere = new StringBuffer("ord.C_Order_ID IN(0")
+			StringBuffer sqlWhere = new StringBuffer("ord.C_Order_ID IN(")
 				.append(headerIdentifers)
 				.append(")")
 			;
 
 			sql = new StringBuffer(
 					"SELECT lord.M_Warehouse_ID, alm.Name Warehouse, " +
-					"lord.C_OrderLine_ID AS ID, lord.UUID, ord.DocumentNo, " +
-					"lord.M_Product_ID, (pro.Name || COALESCE(' - ' || productattribute(lord.M_AttributeSetInstance_ID), '')) Product, " +
+					"lord.C_OrderLine_ID AS ID, lord.UUID, lord.C_Order_ID AS Parent_ID, ord.DocumentNo, " +
+					"lord.M_Product_ID, COALESCE(pro.Value, '') AS ProductValue, " +
+					"(pro.Name || (CASE " + //
+					"        WHEN attr.ProductAttribute IS NOT NULL AND attr.ProductAttribute <> '' " +
+					"        THEN ' - ' || attr.ProductAttribute " +
+					"        ELSE '' " +
+					"    END)) AS Product, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, s.QtyOnHand, " +
 					"lord.QtyOrdered, lord.C_UOM_ID Order_UOM_ID, uom.UOMSymbol Order_UOMSymbol, lord.QtyReserved, lord.QtyInvoiced, lord.QtyDelivered, " +
 					"SUM(" +
@@ -552,6 +588,10 @@ public class OutBoundOrderLogic {
 					"pro.Weight, pro.Volume, ord.DeliveryRule, pro.IsStocked " +
 					"FROM C_Order ord " +
 					"INNER JOIN C_OrderLine lord ON(lord.C_Order_ID = ord.C_Order_ID) " +
+					"LEFT JOIN " +
+					"    (SELECT lord.M_AttributeSetInstance_ID, productattribute(lord.M_AttributeSetInstance_ID) AS ProductAttribute " +
+					"    FROM C_OrderLine lord) AS attr " +
+					"    ON lord.M_AttributeSetInstance_ID = attr.M_AttributeSetInstance_ID " +
 					"INNER JOIN M_Warehouse alm ON(alm.M_Warehouse_ID = lord.M_Warehouse_ID) " +
 					"INNER JOIN M_Product pro ON(pro.M_Product_ID = lord.M_Product_ID) " +
 					"INNER JOIN C_UOM uom ON(uom.C_UOM_ID = lord.C_UOM_ID) " +
@@ -582,8 +622,8 @@ public class OutBoundOrderLogic {
 			//	Group By
 			sql.append(
 					"GROUP BY lord.M_Warehouse_ID, lord.C_Order_ID, lord.C_OrderLine_ID, " +
-					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, " + 
-					"pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
+					"alm.Name, ord.DocumentNo, lord.M_Product_ID, lord.M_AttributeSetInstance_ID, attr.ProductAttribute, " + 
+					"pro.Value, pro.Name, lord.C_UOM_ID, uom.UOMSymbol, lord.QtyEntered, " +
 					"pro.C_UOM_ID, uomp.UOMSymbol, lord.QtyOrdered, lord.QtyReserved, " + 
 					"lord.QtyDelivered, lord.QtyInvoiced, pro.Weight, pro.Volume, ord.DeliveryRule, s.QtyOnHand, pro.IsStocked"
 				)
@@ -616,7 +656,7 @@ public class OutBoundOrderLogic {
 				DocumentLine.Builder builder = OutBoundOrderConvertUtil.convertDocumentLine(resultSet);
 				if (builder.getId() <= 0) {
 					// delivery rule no is manual or force and quantity is zero
-					return;
+					continue;
 				}
 
 				count.incrementAndGet();
@@ -624,6 +664,7 @@ public class OutBoundOrderLogic {
 			}
 		})
 		.onFailure(throwable -> {
+			throwable.printStackTrace();
 			log.severe(throwable.getMessage());
 		});
 
@@ -633,6 +674,35 @@ public class OutBoundOrderLogic {
 
 		return builderList;
 	}
+
+
+
+	public static ListLookupItemsResponse.Builder listLocators(ListLocatorsRequest request) {
+		MWarehouse warehouse = validateAndGetWarehouse(
+			request.getWarehouseId()
+		);
+		final String whereClause = "M_Locator.M_Warehouse_ID = " + warehouse.getM_Warehouse_ID();
+		// int columnId = 64658; // WM_InOutBound.M_Locator_ID
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			0, 0, 0,
+			0,
+			I_M_Locator.COLUMNNAME_M_Locator_ID, I_M_Locator.Table_Name,
+			0, whereClause, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
 
 
 	public static ListLookupItemsResponse.Builder listTargetDocumentTypes(ListTargetDocumentTypesRequest request) {
@@ -645,6 +715,31 @@ public class OutBoundOrderLogic {
 			0, 0, 0,
 			0,
 			I_C_DocType.COLUMNNAME_C_DocType_ID, I_C_DocType.Table_Name,
+			0, whereClause, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listDocumentActions(ListDocumentActionsRequest request) {
+		final int columnId = 58208; // WM_InOutBound.DocAction
+		final String whereClause = " AD_Ref_List.Value IN ('CO', 'PR')";
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			0, 0, 0,
+			columnId,
+			null, null,
 			0, whereClause, false
 		);
 
@@ -734,15 +829,84 @@ public class OutBoundOrderLogic {
 
 
 
-	public static ListLookupItemsResponse.Builder listDocumentActions(ListDocumentActionsRequest request) {
-		final int columnId = 58208; // WM_InOutBound.DocAction
-		final String whereClause = " AD_Ref_List.Value IN ('CO','PR')";
+	public static ListLookupItemsResponse.Builder listFreightDocumentTypes(ListFreightDocumentTypesRequest request) {
+		final int columnId = 83735; // DD_Freight.C_DocType_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,
 			columnId,
 			null, null,
+			0, null, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listVehicles(ListVehiclesRequest request) {
+		final int shipperId = request.getShipperId();
+		if (shipperId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
+		}
+		final String whereClause = " EXISTS(" +
+			"SELECT 1 FROM DD_VehicleAssignment AS a " +
+			"WHERE " +
+			"a.M_Shipper_ID = " + shipperId + " " +
+			"AND a.DD_Vehicle_ID = DD_Vehicle.DD_Vehicle_ID" +
+			")"
+		;
+		final int fieldId = 81789; // DD_Freight.DD_Vehicle_ID
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			fieldId, 0, 0,
+			0,
+			null, null,
 			0, whereClause, false
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listDrivers(ListDriversRequest request) {
+		// final int vehicleId = request.getVehicleId();
+		// if (vehicleId <= 0) {
+		// 	throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
+		// }
+		// final String whereClause = " EXISTS(" +
+		// 	"SELECT 1 FROM DD_DriverAssignment AS a" +
+		// 	"WHERE " +
+		// 	"a.DD_Vehicle_ID = " + vehicleId + " " +
+		// 	"AND a.DD_Driver_ID = DD_Driver.DD_Driver_ID" +
+		// 	")"
+		// ;
+		final int fieldId = 81790; // DD_Freight.DD_Driver_ID
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			fieldId, 0, 0,
+			0,
+			null, null,
+			0, null, false
 		);
 
 		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
@@ -782,32 +946,6 @@ public class OutBoundOrderLogic {
 		return warehouse;
 	}
 
-	public static ListLookupItemsResponse.Builder listLocators(ListLocatorsRequest request) {
-		MWarehouse warehouse = validateAndGetWarehouse(
-			request.getWarehouseId()
-		);
-		final String whereClause = "M_Locator.M_Warehouse_ID = " + warehouse.getM_Warehouse_ID();
-		// int columnId = 64658; // WM_InOutBound.M_Locator_ID
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			0,
-			0, 0, 0,
-			0,
-			I_M_Locator.COLUMNNAME_M_Locator_ID, I_M_Locator.Table_Name,
-			0, whereClause, false
-		);
-
-		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
-			reference,
-			request.getContextAttributes(),
-			request.getPageSize(),
-			request.getPageToken(),
-			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
-		);
-
-		return builderList;
-	}
-
 	/**
 	 * Get Default locator based on stock, else default
 	 * @param warehouseId
@@ -838,6 +976,13 @@ public class OutBoundOrderLogic {
 		return locator.getM_Locator_ID();
 	}
 	public static GenerateLoadOrderResponse.Builder generateLoadOrder(GenerateLoadOrderRequest request) {
+		final String movementType = request.getMovementType();
+		if (Util.isEmpty(movementType, true) ||
+			!(movementType.equals(I_DD_Order.Table_Name) || movementType.equals(I_C_Order.Table_Name))
+		 ) {
+			throw new AdempiereException("@FillMandatory@ @MovementType@");
+		}
+
 		MOrg organization = validateAndGetOrganization(
 			request.getOrganizationId()
 		);
@@ -861,6 +1006,42 @@ public class OutBoundOrderLogic {
 
 		if (request.getLinesList() == null || request.getLinesList().isEmpty()) {
 			throw new AdempiereException("@NoLines@");
+		}
+
+		//	Validate Document Action
+		String documentAction = request.getDocumentAction();
+		if (Util.isEmpty(documentAction, true)) {
+			documentAction = MWMInOutBound.DOCACTION_Complete;
+		}
+		AtomicReference<String> documentActionReference = new AtomicReference<String>(
+			documentAction
+		);
+
+		// if is Prepare not create Freight Order
+		final boolean isCreateFreight = request.getIsGenerateFreightOrder()
+			&& documentAction.equals(MWMInOutBound.DOCACTION_Complete)
+		;
+		if (isCreateFreight) {
+			if (request.getShipperId() <= 0) {
+				throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
+			}
+			if (request.getVehicleId() <= 0) {
+				throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
+			}
+			if (request.getDriverId() <= 0) {
+				throw new AdempiereException("@FillMandatory@ @DD_Driver_ID@");
+			}
+			if (request.getDriverId() <= 0) {
+				throw new AdempiereException("@FillMandatory@ @C_DocType_ID@");
+			}
+			// Set from client
+			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+			if (clientInfo.getC_UOM_Weight_ID() <= 0) {
+				throw new AdempiereException("@C_UOM_Weight_ID@ @NotFound@ @SeeClientInfoConfig@");
+			}
+			if (clientInfo.getC_UOM_Volume_ID() <= 0) {
+				throw new AdempiereException("@C_UOM_Volume_ID@ @NotFound@ @SeeClientInfoConfig@");
+			}
 		}
 
 		GenerateLoadOrderResponse.Builder builder = GenerateLoadOrderResponse.newBuilder();
@@ -953,7 +1134,7 @@ public class OutBoundOrderLogic {
 					organization.getAD_Org_ID()
 				);
 				MProduct product = MProduct.get(Env.getCtx(), productId);
-				if (request.getMovementType().equals(I_DD_Order.Table_Name)) {
+				if (movementType.equals(I_DD_Order.Table_Name)) {
 					outBoundOrderLine.setDD_OrderLine_ID(orderLineId);
 					MDDOrderLine line = new MDDOrderLine(Env.getCtx(), orderLineId, transactionName);
 					outBoundOrderLine.setDD_Order_ID(line.getDD_Order_ID());
@@ -1010,28 +1191,98 @@ public class OutBoundOrderLogic {
 			//	Save Header
 			outBoundOrder.saveEx();
 
-			//	Validate Document Action
-			String documentAction = request.getDocumentAction();
-			if(Util.isEmpty(documentAction)) {
-				documentAction = MWMInOutBound.DOCACTION_Complete;
-			}
 			//	Complete Order
-			outBoundOrder.setDocAction(documentAction);
-			outBoundOrder.processIt(documentAction);
-			outBoundOrder.saveEx();
-
-			//	Valid Error
-			String errorMessage = outBoundOrder.getProcessMsg();
-			if (errorMessage != null && outBoundOrder.getDocStatus().equals(MWMInOutBound.DOCSTATUS_Invalid)) {
-				throw new AdempiereException(errorMessage);
+			outBoundOrder.setDocAction(
+				documentActionReference.get()
+			);
+			if (!outBoundOrder.processIt(documentActionReference.get())) {
+				//	Valid Error
+				throw new AdempiereException(
+					"@Error@ " + outBoundOrder.getProcessMsg()
+				);
 			}
+			outBoundOrder.saveEx();
 
 			String message = Msg.parseTranslation(
 				Env.getCtx(),
 				"@Created@ = [" + outBoundOrder.getDocumentNo()
 				+ "] || @LineNo@" + " = [" + linesQuantity.get() + "]"
-				+ (errorMessage != null ? "\n@Errors@:" + errorMessage: "")
 			);
+			log.severe(message);
+
+			if (isCreateFreight) {
+				MDDFreight freightOrder = new MDDFreight(Env.getCtx(), 0, transactionName);
+				freightOrder.setWM_InOutBound_ID(
+					outBoundOrder.getWM_InOutBound_ID()
+				);
+				freightOrder.setDD_Driver_ID(
+					request.getDriverId()
+				);
+				freightOrder.setDD_Vehicle_ID(
+					request.getVehicleId()
+				);
+				freightOrder.setDateDoc(documentDate);
+				freightOrder.setDateOrdered(shipmentDate);
+				freightOrder.setM_Shipper_ID(
+					request.getShipperId()
+				);
+
+				freightOrder.setC_DocType_ID(
+					request.getFreightDocumentTypeId()
+				);
+
+				freightOrder.setDocStatus(MWMInOutBound.DOCSTATUS_Drafted);
+				freightOrder.saveEx();
+
+				// Save line
+				int lineNo = 10;
+				MDDFreightLine line = new MDDFreightLine(Env.getCtx(), 0, transactionName);
+				line.setDD_Freight_ID(freightOrder.getDD_Freight_ID());
+				line.setLine(lineNo);
+				line.setFreightAmt(Env.ZERO);
+				line.setWeight(outBoundOrder.getWeight());
+				line.setVolume(outBoundOrder.getVolume());
+				MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+				line.setWeight_UOM_ID(clientInfo.getC_UOM_Weight_ID());
+				line.setVolume_UOM_ID(clientInfo.getC_UOM_Volume_ID());
+				line.saveEx();
+
+				freightOrder.setDocAction(
+					MDDFreight.ACTION_Complete
+				);
+				try {
+					if (!freightOrder.processIt(MDDFreight.ACTION_Complete)) {
+						//	Valid Error
+						throw new AdempiereException(
+							"@Error@ " + freightOrder.getProcessMsg()
+						);
+					}
+				} catch(Exception e) {
+					//	Valid Error
+					throw new AdempiereException(
+						"@Error@ " + freightOrder.getProcessMsg()
+					);
+				}
+				freightOrder.saveEx();
+
+				String freightMessage = Msg.parseTranslation(
+					Env.getCtx(),
+					"@Created@ = [" + freightOrder.getDocumentNo() + "]"
+				);
+				log.severe(message);
+				builder.setFreightDocumentNo(
+						StringManager.getValidString(
+							freightOrder.getDocumentNo()
+						)
+					)
+					.setFreightMessage(
+						StringManager.getValidString(
+							freightMessage
+						)
+					)
+				;
+			}
+
 			builder.setRecordCount(
 					linesQuantity.get()
 				)

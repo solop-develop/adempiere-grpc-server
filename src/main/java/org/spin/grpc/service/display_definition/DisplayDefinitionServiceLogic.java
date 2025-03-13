@@ -29,18 +29,28 @@ import java.util.stream.Collectors;
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Table;
+import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_S_ResourceAssignment;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MBPartner;
+import org.compiere.model.MBPartnerLocation;
+import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
+import org.compiere.model.MLocation;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MTable;
+import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.POAdapter;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.display_definition.AddressRequest;
+import org.spin.backend.grpc.display_definition.BusinessPartner;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
+import org.spin.backend.grpc.display_definition.CreateBusinessPartnerRequest;
 import org.spin.backend.grpc.display_definition.CreateDataEntryRequest;
 import org.spin.backend.grpc.display_definition.DataEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
@@ -51,6 +61,7 @@ import org.spin.backend.grpc.display_definition.ExpandCollapseEntry;
 import org.spin.backend.grpc.display_definition.ExpandCollapseGroup;
 import org.spin.backend.grpc.display_definition.FieldDefinition;
 import org.spin.backend.grpc.display_definition.GeneralEntry;
+import org.spin.backend.grpc.display_definition.GetBusinessPartnerRequest;
 import org.spin.backend.grpc.display_definition.HierarchyParent;
 import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
@@ -88,6 +99,7 @@ import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.ResourceGroup;
 import org.spin.backend.grpc.display_definition.ResourceGroupChild;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
+import org.spin.backend.grpc.display_definition.UpdateBusinessPartnerRequest;
 import org.spin.backend.grpc.display_definition.UpdateDataEntryRequest;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
@@ -101,6 +113,7 @@ import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.Value;
@@ -201,6 +214,8 @@ public class DisplayDefinitionServiceLogic {
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
 			whereClause = "AD_Table_ID = ?";
+		} else if (request.getIsOnlyField()) {
+			whereClause = "AD_Table_ID = ? AND (SP010_IsInfoRecord = 'Y' OR IsInsertRecord = 'Y')";
 		}
 		List<Object> parametersList = new ArrayList<>();
 		parametersList.add(
@@ -244,7 +259,7 @@ public class DisplayDefinitionServiceLogic {
 					if(!Util.isEmpty(displayReference.get_ValueAsString("Description"))) {
 						display.set_ValueOfColumn("Description", displayReference.get_ValueAsString("Description"));
 					}
-					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display);
+					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display, true);
 					builderList.addRecords(builder);
 				})
 			;
@@ -253,7 +268,7 @@ public class DisplayDefinitionServiceLogic {
 				.getIDsAsList()
 				.forEach(recordId -> {
 					PO display = referenceTable.getPO(recordId, null);
-					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display);
+					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display, true);
 					builderList.addRecords(builder);
 				})
 			;
@@ -1712,6 +1727,547 @@ public class DisplayDefinitionServiceLogic {
 		});
 
 		return Empty.newBuilder();
+	}
+
+
+	/**
+	 * Get reference from column name and table
+	 * @param tableId
+	 * @param columnName
+	 * @return
+	 */
+	private static int getReferenceId(int tableId, String columnName) {
+		MColumn column = MTable.get(Env.getCtx(), tableId).getColumn(columnName);
+		if(column == null) {
+			return -1;
+		}
+		return column.getAD_Reference_ID();
+	}
+
+	/**
+	 * Set additional attributes
+	 * @param entity
+	 * @param attributes
+	 * @return void
+	 */
+	private static void setAdditionalAttributes(PO entity, Map<String, Value> attributes) {
+		if(attributes != null) {
+			attributes.keySet().forEach(key -> {
+				Value attribute = attributes.get(key);
+				int referenceId = getReferenceId(entity.get_Table_ID(), key);
+				Object value = null;
+				if(referenceId > 0) {
+					value = ValueManager.getObjectFromReference(attribute, referenceId);
+				} 
+				if(value == null) {
+					value = ValueManager.getObjectFromValue(attribute);
+				}
+				entity.set_ValueOfColumn(key, value);
+			});
+		}
+	}
+
+	/**
+	 * Create Address from Business Partner and address request
+	 * @param customer
+	 * @param address
+	 * @param templateLocation
+	 * @param transactionName
+	 * @return void
+	 */
+	private static void createBusinessPartnerAddress(MBPartner businessPartner, AddressRequest address, MLocation templateLocation, String transactionName) {
+		int countryId = address.getCountryId();
+		//	Instance it
+		MLocation location = new MLocation(Env.getCtx(), 0, transactionName);
+		if(countryId > 0) {
+			int regionId = address.getRegionId();
+			int cityId = address.getCityId();
+			String cityName = null;
+			//	City Name
+			if(!Util.isEmpty(address.getCityName())) {
+				cityName = address.getCityName();
+			}
+			location.setC_Country_ID(countryId);
+			location.setC_Region_ID(regionId);
+			location.setCity(cityName);
+			if(cityId > 0) {
+				location.setC_City_ID(cityId);
+			}
+		} else {
+			//	Copy
+			PO.copyValues(templateLocation, location);
+		}
+		//	Postal Code
+		if (!Util.isEmpty(address.getPostalCode())) {
+			location.setPostal(address.getPostalCode());
+		}
+		//	Address
+		Optional.ofNullable(address.getAddress1()).ifPresent(addressValue -> location.setAddress1(addressValue));
+		Optional.ofNullable(address.getAddress2()).ifPresent(addressValue -> location.setAddress2(addressValue));
+		Optional.ofNullable(address.getAddress3()).ifPresent(addressValue -> location.setAddress3(addressValue));
+		Optional.ofNullable(address.getAddress4()).ifPresent(addressValue -> location.setAddress4(addressValue));
+		Optional.ofNullable(address.getPostalCode()).ifPresent(postalCode -> location.setPostal(postalCode));
+		//	
+		location.saveEx(transactionName);
+		//	Create BP location
+		MBPartnerLocation businessPartnerLocation = new MBPartnerLocation(businessPartner);
+		businessPartnerLocation.setC_Location_ID(location.getC_Location_ID());
+		//	Default
+		businessPartnerLocation.setIsBillTo(address.getIsDefaultBilling());
+		businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultBilling, address.getIsDefaultBilling());
+		businessPartnerLocation.setIsShipTo(address.getIsDefaultShipping());
+		businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping, address.getIsDefaultShipping());
+		Optional.ofNullable(address.getContactName()).ifPresent(contact -> businessPartnerLocation.setContactPerson(contact));
+		Optional.ofNullable(address.getLocationName()).ifPresent(locationName -> businessPartnerLocation.setName(locationName));
+		Optional.ofNullable(address.getEmail()).ifPresent(email -> businessPartnerLocation.setEMail(email));
+		Optional.ofNullable(address.getPhone()).ifPresent(phome -> businessPartnerLocation.setPhone(phome));
+		Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.setDescription(description));
+		if(Util.isEmpty(businessPartnerLocation.getName())) {
+			businessPartnerLocation.setName(".");
+		}
+		//	Additional attributes
+		setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributes().getFieldsMap());
+		businessPartnerLocation.saveEx(transactionName);
+		//	Contact
+		if(!Util.isEmpty(address.getContactName()) || !Util.isEmpty(address.getEmail()) || !Util.isEmpty(address.getPhone())) {
+			MUser contact = new MUser(businessPartner);
+			Optional.ofNullable(address.getEmail()).ifPresent(email -> contact.setEMail(email));
+			Optional.ofNullable(address.getPhone()).ifPresent(phome -> contact.setPhone(phome));
+			Optional.ofNullable(address.getDescription()).ifPresent(description -> contact.setDescription(description));
+			String contactName = address.getContactName();
+			if(Util.isEmpty(contactName)) {
+				contactName = address.getEmail();
+			}
+			if(Util.isEmpty(contactName)) {
+				contactName = address.getPhone();
+			}
+			contact.setName(contactName);
+			//	Save
+			contact.setC_BPartner_Location_ID(businessPartnerLocation.getC_BPartner_Location_ID());
+			contact.saveEx(transactionName);
+ 		}
+	}
+
+	/**
+	 * Create Customer
+	 * @param request
+	 * @return
+	 */
+	public static BusinessPartner.Builder createBusinesPartner(CreateBusinessPartnerRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		//	Validate name
+		if(Util.isEmpty(request.getName(), true)) {
+			throw new AdempiereException("@Name@ @IsMandatory@");
+		}
+		Properties context = Env.getCtx();
+		final int clientId = Env.getAD_Client_ID(context);
+
+		//	Validate Template
+		MClientInfo clientInfo = MClientInfo.get(context);
+		int customerTemplateId = clientInfo.getC_BPartnerCashTrx_ID();
+		if(customerTemplateId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartnerCashTrx_ID@");
+		}
+		MBPartner template = MBPartner.get(context, customerTemplateId);
+		if (template == null || template.getC_BPartner_ID() <= 0) {
+			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
+		}
+
+		// copy and clear values by termplate
+		MBPartner businessPartner = new MBPartner(context);
+		PO.copyValues(template, businessPartner);
+		businessPartner.setTaxID("");
+		businessPartner.setValue("");
+		businessPartner.setNAICS(null);
+		businessPartner.setName("");
+		businessPartner.setName2(null);
+		businessPartner.setDUNS("");
+		businessPartner.setIsActive(true);
+
+		Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false))
+			.stream()
+			.findFirst()
+		;
+		if(!maybeTemplateLocation.isPresent()) {
+			throw new AdempiereException("@C_BPartnerCashTrx_ID@ @C_BPartner_Location_ID@ @NotFound@");
+		}
+		//	Get location from template
+		MLocation templateLocation = maybeTemplateLocation.get().getLocation(false);
+		if(templateLocation == null
+				|| templateLocation.getC_Location_ID() <= 0) {
+			throw new AdempiereException("@C_Location_ID@ @NotFound@");
+		}
+		Trx.run(transactionName -> {
+			//	Create it
+			businessPartner.setAD_Org_ID(0);
+			businessPartner.setIsCustomer (true);
+			businessPartner.setIsVendor (false);
+			businessPartner.set_TrxName(transactionName);
+			//	Set Value
+			String code = request.getValue();
+			if (Util.isEmpty(code, true)) {
+				code = DB.getDocumentNo(clientId, I_C_BPartner.Table_Name, transactionName, businessPartner);
+			}
+			businessPartner.setValue(code);
+			//	Tax Id
+			Optional.ofNullable(request.getTaxId()).ifPresent(value -> businessPartner.setTaxID(value));
+			//	Duns
+			Optional.ofNullable(request.getDuns()).ifPresent(value -> businessPartner.setDUNS(value));
+			//	Naics
+			Optional.ofNullable(request.getNaics()).ifPresent(value -> businessPartner.setNAICS(value));
+			//	Name
+			Optional.ofNullable(request.getName()).ifPresent(value -> businessPartner.setName(value));
+			//	Last name
+			Optional.ofNullable(request.getLastName()).ifPresent(value -> businessPartner.setName2(value));
+			//	Description
+			Optional.ofNullable(request.getDescription()).ifPresent(value -> businessPartner.setDescription(value));
+			//	Business partner group
+			if(request.getBusinessPartnerGroupId() > 0) {
+				int businessPartnerGroupId = request.getBusinessPartnerGroupId();
+				if(businessPartnerGroupId != 0) {
+					businessPartner.setC_BP_Group_ID(businessPartnerGroupId);
+				}
+			}
+			//	Additional attributes
+			setAdditionalAttributes(businessPartner, request.getAdditionalAttributes().getFieldsMap());
+			//	Save it
+			businessPartner.saveEx(transactionName);
+			
+			// clear price list from business partner group
+			if (businessPartner.getM_PriceList_ID() > 0) {
+				businessPartner.setM_PriceList_ID(0);
+				businessPartner.saveEx(transactionName);
+			}
+			
+			//	Location
+			request.getAddressesList().forEach(address -> {
+				createBusinessPartnerAddress(
+					businessPartner,
+					address,
+					templateLocation,
+					transactionName
+				);
+			});
+		});
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				businessPartner.getC_BPartner_ID()
+			)
+		;
+
+		//	Default return
+		return DisplayDefinitionConvertUtil.convertBusinessPartner(
+			businessPartner,
+			recordItem
+		);
+	}
+
+	/**
+	 * Get Customer
+	 * @param request
+	 * @return
+	 */
+	public static BusinessPartner.Builder getBusinessPartner(GetBusinessPartnerRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
+		}
+		//	Get business partner
+		MBPartner businessPartner = new Query(
+			Env.getCtx(),
+			I_C_BPartner.Table_Name,
+			"C_BPartner_ID = ?",
+			null
+		)
+			.setParameters(request.getId())
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.first()
+		;
+		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
+		}
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				businessPartner.getC_BPartner_ID()
+			)
+		;
+
+		//	Default return
+		return DisplayDefinitionConvertUtil.convertBusinessPartner(
+			businessPartner,
+			recordItem
+		);
+	}
+
+	/**
+	 * 
+	 * @param businessPartnerLocation
+	 * @param transactionName
+	 * @return
+	 * @return MUser
+	 */
+	private static MUser getOfBusinessPartnerLocation(MBPartnerLocation businessPartnerLocation, String transactionName) {
+		return new Query(
+				businessPartnerLocation.getCtx(),
+				MUser.Table_Name,
+				"C_BPartner_Location_ID = ?",
+				transactionName
+			)
+			.setParameters(businessPartnerLocation.getC_BPartner_Location_ID())
+			.first()
+		;
+	}
+
+	/**
+	 * update Customer
+	 * @param request
+	 * @return
+	 */
+	public static BusinessPartner.Builder updateBusinessPartner(UpdateBusinessPartnerRequest request) {
+		PO displayDefinition = validateAndGetDisplayDefinition(
+			request.getDisplayDefinitionId()
+		);
+
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
+		}
+		//	
+		AtomicReference<MBPartner> businessPartnerReference = new AtomicReference<MBPartner>();
+		Trx.run(transactionName -> {
+			//	Create it
+			MBPartner businessPartner = MBPartner.get(Env.getCtx(), request.getId());
+			if(businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
+				throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
+			}
+			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+			if (businessPartner.getC_BPartner_ID() == clientInfo.getC_BPartnerCashTrx_ID()) {
+				throw new AdempiereException("@POS.ModifyTemplateCustomerNotAllowed@");
+			}
+			businessPartner.set_TrxName(transactionName);
+			//	Set Value
+			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));
+			//	Tax Id
+			Optional.ofNullable(request.getTaxId()).ifPresent(value -> businessPartner.setTaxID(value));
+			//	Duns
+			Optional.ofNullable(request.getDuns()).ifPresent(value -> businessPartner.setDUNS(value));
+			//	Naics
+			Optional.ofNullable(request.getNaics()).ifPresent(value -> businessPartner.setNAICS(value));
+			//	Name
+			Optional.ofNullable(request.getName()).ifPresent(value -> businessPartner.setName(value));
+			//	Last name
+			Optional.ofNullable(request.getLastName()).ifPresent(value -> businessPartner.setName2(value));
+			//	Description
+			Optional.ofNullable(request.getDescription()).ifPresent(value -> businessPartner.setDescription(value));
+			//	Additional attributes
+			setAdditionalAttributes(businessPartner, request.getAdditionalAttributes().getFieldsMap());
+			//	Save it
+			businessPartner.saveEx(transactionName);
+			//	Location
+			request.getAddressesList().forEach(address -> {
+				int countryId = address.getCountryId();
+				//	
+				int regionId = address.getRegionId();
+				String cityName = null;
+				int cityId = address.getCityId();
+				//	City Name
+				if(!Util.isEmpty(address.getCityName())) {
+					cityName = address.getCityName();
+				}
+				//	Validate it
+				if(countryId > 0
+						|| regionId > 0
+						|| cityId > 0
+						|| !Util.isEmpty(cityName)) {
+					//	Find it
+					Optional<MBPartnerLocation> maybeCustomerLocation = Arrays.asList(businessPartner.getLocations(true))
+						.parallelStream()
+						.filter(customerLocation -> customerLocation.getC_BPartner_Location_ID() == address.getId())
+						.findFirst()
+					;
+					if(maybeCustomerLocation.isPresent()) {
+						MBPartnerLocation businessPartnerLocation = maybeCustomerLocation.get();
+						MLocation location = businessPartnerLocation.getLocation(true);
+						location.set_TrxName(transactionName);
+						if(countryId > 0) {
+							location.setC_Country_ID(countryId);
+						}
+						if(regionId > 0) {
+							location.setC_Region_ID(regionId);
+						}
+						if(cityId > 0) {
+							location.setC_City_ID(cityId);
+						}
+						Optional.ofNullable(cityName).ifPresent(city -> location.setCity(city));
+						//	Address
+						Optional.ofNullable(address.getAddress1()).ifPresent(addressValue -> location.setAddress1(addressValue));
+						Optional.ofNullable(address.getAddress2()).ifPresent(addressValue -> location.setAddress2(addressValue));
+						Optional.ofNullable(address.getAddress3()).ifPresent(addressValue -> location.setAddress3(addressValue));
+						Optional.ofNullable(address.getAddress4()).ifPresent(addressValue -> location.setAddress4(addressValue));
+						Optional.ofNullable(address.getPostalCode()).ifPresent(postalCode -> location.setPostal(postalCode));
+						//	Save
+						location.saveEx(transactionName);
+						//	Update business partner location
+						businessPartnerLocation.setIsBillTo(address.getIsDefaultBilling());
+						businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultBilling, address.getIsDefaultBilling());
+						businessPartnerLocation.setIsShipTo(address.getIsDefaultShipping());
+						businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping, address.getIsDefaultShipping());
+						Optional.ofNullable(address.getContactName()).ifPresent(contact -> businessPartnerLocation.setContactPerson(contact));
+						Optional.ofNullable(address.getLocationName()).ifPresent(locationName -> businessPartnerLocation.setName(locationName));
+						Optional.ofNullable(address.getEmail()).ifPresent(email -> businessPartnerLocation.setEMail(email));
+						Optional.ofNullable(address.getPhone()).ifPresent(phome -> businessPartnerLocation.setPhone(phome));
+						Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.setDescription(description));
+						//	Additional attributes
+						setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributes().getFieldsMap());
+						businessPartnerLocation.saveEx(transactionName);
+						//	Contact
+						AtomicReference<MUser> contactReference = new AtomicReference<MUser>(getOfBusinessPartnerLocation(businessPartnerLocation, transactionName));
+						if(contactReference.get() == null
+								|| contactReference.get().getAD_User_ID() <= 0) {
+							contactReference.set(new MUser(businessPartner));
+						}
+						if(!Util.isEmpty(address.getContactName()) || !Util.isEmpty(address.getEmail()) || !Util.isEmpty(address.getPhone())) {
+							MUser contact = contactReference.get();
+							Optional.ofNullable(address.getEmail()).ifPresent(email -> contact.setEMail(email));
+							Optional.ofNullable(address.getPhone()).ifPresent(phome -> contact.setPhone(phome));
+							Optional.ofNullable(address.getDescription()).ifPresent(description -> contact.setDescription(description));
+							String contactName = address.getContactName();
+							if(Util.isEmpty(contactName)) {
+								contactName = address.getEmail();
+							}
+							if(Util.isEmpty(contactName)) {
+								contactName = address.getPhone();
+							}
+							contact.setName(contactName);
+							//	Save
+							contact.setC_BPartner_Location_ID(businessPartnerLocation.getC_BPartner_Location_ID());
+							contact.saveEx(transactionName);
+				 		}
+					} else {	//	Create new
+						Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(businessPartner.getLocations(false)).stream().findFirst();
+						if(!maybeTemplateLocation.isPresent()) {
+							throw new AdempiereException("@C_BPartnerCashTrx_ID@ @C_BPartner_Location_ID@ @NotFound@");
+						}
+						//	Get location from template
+						MLocation templateLocation = maybeTemplateLocation.get().getLocation(false);
+						if(templateLocation == null
+								|| templateLocation.getC_Location_ID() <= 0) {
+							throw new AdempiereException("@C_Location_ID@ @NotFound@");
+						}
+						createCustomerAddress(businessPartner, address, templateLocation, transactionName);
+					}
+					businessPartnerReference.set(businessPartner);
+				}
+			});
+		});
+
+
+		GenericItem recordItem = (GenericItem) DisplayBuilder.newInstance(
+				displayDefinition.get_ID()
+			)
+			.run(
+				businessPartnerReference.get().getC_BPartner_ID()
+			)
+		;
+
+		//	Default return
+		return DisplayDefinitionConvertUtil.convertBusinessPartner(
+			businessPartnerReference.get(),
+			recordItem
+		);
+	}
+
+	/**
+	 * Create Address from customer and address request
+	 * @param customer
+	 * @param address
+	 * @param templateLocation
+	 * @param transactionName
+	 * @return void
+	 */
+	private static void createCustomerAddress(MBPartner customer, AddressRequest address, MLocation templateLocation, String transactionName) {
+		int countryId = address.getCountryId();
+		//	Instance it
+		MLocation location = new MLocation(Env.getCtx(), 0, transactionName);
+		if(countryId > 0) {
+			int regionId = address.getRegionId();
+			int cityId = address.getCityId();
+			String cityName = null;
+			//	City Name
+			if(!Util.isEmpty(address.getCityName())) {
+				cityName = address.getCityName();
+			}
+			location.setC_Country_ID(countryId);
+			location.setC_Region_ID(regionId);
+			location.setCity(cityName);
+			if(cityId > 0) {
+				location.setC_City_ID(cityId);
+			}
+		} else {
+			//	Copy
+			PO.copyValues(templateLocation, location);
+		}
+		//	Postal Code
+		if(!Util.isEmpty(address.getPostalCode())) {
+			location.setPostal(address.getPostalCode());
+		}
+		//	Address
+		Optional.ofNullable(address.getAddress1()).ifPresent(addressValue -> location.setAddress1(addressValue));
+		Optional.ofNullable(address.getAddress2()).ifPresent(addressValue -> location.setAddress2(addressValue));
+		Optional.ofNullable(address.getAddress3()).ifPresent(addressValue -> location.setAddress3(addressValue));
+		Optional.ofNullable(address.getAddress4()).ifPresent(addressValue -> location.setAddress4(addressValue));
+		Optional.ofNullable(address.getPostalCode()).ifPresent(postalCode -> location.setPostal(postalCode));
+		//	
+		location.saveEx(transactionName);
+		//	Create BP location
+		MBPartnerLocation businessPartnerLocation = new MBPartnerLocation(customer);
+		businessPartnerLocation.setC_Location_ID(location.getC_Location_ID());
+		//	Default
+		businessPartnerLocation.setIsBillTo(address.getIsDefaultBilling());
+		businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultBilling, address.getIsDefaultBilling());
+		businessPartnerLocation.setIsShipTo(address.getIsDefaultShipping());
+		businessPartnerLocation.set_ValueOfColumn(VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping, address.getIsDefaultShipping());
+		Optional.ofNullable(address.getContactName()).ifPresent(contact -> businessPartnerLocation.setContactPerson(contact));
+		Optional.ofNullable(address.getLocationName()).ifPresent(locationName -> businessPartnerLocation.setName(locationName));
+		Optional.ofNullable(address.getEmail()).ifPresent(email -> businessPartnerLocation.setEMail(email));
+		Optional.ofNullable(address.getPhone()).ifPresent(phome -> businessPartnerLocation.setPhone(phome));
+		Optional.ofNullable(address.getDescription()).ifPresent(description -> businessPartnerLocation.setDescription(description));
+		if(Util.isEmpty(businessPartnerLocation.getName())) {
+			businessPartnerLocation.setName(".");
+		}
+		//	Additional attributes
+		setAdditionalAttributes(businessPartnerLocation, address.getAdditionalAttributes().getFieldsMap());
+		businessPartnerLocation.saveEx(transactionName);
+		//	Contact
+		if(!Util.isEmpty(address.getContactName()) || !Util.isEmpty(address.getEmail()) || !Util.isEmpty(address.getPhone())) {
+			MUser contact = new MUser(customer);
+			Optional.ofNullable(address.getEmail()).ifPresent(email -> contact.setEMail(email));
+			Optional.ofNullable(address.getPhone()).ifPresent(phome -> contact.setPhone(phome));
+			Optional.ofNullable(address.getDescription()).ifPresent(description -> contact.setDescription(description));
+			String contactName = address.getContactName();
+			if(Util.isEmpty(contactName)) {
+				contactName = address.getEmail();
+			}
+			if(Util.isEmpty(contactName)) {
+				contactName = address.getPhone();
+			}
+			contact.setName(contactName);
+			//	Save
+			contact.setC_BPartner_Location_ID(businessPartnerLocation.getC_BPartner_Location_ID());
+			contact.saveEx(transactionName);
+ 		}
 	}
 
 }
