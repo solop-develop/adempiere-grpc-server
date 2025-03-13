@@ -181,6 +181,26 @@ service DisplayDefinition {
 			delete: "/display-definition/{display_definition_id}/entries/{id}/resources"
 		};
 	}
+
+	//	BusinessPartner
+	rpc CreateBusinessPartner(CreateBusinessPartnerRequest) returns (BusinessPartner) {
+		option (google.api.http) = {
+			post: "/display-definition/{display_definition_id}/business-partners",
+			body: "*"
+		};
+	}
+	rpc GetBusinessPartner(GetBusinessPartnerRequest) returns (BusinessPartner) {
+		option (google.api.http) = {
+			get: "/display-definition/{display_definition_id}/business-partners/{id}"
+		};
+	}
+	rpc UpdateBusinessPartner(UpdateBusinessPartnerRequest) returns (BusinessPartner) {
+		option (google.api.http) = {
+			put: "/display-definition/{display_definition_id}/business-partners/{id}",
+			body: "*"
+		};
+	}
+
 }
 
 
@@ -697,6 +717,7 @@ message ListTimelinesDataResponse {
 }
 
 
+
 // Workflow Definition
 message WorkflowStep {
 	string value = 1;
@@ -724,6 +745,7 @@ message ListWorkflowsDefinitionResponse {
 	string column_name = 3;
 	repeated WorkflowStep steps = 4;
 }
+
 
 
 // Workflow Data
@@ -792,4 +814,107 @@ message UpdateDataEntryRequest {
 message DeleteDataEntryRequest {
 	int32 display_definition_id = 1;
 	int32 id = 2;
+}
+
+
+
+//	Address
+message AddressRequest {
+	int32 id = 1;
+	string location_name = 2;
+	string address1 = 3;
+	string address2 = 4;
+	string address3 = 5;
+	string address4 = 6;
+	int32 city_id = 7;
+	string city_name = 8;
+	string postal_code = 9;
+	string postal_code_additional = 10;
+	int32 region_id = 11;
+	int32 country_id = 12;
+	string description = 13;
+	bool is_default_billing = 14;
+	bool is_default_shipping = 15;
+	string contact_name = 16;
+	string email = 17;
+	string phone = 18;
+	google.protobuf.Struct additional_attributes = 19;
+}
+message Region {
+	int32 id = 1;
+	string name = 2;
+}
+message City {
+	int32 id = 1;
+	string name = 2;
+}
+message Address {
+	int32 id = 1;
+	//	Location
+	string display_value = 2;
+	Region region = 3;
+	City city = 4;
+	string address1 = 5;
+	string address2 = 6;
+	string address3 = 7;
+	string address4 = 8;
+	string phone = 9;
+	string postal_code = 10;
+	string postal_code_additional = 11;
+	string country_code = 12;
+	int32 country_id = 13;
+	bool is_default_shipping = 14;
+	bool is_default_billing = 15;
+	string contact_name = 16;
+	string email = 17;
+	string location_name = 19;
+	string description = 18;
+	string reference = 20;
+	google.protobuf.Struct additional_attributes = 21;
+}
+
+// Business Partner
+message CreateBusinessPartnerRequest {
+	string value = 1;
+	string tax_id = 2;
+	string duns = 3;
+	string naics = 4;
+	string name = 5;
+	string last_name = 6;
+	string description = 7;
+	int32 business_partner_group_id = 8;
+	//	Location
+	repeated AddressRequest addresses = 9;
+	google.protobuf.Struct additional_attributes = 10;
+	int32 display_definition_id = 11;
+}
+message UpdateBusinessPartnerRequest {
+	int32 id = 1;
+	string value = 2;
+	string tax_id = 3;
+	string duns = 4;
+	string naics = 5;
+	string name = 6;
+	string last_name = 7;
+	string description = 8;
+	//	Location
+	repeated AddressRequest addresses = 9;
+	google.protobuf.Struct additional_attributes = 10;
+	int32 display_definition_id = 11;
+}
+message GetBusinessPartnerRequest {
+	int32 id = 1;
+	int32 display_definition_id = 2;
+}
+message BusinessPartner {
+	int32 id = 1;
+	string value = 2;
+	string tax_id = 3;
+	string duns = 4;
+	string naics = 5;
+	string name = 6;
+	string last_name = 7;
+	string description = 8;
+	repeated Address addresses = 9;
+	google.protobuf.Struct additional_attributes = 10;
 }

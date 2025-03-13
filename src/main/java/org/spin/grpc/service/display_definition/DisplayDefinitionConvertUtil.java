@@ -30,14 +30,22 @@ import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_FieldGroup;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
+import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_S_ResourceAssignment;
 import org.adempiere.core.domains.models.X_AD_FieldGroup;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MBPartner;
+import org.compiere.model.MBPartnerLocation;
+import org.compiere.model.MCity;
 import org.compiere.model.MColumn;
+import org.compiere.model.MCountry;
+import org.compiere.model.MLocation;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRefTable;
+import org.compiere.model.MRegion;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MTable;
+import org.compiere.model.MUser;
 import org.compiere.model.MValRule;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
@@ -46,7 +54,10 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.display_definition.Address;
+import org.spin.backend.grpc.display_definition.BusinessPartner;
 import org.spin.backend.grpc.display_definition.CalendarEntry;
+import org.spin.backend.grpc.display_definition.City;
 import org.spin.backend.grpc.display_definition.DataEntry;
 import org.spin.backend.grpc.display_definition.DefinitionMetadata;
 import org.spin.backend.grpc.display_definition.DefinitionType;
@@ -62,6 +73,7 @@ import org.spin.backend.grpc.display_definition.KanbanEntry;
 import org.spin.backend.grpc.display_definition.KanbanStep;
 import org.spin.backend.grpc.display_definition.MosaicEntry;
 import org.spin.backend.grpc.display_definition.Reference;
+import org.spin.backend.grpc.display_definition.Region;
 import org.spin.backend.grpc.display_definition.ResourceEntry;
 import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
@@ -73,6 +85,7 @@ import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -1878,6 +1891,282 @@ public class DisplayDefinitionConvertUtil {
 		);
 		
 
+		return builder;
+	}
+
+
+
+	/**
+	 * Convert customer
+	 * @param businessPartner
+	 * @return
+	 */
+	public static BusinessPartner.Builder convertBusinessPartner(MBPartner businessPartner) {
+		if(businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
+			return BusinessPartner.newBuilder();
+		}
+		BusinessPartner.Builder customer = BusinessPartner.newBuilder()
+			.setId(
+				businessPartner.getC_BPartner_ID()
+			)
+			.setValue(
+				StringManager.getValidString(
+					businessPartner.getValue()
+				)
+			)
+			.setTaxId(
+				StringManager.getValidString(
+					businessPartner.getTaxID()
+				)
+			)
+			.setDuns(
+				StringManager.getValidString(
+					businessPartner.getDUNS()
+				)
+			)
+			.setNaics(
+				StringManager.getValidString(
+					businessPartner.getNAICS()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					businessPartner.getName()
+				)
+			)
+			.setLastName(
+				StringManager.getValidString(
+					businessPartner.getName2()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					businessPartner.getDescription()
+				)
+			)
+		;
+		//	Additional Attributes
+		Struct.Builder customerAdditionalAttributes = Struct.newBuilder();
+		MTable.get(Env.getCtx(), businessPartner.get_Table_ID()).getColumnsAsList().stream()
+		.filter(column -> {
+			String columnName = column.getColumnName();
+			return !columnName.equals(MBPartner.COLUMNNAME_UUID)
+				&& !columnName.equals(MBPartner.COLUMNNAME_Value)
+				&& !columnName.equals(MBPartner.COLUMNNAME_TaxID)
+				&& !columnName.equals(MBPartner.COLUMNNAME_DUNS)
+				&& !columnName.equals(MBPartner.COLUMNNAME_NAICS)
+				&& !columnName.equals(MBPartner.COLUMNNAME_Name)
+				&& !columnName.equals(MBPartner.COLUMNNAME_Name2)
+				&& !columnName.equals(MBPartner.COLUMNNAME_Description)
+			;
+		}).forEach(column -> {
+			String columnName = column.getColumnName();
+			Value value = ValueManager.getValueFromReference(
+					businessPartner.get_Value(columnName),
+					column.getAD_Reference_ID()
+				).build();
+			customerAdditionalAttributes.putFields(
+				columnName,
+				value
+			);
+		});
+		customer.setAdditionalAttributes(customerAdditionalAttributes);
+		//	Add Address
+		Arrays.asList(businessPartner.getLocations(true)).stream()
+			.filter(customerLocation -> customerLocation.isActive())
+			.forEach(address -> {
+				customer.addAddresses(
+					convertBusinessPartnerAddress(address)
+				);
+			});
+		return customer;
+	}
+	/**
+	 * Convert Address
+	 * @param businessPartnerLocation
+	 * @return
+	 * @return Address.Builder
+	 */
+	public static Address.Builder convertBusinessPartnerAddress(MBPartnerLocation businessPartnerLocation) {
+		if(businessPartnerLocation == null) {
+			return Address.newBuilder();
+		}
+		MLocation location = businessPartnerLocation.getLocation(true);
+		Address.Builder builder = Address.newBuilder()
+			.setId(
+				businessPartnerLocation.getC_BPartner_Location_ID()
+			)
+			.setDisplayValue(
+				StringManager.getValidString(
+					location.toString()
+				)
+			)
+			.setPostalCode(
+				StringManager.getValidString(
+					location.getPostal()
+				)
+			)
+			.setPostalCodeAdditional(
+				StringManager.getValidString(
+					location.getPostal_Add()
+				)
+			)
+			.setAddress1(
+				StringManager.getValidString(
+					location.getAddress1()
+				)
+			)
+			.setAddress2(
+				StringManager.getValidString(
+					location.getAddress2()
+				)
+			)
+			.setAddress3(
+				StringManager.getValidString(
+					location.getAddress3()
+				)
+			)
+			.setAddress4(
+				StringManager.getValidString(
+					location.getAddress4()
+				)
+			)
+			.setPostalCode(
+				StringManager.getValidString(
+					location.getPostal()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					businessPartnerLocation.getDescription()
+				)
+			)
+			.setLocationName(
+				StringManager.getValidString(
+					businessPartnerLocation.getName()
+				)
+			)
+			.setContactName(
+				StringManager.getValidString(
+					businessPartnerLocation.getContactPerson()
+				)
+			)
+			.setEmail(
+				StringManager.getValidString(
+					businessPartnerLocation.getEMail()
+				)
+			)
+			.setPhone(
+				StringManager.getValidString(
+					businessPartnerLocation.getPhone()
+				)
+			)
+			.setIsDefaultShipping(
+				businessPartnerLocation.get_ValueAsBoolean(
+					VueStoreFrontUtil.COLUMNNAME_IsDefaultShipping
+				)
+			)
+			.setIsDefaultBilling(
+				businessPartnerLocation.get_ValueAsBoolean(
+					VueStoreFrontUtil.COLUMNNAME_IsDefaultBilling
+				)
+			)
+		;
+		//	Get user from location
+		MUser user = new Query(
+			Env.getCtx(),
+			I_AD_User.Table_Name,
+			I_AD_User.COLUMNNAME_C_BPartner_Location_ID + " = ?",
+			businessPartnerLocation.get_TrxName()
+		)
+			.setParameters(businessPartnerLocation.getC_BPartner_Location_ID())
+			.setOnlyActiveRecords(true)
+			.first();
+		String phone = null;
+		if(user != null && user.getAD_User_ID() > 0) {
+			if(!Util.isEmpty(user.getPhone())) {
+				phone = user.getPhone();
+			}
+			if(!Util.isEmpty(user.getName()) && Util.isEmpty(builder.getContactName())) {
+				builder.setContactName(user.getName());
+			}
+		}
+		//	
+		builder.setPhone(
+			StringManager.getValidString(
+				Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(Optional.ofNullable(phone).orElse(""))
+			)
+		);
+		MCountry country = MCountry.get(Env.getCtx(), location.getC_Country_ID());
+		builder.setCountryCode(
+				StringManager.getValidString(
+					country.getCountryCode()
+				)
+			)
+			.setCountryId(
+				country.getC_Country_ID()
+			)
+		;
+		//	City
+		if(location.getC_City_ID() > 0) {
+			MCity city = MCity.get(Env.getCtx(), location.getC_City_ID());
+			builder.setCity(
+				City.newBuilder()
+					.setId(
+						city.getC_City_ID()
+					)
+					.setName(
+						StringManager.getValidString(
+							city.getName()
+						)
+					)
+			);
+		} else {
+			builder.setCity(
+				City.newBuilder()
+					.setName(
+						StringManager.getValidString(
+							location.getCity()
+						)
+					)
+				)
+			;
+		}
+		//	Region
+		if(location.getC_Region_ID() > 0) {
+			MRegion region = MRegion.get(Env.getCtx(), location.getC_Region_ID());
+			builder.setRegion(
+				Region.newBuilder()
+					.setId(
+						region.getC_Region_ID()
+					)
+					.setName(
+						StringManager.getValidString(
+							region.getName()
+						)
+					)
+			);
+		}
+		//	Additional Attributes
+		MTable.get(Env.getCtx(), businessPartnerLocation.get_Table_ID()).getColumnsAsList().stream()
+		.map(column -> column.getColumnName())
+		.filter(columnName -> {
+			return !columnName.equals(MBPartnerLocation.COLUMNNAME_UUID)
+				&& !columnName.equals(MBPartnerLocation.COLUMNNAME_Phone)
+				&& !columnName.equals(MBPartnerLocation.COLUMNNAME_Name)
+			;
+		}).forEach(columnName -> {
+			Struct.Builder values = Struct.newBuilder()
+				.putFields(
+					columnName,
+					ValueManager.getValueFromObject(
+						businessPartnerLocation.get_Value(columnName)
+					).build()
+				)
+			;
+			builder.setAdditionalAttributes(values);
+		});
+		//	
 		return builder;
 	}
 
