@@ -350,7 +350,6 @@ public class ReferenceInfo {
 			//	Display Type
 			displayTypeId = column.getAD_Reference_ID();
 			referenceValueId = column.getAD_Reference_Value_ID();
-			validationRuleId = column.getAD_Val_Rule_ID();
 			columnName = column.getColumnName();
 			if(field.getAD_Reference_ID() > 0) {
 				displayTypeId = field.getAD_Reference_ID();
