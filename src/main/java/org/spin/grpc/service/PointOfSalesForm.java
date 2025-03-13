@@ -2703,7 +2703,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	POS Uuid
 		MPOS pos = getPOSFromId(request.getPosId(), true);
 		MBPartner businessPartner = MBPartner.getTemplate(context, clientId, pos.getC_POS_ID());
-		businessPartner.isActive();
 
 		//	Validate Template
 		int customerTemplateId = request.getCustomerTemplateId();
@@ -4007,8 +4006,10 @@ public class PointOfSalesForm extends StoreImplBase {
 
 			//	Save
 			salesOrder.saveEx(transactionName);
+			salesOrder.load(transactionName);
 			orderReference.set(salesOrder);
 		});
+
 		//	Return order
 		return orderReference.get();
 	}
@@ -4113,7 +4114,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			orderLine.saveEx();
 		});
 	}
-	
+
 	/**
 	 * Configure Discount for all lines
 	 * @param order
@@ -4121,11 +4122,22 @@ public class PointOfSalesForm extends StoreImplBase {
 	private void configureDiscount(MOrder order, BigDecimal discountRate, String transactionName) {
 		MPOS pos = getPOSFromId(order.getC_POS_ID(), false);
 		Arrays.asList(order.getLines())
-		.forEach(orderLine -> {
-			updateOrderLine(pos, orderLine.getC_OrderLine_ID(), null, null, discountRate, false, 0, 0);
-		});
+			.forEach(orderLine -> {
+				updateOrderLine(
+					transactionName,
+					pos,
+					orderLine.getC_OrderLine_ID(),
+					null,
+					null,
+					discountRate,
+					false,
+					0,
+					0
+				);
+			})
+		;
 	}
-	
+
 	/**
 	 * Configure Discount Off for order
 	 * @param order
@@ -4571,10 +4583,13 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(orderLineId <= 0) {
 			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 		}
-		MPOS pos = getPOSFromId(request.getPosId(), true);
-		//	Quantity
-		return OrderConverUtil.convertOrderLine(
-			updateOrderLine(
+
+		AtomicReference<MOrderLine> maybeOrderLine = new AtomicReference<MOrderLine>();
+		Trx.run(transactionName -> {
+			MPOS pos = getPOSFromId(request.getPosId(), true);
+			//	Quantity
+			MOrderLine orderLine = updateOrderLine(
+				transactionName,
 				pos,
 				orderLineId,
 				NumberManager.getBigDecimalFromString(request.getQuantity()),
@@ -4583,10 +4598,14 @@ public class PointOfSalesForm extends StoreImplBase {
 				request.getIsAddQuantity(),
 				request.getWarehouseId(),
 				request.getUomId()
-			)
+			);
+			maybeOrderLine.set(orderLine);
+		});
+		return OrderConverUtil.convertOrderLine(
+			maybeOrderLine.get()
 		);
 	}
-	
+
 	/**
 	 * Create order line and return this
 	 * @param request
@@ -4788,6 +4807,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	
 	/***
 	 * Update order line
+	 * @param transactionName
 	 * @param orderLineId
 	 * @param quantity
 	 * @param price
@@ -4796,86 +4816,84 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @param warehouseId
 	 * @return
 	 */
-	private MOrderLine updateOrderLine(MPOS pos, int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId, int unitOfMeasureId) {
+	private MOrderLine updateOrderLine(String transactionName, MPOS pos, int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId, int unitOfMeasureId) {
 		if(orderLineId <= 0) {
 			return null;
 		}
-		AtomicReference<MOrderLine> maybeOrderLine = new AtomicReference<MOrderLine>();
-		Trx.run(transactionName -> {
-			MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
-			MOrder order = orderLine.getParent();
-			order.set_TrxName(transactionName);
-			OrderManagement.validateOrderReleased(order);
-			OrderUtil.setCurrentDate(order);
-			orderLine.setHeaderInfo(order);
-			//	Valid Complete
-			if (!DocumentUtil.isDrafted(order)) {
-				throw new AdempiereException("@C_Order_ID@ @Processed@");
+
+		MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
+		MOrder order = orderLine.getParent();
+		order.set_TrxName(transactionName);
+		OrderManagement.validateOrderReleased(order);
+		OrderUtil.setCurrentDate(order);
+		orderLine.setHeaderInfo(order);
+		//	Valid Complete
+		if (!DocumentUtil.isDrafted(order)) {
+			throw new AdempiereException("@C_Order_ID@ @Processed@");
+		}
+		int precision = MPriceList.getPricePrecision(Env.getCtx(), order.getM_PriceList_ID());
+		BigDecimal quantityToChange = quantity;
+		//	Get if is null
+		if(quantity != null) {
+			if(isAddQuantity) {
+				BigDecimal currentQuantity = orderLine.getQtyEntered();
+				if(currentQuantity == null) {
+					currentQuantity = Env.ZERO;
+				}
+				quantityToChange = currentQuantity.add(quantityToChange);
 			}
-			int precision = MPriceList.getPricePrecision(Env.getCtx(), order.getM_PriceList_ID());
-			BigDecimal quantityToChange = quantity;
-			//	Get if is null
-			if(quantity != null) {
-				if(isAddQuantity) {
-					BigDecimal currentQuantity = orderLine.getQtyEntered();
-					if(currentQuantity == null) {
-						currentQuantity = Env.ZERO;
-					}
-					quantityToChange = currentQuantity.add(quantityToChange);
+			if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
+				// if(warehouseId != orderLine.get_ValueAsInt("Ref_WarehouseSource_ID")
+				// 		|| unitOfMeasureId != orderLine.getC_UOM_ID()) {
+				// 	throw new AdempiereException("@ActionNotAllowedHere@");
+				// }
+				MOrderLine sourceRmaLine = new MOrderLine(Env.getCtx(), orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID), transactionName);
+				BigDecimal availableQuantity = OrderUtil.getAvailableQuantityForSell(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID), orderLineId, sourceRmaLine.getQtyEntered(), quantityToChange);
+				if(availableQuantity.compareTo(Env.ZERO) > 0) {
+					//	Update order quantity
+					quantityToChange = availableQuantity;
+				} else {
+					throw new AdempiereException("@QtyInsufficient@");
 				}
-				if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
-//					if(warehouseId != orderLine.get_ValueAsInt("Ref_WarehouseSource_ID")
-//							|| unitOfMeasureId != orderLine.getC_UOM_ID()) {
-//						throw new AdempiereException("@ActionNotAllowedHere@");
-//					}
-					MOrderLine sourceRmaLine = new MOrderLine(Env.getCtx(), orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID), transactionName);
-					BigDecimal availableQuantity = OrderUtil.getAvailableQuantityForSell(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID), orderLineId, sourceRmaLine.getQtyEntered(), quantityToChange);
-					if(availableQuantity.compareTo(Env.ZERO) > 0) {
-						//	Update order quantity
-						quantityToChange = availableQuantity;
-					} else {
-						throw new AdempiereException("@QtyInsufficient@");
-					}
-				}
-				orderLine.setQty(quantityToChange);
 			}
-			//	Calculate discount from final price
-			if(price != null
-					|| discountRate != null) {
-				if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
-					throw new AdempiereException("@ActionNotAllowedHere@");
-				}
-				// TODO: Verify with Price Entered/Actual
-				BigDecimal priceToOrder = orderLine.getPriceActual();
-				BigDecimal discountRateToOrder = Env.ZERO;
-				if (price != null) {
-					priceToOrder = price;
-					discountRateToOrder = getDiscount(orderLine.getPriceList(), price, precision);
-				}
-				//	Calculate final price from discount
-				if (discountRate != null) {
-					discountRateToOrder = discountRate;
-					priceToOrder = getFinalPrice(orderLine.getPriceList(), discountRate, precision);
-					priceToOrder = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), priceToOrder);
-				}
-				orderLine.setDiscount(discountRateToOrder);
-				orderLine.setPrice(priceToOrder);
+			orderLine.setQty(quantityToChange);
+		}
+		//	Calculate discount from final price
+		if(price != null
+				|| discountRate != null) {
+			if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
+				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
-			//	
-			if(warehouseId > 0) {
-//				orderLine.setM_Warehouse_ID(warehouseId);
-				orderLine.set_ValueOfColumn("Ref_WarehouseSource_ID", warehouseId);
+			// TODO: Verify with Price Entered/Actual
+			BigDecimal priceToOrder = orderLine.getPriceActual();
+			BigDecimal discountRateToOrder = Env.ZERO;
+			if (price != null) {
+				priceToOrder = price;
+				discountRateToOrder = getDiscount(orderLine.getPriceList(), price, precision);
 			}
-			//	Validate UOM
-			OrderUtil.updateUomAndQuantity(orderLine, unitOfMeasureId, quantityToChange);
-			//	Set values
-			orderLine.setTax();
-			orderLine.saveEx(transactionName);
-			//	Apply Discount from order
-			configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
-			maybeOrderLine.set(orderLine);
-		});
-		return maybeOrderLine.get();
+			//	Calculate final price from discount
+			if (discountRate != null) {
+				discountRateToOrder = discountRate;
+				priceToOrder = getFinalPrice(orderLine.getPriceList(), discountRate, precision);
+				priceToOrder = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), priceToOrder);
+			}
+			orderLine.setDiscount(discountRateToOrder);
+			orderLine.setPrice(priceToOrder);
+		}
+		//	
+		if(warehouseId > 0) {
+			// orderLine.setM_Warehouse_ID(warehouseId);
+			orderLine.set_ValueOfColumn("Ref_WarehouseSource_ID", warehouseId);
+		}
+		//	Validate UOM
+		OrderUtil.updateUomAndQuantity(orderLine, unitOfMeasureId, quantityToChange);
+		//	Set values
+		orderLine.setTax();
+		orderLine.saveEx(transactionName);
+		//	Apply Discount from order
+		configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
+
+		return orderLine;
 	} //	UpdateLine
 	
 	/**

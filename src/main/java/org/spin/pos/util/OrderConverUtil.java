@@ -64,7 +64,7 @@ public class OrderConverUtil {
 		int defaultDiscountChargeId = pos.get_ValueAsInt("DefaultDiscountCharge_ID");
 		MRefList reference = MRefList.get(Env.getCtx(), MOrder.DOCSTATUS_AD_REFERENCE_ID, order.getDocStatus(), null);
 		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
-		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
+		List<MOrderLine> orderLines = Arrays.asList(order.getLines(true, null));
 		BigDecimal totalLines = orderLines.stream()
 				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
 				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -83,7 +83,7 @@ public class OrderConverUtil {
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 		//	
 		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
-		
+
 		//	
 		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
 			BigDecimal paymentAmount = payment.getPayAmt();
@@ -130,7 +130,7 @@ public class OrderConverUtil {
 				)
 			);
 		}
-		
+
 		//	Convert
 		return builder
 			.setId(
@@ -290,18 +290,24 @@ public class OrderConverUtil {
 				)
 			)
 			.setChargeAmount(
-				NumberManager.getBigDecimalToString(chargeAmt))
+				NumberManager.getBigDecimalToString(chargeAmt)
+			)
 			.setCreditAmount(
-				NumberManager.getBigDecimalToString(creditAmt))
-			.setSourceRmaId(order.get_ValueAsInt("ECA14_Source_RMA_ID"))
+				NumberManager.getBigDecimalToString(creditAmt)
+			)
+			.setSourceRmaId(
+				order.get_ValueAsInt("ECA14_Source_RMA_ID")
+			)
 			.setIsRma(order.isReturnOrder())
 			.setIsOrder(!order.isReturnOrder())
-			.setIsBindingOffer(OrderUtil.isBindingOffer(order))
+			.setIsBindingOffer(
+				OrderUtil.isBindingOffer(order)
+			)
 		;
 	}
 
 
-	
+
 	/**
 	 * Convert order line to stub
 	 * @param orderLine
