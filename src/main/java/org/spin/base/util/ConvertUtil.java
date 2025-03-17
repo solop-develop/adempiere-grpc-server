@@ -656,6 +656,12 @@ public class ConvertUtil {
 					creditAmt
 				)
 			)
+			.setIsProcessed(
+				order.isProcessed()
+			)
+			.setIsProcessing(
+				order.isProcessing()
+			)
 		;
 	}
 	
@@ -943,8 +949,18 @@ public class ConvertUtil {
 					shipment.getM_Warehouse_ID()
 				)
 			)
-			.setMovementDate(ValueManager.getTimestampFromDate(shipment.getMovementDate())
-		);
+			.setMovementDate(
+				ValueManager.getTimestampFromDate(
+					shipment.getMovementDate()
+				)
+			)
+			.setIsProcessed(
+				shipment.isProcessed()
+			)
+			.setIsProcessing(
+				shipment.isProcessing()
+			)
+		;
 	}
 
 

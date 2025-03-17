@@ -38,6 +38,7 @@ import org.spin.backend.grpc.pos.PaymentReference;
 import org.spin.base.util.ConvertUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 
@@ -55,27 +56,29 @@ public class PaymentConvertUtil {
 		paymentMethodBuilder
 			.setId(paymentMethod.getC_PaymentMethod_ID())
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					paymentMethod.getName()
 				)
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					paymentMethod.getValue()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					paymentMethod.getDescription()
 				)
 			)
 			.setTenderType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					paymentMethod.getTenderType()
 				)
 			)
-			.setIsActive(paymentMethod.isActive()
-		);
+			.setIsActive(
+				paymentMethod.isActive()
+			)
+		;
 
 		return paymentMethodBuilder;
 	}
@@ -109,7 +112,7 @@ public class PaymentConvertUtil {
 					)
 				)
 				.setDescription(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						paymentReference.get_ValueAsString("Description")
 					)
 				)
@@ -117,7 +120,7 @@ public class PaymentConvertUtil {
 					paymentReference.get_ValueAsBoolean("IsPaid")
 				)
 				.setTenderTypeCode(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						paymentReference.get_ValueAsString("TenderType")
 					)
 				)
@@ -126,15 +129,23 @@ public class PaymentConvertUtil {
 						paymentReference.get_ValueAsInt("C_Currency_ID")
 					)
 				)
-				.setCustomerBankAccountId(paymentReference.get_ValueAsInt("C_BP_BankAccount_ID"))
-				.setOrderId(paymentReference.get_ValueAsInt("C_Order_ID"))
-				.setPosId(paymentReference.get_ValueAsInt("C_POS_ID"))
+				.setCustomerBankAccountId(
+					paymentReference.get_ValueAsInt("C_BP_BankAccount_ID")
+				)
+				.setOrderId(
+					paymentReference.get_ValueAsInt("C_Order_ID")
+				)
+				.setPosId(
+					paymentReference.get_ValueAsInt("C_POS_ID")
+				)
 				.setSalesRepresentative(
 					CoreFunctionalityConvert.convertSalesRepresentative(
 						MUser.get(Env.getCtx(), paymentReference.get_ValueAsInt("SalesRep_ID"))
 					)
 				)
-				.setId(paymentReference.get_ID())
+				.setId(
+					paymentReference.get_ID()
+				)
 				.setPaymentMethod(paymentMethodBuilder)
 				.setPaymentDate(
 					ValueManager.getTimestampFromDate(
@@ -198,14 +209,44 @@ public class PaymentConvertUtil {
 		
 		//	Convert
 		builder
-			.setId(payment.getC_Payment_ID())
-			.setOrderId(payment.getC_Order_ID())
-			.setDocumentNo(ValueManager.validateNull(payment.getDocumentNo()))
-			.setOrderDocumentNo(ValueManager.validateNull(order.getDocumentNo()))
-			.setInvoiceDocumentNo(ValueManager.validateNull(invoiceNo))
-			.setTenderTypeCode(ValueManager.validateNull(payment.getTenderType()))
-			.setReferenceNo(ValueManager.validateNull(Optional.ofNullable(payment.getCheckNo()).orElse(payment.getDocumentNo())))
-			.setDescription(ValueManager.validateNull(payment.getDescription()))
+			.setId(
+				payment.getC_Payment_ID()
+			)
+			.setOrderId(
+				payment.getC_Order_ID()
+			)
+			.setDocumentNo(
+				StringManager.getValidString(
+					payment.getDocumentNo()
+				)
+			)
+			.setOrderDocumentNo(
+				StringManager.getValidString(
+					order.getDocumentNo()
+				)
+			)
+			.setInvoiceDocumentNo(
+				StringManager.getValidString(invoiceNo)
+			)
+			.setTenderTypeCode(
+				StringManager.getValidString(
+					payment.getTenderType()
+				)
+			)
+			.setReferenceNo(
+				StringManager.getValidString(
+					Optional.ofNullable(
+						payment.getCheckNo()
+					).orElse(
+						payment.getDocumentNo()
+					)
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					payment.getDescription()
+				)
+			)
 			.setAmount(
 				NumberManager.getBigDecimalToString(
 					paymentAmount
@@ -216,20 +257,45 @@ public class PaymentConvertUtil {
 					convertedAmount
 				)
 			)
-			.setBankId(payment.getC_Bank_ID())
+			.setBankId(
+				payment.getC_Bank_ID()
+			)
 			.setCustomer(
 				POSConvertUtil.convertCustomer(
 					(MBPartner) payment.getC_BPartner()
 				)
 			)
 			.setCurrency(currencyBuilder)
-			.setPaymentDate(ValueManager.getTimestampFromDate(payment.getDateTrx()))
-			.setIsRefund(!payment.isReceipt())
-			.setPaymentAccountDate(ValueManager.getTimestampFromDate(payment.getDateAcct()))
+			.setPaymentDate(
+				ValueManager.getTimestampFromDate(
+					payment.getDateTrx()
+				)
+			)
+			.setIsRefund(
+				!payment.isReceipt()
+			)
+			.setPaymentAccountDate(
+				ValueManager.getTimestampFromDate(
+					payment.getDateAcct()
+				)
+			)
 			.setDocumentStatus(
-				ConvertUtil.convertDocumentStatus(ValueManager.validateNull(payment.getDocStatus()),
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)), 
-					ValueManager.validateNull(ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description))
+				ConvertUtil.convertDocumentStatus(
+					StringManager.getValidString(
+						payment.getDocStatus()
+					),
+					StringManager.getValidString(
+						ValueManager.getTranslation(
+							reference,
+							I_AD_Ref_List.COLUMNNAME_Name
+						)
+					),
+					StringManager.getValidString(
+						ValueManager.getTranslation(
+							reference,
+							I_AD_Ref_List.COLUMNNAME_Description
+						)
+					)
 				)
 			)
 			.setPaymentMethod(paymentMethodBuilder)
@@ -253,7 +319,12 @@ public class PaymentConvertUtil {
 					payment.get_ValueAsInt("POSReferenceBankAccount_ID")
 				)
 			)
-			.setIsProcessed(payment.isProcessed())
+			.setIsProcessed(
+				payment.isProcessed()
+			)
+			.setIsProcessing(
+				payment.isProcessing()
+			)
 		;
 		if(payment.getCollectingAgent_ID() > 0) {
 			builder.setCollectingAgent(

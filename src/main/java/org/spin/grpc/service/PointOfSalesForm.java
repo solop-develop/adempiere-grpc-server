@@ -1562,8 +1562,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		int count = 0;
 		try {
 			//	Get Bank statement
-			StringBuffer sql = new StringBuffer("SELECT i.C_Invoice_ID, i.DocumentNo, i.Description, i.DateInvoiced, i.C_Currency_ID, i.GrandTotal, (InvoiceOpen(i.C_Invoice_ID, null) * -1) AS OpenAmount ")
-					.append("FROM C_Invoice i ")
+			StringBuffer sql = new StringBuffer("SELECT i.C_Invoice_ID, i.DocumentNo, i.Description, i.DateInvoiced, i.C_Currency_ID, ")
+					.append("i.GrandTotal, (InvoiceOpen(i.C_Invoice_ID, null) * -1) AS OpenAmount, ")
+					.append("i.IsProcessed, i.IsProcessing ")
+					.append("FROM C_Invoice AS i ")
 					.append("WHERE i.IsSOTrx = 'Y' ")
 					.append("AND i.DocStatus IN('CO', 'CL') ")
 					.append("AND i.IsPaid = 'N' ")
@@ -1638,6 +1640,16 @@ public class PointOfSalesForm extends StoreImplBase {
 					.setOpenAmount(
 						NumberManager.getBigDecimalToString(
 							rs.getBigDecimal("OpenAmount")
+						)
+					)
+					.setIsProcessed(
+						rs.getBoolean(
+							I_C_Invoice.COLUMNNAME_Processed
+						)
+					)
+					.setIsProcessing(
+						rs.getBoolean(
+							I_C_Invoice.COLUMNNAME_Processing
 						)
 					)
 				;

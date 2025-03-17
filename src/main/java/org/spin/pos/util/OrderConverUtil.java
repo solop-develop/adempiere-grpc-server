@@ -298,10 +298,20 @@ public class OrderConverUtil {
 			.setSourceRmaId(
 				order.get_ValueAsInt("ECA14_Source_RMA_ID")
 			)
-			.setIsRma(order.isReturnOrder())
-			.setIsOrder(!order.isReturnOrder())
+			.setIsRma(
+				order.isReturnOrder()
+			)
+			.setIsOrder(
+				!order.isReturnOrder()
+			)
 			.setIsBindingOffer(
 				OrderUtil.isBindingOffer(order)
+			)
+			.setIsProcessed(
+				order.isProcessed()
+			)
+			.setIsProcessing(
+				order.isProcessing()
 			)
 		;
 	}

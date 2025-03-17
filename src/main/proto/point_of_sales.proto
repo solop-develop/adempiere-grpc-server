@@ -584,8 +584,9 @@ message PaymentReference {
 	string source_amount = 15;
 	bool is_automatic = 16;
 	bool is_processed = 17;
-	string converted_amount = 18;
-	int32 invoice_reference_id = 19;
+	bool is_processing = 18;
+	string converted_amount = 19;
+	int32 invoice_reference_id = 20;
 }
 
 //	List Refund Reference Request
@@ -772,6 +773,8 @@ message Shipment {
 	core_functionality.Warehouse warehouse = 6;
 	google.protobuf.Timestamp movement_date = 7;
 	int32 order_id = 8;
+	bool is_processed = 9;
+	bool is_processing = 10;
 }
 
 // Request for Process a Shipment
@@ -1664,8 +1667,9 @@ message Payment {
 	core_functionality.Charge charge = 23;
 	core_functionality.DocumentType document_type = 24;
 	bool is_processed = 25;
-	string order_document_no = 26;
-	string invoice_document_no = 27;
+	bool is_processing = 26;
+	string order_document_no = 27;
+	string invoice_document_no = 28;
 }
 
 // Request for delete a order
@@ -1769,6 +1773,8 @@ message Order {
 	bool is_rma = 28;
 	bool is_binding_offer = 29;
 	bool is_order = 30;
+	bool is_processed = 31;
+	bool is_processing = 32;
 }
 
 // Sales Order Line
@@ -2111,6 +2117,8 @@ message RMA {
 	string charge_amount = 22;
 	string credit_amount = 23;
 	int32 source_order_id = 24;
+	bool is_processed = 25;
+	bool is_processing = 26;
 }
 
 // Return Order Line
@@ -2158,6 +2166,8 @@ message CreditMemo {
 	string amount = 5;
 	string open_amount = 6;
 	core_functionality.Currency currency = 7;
+	bool is_processed = 8;
+	bool is_processing = 9;
 }
 
 message ListCustomerCreditsRequest {
