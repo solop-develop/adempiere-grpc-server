@@ -63,6 +63,7 @@ import org.compiere.model.MBankStatement;
 import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MCurrency;
+import org.compiere.model.MDiscountSchema;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
@@ -475,7 +476,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
 	@Override
 	public void listAvailableWarehouses(ListAvailableWarehousesRequest request,
 			StreamObserver<ListAvailableWarehousesResponse> responseObserver) {
@@ -485,29 +486,15 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
-	@Override
-	public void listAvailablePriceList(ListAvailablePriceListRequest request,
-			StreamObserver<ListAvailablePriceListResponse> responseObserver) {
-		try {
-			ListAvailablePriceListResponse.Builder priceList = listPriceList(request);
-			responseObserver.onNext(priceList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
 	@Override
 	public void listAvailablePaymentMethods(ListAvailablePaymentMethodsRequest request,
 			StreamObserver<ListAvailablePaymentMethodsResponse> responseObserver) {
@@ -517,13 +504,51 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+	@Override
+	public void listAvailablePriceList(ListAvailablePriceListRequest request,
+			StreamObserver<ListAvailablePriceListResponse> responseObserver) {
+		try {
+			ListAvailablePriceListResponse.Builder priceList = listPriceList(request);
+			responseObserver.onNext(priceList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void listAvailableCurrencies(ListAvailableCurrenciesRequest request,
+			StreamObserver<ListAvailableCurrenciesResponse> responseObserver) {
+		try {
+			ListAvailableCurrenciesResponse.Builder currencies = listCurrencies(request);
+			responseObserver.onNext(currencies.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	@Override
 	public void listAvailableDocumentTypes(ListAvailableDocumentTypesRequest request,
 			StreamObserver<ListAvailableDocumentTypesResponse> responseObserver) {
@@ -539,20 +564,22 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
 	@Override
-	public void listAvailableCurrencies(ListAvailableCurrenciesRequest request,
-			StreamObserver<ListAvailableCurrenciesResponse> responseObserver) {
+	public void listAvailableDiscounts(ListAvailableDiscountsRequest request,
+			StreamObserver<ListAvailableDiscountsResponse> responseObserver) {
 		try {
-			ListAvailableCurrenciesResponse.Builder currencies = listCurrencies(request);
-			responseObserver.onNext(currencies.build());
+			ListAvailableDiscountsResponse.Builder documentTypes = POSLogic.listAvailableDiscounts(request);
+			responseObserver.onNext(documentTypes.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -4005,6 +4032,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			BigDecimal discountAmountOff = NumberManager.getBigDecimalFromString(
 				request.getDiscountAmountOff()
 			);
+			if (request.getDiscountSchemaId() > 0) {
+				MDiscountSchema discountSchema = MDiscountSchema.get(
+					Env.getCtx(),
+					request.getDiscountSchemaId()
+				);
+				discountRateOff = discountSchema.getFlatDiscount();
+			}
 			if(discountRateOff != null) {
 				configureDiscountRateOff(salesOrder, discountRateOff, transactionName);
 			} else if(discountAmountOff != null) {
@@ -5132,6 +5166,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			.setIsWriteOffByPercent(getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent))
 			.setIsAllowsCustomerTemplate(
 				getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCustomerTemplate)
+			)
+			.setIsAllowsApplySchemaDiscount(
+				getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsApplyShemaDiscount)
+			)
+			.setMaximumSchemaDiscountAllowed(
+				NumberManager.getBigDecimalToString(
+					getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumShemaDiscountAllowed)
+				)
 			)
 		;
 
