@@ -20,16 +20,23 @@ import java.util.List;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
 import org.adempiere.core.domains.models.I_C_BPartner;
+import org.adempiere.core.domains.models.I_C_POS;
+import org.adempiere.core.domains.models.I_M_DiscountSchema;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MDiscountSchema;
 import org.compiere.model.MPOS;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.pos.AvailableDiscountSchema;
 import org.spin.backend.grpc.pos.Customer;
 import org.spin.backend.grpc.pos.CustomerTemplate;
 import org.spin.backend.grpc.pos.GetCustomerRequest;
+import org.spin.backend.grpc.pos.ListAvailableDiscountsRequest;
+import org.spin.backend.grpc.pos.ListAvailableDiscountsResponse;
 import org.spin.backend.grpc.pos.ListCustomerTemplatesRequest;
 import org.spin.backend.grpc.pos.ListCustomerTemplatesResponse;
 import org.spin.backend.grpc.pos.ListCustomersRequest;
@@ -39,10 +46,96 @@ import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class POSLogic {
+
+	public static ListAvailableDiscountsResponse.Builder listAvailableDiscounts(ListAvailableDiscountsRequest request) {
+		if(request.getPosId() <= 0) {
+			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+		}
+
+		ListAvailableDiscountsResponse.Builder builderList = ListAvailableDiscountsResponse.newBuilder();
+		final String TABLE_NAME = "C_POSDiscountAllocation";
+		if (MTable.getTable_ID(TABLE_NAME) <= 0) {
+			return builderList;
+		}
+
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		//	Dynamic where clause
+		//	Aisle Seller
+		int posId = request.getPosId();
+		//	Get Product list
+		Query query = new Query(
+			Env.getCtx(),
+			TABLE_NAME,
+			"C_POS_ID = ?",
+			null
+		)
+			.setParameters(posId)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo)
+		;
+
+		int count = query.count();
+		query
+			.setLimit(limit, offset)
+			.list()
+			.forEach(availableDiscountSchema -> {
+				MDiscountSchema discountSchema = MDiscountSchema.get(
+					Env.getCtx(),
+					availableDiscountSchema.get_ValueAsInt(
+						I_M_DiscountSchema.COLUMNNAME_M_DiscountSchema_ID
+					)
+				);
+
+				AvailableDiscountSchema.Builder builder = AvailableDiscountSchema.newBuilder()
+					.setId(
+						discountSchema.getM_DiscountSchema_ID()
+					)
+					.setKey(
+						StringManager.getValidString(
+							discountSchema.getName()
+						)
+					)
+					.setName(
+						StringManager.getValidString(
+							discountSchema.getName()
+						)
+					)
+					.setIsPosRequiredPin(
+						availableDiscountSchema.get_ValueAsBoolean(
+							I_C_POS.COLUMNNAME_IsPOSRequiredPIN
+						)
+					)
+					.setFlatDiscountPercetage(
+						NumberManager.getBigDecimalToString(
+							discountSchema.getFlatDiscount()
+						)
+					)
+				;
+				builderList.addDiscounts(builder);
+			})
+		;
+		//	
+		builderList.setRecordCount(count);
+		//	Set page token
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builderList.setNextPageToken(
+			StringManager.getValidString(nexPageToken)
+		);
+		return builderList;
+	}
+
 
 	/**
 	 * Get Customer
