@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_S_ResourceAssignment;
@@ -210,7 +211,7 @@ public class DisplayDefinitionServiceLogic {
 			return builderList;
 		}
 		String displayTableName = DisplayDefinitionChanges.SP010_DisplayDefinition;
-		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType NOT IN('T', 'W')";
+		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType NOT IN('T', 'W') AND (SP010_IsInfoRecord = 'N' AND IsInsertRecord = 'N')";
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
 			whereClause = "AD_Table_ID = ?";
@@ -253,6 +254,10 @@ public class DisplayDefinitionServiceLogic {
 				.forEach(recordId -> {
 					PO displayReference = referenceTable.getPO(recordId, null);
 					PO display = displayDefinitionTable.getPO(displayReference.get_ValueAsInt(DisplayDefinitionChanges.SP010_DisplayDefinition_ID), null);
+					if (display.get_ValueAsBoolean(DisplayDefinitionChanges.SP010_IsInfoRecord) || display.get_ValueAsBoolean(I_AD_Tab.COLUMNNAME_IsInsertRecord)) {
+						// is only field
+						return;
+					}
 					if(!Util.isEmpty(displayReference.get_ValueAsString("Name"))) {
 						display.set_ValueOfColumn("Name", displayReference.get_ValueAsString("Name"));
 					}
