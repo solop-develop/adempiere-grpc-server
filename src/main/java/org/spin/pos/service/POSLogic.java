@@ -15,21 +15,29 @@
 
 package org.spin.pos.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_POS;
 import org.adempiere.core.domains.models.I_M_DiscountSchema;
+import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MDiscountSchema;
+import org.compiere.model.MInOutLine;
+import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
+import org.compiere.model.MUOMConversion;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.AvailableDiscountSchema;
 import org.spin.backend.grpc.pos.Customer;
@@ -41,7 +49,10 @@ import org.spin.backend.grpc.pos.ListCustomerTemplatesRequest;
 import org.spin.backend.grpc.pos.ListCustomerTemplatesResponse;
 import org.spin.backend.grpc.pos.ListCustomersRequest;
 import org.spin.backend.grpc.pos.ListCustomersResponse;
+import org.spin.backend.grpc.pos.ShipmentLine;
+import org.spin.backend.grpc.pos.UpdateShipmentLineRequest;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -503,6 +514,85 @@ public class POSLogic {
 	
 		//	Default return
 		return builderList;
+	}
+
+
+	public static ShipmentLine.Builder updateShipmentLine(UpdateShipmentLineRequest request) {
+		//	Validate Order
+		if(request.getShipmentId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_InOut_ID@");
+		}
+		//	Validate Product and charge
+		if(request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_InOutLine_ID@");
+		}
+
+		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
+		Trx.run(transactionName -> {
+			MInOutLine shipmentLine = new Query(
+				Env.getCtx(),
+				I_M_InOutLine.Table_Name,
+				I_M_InOutLine.COLUMNNAME_M_InOutLine_ID + " = ?",
+				transactionName
+			)
+				.setParameters(request.getId())
+				.setClient_ID()
+				.first()
+			;
+
+			if (shipmentLine == null || shipmentLine.getM_InOutLine_ID() <= 0) {
+				throw new AdempiereException("@M_InOutLine_ID@ @NotFound@");
+			}
+			//	Validate processed Order
+			if(shipmentLine.isProcessed()) {
+				throw new AdempiereException("@M_InOutLine_ID@ @Processed@");
+			}
+
+			// Validate quantity
+			MOrderLine sourcerOrderLine = new MOrderLine(Env.getCtx(), shipmentLine.getC_OrderLine_ID(), transactionName);
+			if(sourcerOrderLine == null || sourcerOrderLine.getC_OrderLine_ID() <= 0) {
+				throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
+			}
+
+			BigDecimal quantity = Optional.ofNullable(
+				NumberManager.getBigDecimalFromString(
+					request.getQuantity()
+				)
+			).orElse(Env.ZERO);
+			BigDecimal availableQuantity = ShipmentUtil.getAvailableQuantityForShipment(
+				sourcerOrderLine.getC_OrderLine_ID(),
+				shipmentLine.getM_InOutLine_ID(),
+				sourcerOrderLine.getQtyEntered(),
+				quantity
+			);
+			if (availableQuantity.compareTo(Env.ZERO) <= 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
+			if (availableQuantity.compareTo(quantity) < 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
+
+			BigDecimal convertedQuantity = MUOMConversion.convertProductFrom(
+				shipmentLine.getCtx(),
+				shipmentLine.getM_Product_ID(),
+				shipmentLine.getC_UOM_ID(),
+				quantity
+			);
+			shipmentLine.setQty(convertedQuantity);
+
+			shipmentLine.setDescription(
+				request.getDescription()
+			);
+
+			//	Save Line
+			shipmentLine.saveEx();
+			shipmentLineReference.set(shipmentLine);
+		});
+
+		//	Convert Line
+		return POSConvertUtil.convertShipmentLine(
+			shipmentLineReference.get()
+		);
 	}
 
 }

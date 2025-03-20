@@ -290,54 +290,49 @@ service Store {
 		option (google.api.http) = { get: "/point-of-sales/{pos_id}/customers/{customer_id}/bank-accounts" };
 	}
 
-	//	shipment
-	//	Create Shipment
+	//	Shipment
 	rpc CreateShipment(CreateShipmentRequest) returns (Shipment) {
 		option (google.api.http) = {
 			post: "/point-of-sales/{pos_id}/shipments",
 			body: "*"
 		};
 	}
-	//	Print Preview for Shipment
 	rpc PrintShipmentPreview(PrintShipmentPreviewRequest) returns (PrintShipmentPreviewResponse) {
 		option (google.api.http) = {
 			post: "/point-of-sales/{pos_id}/shipments/{shipment_id}/print-preview",
 			body: "*"
 		};
 	}
-	//	Delete Shipment
 	rpc DeleteShipment(DeleteShipmentRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/shipments" };
 	}
-	//	Create Shipment Line
-	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {
-		option (google.api.http) = {
-			post: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines",
-			body: "*"
-		};
-	}
-	//	Delete Shipment Line
-	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines/{id}" };
-	}
-	//	Update Order Line
-	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {
-		option (google.api.http) = {
-			put: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines/{id}",
-			body: "*"
-		};
-	}
-	//	List Shipment Line
-	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines" };
-	}
-	//	Process Shipment
 	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {
 		option (google.api.http) = {
 			put: "/point-of-sales/{pos_id}/shipments/{id}/process",
 			body: "*"
 		};
 	}
+
+	//	Shipment Line
+	rpc CreateShipmentLine(CreateShipmentLineRequest) returns (ShipmentLine) {
+		option (google.api.http) = {
+			post: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines",
+			body: "*"
+		};
+	}
+	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {
+		option (google.api.http) = {
+			put: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines/{id}",
+			body: "*"
+		};
+	}
+	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines/{id}" };
+	}
+	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {
+		option (google.api.http) = { get: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines" };
+	}
+
 	//	Return Order
 	//	Reverse Sales Transaction
 	rpc ReverseSales(ReverseSalesRequest) returns (Order) {

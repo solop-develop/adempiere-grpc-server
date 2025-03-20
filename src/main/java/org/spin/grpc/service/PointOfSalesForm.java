@@ -119,6 +119,7 @@ import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
+import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.OrderConverUtil;
@@ -1128,7 +1129,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
 	@Override
 	public void createShipmentLine(CreateShipmentLineRequest request, StreamObserver<ShipmentLine> responseObserver) {
 		try {
@@ -1147,6 +1148,24 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 	
+	@Override
+	public void updateShipmentLine(UpdateShipmentLineRequest request, StreamObserver<ShipmentLine> responseObserver) {
+		try {
+			ShipmentLine.Builder shipmentLine = POSLogic.updateShipmentLine(request);
+			responseObserver.onNext(shipmentLine.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	@Override
 	public void deleteShipmentLine(DeleteShipmentLineRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -2543,24 +2562,39 @@ public class PointOfSalesForm extends StoreImplBase {
 		MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), salesOrderLineId, null);
 		Optional<MInOutLine> maybeOrderLine = Arrays.asList(shipmentHeader.getLines(true))
 			.parallelStream()
-			.filter(shipmentLineTofind -> shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID())
+			.filter(shipmentLineTofind -> {
+				return shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
+			})
 			.findFirst()
 		;
 		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
 		BigDecimal quantity = NumberManager.getBigDecimalFromString(
 			request.getQuantity()
 		);
+
 		//	Validate available
 		if(salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered()).compareTo(Optional.ofNullable(quantity).orElse(Env.ONE)) < 0) {
 			throw new AdempiereException("@QtyInsufficient@");
 		}
 		if(maybeOrderLine.isPresent()) {
 			MInOutLine shipmentLine = maybeOrderLine.get();
+			BigDecimal availableQuantity = ShipmentUtil.getAvailableQuantityForShipment(
+				salesOrderLine.getC_OrderLine_ID(),
+				shipmentLine.getM_InOutLine_ID(),
+				salesOrderLine.getQtyEntered(),
+				quantity
+			);
+			if (availableQuantity.compareTo(Env.ZERO) <= 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
 			//	Set Quantity
 			BigDecimal quantityToOrder = quantity;
 			if(quantity == null) {
 				quantityToOrder = shipmentLine.getQtyEntered();
 				quantityToOrder = quantityToOrder.add(Env.ONE);
+			}
+			if (availableQuantity.compareTo(quantityToOrder) < 0) {
+				throw new AdempiereException("@QtyInsufficient@");
 			}
 			//	Validate available
 			if(salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered()).compareTo(quantityToOrder) < 0) {
@@ -2572,11 +2606,23 @@ public class PointOfSalesForm extends StoreImplBase {
 			shipmentLineReference.set(shipmentLine);
 		} else {
 			MInOutLine shipmentLine = new MInOutLine(shipmentHeader);
+			BigDecimal availableQuantity = ShipmentUtil.getAvailableQuantityForShipment(
+				salesOrderLine.getC_OrderLine_ID(),
+				shipmentLine.getM_InOutLine_ID(),
+				salesOrderLine.getQtyEntered(),
+				quantity
+			);
+			if (availableQuantity.compareTo(Env.ZERO) <= 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
 			BigDecimal quantityToOrder = quantity;
-			if(quantity == null) {
+			if (quantity == null) {
 				quantityToOrder = Env.ONE;
 			}
-	        //create new line
+			if (availableQuantity.compareTo(quantityToOrder) < 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
+			//create new line
 			shipmentLine.setOrderLine(salesOrderLine, 0, quantityToOrder);
 			Optional.ofNullable(request.getDescription()).ifPresent(description -> shipmentLine.setDescription(description));
 			//	Update movement quantity
@@ -2590,7 +2636,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			shipmentLineReference.get()
 		);
 	}
-	
+
 	/**
 	 * Create  from request
 	 * @param context
@@ -3094,7 +3140,8 @@ public class PointOfSalesForm extends StoreImplBase {
 							contact.setC_BPartner_Location_ID(businessPartnerLocation.getC_BPartner_Location_ID());
 							contact.saveEx(transactionName);
 				 		}
-					} else {	//	Create new
+					} else {
+						//	Create new
 						Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(businessPartner.getLocations(false)).stream().findFirst();
 						if(!maybeTemplateLocation.isPresent()) {
 							throw new AdempiereException("@C_BPartnerCashTrx_ID@ @C_BPartner_Location_ID@ @NotFound@");
