@@ -2555,7 +2555,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@M_InOut_ID@ @Processed@");
 		}
 		//	Quantity
-		MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), salesOrderLineId, null);
+		MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), request.getOrderLineId(), null);
 		if (salesOrderLine == null || salesOrderLine.getC_OrderLine_ID() <= 0) {
 			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 		}
