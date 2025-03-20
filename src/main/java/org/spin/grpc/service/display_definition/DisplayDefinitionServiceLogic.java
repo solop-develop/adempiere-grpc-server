@@ -2058,9 +2058,21 @@ public class DisplayDefinitionServiceLogic {
 				throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 			}
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+			int customerTemplateId = clientInfo.getC_BPartnerCashTrx_ID();
+			if (customerTemplateId <= 0) {
+				throw new AdempiereException("@FillMandatory@ @C_BPartnerCashTrx_ID@");
+			}
 			if (businessPartner.getC_BPartner_ID() == clientInfo.getC_BPartnerCashTrx_ID()) {
 				throw new AdempiereException("@POS.ModifyTemplateCustomerNotAllowed@");
 			}
+			MBPartner template = MBPartner.get(Env.getCtx(), customerTemplateId);
+			if (template == null || template.getC_BPartner_ID() <= 0) {
+				throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
+			}
+
+			// copy and clear values by termplate
+			PO.copyValues(template, businessPartner);
+
 			businessPartner.set_TrxName(transactionName);
 			//	Set Value
 			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));
@@ -2160,8 +2172,9 @@ public class DisplayDefinitionServiceLogic {
 							contact.setC_BPartner_Location_ID(businessPartnerLocation.getC_BPartner_Location_ID());
 							contact.saveEx(transactionName);
 				 		}
-					} else {	//	Create new
-						Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(businessPartner.getLocations(false)).stream().findFirst();
+					} else {
+						//	Create new
+						Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false)).stream().findFirst();
 						if(!maybeTemplateLocation.isPresent()) {
 							throw new AdempiereException("@C_BPartnerCashTrx_ID@ @C_BPartner_Location_ID@ @NotFound@");
 						}
