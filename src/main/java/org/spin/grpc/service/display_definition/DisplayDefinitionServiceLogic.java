@@ -2070,9 +2070,6 @@ public class DisplayDefinitionServiceLogic {
 				throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
 			}
 
-			// copy and clear values by termplate
-			PO.copyValues(template, businessPartner);
-
 			businessPartner.set_TrxName(transactionName);
 			//	Set Value
 			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));
