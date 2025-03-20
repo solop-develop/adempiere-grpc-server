@@ -2540,26 +2540,25 @@ public class PointOfSalesForm extends StoreImplBase {
 	private ShipmentLine.Builder createAndConvertShipmentLine(CreateShipmentLineRequest request) {
 		//	Validate Order
 		if(request.getShipmentId() <= 0) {
-			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @M_InOut_ID@");
 		}
 		//	Validate Product and charge
 		if(request.getOrderLineId() <= 0) {
-			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @C_OrderLine_ID@");
 		}
-		int shipmentId = request.getShipmentId();
-		int salesOrderLineId = request.getOrderLineId();
-		if(shipmentId <= 0) {
-			return ShipmentLine.newBuilder();
+
+		MInOut shipmentHeader = new MInOut(Env.getCtx(), request.getShipmentId(), null);
+		if (shipmentHeader == null || shipmentHeader.getM_InOut_ID() <= 0) {
+			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
 		}
-		if(salesOrderLineId <= 0) {
-			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
-		}
-		MInOut shipmentHeader = new MInOut(Env.getCtx(), shipmentId, null);
 		if(!DocumentUtil.isDrafted(shipmentHeader)) {
 			throw new AdempiereException("@M_InOut_ID@ @Processed@");
 		}
 		//	Quantity
 		MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), salesOrderLineId, null);
+		if (salesOrderLine == null || salesOrderLine.getC_OrderLine_ID() <= 0) {
+			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
+		}
 		Optional<MInOutLine> maybeOrderLine = Arrays.asList(shipmentHeader.getLines(true))
 			.parallelStream()
 			.filter(shipmentLineTofind -> {
@@ -2578,6 +2577,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		if(maybeOrderLine.isPresent()) {
 			MInOutLine shipmentLine = maybeOrderLine.get();
+			if(shipmentLine.isProcessed()) {
+				throw new AdempiereException("@M_InOutLine_ID@ @Processed@");
+			}
 			BigDecimal availableQuantity = ShipmentUtil.getAvailableQuantityForShipment(
 				salesOrderLine.getC_OrderLine_ID(),
 				shipmentLine.getM_InOutLine_ID(),

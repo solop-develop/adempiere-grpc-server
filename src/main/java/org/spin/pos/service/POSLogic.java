@@ -29,6 +29,7 @@ import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MDiscountSchema;
+import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
@@ -52,6 +53,7 @@ import org.spin.backend.grpc.pos.ListCustomersResponse;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.backend.grpc.pos.UpdateShipmentLineRequest;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.base.util.DocumentUtil;
 import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
@@ -525,6 +527,14 @@ public class POSLogic {
 		//	Validate Product and charge
 		if(request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_InOutLine_ID@");
+		}
+
+		MInOut shipmentHeader = new MInOut(Env.getCtx(), request.getShipmentId(), null);
+		if (shipmentHeader == null || shipmentHeader.getM_InOut_ID() <= 0) {
+			throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+		}
+		if(!DocumentUtil.isDrafted(shipmentHeader)) {
+			throw new AdempiereException("@M_InOut_ID@ @Processed@");
 		}
 
 		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
