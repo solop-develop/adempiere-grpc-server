@@ -5630,6 +5630,7 @@ public class PointOfSalesForm extends StoreImplBase {
 
 		//	Dynamic where clause
 		StringBuffer whereClause = new StringBuffer();
+		whereClause.append("IsSold = 'Y' ");
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
 
@@ -5638,32 +5639,35 @@ public class PointOfSalesForm extends StoreImplBase {
 			request.getSearchValue()
 		);
 		if(!Util.isEmpty(searchValue, true)) {
-			whereClause.append("IsSold = 'Y' "
-				+ "AND ("
+			whereClause.append(
+				"AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%'"
 				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%'"
 				+ "OR UPPER(UPC) = UPPER(?)"
 				+ "OR UPPER(SKU) = UPPER(?)"
-				+ ")");
+				+ ")"
+			);
 			//	Add parameters
 			parameters.add(searchValue);
 			parameters.add(searchValue);
 			parameters.add(searchValue);
 			parameters.add(searchValue);
-		} 
-		//	for price list
-		if(whereClause.length() > 0) {
-			whereClause.append(" AND ");
 		}
+
 		//	Add Price List
-		whereClause.append("(EXISTS(SELECT 1 FROM M_PriceList_Version plv "
-				+ "INNER JOIN M_ProductPrice pp ON(pp.M_PriceList_Version_ID = plv.M_PriceList_Version_ID) "
+		whereClause.append(
+			"AND EXISTS("
+				+ "SELECT 1 FROM M_PriceList_Version AS plv "
+				+ "INNER JOIN M_ProductPrice AS pp "
+				+ "ON(pp.M_PriceList_Version_ID = plv.M_PriceList_Version_ID) "
 				+ "WHERE plv.M_PriceList_ID = ? "
 				+ "AND plv.ValidFrom <= ? "
 				+ "AND plv.IsActive = 'Y' "
-				+ "AND pp.PriceList IS NOT NULL AND pp.PriceList > 0 "
-				+ "AND pp.PriceStd IS NOT NULL AND pp.PriceStd > 0 "
-				+ "AND pp.M_Product_ID = M_Product.M_Product_ID))");
+				// + "AND pp.PriceList IS NOT NULL AND pp.PriceList > 0 "
+				// + "AND pp.PriceStd IS NOT NULL AND pp.PriceStd > 0 "
+				+ "AND pp.M_Product_ID = M_Product.M_Product_ID"
+			+ ")"
+		);
 		//	Add parameters
 		parameters.add(priceList.getM_PriceList_ID());
 		parameters.add(TimeUtil.getDay(validFrom.get()));
@@ -5675,11 +5679,16 @@ public class PointOfSalesForm extends StoreImplBase {
 		int displayCurrencyId = pos.get_ValueAsInt("DisplayCurrency_ID");
 		int conversionTypeId = pos.get_ValueAsInt("C_ConversionType_ID");
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), I_M_Product.Table_Name, 
-				whereClause.toString(), null)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true);
+		Query query = new Query(
+			Env.getCtx(),
+			I_M_Product.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+		;
 		int count = query.count();
 		query
 		.setLimit(limit, offset)
