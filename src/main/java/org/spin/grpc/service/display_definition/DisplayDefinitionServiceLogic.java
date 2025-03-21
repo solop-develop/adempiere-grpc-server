@@ -39,6 +39,7 @@ import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLocation;
 import org.compiere.model.MResourceAssignment;
+import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
@@ -184,6 +185,7 @@ public class DisplayDefinitionServiceLogic {
 				.setParameters(table.getAD_Table_ID())
 				.setClient_ID()
 				.setOnlyActiveRecords(true)
+				.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 				.count()
 			;
 		}
@@ -214,7 +216,7 @@ public class DisplayDefinitionServiceLogic {
 		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType NOT IN('T', 'W') AND (SP010_IsInfoRecord = 'N' AND IsInsertRecord = 'N')";
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
-			whereClause = "AD_Table_ID = ?";
+			whereClause = "AD_Table_ID = ? AND (SP010_IsInfoRecord = 'N' AND IsInsertRecord = 'N')";
 		} else if (request.getIsOnlyField()) {
 			whereClause = "AD_Table_ID = ? AND (SP010_IsInfoRecord = 'Y' OR IsInsertRecord = 'Y')";
 		}
@@ -232,6 +234,7 @@ public class DisplayDefinitionServiceLogic {
 			.setParameters(parametersList)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		//	Get page and count
@@ -303,6 +306,7 @@ public class DisplayDefinitionServiceLogic {
 		)
 			.setParameters(displayDefinition.get_ID())
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		ListDisplayDefinitionFieldsMetadataResponse.Builder builderList = ListDisplayDefinitionFieldsMetadataResponse.newBuilder()
