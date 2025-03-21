@@ -1320,11 +1320,11 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (searchProcessID > 0) {
 			//Get Instance of process
 			MProcess process = MProcess.get(
-					Env.getCtx(),
+					context,
 					searchProcessID
 			);
 			if (process == null || process.getAD_Process_ID() <= 0) {
-				throw new AdempiereException("@AD_Process_ID@ @NotFound@");
+				throw new AdempiereException("@SearchProcess_ID@ @NotFound@");
 			}
 
 			// Record/Role access
