@@ -63,6 +63,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMessage;
+import org.compiere.model.MProcess;
 import org.compiere.model.MRole;
 import org.compiere.model.MRule;
 import org.compiere.model.MTab;
@@ -70,6 +71,7 @@ import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.POAdapter;
 import org.compiere.model.Query;
+import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -77,6 +79,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.eevolution.services.dsl.ProcessBuilder;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.user_interface.ChatEntry;
@@ -109,6 +112,7 @@ import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.interim.ContextTemporaryWorkaround;
+import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
@@ -1307,6 +1311,71 @@ public class UserInterface extends UserInterfaceImplBase {
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
+		MView view = browser.getAD_View();
+
+
+		int searchProcessID = browser.get_ValueAsInt("SearchProcess_ID");
+
+		StringBuffer processInstanceWhere = new StringBuffer();
+		if (searchProcessID > 0) {
+			//Get Instance of process
+			MProcess process = MProcess.get(
+					context,
+					searchProcessID
+			);
+			if (process == null || process.getAD_Process_ID() <= 0) {
+				throw new AdempiereException("@SearchProcess_ID@ @NotFound@");
+			}
+
+			// Record/Role access
+			boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
+			if (!isWithAccess) {
+				throw new AdempiereException("@AccessCannotProcess@");
+			}
+			String viewProcessInstanceColumnSql = "";
+			List<MViewColumn> viewColumns = view.getViewColumns();
+			HashMap<String, Object> searchProcessParameters = new HashMap<>();
+			for (MViewColumn viewColumn: viewColumns) {
+				String columnName = viewColumn.getColumnName();
+				if (columnName.endsWith("AD_PInstance_ID")) {
+					viewProcessInstanceColumnSql = viewColumn.getColumnSQL();
+				}
+
+				if (parameterMap.containsKey(columnName)) {
+					Object value = parameterMap.get(columnName);
+					String columnSql = viewColumn.getColumnSQL();
+					int index = columnSql.lastIndexOf(".");
+					String parameterName = columnSql.substring(index +1);
+					searchProcessParameters.put(parameterName, value);
+				}
+			}
+
+			//	Call process builder
+			org.eevolution.services.dsl.ProcessBuilder searchProcessBuilder = ProcessBuilder.create(context)
+					.process(searchProcessID)
+					.withTitle(process.getName())
+					;
+			for (Entry <String, Object> parameter: searchProcessParameters.entrySet()) {
+				Object parameterValue = parameter.getValue();
+				if (parameterValue instanceof List ) {
+					List<Object> parameterList = (List<Object>) parameterValue;
+					searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0), parameterList.get(1));
+				}else {
+					searchProcessBuilder.withParameter(parameter.getKey(), parameter.getValue());
+				}
+
+			}
+			//Execute Search Process
+			ProcessInfo processInfo = searchProcessBuilder.execute();
+			int processInstanceID = processInfo.getAD_PInstance_ID();
+			if (!Util.isEmpty(viewProcessInstanceColumnSql, true)) {
+				processInstanceWhere.append(" AND ")
+						.append(viewProcessInstanceColumnSql)
+						.append(" = ")
+						.append(processInstanceID)
+				;
+			}
+		}
 
 		//	get query columns
 		String query = QueryUtil.getBrowserQueryWithReferences(browser);
@@ -1317,7 +1386,6 @@ public class UserInterface extends UserInterfaceImplBase {
 			);
 		}
 
-		MView view = browser.getAD_View();
 		MViewDefinition parentDefinition = view.getParentViewDefinition();
 		String tableNameAlias = parentDefinition.getTableAlias();
 		String tableName = parentDefinition.getAD_Table().getTableName();
@@ -1343,6 +1411,9 @@ public class UserInterface extends UserInterfaceImplBase {
 				.append(" AND ")
 				.append(parsedWhereClause);
 		}
+
+		// Add PInstanceID validation
+		whereClause.append(processInstanceWhere);
 
 		//	For dynamic condition
 		List<Object> filterValues = new ArrayList<Object>();
