@@ -51,6 +51,7 @@ import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class BrowseConverUtil {
+
 	public static Table.Builder convertTable(MTable table) {
 		Table.Builder builder = Table.newBuilder();
 		if (table == null || table.getAD_Table_ID() <= 0) {
@@ -214,6 +215,7 @@ public class BrowseConverUtil {
 				)
 			;
 		}
+
 		//	Window Reference
 		if(browser.getAD_Window_ID() > 0) {
 			MWindow window = MWindow.get(
@@ -225,6 +227,7 @@ public class BrowseConverUtil {
 			);
 			builder.setWindow(windowBuilder.build());
 		}
+
 		//	Process Reference
 		if(browser.getAD_Process_ID() > 0) {
 			MProcess process = MProcess.get(
@@ -247,6 +250,11 @@ public class BrowseConverUtil {
 				)
 			;
 		}
+
+		//	Search process
+		boolean isSearchProcess = browser.get_ColumnIndex("SearchProcess_ID") >= 0 && browser.get_ValueAsBoolean("SearchProcess_ID");
+		builder.setIsSearchProcess(isSearchProcess);
+
 		//	For parameters
 		if(withFields) {
 			List<MBrowseField> browseFields = browser.getFields();

@@ -443,8 +443,9 @@ message Browser {
 	optional int32 process_id = 23;
 	optional string process_uuid = 24;
 	optional DictionaryEntity process = 25;
+	bool is_search_process = 26;
 	// Browse Fields
-	repeated Field fields = 26;
+	repeated Field fields = 27;
 }
 
 // Foreign Reference

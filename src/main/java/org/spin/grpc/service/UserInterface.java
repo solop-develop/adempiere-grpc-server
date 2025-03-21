@@ -1316,8 +1316,8 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		// Run search process
 		StringBuffer processInstanceWhere = new StringBuffer();
-		int searchProcessId = browser.get_ValueAsInt("SearchProcess_ID");
-		if (searchProcessId > 0) {
+		if (browser.get_ColumnIndex("SearchProcess_ID") >= 0 && browser.get_ValueAsInt("SearchProcess_ID") > 0) {
+			int searchProcessId = browser.get_ValueAsInt("SearchProcess_ID");
 			// Get Instance of process
 			MProcess process = MProcess.get(
 				context,
