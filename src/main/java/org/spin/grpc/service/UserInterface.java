@@ -39,6 +39,7 @@ import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_EntityType;
 import org.adempiere.core.domains.models.I_AD_Language;
+import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_R_MailText;
@@ -1313,15 +1314,14 @@ public class UserInterface extends UserInterfaceImplBase {
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 		MView view = browser.getAD_View();
 
-
-		int searchProcessID = browser.get_ValueAsInt("SearchProcess_ID");
-
+		// Run search process
 		StringBuffer processInstanceWhere = new StringBuffer();
-		if (searchProcessID > 0) {
-			//Get Instance of process
+		int searchProcessId = browser.get_ValueAsInt("SearchProcess_ID");
+		if (searchProcessId > 0) {
+			// Get Instance of process
 			MProcess process = MProcess.get(
-					context,
-					searchProcessID
+				context,
+				searchProcessId
 			);
 			if (process == null || process.getAD_Process_ID() <= 0) {
 				throw new AdempiereException("@SearchProcess_ID@ @NotFound@");
@@ -1330,14 +1330,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			// Record/Role access
 			boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
 			if (!isWithAccess) {
-				throw new AdempiereException("@AccessCannotProcess@");
+				throw new AdempiereException("@SearchProcess_ID@ @AccessCannotProcess@");
 			}
 			String viewProcessInstanceColumnSql = "";
 			List<MViewColumn> viewColumns = view.getViewColumns();
 			HashMap<String, Object> searchProcessParameters = new HashMap<>();
 			for (MViewColumn viewColumn: viewColumns) {
 				String columnName = viewColumn.getColumnName();
-				if (columnName.endsWith("AD_PInstance_ID")) {
+				if (columnName.endsWith(I_AD_PInstance.COLUMNNAME_AD_PInstance_ID)) {
 					viewProcessInstanceColumnSql = viewColumn.getColumnSQL();
 				}
 
@@ -1352,27 +1352,32 @@ public class UserInterface extends UserInterfaceImplBase {
 
 			//	Call process builder
 			org.eevolution.services.dsl.ProcessBuilder searchProcessBuilder = ProcessBuilder.create(context)
-					.process(searchProcessID)
-					.withTitle(process.getName())
-					;
+				.process(searchProcessId)
+				.withTitle(process.getName())
+			;
 			for (Entry <String, Object> parameter: searchProcessParameters.entrySet()) {
 				Object parameterValue = parameter.getValue();
 				if (parameterValue instanceof List ) {
+					@SuppressWarnings("unchecked")
 					List<Object> parameterList = (List<Object>) parameterValue;
-					searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0), parameterList.get(1));
-				}else {
+					if (parameterList.size() >= 2) {
+						searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0), parameterList.get(1));
+					} else {
+						searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0));
+					}
+				} else {
 					searchProcessBuilder.withParameter(parameter.getKey(), parameter.getValue());
 				}
-
 			}
-			//Execute Search Process
+
+			// Execute Search Process
 			ProcessInfo processInfo = searchProcessBuilder.execute();
 			int processInstanceID = processInfo.getAD_PInstance_ID();
 			if (!Util.isEmpty(viewProcessInstanceColumnSql, true)) {
 				processInstanceWhere.append(" AND ")
-						.append(viewProcessInstanceColumnSql)
-						.append(" = ")
-						.append(processInstanceID)
+					.append(viewProcessInstanceColumnSql)
+					.append(" = ")
+					.append(processInstanceID)
 				;
 			}
 		}
