@@ -216,7 +216,7 @@ public class DisplayDefinitionServiceLogic {
 		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType NOT IN('T', 'W') AND (SP010_IsInfoRecord = 'N' AND IsInsertRecord = 'N')";
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
-			whereClause = "AD_Table_ID = ? AND (SP010_IsInfoRecord = 'N' AND IsInsertRecord = 'N')";
+			whereClause = "AD_Table_ID = ?";
 		} else if (request.getIsOnlyField()) {
 			whereClause = "AD_Table_ID = ? AND (SP010_IsInfoRecord = 'Y' OR IsInsertRecord = 'Y')";
 		}
