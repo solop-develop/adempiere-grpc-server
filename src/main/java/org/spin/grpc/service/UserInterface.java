@@ -1306,7 +1306,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		HashMap<String, String> parameterOperator = new HashMap<>();
 		//	Populate map
 		FilterManager.newInstance(request.getFilters()).getConditions()
-			.parallelStream()
+			.stream()
 			.forEach(condition -> {
 				parameterOperator.put(condition.getColumnName(), condition.getOperator());
 				parameterMap.put(condition.getColumnName(), condition.getValue());
@@ -1381,7 +1381,6 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 				if (isRange && parameterMap.containsKey(columnName + "_To")) {
 					Object value = parameterMap.get(columnName  + "_To");
-
 					String operatorName = parameterOperator.get(columnName + "_To");
 					if (!operatorName.equalsIgnoreCase(Filter.LESS_EQUAL)) {
 						continue;
