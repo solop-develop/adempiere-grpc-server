@@ -65,6 +65,7 @@ import org.compiere.model.MField;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMessage;
 import org.compiere.model.MProcess;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRole;
 import org.compiere.model.MRule;
 import org.compiere.model.MTab;
@@ -127,6 +128,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
+import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.query.SortingManager;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -1301,10 +1303,12 @@ public class UserInterface extends UserInterfaceImplBase {
 			return builder;
 		}
 		HashMap<String, Object> parameterMap = new HashMap<>();
+		HashMap<String, String> parameterOperator = new HashMap<>();
 		//	Populate map
 		FilterManager.newInstance(request.getFilters()).getConditions()
-			.parallelStream()
+			.stream()
 			.forEach(condition -> {
+				parameterOperator.put(condition.getColumnName(), condition.getOperator());
 				parameterMap.put(condition.getColumnName(), condition.getValue());
 			});
 
@@ -1334,19 +1338,54 @@ public class UserInterface extends UserInterfaceImplBase {
 			}
 			String viewProcessInstanceColumnSql = "";
 			List<MViewColumn> viewColumns = view.getViewColumns();
-			HashMap<String, Object> searchProcessParameters = new HashMap<>();
+			HashMap<String, Object> parametersToAdd = new HashMap<>();
+			//Get Process Parameters
+			List<MProcessPara> searchProcessParameters = process.getParametersAsList();
 			for (MViewColumn viewColumn: viewColumns) {
 				String columnName = viewColumn.getColumnName();
 				if (columnName.endsWith(I_AD_PInstance.COLUMNNAME_AD_PInstance_ID)) {
 					viewProcessInstanceColumnSql = viewColumn.getColumnSQL();
+					if (searchProcessParameters.isEmpty()) {
+						break;
+					}
 				}
+				if (searchProcessParameters.isEmpty()) {
+					continue;
+				}
+				String columnSql = "";
+				int index = -1;
+				String parameterName = "";
+				Optional<MProcessPara> maybeParameter = null;
+				boolean isRange = false;
 
 				if (parameterMap.containsKey(columnName)) {
 					Object value = parameterMap.get(columnName);
-					String columnSql = viewColumn.getColumnSQL();
-					int index = columnSql.lastIndexOf(".");
-					String parameterName = columnSql.substring(index +1);
-					searchProcessParameters.put(parameterName, value);
+				 	columnSql = viewColumn.getColumnSQL();
+				 	index = columnSql.lastIndexOf(".");
+				 	parameterName = columnSql.substring(index +1);
+				 	String searchString = parameterName;
+			 		maybeParameter = searchProcessParameters.stream().filter(param -> param.getColumnName().equals(searchString)).findFirst();
+					if (maybeParameter.isEmpty()) {
+						continue;
+					}
+					isRange = maybeParameter.get().isRange();
+					String operatorName = parameterOperator.get(columnName);
+					if (isRange && !operatorName.equalsIgnoreCase(Filter.BETWEEN)
+						&& !operatorName.equalsIgnoreCase(Filter.GREATER_EQUAL)) {
+						continue;
+					}
+					if (!isRange && !operatorName.equalsIgnoreCase(Filter.EQUAL)) {
+						continue;
+					}
+					parametersToAdd.put(parameterName, value);
+				}
+				if (isRange && parameterMap.containsKey(columnName + "_To")) {
+					Object value = parameterMap.get(columnName  + "_To");
+					String operatorName = parameterOperator.get(columnName + "_To");
+					if (!operatorName.equalsIgnoreCase(Filter.LESS_EQUAL)) {
+						continue;
+					}
+					parametersToAdd.put(parameterName + "_To", value);
 				}
 			}
 
@@ -1355,7 +1394,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				.process(searchProcessId)
 				.withTitle(process.getName())
 			;
-			for (Entry <String, Object> parameter: searchProcessParameters.entrySet()) {
+			for (Entry <String, Object> parameter: parametersToAdd.entrySet()) {
 				Object parameterValue = parameter.getValue();
 				if (parameterValue instanceof List ) {
 					@SuppressWarnings("unchecked")
