@@ -4086,7 +4086,8 @@ public class PointOfSalesForm extends StoreImplBase {
 					Env.getCtx(),
 					request.getDiscountSchemaId()
 				);
-				discountRateOff = discountSchema.getFlatDiscount();
+				// discountRateOff = discountSchema.getFlatDiscount();
+				configureDiscount(salesOrder, discountSchema.getFlatDiscount(), transactionName);
 			}
 			if(discountRateOff != null) {
 				configureDiscountRateOff(salesOrder, discountRateOff, transactionName);
