@@ -48,7 +48,6 @@ import org.spin.dictionary.custom.BrowseFieldCustomUtil;
 import org.spin.service.grpc.util.db.OrderByUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 public class BrowseConverUtil {
 
@@ -294,11 +293,11 @@ public class BrowseConverUtil {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					browseField.getUUID()
 				))
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					browseField.getUUID()
 				)
 			)
@@ -306,22 +305,34 @@ public class BrowseConverUtil {
 				browseField.getAD_Browse_Field_ID()
 			)
 			.setName(
-				ValueManager.validateNull(browseField.getName())
+				StringManager.getValidString(
+					browseField.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(browseField.getDescription())
+				StringManager.getValidString(
+					browseField.getDescription()
+				)
 			)
 			.setHelp(
-				ValueManager.validateNull(browseField.getHelp())
+				StringManager.getValidString(
+					browseField.getHelp()
+				)
 			)
 			.setDefaultValue(
-				ValueManager.validateNull(browseField.getDefaultValue())
+				StringManager.getValidString(
+					browseField.getDefaultValue()
+				)
 			)
 			.setDefaultValueTo(
-				ValueManager.validateNull(browseField.getDefaultValue2())
+				StringManager.getValidString(
+					browseField.getDefaultValue2()
+				)
 			)
 			.setDisplayLogic(
-				ValueManager.validateNull(browseField.getDisplayLogic())
+				StringManager.getValidString(
+					browseField.getDisplayLogic()
+				)
 			)
 			.setDisplayType(browseField.getAD_Reference_ID())
 			.setIsDisplayed(browseField.isDisplayed())
@@ -332,23 +343,33 @@ public class BrowseConverUtil {
 			.setIsRange(browseField.isRange())
 			.setIsReadOnly(browseField.isReadOnly())
 			.setReadOnlyLogic(
-				ValueManager.validateNull(browseField.getReadOnlyLogic())
+				StringManager.getValidString(
+					browseField.getReadOnlyLogic()
+				)
 			)
 			.setIsKey(browseField.isKey())
 			.setIsIdentifier(browseField.isIdentifier())
 			.setSeqNoGrid(browseField.getSeqNoGrid())
 			.setSequence(browseField.getSeqNo())
 			.setValueMax(
-				ValueManager.validateNull(browseField.getValueMax())
+				StringManager.getValidString(
+					browseField.getValueMax()
+				)
 			)
 			.setValueMin(
-				ValueManager.validateNull(browseField.getValueMin())
+				StringManager.getValidString(
+					browseField.getValueMin()
+				)
 			)
 			.setVFormat(
-				ValueManager.validateNull(browseField.getVFormat())
+				StringManager.getValidString(
+					browseField.getVFormat()
+				)
 			)
 			.setCallout(
-				ValueManager.validateNull(browseField.getCallout())
+				StringManager.getValidString(
+					browseField.getCallout()
+				)
 			)
 			.setFieldLength(browseField.getFieldLength())
 			.addAllContextColumnNames(
@@ -361,7 +382,9 @@ public class BrowseConverUtil {
 		
 		MViewColumn viewColumn = MViewColumn.getById(context, browseField.getAD_View_Column_ID(), null);
 		builder.setColumnName(
-			ValueManager.validateNull(viewColumn.getColumnName())
+			StringManager.getValidString(
+				viewColumn.getColumnName()
+			)
 		);
 		String elementName = null;
 		if(viewColumn.getAD_Column_ID() != 0) {
@@ -374,7 +397,7 @@ public class BrowseConverUtil {
 			elementName = browseField.getAD_Element().getColumnName();
 		}
 		builder.setElementName(
-			ValueManager.validateNull(elementName))
+			StringManager.getValidString(elementName))
 		;
 
 		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
@@ -411,7 +434,7 @@ public class BrowseConverUtil {
 			// ASP default displayed field as panel
 			if (browseFieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsPanel(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						browseFieldCustom.get_ValueAsString(
 							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
 						)
@@ -421,7 +444,7 @@ public class BrowseConverUtil {
 			// ASP default displayed field as table
 			if (browseFieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsTable(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						browseFieldCustom.get_ValueAsString(
 							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
 						)
@@ -518,12 +541,12 @@ public class BrowseConverUtil {
 				final String currentColumnName = currentViewColumn.getColumnName();
 				DependentField.Builder builder = DependentField.newBuilder()
 					.setId(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							currentBrowseField.getUUID()
 						)
 					)
 					.setUuid(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							currentBrowseField.getUUID()
 						)
 					)
@@ -537,12 +560,12 @@ public class BrowseConverUtil {
 						browse.getAD_Browse_ID()
 					)
 					.setParentUuid(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							browse.getUUID()
 						)
 					)
 					.setParentName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							browse.getName()
 						)
 					)
