@@ -888,16 +888,28 @@ public class ReportManagement extends ReportManagementImplBase {
 
 				if (printFormat.getAD_Table_ID() > 0) {
 					MTable table = MTable.get(Env.getCtx(), printFormat.getAD_Table_ID());
-					printFormatBuilder.setTableName(
-						StringManager.getValidString(
-							table.getTableName()
+					printFormatBuilder.setTableId(
+							table.getAD_Table_ID()
 						)
-					);
+						.setTableName(
+							StringManager.getValidString(
+								table.getTableName()
+							)
+						)
+					;
 				}
 				if(printFormat.getAD_ReportView_ID() > 0) {
 					printFormatBuilder.setReportViewId(
 						printFormat.getAD_ReportView_ID()
 					);
+				}
+				if (printFormat.getJasperProcess_ID() > 0) {
+					MProcess process = MProcess.get(context, printFormat.getJasperProcess_ID());
+					if (!Util.isEmpty(process.getJasperReport(), true)) {
+						printFormatBuilder.setJasperProcessId(
+							process.getAD_Process_ID()
+						);
+					}
 				}
 				//	add
 				builder.addPrintFormats(printFormatBuilder);
@@ -1033,11 +1045,15 @@ public class ReportManagement extends ReportManagementImplBase {
 
 				if (reportView.getAD_ReportView_ID() > 0) {
 					MTable table = MTable.get(context, reportView.getAD_Table_ID());
-					reportViewBuilder.setTableName(
-						StringManager.getValidString(
-							table.getTableName()
+					reportViewBuilder.setTableId(
+							table.getAD_Table_ID()
 						)
-					);
+						.setTableName(
+							StringManager.getValidString(
+								table.getTableName()
+							)
+						)
+					;
 				}
 				//	add
 				builder.addReportViews(reportViewBuilder);
@@ -1081,13 +1097,13 @@ public class ReportManagement extends ReportManagementImplBase {
 			throw new AdempiereException("@TableName@ @NotFound@");
 		}
 		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		String sql = "SELECT t.TableName, e.ColumnName, NULLIF(e.PO_PrintName,e.PrintName) "
-				+ "FROM AD_Column c "
-				+ " INNER JOIN AD_Column used ON (c.ColumnName=used.ColumnName)"
-				+ " INNER JOIN AD_Table t ON (used.AD_Table_ID=t.AD_Table_ID AND t.IsView='N' AND t.AD_Table_ID <> c.AD_Table_ID)"
-				+ " INNER JOIN AD_Column cKey ON (t.AD_Table_ID=cKey.AD_Table_ID AND cKey.IsKey='Y')"
-				+ " INNER JOIN AD_Element e ON (cKey.ColumnName=e.ColumnName) "
-				+ "WHERE c.AD_Table_ID=? AND c.IsKey='Y' "
+		String sql = "SELECT t.AD_Table_ID, t.TableName, e.ColumnName, NULLIF(e.PO_PrintName,e.PrintName) "
+				+ "FROM AD_Column AS c "
+				+ " INNER JOIN AD_Column AS used ON (c.ColumnName=used.ColumnName)"
+				+ " INNER JOIN AD_Table AS t ON (used.AD_Table_ID=t.AD_Table_ID AND t.IsView='N' AND t.AD_Table_ID <> c.AD_Table_ID)"
+				+ " INNER JOIN AD_Column AS cKey ON (t.AD_Table_ID=cKey.AD_Table_ID AND cKey.IsKey='Y')"
+				+ " INNER JOIN AD_Element AS e ON (cKey.ColumnName=e.ColumnName) "
+				+ "WHERE c.AD_Table_ID = ? AND c.IsKey ='Y' "
 				+ "ORDER BY 3";
 			PreparedStatement pstmt = null;
 			ResultSet resultSet = null;
@@ -1097,27 +1113,32 @@ public class ReportManagement extends ReportManagementImplBase {
 				resultSet = pstmt.executeQuery();
 				int recordCount = 0;
 				while (resultSet.next()) {
+					int drillTableId = resultSet.getInt("AD_Table_ID");
 					String drillTableName = resultSet.getString("TableName");
 					String columnName = resultSet.getString("ColumnName");
 					M_Element element = M_Element.get(Env.getCtx(), columnName);
 					//	Add here
-					DrillTable.Builder drillTable = DrillTable.newBuilder();
-					drillTable.setTableName(
-						StringManager.getValidString(drillTableName)
+					DrillTable.Builder drillTable = DrillTable.newBuilder()
+						.setTableId(
+							drillTableId
+						)
+						.setTableName(
+							StringManager.getValidString(drillTableName)
 					);
+
 					String name = element.getPrintName();
 					String poName = element.getPO_PrintName();
 					if(!Env.isBaseLanguage(Env.getCtx(), "")) {
 						String translation = element.get_Translation("PrintName");
-						if(!Util.isEmpty(translation)) {
+						if(!Util.isEmpty(translation, true)) {
 							name = translation;
 						}
 						translation = element.get_Translation("PO_PrintName");
-						if(!Util.isEmpty(translation)) {
+						if(!Util.isEmpty(translation, true)) {
 							poName = translation;
 						}
 					}
-					if(!Util.isEmpty(poName)) {
+					if(!Util.isEmpty(poName, true)) {
 						name = name + "/" + poName;
 					}
 					//	Print Name
