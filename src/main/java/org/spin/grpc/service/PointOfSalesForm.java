@@ -2418,8 +2418,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		int offset = (pageNumber - 1) * limit;
 
 		int shipmentId = request.getShipmentId();
+		String whereClause = I_M_InOutLine.COLUMNNAME_M_InOut_ID + " = ? AND " +
+				I_M_InOutLine.COLUMNNAME_M_Product_ID + " > 0";
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), I_M_InOutLine.Table_Name, I_M_InOutLine.COLUMNNAME_M_InOut_ID + " = ?", null)
+		Query query = new Query(Env.getCtx(), I_M_InOutLine.Table_Name, whereClause, null)
 				.setParameters(shipmentId)
 				.setClient_ID()
 				.setOnlyActiveRecords(true);
@@ -2708,6 +2710,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		orderLines.forEach(salesOrderLine -> {
 			if(!DocumentUtil.isDrafted(shipmentHeader)) {
 				throw new AdempiereException("@M_InOut_ID@ @Processed@");
+			}
+			if (salesOrderLine.getM_Product_ID() == 0) {
+				return;
 			}
 			//	Quantity
 			Optional<MInOutLine> maybeOrderLine = Arrays.asList(shipmentHeader.getLines(true))
@@ -4376,11 +4381,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			discountOrderLine = maybeOrderLine.get();
 			discountOrderLine.setQty(Env.ONE);
 			discountOrderLine.setPrice(amount.negate());
+			discountOrderLine.setM_AttributeSetInstance_ID(0);
 		} else {
 			discountOrderLine = new MOrderLine(order);
 			discountOrderLine.setQty(Env.ONE);
 			discountOrderLine.setC_Charge_ID(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID));
 			discountOrderLine.setPrice(amount.negate());
+			discountOrderLine.setM_AttributeSetInstance_ID(0);
 		}
 		//	
 		discountOrderLine.saveEx(transactionName);
