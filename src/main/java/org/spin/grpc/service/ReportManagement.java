@@ -884,6 +884,12 @@ public class ReportManagement extends ReportManagementImplBase {
 					.setIsDefault(
 						printFormat.isDefault()
 					)
+					.setIsForm(
+						printFormat.isForm()
+					)
+					.setIsStandardHeaderFooter(
+						printFormat.isStandardHeaderFooter()
+					)
 				;
 
 				if (printFormat.getAD_Table_ID() > 0) {
