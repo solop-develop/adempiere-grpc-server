@@ -175,6 +175,8 @@ message PrintFormat {
 	bool is_default = 7;
 	int32 report_view_id = 8;
 	int32 jasper_process_id = 9;
+	bool is_form = 10;
+	bool is_standard_header_footer = 11;
 }
 message ListPrintFormatsRequest {
 	string filters = 1;
