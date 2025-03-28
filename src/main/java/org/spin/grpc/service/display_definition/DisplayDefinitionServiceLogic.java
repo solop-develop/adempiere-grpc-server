@@ -105,6 +105,7 @@ import org.spin.backend.grpc.display_definition.UpdateBusinessPartnerRequest;
 import org.spin.backend.grpc.display_definition.UpdateDataEntryRequest;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
+import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
@@ -276,6 +277,12 @@ public class DisplayDefinitionServiceLogic {
 				.getIDsAsList()
 				.forEach(recordId -> {
 					PO display = referenceTable.getPO(recordId, null);
+					int targetTableID = display.get_ValueAsInt(MTable.COLUMNNAME_AD_Table_ID);
+					if (targetTableID > 0) {
+						if (!AccessUtil.isWindowAccessByTableID(targetTableID)) {
+							return;
+						}
+					}
 					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display, true);
 					builderList.addRecords(builder);
 				})
