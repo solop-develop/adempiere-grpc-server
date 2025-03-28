@@ -69,15 +69,19 @@ public class AccessUtil {
 		Properties ctx = Env.getCtx();
 		MTable tableInstance = MTable.get(ctx, tableId);
 		int windowId = tableInstance.getAD_Window_ID();
-		Boolean isRoleAccess = role.getWindowAccess(windowId);
-		if (isRoleAccess != null && isRoleAccess.booleanValue()) {
-			return true;
+		Boolean isRoleAccess = null;
+		if (windowId > 0) {
+			isRoleAccess = role.getWindowAccess(windowId);
+			if (isRoleAccess != null && isRoleAccess.booleanValue()) {
+				return true;
+			}
 		}
-
-		isRoleAccess = role.getWindowAccess(tableInstance.getPO_Window_ID());
-		if (isRoleAccess != null && isRoleAccess.booleanValue()) {
-			return true;
-
+		windowId = tableInstance.getPO_Window_ID();
+		if (windowId > 0) {
+			isRoleAccess = role.getWindowAccess(windowId);
+			if (isRoleAccess != null && isRoleAccess.booleanValue()) {
+				return true;
+			}
 		}
 		String whereClause = "EXISTS (SELECT 1 FROM AD_Window w " +
 				"INNER JOIN AD_Tab t ON (t.AD_Window_ID = w.AD_Window_ID) " +
