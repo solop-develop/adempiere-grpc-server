@@ -815,7 +815,14 @@ public class ReportManagement extends ReportManagementImplBase {
 			if (table == null || table.getAD_Table_ID() <= 0) {
 				throw new AdempiereException("@TableName@ @NotFound@");
 			}
-			whereClause = "AD_Table_ID = ?";
+			whereClause = "(AD_Table_ID = ? " +
+					" OR EXISTS (SELECT 1 FROM AD_PrintFormat pf " +
+						" INNER JOIN AD_ReportView rv ON (rv.AD_ReportView_ID = pf.AD_ReportView_ID) " +
+						" WHERE rv.AD_Table_ID = ? " +
+						" AND pf.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID " +
+						" AND rv.IsActive = 'Y') " +
+					")";
+			parameters.add(table.getAD_Table_ID());
 			parameters.add(table.getAD_Table_ID());
 		} else if(request.getReportId() > 0) {
 			whereClause = "EXISTS("
