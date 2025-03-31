@@ -542,7 +542,9 @@ service Store {
 			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{gift_card_id}/lines"
 		};
 	}
+
 }
+
 
 //	Delete Refund reference request
 message DeletePaymentReferenceRequest {
@@ -1011,7 +1013,8 @@ message CustomerBankAccount {
 	string account_no = 20;
 }
 
-//	Create Gift Card
+
+//	Gift Card
 message CreateGiftCardRequest {
 	string document_no = 1;
 	string description = 2;
@@ -1024,14 +1027,11 @@ message CreateGiftCardRequest {
 	bool is_prepayment = 9;
 	int32 business_partner_id = 10;
 }
-//Get Gift Card Request
 message GetGiftCardRequest {
 	int32 id = 1;
 	int32 pos_id = 2;
 	int32 order_id = 3;
 }
-
-// List Gift Cards Request
 message ListGiftCardsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -1044,13 +1044,11 @@ message ListGiftCardsRequest {
 	int32 order_id = 8;
 	int32 business_partner_id = 9;
 }
-// List Gift Cards Response
 message ListGiftCardsResponse {
 	int64 record_count = 1;
 	repeated GiftCard gift_cards = 2;
 	string next_page_token = 3;
 }
-//	Create Gift Card
 message UpdateGiftCardRequest {
 	int32 id = 1;
 	string document_no = 2;
@@ -1064,11 +1062,9 @@ message UpdateGiftCardRequest {
 	bool is_prepayment = 10;
 	int32 business_partner_id = 11;
 }
-//	Delete Gift Card
 message DeleteGiftCardRequest {
 	int32 id = 1;
 }
-//	Gift Card
 message GiftCard {
 	int32 id = 1;
 	string uuid = 2;
@@ -1087,7 +1083,7 @@ message GiftCard {
 	repeated GiftCardLine gift_card_lines = 15;
 }
 
-//	Create Gift Card Line
+//	Gift Card Line
 message CreateGiftCardLineRequest {
 	int32 product_id = 1;
 	string description = 2;
@@ -1098,15 +1094,12 @@ message CreateGiftCardLineRequest {
 	string amount = 7;
 	int32 gift_card_id = 8;
 }
-//Get Gift Card Line Request
 message GetGiftCardLineRequest {
 	int32 id = 1;
 	int32 pos_id = 2;
 	int32 order_id = 3;
 	int32 gift_card_id = 4;
 }
-
-// List Gift Card Lines Request
 message ListGiftCardLinesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -1118,13 +1111,11 @@ message ListGiftCardLinesRequest {
 	// custom filters
 	int32 gift_card_id = 8;
 }
-// List Gift Card Lines Response
 message ListGiftCardLinesResponse {
 	int64 record_count = 1;
 	repeated GiftCardLine gift_card_lines = 2;
 	string next_page_token = 3;
 }
-//	Create Gift Card Line
 message UpdateGiftCardLineRequest {
 	int32 id = 1;
 	int32 product_id = 2;
@@ -1136,11 +1127,9 @@ message UpdateGiftCardLineRequest {
 	int32 uom_id = 8;
 	string amount = 9;
 }
-//	Delete Gift Card Line
 message DeleteGiftCardLineRequest {
 	int32 id = 1;
 }
-//	Gift Card Line
 message GiftCardLine {
 	int32 id = 1;
 	string uuid = 2;

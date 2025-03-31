@@ -253,6 +253,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
+
+
+
 	@Override
 	public void createGiftCard(CreateGiftCardRequest request, StreamObserver<GiftCard> responseObserver) {
 		try {
@@ -261,10 +264,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -283,10 +288,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(
-					Status.INTERNAL
-							.withDescription(e.getLocalizedMessage())
-							.withCause(e)
-							.asRuntimeException()
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -306,10 +311,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -328,10 +335,10 @@ public class PointOfSalesForm extends StoreImplBase {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-					Status.INTERNAL
-							.withDescription(e.getLocalizedMessage())
-							.withCause(e)
-							.asRuntimeException()
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -349,10 +356,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -369,10 +378,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -391,10 +402,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			responseObserver.onError(
-					Status.INTERNAL
-							.withDescription(e.getLocalizedMessage())
-							.withCause(e)
-							.asRuntimeException()
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -415,10 +426,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -437,10 +450,10 @@ public class PointOfSalesForm extends StoreImplBase {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-					Status.INTERNAL
-							.withDescription(e.getLocalizedMessage())
-							.withCause(e)
-							.asRuntimeException()
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -458,10 +471,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -469,6 +484,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		//TODO: Implement
 		return Empty.newBuilder();
 	}
+
 
 
 	@Override
