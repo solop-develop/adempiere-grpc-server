@@ -484,7 +484,67 @@ service Store {
 	rpc ListCustomerCredits(ListCustomerCreditsRequest) returns (ListCustomerCreditsResponse) {
 		option (google.api.http) = { get: "/point-of-sales/{pos_id}/customers/{customer_id}/credits" };
 	}
+
+	//	Gift Card
+	rpc CreateGiftCard(CreateGiftCardRequest) returns (GiftCard) {
+		option (google.api.http) = {
+			post: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards",
+			body: "*"
+		};
+	}
+	rpc UpdateGiftCard(UpdateGiftCardRequest) returns (GiftCard) {
+		option (google.api.http) = {
+			put: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}",
+			body: "*"
+		};
+	}
+	rpc GetGiftCard(GetGiftCardRequest) returns (GiftCard) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}"
+		};
+	}
+	rpc DeleteGiftCard(DeleteGiftCardRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			delete: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}"
+		};
+	}
+	rpc ListGiftCards(ListGiftCardsRequest) returns (ListGiftCardsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards"
+		};
+	}
+
+	//	Gift Card Line
+	rpc CreateGiftCardLine(CreateGiftCardLineRequest) returns (GiftCardLine) {
+		option (google.api.http) = {
+			post: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{gift_card_id}/lines",
+			body: "*"
+		};
+	}
+	rpc UpdateGiftCardLine(UpdateGiftCardLineRequest) returns (GiftCardLine) {
+		option (google.api.http) = {
+			put: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{gift_card_id}/lines/{id}",
+			body: "*"
+		};
+	}
+	rpc GetGiftCardLine(GetGiftCardLineRequest) returns (GiftCardLine) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{gift_card_id}/lines/{id}"
+		};
+	}
+	rpc DeleteGiftCardLine(DeleteGiftCardLineRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			delete: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{gift_card_id}/lines/{id}"
+		};
+	}
+	rpc ListGiftCardLines(ListGiftCardLinesRequest) returns (ListGiftCardLinesResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{gift_card_id}/lines"
+		};
+	}
+
 }
+
 
 //	Delete Refund reference request
 message DeletePaymentReferenceRequest {
@@ -951,6 +1011,137 @@ message CustomerBankAccount {
 	string iban = 18;
 	bool is_payroll_account = 19;
 	string account_no = 20;
+}
+
+
+//	Gift Card
+message CreateGiftCardRequest {
+	string document_no = 1;
+	string description = 2;
+	google.protobuf.Timestamp date_doc = 3;
+	google.protobuf.Timestamp valid_to = 4;
+	int32 order_id = 5;
+	string amount = 6;
+	int32 currency = 7;
+	int32 conversion_type_id = 8;
+	bool is_prepayment = 9;
+	int32 business_partner_id = 10;
+}
+message GetGiftCardRequest {
+	int32 id = 1;
+	int32 pos_id = 2;
+	int32 order_id = 3;
+}
+message ListGiftCardsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// custom filters
+	int32 order_id = 8;
+	int32 business_partner_id = 9;
+}
+message ListGiftCardsResponse {
+	int64 record_count = 1;
+	repeated GiftCard gift_cards = 2;
+	string next_page_token = 3;
+}
+message UpdateGiftCardRequest {
+	int32 id = 1;
+	string document_no = 2;
+	string description = 3;
+	google.protobuf.Timestamp date_doc = 4;
+	google.protobuf.Timestamp valid_to = 5;
+	int32 order_id = 6;
+	string amount = 7;
+	int32 currency = 8;
+	int32 conversion_type_id = 9;
+	bool is_prepayment = 10;
+	int32 business_partner_id = 11;
+}
+message DeleteGiftCardRequest {
+	int32 id = 1;
+}
+message GiftCard {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	string description = 4;
+	google.protobuf.Timestamp date_doc = 5;
+	google.protobuf.Timestamp valid_to = 6;
+	int32 order_id = 7;
+	bool processed = 8;
+	bool processing = 9;
+	string amount = 10;
+	core_functionality.Currency currency = 11;
+	int32 conversion_type_id = 12;
+	bool is_prepayment = 13;
+	int32 business_partner_id = 14;
+	repeated GiftCardLine gift_card_lines = 15;
+}
+
+//	Gift Card Line
+message CreateGiftCardLineRequest {
+	int32 product_id = 1;
+	string description = 2;
+	int32 order_line_id = 3;
+	string quantity_entered = 4;
+	string quantity_ordered = 5;
+	int32 uom_id = 6;
+	string amount = 7;
+	int32 gift_card_id = 8;
+}
+message GetGiftCardLineRequest {
+	int32 id = 1;
+	int32 pos_id = 2;
+	int32 order_id = 3;
+	int32 gift_card_id = 4;
+}
+message ListGiftCardLinesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// custom filters
+	int32 gift_card_id = 8;
+}
+message ListGiftCardLinesResponse {
+	int64 record_count = 1;
+	repeated GiftCardLine gift_card_lines = 2;
+	string next_page_token = 3;
+}
+message UpdateGiftCardLineRequest {
+	int32 id = 1;
+	int32 product_id = 2;
+	string description = 3;
+	int32 order_line_id = 4;
+	bool processed = 5;
+	string quantity_entered = 6;
+	string quantity_ordered = 7;
+	int32 uom_id = 8;
+	string amount = 9;
+}
+message DeleteGiftCardLineRequest {
+	int32 id = 1;
+}
+message GiftCardLine {
+	int32 id = 1;
+	string uuid = 2;
+	int32 product_id = 3;
+	string description = 4;
+	int32 order_line_id = 5;
+	bool processed = 6;
+	string quantity_entered = 7;
+	string quantity_ordered = 8;
+	int32 uom_id = 9;
+	string amount = 10;
+	int32 gift_card_id = 11;
 }
 
 //	Print Ticket

@@ -255,6 +255,238 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 
+
+	@Override
+	public void createGiftCard(CreateGiftCardRequest request, StreamObserver<GiftCard> responseObserver) {
+		try {
+			GiftCard.Builder giftCard = createGiftCard(request);
+			responseObserver.onNext(giftCard.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private GiftCard.Builder createGiftCard(CreateGiftCardRequest request) {
+		//TODO: Implement
+		return GiftCard.newBuilder();
+	}
+
+	@Override
+	public void getGiftCard(GetGiftCardRequest request, StreamObserver<GiftCard> responseObserver) {
+		try {
+			//TODO: implement the getGiftCard function
+			GiftCard.Builder giftCard = GiftCard.newBuilder();
+			responseObserver.onNext(giftCard.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	//TODO: Change return type for GiftCard
+	public PO getGiftCard (int id, String transactionName) {
+		//TODO: Implement
+		//return (PO) RecordUtil.getEntity(Env.getCtx(), "GiftCardTable", id, transactionName);
+		return null;
+	}
+
+	@Override
+	public void listGiftCards(ListGiftCardsRequest request, StreamObserver<ListGiftCardsResponse> responseObserver) {
+		try {
+			ListGiftCardsResponse.Builder listGiftCards = listGiftCards(request);
+			responseObserver.onNext(listGiftCards.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	public ListGiftCardsResponse.Builder listGiftCards(ListGiftCardsRequest request) {
+		//TODO: Implement
+		return ListGiftCardsResponse.newBuilder();
+	}
+
+	@Override
+	public void updateGiftCard(UpdateGiftCardRequest request, StreamObserver<GiftCard> responseObserver) {
+		try {
+			GiftCard.Builder giftCard = updateGiftCard(request);
+			responseObserver.onNext(giftCard.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	public GiftCard.Builder updateGiftCard (UpdateGiftCardRequest request) {
+		//TODO: Implement
+		return GiftCard.newBuilder();
+	}
+
+	@Override
+	public void deleteGiftCard(DeleteGiftCardRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			Empty.Builder orderLine = deleteGiftCard(request);
+			responseObserver.onNext(orderLine.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	public Empty.Builder deleteGiftCard(DeleteGiftCardRequest request) {
+		//TODO: Implement
+		return Empty.newBuilder();
+	}
+
+	@Override
+	public void createGiftCardLine(CreateGiftCardLineRequest request, StreamObserver<GiftCardLine> responseObserver) {
+		try {
+			GiftCardLine.Builder giftCardLine = createGiftCardLine(request);
+			responseObserver.onNext(giftCardLine.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	private GiftCardLine.Builder createGiftCardLine(CreateGiftCardLineRequest request) {
+		//TODO: Implement
+		return GiftCardLine.newBuilder();
+	}
+
+	@Override
+	public void getGiftCardLine(GetGiftCardLineRequest request, StreamObserver<GiftCardLine> responseObserver) {
+		try {
+			//TODO: implement the getGiftCardLine function
+			GiftCardLine.Builder giftCardLine = GiftCardLine.newBuilder();
+			responseObserver.onNext(giftCardLine.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	//TODO: Change return type for GiftCardLine
+	public PO getGiftCardLine (int id, String transactionName) {
+
+		//TODO: Implement
+		//return (PO) RecordUtil.getEntity(Env.getCtx(), "GiftCardLineTable", id, transactionName);
+		return null;
+	}
+
+	@Override
+	public void listGiftCardLines(ListGiftCardLinesRequest request, StreamObserver<ListGiftCardLinesResponse> responseObserver) {
+		try {
+			ListGiftCardLinesResponse.Builder listGiftCardLines = listGiftCardLines(request);
+			responseObserver.onNext(listGiftCardLines.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	public ListGiftCardLinesResponse.Builder listGiftCardLines(ListGiftCardLinesRequest request) {
+		//TODO: Implement
+		return ListGiftCardLinesResponse.newBuilder();
+	}
+
+	@Override
+	public void updateGiftCardLine(UpdateGiftCardLineRequest request, StreamObserver<GiftCardLine> responseObserver) {
+		try {
+			GiftCardLine.Builder giftCardLine = updateGiftCardLine(request);
+			responseObserver.onNext(giftCardLine.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	public GiftCardLine.Builder updateGiftCardLine (UpdateGiftCardLineRequest request) {
+		//TODO: Implement
+		return GiftCardLine.newBuilder();
+	}
+
+	@Override
+	public void deleteGiftCardLine(DeleteGiftCardLineRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			Empty.Builder giftCardLine = deleteGiftCardLine(request);
+			responseObserver.onNext(giftCardLine.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	public Empty.Builder deleteGiftCardLine(DeleteGiftCardLineRequest request) {
+		//TODO: Implement
+		return Empty.newBuilder();
+	}
+
+
+
 	@Override
 	public void createPayment(CreatePaymentRequest request, StreamObserver<Payment> responseObserver) {
 		try {
