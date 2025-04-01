@@ -376,7 +376,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 					null
 				)
 				.setParameters(request.getValue())
-				.firstOnly();
+				.first();
 		}
 		if(accountingCombination == null) {
 			throw new AdempiereException("@Error@ @AccountCombination@ @not.found@");
