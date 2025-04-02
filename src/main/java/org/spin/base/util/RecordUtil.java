@@ -239,7 +239,22 @@ public class RecordUtil {
 	}
 
 
+	/**
+	 * Evaluate if is valid identifier
+	 * @param id
+	 * @param table
+	 * @return
+	 */
+	public static boolean isValidId(int id, MTable table) {
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			return false;
+		}
 
+		return isValidId(
+			id,
+			table.getAccessLevel()
+		);
+	}
 	/**
 	 * Evaluate if is valid identifier
 	 * @param id
