@@ -32,7 +32,6 @@ import org.compiere.model.MCity;
 import org.compiere.model.MCountry;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MLocation;
-import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MProduct;
 import org.compiere.model.MRegion;
