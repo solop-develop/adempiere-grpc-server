@@ -72,6 +72,7 @@ public class OrderManagement {
 			if(!OrderUtil.isValidOrder(salesOrder)) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
+			processOnlinePayments(salesOrder);
 			if(DocumentUtil.isDrafted(salesOrder)) {
 				// In case the Order is Invalid, set to In Progress; otherwise it will not be completed
 				if (salesOrder.getDocStatus().equalsIgnoreCase(MOrder.STATUS_Invalid))  {
@@ -394,6 +395,35 @@ public class OrderManagement {
 			throw new AdempiereException("@POS.SalesRepAssigned@");
 		}
 	}
+
+	public static void processOnlinePayments(MOrder salesOrder) {
+		List<MPayment> payments = MPayment.getOfOrder(salesOrder);
+		StringBuilder errors = new StringBuilder();
+		payments.stream().sorted(Comparator.comparing(MPayment::getCreated)).forEach(payment -> {
+			if(payment.isOnline() && payment.setPaymentProcessor()) {
+				try {
+					payment.setIsApproved(false);
+					boolean isOk = payment.processOnline();
+					if(!isOk) {
+						if(errors.length() > 0) {
+							errors.append(Env.NL);
+						}
+						errors.append(payment.getErrorMessage());
+						payment.setIsApproved(false);
+					}
+					payment.saveEx();
+				} catch (Exception e) {
+					if(errors.length() > 0) {
+						errors.append(Env.NL);
+					}
+					errors.append(e.getMessage());
+				}
+			}
+		});
+		if(errors.length() > 0) {
+			throw new AdempiereException(errors.toString());
+		}
+	}
 	
 	/**
 	 * Process payment of Order
@@ -445,7 +475,7 @@ public class OrderManagement {
 			CashManagement.addPaymentToCash(pos, payment);
 		});
 		//	Allocate all payments
-		if(paymentsIds.size() > 0) {
+		if(!paymentsIds.isEmpty()) {
 			String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
 			//	
 			MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, RecordUtil.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
@@ -520,15 +550,6 @@ public class OrderManagement {
 				payment.setIsAllocated(true);
 				payment.setC_Invoice_ID(invoiceId);
 				payment.saveEx();
-				if(payment.setPaymentProcessor()) {
-					payment.setIsApproved(false);
-					boolean isOk = payment.processOnline();
-					if(!isOk) {
-						throw new AdempiereException(payment.getErrorMessage());
-					}
-					payment.setIsApproved(true);
-					payment.saveEx();
-				}
 			});
 		} else {
 			//	Add write off

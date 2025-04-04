@@ -185,7 +185,7 @@ public class CollectingManagement {
 			payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID, request.getInvoiceReferenceId());
 		}
 		payment.saveEx(transactionName);
-		if(payment.setPaymentProcessor()) {
+		if(payment.isOnline() && payment.setPaymentProcessor()) {
 			payment.setIsApproved(false);
 			boolean isOk = payment.processOnline();
 			if(!isOk) {
