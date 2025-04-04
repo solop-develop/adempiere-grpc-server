@@ -1018,16 +1018,9 @@ message CustomerBankAccount {
 message CreateGiftCardRequest {
 	int32 pos_id = 1;
 	int32 order_id = 2;
-	string document_no = 3;
-	string description = 4;
-	google.protobuf.Timestamp date_doc = 5;
-	google.protobuf.Timestamp valid_to = 6;
-	string amount = 7;
-	int32 currency = 8;
-	int32 conversion_type_id = 9;
-	bool is_prepayment = 10;
-	int32 business_partner_id = 11;
-	bool is_create_lines_from_order = 12;
+	string amount = 3;
+	bool is_prepayment = 4;
+	bool is_create_lines_from_order = 5;
 
 }
 message GetGiftCardRequest {
@@ -1092,16 +1085,13 @@ message GiftCard {
 
 //	Gift Card Line
 message CreateGiftCardLineRequest {
-	int32 product_id = 1;
-	string description = 2;
-	int32 order_line_id = 3;
-	string quantity_entered = 4;
-	string quantity_ordered = 5;
-	int32 uom_id = 6;
-	string amount = 7;
-	int32 pos_id = 8;
-	int32 order_id = 9;
-	int32 gift_card_id = 10;
+	int32 order_line_id = 1;
+	string quantity_entered = 2;
+	string quantity_ordered = 3;
+	string amount = 4;
+	int32 pos_id = 5;
+	int32 order_id = 6;
+	int32 gift_card_id = 7;
 }
 message GetGiftCardLineRequest {
 	int32 id = 1;
