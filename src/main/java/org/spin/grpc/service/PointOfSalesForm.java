@@ -87,6 +87,7 @@ import org.compiere.model.MUser;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.M_Element;
 import org.compiere.model.PO;
+import org.compiere.model.PO_Record;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
 import org.compiere.util.CLogger;
@@ -274,8 +275,67 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 	private GiftCard.Builder createGiftCard(CreateGiftCardRequest request) {
-		//TODO: Implement
-		return GiftCard.newBuilder();
+		int orderId = request.getOrderId();
+		Properties ctx = Env.getCtx();
+		if (orderId <= 0) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
+		if (Util.isEmpty(request.getDocumentNo(), true)) {
+			throw new AdempiereException("@FillMandatory@ @DocumentNo@");
+		}
+		if (ValueManager.getDateFromTimestampDate(request.getDateDoc()) == null) {
+			throw new AdempiereException("@FillMandatory@ @DateDoc@");
+		}
+		BigDecimal amount = NumberManager.getBigDecimalFromString(request.getAmount());
+		if (amount == null || amount.signum() == 0) {
+			throw new AdempiereException("@FillMandatory@ @Amount@");
+		}
+		if (request.getCurrency() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Currency_ID@");
+		}
+		if (request.getBusinessPartnerId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
+		}
+
+		MOrder order = new MOrder(ctx, orderId, null);
+		if (!order.getDocStatus().equals(MOrder.DOCSTATUS_Completed)
+			&& !order.getDocStatus().equals(MOrder.DOCSTATUS_Closed)) {
+			throw new AdempiereException("@DocStatus@ @InValid@");
+		}
+		MTable table = MTable.get(ctx, "ECA14_GiftCard");
+		if (table == null) {
+			throw new AdempiereException("@TableName@ @NotFound@");
+		}
+		AtomicReference<PO> maybeGiftCard = new AtomicReference<PO>();
+		Trx.run(transactionName -> {
+
+			PO giftCard = new Query(Env.getCtx(), table.getTableName(),
+					"processed = 'N' "
+							+ "AND processing = 'N' "
+							+ "AND C_Order_ID = ?", transactionName)
+					.setParameters(orderId)
+					.first();
+
+			if (giftCard == null) {
+				giftCard = table.getPO(0, null);
+			}else {
+				//TODO: Validate if it should update info
+			}
+			giftCard.set_ValueOfColumn("Description", request.getDescription());
+			giftCard.set_ValueOfColumn("C_Order_ID", request.getOrderId());
+			giftCard.set_ValueOfColumn("C_BPartner_ID", request.getBusinessPartnerId());
+			giftCard.set_ValueOfColumn("C_ConversionType_ID", request.getConversionTypeId());
+			giftCard.set_ValueOfColumn("C_Currency_ID" , request.getCurrency());
+			giftCard.set_ValueOfColumn("DateDoc", order.getDateOrdered());
+			giftCard.set_ValueOfColumn("IsPrepayment", request.getIsPrepayment());
+			giftCard.saveEx(transactionName);
+			maybeGiftCard.set(giftCard);
+			if (request.getIsCreateLinesFromOrder()) {
+				createGiftCardLines(giftCard, transactionName);
+			}
+		});
+
+		return POSConvertUtil.convertGiftCard(maybeGiftCard.get());
 	}
 
 	@Override
@@ -373,7 +433,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createGiftCardLine(CreateGiftCardLineRequest request, StreamObserver<GiftCardLine> responseObserver) {
 		try {
-			GiftCardLine.Builder giftCardLine = createGiftCardLine(request);
+			GiftCardLine.Builder giftCardLine = createAndConvertGiftCardLine(request);
 			responseObserver.onNext(giftCardLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -387,9 +447,102 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
-	private GiftCardLine.Builder createGiftCardLine(CreateGiftCardLineRequest request) {
-		//TODO: Implement
-		return GiftCardLine.newBuilder();
+	private void createGiftCardLines(PO giftCard, String transactionName) {
+
+		int orderId = giftCard.get_ValueAsInt(MOrder.COLUMNNAME_C_Order_ID);
+		if (orderId ==0 ) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
+		Properties ctx = Env.getCtx();
+		MOrder order = new MOrder(ctx, orderId, null);
+		if (!order.getDocStatus().equals(MOrder.DOCSTATUS_Completed)
+				&& !order.getDocStatus().equals(MOrder.DOCSTATUS_Closed)) {
+			throw new AdempiereException("@DocStatus@ @InValid@");
+		}
+		MTable table = MTable.get(ctx, "ECA14_GiftCardLine");
+		if (table == null) {
+			throw new AdempiereException("@TableName@ @NotFound@");
+		}
+		int giftCardId = giftCard.get_ID();
+		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
+		String whereClause = MOrderLine.COLUMNNAME_C_OrderLine_ID + " = ? " +
+				" AND ECA14_GiftCard_ID = ?";
+		orderLines.forEach( orderLine ->{
+			PO giftCardLine = new Query(ctx, table.getTableName(), whereClause, transactionName)
+					.setParameters(orderLine.getC_OrderLine_ID(), giftCardId)
+					.first();
+
+			if (giftCardLine == null) {
+				giftCardLine = table.getPO(0, transactionName);
+			}else {
+				//TODO: Validate if it should update info
+			}
+			giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_M_Product_ID, orderLine.getM_Product_ID());
+			giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_Description, orderLine.getDescription());
+			giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_C_OrderLine_ID, orderLine.getC_OrderLine_ID());
+			giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_QtyEntered, orderLine.getQtyEntered());
+			giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_QtyOrdered , orderLine.getQtyOrdered());
+			giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_C_UOM_ID, orderLine.getC_UOM_ID());
+			giftCardLine.set_ValueOfColumn("Amount", orderLine.getLineNetAmt());
+			giftCardLine.set_ValueOfColumn("ECA14_GiftCard_ID", giftCardId);
+			giftCardLine.saveEx();
+		});
+	}
+
+	private GiftCardLine.Builder createAndConvertGiftCardLine(CreateGiftCardLineRequest request) {
+
+		if (request.getGiftCardId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @ECA14_GiftCard_ID@");
+		}
+		if (request.getProductId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Product_ID@");
+		}
+		if (request.getOrderLineId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_OrderLine_ID@");
+		}
+		if (request.getUomId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_UOM_ID@");
+		}
+
+		if (Util.isEmpty(request.getQuantityEntered(), true)) {
+			throw new AdempiereException("@FillMandatory@ @QtyEntered@");
+		}
+		if (Util.isEmpty(request.getQuantityOrdered(), true)) {
+			throw new AdempiereException("@FillMandatory@ @QtyOrdered@");
+		}
+		if (Util.isEmpty(request.getAmount(), true)) {
+			throw new AdempiereException("@FillMandatory@ @Amount@");
+		}
+		Properties ctx = Env.getCtx();
+		MTable table = MTable.get(ctx, "ECA14_GiftCardLine");
+		if (table == null) {
+			throw new AdempiereException("@TableName@ @NotFound@");
+		}
+		AtomicReference<PO> maybeGiftCardLine = new AtomicReference<PO>();
+		Trx.run( transactionName -> {
+			PO giftCardLine = new Query(Env.getCtx(), table.getTableName(),
+					"Processed = 'N' "
+							+ "AND C_OrderLine_ID = ? ", transactionName)
+					.setParameters(request.getOrderLineId())
+					.first();
+
+			if (giftCardLine == null) {
+				giftCardLine = table.getPO(0, null);
+			}else {
+				//TODO: Validate if it should update info
+			}
+			giftCardLine.set_ValueOfColumn("M_Product_ID", request.getProductId());
+			giftCardLine.set_ValueOfColumn("Description", request.getDescription());
+			giftCardLine.set_ValueOfColumn("C_OrderLine_ID", request.getOrderLineId());
+			giftCardLine.set_ValueOfColumn("QtyEntered", NumberManager.getBigDecimalFromString(request.getQuantityEntered()));
+			giftCardLine.set_ValueOfColumn("QtyOrdered", NumberManager.getBigDecimalFromString(request.getQuantityOrdered()));
+			giftCardLine.set_ValueOfColumn("C_UOM_ID", request.getUomId());
+			giftCardLine.set_ValueOfColumn("Amount", NumberManager.getBigDecimalFromString(request.getAmount()));
+			giftCardLine.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
+			giftCardLine.saveEx();
+			maybeGiftCardLine.set(giftCardLine);
+		});
+		return POSConvertUtil.convertGiftCardLine(maybeGiftCardLine.get());
 	}
 
 	@Override
