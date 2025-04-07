@@ -16,7 +16,6 @@
 
 package org.spin.pos.util;
 
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -185,13 +184,17 @@ public class POSConvertUtil {
 				)
 			)
 			.setDateDoc(
-				TimeManager.getTimestampFromObject(
-					giftCard.get_Value("DateDoc")
+				ValueManager.getTimestampFromDate(
+					TimeManager.getTimestampFromObject(
+						giftCard.get_Value("DateDoc")
+					)
 				)
 			)
 			.setValidTo(
-				TimeManager.getTimestampFromObject(
-					giftCard.get_Value("ValidTo")
+				ValueManager.getTimestampFromDate(
+					TimeManager.getTimestampFromObject(
+						giftCard.get_Value("ValidTo")
+					)
 				)
 			)
 			.setOrderId(

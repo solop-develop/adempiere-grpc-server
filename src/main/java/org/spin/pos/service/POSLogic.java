@@ -623,14 +623,20 @@ public class POSLogic {
 		);
 	}
 
-	public static GiftCard.Builder getGiftCard (int id, String transactionName) {
-		PO giftCard = RecordUtil.getEntity(Env.getCtx(), "GiftCardTable", id, transactionName);
+
+
+	public static GiftCard.Builder getGiftCard(int id, String transactionName) {
+		PO giftCard = RecordUtil.getEntity(
+			Env.getCtx(),
+			"ECA14_GiftCard",
+			id,
+			transactionName
+		);
 		return POSConvertUtil.convertGiftCard(giftCard);
 	}
 	public static GiftCard.Builder createGiftCard(CreateGiftCardRequest request) {
-
-		Properties ctx = Env.getCtx();
-		MTable table = MTable.get(ctx, "ECA14_GiftCard");
+		Properties context = Env.getCtx();
+		MTable table = MTable.get(context, "ECA14_GiftCard");
 		if (table == null) {
 			throw new AdempiereException("@TableName@ @NotFound@");
 		}
@@ -641,24 +647,32 @@ public class POSLogic {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 		if (request.getIsPrepayment()) {
-			BigDecimal amount = NumberManager.getBigDecimalFromString(request.getAmount());
+			BigDecimal amount = NumberManager.getBigDecimalFromString(
+				request.getAmount()
+			);
 			if (amount == null || amount.signum() == 0) {
 				throw new AdempiereException("@FillMandatory@ @Amount@");
 			}
 		}
 		AtomicReference<PO> maybeGiftCard = new AtomicReference<PO>();
 		Trx.run(transactionName -> {
-			MOrder order = new MOrder(ctx, request.getOrderId(), transactionName);
-			if (!order.getDocStatus().equals(MOrder.DOCSTATUS_Completed)
-					&& !order.getDocStatus().equals(MOrder.DOCSTATUS_Closed)) {
-				throw new AdempiereException("@DocStatus@ @InValid@");
+			MOrder order = new MOrder(context, request.getOrderId(), transactionName);
+			if (!DocumentUtil.isDrafted(order)) {
+				throw new AdempiereException("@C_Order_ID@ @Processed@");
 			}
-			PO giftCard = new Query(Env.getCtx(), table.getTableName(),
-					"processed = 'N' "
-							+ "AND processing = 'N' "
-							+ "AND C_Order_ID = ?", transactionName)
-					.setParameters(request.getOrderId())
-					.first();
+			final String whereClause = "Processed = 'N' "
+				+ "AND Processing = 'N' "
+				+ "AND C_Order_ID = ?"
+			;
+			PO giftCard = new Query(
+				context,
+				table.getTableName(),
+				whereClause,
+				transactionName
+			)
+				.setParameters(request.getOrderId())
+				.first()
+			;
 
 			if (giftCard == null) {
 				giftCard = table.getPO(0, transactionName);
@@ -671,22 +685,27 @@ public class POSLogic {
 			giftCard.set_ValueOfColumn("DateDoc", order.getDateOrdered());
 			giftCard.set_ValueOfColumn("IsPrepayment", request.getIsPrepayment());
 			giftCard.saveEx(transactionName);
-			maybeGiftCard.set(giftCard);
-			if (request.getIsCreateLinesFromOrder()) {
+			if (!request.getIsPrepayment() && request.getIsCreateLinesFromOrder()) {
 				createGiftCardLines(giftCard, transactionName);
 			}
+			maybeGiftCard.set(giftCard);
 		});
 
 		return POSConvertUtil.convertGiftCard(maybeGiftCard.get());
 	}
 	public static GiftCardLine.Builder getGiftCardLine (int id, String transactionName) {
-		PO giftCardLine = RecordUtil.getEntity(Env.getCtx(), "GiftCardLineTable", id, transactionName);
+		PO giftCardLine = RecordUtil.getEntity(
+			Env.getCtx(),
+			"ECA14_GiftCardLine",
+			id,
+			transactionName
+		);
 		return POSConvertUtil.convertGiftCardLine(giftCardLine);
 	}
 
 	private static void createGiftCardLines(PO giftCard, String transactionName) {
-		Properties ctx = Env.getCtx();
-		MTable table = MTable.get(ctx, "ECA14_GiftCardLine");
+		Properties context = Env.getCtx();
+		MTable table = MTable.get(context, "ECA14_GiftCardLine");
 		if (table == null) {
 			throw new AdempiereException("@TableName@ @NotFound@");
 		}
@@ -694,7 +713,7 @@ public class POSLogic {
 		if (orderId ==0 ) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
-		MOrder order = new MOrder(ctx, orderId, null);
+		MOrder order = new MOrder(context, orderId, null);
 		if (!order.getDocStatus().equals(MOrder.DOCSTATUS_Completed)
 				&& !order.getDocStatus().equals(MOrder.DOCSTATUS_Closed)) {
 			throw new AdempiereException("@DocStatus@ @InValid@");
@@ -703,11 +722,18 @@ public class POSLogic {
 		int giftCardId = giftCard.get_ID();
 		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
 		String whereClause = MOrderLine.COLUMNNAME_C_OrderLine_ID + " = ? " +
-				" AND ECA14_GiftCard_ID = ? ";
-		orderLines.forEach( orderLine ->{
-			PO giftCardLine = new Query(ctx, table.getTableName(), whereClause, transactionName)
-					.setParameters(orderLine.getC_OrderLine_ID(), giftCardId)
-					.first();
+			" AND ECA14_GiftCard_ID = ? "
+		;
+		orderLines.forEach(orderLine ->{
+			PO giftCardLine = new Query(
+				context,
+				table.getTableName(),
+				whereClause,
+				transactionName
+			)
+				.setParameters(orderLine.getC_OrderLine_ID(), giftCardId)
+				.first()
+			;
 
 			if (giftCardLine == null) {
 				giftCardLine = table.getPO(0, transactionName);
@@ -736,6 +762,10 @@ public class POSLogic {
 		//TODO: Implement
 		return Empty.newBuilder();
 	}
+
+
+
+
 	//TODO: Validate how will the qty and amounts be created
 	public static GiftCardLine.Builder createAndConvertGiftCardLine(CreateGiftCardLineRequest request) {
 		Properties ctx = Env.getCtx();
