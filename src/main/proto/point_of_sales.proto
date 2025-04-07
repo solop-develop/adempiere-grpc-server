@@ -1016,16 +1016,12 @@ message CustomerBankAccount {
 
 //	Gift Card
 message CreateGiftCardRequest {
-	string document_no = 1;
-	string description = 2;
-	google.protobuf.Timestamp date_doc = 3;
-	google.protobuf.Timestamp valid_to = 4;
-	int32 order_id = 5;
-	string amount = 6;
-	int32 currency = 7;
-	int32 conversion_type_id = 8;
-	bool is_prepayment = 9;
-	int32 business_partner_id = 10;
+	int32 pos_id = 1;
+	int32 order_id = 2;
+	string amount = 3;
+	bool is_prepayment = 4;
+	bool is_create_lines_from_order = 5;
+
 }
 message GetGiftCardRequest {
 	int32 id = 1;
@@ -1041,8 +1037,9 @@ message ListGiftCardsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	// custom filters
-	int32 order_id = 8;
-	int32 business_partner_id = 9;
+	int32 business_partner_id = 8;
+	int32 pos_id = 9;
+	int32 order_id = 10;
 }
 message ListGiftCardsResponse {
 	int64 record_count = 1;
@@ -1055,15 +1052,18 @@ message UpdateGiftCardRequest {
 	string description = 3;
 	google.protobuf.Timestamp date_doc = 4;
 	google.protobuf.Timestamp valid_to = 5;
-	int32 order_id = 6;
-	string amount = 7;
-	int32 currency = 8;
-	int32 conversion_type_id = 9;
-	bool is_prepayment = 10;
-	int32 business_partner_id = 11;
+	string amount = 6;
+	int32 currency = 7;
+	int32 conversion_type_id = 8;
+	bool is_prepayment = 9;
+	int32 business_partner_id = 10;
+	int32 pos_id = 11;
+	int32 order_id = 12;
 }
 message DeleteGiftCardRequest {
 	int32 id = 1;
+	int32 pos_id = 2;
+	int32 order_id = 3;
 }
 message GiftCard {
 	int32 id = 1;
@@ -1073,8 +1073,8 @@ message GiftCard {
 	google.protobuf.Timestamp date_doc = 5;
 	google.protobuf.Timestamp valid_to = 6;
 	int32 order_id = 7;
-	bool processed = 8;
-	bool processing = 9;
+	bool is_processed = 8;
+	bool is_processing = 9;
 	string amount = 10;
 	core_functionality.Currency currency = 11;
 	int32 conversion_type_id = 12;
@@ -1085,14 +1085,13 @@ message GiftCard {
 
 //	Gift Card Line
 message CreateGiftCardLineRequest {
-	int32 product_id = 1;
-	string description = 2;
-	int32 order_line_id = 3;
-	string quantity_entered = 4;
-	string quantity_ordered = 5;
-	int32 uom_id = 6;
-	string amount = 7;
-	int32 gift_card_id = 8;
+	int32 order_line_id = 1;
+	string quantity_entered = 2;
+	string quantity_ordered = 3;
+	string amount = 4;
+	int32 pos_id = 5;
+	int32 order_id = 6;
+	int32 gift_card_id = 7;
 }
 message GetGiftCardLineRequest {
 	int32 id = 1;
@@ -1109,7 +1108,9 @@ message ListGiftCardLinesRequest {
 	string page_token = 6;
 	string search_value = 7;
 	// custom filters
-	int32 gift_card_id = 8;
+	int32 pos_id = 8;
+	int32 order_id = 9;
+	int32 gift_card_id = 10;
 }
 message ListGiftCardLinesResponse {
 	int64 record_count = 1;
@@ -1121,14 +1122,19 @@ message UpdateGiftCardLineRequest {
 	int32 product_id = 2;
 	string description = 3;
 	int32 order_line_id = 4;
-	bool processed = 5;
-	string quantity_entered = 6;
-	string quantity_ordered = 7;
-	int32 uom_id = 8;
-	string amount = 9;
+	string quantity_entered = 5;
+	string quantity_ordered = 6;
+	int32 uom_id = 7;
+	string amount = 8;
+	int32 pos_id = 9;
+	int32 order_id = 10;
+	int32 gift_card_id = 11;
 }
 message DeleteGiftCardLineRequest {
 	int32 id = 1;
+	int32 pos_id = 2;
+	int32 order_id = 3;
+	int32 gift_card_id = 4;
 }
 message GiftCardLine {
 	int32 id = 1;
@@ -1136,7 +1142,7 @@ message GiftCardLine {
 	int32 product_id = 3;
 	string description = 4;
 	int32 order_line_id = 5;
-	bool processed = 6;
+	bool is_processed = 6;
 	string quantity_entered = 7;
 	string quantity_ordered = 8;
 	int32 uom_id = 9;
