@@ -5410,6 +5410,12 @@ public class PointOfSalesForm extends StoreImplBase {
 					getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumShemaDiscountAllowed)
 				)
 			)
+			.setIsAllowsGiftCard(
+				getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsGiftCard)
+			)
+			.setDefaultGiftCardChargeId(
+				pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID)
+			)
 		;
 
 		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_RefundReferenceCurrency_ID) > 0) {
