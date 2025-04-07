@@ -79,4 +79,7 @@ public class ColumnsAdded {
 	/**	For Payment	*/
 	public static final String COLUMNNAME_ECA14_Invoice_Reference_ID = "ECA14_Invoice_Reference_ID";
 	public static final String COLUMNNAME_ECA14_Reference_Amount = "ECA14_Reference_Amount";
+	/**	For Gift Card */
+	public static final String COLUMNNAME_IsAllowsGiftCard = "IsAllowsGiftCard";
+	public static final String COLUMNNAME_ECA14_DefaultGiftCardCharge_ID = "ECA14_DefaultGiftCardCharge_ID";
 }

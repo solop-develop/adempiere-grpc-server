@@ -1716,6 +1716,8 @@ message PointOfSales {
 	bool is_allows_customer_template = 54;
 	bool is_allows_apply_schema_discount = 55;
 	string maximum_schema_discount_allowed = 56;
+	bool is_allows_gift_card = 57;
+	int32 default_gift_card_charge_id = 58;
 }
 
 // Request for create a order
