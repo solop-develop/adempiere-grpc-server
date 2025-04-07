@@ -131,7 +131,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -161,7 +161,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -188,7 +188,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -212,7 +212,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -236,7 +236,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -697,7 +697,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -724,7 +724,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -749,7 +749,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -773,7 +773,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -797,7 +797,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -821,7 +821,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -845,7 +845,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -880,7 +880,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -915,7 +915,7 @@ public class OutBoundOrderLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
