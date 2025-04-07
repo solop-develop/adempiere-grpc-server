@@ -56,6 +56,7 @@ import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -151,155 +152,163 @@ public class POSConvertUtil {
 		return builder;
 	}
 
+
+
 	/**
 	 * Convert giftCard from entity
 	 * @param giftCard
 	 * @return
 	 */
-	public static  GiftCard.Builder convertGiftCard(PO giftCard) {
-
+	public static GiftCard.Builder convertGiftCard(PO giftCard) {
 		GiftCard.Builder builder = GiftCard.newBuilder();
-		if(giftCard == null) {
+		if (giftCard == null || giftCard.get_ID() <= 0) {
 			return builder;
 		}
 		//	Convert
 		builder
-				.setId(
-						giftCard.get_ID()
+			.setId(
+				giftCard.get_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					giftCard.get_ValueAsString("UUID")
 				)
-				.setUuid(
-						StringManager.getValidString(
-								giftCard.get_ValueAsString("UUID")
-						)
+			)
+			.setDocumentNo(
+				StringManager.getValidString(
+					giftCard.get_ValueAsString("DocumentNo")
 				)
-				.setDocumentNo(
-						StringManager.getValidString(
-								giftCard.get_ValueAsString("DocumentNo")
-						)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					giftCard.get_ValueAsString("Description")
 				)
-				.setDescription(
-						StringManager.getValidString(
-								giftCard.get_ValueAsString("Description")
-						)
+			)
+			.setDateDoc(
+				TimeManager.getTimestampFromObject(
+					giftCard.get_Value("DateDoc")
 				)
-				.setDateDoc(
-						ValueManager.getTimestampFromDate(
-								(Timestamp) giftCard.get_Value("DateDoc")
-						)
+			)
+			.setValidTo(
+				TimeManager.getTimestampFromObject(
+					giftCard.get_Value("ValidTo")
 				)
-				.setValidTo(
-						ValueManager.getTimestampFromDate(
-								(Timestamp) giftCard.get_Value("ValidTo")
-						)
+			)
+			.setOrderId(
+				giftCard.get_ValueAsInt("C_Order_ID")
+			)
+			.setIsProcessed(
+				giftCard.get_ValueAsBoolean("Processed")
+			)
+			.setIsProcessing(
+				giftCard.get_ValueAsBoolean("Processing")
+			)
+			.setAmount(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromString(
+						giftCard.get_ValueAsString("Amount")
+					)
 				)
-				.setOrderId(
-						giftCard.get_ValueAsInt("C_Order_ID")
+			)
+			.setCurrency(
+				CoreFunctionalityConvert.convertCurrency(
+					giftCard.get_ValueAsInt("C_Currency_ID")
 				)
-				.setIsProcessed(
-						giftCard.get_ValueAsBoolean("Processed")
-				)
-				.setIsProcessing(
-						giftCard.get_ValueAsBoolean("Processing")
-				)
-				.setAmount(
-						NumberManager.getBigDecimalToString(
-								NumberManager.getBigDecimalFromString(
-										giftCard.get_ValueAsString("Amount")
-								)
-						)
-				)
-				.setCurrency(
-						CoreFunctionalityConvert.convertCurrency(
-								giftCard.get_ValueAsInt("C_Currency_ID")
-						)
-				)
-				.setConversionTypeId(
-						giftCard.get_ValueAsInt("C_ConversionType_ID")
-				)
-				.setIsPrepayment(
-						giftCard.get_ValueAsBoolean("IsPrepayment")
-				)
-				.setBusinessPartnerId(
-						giftCard.get_ValueAsInt("C_BPartner_ID")
-				)
+			)
+			.setConversionTypeId(
+				giftCard.get_ValueAsInt("C_ConversionType_ID")
+			)
+			.setIsPrepayment(
+				giftCard.get_ValueAsBoolean("IsPrepayment")
+			)
+			.setBusinessPartnerId(
+				giftCard.get_ValueAsInt("C_BPartner_ID")
+			)
 		;
 
 		String whereClause = "ECA14_GiftCard_ID = ?";
-		List<PO> giftCardLines = new Query(giftCard.getCtx(), "ECA14_GiftCardLine", whereClause, giftCard.get_TrxName())
-				.setParameters(giftCard.get_ID())
-				.list();
+		List<PO> giftCardLines = new Query(
+			giftCard.getCtx(),
+			"ECA14_GiftCardLine",
+			whereClause,
+			giftCard.get_TrxName()
+		)
+			.setParameters(giftCard.get_ID())
+			.list()
+		;
 		giftCardLines.forEach( line -> {
 			builder.addGiftCardLines(
-					convertGiftCardLine(line)
+				convertGiftCardLine(line)
 			);
 		});
 		return builder;
 	}
-
 
 	/**
 	 * Convert giftCard from entity
 	 * @param giftCardLine
 	 * @return
 	 */
-	public static  GiftCardLine.Builder convertGiftCardLine(PO giftCardLine) {
+	public static GiftCardLine.Builder convertGiftCardLine(PO giftCardLine) {
 		GiftCardLine.Builder builder = GiftCardLine.newBuilder();
-		if(giftCardLine == null) {
+		if(giftCardLine == null || giftCardLine.get_ID() <= 0) {
 			return builder;
 		}
 		//	Convert
 		return builder
-				.setId(
-						giftCardLine.get_ID()
+			.setId(
+				giftCardLine.get_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					giftCardLine.get_ValueAsString("UUID")
 				)
-				.setUuid(
-						StringManager.getValidString(
-								giftCardLine.get_ValueAsString("UUID")
-						)
+			)
+			.setProductId(
+				giftCardLine.get_ValueAsInt("M_Product_ID")
+			)
+			.setDescription(
+				StringManager.getValidString(
+					giftCardLine.get_ValueAsString("Description")
 				)
-				.setProductId(
-						giftCardLine.get_ValueAsInt("M_Product_ID")
+			)
+			.setOrderLineId(
+				giftCardLine.get_ValueAsInt("C_OrderLine_ID")
+			)
+			.setIsProcessed(
+				giftCardLine.get_ValueAsBoolean("Processed")
+			)
+			.setQuantityEntered(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromString(
+						giftCardLine.get_ValueAsString("QtyEntered")
+					)
 				)
-				.setDescription(
-						StringManager.getValidString(
-								giftCardLine.get_ValueAsString("Description")
-						)
+			)
+			.setQuantityOrdered(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromString(
+						giftCardLine.get_ValueAsString("QtyOrdered")
+					)
 				)
-				.setOrderLineId(
-						giftCardLine.get_ValueAsInt("C_OrderLine_ID")
+			)
+			.setUomId(
+				giftCardLine.get_ValueAsInt("C_UOM_ID")
+			)
+			.setAmount(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromString(
+						giftCardLine.get_ValueAsString("Amount")
+					)
 				)
-				.setIsProcessed(
-						giftCardLine.get_ValueAsBoolean("Processed")
-				)
-				.setQuantityEntered(
-						NumberManager.getBigDecimalToString(
-								NumberManager.getBigDecimalFromString(
-										giftCardLine.get_ValueAsString("QtyEntered")
-								)
-						)
-				)
-				.setQuantityOrdered(
-						NumberManager.getBigDecimalToString(
-								NumberManager.getBigDecimalFromString(
-										giftCardLine.get_ValueAsString("QtyOrdered")
-								)
-						)
-				)
-				.setUomId(
-						giftCardLine.get_ValueAsInt("C_UOM_ID")
-				)
-				.setAmount(
-						NumberManager.getBigDecimalToString(
-								NumberManager.getBigDecimalFromString(
-										giftCardLine.get_ValueAsString("Amount")
-								)
-						)
-				)
-				.setGiftCardId(
-						giftCardLine.get_ValueAsInt("ECA14_GiftCard_ID")
-				)
-				;
+			)
+			.setGiftCardId(
+				giftCardLine.get_ValueAsInt("ECA14_GiftCard_ID")
+			)
+		;
 	}
+
+
 
 	public static CommandShortcut.Builder convertCommandShorcut(PO commandShortcut) {
 		CommandShortcut.Builder builder = CommandShortcut.newBuilder();
