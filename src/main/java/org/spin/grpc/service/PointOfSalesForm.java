@@ -254,6 +254,8 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+
+
 	@Override
 	public void createGiftCard(CreateGiftCardRequest request, StreamObserver<GiftCard> responseObserver) {
 		try {
@@ -340,6 +342,8 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+
+
 	@Override
 	public void createGiftCardLine(CreateGiftCardLineRequest request, StreamObserver<GiftCardLine> responseObserver) {
 		try {
@@ -356,8 +360,6 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
-
-
 
 	@Override
 	public void getGiftCardLine(GetGiftCardLineRequest request, StreamObserver<GiftCardLine> responseObserver) {
@@ -427,6 +429,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
+
+
 
 	@Override
 	public void createPayment(CreatePaymentRequest request, StreamObserver<Payment> responseObserver) {
