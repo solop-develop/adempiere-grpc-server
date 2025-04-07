@@ -195,14 +195,14 @@ public class BusinessData extends BusinessDataImplBase {
 		if(request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
-		int processId = request.getId();
+		final int processId = request.getId();
 		//	Get Process definition
 		MProcess process = MProcess.get(
 			Env.getCtx(),
 			processId
 		);
 		if(process == null || process.getAD_Process_ID() <= 0) {
-			throw new AdempiereException("@AD_Process_ID@ @NotFound@");
+			throw new AdempiereException("@AD_Process_ID@ (" + processId + ") @NotFound@");
 		}
 
 		// Record/Role access
