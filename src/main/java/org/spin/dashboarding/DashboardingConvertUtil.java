@@ -50,7 +50,7 @@ import org.spin.backend.grpc.dictionary.Reference;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.dictionary.DictionaryConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 /**
  * This class was created for add all convert methods for POS form
@@ -80,7 +80,7 @@ public class DashboardingConvertUtil {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 		}
-		return ValueManager.validateNull(
+		return StringManager.getValidString(
 			String.format("#%06X", (0xFFFFFF & color))
 		);
 	}
@@ -203,12 +203,20 @@ public class DashboardingConvertUtil {
 					}
 				}
 			}
-			builder.setReferenceId(referenceId);
-			builder.setAction(ValueManager.validateNull(action));
+			builder.setReferenceId(referenceId)
+				.setAction(
+					StringManager.getValidString(action)
+				)
+			;
 		}
 		//	Set name and description
-		builder.setMenuName(ValueManager.validateNull(menuName));
-		builder.setMenuDescription(ValueManager.validateNull(menuDescription));
+		builder.setMenuName(
+				StringManager.getValidString(menuName)
+			)
+			.setMenuDescription(
+				StringManager.getValidString(menuDescription)
+			)
+		;
 		return builder;
 	}
 
@@ -327,7 +335,7 @@ public class DashboardingConvertUtil {
 		}
 		
 		builder.setName(
-				ValueManager.validateNull(
+			StringManager.getValidString(
 					grapColumn.getLabel()
 				)
 			)
@@ -349,19 +357,21 @@ public class DashboardingConvertUtil {
 		if (chartParameter == null || chartParameter.get_ID() <= 0) {
 			return builder;
 		}
-		builder.setId(chartParameter.get_ID())
+		builder.setId(
+				chartParameter.get_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Description)
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_Help)
 				)
 			)
@@ -369,13 +379,13 @@ public class DashboardingConvertUtil {
 				chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_SeqNo)
 			)
 			.setColumnName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ColumnName)
 				)
 			)
 			.setColumnSql(
-				ValueManager.validateNull(
-					chartParameter.get_ValueAsString("ColumnSQL")
+				StringManager.getValidString(
+					chartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnSQL)
 				)
 			)
 			.setElementId(
@@ -391,7 +401,7 @@ public class DashboardingConvertUtil {
 				chartParameter.get_ValueAsBoolean(I_AD_Process_Para.COLUMNNAME_IsRange)
 			)
 			.setDefaultValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_DefaultValue)
 				)
 			)
@@ -399,32 +409,31 @@ public class DashboardingConvertUtil {
 				chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Reference_ID)
 			)
 			.setVFormat(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_VFormat)
 				)
 			)
 			.setValueMax(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ValueMax)
 				)
 			)
 			.setValueMin(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ValueMin)
 				)
 			)
 			.setDisplayLogic(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_DisplayLogic)
 				)
 			)
 			.setReadOnlyLogic(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					chartParameter.get_ValueAsString(I_AD_Process_Para.COLUMNNAME_ReadOnlyLogic)
 				)
 			)
 		;
-
 
 		int displayTypeId = chartParameter.get_ValueAsInt(I_AD_Process_Para.COLUMNNAME_AD_Reference_ID);
 		if (ReferenceUtil.validateReference(displayTypeId)) {
@@ -462,16 +471,24 @@ public class DashboardingConvertUtil {
 		}
 
 		builder = WindowDashboard.newBuilder()
-			.setId(chartDefinition.getAD_Chart_ID())
+			.setId(
+				chartDefinition.getAD_Chart_ID()
+			)
 			.setName(
-				ValueManager.validateNull(chartDefinition.getName())
+				StringManager.getValidString(
+					chartDefinition.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(chartDefinition.getDescription())
+				StringManager.getValidString(
+					chartDefinition.getDescription()
+				)
 			)
 			.setDashboardType("chart")
 			.setChartType(
-				ValueManager.validateNull(chartDefinition.getChartType())
+				StringManager.getValidString(
+					chartDefinition.getChartType()
+				)
 			)
 			.setIsCollapsible(true)
 			.setIsOpenByDefault(true)
@@ -493,7 +510,7 @@ public class DashboardingConvertUtil {
 			.setOnlyActiveRecords(true)
 			.<PO>list()
 			.forEach(windowChartParameter -> {
-				String contextColumn = ValueManager.validateNull(
+				String contextColumn = StringManager.getValidString(
 					windowChartParameter.get_ValueAsString(I_AD_Column.COLUMNNAME_ColumnName)
 				);
 				contextColumnsList.add(contextColumn);

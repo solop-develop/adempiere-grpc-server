@@ -71,6 +71,7 @@ import org.spin.log.LogsConvertUtil;
 import org.spin.log.LogsServiceLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -296,7 +297,7 @@ public class LogsInfo extends LogsImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -385,9 +386,13 @@ public class LogsInfo extends LogsImplBase {
 					entity.getCreated()
 				)
 			)
-			.setCreatedBy(createdUser.getAD_User_ID())
+			.setCreatedBy(
+				createdUser.getAD_User_ID()
+			)
 			.setCreatedByName(
-				ValueManager.validateNull(createdUser.getName())
+				StringManager.getValidString(
+					createdUser.getName()
+				)
 			)
 		;
 
@@ -399,9 +404,13 @@ public class LogsInfo extends LogsImplBase {
 					entity.getUpdated()
 				)
 			)
-			.setUpdatedBy(updatedUser.getAD_User_ID())
+			.setUpdatedBy(
+				updatedUser.getAD_User_ID()
+			)
 			.setUpdatedByName(
-				ValueManager.validateNull(updatedUser.getName())
+				StringManager.getValidString(
+					updatedUser.getName()
+				)
 			)
 		;
 
@@ -452,7 +461,9 @@ public class LogsInfo extends LogsImplBase {
 			try {
 				RecentItem.Builder recentItemBuilder = RecentItem.newBuilder()
 					.setDisplayName(
-						ValueManager.validateNull(recentItem.getLabel())
+						StringManager.getValidString(
+							recentItem.getLabel()
+						)
 					)
 				;
 				String menuName = "";
@@ -469,7 +480,7 @@ public class LogsInfo extends LogsImplBase {
 					}
 					//	Add Action
 					recentItemBuilder.setAction(
-						ValueManager.validateNull(MMenu.ACTION_Window)
+						StringManager.getValidString(MMenu.ACTION_Window)
 					);
 				}
 				if(recentItem.getAD_Window_ID() > 0) {
@@ -484,7 +495,7 @@ public class LogsInfo extends LogsImplBase {
 					}
 					//	Add Action
 					recentItemBuilder.setAction(
-						ValueManager.validateNull(MMenu.ACTION_Window)
+						StringManager.getValidString(MMenu.ACTION_Window)
 					);
 				}
 				if(recentItem.getAD_Menu_ID() > 0) {
@@ -498,7 +509,9 @@ public class LogsInfo extends LogsImplBase {
 					}
 					//	Add Action
 					recentItemBuilder.setAction(
-						ValueManager.validateNull(menu.getAction())
+						StringManager.getValidString(
+							menu.getAction()
+						)
 					);
 					//	Supported actions
 					if(!Util.isEmpty(menu.getAction())) {
@@ -524,13 +537,15 @@ public class LogsInfo extends LogsImplBase {
 				}
 				//	Add time
 				recentItemBuilder.setMenuName(
-						ValueManager.validateNull(menuName)
+						StringManager.getValidString(menuName)
 					)
 					.setMenuDescription(
-						ValueManager.validateNull(menuDescription)
+						StringManager.getValidString(menuDescription)
 					)
 					.setUpdated(
-						ValueManager.getTimestampFromDate(recentItem.getUpdated())
+						ValueManager.getTimestampFromDate(
+							recentItem.getUpdated()
+						)
 					)
 					.setReferenceId(referenceId)
 				;
@@ -538,11 +553,18 @@ public class LogsInfo extends LogsImplBase {
 				if(recentItem.getAD_Table_ID() != 0 && recentItem.getRecord_ID() != 0) {
 					MTable table = MTable.get(Env.getCtx(), recentItem.getAD_Table_ID());
 					if(table != null && table.getAD_Table_ID() != 0) {
-						recentItemBuilder.setId(recentItem.getRecord_ID())
+						recentItemBuilder.setId(
+							recentItem.getRecord_ID()
+						)
 							.setTableName(
-								ValueManager.validateNull(table.getTableName())
+								StringManager.getValidString(
+									table.getTableName()
+								)
 							)
-							.setTableId(recentItem.getAD_Table_ID());
+							.setTableId(
+								recentItem.getAD_Table_ID()
+							)
+						;
 					}
 				}
 				//	
@@ -595,7 +617,7 @@ public class LogsInfo extends LogsImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -649,7 +671,7 @@ public class LogsInfo extends LogsImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -663,16 +685,26 @@ public class LogsInfo extends LogsImplBase {
 	private EntityChat.Builder convertRecordChat(MChat recordChat) {
 		MTable table = MTable.get(recordChat.getCtx(), recordChat.getAD_Table_ID());
 		EntityChat.Builder builder = EntityChat.newBuilder();
-		builder.setChatId(recordChat.getCM_Chat_ID())
-			.setTableName(
-				ValueManager.validateNull(table.getTableName())
+		builder.setChatId(
+				recordChat.getCM_Chat_ID()
 			)
-			.setId(recordChat.getRecord_ID())
+			.setTableName(
+				StringManager.getValidString(
+					table.getTableName()
+				)
+			)
+			.setId(
+				recordChat.getRecord_ID()
+			)
 			.setDescription(
-				ValueManager.validateNull(recordChat.getDescription())
+				StringManager.getValidString(
+					recordChat.getDescription()
+				)
 			)
 			.setLogDate(
-				ValueManager.getTimestampFromDate(recordChat.getCreated())
+				ValueManager.getTimestampFromDate(
+					recordChat.getCreated()
+				)
 			)
 		;
 		if(recordChat.getCM_ChatType_ID() != 0) {
@@ -681,9 +713,13 @@ public class LogsInfo extends LogsImplBase {
 
 		if (recordChat.getCreatedBy() > 0) {
 			MUser user = MUser.get(recordChat.getCtx(), recordChat.getCreatedBy());
-			builder.setUserId(recordChat.getCreatedBy())
+			builder.setUserId(
+					recordChat.getCreatedBy()
+				)
 				.setUserName(
-					ValueManager.validateNull(user.getName())
+					StringManager.getValidString(
+						user.getName()
+					)
 				)
 			;
 		}
