@@ -979,71 +979,82 @@ public class OutBoundOrderLogic {
 		}
 		return locator.getM_Locator_ID();
 	}
+
+
 	public static int validateAndGetFreightIDFromShipperID(int shipperId) {
 		int freightId = -1;
 		if (shipperId <= 0) {
 			return freightId;
 		}
-		String whereClause = "M_Shipper_ID = ?";
-		freightId = new Query(Env.getCtx(), MFreight.Table_Name, whereClause, null)
-				.setParameters(shipperId)
-				.setOnlyActiveRecords(true)
-				.setClient_ID()
-				.firstId();
-
+		final String whereClause = "M_Shipper_ID = ?";
+		freightId = new Query(
+			Env.getCtx(),
+			MFreight.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(shipperId)
+			.setOnlyActiveRecords(true)
+			.setClient_ID()
+			.firstId()
+		;
 		return freightId;
 	}
 
-	public static void validateShipperID(int shipperId) {
+	public static MShipper validateShipperID(int shipperId) {
 		if (shipperId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
 		}
 		MShipper shipper = new MShipper(Env.getCtx(), shipperId, null);
-		if (shipper.getM_Shipper_ID() <= 0) {
+		if (shipper == null || shipper.getM_Shipper_ID() <= 0) {
 			throw new AdempiereException("@M_Shipper_ID@ @NotFound@");
 		}
 		if (!shipper.isActive()) {
 			throw new AdempiereException("@M_Shipper_ID@ @NotActive@");
 		}
+		return shipper;
 	}
 
-	public static void validateVehicleID(int vehicleId) {
+	public static MDDVehicle validateVehicleID(int vehicleId) {
 		if (vehicleId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
 		}
 		MDDVehicle vehicle = new MDDVehicle(Env.getCtx(), vehicleId, null);
-		if (vehicle.getDD_Vehicle_ID() <= 0) {
+		if (vehicle == null || vehicle.getDD_Vehicle_ID() <= 0) {
 			throw new AdempiereException("@DD_Vehicle_ID@ @NotFound@");
 		}
 		if (!vehicle.isActive()) {
 			throw new AdempiereException("@DD_Vehicle_ID@ @NotActive@");
 		}
+		return vehicle;
 	}
 
-	public static void validateDriverID(int driverId) {
+	public static MDDDriver validateDriverID(int driverId) {
 		if (driverId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @DD_Driver_ID@");
 		}
 		MDDDriver driver = new MDDDriver(Env.getCtx(), driverId, null);
-		if (driver.getDD_Driver_ID() <= 0) {
+		if (driver == null || driver.getDD_Driver_ID() <= 0) {
 			throw new AdempiereException("@DD_Driver_ID@ @NotFound@");
 		}
 		if (!driver.isActive()) {
 			throw new AdempiereException("@DD_Driver_ID@ @NotActive@");
 		}
+		return driver;
 	}
 
-	public static void validateFreightDocumentTypeID(int docTypeId) {
+	public static MDocType validateFreightDocumentTypeID(int docTypeId) {
 		if (docTypeId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_DocType_ID@");
+			throw new AdempiereException("@FillMandatory@ @C_DocType_ID@ @DD_Freight_ID@");
 		}
 		MDocType docType = MDocType.get(Env.getCtx(), docTypeId);
-		if (docType.getC_DocType_ID() <= 0) {
-			throw new AdempiereException("@C_DocType_ID@ @NotFound@");
+		if (docType == null || docType.getC_DocType_ID() <= 0) {
+			throw new AdempiereException("@C_DocType_ID@ @DD_Freight_ID@ @NotFound@");
 		}
 		if (!docType.isActive()) {
-			throw new AdempiereException("@C_DocType_ID@ @NotActive@");
+			throw new AdempiereException("@C_DocType_ID@ @DD_Freight_ID@ @NotActive@");
 		}
+		return docType;
 	}
 
 
