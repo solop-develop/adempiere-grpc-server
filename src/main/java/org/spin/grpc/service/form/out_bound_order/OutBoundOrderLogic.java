@@ -976,6 +976,20 @@ public class OutBoundOrderLogic {
 		}
 		return locator.getM_Locator_ID();
 	}
+	public static int validateAndGetFreightIDFromShipperID(int shipperId) {
+		int freightId = -1;
+		if (shipperId <= 0) {
+			return freightId;
+		}
+		String whereClause = "M_Shipper_ID = ?";
+		freightId = new Query(Env.getCtx(), MFreight.Table_Name, whereClause, null)
+				.setParameters(shipperId)
+				.setOnlyActiveRecords(true)
+				.firstId();
+
+		return freightId;
+	}
+
 	public static GenerateLoadOrderResponse.Builder generateLoadOrder(GenerateLoadOrderRequest request) {
 		final String movementType = request.getMovementType();
 		if (Util.isEmpty(movementType, true) ||
@@ -1022,6 +1036,9 @@ public class OutBoundOrderLogic {
 		final boolean isCreateFreight = request.getIsGenerateFreightOrder()
 			&& documentAction.equals(MWMInOutBound.DOCACTION_Complete)
 		;
+		int freightId = validateAndGetFreightIDFromShipperID(
+				request.getShipperId()
+		);
 		if (isCreateFreight) {
 			if (request.getShipperId() <= 0) {
 				throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
@@ -1032,7 +1049,7 @@ public class OutBoundOrderLogic {
 			if (request.getDriverId() <= 0) {
 				throw new AdempiereException("@FillMandatory@ @DD_Driver_ID@");
 			}
-			if (request.getDriverId() <= 0) {
+			if (request.getFreightDocumentTypeId() <= 0) {
 				throw new AdempiereException("@FillMandatory@ @C_DocType_ID@");
 			}
 			// Set from client
@@ -1042,6 +1059,9 @@ public class OutBoundOrderLogic {
 			}
 			if (clientInfo.getC_UOM_Volume_ID() <= 0) {
 				throw new AdempiereException("@C_UOM_Volume_ID@ @NotFound@ @SeeClientInfoConfig@");
+			}
+			if (freightId <= 0) {
+				throw  new AdempiereException("@FillMandatory@ @M_Freight_ID@");
 			}
 		}
 
@@ -1239,14 +1259,6 @@ public class OutBoundOrderLogic {
 				// Save line
 				int lineNo = 10;
 				MDDFreightLine line = new MDDFreightLine(Env.getCtx(), 0, transactionName);
-				String whereClause = "M_Shipper_ID = ?";
-				int freightId = new Query(Env.getCtx(), MFreight.Table_Name, whereClause, transactionName)
-						.setParameters(request.getShipperId())
-						.setOnlyActiveRecords(true)
-						.firstId();
-				if (freightId <= 0) {
-					throw  new AdempiereException("@FillMandatory@ @M_Freight_ID@");
-				}
 				line.setM_Freight_ID(freightId);
 				line.setDD_Freight_ID(freightOrder.getDD_Freight_ID());
 				line.setLine(lineNo);
