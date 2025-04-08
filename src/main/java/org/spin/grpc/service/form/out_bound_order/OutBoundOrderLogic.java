@@ -40,6 +40,7 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MOrg;
 import org.compiere.model.MProduct;
+import org.compiere.model.MShipper;
 import org.compiere.model.MStorage;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
@@ -49,9 +50,11 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.eevolution.distribution.model.MDDDriver;
 import org.eevolution.distribution.model.MDDFreight;
 import org.eevolution.distribution.model.MDDFreightLine;
 import org.eevolution.distribution.model.MDDOrderLine;
+import org.eevolution.distribution.model.MDDVehicle;
 import org.eevolution.wms.model.MWMInOutBound;
 import org.eevolution.wms.model.MWMInOutBoundLine;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
@@ -985,10 +988,65 @@ public class OutBoundOrderLogic {
 		freightId = new Query(Env.getCtx(), MFreight.Table_Name, whereClause, null)
 				.setParameters(shipperId)
 				.setOnlyActiveRecords(true)
+				.setClient_ID()
 				.firstId();
 
 		return freightId;
 	}
+
+	public static void validateShipperID(int shipperId) {
+		if (shipperId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
+		}
+		MShipper shipper = new MShipper(Env.getCtx(), shipperId, null);
+		if (shipper.getM_Shipper_ID() <= 0) {
+			throw new AdempiereException("@M_Shipper_ID@ @NotFound@");
+		}
+		if (!shipper.isActive()) {
+			throw new AdempiereException("@M_Shipper_ID@ @NotActive@");
+		}
+	}
+
+	public static void validateVehicleID(int vehicleId) {
+		if (vehicleId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
+		}
+		MDDVehicle vehicle = new MDDVehicle(Env.getCtx(), vehicleId, null);
+		if (vehicle.getDD_Vehicle_ID() <= 0) {
+			throw new AdempiereException("@DD_Vehicle_ID@ @NotFound@");
+		}
+		if (!vehicle.isActive()) {
+			throw new AdempiereException("@DD_Vehicle_ID@ @NotActive@");
+		}
+	}
+
+	public static void validateDriverID(int driverId) {
+		if (driverId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @DD_Driver_ID@");
+		}
+		MDDDriver driver = new MDDDriver(Env.getCtx(), driverId, null);
+		if (driver.getDD_Driver_ID() <= 0) {
+			throw new AdempiereException("@DD_Driver_ID@ @NotFound@");
+		}
+		if (!driver.isActive()) {
+			throw new AdempiereException("@DD_Driver_ID@ @NotActive@");
+		}
+	}
+
+	public static void validateFreightDocumentTypeID(int docTypeId) {
+		if (docTypeId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_DocType_ID@");
+		}
+		MDocType docType = MDocType.get(Env.getCtx(), docTypeId);
+		if (docType.getC_DocType_ID() <= 0) {
+			throw new AdempiereException("@C_DocType_ID@ @NotFound@");
+		}
+		if (!docType.isActive()) {
+			throw new AdempiereException("@C_DocType_ID@ @NotActive@");
+		}
+	}
+
+
 
 	public static GenerateLoadOrderResponse.Builder generateLoadOrder(GenerateLoadOrderRequest request) {
 		final String movementType = request.getMovementType();
@@ -1040,18 +1098,13 @@ public class OutBoundOrderLogic {
 				request.getShipperId()
 		);
 		if (isCreateFreight) {
-			if (request.getShipperId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
-			}
-			if (request.getVehicleId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
-			}
-			if (request.getDriverId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @DD_Driver_ID@");
-			}
-			if (request.getFreightDocumentTypeId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_DocType_ID@");
-			}
+			validateShipperID(request.getShipperId());
+
+			validateVehicleID(request.getVehicleId());
+
+			validateDriverID(request.getDriverId());
+
+			validateFreightDocumentTypeID(request.getFreightDocumentTypeId());
 			// Set from client
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 			if (clientInfo.getC_UOM_Weight_ID() <= 0) {
