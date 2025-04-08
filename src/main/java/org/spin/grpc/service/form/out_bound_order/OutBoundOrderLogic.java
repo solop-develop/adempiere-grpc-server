@@ -34,6 +34,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DocTypeNotFoundException;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MDocType;
+import org.compiere.model.MFreight;
 import org.compiere.model.MLocator;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrderLine;
@@ -1121,12 +1122,13 @@ public class OutBoundOrderLogic {
 				BigDecimal quantity = NumberManager.getBigDecimalFromString(
 					requestLine.getQuantity()
 				);
-				BigDecimal weight = NumberManager.getBigDecimalFromString(
-					requestLine.getWeight()
-				);
-				BigDecimal volume = NumberManager.getBigDecimalFromString(
-					requestLine.getVolume()
-				);
+				BigDecimal weight = Optional.ofNullable(
+					NumberManager.getBigDecimalFromString(requestLine.getWeight())
+				).orElse(Env.ZERO);
+
+				BigDecimal volume = Optional.ofNullable(
+					NumberManager.getBigDecimalFromString(requestLine.getVolume())
+				).orElse(Env.ZERO);
 
 				//	New Line
 				MWMInOutBoundLine outBoundOrderLine = new MWMInOutBoundLine(outBoundOrder);
@@ -1237,6 +1239,14 @@ public class OutBoundOrderLogic {
 				// Save line
 				int lineNo = 10;
 				MDDFreightLine line = new MDDFreightLine(Env.getCtx(), 0, transactionName);
+				String whereClause = "M_Shipper_ID = ?";
+				int freightId = new Query(Env.getCtx(), MFreight.Table_Name, whereClause, transactionName)
+						.setParameters(request.getShipperId())
+						.firstId();
+				if (freightId <= 0) {
+					throw  new AdempiereException("@FillMandatory@ @M_Freight_ID@");
+				}
+				line.setM_Freight_ID(freightId);
 				line.setDD_Freight_ID(freightOrder.getDD_Freight_ID());
 				line.setLine(lineNo);
 				line.setFreightAmt(Env.ZERO);
