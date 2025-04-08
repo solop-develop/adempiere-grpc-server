@@ -52,6 +52,7 @@ import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -75,19 +76,21 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (request == null) {
 			return builder;
 		}
-		builder.setId(request.getR_Request_ID())
+		builder.setId(
+				request.getR_Request_ID()
+			)
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getDocumentNo()
 				)
 			)
 			.setSubject(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getSubject()
 				)
 			)
 			.setSummary(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getSummary()
 				)
 			)
@@ -157,7 +160,7 @@ public class TimeRecord extends TimeRecordImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -183,14 +186,16 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (project == null) {
 			return builder;
 		}
-		builder.setId(project.getC_Project_ID())
+		builder.setId(
+				project.getC_Project_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					project.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					project.getName()
 				)
 			)
@@ -251,7 +256,7 @@ public class TimeRecord extends TimeRecordImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -275,19 +280,21 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (resourceType == null) {
 			return builder;
 		}
-		builder.setId(resourceType.getS_ResourceType_ID())
+		builder.setId(
+				resourceType.getS_ResourceType_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceType.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceType.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceType.getDescription()
 				)
 			)
@@ -311,19 +318,21 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (user == null || user.getAD_User_ID() <= 0) {
 			return builder;
 		}
-		builder.setId(user.getAD_User_ID())
+		builder.setId(
+				user.getAD_User_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getDescription()
 				)
 			)
@@ -351,9 +360,11 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (resource == null) {
 			return builder;
 		}
-		builder.setId(resource.getS_ResourceType_ID())
+		builder.setId(
+				resource.getS_ResourceType_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resource.getName()
 				)
 			)
@@ -390,14 +401,16 @@ public class TimeRecord extends TimeRecordImplBase {
 		if (resourceAssignment == null) {
 			return builder;
 		}
-		builder.setId(resourceAssignment.getS_ResourceAssignment_ID())
+		builder.setId(
+				resourceAssignment.getS_ResourceAssignment_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceAssignment.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceAssignment.getDescription()
 				)
 			)
@@ -507,7 +520,7 @@ public class TimeRecord extends TimeRecordImplBase {
 		resourceAssignment.setName(request.getName());
 		resourceAssignment.setQty(quantity);
 		resourceAssignment.setDescription(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				request.getDescription()
 			)
 		);
@@ -642,7 +655,7 @@ public class TimeRecord extends TimeRecordImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		return builderList;

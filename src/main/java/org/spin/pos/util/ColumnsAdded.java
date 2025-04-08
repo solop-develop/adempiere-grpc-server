@@ -49,6 +49,8 @@ public class ColumnsAdded {
 	public static final String COLUMNNAME_WriteOffPercentageTolerance = "WriteOffPercentageTolerance";
 	public static final String COLUMNNAME_IsAllowsWriteOffAmount = "IsAllowsWriteOffAmount";
 	public static final String COLUMNNAME_IsAllowsCustomerTemplate = "IsAllowsCustomerTemplate";
+	public static final String COLUMNNAME_IsAllowsApplyShemaDiscount = "IsAllowsApplyShemaDiscount";
+	public static final String COLUMNNAME_MaximumShemaDiscountAllowed = "MaximumShemaDiscountAllowed";
 	/**	Main POS Definition	*/
 	public static final String COLUMNNAME_DefaultCampaign_ID = "DefaultCampaign_ID";
 	public static final String COLUMNNAME_DefaultDiscountCharge_ID = "DefaultDiscountCharge_ID";
@@ -77,4 +79,7 @@ public class ColumnsAdded {
 	/**	For Payment	*/
 	public static final String COLUMNNAME_ECA14_Invoice_Reference_ID = "ECA14_Invoice_Reference_ID";
 	public static final String COLUMNNAME_ECA14_Reference_Amount = "ECA14_Reference_Amount";
+	/**	For Gift Card */
+	public static final String COLUMNNAME_IsAllowsGiftCard = "IsAllowsGiftCard";
+	public static final String COLUMNNAME_ECA14_DefaultGiftCardCharge_ID = "ECA14_DefaultGiftCardCharge_ID";
 }

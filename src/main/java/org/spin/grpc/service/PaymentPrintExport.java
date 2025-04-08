@@ -83,7 +83,7 @@ import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 import com.google.protobuf.ByteString;
 
@@ -149,7 +149,7 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 		}
 		builder.setId(paymentSelection.getC_PaySelection_ID())
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					paymentSelection.getDocumentNo()
 				)
 			)
@@ -213,7 +213,7 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 		
 		MBank bank = MBank.get(Env.getCtx(), bankAccount.getC_Bank_ID());
 
-		String accountNo = ValueManager.validateNull(
+		String accountNo = StringManager.getValidString(
 			bankAccount.getAccountNo()
 		);
 		int accountNoLength = accountNo.length();
@@ -222,15 +222,17 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 		}
 		accountNo = String.format("%1$" + 20 + "s", accountNo).replace(" ", "*");
 
-		builder.setId(bankAccount.getC_BankAccount_ID())
+		builder.setId(
+				bankAccount.getC_BankAccount_ID()
+			)
 			.setAccountNo(accountNo)
 			.setAccountName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bankAccount.getName()
 				)
 			)
 			.setBankName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					bank.getName()
 				)
 			)
@@ -498,12 +500,12 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 			.setVendorId(vendor.getC_BPartner_ID())
 			// .setVendorTaxId(ValueUtil.validateNull(vendor.getUUID()))
 			.setVendorTaxId(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					vendor.getTaxID()
 				)
 			)
 			.setVendorName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					vendor.getName()
 				)
 			)
@@ -614,7 +616,7 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 	
 		return builderList;
@@ -900,7 +902,7 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 		);
 		try {
 			File outFile = File.createTempFile("WPayPrint", null);
-			String validFileName = ValueManager.validateNull(
+			String validFileName = StringManager.getValidString(
 				outFile.getName()
 			);
 			reportOutputBuilder.setName(
@@ -1071,14 +1073,14 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 		try {
 			File outFile = File.createTempFile("WPayPrint", null);
-			String validFileName = ValueManager.validateNull(
+			String validFileName = StringManager.getValidString(
 				outFile.getName()
 			);
 			reportOutputBuilder.setName(
 				validFileName
 			);
 			reportOutputBuilder.setMimeType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					MimeType.getMimeType(validFileName)
 				)
 			);

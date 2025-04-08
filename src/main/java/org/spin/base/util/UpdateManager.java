@@ -25,7 +25,7 @@ import org.spin.backend.grpc.update.ListStepsResponse;
 import org.spin.backend.grpc.update.ListUpdatesRequest;
 import org.spin.backend.grpc.update.ListUpdatesResponse;
 import org.spin.backend.grpc.update.UpdateCenterGrpc;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -130,7 +130,8 @@ public class UpdateManager {
 			buildConnection();
 			return blockingStub.listPackages(
 				ListPackagesRequest.newBuilder()
-					.setPageToken(ValueManager.validateNull(pageToken))
+					.setPageToken(
+						StringManager.getValidString(pageToken))
 					.setVersion(version)
 					.setReleaseNo(releaseNo)
 					.build()
@@ -154,9 +155,13 @@ public class UpdateManager {
 			buildConnection();
 			return blockingStub.listUpdates(
 				ListUpdatesRequest.newBuilder()
-					.setPageToken(ValueManager.validateNull(pageToken))
+					.setPageToken(
+						StringManager.getValidString(pageToken)
+					)
 					.setEntityType(entityType)
-					.setReleaseNo(ValueManager.validateNull(releaseNo))
+					.setReleaseNo(
+						StringManager.getValidString(releaseNo)
+					)
 					.build()
 			);
 		} catch (Exception e) {
@@ -177,7 +182,8 @@ public class UpdateManager {
 			buildConnection();
 			return blockingStub.listSteps(
 				ListStepsRequest.newBuilder()
-					.setPageToken(ValueManager.validateNull(pageToken))
+					.setPageToken(
+						StringManager.getValidString(pageToken))
 					.setUpdateId(updateId)
 					.setFromStep(fromStep)
 					.build()

@@ -19,7 +19,7 @@ def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
 def patchLibrary = System.properties['deploy.patchLibrary']
 
-def descriptorFile = "adempiere-grpc-server.pb"
+def descriptorFile = "adempiere-grpc-server.dsc"
 def javaMainClass = "org.spin.server.AllInOneServices"
 
 repositories {
@@ -28,10 +28,11 @@ repositories {
 	maven {
 		url = 'https://maven.pkg.github.com/solop-develop/adempiere-solop'
 		credentials {
-			// project property, system property, .env file, system enviroment variable
-			username = findProperty("deployUser") ?: System.properties['deploy.user'] ?:
+			// project property, system property, .env project file, system enviroment variable
+			username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?:
 				projectEnv.get("GITHUB_DEPLOY_USER", null) ?: System.getenv("GITHUB_DEPLOY_USER")
-			password = findProperty("deployToken") ?: System.properties['deploy.token'] ?:
+			password = findProperty("deployPassword") ?: 
+				System.properties['deploy.token'] ?:
 				projectEnv.get("GITHUB_DEPLOY_TOKEN", null) ?: System.getenv("GITHUB_DEPLOY_TOKEN")
 		}
 	}
@@ -39,10 +40,10 @@ repositories {
 		// Adempiere GitHub Organization
 		url = 'https://maven.pkg.github.com/solop-develop/adempiere-base'
 		credentials {
-			// project property, system property, .env file, system enviroment variable
-			username = findProperty("deployUser") ?: System.properties['deploy.user'] ?:
+			// project property, system property, .env project file, system enviroment variable
+			username = findProperty("deployUsername") ?: System.properties['deploy.user'] ?:
 				projectEnv.get("GITHUB_DEPLOY_USER", null) ?: System.getenv("GITHUB_DEPLOY_USER")
-			password = findProperty("deployToken") ?: System.properties['deploy.token'] ?:
+			password = findProperty("deployPassword") ?: System.properties['deploy.token'] ?:
 				projectEnv.get("GITHUB_DEPLOY_TOKEN", null) ?: System.getenv("GITHUB_DEPLOY_TOKEN")
 		}
 	}
@@ -103,7 +104,7 @@ protobuf {
 
 			// Allows to override the default for the descriptor set location
 			task.descriptorSetOptions.path = "${projectDir}/build/descriptors/${descriptorFile}"
-			// task.descriptorSetOptions.path = "${projectDir}/build/descriptors/adempiere-grpc-server.pb"
+			// task.descriptorSetOptions.path = "${projectDir}/build/descriptors/adempiere-grpc-server.dsc"
 
 			// If true, the descriptor set will contain line number information
 			// and comments. Default is false.

@@ -28,6 +28,8 @@ services:
     image: solopcloud/adempiere-backend:alpine-1.7.9
     container_name: ${ADEMPIERE_GRPC_SERVER_HOST}
     restart: ${GENERIC_RESTART}
+    secrets:
+      - adempiere_db_password
     ports:
       - 50059
     healthcheck:
@@ -39,6 +41,8 @@ services:
     environment:
       DB_HOST: ${POSTGRES_NAME}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      # DB_PASSWORD: ${GRPC_SERVER_DB_PASSWORD}
+      DB_PASSWORD_FILE: /run/secrets/adempiere_db_password
     depends_on:
       adempiere.db:
         condition: service_healthy
@@ -52,3 +56,7 @@ networks:
 volumes:
   volume_postgres:
     name: ${POSTGRES_NETWORK}
+
+secrets:
+  adempiere_db_password:
+    file: ./secrets/adempiere_db_password.txt

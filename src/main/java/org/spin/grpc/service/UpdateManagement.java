@@ -44,7 +44,7 @@ import org.spin.backend.grpc.update.StepValue;
 import org.spin.backend.grpc.update.Update;
 import org.spin.backend.grpc.update.UpdateCenterGrpc.UpdateCenterImplBase;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -65,10 +65,12 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -80,10 +82,12 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException())
+			;
 		}
 	}
 	
@@ -95,10 +99,12 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -146,7 +152,7 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				nexPageToken
 			)
 		);
@@ -160,41 +166,61 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private Step.Builder convertStep(MMigrationStep migrationStep) {
 		Step.Builder builder = Step.newBuilder()
-			.setId(migrationStep.getAD_MigrationStep_ID())
+			.setId(
+				migrationStep.getAD_MigrationStep_ID()
+			)
 			.setAction(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migrationStep.getAction()
 				)
 			)
 			.setComments(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migrationStep.getComments()
 				)
 			)
 			.setStepType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migrationStep.getStepType()
 				)
 			)
-			.setTableId(migrationStep.getAD_Table_ID())
-			.setRecordId(migrationStep.getRecord_ID())
-			.setIsParsed(migrationStep.isParse())
-			.setSequence(migrationStep.getSeqNo())
+			.setTableId(
+				migrationStep.getAD_Table_ID()
+			)
+			.setRecordId(
+				migrationStep.getRecord_ID()
+			)
+			.setIsParsed(
+				migrationStep.isParse()
+			)
+			.setSequence(
+				migrationStep.getSeqNo()
+			)
 			.setSqlStatement(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migrationStep.getSQLStatement()
 				)
 			)
 			.setRollbackStatement(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migrationStep.getRollbackStatement()
 				)
 			)
 		;
-		new Query(Env.getCtx(), I_AD_MigrationData.Table_Name, I_AD_MigrationData.COLUMNNAME_AD_MigrationStep_ID + " = ?", null)
+		new Query(
+			Env.getCtx(),
+			I_AD_MigrationData.Table_Name,
+			I_AD_MigrationData.COLUMNNAME_AD_MigrationStep_ID + " = ?",
+			null
+		)
 			.setParameters(migrationStep.getAD_MigrationStep_ID())
 			.<MMigrationData>list()
-			.forEach(modification -> builder.addStepValues(convertStepValue(modification)));
+			.forEach(modification -> {
+				builder.addStepValues(
+					convertStepValue(modification)
+				);
+			});
+		;
 		return builder;
 	}
 	
@@ -205,26 +231,36 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private StepValue.Builder convertStepValue(MMigrationData migrationData) {
 		StepValue.Builder builder = StepValue.newBuilder()
-			.setId(migrationData.getAD_MigrationData_ID())
-			.setColumnId(migrationData.getAD_Column_ID())
+			.setId(
+				migrationData.getAD_MigrationData_ID()
+			)
+			.setColumnId(
+				migrationData.getAD_Column_ID()
+			)
 			.setOldValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migrationData.getOldValue()
 				)
 			)
 			.setBackupValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migrationData.getBackupValue()
 				)
 			)
 			.setNewValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migrationData.getNewValue()
 				)
 			)
-			.setIsOldNull(migrationData.isOldNull())
-			.setIsBackupNull(migrationData.isBackupNull())
-			.setIsNewNull(migrationData.isNewNull())
+			.setIsOldNull(
+				migrationData.isOldNull()
+			)
+			.setIsBackupNull(
+				migrationData.isBackupNull()
+			)
+			.setIsNewNull(
+				migrationData.isNewNull()
+			)
 		;
 		return builder;
 	}
@@ -271,7 +307,7 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -283,29 +319,35 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private Update.Builder convertMigration(MMigration migration) {
 		return Update.newBuilder()
-			.setId(migration.getAD_Migration_ID())
+			.setId(
+				migration.getAD_Migration_ID()
+			)
 			.setEntityType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migration.getEntityType()
 				)
 			)
-			.setSequence(migration.getSeqNo())
+			.setSequence(
+				migration.getSeqNo()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migration.getName()
 				)
 			)
 			.setComments(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migration.getComments()
 				)
 			)
 			.setReleaseNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					migration.getReleaseNo()
 				)
 			)
-			.setStepQuantity(getStepQuantity(migration))
+			.setStepQuantity(
+				getStepQuantity(migration)
+			)
 		;
 	}
 	
@@ -365,7 +407,7 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -377,34 +419,36 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private Package.Builder convertPackage(MEntityType entityType) {
 		Package.Builder builder = Package.newBuilder()
-			.setId(entityType.getAD_EntityType_ID())
+			.setId(
+				entityType.getAD_EntityType_ID()
+			)
 			.setEntityType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entityType.getEntityType()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entityType.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entityType.getDescription()
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entityType.getHelp()
 				)
 			)
 			.setVersion(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entityType.getVersion()
 				)
 			)
 			.setModelPackage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					entityType.getModelPackage()
 				)
 			)
@@ -433,25 +477,29 @@ public class UpdateManagement extends UpdateCenterImplBase {
 	 */
 	private PackageVersion.Builder convertPackageVersion(X_AD_Modification modification) {
 		return PackageVersion.newBuilder()
-			.setId(modification.getAD_Modification_ID())
-			.setSequence(modification.getSeqNo())
+			.setId(
+				modification.getAD_Modification_ID()
+			)
+			.setSequence(
+				modification.getSeqNo()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					modification.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					modification.getDescription()
 				)
 			)
 			.setHelp(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					modification.getHelp()
 				)
 			)
 			.setVersion(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					modification.getVersion()
 				)
 			)

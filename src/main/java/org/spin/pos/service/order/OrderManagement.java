@@ -63,11 +63,17 @@ public class OrderManagement {
 	
 	public static MOrder processOrder(MPOS pos, int orderId, boolean isRefundOpen) {
 		if(orderId <= 0) {
-			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder salesOrder = new MOrder(Env.getCtx(), orderId, transactionName);
+			if(salesOrder == null || salesOrder.getC_Order_ID() <= 0) {
+				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			}
+			CashManagement.validatePreviousCashClosing(pos, salesOrder.getDateOrdered(), transactionName);
+			CashManagement.getCurrentCashClosing(pos, salesOrder.getDateOrdered(), true, transactionName);
+
 			List<PO> paymentReferences = getPaymentReferences(salesOrder);
 			if(!OrderUtil.isValidOrder(salesOrder)) {
 				throw new AdempiereException("@ActionNotAllowedHere@");

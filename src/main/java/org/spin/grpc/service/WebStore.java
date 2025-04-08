@@ -149,6 +149,7 @@ import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.model.MWDeliveryViaRuleAllocation;
@@ -806,37 +807,66 @@ public class WebStore extends WebStoreImplBase {
 	 */
 	private Order.Builder convertOrder(CreateOrderRequest request, MOrder salesOrder, String transactionName) {
 		Order.Builder builder = Order.newBuilder();
-		builder.setId(salesOrder.getC_Order_ID())
+		builder.setId(
+				salesOrder.getC_Order_ID()
+			)
 			.setDocumentNo(
-				ValueManager.validateNull(salesOrder.getDocumentNo())
+				StringManager.getValidString(
+					salesOrder.getDocumentNo()
+				)
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(salesOrder.getCreated())
+				ValueManager.getTimestampFromDate(
+					salesOrder.getCreated()
+				)
 			)
 			.setUpdated(
-				ValueManager.getTimestampFromDate(salesOrder.getUpdated())
+				ValueManager.getTimestampFromDate(
+					salesOrder.getUpdated()
+				)
 			)
 			.setTransmited(
-				ValueManager.getTimestampFromDate(salesOrder.getUpdated())
+				ValueManager.getTimestampFromDate(
+					salesOrder.getUpdated()
+				)
 			)
-			.setCarrierCode(request.getCarrierCode())
-			.setMethodCode(request.getMethodCode())
-			.setPaymentMethodCode(request.getPaymentMethodCode())
-			.setShippingAddress(convertAddress(MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()), ((MBPartnerLocation) salesOrder.getC_BPartner_Location()), transactionName))
-			.setShippingAddress(convertAddress(MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()), ((MBPartnerLocation) salesOrder.getBill_Location()), transactionName));
+			.setCarrierCode(
+				request.getCarrierCode()
+			)
+			.setMethodCode(
+				request.getMethodCode()
+			)
+			.setPaymentMethodCode(
+				request.getPaymentMethodCode()
+			)
+			.setShippingAddress(
+				convertAddress(MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()), ((MBPartnerLocation) salesOrder.getC_BPartner_Location()), transactionName)
+			)
+			.setShippingAddress(
+				convertAddress(MUser.get(Env.getCtx(), salesOrder.getAD_User_ID()), ((MBPartnerLocation) salesOrder.getBill_Location()), transactionName)
+		);
 		//	Add Lines
 		Arrays.asList(salesOrder.getLines(true, null)).forEach(orderLine -> {
 			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
-			builder.addOrderLines(OrderLine.newBuilder()
-				.setSku(
-					ValueManager.validateNull(product.getSKU())
-				)
-				.setName(
-					ValueManager.validateNull(product.getName())
-				)
-				.setPrice(orderLine.getPriceActual().doubleValue())
-				.setQuantity(orderLine.getQtyOrdered().doubleValue()))
-			;
+			builder.addOrderLines(
+				OrderLine.newBuilder()
+					.setSku(
+						StringManager.getValidString(
+							product.getSKU()
+						)
+					)
+					.setName(
+						StringManager.getValidString(
+							product.getName()
+						)
+					)
+					.setPrice(
+						orderLine.getPriceActual().doubleValue()
+					)
+					.setQuantity(
+						orderLine.getQtyOrdered().doubleValue()
+					)
+			);
 		});
 		return builder;
 	}
@@ -850,9 +880,11 @@ public class WebStore extends WebStoreImplBase {
 	 */
 	private Order.Builder convertOrder(MOrder salesOrder, String transactionName) {
 		Order.Builder builder = Order.newBuilder();
-		builder.setId(salesOrder.getC_Order_ID())
+		builder.setId(
+				salesOrder.getC_Order_ID()
+			)
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					salesOrder.getDocumentNo()
 				)
 			)
@@ -889,16 +921,25 @@ public class WebStore extends WebStoreImplBase {
 		//	Add Lines
 		Arrays.asList(salesOrder.getLines(true, null)).forEach(orderLine -> {
 			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
-			builder.addOrderLines(OrderLine.newBuilder()
-				.setSku(
-					ValueManager.validateNull(product.getSKU())
-				)
-				.setName(
-					ValueManager.validateNull(product.getName())
-				)
-				.setPrice(orderLine.getPriceActual().doubleValue())
-				.setQuantity(orderLine.getQtyOrdered().doubleValue()))
-			;
+			builder.addOrderLines(
+				OrderLine.newBuilder()
+					.setSku(
+						StringManager.getValidString(
+							product.getSKU()
+						)
+					)
+					.setName(
+						StringManager.getValidString(
+							product.getName()
+						)
+					)
+					.setPrice(
+						orderLine.getPriceActual().doubleValue()
+					)
+					.setQuantity(
+						orderLine.getQtyOrdered().doubleValue()
+					)
+			);
 		});
 		return builder;
 	}
@@ -1203,12 +1244,12 @@ public class WebStore extends WebStoreImplBase {
 				builder.addPaymentMethods(
 					PaymentMethod.newBuilder()
 						.setCode(
-							ValueManager.validateNull(
+							StringManager.getValidString(
 								paymentMethod.getValue()
 							)
 						)
 						.setName(
-							ValueManager.validateNull(
+							StringManager.getValidString(
 								paymentMethod.getName()
 							)
 						)
@@ -1307,7 +1348,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -1351,7 +1392,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -1526,12 +1567,12 @@ public class WebStore extends WebStoreImplBase {
 			builder.addPaymentMethods(
 				PaymentMethod.newBuilder()
 					.setCode(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							paymentMethod.getValue()
 						)
 					)
 					.setName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							paymentMethod.getName()
 						)
 					)
@@ -1544,7 +1585,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	
 		return builder;
@@ -1684,9 +1725,15 @@ public class WebStore extends WebStoreImplBase {
 		//	
 		builder.setId(basket.getW_Basket_ID());
 		//	
-		List<X_W_BasketLine> items = new Query(Env.getCtx(), X_W_BasketLine.Table_Name, X_W_BasketLine.COLUMNNAME_W_Basket_ID + " = ?", transactionName)
-				.setParameters(basket.getW_Basket_ID())
-				.list(); 
+		List<X_W_BasketLine> items = new Query(
+			Env.getCtx(),
+			X_W_BasketLine.Table_Name,
+			X_W_BasketLine.COLUMNNAME_W_Basket_ID + " = ?",
+			transactionName
+		)
+			.setParameters(basket.getW_Basket_ID())
+			.list()
+		;
 		if(items != null
 				&& items.size() > 0) {
 			AtomicReference<BigDecimal> subtotal = new AtomicReference<BigDecimal>(Env.ZERO);
@@ -1710,27 +1757,49 @@ public class WebStore extends WebStoreImplBase {
 				BigDecimal lineTotalAmount = (BigDecimal) item.get_Value(VueStoreFrontUtil.COLUMNNAME_LineTotalAmt);
 				//	Cart Item
 				CartItem.Builder cartItem = CartItem.newBuilder()
-					.setProductId(product.getM_Product_ID())
+					.setProductId(
+						product.getM_Product_ID()
+					)
 					.setSku(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							product.getSKU()
 						)
 					)
 					.setName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							product.getName()
 						)
 					)
-					.setProductTypeValue(getProductTypeFromProduct(product).getNumber())
-					.setQuantity(item.getQty().doubleValue())
-					.setPrice(Optional.ofNullable(item.getPrice()).orElse(Env.ZERO).doubleValue())
-					.setRowTotal(Optional.ofNullable(lineListAmount).orElse(Env.ZERO).doubleValue())
-					.setRowTotalWithDiscount(Optional.ofNullable(lineNetAmount).orElse(Env.ZERO).doubleValue())
-					.setRowTotalInclTax(Optional.ofNullable(lineTotalAmount).orElse(Env.ZERO).doubleValue())
-					.setTaxAmount(Optional.ofNullable(taxAmount).orElse(Env.ZERO).doubleValue())
-					.setTaxPercent(Optional.ofNullable(taxRate).orElse(Env.ZERO).doubleValue())
-					.setDiscountAmount(Optional.ofNullable(lineDiscount).orElse(Env.ZERO).doubleValue())
-					.setDiscountPercent(Optional.ofNullable(lineDiscountRate).orElse(Env.ZERO).doubleValue())
+					.setProductTypeValue(
+						getProductTypeFromProduct(product).getNumber()
+					)
+					.setQuantity(
+						item.getQty().doubleValue()
+					)
+					.setPrice(
+						Optional.ofNullable(item.getPrice()).orElse(Env.ZERO).doubleValue()
+					)
+					.setRowTotal(
+						Optional.ofNullable(lineListAmount).orElse(Env.ZERO).doubleValue()
+					)
+					.setRowTotalWithDiscount(
+						Optional.ofNullable(lineNetAmount).orElse(Env.ZERO).doubleValue()
+					)
+					.setRowTotalInclTax(
+						Optional.ofNullable(lineTotalAmount).orElse(Env.ZERO).doubleValue()
+					)
+					.setTaxAmount(
+						Optional.ofNullable(taxAmount).orElse(Env.ZERO).doubleValue()
+					)
+					.setTaxPercent(
+						Optional.ofNullable(taxRate).orElse(Env.ZERO).doubleValue()
+					)
+					.setDiscountAmount(
+						Optional.ofNullable(lineDiscount).orElse(Env.ZERO).doubleValue()
+					)
+					.setDiscountPercent(
+						Optional.ofNullable(lineDiscountRate).orElse(Env.ZERO).doubleValue()
+					)
 				;
 				//	Add to Cart
 				builder.addItems(cartItem);
@@ -1752,13 +1821,13 @@ public class WebStore extends WebStoreImplBase {
 						if(freightCategory.isInvoiced()) {
 							//	Set values
 							AtomicReference<BigDecimal> valueToCalulate = new AtomicReference<BigDecimal>(Env.ZERO);
-				        	if(Util.isEmpty(freightCategory.getFreightCalculationType())
-				        			|| freightCategory.getFreightCalculationType().equals(MFreightCategory.FREIGHTCALCULATIONTYPE_WeightBased)) {
-				        		valueToCalulate.set(packageToCalculate.getWeight());
-				        	} else if(freightCategory.getFreightCalculationType().equals(MFreightCategory.FREIGHTCALCULATIONTYPE_VolumeBased)) {
-				        		valueToCalulate.set(packageToCalculate.getVolume());
-				        	}
-				        	//	Calculate
+				 			if(Util.isEmpty(freightCategory.getFreightCalculationType())
+								|| freightCategory.getFreightCalculationType().equals(MFreightCategory.FREIGHTCALCULATIONTYPE_WeightBased)) {
+								valueToCalulate.set(packageToCalculate.getWeight());
+							} else if(freightCategory.getFreightCalculationType().equals(MFreightCategory.FREIGHTCALCULATIONTYPE_VolumeBased)) {
+								valueToCalulate.set(packageToCalculate.getVolume());
+							}
+							//	Calculate
 							if(freightCategory.getM_Product_ID() > 0) {
 								MProduct product = MProduct.get(Env.getCtx(), freightCategory.getM_Product_ID());
 								BigDecimal freightAmount = VueStoreFrontUtil.getPriceStd(product, store.getM_PriceList_ID());
@@ -1779,26 +1848,46 @@ public class WebStore extends WebStoreImplBase {
 				});
 			}
 			//	Set totals
-			builder.setItemsQuantity(items.size())
+			builder.setItemsQuantity(
+					items.size()
+				)
 				.setBaseCurrencyCode(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						currency.getISO_Code()
 					)
 				)
 				.setQuoteCurrencyCode(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						currency.getISO_Code()
 					)
 				)
-				.setDiscountAmount(discount.get().doubleValue())
-				.setTaxAmount(tax.get().doubleValue())
-				.setSubtotal(subtotal.get().doubleValue())
-				.setSubtotalInclTax(subtotalWithTax.get().doubleValue())
-				.setSubtotalWithDiscount(subtotalWithDiscount.get().doubleValue())
-				.setGrandTotal(grandTotal.get().doubleValue())
-				.setShippingAmount(shipping.get().doubleValue())
-				.setShippingInclTax(shipping.get().add(shippingTax.get()).doubleValue())
-				.setShippingTaxAmount(shippingTax.get().doubleValue())
+				.setDiscountAmount(
+					discount.get().doubleValue()
+				)
+				.setTaxAmount(
+					tax.get().doubleValue()
+				)
+				.setSubtotal(
+					subtotal.get().doubleValue()
+				)
+				.setSubtotalInclTax(
+					subtotalWithTax.get().doubleValue()
+				)
+				.setSubtotalWithDiscount(
+					subtotalWithDiscount.get().doubleValue()
+				)
+				.setGrandTotal(
+					grandTotal.get().doubleValue()
+				)
+				.setShippingAmount(
+					shipping.get().doubleValue()
+				)
+				.setShippingInclTax(
+					shipping.get().add(shippingTax.get()).doubleValue()
+				)
+				.setShippingTaxAmount(
+					shippingTax.get().doubleValue()
+				)
 			;
 		}
 		//	Return cart
@@ -1827,27 +1916,50 @@ public class WebStore extends WebStoreImplBase {
 		BigDecimal lineTotalAmount = (BigDecimal) basketLine.get_Value(VueStoreFrontUtil.COLUMNNAME_LineTotalAmt);
 		//	Cart Item
 		return CartItem.newBuilder()
-			.setProductId(product.getM_Product_ID())
+			.setProductId(
+				product.getM_Product_ID()
+			)
 			.setSku(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					product.getSKU()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					product.getName()
 				)
 			)
-			.setProductTypeValue(getProductTypeFromProduct(product).getNumber())
-			.setQuantity(basketLine.getQty().doubleValue())
-			.setPrice(Optional.ofNullable(basketLine.getPrice()).orElse(Env.ZERO).doubleValue())
-			.setRowTotal(Optional.ofNullable(lineListAmount).orElse(Env.ZERO).doubleValue())
-			.setRowTotalWithDiscount(Optional.ofNullable(lineNetAmount).orElse(Env.ZERO).doubleValue())
-			.setRowTotalInclTax(Optional.ofNullable(lineTotalAmount).orElse(Env.ZERO).doubleValue())
-			.setTaxAmount(Optional.ofNullable(taxAmount).orElse(Env.ZERO).doubleValue())
-			.setTaxPercent(Optional.ofNullable(taxRate).orElse(Env.ZERO).doubleValue())
-			.setDiscountAmount(Optional.ofNullable(lineDiscount).orElse(Env.ZERO).doubleValue())
-			.setDiscountPercent(Optional.ofNullable(lineDiscountRate).orElse(Env.ZERO).doubleValue())
+			.setProductTypeValue(
+				getProductTypeFromProduct(
+					product
+				).getNumber()
+			)
+			.setQuantity(
+				basketLine.getQty().doubleValue()
+			)
+			.setPrice(
+				Optional.ofNullable(basketLine.getPrice()).orElse(Env.ZERO).doubleValue()
+			)
+			.setRowTotal(
+				Optional.ofNullable(lineListAmount).orElse(Env.ZERO).doubleValue()
+			)
+			.setRowTotalWithDiscount(
+				Optional.ofNullable(lineNetAmount).orElse(Env.ZERO).doubleValue()
+			)
+			.setRowTotalInclTax(
+				Optional.ofNullable(lineTotalAmount).orElse(Env.ZERO).doubleValue()
+			)
+			.setTaxAmount(
+				Optional.ofNullable(taxAmount).orElse(Env.ZERO).doubleValue()
+			)
+			.setTaxPercent(
+				Optional.ofNullable(taxRate).orElse(Env.ZERO).doubleValue()
+			)
+			.setDiscountAmount(
+				Optional.ofNullable(lineDiscount).orElse(Env.ZERO).doubleValue())
+			.setDiscountPercent(
+				Optional.ofNullable(lineDiscountRate).orElse(Env.ZERO).doubleValue()
+			)
 		;
 	}
 	
@@ -1914,8 +2026,17 @@ public class WebStore extends WebStoreImplBase {
 				//	Save
 				location.saveEx(transactionName);
 				//	Update location of business partner
-				businessPartnerLocation.setName(ValueManager.validateNull(address.getFirstName()));
-				businessPartnerLocation.set_ValueOfColumn(MBPartner.COLUMNNAME_Description, ValueManager.validateNull(address.getLastName()));
+				businessPartnerLocation.setName(
+					StringManager.getValidString(
+						address.getFirstName()
+					)
+				);
+				businessPartnerLocation.set_ValueOfColumn(
+					MBPartner.COLUMNNAME_Description,
+					StringManager.getValidString(
+						address.getLastName()
+					)
+				);
 				businessPartnerLocation.setC_Location_ID(location.getC_Location_ID());
 				businessPartnerLocation.setPhone(address.getPhone());
 				boolean isDefaultShipping = request.getDefaultShipping() == businessPartnerLocation.getC_BPartner_Location_ID();
@@ -1943,21 +2064,23 @@ public class WebStore extends WebStoreImplBase {
 		Customer.Builder builder = Customer.newBuilder();
 		//	Set builder
 		builder.setEmail(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					customer.getEMail()
 				)
 			)
 			.setFirstName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					customer.getName()
 				)
 			)
 			.setLastName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					customer.get_ValueAsString(MBPartner.COLUMNNAME_Name2)
 				)
 			)
-			.setId(customer.getAD_User_ID())
+			.setId(
+				customer.getAD_User_ID()
+			)
 			.setCreated(
 				ValueManager.getTimestampFromDate(
 					customer.getCreated()
@@ -1969,7 +2092,7 @@ public class WebStore extends WebStoreImplBase {
 				)
 			)
 			.setOrganizationName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					MOrg.get(Env.getCtx(), customer.getAD_Org_ID()).getName()
 				)
 			)
@@ -2073,44 +2196,48 @@ public class WebStore extends WebStoreImplBase {
 			phone = contact.getPhone();
 		}
 		MLocation location = MLocation.get(Env.getCtx(), businessPartnerLocation.getC_Location_ID(), transactionName);
-		builder.setId(businessPartnerLocation.getC_BPartner_Location_ID())
-			.setCountryCode(MCountry.get(Env.getCtx(), location.getC_Country_ID()).getCountryCode())
+		builder.setId(
+				businessPartnerLocation.getC_BPartner_Location_ID()
+			)
+			.setCountryCode(
+				MCountry.get(Env.getCtx(), location.getC_Country_ID()).getCountryCode()
+			)
 			.setPostalCode(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					location.getPostal()
 				)
 			)
 			.setPhone(
-				ValueManager.validateNull(Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(
+				StringManager.getValidString(Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(
 					Optional.ofNullable(phone).orElse(""))
 				)
 			)
 			.setFirstName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					businessPartnerLocation.getName()
 				)
 			)
 			.setLastName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					businessPartnerLocation.get_ValueAsString(MBPartner.COLUMNNAME_Description)
 				)
 			)
 			.setAddress1(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					location.getAddress1()
 				)
 			)
 			.setAddress2(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					location.getAddress2())
 				)
 			.setAddress3(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					location.getAddress3()
 				)
 			)
 			.setAddress4(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					location.getAddress4()
 				)
 			)
@@ -2128,42 +2255,48 @@ public class WebStore extends WebStoreImplBase {
 			MCity city = MCity.get(Env.getCtx(), location.getC_City_ID());
 			builder.setCity(
 				City.newBuilder()
-					.setId(city.getC_City_ID())
+					.setId(
+						city.getC_City_ID()
+					)
 					.setName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							city.getName()
 						)
 					)
-				)
-			;
+			);
 		} else {
-			builder.setCity(City.newBuilder()
-				.setName(
-					ValueManager.validateNull(
-						location.getCity())
+			builder.setCity(
+				City.newBuilder()
+					.setName(
+						StringManager.getValidString(
+							location.getCity()
+						)
 					)
-				)
-			;
+			);
 		}
 		//	Region
 		if(location.getC_Region_ID() > 0) {
 			MRegion region = MRegion.get(Env.getCtx(), location.getC_Region_ID());
-			builder.setRegion(Region.newBuilder()
-				.setId(region.getC_Region_ID())
-				.setName(
-					ValueManager.validateNull(
-						region.getName())
+			builder.setRegion(
+				Region.newBuilder()
+					.setId(
+						region.getC_Region_ID()
 					)
-				)
-			;
+					.setName(
+						StringManager.getValidString(
+							region.getName()
+						)
+					)
+			);
 		} else {
-			builder.setCity(City.newBuilder()
-				.setName(
-					ValueManager.validateNull(
-						location.getCity())
+			builder.setCity(
+				City.newBuilder()
+					.setName(
+						StringManager.getValidString(
+							location.getCity()
+						)
 					)
-				)
-			;
+			);
 		}
 		return builder;
 	}
@@ -2407,7 +2540,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	
 		return builder;
@@ -2465,7 +2598,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	
 		return builder;
@@ -2524,19 +2657,25 @@ public class WebStore extends WebStoreImplBase {
 		}
 		MCurrency currency = MCurrency.get(Env.getCtx(), productPriceList.getC_Currency_ID());
 		//	Set product values
-		return builder.setId(product.getM_Product_ID())
+		return builder.setId(
+				product.getM_Product_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					product.getName()
 				)
 			)
-			.setStoreId(Env.getAD_Org_ID(Env.getCtx()))
+			.setStoreId(
+				Env.getAD_Org_ID(Env.getCtx())
+			)
 			.setUrl(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					product.getDescriptionURL()
 				)
 			)
-			.setProductType(getProductTypeFromProduct(product))
+			.setProductType(
+				getProductTypeFromProduct(product)
+			)
 			.setPriceInfo(
 					PriceInfo.newBuilder()
 						.setMaxPrice(priceList.setScale(productPricing.getPrecision()).doubleValue())
@@ -2651,12 +2790,18 @@ public class WebStore extends WebStoreImplBase {
 		productPricing.setM_PriceList_ID(priceList.getM_PriceList_ID());
 		productPricing.setPriceDate(validFrom);
 		//	Set product values
-		return builder.setId(product.getM_Product_ID())
+		return builder.setId(
+				product.getM_Product_ID()
+			)
 			.setSku(
-				ValueManager.validateNull(product.getSKU())
+				StringManager.getValidString(
+					product.getSKU()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(product.getName())
+				StringManager.getValidString(
+					product.getName()
+				)
 			)
 			//	TODO: Add status from product
 			.setStatus(org.spin.backend.grpc.store.Product.Status.ENABLED)
@@ -2676,7 +2821,7 @@ public class WebStore extends WebStoreImplBase {
 				Attribute.newBuilder()
 					.setAttributeCode("description")
 					.setValue(
-						ValueManager.validateNull(product.getDescription())
+						StringManager.getValidString(product.getDescription())
 					)
 			)
 		;
@@ -2715,7 +2860,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	
 		return builder;

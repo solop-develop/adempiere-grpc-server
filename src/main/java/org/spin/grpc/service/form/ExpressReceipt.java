@@ -69,6 +69,7 @@ import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -177,18 +178,28 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 			return builder;
 		}
 
-		builder.setId(businessPartner.getC_BPartner_ID())
+		builder.setId(
+				businessPartner.getC_BPartner_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(businessPartner.getValue())
+				StringManager.getValidString(
+					businessPartner.getValue()
+				)
 			)
 			.setTaxId(
-				ValueManager.validateNull(businessPartner.getTaxID())
+				StringManager.getValidString(
+					businessPartner.getTaxID()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(businessPartner.getName())
+				StringManager.getValidString(
+					businessPartner.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(businessPartner.getDescription())
+				StringManager.getValidString(
+					businessPartner.getDescription()
+				)
 			)
 		;
 
@@ -301,12 +312,18 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 			return builder;
 		}
 
-		builder.setId(purchaseOrder.getC_Order_ID())
+		builder.setId(
+				purchaseOrder.getC_Order_ID()
+			)
 			.setDateOrdered(
-				ValueManager.getTimestampFromDate(purchaseOrder.getDateOrdered())
+				ValueManager.getTimestampFromDate(
+					purchaseOrder.getDateOrdered()
+				)
 			)
 			.setDocumentNo(
-				ValueManager.validateNull(purchaseOrder.getDocumentNo())
+				StringManager.getValidString(
+					purchaseOrder.getDocumentNo()
+				)
 			)
 		;
 
@@ -393,7 +410,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -422,18 +439,28 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		if (product == null) {
 			return builder;
 		}
-		builder.setId(product.getM_Product_ID())
+		builder.setId(
+				product.getM_Product_ID()
+			)
 			.setUpc(
-				ValueManager.validateNull(product.getUPC())
+				StringManager.getValidString(
+					product.getUPC()
+				)
 			)
 			.setSku(
-				ValueManager.validateNull(product.getSKU())
+				StringManager.getValidString(
+					product.getSKU()
+				)
 			)
 			.setValue(
-				ValueManager.validateNull(product.getValue())
+				StringManager.getValidString(
+					product.getValue()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(product.getName())
+				StringManager.getValidString(
+					product.getName()
+				)
 			)
 		;
 
@@ -447,15 +474,23 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 			return builder;
 		}
 
-		builder.setId(receipt.getM_InOut_ID())
+		builder.setId(
+				receipt.getM_InOut_ID()
+			)
 			.setDocumentNo(
-				ValueManager.validateNull(receipt.getDocumentNo())
+				StringManager.getValidString(
+					receipt.getDocumentNo()
+				)
 			)
 			.setDateOrdered(
-				ValueManager.getTimestampFromDate(receipt.getDateOrdered())
+				ValueManager.getTimestampFromDate(
+					receipt.getDateOrdered()
+				)
 			)
 			.setMovementDate(
-				ValueManager.getTimestampFromDate(receipt.getMovementDate())
+				ValueManager.getTimestampFromDate(
+					receipt.getMovementDate()
+				)
 			)
 			.setIsCompleted(
 				DocumentUtil.isCompleted(receipt)
@@ -921,7 +956,9 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			receiptLine.setQty(quantity);
 			receiptLine.setDescription(
-				ValueManager.validateNull(request.getDescription())
+				StringManager.getValidString(
+					request.getDescription()
+				)
 			);
 			receiptLine.saveEx(transactionName);
 
@@ -964,12 +1001,18 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 			return builder;
 		}
 
-		builder.setId(receiptLine.getM_InOutLine_ID())
+		builder.setId(
+				receiptLine.getM_InOutLine_ID()
+			)
 			.setProduct(
-				convertProduct(receiptLine.getM_Product_ID())
+				convertProduct(
+					receiptLine.getM_Product_ID()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(receiptLine.getDescription())
+				StringManager.getValidString(
+					receiptLine.getDescription()
+				)
 			)
 			.setQuantity(
 				NumberManager.getBigDecimalToString(
@@ -1022,7 +1065,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		ListReceiptLinesResponse.Builder builderList = ListReceiptLinesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 

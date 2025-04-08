@@ -39,6 +39,7 @@ import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_EntityType;
 import org.adempiere.core.domains.models.I_AD_Language;
+import org.adempiere.core.domains.models.I_AD_PInstance;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_R_MailText;
@@ -63,6 +64,8 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMessage;
+import org.compiere.model.MProcess;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRole;
 import org.compiere.model.MRule;
 import org.compiere.model.MTab;
@@ -70,6 +73,7 @@ import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.POAdapter;
 import org.compiere.model.Query;
+import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -77,6 +81,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.eevolution.services.dsl.ProcessBuilder;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.user_interface.ChatEntry;
@@ -109,6 +114,7 @@ import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.interim.ContextTemporaryWorkaround;
+import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
@@ -122,6 +128,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
+import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.query.SortingManager;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -1296,10 +1303,12 @@ public class UserInterface extends UserInterfaceImplBase {
 			return builder;
 		}
 		HashMap<String, Object> parameterMap = new HashMap<>();
+		HashMap<String, String> parameterOperator = new HashMap<>();
 		//	Populate map
 		FilterManager.newInstance(request.getFilters()).getConditions()
-			.parallelStream()
+			.stream()
 			.forEach(condition -> {
+				parameterOperator.put(condition.getColumnName(), condition.getOperator());
 				parameterMap.put(condition.getColumnName(), condition.getValue());
 			});
 
@@ -1307,6 +1316,110 @@ public class UserInterface extends UserInterfaceImplBase {
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
+		MView view = browser.getAD_View();
+
+		// Run search process
+		StringBuffer processInstanceWhere = new StringBuffer();
+		if (browser.get_ColumnIndex("SearchProcess_ID") >= 0 && browser.get_ValueAsInt("SearchProcess_ID") > 0) {
+			int searchProcessId = browser.get_ValueAsInt("SearchProcess_ID");
+			// Get Instance of process
+			MProcess process = MProcess.get(
+				context,
+				searchProcessId
+			);
+			if (process == null || process.getAD_Process_ID() <= 0) {
+				throw new AdempiereException("@SearchProcess_ID@ @NotFound@");
+			}
+
+			// Record/Role access
+			boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
+			if (!isWithAccess) {
+				throw new AdempiereException("@SearchProcess_ID@ @AccessCannotProcess@");
+			}
+			String viewProcessInstanceColumnSql = "";
+			List<MViewColumn> viewColumns = view.getViewColumns();
+			HashMap<String, Object> parametersToAdd = new HashMap<>();
+			//Get Process Parameters
+			List<MProcessPara> searchProcessParameters = process.getParametersAsList();
+			for (MViewColumn viewColumn: viewColumns) {
+				String columnName = viewColumn.getColumnName();
+				if (columnName.endsWith(I_AD_PInstance.COLUMNNAME_AD_PInstance_ID)) {
+					viewProcessInstanceColumnSql = viewColumn.getColumnSQL();
+					if (searchProcessParameters.isEmpty()) {
+						break;
+					}
+				}
+				if (searchProcessParameters.isEmpty()) {
+					continue;
+				}
+				String columnSql = "";
+				int index = -1;
+				String parameterName = "";
+				Optional<MProcessPara> maybeParameter = null;
+				boolean isRange = false;
+
+				if (parameterMap.containsKey(columnName)) {
+					Object value = parameterMap.get(columnName);
+				 	columnSql = viewColumn.getColumnSQL();
+				 	index = columnSql.lastIndexOf(".");
+				 	parameterName = columnSql.substring(index +1);
+				 	String searchString = parameterName;
+			 		maybeParameter = searchProcessParameters.stream().filter(param -> param.getColumnName().equals(searchString)).findFirst();
+					if (maybeParameter.isEmpty()) {
+						continue;
+					}
+					isRange = maybeParameter.get().isRange();
+					String operatorName = parameterOperator.get(columnName);
+					if (isRange && !operatorName.equalsIgnoreCase(Filter.BETWEEN)
+						&& !operatorName.equalsIgnoreCase(Filter.GREATER_EQUAL)) {
+						continue;
+					}
+					if (!isRange && !operatorName.equalsIgnoreCase(Filter.EQUAL)) {
+						continue;
+					}
+					parametersToAdd.put(parameterName, value);
+				}
+				if (isRange && parameterMap.containsKey(columnName + "_To")) {
+					Object value = parameterMap.get(columnName  + "_To");
+					String operatorName = parameterOperator.get(columnName + "_To");
+					if (!operatorName.equalsIgnoreCase(Filter.LESS_EQUAL)) {
+						continue;
+					}
+					parametersToAdd.put(parameterName + "_To", value);
+				}
+			}
+
+			//	Call process builder
+			org.eevolution.services.dsl.ProcessBuilder searchProcessBuilder = ProcessBuilder.create(context)
+				.process(searchProcessId)
+				.withTitle(process.getName())
+			;
+			for (Entry <String, Object> parameter: parametersToAdd.entrySet()) {
+				Object parameterValue = parameter.getValue();
+				if (parameterValue instanceof List ) {
+					@SuppressWarnings("unchecked")
+					List<Object> parameterList = (List<Object>) parameterValue;
+					if (parameterList.size() >= 2) {
+						searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0), parameterList.get(1));
+					} else {
+						searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0));
+					}
+				} else {
+					searchProcessBuilder.withParameter(parameter.getKey(), parameter.getValue());
+				}
+			}
+
+			// Execute Search Process
+			ProcessInfo processInfo = searchProcessBuilder.execute();
+			int processInstanceID = processInfo.getAD_PInstance_ID();
+			if (!Util.isEmpty(viewProcessInstanceColumnSql, true)) {
+				processInstanceWhere.append(" AND ")
+					.append(viewProcessInstanceColumnSql)
+					.append(" = ")
+					.append(processInstanceID)
+				;
+			}
+		}
 
 		//	get query columns
 		String query = QueryUtil.getBrowserQueryWithReferences(browser);
@@ -1317,7 +1430,6 @@ public class UserInterface extends UserInterfaceImplBase {
 			);
 		}
 
-		MView view = browser.getAD_View();
 		MViewDefinition parentDefinition = view.getParentViewDefinition();
 		String tableNameAlias = parentDefinition.getTableAlias();
 		String tableName = parentDefinition.getAD_Table().getTableName();
@@ -1343,6 +1455,9 @@ public class UserInterface extends UserInterfaceImplBase {
 				.append(" AND ")
 				.append(parsedWhereClause);
 		}
+
+		// Add PInstanceID validation
+		whereClause.append(processInstanceWhere);
 
 		//	For dynamic condition
 		List<Object> filterValues = new ArrayList<Object>();

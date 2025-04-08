@@ -244,6 +244,7 @@ public class BusinessPartnerLogic {
 			.setClient_ID()
 			.setParameters(parametersList)
 			.setOrderBy(I_C_BPartner.COLUMNNAME_Value)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		//	Get page and count

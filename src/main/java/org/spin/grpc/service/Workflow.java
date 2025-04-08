@@ -72,7 +72,7 @@ import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 import com.google.protobuf.Empty;
 
@@ -98,10 +98,11 @@ public class Workflow extends WorkflowImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -144,10 +145,12 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -166,10 +169,12 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -228,7 +233,7 @@ public class Workflow extends WorkflowImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -350,13 +355,19 @@ public class Workflow extends WorkflowImplBase {
 				if (status.equals(valueList.get(i))) {
 					DocumentStatus.Builder documentStatusBuilder = DocumentStatus.newBuilder()
 						.setValue(
-							ValueManager.validateNull(valueList.get(i))
+							StringManager.getValidString(
+								valueList.get(i)
+							)
 						)
 						.setName(
-							ValueManager.validateNull(nameList.get(i))
+							StringManager.getValidString(
+								nameList.get(i)
+							)
 						)
 						.setDescription(
-							ValueManager.validateNull(descriptionList.get(i))
+							StringManager.getValidString(
+								descriptionList.get(i)
+							)
 						)
 					;
 					builder.addDocumentStatuses(documentStatusBuilder);
@@ -396,13 +407,19 @@ public class Workflow extends WorkflowImplBase {
 				if (option.equals(valueList.get(i))) {
 					DocumentStatus.Builder documentActionBuilder = DocumentStatus.newBuilder()
 						.setValue(
-							ValueManager.validateNull(valueList.get(i))
+							StringManager.getValidString(
+								valueList.get(i)
+							)
 						)
 						.setName(
-							ValueManager.validateNull(nameList.get(i))
+							StringManager.getValidString(
+								nameList.get(i)
+							)
 						)
 						.setDescription(
-							ValueManager.validateNull(descriptionList.get(i))
+							StringManager.getValidString(
+								descriptionList.get(i)
+							)
 						)
 					;
 					builder.addDocumentStatuses(documentActionBuilder);
@@ -516,7 +533,7 @@ public class Workflow extends WorkflowImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -760,7 +777,9 @@ public class Workflow extends WorkflowImplBase {
 				throw new AdempiereException("@AD_WF_Activity_ID@ @NotFound@");
 			}
 
-			String message = ValueManager.validateNull(request.getMessage());
+			String message = StringManager.getValidString(
+				request.getMessage()
+			);
 			int userId = Env.getAD_User_ID(Env.getCtx());
 
 			MWFNode node = workActivity.getNode();
@@ -834,7 +853,7 @@ public class Workflow extends WorkflowImplBase {
 			throw new AdempiereException("@AD_User_ID@ @NotFound@");
 		}
 
-		String message = ValueManager.validateNull(
+		String message = StringManager.getValidString(
 			request.getMessage()
 		);
 		boolean isSuccefully = workActivity.forwardTo(user.getAD_User_ID(), message);

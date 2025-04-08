@@ -54,6 +54,7 @@ import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -492,39 +493,41 @@ public class FileManagement extends FileManagementImplBase {
 			return builder;
 		}
 		builder
-			.setId(reference.getAD_AttachmentReference_ID())
+			.setId(
+				reference.getAD_AttachmentReference_ID()
+			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					reference.getUUID()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					reference.getFileName()
 				)
 			)
 			.setFileName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					reference.getValidFileName()
 				)
 			)
 			.setValidFileName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					reference.getValidFileName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					reference.getDescription()
 				)
 			)
 			.setTextMessage(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					reference.getTextMsg()
 				)
 			)
 			.setContentType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					MimeType.getMimeType(
 						reference.getFileName()
 					)
@@ -574,10 +577,18 @@ public class FileManagement extends FileManagementImplBase {
 			return Attachment.newBuilder();
 		}
 		Attachment.Builder builder = Attachment.newBuilder()
-			.setId(attachment.getAD_Attachment_ID())
-			.setTitle(ValueManager.validateNull(attachment.getTitle()))
+			.setId(
+				attachment.getAD_Attachment_ID()
+			)
+			.setTitle(
+				StringManager.getValidString(
+					attachment.getTitle()
+				)
+			)
 			.setTextMessage(
-				ValueManager.validateNull(attachment.getTextMsg())
+				StringManager.getValidString(
+					attachment.getTextMsg()
+				)
 			)
 		;
 

@@ -1,4 +1,4 @@
-FROM envoyproxy/envoy:v1.32.0
+FROM envoyproxy/envoy:v1.33.2
 
 LABEL maintainer="ySenih@erpya.com; EdwinBetanc0urt@outlook.com;" \
 	description="Proxy Transcoding gRPC to JSON via http"
@@ -43,7 +43,7 @@ WORKDIR /etc/envoy/
 COPY docker/envoy_template.yaml /etc/envoy/envoy_template.yaml
 
 # Proto gRPC descriptor
-COPY docker/adempiere-grpc-server.pb /data/adempiere-grpc-server.pb
+COPY docker/adempiere-grpc-server.dsc /data/adempiere-grpc-server.dsc
 COPY docker/start_grpc_proxy.sh /etc/envoy/start.sh
 
 

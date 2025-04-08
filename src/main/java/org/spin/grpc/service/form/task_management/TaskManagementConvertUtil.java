@@ -24,6 +24,7 @@ import org.spin.backend.grpc.form.task_management.ResourceAssignment;
 import org.spin.backend.grpc.form.task_management.Task;
 import org.spin.backend.grpc.form.task_management.TaskType;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -52,12 +53,12 @@ public class TaskManagementConvertUtil {
 				project.getC_Project_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					project.getUUID()
 				)
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					project.getValue()
 				)
 			)
@@ -98,7 +99,7 @@ public class TaskManagementConvertUtil {
 				project.getValue() + " - " + project.getName()
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					project.getDescription()
 				)
 			)
@@ -139,12 +140,12 @@ public class TaskManagementConvertUtil {
 			request.getR_Request_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getUUID()
 				)
 			)
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getDocumentNo()
 				)
 			)
@@ -185,7 +186,7 @@ public class TaskManagementConvertUtil {
 				request.getDisplayValue()
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					request.getSummary()
 				)
 			)
@@ -223,15 +224,15 @@ public class TaskManagementConvertUtil {
 		}
 
 		builder.setId(
-			resourceAssignment.getS_ResourceAssignment_ID()
+				resourceAssignment.getS_ResourceAssignment_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceAssignment.getUUID()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceAssignment.getName()
 				)
 			)
@@ -274,12 +275,12 @@ public class TaskManagementConvertUtil {
 				TaskType.RESOURCE_ASSIGNMENT
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceAssignment.getDisplayValue()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceAssignment.getDescription()
 				)
 			)

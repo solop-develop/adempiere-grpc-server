@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_S_ResourceAssignment;
@@ -38,6 +39,7 @@ import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLocation;
 import org.compiere.model.MResourceAssignment;
+import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
@@ -103,6 +105,7 @@ import org.spin.backend.grpc.display_definition.UpdateBusinessPartnerRequest;
 import org.spin.backend.grpc.display_definition.UpdateDataEntryRequest;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
+import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
@@ -183,6 +186,7 @@ public class DisplayDefinitionServiceLogic {
 				.setParameters(table.getAD_Table_ID())
 				.setClient_ID()
 				.setOnlyActiveRecords(true)
+				.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 				.count()
 			;
 		}
@@ -210,7 +214,7 @@ public class DisplayDefinitionServiceLogic {
 			return builderList;
 		}
 		String displayTableName = DisplayDefinitionChanges.SP010_DisplayDefinition;
-		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType NOT IN('T', 'W')";
+		String whereClause = "AD_Table_ID = ? AND SP010_DisplayType NOT IN('T', 'W') AND (SP010_IsInfoRecord = 'N' AND IsInsertRecord = 'N')";
 		if(request.getOnlyReferences()) {
 			displayTableName = "SP010_ReferenceTable";
 			whereClause = "AD_Table_ID = ?";
@@ -231,6 +235,7 @@ public class DisplayDefinitionServiceLogic {
 			.setParameters(parametersList)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		//	Get page and count
@@ -253,6 +258,10 @@ public class DisplayDefinitionServiceLogic {
 				.forEach(recordId -> {
 					PO displayReference = referenceTable.getPO(recordId, null);
 					PO display = displayDefinitionTable.getPO(displayReference.get_ValueAsInt(DisplayDefinitionChanges.SP010_DisplayDefinition_ID), null);
+					if (display.get_ValueAsBoolean(DisplayDefinitionChanges.SP010_IsInfoRecord) || display.get_ValueAsBoolean(I_AD_Tab.COLUMNNAME_IsInsertRecord)) {
+						// is only field
+						return;
+					}
 					if(!Util.isEmpty(displayReference.get_ValueAsString("Name"))) {
 						display.set_ValueOfColumn("Name", displayReference.get_ValueAsString("Name"));
 					}
@@ -268,6 +277,12 @@ public class DisplayDefinitionServiceLogic {
 				.getIDsAsList()
 				.forEach(recordId -> {
 					PO display = referenceTable.getPO(recordId, null);
+					int targetTableID = display.get_ValueAsInt(MTable.COLUMNNAME_AD_Table_ID);
+					if (targetTableID > 0) {
+						if (!AccessUtil.isWindowAccessByTableID(targetTableID)) {
+							return;
+						}
+					}
 					DefinitionMetadata.Builder builder = DisplayDefinitionConvertUtil.convertDefinitionMetadata(display, true);
 					builderList.addRecords(builder);
 				})
@@ -298,6 +313,7 @@ public class DisplayDefinitionServiceLogic {
 		)
 			.setParameters(displayDefinition.get_ID())
 			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
 		ListDisplayDefinitionFieldsMetadataResponse.Builder builderList = ListDisplayDefinitionFieldsMetadataResponse.newBuilder()
@@ -2053,9 +2069,18 @@ public class DisplayDefinitionServiceLogic {
 				throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
 			}
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+			int customerTemplateId = clientInfo.getC_BPartnerCashTrx_ID();
+			if (customerTemplateId <= 0) {
+				throw new AdempiereException("@FillMandatory@ @C_BPartnerCashTrx_ID@");
+			}
 			if (businessPartner.getC_BPartner_ID() == clientInfo.getC_BPartnerCashTrx_ID()) {
 				throw new AdempiereException("@POS.ModifyTemplateCustomerNotAllowed@");
 			}
+			MBPartner template = MBPartner.get(Env.getCtx(), customerTemplateId);
+			if (template == null || template.getC_BPartner_ID() <= 0) {
+				throw new AdempiereException("@C_BPartnerCashTrx_ID@ @NotFound@");
+			}
+
 			businessPartner.set_TrxName(transactionName);
 			//	Set Value
 			Optional.ofNullable(request.getValue()).ifPresent(value -> businessPartner.setValue(value));
@@ -2155,8 +2180,9 @@ public class DisplayDefinitionServiceLogic {
 							contact.setC_BPartner_Location_ID(businessPartnerLocation.getC_BPartner_Location_ID());
 							contact.saveEx(transactionName);
 				 		}
-					} else {	//	Create new
-						Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(businessPartner.getLocations(false)).stream().findFirst();
+					} else {
+						//	Create new
+						Optional<MBPartnerLocation> maybeTemplateLocation = Arrays.asList(template.getLocations(false)).stream().findFirst();
 						if(!maybeTemplateLocation.isPresent()) {
 							throw new AdempiereException("@C_BPartnerCashTrx_ID@ @C_BPartner_Location_ID@ @NotFound@");
 						}
