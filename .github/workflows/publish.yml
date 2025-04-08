@@ -45,8 +45,8 @@ jobs:
       - name: Upload descriptor file artifact
         uses: actions/upload-artifact@v4
         with:
-          name: adempiere-grpc-server.pb
-          path: build/descriptors/adempiere-grpc-server.pb
+          name: adempiere-grpc-server.dsc
+          path: build/descriptors/adempiere-grpc-server.dsc
           retention-days: 1
 
       - name: Upload envoy file artifact
@@ -101,7 +101,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: adempiere-grpc-server.pb/adempiere-grpc-server.pb
+          args: adempiere-grpc-server.dsc/adempiere-grpc-server.dsc
 
       - name: Upload Envoy config
         uses: skx/github-action-publish-binaries@master
@@ -266,7 +266,7 @@ jobs:
       - name: Download build dist app
         uses: actions/download-artifact@v4
         with:
-          name: adempiere-grpc-server.pb
+          name: adempiere-grpc-server.dsc
           path: docker/
 
       - name: Set up QEMU
