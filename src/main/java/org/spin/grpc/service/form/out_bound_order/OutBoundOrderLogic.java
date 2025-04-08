@@ -34,11 +34,13 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DocTypeNotFoundException;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MDocType;
+import org.compiere.model.MFreight;
 import org.compiere.model.MLocator;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MOrg;
 import org.compiere.model.MProduct;
+import org.compiere.model.MShipper;
 import org.compiere.model.MStorage;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
@@ -48,9 +50,11 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.eevolution.distribution.model.MDDDriver;
 import org.eevolution.distribution.model.MDDFreight;
 import org.eevolution.distribution.model.MDDFreightLine;
 import org.eevolution.distribution.model.MDDOrderLine;
+import org.eevolution.distribution.model.MDDVehicle;
 import org.eevolution.wms.model.MWMInOutBound;
 import org.eevolution.wms.model.MWMInOutBoundLine;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
@@ -975,6 +979,86 @@ public class OutBoundOrderLogic {
 		}
 		return locator.getM_Locator_ID();
 	}
+
+
+	public static int validateAndGetFreightIDFromShipperID(int shipperId) {
+		int freightId = -1;
+		if (shipperId <= 0) {
+			return freightId;
+		}
+		final String whereClause = "M_Shipper_ID = ?";
+		freightId = new Query(
+			Env.getCtx(),
+			MFreight.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(shipperId)
+			.setOnlyActiveRecords(true)
+			.setClient_ID()
+			.firstId()
+		;
+		return freightId;
+	}
+
+	public static MShipper validateShipperID(int shipperId) {
+		if (shipperId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
+		}
+		MShipper shipper = new MShipper(Env.getCtx(), shipperId, null);
+		if (shipper == null || shipper.getM_Shipper_ID() <= 0) {
+			throw new AdempiereException("@M_Shipper_ID@ @NotFound@");
+		}
+		if (!shipper.isActive()) {
+			throw new AdempiereException("@M_Shipper_ID@ @NotActive@");
+		}
+		return shipper;
+	}
+
+	public static MDDVehicle validateVehicleID(int vehicleId) {
+		if (vehicleId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
+		}
+		MDDVehicle vehicle = new MDDVehicle(Env.getCtx(), vehicleId, null);
+		if (vehicle == null || vehicle.getDD_Vehicle_ID() <= 0) {
+			throw new AdempiereException("@DD_Vehicle_ID@ @NotFound@");
+		}
+		if (!vehicle.isActive()) {
+			throw new AdempiereException("@DD_Vehicle_ID@ @NotActive@");
+		}
+		return vehicle;
+	}
+
+	public static MDDDriver validateDriverID(int driverId) {
+		if (driverId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @DD_Driver_ID@");
+		}
+		MDDDriver driver = new MDDDriver(Env.getCtx(), driverId, null);
+		if (driver == null || driver.getDD_Driver_ID() <= 0) {
+			throw new AdempiereException("@DD_Driver_ID@ @NotFound@");
+		}
+		if (!driver.isActive()) {
+			throw new AdempiereException("@DD_Driver_ID@ @NotActive@");
+		}
+		return driver;
+	}
+
+	public static MDocType validateFreightDocumentTypeID(int docTypeId) {
+		if (docTypeId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_DocType_ID@ @DD_Freight_ID@");
+		}
+		MDocType docType = MDocType.get(Env.getCtx(), docTypeId);
+		if (docType == null || docType.getC_DocType_ID() <= 0) {
+			throw new AdempiereException("@C_DocType_ID@ @DD_Freight_ID@ @NotFound@");
+		}
+		if (!docType.isActive()) {
+			throw new AdempiereException("@C_DocType_ID@ @DD_Freight_ID@ @NotActive@");
+		}
+		return docType;
+	}
+
+
+
 	public static GenerateLoadOrderResponse.Builder generateLoadOrder(GenerateLoadOrderRequest request) {
 		final String movementType = request.getMovementType();
 		if (Util.isEmpty(movementType, true) ||
@@ -1021,19 +1105,17 @@ public class OutBoundOrderLogic {
 		final boolean isCreateFreight = request.getIsGenerateFreightOrder()
 			&& documentAction.equals(MWMInOutBound.DOCACTION_Complete)
 		;
+		int freightId = validateAndGetFreightIDFromShipperID(
+				request.getShipperId()
+		);
 		if (isCreateFreight) {
-			if (request.getShipperId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @M_Shipper_ID@");
-			}
-			if (request.getVehicleId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @DD_Vehicle_ID@");
-			}
-			if (request.getDriverId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @DD_Driver_ID@");
-			}
-			if (request.getDriverId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_DocType_ID@");
-			}
+			validateShipperID(request.getShipperId());
+
+			validateVehicleID(request.getVehicleId());
+
+			validateDriverID(request.getDriverId());
+
+			validateFreightDocumentTypeID(request.getFreightDocumentTypeId());
 			// Set from client
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 			if (clientInfo.getC_UOM_Weight_ID() <= 0) {
@@ -1041,6 +1123,9 @@ public class OutBoundOrderLogic {
 			}
 			if (clientInfo.getC_UOM_Volume_ID() <= 0) {
 				throw new AdempiereException("@C_UOM_Volume_ID@ @NotFound@ @SeeClientInfoConfig@");
+			}
+			if (freightId <= 0) {
+				throw  new AdempiereException("@FillMandatory@ @M_Freight_ID@");
 			}
 		}
 
@@ -1121,12 +1206,13 @@ public class OutBoundOrderLogic {
 				BigDecimal quantity = NumberManager.getBigDecimalFromString(
 					requestLine.getQuantity()
 				);
-				BigDecimal weight = NumberManager.getBigDecimalFromString(
-					requestLine.getWeight()
-				);
-				BigDecimal volume = NumberManager.getBigDecimalFromString(
-					requestLine.getVolume()
-				);
+				BigDecimal weight = Optional.ofNullable(
+					NumberManager.getBigDecimalFromString(requestLine.getWeight())
+				).orElse(Env.ZERO);
+
+				BigDecimal volume = Optional.ofNullable(
+					NumberManager.getBigDecimalFromString(requestLine.getVolume())
+				).orElse(Env.ZERO);
 
 				//	New Line
 				MWMInOutBoundLine outBoundOrderLine = new MWMInOutBoundLine(outBoundOrder);
@@ -1237,6 +1323,7 @@ public class OutBoundOrderLogic {
 				// Save line
 				int lineNo = 10;
 				MDDFreightLine line = new MDDFreightLine(Env.getCtx(), 0, transactionName);
+				line.setM_Freight_ID(freightId);
 				line.setDD_Freight_ID(freightOrder.getDD_Freight_ID());
 				line.setLine(lineNo);
 				line.setFreightAmt(Env.ZERO);
