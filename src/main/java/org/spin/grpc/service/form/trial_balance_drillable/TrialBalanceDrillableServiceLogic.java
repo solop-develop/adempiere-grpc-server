@@ -48,7 +48,7 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -404,14 +404,14 @@ public class TrialBalanceDrillableServiceLogic {
 						)
 					)
 					.setValue(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							rs.getString(
 								I_C_ElementValue.COLUMNNAME_Value
 							)
 						)
 					)
 					.setName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							rs.getString(
 								I_C_ElementValue.COLUMNNAME_Name
 							)
@@ -423,7 +423,7 @@ public class TrialBalanceDrillableServiceLogic {
 					// 	)
 					// )
 					.setUserListName(
-						ValueManager.validateNull(
+						StringManager.getValidString(
 							rs.getString(
 								"userlist1"
 							)

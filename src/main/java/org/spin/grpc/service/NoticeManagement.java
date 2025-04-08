@@ -81,22 +81,22 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				user.getAD_User_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getUUID()
 				)
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getDescription()
 				)
 			)
@@ -231,7 +231,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		ListNoticesResponse.Builder builderList = ListNoticesResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -341,7 +341,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		ListUsersResponse.Builder builderList = ListUsersResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				ValueManager.validateNull(nexPageToken)
+				StringManager.getValidString(nexPageToken)
 			)
 		;
 

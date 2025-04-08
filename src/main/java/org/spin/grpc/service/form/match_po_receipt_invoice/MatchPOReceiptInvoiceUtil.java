@@ -45,6 +45,7 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchType;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Matched;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Vendor;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class MatchPOReceiptInvoiceUtil {
@@ -66,18 +67,28 @@ public class MatchPOReceiptInvoiceUtil {
 			return builder;
 		}
 
-		builder.setId(businessPartner.getC_BPartner_ID())
+		builder.setId(
+				businessPartner.getC_BPartner_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(businessPartner.getValue())
+				StringManager.getValidString(
+					businessPartner.getValue()
+				)
 			)
 			.setTaxId(
-				ValueManager.validateNull(businessPartner.getTaxID())
+				StringManager.getValidString(
+					businessPartner.getTaxID()
+				)
 			)
 			.setName(
-				ValueManager.validateNull(businessPartner.getName())
+				StringManager.getValidString(
+					businessPartner.getName()
+				)
 			)
 			.setDescription(
-				ValueManager.validateNull(businessPartner.getDescription())
+				StringManager.getValidString(
+					businessPartner.getDescription()
+				)
 			)
 		;
 
@@ -104,7 +115,7 @@ public class MatchPOReceiptInvoiceUtil {
 				)
 			)
 			.setDocumentNo(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resultSet.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
 				)
 			)
@@ -125,7 +136,7 @@ public class MatchPOReceiptInvoiceUtil {
 				resultSet.getInt(I_C_InvoiceLine.COLUMNNAME_M_Product_ID)
 			)
 			.setProductName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resultSet.getString("M_Product_Name")
 				)
 			)
@@ -133,7 +144,7 @@ public class MatchPOReceiptInvoiceUtil {
 				resultSet.getInt(I_C_Invoice.COLUMNNAME_C_BPartner_ID)
 			)
 			.setVendorName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resultSet.getString("C_BPartner_Name")
 				)
 			)

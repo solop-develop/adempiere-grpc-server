@@ -27,7 +27,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.user_interface.TreeNode;
 import org.spin.backend.grpc.user_interface.TreeType;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 /**
  * This class was created for add all convert methods for User Interface service
@@ -64,36 +64,51 @@ public class UserInterfaceConvertUtil {
 			description = treeType.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
 		}
 
-		builder.setId(treeType.getAD_Ref_List_ID())
-			.setValue(ValueManager.validateNull(treeType.getValue()))
+		builder.setId(
+				treeType.getAD_Ref_List_ID()
+			)
+			.setValue(
+				StringManager.getValidString(
+					treeType.getValue()
+				)
+			)
 			.setName(
-				ValueManager.validateNull(name)
+				StringManager.getValidString(name)
 			)
 			.setDescription(
-				ValueManager.validateNull(description)
+				StringManager.getValidString(description)
 			)
 		;
-
 		return builder;
 	}
 
 	public static TreeNode.Builder convertTreeNode(MTable table, MTreeNode treeNode, boolean isWithChildrens) {
 		TreeNode.Builder builder = TreeNode.newBuilder();
-		builder.setId(treeNode.getNode_ID())
-			.setRecordId(treeNode.getNode_ID())
-			.setSequence(treeNode.getSeqNo())
+		builder.setId(
+				treeNode.getNode_ID()
+			)
+			.setRecordId(
+				treeNode.getNode_ID()
+			)
+			.setSequence(
+				treeNode.getSeqNo()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					treeNode.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					treeNode.getDescription()
 				)
 			)
-			.setParentId(treeNode.getParent_ID())
-			.setIsSummary(treeNode.isSummary())
+			.setParentId(
+				treeNode.getParent_ID()
+			)
+			.setIsSummary(
+				treeNode.isSummary()
+			)
 			.setIsActive(true)
 		;
 

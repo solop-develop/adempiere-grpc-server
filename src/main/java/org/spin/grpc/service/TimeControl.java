@@ -47,6 +47,7 @@ import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -72,19 +73,21 @@ public class TimeControl extends TimeControlImplBase {
 		if (resourceType == null) {
 			return builder;
 		}
-		builder.setId(resourceType.getS_ResourceType_ID())
+		builder.setId(
+				resourceType.getS_ResourceType_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceType.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceType.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceType.getDescription()
 				)
 			)
@@ -108,9 +111,11 @@ public class TimeControl extends TimeControlImplBase {
 		if (resource == null) {
 			return builder;
 		}
-		builder.setId(resource.getS_ResourceType_ID())
+		builder.setId(
+				resource.getS_ResourceType_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resource.getName()
 				)
 			)
@@ -142,14 +147,16 @@ public class TimeControl extends TimeControlImplBase {
 		if (resourceAssignment == null) {
 			return builder;
 		}
-		builder.setId(resourceAssignment.getS_ResourceAssignment_ID())
+		builder.setId(
+				resourceAssignment.getS_ResourceAssignment_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceAssignment.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					resourceAssignment.getDescription()
 				)
 			)
@@ -240,7 +247,7 @@ public class TimeControl extends TimeControlImplBase {
 		resourceAssignment.setAD_Org_ID(Env.getAD_Org_ID(Env.getCtx()));
 		resourceAssignment.setName(request.getName());
 		resourceAssignment.setDescription(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				request.getDescription()
 			)
 		);
@@ -353,7 +360,7 @@ public class TimeControl extends TimeControlImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		
 		return builderList;
@@ -391,12 +398,12 @@ public class TimeControl extends TimeControlImplBase {
         }
 
 		resourceAssignment.setName(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				request.getName()
 			)
 		);
 		resourceAssignment.setDescription(
-			ValueManager.validateNull(
+			StringManager.getValidString(
 				request.getDescription()
 			)
 		);

@@ -16,7 +16,7 @@ import org.spin.backend.grpc.preference_management.Preference;
 import org.spin.backend.grpc.preference_management.PreferenceManagementGrpc.PreferenceManagementImplBase;
 import org.spin.backend.grpc.preference_management.PreferenceType;
 import org.spin.backend.grpc.preference_management.SetPreferenceRequest;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 import com.google.protobuf.Empty;
 
@@ -174,12 +174,12 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 				preference.getAD_Window_ID()
 			)
 			.setColumnName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					preference.getAttribute()
 				)
 			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					preference.getValue()
 				)
 			)

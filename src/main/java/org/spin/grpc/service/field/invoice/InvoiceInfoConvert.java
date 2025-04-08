@@ -152,7 +152,7 @@ public class InvoiceInfoConvert {
 				)
 			)
 			// .setUuid(
-			// 	ValueManager.validateNull(
+			// 	StringManager.getValidString(
 			// 		rs.getString(
 			// 			I_C_InvoicePaySchedule.COLUMNNAME_UUID
 			// 		)

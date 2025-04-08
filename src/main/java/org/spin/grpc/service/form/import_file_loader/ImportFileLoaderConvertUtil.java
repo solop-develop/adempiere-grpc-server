@@ -26,7 +26,7 @@ import org.spin.backend.grpc.form.import_file_loader.FormatField;
 import org.spin.backend.grpc.form.import_file_loader.ImportColumn;
 import org.spin.backend.grpc.form.import_file_loader.ImportFormat;
 import org.spin.backend.grpc.form.import_file_loader.ImportTable;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.StringManager;
 
 public class ImportFileLoaderConvertUtil {
 
@@ -46,12 +46,12 @@ public class ImportFileLoaderConvertUtil {
 				table.getAD_Table_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					table.getUUID()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(name)
+				StringManager.getValidString(name)
 			)
 			.setTableName(table.getTableName())
 		;
@@ -68,15 +68,15 @@ public class ImportFileLoaderConvertUtil {
 					column.getAD_Column_ID()
 				)
 				.setUuid(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						column.getUUID()
 					)
 				)
 				.setName(
-					ValueManager.validateNull(nameOfColumn)
+					StringManager.getValidString(nameOfColumn)
 				)
 				.setColumnName(
-					ValueManager.validateNull(
+					StringManager.getValidString(
 						column.getColumnName()
 					)
 				)
@@ -84,7 +84,6 @@ public class ImportFileLoaderConvertUtil {
 					column.getAD_Reference_ID()
 				)
 			;
-
 			builder.addImportColumns(columnBuilder);
 		});
 
@@ -102,17 +101,17 @@ public class ImportFileLoaderConvertUtil {
 				importFormat.getAD_ImpFormat_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormat.getUUID()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormat.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormat.getDescription()
 				)
 			)
@@ -120,12 +119,12 @@ public class ImportFileLoaderConvertUtil {
 				MTable.getTableName(Env.getCtx(), importFormat.getAD_Table_ID())
 			)
 			.setFormatType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormat.getFormatType()
 				)
 			)
 			.setSeparatorCharacter(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormat.getSeparatorChar()
 				)
 			)
@@ -151,12 +150,12 @@ public class ImportFileLoaderConvertUtil {
 				importFormatRow.getAD_ImpFormat_Row_ID()
 			)
 			.setUuid(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormatRow.getUUID()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormatRow.getName()
 				)
 			)
@@ -167,7 +166,7 @@ public class ImportFileLoaderConvertUtil {
 				MColumn.getColumnName(Env.getCtx(), importFormatRow.getAD_Column_ID())
 			)
 			.setDataType(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormatRow.getDataType()
 				)
 			)
@@ -178,12 +177,12 @@ public class ImportFileLoaderConvertUtil {
 				importFormatRow.getEndNo()
 			)
 			.setDefaultValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormatRow.getDefaultValue()
 				)
 			)
 			.setDefimalPoint(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormatRow.getDecimalPoint()
 				)
 			)
@@ -191,17 +190,16 @@ public class ImportFileLoaderConvertUtil {
 				importFormatRow.isDivideBy100()
 			)
 			.setDateFormat(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormatRow.getDataFormat()
 				)
 			)
 			.setConstantValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					importFormatRow.getConstantValue()
 				)
 			)
 		;
-
 		return builder;
 	}
 

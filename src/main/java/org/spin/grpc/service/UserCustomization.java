@@ -74,6 +74,7 @@ import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -150,7 +151,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		query
@@ -175,19 +176,21 @@ public class UserCustomization extends UserCustomizationImplBase {
 			return builder;
 		}
 
-		builder.setId(user.getAD_User_ID())
+		builder.setId(
+				user.getAD_User_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					user.getDescription()
 				)
 			)
@@ -258,7 +261,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		query
@@ -283,14 +286,16 @@ public class UserCustomization extends UserCustomizationImplBase {
 			return builder;
 		}
 		
-		builder.setId(role.getAD_Role_ID())
+		builder.setId(
+				role.getAD_Role_ID()
+			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					role.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					role.getDescription()
 				)
 			)
@@ -361,7 +366,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			ValueManager.validateNull(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 
 		query
@@ -389,19 +394,21 @@ public class UserCustomization extends UserCustomizationImplBase {
 			return builder;
 		}
 
-		builder.setId(aspLevel.getASP_Level_ID())
+		builder.setId(
+				aspLevel.getASP_Level_ID()
+			)
 			.setValue(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					aspLevel.getValue()
 				)
 			)
 			.setName(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					aspLevel.getName()
 				)
 			)
 			.setDescription(
-				ValueManager.validateNull(
+				StringManager.getValidString(
 					aspLevel.getDescription()
 				)
 			)
