@@ -1242,6 +1242,7 @@ public class OutBoundOrderLogic {
 				String whereClause = "M_Shipper_ID = ?";
 				int freightId = new Query(Env.getCtx(), MFreight.Table_Name, whereClause, transactionName)
 						.setParameters(request.getShipperId())
+						.setOnlyActiveRecords(true)
 						.firstId();
 				if (freightId <= 0) {
 					throw  new AdempiereException("@FillMandatory@ @M_Freight_ID@");
