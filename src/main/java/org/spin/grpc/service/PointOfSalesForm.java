@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
-import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
 import org.adempiere.core.domains.models.I_C_BPartner;
@@ -135,7 +134,6 @@ import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.ByteString;
@@ -3529,64 +3527,40 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		final String PAYMENT_METHOD_TABLE_NAME = "C_PaymentMethod";
 		MTable paymentTypeTable = MTable.get(Env.getCtx(), PAYMENT_METHOD_TABLE_NAME);
-		if(paymentTypeTable == null
-				|| paymentTypeTable.getAD_Table_ID() <= 0) {
+		if (paymentTypeTable == null || paymentTypeTable.getAD_Table_ID() <= 0) {
 			return builder;
 		}
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
 
 		//	Dynamic where clause
 		//	Aisle Seller
 		int posId = request.getPosId();
 		//	Get Product list
 		Query query = new Query(
-				Env.getCtx(),
-				TABLE_NAME,
-				" C_POS_ID = ? AND IsDisplayedFromCollection = 'Y' ",
-				null
-			)
-				.setParameters(posId)
-				.setOnlyActiveRecords(true)
-				.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo);
-		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.list()
-		.forEach(availablePaymentMethod -> {
-			MCPaymentMethod paymentMethod = (MCPaymentMethod) paymentTypeTable.getPO(availablePaymentMethod.get_ValueAsInt("C_PaymentMethod_ID"), null);
-			PaymentMethod.Builder paymentMethodBuilder = PaymentConvertUtil.convertPaymentMethod(
-				paymentMethod
-			);
+			Env.getCtx(),
+			TABLE_NAME,
+			" C_POS_ID = ? AND IsDisplayedFromCollection = 'Y' ",
+			null
+		)
+			.setParameters(posId)
+			.setOnlyActiveRecords(true)
+			.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo)
+		;
 
-			AvailablePaymentMethod.Builder tenderTypeValue = AvailablePaymentMethod.newBuilder()
-				.setId(availablePaymentMethod.get_ID())
-				.setName(
-					Util.isEmpty(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)) ?
-						StringManager.getValidString(paymentMethod.getName()) :
-						StringManager.getValidString(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name))
-				)
-				.setPosId(request.getPosId())
-				.setIsPosRequiredPin(availablePaymentMethod.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN))
-				.setIsAllowedToRefund(availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefund"))
-				.setIsAllowedToRefundOpen(availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefundOpen"))
-				.setMaximumRefundAllowed(NumberManager.getBigDecimalToString((BigDecimal) availablePaymentMethod.get_Value("MaximumRefundAllowed")))
-				.setMaximumDailyRefundAllowed(NumberManager.getBigDecimalToString((BigDecimal) availablePaymentMethod.get_Value("MaximumDailyRefundAllowed")))
-				.setIsPaymentReference(availablePaymentMethod.get_ValueAsBoolean("IsPaymentReference"))
-				.setDocumentTypeId(availablePaymentMethod.get_ValueAsInt("C_DocTypeCreditMemo_ID"))
-				.setPaymentMethod(paymentMethodBuilder)
-			;
-			if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
-				tenderTypeValue.setRefundReferenceCurrency(CoreFunctionalityConvert.convertCurrency(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID")));
-			}
-			if(availablePaymentMethod.get_ValueAsInt("ReferenceCurrency_ID") > 0) {
-				tenderTypeValue.setReferenceCurrency(CoreFunctionalityConvert.convertCurrency(availablePaymentMethod.get_ValueAsInt("ReferenceCurrency_ID")));
-			}
-			builder.addPaymentMethods(tenderTypeValue);
-			//	
-		});
+		// Pagination
+		int count = query.count();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		query
+			.setLimit(limit, offset)
+			.list()
+			.forEach(availablePaymentMethod -> {
+				AvailablePaymentMethod.Builder tenderTypeValue = POSConvertUtil.convertPaymentMethod(availablePaymentMethod);
+				builder.addPaymentMethods(tenderTypeValue);
+			})
+		;
 		//	
 		builder.setRecordCount(count);
 		//	Set page token

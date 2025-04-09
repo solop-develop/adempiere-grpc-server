@@ -1409,6 +1409,8 @@ message AvailablePaymentMethod {
 	bool is_payment_reference = 12;
 	PaymentMethod payment_method = 13;
 	int32 document_type_id = 14;
+	bool is_allows_apply_discount = 15;
+	string maximum_discount_allowed = 16;
 }
 
 message PaymentMethod {

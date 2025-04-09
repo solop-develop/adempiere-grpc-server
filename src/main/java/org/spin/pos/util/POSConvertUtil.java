@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_POS;
@@ -42,6 +43,7 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.Address;
+import org.spin.backend.grpc.pos.AvailablePaymentMethod;
 import org.spin.backend.grpc.pos.Bank;
 import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.City;
@@ -50,6 +52,7 @@ import org.spin.backend.grpc.pos.Customer;
 import org.spin.backend.grpc.pos.CustomerTemplate;
 import org.spin.backend.grpc.pos.GiftCard;
 import org.spin.backend.grpc.pos.GiftCardLine;
+import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.Region;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
@@ -57,6 +60,7 @@ import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.Struct;
@@ -151,6 +155,89 @@ public class POSConvertUtil {
 		return builder;
 	}
 
+
+	public static AvailablePaymentMethod.Builder convertPaymentMethod(PO availablePaymentMethod) {
+		AvailablePaymentMethod.Builder tenderTypeValue = AvailablePaymentMethod.newBuilder();
+		if (availablePaymentMethod == null || availablePaymentMethod.get_ID() <= 0) {
+			return tenderTypeValue;
+		}
+
+		MTable paymentTypeTable = MTable.get(Env.getCtx(), "C_PaymentMethod");
+
+		MCPaymentMethod paymentMethod = (MCPaymentMethod) paymentTypeTable.getPO(
+			availablePaymentMethod.get_ValueAsInt("C_PaymentMethod_ID"), null
+		);
+		PaymentMethod.Builder paymentMethodBuilder = PaymentConvertUtil.convertPaymentMethod(
+			paymentMethod
+		);
+
+		final String paymentMethodName = Util.isEmpty(availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name), true) ?
+			paymentMethod.getName() :
+			availablePaymentMethod.get_ValueAsString(I_AD_Ref_List.COLUMNNAME_Name)
+		;
+		tenderTypeValue
+			.setId(
+				availablePaymentMethod.get_ID()
+			)
+			.setName(
+				StringManager.getValidString(
+					paymentMethodName
+				)
+			)
+			.setPosId(
+				availablePaymentMethod.get_ValueAsInt(
+					I_C_POS.COLUMNNAME_C_POS_ID
+				)
+			)
+			.setIsPosRequiredPin(
+				availablePaymentMethod.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+			)
+			.setIsAllowedToRefund(
+				availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefund")
+			)
+			.setIsAllowedToRefundOpen(
+				availablePaymentMethod.get_ValueAsBoolean("IsAllowedToRefundOpen")
+			)
+			.setMaximumRefundAllowed(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromObject(
+						availablePaymentMethod.get_Value("MaximumRefundAllowed")
+					)
+				)
+			)
+			.setMaximumDailyRefundAllowed(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromObject(
+						availablePaymentMethod.get_Value("MaximumDailyRefundAllowed")
+					)
+				)
+			)
+			.setIsPaymentReference(
+				availablePaymentMethod.get_ValueAsBoolean("IsPaymentReference")
+			)
+			.setDocumentTypeId(
+				availablePaymentMethod.get_ValueAsInt("C_DocTypeCreditMemo_ID")
+			)
+			.setPaymentMethod(
+				paymentMethodBuilder
+			)
+		;
+		if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
+			tenderTypeValue.setRefundReferenceCurrency(
+				CoreFunctionalityConvert.convertCurrency(
+					availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID")
+				)
+			);
+		}
+		if(availablePaymentMethod.get_ValueAsInt("ReferenceCurrency_ID") > 0) {
+			tenderTypeValue.setReferenceCurrency(
+				CoreFunctionalityConvert.convertCurrency(
+					availablePaymentMethod.get_ValueAsInt("ReferenceCurrency_ID")
+				)
+			);
+		}
+		return tenderTypeValue;
+	}
 
 
 	/**
