@@ -22,11 +22,7 @@ import java.util.Optional;
 import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_PaymentMethod;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MBank;
-import org.compiere.model.MInvoice;
-import org.compiere.model.MOrder;
-import org.compiere.model.MPOS;
-import org.compiere.model.MPayment;
+import org.compiere.model.*;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -36,6 +32,7 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderUtil;
+import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -90,6 +87,15 @@ public class CollectingManagement {
 		} else {
 			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSRefundDocumentType_ID");
 		}
+		int paymentMethodId = request.getPaymentMethodId();
+		if(paymentMethodId > 0) {
+			PO paymentTypeAllocation = POS.getPaymentMethodAllocation(paymentMethodId, pointOfSalesDefinition.getC_POS_ID(), null);
+			if(paymentTypeAllocation != null) {
+				if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0 && !request.getIsRefund()) {
+					documentTypeId = pointOfSalesDefinition.get_ValueAsInt("C_DocTypeTarget_ID");
+				}
+			}
+		}
 		if(documentTypeId > 0) {
 			payment.setC_DocType_ID(documentTypeId);
 		} else {
@@ -110,7 +116,7 @@ public class CollectingManagement {
     		payment.setDateAcct(dateValue);
     	}
         payment.setTenderType(tenderType);
-        payment.setDescription(Optional.ofNullable(request.getDescription()).orElse(salesOrder.getDescription()));
+        payment.setDescription(Optional.of(request.getDescription()).orElse(salesOrder.getDescription()));
         payment.setC_BPartner_ID (salesOrder.getC_BPartner_ID());
         payment.setC_Currency_ID(currencyId);
         payment.setC_POS_ID(pointOfSalesDefinition.getC_POS_ID());
@@ -159,8 +165,8 @@ public class CollectingManagement {
 				break;
 		}
 		//	Payment Method
-		if(request.getPaymentMethodId() > 0) {
-			payment.set_ValueOfColumn(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID, request.getPaymentMethodId());
+		if(paymentMethodId > 0) {
+			payment.set_ValueOfColumn(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID, paymentMethodId);
 		}
 		//	Set Bank Id
 		if(request.getBankId() > 0) {
@@ -185,7 +191,7 @@ public class CollectingManagement {
 			payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID, request.getInvoiceReferenceId());
 		}
 		payment.saveEx(transactionName);
-		if(payment.isOnline() && payment.setPaymentProcessor()) {
+		if(payment.setPaymentProcessor()) {
 			payment.setIsApproved(false);
 			boolean isOk = payment.processOnline();
 			if(!isOk) {

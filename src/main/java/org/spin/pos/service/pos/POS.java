@@ -21,9 +21,7 @@ import java.util.List;
 import org.adempiere.core.domains.models.I_C_Campaign;
 import org.adempiere.core.domains.models.I_C_POS;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MPOS;
-import org.compiere.model.MRole;
-import org.compiere.model.Query;
+import org.compiere.model.*;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.Campaign;
@@ -38,6 +36,21 @@ import org.spin.service.grpc.util.value.ValueManager;
  * Service Logic for backend of Point Of Sales form
  */
 public class POS {
+
+	/**
+	 * Get Payment Method allocation from payment
+	 * @return
+	 * @return PO
+	 */
+	public static PO getPaymentMethodAllocation(int paymentMethodId, int posId, String transactionName) {
+		if(MTable.get(Env.getCtx(), "C_POSPaymentTypeAllocation") == null) {
+			return null;
+		}
+		return new Query(Env.getCtx(), "C_POSPaymentTypeAllocation", "C_POS_ID = ? AND C_PaymentMethod_ID = ?", transactionName)
+				.setParameters(posId, paymentMethodId)
+				.setOnlyActiveRecords(true)
+				.first();
+	}
 
 	/**
 	 * Get POS with identifier

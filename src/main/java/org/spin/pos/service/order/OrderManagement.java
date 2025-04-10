@@ -53,6 +53,7 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
+import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 
 /**
@@ -78,7 +79,6 @@ public class OrderManagement {
 			if(!OrderUtil.isValidOrder(salesOrder)) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
-			processOnlinePayments(salesOrder);
 			if(DocumentUtil.isDrafted(salesOrder)) {
 				// In case the Order is Invalid, set to In Progress; otherwise it will not be completed
 				if (salesOrder.getDocStatus().equalsIgnoreCase(MOrder.STATUS_Invalid))  {
@@ -241,7 +241,7 @@ public class OrderManagement {
 	 */
 	private static void processPaymentReferences(MOrder salesOrder, MPOS pos, List<PO> paymentReferences, String transactionName) {
 		paymentReferences.stream().filter(paymentReference -> {
-			PO paymentMethodAlocation = getPaymentMethodAllocation(paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), paymentReference.get_ValueAsInt("C_POS_ID"), paymentReference.get_TrxName());
+			PO paymentMethodAlocation = POS.getPaymentMethodAllocation(paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), paymentReference.get_ValueAsInt("C_POS_ID"), paymentReference.get_TrxName());
 			if(paymentMethodAlocation == null) {
 				return false;
 			}
@@ -282,22 +282,6 @@ public class OrderManagement {
 		return Env.ZERO;
 	}
 	
-	/**
-	 * Get Payment Method allocation from payment
-	 * @param payment
-	 * @return
-	 * @return PO
-	 */
-	private static PO getPaymentMethodAllocation(int paymentMethodId, int posId, String transactionName) {
-		if(MTable.get(Env.getCtx(), "C_POSPaymentTypeAllocation") == null) {
-			return null;
-		}
-		return new Query(Env.getCtx(), "C_POSPaymentTypeAllocation", "C_POS_ID = ? AND C_PaymentMethod_ID = ?", transactionName)
-				.setParameters(posId, paymentMethodId)
-				.setOnlyActiveRecords(true)
-				.first();
-	}
-	
 	private static void createCreditMemoReference(MOrder salesOrder, MPayment payment, String transactionName) {
 		if(payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID) <= 0) {
 			return;
@@ -336,7 +320,7 @@ public class OrderManagement {
 			}
 			creditMemo.setM_PriceList_ID(priceList.getM_PriceList_ID());
 		}
-		PO paymentTypeAllocation = getPaymentMethodAllocation(payment.get_ValueAsInt("C_PaymentMethod_ID"), payment.getC_POS_ID(), payment.get_TrxName());
+		PO paymentTypeAllocation = POS.getPaymentMethodAllocation(payment.get_ValueAsInt("C_PaymentMethod_ID"), payment.getC_POS_ID(), payment.get_TrxName());
 		int chargeId = 0;
 		if(paymentTypeAllocation != null) {
 			chargeId = paymentTypeAllocation.get_ValueAsInt("C_Charge_ID");
@@ -401,35 +385,6 @@ public class OrderManagement {
 			throw new AdempiereException("@POS.SalesRepAssigned@");
 		}
 	}
-
-	public static void processOnlinePayments(MOrder salesOrder) {
-		List<MPayment> payments = MPayment.getOfOrder(salesOrder);
-		StringBuilder errors = new StringBuilder();
-		payments.stream().sorted(Comparator.comparing(MPayment::getCreated)).forEach(payment -> {
-			if(payment.isOnline() && payment.setPaymentProcessor()) {
-				try {
-					payment.setIsApproved(false);
-					boolean isOk = payment.processOnline();
-					if(!isOk) {
-						if(errors.length() > 0) {
-							errors.append(Env.NL);
-						}
-						errors.append(payment.getErrorMessage());
-						payment.setIsApproved(false);
-					}
-					payment.saveEx();
-				} catch (Exception e) {
-					if(errors.length() > 0) {
-						errors.append(Env.NL);
-					}
-					errors.append(e.getMessage());
-				}
-			}
-		});
-		if(errors.length() > 0) {
-			throw new AdempiereException(errors.toString());
-		}
-	}
 	
 	/**
 	 * Process payment of Order
@@ -481,7 +436,7 @@ public class OrderManagement {
 			CashManagement.addPaymentToCash(pos, payment);
 		});
 		//	Allocate all payments
-		if(!paymentsIds.isEmpty()) {
+		if(paymentsIds.size() > 0) {
 			String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
 			//	
 			MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, RecordUtil.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
@@ -556,6 +511,15 @@ public class OrderManagement {
 				payment.setIsAllocated(true);
 				payment.setC_Invoice_ID(invoiceId);
 				payment.saveEx();
+				if(payment.setPaymentProcessor()) {
+					payment.setIsApproved(false);
+					boolean isOk = payment.processOnline();
+					if(!isOk) {
+						throw new AdempiereException(payment.getErrorMessage());
+					}
+					payment.setIsApproved(true);
+					payment.saveEx();
+				}
 			});
 		} else {
 			//	Add write off
