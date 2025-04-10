@@ -657,8 +657,9 @@ public class POSLogic {
 		AtomicReference<PO> maybeGiftCard = new AtomicReference<PO>();
 		Trx.run(transactionName -> {
 			MOrder order = new MOrder(context, request.getOrderId(), transactionName);
-			if (!DocumentUtil.isDrafted(order)) {
-				throw new AdempiereException("@C_Order_ID@ @Processed@");
+			if (!DocumentUtil.isCompleted(order)
+					&& !DocumentUtil.isClosed(order)) {
+				throw new AdempiereException("@DocStatus@ @InValid@");
 			}
 			final String whereClause = "Processed = 'N' "
 				+ "AND Processing = 'N' "
