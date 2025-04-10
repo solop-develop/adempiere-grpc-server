@@ -53,6 +53,7 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
+import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 
 /**
@@ -240,7 +241,7 @@ public class OrderManagement {
 	 */
 	private static void processPaymentReferences(MOrder salesOrder, MPOS pos, List<PO> paymentReferences, String transactionName) {
 		paymentReferences.stream().filter(paymentReference -> {
-			PO paymentMethodAlocation = getPaymentMethodAllocation(paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), paymentReference.get_ValueAsInt("C_POS_ID"), paymentReference.get_TrxName());
+			PO paymentMethodAlocation = POS.getPaymentMethodAllocation(paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), paymentReference.get_ValueAsInt("C_POS_ID"), paymentReference.get_TrxName());
 			if(paymentMethodAlocation == null) {
 				return false;
 			}
@@ -281,22 +282,6 @@ public class OrderManagement {
 		return Env.ZERO;
 	}
 	
-	/**
-	 * Get Payment Method allocation from payment
-	 * @param payment
-	 * @return
-	 * @return PO
-	 */
-	private static PO getPaymentMethodAllocation(int paymentMethodId, int posId, String transactionName) {
-		if(MTable.get(Env.getCtx(), "C_POSPaymentTypeAllocation") == null) {
-			return null;
-		}
-		return new Query(Env.getCtx(), "C_POSPaymentTypeAllocation", "C_POS_ID = ? AND C_PaymentMethod_ID = ?", transactionName)
-				.setParameters(posId, paymentMethodId)
-				.setOnlyActiveRecords(true)
-				.first();
-	}
-	
 	private static void createCreditMemoReference(MOrder salesOrder, MPayment payment, String transactionName) {
 		if(payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID) <= 0) {
 			return;
@@ -335,7 +320,7 @@ public class OrderManagement {
 			}
 			creditMemo.setM_PriceList_ID(priceList.getM_PriceList_ID());
 		}
-		PO paymentTypeAllocation = getPaymentMethodAllocation(payment.get_ValueAsInt("C_PaymentMethod_ID"), payment.getC_POS_ID(), payment.get_TrxName());
+		PO paymentTypeAllocation = POS.getPaymentMethodAllocation(payment.get_ValueAsInt("C_PaymentMethod_ID"), payment.getC_POS_ID(), payment.get_TrxName());
 		int chargeId = 0;
 		if(paymentTypeAllocation != null) {
 			chargeId = paymentTypeAllocation.get_ValueAsInt("C_Charge_ID");
