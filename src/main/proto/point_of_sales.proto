@@ -1078,7 +1078,7 @@ message GiftCard {
 	core_functionality.Currency currency = 11;
 	int32 conversion_type_id = 12;
 	bool is_prepayment = 13;
-	int32 business_partner_id = 14;
+	core_functionality.BusinessPartner business_partner= 14;
 	repeated GiftCardLine gift_card_lines = 15;
 }
 
@@ -1138,15 +1138,16 @@ message DeleteGiftCardLineRequest {
 message GiftCardLine {
 	int32 id = 1;
 	string uuid = 2;
-	int32 product_id = 3;
+	core_functionality.Product product = 3;
 	string description = 4;
 	int32 order_line_id = 5;
 	bool is_processed = 6;
 	string quantity_entered = 7;
 	string quantity_ordered = 8;
-	int32 uom_id = 9;
-	string amount = 10;
-	int32 gift_card_id = 11;
+	string amount = 9;
+	int32 gift_card_id = 10;
+	core_functionality.ProductConversion uom = 11;
+	core_functionality.ProductConversion product_uom = 12;
 }
 
 
