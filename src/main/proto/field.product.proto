@@ -20,6 +20,7 @@ option java_package = "org.spin.backend.grpc.field.product";
 option java_outer_classname = "ADempiereProductInfo";
 
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
@@ -299,31 +300,32 @@ message ListProductsInfoRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// references
-	int32 reference_id = 11;
-	string table_name = 12;
-	string column_name = 13;
-	int32 column_id = 14;
-	int32 field_id = 15;
-	int32 process_parameter_id = 16;
-	int32 browse_field_id = 17;
-	int32 display_definition_field_id = 18;
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
 	// custom filters
-	string value = 19;
-	string name = 20;
-	string upc = 21;
-	string sku = 22;
-	int32 warehouse_id = 23;
-	int32 price_list_version_id = 24;
-	int32 product_category_id = 25;
-	int32 product_group_id = 26;
-	int32 product_class_id = 27;
-	int32 product_classification_id = 28;
-	int32 attribute_set_id = 29;
-	int32 attribute_set_instance_id = 30;
-	int32 vendor_id = 31;
-	string is_stocked = 32;
-	bool is_only_stock_available = 33;
+	string value = 20; // As code
+	string name = 21;
+	string upc = 22;
+	string sku = 23;
+	int32 warehouse_id = 24;
+	int32 price_list_version_id = 25;
+	int32 product_category_id = 26;
+	int32 product_group_id = 27;
+	int32 product_class_id = 28;
+	int32 product_classification_id = 29;
+	int32 attribute_set_id = 30;
+	int32 attribute_set_instance_id = 31;
+	int32 vendor_id = 32;
+	string is_stocked = 33;
+	bool is_only_stock_available = 34;
 }
 
 

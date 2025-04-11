@@ -149,10 +149,12 @@ public class OrderInfoLogic {
 		//
 		String sql = "SELECT "
 			+ "o.C_Order_ID, o.UUID,"
-			+ "(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=o.C_BPartner_ID) AS BusinessPartner, "
+			+ "o.C_BPartner_ID,"
+			+ "(SELECT Name FROM C_BPartner AS bp WHERE bp.C_BPartner_ID=o.C_BPartner_ID) AS BusinessPartner, "
 			+ "o.DateOrdered, "
 			+ "o.DocumentNo, "
-			+ "((SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=o.C_Currency_ID)) AS Currency, "
+			+ "o.C_Currency_ID, "
+			+ "((SELECT ISO_Code FROM C_Currency AS c WHERE c.C_Currency_ID=o.C_Currency_ID)) AS Currency, "
 			+ "o.GrandTotal, "
 			+ "currencyBase(o.GrandTotal,o.C_Currency_ID,o.DateAcct, o.AD_Client_ID,o.AD_Org_ID), "
 			+ "o.IsSOTrx, "
@@ -230,7 +232,7 @@ public class OrderInfoLogic {
 			}
 		}
 		// Order Reference
-		if (Util.isEmpty(request.getOrderReference(), true)) {
+		if (!Util.isEmpty(request.getOrderReference(), true)) {
 			sql += "AND UPPER(o.POReference) LIKE '%' || UPPER(?) || '%' ";
 			filtersList.add(
 				request.getOrderReference()
@@ -264,7 +266,8 @@ public class OrderInfoLogic {
 				"o",
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
-			);
+			)
+		;
 
 		StringBuffer whereClause = new StringBuffer();
 
@@ -291,7 +294,8 @@ public class OrderInfoLogic {
 			whereClause.append(" AND ")
 				.append("(")
 				.append(dynamicWhere)
-				.append(")");
+				.append(")")
+			;
 		}
 
 		sqlWithRoleAccess += whereClause;
@@ -304,7 +308,7 @@ public class OrderInfoLogic {
 		final int count = CountUtil.countRecords(parsedSQL, tableName, "o", filtersList);
 
 		//	Add Row Number
-		parsedSQL += " ORDER BY o.DateOrdered desc, o.DocumentNo ";
+		parsedSQL += " ORDER BY o.DateOrdered DESC, o.DocumentNo ";
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 
 		//	Set page token

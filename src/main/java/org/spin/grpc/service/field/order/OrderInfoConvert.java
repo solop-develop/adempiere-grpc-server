@@ -59,6 +59,11 @@ public class OrderInfoConvert {
 					order.getDisplayValue()
 				)
 			)
+			.setBusinessPartnerId(
+				rs.getInt(
+					I_C_Order.COLUMNNAME_C_BPartner_ID
+				)
+			)
 			.setBusinessPartner(
 				StringManager.getValidString(
 					rs.getString("BusinessPartner")
@@ -76,6 +81,11 @@ public class OrderInfoConvert {
 					rs.getString(
 						I_C_Order.COLUMNNAME_DocumentNo
 					)
+				)
+			)
+			.setCurrencyId(
+				rs.getInt(
+					I_C_Order.COLUMNNAME_C_Currency_ID
 				)
 			)
 			.setCurrency(
