@@ -711,7 +711,7 @@ public class POSLogic {
 	private static boolean createGiftCardLines(PO giftCard, String transactionName) {
 		Properties context = Env.getCtx();
 		MTable table = MTable.get(context, "ECA14_GiftCardLine");
-		if (table == null || table.getAD_Table_ID()) {
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@TableName@ ECA14_GiftCardLine @NotFound@");
 		}
 		int orderId = giftCard.get_ValueAsInt(MOrder.COLUMNNAME_C_Order_ID);
@@ -932,7 +932,7 @@ public class POSLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		MTable table = MTable.get(Env.getCtx(), "ECA14_GiftCardLine");
-		if (table == null || table.getAD_Table_ID()) {
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@TableName@ ECA14_GiftCardLine @NotFound@");
 		}
 		String whereClause = "ECA14_GiftCard_ID = ? ";
@@ -980,7 +980,7 @@ public class POSLogic {
 		int giftCardLineID = request.getId();
 
 		MTable table = MTable.get(ctx, "ECA14_GiftCardLine");
-		if (table == null || table.getAD_Table_ID()) {
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@TableName@ ECA14_GiftCardLine @NotFound@");
 		}
 		AtomicReference<PO> giftCardLineReference = new AtomicReference<>();
@@ -1051,7 +1051,7 @@ public class POSLogic {
 			return Empty.newBuilder();
 		}
 		MTable table = MTable.get(context, "ECA14_GiftCardLine");
-		if (table == null || table.getAD_Table_ID()) {
+		if (table == null || table.getAD_Table_ID() <= 0) {
 			throw new AdempiereException("@TableName@ ECA14_GiftCardLine @NotFound@");
 		}
 		//TODO: Validate POS Information
