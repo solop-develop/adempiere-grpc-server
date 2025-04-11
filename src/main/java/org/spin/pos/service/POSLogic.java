@@ -689,9 +689,9 @@ public class POSLogic {
 			giftCard.saveEx(transactionName);
 			//TODO: Check how to validate amount for Prepayment Gift Card
 			if (!request.getIsPrepayment() && request.getIsCreateLinesFromOrder()) {
-				 if (!createGiftCardLines(giftCard, transactionName)) {
-					 throw new AdempiereException("@QtyInsufficient@");
-				 }
+				if (!createGiftCardLines(giftCard, transactionName)) {
+					throw new AdempiereException("@QtyInsufficient@");
+				}
 			}
 			maybeGiftCard.set(giftCard);
 		});
@@ -711,11 +711,11 @@ public class POSLogic {
 	private static boolean createGiftCardLines(PO giftCard, String transactionName) {
 		Properties context = Env.getCtx();
 		MTable table = MTable.get(context, "ECA14_GiftCardLine");
-		if (table == null) {
-			throw new AdempiereException("@TableName@ @NotFound@");
+		if (table == null || table.getAD_Table_ID()) {
+			throw new AdempiereException("@TableName@ ECA14_GiftCardLine @NotFound@");
 		}
 		int orderId = giftCard.get_ValueAsInt(MOrder.COLUMNNAME_C_Order_ID);
-		if (orderId ==0 ) {
+		if (orderId <=0 ) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 		MOrder order = new MOrder(context, orderId, null);
@@ -723,7 +723,7 @@ public class POSLogic {
 				&& !order.getDocStatus().equals(MOrder.DOCSTATUS_Closed)) {
 			throw new AdempiereException("@DocStatus@ @InValid@");
 		}
-		//TODO: Validate POS Information
+		// TODO: Validate POS Information
 		int giftCardId = giftCard.get_ID();
 		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
 		String whereClause = MOrderLine.COLUMNNAME_C_OrderLine_ID + " = ? " +
@@ -740,7 +740,10 @@ public class POSLogic {
 				.setParameters(orderLine.getC_OrderLine_ID(), giftCardId)
 				.first()
 			;
-			BigDecimal availableQty = getAvailableQtyForGiftCardLine(orderLine.getC_OrderLine_ID(), orderLine.getQtyOrdered());
+			BigDecimal availableQty = getAvailableQtyForGiftCardLine(
+				orderLine.getC_OrderLine_ID(),
+				orderLine.getQtyOrdered()
+			);
 			if (giftCardLine == null) {
 				if (availableQty.signum() <= 0) {
 					return;
@@ -750,10 +753,12 @@ public class POSLogic {
 				giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_Description, orderLine.getDescription());
 				giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_C_OrderLine_ID, orderLine.getC_OrderLine_ID());
 				giftCardLine.set_ValueOfColumn("ECA14_GiftCard_ID", giftCardId);
-			}else {
+			} else {
 				//In case the GiftCardLine already existed and was evaluated for the available quantity
-				BigDecimal giftCardLineQty = Optional.ofNullable((BigDecimal) giftCardLine.get_Value("QtyEntered"))
-						.orElse(Env.ZERO);
+				BigDecimal giftCardLineQty = Optional.ofNullable(
+					(BigDecimal) giftCardLine.get_Value("QtyEntered")
+				)
+				.orElse(Env.ZERO);
 				availableQty = availableQty.add(giftCardLineQty);
 			}
 
@@ -768,8 +773,7 @@ public class POSLogic {
 	}
 
 	public static ListGiftCardsResponse.Builder listGiftCards(ListGiftCardsRequest request) {
-
-		if(request.getOrderId() <= 0) {
+		if (request.getOrderId() <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 		ListGiftCardsResponse.Builder builder = ListGiftCardsResponse.newBuilder();
@@ -778,16 +782,22 @@ public class POSLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		MTable table = MTable.get(Env.getCtx(), "ECA14_GiftCard");
-		if (table == null) {
-			throw new AdempiereException("@TableName@ @NotFound@");
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@TableName@ ECA14_GiftCard @NotFound@");
 		}
 		//TODO: validate other parameters for filter
 		String whereClause =  "C_Order_ID = ? ";
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), table.getTableName(), whereClause, null)
+		Query query = new Query(
+			Env.getCtx(),
+			table.getTableName(),
+			whereClause,
+			null
+		)
 			.setParameters(request.getOrderId())
 			.setClient_ID()
-			.setOnlyActiveRecords(true);
+			.setOnlyActiveRecords(true)
+		;
 		int count = query.count();
 		query
 			.setLimit(limit, offset)
@@ -799,7 +809,7 @@ public class POSLogic {
 		//
 		builder.setRecordCount(count);
 		//	Set page token
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
@@ -846,14 +856,19 @@ public class POSLogic {
 			if (availableQty.signum() <= 0) {
 				throw new AdempiereException("@QtyInsufficient@");
 			}
-			PO giftCardLine = new Query(Env.getCtx(), table.getTableName(),
-					"Processed = 'N' " +
-							" AND C_OrderLine_ID = ? " +
-							" AND ECA14_GiftCard_ID = ? ", transactionName)
-					.setParameters(request.getOrderLineId(), request.getGiftCardId())
-					.first();
+			PO giftCardLine = new Query(
+				Env.getCtx(),
+				table.getTableName(),
+				"Processed = 'N' " +
+				" AND C_OrderLine_ID = ? " +
+				" AND ECA14_GiftCard_ID = ? ",
+				transactionName
+			)
+				.setParameters(request.getOrderLineId(), request.getGiftCardId())
+				.first()
+			;
 			BigDecimal qtyEntered = Optional.ofNullable(NumberManager.getBigDecimalFromString(request.getQuantityEntered()))
-					.orElse(orderLine.getQtyEntered());
+				.orElse(orderLine.getQtyEntered());
 			if (qtyEntered.compareTo(Env.ZERO) == 0){
 				throw new AdempiereException("@QtyInsufficient@");
 			}
@@ -869,10 +884,10 @@ public class POSLogic {
 				giftCardLine.set_ValueOfColumn("C_OrderLine_ID", request.getOrderLineId());
 				giftCardLine.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
 				giftCardLine.set_ValueOfColumn("Description", orderLine.getDescription());
-			}else {
+			} else {
 				//In case the GiftCardLine already existed and was evaluated for the available quantity
 				BigDecimal giftCardLineQty = Optional.ofNullable((BigDecimal) giftCardLine.get_Value("QtyEntered"))
-						.orElse(Env.ZERO);
+					.orElse(Env.ZERO);
 				availableQty = availableQty.add(giftCardLineQty);
 				giftCardLineQty = giftCardLineQty.add(Env.ONE);
 				if (availableQty.compareTo(giftCardLineQty) < 0) {
@@ -896,18 +911,17 @@ public class POSLogic {
 		if (qtyOrdered == null || qtyOrdered.signum() == 0) {
 			return  availableQty;
 		}
-		//Validate already existing GiftCards for the Order Line
+		// Validate already existing GiftCards for the Order Line
 		String whereClause = MOrderLine.COLUMNNAME_C_OrderLine_ID + " = ? ";
 		BigDecimal usedQty = Optional.ofNullable(
-				new Query(Env.getCtx(), "ECA14_GiftCardLine", whereClause, null)
-						.setParameters(orderLineId)
-						.sum("QtyEntered")
+			new Query(Env.getCtx(), "ECA14_GiftCardLine", whereClause, null)
+				.setParameters(orderLineId)
+				.sum("QtyEntered")
 		).orElse(Env.ZERO);
 		availableQty = qtyOrdered.subtract(usedQty);
 		return availableQty;
 	}
 	public static ListGiftCardLinesResponse.Builder listGiftCardLines(ListGiftCardLinesRequest request) {
-
 		if(request.getGiftCardId() <= 0) {
 			throw new AdempiereException("@ECA14_GiftCard_ID@ @NotFound@");
 		}
@@ -918,16 +932,22 @@ public class POSLogic {
 		int offset = (pageNumber - 1) * limit;
 
 		MTable table = MTable.get(Env.getCtx(), "ECA14_GiftCardLine");
-		if (table == null) {
-			throw new AdempiereException("@TableName@ @NotFound@");
+		if (table == null || table.getAD_Table_ID()) {
+			throw new AdempiereException("@TableName@ ECA14_GiftCardLine @NotFound@");
 		}
-		String whereClause =  "ECA14_GiftCard_ID = ? ";
-		//TODO: validate other parameters for filter
+		String whereClause = "ECA14_GiftCard_ID = ? ";
+		// TODO: validate other parameters for filter
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), table.getTableName(), whereClause, null)
+		Query query = new Query(
+			Env.getCtx(),
+			table.getTableName(),
+			whereClause,
+			null
+		)
 			.setParameters(request.getGiftCardId())
 			.setClient_ID()
-			.setOnlyActiveRecords(true);
+			.setOnlyActiveRecords(true)
+		;
 		int count = query.count();
 		query
 			.setLimit(limit, offset)
@@ -943,7 +963,7 @@ public class POSLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+			StringManager.getValidString(nexPageToken)
 		);
 		return builder;
 
@@ -960,40 +980,49 @@ public class POSLogic {
 		int giftCardLineID = request.getId();
 
 		MTable table = MTable.get(ctx, "ECA14_GiftCardLine");
-		if (table == null) {
-			throw new AdempiereException("@TableName@ @NotFound@");
+		if (table == null || table.getAD_Table_ID()) {
+			throw new AdempiereException("@TableName@ ECA14_GiftCardLine @NotFound@");
 		}
 		AtomicReference<PO> giftCardLineReference = new AtomicReference<>();
 
 		Trx.run( transactionName -> {
-			PO giftCardLine = new Query(ctx, table.getTableName(),
-					" ECA14_GiftCardLine_ID = ? ", transactionName)
-					.setParameters(giftCardLineID)
-					.setClient_ID()
-					.first();
-			if(giftCardLine == null
-					|| giftCardLine.get_ValueAsInt("ECA14_GiftCardLine_ID") == 0) {
+			PO giftCardLine = new Query(
+				ctx,
+				table.getTableName(),
+				" ECA14_GiftCardLine_ID = ? ",
+				transactionName
+			)
+				.setParameters(giftCardLineID)
+				.setClient_ID()
+				.first()
+			;
+			if (giftCardLine == null || giftCardLine.get_ValueAsInt("ECA14_GiftCardLine_ID") <= 0) {
 				throw new AdempiereException("@ECA14_GiftCardLine_ID@ @NotFound@");
 			}
 			//	Validate processed Order
-			if(giftCardLine.get_ValueAsBoolean("IsProcessed")) {
+			if (giftCardLine.get_ValueAsBoolean("IsProcessed")) {
 				throw new AdempiereException("@ECA14_GiftCardLine_ID@ @Processed@");
 			}
 
 			MOrderLine orderLine = new MOrderLine(ctx, giftCardLine.get_ValueAsInt("C_OrderLine_ID"), transactionName);
-			BigDecimal availableQty = getAvailableQtyForGiftCardLine(orderLine.getC_OrderLine_ID(), orderLine.getQtyOrdered());
-			//availableQty already subtracted GiftCardLine Qty
-			BigDecimal giftCardLineQty = Optional.ofNullable((BigDecimal) giftCardLine.get_Value("QtyEntered"))
-					.orElse(Env.ZERO);
+			BigDecimal availableQty = getAvailableQtyForGiftCardLine(
+				orderLine.getC_OrderLine_ID(),
+				orderLine.getQtyOrdered()
+			);
+			// availableQty already subtracted GiftCardLine Qty
+			BigDecimal giftCardLineQty = Optional.ofNullable(
+				(BigDecimal) giftCardLine.get_Value("QtyEntered")
+			)
+			.orElse(Env.ZERO);
 			availableQty = availableQty.add(giftCardLineQty);
 
 			BigDecimal newQtyEntered = Optional.ofNullable(
-					NumberManager.getBigDecimalFromString(
-							request.getQuantityEntered()
-					)
-				).orElse(Env.ZERO);
+				NumberManager.getBigDecimalFromString(
+					request.getQuantityEntered()
+				)
+			).orElse(Env.ZERO);
 			if (newQtyEntered.signum() <= 0) {
-				//TODO: Validate if there is a better message
+				// TODO: Validate if there is a better message
 				throw new AdempiereException("@FillMandatory@ @Qty@");
 			}
 			if (availableQty.compareTo(newQtyEntered) < 0) {
@@ -1001,9 +1030,9 @@ public class POSLogic {
 			}
 			giftCardLine.set_ValueOfColumn("QtyEntered", newQtyEntered);
 			BigDecimal newAmount = Optional.ofNullable(
-					NumberManager.getBigDecimalFromString(
-							request.getAmount()
-					)
+				NumberManager.getBigDecimalFromString(
+					request.getAmount()
+				)
 			).orElse(Env.ZERO);
 			if (newAmount.compareTo(orderLine.getLineNetAmt()) > 0) {
 				throw new AdempiereException("@QtyInsufficient@");
@@ -1011,7 +1040,6 @@ public class POSLogic {
 			giftCardLine.set_ValueOfColumn("Amount", newAmount);
 			giftCardLine.saveEx();
 			giftCardLineReference.set(giftCardLine);
-
 		});
 		//	Return
 		return POSConvertUtil.convertGiftCardLine(giftCardLineReference.get());
@@ -1023,22 +1051,25 @@ public class POSLogic {
 			return Empty.newBuilder();
 		}
 		MTable table = MTable.get(context, "ECA14_GiftCardLine");
-		if (table == null) {
-			throw new AdempiereException("@TableName@ @NotFound@");
+		if (table == null || table.getAD_Table_ID()) {
+			throw new AdempiereException("@TableName@ ECA14_GiftCardLine @NotFound@");
 		}
 		//TODO: Validate POS Information
-		PO giftCardLine = new Query(context, table.getTableName(),
-				" ECA14_GiftCardLine_ID = ? ", null)
-				.setParameters(giftCardLineID)
-				.setClient_ID()
-				.first();
-		if(giftCardLine == null
-				|| giftCardLine.get_ValueAsInt("ECA14_GiftCardLine_ID") == 0) {
+		PO giftCardLine = new Query(
+			context,
+			table.getTableName(),
+			" ECA14_GiftCardLine_ID = ? ",
+			null
+		)
+			.setParameters(giftCardLineID)
+			.setClient_ID()
+			.first()
+		;
+		if (giftCardLine == null || giftCardLine.get_ValueAsInt("ECA14_GiftCardLine_ID") == 0) {
 			return Empty.newBuilder();
 		}
 		//	Validate processed Order
-		if(giftCardLine.get_ValueAsBoolean("IsProcessed")
-			|| giftCardLine.get_ValueAsBoolean("IsProcessing")) {
+		if (giftCardLine.get_ValueAsBoolean("IsProcessed") || giftCardLine.get_ValueAsBoolean("IsProcessing")) {
 			throw new AdempiereException("@ECA14_GiftCardLine_ID@ @Processed@");
 		}
 
