@@ -65,6 +65,7 @@ import org.spin.backend.grpc.pos.ListGiftCardLinesRequest;
 import org.spin.backend.grpc.pos.ListGiftCardLinesResponse;
 import org.spin.backend.grpc.pos.ListGiftCardsRequest;
 import org.spin.backend.grpc.pos.ListGiftCardsResponse;
+import org.spin.backend.grpc.pos.ListShipmentLinesResponse;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.backend.grpc.pos.UpdateGiftCardLineRequest;
 import org.spin.backend.grpc.pos.UpdateGiftCardRequest;
@@ -686,6 +687,7 @@ public class POSLogic {
 			giftCard.set_ValueOfColumn("DateDoc", order.getDateOrdered());
 			giftCard.set_ValueOfColumn("IsPrepayment", request.getIsPrepayment());
 			giftCard.saveEx(transactionName);
+			//TODO: Check how to validate amount for Prepayment Gift Card
 			if (!request.getIsPrepayment() && request.getIsCreateLinesFromOrder()) {
 				 if (!createGiftCardLines(giftCard, transactionName)) {
 					 throw new AdempiereException("@QtyInsufficient@");
@@ -766,8 +768,44 @@ public class POSLogic {
 	}
 
 	public static ListGiftCardsResponse.Builder listGiftCards(ListGiftCardsRequest request) {
-		//TODO: Implement
-		return ListGiftCardsResponse.newBuilder();
+
+		if(request.getOrderId() <= 0) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
+		ListGiftCardsResponse.Builder builder = ListGiftCardsResponse.newBuilder();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		MTable table = MTable.get(Env.getCtx(), "ECA14_GiftCard");
+		if (table == null) {
+			throw new AdempiereException("@TableName@ @NotFound@");
+		}
+		//TODO: validate other parameters for filter
+		String whereClause =  "C_Order_ID = ? ";
+		//	Get Product list
+		Query query = new Query(Env.getCtx(), table.getTableName(), whereClause, null)
+			.setParameters(request.getOrderId())
+			.setClient_ID()
+			.setOnlyActiveRecords(true);
+		int count = query.count();
+		query
+			.setLimit(limit, offset)
+			.<MInOutLine>list()
+			.forEach(line -> {
+				GiftCard.Builder giftCardBuilder = POSConvertUtil.convertGiftCard(line);
+				builder.addGiftCards(giftCardBuilder);
+			});
+		//
+		builder.setRecordCount(count);
+		//	Set page token
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builder.setNextPageToken(
+			StringManager.getValidString(nexPageToken)
+		);
+		return builder;
 	}
 	public static GiftCard.Builder updateGiftCard (UpdateGiftCardRequest request) {
 		//TODO: Implement
@@ -869,8 +907,46 @@ public class POSLogic {
 		return availableQty;
 	}
 	public static ListGiftCardLinesResponse.Builder listGiftCardLines(ListGiftCardLinesRequest request) {
-		//TODO: Implement
-		return ListGiftCardLinesResponse.newBuilder();
+
+		if(request.getGiftCardId() <= 0) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @NotFound@");
+		}
+		ListGiftCardLinesResponse.Builder builder = ListGiftCardLinesResponse.newBuilder();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		MTable table = MTable.get(Env.getCtx(), "ECA14_GiftCardLine");
+		if (table == null) {
+			throw new AdempiereException("@TableName@ @NotFound@");
+		}
+		String whereClause =  "ECA14_GiftCard_ID = ? ";
+		//TODO: validate other parameters for filter
+		//	Get Product list
+		Query query = new Query(Env.getCtx(), table.getTableName(), whereClause, null)
+			.setParameters(request.getGiftCardId())
+			.setClient_ID()
+			.setOnlyActiveRecords(true);
+		int count = query.count();
+		query
+			.setLimit(limit, offset)
+			.<MInOutLine>list()
+			.forEach(line -> {
+				GiftCardLine.Builder giftCardLinetBuilder = POSConvertUtil.convertGiftCardLine(line);
+				builder.addGiftCardLines(giftCardLinetBuilder);
+			});
+		//
+		builder.setRecordCount(count);
+		//	Set page token
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builder.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+		);
+		return builder;
+
 	}
 	public static GiftCardLine.Builder updateGiftCardLine (UpdateGiftCardLineRequest request) {
 		Properties ctx = Env.getCtx();
