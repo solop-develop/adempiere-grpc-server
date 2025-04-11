@@ -57,17 +57,18 @@ message ListLookupItemsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
-	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
-	int32 display_definition_field_id = 17;
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
 	//
-	bool is_without_validation = 18;
 }
 
 message ListLookupItemsResponse {

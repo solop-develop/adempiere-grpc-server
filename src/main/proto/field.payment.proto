@@ -21,6 +21,7 @@ option java_outer_classname = "ADempierePayment";
 
 import "base_data_type.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 // Base URL
@@ -112,25 +113,26 @@ message ListPaymentInfoRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// references
-	int32 reference_id = 11;
-	string table_name = 12;
-	string column_name = 13;
-	int32 column_id = 14;
-	int32 field_id = 15;
-	int32 process_parameter_id = 16;
-	int32 browse_field_id = 17;
-	int32 display_definition_field_id = 18;
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
 	// custom filters
-	string document_no = 19;
-	int32 business_partner_id = 20;
-	string is_receipt = 21;
-	string is_payment = 22;
-	int32 bank_account_id = 23;
-	google.protobuf.Timestamp payment_date_from = 24;
-	google.protobuf.Timestamp payment_date_to = 25;
-	string pay_amount_from = 26;
-	string pay_amount_to = 27;
+	string document_no = 20;
+	int32 business_partner_id = 21;
+	string is_receipt = 22;
+	string is_payment = 23;
+	int32 bank_account_id = 24;
+	google.protobuf.Timestamp payment_date_from = 25;
+	google.protobuf.Timestamp payment_date_to = 26;
+	string pay_amount_from = 27;
+	string pay_amount_to = 28;
 }
 
 // Business Partners
@@ -144,8 +146,10 @@ message ListBusinessPartnersRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// custom filters
-	string is_sales_transaction = 10;
+	string is_sales_transaction = 12;
 }
 
 // Bank Account
@@ -159,6 +163,8 @@ message ListBankAccountRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// custom filters
-	string is_sales_transaction = 10;
+	string is_sales_transaction = 12;
 }

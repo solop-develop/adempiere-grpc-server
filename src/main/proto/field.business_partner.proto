@@ -20,6 +20,7 @@ option java_package = "org.spin.backend.grpc.field.business_partner";
 option java_outer_classname = "ADempiereBusinessPartner";
 
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
@@ -86,6 +87,8 @@ message ListBusinessPartnerGroupsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
 
@@ -126,25 +129,26 @@ message ListBusinessPartnersInfoRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// references
-	int32 reference_id = 11;
-	string table_name = 12;
-	string column_name = 13;
-	int32 column_id = 14;
-	int32 field_id = 15;
-	int32 process_parameter_id = 16;
-	int32 browse_field_id = 17;
-	int32 display_definition_field_id = 18;
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
 	// custom filters
-	string value = 19;
-	string contact = 20;
-	string phone = 21;
-	string name = 22;
-	string email = 23;
-	string postal_code = 24;
-	string is_vendor = 25;
-	string is_customer = 26;
-	int32 business_partner_group_id = 27;
+	string value = 20; // As code
+	string contact = 21;
+	string phone = 22;
+	string name = 23;
+	string email = 24;
+	string postal_code = 25;
+	string is_vendor = 26;
+	string is_customer = 27;
+	int32 business_partner_group_id = 28;
 }
 
 

@@ -20,6 +20,7 @@ option java_package = "org.spin.backend.grpc.field.order";
 option java_outer_classname = "ADempiereOrder";
 
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
@@ -70,20 +71,6 @@ service OrderInfoService {
 }
 
 
-// List Order Info Request
-message ListOrdersRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-	bool is_only_active_records = 9;
-	// custom filters
-	string is_sales_transaction = 10;
-}
 
 // Business Partners
 message ListBusinessPartnersRequest {
@@ -96,8 +83,10 @@ message ListBusinessPartnersRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// custom filters
-	string is_sales_transaction = 10;
+	string is_sales_transaction = 12;
 }
 
 
@@ -106,17 +95,19 @@ message OrderInfo {
 	int32 id = 1;
 	string uuid = 2;
 	string display_value = 3;
-	string business_partner = 4;
-	google.protobuf.Timestamp date_ordered = 5;
-	string document_no = 6;
-	string currency = 7;
-	string grand_total = 8;
-	string converted_amount = 9;
-	bool is_sales_transaction = 10;
-	bool is_delivered = 11;
-	string description = 12;
-	string po_reference = 13;
-	string document_status = 14;
+	int32 business_partner_id = 4;
+	string business_partner = 5;
+	google.protobuf.Timestamp date_ordered = 6;
+	string document_no = 7;
+	int32 currency_id = 8;
+	string currency = 9;
+	string grand_total = 10;
+	string converted_amount = 11;
+	bool is_sales_transaction = 12;
+	bool is_delivered = 13;
+	string description = 14;
+	string po_reference = 15;
+	string document_status = 16;
 }
 message GetOrderInfoRequest {
 	int32 id = 1;
@@ -138,24 +129,25 @@ message ListOrdersInfoRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// references
-	int32 reference_id = 11;
-	string table_name = 12;
-	string column_name = 13;
-	int32 column_id = 14;
-	int32 field_id = 15;
-	int32 process_parameter_id = 16;
-	int32 browse_field_id = 17;
-	int32 display_definition_field_id = 18;
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
 	// custom filters
-	string document_no = 19;
-	int32 business_partner_id = 20;
-	string is_sales_transaction = 21;
-	string description = 22;
-	google.protobuf.Timestamp order_date_from = 23;
-	google.protobuf.Timestamp order_date_to = 24;
-	string is_delivered = 25;
-	string order_reference = 26;
-	string grand_total_from = 27;
-	string grand_total_to = 28;
+	string document_no = 20;
+	int32 business_partner_id = 21;
+	string is_sales_transaction = 22;
+	string description = 23;
+	google.protobuf.Timestamp order_date_from = 24;
+	google.protobuf.Timestamp order_date_to = 25;
+	string is_delivered = 26;
+	string order_reference = 27;
+	string grand_total_from = 28;
+	string grand_total_to = 29;
 }
