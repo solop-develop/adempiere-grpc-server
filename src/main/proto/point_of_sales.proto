@@ -515,7 +515,7 @@ service Store {
 	}
 	rpc PrintGiftCardPreview(PrintGiftCardPreviewRequest) returns (PrintGiftCardPreviewResponse) {
 		option (google.api.http) = {
-			post: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}",
+			post: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}/print-preview",
 			body: "*"
 		};
 	}
