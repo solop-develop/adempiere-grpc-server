@@ -1412,6 +1412,7 @@ message AvailablePaymentMethod {
 	int32 document_type_id = 14;
 	bool is_allows_apply_discount = 15;
 	string maximum_discount_allowed = 16;
+	bool is_online = 17;
 }
 
 message PaymentMethod {
@@ -1862,6 +1863,8 @@ message Payment {
 	bool is_processing = 26;
 	string order_document_no = 27;
 	string invoice_document_no = 28;
+	string waiting_time = 29;
+	string response_type = 30;
 }
 
 // Request for delete a order
