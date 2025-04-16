@@ -1778,6 +1778,7 @@ message CreatePaymentRequest {
 	int32 reference_bank_account_id = 16;
 	int32 customer_bank_account_id = 17;
 	int32 invoice_reference_id = 18;
+	int32 allocate_payment_id = 19;
 }
 
 //	Update Payment
