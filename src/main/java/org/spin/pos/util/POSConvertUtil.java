@@ -221,6 +221,9 @@ public class POSConvertUtil {
 			.setPaymentMethod(
 				paymentMethodBuilder
 			)
+			.setIsOnline(
+				availablePaymentMethod.get_ValueAsBoolean("IsOnline")
+			)
 		;
 		if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
 			tenderTypeValue.setRefundReferenceCurrency(
