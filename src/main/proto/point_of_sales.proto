@@ -513,6 +513,12 @@ service Store {
 			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards"
 		};
 	}
+	rpc PrintGiftCardPreview(PrintGiftCardPreviewRequest) returns (PrintGiftCardPreviewResponse) {
+		option (google.api.http) = {
+			post: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}/print-preview",
+			body: "*"
+		};
+	}
 
 	//	Gift Card Line
 	rpc CreateGiftCardLine(CreateGiftCardLineRequest) returns (GiftCardLine) {
@@ -1081,6 +1087,15 @@ message GiftCard {
 	core_functionality.BusinessPartner business_partner= 14;
 	repeated GiftCardLine gift_card_lines = 15;
 }
+message PrintGiftCardPreviewRequest {
+	int32 id = 1;
+	int32 pos_id = 2;
+	int32 order_id = 3;
+}
+message PrintGiftCardPreviewResponse {
+	string result = 1;
+	ProcessLog process_log = 2;
+}
 
 //	Gift Card Line
 message CreateGiftCardLineRequest {
@@ -1155,10 +1170,6 @@ message GiftCardLine {
 message PrintTicketRequest {
 	int32 pos_id = 1;
 	int32 order_id = 2;
-	int32 invoice_id = 3;
-	int32 shipment_id = 4;
-	int32 record_id = 5;
-	string table_name = 6;
 }
 
 //	Response after print
