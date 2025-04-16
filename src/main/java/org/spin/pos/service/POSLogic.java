@@ -666,25 +666,16 @@ public class POSLogic {
 				+ "AND Processing = 'N' "
 				+ "AND C_Order_ID = ?"
 			;
-			PO giftCard = new Query(
-				context,
-				table.getTableName(),
-				whereClause,
-				transactionName
-			)
-				.setParameters(request.getOrderId())
-				.first()
-			;
+			PO giftCard = table.getPO(0, transactionName);
 
-			if (giftCard == null) {
-				giftCard = table.getPO(0, transactionName);
-			}
+			BigDecimal amount =  Optional.ofNullable(NumberManager.getBigDecimalFromString(request.getAmount())).orElse(Env.ZERO);
 			giftCard.set_ValueOfColumn("Description", order.getDescription());
 			giftCard.set_ValueOfColumn("C_Order_ID", request.getOrderId());
 			giftCard.set_ValueOfColumn("C_BPartner_ID", order.getC_BPartner_ID());
 			giftCard.set_ValueOfColumn("C_ConversionType_ID", order.getC_ConversionType_ID());
 			giftCard.set_ValueOfColumn("C_Currency_ID" , order.getC_Currency_ID());
 			giftCard.set_ValueOfColumn("DateDoc", order.getDateOrdered());
+			giftCard.set_ValueOfColumn("Amount", amount);
 			giftCard.set_ValueOfColumn("IsPrepayment", request.getIsPrepayment());
 			giftCard.saveEx(transactionName);
 			//TODO: Check how to validate amount for Prepayment Gift Card
