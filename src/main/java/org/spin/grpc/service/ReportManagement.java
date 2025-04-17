@@ -172,7 +172,13 @@ public class ReportManagement extends ReportManagementImplBase {
 		ProcessLog.Builder response = ProcessLog.newBuilder()
 			.setId(
 				process.getAD_Process_ID()
-			);
+			)
+			.setUuid(
+				StringManager.getValidString(
+					process.getUUID()
+				)
+			)
+		;
 
 		int tableId = 0;
 		MTable table = null;
