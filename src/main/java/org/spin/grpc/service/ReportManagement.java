@@ -169,13 +169,24 @@ public class ReportManagement extends ReportManagementImplBase {
 			throw new AdempiereException("@AccessCannotReport@");
 		}
 
-		ProcessLog.Builder response = ProcessLog.newBuilder()
+		// TODO: Add process parameters by instance
+		ProcessLog.Builder responseBuilder = ProcessLog.newBuilder()
 			.setId(
 				process.getAD_Process_ID()
 			)
 			.setUuid(
 				StringManager.getValidString(
 					process.getUUID()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					process.getName()
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					process.getDescription()
 				)
 			)
 		;
@@ -313,7 +324,9 @@ public class ReportManagement extends ReportManagementImplBase {
 				)
 				.first()
 			;
-			response.setInstanceId(instance.getAD_PInstance_ID());
+			responseBuilder.setInstanceId(
+				instance.getAD_PInstance_ID()
+			);
 
 			// if (!Util.isEmpty(instance.getErrorMsg(), true)) {
 			// 	result.setError(true);
@@ -327,7 +340,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			// 	result.setSummary(errorMessage);
 			// }
 
-			response.setLastRun(
+			responseBuilder.setLastRun(
 				ValueManager.getTimestampFromDate(
 					instance.getUpdated()
 				)
@@ -367,9 +380,11 @@ public class ReportManagement extends ReportManagementImplBase {
 		}
 
 		//	
-		response.setIsError(result.isError());
+		responseBuilder.setIsError(
+			result.isError()
+		);
 		if(!Util.isEmpty(result.getSummary(), true)) {
-			response.setSummary(
+			responseBuilder.setSummary(
 				StringManager.getValidString(
 					Msg.parseTranslation(
 						Env.getCtx(),
@@ -379,7 +394,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			);
 		}
 		//	
-		response.setResultTableName(
+		responseBuilder.setResultTableName(
 			StringManager.getValidString(
 				result.getResultTableName()
 			)
@@ -388,12 +403,14 @@ public class ReportManagement extends ReportManagementImplBase {
 		if(result.getLogList() != null) {
 			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
 				ProcessInfoLog.Builder infoLogBuilder = ConvertUtil.convertProcessInfoLog(log);
-				response.addLogs(infoLogBuilder.build());
+				responseBuilder.addLogs(
+					infoLogBuilder.build()
+				);
 			}
 		}
 		//	Verify Output
-		response = addReportOutput(
-			response,
+		responseBuilder = addReportOutput(
+			responseBuilder,
 			result,
 			process,
 			reportType,
@@ -402,10 +419,13 @@ public class ReportManagement extends ReportManagementImplBase {
 			tableNameReference
 		);
 
-		return response;
+		return responseBuilder;
 	}
 
 
+	/**
+	 * TODO: Return only report output
+	 */
 	public static ProcessLog.Builder addReportOutput(
 		ProcessLog.Builder processBuilder,
 		ProcessInfo processInfo,
@@ -416,10 +436,16 @@ public class ReportManagement extends ReportManagementImplBase {
 		String tableName
 	) {
 		//	Verify Output
-		File reportFile = Optional.ofNullable(processInfo.getReportAsFile()).orElse(processInfo.getPDFReport());
+		File reportFile = Optional.ofNullable(
+			processInfo.getReportAsFile()
+		).orElse(
+			processInfo.getPDFReport()
+		);
 		if(reportFile != null && reportFile.exists()) {
-			String validFileName = FileUtil.getValidFileName(reportFile.getName());
-			ReportOutput.Builder output = ReportOutput.newBuilder()
+			String validFileName = FileUtil.getValidFileName(
+				reportFile.getName()
+			);
+			ReportOutput.Builder outputBuilder = ReportOutput.newBuilder()
 				.setId(
 					processInfo.getAD_PInstance_ID()
 				)
@@ -451,14 +477,14 @@ public class ReportManagement extends ReportManagementImplBase {
 			if(Util.isEmpty(reportType, true)) {
 				reportType = processInfo.getReportType();
 			}
-			if(!Util.isEmpty(FileUtil.getExtension(validFileName))
+			if(!Util.isEmpty(FileUtil.getExtension(validFileName), true)
 					&& !FileUtil.getExtension(validFileName).equals(reportType)) {
 				reportType = FileUtil.getExtension(validFileName);
 			}
 			if (Util.isEmpty(reportType, true)) {
 				reportType = ReportUtil.DEFAULT_REPORT_TYPE;
 			}
-			output.setReportType(
+			outputBuilder.setReportType(
 				processInfo.getReportType()
 			);
 
@@ -481,9 +507,9 @@ public class ReportManagement extends ReportManagementImplBase {
 				}
 			}
 			if(reportType.endsWith("html") || reportType.endsWith("txt")) {
-				output.setOutputBytes(resultFile);
+				outputBuilder.setOutputBytes(resultFile);
 			}
-			output.setReportType(reportType)
+			outputBuilder.setReportType(reportType)
 				.setOutputStream(resultFile)
 				.setReportViewId(reportViewReferenceId)
 				.setPrintFormatId(printFormatReferenceId)
@@ -491,7 +517,7 @@ public class ReportManagement extends ReportManagementImplBase {
 					StringManager.getValidString(tableName)
 				)
 			;
-			processBuilder.setOutput(output.build());
+			processBuilder.setOutput(outputBuilder);
 		}
 
 		return processBuilder;
