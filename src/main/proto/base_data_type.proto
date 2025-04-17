@@ -120,6 +120,7 @@ message ProcessLog {
 	google.protobuf.Struct parameters = 11;
 	ReportOutput output = 12;
 	repeated ProcesInstanceParameter process_intance_parameters = 13;
+	string uuid = 14;
 }
 
 //	BusinessProcess Log result

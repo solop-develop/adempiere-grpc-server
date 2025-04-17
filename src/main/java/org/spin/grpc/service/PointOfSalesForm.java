@@ -78,6 +78,7 @@ import org.compiere.model.MProductPrice;
 import org.compiere.model.MProductPricing;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MStorage;
+import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
@@ -1093,6 +1094,72 @@ public class PointOfSalesForm extends StoreImplBase {
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
 					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void printGiftCardPreview(PrintGiftCardPreviewRequest request, StreamObserver<PrintGiftCardPreviewResponse> responseObserver) {
+		try {
+			if (request.getId() <= 0) {
+				log.warning("@FillMandatory@ @ECA14_GiftCard@");
+				return;
+			}
+			final int giftCardId = request.getId();
+			MTable giftCardTable = MTable.get(Env.getCtx(), "ECA14_GiftCard");
+			if (giftCardTable == null || giftCardTable.getAD_Table_ID() <= 0) {
+				throw new AdempiereException("@TableName@ @NotFound@");
+			}
+			PO giftCard = giftCardTable.getPO(giftCardId, null);
+			if (giftCard == null || giftCard.get_ValueAsInt("ECA14_GiftCard_ID") <= 0) {
+				log.warning("@ECA14_GiftCard_ID@ (" + giftCardId + ") @NotFound@");
+				return;
+			}
+
+			log.fine("Print Ticket = " + request);
+			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+			int userId = Env.getAD_User_ID(pos.getCtx());
+			if (!getBooleanValueFromPOS(pos, userId, "IsAllowsPreviewDocument")) {
+				throw new AdempiereException("@POS.PreviewDocumentNotAllowed@");
+			}
+
+			PrintGiftCardPreviewResponse.Builder ticket = PrintGiftCardPreviewResponse.newBuilder()
+					.setResult("Ok")
+					;
+
+
+
+			int giftCardTabId = 55269;
+			MTab giftCardTab = MTab.get(Env.getCtx(), giftCardTabId);
+			int processId = giftCardTab.getAD_Process_ID();
+
+			String reportType = "pdf";
+			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+					.setId(processId)
+					.setTableName(giftCardTable.get_TableName())
+					.setRecordId(
+							giftCardId
+					)
+					.setReportType(reportType)
+					;
+
+			ProcessLog.Builder processLog = BusinessData.runBusinessProcess(
+					processRequest.build()
+			);
+
+			// preview document
+			ticket.setProcessLog(processLog.build());
+
+			responseObserver.onNext(ticket.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
