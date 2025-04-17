@@ -1921,6 +1921,7 @@ message InfoOnlinePaymentRequest {
 message InfoOnlinePaymentResponse {
 	bool is_error = 1;
 	string message = 2;
+	string status = 3;
 }
 message CancelOnlinePaymentRequest {
 	int32 pos_id = 3;
