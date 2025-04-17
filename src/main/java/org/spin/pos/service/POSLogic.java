@@ -46,6 +46,8 @@ import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.AvailableDiscountSchema;
+import org.spin.backend.grpc.pos.CancelOnlinePaymentRequest;
+import org.spin.backend.grpc.pos.CancelOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.CreateGiftCardLineRequest;
 import org.spin.backend.grpc.pos.CreateGiftCardRequest;
 import org.spin.backend.grpc.pos.Customer;
@@ -55,6 +57,8 @@ import org.spin.backend.grpc.pos.DeleteGiftCardRequest;
 import org.spin.backend.grpc.pos.GetCustomerRequest;
 import org.spin.backend.grpc.pos.GiftCard;
 import org.spin.backend.grpc.pos.GiftCardLine;
+import org.spin.backend.grpc.pos.InfoOnlinePaymentRequest;
+import org.spin.backend.grpc.pos.InfoOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.ListAvailableDiscountsRequest;
 import org.spin.backend.grpc.pos.ListAvailableDiscountsResponse;
 import org.spin.backend.grpc.pos.ListCustomerTemplatesRequest;
@@ -65,7 +69,8 @@ import org.spin.backend.grpc.pos.ListGiftCardLinesRequest;
 import org.spin.backend.grpc.pos.ListGiftCardLinesResponse;
 import org.spin.backend.grpc.pos.ListGiftCardsRequest;
 import org.spin.backend.grpc.pos.ListGiftCardsResponse;
-import org.spin.backend.grpc.pos.ListShipmentLinesResponse;
+import org.spin.backend.grpc.pos.ProcessOnlinePaymentRequest;
+import org.spin.backend.grpc.pos.ProcessOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.backend.grpc.pos.UpdateGiftCardLineRequest;
 import org.spin.backend.grpc.pos.UpdateGiftCardRequest;
@@ -662,10 +667,10 @@ public class POSLogic {
 					&& !DocumentUtil.isClosed(order)) {
 				throw new AdempiereException("@DocStatus@ @InValid@");
 			}
-			final String whereClause = "Processed = 'N' "
-				+ "AND Processing = 'N' "
-				+ "AND C_Order_ID = ?"
-			;
+			// final String whereClause = "Processed = 'N' "
+			// 	+ "AND Processing = 'N' "
+			// 	+ "AND C_Order_ID = ?"
+			// ;
 			PO giftCard = table.getPO(0, transactionName);
 
 			BigDecimal amount =  Optional.ofNullable(NumberManager.getBigDecimalFromString(request.getAmount())).orElse(Env.ZERO);
@@ -1069,4 +1074,36 @@ public class POSLogic {
 		//	Return
 		return Empty.newBuilder();
 	}
+
+
+
+	public static ProcessOnlinePaymentResponse.Builder processOnlinePayment(ProcessOnlinePaymentRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
+		}
+		ProcessOnlinePaymentResponse.Builder builder = ProcessOnlinePaymentResponse.newBuilder();
+
+		return builder;
+	}
+
+
+	public static InfoOnlinePaymentResponse.Builder infoOnlinePayment(InfoOnlinePaymentRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
+		}
+		InfoOnlinePaymentResponse.Builder builder = InfoOnlinePaymentResponse.newBuilder();
+
+		return builder;
+	}
+
+
+	public static CancelOnlinePaymentResponse.Builder cancelOnlinePayment(CancelOnlinePaymentRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
+		}
+		CancelOnlinePaymentResponse.Builder builder = CancelOnlinePaymentResponse.newBuilder();
+
+		return builder;
+	}
+
 }

@@ -139,28 +139,48 @@ service Store {
 	rpc GetKeyLayout(GetKeyLayoutRequest) returns (KeyLayout) {
 		option (google.api.http) = { get: "/point-of-sales/{pos_id}/key-layouts" };
 	}
+
 	//	Payments
-	//	Create Payment
 	rpc CreatePayment(CreatePaymentRequest) returns (Payment) {
 		option (google.api.http) = {
 			post: "/point-of-sales/{pos_id}/payments",
 			body: "*"
 		};
 	}
-	//	Update Payment
 	rpc UpdatePayment(UpdatePaymentRequest) returns (Payment) {
 		option (google.api.http) = {
 			put: "/point-of-sales/{pos_id}/payments/{id}",
 			body: "*"
 		};
 	}
-	//	Delete Payment
 	rpc DeletePayment(DeletePaymentRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/payments/{id}" };
+		option (google.api.http) = {
+			delete: "/point-of-sales/{pos_id}/payments/{id}"
+		};
 	}
-	//	List Payments
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/payments" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/payments"
+		};
+	}
+
+	//	Online Payments
+	rpc ProcessOnlinePayment(ProcessOnlinePaymentRequest) returns (ProcessOnlinePaymentResponse) {
+		option (google.api.http) = {
+			post: "/point-of-sales/{pos_id}/payments/{id}/online",
+			body: "*"
+		};
+	}
+	rpc InfoOnlinePayment(InfoOnlinePaymentRequest) returns (InfoOnlinePaymentResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/payments/{id}/online"
+		};
+	}
+	rpc CancelOnlinePayment(CancelOnlinePaymentRequest) returns (CancelOnlinePaymentResponse) {
+		option (google.api.http) = {
+			put: "/point-of-sales/{pos_id}/payments/{id}/online",
+			body: "*"
+		};
 	}
 
 	//	Validate PIN
@@ -384,21 +404,25 @@ service Store {
 			body: "*"
 		};
 	}
-	//	Create Refund Reference
+
+	//	Refund Reference
 	rpc CreatePaymentReference(CreatePaymentReferenceRequest) returns (PaymentReference) {
 		option (google.api.http) = {
 			post: "/point-of-sales/orders/{order_id}/references",
 			body: "*"
 		};
 	}
-	//	Delete Refund Reference
 	rpc DeletePaymentReference(DeletePaymentReferenceRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/orders/{order_id}/references/{id}" };
+		option (google.api.http) = {
+			delete: "/point-of-sales/orders/{order_id}/references/{id}"
+		};
 	}
-	//	List Refund References
 	rpc ListPaymentReferences(ListPaymentReferencesRequest) returns (ListPaymentReferencesResponse) {
-		option (google.api.http) = { get: "/point-of-sales/references" };
+		option (google.api.http) = {
+			get: "/point-of-sales/references"
+		};
 	}
+
 	//  List Stock: GET /api/stocks
 	rpc ListStocks(ListStocksRequest) returns (ListStocksResponse) {
 		option (google.api.http) = { get: "/point-of-sales/terminals/{pos_id}/stocks" };
@@ -407,6 +431,7 @@ service Store {
 	rpc ListAvailableCash(ListAvailableCashRequest) returns (ListAvailableCashResponse) {
 		option (google.api.http) = { get: "/point-of-sales/terminals/{pos_id}/cashs" };
 	}
+
 	// Command Shortcut
 	rpc SaveCommandShortcut(SaveCommandShortcutRequest) returns (CommandShortcut) {
 		option (google.api.http) = {
@@ -420,6 +445,7 @@ service Store {
 	rpc DeleteCommandShortcut(DeleteCommandShortcutRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/point-of-sales/terminals/{pos_id}/shortcuts/{id}" };
 	}
+
 	// Campaign
 	rpc ListCampaigns(ListCampaignsRequest) returns (ListCampaignsResponse) {
 		option (google.api.http) = { get: "/point-of-sales/terminals/{pos_id}/campaigns" };
@@ -1878,6 +1904,33 @@ message Payment {
 	string waiting_time = 29;
 	string response_type = 30;
 }
+
+// Online Payment
+message ProcessOnlinePaymentRequest {
+	int32 pos_id = 3;
+	int32 id = 1;
+}
+message ProcessOnlinePaymentResponse {
+	bool is_error = 1;
+	string message = 2;
+}
+message InfoOnlinePaymentRequest {
+	int32 pos_id = 3;
+	int32 id = 1;
+}
+message InfoOnlinePaymentResponse {
+	bool is_error = 1;
+	string message = 2;
+}
+message CancelOnlinePaymentRequest {
+	int32 pos_id = 3;
+	int32 id = 1;
+}
+message CancelOnlinePaymentResponse {
+	bool is_error = 1;
+	string message = 2;
+}
+
 
 // Request for delete a order
 message DeleteOrderRequest {
