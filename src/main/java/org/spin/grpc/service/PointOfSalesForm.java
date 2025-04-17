@@ -499,7 +499,66 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+	@Override
+	public void processOnlinePayment(ProcessOnlinePaymentRequest request, StreamObserver<ProcessOnlinePaymentResponse> responseObserver) {
+		try {
+			ProcessOnlinePaymentResponse.Builder builder = POSLogic.processOnlinePayment(
+				request
+			);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void infoOnlinePayment(InfoOnlinePaymentRequest request, StreamObserver<InfoOnlinePaymentResponse> responseObserver) {
+		try {
+			InfoOnlinePaymentResponse.Builder builder = POSLogic.infoOnlinePayment(
+				request
+			);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void cancelOnlinePayment(CancelOnlinePaymentRequest request, StreamObserver<CancelOnlinePaymentResponse> responseObserver) {
+		try {
+			CancelOnlinePaymentResponse.Builder builder = POSLogic.cancelOnlinePayment(
+				request
+			);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
 	@Override
 	public void listOrders(ListOrdersRequest request, StreamObserver<ListOrdersResponse> responseObserver) {
 		try {
