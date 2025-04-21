@@ -668,7 +668,7 @@ public class POSLogic {
 				throw new AdempiereException("@FillMandatory@ @Amount@");
 			}
 		}
-		ValidateCanCreateGiftCard(request.getOrderId(), request.getIsPrepayment());
+		validateCanCreateGiftCard(request.getOrderId(), request.getIsPrepayment());
 		AtomicReference<PO> maybeGiftCard = new AtomicReference<PO>();
 		Trx.run(transactionName -> {
 			MOrder order = new MOrder(context, request.getOrderId(), transactionName);
@@ -703,7 +703,7 @@ public class POSLogic {
 
 		return POSConvertUtil.convertGiftCard(maybeGiftCard.get());
 	}
-	private static void ValidateCanCreateGiftCard(int orderId, boolean isPrepayment) {
+	private static void validateCanCreateGiftCard(int orderId, boolean isPrepayment) {
 		if (isPrepayment) {
 			//TODO: Prepayment Validations
 			;
