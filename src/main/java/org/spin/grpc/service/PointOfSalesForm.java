@@ -429,6 +429,40 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	@Override
+	public void listAvailableOrderLinesForGiftCard(ListAvailableOrderLinesForGiftCardRequest request, StreamObserver<ListAvailableOrderLinesForGiftCardResponse> responseObserver) {
+		try {
+			ListAvailableOrderLinesForGiftCardResponse.Builder listAvailableOrderLines = POSLogic.listAvailableOrderLinesForGiftCard(request);
+			responseObserver.onNext(listAvailableOrderLines.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void listAvailableOrderLinesForRMA(ListAvailableOrderLinesForRMARequest request, StreamObserver<ListAvailableOrderLinesForRMAResponse> responseObserver) {
+		try {
+			ListAvailableOrderLinesForRMAResponse.Builder listAvailableOrderLines = POSLogic.listAvailableOrderLinesForRMA(request);
+			responseObserver.onNext(listAvailableOrderLines.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
+			);
+		}
+	}
+
 
 
 	@Override
