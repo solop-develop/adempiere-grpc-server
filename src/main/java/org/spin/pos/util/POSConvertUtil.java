@@ -222,7 +222,7 @@ public class POSConvertUtil {
 				paymentMethodBuilder
 			)
 			.setIsOnline(
-				availablePaymentMethod.get_ValueAsBoolean("IsOnline")
+				availablePaymentMethod.get_ValueAsBoolean("IsPaymentVerificationRequired")
 			)
 		;
 		if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
