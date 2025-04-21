@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.protobuf.Empty;
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
 import org.adempiere.core.domains.models.I_C_BPartner;
+import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_C_POS;
 import org.adempiere.core.domains.models.I_M_DiscountSchema;
 import org.adempiere.core.domains.models.I_M_InOutLine;
@@ -46,6 +47,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.AvailableDiscountSchema;
+import org.spin.backend.grpc.pos.AvailableOrderLine;
 import org.spin.backend.grpc.pos.CancelOnlinePaymentRequest;
 import org.spin.backend.grpc.pos.CancelOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.CreateGiftCardLineRequest;
@@ -61,6 +63,10 @@ import org.spin.backend.grpc.pos.InfoOnlinePaymentRequest;
 import org.spin.backend.grpc.pos.InfoOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.ListAvailableDiscountsRequest;
 import org.spin.backend.grpc.pos.ListAvailableDiscountsResponse;
+import org.spin.backend.grpc.pos.ListAvailableOrderLinesForGiftCardRequest;
+import org.spin.backend.grpc.pos.ListAvailableOrderLinesForGiftCardResponse;
+import org.spin.backend.grpc.pos.ListAvailableOrderLinesForRMARequest;
+import org.spin.backend.grpc.pos.ListAvailableOrderLinesForRMAResponse;
 import org.spin.backend.grpc.pos.ListCustomerTemplatesRequest;
 import org.spin.backend.grpc.pos.ListCustomerTemplatesResponse;
 import org.spin.backend.grpc.pos.ListCustomersRequest;
@@ -78,8 +84,10 @@ import org.spin.backend.grpc.pos.UpdateShipmentLineRequest;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
+import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.pos.POS;
+import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -660,6 +668,7 @@ public class POSLogic {
 				throw new AdempiereException("@FillMandatory@ @Amount@");
 			}
 		}
+		validateCanCreateGiftCard(request.getOrderId(), request.getIsPrepayment());
 		AtomicReference<PO> maybeGiftCard = new AtomicReference<PO>();
 		Trx.run(transactionName -> {
 			MOrder order = new MOrder(context, request.getOrderId(), transactionName);
@@ -693,6 +702,30 @@ public class POSLogic {
 		});
 
 		return POSConvertUtil.convertGiftCard(maybeGiftCard.get());
+	}
+	private static void validateCanCreateGiftCard(int orderId, boolean isPrepayment) {
+		if (isPrepayment) {
+			//TODO: Prepayment Validations
+			;
+		}else {
+			if (orderId <= 0) {
+				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			}
+			String whereClause = "C_Order_ID = ?";
+			BigDecimal orderQtyEntered = new Query(Env.getCtx(), MOrderLine.Table_Name,whereClause, null)
+				.setParameters(orderId)
+				.sum(I_C_OrderLine.COLUMNNAME_QtyEntered)
+			;
+
+			whereClause = "C_OrderLine_ID IN (SELECT C_OrderLine_ID FROM C_OrderLine ol WHERE ol.C_Order_ID = ?)";
+			BigDecimal giftCardQtyEntered = new Query(Env.getCtx(), "ECA14_GiftCardLine",whereClause, null)
+				.setParameters(orderId)
+				.sum(I_C_OrderLine.COLUMNNAME_QtyEntered)
+			;
+			if (giftCardQtyEntered.compareTo(orderQtyEntered) >= 0) {
+				throw new AdempiereException("@QtyInsufficient@");
+			}
+		}
 	}
 	public static GiftCardLine.Builder getGiftCardLine (int id, String transactionName) {
 		PO giftCardLine = RecordUtil.getEntity(
@@ -947,7 +980,7 @@ public class POSLogic {
 		int count = query.count();
 		query
 			.setLimit(limit, offset)
-			.<MInOutLine>list()
+			.<PO>list()
 			.forEach(line -> {
 				GiftCardLine.Builder giftCardLinetBuilder = POSConvertUtil.convertGiftCardLine(line);
 				builder.addGiftCardLines(giftCardLinetBuilder);
@@ -1073,6 +1106,101 @@ public class POSLogic {
 
 		//	Return
 		return Empty.newBuilder();
+	}
+
+	public static ListAvailableOrderLinesForGiftCardResponse.Builder listAvailableOrderLinesForGiftCard(ListAvailableOrderLinesForGiftCardRequest request) {
+		if(request.getOrderId() <= 0) {
+			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+		}
+		ListAvailableOrderLinesForGiftCardResponse.Builder builder = ListAvailableOrderLinesForGiftCardResponse.newBuilder();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		String whereClause = "C_Order_ID = ? ";
+		//	Get Product list
+		Query query = new Query(
+				Env.getCtx(),
+				MOrderLine.Table_Name,
+				whereClause,
+				null
+		)
+				.setParameters(request.getOrderId())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+			;
+		query
+			.setLimit(limit, offset)
+			.<MOrderLine>list()
+			.forEach(line -> {
+				BigDecimal availableQty = getAvailableQtyForGiftCardLine(line.getC_OrderLine_ID(), line.getQtyEntered());
+				if (availableQty.signum() <= 0) {
+					return;
+				}
+				AvailableOrderLine.Builder availableOrderLineBuilder = POSConvertUtil.convertAvailableOrderLine(line, availableQty);
+				builder.addOrderLines(availableOrderLineBuilder);
+			});
+		//
+		int count = builder.getOrderLinesCount();
+		builder.setRecordCount(count);
+		//	Set page token
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builder.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+		);
+		return builder;
+
+	}
+
+	public static ListAvailableOrderLinesForRMAResponse.Builder listAvailableOrderLinesForRMA(ListAvailableOrderLinesForRMARequest request) {
+		if(request.getOrderId() <= 0) {
+			throw new AdempiereException("@" + MOrder.COLUMNNAME_C_Order_ID + "@ @NotFound@");
+		}
+		ListAvailableOrderLinesForRMAResponse.Builder builder = ListAvailableOrderLinesForRMAResponse.newBuilder();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		String whereClause = "C_Order_ID = ? ";
+		//	Get Product list
+		Query query = new Query(
+				Env.getCtx(),
+				MOrderLine.Table_Name,
+				whereClause,
+				null
+		)
+				.setParameters(request.getOrderId())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+				;
+		query
+				.setLimit(limit, offset)
+				.<MOrderLine>list()
+				.forEach(line -> {
+					BigDecimal returnedQty = RMAUtil.getReturnedQuantity(line.getC_OrderLine_ID());
+					BigDecimal availableQty = Optional.ofNullable(line.getQtyEntered()).orElse(Env.ZERO).subtract(Optional.ofNullable(returnedQty).orElse(Env.ZERO));
+					if (availableQty.signum() <= 0) {
+						return;
+					}
+					AvailableOrderLine.Builder availableOrderLineBuilder = POSConvertUtil.convertAvailableOrderLine(line, availableQty);
+					builder.addOrderLines(availableOrderLineBuilder);
+				});
+		//
+		int count = builder.getOrderLinesCount();
+		builder.setRecordCount(count);
+		//	Set page token
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builder.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+		);
+		return builder;
+
 	}
 
 

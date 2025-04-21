@@ -218,6 +218,16 @@ service Store {
 	rpc ListAvailableSellers(ListAvailableSellersRequest) returns (ListAvailableSellersResponse) {
 		option (google.api.http) = { get: "/point-of-sales/{pos_id}/sellers" };
 	}
+	rpc ListAvailableOrderLinesForGiftCard(ListAvailableOrderLinesForGiftCardRequest) returns (ListAvailableOrderLinesForGiftCardResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}/order-lines"
+		};
+	}
+	rpc ListAvailableOrderLinesForRMA(ListAvailableOrderLinesForRMARequest) returns (ListAvailableOrderLinesForRMAResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/returns/{id}/order-lines"
+		};
+	}
 
 	//	Customer
 	rpc CreateCustomer(CreateCustomerRequest) returns (Customer) {
@@ -1189,6 +1199,56 @@ message GiftCardLine {
 	int32 gift_card_id = 10;
 	core_functionality.ProductConversion uom = 11;
 	core_functionality.ProductConversion product_uom = 12;
+}
+
+message ListAvailableOrderLinesForGiftCardRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// custom filters
+	int32 pos_id = 8;
+	int32 order_id = 9;
+}
+
+message ListAvailableOrderLinesForGiftCardResponse {
+	int64 record_count = 1;
+	repeated AvailableOrderLine order_lines = 2;
+	string next_page_token = 3;
+}
+
+message ListAvailableOrderLinesForRMARequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// custom filters
+	int32 pos_id = 8;
+	int32 order_id = 9;
+}
+
+message ListAvailableOrderLinesForRMAResponse {
+	int64 record_count = 1;
+	repeated AvailableOrderLine order_lines = 2;
+	string next_page_token = 3;
+}
+
+
+message AvailableOrderLine {
+	int32 id = 1;
+	string uuid = 2;
+	core_functionality.Product product = 3;
+	string description = 4;
+	string available_quantity = 5;
+	string price = 6;
+	core_functionality.ProductConversion uom = 7;
+	core_functionality.ProductConversion product_uom = 8;
 }
 
 
