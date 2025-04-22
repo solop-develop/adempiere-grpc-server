@@ -57,17 +57,18 @@ message ListLookupItemsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
-	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
-	int32 display_definition_field_id = 17;
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
 	//
-	bool is_without_validation = 18;
 }
 
 message ListLookupItemsResponse {
@@ -107,18 +108,19 @@ message ProcesInstanceParameter {
 
 message ProcessLog {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	int32 instance_id = 4;
-	bool is_error = 5;
-	string summary = 6;
-	string result_table_name = 7;
-	bool is_processing = 8;
-	google.protobuf.Timestamp last_run = 9;
-	repeated ProcessInfoLog logs = 10;
-	google.protobuf.Struct parameters = 11;
-	ReportOutput output = 12;
-	repeated ProcesInstanceParameter process_intance_parameters = 13;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	int32 instance_id = 5;
+	bool is_error = 6;
+	string summary = 7;
+	string result_table_name = 8;
+	bool is_processing = 9;
+	google.protobuf.Timestamp last_run = 10;
+	repeated ProcessInfoLog logs = 11;
+	google.protobuf.Struct parameters = 12;
+	ReportOutput output = 13;
+	repeated ProcesInstanceParameter process_intance_parameters = 14;
 }
 
 //	BusinessProcess Log result

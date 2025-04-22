@@ -325,6 +325,16 @@ public class PaymentConvertUtil {
 			.setIsProcessing(
 				payment.isProcessing()
 			)
+			.setWaitingTime(
+				StringManager.getValidString(
+					payment.get_ValueAsString("WaitingTime")
+				)
+			)
+			.setResponseType(
+				StringManager.getValidString(
+					payment.get_ValueAsString("ResponseType")
+				)
+			)
 		;
 		if(payment.getCollectingAgent_ID() > 0) {
 			builder.setCollectingAgent(

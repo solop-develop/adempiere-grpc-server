@@ -321,7 +321,14 @@ public class LogsConvertUtil {
 
 		//	for report
 		MProcess process = MProcess.get(Env.getCtx(), instance.getAD_Process_ID());
-		builder.setId(instance.getAD_Process_ID())
+		builder.setId(
+				process.getAD_Process_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					process.get_UUID()
+				)
+			)
 			.setName(
 				StringManager.getValidString(
 					process.getName()
@@ -346,7 +353,9 @@ public class LogsConvertUtil {
 					)
 				)
 			;
-			builder.setOutput(outputBuilder.build());
+			builder.setOutput(
+				outputBuilder.build()
+			);
 		}
 		builder.setSummary(
 			StringManager.getValidString(

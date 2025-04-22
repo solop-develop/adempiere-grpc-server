@@ -20,6 +20,7 @@ option java_package = "org.spin.backend.grpc.field.invoice";
 option java_outer_classname = "ADempiereInvoice";
 
 import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
@@ -91,8 +92,10 @@ message ListOrdersRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// custom filters
-	string is_sales_transaction = 10;
+	string is_sales_transaction = 12;
 }
 
 // Business Partners
@@ -106,8 +109,10 @@ message ListBusinessPartnersRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// custom filters
-	string is_sales_transaction = 10;
+	string is_sales_transaction = 12;
 }
 
 
@@ -150,26 +155,27 @@ message ListInvoicesInfoRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// references
-	int32 reference_id = 11;
-	string table_name = 12;
-	string column_name = 13;
-	int32 column_id = 14;
-	int32 field_id = 15;
-	int32 process_parameter_id = 16;
-	int32 browse_field_id = 17;
-	int32 display_definition_field_id = 18;
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
 	// custom filters
-	string document_no = 19;
-	int32 business_partner_id = 20;
-	string is_sales_transaction = 21;
-	string is_paid = 22;
-	string description = 23;
-	google.protobuf.Timestamp invoice_date_from = 24;
-	google.protobuf.Timestamp invoice_date_to = 25;
-	int32 order_id = 26;
-	string grand_total_from = 27;
-	string grand_total_to = 28;
+	string document_no = 20;
+	int32 business_partner_id = 21;
+	string is_sales_transaction = 22;
+	string is_paid = 23;
+	string description = 24;
+	google.protobuf.Timestamp invoice_date_from = 25;
+	google.protobuf.Timestamp invoice_date_to = 26;
+	int32 order_id = 27;
+	string grand_total_from = 28;
+	string grand_total_to = 29;
 }
 
 

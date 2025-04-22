@@ -16,6 +16,7 @@
 
 package org.spin.pos.util;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,7 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.Address;
+import org.spin.backend.grpc.pos.AvailableOrderLine;
 import org.spin.backend.grpc.pos.AvailablePaymentMethod;
 import org.spin.backend.grpc.pos.Bank;
 import org.spin.backend.grpc.pos.Campaign;
@@ -221,6 +223,9 @@ public class POSConvertUtil {
 			.setPaymentMethod(
 				paymentMethodBuilder
 			)
+			.setIsOnline(
+				availablePaymentMethod.get_ValueAsBoolean("IsOnline")
+			)
 		;
 		if(availablePaymentMethod.get_ValueAsInt("RefundReferenceCurrency_ID") > 0) {
 			tenderTypeValue.setRefundReferenceCurrency(
@@ -311,8 +316,10 @@ public class POSConvertUtil {
 			.setIsPrepayment(
 				giftCard.get_ValueAsBoolean("IsPrepayment")
 			)
-			.setBusinessPartnerId(
-				giftCard.get_ValueAsInt("C_BPartner_ID")
+			.setBusinessPartner(
+				CoreFunctionalityConvert.convertBusinessPartner(
+					giftCard.get_ValueAsInt("C_BPartner_ID")
+				)
 			)
 		;
 
@@ -344,6 +351,44 @@ public class POSConvertUtil {
 		if(giftCardLine == null || giftCardLine.get_ID() <= 0) {
 			return builder;
 		}
+		int orderId = giftCardLine.get_ValueAsInt("C_OrderLine_ID");
+		MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderId, null);
+		MProduct giftProduct = MProduct.get(Env.getCtx(), giftCardLine.get_ValueAsInt("M_Product_ID"));
+		MUOMConversion uom = null;
+		MUOMConversion productUom = null;
+		if (orderLine.getM_Product_ID() > 0) {
+			MProduct product = MProduct.get(Env.getCtx(), orderLine.getM_Product_ID());
+			List<MUOMConversion> productsConversion = Arrays.asList(
+				MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID())
+			);
+			Optional<MUOMConversion> maybeUom = productsConversion.parallelStream()
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+				})
+				.findFirst()
+			;
+			if (maybeUom.isPresent()) {
+				uom = maybeUom.get();
+			}
+
+			Optional<MUOMConversion> maybeProductUom = productsConversion.parallelStream()
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+				})
+				.findFirst()
+			;
+			if (maybeProductUom.isPresent()) {
+				productUom = maybeProductUom.get();
+			}
+		} else {
+			uom = new MUOMConversion(Env.getCtx(), 0, null);
+			uom.setC_UOM_ID(orderLine.getC_UOM_ID());
+			uom.setC_UOM_To_ID(orderLine.getC_UOM_ID());
+			uom.setMultiplyRate(Env.ONE);
+			uom.setDivideRate(Env.ONE);
+			productUom = uom;
+		}
+
 		//	Convert
 		return builder
 			.setId(
@@ -353,9 +398,10 @@ public class POSConvertUtil {
 				StringManager.getValidString(
 					giftCardLine.get_ValueAsString("UUID")
 				)
-			)
-			.setProductId(
-				giftCardLine.get_ValueAsInt("M_Product_ID")
+			).setProduct(
+				CoreFunctionalityConvert.convertProduct(
+					giftProduct
+				)
 			)
 			.setDescription(
 				StringManager.getValidString(
@@ -381,9 +427,11 @@ public class POSConvertUtil {
 						giftCardLine.get_ValueAsString("QtyOrdered")
 					)
 				)
+			).setUom(
+				CoreFunctionalityConvert.convertProductConversion(uom)
 			)
-			.setUomId(
-				giftCardLine.get_ValueAsInt("C_UOM_ID")
+			.setProductUom(
+				CoreFunctionalityConvert.convertProductConversion(productUom)
 			)
 			.setAmount(
 				NumberManager.getBigDecimalToString(
@@ -396,6 +444,89 @@ public class POSConvertUtil {
 				giftCardLine.get_ValueAsInt("ECA14_GiftCard_ID")
 			)
 		;
+	}
+	/**
+	 * Convert Available Order Line
+	 * @param orderLine
+	 * @param availableQty
+	 * @return
+	 */
+	public static AvailableOrderLine.Builder convertAvailableOrderLine(MOrderLine orderLine, BigDecimal availableQty) {
+		AvailableOrderLine.Builder builder = AvailableOrderLine.newBuilder();
+		if(orderLine == null || orderLine.get_ID() <= 0) {
+			return builder;
+		}
+		MProduct product =orderLine.getProduct();
+		MUOMConversion uom = null;
+		MUOMConversion productUom = null;
+		if (orderLine.getM_Product_ID() > 0) {
+			List<MUOMConversion> productsConversion = Arrays.asList(
+					MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID())
+			);
+			Optional<MUOMConversion> maybeUom = productsConversion.parallelStream()
+					.filter(productConversion -> {
+						return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+					})
+					.findFirst()
+					;
+			if (maybeUom.isPresent()) {
+				uom = maybeUom.get();
+			}
+
+			Optional<MUOMConversion> maybeProductUom = productsConversion.parallelStream()
+					.filter(productConversion -> {
+						return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+					})
+					.findFirst()
+					;
+			if (maybeProductUom.isPresent()) {
+				productUom = maybeProductUom.get();
+			}
+		} else {
+			uom = new MUOMConversion(Env.getCtx(), 0, null);
+			uom.setC_UOM_ID(orderLine.getC_UOM_ID());
+			uom.setC_UOM_To_ID(orderLine.getC_UOM_ID());
+			uom.setMultiplyRate(Env.ONE);
+			uom.setDivideRate(Env.ONE);
+			productUom = uom;
+		}
+
+		//	Convert
+		return builder
+			.setId(
+				orderLine.get_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					orderLine.getUUID()
+				)
+			).setProduct(
+				CoreFunctionalityConvert.convertProduct(
+					product
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					orderLine.getDescription()
+				)
+			)
+			.setAvailableQuantity(
+				NumberManager.getBigDecimalToString(
+					availableQty
+				)
+			)
+			.setPrice(
+				NumberManager.getBigDecimalToString(
+					orderLine.getPriceActual()
+				)
+			)
+			.setUom(
+				CoreFunctionalityConvert.convertProductConversion(uom)
+			)
+			.setProductUom(
+				CoreFunctionalityConvert.convertProductConversion(productUom)
+			)
+			;
 	}
 
 

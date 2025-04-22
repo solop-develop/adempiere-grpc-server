@@ -304,7 +304,7 @@ public class ReferenceInfo {
 			fieldId, processParameterId, browseFieldId,
 			columnId, columnName, tableName,
 			0,
-			0, null, false
+			0, customRestriction, false
 		);
 	}
 

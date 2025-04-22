@@ -532,7 +532,9 @@ public class ReferenceUtil {
 			}
 		}
 		if (!Util.isEmpty(customRestriction, true)) {
-			if (!Util.isEmpty(lookupInformation.ValidationCode) && !customRestriction.trim().startsWith("AND")) {
+			if (!Util.isEmpty(lookupInformation.ValidationCode)
+				&& !(customRestriction.trim().startsWith("AND ") || customRestriction.trim().startsWith("OR "))
+			 ) {
 				lookupInformation.ValidationCode += " AND ";
 			}
 			lookupInformation.ValidationCode += " (" + customRestriction + ")";
