@@ -21,6 +21,8 @@ option java_outer_classname = "ADempiereSecurity";
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 
+import "core_functionality.proto";
+
 // Base URL
 // /security/
 
@@ -154,26 +156,26 @@ message UserInfo {
 	string client_uuid = 9;
 }
 
+message Country {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	string code = 4;
+	string display_sequence = 5;
+}
+
 
 // Session Info
 message SessionInfo {
 	int32 id = 1;
 	string uuid = 2;
 	string name = 3;
-	UserInfo user_info = 4;
-	Role role = 5;
-	bool processed = 6;
-	string language = 7;
-	int32 country_id = 8;
-	string country_code = 9;
-	string country_name = 10;
-	string display_sequence = 11;
-	string currency_name = 12;
-	string currency_iso_code = 13;
-	string currency_symbol = 14;
-	int32 standard_precision = 15;
-	int32 costing_precision = 16;
-	google.protobuf.Struct default_context = 17;
+	Country country = 4;
+	core_functionality.Currency currency = 5;
+	string language = 6;
+	UserInfo user_info = 7;
+	Role role_info = 8;
+	google.protobuf.Struct default_context = 9;
 }
 
 message SetSessionAttributeRequest {
@@ -198,27 +200,27 @@ message Role {
 	string uuid = 2;
 	string name = 3;
 	string description = 4;
-	Client client = 5;
-	bool is_can_report = 6;
-	bool is_can_export = 7;
-	bool is_personal_lock = 8;
-	bool is_personal_access = 9;
-	bool is_allow_info_account = 10;
-	bool is_allow_info_business_partner = 11;
-	bool is_allow_info_in_out = 12;
-	bool is_allow_info_order = 13;
-	bool is_allow_info_product = 14;
-	bool is_allow_info_schedule = 15;
-	bool is_allow_info_mrp = 16;
-	bool is_allow_html_view = 17;
-	bool is_allow_info_asset = 18;
-	bool is_allow_info_cash_journal = 19;
-	bool is_allow_info_invoice = 20;
-	bool is_allow_info_payment = 21;
-	bool is_allow_info_resource = 22;
-	bool is_allow_info_crp = 23;
-	bool is_allow_xls_view = 24;
-	bool is_show_accounting = 25;
+	Client client_info = 5;
+	bool can_report = 6;
+	bool can_export = 7;
+	bool personal_lock = 8;
+	bool personal_access = 9;
+	bool allow_info_account = 10;
+	bool allow_info_business_partner = 11;
+	bool allow_info_in_out = 12;
+	bool allow_info_order = 13;
+	bool allow_info_product = 14;
+	bool allow_info_schedule = 15;
+	bool allow_info_mrp = 16;
+	bool allow_html_view = 17;
+	bool allow_info_asset = 18;
+	bool allow_info_cash_journal = 19;
+	bool allow_info_invoice = 20;
+	bool allow_info_payment = 21;
+	bool allow_info_resource = 22;
+	bool allow_info_crp = 23;
+	bool allow_xls_view = 24;
+	bool show_accounting = 25;
 }
 message ListRolesRequest {
 	string filters = 1;

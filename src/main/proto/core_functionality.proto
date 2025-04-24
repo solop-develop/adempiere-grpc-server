@@ -156,10 +156,12 @@ message Currency {
 	int32 id = 1;
 	string uuid = 2;
 	string iso_code = 3;
-	string cur_symbol = 4;
-	string description = 5;
+	string name = 4;
+	string symbol = 5;
 	int32 standard_precision = 6;
 	int32 costing_precision = 7;
+	string description = 8; // TODO: Deprecated replace with `name`
+	string cur_symbol = 9; // TODO: Deprecated replace with `symbol`
 }
 message GetCurrencyRequest {
 	int32 id = 1;

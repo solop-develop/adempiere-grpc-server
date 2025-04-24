@@ -61,8 +61,10 @@ import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
 import org.spin.authentication.services.OpenIDUtil;
+import org.spin.backend.grpc.core_functionality.Currency;
 import org.spin.backend.grpc.security.ChangeRoleRequest;
 import org.spin.backend.grpc.security.Client;
+import org.spin.backend.grpc.security.Country;
 import org.spin.backend.grpc.security.DictionaryEntity;
 import org.spin.backend.grpc.security.DictionaryType;
 import org.spin.backend.grpc.security.GetDictionaryAccessRequest;
@@ -94,6 +96,7 @@ import org.spin.backend.grpc.security.UserInfoRequest;
 import org.spin.backend.grpc.security.Warehouse;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.PreferenceUtil;
+import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -1000,6 +1003,38 @@ public class Security extends SecurityImplBase {
 		return builder;
 	}
 
+	public static Country.Builder convertCountry(MCountry country) {
+		Country.Builder builder = Country.newBuilder();
+		if (country == null) {
+			return builder;
+		}
+		builder.setId(
+				country.getC_Country_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					country.getUUID()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					country.getName()
+				)
+			)
+			.setCode(
+				StringManager.getValidString(
+					country.getCountryCode()
+				)
+			)
+			.setDisplaySequence(
+				StringManager.getValidString(
+					country.getDisplaySequence()
+				)
+			)
+		;
+		return builder;
+	}
+
 
 	/**
 	 * Populate default values and preferences for session
@@ -1007,47 +1042,18 @@ public class Security extends SecurityImplBase {
 	 */
 	private void populateDefaultPreferences(SessionInfo.Builder session) {
 		MCountry country = MCountry.get(Env.getCtx(), Env.getContextAsInt(Env.getCtx(), "#C_Country_ID"));
-		MCurrency currency = MCurrency.get(Env.getCtx(), country.getC_Currency_ID());
+		Country.Builder countryBuilder = convertCountry(country);
+		session.setCountry(
+			countryBuilder.build()
+		);
+
 		//	Set values for currency
-		session.setCountryId(
-			country.getC_Country_ID()
+		MCurrency currency = MCurrency.get(Env.getCtx(), country.getC_Currency_ID());
+		Currency.Builder currencyBuilder = CoreFunctionalityConvert.convertCurrency(currency);
+		session.setCurrency(
+			currencyBuilder.build()
 		);
-		session.setCountryCode(
-			StringManager.getValidString(
-				country.getCountryCode()
-			)
-		);
-		session.setCountryName(
-			StringManager.getValidString(
-				country.getName()
-			)
-		);
-		session.setDisplaySequence(
-			StringManager.getValidString(
-				country.getDisplaySequence()
-			)
-		);
-		session.setCurrencyIsoCode(
-			StringManager.getValidString(
-				currency.getISO_Code()
-			)
-		);
-		session.setCurrencyName(
-			StringManager.getValidString(
-				currency.getDescription()
-			)
-		);
-		session.setCurrencySymbol(
-			StringManager.getValidString(
-				currency.getCurSymbol()
-			)
-		);
-		session.setStandardPrecision(
-			currency.getStdPrecision()
-		);
-		session.setCostingPrecision(
-			currency.getCostingPrecision()
-		);
+
 		session.setLanguage(
 			StringManager.getValidString(
 				ContextManager.getDefaultLanguage(
@@ -1156,7 +1162,7 @@ public class Security extends SecurityImplBase {
 		Role.Builder roleBuilder = convertRole(
 			MRole.get(context, session.getAD_Role_ID())
 		);
-		builder.setRole(roleBuilder.build());
+		builder.setRoleInfo(roleBuilder.build());
 		//	Set default context
 		populateDefaultPreferences(builder);
 		//	Return session
@@ -1388,29 +1394,29 @@ public class Security extends SecurityImplBase {
 					role.getDescription()
 				)
 			)
-			.setClient(
+			.setClientInfo(
 				clientBuilder
 			)
-			.setIsCanExport(role.isCanExport())
-			.setIsCanReport(role.isCanReport())
-			.setIsPersonalAccess(role.isPersonalAccess())
-			.setIsPersonalLock(role.isPersonalLock())
-			.setIsAllowHtmlView(role.isAllow_HTML_View())
-			.setIsAllowInfoAccount(role.isAllow_Info_Account())
-			.setIsAllowInfoAsset(role.isAllow_Info_Asset())
-			.setIsAllowInfoBusinessPartner(role.isAllow_Info_BPartner())
-			.setIsAllowInfoCashJournal(role.isAllow_Info_CashJournal())
-			.setIsAllowInfoCrp(role.isAllow_Info_CRP())
-			.setIsAllowInfoInOut(role.isAllow_Info_InOut())
-			.setIsAllowInfoInvoice(role.isAllow_Info_Invoice())
-			.setIsAllowInfoMrp(role.isAllow_Info_MRP())
-			.setIsAllowInfoOrder(role.isAllow_Info_Order())
-			.setIsAllowInfoPayment(role.isAllow_Info_Payment())
-			.setIsAllowInfoProduct(role.isAllow_Info_Product())
-			.setIsAllowInfoResource(role.isAllow_Info_Resource())
-			.setIsAllowInfoSchedule(role.isAllow_Info_Schedule())
-			.setIsAllowXlsView(role.isAllow_XLS_View())
-			.setIsShowAccounting(
+			.setCanExport(role.isCanExport())
+			.setCanReport(role.isCanReport())
+			.setPersonalAccess(role.isPersonalAccess())
+			.setPersonalLock(role.isPersonalLock())
+			.setAllowHtmlView(role.isAllow_HTML_View())
+			.setAllowInfoAccount(role.isAllow_Info_Account())
+			.setAllowInfoAsset(role.isAllow_Info_Asset())
+			.setAllowInfoBusinessPartner(role.isAllow_Info_BPartner())
+			.setAllowInfoCashJournal(role.isAllow_Info_CashJournal())
+			.setAllowInfoCrp(role.isAllow_Info_CRP())
+			.setAllowInfoInOut(role.isAllow_Info_InOut())
+			.setAllowInfoInvoice(role.isAllow_Info_Invoice())
+			.setAllowInfoMrp(role.isAllow_Info_MRP())
+			.setAllowInfoOrder(role.isAllow_Info_Order())
+			.setAllowInfoPayment(role.isAllow_Info_Payment())
+			.setAllowInfoProduct(role.isAllow_Info_Product())
+			.setAllowInfoResource(role.isAllow_Info_Resource())
+			.setAllowInfoSchedule(role.isAllow_Info_Schedule())
+			.setAllowXlsView(role.isAllow_XLS_View())
+			.setShowAccounting(
 				role.isShowAcct()
 			)
 		;

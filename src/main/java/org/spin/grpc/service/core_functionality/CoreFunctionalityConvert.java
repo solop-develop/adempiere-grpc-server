@@ -122,14 +122,26 @@ public class CoreFunctionalityConvert {
 					currency.getISO_Code()
 				)
 			)
-			.setCurSymbol(
+			.setName(
+				StringManager.getValidString(
+					currency.getDescription()
+				)
+			)
+			// TODO: Deprecated replace with `name`
+			.setDescription(
+				StringManager.getValidString(
+					currency.getDescription()
+				)
+			)
+			.setSymbol(
 				StringManager.getValidString(
 					currency.getCurSymbol()
 				)
 			)
-			.setDescription(
+			// TODO: Deprecated replace with `symbol`
+			.setCurSymbol(
 				StringManager.getValidString(
-					currency.getDescription()
+					currency.getCurSymbol()
 				)
 			)
 			.setStandardPrecision(
