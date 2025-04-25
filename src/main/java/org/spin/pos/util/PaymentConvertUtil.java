@@ -322,6 +322,9 @@ public class PaymentConvertUtil {
 			.setIsProcessed(
 				payment.isProcessed()
 			)
+			.setIsProcessing(
+				payment.isProcessing()
+			)
 			.setIsOnline(
 				payment.get_ValueAsBoolean("IsOnline")
 			)
