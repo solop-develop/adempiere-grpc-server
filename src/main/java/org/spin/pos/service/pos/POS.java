@@ -52,6 +52,16 @@ public class POS {
 				.first();
 	}
 
+	public static PO getPaymentTypeAllocationId(int paymentTypeAllocationId, String transactionName) {
+		if(MTable.get(Env.getCtx(), "C_POSPaymentTypeAllocation") == null) {
+			return null;
+		}
+		return new Query(Env.getCtx(), "C_POSPaymentTypeAllocation", " C_POSPaymentTypeAllocation_ID = ?", transactionName)
+				.setParameters(paymentTypeAllocationId)
+				.setOnlyActiveRecords(true)
+				.first();
+	}
+
 	/**
 	 * Get POS with identifier
 	 * @param posId

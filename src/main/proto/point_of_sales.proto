@@ -1963,6 +1963,11 @@ message Payment {
 	string invoice_document_no = 28;
 	string waiting_time = 29;
 	string response_type = 30;
+	bool is_online = 31;
+	string response_status = 32;
+	string response_message = 33;
+	string response_code = 34;
+	int32 next_request_time = 35;
 }
 
 // Online Payment

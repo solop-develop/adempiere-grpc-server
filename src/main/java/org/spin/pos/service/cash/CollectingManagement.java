@@ -88,6 +88,7 @@ public class CollectingManagement {
 			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSRefundDocumentType_ID");
 		}
 		int paymentMethodId = request.getPaymentMethodId();
+		int allocatePaymentId = request.getAllocatePaymentId();
 		if(paymentMethodId > 0) {
 			PO paymentTypeAllocation = POS.getPaymentMethodAllocation(paymentMethodId, pointOfSalesDefinition.getC_POS_ID(), null);
 			if(paymentTypeAllocation != null) {
@@ -167,6 +168,12 @@ public class CollectingManagement {
 		//	Payment Method
 		if(paymentMethodId > 0) {
 			payment.set_ValueOfColumn(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID, paymentMethodId);
+		}
+		//	Allocate Payment Method
+		if(allocatePaymentId > 0) {
+			PO paymentTypeAllocation = POS.getPaymentTypeAllocationId(allocatePaymentId, null);
+			
+			payment.setIsOnline(paymentTypeAllocation.get_ValueAsBoolean("IsOnline"));
 		}
 		//	Set Bank Id
 		if(request.getBankId() > 0) {
