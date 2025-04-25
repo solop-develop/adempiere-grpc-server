@@ -1961,13 +1961,11 @@ message Payment {
 	bool is_processing = 26;
 	string order_document_no = 27;
 	string invoice_document_no = 28;
-	string waiting_time = 29;
-	string response_type = 30;
-	bool is_online = 31;
-	string response_status = 32;
-	string response_message = 33;
-	string response_code = 34;
-	int32 next_request_time = 35;
+	bool is_online = 29;
+	string response_status = 30;
+	string response_message = 31;
+	string response_code = 32;
+	int32 next_request_time = 33;
 }
 
 // Online Payment

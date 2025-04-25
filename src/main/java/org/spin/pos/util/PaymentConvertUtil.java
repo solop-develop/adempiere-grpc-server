@@ -325,16 +325,6 @@ public class PaymentConvertUtil {
 			.setIsOnline(
 				payment.get_ValueAsBoolean("IsOnline")
 			)
-			.setWaitingTime(
-				StringManager.getValidString(
-					payment.get_ValueAsString("WaitingTime")
-				)
-			)
-			.setResponseType(
-				StringManager.getValidString(
-					payment.get_ValueAsString("ResponseType")
-				)
-			)
 			.setResponseStatus(
 				StringManager.getValidString(payment.get_ValueAsString("ResponseStatus"))
 			)

@@ -172,8 +172,9 @@ public class CollectingManagement {
 		//	Allocate Payment Method
 		if(allocatePaymentId > 0) {
 			PO paymentTypeAllocation = POS.getPaymentTypeAllocationId(allocatePaymentId, null);
-			
-			payment.setIsOnline(paymentTypeAllocation.get_ValueAsBoolean("IsOnline"));
+			if(paymentTypeAllocation != null) {
+				payment.setIsOnline(paymentTypeAllocation.get_ValueAsBoolean("IsOnline"));
+			}
 		}
 		//	Set Bank Id
 		if(request.getBankId() > 0) {
