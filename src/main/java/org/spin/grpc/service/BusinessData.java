@@ -259,9 +259,9 @@ public class BusinessData extends BusinessDataImplBase {
 
 		PO entity = null;
 		int recordId = request.getRecordId();
-		if (isMultiSelection && selectionsList != null && !selectionsList.isEmpty() && selectionsList.size() > 1) {
-			// is window multi selection
-			;
+		if (isMultiSelection && selectionsList != null && !selectionsList.isEmpty() && selectionsList.size() == 1) {
+			// KeyValueSelection oneRow = selectionsList.get(0);
+			// recordId = oneRow.getSelectionId();
 		} else if (table != null && RecordUtil.isValidId(recordId, table.getAccessLevel())) {
 			entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), recordId, null);
 			if(entity != null) {
@@ -332,26 +332,24 @@ public class BusinessData extends BusinessDataImplBase {
 				.withSelectedRecordsIds(tableSelectionId, tableAlias, selectionKeys)
 			;
 		} else if (table != null && isMultiSelection) {
-			if (selectionsList == null || selectionsList.isEmpty()) {
-				throw new AdempiereException("@AD_Window_ID@ @FillMandatory@ @Selection@");
-			}
-
 			List<Integer> selectionKeys = new ArrayList<>();
 			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
-			for(KeyValueSelection selectionKey : selectionsList) {
-				selectionKeys.add(selectionKey.getSelectionId());
-				if(selectionKey.getValues().getFieldsCount() > 0) {
-					Map<String, Integer> displayTypeColumns = WindowUtil.getTableColumnsDisplayType(table);
-					LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
-						ValueManager.convertValuesMapToObjects(
-							selectionKey.getValues().getFieldsMap(),
-							displayTypeColumns
-						)
-					);
-					selection.put(
-						selectionKey.getSelectionId(),
-						entities
-					);
+			if (selectionsList != null && !selectionsList.isEmpty()) {
+				for(KeyValueSelection selectionKey : selectionsList) {
+					selectionKeys.add(selectionKey.getSelectionId());
+					if(selectionKey.getValues().getFieldsCount() > 0) {
+						Map<String, Integer> displayTypeColumns = WindowUtil.getTableColumnsDisplayType(table);
+						LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
+							ValueManager.convertValuesMapToObjects(
+								selectionKey.getValues().getFieldsMap(),
+								displayTypeColumns
+							)
+						);
+						selection.put(
+							selectionKey.getSelectionId(),
+							entities
+						);
+					}
 				}
 			}
 
