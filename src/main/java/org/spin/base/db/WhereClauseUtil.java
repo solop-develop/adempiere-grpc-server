@@ -131,7 +131,7 @@ public class WhereClauseUtil {
 			Matcher matchColumnName = patternColumnName.matcher(validationCode);
 			StringBuffer sb = new StringBuffer();
 			while (matchColumnName.find()) {
-				String columnName = matchColumnName.group(1); 
+				String columnName = matchColumnName.group(1);
 				if (columnName != null) {
 					if (!tableAliases.contains(columnName)) {
 						// If it is not a table alias, add the alias
