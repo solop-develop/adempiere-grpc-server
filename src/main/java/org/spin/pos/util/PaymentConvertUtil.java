@@ -326,7 +326,7 @@ public class PaymentConvertUtil {
 				payment.isProcessing()
 			)
 			.setIsOnline(
-				payment.get_ValueAsBoolean("IsOnline")
+				payment.isOnline()
 			)
 			.setResponseStatus(
 				StringManager.getValidString(

@@ -87,8 +87,10 @@ public class CollectingManagement {
 		} else {
 			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSRefundDocumentType_ID");
 		}
-		int paymentMethodId = request.getPaymentMethodId();
-		int allocatePaymentId = request.getAllocatePaymentId();
+
+		//	TODO: Validate with `allocatePaymenMethodtId` value
+		//	Payment Method
+		final int paymentMethodId = request.getPaymentMethodId();
 		if (paymentMethodId > 0) {
 			PO paymentTypeAllocation = POS.getPaymentMethodAllocation(paymentMethodId, pointOfSalesDefinition.getC_POS_ID(), null);
 			if(paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
@@ -96,7 +98,29 @@ public class CollectingManagement {
 					documentTypeId = pointOfSalesDefinition.get_ValueAsInt("C_DocTypeTarget_ID");
 				}
 			}
+			payment.set_ValueOfColumn(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID, paymentMethodId);
 		}
+
+		//	Allocate Payment Method
+		final int allocatePaymenMethodtId = request.getAllocatePaymentId();
+		if (allocatePaymenMethodtId > 0) {
+			PO paymentMethodAllocation = POS.getPaymentTypeAllocationId(allocatePaymenMethodtId, null);
+			if(paymentMethodAllocation != null && paymentMethodAllocation.get_ID() > 0) {
+				payment.setIsOnline(
+					paymentMethodAllocation.get_ValueAsBoolean("IsOnline")
+				);
+
+				// TODO: Validate with `paymentMethodId` value
+				// if(paymentMethodAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0 && !request.getIsRefund()) {
+				// 	documentTypeId = pointOfSalesDefinition.get_ValueAsInt("C_DocTypeTarget_ID");
+				// }
+				// payment.set_ValueOfColumn(
+				// 	I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID,
+				// 	paymentMethodAllocation.get_ValueAsInt(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID)
+				// );
+			}
+		}
+
 		if(documentTypeId > 0) {
 			payment.setC_DocType_ID(documentTypeId);
 		} else {
@@ -165,17 +189,7 @@ public class CollectingManagement {
 				payment.setDescription(request.getDescription());
 				break;
 		}
-		//	Payment Method
-		if(paymentMethodId > 0) {
-			payment.set_ValueOfColumn(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID, paymentMethodId);
-		}
-		//	Allocate Payment Method
-		if (allocatePaymentId > 0) {
-			PO paymentTypeAllocation = POS.getPaymentTypeAllocationId(allocatePaymentId, null);
-			if(paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
-				payment.setIsOnline(paymentTypeAllocation.get_ValueAsBoolean("IsOnline"));
-			}
-		}
+
 		//	Set Bank Id
 		if(request.getBankId() > 0) {
 			payment.set_ValueOfColumn(MBank.COLUMNNAME_C_Bank_ID, request.getBankId());
@@ -185,29 +199,29 @@ public class CollectingManagement {
 			payment.setC_BP_BankAccount_ID(request.getCustomerBankAccountId());
 		}
 		//	Validate reference
-		if(!Util.isEmpty(request.getReferenceNo())) {
+		if(!Util.isEmpty(request.getReferenceNo(), true)) {
 			payment.setDocumentNo(request.getReferenceNo());
 			payment.addDescription(request.getReferenceNo());
 		}
 		CashUtil.setCurrentDate(payment);
-		if(Util.isEmpty(payment.getDocumentNo())) {
-			String value = DB.getDocumentNo(payment.getC_DocType_ID(), transactionName, false,  payment);
-	        payment.setDocumentNo(value);
+		if(Util.isEmpty(payment.getDocumentNo(), true)) {
+			String value = DB.getDocumentNo(payment.getC_DocType_ID(), transactionName, false, payment);
+			payment.setDocumentNo(value);
 		}
 		//	
 		if(request.getInvoiceReferenceId() > 0) {
 			payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID, request.getInvoiceReferenceId());
 		}
 		payment.saveEx(transactionName);
-		if(payment.setPaymentProcessor()) {
-			payment.setIsApproved(false);
-			boolean isOk = payment.processOnline();
-			if(!isOk) {
-				throw new AdempiereException(payment.getErrorMessage());
-			}
-			payment.setIsApproved(true);
-			payment.saveEx();
-		}
+		// if(payment.setPaymentProcessor()) {
+		// 	payment.setIsApproved(false);
+		// 	boolean isOk = payment.processOnline();
+		// 	if(!isOk) {
+		// 		throw new AdempiereException(payment.getErrorMessage());
+		// 	}
+		// 	payment.setIsApproved(true);
+		// 	payment.saveEx();
+		// }
 		return payment;
 	}
 }
