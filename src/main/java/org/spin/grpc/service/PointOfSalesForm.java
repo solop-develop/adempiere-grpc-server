@@ -67,6 +67,7 @@ import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MLocation;
+import org.compiere.model.MMenu;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
@@ -4974,16 +4975,23 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private Empty.Builder deletePayment(DeletePaymentRequest request) {
-		int paymentId = request.getId();
-		if(paymentId <= 0) {
-			throw new AdempiereException("@C_Payment_ID@ @NotFound@");
+		final int paymentId = request.getId();
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
 		}
-		MPayment payment = new Query(Env.getCtx(), I_C_Payment.Table_Name, I_C_Payment.COLUMNNAME_C_Payment_ID + " = ?", null)
-				.setParameters(paymentId)
-				.setClient_ID()
-				.first();
+		MPayment payment = new Query(
+			Env.getCtx(),
+			I_C_Payment.Table_Name,
+			I_C_Payment.COLUMNNAME_C_Payment_ID + " = ?",
+			null
+		)
+			.setParameters(paymentId)
+			.setClient_ID()
+			.first()
+		;
 		if(payment == null
 				|| payment.getC_Payment_ID() == 0) {
+			// throw new AdempiereException("@C_Payment_ID@ @NotFound@");
 			return Empty.newBuilder();
 		}
 		//	Validate drafted
@@ -5377,6 +5385,12 @@ public class PointOfSalesForm extends StoreImplBase {
 	private ListPointOfSalesResponse.Builder listPointOfSales(ListPointOfSalesRequest request) {
 		int salesRepresentativeId = Env.getAD_User_ID(Env.getCtx());
 
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			113
+		);
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -5384,7 +5398,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		int offset = (pageNumber - 1) * limit;
 
 		//	Get POS List
-		boolean isAppliedNewFeaturesPOS = M_Element.get(Env.getCtx(), "IsSharedPOS") != null && M_Element.get(Env.getCtx(), "IsAllowsAllocateSeller") != null;
+		boolean isAppliedNewFeaturesPOS = M_Element.get(Env.getCtx(), "IsSharedPOS") != null
+			&& M_Element.get(Env.getCtx(), "IsAllowsAllocateSeller") != null
+		;
 		StringBuffer whereClause = new StringBuffer("SalesRep_ID = ? ");
 		List<Object> parameters = new ArrayList<>();
 		parameters.add(salesRepresentativeId);
@@ -5397,11 +5413,17 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(Env.getAD_Org_ID(Env.getCtx()));
 			parameters.add(salesRepresentativeId);
 		}
-		Query query = new Query(Env.getCtx() , I_C_POS.Table_Name , whereClause.toString(), null)
-				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.setParameters(parameters)
-				.setOrderBy(I_C_POS.COLUMNNAME_Name);
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_POS.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setParameters(parameters)
+			.setOrderBy(I_C_POS.COLUMNNAME_Name)
+		;
 		int count = query.count();
 		ListPointOfSalesResponse.Builder builder = ListPointOfSalesResponse.newBuilder()
 			.setRecordCount(count)
@@ -5851,14 +5873,17 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private MPayment updatePayment(UpdatePaymentRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
+		}
 		AtomicReference<MPayment> maybePayment = new AtomicReference<MPayment>();
 		Trx.run(transactionName -> {
 			String tenderType = request.getTenderTypeCode();
-			int paymentId = request.getId();
-			if(paymentId <= 0) {
+			final int paymentId = request.getId();
+			MPayment payment = new MPayment(Env.getCtx(), paymentId, transactionName);
+			if (payment == null || payment.getC_Payment_ID() <= 0) {
 				throw new AdempiereException("@C_Payment_ID@ @NotFound@");
 			}
-			MPayment payment = new MPayment(Env.getCtx(), paymentId, transactionName);
 			if(!DocumentUtil.isDrafted(payment)) {
 				throw new AdempiereException("@C_Payment_ID@ @Processed@");
 			}
@@ -5873,18 +5898,18 @@ public class PointOfSalesForm extends StoreImplBase {
 				Timestamp date = ValueManager.getDateFromTimestampDate(
 					request.getPaymentDate()
 				);
-	        	if(date != null) {
-	        		payment.setDateTrx(date);
-	        	}
-	        }
+				if(date != null) {
+					payment.setDateTrx(date);
+				}
+			}
 			if(ValueManager.getDateFromTimestampDate(request.getPaymentAccountDate()) != null) {
 				Timestamp date = ValueManager.getDateFromTimestampDate(
 					request.getPaymentAccountDate()
 				);
-	        	if(date != null) {
-	        		payment.setDateAcct(date);
-	        	}
-	        }
+				if(date != null) {
+					payment.setDateAcct(date);
+				}
+			}
 			//	Set Bank Id
 			if(request.getBankId() > 0) {
 				payment.set_ValueOfColumn(MBank.COLUMNNAME_C_Bank_ID, request.getBankId());
@@ -5901,9 +5926,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			BigDecimal paymentAmount = NumberManager.getBigDecimalFromString(
 				request.getAmount()
 			);
-	        payment.setPayAmt(paymentAmount);
-	        payment.setOverUnderAmt(Env.ZERO);
-	        CashUtil.setCurrentDate(payment);
+			payment.setPayAmt(paymentAmount);
+			payment.setOverUnderAmt(Env.ZERO);
+			CashUtil.setCurrentDate(payment);
 			payment.saveEx(transactionName);
 			maybePayment.set(payment);
 		});
