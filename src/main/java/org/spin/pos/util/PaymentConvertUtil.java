@@ -325,15 +325,26 @@ public class PaymentConvertUtil {
 			.setIsProcessing(
 				payment.isProcessing()
 			)
-			.setWaitingTime(
+			.setIsOnline(
+				payment.get_ValueAsBoolean("IsOnline")
+			)
+			.setResponseStatus(
 				StringManager.getValidString(
-					payment.get_ValueAsString("WaitingTime")
+					payment.get_ValueAsString("ResponseStatus")
 				)
 			)
-			.setResponseType(
+			.setResponseMessage(
 				StringManager.getValidString(
-					payment.get_ValueAsString("ResponseType")
+					payment.get_ValueAsString("ResponseMessage")
 				)
+			)
+			.setResponseCode(
+				StringManager.getValidString(
+					payment.get_ValueAsString("ResponseCode")
+				)
+			)
+			.setNextRequestTime(
+				payment.get_ValueAsInt("NextRequestTime")
 			)
 		;
 		if(payment.getCollectingAgent_ID() > 0) {

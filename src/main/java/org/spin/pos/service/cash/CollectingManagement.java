@@ -88,9 +88,10 @@ public class CollectingManagement {
 			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSRefundDocumentType_ID");
 		}
 		int paymentMethodId = request.getPaymentMethodId();
-		if(paymentMethodId > 0) {
+		int allocatePaymentId = request.getAllocatePaymentId();
+		if (paymentMethodId > 0) {
 			PO paymentTypeAllocation = POS.getPaymentMethodAllocation(paymentMethodId, pointOfSalesDefinition.getC_POS_ID(), null);
-			if(paymentTypeAllocation != null) {
+			if(paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
 				if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0 && !request.getIsRefund()) {
 					documentTypeId = pointOfSalesDefinition.get_ValueAsInt("C_DocTypeTarget_ID");
 				}
@@ -105,10 +106,10 @@ public class CollectingManagement {
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getPaymentDate()
 		);
-    	if(date != null) {
-    		payment.setDateTrx(date);
-    		payment.setDateAcct(date);
-    	}
+		if(date != null) {
+			payment.setDateTrx(date);
+			payment.setDateAcct(date);
+		}
 		Timestamp dateValue = ValueManager.getDateFromTimestampDate(
 			request.getPaymentAccountDate()
 		);
@@ -167,6 +168,13 @@ public class CollectingManagement {
 		//	Payment Method
 		if(paymentMethodId > 0) {
 			payment.set_ValueOfColumn(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID, paymentMethodId);
+		}
+		//	Allocate Payment Method
+		if (allocatePaymentId > 0) {
+			PO paymentTypeAllocation = POS.getPaymentTypeAllocationId(allocatePaymentId, null);
+			if(paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
+				payment.setIsOnline(paymentTypeAllocation.get_ValueAsBoolean("IsOnline"));
+			}
 		}
 		//	Set Bank Id
 		if(request.getBankId() > 0) {
