@@ -223,6 +223,20 @@ public class POSConvertUtil {
 			.setPaymentMethod(
 				paymentMethodBuilder
 			)
+			.setIsAllowsApplyDiscount(
+				availablePaymentMethod.get_ValueAsBoolean(
+					ColumnsAdded.COLUMNNAME_IsAllowsApplyDiscount
+				)
+			)
+			.setMaximumDiscountAllowed(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromObject(
+						availablePaymentMethod.get_Value(
+							ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed
+						)
+					)
+				)
+			)
 			.setIsOnline(
 				availablePaymentMethod.get_ValueAsBoolean("IsOnline")
 			)
