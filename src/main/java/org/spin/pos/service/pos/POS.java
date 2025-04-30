@@ -56,10 +56,16 @@ public class POS {
 		if(MTable.get(Env.getCtx(), "C_POSPaymentTypeAllocation") == null) {
 			return null;
 		}
-		return new Query(Env.getCtx(), "C_POSPaymentTypeAllocation", " C_POSPaymentTypeAllocation_ID = ?", transactionName)
-				.setParameters(paymentTypeAllocationId)
-				.setOnlyActiveRecords(true)
-				.first();
+		return new Query(
+			Env.getCtx(),
+			"C_POSPaymentTypeAllocation",
+			" C_POSPaymentTypeAllocation_ID = ?",
+			transactionName
+		)
+			.setParameters(paymentTypeAllocationId)
+			.setOnlyActiveRecords(true)
+			.first()
+		;
 	}
 
 	/**

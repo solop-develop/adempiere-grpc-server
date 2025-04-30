@@ -329,13 +329,19 @@ public class PaymentConvertUtil {
 				payment.get_ValueAsBoolean("IsOnline")
 			)
 			.setResponseStatus(
-				StringManager.getValidString(payment.get_ValueAsString("ResponseStatus"))
+				StringManager.getValidString(
+					payment.get_ValueAsString("ResponseStatus")
+				)
 			)
 			.setResponseMessage(
-				StringManager.getValidString(payment.get_ValueAsString("ResponseMessage"))
+				StringManager.getValidString(
+					payment.get_ValueAsString("ResponseMessage")
+				)
 			)
 			.setResponseCode(
-				StringManager.getValidString(payment.get_ValueAsString("ResponseCode"))
+				StringManager.getValidString(
+					payment.get_ValueAsString("ResponseCode")
+				)
 			)
 			.setNextRequestTime(
 				payment.get_ValueAsInt("NextRequestTime")
