@@ -38,6 +38,7 @@ import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
+import org.compiere.model.MPayment;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUOMConversion;
@@ -1208,9 +1209,24 @@ public class POSLogic {
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
 		}
-		ProcessOnlinePaymentResponse.Builder builder = ProcessOnlinePaymentResponse.newBuilder();
+		AtomicReference<ProcessOnlinePaymentResponse.Builder> builderReference = new AtomicReference<>();
+		Trx.run( transactionName ->{
+			ProcessOnlinePaymentResponse.Builder builder = ProcessOnlinePaymentResponse.newBuilder();
+			MPayment payment = new MPayment(Env.getCtx(), request.getId(), transactionName);
+			payment.processOnline();
+			boolean isError = "E".equals(payment.get_ValueAsString("ResponseStatus"));
+			String message = payment.get_ValueAsString("ResponseMessage");
+			builder
+				.setIsError(isError)
+				.setMessage(
+					StringManager.getValidString(
+						message
+					)
+				);
+			builderReference.set(builder);
 
-		return builder;
+		});
+		return builderReference.get();
 	}
 
 
@@ -1218,9 +1234,30 @@ public class POSLogic {
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
 		}
-		InfoOnlinePaymentResponse.Builder builder = InfoOnlinePaymentResponse.newBuilder();
+		AtomicReference<InfoOnlinePaymentResponse.Builder> builderReference = new AtomicReference<>();
+		Trx.run(transactionName -> {
+			InfoOnlinePaymentResponse.Builder builder = InfoOnlinePaymentResponse.newBuilder();
 
-		return builder;
+			MPayment payment = new MPayment(Env.getCtx(), request.getId(), transactionName);
+			payment.getOnlineStatus();
+			boolean isError = "E".equals(payment.get_ValueAsString("ResponseStatus"));
+			String message = payment.get_ValueAsString("ResponseMessage");
+			String status = payment.get_ValueAsString("ResponseStatus");
+			builder
+				.setIsError(isError)
+				.setMessage(
+					StringManager.getValidString(
+						message
+					)
+				)
+				.setStatus(
+					StringManager.getValidString(
+						status
+					)
+				);
+			builderReference.set(builder);
+		});
+		return builderReference.get();
 	}
 
 
@@ -1228,9 +1265,25 @@ public class POSLogic {
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
 		}
-		CancelOnlinePaymentResponse.Builder builder = CancelOnlinePaymentResponse.newBuilder();
+		AtomicReference<CancelOnlinePaymentResponse.Builder> builderReference = new AtomicReference<>();
+		Trx.run(transactionName -> {
+			MPayment payment = new MPayment(Env.getCtx(), request.getId(), null);
+			CancelOnlinePaymentResponse.Builder builder = CancelOnlinePaymentResponse.newBuilder();
+			payment.reverseOnlineTransaction();
+			boolean isError = "E".equals(payment.get_ValueAsString("ResponseStatus"));
+			String message = payment.get_ValueAsString("ResponseMessage");
 
-		return builder;
+			builder
+					.setIsError(isError)
+					.setMessage(
+							StringManager.getValidString(
+									message
+							)
+					);
+			builderReference.set(builder);
+		});
+
+		return builderReference.get();
 	}
 
 }
