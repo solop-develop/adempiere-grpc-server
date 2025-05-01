@@ -403,8 +403,8 @@ public class OrderManagement {
 		//	Complete Payments
 		List<MPayment> payments = MPayment.getOfOrder(salesOrder);
 		payments.stream().sorted(Comparator.comparing(MPayment::getCreated)).forEach(payment -> {
-			if (Util.isEmpty(payment.get_ValueAsString("ResponseStatus"), true)
-				|| !payment.get_ValueAsString("ResponseStatus").equals("A")) {
+			if (payment.isOnline() && (Util.isEmpty(payment.get_ValueAsString("ResponseStatus"), true)
+				|| !payment.get_ValueAsString("ResponseStatus").equals("A"))) {
 				String errorMessage = "<" + payment.getDocumentNo() + "> @IsPaymentVerificationRequired@ .";
 				if (!Util.isEmpty(payment.get_ValueAsString("ResponseMessage"))) {
 					errorMessage += "@ResponseMessage@ : " + payment.get_ValueAsString("ResponseMessage") + ". ";
