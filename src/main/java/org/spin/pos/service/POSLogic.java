@@ -1265,11 +1265,6 @@ public class POSLogic {
 						status
 					)
 				)
-				.setStatus(
-					StringManager.getValidString(
-						status
-					)
-				)
 				.setNextRequestTime(
 					payment.get_ValueAsInt("NextRequestTime")
 				)
