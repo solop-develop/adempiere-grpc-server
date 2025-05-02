@@ -1214,15 +1214,25 @@ public class POSLogic {
 			ProcessOnlinePaymentResponse.Builder builder = ProcessOnlinePaymentResponse.newBuilder();
 			MPayment payment = new MPayment(Env.getCtx(), request.getId(), transactionName);
 			payment.processOnline();
-			boolean isError = "E".equals(payment.get_ValueAsString("ResponseStatus"));
 			String message = payment.get_ValueAsString("ResponseMessage");
+			String status = payment.get_ValueAsString("ResponseStatus");
+			boolean isError = "E".equals(status);
 			builder
 				.setIsError(isError)
 				.setMessage(
 					StringManager.getValidString(
 						message
 					)
-				);
+				)
+				.setStatus(
+					StringManager.getValidString(
+						status
+					)
+				)
+				.setNextRequestTime(
+					payment.get_ValueAsInt("NextRequestTime")
+				)
+			;
 			builderReference.set(builder);
 
 		});
@@ -1240,9 +1250,9 @@ public class POSLogic {
 
 			MPayment payment = new MPayment(Env.getCtx(), request.getId(), transactionName);
 			payment.getOnlineStatus();
-			boolean isError = "E".equals(payment.get_ValueAsString("ResponseStatus"));
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
+			boolean isError = "E".equals(status);
 			builder
 				.setIsError(isError)
 				.setMessage(
@@ -1254,7 +1264,17 @@ public class POSLogic {
 					StringManager.getValidString(
 						status
 					)
-				);
+				)
+				.setStatus(
+					StringManager.getValidString(
+						status
+					)
+				)
+				.setNextRequestTime(
+					payment.get_ValueAsInt("NextRequestTime")
+				)
+			;
+			;
 			builderReference.set(builder);
 		});
 		return builderReference.get();
@@ -1270,16 +1290,23 @@ public class POSLogic {
 			MPayment payment = new MPayment(Env.getCtx(), request.getId(), null);
 			CancelOnlinePaymentResponse.Builder builder = CancelOnlinePaymentResponse.newBuilder();
 			payment.reverseOnlineTransaction();
-			boolean isError = "E".equals(payment.get_ValueAsString("ResponseStatus"));
 			String message = payment.get_ValueAsString("ResponseMessage");
+			String status = payment.get_ValueAsString("ResponseStatus");
+			boolean isError = "E".equals(status);
 
 			builder
-					.setIsError(isError)
-					.setMessage(
-							StringManager.getValidString(
-									message
-							)
-					);
+				.setIsError(isError)
+				.setMessage(
+					StringManager.getValidString(
+						message
+					)
+				)
+				.setStatus(
+					StringManager.getValidString(
+						status
+					)
+				)
+			;
 			builderReference.set(builder);
 		});
 

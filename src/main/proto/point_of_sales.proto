@@ -1976,6 +1976,8 @@ message ProcessOnlinePaymentRequest {
 message ProcessOnlinePaymentResponse {
 	bool is_error = 1;
 	string message = 2;
+	string status = 3;
+	int32 next_request_time = 4;
 }
 message InfoOnlinePaymentRequest {
 	int32 pos_id = 3;
@@ -1985,6 +1987,7 @@ message InfoOnlinePaymentResponse {
 	bool is_error = 1;
 	string message = 2;
 	string status = 3;
+	int32 next_request_time = 4;
 }
 message CancelOnlinePaymentRequest {
 	int32 pos_id = 3;
@@ -1993,6 +1996,7 @@ message CancelOnlinePaymentRequest {
 message CancelOnlinePaymentResponse {
 	bool is_error = 1;
 	string message = 2;
+	string status = 3;
 }
 
 
