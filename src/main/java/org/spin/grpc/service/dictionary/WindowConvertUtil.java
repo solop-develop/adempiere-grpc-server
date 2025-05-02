@@ -596,7 +596,7 @@ public class WindowConvertUtil {
 				)
 			)
 			.setSequence(field.getSeqNo())
-			.setSeqNoGrid(field.getSeqNoGrid())
+			.setGridSequence(field.getSeqNoGrid())
 			.setValueMax(
 				StringManager.getValidString(
 					column.getValueMax()

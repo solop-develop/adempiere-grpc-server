@@ -262,7 +262,7 @@ message Field {
 	// Window Field Compatibility
 	string column_sql = 28;
 	bool is_displayed_grid = 29;
-	int32 seq_no_grid = 30;
+	int32 grid_sequence = 30;
 	optional FieldGroup field_group = 31;
 	bool is_allow_copy = 32;
 	bool is_same_line = 33;
