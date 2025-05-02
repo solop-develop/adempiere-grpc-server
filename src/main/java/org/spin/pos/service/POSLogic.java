@@ -1216,7 +1216,7 @@ public class POSLogic {
 			payment.processOnline();
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
-			boolean isError = "E".equals(status);
+			boolean isError = "E".equals(status) || "R".equals(status);
 			builder
 				.setIsError(isError)
 				.setMessage(
@@ -1252,7 +1252,7 @@ public class POSLogic {
 			payment.getOnlineStatus();
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
-			boolean isError = "E".equals(status);
+			boolean isError = "E".equals(status) || "R".equals(status);
 			builder
 				.setIsError(isError)
 				.setMessage(
@@ -1287,7 +1287,7 @@ public class POSLogic {
 			payment.reverseOnlineTransaction();
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
-			boolean isError = "E".equals(status);
+			boolean isError = "E".equals(status) || "R".equals(status);
 
 			builder
 				.setIsError(isError)
