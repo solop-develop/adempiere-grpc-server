@@ -349,7 +349,7 @@ public class BrowseConverUtil {
 			)
 			.setIsKey(browseField.isKey())
 			.setIsIdentifier(browseField.isIdentifier())
-			.setSeqNoGrid(browseField.getSeqNoGrid())
+			.setGridSequence(browseField.getSeqNoGrid())
 			.setSequence(browseField.getSeqNo())
 			.setValueMax(
 				StringManager.getValidString(
