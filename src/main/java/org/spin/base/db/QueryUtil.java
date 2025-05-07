@@ -277,7 +277,7 @@ public class QueryUtil {
 				continue;
 			}
 			if (isAddFirstColumn.get()) {
-				sql.append(",");
+				sql.append(", ");
 			}
 
 			MViewColumn viewColumn = MViewColumn.getById(

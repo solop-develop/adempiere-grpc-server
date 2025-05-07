@@ -330,7 +330,7 @@ public class ReferenceUtil {
 
 			int endIndex = inStr.indexOf('@');                     // next @
 			if (endIndex < 0) {
-				token = "";                                 //  no second tag
+				token = "";                                 // no second tag
 				endIndex = index + 1;
 			} else {
 				token = inStr.substring(0, endIndex);

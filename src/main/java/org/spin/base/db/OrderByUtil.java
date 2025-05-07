@@ -69,7 +69,7 @@ public class OrderByUtil {
 			// String orderColumnName = orderBys[i];
 			if (!Util.isEmpty(orderColumnName, true)) {
 				if (orderByClause.length() > 0) {
-					orderByClause += ",";
+					orderByClause += ", ";
 				}
 				orderByClause += orderColumnName;
 				count++;

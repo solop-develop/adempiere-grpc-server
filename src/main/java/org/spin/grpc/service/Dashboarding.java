@@ -489,9 +489,10 @@ public class Dashboarding extends DashboardingImplBase {
 		final boolean isBaseLanguage = Env.isBaseLanguage(Env.getCtx(), "");
 		queryDashboard
 			.setOrderBy(
-				I_PA_DashboardContent.COLUMNNAME_ColumnNo + ","
-				+ I_PA_DashboardContent.COLUMNNAME_AD_Client_ID + "," 
-				+ I_PA_DashboardContent.COLUMNNAME_Line)
+				I_PA_DashboardContent.COLUMNNAME_ColumnNo + ", "
+				+ I_PA_DashboardContent.COLUMNNAME_AD_Client_ID + ", "
+				+ I_PA_DashboardContent.COLUMNNAME_Line
+			)
 			.<MDashboardContent>list()
 			.forEach(dashboard -> {
 				String name = dashboard.getName();
