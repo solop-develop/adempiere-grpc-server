@@ -321,7 +321,7 @@ public class ReferenceUtil {
 	public static String getColumnsOrderLocation(String displaySequence, boolean isAddressReverse) {
 		StringBuffer cityPostalRegion = new StringBuffer();
 
-		String inStr = displaySequence.replace(", ", "|| ', ' ");
+		String inStr = displaySequence.replace(",", "|| ', ' ");
 		String token;
 		int index = inStr.indexOf('@');
 		while (index != -1) {
