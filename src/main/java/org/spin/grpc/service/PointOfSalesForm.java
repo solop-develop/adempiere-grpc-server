@@ -2098,10 +2098,27 @@ public class PointOfSalesForm extends StoreImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 		parameters.add(posId);
 		if(request.getIsOnlyAllocated()) {
-			whereClause.append("EXISTS(SELECT 1 FROM C_POSSellerAllocation s WHERE s.C_POS_ID = ? AND s.SalesRep_ID = AD_User.AD_User_ID AND s.IsActive = 'Y')");
+			whereClause.append("EXISTS(SELECT 1 FROM C_POSSellerAllocation s WHERE s.C_POS_ID = ? AND s.SalesRep_ID = AD_User.AD_User_ID AND s.IsActive = 'Y') ");
 		} else {
-			whereClause.append("EXISTS(SELECT 1 FROM C_POSSellerAllocation s WHERE s.C_POS_ID <> ? AND s.SalesRep_ID = AD_User.AD_User_ID OR s.IsActive = 'N')");
+			whereClause.append("EXISTS(SELECT 1 FROM C_POSSellerAllocation s WHERE s.C_POS_ID <> ? AND s.SalesRep_ID = AD_User.AD_User_ID OR s.IsActive = 'N') ");
 		}
+		//	For search value
+		final String searchValue = ValueManager.getDecodeUrl(
+				request.getSearchValue()
+		);
+		if(!Util.isEmpty(searchValue, true)) {
+			whereClause.append(
+				" AND ( "
+				+ "UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Name2) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%' "
+				+ ") "
+			);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+		}
+
 		Query query = new Query(Env.getCtx(), I_AD_User.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters)
 				.setClient_ID()
