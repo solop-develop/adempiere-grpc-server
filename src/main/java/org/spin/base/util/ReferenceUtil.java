@@ -29,6 +29,7 @@ import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.I_C_Location;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
 import org.adempiere.core.domains.models.I_M_AttributeSetInstance;
+import org.adempiere.core.domains.models.I_M_Locator;
 import org.compiere.model.MColumn;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLookupFactory;
@@ -223,6 +224,12 @@ public class ReferenceUtil {
 			final String displaColumn = getDisplayColumnSQLLocation(tableName, columnName);
 			referenceInfo.setDisplayColumnValue("(" + displaColumn + ")");
 			referenceInfo.setHasJoinValue(false);
+		} else if (DisplayType.Locator == referenceId) {
+			//	Add Display
+			referenceInfo.setTableName(I_M_Locator.Table_Name);
+			referenceInfo.setDisplayColumnValue(I_M_Locator.COLUMNNAME_Value);
+			referenceInfo.setTableAlias(I_M_Locator.Table_Name + "_" + columnName);
+			referenceInfo.setJoinColumnName(I_M_Locator.COLUMNNAME_M_Locator_ID);
 		} else if((DisplayType.TableDir == referenceId || (DisplayType.Table == referenceId || DisplayType.Search == referenceId)
 			&& columnName.endsWith("_ID")) && referenceValueId <= 0) {
 			//	Add Display
@@ -480,6 +487,15 @@ public class ReferenceUtil {
 				+ "FROM M_AttributeSetInstance ";
 			lookupInformation.QueryDirect = lookupInformation.Query
 				+ "WHERE M_AttributeSetInstance.M_AttributeSetInstance_ID = ? ";
+		} else if (DisplayType.Locator == referenceId) {
+			columnName = I_M_Locator.COLUMNNAME_M_Locator_ID;
+			lookupInformation = getLookupInfoFromColumnName(columnName);
+			lookupInformation.DisplayType = referenceId;
+			lookupInformation.Query = "SELECTM_Locator.M_Locator_ID, "
+				+ "NULL, M_Locator.Value, M_Locatore.IsActive "
+				+ "FROM M_Locator ";
+			lookupInformation.QueryDirect = lookupInformation.Query
+				+ "WHERE M_Locator.M_Locator_ID = ? ";
 		} else if(DisplayType.Image == referenceId) {
 			columnName = I_AD_Image.COLUMNNAME_AD_Image_ID;
 			lookupInformation = getLookupInfoFromColumnName(columnName);
