@@ -169,6 +169,12 @@ public class ReportManagement extends ReportManagementImplBase {
 			throw new AdempiereException("@AccessCannotReport@");
 		}
 
+		//	Add to recent Item
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Report,
+			process.getAD_Process_ID()
+		);
+
 		// TODO: Add process parameters by instance
 		ProcessLog.Builder responseBuilder = ProcessLog.newBuilder()
 			.setId(

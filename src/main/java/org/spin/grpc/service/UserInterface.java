@@ -63,6 +63,7 @@ import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MMailText;
+import org.compiere.model.MMenu;
 import org.compiere.model.MMessage;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
@@ -119,6 +120,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
+import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.dictionary.util.WindowUtil;
 import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.grpc.service.ui.CalloutLogic;
@@ -424,6 +426,13 @@ public class UserInterface extends UserInterfaceImplBase {
 				"@AD_Tab_ID@ " + request.getTabId() + " @NotFound@"
 			);
 		}
+
+		//	Add to recent Item
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Window,
+			tab.getAD_Window_ID()
+		);
+
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
 		String[] keyColumns = table.getKeyColumns();
 
@@ -638,6 +647,12 @@ public class UserInterface extends UserInterfaceImplBase {
 				"@AD_Tab_ID@ " + tabId + " @NotFound@"
 			);
 		}
+
+		//	Add to recent Item
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Window,
+			tab.getAD_Window_ID()
+		);
 
 		//	
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
@@ -1302,6 +1317,13 @@ public class UserInterface extends UserInterfaceImplBase {
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			return builder;
 		}
+
+		//	Add to recent Item
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_SmartBrowse,
+			browser.getAD_Browse_ID()
+		);
+
 		HashMap<String, Object> parameterMap = new HashMap<>();
 		HashMap<String, String> parameterOperator = new HashMap<>();
 		//	Populate map

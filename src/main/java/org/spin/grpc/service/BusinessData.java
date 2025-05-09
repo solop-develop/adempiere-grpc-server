@@ -227,6 +227,12 @@ public class BusinessData extends BusinessDataImplBase {
 			);
 		}
 
+		//	Add to recent Item
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Process,
+			process.getAD_Process_ID()
+		);
+
 		ProcessLog.Builder response = ProcessLog.newBuilder()
 			.setId(
 				process.getAD_Process_ID()
