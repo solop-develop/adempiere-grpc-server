@@ -359,9 +359,11 @@ public class BusinessData extends BusinessDataImplBase {
 				}
 			}
 
-			builder.withSelectedRecordsIds(table.getAD_Table_ID(), selectionKeys, selection)
-				.withSelectedRecordsIds(table.getAD_Table_ID(), table.getTableName(), selectionKeys)
-			;
+			if (!selectionKeys.isEmpty()) {
+				builder.withSelectedRecordsIds(table.getAD_Table_ID(), selectionKeys, selection)
+					.withSelectedRecordsIds(table.getAD_Table_ID(), table.getTableName(), selectionKeys)
+				;
+			}
 		}
 
 		//	get document action
