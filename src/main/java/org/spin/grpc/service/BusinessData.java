@@ -341,10 +341,10 @@ public class BusinessData extends BusinessDataImplBase {
 			List<Integer> selectionKeys = new ArrayList<>();
 			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
 			if (selectionsList != null && !selectionsList.isEmpty()) {
+				Map<String, Integer> displayTypeColumns = WindowUtil.getTableColumnsDisplayType(table);
 				for(KeyValueSelection selectionKey : selectionsList) {
 					selectionKeys.add(selectionKey.getSelectionId());
 					if(selectionKey.getValues().getFieldsCount() > 0) {
-						Map<String, Integer> displayTypeColumns = WindowUtil.getTableColumnsDisplayType(table);
 						LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
 							ValueManager.convertValuesMapToObjects(
 								selectionKey.getValues().getFieldsMap(),
