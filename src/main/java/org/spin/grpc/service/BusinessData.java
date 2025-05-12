@@ -309,10 +309,10 @@ public class BusinessData extends BusinessDataImplBase {
 				throw new AdempiereException("@AD_Browse_ID@ @FillMandatory@ @Selection@");
 			}
 
+			Map<String, Integer> displayTypeColumns = BrowserUtil.getBrowseFieldsSelectionDisplayType(browse);
 			for(KeyValueSelection selectionKey : selectionsList) {
 				selectionKeys.add(selectionKey.getSelectionId());
 				if(selectionKey.getValues().getFieldsCount() > 0) {
-					Map<String, Integer> displayTypeColumns = BrowserUtil.getBrowseFieldsSelectionDisplayType(browse);
 					LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
 						ValueManager.convertValuesMapToObjects(
 							selectionKey.getValues().getFieldsMap(),
@@ -341,10 +341,10 @@ public class BusinessData extends BusinessDataImplBase {
 			List<Integer> selectionKeys = new ArrayList<>();
 			LinkedHashMap<Integer, LinkedHashMap<String, Object>> selection = new LinkedHashMap<>();
 			if (selectionsList != null && !selectionsList.isEmpty()) {
+				Map<String, Integer> displayTypeColumns = WindowUtil.getTableColumnsDisplayType(table);
 				for(KeyValueSelection selectionKey : selectionsList) {
 					selectionKeys.add(selectionKey.getSelectionId());
 					if(selectionKey.getValues().getFieldsCount() > 0) {
-						Map<String, Integer> displayTypeColumns = WindowUtil.getTableColumnsDisplayType(table);
 						LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
 							ValueManager.convertValuesMapToObjects(
 								selectionKey.getValues().getFieldsMap(),
@@ -359,9 +359,11 @@ public class BusinessData extends BusinessDataImplBase {
 				}
 			}
 
-			builder.withSelectedRecordsIds(table.getAD_Table_ID(), selectionKeys, selection)
-				.withSelectedRecordsIds(table.getAD_Table_ID(), table.getTableName(), selectionKeys)
-			;
+			if (!selectionKeys.isEmpty()) {
+				builder.withSelectedRecordsIds(table.getAD_Table_ID(), selectionKeys, selection)
+					.withSelectedRecordsIds(table.getAD_Table_ID(), table.getTableName(), selectionKeys)
+				;
+			}
 		}
 
 		//	get document action
