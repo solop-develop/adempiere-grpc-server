@@ -309,10 +309,10 @@ public class BusinessData extends BusinessDataImplBase {
 				throw new AdempiereException("@AD_Browse_ID@ @FillMandatory@ @Selection@");
 			}
 
+			Map<String, Integer> displayTypeColumns = BrowserUtil.getBrowseFieldsSelectionDisplayType(browse);
 			for(KeyValueSelection selectionKey : selectionsList) {
 				selectionKeys.add(selectionKey.getSelectionId());
 				if(selectionKey.getValues().getFieldsCount() > 0) {
-					Map<String, Integer> displayTypeColumns = BrowserUtil.getBrowseFieldsSelectionDisplayType(browse);
 					LinkedHashMap<String, Object> entities = new LinkedHashMap<String, Object>(
 						ValueManager.convertValuesMapToObjects(
 							selectionKey.getValues().getFieldsMap(),
