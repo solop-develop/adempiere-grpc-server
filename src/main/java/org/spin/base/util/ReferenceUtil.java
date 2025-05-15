@@ -134,9 +134,30 @@ public class ReferenceUtil {
 	 * @param referenceValueId
 	 * @param columnName
 	 * @param language
+	 * @param tableName
 	 * @return
 	 */
 	public ReferenceInfo getReferenceInfo(int referenceId, int referenceValueId, String columnName, String language, String tableName) {
+		return getReferenceInfo(
+			referenceId,
+			referenceValueId,
+			columnName,
+			null,
+			language,
+			tableName
+		);
+	}
+	/**
+	 * Get Reference information, can return null if reference is invalid or not exists
+	 * @param referenceId
+	 * @param referenceValueId
+	 * @param columnName
+	 * @param columnAlias
+	 * @param language
+	 * @param tableName
+	 * @return
+	 */
+	public ReferenceInfo getReferenceInfo(int referenceId, int referenceValueId, String columnName, String columnAlias, String language, String tableName) {
 		if(!validateReference(referenceId)) {
 			return null;
 		}
@@ -151,6 +172,7 @@ public class ReferenceUtil {
 		// new instance generated
 		referenceInfo = new ReferenceInfo();
 		referenceInfo.setColumnName(columnName);
+		referenceInfo.setColumnAlias(columnAlias);
 
 		if (DisplayType.ID == referenceId) {
 			MTable table = MTable.get(context, tableName);
@@ -249,29 +271,33 @@ public class ReferenceUtil {
 				return null;
 			}
 
-			String displayColumn = "";
-			if (!Util.isEmpty(lookupInfo.DisplayColumn, true)) {
-				displayColumn = (lookupInfo.DisplayColumn).replace(lookupInfo.TableName + ".", "");
-			} else {
+			String displayColumn = lookupInfo.DisplayColumn;
+			if (Util.isEmpty(displayColumn, true)) {
 				// Parent recursive columns
 				displayColumn = "(" + MLookupFactory.getLookup_TableEmbed(languageValue, columnName, tableName, referenceValueId) + ")";
 				referenceInfo.setDisplayColumnValue(displayColumn);
 				referenceInfo.setHasJoinValue(false);
 				return referenceInfo;
 			}
-			if (!Util.isEmpty(displayColumn)) {
+
+			displayColumn = (lookupInfo.DisplayColumn).replace(lookupInfo.TableName + ".", "");
+			if (!Util.isEmpty(displayColumn, true)) {
 				referenceInfo.setDisplayColumnValue(displayColumn);
 			}
+	
 			referenceInfo.setJoinColumnName((lookupInfo.KeyColumn == null ? "" : lookupInfo.KeyColumn).replace(lookupInfo.TableName + ".", ""));
 			referenceInfo.setTableName(lookupInfo.TableName);
-			if(DisplayType.List == referenceId
-					&& referenceValueId != 0) {
+			// TODO: Validate if it is a `Table` with reference value key, to remove the `List` from the condition
+			if(DisplayType.List == referenceId && referenceValueId > 0) {
 				referenceInfo.setReferenceId(referenceValueId);
 			}
 			//	Translate
 			if (!Util.isEmpty(displayColumn, true) && MTable.hasTranslation(lookupInfo.TableName)) {
 				// display column exists on translation table
-				int columnId = MColumn.getColumn_ID(lookupInfo.TableName + DictionaryUtil.TRANSLATION_SUFFIX, displayColumn);
+				int columnId = MColumn.getColumn_ID(
+					lookupInfo.TableName + DictionaryUtil.TRANSLATION_SUFFIX,
+					displayColumn
+				);
 				if (columnId > 0) {
 					referenceInfo.setLanguage(language);
 				}

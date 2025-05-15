@@ -45,6 +45,7 @@ public class ReferenceInfo {
 		tableName = "";
 		tableAlias = "";
 		columnName = "";
+		columnAlias = "";
 		referenceId = 0;
 		hasJoinValue = false;
 		language = Language.AD_Language_en_US;
@@ -55,6 +56,8 @@ public class ReferenceInfo {
 	private String displayColumnAlias;
 	/**	Column Name	*/
 	private String columnName;
+	/**	Column Alias	*/
+	private String columnAlias;
 	/**	Join Column Name	*/
 	private String joinColumnName;
 	/**	Table Name	*/
@@ -100,6 +103,18 @@ public class ReferenceInfo {
 
 	public void setColumnName(String columnName) {
 		this.columnName = columnName;
+	}
+
+	public String getColumnAlias() {
+		if (Util.isEmpty(this.columnAlias)) {
+			return this.columnName;
+		}
+		return this.columnAlias;
+	}
+
+	public ReferenceInfo setColumnAlias(String columnAlias) {
+		this.columnAlias = columnAlias;
+		return this;
 	}
 
 	public boolean isTranslated() {
@@ -187,12 +202,12 @@ public class ReferenceInfo {
 	 */
 	private void buildAlias(String columnName) {
 		//	For table alias
-		if(Util.isEmpty(tableAlias)) {
-			setTableAlias(getColumnName() + "_" + getTableName());
+		if(Util.isEmpty(this.tableAlias, true)) {
+			this.setTableAlias(this.getColumnAlias() + "_" + this.getTableName());
 		}
 		//	For column alias
-		if(Util.isEmpty(displayColumnAlias)) {
-			if(Util.isEmpty(columnName)) {
+		if(Util.isEmpty(this.displayColumnAlias, true)) {
+			if(Util.isEmpty(columnName, true)) {
 				setDisplayColumnAlias(DISPLAY_COLUMN_ALIAS + "_" + getColumnName());
 			} else {
 				setDisplayColumnAlias(DISPLAY_COLUMN_ALIAS + "_" + columnName);
@@ -238,7 +253,7 @@ public class ReferenceInfo {
 			.append(getTableName()).append(" AS ").append(getTableAlias())
 			.append(" ON(").append(getJoinColumnName(true)).append(" = ")
 		;
-		if (!Util.isEmpty(baseTable, hasJoinValue)) {
+		if (!Util.isEmpty(baseTable, true)) {
 			join.append(baseTable).append(".");
 		}
 		join.append(baseColumnName);
