@@ -343,6 +343,8 @@ public class QueryUtil {
 
 			if (ReferenceUtil.validateReference(displayTypeId)) {
 				MViewColumn viewColumn = MViewColumn.getById(browseField.getCtx(), browseField.getAD_View_Column_ID(), null);
+				final String dbColumnName = viewColumn.getColumnName();
+
 				MViewDefinition viewDefinition = MViewDefinition.get(browseField.getCtx(), viewColumn.getAD_View_Definition_ID());
 				final String tableName = viewDefinition.getTableAlias();
 
@@ -361,12 +363,12 @@ public class QueryUtil {
 						displayTypeId,
 						referenceValueId,
 						columnName,
+						dbColumnName,  // as column alias
 						language.getAD_Language(),
 						tableName
 					);
 				if(referenceInfo != null) {
 					queryToAdd.append(", ");
-					final String dbColumnName = viewColumn.getColumnName();
 					referenceInfo.setDisplayColumnAlias(
 						LookupUtil.getDisplayColumnName(
 							dbColumnName
@@ -375,12 +377,15 @@ public class QueryUtil {
 					final String displayColumn = referenceInfo.getDisplayValue(columnName);
 					queryToAdd.append(displayColumn);
 
-					String joinClause = referenceInfo.getJoinValue(columnName, tableName);
-					if (viewColumn.getAD_Column_ID() <= 0) {
+					String joinClause = "";
+					if (viewColumn.getAD_Column_ID() > 0) {
+						joinClause = referenceInfo.getJoinValue(columnName, tableName);
+					} else {
 						// sub query
-						joinClause = referenceInfo.getJoinValue(columnName);
-						if (!Util.isEmpty(viewColumn.getColumnSQL(), true) && viewColumn.getColumnSQL().contains("(")) {
+						if (!Util.isEmpty(viewColumn.getColumnSQL(), true)) {
 							joinClause = referenceInfo.getJoinValue(viewColumn.getColumnSQL());
+						} else {
+							joinClause = referenceInfo.getJoinValue(columnName);
 						}
 					}
 					joinsToAdd.append(joinClause);
