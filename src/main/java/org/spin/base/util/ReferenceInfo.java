@@ -56,7 +56,7 @@ public class ReferenceInfo {
 	private String displayColumnAlias;
 	/**	Column Name	*/
 	private String columnName;
-	/**	Column Name	*/
+	/**	Column Alias	*/
 	private String columnAlias;
 	/**	Join Column Name	*/
 	private String joinColumnName;
