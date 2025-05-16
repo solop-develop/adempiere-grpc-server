@@ -22,23 +22,33 @@ import java.util.stream.Collectors;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.I_AD_Table;
+import org.adempiere.core.domains.models.I_C_Invoice;
+import org.adempiere.core.domains.models.I_M_MatchInv;
+import org.adempiere.core.domains.models.I_M_MatchPO;
 import org.adempiere.core.domains.models.X_Fact_Acct;
+import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MClient;
 import org.compiere.model.MOrg;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.general_ledger.AccountingDocument;
+import org.spin.backend.grpc.general_ledger.ExistsAccoutingDocumentRequest;
+import org.spin.backend.grpc.general_ledger.ExistsAccoutingDocumentResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.base.util.GeneralLedgerConvertUtil;
 import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
@@ -48,6 +58,14 @@ import org.spin.service.grpc.util.value.StringManager;
  * Service Logic for backend of General Ledger
  */
 public class GeneralLedgerServiceLogic {
+
+	private static String TABLE_NAME = MAccount.Table_Name;
+
+	private final static List<String> POSTED_TABLES_WITHOUT_DOCUMENT = Arrays.asList(
+		I_M_MatchInv.Table_Name,
+		I_M_MatchPO.Table_Name
+	);
+
 
 	public static ListLookupItemsResponse.Builder listAccountingSchemas(ListAccountingSchemasRequest request) {
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
@@ -195,6 +213,75 @@ public class GeneralLedgerServiceLogic {
 		;
 
 		return builderList;
+	}
+
+
+
+	public static ExistsAccoutingDocumentResponse.Builder existsAccoutingDocument(ExistsAccoutingDocumentRequest request) {
+		ExistsAccoutingDocumentResponse.Builder builder = ExistsAccoutingDocumentResponse.newBuilder();
+		MRole role = MRole.getDefault();
+		if (role == null || !role.isShowAcct()) {
+			return builder;
+		}
+
+		// Validate accounting schema
+		int acctSchemaId = request.getAccountingSchemaId();
+		if (acctSchemaId <= 0) {
+			// throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+			return builder;
+		}
+
+		// Validate table
+		if (Util.isEmpty(request.getTableName(), true)) {
+			// throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+			return builder;
+		}
+		final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
+		if (documentTable == null || documentTable.getAD_Table_ID() == 0) {
+			// throw new AdempiereException("@AD_Table_ID@ @Invalid@");
+			return builder;
+		}
+
+		if (documentTable.isView()) {
+			return builder;
+		}
+		if (!documentTable.isDocument()) {
+			// TODO: Remove this condition when complete support to document table
+			if (!POSTED_TABLES_WITHOUT_DOCUMENT.contains(documentTable.getTableName())) {
+				// With `Posted` column
+				if (documentTable.getColumn(I_C_Invoice.COLUMNNAME_Posted) == null) {
+					return builder;
+				}
+			}
+		}
+
+		// Validate record
+		final int recordId = request.getRecordId();
+		if (!RecordUtil.isValidId(recordId, TABLE_NAME)) {
+			// throw new AdempiereException("@FillMandatory@ @Record_ID@");
+			return builder;
+		}
+		PO record = RecordUtil.getEntity(Env.getCtx(), documentTable.getTableName(), recordId, null);
+		if (record == null || record.get_ID() <= 0) {
+			return builder;
+		}
+
+		// Validate `Posted` column
+		if (record.get_ColumnIndex(I_C_Invoice.COLUMNNAME_Posted) < 0) {
+			// without `Posted` button
+			return builder;
+		}
+
+		// Validate `Processed` column
+		if (record.get_ColumnIndex(I_C_Invoice.COLUMNNAME_Processed) < 0) {
+			return builder;
+		}
+		if (!record.get_ValueAsBoolean(I_C_Invoice.COLUMNNAME_Processed)) {
+			return builder;
+		}
+
+		builder.setIsShowAccouting(true);
+		return builder;
 	}
 
 }

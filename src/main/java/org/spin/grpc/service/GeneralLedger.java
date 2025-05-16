@@ -29,11 +29,8 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_AD_Field;
-import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
 import org.adempiere.core.domains.models.I_Fact_Acct;
-import org.adempiere.core.domains.models.I_M_MatchInv;
-import org.adempiere.core.domains.models.I_M_MatchPO;
 import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
 import org.adempiere.core.domains.models.X_Fact_Acct;
 import org.compiere.model.GridField;
@@ -49,7 +46,6 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
-import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.CLogger;
@@ -860,7 +856,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			if(request == null) {
 				throw new AdempiereException("ExistsAccoutingDocumentRequest Null");
 			}
-			ExistsAccoutingDocumentResponse.Builder builder = existsAccoutingDocument(request);
+			ExistsAccoutingDocumentResponse.Builder builder = GeneralLedgerServiceLogic.existsAccoutingDocument(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -873,71 +869,6 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 					.asRuntimeException()
 			);
 		}
-	}
-
-	private ExistsAccoutingDocumentResponse.Builder existsAccoutingDocument(ExistsAccoutingDocumentRequest request) {
-		ExistsAccoutingDocumentResponse.Builder builder = ExistsAccoutingDocumentResponse.newBuilder();
-		MRole role = MRole.getDefault();
-		if (role == null || !role.isShowAcct()) {
-			return builder;
-		}
-
-		// Validate accounting schema
-		int acctSchemaId = request.getAccountingSchemaId();
-		if (acctSchemaId <= 0) {
-			// throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
-			return builder;
-		}
-
-		// Validate table
-		if (Util.isEmpty(request.getTableName(), true)) {
-			// throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-			return builder;
-		}
-		final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
-		if (documentTable == null || documentTable.getAD_Table_ID() == 0) {
-			// throw new AdempiereException("@AD_Table_ID@ @Invalid@");
-			return builder;
-		}
-
-		if (!documentTable.isDocument() || documentTable.isView()) {
-			// TODO: Remove this condition when complete support to document table
-			final List<String> POSTED_TABLES_WITHOUT_DOCUMENT = Arrays.asList(
-				I_M_MatchInv.Table_Name,
-				I_M_MatchPO.Table_Name
-			);
-			if (!POSTED_TABLES_WITHOUT_DOCUMENT.contains(documentTable.getTableName())) {
-				return builder;
-			}
-		}
-
-		// Validate record
-		final int recordId = request.getRecordId();
-		if (!RecordUtil.isValidId(recordId, tableName)) {
-			// throw new AdempiereException("@FillMandatory@ @Record_ID@");
-			return builder;
-		}
-		PO record = RecordUtil.getEntity(Env.getCtx(), documentTable.getTableName(), recordId, null);
-		if (record == null || record.get_ID() <= 0) {
-			return builder;
-		}
-
-		// Validate `Posted` column
-		if (record.get_ColumnIndex(I_C_Invoice.COLUMNNAME_Posted) < 0) {
-			// without `Posted` button
-			return builder;
-		}
-
-		// Validate `Processed` column
-		if (record.get_ColumnIndex(I_C_Invoice.COLUMNNAME_Processed) < 0) {
-			return builder;
-		}
-		if (!record.get_ValueAsBoolean(I_C_Invoice.COLUMNNAME_Processed)) {
-			return builder;
-		}
-
-		builder.setIsShowAccouting(true);
-		return builder;
 	}
 
 
