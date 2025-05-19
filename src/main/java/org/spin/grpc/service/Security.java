@@ -337,13 +337,7 @@ public class Security extends SecurityImplBase {
 	 * @return
 	 */
 	private ListRolesResponse.Builder listRoles(ListRolesRequest request) {
-		int userId = Env.getAD_User_ID(Env.getCtx());
-
-		//	Get page and count
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
+		final int userId = Env.getAD_User_ID(Env.getCtx());
 
 		final String whereClause = "EXISTS("
 				+ "SELECT 1 FROM AD_User_Roles ur "
@@ -372,25 +366,36 @@ public class Security extends SecurityImplBase {
 			.setParameters(userId, userId)
 			.setOnlyActiveRecords(true)
 		;
-		int count = query.count();
 
-		ListRolesResponse.Builder builder = ListRolesResponse.newBuilder();
-		query.setLimit(limit, offset)
+		//	Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		int count = query.count();
+		//	Set page token
+		String nexPageToken = null;
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListRolesResponse.Builder builder = ListRolesResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+		query
+			.setOrderBy(I_AD_Role.COLUMNNAME_Name)
+			// .setLimit(limit, offset)
+			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
 			.<MRole>list()
 			.forEach(role -> {
+				// MRole.get static method not instance the role in 0=* (asterisk)
+				// MRole role = role.get(Env.getCtx(), roleId);
 				builder.addRoles(
 					convertRole(role)
 				);
 			});
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		if(count > offset && count > limit) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
-		);
 		//	Return
 		return builder;
 	}
@@ -440,25 +445,31 @@ public class Security extends SecurityImplBase {
 		String whereClause = "1 = 2";
 		//	get from role access
 		if (role.isAccessAllOrgs()) {
-			whereClause = "(EXISTS(SELECT 1 FROM AD_Role r "
-				+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
-				+ "AND r.AD_Role_ID = ? "
-				+ "AND r.IsActive = 'Y') "
-				+ "OR AD_Org_ID = 0) "
-			;
+			whereClause = "(EXISTS("
+					+ "SELECT 1 FROM AD_Role AS r "
+					+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
+					+ "AND r.AD_Role_ID = ? "
+					+ "AND r.IsActive = 'Y' "
+				+ ") "
+				+ "OR AD_Org_ID = 0 "
+			+ ")";
 			parameters.add(role.getAD_Role_ID());
 		} else {
 			if(role.isUseUserOrgAccess()) {
-				whereClause = "EXISTS(SELECT 1 FROM AD_User_OrgAccess ua "
+				whereClause = "EXISTS("
+					+ "SELECT 1 FROM AD_User_OrgAccess AS ua "
 					+ "WHERE ua.AD_Org_ID = AD_Org.AD_Org_ID "
 					+ "AND ua.AD_User_ID = ? "
-					+ "AND ua.IsActive = 'Y')";
+					+ "AND ua.IsActive = 'Y' "
+				+ ")";
 				parameters.add(Env.getAD_User_ID(Env.getCtx()));
 			} else {
-				whereClause = "EXISTS(SELECT 1 FROM AD_Role_OrgAccess ra "
+				whereClause = "EXISTS("
+					+ "SELECT 1 FROM AD_Role_OrgAccess AS ra "
 					+ "WHERE ra.AD_Org_ID = AD_Org.AD_Org_ID "
 					+ "AND ra.AD_Role_ID = ? "
-					+ "AND ra.IsActive = 'Y')";
+					+ "AND ra.IsActive = 'Y' "
+				+ ")";
 				parameters.add(role.getAD_Role_ID());
 			}
 		}
@@ -477,13 +488,13 @@ public class Security extends SecurityImplBase {
 		;
 
 		//	Get page and count
-		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		int count = query.count();
 		//	Set page token
-		if(count > limit) {
+		String nexPageToken = null;
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
@@ -494,7 +505,9 @@ public class Security extends SecurityImplBase {
 			)
 		;
 		//	Get List
-		query.setLimit(limit, offset)
+		query
+			.setOrderBy(I_AD_Org.COLUMNNAME_Name)
+			// .setLimit(limit, offset)
 			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
 			.<MOrg>list()
 			.forEach(organization -> {
@@ -623,13 +636,13 @@ public class Security extends SecurityImplBase {
 		;
 
 		//	Get page and count
-		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
-		// int offset = (pageNumber - 1) * limit;
+		int offset = (pageNumber - 1) * limit;
 		int count = query.count();
 		//	Set page token
-		if(count > limit) {
+		String nexPageToken = null;
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
@@ -644,7 +657,9 @@ public class Security extends SecurityImplBase {
 
 		//	Get List
 		// TODO: Fix .setLimit combined with .setApplyAccessFilter and with access record (ROWNUM error)
-		query //.setLimit(limit, offset)
+		query
+			//.setLimit(limit, offset)
+			.setOrderBy(I_M_Warehouse.COLUMNNAME_Name)
 			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
 			.<MWarehouse>list()
 			.forEach(warehouse -> {
