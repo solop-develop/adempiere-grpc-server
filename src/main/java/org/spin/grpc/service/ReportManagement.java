@@ -853,21 +853,25 @@ public class ReportManagement extends ReportManagementImplBase {
 			if (table == null || table.getAD_Table_ID() <= 0) {
 				throw new AdempiereException("@TableName@ @NotFound@");
 			}
-			whereClause = "(AD_Table_ID = ? " +
-					" OR EXISTS (SELECT 1 FROM AD_PrintFormat pf " +
-						" INNER JOIN AD_ReportView rv ON (rv.AD_ReportView_ID = pf.AD_ReportView_ID) " +
-						" WHERE rv.AD_Table_ID = ? " +
-						" AND pf.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID " +
-						" AND rv.IsActive = 'Y') " +
-					")";
+			whereClause = "AD_Table_ID = ? "
+				+ "OR EXISTS ("
+					+ "SELECT 1 FROM AD_PrintFormat AS pf "
+					+ "INNER JOIN AD_ReportView AS rv ON (rv.AD_ReportView_ID = pf.AD_ReportView_ID) "
+					+ "WHERE rv.AD_Table_ID = ? "
+					+ "AND pf.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID "
+					+ "AND rv.IsActive = 'Y' "
+				+ ")"
+			;
 			parameters.add(table.getAD_Table_ID());
 			parameters.add(table.getAD_Table_ID());
 		} else if(request.getReportId() > 0) {
 			whereClause = "EXISTS("
-				+ "SELECT 1 FROM AD_Process AS p "
-				+ "WHERE p.AD_Process_ID = ? "
-				+ "AND (p.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID "
-				+ "OR p.AD_ReportView_ID = AD_PrintFormat.AD_ReportView_ID))"
+					+ "SELECT 1 FROM AD_Process AS p "
+					+ "WHERE p.AD_Process_ID = ? "
+					+ "AND (p.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID "
+					+ "OR p.AD_ReportView_ID = AD_PrintFormat.AD_ReportView_ID) "
+					+ "AND p.IsActive = 'Y' "
+				+ ")"
 			;
 			parameters.add(request.getReportId());
 		} else if(request.getReportViewId() > 0) {
@@ -880,11 +884,14 @@ public class ReportManagement extends ReportManagementImplBase {
 				.setParameters(request.getReportViewId())
 				.first()
 			;
-			whereClause = "AD_ReportView_ID = ?";
-			parameters.add(reportView.getAD_ReportView_ID());
-			if (reportView != null && reportView.getAD_ReportView_ID() > 0) {
+			if (reportView == null || reportView.getAD_ReportView_ID() <= 0) {
 				throw new AdempiereException("@AD_ReportView_ID@ @NotFound@");
 			}
+			if (!reportView.isActive()) {
+				throw new AdempiereException("@AD_ReportView_ID@ @NotActive@");
+			}
+			whereClause = "AD_ReportView_ID = ?";
+			parameters.add(reportView.getAD_ReportView_ID());
 		}
 
 		//	Get List
@@ -1012,7 +1019,13 @@ public class ReportManagement extends ReportManagementImplBase {
 			whereClause = "AD_Table_ID = ?";
 			parameters.add(table.getAD_Table_ID());
 		} else if(request.getReportId() > 0) {
-			whereClause = "EXISTS(SELECT 1 FROM AD_Process AS p WHERE p.AD_Process_ID = ? AND p.AD_ReportView_ID = AD_ReportView.AD_ReportView_ID)";
+			whereClause = "EXISTS("
+					+ "SELECT 1 FROM AD_Process AS p "
+					+ "WHERE p.AD_Process_ID = ? "
+					+ "AND p.AD_ReportView_ID = AD_ReportView.AD_ReportView_ID "
+					+ "AND p.IsActive = 'Y' "
+				+ ")"
+			;
 			parameters.add(request.getReportId());
 		} else {
 			throw new AdempiereException("@TableName@ / @AD_Process_ID@ @NotFound@");
@@ -1148,68 +1161,76 @@ public class ReportManagement extends ReportManagementImplBase {
 			throw new AdempiereException("@TableName@ @NotFound@");
 		}
 		MTable table = MTable.get(Env.getCtx(), request.getTableName());
-		String sql = "SELECT t.AD_Table_ID, t.TableName, e.ColumnName, NULLIF(e.PO_PrintName,e.PrintName) "
-				+ "FROM AD_Column AS c "
-				+ " INNER JOIN AD_Column AS used ON (c.ColumnName=used.ColumnName)"
-				+ " INNER JOIN AD_Table AS t ON (used.AD_Table_ID=t.AD_Table_ID AND t.IsView='N' AND t.AD_Table_ID <> c.AD_Table_ID)"
-				+ " INNER JOIN AD_Column AS cKey ON (t.AD_Table_ID=cKey.AD_Table_ID AND cKey.IsKey='Y')"
-				+ " INNER JOIN AD_Element AS e ON (cKey.ColumnName=e.ColumnName) "
-				+ "WHERE c.AD_Table_ID = ? AND c.IsKey ='Y' "
-				+ "ORDER BY 3";
-			PreparedStatement pstmt = null;
-			ResultSet resultSet = null;
-			try {
-				pstmt = DB.prepareStatement(sql, null);
-				pstmt.setInt(1, table.getAD_Table_ID());
-				resultSet = pstmt.executeQuery();
-				int recordCount = 0;
-				while (resultSet.next()) {
-					int drillTableId = resultSet.getInt("AD_Table_ID");
-					String drillTableName = resultSet.getString("TableName");
-					String columnName = resultSet.getString("ColumnName");
-					M_Element element = M_Element.get(Env.getCtx(), columnName);
-					//	Add here
-					DrillTable.Builder drillTable = DrillTable.newBuilder()
-						.setTableId(
-							drillTableId
-						)
-						.setTableName(
-							StringManager.getValidString(drillTableName)
-					);
+		String sql = "SELECT t.AD_Table_ID, t.TableName, e.ColumnName, NULLIF(e.PO_PrintName, e.PrintName) "
+			+ "FROM AD_Column AS c "
+			+ "INNER JOIN AD_Column AS used "
+				+ "ON (c.ColumnName=used.ColumnName) "
+			+ "INNER JOIN AD_Table AS t "
+				+ "ON (used.AD_Table_ID=t.AD_Table_ID "
+				+ "AND t.IsView='N' "
+				+ "AND t.AD_Table_ID <> c.AD_Table_ID) "
+			+ "INNER JOIN AD_Column AS cKey "
+				+ "ON (t.AD_Table_ID=cKey.AD_Table_ID "
+				+ "AND cKey.IsKey='Y') "
+			+ "INNER JOIN AD_Element AS e "
+				+ "ON (cKey.ColumnName=e.ColumnName) "
+			+ "WHERE c.AD_Table_ID = ? AND c.IsKey ='Y' "
+			+ "ORDER BY 3"
+		;
+		PreparedStatement pstmt = null;
+		ResultSet resultSet = null;
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			pstmt.setInt(1, table.getAD_Table_ID());
+			resultSet = pstmt.executeQuery();
+			int recordCount = 0;
+			while (resultSet.next()) {
+				int drillTableId = resultSet.getInt("AD_Table_ID");
+				String drillTableName = resultSet.getString("TableName");
+				String columnName = resultSet.getString("ColumnName");
+				M_Element element = M_Element.get(Env.getCtx(), columnName);
+				//	Add here
+				DrillTable.Builder drillTable = DrillTable.newBuilder()
+					.setTableId(
+						drillTableId
+					)
+					.setTableName(
+						StringManager.getValidString(drillTableName)
+				);
 
-					String name = element.getPrintName();
-					String poName = element.getPO_PrintName();
-					if(!Env.isBaseLanguage(Env.getCtx(), "")) {
-						String translation = element.get_Translation("PrintName");
-						if(!Util.isEmpty(translation, true)) {
-							name = translation;
-						}
-						translation = element.get_Translation("PO_PrintName");
-						if(!Util.isEmpty(translation, true)) {
-							poName = translation;
-						}
+				String name = element.getPrintName();
+				String poName = element.getPO_PrintName();
+				if(!Env.isBaseLanguage(Env.getCtx(), "")) {
+					String translation = element.get_Translation("PrintName");
+					if(!Util.isEmpty(translation, true)) {
+						name = translation;
 					}
-					if(!Util.isEmpty(poName, true)) {
-						name = name + "/" + poName;
+					translation = element.get_Translation("PO_PrintName");
+					if(!Util.isEmpty(translation, true)) {
+						poName = translation;
 					}
-					//	Print Name
-					drillTable.setPrintName(
-						StringManager.getValidString(name)
-					);
-					recordCount++;
-					//	Add to list
-					builder.addDrillTables(drillTable);
 				}
-				builder.setRecordCount(recordCount);
-				resultSet.close();
-				pstmt.close();
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, sql, e);
-			} finally {
-				DB.close(resultSet, pstmt);
-				resultSet = null;
-				pstmt = null;
+				if(!Util.isEmpty(poName, true)) {
+					name = name + "/" + poName;
+				}
+				//	Print Name
+				drillTable.setPrintName(
+					StringManager.getValidString(name)
+				);
+				recordCount++;
+				//	Add to list
+				builder.addDrillTables(drillTable);
 			}
+			builder.setRecordCount(recordCount);
+			resultSet.close();
+			pstmt.close();
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, sql, e);
+		} finally {
+			DB.close(resultSet, pstmt);
+			resultSet = null;
+			pstmt = null;
+		}
 		//	Return
 		return builder;
 	}
