@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import org.adempiere.core.domains.models.I_AD_Column;
@@ -135,53 +136,55 @@ public class DictionaryServiceLogic {
 
 
 	public static ListIdentifierColumnsResponse.Builder getIdentifierFields(ListIdentifierColumnsRequest request) {
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			DisplayType.Search,
-			request.getFieldId(),
-			request.getProcessParameterId(),
-			request.getBrowseFieldId(),
-			request.getColumnId(),
-			request.getColumnName(),
-			request.getTableName()
+		// MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+		// 	DisplayType.Search,
+		// 	request.getFieldId(),
+		// 	request.getProcessParameterId(),
+		// 	request.getBrowseFieldId(),
+		// 	request.getColumnId(),
+		// 	request.getColumnName(),
+		// 	request.getTableName()
+		// );
+		// if (reference == null) {
+		// 	throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
+		// }
+		final String tableName = request.getTableName();
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			tableName
 		);
-		if (reference == null) {
-			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
-		}
-		final String tableName = reference.TableName;
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
+
 		Properties context = Env.getCtx();
-		MTable table = MTable.get(context, tableName);
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-
-		ListIdentifierColumnsResponse.Builder fieldsListBuilder = ListIdentifierColumnsResponse.newBuilder();
-
-		final String sql = "SELECT c.ColumnName"
-			// + "c.AD_Column_ID , c.ColumnName, t.AD_Table_ID, t.TableName, c.ColumnSql "
-			+ " FROM AD_Column AS c"
-			+ " WHERE "
-			// + "	WHERE c.AD_Reference_ID = 10 "
-			+ " c.AD_Table_ID = ? "
-			+ " AND c.IsIdentifier = 'Y'"
-			+ "	ORDER BY c.SeqNo "
+		Query query = new Query(
+			context,
+			I_AD_Column.Table_Name,
+			"AD_Table_ID = ? AND IsIdentifier = 'Y'",
+			null
+		)
+			.setOrderBy(I_AD_Column.COLUMNNAME_SeqNo)
+			.setParameters(table.getAD_Table_ID())
 		;
 
-		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
-			int recordCount = 0;
-			while(resultSet.next()) {
-				String columnName = resultSet.getString(I_AD_Column.COLUMNNAME_ColumnName);
+		ListIdentifierColumnsResponse.Builder fieldsListBuilder = ListIdentifierColumnsResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
+
+		query
+			.getIDsAsList()
+			.forEach(columnId -> {
+				MColumn column = MColumn.get(context, columnId);
+				if (column == null || column.getAD_Column_ID() <= 0) {
+					return;
+				}
+				final String columnName = column.getColumnName();
 				fieldsListBuilder.addIdentifierColumns(
-					columnName
-				);
-				recordCount++;
-			}
-			fieldsListBuilder.setRecordCount(recordCount);
-		}).onFailure(throwable -> {
-			log.log(Level.SEVERE, sql, throwable);
-		});
+						columnName
+					)
+				;
+			})
+		;
 
 		if (fieldsListBuilder.getIdentifierColumnsCount() <= 0) {
 			MColumn valueColumn = table.getColumn("Value");
@@ -211,61 +214,73 @@ public class DictionaryServiceLogic {
 			);
 		}
 
-		//	empty general info
-		// if (fieldsListBuilder.getFieldsList().size() == 0) {
-		// }
-
 		return fieldsListBuilder;
 	}
 
 	public static ListSelectionColumnsResponse.Builder listSelectionColumns(ListSelectionColumnsRequest request) {
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			DisplayType.Search,
-			request.getFieldId(),
-			request.getProcessParameterId(),
-			request.getBrowseFieldId(),
-			request.getColumnId(),
-			request.getColumnName(),
-			request.getTableName()
+		// MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+		// 	DisplayType.Search,
+		// 	request.getFieldId(),
+		// 	request.getProcessParameterId(),
+		// 	request.getBrowseFieldId(),
+		// 	request.getColumnId(),
+		// 	request.getColumnName(),
+		// 	request.getTableName()
+		// );
+		// if (reference == null) {
+		// 	throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
+		// }
+		final String tableName = request.getTableName();
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			tableName
 		);
-		if (reference == null) {
-			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
-		}
-		final String tableName = reference.TableName;
-		if (Util.isEmpty(tableName, true)) {
-			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
-		}
+
 		Properties context = Env.getCtx();
-		MTable table = MTable.get(context, tableName);
-		if (table == null || table.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
-		}
-
-		ListSelectionColumnsResponse.Builder fieldsListBuilder = ListSelectionColumnsResponse.newBuilder();
-
-		final String sql = "SELECT c.ColumnName"
-			// + "c.AD_Column_ID , c.ColumnName, t.AD_Table_ID, t.TableName, c.ColumnSql "
-			+ " FROM AD_Column AS c"
-			+ " WHERE "
-			// + "	WHERE c.AD_Reference_ID = 10 "
-			+ " c.AD_Table_ID = ? "
-			+ " AND c.IsSelectionColumn = 'Y'"
-			+ "	ORDER BY c.ColumnName "
+		Query query = new Query(
+			context,
+			I_AD_Column.Table_Name,
+			"AD_Table_ID = ? AND IsSelectionColumn = 'Y'",
+			null
+		)
+			.setOrderBy(I_AD_Column.COLUMNNAME_ColumnName)
+			.setParameters(table.getAD_Table_ID())
 		;
 
-		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
-			int recordCount = 0;
-			while(resultSet.next()) {
-				String columnName = resultSet.getString(I_AD_Column.COLUMNNAME_ColumnName);
-				fieldsListBuilder.addSelectionColumns(
-					columnName
+		ListSelectionColumnsResponse.Builder fieldsListBuilder = ListSelectionColumnsResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
+
+		AtomicInteger sequence = new AtomicInteger(0);
+		query
+			.getIDsAsList()
+			.forEach(columnId -> {
+				MColumn column = MColumn.get(context, columnId);
+				if (column == null || column.getAD_Column_ID() <= 0) {
+					return;
+				}
+				final String columnName = column.getColumnName();
+				Field.Builder fieldBuilder = DictionaryConvertUtil.convertFieldByColumn(
+					context,
+					column
 				);
-				recordCount++;
-			}
-			fieldsListBuilder.setRecordCount(recordCount);
-		}).onFailure(throwable -> {
-			log.log(Level.SEVERE, sql, throwable);
-		});
+				fieldBuilder.setSequence(
+						sequence.incrementAndGet()
+					)
+					.setIsDisplayed(true)
+					.setIsMandatory(false)
+				;
+				fieldsListBuilder.addSelectionColumns(
+						columnName
+					)
+					.addSelectionFields(
+						fieldBuilder
+					)
+				;
+			})
+		;
 
 		if (fieldsListBuilder.getSelectionColumnsCount() <= 0) {
 			MColumn valueColumn = table.getColumn("Value");
@@ -294,10 +309,6 @@ public class DictionaryServiceLogic {
 				)
 			);
 		}
-
-		//	empty general info
-		// if (fieldsListBuilder.getFieldsList().size() == 0) {
-		// }
 
 		return fieldsListBuilder;
 	}
