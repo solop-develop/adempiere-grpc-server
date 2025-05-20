@@ -48,6 +48,8 @@ import org.spin.backend.grpc.dictionary.ListProcessesRequest;
 import org.spin.backend.grpc.dictionary.ListProcessesResponse;
 import org.spin.backend.grpc.dictionary.ListSearchFieldsRequest;
 import org.spin.backend.grpc.dictionary.ListSearchFieldsResponse;
+import org.spin.backend.grpc.dictionary.ListSelectionColumnsRequest;
+import org.spin.backend.grpc.dictionary.ListSelectionColumnsResponse;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.Tab;
 import org.spin.backend.grpc.dictionary.Window;
@@ -422,6 +424,29 @@ public class Dictionary extends DictionaryImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			ListIdentifierColumnsResponse.Builder fielsListBuilder = DictionaryServiceLogic.getIdentifierFields(request);
+			responseObserver.onNext(fielsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listSelectionColumns(ListSelectionColumnsRequest request, StreamObserver<ListSelectionColumnsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListSelectionColumnsResponse.Builder fielsListBuilder = DictionaryServiceLogic.listSelectionColumns(request);
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

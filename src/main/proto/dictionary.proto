@@ -105,6 +105,33 @@ service Dictionary {
 		};
 	}
 
+	rpc ListSelectionColumns(ListSelectionColumnsRequest) returns (ListSelectionColumnsResponse) {
+		option (google.api.http) = {
+			get: "/dictionary/selections/{table_name}"
+			additional_bindings: {
+				get: "/dictionary/selections/table/{table_name}/{column_name}"
+			}
+			additional_bindings: {
+				get: "/field/selections/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/field/selections/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/field/selections/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/field/selections/query-criteria/{browse_field_id}"
+			}
+			additional_bindings: {
+				get: "/dictionary/selections/element/{element_id}"
+			}
+			additional_bindings: {
+				get: "/dictionary/selections/element/column/{element_column_name}"
+			}
+		};
+	}
+
 	// List Search Info Fields
 	rpc ListSearchFields(ListSearchFieldsRequest) returns (ListSearchFieldsResponse) {
 		option (google.api.http) = {
@@ -473,19 +500,44 @@ message ListIdentifierColumnsRequest {
 	string search_value = 7;
 	// references
 	string table_name = 8;
-	int32 process_parameter_id = 9;
-	int32 field_id = 10;
-	int32 browse_field_id = 11;
-	int32 column_id = 12;
-	string column_name = 13;
+	string column_name = 9;
+	int32 column_id = 10;
+	int32 field_id = 11;
+	int32 process_parameter_id = 12;
+	int32 browse_field_id = 13;
 	int32 element_id = 14;
 	string element_column_name = 15;
 }
-
 message ListIdentifierColumnsResponse {
 	int64 record_count = 1;
 	repeated string identifier_columns = 2;
 	string next_page_token = 3;
+}
+
+// Selection Columns
+message ListSelectionColumnsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// references
+	string table_name = 8;
+	string column_name = 9;
+	int32 column_id = 10;
+	int32 field_id = 11;
+	int32 process_parameter_id = 12;
+	int32 browse_field_id = 13;
+	int32 element_id = 14;
+	string element_column_name = 15;
+}
+message ListSelectionColumnsResponse {
+	int64 record_count = 1;
+	repeated string selection_columns = 2;
+	repeated Field selection_fields = 3;
+	string next_page_token = 4;
 }
 
 
@@ -496,7 +548,6 @@ message SearchColumn {
 	int32 sequence = 3;
 	int32 display_type = 4;
 }
-
 message ListSearchFieldsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -507,15 +558,14 @@ message ListSearchFieldsRequest {
 	string search_value = 7;
 	// references
 	string table_name = 8;
-	int32 process_parameter_id = 9;
-	int32 field_id = 10;
-	int32 browse_field_id = 11;
-	int32 column_id = 12;
-	string column_name = 13;
+	string column_name = 9;
+	int32 column_id = 10;
+	int32 field_id = 11;
+	int32 process_parameter_id = 12;
+	int32 browse_field_id = 13;
 	int32 element_id = 14;
 	string element_column_name = 15;
 }
-
 message ListSearchFieldsResponse {
 	string table_name = 1;
 	repeated Field query_fields = 2;
