@@ -43,6 +43,8 @@ import org.spin.backend.grpc.dictionary.ListProcessesRequest;
 import org.spin.backend.grpc.dictionary.ListProcessesResponse;
 import org.spin.backend.grpc.dictionary.ListSearchFieldsRequest;
 import org.spin.backend.grpc.dictionary.ListSearchFieldsResponse;
+import org.spin.backend.grpc.dictionary.ListSelectionColumnsRequest;
+import org.spin.backend.grpc.dictionary.ListSelectionColumnsResponse;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.SearchColumn;
 import org.spin.base.util.RecordUtil;
@@ -194,8 +196,6 @@ public class DictionaryServiceLogic {
 					"Name"
 				);
 			}
-		}
-		if (fieldsListBuilder.getIdentifierColumnsCount() <= 0) {
 			MColumn documentNoColumn = table.getColumn("DocumentNo");
 			if (documentNoColumn != null) {
 				fieldsListBuilder.addIdentifierColumns(
@@ -217,6 +217,92 @@ public class DictionaryServiceLogic {
 
 		return fieldsListBuilder;
 	}
+
+	public static ListSelectionColumnsResponse.Builder listSelectionColumns(ListSelectionColumnsRequest request) {
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			DisplayType.Search,
+			request.getFieldId(),
+			request.getProcessParameterId(),
+			request.getBrowseFieldId(),
+			request.getColumnId(),
+			request.getColumnName(),
+			request.getTableName()
+		);
+		if (reference == null) {
+			throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
+		}
+		final String tableName = reference.TableName;
+		if (Util.isEmpty(tableName, true)) {
+			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
+		}
+		Properties context = Env.getCtx();
+		MTable table = MTable.get(context, tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("@AD_Table_ID@ @NotFound@");
+		}
+
+		ListSelectionColumnsResponse.Builder fieldsListBuilder = ListSelectionColumnsResponse.newBuilder();
+
+		final String sql = "SELECT c.ColumnName"
+			// + "c.AD_Column_ID , c.ColumnName, t.AD_Table_ID, t.TableName, c.ColumnSql "
+			+ " FROM AD_Column AS c"
+			+ " WHERE "
+			// + "	WHERE c.AD_Reference_ID = 10 "
+			+ " c.AD_Table_ID = ? "
+			+ " AND c.IsSelectionColumn = 'Y'"
+			+ "	ORDER BY c.ColumnName "
+		;
+
+		DB.runResultSet(null, sql, List.of(table.getAD_Table_ID()), resultSet -> {
+			int recordCount = 0;
+			while(resultSet.next()) {
+				String columnName = resultSet.getString(I_AD_Column.COLUMNNAME_ColumnName);
+				fieldsListBuilder.addSelectionColumns(
+					columnName
+				);
+				recordCount++;
+			}
+			fieldsListBuilder.setRecordCount(recordCount);
+		}).onFailure(throwable -> {
+			log.log(Level.SEVERE, sql, throwable);
+		});
+
+		if (fieldsListBuilder.getSelectionColumnsCount() <= 0) {
+			MColumn valueColumn = table.getColumn("Value");
+			if (valueColumn != null) {
+				fieldsListBuilder.addSelectionColumns(
+					"Value"
+				);
+			}
+			MColumn nameColumn = table.getColumn("Name");
+			if (nameColumn != null) {
+				fieldsListBuilder.addSelectionColumns(
+					"Name"
+				);
+			}
+			MColumn documentNoColumn = table.getColumn("DocumentNo");
+			if (documentNoColumn != null) {
+				fieldsListBuilder.addSelectionColumns(
+					"DocumentNo"
+				);
+			}
+		}
+		if (fieldsListBuilder.getSelectionColumnsCount() <= 0) {
+			fieldsListBuilder.addAllSelectionColumns(
+				Arrays.asList(
+					table.getKeyColumns()
+				)
+			);
+		}
+
+		//	empty general info
+		// if (fieldsListBuilder.getFieldsList().size() == 0) {
+		// }
+
+		return fieldsListBuilder;
+	}
+
+
 
 	public static ListSearchFieldsResponse.Builder listSearchFields(ListSearchFieldsRequest request) {
 		ListSearchFieldsResponse.Builder responseBuilder = ListSearchFieldsResponse.newBuilder();
