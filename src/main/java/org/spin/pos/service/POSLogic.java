@@ -1288,17 +1288,17 @@ public class POSLogic {
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
 			boolean isError = "E".equals(status) || "R".equals(status);
-
+			//TODO: This is not implemented and returns error by default, must set builder info from Payment Information when implemented
 			builder
-				.setIsError(isError)
+				.setIsError(true)
 				.setMessage(
 					StringManager.getValidString(
-						message
+						"Not Implemented"
 					)
 				)
 				.setStatus(
 					StringManager.getValidString(
-						status
+						"E"
 					)
 				)
 			;
