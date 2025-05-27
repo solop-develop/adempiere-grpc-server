@@ -62,11 +62,13 @@ import org.compiere.model.MChatEntry;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
+import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMenu;
 import org.compiere.model.MMessage;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
+import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MRule;
 import org.compiere.model.MTab;
@@ -120,6 +122,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
+import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.dictionary.util.WindowUtil;
 import org.spin.grpc.service.ui.BrowserLogic;
@@ -1704,15 +1707,88 @@ public class UserInterface extends UserInterfaceImplBase {
 				})
 				.collect(Collectors.toList())
 			;
-			list.forEach(fieldValue -> {
+			list.forEach(gridFieldItem -> {
+				Object contextValue = gridFieldItem.getValue();
 				Value.Builder valueBuilder = ValueManager.getValueFromReference(
-					fieldValue.getValue(),
-					fieldValue.getDisplayType()
+					contextValue,
+					gridFieldItem.getDisplayType()
 				);
 				contextValues.putFields(
-					fieldValue.getColumnName(),
+					gridFieldItem.getColumnName(),
 					valueBuilder.build()
 				);
+
+				// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
+				int displayTypeId = ReferenceUtil.overwriteDisplayType(
+					gridFieldItem.getDisplayType(),
+					gridFieldItem.getAD_Reference_Value_ID()
+				);
+				if (ReferenceUtil.validateReference(displayTypeId)) {
+					String contextDisplayValue = null;
+					if (contextValue != null) {
+						if (displayTypeId == DisplayType.List ||
+							(displayTypeId == DisplayType.Button && gridFieldItem.getAD_Reference_Value_ID() > 0)) {
+							MRefList referenceList = MRefList.get(
+								Env.getCtx(),
+								gridFieldItem.getAD_Reference_Value_ID(),
+								StringManager.getStringFromObject(
+									contextValue
+								),
+								null
+							);
+							if (referenceList != null) {
+								contextDisplayValue = referenceList.get_Translation(
+									MRefList.COLUMNNAME_Name
+								);
+							}
+						} else {
+							MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(
+								displayTypeId,
+								gridFieldItem.getAD_Reference_Value_ID(),
+								gridFieldItem.getColumnName(),
+								0
+							);
+							if(lookupInfo != null && !Util.isEmpty(lookupInfo.QueryDirect, true)) {
+								final String sql = WhereClauseUtil.removeIsActiveRestriction(
+									lookupInfo.TableName,
+									lookupInfo.QueryDirect
+								);
+								PreparedStatement pstmt = null;
+								ResultSet rs = null;
+								try {
+									//	SELECT Key, Value, Name FROM ...
+									pstmt = DB.prepareStatement(sql.toString(), null);
+									DB.setParameter(pstmt, 1, contextValue);
+
+									//	Get from Query
+									rs = pstmt.executeQuery();
+									if (rs.next()) {
+										//	3 = Display Value
+										contextDisplayValue = rs.getString(3);
+									}
+								} catch (Exception e) {
+									log.severe(e.getLocalizedMessage());
+									e.printStackTrace();
+									// throw new AdempiereException(e);
+								} finally {
+									DB.close(rs, pstmt);
+									rs = null;
+									pstmt = null;
+								}
+							}
+						}
+					}
+
+					Value.Builder displayValueBuilder = ValueManager.getValueFromString(
+						contextDisplayValue
+					);
+					contextValues.putFields(
+						LookupUtil.getDisplayColumnName(
+							gridFieldItem.getColumnName()
+						),
+						displayValueBuilder.build()
+					);
+				}
 			});
 
 			// always add is sales transaction on context
@@ -1812,7 +1888,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				int methodStart = cmd.lastIndexOf('.');
 				try {
 					if (methodStart != -1) {
-						Class<?> cClass = Class.forName(cmd.substring(0,methodStart));
+						Class<?> cClass = Class.forName(cmd.substring(0, methodStart));
 						call = (Callout) cClass.getDeclaredConstructor().newInstance();
 						method = cmd.substring(methodStart+1);
 					}
