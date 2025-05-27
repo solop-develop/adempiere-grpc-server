@@ -499,7 +499,7 @@ public class ReferenceInfo {
 					validationRuleId = column.getAD_Val_Rule_ID();
 				}
 			}
-		}else if(displayTypeId > 0) {
+		} else if(displayTypeId > 0) {
 			X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), displayTypeId, null);
 			if(reference == null || reference.getAD_Reference_ID() <= 0) {
 				throw new AdempiereException("@AD_Reference_ID@ @NotFound@");
