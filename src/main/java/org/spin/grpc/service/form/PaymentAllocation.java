@@ -535,8 +535,13 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 	private ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
 		Properties context = Env.getCtx();
+
 		int currencyId = request.getCurrencyId();
+		validateAndGetCurrency(currencyId);
+
 		int businessPartnerId = request.getBusinessPartnerId();
+		validateAndGetBusinessPartner(businessPartnerId);
+
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getDate()
 		);
@@ -710,10 +715,13 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 	private ListInvoicesResponse.Builder listInvoices(ListInvoicesRequest request) {
 		Properties context = Env.getCtx();
+
 		int currencyId = request.getCurrencyId();
 		validateAndGetCurrency(currencyId);
+
 		int businessPartnerId = request.getBusinessPartnerId();
 		validateAndGetBusinessPartner(businessPartnerId);
+
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getDate()
 		);
