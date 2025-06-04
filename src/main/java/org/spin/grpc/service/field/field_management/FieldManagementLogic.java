@@ -961,8 +961,8 @@ public class FieldManagementLogic {
 		}
 
 		List<MTab> tabsList = Arrays.asList(
-				window.getTabs(false, null)
-			)
+			window.getTabs(false, null)
+		)
 			.stream()
 			.filter(tabItem -> {
 				return tabItem.isActive();
