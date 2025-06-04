@@ -691,8 +691,8 @@ public class WhereClauseUtil {
 		if (tabs == null) {
 			MWindow window = MWindow.get(tab.getCtx(), tab.getAD_Window_ID());
 			tabs = Arrays.asList(
-					window.getTabs(false, null)
-				)
+				window.getTabs(false, null)
+			)
 				.stream()
 				.filter(currentTab -> {
 					return currentTab.isActive();
@@ -720,13 +720,18 @@ public class WhereClauseUtil {
 			MTable mainTable = null;
 			if(optionalTab.isPresent()) {
 				mainTable = MTable.get(context, optionalTab.get().getAD_Table_ID());
-				mainColumnName = mainTable.getKeyColumns()[0];
+				String[] keyColumns = mainTable.getKeyColumns();
+				if (keyColumns.length > 0) {
+					// get first
+					mainColumnName = keyColumns[0];
+				}
 			}
 
 			List<MTab> parentTabsList = WindowUtil.getParentTabsList(tab.getAD_Window_ID(), tabId, new ArrayList<MTab>());
 			List<MTab> tabList = parentTabsList.stream()
 				.filter(parentTab -> {
-					return parentTab.getAD_Tab_ID() != tabId
+					return parentTab.isActive()
+						&& parentTab.getAD_Tab_ID() != tabId
 						&& parentTab.getAD_Tab_ID() != optionalTab.get().getAD_Tab_ID()
 						&& parentTab.getSeqNo() < seqNo
 						&& parentTab.getTabLevel() < tabLevel

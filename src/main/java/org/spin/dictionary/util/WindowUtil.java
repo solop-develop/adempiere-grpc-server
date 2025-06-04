@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.compiere.model.MColumn;
@@ -183,7 +184,13 @@ public class WindowUtil {
 			);
 			List<MTab> tabsList = Arrays.asList(
 				windowDefintion.getTabs(false, null)
-			);
+			)
+				.stream()
+				.filter(currentTab -> {
+					return currentTab.isActive();
+				})
+				.collect(Collectors.toList())
+			;
 			tabsList.forEach(tabItem -> {
 				if (tabItem.getTabLevel() >= tabLevel || tabItem.getSeqNo() >= tabSequence) {
 					// it is child tab

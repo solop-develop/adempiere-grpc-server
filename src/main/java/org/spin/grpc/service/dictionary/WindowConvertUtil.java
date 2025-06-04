@@ -125,8 +125,14 @@ public class WindowConvertUtil {
 			boolean isShowAcct = MRole.getDefault(context, false).isShowAcct();
 			// List<Tab.Builder> tabListForGroup = new ArrayList<>();
 			List<MTab> tabs = Arrays.asList(
-				window.getTabs(false, null)
-			);
+					window.getTabs(false, null)
+				)
+				.stream()
+				.filter(currentTab -> {
+					return currentTab.isActive();
+				})
+				.collect(Collectors.toList())
+			;
 			if (tabs != null) {
 				for(MTab tab : tabs) {
 					if(tab == null || !tab.isActive()) {
@@ -733,7 +739,13 @@ public class WindowConvertUtil {
 		MWindow window = MWindow.get(field.getCtx(), parentTab.getAD_Window_ID());
 		List<MTab> tabsList = Arrays.asList(
 			window.getTabs(false, null)
-		);
+		)
+			.stream()
+			.filter(currentTab -> {
+				return currentTab.isActive();
+			})
+			.collect(Collectors.toList())
+		;
 		if (tabsList == null || tabsList.isEmpty()) {
 			return depenentFieldsList;
 		}
