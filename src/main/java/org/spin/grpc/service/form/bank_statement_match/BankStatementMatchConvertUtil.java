@@ -39,7 +39,6 @@ import org.spin.backend.grpc.form.bank_statement_match.MatchingMovement;
 import org.spin.backend.grpc.form.bank_statement_match.Payment;
 import org.spin.backend.grpc.form.bank_statement_match.ResultMovement;
 import org.spin.backend.grpc.form.bank_statement_match.TenderType;
-import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -89,6 +88,7 @@ public class BankStatementMatchConvertUtil {
 		;
 		return builder;
 	}
+
 
 
 	public static BankAccount.Builder convertBankAccount(int bankAccountId) {
@@ -155,6 +155,8 @@ public class BankStatementMatchConvertUtil {
 		return builder;
 	}
 
+
+
 	public static BankStatement.Builder convertBankStatement(int bankStatementId) {
 		BankStatement.Builder builder = BankStatement.newBuilder();
 		if (bankStatementId <= 0) {
@@ -163,7 +165,6 @@ public class BankStatementMatchConvertUtil {
 		MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, null);
 		return convertBankStatement(bankStatement);
 	}
-
 	public static BankStatement.Builder convertBankStatement(MBankStatement bankStatement) {
 		BankStatement.Builder builder = BankStatement.newBuilder();
 		if (bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
@@ -382,6 +383,8 @@ public class BankStatementMatchConvertUtil {
 		return builder;
 	}
 
+
+
 	public static Payment.Builder convertPayment(MPayment payment) {
 		Payment.Builder builder = Payment.newBuilder();
 		if (payment == null) {
@@ -441,6 +444,7 @@ public class BankStatementMatchConvertUtil {
 
 		return builder;
 	}
+
 
 
 	public static ImportedBankMovement.Builder convertImportedBankMovement(X_I_BankStatement bankStatemet) {
@@ -520,6 +524,7 @@ public class BankStatementMatchConvertUtil {
 	}
 
 
+
 	public static MatchingMovement.Builder convertMatchMovement(X_I_BankStatement bankStatemet) {
 		MatchingMovement.Builder builder = MatchingMovement.newBuilder();
 		if (bankStatemet == null || bankStatemet.getI_BankStatement_ID() <= 0) {
@@ -568,8 +573,8 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setIsAutomatic(
-				BooleanManager.getBooleanFromString(
-					bankStatemet.getEftMemo()
+				bankStatemet.get_ValueAsBoolean(
+					"IsMatched"
 				)
 			)
 		;
@@ -621,6 +626,7 @@ public class BankStatementMatchConvertUtil {
 	}
 
 
+
 	public static ResultMovement.Builder convertResultMovement(X_I_BankStatement bankStatemet) {
 		ResultMovement.Builder builder = ResultMovement.newBuilder();
 		if (bankStatemet == null || bankStatemet.getI_BankStatement_ID() <= 0) {
@@ -663,8 +669,8 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setIsAutomatic(
-				BooleanManager.getBooleanFromString(
-					bankStatemet.getEftMemo()
+				bankStatemet.get_ValueAsBoolean(
+					"IsMatched"
 				)
 			)
 		;
