@@ -150,6 +150,9 @@ message ListBrowserItemsRequest {
 	string context_attributes = 8;
 	// custom filters
 	int32 id = 9;
+	// to run process before search
+	string table_name = 10;
+	int32 record_id = 11;
 }
 message ListBrowserItemsResponse {
 	int64 record_count = 1;
