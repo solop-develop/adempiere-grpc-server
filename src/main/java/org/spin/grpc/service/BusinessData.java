@@ -278,11 +278,11 @@ public class BusinessData extends BusinessDataImplBase {
 		//	Call process builder
 		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
 			.process(process.getAD_Process_ID())
+			.withTitle(process.getName())
+			.withWindowNo(0)
 			.withRecordId(tableId, recordId)
 			.withoutPrintPreview()
 			.withoutBatchMode()
-			.withWindowNo(0)
-			.withTitle(process.getName())
 			.withoutTransactionClose()
 		;
 
