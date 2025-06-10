@@ -23,16 +23,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-
-import javax.script.ScriptEngine;
 
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Element;
@@ -47,26 +41,15 @@ import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MView;
 import org.adempiere.model.MViewColumn;
 import org.adempiere.model.MViewDefinition;
-import org.compiere.model.Callout;
-import org.compiere.model.GridField;
-import org.compiere.model.GridFieldVO;
-import org.compiere.model.GridTab;
-import org.compiere.model.GridTabVO;
-import org.compiere.model.GridWindow;
-import org.compiere.model.GridWindowVO;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
-import org.compiere.model.MField;
-import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMenu;
 import org.compiere.model.MMessage;
-import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
-import org.compiere.model.MRule;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
@@ -115,9 +98,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
-import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.util.DictionaryUtil;
-import org.spin.dictionary.util.WindowUtil;
 import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.grpc.service.ui.CalloutLogic;
 import org.spin.grpc.service.ui.UserInterfaceLogic;
@@ -147,8 +128,6 @@ import io.grpc.stub.StreamObserver;
 public class UserInterface extends UserInterfaceImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(UserInterface.class);
-	/**	Window emulation	*/
-	private AtomicInteger windowNoEmulation = new AtomicInteger(1);
 	
 	@Override
 	public void rollbackEntity(RollbackEntityRequest request, StreamObserver<Entity> responseObserver) {
@@ -1303,7 +1282,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			org.spin.backend.grpc.user_interface.Callout.Builder calloutResponse = runcallout(request);
+			org.spin.backend.grpc.user_interface.Callout.Builder calloutResponse = CalloutLogic.runcallout(request);
 			responseObserver.onNext(
 				calloutResponse.build()
 			);
@@ -1311,369 +1290,14 @@ public class UserInterface extends UserInterfaceImplBase {
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
-
-	/**
-	 * Run callout with data from server
-	 * @param request
-	 * @return
-	 */
-	private org.spin.backend.grpc.user_interface.Callout.Builder runcallout(RunCalloutRequest request) {
-		if (Util.isEmpty(request.getCallout(), true)) {
-			throw new AdempiereException("@FillMandatory@ @Callout@");
-		}
-		if (Util.isEmpty(request.getColumnName(), true)) {
-			throw new AdempiereException("@FillMandatory@ @ColumnName@");
-		}
-		org.spin.backend.grpc.user_interface.Callout.Builder calloutBuilder = org.spin.backend.grpc.user_interface.Callout.newBuilder();
-		Trx.run(transactionName -> {
-			if (request.getTabId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @AD_Tab_ID@");
-			}
-			MTab tab = MTab.get(Env.getCtx(), request.getTabId());
-			if (tab == null || tab.getAD_Tab_ID() <= 0) {
-				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
-			}
-
-			MField field = Arrays.asList(tab.getFields(false, null))
-				.parallelStream()
-				.filter(searchField -> {
-					return 
-						searchField != null && 
-						searchField.getAD_Column() != null && 
-						request.getColumnName().equals(
-							searchField.getAD_Column().getColumnName()
-						)
-					;
-				})
-				.findFirst()
-				.orElse(null)
-			;
-			if (field == null || field.getAD_Field_ID() <= 0) {
-				throw new AdempiereException("@AD_Field_ID@ @NotFound@: " + request.getColumnName());
-			}
-
-			//	window
-			int windowNo = request.getWindowNo();
-			if(windowNo <= 0) {
-				windowNo = windowNoEmulation.getAndIncrement();
-			}
-
-			// set values on Env.getCtx()
-			Map<String, Integer> displayTypeColumns = WindowUtil.getTabFieldsDisplayType(tab);
-			Map<String, Object> attributes = ValueManager.convertValuesMapToObjects(
-				request.getContextAttributes().getFieldsMap(),
-				displayTypeColumns
-			);
-			ContextManager.setContextWithAttributesFromObjectMap(
-				windowNo,
-				Env.getCtx(),
-				attributes
-			);
-
-			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
-			int columnDisplayTypeId = column.getAD_Reference_ID();
-			//
-			Object oldValue = ValueManager.getObjectFromReference(
-				request.getOldValue(),
-				columnDisplayTypeId
-			);
-			Object value = ValueManager.getObjectFromReference(
-				request.getValue(),
-				columnDisplayTypeId
-			);
-
-			// TODO: Correct `tabNo` with get ASP Tabs List and isActive tab
-			int tabNo = (tab.getSeqNo() / 10) - 1;
-			if(tabNo < 0) {
-				tabNo = 0;
-			}
-			ContextManager.setTabContextByObject(Env.getCtx(), windowNo, tabNo, request.getColumnName(), value);
-
-			//	Initial load for callout wrapper
-			GridWindowVO gridWindowVo = GridWindowVO.create(Env.getCtx(), windowNo, tab.getAD_Window_ID());
-			GridWindow gridWindow = new GridWindow(gridWindowVo, true);
-			// gridWindow.initTab(tabNo); // TODO: Set more precise link column
-			GridTabVO gridTabVo = GridTabVO.create(gridWindowVo, tabNo, tab, false, true);
-			// TODO: Fix Convert_PostgreSQL.convertRowNum with multiple row num on first restriction as `WHERE ROWNUM >= 1 AND ROWNUM <= 1`
-			gridTabVo.WhereClause = "1=1 AND ROWNUM >= 1 AND ROWNUM <= 1";
-			GridFieldVO gridFieldVo = GridFieldVO.create(Env.getCtx(), windowNo, tabNo, tab.getAD_Window_ID(), tab.getAD_Tab_ID(), false, field);
-			GridField gridField = new GridField(gridFieldVo);
-			//	Init tab
-			GridTab gridTab = new GridTab(gridTabVo, gridWindow, true);
-
-			// set link column name by tab
-			gridTab.setLinkColumnName(null);
-			String linkColumn = gridTab.getLinkColumnName();
-			if (Util.isEmpty(linkColumn, true)) {
-				// set link column name by parent column
-				MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
-				List<MColumn> columnsList = table.getColumnsAsList();
-				MColumn parentColumn = columnsList.parallelStream()
-					.filter(columnItem -> {
-						return columnItem.isParent();
-					})
-					.findFirst()
-					.orElse(null);
-				if (parentColumn != null && parentColumn.getAD_Column_ID() > 0) {
-					linkColumn = parentColumn.getColumnName();
-					gridTab.setLinkColumnName(linkColumn);
-				}
-			}
-
-			gridTab.query(false);
-			gridTab.clearSelection();
-			gridTab.dataNew(false);
-
-			//	load values
-			for (Entry<String, Object> attribute : attributes.entrySet()) {
-				String columnNameEntity = attribute.getKey();
-				Object valueEntity = attribute.getValue();
-				gridTab.setValue(
-					columnNameEntity,
-					valueEntity
-				);
-			}
-			// gridTab.setValue(request.getColumnName(), value);
-			gridTab.setValue(gridField, value);
-
-			//	Load value for field
-			Object oldValueChange = oldValue;
-			if(oldValueChange != null
-					&& value != null
-					&& value.equals(oldValueChange)) {
-				oldValueChange = null;
-			}
-			gridField.setValue(oldValueChange, false);
-			gridField.setValue(value, false);
-
-			//	Run it
-			String result = processCallout(windowNo, gridTab, gridField);
-			Struct.Builder contextValues = Struct.newBuilder();
-			List<GridField> list = Arrays.asList(gridTab.getFields())
-				.stream()
-				.filter(fieldValue -> {
-					return CalloutLogic.isValidChange(fieldValue);
-				})
-				.collect(Collectors.toList())
-			;
-			list.forEach(gridFieldItem -> {
-				Object contextValue = gridFieldItem.getValue();
-				Value.Builder valueBuilder = ValueManager.getValueFromReference(
-					contextValue,
-					gridFieldItem.getDisplayType()
-				);
-				contextValues.putFields(
-					gridFieldItem.getColumnName(),
-					valueBuilder.build()
-				);
-
-				// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
-				int displayTypeId = ReferenceUtil.overwriteDisplayType(
-					gridFieldItem.getDisplayType(),
-					gridFieldItem.getAD_Reference_Value_ID()
-				);
-				if (ReferenceUtil.validateReference(displayTypeId)) {
-					String contextDisplayValue = null;
-					if (contextValue != null) {
-						if (displayTypeId == DisplayType.List ||
-							(displayTypeId == DisplayType.Button && gridFieldItem.getAD_Reference_Value_ID() > 0)) {
-							MRefList referenceList = MRefList.get(
-								Env.getCtx(),
-								gridFieldItem.getAD_Reference_Value_ID(),
-								StringManager.getStringFromObject(
-									contextValue
-								),
-								null
-							);
-							if (referenceList != null) {
-								contextDisplayValue = referenceList.get_Translation(
-									MRefList.COLUMNNAME_Name
-								);
-							}
-						} else {
-							MLookupInfo lookupInfo = ReferenceUtil.getReferenceLookupInfo(
-								displayTypeId,
-								gridFieldItem.getAD_Reference_Value_ID(),
-								gridFieldItem.getColumnName(),
-								0
-							);
-							if(lookupInfo != null && !Util.isEmpty(lookupInfo.QueryDirect, true)) {
-								final String sql = WhereClauseUtil.removeIsActiveRestriction(
-									lookupInfo.TableName,
-									lookupInfo.QueryDirect
-								);
-								PreparedStatement pstmt = null;
-								ResultSet rs = null;
-								try {
-									//	SELECT Key, Value, Name FROM ...
-									pstmt = DB.prepareStatement(sql.toString(), null);
-									DB.setParameter(pstmt, 1, contextValue);
-
-									//	Get from Query
-									rs = pstmt.executeQuery();
-									if (rs.next()) {
-										//	3 = Display Value
-										contextDisplayValue = rs.getString(3);
-									}
-								} catch (Exception e) {
-									log.severe(e.getLocalizedMessage());
-									e.printStackTrace();
-									// throw new AdempiereException(e);
-								} finally {
-									DB.close(rs, pstmt);
-									rs = null;
-									pstmt = null;
-								}
-							}
-						}
-					}
-
-					Value.Builder displayValueBuilder = ValueManager.getValueFromString(
-						contextDisplayValue
-					);
-					contextValues.putFields(
-						LookupUtil.getDisplayColumnName(
-							gridFieldItem.getColumnName()
-						),
-						displayValueBuilder.build()
-					);
-				}
-			});
-
-			// always add is sales transaction on context
-			String isSalesTransaction = Env.getContext(Env.getCtx(), windowNo, "IsSOTrx", true);
-			if (!Util.isEmpty(isSalesTransaction, true)) {
-				Value.Builder valueBuilder = ValueManager.getValueFromStringBoolean(isSalesTransaction);
-				contextValues.putFields(
-					"IsSOTrx",
-					valueBuilder.build()
-				);
-			}
-			calloutBuilder.setResult(
-					StringManager.getValidString(
-						Msg.parseTranslation(
-							Env.getCtx(),
-							result
-						)
-					)
-				)
-				.setValues(contextValues)
-			;
-
-			// TODO: Temporary Workaround
-			ContextTemporaryWorkaround.setAdditionalContext(
-				request.getCallout(),
-				windowNo,
-				calloutBuilder
-			);
-		});
-		return calloutBuilder;
-	}
-
-	/**
-	 * Process Callout
-	 * @param gridTab
-	 * @param field
-	 * @return
-	 */
-	private String processCallout (int windowNo, GridTab gridTab, GridField field) {
-		String callout = field.getCallout();
-		if (Util.isEmpty(callout, true)) {
-			return "";
-		}
-
-		//
-		Object value = field.getValue();
-		Object oldValue = field.getOldValue();
-		log.fine(field.getColumnName() + "=" + value
-			+ " (" + callout + ") - old=" + oldValue);
-
-		StringTokenizer st = new StringTokenizer(callout, ";,", false);
-		while (st.hasMoreTokens()) {
-			String cmd = st.nextToken().trim();
-			String retValue = "";
-			// FR [1877902]
-			// CarlosRuiz - globalqss - implement beanshell callout
-			// Victor Perez  - vpj-cd implement JSR 223 Scripting
-			if (cmd.toLowerCase().startsWith(MRule.SCRIPT_PREFIX)) {
-				MRule rule = MRule.get(Env.getCtx(), cmd.substring(MRule.SCRIPT_PREFIX.length()));
-				if (rule == null) {
-					retValue = "Callout " + cmd + " not found"; 
-					log.log(Level.SEVERE, retValue);
-					return retValue;
-				}
-				if ( !  (rule.getEventType().equals(MRule.EVENTTYPE_Callout) 
-					  && rule.getRuleType().equals(MRule.RULETYPE_JSR223ScriptingAPIs))) {
-					retValue = "Callout " + cmd + " must be of type JSR 223 and event Callout"; 
-					log.log(Level.SEVERE, retValue);
-					return retValue;
-				}
-
-				ScriptEngine engine = rule.getScriptEngine();
-
-				// Window Env.getCtx() are    W_
-				// Login Env.getCtx()  are    G_
-				MRule.setContext(engine, Env.getCtx(), windowNo);
-				// now add the callout parameters windowNo, tab, field, value, oldValue to the engine 
-				// Method arguments Env.getCtx() are A_
-				engine.put(MRule.ARGUMENTS_PREFIX + "WindowNo", windowNo);
-				engine.put(MRule.ARGUMENTS_PREFIX + "Tab", gridTab);
-				engine.put(MRule.ARGUMENTS_PREFIX + "Field", field);
-				engine.put(MRule.ARGUMENTS_PREFIX + "Value", value);
-				engine.put(MRule.ARGUMENTS_PREFIX + "OldValue", oldValue);
-				engine.put(MRule.ARGUMENTS_PREFIX + "Ctx", Env.getCtx());
-
-				try {
-					retValue = engine.eval(rule.getScript()).toString();
-				} catch (Exception e) {
-					log.log(Level.SEVERE, "", e);
-					e.printStackTrace();
-					retValue = 	"Callout Invalid: " + e.toString();
-					return retValue;
-				}
-			} else {
-				Callout call = null;
-				String method = null;
-				int methodStart = cmd.lastIndexOf('.');
-				try {
-					if (methodStart != -1) {
-						Class<?> cClass = Class.forName(cmd.substring(0, methodStart));
-						call = (Callout) cClass.getDeclaredConstructor().newInstance();
-						method = cmd.substring(methodStart+1);
-					}
-				} catch (Exception e) {
-					log.log(Level.SEVERE, "class", e);
-					e.printStackTrace();
-					return "Callout Invalid: " + cmd + " (" + e.toString() + ")";
-				}
-
-				if (call == null || Util.isEmpty(method, true)) {
-					return "Callout Invalid: " + method;
-				}
-
-				try {
-					retValue = call.start(Env.getCtx(), method, windowNo, gridTab, field, value, oldValue);
-				} catch (Exception e) {
-					log.log(Level.SEVERE, "start", e);
-					e.printStackTrace();
-					retValue = 	"Callout Invalid: " + e.toString();
-					return retValue;
-				}
-			}
-			if (!Util.isEmpty(retValue)) {	//	interrupt on first error
-				log.severe (retValue);
-				return retValue;
-			}
-		}   //  for each callout
-		return "";
-	}	//	processCallout
 
 
 
