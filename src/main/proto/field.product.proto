@@ -283,6 +283,7 @@ message ProductInfo {
 	string description = 26;
 	string document_note = 27;
 	bool is_active = 28;
+	string currency = 29; // TODO: Load with price list version
 }
 message ListProductsInfoResponse {
 	int64 record_count = 1;

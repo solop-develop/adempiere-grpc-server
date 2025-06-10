@@ -26,6 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.core.domains.models.I_M_AttributeSet;
 import org.adempiere.core.domains.models.I_M_AttributeSetInstance;
+import org.adempiere.core.domains.models.I_M_PriceList;
 import org.adempiere.core.domains.models.I_M_PriceList_Version;
 import org.adempiere.core.domains.models.I_M_Product;
 import org.adempiere.core.domains.models.I_M_Product_Category;
@@ -35,6 +36,7 @@ import org.adempiere.core.domains.models.I_M_Product_Group;
 import org.adempiere.core.domains.models.I_M_Product_PO;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MPriceListVersion;
@@ -551,6 +553,7 @@ public class ProductInfoLogic {
 		}
 
 		// Price List Version
+		String currencyCode = "";
 		final int priceListVersionId = request.getPriceListVersionId();
 		if (request.getPriceListVersionId() > 0) {
 			sqlQuery += ", "
@@ -571,6 +574,28 @@ public class ProductInfoLogic {
 			parametersList.add(
 				priceListVersionId
 			);
+
+			final String priceListWhere = "EXISTS ("
+				+ "SELECT 1 FROM M_PriceList_Version AS plv "
+				+ "WHERE plv.M_PriceList_ID = M_PriceList.m_pricelist_id "
+				+ "AND plv.m_pricelist_version_id = ? "
+				+ ")"
+			; 
+			MPriceList priceList = new Query(
+				Env.getCtx(),
+				I_M_PriceList.Table_Name,
+				priceListWhere,
+				null
+			)
+				.setParameters(priceListVersionId)
+				.first()
+			;
+			if (priceList != null && priceList.getM_PriceList_ID() > 0) {
+				MCurrency currency = MCurrency.get(Env.getCtx(), priceList.getC_Currency_ID());
+				if (currency != null && currency.getC_Currency_ID() > 0) {
+					currencyCode = currency.getISO_Code();
+				}
+			}
 		}
 
 		// Warehouse
@@ -696,6 +721,9 @@ public class ProductInfoLogic {
 					priceListVersionId,
 					warhouseId,
 					isUnconfirmed
+				);
+				builder.setCurrency(
+					StringManager.getValidString(currencyCode)
 				);
 				builderList.addRecords(builder);
 			}
