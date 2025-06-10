@@ -27,6 +27,7 @@ import org.adempiere.core.domains.models.I_M_Storage;
 import org.adempiere.core.domains.models.I_M_Substitute;
 import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MCurrency;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductPO;
 import org.compiere.model.MUOM;
@@ -209,6 +210,7 @@ public class ProductInfoConvert {
 				;
 			}
 		}
+
 		if (priceListVersionId > 0) {
 			builder.setListPrice(
 					NumberManager.getBigDecimalToString(
@@ -576,8 +578,19 @@ public class ProductInfoConvert {
 			);
 		}
 
+		String currencyCode = "";
+		if (productVendor.getC_Currency_ID() > 0) {
+			MCurrency currency = MCurrency.get(Env.getCtx(), productVendor.getC_Currency_ID());
+			if (currency != null && currency.getC_Currency_ID() > 0) {
+				currencyCode = currency.getISO_Code();
+			}
+		}
+
 		builder.setIsCurrentVendor(
 				productVendor.isCurrentVendor()
+			)
+			.setCurrency(
+				StringManager.getValidString(currencyCode)
 			)
 			.setListPrice(
 				NumberManager.getBigDecimalToString(
