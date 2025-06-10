@@ -24,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.ThreadLocalRandom;
@@ -1342,15 +1341,24 @@ public class UserInterface extends UserInterfaceImplBase {
 				throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
 			}
 
-			MField field = null;
-			Optional<MField> searchedValue = Arrays.asList(tab.getFields(false, null)).parallelStream()
+			MField field = Arrays.asList(tab.getFields(false, null))
+				.parallelStream()
 				.filter(searchField -> {
-					return searchField.getAD_Column().getColumnName().equals(request.getColumnName());
+					return 
+						searchField != null && 
+						searchField.getAD_Column() != null && 
+						request.getColumnName().equals(
+							searchField.getAD_Column().getColumnName()
+						)
+					;
 				})
-				.findFirst();
-			if(searchedValue.isPresent()) {
-				field = searchedValue.get();
+				.findFirst()
+				.orElse(null)
+			;
+			if (field == null || field.getAD_Field_ID() <= 0) {
+				throw new AdempiereException("@AD_Field_ID@ @NotFound@: " + request.getColumnName());
 			}
+
 			//	window
 			int windowNo = request.getWindowNo();
 			if(windowNo <= 0) {
@@ -1369,28 +1377,17 @@ public class UserInterface extends UserInterfaceImplBase {
 				attributes
 			);
 
+			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
+			int columnDisplayTypeId = column.getAD_Reference_ID();
 			//
-			Object oldValue = null;
-			Object value = null;
-			if (field != null && field.getAD_Field_ID() > 0) {
-				MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
-				int displayTypeId = column.getAD_Reference_ID();
-				oldValue = ValueManager.getObjectFromReference(
-					request.getOldValue(),
-					displayTypeId
-				);
-				value = ValueManager.getObjectFromReference(
-					request.getValue(),
-					displayTypeId
-				);
-			} else {
-				oldValue = ValueManager.getObjectFromValue(
-					request.getOldValue()
-				);
-				value = ValueManager.getObjectFromValue(
-					request.getValue()
-				);
-			}
+			Object oldValue = ValueManager.getObjectFromReference(
+				request.getOldValue(),
+				columnDisplayTypeId
+			);
+			Object value = ValueManager.getObjectFromReference(
+				request.getValue(),
+				columnDisplayTypeId
+			);
 
 			// TODO: Correct `tabNo` with get ASP Tabs List and isActive tab
 			int tabNo = (tab.getSeqNo() / 10) - 1;
@@ -1419,8 +1416,8 @@ public class UserInterface extends UserInterfaceImplBase {
 				MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 				List<MColumn> columnsList = table.getColumnsAsList();
 				MColumn parentColumn = columnsList.parallelStream()
-					.filter(column -> {
-						return column.isParent();
+					.filter(columnItem -> {
+						return columnItem.isParent();
 					})
 					.findFirst()
 					.orElse(null);
