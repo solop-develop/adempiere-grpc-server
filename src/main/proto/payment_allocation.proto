@@ -24,9 +24,9 @@ import "google/protobuf/timestamp.proto";
 import "base_data_type.proto";
 
 // Base URL
-// /payment-allocation/
+// /forms/payment-allocation/
 
-package payment_allocation;
+package form.payment_allocation;
 
 // The Banck Statement Match form service definition.
 // - org.compiere.apps.form.Allocation
@@ -36,51 +36,56 @@ service PaymentAllocation {
 	// lists criteria
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/payment-allocation/business-partners"
+			get: "/forms/payment-allocation/business-partners"
 		};
 	}
 	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/payment-allocation/organizations"
+			get: "/forms/payment-allocation/organizations"
 		};
 	}
-	rpc ListCurrencies(ListCurrenciesRequest) returns (data.ListLookupItemsResponse) {
+	rpc ListCurrencies(ListCurrenciesRequest) returns (ListCurrenciesResponse) {
 		option (google.api.http) = {
-			get: "/payment-allocation/currencies"
+			get: "/forms/payment-allocation/currencies"
 		};
 	}
 	rpc ListTransactionTypes(ListTransactionTypesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/payment-allocation/transaction-types"
+			get: "/forms/payment-allocation/transaction-types"
+		};
+	}
+	rpc ListConversionTypes(ListConversionTypesRequest) returns (ListConversionTypesResponse) {
+		option (google.api.http) = {
+			get: "/forms/payment-allocation/conversion-types"
 		};
 	}
 
 	// list result
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
 		option (google.api.http) = {
-			get: "/payment-allocation/payments/{business_partner_id}"
+			get: "/forms/payment-allocation/payments/{business_partner_id}"
 		};
 	}
 	rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse) {
 		option (google.api.http) = {
-			get: "/payment-allocation/invoices/{business_partner_id}"
+			get: "/forms/payment-allocation/invoices/{business_partner_id}"
 		};
 	}
 
 	// process
 	rpc ListCharges(ListChargesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/payment-allocation/charges"
+			get: "/forms/payment-allocation/charges"
 		};
 	}
 	rpc ListTransactionOrganizations(ListTransactionOrganizationsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/payment-allocation/organizations/transactions"
+			get: "/forms/payment-allocation/organizations/transactions"
 		};
 	}
 	rpc Process(ProcessRequest) returns (ProcessResponse) {
 		option (google.api.http) = {
-			post: "/payment-allocation/process",
+			post: "/forms/payment-allocation/process",
 			body: "*"
 		};
 	}
@@ -96,7 +101,6 @@ message BusinessPartner {
 	string name = 5;
 	string description = 6;
 }
-
 message ListBusinessPartnersRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -108,7 +112,6 @@ message ListBusinessPartnersRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
-
 message ListBusinessPartnersResponse {
 	int64 record_count = 1;
 	repeated BusinessPartner records = 2;
@@ -123,7 +126,6 @@ message Organization {
 	string value = 3;
 	string name = 4;
 }
-
 message ListOrganizationsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -135,7 +137,6 @@ message ListOrganizationsRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
-
 message ListOrganizatiosResponse {
 	int64 record_count = 1;
 	repeated Organization records = 2;
@@ -148,9 +149,10 @@ message Currency {
 	int32 id = 1;
 	string uuid = 2;
 	string iso_code = 3;
-	string description = 4;
+	string name = 4;
+	string symbol = 5;
+	int32 standard_precision = 6;
 }
-
 message ListCurrenciesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -162,10 +164,39 @@ message ListCurrenciesRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
-
 message ListCurrenciesResponse {
 	int64 record_count = 1;
 	repeated Currency records = 2;
+	string next_page_token = 3;
+}
+
+
+// Conversion Type
+message ConversionType {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string nombre = 4;
+	string description = 5;
+	bool is_default = 6;
+}
+message ListConversionTypesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	int32 business_partner_id = 10;
+	google.protobuf.Timestamp date = 11;
+}
+message ListConversionTypesResponse {
+	int64 record_count = 1;
+	repeated ConversionType records = 2;
 	string next_page_token = 3;
 }
 
@@ -178,7 +209,6 @@ message TransactionType {
 	string name = 4;
 	string description = 5;
 }
-
 message ListTransactionTypesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -190,7 +220,6 @@ message ListTransactionTypesRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
-
 message ListTransactionTypesResponse {
 	int64 record_count = 1;
 	repeated TransactionType records = 2;
@@ -223,7 +252,6 @@ message Payment {
 	string converted_amount = 12;
 	string open_amount = 13;
 }
-
 message ListPaymentsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -232,6 +260,7 @@ message ListPaymentsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	// custom filters
 	int32 business_partner_id = 8;
 	google.protobuf.Timestamp date = 9;
 	int32 organization_id = 10;
@@ -239,8 +268,10 @@ message ListPaymentsRequest {
 	bool is_multi_currency = 12;
 	string transaction_type = 13; // AP-AR
 	bool is_automatic_write_off = 14;
+	int32 conversion_type_id = 15;
+	bool is_negotiated_rate = 16;
+	string negociated_rate = 17;
 }
-
 message ListPaymentsResponse {
 	int64 record_count = 1;
 	repeated Payment records = 2;
@@ -265,7 +296,6 @@ message Invoice {
 	string open_amount = 13;
 	string discount_amount = 14;
 }
-
 message ListInvoicesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -274,6 +304,7 @@ message ListInvoicesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	// custom filters
 	int32 business_partner_id = 8;
 	google.protobuf.Timestamp date = 9;
 	int32 organization_id = 10;
@@ -281,8 +312,10 @@ message ListInvoicesRequest {
 	bool is_multi_currency = 12;
 	string transaction_type = 13; // AP-AR
 	bool is_automatic_write_off = 14;
+	int32 conversion_type_id = 15;
+	bool is_negotiated_rate = 16;
+	string negociated_rate = 17;
 }
-
 message ListInvoicesResponse {
 	int64 record_count = 1;
 	repeated Invoice records = 2;
@@ -298,7 +331,6 @@ message Charge {
 	string description = 4;
 	string amount = 5;
 }
-
 message ListChargesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -310,7 +342,6 @@ message ListChargesRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
-
 message ListChargesResponse {
 	int64 record_count = 1;
 	repeated Charge records = 2;
@@ -330,7 +361,6 @@ message ListTransactionOrganizationsRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
-
 message ListTransactionOrganizationsResponse {
 	int64 record_count = 1;
 	repeated Organization records = 2;
@@ -365,7 +395,6 @@ message ProcessRequest {
 	repeated PaymentSelection payment_selections = 9;
 	repeated InvoiceSelection invoice_selections = 10;
 }
-
 message ProcessResponse {
 	string message = 1;
 }
