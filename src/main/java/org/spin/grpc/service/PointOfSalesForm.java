@@ -6019,13 +6019,22 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
 				"AND ("
-				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%'"
-				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%'"
-				+ "OR UPPER(UPC) = UPPER(?)"
-				+ "OR UPPER(SKU) = UPPER(?)"
-				+ ")"
+					+ "("
+						+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
+						+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+						+ "OR UPPER(UPC) = UPPER(?) "
+						+ "OR UPPER(SKU) = UPPER(?) "
+					+ ") "
+					+ "OR EXISTS("
+						+ "SELECT 1 FROM M_Product_PO AS po "
+						+ "WHERE po.IsActive = 'Y' "
+						+ "AND po.M_Product_ID = M_Product.M_Product_ID "
+						+ "AND UPPER(po.UPC) LIKE UPPER(?) "
+					+ ")"
+				+ ") "
 			);
 			//	Add parameters
+			parameters.add(searchValue);
 			parameters.add(searchValue);
 			parameters.add(searchValue);
 			parameters.add(searchValue);
