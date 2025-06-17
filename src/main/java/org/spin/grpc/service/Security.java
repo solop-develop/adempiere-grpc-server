@@ -95,11 +95,11 @@ import org.spin.backend.grpc.security.UserInfo;
 import org.spin.backend.grpc.security.UserInfoRequest;
 import org.spin.backend.grpc.security.Warehouse;
 import org.spin.base.util.ContextManager;
-import org.spin.base.util.PreferenceUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.PreferenceUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -780,20 +780,22 @@ public class Security extends SecurityImplBase {
 			List<MPreference> preferencesList = new ArrayList<MPreference>();
 			if (isDefaultRole) {
 				preferencesList = PreferenceUtil.getSessionPreferences(userId);
-				for (MPreference preference: preferencesList) {
-					String attibuteName = preference.getAttribute();
-					String attributeValue = preference.getValue();
-					if (!Util.isEmpty(attributeValue, true)) {
-						if (attibuteName.equals(PreferenceUtil.P_ROLE)) {
-							roleId = NumberManager.getIntFromString(attributeValue);
-						} else if (attibuteName.equals(PreferenceUtil.P_CLIENT)) {
-							// clientId = NumberManager.getIntFromString(attributeValue);
-						} else if (attibuteName.equals(PreferenceUtil.P_ORG)) {
-							organizationId = NumberManager.getIntFromString(attributeValue);
-						} else if (attibuteName.equals(PreferenceUtil.P_WAREHOUSE)) {
-							warehouseId = NumberManager.getIntFromString(attributeValue);
-						} else if (attibuteName.equals(PreferenceUtil.P_LANGUAGE)) {
-							// language = attributeValue;
+				if (preferencesList != null && !preferencesList.isEmpty()) {
+					for (MPreference preference: preferencesList) {
+						String attibuteName = preference.getAttribute();
+						String attributeValue = preference.getValue();
+						if (!Util.isEmpty(attributeValue, true)) {
+							if (attibuteName.equals(PreferenceUtil.P_ROLE)) {
+								roleId = NumberManager.getIntFromString(attributeValue);
+							} else if (attibuteName.equals(PreferenceUtil.P_CLIENT)) {
+								// clientId = NumberManager.getIntFromString(attributeValue);
+							} else if (attibuteName.equals(PreferenceUtil.P_ORG)) {
+								organizationId = NumberManager.getIntFromString(attributeValue);
+							} else if (attibuteName.equals(PreferenceUtil.P_WAREHOUSE)) {
+								warehouseId = NumberManager.getIntFromString(attributeValue);
+							} else if (attibuteName.equals(PreferenceUtil.P_LANGUAGE)) {
+								// language = attributeValue;
+							}
 						}
 					}
 				}
@@ -836,42 +838,46 @@ public class Security extends SecurityImplBase {
 	 * @return
 	 */
 	private Session.Builder createValidSession(boolean isDefaultRole, String clientVersion, String language, int roleId, int userId, int organizationId, int warehouseId, boolean isOpenID) {
-		Session.Builder builder = Session.newBuilder();
-			if(isDefaultRole && roleId <= 0) {
-				roleId = SessionManager.getDefaultRoleId(userId);
-			}
-			//	Get Values from role
-			if(roleId < 0) {
-				throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
-			}
+		if(isDefaultRole && roleId <= 0) {
+			roleId = SessionManager.getDefaultRoleId(userId);
+		}
+		//	Get Values from role
+		if(roleId < 0) {
+			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
+		}
 
-			//	Organization
-			if(organizationId <= 0) {
-				organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
-			}
-			if(organizationId < 0) {
-				throw new AdempiereException("@AD_User_ID@: @AD_Org_ID@ @NotFound@");
-			}
+		//	Organization
+		if(organizationId <= 0) {
+			organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
+		}
+		if(organizationId < 0) {
+			throw new AdempiereException("@AD_User_ID@: @AD_Org_ID@ @NotFound@");
+		}
 
-			if (organizationId == 0) {
-				warehouseId = 0;
-			} else if (warehouseId <= 0) {
-				warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
-			}
+		//	Warehouse
+		if (organizationId == 0) {
+			warehouseId = 0;
+		} else if (warehouseId <= 0) {
+			warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+		}
 
-			//	Session values
-			final String bearerToken = SessionManager.createSessionAndGetToken(
-				clientVersion,
-				language,
-				roleId,
-				userId,
-				organizationId,
-				warehouseId,
-				isOpenID
-			);
-			builder.setToken(bearerToken);
-			//	Return session
-			return builder;
+		//	Session values
+		final String bearerToken = SessionManager.createSessionAndGetToken(
+			clientVersion,
+			language,
+			roleId,
+			userId,
+			organizationId,
+			warehouseId,
+			isOpenID
+		);
+
+		//	Return session
+		Session.Builder builder = Session.newBuilder()
+			.setToken(bearerToken)
+		;
+
+		return builder;
 	}
 
 
