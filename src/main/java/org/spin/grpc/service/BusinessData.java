@@ -14,9 +14,9 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -539,7 +539,14 @@ public class BusinessData extends BusinessDataImplBase {
 						.withContainerId("tmp")
 						.withName(fileName)
 						;
-				return fileHandler.getResource(resourceMetadata);
+				InputStream inputStream = fileHandler.getResource(resourceMetadata);
+				if (inputStream == null) {
+					throw new AdempiereException("@InputStream@ @NotFound@");
+				}
+				String tempFolder = System.getProperty("java.io.tmpdir");
+				File tmpFile = new File(tempFolder + File.separator + fileName);
+				Files.copy(inputStream, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				return tmpFile.getAbsolutePath();
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
