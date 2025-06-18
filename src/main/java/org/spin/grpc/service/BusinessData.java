@@ -14,8 +14,9 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -33,20 +34,10 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MViewDefinition;
-import org.compiere.model.MMenu;
-import org.compiere.model.MPInstance;
-import org.compiere.model.MProcess;
-import org.compiere.model.MProcessPara;
-import org.compiere.model.MTable;
-import org.compiere.model.PO;
-import org.compiere.model.Query;
+import org.compiere.model.*;
 import org.compiere.process.DocAction;
 import org.compiere.process.ProcessInfo;
-import org.compiere.util.CLogger;
-import org.compiere.util.Env;
-import org.compiere.util.Msg;
-import org.compiere.util.Trx;
-import org.compiere.util.Util;
+import org.compiere.util.*;
 import org.eevolution.services.dsl.ProcessBuilder;
 import org.spin.backend.grpc.common.BusinessDataGrpc.BusinessDataImplBase;
 import org.spin.backend.grpc.common.CreateEntityRequest;
@@ -69,7 +60,10 @@ import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.BrowserUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.dictionary.util.WindowUtil;
+import org.spin.eca62.support.IS3;
+import org.spin.eca62.support.ResourceMetadata;
 import org.spin.grpc.service.ui.BrowserLogic;
+import org.spin.model.MADAppRegistration;
 import org.spin.service.grpc.authentication.SessionManager;
 // import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -82,6 +76,8 @@ import com.google.protobuf.Value;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import org.spin.util.support.AppSupportHandler;
+import org.spin.util.support.IAppSupport;
 
 /**
  * https://itnext.io/customizing-grpc-generated-code-5909a2551ca1
@@ -412,9 +408,10 @@ public class BusinessData extends BusinessDataImplBase {
 						} else {
 							valueTo = ValueManager.getObjectFromValue(maybeToParameter.get().getValue());
 						}
-						builder.withParameter(columnName, value, valueTo);
+						//	Get Valid Local file
+						builder.withParameter(columnName, getValidParameterValue(value, displayTypeId), getValidParameterValue(valueTo, displayTypeId));
 					} else {
-						builder.withParameter(columnName, value);
+						builder.withParameter(columnName, getValidParameterValue(value, displayTypeId));
 					}
 					//	For Document Action
 					if(columnName.equals(I_C_Order.COLUMNNAME_DocAction)) {
@@ -503,6 +500,58 @@ public class BusinessData extends BusinessDataImplBase {
 		}
 
 		return response;
+	}
+
+	private static Object getValidParameterValue(Object value, int displayTypeId) {
+		if(value == null) {
+			return null;
+		}
+		if(!String.class.isAssignableFrom(value.getClass())) {
+			return null;
+		}
+		String fileName = (String) value;
+		//	Get from S3
+		if(displayTypeId == DisplayType.FileName || displayTypeId == DisplayType.FilePath || displayTypeId == DisplayType.FilePathOrName) {
+			//	Push to S3
+			try {
+				MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+				if(clientInfo.getFileHandler_ID() <= 0) {
+					throw new AdempiereException("@FileHandler_ID@ @NotFound@");
+				}
+				MADAppRegistration genericConnector = MADAppRegistration.getById(Env.getCtx(), clientInfo.getFileHandler_ID(), null);
+				if(genericConnector == null) {
+					throw new AdempiereException("@AD_AppRegistration_ID@ @NotFound@");
+				}
+				//	Load
+				IAppSupport supportedApi = AppSupportHandler.getInstance().getAppSupport(genericConnector);
+				if(supportedApi == null) {
+					throw new AdempiereException("@AD_AppSupport_ID@ @NotFound@");
+				}
+				if(!IS3.class.isAssignableFrom(supportedApi.getClass())) {
+					throw new AdempiereException("@AD_AppSupport_ID@ @Unsupported@");
+				}
+				//	Push it
+				IS3 fileHandler = (IS3) supportedApi;
+				ResourceMetadata resourceMetadata = ResourceMetadata.newInstance()
+						.withClientId(Env.getAD_Client_ID(Env.getCtx()))
+						.withUserId(Env.getAD_User_ID(Env.getCtx()))
+						.withContainerType(ResourceMetadata.ContainerType.RESOURCE)
+						.withContainerId("tmp")
+						.withName(fileName)
+						;
+				InputStream inputStream = fileHandler.getResource(resourceMetadata);
+				if (inputStream == null) {
+					throw new AdempiereException("@InputStream@ @NotFound@");
+				}
+				String tempFolder = System.getProperty("java.io.tmpdir");
+				File tmpFile = new File(tempFolder + File.separator + fileName);
+				Files.copy(inputStream, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				return tmpFile.getAbsolutePath();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return value;
 	}
 	
 	/**
