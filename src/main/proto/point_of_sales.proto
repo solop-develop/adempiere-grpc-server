@@ -539,6 +539,11 @@ service Store {
 			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}"
 		};
 	}
+	rpc GetValidGiftCard(GetValidGiftCardRequest) returns (GiftCard) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/gift-cards/valid/{search_value}"
+		};
+	}
 	rpc DeleteGiftCard(DeleteGiftCardRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = {
 			delete: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}"
@@ -656,6 +661,7 @@ message CreatePaymentReferenceRequest {
 	int32 customer_id = 14;
 	bool is_receipt = 15;
 	int32 invoice_reference_id = 16;
+	int32 gift_card_id = 17;
 }
 
 //	Refund Reference
@@ -680,6 +686,7 @@ message PaymentReference {
 	bool is_processing = 18;
 	string converted_amount = 19;
 	int32 invoice_reference_id = 20;
+	int32 gift_card_id = 21;
 }
 
 //	List Refund Reference Request
@@ -1068,6 +1075,10 @@ message GetGiftCardRequest {
 	int32 id = 1;
 	int32 pos_id = 2;
 	int32 order_id = 3;
+}
+message GetValidGiftCardRequest {
+	int32 pos_id = 1;
+	string search_value = 2;
 }
 message ListGiftCardsRequest {
 	string filters = 1;
@@ -1876,6 +1887,7 @@ message CreatePaymentRequest {
 	int32 customer_bank_account_id = 17;
 	int32 invoice_reference_id = 18;
 	int32 allocate_payment_id = 19;
+	int32 gift_card_id = 20;
 }
 
 //	Update Payment

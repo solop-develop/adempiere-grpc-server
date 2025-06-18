@@ -57,7 +57,9 @@ import org.spin.backend.grpc.pos.Customer;
 import org.spin.backend.grpc.pos.CustomerTemplate;
 import org.spin.backend.grpc.pos.DeleteGiftCardLineRequest;
 import org.spin.backend.grpc.pos.DeleteGiftCardRequest;
+import org.spin.backend.grpc.pos.DeletePaymentReferenceRequest;
 import org.spin.backend.grpc.pos.GetCustomerRequest;
+import org.spin.backend.grpc.pos.GetValidGiftCardRequest;
 import org.spin.backend.grpc.pos.GiftCard;
 import org.spin.backend.grpc.pos.GiftCardLine;
 import org.spin.backend.grpc.pos.InfoOnlinePaymentRequest;
@@ -96,6 +98,51 @@ import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class POSLogic {
+
+
+	/**
+	 * Delete order line from uuid
+	 * @param request
+	 * @return
+	 */
+	public static Empty.Builder deletePaymentReference(DeletePaymentReferenceRequest request) {
+		if(request.getId() <= 0) {
+			throw new AdempiereException("@C_POSPaymentReference_ID@ @IsMandatory@");
+		}
+		if(MTable.get(Env.getCtx(), "C_POSPaymentReference") == null) {
+			return Empty.newBuilder();
+		}
+		Trx.run(transactionName -> {
+			PO refundReference = RecordUtil.getEntity(
+				Env.getCtx(),
+				"C_POSPaymentReference",
+				request.getId(),
+				transactionName
+			);
+			if(refundReference != null && refundReference.get_ID() != 0) {
+				if (refundReference.get_ValueAsInt("ECA14_GiftCard_ID") > 0) {
+					PO giftCard = RecordUtil.getEntity(
+						Env.getCtx(),
+						"ECA14_GiftCard",
+						refundReference.get_ValueAsInt("ECA14_GiftCard_ID"),
+						transactionName
+					);
+					if (giftCard != null && giftCard.get_ID() > 0) {
+						giftCard.set_ValueOfColumn("IsProcessing", true);
+						giftCard.saveEx();
+					}
+				}
+				//	Validate processed Order
+				refundReference.deleteEx(true);
+			} else {
+				throw new AdempiereException("@C_POSPaymentReference_ID@ @NotFound@");
+			}
+		});
+		//	Return
+		return Empty.newBuilder();
+	}
+
+
 
 	public static ListAvailableDiscountsResponse.Builder listAvailableDiscounts(ListAvailableDiscountsRequest request) {
 		if(request.getPosId() <= 0) {
@@ -638,6 +685,32 @@ public class POSLogic {
 	}
 
 
+	public static GiftCard.Builder getValidGiftCard(GetValidGiftCardRequest request) {
+		if (Util.isEmpty(request.getSearchValue(), true)) {
+			throw new AdempiereException("@FillMandatory@ @SearchValue@");
+		}
+		PO giftCard = new Query(
+			Env.getCtx(),
+			"ECA14_GiftCard",
+			"UPPER(UUID) = UPPER(?)",
+			null
+		)
+			.setParameters(request.getSearchValue())
+			.first()
+		;
+		if (giftCard == null || giftCard.get_ID() <= 0) {
+			throw new AdempiereException("@ECA14_GiftCard@ @NotFound@");
+		}
+		if (giftCard.get_ValueAsBoolean("Processing")) {
+			throw new AdempiereException("@ECA14_GiftCard@ @Processing@");
+		}
+		if (giftCard.get_ValueAsBoolean("Processed")) {
+			throw new AdempiereException("@ECA14_GiftCard@ @Processed@");
+		}
+
+		return POSConvertUtil.convertGiftCard(giftCard);
+	}
+
 
 	public static GiftCard.Builder getGiftCard(int id, String transactionName) {
 		PO giftCard = RecordUtil.getEntity(
@@ -652,7 +725,7 @@ public class POSLogic {
 		Properties context = Env.getCtx();
 		MTable table = MTable.get(context, "ECA14_GiftCard");
 		if (table == null) {
-			throw new AdempiereException("@TableName@ @NotFound@");
+			throw new AdempiereException("@TableName@: ECA14_GiftCard @NotFound@");
 		}
 		if (request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
@@ -707,7 +780,7 @@ public class POSLogic {
 		if (isPrepayment) {
 			//TODO: Prepayment Validations
 			;
-		}else {
+		} else {
 			if (orderId <= 0) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
@@ -1284,21 +1357,20 @@ public class POSLogic {
 		Trx.run(transactionName -> {
 			MPayment payment = new MPayment(Env.getCtx(), request.getId(), null);
 			CancelOnlinePaymentResponse.Builder builder = CancelOnlinePaymentResponse.newBuilder();
-			payment.reverseOnlineTransaction();
+			boolean wasReversed = payment.reverseOnlineTransaction();
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
-			boolean isError = "E".equals(status) || "R".equals(status);
-			//TODO: This is not implemented and returns error by default, must set builder info from Payment Information when implemented
+			boolean isError = !wasReversed || "E".equals(status) || "R".equals(status);
 			builder
-				.setIsError(true)
+				.setIsError(isError)
 				.setMessage(
 					StringManager.getValidString(
-						"Not Implemented"
+						message
 					)
 				)
 				.setStatus(
 					StringManager.getValidString(
-						"E"
+						status
 					)
 				)
 			;
