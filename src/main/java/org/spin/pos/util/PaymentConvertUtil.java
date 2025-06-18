@@ -163,6 +163,9 @@ public class PaymentConvertUtil {
 						convertedAmount
 					)
 				)
+				.setGiftCardId(
+					paymentReference.get_ValueAsInt("ECA14_GiftCard_ID")
+				)
 			;
 		}
 		//	
