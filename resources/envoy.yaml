@@ -64,6 +64,7 @@ static_resources:
                 - field.product.ProductInfoService
                 - file_management.FileManagement
                 - form.out_bound_order.OutBoundOrderService
+                - form.payment_allocation.PaymentAllocation
                 - general_ledger.GeneralLedger
                 - import_file_loader.ImportFileLoader
                 - issue_management.IssueManagement
@@ -72,7 +73,6 @@ static_resources:
                 - match_po_receipt_invoice.MatchPORReceiptInvoice
                 - material_management.MaterialManagement
                 - notice_management.NoticeManagement
-                - payment_allocation.PaymentAllocation
                 - payment_print_export.PaymentPrintExport
                 - payroll_action_notice.PayrollActionNotice
                 - preference_management.PreferenceManagement

@@ -28,7 +28,9 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Org;
+import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Charge;
+import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
@@ -37,11 +39,14 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MConversionType;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
 import org.compiere.util.CLogger;
@@ -236,23 +241,32 @@ public class PaymentAllocationLogic {
 
 
 	public static ListConversionTypesResponse.Builder listConversionTypes(ListConversionTypesRequest request) {
-		if (request.getBusinessPartnerId() > 0) {
-			validateAndGetBusinessPartner(
+		MTable table = MTable.get(
+			Env.getCtx(),
+			I_C_ConversionType.Table_Name
+		);
+
+		String whereClause = "";
+		List<Object> parametersList = new ArrayList<Object>();
+		if (table.get_ColumnIndex(I_C_BPartner.COLUMNNAME_C_BPartner_ID) >= 0) {
+			whereClause = "C_BPartner_ID IS NULL OR C_BPartner_ID = ?";
+			if (request.getBusinessPartnerId() > 0) {
+				validateAndGetBusinessPartner(
+					request.getBusinessPartnerId()
+				);
+			}
+			parametersList.add(
 				request.getBusinessPartnerId()
 			);
 		}
-		List<Object> parametersList = new ArrayList<Object>();
-		parametersList.add(
-			request.getBusinessPartnerId()
-		);
 
-		String whereClause = "C_BPartner_ID IS NULL OR C_BPartner_ID = ?";
 		Query query = new Query(
 			Env.getCtx(),
-			I_C_Currency.Table_Name,
+			table,
 			whereClause,
 			null
 		)
+			.setParameters(parametersList)
 			.setApplyAccessFilter(true)
 			.setOnlyActiveRecords(true)
 		;
@@ -265,8 +279,11 @@ public class PaymentAllocationLogic {
 
 		query
 			.getIDsAsList()
-			.forEach(currencyId -> {
-				ConversionType.Builder currencyBuilder = PaymentAllocationConvertUtil.convertConversionType(currencyId);
+			.forEach(conversionTypeId -> {
+				PO conversionType = table.getPO(conversionTypeId, null);
+				ConversionType.Builder currencyBuilder = PaymentAllocationConvertUtil.convertConversionType(
+					(MConversionType) conversionType
+				);
 				builderList.addRecords(
 					currencyBuilder
 				);
@@ -334,7 +351,7 @@ public class PaymentAllocationLogic {
 		parametersList.add(
 			date
 		);
-		if (conversionTypeId > 0) {
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
 			sql.append("?, ");
 			parametersList.add(conversionTypeId);
 		} else {
@@ -350,7 +367,7 @@ public class PaymentAllocationLogic {
 		parametersList.add(
 			date
 		);
-		if (conversionTypeId > 0) {
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
 			sql.append("?, ");
 			parametersList.add(conversionTypeId);
 		} else {
@@ -531,7 +548,7 @@ public class PaymentAllocationLogic {
 		parametersList.add(
 			date
 		);
-		if (conversionTypeId > 0) {
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
 			sql.append("?, ");
 			parametersList.add(conversionTypeId);
 		} else {
@@ -547,7 +564,7 @@ public class PaymentAllocationLogic {
 		parametersList.add(
 			date
 		);
-		if (conversionTypeId > 0) {
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
 			sql.append("?, ");
 			parametersList.add(conversionTypeId);
 		} else {
@@ -564,7 +581,7 @@ public class PaymentAllocationLogic {
 		parametersList.add(
 			currencyId
 		);
-		if (conversionTypeId > 0) {
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
 			sql.append("?, ");
 			parametersList.add(conversionTypeId);
 		} else {

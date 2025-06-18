@@ -15,6 +15,8 @@
 package org.spin.grpc.service.form.payment_allocation;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_BPartner;
+import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
 import org.compiere.model.MCharge;
@@ -23,6 +25,7 @@ import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
 import org.compiere.model.MOrg;
 import org.compiere.model.MRefList;
+import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.form.payment_allocation.Charge;
@@ -132,9 +135,19 @@ public class PaymentAllocationConvertUtil {
 		if (conversionTypeId <= 0) {
 			return builder;
 		}
+		MConversionType conversionType = new Query(
+			Env.getCtx(),
+			I_C_ConversionType.Table_Name,
+			"C_ConversionType_ID = ?",
+			null
+		)
+			.setParameters(conversionTypeId)
+			.first()
+		;
+		builder = convertConversionType(conversionType);
 		return builder;
 	}
-	public static ConversionType.Builder conversionType(MConversionType conversionType) {
+	public static ConversionType.Builder convertConversionType(MConversionType conversionType) {
 		ConversionType.Builder builder = ConversionType.newBuilder();
 		if (conversionType == null || conversionType.getC_ConversionType_ID() <= 0) {
 			return builder;
@@ -152,6 +165,11 @@ public class PaymentAllocationConvertUtil {
 					conversionType.getValue()
 				)
 			)
+			.setName(
+				StringManager.getValidString(
+					conversionType.getName()
+				)
+			)
 			.setDescription(
 				StringManager.getValidString(
 					conversionType.getDescription()
@@ -159,6 +177,11 @@ public class PaymentAllocationConvertUtil {
 			)
 			.setIsDefault(
 				conversionType.isDefault()
+			)
+			.setBusinessPartnerId(
+				conversionType.get_ValueAsInt(
+					I_C_BPartner.COLUMNNAME_C_BPartner_ID
+				)
 			)
 		;
 		return builder;

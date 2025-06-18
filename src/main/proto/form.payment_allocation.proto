@@ -176,9 +176,10 @@ message ConversionType {
 	int32 id = 1;
 	string uuid = 2;
 	string value = 3;
-	string nombre = 4;
+	string name = 4;
 	string description = 5;
 	bool is_default = 6;
+	int32 business_partner_id = 7;
 }
 message ListConversionTypesRequest {
 	string filters = 1;
