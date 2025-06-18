@@ -291,6 +291,23 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 	@Override
+	public void getValidGiftCard(GetValidGiftCardRequest request, StreamObserver<GiftCard> responseObserver) {
+		try {
+			GiftCard.Builder giftCard = POSLogic.getValidGiftCard(request);
+			responseObserver.onNext(giftCard.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
 	public void listGiftCards(ListGiftCardsRequest request, StreamObserver<ListGiftCardsResponse> responseObserver) {
 		try {
 			ListGiftCardsResponse.Builder listGiftCards = POSLogic.listGiftCards(request);
@@ -1678,25 +1695,29 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
 	@Override
 	public void deletePaymentReference(DeletePaymentReferenceRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			Empty.Builder orderLine = deletePaymentReference(request);
+			Empty.Builder orderLine = POSLogic.deletePaymentReference(request);
 			responseObserver.onNext(orderLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -2457,6 +2478,19 @@ public class PointOfSalesForm extends StoreImplBase {
 			id = request.getSalesRepresentativeId();
 			if(id > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("SalesRep_ID", id);
+			}
+			if (request.getGiftCardId() > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
+				PO giftCard = RecordUtil.getEntity(
+					Env.getCtx(),
+					"ECA14_GiftCard",
+					id,
+					transactionName
+				);
+				if (giftCard != null && giftCard.get_ID() > 0) {
+					giftCard.set_ValueOfColumn("IsProcessing", true);
+					giftCard.saveEx();
+				}
 			}
 			refundReferenceToCreate.set_ValueOfColumn("IsReceipt", request.getIsReceipt());
 			refundReferenceToCreate.set_ValueOfColumn("TenderType", request.getTenderTypeCode());
@@ -4904,32 +4938,6 @@ public class PointOfSalesForm extends StoreImplBase {
 					//	Apply Discount from order
 					configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
 				}
-			}
-		});
-		//	Return
-		return Empty.newBuilder();
-	}
-	
-	/**
-	 * Delete order line from uuid
-	 * @param request
-	 * @return
-	 */
-	private Empty.Builder deletePaymentReference(DeletePaymentReferenceRequest request) {
-		if(request.getId() <= 0) {
-			throw new AdempiereException("@C_POSPaymentReference_ID@ @IsMandatory@");
-		}
-		if(MTable.get(Env.getCtx(), "C_POSPaymentReference") == null) {
-			return Empty.newBuilder();
-		}
-		Trx.run(transactionName -> {
-			PO refundReference = RecordUtil.getEntity(Env.getCtx(), "C_POSPaymentReference", request.getId(), transactionName);
-			if(refundReference != null
-					&& refundReference.get_ID() != 0) {
-				//	Validate processed Order
-				refundReference.deleteEx(true);
-			} else {
-				throw new AdempiereException("@C_POSPaymentReference_ID@ @NotFound@");
 			}
 		});
 		//	Return
