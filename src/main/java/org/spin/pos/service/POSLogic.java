@@ -1284,21 +1284,20 @@ public class POSLogic {
 		Trx.run(transactionName -> {
 			MPayment payment = new MPayment(Env.getCtx(), request.getId(), null);
 			CancelOnlinePaymentResponse.Builder builder = CancelOnlinePaymentResponse.newBuilder();
-			payment.reverseOnlineTransaction();
+			boolean wasReversed = payment.reverseOnlineTransaction();
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
-			boolean isError = "E".equals(status) || "R".equals(status);
-			//TODO: This is not implemented and returns error by default, must set builder info from Payment Information when implemented
+			boolean isError = !wasReversed || "E".equals(status) || "R".equals(status);
 			builder
-				.setIsError(true)
+				.setIsError(isError)
 				.setMessage(
 					StringManager.getValidString(
-						"Not Implemented"
+						message
 					)
 				)
 				.setStatus(
 					StringManager.getValidString(
-						"E"
+						status
 					)
 				)
 			;
