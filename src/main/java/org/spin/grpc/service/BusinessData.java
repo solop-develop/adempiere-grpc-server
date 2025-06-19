@@ -368,11 +368,14 @@ public class BusinessData extends BusinessDataImplBase {
 		Map<String, Value> parametersList = new HashMap<String, Value>();
 		parametersList.putAll(request.getParameters().getFieldsMap());
 		if(request.getParameters().getFieldsCount() > 0) {
-			List<Entry<String, Value>> parametersListWithoutRange = parametersList.entrySet().parallelStream()
+			List<Entry<String, Value>> parametersListWithoutRange = parametersList
+				.entrySet()
+				.parallelStream()
 				.filter(parameterValue -> {
 					return !parameterValue.getKey().endsWith("_To");
 				})
-				.collect(Collectors.toList());
+				.collect(Collectors.toList())
+			;
 			for(Entry<String, Value> parameter : parametersListWithoutRange) {
 				final String columnName = parameter.getKey();
 				int displayTypeId = -1;
@@ -395,12 +398,16 @@ public class BusinessData extends BusinessDataImplBase {
 				} else {
 					value = ValueManager.getObjectFromValue(parameter.getValue());
 				}
-				Optional<Entry<String, Value>> maybeToParameter = parametersList.entrySet().parallelStream()
+				Optional<Entry<String, Value>> maybeToParameter = parametersList
+					.entrySet()
+					.parallelStream()
 					.filter(parameterValue -> {
 						return parameterValue.getKey().equals(parameter.getKey() + "_To");
 					})
-					.findFirst();
+					.findFirst()
+				;
 				if(value != null) {
+					value = getValidParameterValue(value, displayTypeId);
 					if(maybeToParameter.isPresent()) {
 						Object valueTo = null;
 						if (displayTypeId > 0) {
@@ -408,10 +415,11 @@ public class BusinessData extends BusinessDataImplBase {
 						} else {
 							valueTo = ValueManager.getObjectFromValue(maybeToParameter.get().getValue());
 						}
+						valueTo = getValidParameterValue(valueTo, displayTypeId);
 						//	Get Valid Local file
-						builder.withParameter(columnName, getValidParameterValue(value, displayTypeId), getValidParameterValue(valueTo, displayTypeId));
+						builder.withParameter(columnName, value, valueTo);
 					} else {
-						builder.withParameter(columnName, getValidParameterValue(value, displayTypeId));
+						builder.withParameter(columnName, value);
 					}
 					//	For Document Action
 					if(columnName.equals(I_C_Order.COLUMNNAME_DocAction)) {
@@ -533,12 +541,12 @@ public class BusinessData extends BusinessDataImplBase {
 				//	Push it
 				IS3 fileHandler = (IS3) supportedApi;
 				ResourceMetadata resourceMetadata = ResourceMetadata.newInstance()
-						.withClientId(Env.getAD_Client_ID(Env.getCtx()))
-						.withUserId(Env.getAD_User_ID(Env.getCtx()))
-						.withContainerType(ResourceMetadata.ContainerType.RESOURCE)
-						.withContainerId("tmp")
-						.withName(fileName)
-						;
+					.withClientId(Env.getAD_Client_ID(Env.getCtx()))
+					.withUserId(Env.getAD_User_ID(Env.getCtx()))
+					.withContainerType(ResourceMetadata.ContainerType.RESOURCE)
+					.withContainerId("tmp")
+					.withName(fileName)
+				;
 				InputStream inputStream = fileHandler.getResource(resourceMetadata);
 				if (inputStream == null) {
 					throw new AdempiereException("@InputStream@ @NotFound@");
