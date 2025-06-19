@@ -117,7 +117,7 @@ public class PaymentConvertUtil {
 					)
 				)
 				.setIsPaid(
-					paymentReference.get_ValueAsBoolean("IsPaid")
+					!paymentReference.get_ValueAsBoolean("IsReceipt")
 				)
 				.setTenderTypeCode(
 					StringManager.getValidString(
