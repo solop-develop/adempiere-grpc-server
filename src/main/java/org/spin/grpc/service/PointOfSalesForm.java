@@ -1973,6 +1973,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	
 	/**
 	 * List shipment Lines from Order UUID
+	 * TODO: Omit if exists into Payment Reference without open amount
 	 * @param request
 	 * @return
 	 */

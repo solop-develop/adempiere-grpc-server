@@ -184,6 +184,10 @@ public class CollectingManagement {
 				payment.setR_PnRef(request.getReferenceNo());
 				payment.setDocumentNo(request.getReferenceNo());
 				payment.setCheckNo(request.getReferenceNo());
+				payment.set_ValueOfColumn(
+					ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID,
+					request.getInvoiceId()
+				);
 				break;
 			default:
 				payment.setDescription(request.getDescription());
