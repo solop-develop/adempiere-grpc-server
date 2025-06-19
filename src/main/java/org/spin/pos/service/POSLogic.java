@@ -128,7 +128,7 @@ public class POSLogic {
 						transactionName
 					);
 					if (giftCard != null && giftCard.get_ID() > 0) {
-						giftCard.set_ValueOfColumn("Processing", true);
+						giftCard.set_ValueOfColumn("Processing", false);
 						giftCard.saveEx();
 					}
 				}

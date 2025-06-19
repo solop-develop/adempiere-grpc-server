@@ -2493,26 +2493,31 @@ public class PointOfSalesForm extends StoreImplBase {
 			//	Throw if not exist conversion
 			ConvertUtil.validateConversion(salesOrder, currencyId, pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
 			refundReferenceToCreate.set_ValueOfColumn("C_Order_ID", salesOrder.getC_Order_ID());
-			int id = request.getPaymentMethodId();
-			if(id > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("C_PaymentMethod_ID", id);
+			if(request.getPaymentMethodId() > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("C_PaymentMethod_ID", request.getPaymentMethodId());
 			}
 			if(pos.getC_POS_ID() > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
 			}
-			id = request.getSalesRepresentativeId();
-			if(id > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("SalesRep_ID", id);
+			if(request.getSalesRepresentativeId() > 0) {
+				refundReferenceToCreate.set_ValueOfColumn("SalesRep_ID", request.getSalesRepresentativeId());
 			}
 			if (request.getGiftCardId() > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
+				// TODO: Support with lines
 				PO giftCard = RecordUtil.getEntity(
 					Env.getCtx(),
 					"ECA14_GiftCard",
-					id,
+					request.getGiftCardId(),
 					transactionName
 				);
 				if (giftCard != null && giftCard.get_ID() > 0) {
+					refundReferenceToCreate.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
+					if (giftCard.get_ValueAsBoolean("Processed")) {
+						throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
+					}
+					if (giftCard.get_ValueAsBoolean("Processing")) {
+						throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
+					}
 					giftCard.set_ValueOfColumn("Processing", true);
 					giftCard.saveEx();
 				}
