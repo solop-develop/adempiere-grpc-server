@@ -1986,16 +1986,17 @@ public class PointOfSalesForm extends StoreImplBase {
 		try {
 			//	Get Bank statement
 			StringBuffer sql = new StringBuffer("SELECT i.C_Invoice_ID, i.DocumentNo, i.Description, i.DateInvoiced, i.C_Currency_ID, ")
-					.append("i.GrandTotal, (InvoiceOpen(i.C_Invoice_ID, null) * -1) AS OpenAmount, ")
-					.append("i.IsProcessed, i.IsProcessing ")
-					.append("FROM C_Invoice AS i ")
-					.append("WHERE i.IsSOTrx = 'Y' ")
-					.append("AND i.DocStatus IN('CO', 'CL') ")
-					.append("AND i.IsPaid = 'N' ")
-					.append("AND EXISTS(SELECT 1 FROM C_DocType dt WHERE dt.C_DocType_ID = i.C_DocType_ID AND dt.DocBaseType = 'ARC') ")
-					.append("AND i.C_BPartner_ID = ? ")
-					.append("AND i.AD_Org_ID = ? ")
-					.append("AND InvoiceOpen(i.C_Invoice_ID, null) <> 0");
+				.append("i.GrandTotal, (InvoiceOpen(i.C_Invoice_ID, null) * -1) AS OpenAmount, ")
+				.append("i.Processed, i.Processing ")
+				.append("FROM C_Invoice AS i ")
+				.append("WHERE i.IsSOTrx = 'Y' ")
+				.append("AND i.DocStatus IN('CO', 'CL') ")
+				.append("AND i.IsPaid = 'N' ")
+				.append("AND EXISTS(SELECT 1 FROM C_DocType dt WHERE dt.C_DocType_ID = i.C_DocType_ID AND dt.DocBaseType = 'ARC') ")
+				.append("AND i.C_BPartner_ID = ? ")
+				.append("AND i.AD_Org_ID = ? ")
+				.append("AND InvoiceOpen(i.C_Invoice_ID, null) <> 0")
+			;
 			StringBuffer whereClause = new StringBuffer();
 			List<Object> parameters = new ArrayList<Object>();
 			//	Count records
@@ -2034,30 +2035,44 @@ public class PointOfSalesForm extends StoreImplBase {
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
 				CreditMemo.Builder creditMemo = CreditMemo.newBuilder()
-					.setId(rs.getInt("C_Invoice_ID"))
+					.setId(
+						rs.getInt(
+							I_C_Invoice.COLUMNNAME_C_Invoice_ID
+						)
+					)
 					.setDocumentNo(
 						StringManager.getValidString(
-							rs.getString("DocumentNo")
+							rs.getString(
+								I_C_Invoice.COLUMNNAME_DocumentNo
+							)
 						)
 					)
 					.setDescription(
 						StringManager.getValidString(
-							rs.getString("Description")
+							rs.getString(
+								I_C_Invoice.COLUMNNAME_Description
+							)
 						)
 					)
 					.setDocumentDate(
 						ValueManager.getTimestampFromDate(
-							rs.getTimestamp("DateInvoiced")
+							rs.getTimestamp(
+								I_C_Invoice.COLUMNNAME_DateInvoiced
+							)
 						)
 					)
 					.setCurrency(
 						CoreFunctionalityConvert.convertCurrency(
-							rs.getInt("C_Currency_ID")
+							rs.getInt(
+								I_C_Invoice.COLUMNNAME_C_Currency_ID
+							)
 						)
 					)
 					.setAmount(
 						NumberManager.getBigDecimalToString(
-							rs.getBigDecimal("GrandTotal")
+							rs.getBigDecimal(
+								I_C_Invoice.COLUMNNAME_GrandTotal
+							)
 						)
 					)
 					.setOpenAmount(
@@ -2488,7 +2503,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					transactionName
 				);
 				if (giftCard != null && giftCard.get_ID() > 0) {
-					giftCard.set_ValueOfColumn("IsProcessing", true);
+					giftCard.set_ValueOfColumn("Processing", true);
 					giftCard.saveEx();
 				}
 			}
