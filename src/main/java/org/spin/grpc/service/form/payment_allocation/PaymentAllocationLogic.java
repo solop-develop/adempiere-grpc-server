@@ -12,9 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service.form;
-
-import org.adempiere.exceptions.AdempiereException;
+package org.spin.grpc.service.form.payment_allocation;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -30,24 +28,25 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Org;
-import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Charge;
+import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Currency;
-import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
 import org.compiere.model.MBPartner;
-import org.compiere.model.MCharge;
+import org.compiere.model.MConversionType;
 import org.compiere.model.MCurrency;
-import org.compiere.model.MDocType;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPayment;
-import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
 import org.compiere.util.CLogger;
@@ -57,15 +56,24 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.base.util.ReferenceInfo;
+import org.spin.grpc.service.field.field_management.FieldManagementLogic;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
-import org.spin.backend.grpc.form.payment_allocation.Charge;
+import org.spin.backend.grpc.form.payment_allocation.ConversionType;
 import org.spin.backend.grpc.form.payment_allocation.Currency;
 import org.spin.backend.grpc.form.payment_allocation.DocumentType;
 import org.spin.backend.grpc.form.payment_allocation.Invoice;
 import org.spin.backend.grpc.form.payment_allocation.InvoiceSelection;
 import org.spin.backend.grpc.form.payment_allocation.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListChargesRequest;
+import org.spin.backend.grpc.form.payment_allocation.ListConversionTypesRequest;
+import org.spin.backend.grpc.form.payment_allocation.ListConversionTypesResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListCurrenciesRequest;
+import org.spin.backend.grpc.form.payment_allocation.ListCurrenciesResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListInvoicesRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListInvoicesResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListOrganizationsRequest;
@@ -79,168 +87,12 @@ import org.spin.backend.grpc.form.payment_allocation.PaymentSelection;
 import org.spin.backend.grpc.form.payment_allocation.ProcessRequest;
 import org.spin.backend.grpc.form.payment_allocation.ProcessResponse;
 import org.spin.backend.grpc.form.payment_allocation.TransactionType;
-import org.spin.backend.grpc.form.payment_allocation.PaymentAllocationGrpc.PaymentAllocationImplBase;
-import org.spin.base.util.ReferenceInfo;
-import org.spin.grpc.service.field.field_management.FieldManagementLogic;
-import org.spin.service.grpc.util.value.BooleanManager;
-import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
+public class PaymentAllocationLogic {
 
-/**
- * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Service for backend of Payment Allocation form
- */
-public class PaymentAllocation extends PaymentAllocationImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(PaymentAllocation.class);
+	private static CLogger log = CLogger.getCLogger(PaymentAllocationLogic.class);
 
-
-
-	@Override
-	public void listBusinessPartners(ListBusinessPartnersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ListLookupItemsResponse.Builder builderList = listBusinessPartners(request);
-			responseObserver.onNext(builderList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
-		// BPartner
-		int columnId = 3499; // C_Invoice.C_BPartner_ID
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			0,
-			0, 0, 0,
-			columnId,
-			null, null
-		);
-
-		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
-			reference,
-			request.getContextAttributes(),
-			request.getPageSize(),
-			request.getPageToken(),
-			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
-		);
-
-		return builderList;
-	}
-
-	public static MBPartner validateAndGetBusinessPartner(int businessPartnerId) {
-		if (businessPartnerId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
-		}
-		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
-		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
-			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
-		}
-		if (!businessPartner.isActive()) {
-			throw new AdempiereException("@C_BPartner_ID@ @NotActive@");
-		}
-		return businessPartner;
-	}
-
-
-
-	@Override
-	public void listOrganizations(ListOrganizationsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ListLookupItemsResponse.Builder builderList = listOrganizations(request);
-			responseObserver.onNext(builderList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	/**
-	 * @param request
-	 * @return
-	 */
-	private ListLookupItemsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
-		// Organization filter selection
-		int columnId = 839; // C_Period.AD_Org_ID (needed to allow org 0)
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			0,
-			0, 0, 0,
-			columnId,
-			null, null
-		);
-
-		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
-			reference,
-			request.getContextAttributes(),
-			request.getPageSize(),
-			request.getPageToken(),
-			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
-		);
-
-		return builderList;
-	}
-
-	public static Organization.Builder convertOrganization(int organizationId) {
-		if (organizationId < 0) {
-			return Organization.newBuilder();
-		}
-		MOrg organization = MOrg.get(Env.getCtx(), organizationId);
-		return convertOrganization(organization);
-	}
-	public static Organization.Builder convertOrganization(MOrg organization) {
-		Organization.Builder builder = Organization.newBuilder();
-		if (organization == null || organization.getAD_Org_ID() < 0) {
-			return builder;
-		}
-
-		builder.setId(
-				organization.getAD_Org_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					organization.getUUID()
-				)
-			)
-			.setValue(
-				StringManager.getValidString(
-					organization.getName()
-				)
-			)
-			.setName(
-				StringManager.getValidString(
-					organization.getName()
-				)
-			)
-		;
-
-		return builder;
-	}
 
 	public static MOrg validateAndGetOrganization(int organizationId) {
 		if (organizationId < 0) {
@@ -268,32 +120,13 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		return organization;
 	}
 
-
-
-	@Override
-	public void listCurrencies(ListCurrenciesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ListLookupItemsResponse.Builder builder = listCurrencies(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListLookupItemsResponse.Builder listCurrencies(ListCurrenciesRequest request) {
-		// Currency
-		int columnId = 3505; // C_Invoice.C_Currency_ID
+	/**
+	 * @param request
+	 * @return
+	 */
+	public static ListLookupItemsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
+		// Organization filter selection
+		int columnId = 839; // C_Period.AD_Org_ID (needed to allow org 0)
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,
@@ -313,48 +146,45 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		return builderList;
 	}
 
-	public static Currency.Builder convertCurrency(String isoCode) {
-		if (Util.isEmpty(isoCode, true)) {
-			return Currency.newBuilder();
-		}
-		MCurrency currency = MCurrency.get(Env.getCtx(), isoCode);
-		return convertCurrency(currency);
-	}
-	public static Currency.Builder convertCurrency(int currencyId) {
-		if (currencyId <= 0) {
-			return Currency.newBuilder();
-		}
-		MCurrency currency = MCurrency.get(Env.getCtx(), currencyId);
-		return convertCurrency(currency);
-	}
-	public static Currency.Builder convertCurrency(MCurrency currency) {
-		Currency.Builder builder = Currency.newBuilder();
-		if (currency == null || currency.getC_Currency_ID() <= 0) {
-			return builder;
-		}
 
-		builder.setId(
-				currency.getC_Currency_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					currency.getUUID()
-				)
-			)
-			.setIsoCode(
-				StringManager.getValidString(
-					currency.getISO_Code()
-				)
-			)
-			.setDescription(
-				StringManager.getValidString(
-					currency.getDescription()
-				)
-			)
-		;
 
-		return builder;
+	public static MBPartner validateAndGetBusinessPartner(int businessPartnerId) {
+		if (businessPartnerId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
+		}
+		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
+		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
+		}
+		if (!businessPartner.isActive()) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotActive@");
+		}
+		return businessPartner;
 	}
+
+	public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
+		// BPartner
+		int columnId = 3499; // C_Invoice.C_BPartner_ID
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			0, 0, 0,
+			columnId,
+			null, null
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
 
 	public static MCurrency validateAndGetCurrency(int currencyId) {
 		if (currencyId <= 0) {
@@ -378,29 +208,94 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		return currency;
 	}
 
+	public static ListCurrenciesResponse.Builder listCurrencies(ListCurrenciesRequest request) {
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_Currency.Table_Name,
+			null,
+			null
+		)
+			.setApplyAccessFilter(true)
+			.setOnlyActiveRecords(true)
+		;
 
-	@Override
-	public void listTransactionTypes(ListTransactionTypesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
+		ListCurrenciesResponse.Builder builderList = ListCurrenciesResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
 
-			ListLookupItemsResponse.Builder builder = listTransactionTypes(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
+		query
+			.getIDsAsList()
+			.forEach(currencyId -> {
+				Currency.Builder currencyBuilder = PaymentAllocationConvertUtil.convertCurrency(currencyId);
+				builderList.addRecords(
+					currencyBuilder
+				);
+			})
+		;
+
+		return builderList;
 	}
 
-	private ListLookupItemsResponse.Builder listTransactionTypes(ListTransactionTypesRequest request) {
+
+
+	public static ListConversionTypesResponse.Builder listConversionTypes(ListConversionTypesRequest request) {
+		MTable table = MTable.get(
+			Env.getCtx(),
+			I_C_ConversionType.Table_Name
+		);
+
+		String whereClause = "";
+		List<Object> parametersList = new ArrayList<Object>();
+		if (table.get_ColumnIndex(I_C_BPartner.COLUMNNAME_C_BPartner_ID) >= 0) {
+			whereClause = "C_BPartner_ID IS NULL OR C_BPartner_ID = ?";
+			if (request.getBusinessPartnerId() > 0) {
+				validateAndGetBusinessPartner(
+					request.getBusinessPartnerId()
+				);
+			}
+			parametersList.add(
+				request.getBusinessPartnerId()
+			);
+		}
+
+		Query query = new Query(
+			Env.getCtx(),
+			table,
+			whereClause,
+			null
+		)
+			.setParameters(parametersList)
+			.setApplyAccessFilter(true)
+			.setOnlyActiveRecords(true)
+		;
+
+		ListConversionTypesResponse.Builder builderList = ListConversionTypesResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
+
+		query
+			.getIDsAsList()
+			.forEach(conversionTypeId -> {
+				PO conversionType = table.getPO(conversionTypeId, null);
+				ConversionType.Builder currencyBuilder = PaymentAllocationConvertUtil.convertConversionType(
+					(MConversionType) conversionType
+				);
+				builderList.addRecords(
+					currencyBuilder
+				);
+			})
+		;
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listTransactionTypes(ListTransactionTypesRequest request) {
 		// APAR
 		int columnId = 14082; // T_InvoiceGL.APAR
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -423,118 +318,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	}
 
 
-	public static TransactionType.Builder convertTransactionType(String value) {
-		if (Util.isEmpty(value, true)) {
-			return TransactionType.newBuilder();
-		}
 
-		MRefList transactionType = MRefList.get(Env.getCtx(), X_T_InvoiceGL.APAR_AD_Reference_ID, value, null);
-		return convertTransactionType(transactionType);
-	}
-	public static TransactionType.Builder convertTransactionType(MRefList transactionType) {
-		TransactionType.Builder builder = TransactionType.newBuilder();
-		if (transactionType == null || transactionType.getAD_Ref_List_ID() <= 0) {
-			return builder;
-		}
-
-		String name = transactionType.getName();
-		String description = transactionType.getDescription();
-
-		// set translated values
-		if (!Env.isBaseLanguage(Env.getCtx(), "")) {
-			name = transactionType.get_Translation(I_AD_Ref_List.COLUMNNAME_Name);
-			description = transactionType.get_Translation(I_AD_Ref_List.COLUMNNAME_Description);
-		}
-
-		builder.setId(
-				transactionType.getAD_Ref_List_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					transactionType.getUUID()
-				)
-			)
-			.setValue(
-				StringManager.getValidString(
-					transactionType.getValue()
-				)
-			)
-			.setName(
-				StringManager.getValidString(name)
-			)
-			.setDescription(
-				StringManager.getValidString(description)
-			)
-		;
-
-		return builder;
-	}
-
-
-	public static DocumentType.Builder convertDocumentType(int documentTypeId) {
-		if (documentTypeId < 0) {
-			return DocumentType.newBuilder();
-		}
-		MDocType documentType = MDocType.get(Env.getCtx(), documentTypeId);
-		return convertDocumentType(documentType);
-	}
-	public static DocumentType.Builder convertDocumentType(MDocType documentType) {
-		DocumentType.Builder builder = DocumentType.newBuilder();
-		if (documentType == null || documentType.getC_DocType_ID() < 0) {
-			return builder;
-		}
-
-		builder.setId(
-				documentType.getC_DocType_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					documentType.getUUID()
-				)
-			)
-			.setName(
-				StringManager.getValidString(
-					documentType.get_Translation(I_C_DocType.COLUMNNAME_Name)
-				)
-			)
-			.setPrintName(
-				StringManager.getValidString(
-					documentType.get_Translation(I_C_DocType.COLUMNNAME_PrintName)
-				)
-			)
-			.setDescription(
-				StringManager.getValidString(
-					documentType.get_Translation(I_C_DocType.COLUMNNAME_Description)
-				)
-			)
-		;
-
-		return builder;
-	}
-
-
-	@Override
-	public void listPayments(ListPaymentsRequest request, StreamObserver<ListPaymentsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ListPaymentsResponse.Builder builder = listPayments(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
+	public static ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
 		Properties context = Env.getCtx();
+		ArrayList<Object> parametersList = new ArrayList<Object>();
 
 		int currencyId = request.getCurrencyId();
 		validateAndGetCurrency(currencyId);
@@ -546,6 +333,8 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			request.getDate()
 		);
 
+		int conversionTypeId = request.getConversionTypeId();
+
 		/**
 		 *  Load unallocated Payments
 		 *    1-TrxDate, 2-DocumentNo, (3-Currency, 4-PayAmt,)
@@ -554,8 +343,38 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		StringBuffer sql = new StringBuffer("SELECT p.DateTrx, p.DocumentNo, p.C_Payment_ID,"	//	1..3
 			+ "p.C_DocType_ID, "
 			+ "c.ISO_Code, p.PayAmt,"			//	4..5
-			+ "currencyConvert(p.PayAmt, p.C_Currency_ID, ?, ?, p.C_ConversionType_ID, p.AD_Client_ID, p.AD_Org_ID) AS ConvertedAmt,"//		#1, #2
-			+ "currencyConvert(paymentAvailable(C_Payment_ID), p.C_Currency_ID, ?, ?, p.C_ConversionType_ID, p.AD_Client_ID, p.AD_Org_ID) AS AvailableAmt,"	//	7   #3, #4
+			+ "currencyConvert(p.PayAmt, p.C_Currency_ID, ?, ?, "
+		);
+		parametersList.add(
+			currencyId
+		);
+		parametersList.add(
+			date
+		);
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
+			sql.append("?, ");
+			parametersList.add(conversionTypeId);
+		} else {
+			sql.append("p.C_ConversionType_ID, ");
+		}
+
+		sql.append("p.AD_Client_ID, p.AD_Org_ID) AS ConvertedAmt,"//		#1, #2
+			+ "currencyConvert(paymentAvailable(C_Payment_ID), p.C_Currency_ID, ?, ?, "
+		);
+		parametersList.add(
+			currencyId
+		);
+		parametersList.add(
+			date
+		);
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
+			sql.append("?, ");
+			parametersList.add(conversionTypeId);
+		} else {
+			sql.append("p.C_ConversionType_ID, ");
+		}
+
+		sql.append("p.AD_Client_ID, p.AD_Org_ID) AS AvailableAmt,"	//	7   #3, #4
 			+ "p.MultiplierAP, p.IsReceipt, p.AD_Org_ID, p.Description " //	8..11
 			+ "FROM C_Payment_v p "		//	Corrected for AP/AR
 			+ "INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) "
@@ -563,9 +382,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			+ "AND p.C_Charge_ID IS NULL "			//	Prepayments OK
 			+ "AND p.C_BPartner_ID = ? "			//	#5
 		);
-
+		parametersList.add(businessPartnerId);
 		if (!request.getIsMultiCurrency()) {
 			sql.append(" AND p.C_Currency_ID=?");				//      #6
+			parametersList.add(currencyId);
 		}
 		if (request.getOrganizationId() > 0 ) {
 			sql.append(" AND p.AD_Org_ID = " + request.getOrganizationId());
@@ -595,6 +415,8 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder();
 		try {
 			pstmt = DB.prepareStatement(sql.toString(), null);
+			DB.setParameters(pstmt, parametersList);
+			/*
 			pstmt.setInt(1, currencyId);
 			pstmt.setTimestamp(2, date);
 			pstmt.setInt(3, currencyId);
@@ -603,26 +425,27 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			if (!request.getIsMultiCurrency()) {
 				pstmt.setInt(6, currencyId);
 			}
+			*/
 			rs = pstmt.executeQuery();
 			int recordCount = 0;
 			while (rs.next()) {
 				recordCount++;
 
-				DocumentType.Builder documentTypeBuilder = convertDocumentType(
+				DocumentType.Builder documentTypeBuilder = PaymentAllocationConvertUtil.convertDocumentType(
 					rs.getInt(I_C_Payment.COLUMNNAME_C_DocType_ID)
 				);
-				Organization.Builder organizationBuilder = convertOrganization(
+				Organization.Builder organizationBuilder = PaymentAllocationConvertUtil.convertOrganization(
 					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
 				);
 
-				Currency.Builder currencyBuilder = convertCurrency(
+				Currency.Builder currencyBuilder = PaymentAllocationConvertUtil.convertCurrency(
 					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
 				boolean isReceipt = BooleanManager.getBooleanFromString(
 					rs.getString("IsReceipt")
 				);
-				TransactionType.Builder transactionTypeBuilder = convertTransactionType(
+				TransactionType.Builder transactionTypeBuilder = PaymentAllocationConvertUtil.convertTransactionType(
 					isReceipt ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
 				);
 
@@ -692,29 +515,9 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 
 
-	@Override
-	public void listInvoices(ListInvoicesRequest request, StreamObserver<ListInvoicesResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ListInvoicesResponse.Builder builder = listInvoices(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListInvoicesResponse.Builder listInvoices(ListInvoicesRequest request) {
+	public static ListInvoicesResponse.Builder listInvoices(ListInvoicesRequest request) {
 		Properties context = Env.getCtx();
+		ArrayList<Object> parametersList = new ArrayList<Object>();
 
 		int currencyId = request.getCurrencyId();
 		validateAndGetCurrency(currencyId);
@@ -726,6 +529,8 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			request.getDate()
 		);
 
+		int conversionTypeId = request.getConversionTypeId();
+
 		/**
 		 *  Load unpaid Invoices
 		 *    1-TrxDate, 2-Value, (3-Currency, 4-InvAmt,)
@@ -735,18 +540,64 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			"SELECT i.DateInvoiced, i.DocumentNo, i.Description, i.C_Invoice_ID, "		//	1..3
 			+ "i.C_DocTypeTarget_ID, "
 			+ "c.ISO_Code, (i.GrandTotal * i.MultiplierAP) AS OriginalAmt, "		//  4..5	Orig Currency
-			+ "currencyConvert(i.GrandTotal * i.MultiplierAP, i.C_Currency_ID, ?, ?, i.C_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) AS ConvertedAmt, "		//	6   #1  Converted, #2 Date
-			+ "(currencyConvert(invoiceOpen(C_Invoice_ID,C_InvoicePaySchedule_ID), i.C_Currency_ID, ?, ?, i.C_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) * i.MultiplierAP) AS OpenAmt, "	//  7   #3, #4  Converted Open
+			+ "currencyConvert(i.GrandTotal * i.MultiplierAP, i.C_Currency_ID, ?, ?, "
+		);
+		parametersList.add(
+			currencyId
+		);
+		parametersList.add(
+			date
+		);
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
+			sql.append("?, ");
+			parametersList.add(conversionTypeId);
+		} else {
+			sql.append("i.C_ConversionType_ID, ");
+		}
+
+		sql.append("i.AD_Client_ID, i.AD_Org_ID) AS ConvertedAmt, "		//	6   #1  Converted, #2 Date
+			+ "(currencyConvert(invoiceOpen(C_Invoice_ID,C_InvoicePaySchedule_ID), i.C_Currency_ID, ?, ?, "
+		);
+		parametersList.add(
+			currencyId
+		);
+		parametersList.add(
+			date
+		);
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
+			sql.append("?, ");
+			parametersList.add(conversionTypeId);
+		} else {
+			sql.append("i.C_ConversionType_ID, ");
+		}
+
+		sql.append("i.AD_Client_ID, i.AD_Org_ID) * i.MultiplierAP) AS OpenAmt, "	//  7   #3, #4  Converted Open
 			+ "(currencyConvert(invoiceDiscount"		//  8  AllowedDiscount
-			+ "(i.C_Invoice_ID, ?, C_InvoicePaySchedule_ID), i.C_Currency_ID, ?, i.DateInvoiced, i.C_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) * i.Multiplier * i.MultiplierAP) AS DiscountAmt, "               //  #5, #6
+			+ "(i.C_Invoice_ID, ?, C_InvoicePaySchedule_ID), i.C_Currency_ID, ?, i.DateInvoiced, "
+		);
+		parametersList.add(
+			date
+		);
+		parametersList.add(
+			currencyId
+		);
+		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
+			sql.append("?, ");
+			parametersList.add(conversionTypeId);
+		} else {
+			sql.append("i.C_ConversionType_ID, ");
+		}
+		sql.append("i.AD_Client_ID, i.AD_Org_ID) * i.Multiplier * i.MultiplierAP) AS DiscountAmt, "               //  #5, #6
 			+ "i.MultiplierAP, i.IsSoTrx, i.AD_Org_ID " // 9..11
 			+ "FROM C_Invoice_v i "		//  corrected for CM/Split
 			+ "INNER JOIN C_Currency c ON (i.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE i.IsPaid='N' AND i.Processed='Y' "
 			+ "AND i.C_BPartner_ID = ? "		//  #7
 		);
+		parametersList.add(businessPartnerId);
 		if (!request.getIsMultiCurrency()) {
 			sql.append("AND i.C_Currency_ID = ? ");		//  #8
+			parametersList.add(currencyId);
 		}
 		if (request.getOrganizationId() != 0 ) {
 			sql.append(" AND i.AD_Org_ID = " + request.getOrganizationId());
@@ -776,6 +627,8 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		ListInvoicesResponse.Builder builderList = ListInvoicesResponse.newBuilder();
 		try {
 			pstmt = DB.prepareStatement(sql.toString(), null);
+			DB.setParameters(pstmt, parametersList);
+			/*
 			pstmt.setInt(1, currencyId);
 			pstmt.setTimestamp(2, date);
 			pstmt.setInt(3, currencyId);
@@ -786,26 +639,27 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 			if (!request.getIsMultiCurrency()) {
 				pstmt.setInt(8, currencyId);
 			}
+			*/
 			rs = pstmt.executeQuery();
 			int recordCount = 0;
 			while (rs.next()) {
 				recordCount++;
 
-				DocumentType.Builder targetDocumentTypeBuilder = convertDocumentType(
+				DocumentType.Builder targetDocumentTypeBuilder = PaymentAllocationConvertUtil.convertDocumentType(
 					rs.getInt(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)
 				);
-				Organization.Builder organizationBuilder = convertOrganization(
+				Organization.Builder organizationBuilder = PaymentAllocationConvertUtil.convertOrganization(
 					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
 				);
 
-				Currency.Builder currencyBuilder = convertCurrency(
+				Currency.Builder currencyBuilder = PaymentAllocationConvertUtil.convertCurrency(
 					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
 				);
 
 				boolean isSalesTransaction = BooleanManager.getBooleanFromString(
 					rs.getString(I_C_Invoice.COLUMNNAME_IsSOTrx)
 				);
-				TransactionType.Builder transactionTypeBuilder = convertTransactionType(
+				TransactionType.Builder transactionTypeBuilder = PaymentAllocationConvertUtil.convertTransactionType(
 					isSalesTransaction ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
 				);
 
@@ -880,28 +734,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 
 
-	@Override
-	public void listCharges(ListChargesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ListLookupItemsResponse.Builder builder = listCharges(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListLookupItemsResponse.Builder listCharges(ListChargesRequest request) {
+	public static ListLookupItemsResponse.Builder listCharges(ListChargesRequest request) {
 		// Charge
 		int columnId = 61804; // C_AllocationLine.C_Charge_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -922,65 +755,10 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 
 		return builderList;
 	}
-	
-	public static Charge.Builder convertCharge(MCharge charge) {
-		Charge.Builder builder = Charge.newBuilder();
-		if (charge == null || charge.getC_Charge_ID() <= 0) {
-			return builder;
-		}
-
-		builder.setId(
-				charge.getC_Charge_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					charge.getUUID()
-				)
-			)
-			.setName(
-				StringManager.getValidString(
-					charge.getName()
-				)
-			)
-			.setDescription(
-				StringManager.getValidString(
-					charge.getDescription()
-				)
-			)
-			.setAmount(
-				NumberManager.getBigDecimalToString(
-					charge.getChargeAmt()
-				)
-			)
-		;
-
-		return builder;
-	}
 
 
 
-	@Override
-	public void listTransactionOrganizations(ListTransactionOrganizationsRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ListLookupItemsResponse.Builder builder = listTransactionOrganizations(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ListLookupItemsResponse.Builder listTransactionOrganizations(ListTransactionOrganizationsRequest request) {
+	public static ListLookupItemsResponse.Builder listTransactionOrganizations(ListTransactionOrganizationsRequest request) {
 		// Organization to overwrite
 		int columnId = 3863; // C_Period.AD_Org_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -1003,7 +781,8 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 	}
 
 
-	private Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
+
+	public static Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
 		AtomicReference<Timestamp> transactionDateReference = new AtomicReference<Timestamp>();
 		paymentSelection.forEach(paymentSelected -> {
 			Timestamp paymentDate = ValueManager.getDateFromTimestampDate(
@@ -1023,28 +802,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		return transactionDateReference.get();
 	}
 
-	@Override
-	public void process(ProcessRequest request, StreamObserver<ProcessResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-
-			ProcessResponse.Builder builder = process(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-	private ProcessResponse.Builder process(ProcessRequest request) {
+	public static ProcessResponse.Builder process(ProcessRequest request) {
 		// validate and get Organization
 		MOrg organization = validateAndGetOrganization(request.getTransactionOrganizationId());
 		Properties context = Env.getCtx();
@@ -1099,7 +857,7 @@ public class PaymentAllocation extends PaymentAllocationImplBase {
 		;
 	}
 
-	private String saveData(
+	private static String saveData(
 		int windowNo, int businessPartnerId,
 		int currencyId, boolean isMultiCurrency,
 		int organizationId, Timestamp transactionDate,
