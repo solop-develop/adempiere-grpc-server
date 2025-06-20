@@ -128,7 +128,7 @@ public class POSLogic {
 						transactionName
 					);
 					if (giftCard != null && giftCard.get_ID() > 0) {
-						giftCard.set_ValueOfColumn("IsProcessing", true);
+						giftCard.set_ValueOfColumn("Processing", false);
 						giftCard.saveEx();
 					}
 				}
@@ -1102,7 +1102,7 @@ public class POSLogic {
 				throw new AdempiereException("@ECA14_GiftCardLine_ID@ @NotFound@");
 			}
 			//	Validate processed Order
-			if (giftCardLine.get_ValueAsBoolean("IsProcessed")) {
+			if (giftCardLine.get_ValueAsBoolean("Processed")) {
 				throw new AdempiereException("@ECA14_GiftCardLine_ID@ @Processed@");
 			}
 
@@ -1171,7 +1171,7 @@ public class POSLogic {
 			return Empty.newBuilder();
 		}
 		//	Validate processed Order
-		if (giftCardLine.get_ValueAsBoolean("IsProcessed") || giftCardLine.get_ValueAsBoolean("IsProcessing")) {
+		if (giftCardLine.get_ValueAsBoolean("Processed") || giftCardLine.get_ValueAsBoolean("Processing")) {
 			throw new AdempiereException("@ECA14_GiftCardLine_ID@ @Processed@");
 		}
 
