@@ -34,6 +34,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.compiere.wf.MWFActivity;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.base.util.RecordUtil;
@@ -139,7 +140,6 @@ public class WorkflowUtil {
 			if (!isWithAccess) {
 				throw new AdempiereException("@AccessCannotProcess@");
 			}
-
 			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_DocAction, documentAction);
 			entity.saveEx();
 			//	Process It
@@ -148,6 +148,10 @@ public class WorkflowUtil {
 			if(column != null) {
 				MProcess process = MProcess.get(context, column.getAD_Process_ID());
 				if(process.getAD_Workflow_ID() > 0) {
+					String wfStatus = MWFActivity.getActiveInfo(Env.getCtx(), table.getAD_Table_ID(), entity.get_ID());
+					if (wfStatus != null) {
+						throw new AdempiereException("@WFActiveForRecord@ " + wfStatus);
+					}
 					MWorkflow workFlow = MWorkflow.get (context, process.getAD_Workflow_ID());
 					String name = process.get_Translation(I_AD_Process.COLUMNNAME_Name);
 					ProcessInfo processInfo = new ProcessInfo(name, process.getAD_Process_ID(), table.getAD_Table_ID(), entity.get_ID());
