@@ -17,10 +17,13 @@ package org.spin.pos.service.bank;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
+import org.adempiere.core.domains.models.I_C_BP_BankAccount;
 import org.adempiere.core.domains.models.I_C_Bank;
 import org.adempiere.core.domains.models.I_C_BankAccount;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBank;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
@@ -139,6 +142,32 @@ public class BankManagement {
 			builderList.addRecords(bankAccountBuilder);
 		});
 		return builderList;
+	}
+
+
+
+	public static MBPBankAccount validateAndGetCustomerBankAccount(int customerBankAccountId) {
+		if (customerBankAccountId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BP_BankAccount_ID@");
+		}
+		MBPBankAccount customerBankAccount = new MBPBankAccount(Env.getCtx(), customerBankAccountId, null);
+		if (customerBankAccount == null || customerBankAccount.getC_BP_BankAccount_ID() <= 0) {
+			throw new AdempiereException("@C_BP_BankAccount_ID@ @NotFound@");
+		}
+		return customerBankAccount;
+	}
+
+	public static int getCustomerBankAccountFromAccount(Properties context, int customerId, int bankId, String accountNo, String businessPartnerCode) {
+		return new Query(
+			context,
+			I_C_BP_BankAccount.Table_Name,
+			"C_BPartner_ID = ? AND C_Bank_ID = ? AND AccountNo = ? AND A_Ident_SSN = ?",
+			null
+		)
+			.setParameters(customerId, bankId, accountNo, businessPartnerCode)
+			.setOnlyActiveRecords(true)
+			.firstId()
+		;
 	}
 
 }
