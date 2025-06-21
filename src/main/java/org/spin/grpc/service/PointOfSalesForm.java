@@ -1252,7 +1252,13 @@ public class PointOfSalesForm extends StoreImplBase {
 					}
 				}
 			}
-			int customerBankAccountId = getCustomerBankAccountFromAccount(Env.getCtx(), businessPartner.getC_BPartner_ID(), bankId, request.getAccountNo(), request.getSocialSecurityNumber());
+			int customerBankAccountId = BankManagement.getCustomerBankAccountFromAccount(
+				Env.getCtx(),
+				businessPartner.getC_BPartner_ID(),
+				bankId,
+				request.getAccountNo(),
+				request.getSocialSecurityNumber()
+			);
 			if(customerBankAccountId < 0) {
 				customerBankAccountId = 0;
 			}
@@ -1285,32 +1291,29 @@ public class PointOfSalesForm extends StoreImplBase {
 				businessPartnerBankAccount.setBankAccountType(request.getBankAccountType());
 			}
 			businessPartnerBankAccount.saveEx();
-			responseObserver.onNext(ConvertUtil.convertCustomerBankAccount(businessPartnerBankAccount).build());
+			responseObserver.onNext(
+				ConvertUtil.convertCustomerBankAccount(businessPartnerBankAccount).build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
-	private int getCustomerBankAccountFromAccount(Properties context, int customerId, int bankId, String accountNo, String businessPartnerCode) {
-		return new Query(context, I_C_BP_BankAccount.Table_Name, "C_BPArtner_ID = ? AND C_Bank_ID = ? AND AccountNo = ? AND A_Ident_SSN = ?", null)
-				.setParameters(customerId, bankId, accountNo, businessPartnerCode)
-				.setOnlyActiveRecords(true)
-				.firstId();
-	}
-	
+
 	@Override
 	public void updateCustomerBankAccount(UpdateCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
 		try {
-			if(request.getCustomerBankAccountId() <= 0) {
-				throw new AdempiereException("@C_BPBankAccount_ID@ @IsMandatory@");
-			}
+			MBPBankAccount businessPartnerBankAccount = BankManagement.validateAndGetCustomerBankAccount(
+				request.getId()
+			);
 			//	For data
-			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), request.getCustomerBankAccountId(), null);
 			businessPartnerBankAccount.setIsACH(request.getIsAch());
 			//	Validate all data
 			Optional.ofNullable(request.getCity()).ifPresent(value -> businessPartnerBankAccount.setA_City(value));
@@ -1337,53 +1340,69 @@ public class PointOfSalesForm extends StoreImplBase {
 				businessPartnerBankAccount.setBankAccountType(request.getBankAccountType());
 			}
 			businessPartnerBankAccount.saveEx();
-			responseObserver.onNext(ConvertUtil.convertCustomerBankAccount(businessPartnerBankAccount).build());
+			responseObserver.onNext(
+				ConvertUtil.convertCustomerBankAccount(businessPartnerBankAccount).build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
 	@Override
 	public void getCustomerBankAccount(GetCustomerBankAccountRequest request, StreamObserver<CustomerBankAccount> responseObserver) {
+		try {
+			MBPBankAccount businessPartnerBankAccount = BankManagement.validateAndGetCustomerBankAccount(
+				request.getId()
+			);
+			//	For data
+			responseObserver.onNext(
+				ConvertUtil.convertCustomerBankAccount(businessPartnerBankAccount).build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void deleteCustomerBankAccount(DeleteCustomerBankAccountRequest request, StreamObserver<Empty> responseObserver) {
 		try {
 			if(request.getId() <= 0) {
 				throw new AdempiereException("@C_BP_BankAccount_ID@ @IsMandatory@");
 			}
 			//	For data
-			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), request.getId(), null);
-			responseObserver.onNext(ConvertUtil.convertCustomerBankAccount(businessPartnerBankAccount).build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void deleteCustomerBankAccount(DeleteCustomerBankAccountRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			if(request.getCustomerBankAccountId() <= 0) {
-				throw new AdempiereException("@C_BP_BankAccount_ID@ @IsMandatory@");
-			}
-			//	For data
-			MBPBankAccount businessPartnerBankAccount = new MBPBankAccount(Env.getCtx(), request.getCustomerBankAccountId(), null);
+			MBPBankAccount businessPartnerBankAccount = BankManagement.validateAndGetCustomerBankAccount(
+				request.getId()
+			);
 			businessPartnerBankAccount.deleteEx(true);
-			responseObserver.onNext(Empty.newBuilder().build());
+			responseObserver.onNext(
+				Empty.newBuilder().build()
+			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -1430,23 +1449,17 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(request.getCustomerId() <= 0) {
 				throw new AdempiereException("@C_BPartner_ID@ @IsMandatory@");
 			}
-			int customerId = request.getCustomerId();
-
-			//	For data
-			String nexPageToken = null;
-			int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-			int limit = LimitUtil.getPageSize(request.getPageSize());
-			int offset = (pageNumber - 1) * limit;
-
 			String whereClause = I_C_BP_BankAccount.COLUMNNAME_C_BPartner_ID + " = ?";
+			int customerId = request.getCustomerId();
 			List<Object> filtersList = new ArrayList<Object>();
 			filtersList.add(customerId);
 			if (request.getBankId() > 0) {
-				whereClause += " " + I_C_BP_BankAccount.COLUMNNAME_C_Bank_ID + " = ?";
-				filtersList.add(request.getBankId());
+				whereClause += " AND " + I_C_BP_BankAccount.COLUMNNAME_C_Bank_ID + " = ?";
+				filtersList.add(
+					request.getBankId()
+				);
 			}
 
-			// if (request.get)
 			Query query = new Query(
 				Env.getCtx(),
 				I_C_BP_BankAccount.Table_Name,
@@ -1458,35 +1471,42 @@ public class PointOfSalesForm extends StoreImplBase {
 				.setOnlyActiveRecords(true)
 			;
 
+			//	Set page token
+			int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+			int limit = LimitUtil.getPageSize(request.getPageSize());
+			int offset = (pageNumber - 1) * limit;
 			int count = query.count();
+			String nexPageToken = null;
+			if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+				nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+			}
+
 			ListCustomerBankAccountsResponse.Builder builder = ListCustomerBankAccountsResponse.newBuilder()
 				.setRecordCount(
 					count
 				)
+				.setNextPageToken(
+					StringManager.getValidString(nexPageToken)
+				)
 			;
 			query
 				.setLimit(limit, offset)
-				.<MBPBankAccount>list()
-				.forEach(customerBankAccount -> {
+				.getIDsAsList()
+				.forEach(customerBankAccountId -> {
+					MBPBankAccount customerBankAccount = new MBPBankAccount(Env.getCtx(), customerBankAccountId, null);
 					builder.addCustomerBankAccounts(
 						ConvertUtil.convertCustomerBankAccount(
 							customerBankAccount
 						)
 					);
-				});
+				})
+			;
 			//	
 
-			//	Set page token
-			if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-				nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-			}
-			builder.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
-			);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
