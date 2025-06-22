@@ -80,6 +80,11 @@ public class ColumnsAdded {
 	public static final String COLUMNNAME_ECA14_Invoice_Reference_ID = "ECA14_Invoice_Reference_ID";
 	public static final String COLUMNNAME_ECA14_Reference_Amount = "ECA14_Reference_Amount";
 	/**	For Gift Card */
+	public static final String COLUMNNAME_ECA14_GiftCard_ID = "ECA14_GiftCard_ID";
+	public static final String COLUMNNAME_ECA14_GiftCardLine_ID = "ECA14_GiftCardLine_ID";
 	public static final String COLUMNNAME_IsAllowsGiftCard = "IsAllowsGiftCard";
 	public static final String COLUMNNAME_ECA14_DefaultGiftCardCharge_ID = "ECA14_DefaultGiftCardCharge_ID";
+	public static final String COLUMNNAME_IsPrepayment = "IsPrepayment";
+	public static final String COLUMNNAME_DateDoc = "DateDoc";
+	public static final String COLUMNNAME_Amount = "Amount";
 }

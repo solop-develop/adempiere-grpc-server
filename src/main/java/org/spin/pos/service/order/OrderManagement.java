@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_C_Order;
+import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
@@ -373,7 +374,41 @@ public class OrderManagement {
 		creditMemo.setDocumentNo(payment.getDocumentNo());
 		creditMemo.saveEx(transactionName);
 	}
-	
+
+
+	/**
+	 * Create Gift Card from payment
+	 * @param salesOrder
+	 * @param payment
+	 * @param transactionName
+	 * @return void
+	 */
+	private static void createGiftCard(MOrder salesOrder, MPayment payment, String transactionName) {
+		MTable giftCardTable = MTable.get(payment.getCtx(), "ECA14_GiftCard");
+		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
+			return;
+		}
+		PO giftCard = giftCardTable.getPO(0, payment.get_TrxName());
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_BPartner_ID, payment.getC_BPartner_ID());
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_ConversionType_ID, payment.getC_ConversionType_ID());
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Currency_ID, payment.getC_Currency_ID());
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Order_ID, salesOrder.getC_Order_ID());
+		// TODO: Add `C_Payment_ID` source column
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Payment_ID, payment.getC_Payment_ID());
+		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_DateDoc, payment.getDateTrx());
+		String description = Msg.parseTranslation(
+			payment.getCtx(),
+			"@C_Order_ID@: " + salesOrder.getDisplayValue() + "\n" +
+			"@C_Payment_ID@: " + payment.getDisplayValue() + "\n"
+		);
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_Description, description);
+		// set total amount on header
+		giftCard.set_ValueOfColumn(I_C_Payment.COLUMNNAME_IsPrepayment, true);
+		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_Amount, payment.getPayAmt());
+		giftCard.saveEx(transactionName);
+	}
+
+
 	/**
 	 * Validate if a order is released
 	 * @param salesOrder
@@ -433,6 +468,10 @@ public class OrderManagement {
 					} else {
 						createCreditMemoReference(salesOrder, payment, transactionName);
 					}
+				} else if (payment.getTenderType().equals("G")) {
+					if (!payment.isReceipt()) {
+						createGiftCard(salesOrder, payment, transactionName);
+					}
 				}
 				payment.setDocAction(MPayment.DOCACTION_Complete);
 				CashUtil.setCurrentDate(payment);
@@ -446,6 +485,7 @@ public class OrderManagement {
 			}
 			CashManagement.addPaymentToCash(pos, payment);
 		});
+
 		//	Allocate all payments
 		if(paymentsIds.size() > 0) {
 			String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
@@ -553,4 +593,5 @@ public class OrderManagement {
 			}
 		}
 	}
+
 }
