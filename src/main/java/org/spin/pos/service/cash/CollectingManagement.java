@@ -126,6 +126,7 @@ public class CollectingManagement {
 		} else {
 			payment.setC_DocType_ID(!request.getIsRefund());
 		}
+
 		payment.setAD_Org_ID(salesOrder.getAD_Org_ID());
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getPaymentDate()
@@ -137,11 +138,17 @@ public class CollectingManagement {
 		Timestamp dateValue = ValueManager.getDateFromTimestampDate(
 			request.getPaymentAccountDate()
 		);
-    	if(dateValue != null) {
-    		payment.setDateAcct(dateValue);
-    	}
-        payment.setTenderType(tenderType);
-        payment.setDescription(Optional.of(request.getDescription()).orElse(salesOrder.getDescription()));
+		if(dateValue != null) {
+			payment.setDateAcct(dateValue);
+		}
+		payment.setTenderType(tenderType);
+		payment.setDescription(
+			Optional.of(
+				request.getDescription()
+			).orElse(
+				salesOrder.getDescription()
+			)
+		);
         payment.setC_BPartner_ID (salesOrder.getC_BPartner_ID());
         payment.setC_Currency_ID(currencyId);
         payment.setC_POS_ID(pointOfSalesDefinition.getC_POS_ID());
@@ -210,7 +217,9 @@ public class CollectingManagement {
 		CashUtil.setCurrentDate(payment);
 		if(Util.isEmpty(payment.getDocumentNo(), true)) {
 			String value = DB.getDocumentNo(payment.getC_DocType_ID(), transactionName, false, payment);
-			payment.setDocumentNo(value);
+			if (!Util.isEmpty(value, true)) {
+				payment.setDocumentNo(value);
+			}
 		}
 		//	
 		if(request.getInvoiceReferenceId() > 0) {
