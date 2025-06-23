@@ -4485,6 +4485,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(!DocumentUtil.isDrafted(salesOrder)) {
 				throw new AdempiereException("@C_Order_ID@ @Processed@");
 			}
+
+			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
+			Timestamp currentDate = RecordUtil.getDate();
+			CashManagement.validatePreviousCashClosing(pos, currentDate, transactionName);
+			CashManagement.getCurrentCashClosing(pos, currentDate, true, transactionName);
+
 			OrderManagement.validateOrderReleased(salesOrder);
 			//	Update Date Ordered
 			Timestamp now = TimeUtil.getDay(System.currentTimeMillis());
@@ -5765,9 +5772,15 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(request.getSalesRepresentativeId() <= 0) {
 			throw new AdempiereException("@SalesRep_ID@ @IsMandatory@");
 		}
+		
 		AtomicReference<MOrder> maybeOrder = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
+			Timestamp currentDate = RecordUtil.getDate();
+			CashManagement.validatePreviousCashClosing(pos, currentDate, transactionName);
+			CashManagement.getCurrentCashClosing(pos, currentDate, true, transactionName);
+
 			StringBuffer whereClause = new StringBuffer("DocStatus = 'DR' "
 					+ "AND C_POS_ID = ? "
 					+ "AND NOT EXISTS(SELECT 1 "
@@ -5790,9 +5803,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(salesOrder == null) {
 				salesOrder = new MOrder(Env.getCtx(), 0, transactionName);
 			} else {
-				salesOrder.setDateOrdered(RecordUtil.getDate());
-				salesOrder.setDateAcct(RecordUtil.getDate());
-				salesOrder.setDatePromised(RecordUtil.getDate());
+				salesOrder.setDateOrdered(currentDate);
+				salesOrder.setDateAcct(currentDate);
+				salesOrder.setDatePromised(currentDate);
 			}
 			//	Set campaign
 			//	Default values

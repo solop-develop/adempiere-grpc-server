@@ -80,14 +80,14 @@ public class OrderManagement {
 			if(!OrderUtil.isValidOrder(salesOrder)) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
+			boolean isOpenToRefund = isRefundOpen;
+			if(getPaymentReferenceAmount(salesOrder, paymentReferences).compareTo(Env.ZERO) != 0) {
+				isOpenToRefund = true;
+			}
 			if(DocumentUtil.isDrafted(salesOrder)) {
 				// In case the Order is Invalid, set to In Progress; otherwise it will not be completed
 				if (salesOrder.getDocStatus().equalsIgnoreCase(MOrder.STATUS_Invalid))  {
 					salesOrder.setDocStatus(MOrder.STATUS_InProgress);
-				}
-				boolean isOpenRefund = isRefundOpen;
-				if(getPaymentReferenceAmount(salesOrder, paymentReferences).compareTo(Env.ZERO) != 0) {
-					isOpenRefund = true;
 				}
 				//	Set default values
 				salesOrder.setDocAction(DocAction.ACTION_Complete);
@@ -104,14 +104,9 @@ public class OrderManagement {
 				}
 				salesOrder.set_ValueOfColumn("AssignedSalesRep_ID", null);
 				salesOrder.saveEx();
-				processPayments(salesOrder, pos, isOpenRefund, transactionName);
-			} else {
-				boolean isOpenToRefund = isRefundOpen;
-				if(getPaymentReferenceAmount(salesOrder, paymentReferences).compareTo(Env.ZERO) != 0) {
-					isOpenToRefund = true;
-				}
-				processPayments(salesOrder, pos, isOpenToRefund, transactionName);
 			}
+
+			processPayments(salesOrder, pos, isOpenToRefund, transactionName);
 			//	Process all references
 			processPaymentReferences(salesOrder, pos, paymentReferences, transactionName);
 			//	Create
