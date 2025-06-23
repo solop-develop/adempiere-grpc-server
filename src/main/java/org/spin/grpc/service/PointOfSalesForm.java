@@ -2481,7 +2481,9 @@ public class PointOfSalesForm extends StoreImplBase {
 				;
 				//	
 				builder.addCashMovements(paymentSummary.build());
-				count++;
+				if (count <= 0) {
+					count++;
+				}
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -2489,15 +2491,16 @@ public class PointOfSalesForm extends StoreImplBase {
 		} finally {
 			DB.close(rs, pstmt);
 		}
-		//	
-		builder.setRecordCount(count);
+
 		//	Set page token
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
-		);
+				StringManager.getValidString(nexPageToken)
+			)
+			.setRecordCount(count)
+		;
 		//	Return
 		return builder;
 	}

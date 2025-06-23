@@ -121,17 +121,17 @@ public class CashManagement {
 			case MPayment.TENDERTYPE_DirectDebit:
 				break;
 			case MPayment.TENDERTYPE_CreditCard:
-				if (Util.isEmpty(request.getCreditCardTypeValue(), true)) {
+				if (!Util.isEmpty(request.getCreditCardTypeValue(), true)) {
 					payment.setCreditCardType(
 						request.getCreditCardTypeValue()
 					);
 				}
-				if (Util.isEmpty(request.getCreditCardNumber(), true)) {
+				if (!Util.isEmpty(request.getCreditCardNumber(), true)) {
 					payment.setCreditCardNumber(
 						request.getCreditCardNumber()
 					);
 				}
-				if (Util.isEmpty(request.getCreditCardVerificationValue(), true)) {
+				if (!Util.isEmpty(request.getCreditCardVerificationValue(), true)) {
 					payment.setCreditCardVV(
 						request.getCreditCardVerificationValue()
 					);
@@ -320,20 +320,28 @@ public class CashManagement {
 			return;
 		}
 		//	Find
-		StringBuilder whereClause = new StringBuilder();
-		whereClause.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND StatementDate < ?")
-				.append(" AND ").append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
-				.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
-				.append(" AND ").append("C_POS_ID = ?");
-		MBankStatement bankStatement = new Query(Env.getCtx(), MBankStatement.Table_Name, whereClause.toString(), transactionName)
-				.setClient_ID()
-				.setParameters(pos.getC_BankAccount_ID(), TimeUtil.getDay(validDate), false, cashClosingDocumentTypeId, pos.getC_POS_ID())
-				.first();
+		StringBuilder whereClause = new StringBuilder()
+			.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND StatementDate < ?")
+			.append(" AND ").append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
+			.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
+			.append(" AND ").append("C_POS_ID = ?")
+		;
+		MBankStatement bankStatement = new Query(
+			Env.getCtx(),
+			MBankStatement.Table_Name,
+			whereClause.toString(),
+			transactionName
+		)
+			.setClient_ID()
+			.setParameters(pos.getC_BankAccount_ID(), TimeUtil.getDay(validDate), false, cashClosingDocumentTypeId, pos.getC_POS_ID())
+			.setOrderBy("StatementDate DESC")
+			.first()
+		;
 		if (bankStatement != null && bankStatement.get_ID() > 0) {
 			throw new AdempiereException("@POS.PreviousCashClosingOpened@: " + bankStatement.getDocumentNo());
 		}
 	}
-	
+
 	/**
 	 * Get Current bank statement
 	 * @param pos
@@ -353,15 +361,23 @@ public class CashManagement {
 		if(pos.getC_BankAccount_ID() <= 0) {
 			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
 		}
-		StringBuilder whereClause = new StringBuilder();
-		whereClause.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND StatementDate <= ?")
-		.append(" AND ").append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
-		.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
-		.append(" AND ").append("C_POS_ID = ?");
-		MBankStatement bankStatement = new Query(Env.getCtx() , MBankStatement.Table_Name , whereClause.toString(), transactionName)
-				.setClient_ID()
-				.setParameters(pos.getC_BankAccount_ID(), TimeUtil.getDay(validDate), false, cashClosingDocumentTypeId, pos.getC_POS_ID())
-				.first();
+		StringBuilder whereClause = new StringBuilder()
+			.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND StatementDate <= ?")
+			.append(" AND ").append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
+			.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
+			.append(" AND ").append("C_POS_ID = ?")
+		;
+		MBankStatement bankStatement = new Query(
+			Env.getCtx(),
+			MBankStatement.Table_Name ,
+			whereClause.toString(),
+			transactionName
+		)
+			.setClient_ID()
+			.setParameters(pos.getC_BankAccount_ID(), TimeUtil.getDay(validDate), false, cashClosingDocumentTypeId, pos.getC_POS_ID())
+			.setOrderBy("StatementDate DESC")
+			.first()
+		;
 		if (bankStatement == null || bankStatement.get_ID() <= 0) {
 			if(pos.get_ValueAsBoolean("IsValidatePOSCashOpening") && validate) {
 				throw new AdempiereException("@POS.CashClosingNotFound@");
@@ -369,7 +385,7 @@ public class CashManagement {
 		}
 		return bankStatement;
 	}
-	
+
 	/**
 	 * Get Current bank statement
 	 * @param pos
@@ -389,16 +405,24 @@ public class CashManagement {
 		if(pos.getC_BankAccount_ID() <= 0) {
 			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
 		}
-		StringBuilder whereClause = new StringBuilder();
-		whereClause.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND ")
-				.append("TRUNC(").append(MBankStatement.COLUMNNAME_StatementDate).append(",'DD') = ? AND ")
-				.append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
-				.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
-				.append(" AND ").append("C_POS_ID = ?");
-		MBankStatement bankStatement = new Query(Env.getCtx() , MBankStatement.Table_Name , whereClause.toString(), transactionName)
-				.setClient_ID()
-				.setParameters(pos.getC_BankAccount_ID(), TimeUtil.getDay(validDate), false, cashClosingDocumentTypeId, pos.getC_POS_ID())
-				.first();
+		StringBuilder whereClause = new StringBuilder()
+			.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append(" = ? AND ")
+			.append("TRUNC(").append(MBankStatement.COLUMNNAME_StatementDate).append(",'DD') = ? AND ")
+			.append(MBankStatement.COLUMNNAME_Processed).append(" = ?")
+			.append(" AND ").append(MBankStatement.COLUMNNAME_C_DocType_ID).append(" = ?")
+			.append(" AND ").append("C_POS_ID = ?")
+		;
+		MBankStatement bankStatement = new Query(
+			Env.getCtx(),
+			MBankStatement.Table_Name,
+			whereClause.toString(),
+			transactionName
+		)
+			.setClient_ID()
+			.setParameters(pos.getC_BankAccount_ID(), TimeUtil.getDay(validDate), false, cashClosingDocumentTypeId, pos.getC_POS_ID())
+			.setOrderBy("StatementDate DESC")
+			.first()
+		;
 		if (bankStatement == null || bankStatement.get_ID() <= 0) {
 			if(pos.get_ValueAsBoolean("IsValidatePOSCashOpening") && validate) {
 				throw new AdempiereException("@POS.CashClosingNotFound@");

@@ -178,17 +178,17 @@ public class CollectingManagement {
 			case MPayment.TENDERTYPE_DirectDebit:
 				break;
 			case MPayment.TENDERTYPE_CreditCard:
-				if (Util.isEmpty(request.getCreditCardTypeValue(), true)) {
+				if (!Util.isEmpty(request.getCreditCardTypeValue(), true)) {
 					payment.setCreditCardType(
 						request.getCreditCardTypeValue()
 					);
 				}
-				if (Util.isEmpty(request.getCreditCardNumber(), true)) {
+				if (!Util.isEmpty(request.getCreditCardNumber(), true)) {
 					payment.setCreditCardNumber(
 						request.getCreditCardNumber()
 					);
 				}
-				if (Util.isEmpty(request.getCreditCardVerificationValue(), true)) {
+				if (!Util.isEmpty(request.getCreditCardVerificationValue(), true)) {
 					payment.setCreditCardVV(
 						request.getCreditCardVerificationValue()
 					);
