@@ -1907,7 +1907,7 @@ message CreatePaymentReferenceRequest {
 	bool is_receipt = 15;
 	int32 invoice_reference_id = 16;
 	int32 gift_card_id = 17;
-	optional string credit_card_type = 18;
+	optional string credit_card_type_value = 18;
 	optional string credit_card_number = 19;
 	optional string credit_card_verification_value = 20;
 	optional int32 credit_card_expirity_month = 21;
@@ -2000,7 +2000,7 @@ message CreatePaymentRequest {
 	int32 invoice_reference_id = 18;
 	int32 allocate_payment_id = 19;
 	int32 gift_card_id = 20;
-	optional string credit_card_type = 21;
+	optional string credit_card_type_value = 21;
 	optional string credit_card_number = 22;
 	optional string credit_card_verification_value = 23;
 	optional int32 credit_card_expirity_month = 24;
@@ -2020,7 +2020,7 @@ message UpdatePaymentRequest {
 	int32 reference_bank_account_id = 11;
 	int32 invoice_reference_id = 12;
 	int32 gift_card_id = 13;
-	optional string credit_card_type = 14;
+	optional string credit_card_type_value = 14;
 	optional string credit_card_number = 15;
 	optional string credit_card_verification_value = 16;
 	optional int32 credit_card_expirity_month = 17;
