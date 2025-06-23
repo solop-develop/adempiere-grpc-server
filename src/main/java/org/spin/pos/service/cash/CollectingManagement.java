@@ -178,9 +178,9 @@ public class CollectingManagement {
 			case MPayment.TENDERTYPE_DirectDebit:
 				break;
 			case MPayment.TENDERTYPE_CreditCard:
-				if (Util.isEmpty(request.getCreditCardType(), true)) {
+				if (Util.isEmpty(request.getCreditCardTypeValue(), true)) {
 					payment.setCreditCardType(
-						request.getCreditCardType()
+						request.getCreditCardTypeValue()
 					);
 				}
 				if (Util.isEmpty(request.getCreditCardNumber(), true)) {
