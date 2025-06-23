@@ -25,11 +25,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.protobuf.Empty;
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
+import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_C_POS;
 import org.adempiere.core.domains.models.I_M_DiscountSchema;
 import org.adempiere.core.domains.models.I_M_InOutLine;
+import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MDiscountSchema;
@@ -39,6 +42,7 @@ import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
+import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUOMConversion;
@@ -53,6 +57,7 @@ import org.spin.backend.grpc.pos.CancelOnlinePaymentRequest;
 import org.spin.backend.grpc.pos.CancelOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.CreateGiftCardLineRequest;
 import org.spin.backend.grpc.pos.CreateGiftCardRequest;
+import org.spin.backend.grpc.pos.CreditCardType;
 import org.spin.backend.grpc.pos.Customer;
 import org.spin.backend.grpc.pos.CustomerTemplate;
 import org.spin.backend.grpc.pos.DeleteGiftCardLineRequest;
@@ -70,6 +75,8 @@ import org.spin.backend.grpc.pos.ListAvailableOrderLinesForGiftCardRequest;
 import org.spin.backend.grpc.pos.ListAvailableOrderLinesForGiftCardResponse;
 import org.spin.backend.grpc.pos.ListAvailableOrderLinesForRMARequest;
 import org.spin.backend.grpc.pos.ListAvailableOrderLinesForRMAResponse;
+import org.spin.backend.grpc.pos.ListCreditCardTypesRequest;
+import org.spin.backend.grpc.pos.ListCreditCardTypesResponse;
 import org.spin.backend.grpc.pos.ListCustomerTemplatesRequest;
 import org.spin.backend.grpc.pos.ListCustomerTemplatesResponse;
 import org.spin.backend.grpc.pos.ListCustomersRequest;
@@ -91,6 +98,7 @@ import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
+import org.spin.pos.util.PaymentConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -98,6 +106,48 @@ import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class POSLogic {
+
+	public static ListCreditCardTypesResponse.Builder listCreditCardTypes(ListCreditCardTypesRequest request) {
+		// Credit Card Type = 125
+		final int referenceId = X_C_Payment.CREDITCARDTYPE_AD_Reference_ID;
+		final String whereClause = I_AD_Reference.COLUMNNAME_AD_Reference_ID + " = ? ";
+
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_Ref_List.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(referenceId)
+			.setOnlyActiveRecords(true)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
+
+		//	Get page and count
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		int recordCount = query.count();
+
+		ListCreditCardTypesResponse.Builder builderList = ListCreditCardTypesResponse.newBuilder()
+			.setRecordCount(recordCount)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		//	Get List
+		query.setLimit(limit, offset)
+			.<MRefList>list()
+			.forEach(refList -> {
+				CreditCardType.Builder builder = PaymentConvertUtil.convertCreditCardType(nexPageToken);
+				builderList.addRecords(builder);
+			})
+		;
+
+		return builderList;
+	}
 
 
 	/**

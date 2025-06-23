@@ -802,15 +802,18 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+
+
 	@Override
-	public void listAvailablePaymentMethods(ListAvailablePaymentMethodsRequest request,
-			StreamObserver<ListAvailablePaymentMethodsResponse> responseObserver) {
+	public void listCreditCardTypes(ListCreditCardTypesRequest request,
+			StreamObserver<ListCreditCardTypesResponse> responseObserver) {
 		try {
-			ListAvailablePaymentMethodsResponse.Builder tenderTypes = listPaymentMethods(request);
+			ListCreditCardTypesResponse.Builder tenderTypes = POSLogic.listCreditCardTypes(request);
 			responseObserver.onNext(tenderTypes.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -819,6 +822,27 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
+
+	@Override
+	public void listAvailablePaymentMethods(ListAvailablePaymentMethodsRequest request,
+			StreamObserver<ListAvailablePaymentMethodsResponse> responseObserver) {
+		try {
+			ListAvailablePaymentMethodsResponse.Builder tenderTypes = listPaymentMethods(request);
+			responseObserver.onNext(tenderTypes.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
 
 	@Override
 	public void listAvailablePriceList(ListAvailablePriceListRequest request,

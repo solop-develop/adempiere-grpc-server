@@ -21,6 +21,8 @@ import java.sql.Timestamp;
 import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_Payment;
+import org.adempiere.core.domains.models.X_C_Payment;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MInvoice;
@@ -31,7 +33,9 @@ import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.core_functionality.Currency;
+import org.spin.backend.grpc.pos.CreditCardType;
 import org.spin.backend.grpc.pos.Payment;
 import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.PaymentReference;
@@ -47,6 +51,60 @@ import org.spin.store.model.MCPaymentMethod;
  * Payment Convert Util from Point Of Sales
  */
 public class PaymentConvertUtil {
+
+	public static CreditCardType.Builder convertCreditCardType(String creditCardTypeValue) {
+		CreditCardType.Builder builder = CreditCardType.newBuilder();
+		if (Util.isEmpty(creditCardTypeValue, true)) {
+			return builder;
+		}
+		MRefList creditCardTypeReference = MRefList.get(
+			Env.getCtx(),
+			X_C_Payment.CREDITCARDTYPE_AD_Reference_ID,
+			creditCardTypeValue,
+			null
+		);
+		if (creditCardTypeReference == null) {
+			return builder;
+		}
+		builder = convertCreditCardType(creditCardTypeReference);
+		return builder;
+	}
+	public static CreditCardType.Builder convertCreditCardType(MRefList creditCardTypeReference) {
+		CreditCardType.Builder builder = CreditCardType.newBuilder();
+		if (creditCardTypeReference == null) {
+			return builder;
+		}
+		builder.setId(
+				creditCardTypeReference.getAD_Ref_List_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					creditCardTypeReference.getUUID()
+				)
+			)
+			.setValue(
+				StringManager.getValidString(
+					creditCardTypeReference.getValue()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					creditCardTypeReference.get_Translation(I_AD_Ref_List.COLUMNNAME_Name)
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					creditCardTypeReference.get_Translation(I_AD_Ref_List.COLUMNNAME_Description)
+				)
+			)
+			.setIsActive(
+				creditCardTypeReference.isActive()
+			)
+		;
+		return builder;
+	}
+
+
 
 	public static PaymentMethod.Builder convertPaymentMethod(MCPaymentMethod paymentMethod) {
 		PaymentMethod.Builder paymentMethodBuilder = PaymentMethod.newBuilder();
@@ -168,6 +226,16 @@ public class PaymentConvertUtil {
 				)
 			;
 		}
+		if (paymentReference.get_ColumnIndex(I_C_Payment.COLUMNNAME_CreditCardType) >= 0) {
+			builder.setCreditCardType(
+				convertCreditCardType(
+					paymentReference.get_ValueAsString(
+						I_C_Payment.COLUMNNAME_CreditCardType
+					)
+				)
+			);
+		}
+
 		//	
 		return builder;
 	}
@@ -302,6 +370,11 @@ public class PaymentConvertUtil {
 				)
 			)
 			.setPaymentMethod(paymentMethodBuilder)
+			.setCreditCardType(
+				convertCreditCardType(
+					payment.getCreditCardType()
+				)
+			)
 			.setCharge(
 				CoreFunctionalityConvert.convertCharge(
 					payment.getC_Charge_ID()

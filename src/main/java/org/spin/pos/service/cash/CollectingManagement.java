@@ -178,6 +178,27 @@ public class CollectingManagement {
 			case MPayment.TENDERTYPE_DirectDebit:
 				break;
 			case MPayment.TENDERTYPE_CreditCard:
+				if (Util.isEmpty(request.getCreditCardType(), true)) {
+					payment.setCreditCardType(
+						request.getCreditCardType()
+					);
+				}
+				if (Util.isEmpty(request.getCreditCardNumber(), true)) {
+					payment.setCreditCardNumber(
+						request.getCreditCardNumber()
+					);
+				}
+				if (Util.isEmpty(request.getCreditCardVerificationValue(), true)) {
+					payment.setCreditCardVV(
+						request.getCreditCardVerificationValue()
+					);
+				}
+				payment.setCreditCardExpMM(
+					request.getCreditCardExpirityMonth()
+				);
+				payment.setCreditCardExpYY(
+					request.getCreditCardExpirityYear()
+				);
 				break;
 			case MPayment.TENDERTYPE_MobilePaymentInterbank:
 				payment.setR_PnRef(request.getReferenceNo());
