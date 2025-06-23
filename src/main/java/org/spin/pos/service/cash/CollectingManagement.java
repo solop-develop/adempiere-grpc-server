@@ -217,11 +217,14 @@ public class CollectingManagement {
 				break;
 			// Gift Card
 			case "G":
-				// payment.setR_PnRef(request.getReferenceNo());
-				// payment.set_ValueOfColumn(
-				// 	ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID,
-				// 	request.getGiftCardId()
-				// );
+				// TODO: Add support to source Gift Card as payment
+				if (payment.get_ColumnIndex(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID) >= 0) {
+					payment.setR_PnRef(request.getReferenceNo());
+					payment.set_ValueOfColumn(
+						ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID,
+						request.getGiftCardId()
+					);
+				}
 				break;
 			default:
 				payment.setDescription(request.getDescription());

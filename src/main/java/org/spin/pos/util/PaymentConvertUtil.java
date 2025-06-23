@@ -29,6 +29,7 @@ import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
+import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -112,7 +113,9 @@ public class PaymentConvertUtil {
 			return paymentMethodBuilder;
 		}
 		paymentMethodBuilder
-			.setId(paymentMethod.getC_PaymentMethod_ID())
+			.setId(
+				paymentMethod.getC_PaymentMethod_ID()
+			)
 			.setName(
 				StringManager.getValidString(
 					paymentMethod.getName()
@@ -150,82 +153,81 @@ public class PaymentConvertUtil {
 	 */
 	public static PaymentReference.Builder convertPaymentReference(PO paymentReference) {
 		PaymentReference.Builder builder = PaymentReference.newBuilder();
-		if(paymentReference != null
-				&& paymentReference.get_ID() > 0) {
-			MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), null);
-			PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
-
-			int presicion = MCurrency.getStdPrecision(paymentReference.getCtx(), paymentReference.get_ValueAsInt("C_Currency_ID"));
-
-			BigDecimal amount = (BigDecimal) paymentReference.get_Value("Amount");
-			amount.setScale(presicion, RoundingMode.HALF_UP);
-
-			MOrder order = new MOrder(Env.getCtx(), paymentReference.get_ValueAsInt("C_Order_ID"), null);
-			BigDecimal convertedAmount = ConvertUtil.getConvetedAmount(order, paymentReference, amount)
-				.setScale(presicion, RoundingMode.HALF_UP);
-
-			builder.setAmount(
-					NumberManager.getBigDecimalToString(
-						amount
-					)
-				)
-				.setDescription(
-					StringManager.getValidString(
-						paymentReference.get_ValueAsString("Description")
-					)
-				)
-				.setIsPaid(
-					!paymentReference.get_ValueAsBoolean("IsReceipt")
-				)
-				.setTenderTypeCode(
-					StringManager.getValidString(
-						paymentReference.get_ValueAsString("TenderType")
-					)
-				)
-				.setCurrency(
-					CoreFunctionalityConvert.convertCurrency(
-						paymentReference.get_ValueAsInt("C_Currency_ID")
-					)
-				)
-				.setCustomerBankAccountId(
-					paymentReference.get_ValueAsInt("C_BP_BankAccount_ID")
-				)
-				.setOrderId(
-					paymentReference.get_ValueAsInt("C_Order_ID")
-				)
-				.setPosId(
-					paymentReference.get_ValueAsInt("C_POS_ID")
-				)
-				.setSalesRepresentative(
-					CoreFunctionalityConvert.convertSalesRepresentative(
-						MUser.get(Env.getCtx(), paymentReference.get_ValueAsInt("SalesRep_ID"))
-					)
-				)
-				.setId(
-					paymentReference.get_ID()
-				)
-				.setPaymentMethod(paymentMethodBuilder)
-				.setPaymentDate(
-					ValueManager.getTimestampFromDate(
-						(Timestamp) paymentReference.get_Value("PayDate")
-					)
-				)
-				.setIsAutomatic(
-					paymentReference.get_ValueAsBoolean("IsAutoCreatedReference")
-				)
-				.setIsProcessed(
-					paymentReference.get_ValueAsBoolean("Processed")
-				)
-				.setConvertedAmount(
-					NumberManager.getBigDecimalToString(
-						convertedAmount
-					)
-				)
-				.setGiftCardId(
-					paymentReference.get_ValueAsInt("ECA14_GiftCard_ID")
-				)
-			;
+		if(paymentReference == null || paymentReference.get_ID() <= 0) {
+			return builder;
 		}
+		MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), paymentReference.get_ValueAsInt("C_PaymentMethod_ID"), null);
+		PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
+
+		int presicion = MCurrency.getStdPrecision(paymentReference.getCtx(), paymentReference.get_ValueAsInt("C_Currency_ID"));
+
+		BigDecimal amount = (BigDecimal) paymentReference.get_Value("Amount");
+		amount.setScale(presicion, RoundingMode.HALF_UP);
+
+		MOrder order = new MOrder(Env.getCtx(), paymentReference.get_ValueAsInt("C_Order_ID"), null);
+		BigDecimal convertedAmount = ConvertUtil.getConvetedAmount(order, paymentReference, amount)
+			.setScale(presicion, RoundingMode.HALF_UP)
+		;
+
+		builder.setAmount(
+				NumberManager.getBigDecimalToString(
+					amount
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					paymentReference.get_ValueAsString("Description")
+				)
+			)
+			.setIsPaid(
+				!paymentReference.get_ValueAsBoolean("IsReceipt")
+			)
+			.setTenderTypeCode(
+				StringManager.getValidString(
+					paymentReference.get_ValueAsString("TenderType")
+				)
+			)
+			.setCurrency(
+				CoreFunctionalityConvert.convertCurrency(
+					paymentReference.get_ValueAsInt("C_Currency_ID")
+				)
+			)
+			.setCustomerBankAccountId(
+				paymentReference.get_ValueAsInt("C_BP_BankAccount_ID")
+			)
+			.setOrderId(
+				paymentReference.get_ValueAsInt("C_Order_ID")
+			)
+			.setPosId(
+				paymentReference.get_ValueAsInt("C_POS_ID")
+			)
+			.setSalesRepresentative(
+				CoreFunctionalityConvert.convertSalesRepresentative(
+					MUser.get(Env.getCtx(), paymentReference.get_ValueAsInt("SalesRep_ID"))
+				)
+			)
+			.setId(
+				paymentReference.get_ID()
+			)
+			.setPaymentMethod(paymentMethodBuilder)
+			.setPaymentDate(
+				ValueManager.getTimestampFromDate(
+					(Timestamp) paymentReference.get_Value("PayDate")
+				)
+			)
+			.setIsAutomatic(
+				paymentReference.get_ValueAsBoolean("IsAutoCreatedReference")
+			)
+			.setIsProcessed(
+				paymentReference.get_ValueAsBoolean("Processed")
+			)
+			.setConvertedAmount(
+				NumberManager.getBigDecimalToString(
+					convertedAmount
+				)
+			)
+		;
+
 		if (paymentReference.get_ColumnIndex(I_C_Payment.COLUMNNAME_CreditCardType) >= 0) {
 			builder.setCreditCardType(
 				convertCreditCardType(
@@ -236,6 +238,28 @@ public class PaymentConvertUtil {
 			);
 		}
 
+		if (paymentReference.get_ColumnIndex(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID) >= 0) {
+			MTable giftCardTable = MTable.get(Env.getCtx(), "ECA14_GiftCard");
+			if (giftCardTable != null && giftCardTable.get_ID() > 0) {
+				PO giftCard = giftCardTable.getPO(
+					paymentReference.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID),
+					null
+				);
+				if (giftCard != null && giftCard.get_ID() > 0) {
+					builder.setGiftCardId(
+							giftCard.get_ID()
+						)
+						.setGiftCardCode(
+							StringManager.getValidString(
+								giftCard.get_ValueAsString(
+									I_C_Payment.COLUMNNAME_DocumentNo
+								)
+							)
+						)
+					;
+				}
+			}
+		}
 		//	
 		return builder;
 	}
@@ -423,6 +447,30 @@ public class PaymentConvertUtil {
 				payment.get_ValueAsInt("NextRequestTime")
 			)
 		;
+
+		if (payment.get_ColumnIndex(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID) >= 0) {
+			MTable giftCardTable = MTable.get(Env.getCtx(), "ECA14_GiftCard");
+			if (giftCardTable != null && giftCardTable.get_ID() > 0) {
+				PO giftCard = giftCardTable.getPO(
+					payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID),
+					null
+				);
+				if (giftCard != null && giftCard.get_ID() > 0) {
+					builder.setGiftCardId(
+							giftCard.get_ID()
+						)
+						.setGiftCardCode(
+							StringManager.getValidString(
+								giftCard.get_ValueAsString(
+									I_C_Payment.COLUMNNAME_DocumentNo
+								)
+							)
+						)
+					;
+				}
+			}
+		}
+
 		if(payment.getCollectingAgent_ID() > 0) {
 			builder.setCollectingAgent(
 				CoreFunctionalityConvert.convertSalesRepresentative(
