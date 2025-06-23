@@ -27,6 +27,7 @@ import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_C_POS;
+import org.adempiere.core.domains.models.I_C_PaymentMethod;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MBank;
@@ -166,10 +167,10 @@ public class POSConvertUtil {
 			return tenderTypeValue;
 		}
 
-		MTable paymentTypeTable = MTable.get(Env.getCtx(), "C_PaymentMethod");
+		MTable paymentTypeTable = MTable.get(Env.getCtx(), I_C_PaymentMethod.Table_Name);
 
 		MCPaymentMethod paymentMethod = (MCPaymentMethod) paymentTypeTable.getPO(
-			availablePaymentMethod.get_ValueAsInt("C_PaymentMethod_ID"), null
+			availablePaymentMethod.get_ValueAsInt(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID), null
 		);
 		PaymentMethod.Builder paymentMethodBuilder = PaymentConvertUtil.convertPaymentMethod(
 			paymentMethod
