@@ -389,13 +389,17 @@ public class OrderManagement {
 			return;
 		}
 		PO giftCard = giftCardTable.getPO(0, payment.get_TrxName());
+		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_DateDoc, payment.getDateTrx());
 		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_BPartner_ID, payment.getC_BPartner_ID());
 		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_ConversionType_ID, payment.getC_ConversionType_ID());
 		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Currency_ID, payment.getC_Currency_ID());
 		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Order_ID, salesOrder.getC_Order_ID());
-		// TODO: Add `C_Payment_ID` source column
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Payment_ID, payment.getC_Payment_ID());
-		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_DateDoc, payment.getDateTrx());
+
+		// TODO: Add `C_Payment_ID` as source refund
+		if (giftCardTable.get_ColumnIndex(I_C_Payment.COLUMNNAME_C_Payment_ID) >= 0) {
+			giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Payment_ID, payment.getC_Payment_ID());
+		}
+
 		String description = Msg.parseTranslation(
 			payment.getCtx(),
 			"@C_Order_ID@: " + salesOrder.getDisplayValue() + "\n" +
