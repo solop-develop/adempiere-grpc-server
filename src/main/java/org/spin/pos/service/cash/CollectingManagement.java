@@ -92,9 +92,10 @@ public class CollectingManagement {
 
 		//	Payment Method
 		int paymentMethodId = request.getPaymentMethodId();
-		if (paymentMethodId <= 0 && paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
-			paymentMethodId = paymentTypeAllocation.get_ValueAsInt(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID);
-
+		if (paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
+			if (paymentMethodId <= 0) {
+				paymentMethodId = paymentTypeAllocation.get_ValueAsInt(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID);
+			}
 			// Set Online Payment
 			payment.setIsOnline(
 				paymentTypeAllocation.get_ValueAsBoolean("IsOnline")
