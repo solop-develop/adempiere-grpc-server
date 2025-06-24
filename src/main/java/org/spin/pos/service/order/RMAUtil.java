@@ -220,12 +220,26 @@ public class RMAUtil {
             returnPayment.setDateTrx(OrderUtil.getToday());
             returnPayment.setDateAcct(OrderUtil.getToday());
             returnPayment.addDescription(Msg.parseTranslation(sourceOrder.getCtx(), " @From@ " + sourcePayment.getDocumentNo() + " @of@ @C_Order_ID@ " + sourceOrder.getDocumentNo()));
-            returnPayment.setIsReceipt(sourcePayment.isReceipt());
-            returnPayment.setPayAmt(sourcePayment.getPayAmt().negate());
+            returnPayment.setIsReceipt(!sourcePayment.isReceipt());
+            returnPayment.setPayAmt(sourcePayment.getPayAmt());
             returnPayment.setDocAction(DocAction.ACTION_Complete);
             returnPayment.setDocStatus(DocAction.STATUS_Drafted);
             returnPayment.setC_Order_ID(returnOrder.getC_Order_ID());
             returnPayment.setIsPrepayment(sourcePayment.isPrepayment());
+			if (sourcePayment.isOnline()) {
+				returnPayment.setIsOnline(true);
+				returnPayment.setR_PnRef_DC(returnPayment.getR_PnRef_DC());
+				returnPayment.setR_PnRef(null);
+				returnPayment.set_ValueOfColumn("ResponseStatus", null);
+				returnPayment.set_ValueOfColumn("NextRequestTime", 0);
+				returnPayment.set_ValueOfColumn("ResponseMessage", null);
+				returnPayment.set_ValueOfColumn("ResponseCode", null);
+				returnPayment.setIsApproved(false);
+				returnPayment.setR_AuthCode(null);
+				returnPayment.setR_Info(null);
+				returnPayment.setR_RespMsg(null);
+				returnPayment.setR_Result(null);
+			}
             returnPayment.saveEx();
         });
     }
