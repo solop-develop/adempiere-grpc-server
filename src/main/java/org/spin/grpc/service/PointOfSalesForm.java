@@ -111,6 +111,7 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.FileUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
+import org.spin.pos.process.inf_POS_Sales_Detail_And_CollectionAbstract;
 import org.spin.pos.service.POSLogic;
 import org.spin.pos.service.bank.BankManagement;
 import org.spin.pos.service.cash.CashManagement;
@@ -140,6 +141,7 @@ import org.spin.store.util.VueStoreFrontUtil;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 
 import io.grpc.Status;
@@ -1716,7 +1718,61 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+	@Override
+	public void printPreviewCashMovements(PrintPreviewCashMovementsRequest request, StreamObserver<PrintPreviewCashMovementsResponse> responseObserver) {
+		try {
+			log.fine("Print Cash Movements = " + request);
+			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
+			// inf_POS_Sales_Detail_And_Collection
+			final int processId = inf_POS_Sales_Detail_And_CollectionAbstract.getProcessId();
+			String reportType = "pdf";
+			if (!Util.isEmpty(request.getReportType(), true)) {
+				reportType = request.getReportType();
+			}
+
+			Struct.Builder parameters = Struct.newBuilder();
+			Value.Builder builderPosId = ValueManager.getValueFromInt(
+				pos.getC_POS_ID()
+			);
+			parameters.putFields(
+				inf_POS_Sales_Detail_And_CollectionAbstract.C_POS_ID,
+				builderPosId.build()
+			);
+
+			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+				.setId(processId)
+				.setReportType(reportType)
+				.setParameters(parameters)
+			;
+
+			ProcessLog.Builder processLog = BusinessData.runBusinessProcess(
+				processRequest.build()
+			);
+
+			// preview document
+			PrintPreviewCashMovementsResponse.Builder ticket = PrintPreviewCashMovementsResponse.newBuilder()
+				.setResult("Ok")
+				.setProcessLog(
+					processLog.build()
+				)
+			;
+
+			responseObserver.onNext(ticket.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	@Override
 	public void listCashSummaryMovements(ListCashSummaryMovementsRequest request, StreamObserver<ListCashSummaryMovementsResponse> responseObserver) {
 		try {

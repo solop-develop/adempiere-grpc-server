@@ -415,14 +415,24 @@ service Store {
 			body: "*"
 		};
 	}
-	//	List all cash movements
+
+	//	Cash Movements
 	rpc ListCashMovements(ListCashMovementsRequest) returns (ListCashMovementsResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/cash/movements" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/movements"
+		};
 	}
-	//	List Cash Summary
+	rpc PrintPreviewCashMovements(PrintPreviewCashMovementsRequest) returns (PrintPreviewCashMovementsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/movements/print-preview"
+		};
+	}
 	rpc ListCashSummaryMovements(ListCashSummaryMovementsRequest) returns (ListCashSummaryMovementsResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/cash/summary-movements" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/summary-movements"
+		};
 	}
+
 	//	Allocate Seller
 	rpc AllocateSeller(AllocateSellerRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = {
@@ -736,7 +746,18 @@ message ListCashSummaryMovementsResponse {
 	repeated PaymentTotal total_movements = 5;
 }
 
-
+// Print Cash Movements
+message PrintPreviewCashMovementsRequest {
+	int32 pos_id = 1;
+	string report_type = 2;
+	int32 customer_id = 3;
+	google.protobuf.Timestamp date_from = 4;
+	google.protobuf.Timestamp date_to = 5;
+}
+message PrintPreviewCashMovementsResponse {
+	string result = 1;
+	ProcessLog process_log = 2;
+}
 
 //	Cash closing
 message CashClosing {
