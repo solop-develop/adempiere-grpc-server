@@ -32,7 +32,6 @@ import org.compiere.model.MBPBankAccount;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MChatEntry;
 import org.compiere.model.MClient;
-import org.compiere.model.MClientInfo;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInvoice;
@@ -62,7 +61,6 @@ import org.spin.backend.grpc.common.DocumentAction;
 import org.spin.backend.grpc.common.DocumentStatus;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ProcessInfoLog;
-import org.spin.backend.grpc.pos.AvailableSeller;
 import org.spin.backend.grpc.pos.CustomerBankAccount;
 import org.spin.backend.grpc.pos.Key;
 import org.spin.backend.grpc.pos.KeyLayout;
@@ -74,14 +72,12 @@ import org.spin.backend.grpc.user_interface.ModeratorStatus;
 import org.spin.base.interim.ContextTemporaryWorkaround;
 import org.spin.grpc.service.FileManagement;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
-import org.spin.model.MADAttachmentReference;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
-import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -91,57 +87,6 @@ import com.google.protobuf.Value;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class ConvertUtil {
-
-	/**
-	 * Convert User entity
-	 * @param user
-	 * @return
-	 */
-	public static AvailableSeller.Builder convertSeller(MUser user) {
-		AvailableSeller.Builder sellerInfo = AvailableSeller.newBuilder();
-		if (user == null) {
-			return sellerInfo;
-		}
-		sellerInfo.setId(
-				user.getAD_User_ID()
-			)
-			.setName(
-				StringManager.getValidString(
-					user.getName()
-				)
-			)
-			.setDescription(
-				StringManager.getValidString(
-					user.getDescription()
-				)
-			)
-			.setComments(
-				StringManager.getValidString(
-					user.getComments()
-				)
-			)
-		;
-
-		int clientId = Env.getAD_Client_ID(Env.getCtx());
-		if(user.getLogo_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(clientId)) {
-			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), clientId);
-			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
-				Env.getCtx(),
-				clientInfo.getFileHandler_ID(),
-				user.getLogo_ID(),
-				null
-			);
-			if(attachmentReference != null
-					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
-				sellerInfo.setImage(
-					StringManager.getValidString(
-						attachmentReference.getValidFileName()
-					)
-				);
-			}
-		}
-		return sellerInfo;
-	}
 
 	/**
 	 * Convert ProcessInfoLog to gRPC

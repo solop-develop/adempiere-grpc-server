@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
-import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_ConversionType;
@@ -124,6 +123,7 @@ import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.pos.POS;
+import org.spin.pos.service.seller.SellerServiceLogic;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.OrderConverUtil;
 import org.spin.pos.util.POSConvertUtil;
@@ -1819,22 +1819,64 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
-	
+
+
+
 	@Override
-	public void allocateSeller(AllocateSellerRequest request, StreamObserver<Empty> responseObserver) {
+	public void listAvailableSellers(ListAvailableSellersRequest request, StreamObserver<ListAvailableSellersResponse> responseObserver) {
 		try {
-			Empty.Builder empty = allocateSeller(request);
+			ListAvailableSellersResponse.Builder response = SellerServiceLogic.listAvailableSellers(request);
+			responseObserver.onNext(response.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void allocateSeller(AllocateSellerRequest request, StreamObserver<AvailableSeller> responseObserver) {
+		try {
+			AvailableSeller.Builder response = SellerServiceLogic.allocateSeller(request);
+			responseObserver.onNext(response.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+	@Override
+	public void deallocateSeller(DeallocateSellerRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			Empty.Builder empty = SellerServiceLogic.deallocateSeller(request);
 			responseObserver.onNext(empty.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+
+
 	@Override
 	public void createPaymentReference(CreatePaymentReferenceRequest request, StreamObserver<PaymentReference> responseObserver) {
 		try {
@@ -1883,37 +1925,9 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void deallocateSeller(DeallocateSellerRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			Empty.Builder empty = deallocateSeller(request);
-			responseObserver.onNext(empty.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void listAvailableSellers(ListAvailableSellersRequest request, StreamObserver<ListAvailableSellersResponse> responseObserver) {
-		try {
-			ListAvailableSellersResponse.Builder response = listAvailableSellers(request);
-			responseObserver.onNext(response.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
+
+
+
 	@Override
 	public void createRMA(CreateRMARequest request, StreamObserver<RMA> responseObserver) {
 		try {
@@ -2261,169 +2275,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		);
 		return builder;
 	}
-	
-	/**
-	 * List shipment Lines from Order UUID
-	 * @param request
-	 * @return
-	 */
-	private ListAvailableSellersResponse.Builder listAvailableSellers(ListAvailableSellersRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
-		ListAvailableSellersResponse.Builder builder = ListAvailableSellersResponse.newBuilder();
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
 
-		int posId = request.getPosId();
-		//	
-		StringBuffer whereClause = new StringBuffer();
-		List<Object> parameters = new ArrayList<Object>();
-		parameters.add(posId);
-		if(request.getIsOnlyAllocated()) {
-			whereClause.append("EXISTS(SELECT 1 FROM C_POSSellerAllocation s WHERE s.C_POS_ID = ? AND s.SalesRep_ID = AD_User.AD_User_ID AND s.IsActive = 'Y') ");
-		} else {
-			whereClause.append("EXISTS(SELECT 1 FROM C_POSSellerAllocation s WHERE s.C_POS_ID <> ? AND s.SalesRep_ID = AD_User.AD_User_ID OR s.IsActive = 'N') ");
-		}
-		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
-				request.getSearchValue()
-		);
-		if(!Util.isEmpty(searchValue, true)) {
-			whereClause.append(
-				" AND ( "
-				+ "UPPER(Name) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Name2) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%' "
-				+ ") "
-			);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-		}
 
-		Query query = new Query(Env.getCtx(), I_AD_User.Table_Name, whereClause.toString(), null)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true);
-		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.<MUser>list()
-		.forEach(seller -> {
-			builder.addSellers(ConvertUtil.convertSeller(seller));
-		});
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
-		);
-		return builder;
-	}
-	
-	/**
-	 * Allocate a seller to point of sales
-	 * @param request
-	 * @return
-	 */
-	private Empty.Builder deallocateSeller(DeallocateSellerRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
-		}
-		if(request.getSalesRepresentativeId() <= 0) {
-			throw new AdempiereException("@SalesRep_ID@ @IsMandatory@");
-		}
-		int posId = request.getPosId();
-		int salesRepresentativeId = request.getSalesRepresentativeId();
-		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
-		if(!pointOfSales.get_ValueAsBoolean("IsAllowsAllocateSeller")) {
-			throw new AdempiereException("@POS.AllocateSellerNotAllowed@");
-		}
-		Trx.run(transactionName -> {
-			PO seller = new Query(Env.getCtx(), "C_POSSellerAllocation", "C_POS_ID = ? AND SalesRep_ID = ?", transactionName).setParameters(posId, salesRepresentativeId).first();
-			if(seller == null
-					|| seller.get_ID() <= 0) {
-				throw new AdempiereException("@SalesRep_ID@ @NotFound@");
-			}
-			seller.set_ValueOfColumn("IsActive", false);
-			seller.saveEx(transactionName);
-		});
-		//	Return
-		return Empty.newBuilder();
-	}
-	
-	/**
-	 * Allocate a seller to point of sales
-	 * @param request
-	 * @return
-	 */
-	private Empty.Builder allocateSeller(AllocateSellerRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
-		}
-		if(request.getSalesRepresentativeId() <= 0) {
-			throw new AdempiereException("@SalesRep_ID@ @IsMandatory@");
-		}
-		int posId = request.getPosId();
-		int salesRepresentativeId = request.getSalesRepresentativeId();
-		MPOS pointOfSales = new MPOS(Env.getCtx(), posId, null);
-		if(!pointOfSales.get_ValueAsBoolean("IsAllowsAllocateSeller")) {
-			throw new AdempiereException("@POS.AllocateSellerNotAllowed@");
-		}
-		Trx.run(transactionName -> {
-			List<Integer> allocatedSellersIds = new Query(Env.getCtx(), "C_POSSellerAllocation", "C_POS_ID = ?", transactionName).setParameters(posId).getIDsAsList();
-			if(!pointOfSales.get_ValueAsBoolean("IsAllowsConcurrentUse")) {
-				allocatedSellersIds
-				.forEach(allocatedSellerId -> {
-					PO allocatedSeller = new GenericPO("C_POSSellerAllocation", Env.getCtx(), allocatedSellerId, transactionName);
-					if(allocatedSeller.get_ValueAsInt("SalesRep_ID") != salesRepresentativeId) {
-						allocatedSeller.set_ValueOfColumn("IsActive", false);
-						allocatedSeller.saveEx(transactionName);
-					}
-				});
-			}
-			//	For add seller
-			PO seller = new Query(Env.getCtx(), "C_POSSellerAllocation", "C_POS_ID = ? AND SalesRep_ID = ?", transactionName).setParameters(posId, salesRepresentativeId).first();
-			if(seller == null
-					|| seller.get_ID() <= 0) {
-				seller = new GenericPO("C_POSSellerAllocation", Env.getCtx(), 0, transactionName);
-				seller.set_ValueOfColumn("C_POS_ID", posId);
-				seller.set_ValueOfColumn("SalesRep_ID", salesRepresentativeId);
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsModifyQuantity, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsModifyQuantity));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsReturnOrder, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsReturnOrder));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsCollectOrder, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsCollectOrder));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsCreateOrder, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsCreateOrder));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsDisplayTaxAmount, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsDisplayTaxAmount));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsDisplayDiscount, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsDisplayDiscount));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsConfirmShipment, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsConfirmShipment));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsConfirmCompleteShipment, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsConfirmCompleteShipment));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsAllocateSeller, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsAllocateSeller));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsConcurrentUse, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsConcurrentUse));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsCashOpening, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsCashOpening));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsCashClosing, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsCashClosing));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsCashWithdrawal, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsCashWithdrawal));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsApplyDiscount, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsApplyDiscount));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_MaximumRefundAllowed, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_MaximumRefundAllowed));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_MaximumDailyRefundAllowed, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_MaximumDailyRefundAllowed));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsCreateCustomer, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsCreateCustomer));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsPrintDocument, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsPrintDocument));
-				seller.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_IsAllowsPreviewDocument, pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsPreviewDocument));
-			}
-			seller.set_ValueOfColumn("IsActive", true);
-			seller.saveEx(transactionName);
-		});
-		//	Return
-		return Empty.newBuilder();
-	}
-	
+
 	/**
 	 * List all movements from cash
 	 * @return
