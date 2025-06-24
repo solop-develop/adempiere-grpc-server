@@ -1731,27 +1731,43 @@ public class PointOfSalesForm extends StoreImplBase {
 			if (!Util.isEmpty(request.getReportType(), true)) {
 				reportType = request.getReportType();
 			}
-			Timestamp nowTimestamp = new Timestamp(System.currentTimeMillis());
-			nowTimestamp = TimeUtil.getDay(nowTimestamp);
 			Struct.Builder parameters = Struct.newBuilder();
+
+			Timestamp dateFrom = null;
+			Timestamp dateTo = null;
+			if (request.hasDateFrom() && request.hasDateTo()) {
+				dateFrom = ValueManager.getDateFromTimestampDate(request.getDateFrom());
+				dateTo = ValueManager.getDateFromTimestampDate(request.getDateTo());
+			} else {
+				Timestamp nowTimestamp = new Timestamp(System.currentTimeMillis());
+				dateFrom = TimeUtil.getDay(nowTimestamp);
+				dateTo = dateFrom;
+			}
+
+			Value.Builder builderDateInvoiced = ValueManager.getValueFromTimestamp(
+				dateFrom
+			);
+			Value.Builder builderDateInvoicedTo = ValueManager.getValueFromTimestamp(
+				dateTo
+			);
+			Value valueDateFrom = builderDateInvoiced.build();
+			Value valueDateTo = builderDateInvoicedTo.build();
+			parameters.putFields(
+				inf_POS_Sales_Detail_And_CollectionAbstract.DATEINVOICED,
+				valueDateFrom
+			);
+			parameters.putFields(
+				inf_POS_Sales_Detail_And_CollectionAbstract.DATEINVOICED + "_To",
+				valueDateTo
+			);
+
 			Value.Builder builderPosId = ValueManager.getValueFromInt(
 				pos.getC_POS_ID()
 			);
-			Value.Builder builderDateInvoiced = ValueManager.getValueFromTimestamp(
-					nowTimestamp
-			);
+
 			parameters.putFields(
 				inf_POS_Sales_Detail_And_CollectionAbstract.C_POS_ID,
 				builderPosId.build()
-			);
-			Value date = builderDateInvoiced.build();
-			parameters.putFields(
-					inf_POS_Sales_Detail_And_CollectionAbstract.DATEINVOICED,
-					date
-			);
-			parameters.putFields(
-					inf_POS_Sales_Detail_And_CollectionAbstract.DATEINVOICED + "_To",
-					date
 			);
 
 			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
