@@ -834,11 +834,11 @@ public class OutBoundOrderLogic {
 
 
 	public static ListLookupItemsResponse.Builder listFreightDocumentTypes(ListFreightDocumentTypesRequest request) {
-		final int columnId = 83735; // DD_Freight.C_DocType_ID
+		final int processParameterId = 56732; // GenerateFreightOrderFromOutbound.C_DocType_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
-			0, 0, 0,
-			columnId,
+			0, processParameterId, 0,
+			0,
 			null, null,
 			0, null, false
 		);
