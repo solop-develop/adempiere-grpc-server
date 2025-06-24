@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -131,7 +132,6 @@ import org.spin.pos.util.TicketResult;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -2354,19 +2354,16 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
 		}
 
-		ListCashMovementsResponse.Builder builder = ListCashMovementsResponse.newBuilder()
-			.setId(cashClosing.getC_BankStatement_ID())
-		;
-
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-
 		List<Object> parameters = new ArrayList<Object>();
-		StringBuffer whereClause = new StringBuffer("DocStatus IN('CO', 'CL') "
-				+ "AND C_POS_ID = ? "
-				+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl WHERE bsl.C_Payment_ID = C_Payment.C_Payment_ID AND bsl.C_BankStatement_ID = ?)");
+		StringBuffer whereClause = new StringBuffer(
+			"DocStatus IN('CO', 'CL') "
+			+ "AND C_POS_ID = ? "
+			+ "AND EXISTS("
+				+ "SELECT 1 FROM C_BankStatementLine AS bsl "
+				+ "WHERE bsl.C_Payment_ID = C_Payment.C_Payment_ID "
+				+ "AND bsl.C_BankStatement_ID = ?"
+			+ ")"
+		);
 		parameters.add(pos.getC_POS_ID());
 		parameters.add(cashClosing.getC_BankStatement_ID());
 		//	Optional
@@ -2378,44 +2375,89 @@ public class PointOfSalesForm extends StoreImplBase {
 			whereClause.append(" AND CollectingAgent_ID = ?");
 		}
 		//	Get Refund Reference list
-		Query query = new Query(Env.getCtx(), I_C_Payment.Table_Name, whereClause.toString(), null)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true);
-		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.getIDsAsList()
-		.forEach(paymentId -> {
-			MPayment payment = new MPayment(pos.getCtx(), paymentId, null);
-			Payment.Builder paymentBuilder = PaymentConvertUtil.convertPayment(
-				payment
-			);
-			builder.addCashMovements(
-				paymentBuilder
-			);
-		});
-		//	
-		builder.setRecordCount(count);
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_Payment.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+		;
+
 		//	Set page token
+		int count = query.count();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
-		);
+
+		HashMap<Integer, BigDecimal> cashCurrencySummary = new HashMap<Integer, BigDecimal>();
+		ListCashMovementsResponse.Builder builder = ListCashMovementsResponse.newBuilder()
+			.setId(
+				cashClosing.getC_BankStatement_ID()
+			)
+			.setRecordCount(count)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
+
+		query
+			.setLimit(limit, offset)
+			.getIDsAsList()
+			.forEach(paymentId -> {
+				MPayment payment = new MPayment(pos.getCtx(), paymentId, null);
+				Payment.Builder paymentBuilder = PaymentConvertUtil.convertPayment(
+					payment
+				);
+				builder.addCashMovements(
+					paymentBuilder
+				);
+
+				int currencyId = payment.getC_Currency_ID();
+				BigDecimal amount = payment.getPayAmt(true);
+				BigDecimal totalAmount = Env.ZERO;
+				BigDecimal paymentAmount = Optional.ofNullable(amount).orElse(Env.ZERO);
+				if (cashCurrencySummary.containsKey(currencyId)) {
+					totalAmount = cashCurrencySummary.get(currencyId);
+				}
+				totalAmount = totalAmount.add(paymentAmount);
+				cashCurrencySummary.put(currencyId, totalAmount);
+			})
+		;
+
+		cashCurrencySummary.forEach((currencyId, totalAmount) -> {
+			PaymentTotal.Builder paymentTotalBuilder = PaymentTotal.newBuilder()
+				.setCurrency(
+					CoreFunctionalityConvert.convertCurrency(
+						currencyId
+					)
+				)
+				.setTotalAmount(
+					NumberManager.getBigDecimalToString(
+						totalAmount
+					)
+				)
+			;
+			builder.addTotalMovements(paymentTotalBuilder);
+		});
+
 		//	Return
 		return builder;
 	}
-	
+
+
+
 	/**
 	 * List all movements from cash
 	 * @return
 	 */
 	private ListCashSummaryMovementsResponse.Builder listCashSummaryMovements(ListCashSummaryMovementsRequest request) {
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		ListCashSummaryMovementsResponse.Builder builder = ListCashSummaryMovementsResponse.newBuilder();
 		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
@@ -2425,34 +2467,70 @@ public class PointOfSalesForm extends StoreImplBase {
 				|| cashClosing.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
 		}
-		builder
-			.setId(cashClosing.getC_BankStatement_ID());
+
+		HashMap<Integer, BigDecimal> cashCurrencySummary = new HashMap<Integer, BigDecimal>();
+		ListCashSummaryMovementsResponse.Builder builder = ListCashSummaryMovementsResponse.newBuilder()
+			.setId(
+				cashClosing.getC_BankStatement_ID()
+			)
+		;
+
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-
 		int count = 0;
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try {
 			//	Get Bank statement
-			String sql = "SELECT pm.C_PaymentMethod_ID, pm.Name AS PaymentMethodName, pm.TenderType AS TenderTypeCode, p.C_Currency_ID, p.IsReceipt, (SUM(p.PayAmt) * CASE WHEN p.IsReceipt = 'Y' THEN 1 ELSE -1 END) AS PaymentAmount "
-					+ "FROM C_Payment p "
-					+ "INNER JOIN C_PaymentMethod pm ON(pm.C_PaymentMethod_ID = p.C_PaymentMethod_ID) "
-					+ "WHERE p.DocStatus IN('CO', 'CL') "
-					+ "AND p.C_POS_ID = ? "
-					+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl WHERE bsl.C_Payment_ID = p.C_Payment_ID AND bsl.C_BankStatement_ID = ?) "
-					+ "GROUP BY pm.C_PaymentMethod_ID, pm.Name, pm.TenderType, p.C_Currency_ID, p.IsReceipt";
+			String sql = "SELECT "
+				+ "pm.C_PaymentMethod_ID, "
+				+ "pm.Name AS PaymentMethodName, "
+				+ "pm.TenderType AS TenderTypeCode, "
+				+ "p.C_Currency_ID, "
+			;
+			if (request.getIsDetailMovementType()) {
+				sql += "p.IsReceipt, ";
+			}
+
+			sql += "(SUM(p.PayAmt";
+			if (request.getIsDetailMovementType()) {
+				sql += ")";
+			}
+			sql	+= " * CASE WHEN p.IsReceipt = 'Y' THEN 1 ELSE -1 END)";
+			if (!request.getIsDetailMovementType()) {
+				sql += ")";
+			}
+
+			sql += " AS PaymentAmount "
+				+ "FROM C_Payment AS p "
+				+ "INNER JOIN C_PaymentMethod AS pm ON(pm.C_PaymentMethod_ID = p.C_PaymentMethod_ID) "
+				+ "WHERE p.DocStatus IN('CO', 'CL') "
+				+ "AND p.C_POS_ID = ? "
+				+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl WHERE bsl.C_Payment_ID = p.C_Payment_ID AND bsl.C_BankStatement_ID = ?) "
+				+ "GROUP BY pm.C_PaymentMethod_ID, pm.Name, pm.TenderType, p.C_Currency_ID"
+			;
+			
+			if (request.getIsDetailMovementType()) {
+				sql += ", p.IsReceipt ";
+			}
+			// sql += "ORDER BY PaymentMethodName, p.C_Currency_ID";
+
 			//	Count records
 			List<Object> parameters = new ArrayList<Object>();
 			parameters.add(pos.getC_POS_ID());
 			parameters.add(cashClosing.getC_BankStatement_ID());
-			count = CountUtil.countRecords(sql, "C_Payment p", parameters);
 			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, pos.getC_POS_ID());
-			pstmt.setInt(2, cashClosing.getC_BankStatement_ID());
+			DB.setParameters(pstmt, parameters);
+
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
+				int currencyId = rs.getInt("C_Currency_ID");
+				BigDecimal amount = rs.getBigDecimal("PaymentAmount");
+				
 				PaymentSummary.Builder paymentSummary = PaymentSummary.newBuilder()
 					.setPaymentMethodId(
 						rs.getInt("C_PaymentMethod_ID")
@@ -2469,28 +2547,57 @@ public class PointOfSalesForm extends StoreImplBase {
 					)
 					.setCurrency(
 						CoreFunctionalityConvert.convertCurrency(
-							rs.getInt("C_Currency_ID")
+							currencyId
 						)
 					)
-					.setIsRefund(
-						!BooleanManager.getBooleanFromString(
-							rs.getString("IsReceipt")
+					.setAmount(
+						NumberManager.getBigDecimalToString(
+							amount
 						)
 					)
-					.setAmount(NumberManager.getBigDecimalToString(rs.getBigDecimal("PaymentAmount")))
 				;
+				if (request.getIsDetailMovementType()) {
+					paymentSummary.setIsRefund(
+						!rs.getBoolean("IsReceipt")
+					);
+				}
+
+				BigDecimal totalAmount = Env.ZERO;
+				BigDecimal paymentAmount = Optional.ofNullable(amount).orElse(Env.ZERO);
+				if (cashCurrencySummary.containsKey(currencyId)) {
+					totalAmount = cashCurrencySummary.get(currencyId);
+				}
+				totalAmount = totalAmount.add(paymentAmount);
+				cashCurrencySummary.put(currencyId, totalAmount);
+
 				//	
 				builder.addCashMovements(paymentSummary.build());
-				if (count <= 0) {
-					count++;
-				}
+				count++;
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			pstmt = null;
+			rs = null;
 		}
+
+		cashCurrencySummary.forEach((currencyId, totalAmount) -> {
+			PaymentTotal.Builder paymentTotalBuilder = PaymentTotal.newBuilder()
+				.setCurrency(
+					CoreFunctionalityConvert.convertCurrency(
+						currencyId
+					)
+				)
+				.setTotalAmount(
+					NumberManager.getBigDecimalToString(
+						totalAmount
+					)
+				)
+			;
+			builder.addTotalMovements(paymentTotalBuilder);
+		});
 
 		//	Set page token
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {

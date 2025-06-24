@@ -310,6 +310,9 @@ public class PaymentConvertUtil {
 			.setOrderId(
 				payment.getC_Order_ID()
 			)
+			.setPosId(
+				payment.getC_POS_ID()
+			)
 			.setDocumentNo(
 				StringManager.getValidString(
 					payment.getDocumentNo()

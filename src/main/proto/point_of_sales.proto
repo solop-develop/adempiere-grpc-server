@@ -417,11 +417,11 @@ service Store {
 	}
 	//	List all cash movements
 	rpc ListCashMovements(ListCashMovementsRequest) returns (ListCashMovementsResponse) {
-		option (google.api.http) = { get: "/point-of-sales/cash/movements" };
+		option (google.api.http) = { get: "/point-of-sales/{pos_id}/cash/movements" };
 	}
 	//	List Cash Summary
 	rpc ListCashSummaryMovements(ListCashSummaryMovementsRequest) returns (ListCashSummaryMovementsResponse) {
-		option (google.api.http) = { get: "/point-of-sales/cash/summary-movements" };
+		option (google.api.http) = { get: "/point-of-sales/{pos_id}/cash/summary-movements" };
 	}
 	//	Allocate Seller
 	rpc AllocateSeller(AllocateSellerRequest) returns (google.protobuf.Empty) {
@@ -672,17 +672,14 @@ message AvailableSeller {
 }
 
 
-//	Payment Summary
-message PaymentSummary {
-	int32 payment_method_id = 1;
-	string payment_method_name = 2;
-	string tender_type_code = 3;
-	core_functionality.Currency currency = 4;
-	bool is_refund = 5;
-	string amount = 6;
+
+message PaymentTotal {
+	core_functionality.Currency currency = 1;
+	string total_amount = 2;
+	string total_amount_converted = 3;
 }
 
-//	List Cash Movements Request
+//	Cash/Payment Detail Movements
 message ListCashMovementsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -691,23 +688,31 @@ message ListCashMovementsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	// custom filters
 	int32 pos_id = 8;
 	int32 business_partner_id = 9;
 	bool is_only_processed = 10;
 	bool is_only_refund = 11;
 	int32 sales_representative_id = 12;
 }
-
-//	List cash movements
 message ListCashMovementsResponse {
 	int64 record_count = 1;
 	repeated Payment cash_movements = 2;
 	string next_page_token = 3;
 	// header values
 	int32 id = 4;
+	repeated PaymentTotal total_movements = 5;
 }
 
-//	List Cash Summary Movements Request
+//	Cash/Payment Summary Movements
+message PaymentSummary {
+	int32 payment_method_id = 1;
+	string payment_method_name = 2;
+	string tender_type_code = 3;
+	core_functionality.Currency currency = 4;
+	bool is_refund = 5;
+	string amount = 6;
+}
 message ListCashSummaryMovementsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -716,18 +721,22 @@ message ListCashSummaryMovementsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	// custom filters
 	int32 pos_id = 8;
 	bool is_only_processed = 9;
 	bool is_only_refund = 10;
+	bool is_detail_movement_type = 11;
 }
-
-//	List cash summary movements
 message ListCashSummaryMovementsResponse {
 	int64 record_count = 1;
-	int32 id = 2;
-	repeated PaymentSummary cash_movements = 3;
-	string next_page_token = 4;
+	repeated PaymentSummary cash_movements = 2;
+	string next_page_token = 3;
+	// header values
+	int32 id = 4;
+	repeated PaymentTotal total_movements = 5;
 }
+
+
 
 //	Cash closing
 message CashClosing {
@@ -737,8 +746,6 @@ message CashClosing {
 	DocumentStatus document_status = 4;
 	string description = 5;
 }
-
-//	Request for create cash closing
 message CashClosingRequest {
 	int32 pos_id = 1;
 	int32 id = 2;
@@ -746,19 +753,25 @@ message CashClosingRequest {
 	string description = 4;
 }
 
-//	Request for create cash withdrawal
+
+
+//	Create Cash Withdrawal
 message CashWithdrawalRequest {
 	int32 pos_id = 1;
 	int32 collecting_agent_id = 2;
 	string description = 3;
 }
 
-//	Request for create cash opening
+
+
+//	Cash Opening
 message CashOpeningRequest {
 	int32 pos_id = 1;
 	int32 collecting_agent_id = 2;
 	string description = 3;
 }
+
+
 
 // Request for create a Shipment from Order
 message CreateShipmentRequest {
