@@ -223,10 +223,26 @@ service Store {
 	rpc ListAvailableDiscounts(ListAvailableDiscountsRequest) returns (ListAvailableDiscountsResponse) {
 		option (google.api.http) = { get: "/point-of-sales/{pos_id}/discounts" };
 	}
-	//	List of Available Sellers
+
+	//	Sellers
 	rpc ListAvailableSellers(ListAvailableSellersRequest) returns (ListAvailableSellersResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/sellers" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/sellers"
+		};
 	}
+	//	Seller
+	rpc AllocateSeller(AllocateSellerRequest) returns (AvailableSeller) {
+		option (google.api.http) = {
+			post: "/point-of-sales/{pos_id}/sellers",
+			body: "*"
+		};
+	}
+	rpc DeallocateSeller(DeallocateSellerRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			delete: "/point-of-sales/{pos_id}/sellers/{sales_representative_id}"
+		};
+	}
+
 	rpc ListAvailableOrderLinesForGiftCard(ListAvailableOrderLinesForGiftCardRequest) returns (ListAvailableOrderLinesForGiftCardResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}/order-lines"
@@ -433,21 +449,6 @@ service Store {
 		};
 	}
 
-	//	Allocate Seller
-	rpc AllocateSeller(AllocateSellerRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = {
-			put: "/point-of-sales/terminals/{pos_id}/allocate-seller",
-			body: "*"
-		};
-	}
-	//	Allocate Seller
-	rpc DeallocateSeller(DeallocateSellerRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = {
-			put: "/point-of-sales/terminals/{pos_id}/deallocate-seller",
-			body: "*"
-		};
-	}
-
 	//	Refund Reference
 	rpc CreatePaymentReference(CreatePaymentReferenceRequest) returns (PaymentReference) {
 		option (google.api.http) = {
@@ -638,19 +639,21 @@ message ValidatePINRequest {
 
 
 
-//	Allocate Seller Request
+//	Allocate Seller
+message AvailableSeller {
+	int32 id = 1;
+	string uuid = 2;
+	string key = 3;
+	string name = 4;
+	bool is_pos_required_pin = 5;
+	string description = 6;
+	string comments = 7;
+	string image = 8;
+}
 message AllocateSellerRequest {
 	int32 pos_id = 1;
 	int32 sales_representative_id = 2;
 }
-
-//	Deallocate Seller Request
-message DeallocateSellerRequest {
-	int32 pos_id = 1;
-	int32 sales_representative_id = 2;
-}
-
-//	List allocated sellers for POS
 message ListAvailableSellersRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -659,26 +662,18 @@ message ListAvailableSellersRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	bool is_only_allocated = 8;
+	// custom filters
 	int32 pos_id = 9;
+	bool is_other_allocated = 8;
 }
-
-//	Discounts Response
 message ListAvailableSellersResponse {
 	int64 record_count = 1;
 	repeated AvailableSeller sellers = 2;
 	string next_page_token = 3;
 }
-
-// Available Discounts
-message AvailableSeller {
-	int32 id = 1;
-	string key = 2;
-	string name = 3;
-	bool is_pos_required_pin = 4;
-	string description = 5;
-	string comments = 6;
-	string image = 7;
+message DeallocateSellerRequest {
+	int32 pos_id = 1;
+	int32 sales_representative_id = 2;
 }
 
 
