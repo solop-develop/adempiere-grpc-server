@@ -1735,6 +1735,15 @@ public class PointOfSalesForm extends StoreImplBase {
 
 			Timestamp dateFrom = null;
 			Timestamp dateTo = null;
+			if (request.getBankStatementId() > 0) {
+				Value.Builder bankStatementBuilder = ValueManager.getValueFromInt(
+					request.getBankStatementId()
+				);
+				parameters.putFields(
+						MBankStatement.COLUMNNAME_C_BankStatement_ID,
+						bankStatementBuilder.build()
+				);
+			}
 			if (request.hasDateFrom() && request.hasDateTo()) {
 				dateFrom = ValueManager.getDateFromTimestampDate(request.getDateFrom());
 				dateTo = ValueManager.getDateFromTimestampDate(request.getDateTo());
