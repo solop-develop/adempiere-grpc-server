@@ -515,7 +515,7 @@ public class BusinessData extends BusinessDataImplBase {
 			return null;
 		}
 		if(!String.class.isAssignableFrom(value.getClass())) {
-			return null;
+			return value;
 		}
 		String fileName = (String) value;
 		//	Get from S3
