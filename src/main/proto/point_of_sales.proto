@@ -706,7 +706,10 @@ message ListCashMovementsResponse {
 	string next_page_token = 3;
 	// header values
 	int32 id = 4;
-	repeated PaymentTotal total_movements = 5;
+	string document_no = 5;
+	string name = 6;
+	google.protobuf.Timestamp date = 7;
+	repeated PaymentTotal total_movements = 8;
 }
 
 //	Cash/Payment Summary Movements
@@ -738,16 +741,20 @@ message ListCashSummaryMovementsResponse {
 	string next_page_token = 3;
 	// header values
 	int32 id = 4;
-	repeated PaymentTotal total_movements = 5;
+	string document_no = 5;
+	string name = 6;
+	google.protobuf.Timestamp date = 7;
+	repeated PaymentTotal total_movements = 8;
 }
 
 // Print Cash Movements
 message PrintPreviewCashMovementsRequest {
 	int32 pos_id = 1;
 	string report_type = 2;
-	int32 customer_id = 3;
-	google.protobuf.Timestamp date_from = 4;
-	google.protobuf.Timestamp date_to = 5;
+	int32 bank_statement_id = 3;
+	int32 customer_id = 4;
+	google.protobuf.Timestamp date_from = 5;
+	google.protobuf.Timestamp date_to = 6;
 }
 message PrintPreviewCashMovementsResponse {
 	string result = 1;
