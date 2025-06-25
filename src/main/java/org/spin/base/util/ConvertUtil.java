@@ -77,6 +77,7 @@ import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -698,7 +699,9 @@ public class ConvertUtil {
 			return Env.ONE;
 		}
 		
-		Timestamp conversionDate = Timestamp.valueOf(paymentReference.get_ValueAsString("PayDate"));
+		Timestamp conversionDate = TimeManager.getTimestampFromString(
+			paymentReference.get_ValueAsString("PayDate")
+		);
 		BigDecimal conversionRate = MConversionRate.getRate(
 			paymentReference.get_ValueAsInt("C_Currency_ID"),
 			order.getC_Currency_ID(),
