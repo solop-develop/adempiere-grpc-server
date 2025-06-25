@@ -514,12 +514,13 @@ public class BusinessData extends BusinessDataImplBase {
 		if(value == null) {
 			return null;
 		}
-		if(!String.class.isAssignableFrom(value.getClass())) {
-			return value;
-		}
-		String fileName = (String) value;
 		//	Get from S3
 		if(displayTypeId == DisplayType.FileName || displayTypeId == DisplayType.FilePath || displayTypeId == DisplayType.FilePathOrName) {
+			//	Push to S3
+			if(!String.class.isAssignableFrom(value.getClass())) {
+				return null;
+			}
+			String fileName = (String) value;
 			//	Push to S3
 			try {
 				MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
