@@ -2610,6 +2610,10 @@ public class PointOfSalesForm extends StoreImplBase {
 			GenericPO refundReferenceToCreate = new GenericPO("C_POSPaymentReference", Env.getCtx(), 0, transactionName);
 			refundReferenceToCreate.set_ValueOfColumn("Amount", NumberManager.getBigDecimalFromString(request.getAmount()));
 			refundReferenceToCreate.set_ValueOfColumn("AmtSource", NumberManager.getBigDecimalFromString(request.getSourceAmount()));
+			refundReferenceToCreate.set_ValueOfColumn(
+				"PayDate",
+				TimeUtil.getDay(System.currentTimeMillis())
+			);
 			if(request.getCustomerBankAccountId() > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_BP_BankAccount_ID", request.getCustomerBankAccountId());
 			}
