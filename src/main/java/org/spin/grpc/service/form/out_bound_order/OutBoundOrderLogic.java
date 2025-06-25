@@ -1297,6 +1297,18 @@ public class OutBoundOrderLogic {
 			log.severe(message);
 
 			if (isCreateFreight) {
+				if (request.getDriverId() <= 0) {
+					throw new AdempiereException("@DD_Driver_ID@ @NotFound@");
+				}
+				if (request.getVehicleId() <= 0) {
+					throw new AdempiereException("@DD_Vehicle_ID@ @NotFound@");
+				}
+				if (request.getShipperId() <= 0) {
+					throw new AdempiereException("@M_Shipper_ID@ @NotFound@");
+				}
+				if (request.getFreightDocumentTypeId() <= 0) {
+					throw new AdempiereException("@C_DocType_ID@ (@DD_Freight_ID@) @NotFound@");
+				}
 				MDDFreight freightOrder = new MDDFreight(Env.getCtx(), 0, transactionName);
 				freightOrder.setWM_InOutBound_ID(
 					outBoundOrder.getWM_InOutBound_ID()
