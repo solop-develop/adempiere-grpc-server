@@ -2340,6 +2340,21 @@ public class PointOfSalesForm extends StoreImplBase {
 			.setId(
 				cashClosing.getC_BankStatement_ID()
 			)
+			.setDocumentNo(
+				StringManager.getValidString(
+					cashClosing.getDocumentNo()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					cashClosing.getName()
+				)
+			)
+			.setDate(
+				ValueManager.getTimestampFromDate(
+					cashClosing.getStatementDate()
+				)
+			)
 			.setRecordCount(count)
 			.setNextPageToken(
 				StringManager.getValidString(nexPageToken)
@@ -2411,6 +2426,21 @@ public class PointOfSalesForm extends StoreImplBase {
 		ListCashSummaryMovementsResponse.Builder builder = ListCashSummaryMovementsResponse.newBuilder()
 			.setId(
 				cashClosing.getC_BankStatement_ID()
+			)
+			.setDocumentNo(
+				StringManager.getValidString(
+					cashClosing.getDocumentNo()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					cashClosing.getName()
+				)
+			)
+			.setDate(
+				ValueManager.getTimestampFromDate(
+					cashClosing.getStatementDate()
+				)
 			)
 		;
 
