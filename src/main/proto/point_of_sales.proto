@@ -410,6 +410,13 @@ service Store {
 			body: "*"
 		};
 	}
+	rpc ReverseSalesOnlinePayment(ReverseSalesOnlinePaymentRequest) returns (Order) {
+		option (google.api.http) = {
+			put: "/point-of-sales/{pos_id}/orders/{id}/reverse/online",
+			body: "*"
+		};
+	}
+
 	//	Cash Management
 	rpc ProcessCashOpening(CashOpeningRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = {
@@ -885,6 +892,11 @@ message ProcessShipmentRequest {
 
 // Request for Reverse a Sales Transaction
 message ReverseSalesRequest {
+	int32 pos_id = 1;
+	int32 id = 2;
+	string description = 3;
+}
+message ReverseSalesOnlinePaymentRequest {
 	int32 pos_id = 1;
 	int32 id = 2;
 	string description = 3;
@@ -2223,6 +2235,7 @@ message Order {
 	bool is_order = 30;
 	bool is_processed = 31;
 	bool is_processing = 32;
+	bool is_online_payment_approved = 33;
 }
 
 // Sales Order Line

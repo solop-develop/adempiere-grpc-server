@@ -1648,7 +1648,9 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
+
+
+
 	@Override
 	public void reverseSales(ReverseSalesRequest request, StreamObserver<Order> responseObserver) {
 		try {
@@ -1656,7 +1658,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1666,7 +1668,27 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
-	
+
+	@Override
+	public void reverseSalesOnlinePayment(ReverseSalesOnlinePaymentRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder order = Order.newBuilder();
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
 	@Override
 	public void processCashOpening(CashOpeningRequest request, StreamObserver<Empty> responseObserver) {
 		try {

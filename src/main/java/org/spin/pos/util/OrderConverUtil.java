@@ -22,6 +22,7 @@ import org.compiere.model.MTax;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.OrderLine;
@@ -61,26 +62,72 @@ public class OrderConverUtil {
 			return builder;
 		}
 		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), order.get_TrxName());
-		int defaultDiscountChargeId = pos.get_ValueAsInt("DefaultDiscountCharge_ID");
+		final int defaultDiscountChargeId = pos.get_ValueAsInt("DefaultDiscountCharge_ID");
+		// final int defaultGiftCardChargeId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID);
+
 		MRefList reference = MRefList.get(Env.getCtx(), MOrder.DOCSTATUS_AD_REFERENCE_ID, order.getDocStatus(), null);
 		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
 		List<MOrderLine> orderLines = Arrays.asList(order.getLines(true, null));
 		BigDecimal totalLines = orderLines.stream()
-				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
-				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
-		BigDecimal discountAmount = orderLines.stream()
-				.filter(orderLine -> orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId)
-				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
-		BigDecimal lineDiscountAmount = orderLines.stream()
-				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
-				.map(orderLine -> {
-					BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
-					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
-					BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
-						.multiply(Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO));
-					return discountLine;
+			.filter(orderLine -> {
+				int chargeOrdeLineId = orderLine.getC_Charge_ID();
+				// if (chargeOrdeLineId <= 0) {
+				// 	return true;
+				// }
+				if (defaultDiscountChargeId <= 0) {
+					return true;
+				}
+				return chargeOrdeLineId != defaultDiscountChargeId; // && chargeOrdeLineId != defaultGiftCardChargeId;
+			})
+			.map(orderLine -> {
+				return Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO);
+			})
+			.reduce(BigDecimal.ZERO, BigDecimal::add)
+		;
+
+		BigDecimal discountAmount = BigDecimal.ZERO;
+		if (defaultDiscountChargeId > 0) {
+			discountAmount = orderLines.stream()
+				.filter(orderLine -> {
+					int chargeOrdeLineId = orderLine.getC_Charge_ID();
+					if (chargeOrdeLineId <= 0) {
+						return false;
+					}
+					return chargeOrdeLineId == defaultDiscountChargeId;
 				})
-				.reduce(BigDecimal.ZERO, BigDecimal::add);
+				.map(orderLine -> {
+					return Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO);
+				})
+				.reduce(BigDecimal.ZERO, BigDecimal::add)
+			;
+		}
+
+		BigDecimal lineDiscountAmount = orderLines.stream()
+			.filter(orderLine -> {
+				int chargeOrdeLineId = orderLine.getC_Charge_ID();
+				// if (chargeOrdeLineId <= 0) {
+				// 	return true;
+				// }
+				if (defaultDiscountChargeId <= 0) {
+					return true;
+				}
+				return chargeOrdeLineId != defaultDiscountChargeId; // && chargeOrdeLineId != defaultGiftCardChargeId;
+			})
+			.map(orderLine -> {
+				BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
+				BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
+				BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
+					.multiply(
+						Optional.ofNullable(
+							orderLine.getQtyOrdered()
+						)
+							.orElse(Env.ZERO)
+					)
+				;
+				return discountLine;
+			})
+			.reduce(BigDecimal.ZERO, BigDecimal::add)
+		;
 		//	
 		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
 
@@ -130,6 +177,16 @@ public class OrderConverUtil {
 				)
 			);
 		}
+
+		// Exists Online Payment Approved
+		final String sql = "SELECT 1 "
+			+ "FROM C_Payment "
+			+ "WHERE IsOnline = 'Y' "
+			+ "AND ResponseStatus = 'A' "
+			+ "AND C_Order_ID = ? "
+			+ "LIMIT 1"
+		;
+		boolean isOnlinePaymentApproved = 1 == DB.getSQLValue(null, sql, order.getC_Order_ID());
 
 		//	Convert
 		return builder
@@ -313,6 +370,7 @@ public class OrderConverUtil {
 			.setIsProcessing(
 				order.isProcessing()
 			)
+			.setIsOnlinePaymentApproved(isOnlinePaymentApproved)
 		;
 	}
 

@@ -44,6 +44,7 @@ import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.service.grpc.util.value.NumberManager;
 
 /**
  * A util class for change values for documents
@@ -574,13 +575,18 @@ public class OrderUtil {
 
 		List<PO> paymentReferencesList = getPaymentReferencesList(order);
 		Optional<BigDecimal> paymentReferenceAmount = paymentReferencesList.stream()
-				.map(paymentReference -> {
-			BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
-			if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
-				amount = amount.negate();
-			}
-			return getConvetedAmount(order, paymentReference, amount);
-		}).collect(Collectors.reducing(BigDecimal::add));
+			.map(paymentReference -> {
+				BigDecimal amount = NumberManager.getBigDecimalFromObject(
+					paymentReference.get_Value("Amount")
+				); //((BigDecimal) paymentReference.get_Value("Amount"));
+				if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
+					amount = amount.negate();
+				}
+				BigDecimal convertedAmount = getConvetedAmount(order, paymentReference, amount);
+				return convertedAmount;
+			})
+			.collect(Collectors.reducing(BigDecimal::add))
+		;
 
 		BigDecimal paymentAmount = Env.ZERO;
 		if(paidAmount.isPresent()) {
