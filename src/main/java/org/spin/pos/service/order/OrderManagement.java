@@ -56,6 +56,8 @@ import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * A util class for change values for documents
@@ -244,6 +246,42 @@ public class OrderManagement {
 			return paymentMethodAlocation.get_ValueAsBoolean("IsPaymentReference") && !paymentReference.get_ValueAsBoolean("IsAutoCreatedReference");
 		}).forEach(paymentReference -> {
 			paymentReference.set_ValueOfColumn("Processed", true);
+			if ("G".equals(paymentReference.get_ValueAsString("TenderType"))) {
+				if (!paymentReference.get_ValueAsBoolean("IsReceipt")) {
+					PO giftCard = createGiftCardFromPaymentReference(
+						salesOrder,
+						paymentReference,
+						transactionName
+					);
+					if (giftCard != null && giftCard.get_ID() > 0) {
+						paymentReference.set_ValueOfColumn(
+							ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID,
+							giftCard.get_ID()
+						);
+					}
+				} else {
+					int giftCardId = paymentReference.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID);
+					if (giftCardId > 0) {
+						PO giftCard = RecordUtil.getEntity(
+							Env.getCtx(),
+							"ECA14_GiftCard",
+							giftCardId,
+							transactionName
+						);
+						if (giftCard != null && giftCard.get_ID() > 0) {
+							if (giftCard.get_ValueAsBoolean("Processed")) {
+								throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
+							}
+							if (giftCard.get_ValueAsBoolean("Processing")) {
+								throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
+							}
+							giftCard.set_ValueOfColumn("Processing", false);
+							giftCard.set_ValueOfColumn("Processed", true);
+							giftCard.saveEx();
+						}
+					}
+				}
+			}
 			paymentReference.saveEx();
 		});
 	}
@@ -378,7 +416,7 @@ public class OrderManagement {
 	 * @param transactionName
 	 * @return void
 	 */
-	private static void createGiftCard(MOrder salesOrder, MPayment payment, String transactionName) {
+	private static void createGiftCardFromPayment(MOrder salesOrder, MPayment payment, String transactionName) {
 		MTable giftCardTable = MTable.get(payment.getCtx(), "ECA14_GiftCard");
 		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
 			return;
@@ -405,6 +443,74 @@ public class OrderManagement {
 		giftCard.set_ValueOfColumn(I_C_Payment.COLUMNNAME_IsPrepayment, true);
 		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_Amount, payment.getPayAmt());
 		giftCard.saveEx(transactionName);
+	}
+
+
+	/**
+	 * Create Gift Card from payment
+	 * @param salesOrder
+	 * @param payment
+	 * @param transactionName
+	 * @return void
+	 */
+	private static PO createGiftCardFromPaymentReference(MOrder salesOrder, PO paymentReference, String transactionName) {
+		MTable giftCardTable = MTable.get(paymentReference.getCtx(), "ECA14_GiftCard");
+		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
+			return null;
+		}
+		PO giftCard = giftCardTable.getPO(0, paymentReference.get_TrxName());
+		giftCard.set_ValueOfColumn(
+			ColumnsAdded.COLUMNNAME_DateDoc,
+			TimeManager.getTimestampFromString(
+				paymentReference.get_ValueAsString("PayDate")
+			)
+		);
+		giftCard.set_ValueOfColumn(
+			I_C_Order.COLUMNNAME_C_BPartner_ID,
+			paymentReference.get_ValueAsInt(
+				I_C_Order.COLUMNNAME_C_BPartner_ID
+			)
+		);
+		giftCard.set_ValueOfColumn(
+			I_C_Order.COLUMNNAME_C_ConversionType_ID,
+			paymentReference.get_ValueAsInt(
+				I_C_Order.COLUMNNAME_C_ConversionType_ID
+			)
+		);
+		giftCard.set_ValueOfColumn(
+			I_C_Order.COLUMNNAME_C_Currency_ID,
+			paymentReference.get_ValueAsInt(
+				I_C_Order.COLUMNNAME_C_Currency_ID
+			)
+		);
+		giftCard.set_ValueOfColumn(
+			I_C_Order.COLUMNNAME_C_Order_ID,
+			salesOrder.getC_Order_ID()
+		);
+
+		// TODO: Add `C_Payment_ID` as source refund
+		// if (giftCardTable.get_ColumnIndex(I_C_Payment.COLUMNNAME_C_Payment_ID) >= 0) {
+		// 	giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Payment_ID, paymentReference.getC_Payment_ID());
+		// }
+
+		String description = Msg.parseTranslation(
+			paymentReference.getCtx(),
+			"@C_Order_ID@: " + salesOrder.getDisplayValue() + "\n" +
+			"@C_POSPaymentReference_ID@: " + paymentReference.getDisplayValue() + "\n"
+		);
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_Description, description);
+		// set total amount on header
+		giftCard.set_ValueOfColumn(I_C_Payment.COLUMNNAME_IsPrepayment, true);
+		giftCard.set_ValueOfColumn(
+			ColumnsAdded.COLUMNNAME_Amount,
+			NumberManager.getBigDecimalFromString(
+				paymentReference.get_ValueAsString(
+					ColumnsAdded.COLUMNNAME_Amount
+				)
+			)
+		);
+		giftCard.saveEx(transactionName);
+		return giftCard;
 	}
 
 
@@ -468,9 +574,9 @@ public class OrderManagement {
 						createCreditMemoReference(salesOrder, payment, transactionName);
 					}
 				} else if (payment.getTenderType().equals("G")) {
-					if (!payment.isReceipt()) {
-						createGiftCard(salesOrder, payment, transactionName);
-					}
+					// if (!payment.isReceipt()) {
+					// 	createGiftCardFromPayment(salesOrder, payment, transactionName);
+					// }
 				}
 				payment.setDocAction(MPayment.DOCACTION_Complete);
 				CashUtil.setCurrentDate(payment);

@@ -177,7 +177,7 @@ public class POSLogic {
 						refundReference.get_ValueAsInt("ECA14_GiftCard_ID"),
 						transactionName
 					);
-					if (giftCard != null && giftCard.get_ID() > 0) {
+					if (giftCard != null && giftCard.get_ID() > 0 && !giftCard.get_ValueAsBoolean("Processed")) {
 						giftCard.set_ValueOfColumn("Processing", false);
 						giftCard.saveEx();
 					}
