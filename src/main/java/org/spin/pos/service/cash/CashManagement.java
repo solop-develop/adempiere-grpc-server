@@ -239,7 +239,7 @@ public class CashManagement {
 	 * @return
 	 */
 	private static MPayment createRelatedPayment(MPOS pointOfSalesDefinition, MPayment sourcePayment, String transactionName) {
-		if(sourcePayment.get_ValueAsInt("POSReferenceBankAccount_ID") <= 0) {
+		if(sourcePayment.get_ValueAsInt("POSReferenceBankAccount_ID") <= 0 || sourcePayment.getPayAmt().compareTo(Env.ZERO) == 0) {
 			return null;
 		}
 		MPayment relatedPayment = new MPayment(Env.getCtx(), 0, transactionName);

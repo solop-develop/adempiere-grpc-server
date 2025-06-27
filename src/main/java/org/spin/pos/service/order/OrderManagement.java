@@ -72,7 +72,7 @@ public class OrderManagement {
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder salesOrder = new MOrder(Env.getCtx(), orderId, transactionName);
-			if(salesOrder == null || salesOrder.getC_Order_ID() <= 0) {
+			if(salesOrder.getC_Order_ID() <= 0) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
 			CashManagement.validatePreviousCashClosing(pos, salesOrder.getDateOrdered(), transactionName);
@@ -558,7 +558,7 @@ public class OrderManagement {
 			//	Get current open amount
 			AtomicReference<BigDecimal> multiplier = new AtomicReference<BigDecimal>(!salesOrder.isReturnOrder()? Env.ONE: Env.ONE.negate());
 			if(!payment.isReceipt()) {
-				multiplier.updateAndGet(value -> value.negate());
+				multiplier.updateAndGet(BigDecimal::negate);
 			}
 			openAmount.updateAndGet(amount -> amount.subtract(convertedAmount.multiply(multiplier.get())));
 			if(payment.isAllocated()) {
@@ -592,7 +592,7 @@ public class OrderManagement {
 		});
 
 		//	Allocate all payments
-		if(paymentsIds.size() > 0) {
+		if(!paymentsIds.isEmpty()) {
 			String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
 			//	
 			MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, RecordUtil.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);

@@ -2708,34 +2708,15 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private Empty.Builder processCashOpening(CashOpeningRequest request) {
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-
-		// if(request.getCollectingAgentId() <= 0) {
-		// 	throw new AdempiereException("@CollectingAgent_ID@ @NotFound@");
-		// }
-		//	
 		if(pos.getC_BankAccount_ID() <= 0) {
 			throw new AdempiereException("@C_BankAccount_ID@ @NotFound@");
 		}
-
 		Trx.run(transactionName -> {
 			MBankAccount cashAccount = MBankAccount.get(Env.getCtx(), pos.getC_BankAccount_ID());
 			int defaultChargeId = cashAccount.get_ValueAsInt("DefaultOpeningCharge_ID");
 			if(defaultChargeId <= 0) {
 				throw new AdempiereException("@DefaultOpeningCharge_ID@ @NotFound@");
 			}
-			//	TODO: Implement it
-			// request.getPaymentsList().forEach(paymentRequest -> {
-			// 	MPayment payment = CashManagement.createPaymentFromCharge(
-			// 		cashAccount.get_ValueAsInt("DefaultOpeningCharge_ID"),
-			// 		paymentRequest,
-			// 		pos,
-			// 		transactionName
-			// 	);
-			// 	//	Add bank statement
-			// 	CashManagement.createCashClosing(pos, payment);
-			// 	//	
-			// 	CashManagement.processPayment(pos, payment, transactionName);
-			// });
 			final String whereClause = "C_POS_ID = ? AND C_Charge_ID = ? AND DocStatus = ?";
 			List<Integer> paymentsIdList = new Query(
 				Env.getCtx(),
@@ -2750,7 +2731,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				)
 				.getIDsAsList()
 			;
-			if(paymentsIdList == null || paymentsIdList.size() == 0) {
+			if(paymentsIdList == null || paymentsIdList.isEmpty()) {
 				throw new AdempiereException("@C_Payment_ID@ @NotFound@");
 			}
 
@@ -2868,16 +2849,6 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(defaultChargeId <= 0) {
 				throw new AdempiereException("@DefaultWithdrawalCharge_ID@ @NotFound@");
 			}
-			//	TODO: Implement it
-			// request.getPaymentsList().forEach(paymentRequest -> {
-			// 	MPayment payment = CashManagement.createPaymentFromCharge(
-			// 		cashAccount.get_ValueAsInt("DefaultWithdrawalCharge_ID"),
-			// 		paymentRequest,
-			// 		pos,
-			// 		transactionName
-			// 	);
-			// 	CashManagement.processPayment(pos, payment, transactionName);
-			// });
 			final String whereClause = "C_POS_ID = ? AND C_Charge_ID = ? AND DocStatus = ?";
 			List<Integer> paymentsIdList = new Query(
 				Env.getCtx(),
@@ -2892,7 +2863,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				)
 				.getIDsAsList()
 			;
-			if(paymentsIdList == null || paymentsIdList.size() == 0) {
+			if(paymentsIdList == null || paymentsIdList.isEmpty()) {
 				throw new AdempiereException("@C_Payment_ID@ @NotFound@");
 			}
 
@@ -2919,7 +2890,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@FillMandatory@ @C_POS_ID@");
 		}
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		if (pos == null || pos.getC_POS_ID() <= 0) {
+		if (pos.getC_POS_ID() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		int orderId = request.getId();

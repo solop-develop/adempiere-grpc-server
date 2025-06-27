@@ -113,7 +113,7 @@ public class CollectingManagement {
 		if (paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
 			// TODO: Add support to Refund Document Type on Payment Allocation
 			if (!request.getIsRefund()) {
-				if(paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
+				if(paymentTypeAllocation.get_ID() > 0) {
 					if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0 && !request.getIsRefund()) {
 						documentTypeId = pointOfSalesDefinition.get_ValueAsInt("C_DocTypeTarget_ID");
 					}
@@ -257,16 +257,6 @@ public class CollectingManagement {
 			payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID, request.getInvoiceReferenceId());
 		}
 		payment.saveEx(transactionName);
-		// if(payment.setPaymentProcessor()) {
-		// 	payment.setIsApproved(false);
-		// 	boolean isOk = payment.processOnline();
-		// 	if(!isOk) {
-		// 		throw new AdempiereException(payment.getErrorMessage());
-		// 	}
-		// 	payment.setIsApproved(true);
-		// 	payment.saveEx();
-		// }
 		return payment;
 	}
-
 }

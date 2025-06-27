@@ -51,10 +51,12 @@ public class ReverseSalesTransaction {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 			MOrder returnOrder = createReturnOrder(pos, sourceOrder, transactionName);
-			if(!Util.isEmpty(description)) {
+			if(!Util.isEmpty(description, true)) {
 				returnOrder.setDescription(description);
-				returnOrder.saveEx();
+			} else {
+				returnOrder.setDescription(sourceOrder.getDocumentNo());
 			}
+			returnOrder.saveEx();
 			//	Close all
 	        if(!sourceOrder.processIt(MOrder.DOCACTION_Close)) {
 	        	throw new AdempiereException(sourceOrder.getProcessMsg());
