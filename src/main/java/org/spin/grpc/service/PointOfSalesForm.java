@@ -5808,7 +5808,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		//	Bank Account to transfer
 		if(pos.getCashTransferBankAccount_ID() != 0) {
-			builder.setCashBankAccount(CoreFunctionalityConvert.convertBankAccount(pos.getCashTransferBankAccount_ID()));
+			builder.setCashTransferBankAccount(CoreFunctionalityConvert.convertBankAccount(pos.getCashTransferBankAccount_ID()));
 		}
 		//	Warehouse
 		if(pos.getM_Warehouse_ID() > 0) {
