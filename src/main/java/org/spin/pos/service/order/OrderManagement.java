@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_C_Order;
-import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
@@ -54,10 +53,10 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
+import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * A util class for change values for documents
@@ -83,7 +82,8 @@ public class OrderManagement {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 			boolean isOpenToRefund = isRefundOpen;
-			if(getPaymentReferenceAmount(salesOrder, paymentReferences).compareTo(Env.ZERO) != 0) {
+			BigDecimal paymentReferenceAmount = getPaymentReferenceAmount(salesOrder, paymentReferences);
+			if(paymentReferenceAmount.compareTo(Env.ZERO) != 0) {
 				isOpenToRefund = true;
 			}
 			if(DocumentUtil.isDrafted(salesOrder)) {
@@ -248,7 +248,7 @@ public class OrderManagement {
 			paymentReference.set_ValueOfColumn("Processed", true);
 			if ("G".equals(paymentReference.get_ValueAsString("TenderType"))) {
 				if (!paymentReference.get_ValueAsBoolean("IsReceipt")) {
-					PO giftCard = createGiftCardFromPaymentReference(
+					PO giftCard = GiftCardManagement.createGiftCardFromPaymentReference(
 						salesOrder,
 						paymentReference,
 						transactionName
@@ -410,111 +410,6 @@ public class OrderManagement {
 
 
 	/**
-	 * Create Gift Card from payment
-	 * @param salesOrder
-	 * @param payment
-	 * @param transactionName
-	 * @return void
-	 */
-	private static void createGiftCardFromPayment(MOrder salesOrder, MPayment payment, String transactionName) {
-		MTable giftCardTable = MTable.get(payment.getCtx(), "ECA14_GiftCard");
-		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
-			return;
-		}
-		PO giftCard = giftCardTable.getPO(0, payment.get_TrxName());
-		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_DateDoc, payment.getDateTrx());
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_BPartner_ID, payment.getC_BPartner_ID());
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_ConversionType_ID, payment.getC_ConversionType_ID());
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Currency_ID, payment.getC_Currency_ID());
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Order_ID, salesOrder.getC_Order_ID());
-
-		// TODO: Add `C_Payment_ID` as source refund
-		if (giftCardTable.get_ColumnIndex(I_C_Payment.COLUMNNAME_C_Payment_ID) >= 0) {
-			giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Payment_ID, payment.getC_Payment_ID());
-		}
-
-		String description = Msg.parseTranslation(
-			payment.getCtx(),
-			"@C_Order_ID@: " + salesOrder.getDisplayValue() + "\n" +
-			"@C_Payment_ID@: " + payment.getDisplayValue() + "\n"
-		);
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_Description, description);
-		// set total amount on header
-		giftCard.set_ValueOfColumn(I_C_Payment.COLUMNNAME_IsPrepayment, true);
-		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_Amount, payment.getPayAmt());
-		giftCard.saveEx(transactionName);
-	}
-
-
-	/**
-	 * Create Gift Card from payment
-	 * @param salesOrder
-	 * @param payment
-	 * @param transactionName
-	 * @return void
-	 */
-	private static PO createGiftCardFromPaymentReference(MOrder salesOrder, PO paymentReference, String transactionName) {
-		MTable giftCardTable = MTable.get(paymentReference.getCtx(), "ECA14_GiftCard");
-		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
-			return null;
-		}
-		PO giftCard = giftCardTable.getPO(0, paymentReference.get_TrxName());
-		giftCard.set_ValueOfColumn(
-			ColumnsAdded.COLUMNNAME_DateDoc,
-			TimeManager.getTimestampFromString(
-				paymentReference.get_ValueAsString("PayDate")
-			)
-		);
-		giftCard.set_ValueOfColumn(
-			I_C_Order.COLUMNNAME_C_BPartner_ID,
-			paymentReference.get_ValueAsInt(
-				I_C_Order.COLUMNNAME_C_BPartner_ID
-			)
-		);
-		giftCard.set_ValueOfColumn(
-			I_C_Order.COLUMNNAME_C_ConversionType_ID,
-			paymentReference.get_ValueAsInt(
-				I_C_Order.COLUMNNAME_C_ConversionType_ID
-			)
-		);
-		giftCard.set_ValueOfColumn(
-			I_C_Order.COLUMNNAME_C_Currency_ID,
-			paymentReference.get_ValueAsInt(
-				I_C_Order.COLUMNNAME_C_Currency_ID
-			)
-		);
-		giftCard.set_ValueOfColumn(
-			I_C_Order.COLUMNNAME_C_Order_ID,
-			salesOrder.getC_Order_ID()
-		);
-
-		// TODO: Add `C_Payment_ID` as source refund
-		// if (giftCardTable.get_ColumnIndex(I_C_Payment.COLUMNNAME_C_Payment_ID) >= 0) {
-		// 	giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Payment_ID, paymentReference.getC_Payment_ID());
-		// }
-
-		String description = Msg.parseTranslation(
-			paymentReference.getCtx(),
-			"@C_Order_ID@: " + salesOrder.getDisplayValue() + "\n" +
-			"@C_POSPaymentReference_ID@: " + paymentReference.getDisplayValue() + "\n"
-		);
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_Description, description);
-		// set total amount on header
-		giftCard.set_ValueOfColumn(I_C_Payment.COLUMNNAME_IsPrepayment, true);
-		giftCard.set_ValueOfColumn(
-			ColumnsAdded.COLUMNNAME_Amount,
-			NumberManager.getBigDecimalFromString(
-				paymentReference.get_ValueAsString(
-					ColumnsAdded.COLUMNNAME_Amount
-				)
-			)
-		);
-		giftCard.saveEx(transactionName);
-		return giftCard;
-	}
-
-
-	/**
 	 * Validate if a order is released
 	 * @param salesOrder
 	 * @return void
@@ -591,8 +486,9 @@ public class OrderManagement {
 			CashManagement.addPaymentToCash(pos, payment);
 		});
 
+		List<PO> paymentReferencesList = getPaymentReferences(salesOrder);
 		//	Allocate all payments
-		if(!paymentsIds.isEmpty()) {
+		if(!paymentsIds.isEmpty() || !paymentReferencesList.isEmpty()) {
 			String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
 			//	
 			MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, RecordUtil.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
@@ -657,6 +553,49 @@ public class OrderManagement {
 					paymentAllocationLine.saveEx();
 				}
 			}
+
+			// Assigment GiftCard
+			final int defaultGiftCardChargeId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID);
+			paymentReferencesList.stream()
+				.filter(paymentReference -> {
+					if (paymentReference == null || paymentAllocation.get_ID() <= 0) {
+						return false;
+					}
+					return "G".equals(paymentReference.get_ValueAsString("TenderType"));
+				})
+				.forEach(paymentReference -> {
+					BigDecimal multiplier = Env.ONE;
+					if (!paymentReference.get_ValueAsBoolean("IsReceipt")) {
+						multiplier = Env.ONE.negate();
+					}
+
+					BigDecimal sourceAmount = Optional.ofNullable(
+						NumberManager.getBigDecimalFromString(
+							paymentReference.get_ValueAsString("AmtSource")
+						)
+					).orElse(Env.ZERO);
+					BigDecimal paymentAmount = OrderUtil.getConvetedAmount(salesOrder, paymentReference, sourceAmount);
+					BigDecimal discountAmount = OrderUtil.getConvetedAmount(salesOrder, paymentReference, Env.ZERO);
+					BigDecimal overUnderAmount = OrderUtil.getConvetedAmount(salesOrder, paymentReference, Env.ZERO);
+					BigDecimal writeOffAmount = OrderUtil.getConvetedAmount(salesOrder, paymentReference, Env.ZERO);
+					if (overUnderAmount.signum() < 0 && paymentAmount.signum() > 0) {
+						paymentAmount = paymentAmount.add(overUnderAmount);
+					}
+
+					MAllocationLine paymentAllocationLine = new MAllocationLine(
+						paymentAllocation,
+						paymentAmount.multiply(multiplier),
+						discountAmount,
+						writeOffAmount,
+						overUnderAmount
+					);
+					paymentAllocationLine.setDocInfo(salesOrder.getC_BPartner_ID(), salesOrder.getC_Order_ID(), invoiceId);
+					paymentAllocationLine.setC_Charge_ID(defaultGiftCardChargeId);
+					paymentAllocationLine.saveEx();
+					isAllocationLineCreated.set(true);
+				})
+			;
+
 			//	Complete
 			if (!paymentAllocation.processIt(MAllocationHdr.DOCACTION_Complete)) {
 				throw new AdempiereException(paymentAllocation.getProcessMsg());

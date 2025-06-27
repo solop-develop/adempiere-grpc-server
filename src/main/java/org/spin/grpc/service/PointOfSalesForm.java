@@ -122,6 +122,7 @@ import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.pos.service.order.ShipmentUtil;
+import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.service.seller.SellerServiceLogic;
 import org.spin.pos.util.ColumnsAdded;
@@ -2670,24 +2671,17 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(request.getSalesRepresentativeId() > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("SalesRep_ID", request.getSalesRepresentativeId());
 			}
-			if (request.getGiftCardId() > 0) {
-				// TODO: Support with lines
-				PO giftCard = RecordUtil.getEntity(
-					Env.getCtx(),
-					"ECA14_GiftCard",
-					request.getGiftCardId(),
-					transactionName
-				);
-				if (giftCard != null && giftCard.get_ID() > 0) {
+			if (request.getIsReceipt()) {
+				if (request.getGiftCardId() > 0) {
+					GiftCardManagement.processingGiftCard(
+						request.getGiftCardId(),
+						true,
+						transactionName
+					);
 					refundReferenceToCreate.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
-					if (giftCard.get_ValueAsBoolean("Processed")) {
-						throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
-					}
-					if (giftCard.get_ValueAsBoolean("Processing")) {
-						throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
-					}
-					giftCard.set_ValueOfColumn("Processing", true);
-					giftCard.saveEx();
+				}
+			} else {
+				if ("G".equals(request.getTenderTypeCode())) {
 				}
 			}
 			refundReferenceToCreate.set_ValueOfColumn("IsReceipt", request.getIsReceipt());
@@ -4463,6 +4457,10 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(pos.get_ValueAsInt("DefaultDiscountCharge_ID"));
 			whereClause.append(" AND (C_Charge_ID IS NULL OR C_Charge_ID <> ?)");
 		}
+		if(pos.get_ValueAsInt("ECA14_DefaultGiftCardCharge_ID") > 0) {
+			parameters.add(pos.get_ValueAsInt("ECA14_DefaultGiftCardCharge_ID"));
+			whereClause.append(" AND (C_Charge_ID IS NULL OR C_Charge_ID <> ?)");
+		}
 		//	Get Product list
 		Query query = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, whereClause.toString(), null)
 				.setParameters(parameters)
@@ -4942,22 +4940,21 @@ public class PointOfSalesForm extends StoreImplBase {
 	private void createDiscountLine(MPOS pos, MOrder order, BigDecimal amount, String transactionName) {
 		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines())
 			.parallelStream()
-			.filter(ordeLine -> ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID))
+			.filter(ordeLine -> {
+				return ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID);
+			})
 			.findFirst()
 		;
 		MOrderLine discountOrderLine = null;
 		if(maybeOrderLine.isPresent()) {
 			discountOrderLine = maybeOrderLine.get();
-			discountOrderLine.setQty(Env.ONE);
-			discountOrderLine.setPrice(amount.negate());
-			discountOrderLine.setM_AttributeSetInstance_ID(0);
 		} else {
 			discountOrderLine = new MOrderLine(order);
-			discountOrderLine.setQty(Env.ONE);
 			discountOrderLine.setC_Charge_ID(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID));
-			discountOrderLine.setPrice(amount.negate());
-			discountOrderLine.setM_AttributeSetInstance_ID(0);
 		}
+		discountOrderLine.setQty(Env.ONE);
+		discountOrderLine.setPrice(amount.negate());
+		discountOrderLine.setM_AttributeSetInstance_ID(0);
 		//	
 		discountOrderLine.saveEx(transactionName);
 	}
