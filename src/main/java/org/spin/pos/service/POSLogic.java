@@ -96,6 +96,7 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ShipmentUtil;
+import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.pos.util.PaymentConvertUtil;
@@ -156,6 +157,7 @@ public class POSLogic {
 	 * @return
 	 */
 	public static Empty.Builder deletePaymentReference(DeletePaymentReferenceRequest request) {
+		// MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 		if(request.getId() <= 0) {
 			throw new AdempiereException("@C_POSPaymentReference_ID@ @IsMandatory@");
 		}
@@ -169,24 +171,22 @@ public class POSLogic {
 				request.getId(),
 				transactionName
 			);
-			if(refundReference != null && refundReference.get_ID() != 0) {
-				if (refundReference.get_ValueAsInt("ECA14_GiftCard_ID") > 0) {
-					PO giftCard = RecordUtil.getEntity(
-						Env.getCtx(),
-						"ECA14_GiftCard",
-						refundReference.get_ValueAsInt("ECA14_GiftCard_ID"),
-						transactionName
-					);
-					if (giftCard != null && giftCard.get_ID() > 0 && !giftCard.get_ValueAsBoolean("Processed")) {
-						giftCard.set_ValueOfColumn("Processing", false);
-						giftCard.saveEx();
-					}
-				}
-				//	Validate processed Order
-				refundReference.deleteEx(true);
-			} else {
+			if(refundReference == null || refundReference.get_ID() <= 0) {
 				throw new AdempiereException("@C_POSPaymentReference_ID@ @NotFound@");
 			}
+			if ("G".equals(refundReference.get_ValueAsString("TenderType"))) {
+				if (refundReference.get_ValueAsBoolean("IsReceipt")) {
+					if (refundReference.get_ValueAsInt("ECA14_GiftCard_ID") > 0) {
+						GiftCardManagement.processingGiftCard(
+							refundReference.get_ValueAsInt("ECA14_GiftCard_ID"),
+							false,
+							transactionName
+						);
+					}
+				}
+			}
+			//	Validate processed Order
+			refundReference.deleteEx(true);
 		});
 		//	Return
 		return Empty.newBuilder();
