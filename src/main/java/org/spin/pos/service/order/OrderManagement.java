@@ -606,15 +606,6 @@ public class OrderManagement {
 				payment.setIsAllocated(true);
 				payment.setC_Invoice_ID(invoiceId);
 				payment.saveEx();
-				if(payment.setPaymentProcessor()) {
-					payment.setIsApproved(false);
-					boolean isOk = payment.processOnline();
-					if(!isOk) {
-						throw new AdempiereException(payment.getErrorMessage());
-					}
-					payment.setIsApproved(true);
-					payment.saveEx();
-				}
 			});
 		} else {
 			//	Add write off
