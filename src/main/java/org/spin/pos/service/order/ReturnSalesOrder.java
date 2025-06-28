@@ -172,7 +172,7 @@ public class ReturnSalesOrder {
 			} else {
 				if(availableQuantity.compareTo(Env.ZERO) > 0) {
 		        	MOrderLine rmaLine = RMAUtil.copyRMALineFromOrder(rma, sourcerOrderLine, transactionName);
-		        	Optional.ofNullable(descrption).ifPresent(description -> rmaLine.setDescription(description));
+		        	Optional.ofNullable(descrption).ifPresent(rmaLine::setDescription);
 		        	OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), availableQuantity);
 		        	returnOrderReference.set(rmaLine);
     			} else {
@@ -210,7 +210,7 @@ public class ReturnSalesOrder {
 			if(rma.isProcessed()) {
 				throw new AdempiereException("@M_InOut_ID@ @Processed@");
 			}
-			Optional.ofNullable(description).ifPresent(descriptionValue -> rma.addDescription(descriptionValue));
+			Optional.ofNullable(description).ifPresent(rma::addDescription);
 			if (!rma.processIt(documentAction)) {
 				throw new AdempiereException("@ProcessFailed@ :" + rma.getProcessMsg());
 			}

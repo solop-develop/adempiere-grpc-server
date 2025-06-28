@@ -2480,110 +2480,94 @@ public class PointOfSalesForm extends StoreImplBase {
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = 0;
-
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-			//	Get Bank statement
-			String sql = "SELECT "
+		String sql = "SELECT "
 				+ "pm.C_PaymentMethod_ID, "
 				+ "pm.Name AS PaymentMethodName, "
 				+ "pm.TenderType AS TenderTypeCode, "
 				+ "p.C_Currency_ID, "
-			;
-			if (request.getIsDetailMovementType()) {
-				sql += "p.IsReceipt, ";
-			}
+				;
+		if (request.getIsDetailMovementType()) {
+			sql += "p.IsReceipt, ";
+		}
 
-			sql += "(SUM(CASE WHEN p.PayAmt <> 0 THEN p.PayAmt ELSE COALESCE(p.ECA14_Reference_Amount, 0) END";
-			if (request.getIsDetailMovementType()) {
-				sql += ")";
-			}
-			sql	+= " * CASE WHEN p.IsReceipt = 'Y' THEN 1 ELSE -1 END)";
-			if (!request.getIsDetailMovementType()) {
-				sql += ")";
-			}
+		sql += "(SUM(CASE WHEN p.PayAmt <> 0 THEN p.PayAmt ELSE COALESCE(p.ECA14_Reference_Amount, 0) END";
+		if (request.getIsDetailMovementType()) {
+			sql += ")";
+		}
+		sql	+= " * CASE WHEN p.IsReceipt = 'Y' THEN 1 ELSE -1 END)";
+		if (!request.getIsDetailMovementType()) {
+			sql += ")";
+		}
 
-			sql += " AS PaymentAmount "
+		sql += " AS PaymentAmount "
 				+ "FROM C_Payment AS p "
 				+ "INNER JOIN C_PaymentMethod AS pm ON(pm.C_PaymentMethod_ID = p.C_PaymentMethod_ID) "
 				+ "WHERE p.DocStatus IN('CO', 'CL') "
 				+ "AND p.C_POS_ID = ? "
 				+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl WHERE bsl.C_Payment_ID = p.C_Payment_ID AND bsl.C_BankStatement_ID = ?) "
 				+ "GROUP BY pm.C_PaymentMethod_ID, pm.Name, pm.TenderType, p.C_Currency_ID"
-			;
-			
-			if (request.getIsDetailMovementType()) {
-				sql += ", p.IsReceipt ";
-			}
-			// sql += "ORDER BY PaymentMethodName, p.C_Currency_ID";
+		;
 
-			//	Count records
-			List<Object> parameters = new ArrayList<Object>();
-			parameters.add(pos.getC_POS_ID());
-			parameters.add(cashClosing.getC_BankStatement_ID());
-			pstmt = DB.prepareStatement(sql, null);
-			DB.setParameters(pstmt, parameters);
-
-			//	Get from Query
-			rs = pstmt.executeQuery();
-			while(rs.next()) {
-				int currencyId = rs.getInt("C_Currency_ID");
-				BigDecimal amount = rs.getBigDecimal("PaymentAmount");
-				
+		if (request.getIsDetailMovementType()) {
+			sql += ", p.IsReceipt ";
+		}
+		AtomicInteger counter = new AtomicInteger(0);
+		//	Count records
+		List<Object> parameters = new ArrayList<Object>();
+		parameters.add(pos.getC_POS_ID());
+		parameters.add(cashClosing.getC_BankStatement_ID());
+		DB.runResultSet(null, sql, parameters, resultset -> {
+			while (resultset.next()) {
+				int currencyId = resultset.getInt("C_Currency_ID");
+				BigDecimal amount = resultset.getBigDecimal("PaymentAmount");
+				String tenderTypeCode = resultset.getString("TenderTypeCode");
 				PaymentSummary.Builder paymentSummary = PaymentSummary.newBuilder()
-					.setPaymentMethodId(
-						rs.getInt("C_PaymentMethod_ID")
-					)
-					.setPaymentMethodName(
-						StringManager.getValidString(
-							rs.getString("PaymentMethodName")
+						.setPaymentMethodId(
+								resultset.getInt("C_PaymentMethod_ID")
 						)
-					)
-					.setTenderTypeCode(
-						StringManager.getValidString(
-							rs.getString("TenderTypeCode")
+						.setPaymentMethodName(
+								StringManager.getValidString(
+										resultset.getString("PaymentMethodName")
+								)
 						)
-					)
-					.setCurrency(
-						CoreFunctionalityConvert.convertCurrency(
-							currencyId
+						.setTenderTypeCode(
+								StringManager.getValidString(
+										tenderTypeCode
+								)
 						)
-					)
-					.setAmount(
-						NumberManager.getBigDecimalToString(
-							amount
+						.setCurrency(
+								CoreFunctionalityConvert.convertCurrency(
+										currencyId
+								)
 						)
-					)
-				;
+						.setAmount(
+								NumberManager.getBigDecimalToString(
+										amount
+								)
+						)
+						;
 				if (request.getIsDetailMovementType()) {
 					paymentSummary.setIsRefund(
-						!rs.getBoolean("IsReceipt")
+							!resultset.getBoolean("IsReceipt")
 					);
 				}
 
 				BigDecimal totalAmount = Env.ZERO;
 				BigDecimal paymentAmount = Optional.ofNullable(amount).orElse(Env.ZERO);
-				if (cashCurrencySummary.containsKey(currencyId)) {
-					totalAmount = cashCurrencySummary.get(currencyId);
+				if(!tenderTypeCode.equals(MPayment.TENDERTYPE_CreditMemo) && !tenderTypeCode.equals("G")) {
+					if (cashCurrencySummary.containsKey(currencyId)) {
+						totalAmount = cashCurrencySummary.get(currencyId);
+					}
+					totalAmount = totalAmount.add(paymentAmount);
+					cashCurrencySummary.put(currencyId, totalAmount);
 				}
-				totalAmount = totalAmount.add(paymentAmount);
-				cashCurrencySummary.put(currencyId, totalAmount);
-
-				//	
+				//
 				builder.addCashMovements(paymentSummary.build());
-				count++;
+				counter.incrementAndGet();
 			}
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			throw new AdempiereException(e);
-		} finally {
-			DB.close(rs, pstmt);
-			pstmt = null;
-			rs = null;
-		}
-
+		}).onFailure(throwable -> {
+			throw new AdempiereException(throwable);
+		});
 		cashCurrencySummary.forEach((currencyId, totalAmount) -> {
 			PaymentTotal.Builder paymentTotalBuilder = PaymentTotal.newBuilder()
 				.setCurrency(
@@ -2601,13 +2585,13 @@ public class PointOfSalesForm extends StoreImplBase {
 		});
 
 		//	Set page token
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+		if(LimitUtil.isValidNextPageToken(counter.get(), offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
 				StringManager.getValidString(nexPageToken)
 			)
-			.setRecordCount(count)
+			.setRecordCount(counter.get())
 		;
 		//	Return
 		return builder;
@@ -3030,8 +3014,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListPaymentReferencesResponse.Builder listPaymentReferencesLines(ListPaymentReferencesRequest request) {
-		if(request.getCustomerId() <= 0
-				&& request.getPosId() <= 0) {
+		if(request.getCustomerId() <= 0 && request.getPosId() <= 0 && request.getOrderId() <= 0) {
 			throw new AdempiereException("@C_BPartner_ID@ / @C_Order_ID@ @IsMandatory@");
 		}
 		ListPaymentReferencesResponse.Builder builder = ListPaymentReferencesResponse.newBuilder();
@@ -3044,14 +3027,14 @@ public class PointOfSalesForm extends StoreImplBase {
 		int offset = (pageNumber - 1) * limit;
 
 		List<Object> parameters = new ArrayList<Object>();
-		StringBuffer whereClause = new StringBuffer("(IsPaid = 'N' AND Processed = 'N' OR IsKeepReferenceAfterProcess = 'Y')");
-		if(request.getPosId() <= 0) {
+		StringBuilder whereClause = new StringBuilder("(IsPaid = 'N' AND Processed = 'N' OR IsKeepReferenceAfterProcess = 'Y')");
+		if(request.getOrderId() > 0) {
 			parameters.add(request.getOrderId());
 			whereClause.append(" AND C_Order_ID = ?");
-		} else if(request.getCustomerId() <= 0) {
+		} else if(request.getCustomerId() > 0) {
 			parameters.add(request.getCustomerId());
 			whereClause.append(" AND EXISTS(SELECT 1 FROM C_BP_BankAccount ba WHERE ba.C_BP_BankAccount_ID = C_POSPaymentReference.C_BP_BankAccount_ID AND ba.C_BPartner_ID = ?)");
-		} else if(request.getPosId() <= 0) {
+		} else if(request.getPosId() > 0) {
 			parameters.add(request.getPosId());
 			whereClause.append(" AND C_POS_ID = ?");
 		}
