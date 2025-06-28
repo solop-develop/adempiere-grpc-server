@@ -1370,12 +1370,15 @@ public class POSLogic {
 		AtomicReference<InfoOnlinePaymentResponse.Builder> builderReference = new AtomicReference<>();
 		Trx.run(transactionName -> {
 			InfoOnlinePaymentResponse.Builder builder = InfoOnlinePaymentResponse.newBuilder();
-
 			MPayment payment = new MPayment(Env.getCtx(), request.getId(), transactionName);
-			payment.getOnlineStatus();
+			boolean isForcedStatus = payment.getOnlineStatus();
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
 			boolean isError = "E".equals(status) || "R".equals(status);
+			if(isForcedStatus) {
+				isError = false;
+				status = "R";
+			}
 			builder
 				.setIsError(isError)
 				.setMessage(
@@ -1410,7 +1413,10 @@ public class POSLogic {
 			boolean wasReversed = payment.reverseOnlineTransaction();
 			String message = payment.get_ValueAsString("ResponseMessage");
 			String status = payment.get_ValueAsString("ResponseStatus");
-			boolean isError = !wasReversed || "E".equals(status) || "R".equals(status);
+			boolean isError = "E".equals(status) || "R".equals(status);
+			if(wasReversed) {
+				isError = false;
+			}
 			builder
 				.setIsError(isError)
 				.setMessage(
