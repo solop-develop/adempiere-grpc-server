@@ -25,6 +25,7 @@ import org.compiere.model.PO;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.spin.base.util.RecordUtil;
+import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -60,7 +61,7 @@ public class GiftCardManagement {
 	 * @param transactionName
 	 * @return void
 	 */
-	public static void createGiftCardFromPayment(MOrder salesOrder, MPayment payment, String transactionName) {
+	public static void createGiftCard(MOrder salesOrder, MPayment payment, String transactionName) {
 		MTable giftCardTable = MTable.get(payment.getCtx(), "ECA14_GiftCard");
 		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
 			return;
@@ -87,6 +88,27 @@ public class GiftCardManagement {
 		giftCard.set_ValueOfColumn(I_C_Payment.COLUMNNAME_IsPrepayment, true);
 		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_Amount, payment.getPayAmt());
 		giftCard.saveEx(transactionName);
+		//	Set reference to Payment
+		payment.setC_Invoice_ID(-1);
+		payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Reference_Amount, payment.getPayAmt());
+		payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID, giftCard.get_ID());
+		payment.setPayAmt(Env.ZERO);
+		CashUtil.setCurrentDate(payment, true);
+		payment.saveEx(transactionName);
+	}
+
+	public static void createGiftCardReference(MOrder salesOrder, MPayment payment, String transactionName) {
+		MTable giftCardTable = MTable.get(payment.getCtx(), "ECA14_GiftCard");
+		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
+			return;
+		}
+		PO giftCard = giftCardTable.getPO(payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID), payment.get_TrxName());
+		//	Set reference to Payment
+		payment.setC_Invoice_ID(-1);
+		payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Reference_Amount, payment.getPayAmt());
+		payment.setPayAmt(Env.ZERO);
+		CashUtil.setCurrentDate(payment, true);
+		payment.saveEx(transactionName);
 	}
 
 

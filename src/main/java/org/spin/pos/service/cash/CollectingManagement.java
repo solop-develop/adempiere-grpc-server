@@ -54,8 +54,18 @@ public class CollectingManagement {
 		OrderManagement.validateOrderReleased(salesOrder);
 		OrderUtil.setCurrentDate(salesOrder);
 		String tenderType = request.getTenderTypeCode();
+		if (request.getAllocatePaymentId() <= 0) {
+			throw new AdempiereException("@C_POSPaymentTypeAllocation_ID@ @IsMandatory@");
+		}
+		PO paymentTypeAllocation = POS.getPaymentTypeAllocationId(request.getAllocatePaymentId(), null);
+		if (paymentTypeAllocation == null) {
+			throw new AdempiereException("@C_POSPaymentTypeAllocation_ID@ @NotFound@");
+		}
 		if(Util.isEmpty(tenderType)) {
 			tenderType = MPayment.TENDERTYPE_Cash;
+		}
+		if(tenderType.equals(MPayment.TENDERTYPE_CreditMemo) && request.getInvoiceId() <= 0 && paymentTypeAllocation.get_ValueAsBoolean(ColumnsAdded.IsMandatoryCreditMemoRef)) {
+			throw new AdempiereException("@" + ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID + "@ @IsMandatory@");
 		}
 		if(!OrderUtil.isValidOrder(salesOrder)) {
 			throw new AdempiereException("@ActionNotAllowedHere@");
@@ -80,44 +90,26 @@ public class CollectingManagement {
 		//	
 		MPayment payment = new MPayment(Env.getCtx(), 0, transactionName);
 		payment.setC_BankAccount_ID(pointOfSalesDefinition.getC_BankAccount_ID());
-
-		// Instance Payment Method Allocation
-		PO paymentTypeAllocation = null;
-		if (request.getAllocatePaymentId() > 0) {
-			paymentTypeAllocation = POS.getPaymentTypeAllocationId(request.getAllocatePaymentId(), null);
-		}
-		if (request.getPaymentMethodId() > 0 && (paymentTypeAllocation == null || paymentTypeAllocation.get_ID() <= 0)) {
-			paymentTypeAllocation = POS.getPaymentMethodAllocation(request.getPaymentMethodId(), pointOfSalesDefinition.getC_POS_ID(), null);
-		}
-
 		//	Payment Method
 		int paymentMethodId = request.getPaymentMethodId();
-		if (paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
-			if (paymentMethodId <= 0) {
-				paymentMethodId = paymentTypeAllocation.get_ValueAsInt(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID);
-			}
-			// Set Online Payment
-			payment.setIsOnline(
+		if (paymentMethodId <= 0) {
+			paymentMethodId = paymentTypeAllocation.get_ValueAsInt(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID);
+		}
+		// Set Online Payment
+		payment.setIsOnline(
 				paymentTypeAllocation.get_ValueAsBoolean("IsOnline")
-			);
-		}
+		);
 		payment.setC_PaymentMethod_ID(paymentMethodId);
-
 		//	Document Type
-		int documentTypeId;
-		if(!request.getIsRefund()) {
-			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSCollectingDocumentType_ID");
+		String documentTypeColumnName = request.getIsRefund()? "POSRefundDocumentType_ID": "POSCollectingDocumentType_ID";
+		int documentTypeId = pointOfSalesDefinition.get_ValueAsInt(documentTypeColumnName);
+		if (!request.getIsRefund()) {
+			if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {
+				documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
+			}
 		} else {
-			documentTypeId = pointOfSalesDefinition.get_ValueAsInt("POSRefundDocumentType_ID");
-		}
-		if (paymentTypeAllocation != null && paymentTypeAllocation.get_ID() > 0) {
-			// TODO: Add support to Refund Document Type on Payment Allocation
-			if (!request.getIsRefund()) {
-				if(paymentTypeAllocation.get_ID() > 0) {
-					if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0 && !request.getIsRefund()) {
-						documentTypeId = pointOfSalesDefinition.get_ValueAsInt("C_DocTypeTarget_ID");
-					}
-				}
+			if(paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID") > 0) {
+				documentTypeId = paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID");
 			}
 		}
 		if(documentTypeId > 0) {
@@ -125,7 +117,6 @@ public class CollectingManagement {
 		} else {
 			payment.setC_DocType_ID(!request.getIsRefund());
 		}
-
 		payment.setAD_Org_ID(salesOrder.getAD_Org_ID());
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getPaymentDate()
@@ -202,12 +193,10 @@ public class CollectingManagement {
 				);
 				break;
 			case MPayment.TENDERTYPE_MobilePaymentInterbank:
-				payment.setR_PnRef(request.getReferenceNo());
+            case MPayment.TENDERTYPE_Zelle:
+                payment.setR_PnRef(request.getReferenceNo());
 				break;
-			case MPayment.TENDERTYPE_Zelle:
-				payment.setR_PnRef(request.getReferenceNo());
-				break;
-			case MPayment.TENDERTYPE_CreditMemo:
+            case MPayment.TENDERTYPE_CreditMemo:
 				payment.setR_PnRef(request.getReferenceNo());
 				payment.setDocumentNo(request.getReferenceNo());
 				payment.setCheckNo(request.getReferenceNo());
@@ -218,7 +207,6 @@ public class CollectingManagement {
 				break;
 			// Gift Card
 			case "G":
-				// TODO: Add support to source Gift Card as payment
 				if (payment.get_ColumnIndex(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID) >= 0) {
 					payment.setR_PnRef(request.getReferenceNo());
 					payment.set_ValueOfColumn(

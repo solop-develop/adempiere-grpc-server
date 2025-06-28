@@ -87,4 +87,5 @@ public class ColumnsAdded {
 	public static final String COLUMNNAME_IsPrepayment = "IsPrepayment";
 	public static final String COLUMNNAME_DateDoc = "DateDoc";
 	public static final String COLUMNNAME_Amount = "Amount";
+	public static final String IsMandatoryCreditMemoRef = "IsMandatoryCreditMemoRef";
 }

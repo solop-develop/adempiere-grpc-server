@@ -2496,7 +2496,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				sql += "p.IsReceipt, ";
 			}
 
-			sql += "(SUM(p.PayAmt";
+			sql += "(SUM(CASE WHEN p.PayAmt <> 0 THEN p.PayAmt ELSE COALESCE(p.ECA14_Reference_Amount, 0) END";
 			if (request.getIsDetailMovementType()) {
 				sql += ")";
 			}

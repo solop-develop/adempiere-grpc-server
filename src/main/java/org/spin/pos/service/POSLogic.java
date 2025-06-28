@@ -749,13 +749,13 @@ public class POSLogic {
 			.first()
 		;
 		if (giftCard == null || giftCard.get_ID() <= 0) {
-			throw new AdempiereException("@ECA14_GiftCard@ @NotFound@");
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @NotFound@");
 		}
 		if (giftCard.get_ValueAsBoolean("Processing")) {
-			throw new AdempiereException("@ECA14_GiftCard@ @Processing@");
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
 		}
 		if (giftCard.get_ValueAsBoolean("Processed")) {
-			throw new AdempiereException("@ECA14_GiftCard@ @Processed@");
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
 		}
 
 		return POSConvertUtil.convertGiftCard(giftCard);
