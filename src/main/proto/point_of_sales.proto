@@ -165,6 +165,11 @@ service Store {
 	}
 
 	//	Online Payments
+	rpc ListApprovedPaymentsOnline(ListApprovedPaymentsOnlineRequest) returns (ListPaymentsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/payments/online"
+		};
+	}
 	rpc ProcessOnlinePayment(ProcessOnlinePaymentRequest) returns (ProcessOnlinePaymentResponse) {
 		option (google.api.http) = {
 			post: "/point-of-sales/{pos_id}/payments/{id}/online",
@@ -410,9 +415,9 @@ service Store {
 			body: "*"
 		};
 	}
-	rpc ReverseSalesOnlinePayment(ReverseSalesOnlinePaymentRequest) returns (Order) {
+	rpc ProcessReverseSales(ProcessReverseSalesRequest) returns (Order) {
 		option (google.api.http) = {
-			put: "/point-of-sales/{pos_id}/orders/{id}/reverse/online",
+			post: "/point-of-sales/{pos_id}/orders/{id}/reverse",
 			body: "*"
 		};
 	}
@@ -897,11 +902,13 @@ message ReverseSalesRequest {
 	int32 id = 2;
 	string description = 3;
 }
-message ReverseSalesOnlinePaymentRequest {
+message ProcessReverseSalesRequest {
 	int32 pos_id = 1;
 	int32 id = 2;
-	string description = 3;
+	int32 source_order_id = 3;
+	string description = 4;
 }
+
 
 // Sales Shipment Line
 message ShipmentLine {
@@ -2087,6 +2094,7 @@ message ListPaymentsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	// custom filters
 	int32 pos_id = 8;
 	int32 order_id = 9;
 	bool is_only_refund = 10;
@@ -2100,6 +2108,20 @@ message ListPaymentsResponse {
 
 
 // Online Payment
+message ListApprovedPaymentsOnlineRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// custom filters
+	int32 pos_id = 8;
+	int32 order_id = 9;
+	bool is_only_refund = 10;
+	bool is_only_receipt = 11;
+}
 message ProcessOnlinePaymentRequest {
 	int32 pos_id = 3;
 	int32 id = 1;
