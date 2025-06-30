@@ -52,6 +52,18 @@ public class POS {
 				.first();
 	}
 
+	public static PO getPaymentMethodAllocationFromTenderType(int posId, String tenderType) {
+		if(MTable.get(Env.getCtx(), "C_POSPaymentTypeAllocation") == null) {
+			return null;
+		}
+		return new Query(Env.getCtx(), "C_POSPaymentTypeAllocation", "C_POS_ID = ? " +
+				"AND IsDisplayedFromCollection = 'Y' " +
+				"AND EXISTS(SELECT 1 FROM C_PaymentMethod pm WHERE pm.C_PaymentMethod_ID = C_POSPaymentTypeAllocation.C_PaymentMethod_ID AND pm.TenderType = ?)", null)
+				.setParameters(posId, tenderType)
+				.setOnlyActiveRecords(true)
+				.first();
+	}
+
 	public static PO getPaymentTypeAllocationId(int paymentTypeAllocationId, String transactionName) {
 		if(MTable.get(Env.getCtx(), "C_POSPaymentTypeAllocation") == null) {
 			return null;

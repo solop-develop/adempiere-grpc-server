@@ -16,6 +16,7 @@
 package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -23,7 +24,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Order;
+import org.adempiere.core.domains.models.I_C_PaymentMethod;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
@@ -54,6 +57,7 @@ import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.service.grpc.util.value.ValueManager;
 
 import static org.spin.pos.service.payment.GiftCardManagement.createGiftCard;
 import static org.spin.pos.service.payment.GiftCardManagement.createGiftCardReference;
@@ -173,13 +177,13 @@ public class OrderManagement {
 			return returnOrder;
 		}
 		Trx.run(transactionName -> {
-			MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
-			if(!DocumentUtil.isClosed(sourceOrder)
-					|| DocumentUtil.isVoided(sourceOrder)
-					|| !sourceOrder.isReturnOrder()) {
+			MOrder sourceReturnOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
+			if(!DocumentUtil.isClosed(sourceReturnOrder)
+					|| DocumentUtil.isVoided(sourceReturnOrder)
+					|| !sourceReturnOrder.isReturnOrder()) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
-			MOrder targetOrder = OrderUtil.copyOrder(pos, sourceOrder, transactionName);
+			MOrder targetOrder = OrderUtil.copyOrder(pos, sourceReturnOrder, transactionName);
 			setDefaultValuesFromPOS(pos, targetOrder);
 			MBPartner businessPartner = (MBPartner) targetOrder.getC_BPartner();
 			OrderUtil.setCurrentDate(targetOrder);
@@ -197,12 +201,68 @@ public class OrderManagement {
 			}
 			targetOrder.set_ValueOfColumn("AssignedSalesRep_ID", currentUser.getAD_User_ID());
 			//	Set reference
-			targetOrder.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID, sourceOrder.getC_Order_ID());
+			targetOrder.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID, sourceReturnOrder.getC_Order_ID());
 			targetOrder.saveEx();
-			OrderUtil.copyOrderLinesFromRMA(sourceOrder, targetOrder, transactionName);
+			OrderUtil.copyOrderLinesFromRMA(sourceReturnOrder, targetOrder, transactionName);
+			//	Add Credit Memo as Payment
+			int creditMemoId = sourceReturnOrder.getC_Invoice_ID();
+			if(creditMemoId > 0) {
+				createPaymentFromCreditMemo(targetOrder, pos, creditMemoId, transactionName);
+			}
 			orderReference.set(targetOrder);
 		});
 		return orderReference.get();
+	}
+
+	private static void createPaymentFromCreditMemo(MOrder salesOrder, MPOS pos, int creditMemoId, String transactionName) {
+		MInvoice creditMemo = new MInvoice(salesOrder.getCtx(), creditMemoId, transactionName);
+		BigDecimal paymentAmount = salesOrder.getGrandTotal().min(salesOrder.getGrandTotal());
+		int currencyId = salesOrder.getC_Currency_ID();
+		MPayment payment = new MPayment(Env.getCtx(), 0, transactionName);
+		payment.setC_BankAccount_ID(pos.getC_BankAccount_ID());
+		PO paymentTypeAllocation = POS.getPaymentMethodAllocationFromTenderType(pos.getC_POS_ID(), MPayment.TENDERTYPE_CreditMemo);
+		if (paymentTypeAllocation == null) {
+			throw new AdempiereException("@C_POSPaymentTypeAllocation_ID@ @NotFound@");
+		}
+		//	Payment Method
+		int paymentMethodId = paymentTypeAllocation.get_ValueAsInt(I_C_PaymentMethod.COLUMNNAME_C_PaymentMethod_ID);
+		payment.setC_PaymentMethod_ID(paymentMethodId);
+		//	Document Type
+		String documentTypeColumnName = "POSCollectingDocumentType_ID";
+		int documentTypeId = pos.get_ValueAsInt(documentTypeColumnName);
+		if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {
+			documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
+		}
+		if(documentTypeId > 0) {
+			payment.setC_DocType_ID(documentTypeId);
+		} else {
+			payment.setC_DocType_ID(true);
+		}
+		payment.setAD_Org_ID(salesOrder.getAD_Org_ID());
+		payment.setDateTrx(salesOrder.getDateOrdered());
+		payment.setDateAcct(salesOrder.getDateOrdered());
+		payment.setDateAcct(salesOrder.getDateAcct());
+		payment.setTenderType(MPayment.TENDERTYPE_CreditMemo);
+		payment.setDescription(salesOrder.getDescription());
+		payment.setC_BPartner_ID (salesOrder.getC_BPartner_ID());
+		payment.setC_Currency_ID(currencyId);
+		payment.setC_POS_ID(pos.getC_POS_ID());
+		if(salesOrder.getSalesRep_ID() > 0) {
+			payment.set_ValueOfColumn("CollectingAgent_ID", salesOrder.getSalesRep_ID());
+		}
+		if(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID) > 0) {
+			payment.setC_ConversionType_ID(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
+		}
+		payment.setPayAmt(paymentAmount);
+		//	Order Reference
+		payment.setC_Order_ID(salesOrder.getC_Order_ID());
+		payment.setDocStatus(MPayment.DOCSTATUS_Drafted);
+		payment.setR_PnRef(creditMemo.getDocumentNo());
+		payment.setDocumentNo(creditMemo.getDocumentNo());
+		payment.setCheckNo(creditMemo.getDocumentNo());
+		payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID, creditMemoId);
+		CashUtil.setCurrentDate(payment);
+		payment.saveEx(transactionName);
 	}
 	
 	private static void setDefaultValuesFromPOS(MPOS pos, MOrder salesOrder) {
@@ -308,7 +368,7 @@ public class OrderManagement {
 	 */
 	private static BigDecimal getPaymentReferenceAmount(MOrder order, List<PO> paymentReferences) {
 		Optional<BigDecimal> paymentReferenceAmount = paymentReferences.stream().map(refundReference -> {
-			return OrderUtil.getConvetedAmount(order, refundReference, ((BigDecimal) refundReference.get_Value("Amount")));
+			return OrderUtil.getConvertedAmount(order, refundReference, ((BigDecimal) refundReference.get_Value("Amount")));
 		}).reduce(BigDecimal::add);
         return paymentReferenceAmount.orElse(Env.ZERO);
     }
@@ -446,7 +506,7 @@ public class OrderManagement {
 				}
 				throw new AdempiereException(errorMessage);
 			}
-			BigDecimal convertedAmount = OrderUtil.getConvetedAmount(salesOrder, payment, payment.getPayAmt());
+			BigDecimal convertedAmount = OrderUtil.getConvertedAmount(salesOrder, payment, payment.getPayAmt());
 			//	Get current open amount
 			AtomicReference<BigDecimal> multiplier = new AtomicReference<BigDecimal>(!salesOrder.isReturnOrder()? Env.ONE: Env.ONE.negate());
 			if(!payment.isReceipt()) {
@@ -549,28 +609,28 @@ public class OrderManagement {
 		if(isOnlyReference(payment)) {
 			return Optional.ofNullable((BigDecimal) payment.get_Value(ColumnsAdded.COLUMNNAME_ECA14_Reference_Amount)).orElse(Env.ZERO);
 		}
-		return OrderUtil.getConvetedAmount(salesOrder, payment, payment.getPayAmt());
+		return OrderUtil.getConvertedAmount(salesOrder, payment, payment.getPayAmt());
 	}
 
 	private static BigDecimal getDiscountAmount(MOrder salesOrder, MPayment payment) {
 		if(isOnlyReference(payment)) {
 			return Env.ZERO;
 		}
-		return OrderUtil.getConvetedAmount(salesOrder, payment, payment.getDiscountAmt());
+		return OrderUtil.getConvertedAmount(salesOrder, payment, payment.getDiscountAmt());
 	}
 
 	private static BigDecimal getOverUnderAmount(MOrder salesOrder, MPayment payment) {
 		if(isOnlyReference(payment)) {
 			return Env.ZERO;
 		}
-		return OrderUtil.getConvetedAmount(salesOrder, payment, payment.getOverUnderAmt());
+		return OrderUtil.getConvertedAmount(salesOrder, payment, payment.getOverUnderAmt());
 	}
 
 	private static BigDecimal getWriteOffAmount(MOrder salesOrder, MPayment payment) {
 		if(isOnlyReference(payment)) {
 			return Env.ZERO;
 		}
-		return OrderUtil.getConvetedAmount(salesOrder, payment, payment.getWriteOffAmt());
+		return OrderUtil.getConvertedAmount(salesOrder, payment, payment.getWriteOffAmt());
 	}
 
 	private static void createAllocationLine(MPOS pos, MOrder salesOrder, int invoiceId, MAllocationHdr paymentAllocation, MPayment payment) {

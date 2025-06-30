@@ -23,13 +23,7 @@ import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -2449,7 +2443,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
 		}
 
-		HashMap<CurrencyCashKey, BigDecimal> cashCurrencySummary = new HashMap<CurrencyCashKey, BigDecimal>();
+		Map<CurrencyCashKey, BigDecimal> cashCurrencySummary = new HashMap<CurrencyCashKey, BigDecimal>();
 		ListCashSummaryMovementsResponse.Builder builder = ListCashSummaryMovementsResponse.newBuilder()
 			.setId(
 				cashClosing.getC_BankStatement_ID()
@@ -2562,7 +2556,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}).onFailure(throwable -> {
 			throw new AdempiereException(throwable);
 		});
-		cashCurrencySummary.forEach((currencyCashKey, totalAmount) -> {
+		cashCurrencySummary.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+			CurrencyCashKey currencyCashKey = entry.getKey();
+			BigDecimal totalAmount = entry.getValue();
 			PaymentTotal.Builder paymentTotalBuilder = PaymentTotal.newBuilder()
 				.setCurrency(
 					CoreFunctionalityConvert.convertCurrency(

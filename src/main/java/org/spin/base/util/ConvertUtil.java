@@ -436,13 +436,13 @@ public class ConvertUtil {
 		int standardPrecision = priceList.getStandardPrecision();
 
 		BigDecimal creditAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
-		Optional<BigDecimal> maybeCreditAmt = OrderUtil.getPaymentChageOrCredit(order, true);
+		Optional<BigDecimal> maybeCreditAmt = OrderUtil.getPaymentChargeOrCredit(order, true);
 		if (maybeCreditAmt.isPresent()) {
 			creditAmt = maybeCreditAmt.get()
 				.setScale(standardPrecision, RoundingMode.HALF_UP);
 		}
 		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
-		Optional<BigDecimal> maybeChargeAmt = OrderUtil.getPaymentChageOrCredit(order, false);
+		Optional<BigDecimal> maybeChargeAmt = OrderUtil.getPaymentChargeOrCredit(order, false);
 		if (maybeChargeAmt.isPresent()) {
 			chargeAmt = maybeChargeAmt.get()
 				.setScale(standardPrecision, RoundingMode.HALF_UP);

@@ -5,7 +5,9 @@ import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
-public class CurrencyCashKey {
+import java.util.Objects;
+
+public class CurrencyCashKey implements Comparable<CurrencyCashKey> {
 
     public static CurrencyCashKey newInstance(int currencyId, String tenderType) {
         return new CurrencyCashKey(currencyId, tenderType);
@@ -48,5 +50,27 @@ public class CurrencyCashKey {
     @Override
     public String toString() {
         return currencyId + "|" + getValidType();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CurrencyCashKey that = (CurrencyCashKey) o;
+        return currencyId == that.currencyId &&
+                Objects.equals(tenderType, that.tenderType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(currencyId, tenderType);
+    }
+    @Override
+    public int compareTo(CurrencyCashKey other) {
+        int result = Integer.compare(this.currencyId, other.currencyId);
+        if (result == 0) {
+            result = this.tenderType.compareTo(other.tenderType);
+        }
+        return result;
     }
 }
