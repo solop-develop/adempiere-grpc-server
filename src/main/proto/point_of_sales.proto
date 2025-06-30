@@ -687,8 +687,9 @@ message DeallocateSellerRequest {
 
 message PaymentTotal {
 	core_functionality.Currency currency = 1;
-	string total_amount = 2;
-	string total_amount_converted = 3;
+	string description = 2;
+	string total_amount = 3;
+	string total_amount_converted = 4;
 }
 
 //	Cash/Payment Detail Movements

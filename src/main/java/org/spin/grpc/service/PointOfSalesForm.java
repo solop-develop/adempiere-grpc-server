@@ -125,12 +125,7 @@ import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.service.seller.SellerServiceLogic;
-import org.spin.pos.util.ColumnsAdded;
-import org.spin.pos.util.OrderConverUtil;
-import org.spin.pos.util.POSConvertUtil;
-import org.spin.pos.util.PaymentConvertUtil;
-import org.spin.pos.util.TicketHandler;
-import org.spin.pos.util.TicketResult;
+import org.spin.pos.util.*;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -2454,7 +2449,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
 		}
 
-		HashMap<Integer, BigDecimal> cashCurrencySummary = new HashMap<Integer, BigDecimal>();
+		HashMap<CurrencyCashKey, BigDecimal> cashCurrencySummary = new HashMap<CurrencyCashKey, BigDecimal>();
 		ListCashSummaryMovementsResponse.Builder builder = ListCashSummaryMovementsResponse.newBuilder()
 			.setId(
 				cashClosing.getC_BankStatement_ID()
@@ -2554,13 +2549,12 @@ public class PointOfSalesForm extends StoreImplBase {
 
 				BigDecimal totalAmount = Env.ZERO;
 				BigDecimal paymentAmount = Optional.ofNullable(amount).orElse(Env.ZERO);
-				if(!tenderTypeCode.equals(MPayment.TENDERTYPE_CreditMemo) && !tenderTypeCode.equals("G")) {
-					if (cashCurrencySummary.containsKey(currencyId)) {
-						totalAmount = cashCurrencySummary.get(currencyId);
-					}
-					totalAmount = totalAmount.add(paymentAmount);
-					cashCurrencySummary.put(currencyId, totalAmount);
+				CurrencyCashKey key = CurrencyCashKey.newInstance(currencyId, tenderTypeCode);
+				if (cashCurrencySummary.containsKey(key)) {
+					totalAmount = cashCurrencySummary.get(key);
 				}
+				totalAmount = totalAmount.add(paymentAmount);
+				cashCurrencySummary.put(key, totalAmount);
 				//
 				builder.addCashMovements(paymentSummary.build());
 				counter.incrementAndGet();
@@ -2568,13 +2562,14 @@ public class PointOfSalesForm extends StoreImplBase {
 		}).onFailure(throwable -> {
 			throw new AdempiereException(throwable);
 		});
-		cashCurrencySummary.forEach((currencyId, totalAmount) -> {
+		cashCurrencySummary.forEach((currencyCashKey, totalAmount) -> {
 			PaymentTotal.Builder paymentTotalBuilder = PaymentTotal.newBuilder()
 				.setCurrency(
 					CoreFunctionalityConvert.convertCurrency(
-						currencyId
+							currencyCashKey.getCurrencyId()
 					)
 				)
+					.setDescription(currencyCashKey.getValidDisplayValue())
 				.setTotalAmount(
 					NumberManager.getBigDecimalToString(
 						totalAmount
