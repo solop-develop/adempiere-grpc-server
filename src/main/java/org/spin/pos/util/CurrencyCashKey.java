@@ -58,18 +58,18 @@ public class CurrencyCashKey implements Comparable<CurrencyCashKey> {
         if (o == null || getClass() != o.getClass()) return false;
         CurrencyCashKey that = (CurrencyCashKey) o;
         return currencyId == that.currencyId &&
-                Objects.equals(tenderType, that.tenderType);
+                Objects.equals(getValidType(), that.getValidType());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(currencyId, tenderType);
+        return Objects.hash(toString());
     }
     @Override
     public int compareTo(CurrencyCashKey other) {
         int result = Integer.compare(this.currencyId, other.currencyId);
         if (result == 0) {
-            result = this.tenderType.compareTo(other.tenderType);
+            result = this.getValidType().compareTo(other.getValidType());
         }
         return result;
     }
