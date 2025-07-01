@@ -165,9 +165,9 @@ service Store {
 	}
 
 	//	Online Payments
-	rpc ListApprovedPaymentsOnline(ListApprovedPaymentsOnlineRequest) returns (ListPaymentsResponse) {
+	rpc ExistsUnapprovedOnlinePayments(ExistsUnapprovedOnlinePaymentsRequest) returns (ExistsUnapprovedOnlinePaymentsResponse) {
 		option (google.api.http) = {
-			get: "/point-of-sales/{pos_id}/payments/online"
+			get: "/point-of-sales/{pos_id}/payments/{order_id}/online/exists"
 		};
 	}
 	rpc ProcessOnlinePayment(ProcessOnlinePaymentRequest) returns (ProcessOnlinePaymentResponse) {
@@ -2108,19 +2108,14 @@ message ListPaymentsResponse {
 
 
 // Online Payment
-message ListApprovedPaymentsOnlineRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	// custom filters
+message ExistsUnapprovedOnlinePaymentsRequest {
 	int32 pos_id = 8;
 	int32 order_id = 9;
 	bool is_only_refund = 10;
 	bool is_only_receipt = 11;
+}
+message ExistsUnapprovedOnlinePaymentsResponse {
+	int32 record_count = 1;
 }
 message ProcessOnlinePaymentRequest {
 	int32 pos_id = 3;

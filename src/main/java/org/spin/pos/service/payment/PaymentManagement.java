@@ -15,7 +15,11 @@
 
 package org.spin.pos.service.payment;
 
+import org.adempiere.core.domains.models.I_C_Payment;
+import org.compiere.model.MOrder;
+import org.compiere.model.Query;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -25,6 +29,10 @@ public class PaymentManagement {
 
 	public static boolean isOrderWithOnlinePaymentApproved(int salesOrderId) {
 		if (salesOrderId <= 0) {
+			return false;
+		}
+		MOrder salesOrder = new MOrder(Env.getCtx(), salesOrderId, null);
+		if (salesOrder == null || salesOrder.getC_Order_ID() <= 0) {
 			return false;
 		}
 		// Exists Online Payment Approved
@@ -38,5 +46,34 @@ public class PaymentManagement {
 		boolean isOnlinePaymentApproved = 1 == DB.getSQLValue(null, sql, salesOrderId);
 		return isOnlinePaymentApproved;
 	}
+
+	public static int isOrderWithoutOnlinePaymentApproved(int salesOrderId) {
+		if (salesOrderId <= 0) {
+			return 0;
+		}
+		MOrder salesOrder = new MOrder(Env.getCtx(), salesOrderId, null);
+		if (salesOrder == null || salesOrder.getC_Order_ID() <= 0) {
+			return 0;
+		}
+		// Exists Online Payment Approved
+		final String whereClause = "IsOnline = 'Y' "
+			+ "AND ResponseStatus <> 'A' "
+			// + "AND IsReceipt = ? "
+			+ "AND C_Order_ID = ? "
+		;
+
+		int countRecords = new Query(
+			Env.getCtx(),
+			I_C_Payment.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(salesOrder.getC_Order_ID())
+			.count()
+		;
+		
+		return countRecords;
+	}
+
 
 }

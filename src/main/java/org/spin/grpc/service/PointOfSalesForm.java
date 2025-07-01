@@ -570,10 +570,10 @@ public class PointOfSalesForm extends StoreImplBase {
 
 
 	@Override
-	public void listApprovedPaymentsOnline(ListApprovedPaymentsOnlineRequest request, StreamObserver<ListPaymentsResponse> responseObserver) {
+	public void existsUnapprovedOnlinePayments(ExistsUnapprovedOnlinePaymentsRequest request, StreamObserver<ExistsUnapprovedOnlinePaymentsResponse> responseObserver) {
 		try {
-			ListPaymentsResponse.Builder paymentList = PaymentServiceLogic.listApprovedPaymentsOnline(request);
-			responseObserver.onNext(paymentList.build());
+			ExistsUnapprovedOnlinePaymentsResponse.Builder builder = PaymentServiceLogic.existsUnapprovedOnlinePayments(request);
+			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.warning(e.getLocalizedMessage());
