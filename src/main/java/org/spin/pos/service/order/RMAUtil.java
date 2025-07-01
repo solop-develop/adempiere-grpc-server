@@ -228,7 +228,7 @@ public class RMAUtil {
 			returnPayment.setIsPrepayment(sourcePayment.isPrepayment());
 			if (sourcePayment.isOnline()) {
 				returnPayment.setIsOnline(true);
-				returnPayment.setR_PnRef_DC(returnPayment.getR_PnRef_DC());
+				returnPayment.setR_PnRef_DC(sourcePayment.getR_PnRef_DC());
 				returnPayment.setR_PnRef(null);
 				returnPayment.set_ValueOfColumn("ResponseStatus", null);
 				returnPayment.set_ValueOfColumn("NextRequestTime", 0);
