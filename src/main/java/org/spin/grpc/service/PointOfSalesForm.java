@@ -111,12 +111,13 @@ import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.cash.CollectingManagement;
 import org.spin.pos.service.order.OrderManagement;
+import org.spin.pos.service.order.OrderServiceLogic;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ReturnSalesOrder;
-import org.spin.pos.service.order.ReverseSalesTransaction;
 import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
+import org.spin.pos.service.payment.PaymentServiceLogic;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.service.seller.SellerServiceLogic;
 import org.spin.pos.util.*;
@@ -548,6 +549,25 @@ public class PointOfSalesForm extends StoreImplBase {
 		try {
 			ListPaymentsResponse.Builder paymentList = listPayments(request);
 			responseObserver.onNext(paymentList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void existsUnapprovedOnlinePayments(ExistsUnapprovedOnlinePaymentsRequest request, StreamObserver<ExistsUnapprovedOnlinePaymentsResponse> responseObserver) {
+		try {
+			ExistsUnapprovedOnlinePaymentsResponse.Builder builder = PaymentServiceLogic.existsUnapprovedOnlinePayments(request);
+			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.warning(e.getLocalizedMessage());
@@ -1644,7 +1664,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void reverseSales(ReverseSalesRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = reverseSalesTransaction(request);
+			Order.Builder order = OrderServiceLogic.reverseSalesTransaction(request);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1660,7 +1680,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 	@Override
-	public void reverseSalesOnlinePayment(ReverseSalesOnlinePaymentRequest request, StreamObserver<Order> responseObserver) {
+	public void processReverseSales(ProcessReverseSalesRequest request, StreamObserver<Order> responseObserver) {
 		try {
 			Order.Builder order = Order.newBuilder();
 			responseObserver.onNext(order.build());
@@ -2849,27 +2869,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		return Empty.newBuilder();
 	}
 
-	/**
-	 * Reverse Sales Transaction
-	 * @param request ReverseSalesRequest
-	 * @return Order.Builder
-	 */
-	private Order.Builder reverseSalesTransaction(ReverseSalesRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_POS_ID@");
-		}
-		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		if (pos.getC_POS_ID() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
-		int orderId = request.getId();
-		if (orderId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
-		}
-		MOrder returnOrder = ReverseSalesTransaction.returnCompleteOrder(pos, orderId, request.getDescription());
-		//	Default
-		return OrderConverUtil.convertOrder(returnOrder);
-	}
 
 	/**
 	 * Process a Shipment
