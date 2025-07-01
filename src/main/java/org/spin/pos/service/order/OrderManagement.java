@@ -16,7 +16,6 @@
 package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -55,9 +54,9 @@ import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
+import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import static org.spin.pos.service.payment.GiftCardManagement.createGiftCard;
 import static org.spin.pos.service.payment.GiftCardManagement.createGiftCardReference;
@@ -78,6 +77,15 @@ public class OrderManagement {
 			if(salesOrder.getC_Order_ID() <= 0) {
 				throw new AdempiereException("@C_Order_ID@ @NotFound@");
 			}
+
+			// Verify online payments
+			int onlinePaymentsWithoutApproved = PaymentManagement.isOrderWithoutOnlinePaymentApproved(
+				salesOrder.getC_Order_ID()
+			);
+			if (onlinePaymentsWithoutApproved > 0) {
+				throw new AdempiereException("@PaymentFormController: PaymentNotProcessed@");
+			}
+
 			CashManagement.validatePreviousCashClosing(pos, salesOrder.getDateOrdered(), transactionName);
 			CashManagement.getCurrentCashClosing(pos, salesOrder.getDateOrdered(), true, transactionName);
 
