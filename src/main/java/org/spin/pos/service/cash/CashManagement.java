@@ -68,11 +68,7 @@ public class CashManagement {
 		if(cashAccount.getC_BPartner_ID() <= 0) {
 			throw new AdempiereException("@C_BankAccount_ID@ @C_BPartner_ID@ @NotFound@");
 		}
-		//	Validate or complete
-		if(request.getAmount() == null) {
-			throw new AdempiereException("@PayAmt@ @NotFound@");
-		}
-		//	Order
+        //	Order
 		if(request.getCurrencyId() <= 0) {
 			throw new AdempiereException("@C_Currency_ID@ @NotFound@");
 		}
@@ -89,6 +85,7 @@ public class CashManagement {
 		} else {
 			payment.setC_DocType_ID(!request.getIsRefund());
 		}
+		payment.setIsReceipt(!request.getIsRefund());
 		payment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
         String value = DB.getDocumentNo(payment.getC_DocType_ID(), transactionName, false,  payment);
         payment.setDocumentNo(value);
@@ -174,22 +171,6 @@ public class CashManagement {
 			payment.set_ValueOfColumn("POSReferenceBankAccount_ID", request.getReferenceBankAccountId());
 		}
 		payment.saveEx(transactionName);
-		//	Validate or complete
-//		if(Util.isEmpty(request.getUuid())) {
-//		} else {
-//			int paymentId = RecordUtil.getIdFromUuid(I_C_Payment.Table_Name, request.getUuid(), transactionName);
-//			if(paymentId <= 0) {
-//				throw new AdempiereException("@C_Payment_ID@ @NotFound@");
-//			}
-//			payment = new MPayment(Env.getCtx(), paymentId, transactionName);
-//			if(!Util.isEmpty(request.getDescription())) {
-//				payment.setDescription(request.getDescription());
-//			}
-//			if(!Util.isEmpty(request.getCollectingAgentUuid())) {
-//				payment.set_ValueOfColumn("CollectAgent_ID", RecordUtil.getIdFromUuid(I_AD_User.Table_Name, request.getCollectingAgentUuid(), transactionName));
-//			}
-//			payment.saveEx(transactionName);
-//		}
 		return payment;
 	}
 	
