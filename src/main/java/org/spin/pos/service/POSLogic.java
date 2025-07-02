@@ -327,7 +327,7 @@ public class POSLogic {
 				whereClause.append(" AND ");
 			}
 			whereClause.append(
-				"(UPPER(Name) LIKE UPPER(?))"
+				"(UPPER(Name) LIKE '%' || UPPER(?) || '%')"
 			);
 			//	Add parameters
 			parameters.add(request.getName());
