@@ -107,7 +107,7 @@ public class CollectingManagement {
 		String documentTypeColumnName = request.getIsRefund()? "POSRefundDocumentType_ID": "POSCollectingDocumentType_ID";
 		int documentTypeId = pointOfSalesDefinition.get_ValueAsInt(documentTypeColumnName);
 		if (!request.getIsRefund()) {
-			// TODO: Rename this columnas as `POSRefundDocumentType_ID`
+			// TODO: Rename this column as `POSCollectingDocumentType_ID`
 			if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {
 				documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
 			}
