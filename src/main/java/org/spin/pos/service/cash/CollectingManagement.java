@@ -83,13 +83,16 @@ public class CollectingManagement {
 		//	Order
 		int currencyId = request.getCurrencyId();
 		if(currencyId <= 0) {
+			// TODO: Validate if currency with `paymentTypeAllocation`
 			currencyId = salesOrder.getC_Currency_ID();
 		}
 		//	Throw if not exist conversion
 		ConvertUtil.validateConversion(salesOrder, currencyId, pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
 		//	
 		MPayment payment = new MPayment(Env.getCtx(), 0, transactionName);
+		payment.setIsReceipt(!request.getIsRefund());
 		payment.setC_BankAccount_ID(pointOfSalesDefinition.getC_BankAccount_ID());
+
 		//	Payment Method
 		int paymentMethodId = request.getPaymentMethodId();
 		if (paymentMethodId <= 0) {
@@ -104,6 +107,7 @@ public class CollectingManagement {
 		String documentTypeColumnName = request.getIsRefund()? "POSRefundDocumentType_ID": "POSCollectingDocumentType_ID";
 		int documentTypeId = pointOfSalesDefinition.get_ValueAsInt(documentTypeColumnName);
 		if (!request.getIsRefund()) {
+			// TODO: Rename this column as `POSCollectingDocumentType_ID`
 			if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {
 				documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
 			}
