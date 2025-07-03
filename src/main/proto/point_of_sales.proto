@@ -2295,6 +2295,8 @@ message OrderLine {
 	core_functionality.ProductConversion product_uom = 34;
 	time_control.ResourceAssignment resource_assignment = 35;
 	int32 source_rma_line_id = 36;
+	bool is_generate_gift_card = 37;
+	string gift_card_quantity = 38;
 }
 
 // Request Product Price
