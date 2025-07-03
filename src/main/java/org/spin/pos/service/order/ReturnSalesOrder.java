@@ -82,10 +82,10 @@ public class ReturnSalesOrder {
 				targetOrder.setDescription(description);
 			}
 			targetOrder.saveEx();
-	    	if(copyLines) {
-	    		RMAUtil.copyRMALinesFromOrder(sourceOrder, targetOrder, transactionName);
-	    	}
-	    	orderReference.set(targetOrder);
+			if(copyLines) {
+				RMAUtil.copyRMALinesFromOrder(sourceOrder, targetOrder, transactionName);
+			}
+			orderReference.set(targetOrder);
 		});
 		return orderReference.get();
 	}

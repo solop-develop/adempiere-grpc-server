@@ -81,6 +81,9 @@ public class PaymentManagement {
 
 
 	public static void setDocumentType(MPOS pointOfSalesDefinition, MPayment payment, PO paymentTypeAllocation, String transactionName) {
+		String documentTypeColumnName = payment.isReceipt() ? "POSCollectingDocumentType_ID" : "POSRefundDocumentType_ID";
+		int documentTypeId = pointOfSalesDefinition.get_ValueAsInt(documentTypeColumnName);
+
 		if (paymentTypeAllocation == null) {
 			paymentTypeAllocation = POS.getPaymentMethodAllocation(
 				payment.getC_PaymentMethod_ID(),
@@ -88,17 +91,16 @@ public class PaymentManagement {
 				transactionName
 			);
 		}
-
-		String documentTypeColumnName = payment.isReceipt() ? "POSCollectingDocumentType_ID" : "POSRefundDocumentType_ID";
-		int documentTypeId = pointOfSalesDefinition.get_ValueAsInt(documentTypeColumnName);
-		if (payment.isReceipt()) {
-			// TODO: Rename this column as `POSCollectingDocumentType_ID`
-			if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {
-				documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
-			}
-		} else {
-			if(paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID") > 0) {
-				documentTypeId = paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID");
+		if (paymentTypeAllocation != null) {
+			if (payment.isReceipt()) {
+				// TODO: Rename this column as `POSCollectingDocumentType_ID`
+				if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {
+					documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
+				}
+			} else {
+				if(paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID") > 0) {
+					documentTypeId = paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID");
+				}
 			}
 		}
 

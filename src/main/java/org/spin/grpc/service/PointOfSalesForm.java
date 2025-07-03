@@ -1682,7 +1682,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void processReverseSales(ProcessReverseSalesRequest request, StreamObserver<Order> responseObserver) {
 		try {
-			Order.Builder order = Order.newBuilder();
+			Order.Builder order = OrderServiceLogic.processReverseSales(request);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
