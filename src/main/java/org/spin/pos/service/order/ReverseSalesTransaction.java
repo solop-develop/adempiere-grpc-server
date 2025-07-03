@@ -20,11 +20,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MOrder;
 import org.compiere.model.MPOS;
-import org.compiere.process.DocAction;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.base.util.DocumentUtil;
+import org.spin.pos.service.cash.CashManagement;
 
 /**
  * This class was created for Reverse Sales Transaction
@@ -51,6 +51,8 @@ public class ReverseSalesTransaction {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}
 
+			CashManagement.validatePreviousCashClosing(pos, sourceOrder.getDateOrdered(), transactionName);
+
 			MOrder returnOrder = RMAUtil.copyRMAFromOrder(pos, sourceOrder, transactionName);
 			if(!Util.isEmpty(description, true)) {
 				returnOrder.setDescription(description);
@@ -70,15 +72,6 @@ public class ReverseSalesTransaction {
 					returnOrder,
 					transactionName
 				);
-				//	Close all
-				if(!sourceOrder.processIt(MOrder.DOCACTION_Close)) {
-					throw new AdempiereException(sourceOrder.getProcessMsg());
-				}
-				sourceOrder.saveEx();
-				if(!returnOrder.processIt(MOrder.DOCACTION_Close)) {
-					throw new AdempiereException(returnOrder.getProcessMsg());
-				}
-				returnOrder.saveEx();
 			}
 			returnOrderReference.set(returnOrder);
 		});
@@ -93,8 +86,15 @@ public class ReverseSalesTransaction {
 	 * @return
 	 */
 	public static MOrder processReverseSalesOrder(MPOS pos, MOrder sourceOrder, MOrder returnOrder, String transactionName) {
-		if(!returnOrder.processIt(DocAction.ACTION_Complete)) {
-			throw new AdempiereException("@ProcessFailed@ :" + returnOrder.getProcessMsg());
+		CashManagement.validatePreviousCashClosing(pos, sourceOrder.getDateOrdered(), transactionName);
+
+		//	Close all
+		if(!sourceOrder.processIt(MOrder.DOCACTION_Close)) {
+			throw new AdempiereException(sourceOrder.getProcessMsg());
+		}
+		sourceOrder.saveEx();
+		if(!returnOrder.processIt(MOrder.DOCACTION_Close)) {
+			throw new AdempiereException(returnOrder.getProcessMsg());
 		}
 		returnOrder.saveEx();
 
