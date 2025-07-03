@@ -592,6 +592,11 @@ public class OrderUtil {
 			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
 		}
 
+		// final boolean isReturnOrder = order.isReturnOrder();
+		// if (isReturnOrder) {
+		// 	totalPaymentAmount = totalPaymentAmount.negate();
+		// }
+
 		return totalPaymentAmount;
 	}
 

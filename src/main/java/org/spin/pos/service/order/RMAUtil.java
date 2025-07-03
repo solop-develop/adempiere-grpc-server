@@ -39,6 +39,7 @@ import org.compiere.process.DocAction;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
+import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.util.ColumnsAdded;
 
 /**
@@ -240,6 +241,15 @@ public class RMAUtil {
 				returnPayment.setR_RespMsg(null);
 				returnPayment.setR_Result(null);
 			}
+
+			//	Document Type
+			PaymentManagement.setDocumentType(
+				pos,
+				returnPayment,
+				null,
+				null
+			);
+
 			returnPayment.saveEx();
 		});
 	}

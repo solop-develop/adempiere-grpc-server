@@ -17,9 +17,13 @@ package org.spin.pos.service.payment;
 
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.compiere.model.MOrder;
+import org.compiere.model.MPOS;
+import org.compiere.model.MPayment;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.spin.pos.service.pos.POS;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -75,5 +79,34 @@ public class PaymentManagement {
 		return countRecords;
 	}
 
+
+	public static void setDocumentType(MPOS pointOfSalesDefinition, MPayment payment, PO paymentTypeAllocation, String transactionName) {
+		if (paymentTypeAllocation == null) {
+			paymentTypeAllocation = POS.getPaymentMethodAllocation(
+				payment.getC_PaymentMethod_ID(),
+				pointOfSalesDefinition.getC_POS_ID(),
+				transactionName
+			);
+		}
+
+		String documentTypeColumnName = payment.isReceipt() ? "POSCollectingDocumentType_ID" : "POSRefundDocumentType_ID";
+		int documentTypeId = pointOfSalesDefinition.get_ValueAsInt(documentTypeColumnName);
+		if (payment.isReceipt()) {
+			// TODO: Rename this column as `POSCollectingDocumentType_ID`
+			if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {
+				documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
+			}
+		} else {
+			if(paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID") > 0) {
+				documentTypeId = paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID");
+			}
+		}
+
+		if(documentTypeId > 0) {
+			payment.setC_DocType_ID(documentTypeId);
+		} else {
+			payment.setC_DocType_ID(payment.isReceipt());
+		}
+	}
 
 }
