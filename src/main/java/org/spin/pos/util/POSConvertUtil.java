@@ -504,24 +504,24 @@ public class POSConvertUtil {
 		MUOMConversion productUom = null;
 		if (orderLine.getM_Product_ID() > 0) {
 			List<MUOMConversion> productsConversion = Arrays.asList(
-					MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID())
+				MUOMConversion.getProductConversions(Env.getCtx(), product.getM_Product_ID())
 			);
 			Optional<MUOMConversion> maybeUom = productsConversion.parallelStream()
-					.filter(productConversion -> {
-						return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
-					})
-					.findFirst()
-					;
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == orderLine.getC_UOM_ID();
+				})
+				.findFirst()
+			;
 			if (maybeUom.isPresent()) {
 				uom = maybeUom.get();
 			}
 
 			Optional<MUOMConversion> maybeProductUom = productsConversion.parallelStream()
-					.filter(productConversion -> {
-						return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
-					})
-					.findFirst()
-					;
+				.filter(productConversion -> {
+					return productConversion.getC_UOM_To_ID() == product.getC_UOM_ID();
+				})
+				.findFirst()
+			;
 			if (maybeProductUom.isPresent()) {
 				productUom = maybeProductUom.get();
 			}
@@ -569,7 +569,7 @@ public class POSConvertUtil {
 			.setProductUom(
 				CoreFunctionalityConvert.convertProductConversion(productUom)
 			)
-			;
+		;
 	}
 
 

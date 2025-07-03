@@ -715,6 +715,15 @@ public class OrderConverUtil {
 			.setSourceRmaLineId(
 				orderLine.get_ValueAsInt("ECA14_Source_RMALine_ID")
 			)
+			.setGiftCardQuantity(
+				NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromString(
+						orderLine.get_ValueAsString(
+							"GiftCardQuantity"
+						)
+					)
+				)
+			)
 		;
 	}
 
