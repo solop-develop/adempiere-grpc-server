@@ -183,9 +183,13 @@ public class OrderConverUtil {
 		BigDecimal creditAmt = OrderUtil.getCreditAmount(order);
 		BigDecimal chargeAmt = OrderUtil.getChargeAmount(order);
 		BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(order);
+		final boolean isReturnOrder = order.isReturnOrder();
+		if (isReturnOrder) {
+			totalPaymentAmount = totalPaymentAmount.negate();
+		}
 
-		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
-		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount).negate());
+		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount));
+		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount).negate());
 		BigDecimal displayCurrencyRate = ConvertUtil.getDisplayConversionRateFromOrder(order);
 
 		if (order.getC_Invoice_ID() > 0) {
@@ -370,10 +374,10 @@ public class OrderConverUtil {
 				order.get_ValueAsInt("ECA14_Source_RMA_ID")
 			)
 			.setIsRma(
-				order.isReturnOrder()
+				isReturnOrder
 			)
 			.setIsOrder(
-				!order.isReturnOrder()
+				!isReturnOrder
 			)
 			.setIsBindingOffer(
 				OrderUtil.isBindingOffer(order)

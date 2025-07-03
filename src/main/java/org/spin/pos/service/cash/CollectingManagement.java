@@ -32,6 +32,7 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderUtil;
+import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -103,24 +104,15 @@ public class CollectingManagement {
 				paymentTypeAllocation.get_ValueAsBoolean("IsOnline")
 		);
 		payment.setC_PaymentMethod_ID(paymentMethodId);
+
 		//	Document Type
-		String documentTypeColumnName = request.getIsRefund()? "POSRefundDocumentType_ID": "POSCollectingDocumentType_ID";
-		int documentTypeId = pointOfSalesDefinition.get_ValueAsInt(documentTypeColumnName);
-		if (!request.getIsRefund()) {
-			// TODO: Rename this column as `POSCollectingDocumentType_ID`
-			if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {
-				documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
-			}
-		} else {
-			if(paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID") > 0) {
-				documentTypeId = paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID");
-			}
-		}
-		if(documentTypeId > 0) {
-			payment.setC_DocType_ID(documentTypeId);
-		} else {
-			payment.setC_DocType_ID(!request.getIsRefund());
-		}
+		PaymentManagement.setDocumentType(
+			pointOfSalesDefinition,
+			payment,
+			paymentTypeAllocation,
+			transactionName
+		);
+
 		payment.setAD_Org_ID(salesOrder.getAD_Org_ID());
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getPaymentDate()
