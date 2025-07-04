@@ -32,13 +32,13 @@ import org.spin.service.grpc.util.value.TimeManager;
 
 public class GiftCardManagement {
 
-	public static PO processingGiftCard(int giftCardId, boolean isProcessing, String transactionName) {
+	public static void processingGiftCard(int giftCardId) {
 		// TODO: Support with lines
 		PO giftCard = RecordUtil.getEntity(
 			Env.getCtx(),
 			"ECA14_GiftCard",
 			giftCardId,
-			transactionName
+			null
 		);
 		if (giftCard != null && giftCard.get_ID() > 0) {
 			if (giftCard.get_ValueAsBoolean("Processed")) {
@@ -50,9 +50,27 @@ public class GiftCardManagement {
 			giftCard.set_ValueOfColumn("Processing", true);
 			giftCard.saveEx();
 		}
-		return giftCard;
 	}
 
+	public static void unProcessingGiftCard(int giftCardId, boolean forced) {
+		// TODO: Support with lines
+		PO giftCard = RecordUtil.getEntity(
+				Env.getCtx(),
+				"ECA14_GiftCard",
+				giftCardId,
+				null
+		);
+		if (giftCard != null && giftCard.get_ID() > 0) {
+			if (giftCard.get_ValueAsBoolean("Processed")) {
+				throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
+			}
+			if (giftCard.get_ValueAsBoolean("Processing") && !forced) {
+				throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
+			}
+			giftCard.set_ValueOfColumn("Processing", false);
+			giftCard.saveEx();
+		}
+	}
 
 	/**
 	 * Create Gift Card from payment
@@ -105,6 +123,11 @@ public class GiftCardManagement {
 		PO giftCard = giftCardTable.getPO(payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID), payment.get_TrxName());
 		//	Set reference to Payment
 		payment.setC_Invoice_ID(-1);
+		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_DateDoc, payment.getDateTrx());
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_BPartner_ID, payment.getC_BPartner_ID());
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_ConversionType_ID, payment.getC_ConversionType_ID());
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Currency_ID, payment.getC_Currency_ID());
+		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Order_ID, payment.getC_Order_ID());
 		payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Reference_Amount, payment.getPayAmt());
 		payment.setPayAmt(Env.ZERO);
 		CashUtil.setCurrentDate(payment, true);

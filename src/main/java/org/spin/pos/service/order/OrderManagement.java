@@ -667,7 +667,7 @@ public class OrderManagement {
 			paymentAllocationLine.saveEx();
 		} else if(payment.getTenderType().equals("G")) {
 			final int defaultGiftCardChargeId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID);
-			paymentAllocationLine = new MAllocationLine (paymentAllocation, Env.ZERO, Env.ZERO, paymentAmount.multiply(multiplier), Env.ZERO);
+			paymentAllocationLine = new MAllocationLine (paymentAllocation, paymentAmount.multiply(multiplier), Env.ZERO, Env.ZERO, Env.ZERO);
 			paymentAllocationLine.setDocInfo(salesOrder.getC_BPartner_ID(), salesOrder.getC_Order_ID(), 0);
 			paymentAllocationLine.setC_Charge_ID(defaultGiftCardChargeId);
 			paymentAllocationLine.saveEx();

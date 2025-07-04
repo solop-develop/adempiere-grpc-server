@@ -32,6 +32,7 @@ import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderUtil;
+import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
@@ -135,6 +136,12 @@ public class CollectingManagement {
 				salesOrder.getDescription()
 			)
 		);
+		if (request.getGiftCardId() > 0) {
+			GiftCardManagement.processingGiftCard(
+					request.getGiftCardId()
+			);
+			payment.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
+		}
         payment.setC_BPartner_ID (salesOrder.getC_BPartner_ID());
         payment.setC_Currency_ID(currencyId);
         payment.setC_POS_ID(pointOfSalesDefinition.getC_POS_ID());
