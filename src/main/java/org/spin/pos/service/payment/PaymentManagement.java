@@ -117,8 +117,8 @@ public class PaymentManagement {
 			if (documentType != null && documentType.getC_DocType_ID() > 0) {
 				if (documentType.get_ColumnIndex("SP015_AllowsOnlinePayment") >= 0 && !documentType.get_ValueAsBoolean("SP015_AllowsOnlinePayment")) {
 					throw new AdempiereException(
-						"@C_Payment_ID@ @Online@ " + payment.isOnline() + " (@IsReceipt@: " + payment.isReceipt() + ")"
-						+ " / @C_DocType_ID@ @SP015_AllowsOnlinePayment@ " + documentType.get_ValueAsBoolean("SP015_AllowsOnlinePayment")
+						"@C_Payment_ID@ @Online@: " + payment.isOnline() + " (@IsReceipt@: " + payment.isReceipt() + ")"
+						+ " / @C_DocType_ID@ (" + documentType.toString() + ") @SP015_AllowsOnlinePayment@: " + documentType.get_ValueAsBoolean("SP015_AllowsOnlinePayment")
 					);
 				}
 			}
