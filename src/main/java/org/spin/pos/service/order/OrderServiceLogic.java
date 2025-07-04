@@ -84,16 +84,20 @@ public class OrderServiceLogic {
 		if (pos.getC_POS_ID() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
-		int orderId = request.getId();
-		if (orderId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
+		final int salesOrderId = request.getSourceOrderId();
+		if (salesOrderId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @ECA14_Source_Order_ID@");
+		}
+		final int returnOrderId = request.getId();
+		if (returnOrderId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_RMA_ID@");
 		}
 
 		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
-			MOrder returnOrder = new MOrder(Env.getCtx(), request.getId(), transactionName);
+			MOrder returnOrder = new MOrder(Env.getCtx(), returnOrderId, transactionName);
 
-			MOrder sourceOrder = new MOrder(Env.getCtx(), request.getSourceOrderId(), transactionName);
+			MOrder sourceOrder = new MOrder(Env.getCtx(), salesOrderId, transactionName);
 			returnOrder = ReverseSalesTransaction.processReverseSalesOrder(
 				pos,
 				sourceOrder,

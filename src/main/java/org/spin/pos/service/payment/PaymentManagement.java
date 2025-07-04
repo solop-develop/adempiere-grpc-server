@@ -16,6 +16,8 @@
 package org.spin.pos.service.payment;
 
 import org.adempiere.core.domains.models.I_C_Payment;
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MDocType;
 import org.compiere.model.MOrder;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
@@ -108,6 +110,18 @@ public class PaymentManagement {
 			payment.setC_DocType_ID(documentTypeId);
 		} else {
 			payment.setC_DocType_ID(payment.isReceipt());
+		}
+
+		if (payment.isOnline()) {
+			MDocType documentType = MDocType.get(payment.getCtx(), payment.getC_DocType_ID());
+			if (documentType != null && documentType.getC_DocType_ID() > 0) {
+				if (documentType.get_ColumnIndex("SP015_AllowsOnlinePayment") >= 0 && !documentType.get_ValueAsBoolean("SP015_AllowsOnlinePayment")) {
+					throw new AdempiereException(
+						"@C_Payment_ID@ @Online@: " + payment.isOnline() + " (@IsReceipt@: " + payment.isReceipt() + ")"
+						+ " / @C_DocType_ID@ (" + documentType.toString() + ") @SP015_AllowsOnlinePayment@: " + documentType.get_ValueAsBoolean("SP015_AllowsOnlinePayment")
+					);
+				}
+			}
 		}
 	}
 
