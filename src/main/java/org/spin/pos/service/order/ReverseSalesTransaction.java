@@ -90,11 +90,11 @@ public class ReverseSalesTransaction {
 
 		//	Close all
 		if(!sourceOrder.processIt(MOrder.DOCACTION_Close)) {
-			throw new AdempiereException(sourceOrder.getProcessMsg());
+			throw new AdempiereException("@ProcessFailed@ :" + sourceOrder.getProcessMsg());
 		}
 		sourceOrder.saveEx();
 		if(!returnOrder.processIt(MOrder.DOCACTION_Close)) {
-			throw new AdempiereException(returnOrder.getProcessMsg());
+			throw new AdempiereException("@ProcessFailed@ :" + returnOrder.getProcessMsg());
 		}
 		returnOrder.saveEx();
 

@@ -370,14 +370,17 @@ public class OrderConverUtil {
 			.setCreditAmount(
 				NumberManager.getBigDecimalToString(creditAmt)
 			)
+			.setIsOrder(
+				!isReturnOrder
+			)
 			.setSourceRmaId(
-				order.get_ValueAsInt("ECA14_Source_RMA_ID")
+				order.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID)
 			)
 			.setIsRma(
 				isReturnOrder
 			)
-			.setIsOrder(
-				!isReturnOrder
+			.setSourceOrderId(
+				order.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID)
 			)
 			.setIsBindingOffer(
 				OrderUtil.isBindingOffer(order)
@@ -717,7 +720,10 @@ public class OrderConverUtil {
 				)
 			)
 			.setSourceRmaLineId(
-				orderLine.get_ValueAsInt("ECA14_Source_RMALine_ID")
+				orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID)
+			)
+			.setSourceOrderLineId(
+				orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID)
 			)
 			.setGiftCardQuantity(
 				NumberManager.getBigDecimalToString(

@@ -2247,13 +2247,14 @@ message Order {
 	string refund_amount = 24;
 	string charge_amount = 25;
 	string credit_amount = 26;
-	int32 source_rma_id = 27;
-	bool is_rma = 28;
-	bool is_binding_offer = 29;
-	bool is_order = 30;
-	bool is_processed = 31;
-	bool is_processing = 32;
-	bool is_online_payment_approved = 33;
+	bool is_order = 27;
+	int32 source_rma_id = 28; // in Order
+	bool is_rma = 29;
+	int32 source_order_id = 30; // in RMA
+	bool is_binding_offer = 31;
+	bool is_processed = 32;
+	bool is_processing = 33;
+	bool is_online_payment_approved = 34;
 }
 
 // Sales Order Line
@@ -2295,8 +2296,9 @@ message OrderLine {
 	core_functionality.ProductConversion product_uom = 34;
 	time_control.ResourceAssignment resource_assignment = 35;
 	int32 source_rma_line_id = 36;
-	bool is_generate_gift_card = 37;
-	string gift_card_quantity = 38;
+	int32 source_order_line_id = 37;
+	bool is_generate_gift_card = 38;
+	string gift_card_quantity = 39;
 }
 
 // Request Product Price
