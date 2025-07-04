@@ -209,7 +209,7 @@ public class ReturnSalesOrder {
 		Trx.run(transactionName -> {
 			MOrder rma = new MOrder(Env.getCtx(), rmaId, transactionName);
 			if(rma.isProcessed()) {
-				throw new AdempiereException("@M_InOut_ID@ @Processed@");
+				throw new AdempiereException("@M_RMA_ID@ @Processed@");
 			}
 			Optional.ofNullable(description).ifPresent(rma::addDescription);
 			if (!rma.processIt(documentAction)) {
