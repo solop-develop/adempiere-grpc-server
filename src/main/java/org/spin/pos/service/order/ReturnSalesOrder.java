@@ -181,19 +181,20 @@ public class ReturnSalesOrder {
 			}
 		});
 		return returnOrderReference.get();
-    }
-    
-    /**
-     * Process a RMA
-     * @param rmaId
-     * @param documentAction
-     * @return
-     */
-    public static MOrder processRMA(int rmaId, int posId, String documentAction, String description) {
-    	if(rmaId <= 0) {
+	}
+
+	/**
+	 * Process a RMA
+	 * @param rmaId
+	 * @param documentAction
+	 * @see {@link ReverseSalesTransaction#processReverseSalesOrder} method
+	 * @return
+	 */
+	public static MOrder processRMA(int rmaId, int posId, String documentAction, String description) {
+		if(rmaId <= 0) {
 			throw new AdempiereException("@M_RMA_ID@ @NotFound@");
 		}
-    	if(posId <= 0) {
+		if(posId <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
 		if(Util.isEmpty(documentAction)) {
@@ -217,14 +218,15 @@ public class ReturnSalesOrder {
 			rma.saveEx(transactionName);
 			//	Generate Return
 			RMAUtil.generateReturnFromRMA(rma, transactionName);
-	        //	Generate Credit Memo
+			//	Generate Credit Memo
 			RMAUtil.generateCreditMemoFromRMA(rma, transactionName);
 			if(!rma.processIt(MOrder.DOCACTION_Close)) {
 				throw new AdempiereException("@ProcessFailed@ :" + rma.getProcessMsg());
-	        }
+			}
 			rma.saveEx(transactionName);
 			rmaReference.set(rma);
 		});
 		return rmaReference.get();
-    }
+	}
+
 }

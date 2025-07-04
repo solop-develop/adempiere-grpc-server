@@ -98,7 +98,7 @@ public class PaymentManagement {
 					documentTypeId = paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID");
 				}
 			} else {
-				if(paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID") > 0) {
+				if(paymentTypeAllocation.get_ValueAsBoolean("IsAllowedToRefund") && paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID") > 0) {
 					documentTypeId = paymentTypeAllocation.get_ValueAsInt("POSRefundDocumentType_ID");
 				}
 			}
