@@ -175,14 +175,10 @@ public class POSLogic {
 				throw new AdempiereException("@C_POSPaymentReference_ID@ @NotFound@");
 			}
 			if ("G".equals(refundReference.get_ValueAsString("TenderType"))) {
-				if (refundReference.get_ValueAsBoolean("IsReceipt")) {
-					if (refundReference.get_ValueAsInt("ECA14_GiftCard_ID") > 0) {
-						GiftCardManagement.processingGiftCard(
-							refundReference.get_ValueAsInt("ECA14_GiftCard_ID"),
-							false,
-							transactionName
-						);
-					}
+				if (refundReference.get_ValueAsInt("ECA14_GiftCard_ID") > 0) {
+					GiftCardManagement.unProcessingGiftCard(
+							refundReference.get_ValueAsInt("ECA14_GiftCard_ID"), true
+					);
 				}
 			}
 			//	Validate processed Order

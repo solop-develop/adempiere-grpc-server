@@ -1938,8 +1938,8 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void deletePaymentReference(DeletePaymentReferenceRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			Empty.Builder orderLine = POSLogic.deletePaymentReference(request);
-			responseObserver.onNext(orderLine.build());
+			Empty.Builder empty = POSLogic.deletePaymentReference(request);
+			responseObserver.onNext(empty.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
@@ -2666,18 +2666,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(request.getSalesRepresentativeId() > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("SalesRep_ID", request.getSalesRepresentativeId());
 			}
-			if (request.getIsReceipt()) {
-				if (request.getGiftCardId() > 0) {
-					GiftCardManagement.processingGiftCard(
-						request.getGiftCardId(),
-						true,
-						transactionName
-					);
-					refundReferenceToCreate.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
-				}
-			} else {
-				if ("G".equals(request.getTenderTypeCode())) {
-				}
+			if (request.getGiftCardId() > 0) {
+				GiftCardManagement.processingGiftCard(
+						request.getGiftCardId()
+				);
+				refundReferenceToCreate.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
 			}
 			refundReferenceToCreate.set_ValueOfColumn("IsReceipt", request.getIsReceipt());
 			refundReferenceToCreate.set_ValueOfColumn("TenderType", request.getTenderTypeCode());
@@ -5183,8 +5176,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@C_Payment_ID@ @Processed@");
 		}
 		//	
-		if(payment != null
-				&& payment.getC_Payment_ID() >= 0) {
+		if(payment.getC_Payment_ID() >= 0) {
+			if ("G".equals(payment.getTenderType())) {
+				if (payment.get_ValueAsInt("ECA14_GiftCard_ID") > 0) {
+					GiftCardManagement.unProcessingGiftCard(
+							payment.get_ValueAsInt("ECA14_GiftCard_ID"), true
+					);
+				}
+			}
 			if(payment.getC_Order_ID() > 0) {
 				MOrder salesOrder = new MOrder(Env.getCtx(), payment.getC_Order_ID(), null);
 				OrderManagement.validateOrderReleased(salesOrder);
