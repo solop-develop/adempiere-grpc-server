@@ -38,6 +38,7 @@ import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -241,10 +242,25 @@ public class SellerServiceLogic {
 					ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed,
 					pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed)
 				);
+
+				// Write Off
+				seller.set_ValueOfColumn(
+					ColumnsAdded.COLUMNNAME_WriteOffAmtCurrency_ID,
+					pointOfSales.get_ValueAsInt(ColumnsAdded.COLUMNNAME_WriteOffAmtCurrency_ID)
+				);
 				seller.set_ValueOfColumn(
 					ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance,
-					pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance)
+					NumberManager.getBigDecimalFromString(
+						pointOfSales.get_ValueAsString(ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance)
+					)
 				);
+				seller.set_ValueOfColumn(
+					ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent,
+					NumberManager.getBigDecimalFromString(
+						pointOfSales.get_ValueAsString(ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent)
+					)
+				);
+
 				seller.set_ValueOfColumn(
 					ColumnsAdded.COLUMNNAME_IsAllowsCreateCustomer,
 					pointOfSales.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsAllowsCreateCustomer)
