@@ -33,6 +33,9 @@ import org.spin.service.grpc.util.value.TimeManager;
 public class GiftCardManagement {
 
 	public static void processingGiftCard(int giftCardId) {
+		if (giftCardId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @ECA14_GiftCard_ID@");
+		}
 		// TODO: Support with lines
 		PO giftCard = RecordUtil.getEntity(
 			Env.getCtx(),
@@ -40,36 +43,41 @@ public class GiftCardManagement {
 			giftCardId,
 			null
 		);
-		if (giftCard != null && giftCard.get_ID() > 0) {
-			if (giftCard.get_ValueAsBoolean("Processed")) {
-				throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
-			}
-			if (giftCard.get_ValueAsBoolean("Processing")) {
-				throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
-			}
-			giftCard.set_ValueOfColumn("Processing", true);
-			giftCard.saveEx();
+		if (giftCard == null || giftCard.get_ID() <= 0) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @NotFound@");
 		}
+		if (giftCard.get_ValueAsBoolean("Processed")) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
+		}
+		if (giftCard.get_ValueAsBoolean("Processing")) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
+		}
+		giftCard.set_ValueOfColumn("Processing", true);
+		giftCard.saveEx();
 	}
 
 	public static void unProcessingGiftCard(int giftCardId, boolean forced) {
+		if (giftCardId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @ECA14_GiftCard_ID@");
+		}
 		// TODO: Support with lines
 		PO giftCard = RecordUtil.getEntity(
-				Env.getCtx(),
-				"ECA14_GiftCard",
-				giftCardId,
-				null
+			Env.getCtx(),
+			"ECA14_GiftCard",
+			giftCardId,
+			null
 		);
-		if (giftCard != null && giftCard.get_ID() > 0) {
-			if (giftCard.get_ValueAsBoolean("Processed")) {
-				throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
-			}
-			if (giftCard.get_ValueAsBoolean("Processing") && !forced) {
-				throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
-			}
-			giftCard.set_ValueOfColumn("Processing", false);
-			giftCard.saveEx();
+		if (giftCard == null || giftCard.get_ID() <= 0) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @NotFound@");
 		}
+		if (giftCard.get_ValueAsBoolean("Processed")) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
+		}
+		if (giftCard.get_ValueAsBoolean("Processing") && !forced) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
+		}
+		giftCard.set_ValueOfColumn("Processing", false);
+		giftCard.saveEx();
 	}
 
 	/**
@@ -116,19 +124,20 @@ public class GiftCardManagement {
 	}
 
 	public static void createGiftCardReference(MOrder salesOrder, MPayment payment, String transactionName) {
-		MTable giftCardTable = MTable.get(payment.getCtx(), "ECA14_GiftCard");
-		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
-			return;
-		}
-		PO giftCard = giftCardTable.getPO(payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID), payment.get_TrxName());
+		final int giftCardId = payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID);
+		processGiftCard(
+			giftCardId,
+			payment,
+			null,
+			transactionName
+		);
+
 		//	Set reference to Payment
 		payment.setC_Invoice_ID(-1);
-		giftCard.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_DateDoc, payment.getDateTrx());
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_BPartner_ID, payment.getC_BPartner_ID());
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_ConversionType_ID, payment.getC_ConversionType_ID());
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Currency_ID, payment.getC_Currency_ID());
-		giftCard.set_ValueOfColumn(I_C_Order.COLUMNNAME_C_Order_ID, payment.getC_Order_ID());
-		payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Reference_Amount, payment.getPayAmt());
+		payment.set_ValueOfColumn(
+			ColumnsAdded.COLUMNNAME_ECA14_Reference_Amount,
+			payment.getPayAmt()
+		);
 		payment.setPayAmt(Env.ZERO);
 		CashUtil.setCurrentDate(payment, true);
 		payment.saveEx(transactionName);
@@ -198,6 +207,40 @@ public class GiftCardManagement {
 				)
 			)
 		);
+		giftCard.saveEx(transactionName);
+		return giftCard;
+	}
+
+
+	public static PO processGiftCard(int giftCardId, MPayment payment, PO paymentReference, String transactionName) {
+		MTable giftCardTable = MTable.get(Env.getCtx(), "ECA14_GiftCard");
+		if (giftCardTable == null || giftCardTable.get_ID() <= 0) {
+			return null;
+		}
+		if (giftCardId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @ECA14_GiftCard_ID@");
+		}
+		PO giftCard = giftCardTable.getPO(
+			giftCardId,
+			transactionName
+		);
+		if (giftCard == null || giftCard.get_ID() <= 0) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @NotFound@");
+		}
+		if (giftCard.get_ValueAsBoolean("Processed")) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
+		}
+		int referenceGiftCardId = -1;
+		if (payment != null) {
+			referenceGiftCardId = payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID);
+		} else if (paymentReference != null) {
+			referenceGiftCardId = paymentReference.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID);
+		}
+		if (giftCard.get_ValueAsBoolean("Processing") && giftCard.get_ID() != referenceGiftCardId) {
+			throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
+		}
+		giftCard.set_ValueOfColumn("Processing", false);
+		giftCard.set_ValueOfColumn("Processed", true);
 		giftCard.saveEx(transactionName);
 		return giftCard;
 	}
