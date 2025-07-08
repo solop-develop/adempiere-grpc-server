@@ -328,32 +328,20 @@ public class OrderManagement {
 						);
 					}
 				} else {
-					int giftCardId = paymentReference.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID);
-					if (giftCardId > 0) {
-						PO giftCard = RecordUtil.getEntity(
-							Env.getCtx(),
-							"ECA14_GiftCard",
-							giftCardId,
-							transactionName
-						);
-						if (giftCard != null && giftCard.get_ID() > 0) {
-							if (giftCard.get_ValueAsBoolean("Processed")) {
-								throw new AdempiereException("@ECA14_GiftCard_ID@ @Processed@");
-							}
-							if (giftCard.get_ValueAsBoolean("Processing")) {
-								throw new AdempiereException("@ECA14_GiftCard_ID@ @Processing@");
-							}
-							giftCard.set_ValueOfColumn("Processing", false);
-							giftCard.set_ValueOfColumn("Processed", true);
-							giftCard.saveEx();
-						}
-					}
+					final int giftCardId = paymentReference.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID);
+					GiftCardManagement.processGiftCard(
+						giftCardId,
+						null,
+						paymentReference,
+						transactionName
+					);
 				}
 			}
 			paymentReference.saveEx();
 		});
 	}
-	
+
+
 	/**
 	 * Get Refund references from order
 	 * @param order
@@ -534,7 +522,7 @@ public class OrderManagement {
 						createCreditMemoReference(salesOrder, payment, transactionName);
 					}
 				} else if (payment.getTenderType().equals("G")) {
-					if(payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID) <= 0) {
+					if(!payment.isReceipt()) {
 						createGiftCard(salesOrder, payment, transactionName);
 					} else {
 						createGiftCardReference(salesOrder, payment, transactionName);
@@ -563,9 +551,17 @@ public class OrderManagement {
 			//	Set Description
 			paymentAllocation.saveEx();
 			//	Add lines
-			paymentsIds.stream().map(paymentId -> new MPayment(Env.getCtx(), paymentId, transactionName))
-			.filter(payment -> payment.getC_POS_ID() != 0)
-			.forEach(payment -> createAllocationLine(pos, salesOrder, invoiceId, paymentAllocation, payment));
+			paymentsIds.stream()
+				.map(paymentId -> {
+					return new MPayment(Env.getCtx(), paymentId, transactionName);
+				})
+				.filter(payment -> {
+					return payment.getC_POS_ID() != 0;
+				})
+				.forEach(payment -> {
+					createAllocationLine(pos, salesOrder, invoiceId, paymentAllocation, payment);
+				})
+			;
 			//	Add write off
 			if(!isOpenRefund
 					|| OrderUtil.isAutoWriteOff(salesOrder, openAmount.get())) {
@@ -582,11 +578,16 @@ public class OrderManagement {
 			}
 			paymentAllocation.saveEx();
 			//	Test allocation
-			paymentsIds.stream().map(paymentId -> new MPayment(Env.getCtx(), paymentId, transactionName)).forEach(payment -> {
-				payment.setIsAllocated(true);
-				payment.setC_Invoice_ID(invoiceId);
-				payment.saveEx();
-			});
+			paymentsIds.stream()
+				.map(paymentId -> {
+					return new MPayment(Env.getCtx(), paymentId, transactionName);
+				})
+				.forEach(payment -> {
+					payment.setIsAllocated(true);
+					payment.setC_Invoice_ID(invoiceId);
+					payment.saveEx();
+				})
+			;
 		} else {
 			//	Add write off
 			if(!isOpenRefund) {

@@ -136,12 +136,6 @@ public class CollectingManagement {
 				salesOrder.getDescription()
 			)
 		);
-		if (request.getGiftCardId() > 0) {
-			GiftCardManagement.processingGiftCard(
-					request.getGiftCardId()
-			);
-			payment.set_ValueOfColumn("ECA14_GiftCard_ID", request.getGiftCardId());
-		}
         payment.setC_BPartner_ID (salesOrder.getC_BPartner_ID());
         payment.setC_Currency_ID(currencyId);
         payment.setC_POS_ID(pointOfSalesDefinition.getC_POS_ID());
@@ -211,6 +205,11 @@ public class CollectingManagement {
 			// Gift Card
 			case "G":
 				if (payment.get_ColumnIndex(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID) >= 0) {
+					if (payment.isReceipt()) {
+						GiftCardManagement.processingGiftCard(
+							request.getGiftCardId()
+						);
+					}
 					payment.setR_PnRef(request.getReferenceNo());
 					payment.set_ValueOfColumn(
 						ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID,
