@@ -201,8 +201,10 @@ public class ReturnSalesOrder {
 			throw new AdempiereException("@DocAction@ @IsMandatory@");
 		}
 		if(!documentAction.equals(MInOut.ACTION_Complete)
-				&& !documentAction.equals(MInOut.ACTION_Reverse_Accrual)
-				&& !documentAction.equals(MInOut.ACTION_Reverse_Correct)) {
+			&& !documentAction.equals(MInOut.ACTION_Close)
+			&& !documentAction.equals(MInOut.ACTION_Reverse_Accrual)
+			&& !documentAction.equals(MInOut.ACTION_Reverse_Correct)
+		) {
 			throw new AdempiereException("@DocAction@ @Invalid@");
 		}
 		AtomicReference<MOrder> rmaReference = new AtomicReference<MOrder>();

@@ -15,17 +15,34 @@
 
 package org.spin.pos.service.payment;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.adempiere.core.domains.models.I_C_Order;
+import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MAllocationHdr;
+import org.compiere.model.MAllocationLine;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
+import org.compiere.model.MOrderLine;
+import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.cash.CashUtil;
+import org.spin.pos.service.order.RMAUtil;
+import org.spin.pos.service.order.ReturnSalesOrder;
+import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -243,6 +260,178 @@ public class GiftCardManagement {
 		giftCard.set_ValueOfColumn("Processed", true);
 		giftCard.saveEx(transactionName);
 		return giftCard;
+	}
+
+
+	public static void createReturnSalesOrder(MOrder salesOrder, List<Integer> paymentsIds, String transactionName) {
+		MTable giftCardTable = MTable.get(salesOrder.getCtx(), "ECA14_GiftCard");
+		MTable giftCardLineTable = MTable.get(salesOrder.getCtx(), "ECA14_GiftCardLine");
+
+		List<PO> giftCardPayments = paymentsIds.stream()
+			.map(paymentId -> {
+				MPayment payment = new MPayment(Env.getCtx(), paymentId, transactionName);
+				return payment;
+			})
+			.filter(payment -> {
+				if (payment.isReceipt()) {
+					boolean isGiftCard = payment.getTenderType().equals("G");
+					return isGiftCard;
+				}
+				return false;
+			})
+			.map(payment -> {
+				final int giftCardId = payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID);
+				PO giftCard = giftCardTable.getPO(
+					giftCardId,
+					transactionName
+				);
+				return giftCard;
+			})
+			.filter(giftCard -> {
+				return !giftCard.get_ValueAsBoolean(I_C_Payment.COLUMNNAME_IsPrepayment);
+			})
+			.toList()
+		;
+
+		// Order ID, Order Lines ID
+		Map<Integer, List<Integer>> ordersToReverse = new HashMap<Integer, List<Integer>>();
+		// Order Line ID, Gift Card Quantity
+		Map<Integer, BigDecimal> orderLinesToReverse = new HashMap<Integer, BigDecimal>();
+		giftCardPayments.forEach(giftCard -> {
+			final int giftCardId = giftCard.get_ID();
+			List<PO> giftCardLines = new Query(
+				Env.getCtx(),
+				giftCardLineTable,
+				ColumnsAdded.COLUMNNAME_ECA14_GiftCard_ID + " = ?",
+				null
+			)
+				.setParameters(giftCardId)
+				.list()
+			;
+			giftCardLines.forEach(giftCardLine -> {
+				final int orderLineId = giftCardLine.get_ValueAsInt(
+					I_C_OrderLine.COLUMNNAME_C_OrderLine_ID
+				);
+				BigDecimal reverseQuantity = Env.ZERO;
+				if (orderLinesToReverse.containsKey(orderLineId)) {
+					reverseQuantity = reverseQuantity.add(
+						orderLinesToReverse.get(orderLineId)
+					);
+				}
+
+				BigDecimal giftCardQuantity = Optional.ofNullable(
+					NumberManager.getBigDecimalFromObject(
+						giftCardLine.get_Value(
+							I_C_OrderLine.COLUMNNAME_QtyEntered
+						)
+					)
+				).orElse(Env.ZERO);
+				reverseQuantity = reverseQuantity.add(giftCardQuantity);
+				orderLinesToReverse.put(orderLineId, reverseQuantity);
+
+				MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
+				List<Integer> orderLinesIds = new ArrayList<Integer>();
+				if (ordersToReverse.containsKey(orderLine.getC_Order_ID())) {
+					orderLinesIds = ordersToReverse.get(orderLine.getC_Order_ID());
+				}
+				orderLinesIds.add(orderLineId);
+				ordersToReverse.put(
+					orderLine.getC_Order_ID(),
+					orderLinesIds
+				);
+			});
+		});
+
+		MPOS pos = POS.validateAndGetPOS(salesOrder.getC_POS_ID(), false);
+		ordersToReverse.entrySet().forEach(entry -> {
+			final int sourceOrderId = entry.getKey();
+			MOrder returnOrder = ReturnSalesOrder.createRMAFromOrder(
+				salesOrder.getC_POS_ID(),
+				sourceOrderId,
+				0,
+				false,
+				transactionName
+			);
+
+			List<Integer> linesIds = entry.getValue();
+			for (Integer sourceLineId : linesIds) {
+				BigDecimal giftCardQuantity = orderLinesToReverse.get(sourceLineId);
+				ReturnSalesOrder.createRMALineFromOrder(
+					returnOrder.getC_Order_ID(),
+					sourceLineId,
+					giftCardQuantity,
+					transactionName
+				);
+			}
+
+			processReverseSalesOrder(
+				pos,
+				returnOrder,
+				transactionName
+			);
+		});
+	}
+
+
+	/**
+	 * Create return order
+	 * @param pos
+	 * @param sourceOrder
+	 * @param transactionName
+	 * @return
+	 */
+	public static MOrder processReverseSalesOrder(MPOS pos, MOrder returnOrder, String transactionName) {
+		//	Close all
+		if(!returnOrder.processIt(MOrder.DOCACTION_Close)) {
+			throw new AdempiereException("@ProcessFailed@ :" + returnOrder.getProcessMsg());
+		}
+		returnOrder.saveEx();
+
+		//	Generate Return
+		RMAUtil.generateReturnFromRMA(returnOrder, transactionName);
+		//	Generate Credit Memo
+		MInvoice creditMemo = RMAUtil.generateCreditMemoFromRMA(returnOrder, transactionName);
+
+		createPaymentAllocation(
+			pos,
+			returnOrder,
+			creditMemo,
+			transactionName
+		);
+
+		return returnOrder;
+	}
+
+
+	public static MAllocationHdr createPaymentAllocation(MPOS pos, MOrder returnOrder, MInvoice creditMemo, String transactionName) {
+		String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + returnOrder.getDocumentNo());
+
+		MAllocationHdr paymentAllocation = new MAllocationHdr(
+			Env.getCtx(),
+			true,
+			RecordUtil.getDate(),
+			returnOrder.getC_Currency_ID(),
+			description,
+			transactionName
+		);
+		paymentAllocation.setAD_Org_ID(returnOrder.getAD_Org_ID());
+		//	Set Description
+		paymentAllocation.saveEx();
+
+		MAllocationLine paymentAllocationLine = new MAllocationLine(
+			paymentAllocation,
+			returnOrder.getGrandTotal(),
+			BigDecimal.ZERO,
+			BigDecimal.ZERO,
+			BigDecimal.ZERO
+		);
+		paymentAllocationLine.setDocInfo(
+			returnOrder.getC_BPartner_ID(),
+			returnOrder.getC_Order_ID(),
+			creditMemo.getC_Invoice_ID()
+		);
+
+		return paymentAllocation;
 	}
 
 }
