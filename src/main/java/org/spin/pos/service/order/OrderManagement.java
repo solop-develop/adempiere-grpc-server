@@ -562,6 +562,14 @@ public class OrderManagement {
 					createAllocationLine(pos, salesOrder, invoiceId, paymentAllocation, payment);
 				})
 			;
+
+			// Create RMA if payment with gift card
+			GiftCardManagement.createReturnSalesOrder(
+				salesOrder,
+				paymentsIds,
+				transactionName
+			);
+
 			//	Add write off
 			if(!isOpenRefund
 					|| OrderUtil.isAutoWriteOff(salesOrder, openAmount.get())) {

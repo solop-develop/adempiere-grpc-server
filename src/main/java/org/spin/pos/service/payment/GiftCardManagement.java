@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
@@ -290,8 +291,13 @@ public class GiftCardManagement {
 			.filter(giftCard -> {
 				return !giftCard.get_ValueAsBoolean(I_C_Payment.COLUMNNAME_IsPrepayment);
 			})
-			.toList()
+			// .toList()
+			.collect(Collectors.toList())
 		;
+
+		if (giftCardPayments == null || giftCardPayments.isEmpty()) {
+			return;
+		}
 
 		// Order ID, Order Lines ID
 		Map<Integer, List<Integer>> ordersToReverse = new HashMap<Integer, List<Integer>>();
@@ -389,6 +395,7 @@ public class GiftCardManagement {
 
 		//	Generate Return
 		RMAUtil.generateReturnFromRMA(returnOrder, transactionName);
+
 		//	Generate Credit Memo
 		MInvoice creditMemo = RMAUtil.generateCreditMemoFromRMA(returnOrder, transactionName);
 
@@ -418,18 +425,42 @@ public class GiftCardManagement {
 		//	Set Description
 		paymentAllocation.saveEx();
 
-		MAllocationLine paymentAllocationLine = new MAllocationLine(
+		// Credit Memo line
+		MAllocationLine paymentAllocationLineMemo = new MAllocationLine(
 			paymentAllocation,
 			returnOrder.getGrandTotal(),
 			BigDecimal.ZERO,
 			BigDecimal.ZERO,
 			BigDecimal.ZERO
 		);
-		paymentAllocationLine.setDocInfo(
+		paymentAllocationLineMemo.setDocInfo(
 			returnOrder.getC_BPartner_ID(),
 			returnOrder.getC_Order_ID(),
 			creditMemo.getC_Invoice_ID()
 		);
+		paymentAllocationLineMemo.saveEx();
+
+		// Gift Card Charge line
+		final int defaultGiftCardChargeId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID);
+		MAllocationLine paymentAllocationLineCharge = new MAllocationLine(
+			paymentAllocation,
+			returnOrder.getGrandTotal().negate(),
+			Env.ZERO,
+			Env.ZERO,
+			Env.ZERO
+		);
+		paymentAllocationLineCharge.setDocInfo(
+			returnOrder.getC_BPartner_ID(),
+			returnOrder.getC_Order_ID(),
+			0
+		);
+		paymentAllocationLineCharge.setC_Charge_ID(defaultGiftCardChargeId);
+		paymentAllocationLineCharge.saveEx();
+
+		//	Complete
+		if (!paymentAllocation.processIt(MAllocationHdr.DOCACTION_Complete)) {
+			throw new AdempiereException(paymentAllocation.getProcessMsg());
+		}
 
 		return paymentAllocation;
 	}
