@@ -254,19 +254,19 @@ public class RMAUtil {
 		});
 	}
 
-    /**
-     * Generate Credit Memo from Return Order
-     * @param returnOrder
-     * @param transactionName
-     */
-    public static void generateCreditMemoFromRMA(MOrder returnOrder, String transactionName) {
-    	if(!OrderUtil.isInvoiced(returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID), transactionName)) {
-    		return;
-    	}
-    	MInvoice invoice = new MInvoice (returnOrder, 0, OrderUtil.getToday());
-    	invoice.setC_POS_ID(returnOrder.getC_POS_ID());
+	/**
+	 * Generate Credit Memo from Return Order
+	 * @param returnOrder
+	 * @param transactionName
+	 */
+	public static MInvoice generateCreditMemoFromRMA(MOrder returnOrder, String transactionName) {
+		if(!OrderUtil.isInvoiced(returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID), transactionName)) {
+			return null;
+		}
+		MInvoice invoice = new MInvoice (returnOrder, 0, OrderUtil.getToday());
+		invoice.setC_POS_ID(returnOrder.getC_POS_ID());
 		invoice.saveEx();
-    	//	Convert Lines
+		//	Convert Lines
 		new Query(returnOrder.getCtx(), I_C_OrderLine.Table_Name, "C_Order_ID = ?", transactionName)
 			.setParameters(returnOrder.getC_Order_ID())
 			.setClient_ID()
@@ -281,14 +281,15 @@ public class RMAUtil {
 				line.saveEx();
 		});
 		if(!invoice.processIt(MOrder.DOCACTION_Complete)) {
-        	throw new AdempiereException(invoice.getProcessMsg());
-        }
+			throw new AdempiereException(invoice.getProcessMsg());
+		}
 		invoice.saveEx();
 		returnOrder.setIsInvoiced(true);
 		returnOrder.set_ValueOfColumn("AssignedSalesRep_ID", null);
 		returnOrder.saveEx();
-    }
-    
+		return invoice;
+	}
+
     /**
      * Generate Return from Return Order
      * @param returnOrder
