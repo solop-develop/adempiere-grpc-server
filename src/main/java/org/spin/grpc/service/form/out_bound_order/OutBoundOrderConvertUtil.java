@@ -201,28 +201,28 @@ public class OutBoundOrderConvertUtil {
 		}
 
 		//	Valid Quantity On Hand
-		if(!deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Force) && !deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Manual)) {
-			//FR [ 1 ]
-			BigDecimal diff = ((BigDecimal) (isStocked ? Env.ONE : Env.ZERO))
-				.multiply(
-					qtyOnHand
-						.subtract(qty)
-						.setScale(precision, RoundingMode.HALF_UP)
-				);
-			//	Set Quantity
-			if(diff.doubleValue() < 0) {
-				qty = qty
-					.subtract(diff.abs())
-					.setScale(precision, RoundingMode.HALF_UP)
-				;
-			}
-			//	Valid Zero
-			if (qty.compareTo(Env.ZERO) <= 0) {
-				// Omit this record
-				// continue;
-				return builder;
-			}
-		}
+//		if(!deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Force) && !deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Manual)) {
+//			//FR [ 1 ]
+//			BigDecimal diff = ((BigDecimal) (isStocked ? Env.ONE : Env.ZERO))
+//				.multiply(
+//					qtyOnHand
+//						.subtract(qty)
+//						.setScale(precision, RoundingMode.HALF_UP)
+//				);
+//			//	Set Quantity
+//			if(diff.doubleValue() < 0) {
+//				qty = qty
+//					.subtract(diff.abs())
+//					.setScale(precision, RoundingMode.HALF_UP)
+//				;
+//			}
+//			//	Valid Zero
+//			if (qty.compareTo(Env.ZERO) <= 0) {
+//				// Omit this record
+//				// continue;
+//				return builder;
+//			}
+//		}
 
 		builder.setId(
 				resultSet.getInt("ID")
