@@ -333,8 +333,6 @@ public class PaymentAllocationLogic {
 			request.getDate()
 		);
 
-		int conversionTypeId = request.getConversionTypeId();
-
 		/**
 		 *  Load unallocated Payments
 		 *    1-TrxDate, 2-DocumentNo, (3-Currency, 4-PayAmt,)
@@ -351,6 +349,8 @@ public class PaymentAllocationLogic {
 		parametersList.add(
 			date
 		);
+
+		final int conversionTypeId = request.getConversionTypeId();
 		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
 			sql.append("?, ");
 			parametersList.add(conversionTypeId);
@@ -529,8 +529,6 @@ public class PaymentAllocationLogic {
 			request.getDate()
 		);
 
-		int conversionTypeId = request.getConversionTypeId();
-
 		/**
 		 *  Load unpaid Invoices
 		 *    1-TrxDate, 2-Value, (3-Currency, 4-InvAmt,)
@@ -548,6 +546,8 @@ public class PaymentAllocationLogic {
 		parametersList.add(
 			date
 		);
+
+		final int conversionTypeId = request.getConversionTypeId();
 		if (request.getIsMultiCurrency() && conversionTypeId > 0) {
 			sql.append("?, ");
 			parametersList.add(conversionTypeId);
