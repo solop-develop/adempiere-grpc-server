@@ -266,9 +266,9 @@ message ListPaymentsRequest {
 	google.protobuf.Timestamp date = 9;
 	int32 organization_id = 10;
 	int32 currency_id = 11;
-	bool is_multi_currency = 12;
-	string transaction_type = 13; // AP-AR
-	bool is_automatic_write_off = 14;
+	string transaction_type = 12; // AP-AR
+	bool is_automatic_write_off = 13;
+	bool is_multi_currency = 14;
 	int32 conversion_type_id = 15;
 	bool is_negotiated_rate = 16;
 	string negociated_rate = 17;
@@ -310,9 +310,9 @@ message ListInvoicesRequest {
 	google.protobuf.Timestamp date = 9;
 	int32 organization_id = 10;
 	int32 currency_id = 11;
-	bool is_multi_currency = 12;
-	string transaction_type = 13; // AP-AR
-	bool is_automatic_write_off = 14;
+	string transaction_type = 12; // AP-AR
+	bool is_automatic_write_off = 13;
+	bool is_multi_currency = 14;
 	int32 conversion_type_id = 15;
 	bool is_negotiated_rate = 16;
 	string negociated_rate = 17;
@@ -386,15 +386,16 @@ message InvoiceSelection {
 // Process
 message ProcessRequest {
 	int32 business_partner_id = 1;
-	int32 currency_id = 2;
-	bool is_multi_currency = 3;
-	int32 charge_id = 4;
-	int32 transaction_organization_id = 5;
-	google.protobuf.Timestamp date = 6;
-	string description = 7;
-	string total_difference = 8;
-	repeated PaymentSelection payment_selections = 9;
-	repeated InvoiceSelection invoice_selections = 10;
+	google.protobuf.Timestamp date = 2;
+	int32 transaction_organization_id = 3;
+	int32 currency_id = 4;
+	int32 charge_id = 5;
+	string description = 6;
+	string total_difference = 7;
+	repeated PaymentSelection payment_selections = 8;
+	repeated InvoiceSelection invoice_selections = 9;
+	bool is_multi_currency = 10;
+	int32 conversion_type_id = 11;
 }
 message ProcessResponse {
 	string message = 1;
