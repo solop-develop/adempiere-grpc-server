@@ -320,7 +320,7 @@ public class OutBoundOrderLogic {
 				"AND ord.AD_Client_ID=? "
 			);
 			// if (organization.getAD_Org_ID() > 0) {
-				sql.append("AND lord.AD_Org_ID=? ");
+				sql.append("AND ord.AD_Org_ID=? ");
 			// }
 			// if (warehouse.getM_Warehouse_ID() > 0) {
 				sql.append("AND wr.M_Warehouse_ID=? ");
