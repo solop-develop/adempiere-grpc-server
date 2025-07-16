@@ -24,12 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import org.adempiere.core.domains.models.I_AD_Org;
-import org.adempiere.core.domains.models.I_C_DocType;
-import org.adempiere.core.domains.models.I_C_Order;
-import org.adempiere.core.domains.models.I_DD_Order;
-import org.adempiere.core.domains.models.I_M_Locator;
-import org.adempiere.core.domains.models.I_M_Warehouse;
+import org.adempiere.core.domains.models.*;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DocTypeNotFoundException;
 import org.compiere.model.MClientInfo;
@@ -319,12 +314,8 @@ public class OutBoundOrderLogic {
 				"AND COALESCE(qafl.QtyAvailable, 0) > 0 " +
 				"AND ord.AD_Client_ID=? "
 			);
-			// if (organization.getAD_Org_ID() > 0) {
-				sql.append("AND ord.AD_Org_ID=? ");
-			// }
-			// if (warehouse.getM_Warehouse_ID() > 0) {
-				sql.append("AND wr.M_Warehouse_ID=? ");
-			// }
+			sql.append("AND ord.AD_Org_ID=? ");
+			sql.append("AND wr.M_Warehouse_ID=? ");
 			if (salesRegionId > 0) {
 				sql.append("AND bploc.C_SalesRegion_ID=? ");
 				parametersList.add(salesRegionId);
@@ -393,12 +384,8 @@ public class OutBoundOrderLogic {
 				"AND COALESCE(qafl.QtyAvailable, 0) > 0 " +
 				"AND ord.AD_Client_ID=? "
 			);
-			// if (organization.getAD_Org_ID() > 0) {
-				sql.append("AND lord.AD_Org_ID=? ");
-			// }
-			// if (warehouse.getM_Warehouse_ID() > 0) {
-				sql.append("AND wr.M_Warehouse_ID=? ");
-			// }
+			sql.append("AND ord.AD_Org_ID=? ");
+			sql.append("AND wr.M_Warehouse_ID=? ");
 			if (salesRegionId > 0) {
 				sql.append("AND bploc.C_SalesRegion_ID=? ");
 				parametersList.add(salesRegionId);
@@ -1131,6 +1118,7 @@ public class OutBoundOrderLogic {
 
 		GenerateLoadOrderResponse.Builder builder = GenerateLoadOrderResponse.newBuilder();
 		AtomicInteger linesQuantity = new AtomicInteger();
+		final int locatorId = request.getLocatorId();
 		Trx.run(transactionName -> {
 			AtomicReference<BigDecimal> totalWeightReference = new AtomicReference<BigDecimal>(
 				Env.ZERO
@@ -1138,9 +1126,6 @@ public class OutBoundOrderLogic {
 			AtomicReference<BigDecimal> totalVolumeReference = new AtomicReference<BigDecimal>(
 				Env.ZERO
 			);
-			// BigDecimal totalWeight = Env.ZERO;
-			// BigDecimal totalVolume = Env.ZERO;
-
 			MWMInOutBound outBoundOrder = new MWMInOutBound(Env.getCtx(), 0, transactionName);
 			outBoundOrder.setAD_Org_ID(
 				organization.getAD_Org_ID()
@@ -1149,6 +1134,9 @@ public class OutBoundOrderLogic {
 			outBoundOrder.setM_Warehouse_ID(
 				warehouse.getM_Warehouse_ID()
 			);
+			if (locatorId > 0) {
+				outBoundOrder.setM_Locator_ID(locatorId);
+			}
 			outBoundOrder.setDateTrx(documentDate);
 			outBoundOrder.setPickDate(documentDate);
 			outBoundOrder.setShipDate(shipmentDate);
@@ -1158,18 +1146,17 @@ public class OutBoundOrderLogic {
 			if (targetDocumentTypeId > 0) {
 				outBoundOrder.setC_DocType_ID(targetDocumentTypeId);
 			} else {
-				Optional<MDocType> defaultDocumentType = Arrays.asList(
+				Optional<MDocType> defaultDocumentType = Arrays.stream(
 						MDocType.getOfDocBaseType(
 							Env.getCtx(),
 							MDocType.DOCBASETYPE_WarehouseManagementOrder
 						)
 					)
-					.stream()
-					.filter(documentType -> documentType.isSOTrx())
+					.filter(X_C_DocType::isSOTrx)
 					.findFirst()
 				;
 
-				if (!defaultDocumentType.isPresent()) {
+				if (defaultDocumentType.isEmpty()) {
 					throw new DocTypeNotFoundException(MDocType.DOCBASETYPE_WarehouseManagementOrder, "");
 				}
 				outBoundOrder.setC_DocType_ID(defaultDocumentType.get().getC_DocType_ID());
@@ -1236,23 +1223,26 @@ public class OutBoundOrderLogic {
 					outBoundOrderLine.setC_OrderLine_ID(line.getC_OrderLine_ID());
 					outBoundOrderLine.setM_AttributeSetInstance_ID(line.getM_AttributeSetInstance_ID());
 					outBoundOrderLine.setC_UOM_ID(product.getC_UOM_ID());
-
-					int locatorId = request.getLocatorId();
-					if (locatorId <= 0) {
-						locatorId = getDefaultLocator(
-							line.getM_Warehouse_ID(),
-							productId,
-							line.getM_AttributeSetInstance_ID(),
-							quantity,
-							transactionName
+					if(locatorId > 0) {
+						outBoundOrderLine.setM_Locator_ID(locatorId);
+						outBoundOrderLine.setM_LocatorTo_ID(locatorId);
+					} else {
+						int defaultLocatorId = getDefaultLocator(
+								line.getM_Warehouse_ID(),
+								productId,
+								line.getM_AttributeSetInstance_ID(),
+								quantity,
+								transactionName
 						);
+						if(defaultLocatorId > 0) {
+							outBoundOrderLine.setM_Locator_ID(defaultLocatorId);
+							outBoundOrderLine.setM_LocatorTo_ID(defaultLocatorId);
+						}
 					}
-
-					outBoundOrderLine.setM_LocatorTo_ID(locatorId);
 				}
 				outBoundOrderLine.setM_Product_ID(productId);
 				outBoundOrderLine.setMovementQty(quantity);
-				outBoundOrderLine.setPickedQty(quantity);
+				outBoundOrderLine.setPickedQty(Env.ZERO);
 				
 				//	Add Weight
 				BigDecimal totalWeight = totalWeightReference.get().add(weight);
@@ -1294,7 +1284,7 @@ public class OutBoundOrderLogic {
 				"@Created@ = [" + outBoundOrder.getDocumentNo()
 				+ "] || @LineNo@" + " = [" + linesQuantity.get() + "]"
 			);
-			log.severe(message);
+			log.fine(message);
 
 			if (isCreateFreight) {
 				if (request.getDriverId() <= 0) {
@@ -1368,7 +1358,7 @@ public class OutBoundOrderLogic {
 					Env.getCtx(),
 					"@Created@ = [" + freightOrder.getDocumentNo() + "]"
 				);
-				log.severe(message);
+				log.fine(message);
 				builder.setFreightDocumentNo(
 						StringManager.getValidString(
 							freightOrder.getDocumentNo()
