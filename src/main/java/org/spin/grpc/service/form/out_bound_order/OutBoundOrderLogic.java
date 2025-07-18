@@ -1242,7 +1242,7 @@ public class OutBoundOrderLogic {
 				}
 				outBoundOrderLine.setM_Product_ID(productId);
 				outBoundOrderLine.setMovementQty(quantity);
-				outBoundOrderLine.setPickedQty(Env.ZERO);
+				outBoundOrderLine.setPickedQty(quantity);
 				
 				//	Add Weight
 				BigDecimal totalWeight = totalWeightReference.get().add(weight);
