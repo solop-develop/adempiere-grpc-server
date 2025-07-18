@@ -17,6 +17,8 @@ package org.spin.grpc.service.form.payment_allocation;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
+import org.spin.backend.grpc.form.payment_allocation.CreateConversionRateRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListChargesRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListConversionTypesRequest;
@@ -144,6 +146,30 @@ public class PaymentAllocationService extends PaymentAllocationImplBase {
 			}
 
 			ListConversionTypesResponse.Builder builder = PaymentAllocationLogic.listConversionTypes(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void createConversionRate(CreateConversionRateRequest request, StreamObserver<ConversionRate> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ConversionRate.Builder builder = PaymentAllocationLogic.createConversionRate(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

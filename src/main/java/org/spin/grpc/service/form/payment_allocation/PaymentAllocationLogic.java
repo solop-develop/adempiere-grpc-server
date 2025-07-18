@@ -36,9 +36,11 @@ import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MConversionRate;
 import org.compiere.model.MConversionType;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
@@ -63,7 +65,9 @@ import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
 import org.spin.backend.grpc.form.payment_allocation.ConversionType;
+import org.spin.backend.grpc.form.payment_allocation.CreateConversionRateRequest;
 import org.spin.backend.grpc.form.payment_allocation.Currency;
 import org.spin.backend.grpc.form.payment_allocation.DocumentType;
 import org.spin.backend.grpc.form.payment_allocation.Invoice;
@@ -240,6 +244,30 @@ public class PaymentAllocationLogic {
 
 
 
+	public static ListLookupItemsResponse.Builder listTransactionTypes(ListTransactionTypesRequest request) {
+		// APAR
+		int columnId = 14082; // T_InvoiceGL.APAR
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			0,
+			0, 0, 0,
+			columnId,
+			null, null
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			request.getContextAttributes(),
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			request.getIsOnlyActiveRecords()
+		);
+
+		return builderList;
+	}
+
+
+
 	public static ListConversionTypesResponse.Builder listConversionTypes(ListConversionTypesRequest request) {
 		MTable table = MTable.get(
 			Env.getCtx(),
@@ -294,27 +322,78 @@ public class PaymentAllocationLogic {
 	}
 
 
-
-	public static ListLookupItemsResponse.Builder listTransactionTypes(ListTransactionTypesRequest request) {
-		// APAR
-		int columnId = 14082; // T_InvoiceGL.APAR
-		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
-			0,
-			0, 0, 0,
-			columnId,
-			null, null
+	public static ConversionRate.Builder createConversionRate(CreateConversionRateRequest request) {
+		MOrg organization = validateAndGetOrganization(
+			request.getOrganizationId()
 		);
 
-		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
-			reference,
-			request.getContextAttributes(),
-			request.getPageSize(),
-			request.getPageToken(),
-			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+		final int clientId = Env.getAD_Client_ID(Env.getCtx());
+		final int accountingSchemaId = DB.getSQLValue(null, "SELECT MIN(C_AcctSchema_ID) FROM C_AcctSchema WHERE AD_CLient_ID = ?", clientId);
+		MAcctSchema accoutingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId);
+		MCurrency currency = validateAndGetCurrency(
+			accoutingSchema.getC_Currency_ID()
+		);
+		MCurrency currencyTo = validateAndGetCurrency(
+			request.getCurrencyToId()
 		);
 
-		return builderList;
+		MBPartner businessPartner = validateAndGetBusinessPartner(
+			request.getBusinessPartnerId()
+		);
+
+		BigDecimal negotiatedRate = NumberManager.getBigDecimalFromString(
+			request.getNegotiatedRate()
+		);
+
+		MConversionType conversionType = new Query(
+			Env.getCtx(),
+			I_C_ConversionType.Table_Name,
+			"C_BPartner_ID = ?",
+			null
+		)
+			.setParameters(businessPartner.getC_BPartner_ID())
+			.setClient_ID()
+			// .setApplyAccessFilter(true)
+			.first()
+		;
+		if (conversionType == null) {
+			conversionType = new MConversionType(Env.getCtx(), 0, null);
+			if (request.getConversionTypeId() > 0) {
+				MConversionType conversionTypeBase = new MConversionType(Env.getCtx(), request.getConversionTypeId(), null);
+				PO.copyValues(conversionTypeBase, conversionType);
+			}
+			conversionType.setAD_Org_ID(0);
+			conversionType.setName(businessPartner.getDisplayValue());
+			conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, conversionType);
+			conversionType.set_CustomColumn("SP032_ParentCType_ID", request.getConversionTypeId());
+			conversionType.saveEx();
+		}
+
+		MConversionRate conversionRate = new MConversionRate(Env.getCtx(), 0, null);
+		conversionRate.setAD_Org_ID(
+			organization.getAD_Org_ID()
+		);
+		conversionRate.setC_ConversionType_ID(
+			conversionType.getC_ConversionType_ID()
+		);
+		conversionRate.setC_Currency_ID(
+			currency.getC_Currency_ID()
+		);
+		conversionRate.setC_Currency_ID_To(
+			currencyTo.getC_Currency_ID()
+		);
+		conversionRate.setMultiplyRate(negotiatedRate);
+
+		Timestamp date = ValueManager.getDateFromTimestampDate(
+			request.getDate()
+		);
+		date = TimeUtil.getDay(date);
+		conversionRate.setValidFrom(date);
+		conversionRate.setValidTo(date);
+		conversionRate.saveEx();
+
+		ConversionRate.Builder builder = PaymentAllocationConvertUtil.convertConversionRate(conversionRate);
+		return builder;
 	}
 
 
