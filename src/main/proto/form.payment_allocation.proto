@@ -60,6 +60,13 @@ service PaymentAllocation {
 		};
 	}
 
+	// Create Rates
+	rpc CreateConversionRate(CreateConversionRateRequest) returns (ConversionRate) {
+		option (google.api.http) = {
+			post: "/forms/payment-allocation/conversion-types/conversion-rates"
+		};
+	}
+
 	// list result
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
 		option (google.api.http) = {
@@ -180,6 +187,7 @@ message ConversionType {
 	string description = 5;
 	bool is_default = 6;
 	int32 business_partner_id = 7;
+	int32 parent_id = 8;
 }
 message ListConversionTypesRequest {
 	string filters = 1;
@@ -199,6 +207,29 @@ message ListConversionTypesResponse {
 	int64 record_count = 1;
 	repeated ConversionType records = 2;
 	string next_page_token = 3;
+}
+
+
+// Conversion Rate
+message ConversionRate {
+	int32 id = 1;
+	string uuid = 2;
+	int32 organization_id = 3;
+	Currency currency_from = 4;
+	Currency currency_to = 5;
+	google.protobuf.Timestamp valid_from = 6;
+	google.protobuf.Timestamp valid_to = 7;
+	string multiply_rate = 8;
+	string divide_rate = 9;
+	ConversionType conversion_type = 10;
+}
+message CreateConversionRateRequest {
+	int32 organization_id = 1;
+	int32 conversion_type_id = 2;
+	google.protobuf.Timestamp date = 3;
+	int32 business_partner_id = 4;
+	int32 currency_to_id = 5;
+	string negotiated_rate = 6;
 }
 
 
@@ -270,8 +301,6 @@ message ListPaymentsRequest {
 	bool is_automatic_write_off = 13;
 	bool is_multi_currency = 14;
 	int32 conversion_type_id = 15;
-	bool is_negotiated_rate = 16;
-	string negociated_rate = 17;
 }
 message ListPaymentsResponse {
 	int64 record_count = 1;
@@ -314,8 +343,6 @@ message ListInvoicesRequest {
 	bool is_automatic_write_off = 13;
 	bool is_multi_currency = 14;
 	int32 conversion_type_id = 15;
-	bool is_negotiated_rate = 16;
-	string negociated_rate = 17;
 }
 message ListInvoicesResponse {
 	int64 record_count = 1;

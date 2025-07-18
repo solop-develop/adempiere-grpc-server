@@ -20,6 +20,7 @@ import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
 import org.compiere.model.MCharge;
+import org.compiere.model.MConversionRate;
 import org.compiere.model.MConversionType;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
@@ -29,6 +30,7 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.form.payment_allocation.Charge;
+import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
 import org.spin.backend.grpc.form.payment_allocation.ConversionType;
 import org.spin.backend.grpc.form.payment_allocation.Currency;
 import org.spin.backend.grpc.form.payment_allocation.DocumentType;
@@ -181,6 +183,58 @@ public class PaymentAllocationConvertUtil {
 			.setBusinessPartnerId(
 				conversionType.get_ValueAsInt(
 					I_C_BPartner.COLUMNNAME_C_BPartner_ID
+				)
+			)
+			.setParentId(
+				conversionType.get_ValueAsInt(
+					"SP032_ParentCType_ID"
+				)
+			)
+		;
+		return builder;
+	}
+
+
+
+	public static ConversionRate.Builder convertConversionRate(MConversionRate conversionRate) {
+		ConversionRate.Builder builder = ConversionRate.newBuilder();
+		if (conversionRate == null || conversionRate.getC_Conversion_Rate_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(
+				conversionRate.getC_Conversion_Rate_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					conversionRate.getUUID()
+				)
+			)
+			.setOrganizationId(
+				conversionRate.getAD_Org_ID()
+			)
+			.setCurrencyFrom(
+				convertCurrency(
+					conversionRate.getC_Currency_ID()
+				)
+			)
+			.setCurrencyTo(
+				convertCurrency(
+					conversionRate.getC_Currency_ID_To()
+				)
+			)
+			.setMultiplyRate(
+				NumberManager.getBigDecimalToString(
+					conversionRate.getMultiplyRate()
+				)
+			)
+			.setDivideRate(
+				NumberManager.getBigDecimalToString(
+					conversionRate.getDivideRate()
+				)
+			)
+			.setConversionType(
+				convertConversionType(
+					conversionRate.getC_ConversionType_ID()
 				)
 			)
 		;
