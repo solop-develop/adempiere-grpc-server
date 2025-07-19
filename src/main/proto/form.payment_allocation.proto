@@ -228,8 +228,9 @@ message CreateConversionRateRequest {
 	int32 conversion_type_id = 2;
 	google.protobuf.Timestamp date = 3;
 	int32 business_partner_id = 4;
-	int32 currency_to_id = 5;
-	string negotiated_rate = 6;
+	int32 currency_from_id = 5;
+	int32 currency_to_id = 6;
+	string negotiated_rate = 7;
 }
 
 

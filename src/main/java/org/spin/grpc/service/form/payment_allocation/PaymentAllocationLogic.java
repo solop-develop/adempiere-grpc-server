@@ -327,11 +327,15 @@ public class PaymentAllocationLogic {
 			request.getOrganizationId()
 		);
 
-		final int clientId = Env.getAD_Client_ID(Env.getCtx());
-		final int accountingSchemaId = DB.getSQLValue(null, "SELECT MIN(C_AcctSchema_ID) FROM C_AcctSchema WHERE AD_CLient_ID = ?", clientId);
-		MAcctSchema accoutingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId);
-		MCurrency currency = validateAndGetCurrency(
-			accoutingSchema.getC_Currency_ID()
+		int currencyFromId = request.getCurrencyFromId();
+		if (currencyFromId <= 0) {
+			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			final int accountingSchemaId = DB.getSQLValue(null, "SELECT MIN(C_AcctSchema_ID) FROM C_AcctSchema WHERE AD_CLient_ID = ?", clientId);
+			MAcctSchema accountingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId);
+			currencyFromId = accountingSchema.getC_Currency_ID();
+		}
+		MCurrency currencyFrom = validateAndGetCurrency(
+			currencyFromId
 		);
 		MCurrency currencyTo = validateAndGetCurrency(
 			request.getCurrencyToId()
@@ -364,7 +368,7 @@ public class PaymentAllocationLogic {
 			}
 			conversionType.setAD_Org_ID(0);
 			conversionType.setName(businessPartner.getDisplayValue());
-			conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, conversionType);
+			conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, businessPartner.getC_BPartner_ID());
 			conversionType.set_CustomColumn("SP032_ParentCType_ID", request.getConversionTypeId());
 			conversionType.saveEx();
 		}
@@ -377,7 +381,7 @@ public class PaymentAllocationLogic {
 			conversionType.getC_ConversionType_ID()
 		);
 		conversionRate.setC_Currency_ID(
-			currency.getC_Currency_ID()
+			currencyFrom.getC_Currency_ID()
 		);
 		conversionRate.setC_Currency_ID_To(
 			currencyTo.getC_Currency_ID()
