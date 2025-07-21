@@ -315,7 +315,7 @@ public class OutBoundOrderLogic {
 				"AND ord.AD_Client_ID=? "
 			);
 			sql.append("AND ord.AD_Org_ID=? ");
-			sql.append("AND wr.M_Warehouse_ID=? ");
+			sql.append("AND lord.M_Warehouse_ID=? ");
 			if (salesRegionId > 0) {
 				sql.append("AND bploc.C_SalesRegion_ID=? ");
 				parametersList.add(salesRegionId);
@@ -385,7 +385,7 @@ public class OutBoundOrderLogic {
 				"AND ord.AD_Client_ID=? "
 			);
 			sql.append("AND ord.AD_Org_ID=? ");
-			sql.append("AND wr.M_Warehouse_ID=? ");
+			sql.append("AND lord.M_Warehouse_ID=? ");
 			if (salesRegionId > 0) {
 				sql.append("AND bploc.C_SalesRegion_ID=? ");
 				parametersList.add(salesRegionId);
