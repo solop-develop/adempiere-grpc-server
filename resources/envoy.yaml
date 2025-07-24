@@ -65,6 +65,7 @@ static_resources:
                 - file_management.FileManagement
                 - form.out_bound_order.OutBoundOrderService
                 - form.payment_allocation.PaymentAllocation
+                - form.trial_balance_drillable.TrialBalanceDrillable
                 - general_ledger.GeneralLedger
                 - import_file_loader.ImportFileLoader
                 - issue_management.IssueManagement
@@ -85,7 +86,6 @@ static_resources:
                 - ticket_management.TicketManagement
                 - time_control.TimeControl
                 - time_record.TimeRecord
-                - trial_balance_drillable.TrialBalanceDrillable
                 - updates.UpdateCenter
                 - user_customization.UserCustomization
                 - user_interface.UserInterface
