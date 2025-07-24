@@ -25,40 +25,54 @@ import "base_data_type.proto";
 // Base URL
 // /trial-balance-drillable/
 
-package trial_balance_drillable;
+package form.trial_balance_drillable;
 
 // The Trial Balance Drillable Report form service definition.
 // - org.adempiere.webui.apps.form.WTrialBalance
 service TrialBalanceDrillable {
 	// criteria
 	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/trial-balance-drillable/organizations" };
+		option (google.api.http) = {
+			get: "/forms/trial-balance-drillable/organizations"
+		};
 	}
 	rpc ListBudgets(ListBudgetsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/trial-balance-drillable/budgets" };
+		option (google.api.http) = {
+			get: "/forms/trial-balance-drillable/budgets"
+		};
 	}
 	rpc ListUser1(ListUser1Request) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/trial-balance-drillable/user-1" };
+		option (google.api.http) = {
+			get: "/forms/trial-balance-drillable/user-1"
+		};
 	}
 	rpc ListPeriods(ListPeriodsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/trial-balance-drillable/periods" };
+		option (google.api.http) = {
+			get: "/forms/trial-balance-drillable/periods"
+		};
 	}
-	rpc ListAccoutingKeys(ListAccoutingKeysRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/trial-balance-drillable/accouting-keys" };
+	rpc ListAccountingKeys(ListAccountingKeysRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/forms/trial-balance-drillable/accounting-keys"
+		};
 	}
 	rpc ListReportCubes(ListReportCubesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/trial-balance-drillable/report-cubes" };
+		option (google.api.http) = {
+			get: "/forms/trial-balance-drillable/report-cubes"
+		};
 	}
 
 	// result
 	rpc ListFactAcctSummary(ListFactAcctSummaryRequest) returns (ListFactAcctSummaryResponse) {
-		option (google.api.http) = { get: "/trial-balance-drillable/accouting-fact-summary" };
+		option (google.api.http) = {
+			get: "/forms/trial-balance-drillable/accounting-fact-summary"
+		};
 	}
 
 	// manage
 	rpc Export(ExportRequest) returns (ExportResponse) {
 		option (google.api.http) = {
-			post: "/trial-balance-drillable/export",
+			post: "/forms/trial-balance-drillable/export",
 			body: "*"
 		};
 	}
@@ -89,6 +103,8 @@ message ListBudgetsRequest {
 	bool is_only_active_records = 9;
 }
 
+
+// User List 1
 message ListUser1Request {
 	string filters = 1;
 	string sort_by = 2;
@@ -113,7 +129,7 @@ message ListPeriodsRequest {
 	bool is_only_active_records = 9;
 }
 
-message ListAccoutingKeysRequest {
+message ListAccountingKeysRequest {
 	string filters = 1;
 	string sort_by = 2;
 	repeated string group_columns = 3;
@@ -138,7 +154,7 @@ message ListReportCubesRequest {
 }
 
 
-
+// Fact Acct Summary
 message ListFactAcctSummaryRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -150,12 +166,11 @@ message ListFactAcctSummaryRequest {
 	int32 organization_id = 8;
 	int32 budget_id = 9;
 	int32 period_id = 10;
-	int32 accouting_from_id = 11;
-	int32 accouting_to_id = 12;
+	int32 accounting_from_id = 11;
+	int32 accounting_to_id = 12;
 	int32 report_cube_id = 13;
 	int32 user1_id = 14;
 }
-
 message FactAcctSummary {
 	int32 id = 1;
 	string value = 2;
@@ -169,7 +184,6 @@ message FactAcctSummary {
 	string ytd_budget_amount = 10;
 	string variance_amount = 11;
 }
-
 message ListFactAcctSummaryResponse {
 	int64 record_count = 1;
 	repeated FactAcctSummary records = 2;
@@ -177,16 +191,16 @@ message ListFactAcctSummaryResponse {
 }
 
 
+// Export
 message ExportRequest {
 	string search_value = 1;
 	int32 organization_id = 2;
 	int32 budget_id = 3;
 	int32 period_id = 4;
-	int32 accouting_from_id = 5;
-	int32 accouting_to_id = 6;
+	int32 accounting_from_id = 5;
+	int32 accounting_to_id = 6;
 	int32 report_cube_id = 7;
 	int32 user1_id = 8;
 }
-
 message ExportResponse {
 }

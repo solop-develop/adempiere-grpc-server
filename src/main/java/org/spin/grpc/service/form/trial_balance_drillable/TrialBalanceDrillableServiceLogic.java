@@ -36,7 +36,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.trial_balance_drillable.FactAcctSummary;
-import org.spin.backend.grpc.form.trial_balance_drillable.ListAccoutingKeysRequest;
+import org.spin.backend.grpc.form.trial_balance_drillable.ListAccountingKeysRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListBudgetsRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListFactAcctSummaryRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListFactAcctSummaryResponse;
@@ -162,7 +162,7 @@ public class TrialBalanceDrillableServiceLogic {
 	}
 
 
-	public static ListLookupItemsResponse.Builder listAccoutingKeys(ListAccoutingKeysRequest request) {
+	public static ListLookupItemsResponse.Builder listAccountingKeys(ListAccountingKeysRequest request) {
 		final int columnId = 69936; // GL_JournalLine.Account_ID
 		MColumn column = MColumn.get(Env.getCtx(), columnId);
 		final int clientId = Env.getAD_Client_ID(Env.getCtx());
@@ -298,15 +298,15 @@ public class TrialBalanceDrillableServiceLogic {
 			filterParametersList.add(user1_ID);
 		}
 
-		int accountingFromId = request.getAccoutingFromId();
-		int accountingToId = request.getAccoutingToId();
+		int accountingFromId = request.getAccountingFromId();
+		int accountingToId = request.getAccountingToId();
 		String accountingFromValue = null;
 		String accountingToValue = null;
 
 		if (accountingFromId > 0 || accountingToId > 0) {
-			final String sqlAccoutingValue = "SELECT Value from C_ElementValue WHERE C_ElementValue_ID = ?";
-			accountingFromValue = DB.getSQLValueString(null, sqlAccoutingValue, accountingFromId);
-			accountingToValue = DB.getSQLValueString(null, sqlAccoutingValue, accountingToId);
+			final String sqlAccountingValue = "SELECT Value from C_ElementValue WHERE C_ElementValue_ID = ?";
+			accountingFromValue = DB.getSQLValueString(null, sqlAccountingValue, accountingFromId);
+			accountingToValue = DB.getSQLValueString(null, sqlAccountingValue, accountingToId);
 
 			if (accountingFromValue != null && accountingToValue != null) {
 				sql.append(" AND (fs.Account_ID IS NULL OR EXISTS (SELECT * FROM C_ElementValue ev ")
