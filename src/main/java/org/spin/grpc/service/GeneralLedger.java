@@ -73,18 +73,18 @@ import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.general_ledger.GeneralLedgerGrpc.GeneralLedgerImplBase;
-import org.spin.backend.grpc.general_ledger.AccoutingElement;
-import org.spin.backend.grpc.general_ledger.ExistsAccoutingDocumentRequest;
-import org.spin.backend.grpc.general_ledger.ExistsAccoutingDocumentResponse;
+import org.spin.backend.grpc.general_ledger.AccountingElement;
+import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentRequest;
+import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentResponse;
 import org.spin.backend.grpc.general_ledger.GetAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingCombinationsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingFactsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
-import org.spin.backend.grpc.general_ledger.ListAccoutingElementValuesRequest;
-import org.spin.backend.grpc.general_ledger.ListAccoutingElementsRequest;
-import org.spin.backend.grpc.general_ledger.ListAccoutingElementsResponse;
+import org.spin.backend.grpc.general_ledger.ListAccountingElementValuesRequest;
+import org.spin.backend.grpc.general_ledger.ListAccountingElementsRequest;
+import org.spin.backend.grpc.general_ledger.ListAccountingElementsResponse;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.backend.grpc.general_ledger.SaveAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostRequest;
@@ -108,13 +108,13 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 
 	@Override
-	public void listAccoutingElements(ListAccoutingElementsRequest request, StreamObserver<ListAccoutingElementsResponse> responseObserver) {
+	public void listAccountingElements(ListAccountingElementsRequest request, StreamObserver<ListAccountingElementsResponse> responseObserver) {
 		try {
-			ListAccoutingElementsResponse.Builder accountingElementsList = listAccoutingElements(request);
+			ListAccountingElementsResponse.Builder accountingElementsList = listAccountingElements(request);
 			responseObserver.onNext(accountingElementsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -125,18 +125,18 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 	}
 
-	ListAccoutingElementsResponse.Builder listAccoutingElements(ListAccoutingElementsRequest request) {
-		int accountingSchemaId = request.getAccoutingSchemaId();
+	ListAccountingElementsResponse.Builder listAccountingElements(ListAccountingElementsRequest request) {
+		int accountingSchemaId = request.getAccountingSchemaId();
 		if (accountingSchemaId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
 		}
 		Properties context = Env.getCtx();
-		MAcctSchema accoutingSchema = MAcctSchema.get(context, accountingSchemaId);
-		if (accoutingSchema == null || accoutingSchema.getC_AcctSchema_ID() <= 0) {
+		MAcctSchema accountingSchema = MAcctSchema.get(context, accountingSchemaId);
+		if (accountingSchema == null || accountingSchema.getC_AcctSchema_ID() <= 0) {
 			throw new AdempiereException("@C_AcctSchema_ID@ @NotFound@");
 		}
 
-		ListAccoutingElementsResponse.Builder builderList = ListAccoutingElementsResponse.newBuilder();
+		ListAccountingElementsResponse.Builder builderList = ListAccountingElementsResponse.newBuilder();
 		MRole role = MRole.getDefault();
 		if (role == null || !role.isShowAcct()) {
 			log.warning(
@@ -161,8 +161,8 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			m_mWindow.initTab(0);
 		}
 
-		if (accoutingSchema.isHasAlias()) {
-			AccoutingElement.Builder elementBuilder = AccoutingElement.newBuilder()
+		if (accountingSchema.isHasAlias()) {
+			AccountingElement.Builder elementBuilder = AccountingElement.newBuilder()
 				.setColumnName(I_C_ValidCombination.COLUMNNAME_Combination)
 				.setSequece(0)
 				.setDisplayType(DisplayType.Text)
@@ -177,27 +177,27 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 				;
 			}
 
-			builderList.addAccoutingElements(elementBuilder);
+			builderList.addAccountingElements(elementBuilder);
 		}
 
-		List.of(accoutingSchema.getAcctSchemaElements()).forEach(accoutingElement -> {
-			String columnName = accoutingElement.getColumnName();
-			AccoutingElement.Builder elemeBuilder = AccoutingElement.newBuilder()
+		List.of(accountingSchema.getAcctSchemaElements()).forEach(accountingElement -> {
+			String columnName = accountingElement.getColumnName();
+			AccountingElement.Builder elemeBuilder = AccountingElement.newBuilder()
 				.setColumnName(
 					columnName
 				)
 				.setSequece(
-					accoutingElement.getSeqNo()
+					accountingElement.getSeqNo()
 				)
 				.setIsMandatory(
-					accoutingElement.isMandatory()
+					accountingElement.isMandatory()
 				)
 				.setIsBalanced(
-					accoutingElement.isBalanced()
+					accountingElement.isBalanced()
 				)
 				.setElementType(
 					StringManager.getValidString(
-						accoutingElement.getElementType()
+						accountingElement.getElementType()
 					)
 				)
 			;
@@ -229,11 +229,11 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 				}
 			}
 
-			builderList.addAccoutingElements(elemeBuilder);
+			builderList.addAccountingElements(elemeBuilder);
 		});
 
 		builderList.setRecordCount(
-			builderList.getAccoutingElementsCount()
+			builderList.getAccountingElementsCount()
 		);
 
 		return builderList;
@@ -243,13 +243,13 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 
 	@Override
-	public void listAccoutingElementValues(ListAccoutingElementValuesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+	public void listAccountingElementValues(ListAccountingElementValuesRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
 		try {
-			ListLookupItemsResponse.Builder accountingElementsList = listAccoutingElementValues(request);
+			ListLookupItemsResponse.Builder accountingElementsList = listAccountingElementValues(request);
 			responseObserver.onNext(accountingElementsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -260,14 +260,14 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 	}
 
-	private ListLookupItemsResponse.Builder listAccoutingElementValues(ListAccoutingElementValuesRequest request) {
-		int accountingSchemaId = request.getAccoutingSchemaId();
+	private ListLookupItemsResponse.Builder listAccountingElementValues(ListAccountingElementValuesRequest request) {
+		int accountingSchemaId = request.getAccountingSchemaId();
 		if (accountingSchemaId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
 		}
 		Properties context = Env.getCtx();
-		MAcctSchema accoutingSchema = MAcctSchema.get(context, accountingSchemaId);
-		if (accoutingSchema == null || accoutingSchema.getC_AcctSchema_ID() <= 0) {
+		MAcctSchema accountingSchema = MAcctSchema.get(context, accountingSchemaId);
+		if (accountingSchema == null || accountingSchema.getC_AcctSchema_ID() <= 0) {
 			throw new AdempiereException("@C_AcctSchema_ID@ @NotFound@");
 		}
 
@@ -276,7 +276,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			throw new AdempiereException("@C_AcctSchema_ID@ @ElementType@");
 		}
 
-		MAcctSchemaElement schemaElement = accoutingSchema.getAcctSchemaElement(elementType);
+		MAcctSchemaElement schemaElement = accountingSchema.getAcctSchemaElement(elementType);
 		if (schemaElement == null || schemaElement.getC_AcctSchema_Element_ID() <= 0) {
 			throw new AdempiereException("@C_AcctSchema_Element_ID@ @NotFound@");
 		}
@@ -343,7 +343,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onNext(accountingCombination.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -401,7 +401,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -492,7 +492,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onNext(entity.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -602,7 +602,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			// return;
 		}
 
-		log.config("New Accouting Combination");
+		log.config("New Accounting Combination");
 		MAccount accountCombination = setAccountingCombinationByAttributes(clientId, organizationId, accountingSchemaId, accountId, attributesList);
 		
 		Entity.Builder builder = ConvertUtil.convertEntity(accountCombination);
@@ -735,7 +735,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -791,7 +791,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -814,7 +814,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -837,7 +837,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -851,16 +851,16 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 
 
 	@Override
-	public void existsAccoutingDocument(ExistsAccoutingDocumentRequest request, StreamObserver<ExistsAccoutingDocumentResponse> responseObserver) {
+	public void existsAccountingDocument(ExistsAccountingDocumentRequest request, StreamObserver<ExistsAccountingDocumentResponse> responseObserver) {
 		try {
 			if(request == null) {
-				throw new AdempiereException("ExistsAccoutingDocumentRequest Null");
+				throw new AdempiereException("ExistsAccountingDocumentRequest Null");
 			}
-			ExistsAccoutingDocumentResponse.Builder builder = GeneralLedgerServiceLogic.existsAccoutingDocument(request);
+			ExistsAccountingDocumentResponse.Builder builder = GeneralLedgerServiceLogic.existsAccountingDocument(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -883,7 +883,7 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

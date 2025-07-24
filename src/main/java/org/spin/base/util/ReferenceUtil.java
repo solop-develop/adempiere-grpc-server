@@ -181,7 +181,7 @@ public class ReferenceUtil {
 			}
 			String[] keyColumns = table.getKeyColumns();
 			if (keyColumns == null || keyColumns.length > 1) {
-				// traslated or accouting table
+				// traslated or accounting table
 				return null;
 			}
 

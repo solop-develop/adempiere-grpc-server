@@ -150,7 +150,7 @@ public class ContextManager {
 
 
 	/**
-	 * Is Session context, #Global or $Accouting
+	 * Is Session context, #Global or $Accounting
 	 * @param contextKey
 	 * @return
 	 */
