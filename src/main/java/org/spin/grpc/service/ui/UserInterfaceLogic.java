@@ -140,7 +140,7 @@ public class UserInterfaceLogic {
 		//
 		Integer treeId = null;
 		String whereClause = new String();
-		//	Valid Accouting Element
+		//	Valid Accounting Element
 		if (elementId > 0) {
 			whereClause = " AND EXISTS ("
 				+ "SELECT 1 FROM C_Element ae "

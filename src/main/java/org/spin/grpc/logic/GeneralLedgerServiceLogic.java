@@ -40,8 +40,8 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.general_ledger.AccountingDocument;
-import org.spin.backend.grpc.general_ledger.ExistsAccoutingDocumentRequest;
-import org.spin.backend.grpc.general_ledger.ExistsAccoutingDocumentResponse;
+import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentRequest;
+import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
@@ -217,8 +217,8 @@ public class GeneralLedgerServiceLogic {
 
 
 
-	public static ExistsAccoutingDocumentResponse.Builder existsAccoutingDocument(ExistsAccoutingDocumentRequest request) {
-		ExistsAccoutingDocumentResponse.Builder builder = ExistsAccoutingDocumentResponse.newBuilder();
+	public static ExistsAccountingDocumentResponse.Builder existsAccountingDocument(ExistsAccountingDocumentRequest request) {
+		ExistsAccountingDocumentResponse.Builder builder = ExistsAccountingDocumentResponse.newBuilder();
 		MRole role = MRole.getDefault();
 		if (role == null || !role.isShowAcct()) {
 			return builder;
@@ -280,7 +280,7 @@ public class GeneralLedgerServiceLogic {
 			return builder;
 		}
 
-		builder.setIsShowAccouting(true);
+		builder.setIsShowAccounting(true);
 		return builder;
 	}
 
