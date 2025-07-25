@@ -103,6 +103,8 @@ message AccountingElement {
 	repeated string context_column_names = 7;
 	int32 display_type = 8;
 	int32 field_id = 9;
+	int32 table_id = 10;
+	string table_name = 11;
 }
 message ListAccountingElementsRequest {
 	string filters = 1;

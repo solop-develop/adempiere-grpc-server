@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.logic;
+package org.spin.grpc.service.accounting;
 
 import java.util.Arrays;
 import java.util.Comparator;
