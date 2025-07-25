@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-package org.spin.grpc.service;
+package org.spin.grpc.service.accounting;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,6 +29,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_C_ElementValue;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
 import org.adempiere.core.domains.models.I_Fact_Acct;
 import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
@@ -60,7 +61,7 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.grpc.logic.GeneralLedgerServiceLogic;
+import org.spin.grpc.service.UserInterface;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
@@ -184,7 +185,14 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			String columnName = accountingElement.getColumnName();
 			AccountingElement.Builder elemeBuilder = AccountingElement.newBuilder()
 				.setColumnName(
-					columnName
+					StringManager.getValidString(
+						columnName
+					)
+				)
+				.setName(
+					StringManager.getValidString(
+						accountingElement.getName()
+					)
 				)
 				.setSequece(
 					accountingElement.getSeqNo()
@@ -205,13 +213,16 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 			GridField field = mTab.getField(columnName);
 			if (field != null) {
 				elemeBuilder.setFieldId(field.getAD_Field_ID())
-					.setName(
-						field.getHeader()
-					)
 					.setDisplayType(
 						field.getDisplayType()
 					)
+					.setName(
+						StringManager.getValidString(
+							field.getHeader()
+						)
+					)
 				;
+
 				if (ReferenceUtil.validateReference(field.getDisplayType())) {
 					int columnId = MColumn.getColumn_ID(mTab.getTableName(), field.getColumnName());
 					MColumn column = MColumn.get(context, columnId);
@@ -226,6 +237,47 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 						);
 						elemeBuilder.addAllContextColumnNames(contextColumnsList);
 					}
+				}
+			}
+
+			// UX type
+			if (AccountingUtils.USER_LIST_COLUMNS.contains(columnName)) {
+				// overwrite field name by element name
+				elemeBuilder
+					.setTableId(
+						I_C_ElementValue.Table_ID
+					)
+					.setTableName(
+						StringManager.getValidString(
+							I_C_ElementValue.Table_Name
+						)
+					)
+					.setName(
+						StringManager.getValidString(
+							accountingElement.getName()
+						)
+					)
+				;
+			}
+			if (AccountingUtils.USER_ELEMENT_COLUMNS.contains(columnName)) {
+				elemeBuilder.setName(
+					StringManager.getValidString(
+						accountingElement.getName()
+					)
+				);
+				if (accountingElement.getAD_Column_ID() > 0) {
+					MColumn column = MColumn.get(Env.getCtx(), accountingElement.getAD_Column_ID());
+					// overwrite table name by element name
+					MTable table = MTable.get(Env.getCtx(), column.getAD_Table_ID());
+					elemeBuilder.setTableId(
+							table.getAD_Table_ID()
+						)
+						.setTableName(
+							StringManager.getValidString(
+								table.getTableName()
+							)
+						)
+					;
 				}
 			}
 

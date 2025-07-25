@@ -42,6 +42,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.spin.dictionary.util.DictionaryUtil;
+import org.spin.grpc.service.accounting.AccountingUtils;
 import org.spin.util.AttachmentUtil;
 
 
@@ -530,6 +531,13 @@ public class ReferenceUtil {
 			lookupInformation.QueryDirect = getDirectQueryColumnSQLImage();
 		} else if(DisplayType.TableDir == referenceId
 				|| referenceValueId <= 0) {
+			// TODO: Add support on MLookupInfo to reuse on Zk/Swing
+			if (AccountingUtils.USER_ELEMENT_COLUMNS.contains(columnName)) {
+				String newColumnName = AccountingUtils.overwriteColumnName(columnName);
+				if (!Util.isEmpty(newColumnName, true)) {
+					columnName = newColumnName;
+				}
+			}
 			//	Add Display
 			lookupInformation = getLookupInfoFromColumnName(columnName);
 		} else {
