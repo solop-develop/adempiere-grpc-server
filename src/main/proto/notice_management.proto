@@ -60,6 +60,8 @@ message User {
 	string name = 4;
 	string description = 5;
 	string avatar = 6;
+	// client of user record
+	string client_uuid = 7;
 }
 message ListUsersRequest {
 	string filters = 1;
@@ -84,14 +86,15 @@ message Notice {
 	google.protobuf.Timestamp created = 3;
 	string message = 4;
 	User user = 5;
-	string table_name = 6;
-	int32 record_id = 7;
-	string reference = 8;
-	string text_message = 9;
-	string description = 10;
-	bool is_acknowledge = 11;
+	int32 table_id = 6;
+	string table_name = 7;
+	int32 record_id = 8;
+	string reference = 9;
+	string text_message = 10;
+	string description = 11;
+	bool is_acknowledge = 12;
+	string organization = 13;
 }
-
 message ListNoticesRequest {
 	string filters = 1;
 	string sort_by = 2;
