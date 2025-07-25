@@ -22,7 +22,9 @@ import java.util.List;
 import org.adempiere.core.domains.models.I_AD_Note;
 import org.adempiere.core.domains.models.I_AD_User;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MClient;
 import org.compiere.model.MNote;
+import org.compiere.model.MOrg;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
@@ -101,6 +103,13 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				)
 			)
 		;
+		// client of user record
+		MClient clientUser = MClient.get(Env.getCtx(), user.getAD_Client_ID());
+		builder.setClientUuid(
+			StringManager.getValidString(
+				clientUser.getUUID()
+			)
+		);
 		return builder;
 	}
 
@@ -135,7 +144,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 			.setMessage(
 				StringManager.getValidString(
 					Msg.parseTranslation(
-						notice.getCtx(),
+						Env.getCtx(),
 						notice.getMessage()
 					)
 				)
@@ -143,12 +152,6 @@ public class NoticeManagement extends NoticeManagementImplBase {
 			.setUser(
 				convertUser(
 					notice.getAD_User_ID()
-				)
-			)
-			.setTableName(
-				MTable.getTableName(
-					Env.getCtx(),
-					notice.getAD_Table_ID()
 				)
 			)
 			.setRecordId(
@@ -173,6 +176,32 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				notice.isProcessed()
 			)
 		;
+
+		MOrg organization = MOrg.get(Env.getCtx(), 0);
+		if (organization == null) {
+			organization = new MOrg(Env.getCtx(), notice.getAD_Org_ID(), null);
+		}
+		if (organization != null && organization.getAD_Org_ID() >= 0) {
+			builder.setOrganization(
+				StringManager.getValidString(
+					organization.getDisplayValue()
+				)
+			);
+		}
+
+		MTable table = MTable.get(Env.getCtx(), notice.getAD_Table_ID());
+		if (table != null && table.getAD_Table_ID() > 0) {
+			builder.setTableId(
+				table.getAD_Table_ID()
+				)
+				.setTableName(
+					StringManager.getValidString(
+						table.getTableName()
+					)
+				)
+			;
+		}
+
 		return builder;
 	}
 
@@ -187,7 +216,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -259,7 +288,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -297,7 +326,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -369,7 +398,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
