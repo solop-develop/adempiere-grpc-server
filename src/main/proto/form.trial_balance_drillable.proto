@@ -19,6 +19,7 @@ option java_package = "org.spin.backend.grpc.form.trial_balance_drillable";
 option java_outer_classname = "ADempierePaymentAllocation";
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 import "base_data_type.proto";
 
@@ -44,6 +45,11 @@ service TrialBalanceDrillable {
 	rpc ListUser1(ListUser1Request) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/trial-balance-drillable/user-1"
+		};
+	}
+	rpc GetDefaultPeriod(GetDefaultPeriodRequest) returns (Period) {
+		option (google.api.http) = {
+			get: "/forms/trial-balance-drillable/periods/default"
 		};
 	}
 	rpc ListPeriods(ListPeriodsRequest) returns (data.ListLookupItemsResponse) {
@@ -117,6 +123,20 @@ message ListUser1Request {
 	bool is_only_active_records = 9;
 }
 
+
+// Period
+message Period {
+	int32 id = 1;
+	string uuid = 2;
+	string name = 3;
+	int32 period_no = 4;
+	google.protobuf.Timestamp start_date = 5;
+	google.protobuf.Timestamp end_date = 6;
+	bool is_active = 7;
+}
+message GetDefaultPeriodRequest {
+	int32 organization_id = 1;
+}
 message ListPeriodsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -128,6 +148,7 @@ message ListPeriodsRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
+
 
 message ListAccountingKeysRequest {
 	string filters = 1;
