@@ -78,7 +78,7 @@ public class TrialBalanceDrillableServiceLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -102,7 +102,7 @@ public class TrialBalanceDrillableServiceLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -130,7 +130,7 @@ public class TrialBalanceDrillableServiceLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -155,7 +155,7 @@ public class TrialBalanceDrillableServiceLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -173,7 +173,7 @@ public class TrialBalanceDrillableServiceLogic {
 			tableReferenceId,
 			column.getColumnName(),
 			0,
-			"C_ElementValue.IsActive='Y' AND C_ElementValue.AD_Client_ID=" + clientId
+			"C_ElementValue.IsActive = 'Y' AND C_ElementValue.AD_Client_ID = " + clientId
 		);
 
 		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
@@ -182,7 +182,7 @@ public class TrialBalanceDrillableServiceLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
@@ -206,7 +206,7 @@ public class TrialBalanceDrillableServiceLogic {
 			request.getPageSize(),
 			request.getPageToken(),
 			request.getSearchValue(),
-			request.getIsOnlyActiveRecords()
+			true
 		);
 
 		return builderList;
