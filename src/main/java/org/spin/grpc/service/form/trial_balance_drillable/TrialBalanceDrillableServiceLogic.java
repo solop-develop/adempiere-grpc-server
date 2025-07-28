@@ -19,6 +19,7 @@ import java.util.Properties;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +37,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.trial_balance_drillable.FactAcctSummary;
+import org.spin.backend.grpc.form.trial_balance_drillable.GetDefaultPeriodRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListAccountingKeysRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListBudgetsRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListFactAcctSummaryRequest;
@@ -44,11 +46,13 @@ import org.spin.backend.grpc.form.trial_balance_drillable.ListOrganizationsReque
 import org.spin.backend.grpc.form.trial_balance_drillable.ListPeriodsRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListReportCubesRequest;
 import org.spin.backend.grpc.form.trial_balance_drillable.ListUser1Request;
+import org.spin.backend.grpc.form.trial_balance_drillable.Period;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -137,6 +141,54 @@ public class TrialBalanceDrillableServiceLogic {
 	}
 
 
+
+	public static Period.Builder getDefaultPeriod(GetDefaultPeriodRequest request) {
+		Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+		int organizationId = request.getOrganizationId();
+		if (organizationId <= 0) {
+			organizationId = Env.getAD_Org_ID(Env.getCtx());
+		}
+
+		Period.Builder builder = Period.newBuilder();
+		MPeriod period = MPeriod.get(Env.getCtx(), currentTime, organizationId, null);
+		if (period == null || period.getC_Period_ID() <= 0) {
+			return builder;
+		}
+
+		builder.setId(
+				period.getC_Period_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					period.getUUID()
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					period.getName()
+				)
+			)
+			.setPeriodNo(
+				period.getPeriodNo()
+			)
+			.setStartDate(
+				TimeManager.convertDateToValue(
+					period.getStartDate()
+				)
+			)
+			.setEndDate(
+				TimeManager.convertDateToValue(
+					period.getEndDate()
+				)
+			)
+			.setIsActive(
+				period.isActive()
+			)
+		;
+
+		return builder;
+	}
+
 	public static ListLookupItemsResponse.Builder listPeriods(ListPeriodsRequest request) {
 		final int columnId = 2516; // Fact_Acct.C_Period_ID
 		MColumn column = MColumn.get(Env.getCtx(), columnId);
@@ -160,6 +212,7 @@ public class TrialBalanceDrillableServiceLogic {
 
 		return builderList;
 	}
+
 
 
 	public static ListLookupItemsResponse.Builder listAccountingKeys(ListAccountingKeysRequest request) {
