@@ -117,15 +117,20 @@ public class TrialBalanceDrillableServiceLogic {
 		final int columnId = 69948; // GL_JournalLine.User1_ID
 		MColumn column = MColumn.get(Env.getCtx(), columnId);
 
+		// final int clientId = Env.getAD_Client_ID(Env.getCtx());
+		// final String customRestriction = "C_ElementValue.IsActive='Y' AND C_ElementValue.AD_Client_ID = " + clientId;
+		final String customRestriction = "C_ElementValue.IsActive='Y' AND C_ElementValue.AD_Client_ID = @#AD_Client_ID@";
+
 		final int tableReferenceId = 134; // where clause C_ElementValue.IsActive='Y'
 		// AND C_ElementValue.IsSummary='N' AND C_ElementValue.C_Element_ID IN 
 		// (SELECT C_Element_ID FROM C_AcctSchema_Element ase WHERE ase.ElementType='U1' 
 		// AND ase.AD_Client_ID=@AD_Client_ID@)
 		MLookupInfo reference = ReferenceUtil.getReferenceLookupInfo(
-			DisplayType.TableDir,
+			DisplayType.Table,
 			tableReferenceId,
 			column.getColumnName(),
-			0
+			0,
+			customRestriction
 		);
 
 		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
