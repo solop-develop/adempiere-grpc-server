@@ -84,7 +84,17 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
         shipmentsData = new HashSet<>();
         // Overwrite table RV_WM_InOutBoundLine by WM_InOutBoundLine domain model
         getProcessInfo().setTableSelectionId(MWMInOutBoundLine.Table_ID);
-        List<MWMInOutBoundLine> outBoundLines = (List<MWMInOutBoundLine>) getInstancesForSelection(get_TrxName());
+        List<MWMInOutBoundLine> outBoundLines = null;
+        if(getRecord_ID() > 0) {
+            outBoundLines = new Query(getCtx(), MWMInOutBoundLine.Table_Name, MWMInOutBound.COLUMNNAME_WM_InOutBound_ID + "=?", get_TrxName())
+                    .setParameters(getRecord_ID())
+                    .setOrderBy(MWMInOutBoundLine.COLUMNNAME_C_Order_ID + ", " + MWMInOutBoundLine.COLUMNNAME_DD_Order_ID)
+                    .list();
+        } else if(isSelection()) {
+            // Overwrite table RV_WM_InOutBoundLine by WM_InOutBoundLine
+            getProcessInfo().setTableSelectionId(MWMInOutBoundLine.Table_ID);
+            outBoundLines = (List<MWMInOutBoundLine>) getInstancesForSelection(get_TrxName());
+        }
         outBoundLines.stream()
                 .filter(outBoundLine -> outBoundLine.getQtyToDeliver().signum() > 0 || isIncludeNotAvailable())
                 .forEach(this::groupOutBoundLines);
@@ -127,7 +137,7 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
                             shipment.saveEx(transactionName);
                             maybeShipment.set(shipment);
                         }
-                        BigDecimal qtyToDelivery = getSalesOrderQtyToDelivery(outboundLine, orderLine);
+                        BigDecimal qtyToDelivery = getSalesOrderQtyToDelivery(outboundLine);
                         MInOutLine shipmentLine = new MInOutLine(outboundLine.getCtx(), 0, transactionName);
                         shipmentLine.setM_InOut_ID(shipment.getM_InOut_ID());
                         shipmentLine.setM_Locator_ID(outboundLine.getM_LocatorTo_ID());
@@ -144,12 +154,14 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
                         shipmentLine.setWM_InOutBoundLine_ID(outboundLine.getWM_InOutBoundLine_ID());
                         shipmentLine.saveEx();
                         outboundLine.setPickedQty(Optional.ofNullable(outboundLine.getShipmentQtyDelivered()).orElse(Env.ZERO).add(qtyToDelivery));
+                        outboundLine.setM_InOutLine_ID(shipmentLine.getM_InOutLine_ID());
+                        outboundLine.setM_InOut_ID(shipmentLine.getM_InOut_ID());
                         outboundLine.saveEx();
                     });
                     MInOut shipment = maybeShipment.get();
                     if (!shipment.processIt(getDocAction())) {
-                        addLog("@ProcessFailed@ : " + shipment.getDocumentInfo());
-                        throw new AdempiereException("@ProcessFailed@ :" + shipment.getDocumentInfo());
+                        addLog("@ProcessFailed@ : " + shipment.getProcessMsg());
+                        throw new AdempiereException("@ProcessFailed@ :" + shipment.getProcessMsg());
                     }
                     shipment.saveEx();
                     shipmentsData.add(shipment.getDocumentInfo());
@@ -167,7 +179,7 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
     }
     private void createAndProcessMovements(){
         List<PO> documentsToPrint = new ArrayList<PO>();
-        groupedOutBoundLinesForMovements.entrySet().stream().filter(entry -> entry != null).forEach(entry -> {
+        groupedOutBoundLinesForMovements.entrySet().stream().filter(Objects::nonNull).forEach(entry -> {
             try {
                 Trx.run(transactionName -> {
                     List<MWMInOutBoundLine> lines = entry.getValue();
@@ -210,7 +222,7 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
         printDocument(documentsToPrint, true);
     }
     private void createAndProcessIssues() {
-        groupedOutBoundLinesForIssues.entrySet().stream().filter(entry -> entry != null).forEach(entry -> {
+        groupedOutBoundLinesForIssues.entrySet().stream().filter(Objects::nonNull).forEach(entry -> {
             try {
                 Trx.run(transactionName -> {
                     List<MWMInOutBoundLine> lines = entry.getValue();
@@ -253,26 +265,8 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
         });
     }
 
-    private BigDecimal getSalesOrderQtyToDelivery(MWMInOutBoundLine outboundLine, MOrderLine orderLine) {
-        BigDecimal qtyToDelivery;
-        //Sales Order Qty To Delivery
-        BigDecimal salesOrderQtyToDelivery = getSelectionAsBigDecimal(outboundLine.getWM_InOutBoundLine_ID(), "QtyToDeliver");
-        if (isIncludeNotAvailable()) {
-            qtyToDelivery = salesOrderQtyToDelivery;
-        } else {
-            //Outbound Order Qty To Delivery
-            BigDecimal outboundOrderQtyToDelivery = outboundLine.getPickedQty().subtract(outboundLine.getShipmentQtyDelivered());
-            //The quantity to delivery of the Outbound order cannot be greater than the pending quantity to delivery  of the sales order.
-            if (outboundOrderQtyToDelivery.compareTo(salesOrderQtyToDelivery) > 0){
-                qtyToDelivery = salesOrderQtyToDelivery;
-            } else if (!X_C_Order.DELIVERYRULE_Force.equals(orderLine.getParent().getDeliveryRule())
-                    && !X_C_Order.DELIVERYRULE_Manual.equals(orderLine.getParent().getDeliveryRule())) {
-                qtyToDelivery = outboundOrderQtyToDelivery;
-            } else {
-                qtyToDelivery = salesOrderQtyToDelivery;
-            }
-        }
-        return qtyToDelivery;
+    private BigDecimal getSalesOrderQtyToDelivery(MWMInOutBoundLine outboundLine) {
+        return Optional.ofNullable(getSelectionAsBigDecimal(outboundLine.getWM_InOutBoundLine_ID(), "QtyToDeliver")).orElse(outboundLine.getQtyToDeliver());
     }
 
     private BigDecimal getManufacturingOrderQtyToDelivery(MWMInOutBoundLine outboundLine, MPPOrderBOMLine orderBOMLine) {
@@ -325,15 +319,12 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
             int keyNumber = numberOfDocuments.getOrDefault(key, 0);
             String keyString = String.valueOf(key) + keyNumber;
             List<MWMInOutBoundLine> lines = groupedOutBoundLinesForShipments.getOrDefault(keyString, new ArrayList<>());
-
-
             MOrder order = orderLine.getParent();
             MDocType orderDocumentType = (MDocType) order.getC_DocType();
             int docTypeId = orderDocumentType.getC_DocTypeShipment_ID();
             if (docTypeId == 0) {
                 docTypeId = MDocType.getDocType(MDocType.DOCBASETYPE_MaterialDelivery, orderLine.getAD_Org_ID());
             }
-
             MDocType ShipmentDocType = MDocType.get(getCtx(), docTypeId);
             int maxLines = ShipmentDocType.get_ValueAsInt("MaxLinesPerDocument");
 
