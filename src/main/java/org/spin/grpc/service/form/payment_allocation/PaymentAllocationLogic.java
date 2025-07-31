@@ -31,6 +31,7 @@ import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_Charge;
 import org.adempiere.core.domains.models.I_C_ConversionType;
+import org.adempiere.core.domains.models.I_C_Conversion_Rate;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
@@ -323,9 +324,7 @@ public class PaymentAllocationLogic {
 
 
 	public static ConversionRate.Builder createConversionRate(CreateConversionRateRequest request) {
-		MOrg organization = validateAndGetOrganization(
-			request.getOrganizationId()
-		);
+		// MOrg organization = new MOrg(Env.getCtx(), request.getOrganizationId(), null);
 
 		int currencyFromId = request.getCurrencyFromId();
 		if (currencyFromId <= 0) {
@@ -349,54 +348,73 @@ public class PaymentAllocationLogic {
 			request.getNegotiatedRate()
 		);
 
-		MConversionType conversionType = new Query(
-			Env.getCtx(),
-			I_C_ConversionType.Table_Name,
-			"C_BPartner_ID = ?",
-			null
-		)
-			.setParameters(businessPartner.getC_BPartner_ID())
-			.setClient_ID()
-			// .setApplyAccessFilter(true)
-			.first()
-		;
-		if (conversionType == null) {
-			conversionType = new MConversionType(Env.getCtx(), 0, null);
-			if (request.getConversionTypeId() > 0) {
-				MConversionType conversionTypeBase = new MConversionType(Env.getCtx(), request.getConversionTypeId(), null);
-				PO.copyValues(conversionTypeBase, conversionType);
+		AtomicReference<MConversionRate> conversionRateReference = new AtomicReference<MConversionRate>();
+		Trx.run(transactionName -> {
+			MConversionType conversionType = new Query(
+				Env.getCtx(),
+				I_C_ConversionType.Table_Name,
+				"C_BPartner_ID = ?",
+				transactionName
+			)
+				.setParameters(businessPartner.getC_BPartner_ID())
+				.setClient_ID()
+				// .setApplyAccessFilter(true)
+				.first()
+			;
+			if (conversionType == null || conversionType.getC_ConversionType_ID() <= 0) {
+				conversionType = new MConversionType(Env.getCtx(), 0, transactionName);
+				// fill with parent conversion type
+				if (request.getConversionTypeId() > 0) {
+					MConversionType conversionTypeBase = new MConversionType(Env.getCtx(), request.getConversionTypeId(), transactionName);
+					PO.copyValues(conversionTypeBase, conversionType);
+					conversionType.set_CustomColumn("SP032_ParentCType_ID", request.getConversionTypeId());
+				}
+				conversionType.setAD_Org_ID(0);
+				conversionType.setIsDefault(false);
+				conversionType.setName(businessPartner.getDisplayValue());
+				conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, businessPartner.getC_BPartner_ID());
+				conversionType.saveEx();
 			}
-			conversionType.setAD_Org_ID(0);
-			conversionType.setName(businessPartner.getDisplayValue());
-			conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, businessPartner.getC_BPartner_ID());
-			conversionType.set_CustomColumn("SP032_ParentCType_ID", request.getConversionTypeId());
-			conversionType.saveEx();
-		}
 
-		MConversionRate conversionRate = new MConversionRate(Env.getCtx(), 0, null);
-		conversionRate.setAD_Org_ID(
-			organization.getAD_Org_ID()
-		);
-		conversionRate.setC_ConversionType_ID(
-			conversionType.getC_ConversionType_ID()
-		);
-		conversionRate.setC_Currency_ID(
-			currencyFrom.getC_Currency_ID()
-		);
-		conversionRate.setC_Currency_ID_To(
-			currencyTo.getC_Currency_ID()
-		);
-		conversionRate.setMultiplyRate(negotiatedRate);
+			Timestamp date = ValueManager.getDateFromTimestampDate(
+				request.getDate()
+			);
+			date = TimeUtil.getDay(date);
+			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			MConversionRate conversionRate = new Query(
+				Env.getCtx(),
+				I_C_Conversion_Rate.Table_Name,
+				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ? >= ValidFrom AND ? <= ValidTo AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
+				null
+			)
+				.setParameters(currencyFrom.getC_Currency_ID(), currencyTo.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, 0)
+				.first()
+			;
+			if (conversionRate == null || conversionRate.getC_ConversionType_ID() <= 0) {
+				conversionRate = new MConversionRate(Env.getCtx(), 0, transactionName);
+				conversionRate.setAD_Org_ID(0);
+				conversionRate.setC_ConversionType_ID(
+					conversionType.getC_ConversionType_ID()
+				);
+				conversionRate.setC_Currency_ID(
+					currencyFrom.getC_Currency_ID()
+				);
+				conversionRate.setC_Currency_ID_To(
+					currencyTo.getC_Currency_ID()
+				);
+				conversionRate.setValidFrom(date);
+				conversionRate.setValidTo(date);
+			}
+			conversionRate.setMultiplyRate(negotiatedRate);
+			conversionRate.saveEx();
 
-		Timestamp date = ValueManager.getDateFromTimestampDate(
-			request.getDate()
-		);
-		date = TimeUtil.getDay(date);
-		conversionRate.setValidFrom(date);
-		conversionRate.setValidTo(date);
-		conversionRate.saveEx();
+			//
+			conversionRateReference.set(conversionRate);
+		});
 
-		ConversionRate.Builder builder = PaymentAllocationConvertUtil.convertConversionRate(conversionRate);
+		ConversionRate.Builder builder = PaymentAllocationConvertUtil.convertConversionRate(
+			conversionRateReference.get()
+		);
 		return builder;
 	}
 
