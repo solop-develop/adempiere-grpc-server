@@ -447,6 +447,7 @@ message ListIssuesRequest {
 	google.protobuf.Timestamp date_next_action_to = 20;
 	google.protobuf.Timestamp created_from = 21;
 	google.protobuf.Timestamp created_to = 22;
+	int32 sales_representative_id = 23;
 }
 
 message ListIssuesReponse {

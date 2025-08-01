@@ -147,8 +147,8 @@ public class IssueManagementServiceLogic {
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
-			filtersList.add(searchValue);
 			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+			filtersList.add(searchValue);
 		}
 
 		Query querySaleRepresentatives = new Query(
@@ -935,7 +935,13 @@ public class IssueManagementServiceLogic {
 			parametersList.add(searchValue);
 		}
 
-		
+		if (request.getSalesRepresentativeId() > 0) {
+			whereClause += " AND (SalesRep_ID = ?) ";
+			parametersList.add(
+				request.getSalesRepresentativeId()
+			);
+		}
+
 		if (request.getCategoryId() > 0) {
 			whereClause += " AND (R_Category_ID = ?) ";
 			parametersList.add(
