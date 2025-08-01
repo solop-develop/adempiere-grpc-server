@@ -324,7 +324,7 @@ public class PaymentAllocationLogic {
 
 
 	public static ConversionRate.Builder createConversionRate(CreateConversionRateRequest request) {
-		// MOrg organization = new MOrg(Env.getCtx(), request.getOrganizationId(), null);
+		MOrg organization = new MOrg(Env.getCtx(), request.getOrganizationId(), null);
 
 		int currencyFromId = request.getCurrencyFromId();
 		if (currencyFromId <= 0) {
@@ -379,15 +379,18 @@ public class PaymentAllocationLogic {
 			Timestamp date = ValueManager.getDateFromTimestampDate(
 				request.getDate()
 			);
-			date = TimeUtil.getDay(date);
+			date = TimeUtil.getDay(date); // Remove time mark
+
 			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			final int organizationId = organization.getAD_Org_ID();
+
 			MConversionRate conversionRate = new Query(
 				Env.getCtx(),
 				I_C_Conversion_Rate.Table_Name,
 				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ? >= ValidFrom AND ? <= ValidTo AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
 				null
 			)
-				.setParameters(currencyFrom.getC_Currency_ID(), currencyTo.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, 0)
+				.setParameters(currencyFrom.getC_Currency_ID(), currencyTo.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, organizationId)
 				.first()
 			;
 			if (conversionRate == null || conversionRate.getC_ConversionType_ID() <= 0) {
@@ -433,6 +436,7 @@ public class PaymentAllocationLogic {
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getDate()
 		);
+		date = TimeUtil.getDay(date); // Remove time mark
 
 		/**
 		 *  Load unallocated Payments
@@ -629,6 +633,7 @@ public class PaymentAllocationLogic {
 		Timestamp date = ValueManager.getDateFromTimestampDate(
 			request.getDate()
 		);
+		date = TimeUtil.getDay(date); // Remove time mark
 
 		/**
 		 *  Load unpaid Invoices
@@ -929,6 +934,7 @@ public class PaymentAllocationLogic {
 					request.getInvoiceSelectionsList()
 				);
 			}
+			transactionDate = TimeUtil.getDay(transactionDate); // Remove time mark
 
 			BigDecimal totalDifference = NumberManager.getBigDecimalFromString(
 				request.getTotalDifference()

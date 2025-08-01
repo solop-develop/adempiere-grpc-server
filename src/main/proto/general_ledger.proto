@@ -89,6 +89,13 @@ service GeneralLedger {
 			body: "*"
 		};
 	}
+
+	// Conversion Rates
+	rpc CreateConversionRate(CreateConversionRateRequest) returns (ConversionRate) {
+		option (google.api.http) = {
+			post: "/general-ledger/conversion-types/conversion-rates"
+		};
+	}
 }
 
 
@@ -286,4 +293,43 @@ message StartRePostRequest {
 }
 message StartRePostResponse {
 	string error_msg = 1;
+}
+
+
+// Conversion Rate
+message ConversionType {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	bool is_default = 6;
+	int32 parent_id = 7;
+	int32 business_partner_id = 8;
+	int32 order_id = 9;
+	int32 invoice_id = 10;
+	int32 payment_id = 11;
+	int32 asset_addition_id = 12;
+	int32 expedient_id = 13;
+}
+message ConversionRate {
+	int32 id = 1;
+	string uuid = 2;
+	int32 organization_id = 3;
+	Currency currency_from = 4;
+	Currency currency_to = 5;
+	google.protobuf.Timestamp valid_from = 6;
+	google.protobuf.Timestamp valid_to = 7;
+	string multiply_rate = 8;
+	string divide_rate = 9;
+	ConversionType conversion_type = 10;
+}
+message CreateConversionRateRequest {
+	int32 organization_id = 1;
+	int32 conversion_type_id = 2;
+	google.protobuf.Timestamp date = 3;
+	int32 business_partner_id = 4;
+	int32 currency_from_id = 5;
+	int32 currency_to_id = 6;
+	string negotiated_rate = 7;
 }
