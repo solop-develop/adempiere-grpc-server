@@ -169,7 +169,7 @@ public class FiscalDocumentLine {
 		MProduct product = null;
 		MCharge charge = null;
 		MTax tax = null;
-		productValue = summaryLine.getValue();
+		productValue = summaryLine.getSP013_ElectronicProductType();
 		productName = summaryLine.getName();
 		productDescription = summaryLine.getDescription();
 		MUOM unitOfMeasure = (MUOM) summaryLine.getC_UOM();
