@@ -407,7 +407,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		);
 
 		MTable table = MTable.get(context, tab.getAD_Table_ID());
-		String[] keyColumns = table.getKeyColumns();
+		final String[] keyColumns = table.getKeyColumns();
 
 		String sql = QueryUtil.getTabQueryWithReferences(
 			context,
@@ -417,7 +417,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> filtersList = new ArrayList<Object>();
 		if (keyColumns.length == 1) {
-			for (final String keyColumnName: table.getKeyColumns()) {
+			for (final String keyColumnName: keyColumns) {
 				MColumn column = table.getColumn(keyColumnName);
 				if (DisplayType.isID(column.getAD_Reference_ID())) {
 					if (whereClause.length() > 0) {
@@ -432,13 +432,12 @@ public class UserInterface extends UserInterfaceImplBase {
 				}
 			}
 		} else {
-			String whereMultiKeys = WhereClauseUtil.getWhereClauseFromKeyColumns(keyColumns);
-			whereMultiKeys = WhereClauseUtil.getWhereRestrictionsWithAlias(
+			final String whereMultiKeys = WhereClauseUtil.getWhereClauseFromKeyColumns(
 				table.getTableName(),
-				whereMultiKeys
+				keyColumns
 			);
 			whereClause.append(whereMultiKeys);
-			filtersList = multiKeys;
+			filtersList.addAll(multiKeys);
 		}
 		sql += " WHERE " + whereClause.toString();
 

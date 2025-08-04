@@ -848,12 +848,22 @@ public class WhereClauseUtil {
 		return where.toString();
 	}
 
+
+
 	public static String getWhereClauseFromKeyColumns(String[] keyColumns) {
+		String whereClause = getWhereClauseFromKeyColumns(null, keyColumns);
+
+		return whereClause;
+	}
+	public static String getWhereClauseFromKeyColumns(String tableAlias, String[] keyColumns) {
 		String whereClause = "";
 		if (keyColumns != null && keyColumns.length > 0) {
 			for (String columnName: keyColumns) {
 				if (!Util.isEmpty(whereClause, true)) {
 					whereClause += " AND ";
+				}
+				if (!Util.isEmpty(tableAlias, true)) {
+					whereClause += tableAlias + ".";
 				}
 				whereClause += columnName + " = ? ";
 			}
