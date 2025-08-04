@@ -75,6 +75,8 @@ import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.general_ledger.GeneralLedgerGrpc.GeneralLedgerImplBase;
 import org.spin.backend.grpc.general_ledger.AccountingElement;
+import org.spin.backend.grpc.general_ledger.ConversionRate;
+import org.spin.backend.grpc.general_ledger.CreateConversionRateRequest;
 import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentRequest;
 import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentResponse;
 import org.spin.backend.grpc.general_ledger.GetAccountingCombinationRequest;
@@ -99,9 +101,9 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for Paryroll Action Notice Form
  */
-public class GeneralLedger extends GeneralLedgerImplBase {
+public class GeneralLedgerService extends GeneralLedgerImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(GeneralLedger.class);
+	private CLogger log = CLogger.getCLogger(GeneralLedgerService.class);
 
 	private String tableName = MAccount.Table_Name;
 
@@ -829,6 +831,30 @@ public class GeneralLedger extends GeneralLedgerImplBase {
 		}
 
 		return rePostBuilder;
+	}
+
+
+
+	@Override
+	public void createConversionRate(CreateConversionRateRequest request, StreamObserver<ConversionRate> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ConversionRate.Builder builder = GeneralLedgerServiceLogic.createConversionRate(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
 	}
 
 
