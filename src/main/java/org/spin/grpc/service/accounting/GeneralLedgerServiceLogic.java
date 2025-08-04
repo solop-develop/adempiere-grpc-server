@@ -14,44 +14,72 @@
  ************************************************************************************/
 package org.spin.grpc.service.accounting;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.I_AD_Table;
+import org.adempiere.core.domains.models.I_A_Asset_Addition;
+import org.adempiere.core.domains.models.I_C_BPartner;
+import org.adempiere.core.domains.models.I_C_ConversionType;
+import org.adempiere.core.domains.models.I_C_Conversion_Rate;
+import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
+import org.adempiere.core.domains.models.I_C_Order;
+import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.I_M_MatchInv;
 import org.adempiere.core.domains.models.I_M_MatchPO;
 import org.adempiere.core.domains.models.X_Fact_Acct;
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.asset.model.MAssetAddition;
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MClient;
+import org.compiere.model.MConversionRate;
+import org.compiere.model.MConversionType;
+import org.compiere.model.MCurrency;
+import org.compiere.model.MInvoice;
+import org.compiere.model.MOrder;
 import org.compiere.model.MOrg;
+import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.TimeUtil;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.solop.sp032.util.CurrencyConvertDocumentsUtil;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.general_ledger.AccountingDocument;
+import org.spin.backend.grpc.general_ledger.ConversionRate;
+import org.spin.backend.grpc.general_ledger.CreateConversionRateRequest;
 import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentRequest;
 import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
-import org.spin.base.util.GeneralLedgerConvertUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -65,6 +93,71 @@ public class GeneralLedgerServiceLogic {
 		I_M_MatchInv.Table_Name,
 		I_M_MatchPO.Table_Name
 	);
+
+
+	public static MOrg validateAndGetOrganization(int organizationId) {
+		if (organizationId < 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
+		}
+		if (organizationId == 0) {
+			throw new AdempiereException("@Org0NotAllowed@");
+		}
+		MOrg organization = new Query(
+			Env.getCtx(),
+			I_AD_Org.Table_Name,
+			" AD_Org_ID = ? ",
+			null
+		)
+			.setParameters(organizationId)
+			.setClient_ID()
+			.first()
+		;
+		if (organization == null || organization.getAD_Org_ID() <= 0) {
+			throw new AdempiereException("@AD_Org_ID@ @NotFound@");
+		}
+		if (!organization.isActive()) {
+			throw new AdempiereException("@AD_Org_ID@ @NotActive@");
+		}
+		return organization;
+	}
+
+
+	public static MCurrency validateAndGetCurrency(int currencyId) {
+		if (currencyId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Currency_ID@");
+		}
+		MCurrency currency = new Query(
+			Env.getCtx(),
+			I_C_Currency.Table_Name,
+			" C_Currency_ID = ? ",
+			null
+		)
+			.setParameters(currencyId)
+			.first()
+		;
+		if (currency == null || currency.getC_Currency_ID() <= 0) {
+			throw new AdempiereException("@C_Currency_ID@ @NotFound@");
+		}
+		if (!currency.isActive()) {
+			throw new AdempiereException("@C_Currency_ID@ @NotActive@");
+		}
+		return currency;
+	}
+
+
+	public static MBPartner validateAndGetBusinessPartner(int businessPartnerId) {
+		if (businessPartnerId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
+		}
+		MBPartner businessPartner = MBPartner.get(Env.getCtx(), businessPartnerId);
+		if (businessPartner == null || businessPartner.getC_BPartner_ID() <= 0) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotFound@");
+		}
+		if (!businessPartner.isActive()) {
+			throw new AdempiereException("@C_BPartner_ID@ @NotActive@");
+		}
+		return businessPartner;
+	}
 
 
 	public static ListLookupItemsResponse.Builder listAccountingSchemas(ListAccountingSchemasRequest request) {
@@ -281,6 +374,182 @@ public class GeneralLedgerServiceLogic {
 		}
 
 		builder.setIsShowAccounting(true);
+		return builder;
+	}
+
+
+	public static ConversionRate.Builder createConversionRate(CreateConversionRateRequest request) {
+		MOrg organization = new MOrg(Env.getCtx(), request.getOrganizationId(), null);
+
+		int currencyFromId = request.getCurrencyFromId();
+		if (currencyFromId <= 0) {
+			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			final int accountingSchemaId = DB.getSQLValue(null, "SELECT MIN(C_AcctSchema_ID) FROM C_AcctSchema WHERE AD_CLient_ID = ?", clientId);
+			MAcctSchema accountingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId);
+			currencyFromId = accountingSchema.getC_Currency_ID();
+		}
+		MCurrency currencyFrom = validateAndGetCurrency(
+			currencyFromId
+		);
+		MCurrency currencyTo = validateAndGetCurrency(
+			request.getCurrencyToId()
+		);
+
+		MBPartner businessPartner = validateAndGetBusinessPartner(
+			request.getBusinessPartnerId()
+		);
+
+		BigDecimal negotiatedRate = NumberManager.getBigDecimalFromString(
+			request.getNegotiatedRate()
+		);
+
+		AtomicReference<MConversionRate> conversionRateReference = new AtomicReference<MConversionRate>();
+		Trx.run(transactionName -> {
+			String whereClause = "C_BPartner_ID = ?";
+			List<Integer> filtersList = new ArrayList<Integer>();
+			filtersList.add(businessPartner.getC_BPartner_ID());
+
+			String documentNo = "";
+			if (request.getOrderId() > 0) {
+				MOrder order = new MOrder(Env.getCtx(), request.getOrderId(), null);
+				if (order != null && order.getC_Order_ID() > 0) {
+					whereClause += " AND C_Order_ID = ?";
+					filtersList.add(
+						request.getOrderId()
+					);
+					documentNo = order.getDocumentNo();
+				}
+			} else if (request.getInvoiceId() > 0) {
+				MInvoice invoice = new MInvoice(Env.getCtx(), request.getInvoiceId(), null);
+				if (invoice != null && invoice.getC_Invoice_ID() > 0) {
+					whereClause += " AND C_Invoice_ID = ?";
+					filtersList.add(
+						request.getInvoiceId()
+					);
+					documentNo = invoice.getDocumentNo();
+				}
+			} else if (request.getPaymentId() > 0) {
+				MPayment payment = new MPayment(Env.getCtx(), request.getPaymentId(), null);
+				if (payment != null && payment.getC_Payment_ID() > 0) {
+					whereClause += " AND C_Order_ID = ?";
+					filtersList.add(
+						request.getPaymentId()
+					);
+					documentNo = payment.getDocumentNo();
+				}
+			} else if (request.getAssetAdditionId() > 0) {
+				MAssetAddition assetAddition = new MAssetAddition(Env.getCtx(), request.getAssetAdditionId(), null);
+				if (assetAddition != null && assetAddition.getA_Asset_Addition_ID() > 0) {
+					whereClause += " AND A_Asset_Addition_ID = ?";
+					filtersList.add(
+						request.getAssetAdditionId()
+					);
+					documentNo = assetAddition.getDocumentNo();
+				}
+			} else if (request.getExpedientId() > 0) {
+				MTable table = MTable.get(Env.getCtx(), "SP009_Expedient");
+				if (table != null && table.getAD_Table_ID() > 0) {
+					PO expedient = table.getPO(request.getExpedientId(), transactionName);
+					if (expedient != null && expedient.get_ID() > 0) {
+						whereClause += " AND SP009_Expedient_ID = ?";
+						filtersList.add(
+							request.getExpedientId()
+						);
+						documentNo = expedient.get_ValueAsString(I_C_Order.COLUMNNAME_DocumentNo);
+					}
+				}
+			}
+
+			MConversionType conversionType = new Query(
+				Env.getCtx(),
+				I_C_ConversionType.Table_Name,
+				whereClause,
+				transactionName
+			)
+				.setParameters(filtersList)
+				.setClient_ID()
+				// .setApplyAccessFilter(true)
+				.first()
+			;
+			if (conversionType == null || conversionType.getC_ConversionType_ID() <= 0) {
+				conversionType = new MConversionType(Env.getCtx(), 0, transactionName);
+				// fill with parent conversion type
+				if (request.getConversionTypeId() > 0) {
+					MConversionType conversionTypeBase = new MConversionType(Env.getCtx(), request.getConversionTypeId(), transactionName);
+					PO.copyValues(conversionTypeBase, conversionType);
+					conversionType.set_CustomColumn(
+						CurrencyConvertDocumentsUtil.COLUMNNAME_SP032_ParentCType_ID,
+						request.getConversionTypeId()
+					);
+				}
+				conversionType.setAD_Org_ID(0);
+				conversionType.setIsDefault(false);
+				String name = businessPartner.getDisplayValue();
+				String value = businessPartner.getValue();
+				if (!Util.isEmpty(documentNo, true)) {
+					name += " - " + documentNo;
+					value += " - " + documentNo;
+				}
+				conversionType.setValue(value);
+				conversionType.setName(name);
+
+				conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, businessPartner.getC_BPartner_ID());
+				if (request.getOrderId() > 0) {
+					conversionType.set_CustomColumn(I_C_Order.COLUMNNAME_C_Order_ID, request.getOrderId());
+				} else if (request.getInvoiceId() > 0) {
+					conversionType.set_CustomColumn(I_C_Invoice.COLUMNNAME_C_Order_ID, request.getInvoiceId());
+				} else if (request.getPaymentId() > 0) {
+					conversionType.set_CustomColumn(I_C_Payment.COLUMNNAME_C_Payment_ID, request.getPaymentId());
+				} else if (request.getAssetAdditionId() > 0) {
+					conversionType.set_CustomColumn(I_A_Asset_Addition.COLUMNNAME_A_Asset_Addition_ID, request.getAssetAdditionId());
+				} else if (request.getExpedientId() > 0) {
+					conversionType.set_CustomColumn(CurrencyConvertDocumentsUtil.ColumnName_SP009_Expedient_ID, request.getExpedientId());
+				}
+				conversionType.saveEx();
+			}
+
+			Timestamp date = ValueManager.getDateFromTimestampDate(
+				request.getDate()
+			);
+			date = TimeUtil.getDay(date); // Remove time mark
+
+			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			final int organizationId = organization.getAD_Org_ID();
+
+			MConversionRate conversionRate = new Query(
+				Env.getCtx(),
+				I_C_Conversion_Rate.Table_Name,
+				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ? >= ValidFrom AND ? <= ValidTo AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
+				null
+			)
+				.setParameters(currencyFrom.getC_Currency_ID(), currencyTo.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, organizationId)
+				.first()
+			;
+			if (conversionRate == null || conversionRate.getC_ConversionType_ID() <= 0) {
+				conversionRate = new MConversionRate(Env.getCtx(), 0, transactionName);
+				conversionRate.setAD_Org_ID(0);
+				conversionRate.setC_ConversionType_ID(
+					conversionType.getC_ConversionType_ID()
+				);
+				conversionRate.setC_Currency_ID(
+					currencyFrom.getC_Currency_ID()
+				);
+				conversionRate.setC_Currency_ID_To(
+					currencyTo.getC_Currency_ID()
+				);
+				conversionRate.setValidFrom(date);
+				conversionRate.setValidTo(date);
+			}
+			conversionRate.setMultiplyRate(negotiatedRate);
+			conversionRate.saveEx();
+
+			//
+			conversionRateReference.set(conversionRate);
+		});
+
+		ConversionRate.Builder builder = GeneralLedgerConvertUtil.convertConversionRate(
+			conversionRateReference.get()
+		);
 		return builder;
 	}
 

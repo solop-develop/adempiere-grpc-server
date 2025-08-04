@@ -46,7 +46,7 @@ import org.spin.grpc.service.UserCustomization;
 import org.spin.grpc.service.UserInterface;
 import org.spin.grpc.service.WebStore;
 import org.spin.grpc.service.Workflow;
-import org.spin.grpc.service.accounting.GeneralLedger;
+import org.spin.grpc.service.accounting.GeneralLedgerService;
 import org.spin.grpc.service.core_functionality.CoreFunctionality;
 import org.spin.grpc.service.dictionary.Dictionary;
 import org.spin.grpc.service.display_definition.DisplayDefinition;
@@ -208,8 +208,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new FileManagement());
 		logger.info("Service " + FileManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	General Ledger
-		serverBuilder.addService(new GeneralLedger());
-		logger.info("Service " + GeneralLedger.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new GeneralLedgerService());
+		logger.info("Service " + GeneralLedgerService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Import File Loader
 		serverBuilder.addService(new ImportFileLoader());
 		logger.info("Service " + ImportFileLoader.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

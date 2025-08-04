@@ -29,6 +29,7 @@ import org.compiere.model.MRefList;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.solop.sp032.util.CurrencyConvertDocumentsUtil;
 import org.spin.backend.grpc.form.payment_allocation.Charge;
 import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
 import org.spin.backend.grpc.form.payment_allocation.ConversionType;
@@ -187,7 +188,7 @@ public class PaymentAllocationConvertUtil {
 			)
 			.setParentId(
 				conversionType.get_ValueAsInt(
-					"SP032_ParentCType_ID"
+					CurrencyConvertDocumentsUtil.COLUMNNAME_SP032_ParentCType_ID
 				)
 			)
 		;
