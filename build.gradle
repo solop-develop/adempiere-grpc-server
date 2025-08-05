@@ -17,7 +17,7 @@ java {
 
 def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
-def patchLibrary = System.properties['deploy.patchLibrary']
+def adempiereCoreVersion = '1.0.0'
 
 def descriptorFile = "adempiere-grpc-server.dsc"
 def javaMainClass = "org.spin.server.AllInOneServices"
@@ -71,8 +71,31 @@ dependencies {
 	//	Others
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
-	//	ADempiere Core + Patches + Features
-	implementation "${patchLibrary}"
+	//	ADempiere Core
+	implementation "org.solop.adempiere:adempiere-core:${adempiereCoreVersion}"
+	implementation "com.solop.adempiere.tools:solop-core:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:display-definition:core-${adempiereCoreVersion}-1.0.0"
+	// Firebase Connector
+	implementation "com.solop.adempiere.tools:adempiere-firebase-connector:core-${adempiereCoreVersion}-1.0.0"
+	// Time Control
+	implementation "com.solop.adempiere.tools:time-control:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:performance-analysis:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.verticals:import-export-management:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.verticals:agency-project:core-${adempiereCoreVersion}-1.0.0"
+	// Electronic Invoicing
+	implementation "com.solop.adempiere.tools:electronic-invoicing:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:shopping-admin-connection:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:cloud-solop-notifier:core-${adempiereCoreVersion}-1.0.0"
+	// Payment Processor
+	implementation "com.solop.adempiere.tools:payment-processor:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:warehouse-light:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:distribution-light:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:wms-light:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:additional-reports:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:intercompany-management:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.verticals:delivery-management-service:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:adempiere-webhook:core-${adempiereCoreVersion}-1.0.0"
+	implementation "com.solop.adempiere.tools:external-store:core-${adempiereCoreVersion}-1.0.0"
 }
 
 configurations.all {
