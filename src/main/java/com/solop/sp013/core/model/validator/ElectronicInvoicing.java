@@ -16,6 +16,7 @@
  *****************************************************************************/
 package com.solop.sp013.core.model.validator;
 
+import com.solop.sp013.core.model.X_SP013_ElectronicLineSummary;
 import com.solop.sp013.core.process.SendInvoice;
 import com.solop.sp013.core.queue.ElectronicDocument;
 import com.solop.sp013.core.util.ElectronicInvoicingChanges;
@@ -29,6 +30,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.openup.core.model.I_C_InvoiceLineCFE;
 import org.spin.queue.util.QueueLoader;
 
 /**
@@ -142,11 +144,15 @@ public class ElectronicInvoicing implements ModelValidator {
 	@Override
 	public String docValidate(PO po, int timing) {
 		if(timing == TIMING_BEFORE_PREPARE) {
-			/*if(po.get_TableName().equals(I_C_Invoice.Table_Name)) {
+			if(po.get_TableName().equals(I_C_Invoice.Table_Name)) {
 				MInvoice invoice = (MInvoice) po;
-				ElectronicInvoicingSummaryGrouping grouping = ElectronicInvoicingSummaryGrouping.newInstance(invoice);
-				grouping.process();
-			}*/
+				if (!new Query(invoice.getCtx(), X_SP013_ElectronicLineSummary.Table_Name, X_SP013_ElectronicLineSummary.COLUMNNAME_C_Invoice_ID + "=?", invoice.get_TrxName())
+					.setParameters(invoice.get_ID())
+					.match()) {
+					ElectronicInvoicingSummaryGrouping grouping = ElectronicInvoicingSummaryGrouping.newInstance(invoice);
+					grouping.process();
+				}
+			}
 		}
 		if(timing == TIMING_BEFORE_REVERSECORRECT
 				|| timing == TIMING_BEFORE_VOID) {
