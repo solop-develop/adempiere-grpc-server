@@ -1,6 +1,8 @@
 package com.solop.sp013.core.util;
 
 import com.solop.sp013.core.model.X_SP013_ElectronicLineSummary;
+import org.adempiere.core.domains.models.I_C_Commission;
+import org.adempiere.core.domains.models.I_M_Product;
 import org.adempiere.core.domains.models.X_S_Contract;
 import org.adempiere.core.domains.models.X_S_ContractLine;
 import org.adempiere.exceptions.AdempiereException;
@@ -20,9 +22,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,10 +64,28 @@ public class ElectronicInvoicingSummaryGrouping {
             isTaxIncluded.set(true);
         }
 
+        String whereClause = "EXISTS (" +
+                "SELECT 1 " +
+                "FROM " + I_C_Commission.Table_Name + " c " +
+                "WHERE c.M_Product_ID=" + I_M_Product.Table_Name + "." + I_M_Product.COLUMNNAME_M_Product_ID + " " +
+                "AND " + I_C_Commission.COLUMNNAME_IsActive + "='Y' " +
+                "AND " + I_C_Commission.COLUMNNAME_DocBasisType + "='H'" +
+                ")";
+        Set<Integer> honoraryProductIds = new HashSet<>(new Query(invoice.getCtx(), I_M_Product.Table_Name, whereClause, invoice.get_TrxName()).getIDsAsList());
+
         invoiceLines.forEach(invoiceLine -> {
             String description = null;
             String key = "";
-            if (billingCriteria.equals("L")){
+            if (honoraryProductIds.contains(invoiceLine.getM_Product_ID())) {
+                key = "H" + invoiceLine.getM_Product_ID();
+                key += invoiceLine.getC_Tax_ID();
+                description = groupDescription.get(key);
+                if (description == null) {
+                    MProduct product = MProduct.get(invoice.getCtx(), invoiceLine.getM_Product_ID());
+                    description = product.getName();
+                    groupDescription.put(key, description);
+                }
+            } else if (billingCriteria.equals("L")){
                 key = String.valueOf(invoiceLine.get_ID());
                 key += String.valueOf(invoiceLine.getC_Tax_ID());
                 description = groupDescription.get(key);
@@ -79,8 +101,6 @@ public class ElectronicInvoicingSummaryGrouping {
                     }
                     groupDescription.put(key, description);
                 }
-
-
             } else if (billingCriteria.equals("P")){
                 int projectId = invoiceLine.getC_Project_ID();
                 if (projectId <= 0) {
