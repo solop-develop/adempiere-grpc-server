@@ -91,6 +91,11 @@ service GeneralLedger {
 	}
 
 	// Conversion Rates
+	rpc ListConversionTypes(ListConversionTypesRequest) returns (ListConversionTypesResponse) {
+		option (google.api.http) = {
+			get: "/general-ledger/conversion-types"
+		};
+	}
 	rpc CreateConversionRate(CreateConversionRateRequest) returns (ConversionRate) {
 		option (google.api.http) = {
 			post: "/general-ledger/conversion-types/conversion-rates"
@@ -296,15 +301,7 @@ message StartRePostResponse {
 }
 
 
-// Conversion Rate
-message Currency {
-	int32 id = 1;
-	string uuid = 2;
-	string iso_code = 3;
-	string name = 4;
-	string symbol = 5;
-	int32 standard_precision = 6;
-}
+// Conversion Type
 message ConversionType {
 	int32 id = 1;
 	string uuid = 2;
@@ -319,6 +316,36 @@ message ConversionType {
 	int32 payment_id = 11;
 	int32 asset_addition_id = 12;
 	int32 expedient_id = 13;
+}
+message ListConversionTypesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	int32 business_partner_id = 10;
+	google.protobuf.Timestamp date = 11;
+}
+message ListConversionTypesResponse {
+	int64 record_count = 1;
+	repeated ConversionType records = 2;
+	string next_page_token = 3;
+}
+
+
+// Conversion Rate
+message Currency {
+	int32 id = 1;
+	string uuid = 2;
+	string iso_code = 3;
+	string name = 4;
+	string symbol = 5;
+	int32 standard_precision = 6;
 }
 message ConversionRate {
 	int32 id = 1;
