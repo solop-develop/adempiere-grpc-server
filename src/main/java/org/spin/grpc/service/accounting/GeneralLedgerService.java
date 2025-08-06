@@ -85,6 +85,8 @@ import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingFactsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
+import org.spin.backend.grpc.general_ledger.ListConversionTypesRequest;
+import org.spin.backend.grpc.general_ledger.ListConversionTypesResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingElementValuesRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingElementsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingElementsResponse;
@@ -834,6 +836,28 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 	}
 
 
+
+	@Override
+	public void listConversionTypes(ListConversionTypesRequest request, StreamObserver<ListConversionTypesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListConversionTypesResponse.Builder builder = GeneralLedgerServiceLogic.listConversionTypes(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
 
 	@Override
 	public void createConversionRate(CreateConversionRateRequest request, StreamObserver<ConversionRate> responseObserver) {

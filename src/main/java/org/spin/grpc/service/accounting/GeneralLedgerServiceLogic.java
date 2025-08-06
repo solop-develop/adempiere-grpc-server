@@ -66,12 +66,15 @@ import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.general_ledger.AccountingDocument;
 import org.spin.backend.grpc.general_ledger.ConversionRate;
+import org.spin.backend.grpc.general_ledger.ConversionType;
 import org.spin.backend.grpc.general_ledger.CreateConversionRateRequest;
 import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentRequest;
 import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
+import org.spin.backend.grpc.general_ledger.ListConversionTypesRequest;
+import org.spin.backend.grpc.general_ledger.ListConversionTypesResponse;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.RecordUtil;
@@ -375,6 +378,61 @@ public class GeneralLedgerServiceLogic {
 
 		builder.setIsShowAccounting(true);
 		return builder;
+	}
+
+
+
+	public static ListConversionTypesResponse.Builder listConversionTypes(ListConversionTypesRequest request) {
+		MTable table = MTable.get(
+			Env.getCtx(),
+			I_C_ConversionType.Table_Name
+		);
+
+		String whereClause = "";
+		List<Object> parametersList = new ArrayList<Object>();
+		if (table.get_ColumnIndex(I_C_BPartner.COLUMNNAME_C_BPartner_ID) >= 0) {
+			whereClause = "C_BPartner_ID IS NULL OR C_BPartner_ID = ?";
+			if (request.getBusinessPartnerId() > 0) {
+				validateAndGetBusinessPartner(
+					request.getBusinessPartnerId()
+				);
+			}
+			parametersList.add(
+				request.getBusinessPartnerId()
+			);
+		}
+
+		Query query = new Query(
+			Env.getCtx(),
+			table,
+			whereClause,
+			null
+		)
+			.setParameters(parametersList)
+			.setApplyAccessFilter(true)
+			.setOnlyActiveRecords(true)
+		;
+
+		ListConversionTypesResponse.Builder builderList = ListConversionTypesResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
+
+		query
+			.getIDsAsList()
+			.forEach(conversionTypeId -> {
+				PO conversionType = table.getPO(conversionTypeId, null);
+				ConversionType.Builder currencyBuilder = GeneralLedgerConvertUtil.convertConversionType(
+					(MConversionType) conversionType
+				);
+				builderList.addRecords(
+					currencyBuilder
+				);
+			})
+		;
+
+		return builderList;
 	}
 
 
