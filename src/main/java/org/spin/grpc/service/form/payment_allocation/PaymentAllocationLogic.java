@@ -413,6 +413,36 @@ public class PaymentAllocationLogic {
 
 			//
 			conversionRateReference.set(conversionRate);
+
+			// Invert conversion rate
+			MConversionRate invertConversionRate = new Query(
+				Env.getCtx(),
+				I_C_Conversion_Rate.Table_Name,
+				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ? >= ValidFrom AND ? <= ValidTo AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
+				null
+			)
+				.setParameters(currencyTo.getC_Currency_ID(), currencyFrom.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, organizationId)
+				.first()
+			;
+			if (invertConversionRate == null || invertConversionRate.getC_ConversionType_ID() <= 0) {
+				invertConversionRate = new MConversionRate(Env.getCtx(), 0, transactionName);
+				invertConversionRate.setAD_Org_ID(0);
+				invertConversionRate.setC_ConversionType_ID(
+					conversionType.getC_ConversionType_ID()
+				);
+				invertConversionRate.setC_Currency_ID(
+					currencyTo.getC_Currency_ID()
+				);
+				invertConversionRate.setC_Currency_ID_To(
+					currencyFrom.getC_Currency_ID()
+				);
+				invertConversionRate.setValidFrom(date);
+				invertConversionRate.setValidTo(date);
+			}
+			invertConversionRate.setMultiplyRate(
+				conversionRate.getDivideRate()
+			);
+			invertConversionRate.saveEx();
 		});
 
 		ConversionRate.Builder builder = PaymentAllocationConvertUtil.convertConversionRate(
