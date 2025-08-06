@@ -328,8 +328,13 @@ message ListConversionTypesRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 	// custom filters
-	int32 business_partner_id = 10;
-	google.protobuf.Timestamp date = 11;
+	google.protobuf.Timestamp date = 10;
+	int32 business_partner_id = 11;
+	int32 order_id = 12;
+	int32 invoice_id = 13;
+	int32 payment_id = 14;
+	int32 asset_addition_id = 15;
+	int32 expedient_id = 16;
 }
 message ListConversionTypesResponse {
 	int64 record_count = 1;
