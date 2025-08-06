@@ -30,7 +30,6 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
-import org.openup.core.model.I_C_InvoiceLineCFE;
 import org.spin.queue.util.QueueLoader;
 
 /**
