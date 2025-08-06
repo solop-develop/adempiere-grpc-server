@@ -389,17 +389,62 @@ public class GeneralLedgerServiceLogic {
 		);
 
 		String whereClause = "";
-		List<Object> parametersList = new ArrayList<Object>();
+		List<Object> filtersList = new ArrayList<Object>();
 		if (table.get_ColumnIndex(I_C_BPartner.COLUMNNAME_C_BPartner_ID) >= 0) {
-			whereClause = "C_BPartner_ID IS NULL OR C_BPartner_ID = ?";
+			whereClause = "(C_BPartner_ID IS NULL OR C_BPartner_ID = ?)";
 			if (request.getBusinessPartnerId() > 0) {
 				validateAndGetBusinessPartner(
 					request.getBusinessPartnerId()
 				);
 			}
-			parametersList.add(
+			filtersList.add(
 				request.getBusinessPartnerId()
 			);
+
+			if (request.getOrderId() > 0) {
+				MOrder order = new MOrder(Env.getCtx(), request.getOrderId(), null);
+				if (order != null && order.getC_Order_ID() > 0) {
+					whereClause += " AND C_Order_ID = ?";
+					filtersList.add(
+						request.getOrderId()
+					);
+				}
+			} else if (request.getInvoiceId() > 0) {
+				MInvoice invoice = new MInvoice(Env.getCtx(), request.getInvoiceId(), null);
+				if (invoice != null && invoice.getC_Invoice_ID() > 0) {
+					whereClause += " AND C_Invoice_ID = ?";
+					filtersList.add(
+						request.getInvoiceId()
+					);
+				}
+			} else if (request.getPaymentId() > 0) {
+				MPayment payment = new MPayment(Env.getCtx(), request.getPaymentId(), null);
+				if (payment != null && payment.getC_Payment_ID() > 0) {
+					whereClause += " AND C_Order_ID = ?";
+					filtersList.add(
+						request.getPaymentId()
+					);
+				}
+			} else if (request.getAssetAdditionId() > 0) {
+				MAssetAddition assetAddition = new MAssetAddition(Env.getCtx(), request.getAssetAdditionId(), null);
+				if (assetAddition != null && assetAddition.getA_Asset_Addition_ID() > 0) {
+					whereClause += " AND A_Asset_Addition_ID = ?";
+					filtersList.add(
+						request.getAssetAdditionId()
+					);
+				}
+			} else if (request.getExpedientId() > 0) {
+				MTable expedientTable = MTable.get(Env.getCtx(), "SP009_Expedient");
+				if (expedientTable != null && expedientTable.getAD_Table_ID() > 0) {
+					PO expedient = expedientTable.getPO(request.getExpedientId(), null);
+					if (expedient != null && expedient.get_ID() > 0) {
+						whereClause += " AND SP009_Expedient_ID = ?";
+						filtersList.add(
+							request.getExpedientId()
+						);
+					}
+				}
+			}
 		}
 
 		Query query = new Query(
@@ -408,7 +453,7 @@ public class GeneralLedgerServiceLogic {
 			whereClause,
 			null
 		)
-			.setParameters(parametersList)
+			.setParameters(filtersList)
 			.setApplyAccessFilter(true)
 			.setOnlyActiveRecords(true)
 		;
@@ -464,7 +509,7 @@ public class GeneralLedgerServiceLogic {
 		AtomicReference<MConversionRate> conversionRateReference = new AtomicReference<MConversionRate>();
 		Trx.run(transactionName -> {
 			String whereClause = "C_BPartner_ID = ?";
-			List<Integer> filtersList = new ArrayList<Integer>();
+			List<Object> filtersList = new ArrayList<Object>();
 			filtersList.add(businessPartner.getC_BPartner_ID());
 
 			String documentNo = "";
