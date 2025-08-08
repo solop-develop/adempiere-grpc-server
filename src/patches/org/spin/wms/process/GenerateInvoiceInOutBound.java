@@ -20,7 +20,6 @@ package org.spin.wms.process;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.process.util.InvoiceGrouping;
 import org.compiere.model.*;
-import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.eevolution.wms.model.MWMInOutBound;
 import org.eevolution.wms.model.MWMInOutBoundLine;
