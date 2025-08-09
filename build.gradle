@@ -204,14 +204,9 @@ application {
 			contents {
 				from(ADempiereAllInOne) {
 					into 'bin'
-					filePermissions {
-						unix {
-							from('**/*.sh')
-							mode = 0755
-						}
-						windows {
-							from('**/*.bat')
-							mode = 0755
+					eachFile { file ->
+						if (file.name.endsWith('.sh') || file.name.endsWith('.bat')) {
+							file.setMode(0755)
 						}
 					}
 				}
