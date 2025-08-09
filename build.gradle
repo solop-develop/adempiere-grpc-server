@@ -189,6 +189,12 @@ run {
 application {
 	// mainClass = javaMainClass
 	mainClass.set(javaMainClass)
+
+	// Agrega esto para la distribución
+	applicationDistribution.from(ADempiereAllInOne) {
+		into "bin"
+		fileMode = 0755
+	}
 }
 jar {
 	manifest {
@@ -204,11 +210,6 @@ task ADempiereAllInOne(type: CreateStartScripts) {
     defaultJvmOpts = Arrays.asList("-DPropertyFile=Adempiere.properties", "-Dorg.adempiere.server.embedded=true")
     outputDir = new File(project.buildDir, 'tmp')
     classpath = jar.outputs.files + project.configurations.runtimeClasspath
-}
-
-applicationDistribution.into('bin') {
-	from(ADempiereAllInOne)
-    fileMode = 0755
 }
 
 //	Create release for project
