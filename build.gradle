@@ -204,11 +204,17 @@ application {
 			contents {
 				from(ADempiereAllInOne) {
 					into 'bin'
-					// eachFile { file ->
-					// 	file.mode = 0755
-					// }
+					filePermissions {
+						unix {
+							from('**/*.sh')
+							mode = 0755
+						}
+						windows {
+							from('**/*.bat')
+							mode = 0755
+						}
+					}
 				}
-				fileMode = 0755
 			}
 		}
 	}
