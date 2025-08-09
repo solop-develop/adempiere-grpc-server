@@ -186,9 +186,31 @@ run {
 	]
 }
 
+task ADempiereAllInOne(type: CreateStartScripts) {
+	mainClass = javaMainClass
+	applicationName = 'adempiere-all-in-one-server'
+	defaultJvmOpts = Arrays.asList("-DPropertyFile=Adempiere.properties", "-Dorg.adempiere.server.embedded=true")
+	outputDir = new File(project.buildDir, 'tmp')
+	classpath = jar.outputs.files + project.configurations.runtimeClasspath
+}
+
 application {
 	// mainClass = javaMainClass
 	mainClass.set(javaMainClass)
+
+	// distribution output
+	distributions {
+		main {
+			contents {
+				from(ADempiereAllInOne) {
+					into 'bin'
+					eachFile { file ->
+						file.mode = 0755
+					}
+				}
+			}
+		}
+	}
 }
 jar {
 	manifest {
@@ -196,19 +218,6 @@ jar {
 			'Main-Class': javaMainClass
 		)
 	}
-}
-
-task ADempiereAllInOne(type: CreateStartScripts) {
-	mainClass = javaMainClass
-    applicationName = 'adempiere-all-in-one-server'
-    defaultJvmOpts = Arrays.asList("-DPropertyFile=Adempiere.properties", "-Dorg.adempiere.server.embedded=true")
-    outputDir = new File(project.buildDir, 'tmp')
-    classpath = jar.outputs.files + project.configurations.runtimeClasspath
-}
-
-applicationDistribution.into('bin') {
-	from(ADempiereAllInOne)
-    fileMode = 0755
 }
 
 //	Create release for project
