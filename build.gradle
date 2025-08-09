@@ -206,7 +206,7 @@ application {
 					into 'bin'
 					eachFile { file ->
 						if (file.name.endsWith('.sh') || file.name.endsWith('.bat')) {
-							file.setPermissions {
+							file.permissions {
 								mode = 0755
 							}
 						}
