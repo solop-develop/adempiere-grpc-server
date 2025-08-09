@@ -204,10 +204,11 @@ application {
 			contents {
 				from(ADempiereAllInOne) {
 					into 'bin'
-					eachFile { file ->
-						file.mode = 0755
-					}
+					// eachFile { file ->
+					// 	file.mode = 0755
+					// }
 				}
+				fileMode = 0755
 			}
 		}
 	}
