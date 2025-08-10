@@ -197,19 +197,25 @@ distZip {
 	dependsOn compileTestJava
 }
 
-task ADempiereAllInOne(type: CreateStartScripts) {
-	mainClass = javaMainClass
+startScripts {
 	applicationName = 'adempiere-all-in-one-server'
-	defaultJvmOpts = Arrays.asList("-DPropertyFile=Adempiere.properties", "-Dorg.adempiere.server.embedded=true")
+
+	// default JVM setting
+	defaultJvmOpts = [
+		"-DPropertyFile=Adempiere.properties", 
+		"-Dorg.adempiere.server.embedded=true"
+	]
 	outputDir = new File(project.buildDir, 'tmp')
 	classpath = jar.outputs.files + project.configurations.runtimeClasspath
 
 	doLast {
-		// Configurar permisos para los scripts generados
+		// Rename files after generating them
 		def unixScript = file(getUnixScript())
-		unixScript.setExecutable(true, false)
 		def winScript = file(getWindowsScript())
-		winScript.setExecutable(true, false)
+
+		// Configure permissions for generated scripts
+		unixScript.setExecutable(true, false)
+		// winScript.setExecutable(true, false)
 	}
 }
 
@@ -221,9 +227,6 @@ application {
 	distributions {
 		main {
 			contents {
-				from(ADempiereAllInOne) {
-					into 'bin'
-				}
 			}
 		}
 	}
