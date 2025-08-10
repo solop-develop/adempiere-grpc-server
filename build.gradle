@@ -189,6 +189,14 @@ run {
 	]
 }
 
+distTar {
+	dependsOn compileTestJava
+}
+
+distZip {
+	dependsOn compileTestJava
+}
+
 task ADempiereAllInOne(type: CreateStartScripts) {
 	mainClass = javaMainClass
 	applicationName = 'adempiere-all-in-one-server'
