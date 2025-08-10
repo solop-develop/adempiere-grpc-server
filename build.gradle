@@ -226,6 +226,9 @@ jar {
 			'Main-Class': javaMainClass
 		)
 	}
+
+	// only include files from the ‘main’ sourceSet
+	from sourceSets.main.output
 }
 
 //	Create release for project
