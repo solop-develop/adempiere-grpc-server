@@ -204,14 +204,9 @@ application {
 			contents {
 				from(ADempiereAllInOne) {
 					into 'bin'
-					eachFile { file ->
-						if (file.name.endsWith('.sh') || file.name.endsWith('.bat')) {
-							file.permissions {
-								mode = 0755
-							}
-						}
-					}
 				}
+				executableDir = 'bin'
+				fileMode = 0755
 			}
 		}
 	}
