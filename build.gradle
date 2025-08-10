@@ -188,16 +188,16 @@ run {
 	]
 }
 
+// compressed files task
 distTar {
-	dependsOn compileTestJava
+	dependsOn compileTestJava, copyDescriptor, startScripts
 }
-
 distZip {
-	dependsOn compileTestJava
+	dependsOn compileTestJava, copyDescriptor, startScripts
 }
 
 startScripts {
-	applicationName = 'adempiere-all-in-one-server'
+	applicationName = 'start-backend'
 
 	// default JVM setting
 	defaultJvmOpts = [
@@ -207,10 +207,14 @@ startScripts {
 	outputDir = new File(project.buildDir, 'tmp')
 	classpath = jar.outputs.files + project.configurations.runtimeClasspath
 
+	// Configure script names with extensions
 	doLast {
-		// Rename files after generating them
 		def unixScript = file(getUnixScript())
-		// def winScript = file(getWindowsScript())
+		def windowsScript = file(getWindowsScript())
+
+		// Rename files after generating them
+		unixScript.renameTo("${unixScript.parent}/${applicationName}.sh")
+		windowsScript.renameTo("${windowsScript.parent}/${applicationName}.bat")
 
 		// Configure permissions for generated scripts
 		unixScript.setExecutable(true, false)

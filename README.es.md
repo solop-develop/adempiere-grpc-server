@@ -61,7 +61,7 @@ No olvide que para ejecutar el servidor necesita establecer la línea del archiv
 - Ejecutar
 
 ```bash
-./adempiere-all-in-one-server "./resources/standalone.yaml"
+./start-backend.sh "./resources/standalone.yaml"
 ```
 
 
