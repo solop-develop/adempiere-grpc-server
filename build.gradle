@@ -146,6 +146,9 @@ allprojects {
 		into "${projectDir}/resources/"
 		// into "${projectDir}/docker-compose/envoy/definitions/"
 		// rename { "${descriptorFile}" }
+
+		// task dependency
+		dependsOn "generateTestProto"
 	}
 
 	tasks.matching {
