@@ -29,7 +29,7 @@ sed -i "s|fill_connection_timeout|$CONNECTION_TIMEOUT|g" env.yaml
 sed -i "s|fill_maximum_lifetime|$MAXIMUM_LIFETIME|g" env.yaml
 sed -i "s|fill_keepalive_time|$KEEPALIVE_TIME|g" env.yaml
 sed -i "s|fill_connection_test_query|$CONNECTION_TEST_QUERY|g" env.yaml
-sed -i "s|$DEFAULT_JAVA_OPTIONS|$JAVA_OPTIONS|g" bin/adempiere-all-in-one-server
+sed -i "s|$DEFAULT_JAVA_OPTIONS|$JAVA_OPTIONS|g" bin/start-backend.sh
 
 # Run app
-bin/adempiere-all-in-one-server env.yaml
+bin/start-backend.sh env.yaml

@@ -61,7 +61,7 @@ Don't forgive that for run server you need set `yaml` file line is `/resources` 
 - Run it
 
 ```shell
-./adempiere-all-in-one-server "./resources/standalone.yaml"
+./start-backend.sh "./resources/standalone.yaml"
 ```
 
 
