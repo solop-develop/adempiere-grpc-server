@@ -192,6 +192,14 @@ task ADempiereAllInOne(type: CreateStartScripts) {
 	defaultJvmOpts = Arrays.asList("-DPropertyFile=Adempiere.properties", "-Dorg.adempiere.server.embedded=true")
 	outputDir = new File(project.buildDir, 'tmp')
 	classpath = jar.outputs.files + project.configurations.runtimeClasspath
+
+	doLast {
+		// Configurar permisos para los scripts generados
+		def unixScript = file(getUnixScript())
+		unixScript.setExecutable(true, false)
+		def winScript = file(getWindowsScript())
+		winScript.setExecutable(true, false)
+	}
 }
 
 application {
@@ -205,8 +213,6 @@ application {
 				from(ADempiereAllInOne) {
 					into 'bin'
 				}
-				executableDir = 'bin'
-				fileMode = 0755
 			}
 		}
 	}
