@@ -175,7 +175,6 @@ sourceSets {
     }
 }
 
-startScripts.enabled = false
 
 run {
 	doFirst {
@@ -211,11 +210,11 @@ startScripts {
 	doLast {
 		// Rename files after generating them
 		def unixScript = file(getUnixScript())
-		def winScript = file(getWindowsScript())
+		// def winScript = file(getWindowsScript())
 
 		// Configure permissions for generated scripts
 		unixScript.setExecutable(true, false)
-		// winScript.setExecutable(true, false)
+		// windowsScript.setExecutable(true, false)
 	}
 }
 
