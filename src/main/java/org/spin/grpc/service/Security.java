@@ -1440,6 +1440,9 @@ public class Security extends SecurityImplBase {
 			.setShowAccounting(
 				role.isShowAcct()
 			)
+			.setPreferenceLevel(
+				role.getPreferenceType()
+			)
 		;
 
 		//	return

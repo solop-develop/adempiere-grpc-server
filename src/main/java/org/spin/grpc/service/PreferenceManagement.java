@@ -15,8 +15,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.preference_management.DeletePreferenceRequest;
 import org.spin.backend.grpc.preference_management.GetPreferenceRequest;
-import org.spin.backend.grpc.preference_management.ListPreferencesRequest;
-import org.spin.backend.grpc.preference_management.ListPreferencesResponse;
 import org.spin.backend.grpc.preference_management.Preference;
 import org.spin.backend.grpc.preference_management.PreferenceManagementGrpc.PreferenceManagementImplBase;
 import org.spin.backend.grpc.preference_management.PreferenceType;
@@ -215,93 +213,6 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 			preference
 		);
 		return preferenceBuilder;
-	}
-
-
-
-	@Override
-	public void listPreferences(ListPreferencesRequest request, StreamObserver<ListPreferencesResponse> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object ListPreferencesRequest Null");
-			}
-			ListPreferencesResponse.Builder preferenceBuilder = listPreferences(request);
-			responseObserver.onNext(preferenceBuilder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.warning(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-				);
-		}
-	}
-	ListPreferencesResponse.Builder listPreferences(ListPreferencesRequest request) {
-		StringBuffer whereClause = new StringBuffer();
-		List<Object> parameters = new ArrayList<>();
-
-		//	For client
-		whereClause.append("AD_Client_ID = ? ");
-		if(request.getIsForCurrentClient()) {
-			parameters.add(Env.getAD_Client_ID(Env.getCtx()));
-		} else {
-			parameters.add(0);
-		}
-
-		//	For Organization
-		whereClause.append("AND AD_Org_ID = ? ");
-		if(request.getIsForCurrentOrganization()) {
-			parameters.add(Env.getAD_Org_ID(Env.getCtx()));
-		} else {
-			parameters.add(0);
-		}
-
-		// For User
-		// if(request.getIsForCurrentUser()) {
-			parameters.add(Env.getAD_User_ID(Env.getCtx()));
-			whereClause.append("AND AD_User_ID = ? ");
-		// } else {
-		// 	whereClause.append("AND AD_User_ID IS NULL ");
-		// }
-
-		if(request.getTypeValue() == PreferenceType.WINDOW_VALUE) {
-			//	For Window
-			if (request.getIsForCurrentContainer()) {
-				if (request.getContainerId() <= 0) {
-					throw new AdempiereException("@FillMandatory@ @AD_Window_ID@");
-				}
-				parameters.add(request.getContainerId());
-				whereClause.append(" AND AD_Window_ID = ?");
-			}
-		} else {
-			whereClause.append("AND AD_Window_ID IS NULL ");
-		}
-
-		Query query = new Query(
-			Env.getCtx(),
-			I_AD_Preference.Table_Name,
-			whereClause.toString(),
-			null
-		)
-			.setParameters(parameters)
-			.setOnlyActiveRecords(true)
-		;
-		
-		ListPreferencesResponse.Builder builderList = ListPreferencesResponse.newBuilder()
-			.setRecordCount(
-				query.count()
-			)
-		;
-		query.getIDsAsList().forEach(preferenceId -> {
-			MPreference preference = new MPreference(Env.getCtx(), preferenceId, null);
-			Preference.Builder builder = convertPreference(preference);
-			builderList.addRecords(builder);
-		});
-
-		return builderList;
 	}
 
 

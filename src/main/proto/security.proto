@@ -39,11 +39,15 @@ service Security {
 	}
 	// Request a Role
 	rpc RunLogout(LogoutRequest) returns (Session) {
-		option (google.api.http) = { post: "/security/logout" };
+		option (google.api.http) = {
+			post: "/security/logout"
+		};
 	}
 	// Request user roles from SessionInfo
 	rpc GetUserInfo(UserInfoRequest) returns (UserInfo) {
-		option (google.api.http) = { get: "/security/user-info" };
+		option (google.api.http) = {
+			get: "/security/user-info"
+		};
 	}
 	// Request Menu from Parent
 	rpc GetMenu(MenuRequest) returns (MenuResponse) {
@@ -60,7 +64,9 @@ service Security {
 	}
 	// Request session
 	rpc GetSessionInfo(SessionInfoRequest) returns (SessionInfo) {
-		option (google.api.http) = { get: "/security/session-info" };
+		option (google.api.http) = {
+			get: "/security/session-info"
+		};
 	}
 	rpc SetSessionAttribute(SetSessionAttributeRequest) returns (Session) {
 		option (google.api.http) = {
@@ -71,20 +77,28 @@ service Security {
 
 	// List Roles
 	rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
-		option (google.api.http) = { get: "/security/roles" };
+		option (google.api.http) = {
+			get: "/security/roles"
+		};
 	}
 	//	List Organizations
 	rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
-		option (google.api.http) = { get: "/security/organizations" };
+		option (google.api.http) = {
+			get: "/security/organizations"
+		};
 	}
 	//	Warehouses
 	rpc ListWarehouses(ListWarehousesRequest) returns (ListWarehousesResponse) {
-		option (google.api.http) = { get: "/security/warehouses" };
+		option (google.api.http) = {
+			get: "/security/warehouses"
+		};
 	}
 
 	// List Available Services
 	rpc ListServices(ListServicesRequest) returns (ListServicesResponse) {
-		option (google.api.http) = { get: "/security/services" };
+		option (google.api.http) = {
+			get: "/security/services"
+		};
 	}
 	// Request login from Open ID
 	rpc RunLoginOpenID(LoginOpenIDRequest) returns (Session) {
@@ -221,6 +235,7 @@ message Role {
 	bool allow_info_crp = 23;
 	bool allow_xls_view = 24;
 	bool show_accounting = 25;
+	string preference_level = 26;
 }
 message ListRolesRequest {
 	string filters = 1;
