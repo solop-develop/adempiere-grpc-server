@@ -20,6 +20,7 @@ import java.sql.Timestamp;
 import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_C_ConversionType;
+import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.I_C_PaymentMethod;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.*;
@@ -245,6 +246,9 @@ public class CollectingManagement {
 		//	
 		if(request.getInvoiceReferenceId() > 0) {
 			payment.set_ValueOfColumn(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID, request.getInvoiceReferenceId());
+		}
+		if(paymentTypeAllocation.get_ValueAsInt(I_C_Payment.COLUMNNAME_C_CardProvider_ID) > 0) {
+			payment.setC_CardProvider_ID(paymentTypeAllocation.get_ValueAsInt(I_C_Payment.COLUMNNAME_C_CardProvider_ID));
 		}
 		payment.saveEx(transactionName);
 		return payment;
