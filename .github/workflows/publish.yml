@@ -192,15 +192,27 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
+      - name: Set Docker Alpine Tags
+        id: set_tags_alpine
+        run: |
+          # Get the release type
+          IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+          # Set the base tags, always include the specific version tag
+          TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}-alpine"
+          # If it's not a pre-release, add the "latest" tag
+          if [[ "$IS_PRE_RELEASE" == "false" ]]; then
+            TAGS+="\n${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:alpine"
+          fi
+          # Set the output variable for the next step to use
+          echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
+
       - name: Push alpine image in Docker Hub
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/alpine.Dockerfile
           push: true
-          tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:alpine
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:alpine-${{ github.event.release.tag_name }}
+          tags: ${{ steps.set_tags_alpine.outputs.tags_to_push }}
 
   # TODO: Download .tar and add docker image without uncompress
   # Publish docker image multiplatform in Docker Hub Registry to application
@@ -238,6 +250,20 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
+      - name: Set Docker Tags
+        id: set_tags
+        run: |
+          # Get the release type
+          IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+          # Set the base tags, always include the specific version tag
+          TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}"
+          # If it's not a pre-release, add the "latest" tag
+          if [[ "$IS_PRE_RELEASE" == "false" ]]; then
+            TAGS+="\n${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:latest"
+          fi
+          # Set the output variable for the next step to use
+          echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
+
       - name: Push image in Docker Hub
         uses: docker/build-push-action@v6
         with:
@@ -246,9 +272,7 @@ jobs:
           platforms: linux/amd64,linux/amd64/v2
           # platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true
-          tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:latest
+          tags: ${{ steps.set_tags.outputs.tags_to_push }}
 
 
   # Publish docker image multiplatform in Docker Hub Registry to application
@@ -283,6 +307,20 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
+      - name: Set Docker Tags
+        id: set_envoy_tags
+        run: |
+          # Get the release type
+          IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+          # Set the base tags, always include the specific version tag
+          TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:${{ github.event.release.tag_name }}"
+          # If it's not a pre-release, add the "latest" tag
+          if [[ "$IS_PRE_RELEASE" == "false" ]]; then
+            TAGS+="\n${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:latest"
+          fi
+          # Set the output variable for the next step to use
+          echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
+
       - name: Push image in Docker Hub
         uses: docker/build-push-action@v6
         with:
@@ -290,6 +328,4 @@ jobs:
           file: docker/grpc_proxy.Dockerfile
           platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true
-          tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:${{ github.event.release.tag_name }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:latest
+          tags: ${{ steps.set_envoy_tags.outputs.tags_to_push }}
