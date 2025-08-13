@@ -201,7 +201,7 @@ jobs:
           TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}-alpine"
           # If it's not a pre-release, add the "latest" tag
           if [[ "$IS_PRE_RELEASE" == "false" ]]; then
-            TAGS+="\n${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:alpine"
+            TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:alpine"
           fi
           # Set the output variable for the next step to use
           echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
@@ -259,7 +259,7 @@ jobs:
           TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}"
           # If it's not a pre-release, add the "latest" tag
           if [[ "$IS_PRE_RELEASE" == "false" ]]; then
-            TAGS+="\n${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:latest"
+            TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:latest"
           fi
           # Set the output variable for the next step to use
           echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
@@ -316,7 +316,7 @@ jobs:
           TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:${{ github.event.release.tag_name }}"
           # If it's not a pre-release, add the "latest" tag
           if [[ "$IS_PRE_RELEASE" == "false" ]]; then
-            TAGS+="\n${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:latest"
+            TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:latest"
           fi
           # Set the output variable for the next step to use
           echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
