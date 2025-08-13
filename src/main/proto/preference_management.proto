@@ -20,6 +20,7 @@ option java_outer_classname = "ADempierePreferenceManagement";
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 // Base URL
 // /preference-management/
@@ -31,9 +32,24 @@ service PreferenceManagement {
 	//	Get Preference from field
 	rpc GetPreference(GetPreferenceRequest) returns (Preference) {
 		option (google.api.http) = {
-			get: "/preference-management/preference/{type}/{column_name}"
+			get: "/preference-management/preferences/{id}"
 			additional_bindings: {
-				get: "/preference-management/preference/{type}/{container_id}/{column_name}"
+				get: "/preference-management/preferences/{type}/{column_name}"
+			}
+			additional_bindings: {
+				get: "/preference-management/preferences/{type}/{container_id}/{column_name}"
+			}
+		};
+	}
+	//	List Preferences
+	rpc ListPreferences(ListPreferencesRequest) returns (ListPreferencesResponse) {
+		option (google.api.http) = {
+			get: "/preference-management/preferences"
+			additional_bindings: {
+				get: "/preference-management/preferences/{type}"
+			}
+			additional_bindings: {
+				get: "/preference-management/preferences/{type}/{container_id}"
 			}
 		};
 	}
@@ -41,10 +57,30 @@ service PreferenceManagement {
 	//	Set Preference from field
 	rpc SetPreference(SetPreferenceRequest) returns (Preference) {
 		option (google.api.http) = {
-			post: "/preference-management/preference/{type}/{column_name}",
+			post: "/preference-management/preferences/{id}",
 			body: "*"
 			additional_bindings: {
-				post: "/preference-management/preference/{type}/{container_id}/{column_name}",
+				post: "/preference-management/preferences/{type}/{column_name}",
+				body: "*"
+			}
+			additional_bindings: {
+				post: "/preference-management/preferences/{type}/{container_id}/{column_name}",
+				body: "*"
+			}
+		};
+	}
+
+	//	Set Preference from field
+	rpc SetMultiplePreferences(SetMultiplePreferencesRequest) returns (ListPreferencesResponse) {
+		option (google.api.http) = {
+			patch: "/preference-management/preferences",
+			body: "*"
+			additional_bindings: {
+				patch: "/preference-management/preferences/{type}/{column_name}",
+				body: "*"
+			}
+			additional_bindings: {
+				patch: "/preference-management/preferences/{type}/{container_id}/{column_name}",
 				body: "*"
 			}
 		};
@@ -53,47 +89,17 @@ service PreferenceManagement {
 	//	Delete Preference from field
 	rpc DeletePreference(DeletePreferenceRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = {
-			delete: "/preference-management/preference/{type}/{column_name}"
+			delete: "/preference-management/preferences/{id}"
 			additional_bindings: {
-				delete: "/preference-management/preference/{type}/{container_id}/{column_name}"
+				delete: "/preference-management/preferences/{type}/{column_name}"
+			}
+			additional_bindings: {
+				delete: "/preference-management/preferences/{type}/{container_id}/{column_name}"
 			}
 		};
 	}
 }
 
-
-message GetPreferenceRequest {
-	int32 container_id = 1;
-	string column_name = 2;
-	bool is_for_current_user = 3;
-	bool is_for_current_client = 4;
-	bool is_for_current_organization = 5;
-	bool is_for_current_container = 6;
-	PreferenceType type = 7;
-}
-
-// Request for set preference
-message SetPreferenceRequest {
-	int32 container_id = 1;
-	string column_name = 2;
-	bool is_for_current_user = 3;
-	bool is_for_current_client = 4;
-	bool is_for_current_organization = 5;
-	bool is_for_current_container = 6;
-	PreferenceType type = 7;
-	string value = 8;
-}
-
-// Request for delete preference
-message DeletePreferenceRequest {
-	int32 container_id = 1;
-	string column_name = 2;
-	bool is_for_current_user = 3;
-	bool is_for_current_client = 4;
-	bool is_for_current_organization = 5;
-	bool is_for_current_container = 6;
-	PreferenceType type = 7;
-}
 
 // Preference
 enum PreferenceType {
@@ -101,13 +107,85 @@ enum PreferenceType {
 	WINDOW = 1;
 	PROCESS = 2;
 	SMART_BROWSER = 3;
+	FORM = 4;
 }
 message Preference {
-	int32 client_id = 1;
-	int32 organization_id = 2;
-	int32 user_id = 3;
-	int32 container_id = 4;
-	string column_name = 5;
-	string value = 6;
+	int32 id = 1;
+	string uuid = 2;
+	string column_name = 3;
+	string value = 4;
+	int32 client_id = 5;
+	int32 organization_id = 6;
+	int32 user_id = 7;
+	int32 container_id = 8;
+	PreferenceType type = 9;
+}
+
+
+message GetPreferenceRequest {
+	int32 id = 1;
+	string column_name = 2;
+	bool is_for_current_user = 3;
+	bool is_for_current_client = 4;
+	bool is_for_current_organization = 5;
+	bool is_for_current_container = 6;
 	PreferenceType type = 7;
+	int32 container_id = 8;
+}
+
+message ListPreferencesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	bool is_for_current_user = 11;
+	bool is_for_current_client = 12;
+	bool is_for_current_organization = 13;
+	bool is_for_current_container = 14;
+	int32 container_id = 10;
+	PreferenceType type = 15;
+}
+message ListPreferencesResponse {
+	int64 record_count = 1;
+	repeated Preference records = 2;
+	string next_page_token = 3;
+}
+
+message SetPreferenceRequest {
+	int32 id = 1;
+	string column_name = 2;
+	PreferenceType type = 3;
+	int32 container_id = 4;
+	bool is_for_current_user = 5;
+	bool is_for_current_client = 6;
+	bool is_for_current_organization = 7;
+	bool is_for_current_container = 8;
+	string value = 9;
+}
+
+message SetMultiplePreferencesRequest {
+	int32 container_id = 1;
+	bool is_for_current_user = 3;
+	bool is_for_current_client = 4;
+	bool is_for_current_organization = 5;
+	bool is_for_current_container = 6;
+	PreferenceType type = 7;
+	google.protobuf.Struct preferences = 8;
+}
+
+message DeletePreferenceRequest {
+	int32 id = 1;
+	string column_name = 2;
+	PreferenceType type = 3;
+	bool is_for_current_user = 4;
+	bool is_for_current_client = 5;
+	bool is_for_current_organization = 6;
+	bool is_for_current_container = 7;
+	int32 container_id = 8;
 }
