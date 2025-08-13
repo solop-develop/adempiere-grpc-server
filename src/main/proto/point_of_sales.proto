@@ -423,41 +423,82 @@ service Store {
 	}
 
 	//	Cash Management
-	rpc ProcessCashOpening(CashOpeningRequest) returns (google.protobuf.Empty) {
+	rpc CashOpening(CashOpeningRequest) returns (CashMovements) {
 		option (google.api.http) = {
-			put: "/point-of-sales/{pos_id}/cash/process-opening",
+			post: "/point-of-sales/{pos_id}/cash",
 			body: "*"
+			additional_bindings: {
+				put: "/point-of-sales/{pos_id}/cash/process-opening",
+				body: "*"
+			}
 		};
 	}
-	//	Cash Withdrawal
-	rpc ProcessCashWithdrawal(CashWithdrawalRequest) returns (google.protobuf.Empty) {
+	rpc CashClosing(CashClosingRequest) returns (CashMovements) {
 		option (google.api.http) = {
-			put: "/point-of-sales/cash/process-withdrawal",
+			post: "/point-of-sales/cash/{id}",
 			body: "*"
+			additional_bindings: {
+				put: "/point-of-sales/cash/closings/{id}/process",
+				body: "*"
+			}
 		};
 	}
-	//	Cash Closing
-	rpc ProcessCashClosing(CashClosingRequest) returns (CashClosing) {
+	rpc CashWithdrawal(CashWithdrawalRequest) returns (CashMovements) {
 		option (google.api.http) = {
-			put: "/point-of-sales/cash/closings/{id}/process",
+			put: "/point-of-sales/{pos_id}/cash/{id}/withdrawal",
 			body: "*"
+			additional_bindings: {
+				put: "/point-of-sales/cash/process-withdrawal",
+				body: "*"
+			}
 		};
 	}
-
-	//	Cash Movements
 	rpc ListCashMovements(ListCashMovementsRequest) returns (ListCashMovementsResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/cash/movements"
-		};
-	}
-	rpc PrintPreviewCashMovements(PrintPreviewCashMovementsRequest) returns (PrintPreviewCashMovementsResponse) {
-		option (google.api.http) = {
-			get: "/point-of-sales/{pos_id}/cash/movements/print-preview"
+			additional_bindings: {
+				get: "/point-of-sales/{pos_id}/cash/{id}"
+			}
 		};
 	}
 	rpc ListCashSummaryMovements(ListCashSummaryMovementsRequest) returns (ListCashSummaryMovementsResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/cash/summary-movements"
+			additional_bindings: {
+				get: "/point-of-sales/{pos_id}/cash/{id}/summary"
+			}
+		};
+	}
+	rpc PrintPreviewCashMovements(PrintPreviewCashMovementsRequest) returns (PrintPreviewCashMovementsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/movements/print-preview"
+			additional_bindings: {
+				get: "/point-of-sales/{pos_id}/cash/{bank_statement_id}/print-preview"
+			}
+		};
+	}
+
+	// POS Device Closing
+	rpc ExistsOnlineCashClosingPayments(ExistsOnlineCashClosingPaymentsRequest) returns (ExistsOnlineCashClosingPaymentsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/{id}/online/exists"
+		};
+	}
+	rpc ProcessOnlineCashClosing(ProcessOnlineCashClosingRequest) returns (ProcessOnlineCashClosingResponse) {
+		option (google.api.http) = {
+			post: "/point-of-sales/{pos_id}/cash/{id}/online",
+			body: "*"
+		};
+	}
+	rpc InfoOnlineCashClosing(InfoOnlineCashClosingRequest) returns (InfoOnlineCashClosingResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/{id}/online"
+		};
+	}
+	rpc CancelOnlineCashClosing(CancelOnlineCashClosingRequest) returns (CancelOnlineCashClosingResponse) {
+		option (google.api.http) = {
+			put: "/point-of-sales/{pos_id}/cash/{id}/online",
+			body: "*"
 		};
 	}
 
@@ -690,11 +731,49 @@ message DeallocateSellerRequest {
 
 
 
+//	Cash Movements
+message PaymentSummary {
+	int32 payment_method_id = 1;
+	string payment_method_name = 2;
+	string tender_type_code = 3;
+	core_functionality.Currency currency = 4;
+	bool is_refund = 5;
+	string amount = 6;
+	string amount_converted = 7;
+}
 message PaymentTotal {
 	core_functionality.Currency currency = 1;
 	string description = 2;
 	string total_amount = 3;
 	string total_amount_converted = 4;
+}
+message CashMovements {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	google.protobuf.Timestamp date = 4;
+	core_functionality.DocumentType document_type = 5;
+	DocumentStatus document_status = 6;
+	string description = 7;
+	repeated PaymentSummary cash_movements = 8;
+	repeated PaymentTotal total_movements = 9;
+	bool is_online_payments = 10;
+}
+message CashOpeningRequest {
+	int32 pos_id = 1;
+	int32 collecting_agent_id = 2;
+	string description = 3;
+}
+message CashClosingRequest {
+	int32 pos_id = 1;
+	int32 id = 2;
+	int32 collecting_agent_id = 3;
+	string description = 4;
+}
+message CashWithdrawalRequest {
+	int32 pos_id = 1;
+	int32 collecting_agent_id = 2;
+	string description = 3;
 }
 
 //	Cash/Payment Detail Movements
@@ -723,16 +802,7 @@ message ListCashMovementsResponse {
 	string name = 6;
 	google.protobuf.Timestamp date = 7;
 	repeated PaymentTotal total_movements = 8;
-}
-
-//	Cash/Payment Summary Movements
-message PaymentSummary {
-	int32 payment_method_id = 1;
-	string payment_method_name = 2;
-	string tender_type_code = 3;
-	core_functionality.Currency currency = 4;
-	bool is_refund = 5;
-	string amount = 6;
+	bool is_online_payments = 9;
 }
 message ListCashSummaryMovementsRequest {
 	string filters = 1;
@@ -758,9 +828,8 @@ message ListCashSummaryMovementsResponse {
 	string name = 6;
 	google.protobuf.Timestamp date = 7;
 	repeated PaymentTotal total_movements = 8;
+	bool is_online_payments = 9;
 }
-
-// Print Cash Movements
 message PrintPreviewCashMovementsRequest {
 	int32 pos_id = 1;
 	string report_type = 2;
@@ -773,40 +842,6 @@ message PrintPreviewCashMovementsResponse {
 	string result = 1;
 	ProcessLog process_log = 2;
 }
-
-//	Cash closing
-message CashClosing {
-	int32 id = 1;
-	string document_no = 2;
-	core_functionality.DocumentType document_type = 3;
-	DocumentStatus document_status = 4;
-	string description = 5;
-}
-message CashClosingRequest {
-	int32 pos_id = 1;
-	int32 id = 2;
-	int32 collecting_agent_id = 3;
-	string description = 4;
-}
-
-
-
-//	Create Cash Withdrawal
-message CashWithdrawalRequest {
-	int32 pos_id = 1;
-	int32 collecting_agent_id = 2;
-	string description = 3;
-}
-
-
-
-//	Cash Opening
-message CashOpeningRequest {
-	int32 pos_id = 1;
-	int32 collecting_agent_id = 2;
-	string description = 3;
-}
-
 
 
 // Request for create a Shipment from Order
@@ -2124,10 +2159,10 @@ message ListPaymentsResponse {
 
 // Online Payment
 message ExistsUnapprovedOnlinePaymentsRequest {
-	int32 pos_id = 8;
-	int32 order_id = 9;
-	bool is_only_refund = 10;
-	bool is_only_receipt = 11;
+	int32 pos_id = 1;
+	int32 order_id = 2;
+	bool is_only_refund = 3;
+	bool is_only_receipt = 4;
 }
 message ExistsUnapprovedOnlinePaymentsResponse {
 	int32 record_count = 1;
@@ -2153,8 +2188,8 @@ message InfoOnlinePaymentResponse {
 	int32 next_request_time = 4;
 }
 message CancelOnlinePaymentRequest {
-	int32 pos_id = 3;
-	int32 id = 1;
+	int32 pos_id = 1;
+	int32 id = 2;
 }
 message CancelOnlinePaymentResponse {
 	bool is_error = 1;
@@ -2162,6 +2197,48 @@ message CancelOnlinePaymentResponse {
 	string status = 3;
 }
 
+
+
+// POS Device Closing
+message ExistsOnlineCashClosingPaymentsRequest {
+	int32 pos_id = 1;
+	int32 id = 2;
+	bool is_only_refund = 3;
+	bool is_only_receipt = 4;
+
+}
+message ExistsOnlineCashClosingPaymentsResponse {
+	int32 record_count = 1;
+}
+message ProcessOnlineCashClosingRequest {
+	int32 pos_id = 3;
+	int32 id = 1;
+}
+message ProcessOnlineCashClosingResponse {
+	bool is_error = 1;
+	string message = 2;
+	string status = 3;
+	int32 next_request_time = 4;
+}
+message InfoOnlineCashClosingRequest {
+	int32 pos_id = 3;
+	int32 id = 1;
+}
+message InfoOnlineCashClosingResponse {
+	bool is_error = 1;
+	string message = 2;
+	string status = 3;
+	int32 next_request_time = 4;
+}
+message CancelOnlineCashClosingRequest {
+	int32 pos_id = 1;
+	int32 id = 2;
+}
+message CancelOnlineCashClosingResponse {
+	bool is_error = 1;
+	string message = 2;
+	string status = 3;
+}
 
 
 // Request for delete a order
