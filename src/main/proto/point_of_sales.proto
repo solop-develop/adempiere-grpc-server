@@ -36,19 +36,19 @@ package data;
 //	POS Service used for ADempiere integration 
 service Store {
 	//	POS Terminal Definition
-	rpc GetPointOfSales(PointOfSalesRequest) returns (PointOfSales) {
-		option (google.api.http) = {
-			get: "/point-of-sales/{id}"
-			additional_bindings: {
-				get: "/point-of-sales/terminals/{id}"
-			}
-		};
-	}
 	rpc ListPointOfSales(ListPointOfSalesRequest) returns (ListPointOfSalesResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales"
 			additional_bindings: {
 				get: "/point-of-sales/terminals"
+			}
+		};
+	}
+	rpc GetPointOfSales(PointOfSalesRequest) returns (PointOfSales) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{id}"
+			additional_bindings: {
+				get: "/point-of-sales/terminals/{id}"
 			}
 		};
 	}
