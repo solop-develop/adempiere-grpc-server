@@ -35,7 +35,7 @@ package data;
 
 //	POS Service used for ADempiere integration 
 service Store {
-	//	Get POS Definition
+	//	POS Terminal Definition
 	rpc GetPointOfSales(PointOfSalesRequest) returns (PointOfSales) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{id}"
@@ -44,7 +44,6 @@ service Store {
 			}
 		};
 	}
-	//	List Point of Sales
 	rpc ListPointOfSales(ListPointOfSalesRequest) returns (ListPointOfSalesResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales"
@@ -53,6 +52,7 @@ service Store {
 			}
 		};
 	}
+
 	//	Get Product Price from Code / UPC / Name
 	rpc GetProductPrice(GetProductPriceRequest) returns (core_functionality.ProductPrice) {
 		option (google.api.http) = {
@@ -1737,12 +1737,7 @@ message ListAvailableCurrenciesResponse {
 	string next_page_token = 3;
 }
 
-//	List POS Response
-message ListPointOfSalesResponse {
-	int64 record_count = 1;
-	repeated PointOfSales selling_points = 2;
-	string next_page_token = 3;
-}
+
 
 //	List Product Price Response
 message ListProductPriceResponse {
@@ -1824,23 +1819,9 @@ message ListProductPriceRequest {
 	int32 warehouse_id = 12;
 }
 
-// POS from user id
-message ListPointOfSalesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-}
 
-// Point of Sales request
-message PointOfSalesRequest {
-	int32 id = 1;
-}
 
-// Point of Sales definition
+// Point of Sales
 message PointOfSales {
 	int32 id = 1;
 	string name = 2;
@@ -1917,6 +1898,25 @@ message PointOfSales {
 	int32 default_gift_card_charge_id = 63;
 	bool is_print_gift_card = 64;
 }
+message ListPointOfSalesResponse {
+	int64 record_count = 1;
+	repeated PointOfSales selling_points = 2;
+	string next_page_token = 3;
+}
+message ListPointOfSalesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+}
+message PointOfSalesRequest {
+	int32 id = 1;
+}
+
+
 
 // Request for create a order
 message CreateOrderRequest {
