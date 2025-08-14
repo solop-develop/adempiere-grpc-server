@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
+import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_ConversionType;
@@ -91,6 +92,7 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.core_functionality.Currency;
 import org.spin.backend.grpc.core_functionality.ProductPrice;
 import org.spin.backend.grpc.pos.*;
@@ -1125,6 +1127,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
 			);
+			ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+			outputBuilder.setIsDirectPrint(
+				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+			);
+			processLog.setOutput(outputBuilder);
 
 			// preview document
 			ticket.setProcessLog(processLog.build());
@@ -1184,6 +1191,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
 			);
+			ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+			outputBuilder.setIsDirectPrint(
+				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+			);
+			processLog.setOutput(outputBuilder);
 
 			// preview document
 			ticket.setProcessLog(processLog.build());
@@ -1244,6 +1256,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
 			);
+			ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+			outputBuilder.setIsDirectPrint(
+				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+			);
+			processLog.setOutput(outputBuilder);
 
 			// preview document
 			PrintGiftCardPreviewResponse.Builder ticket = PrintGiftCardPreviewResponse.newBuilder()
@@ -1747,6 +1764,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/movements"
+	 * get: "/point-of-sales/{pos_id}/cash/{id}"
+	 */
 	@Override
 	public void listCashMovements(ListCashMovementsRequest request, StreamObserver<ListCashMovementsResponse> responseObserver) {
 		try {
@@ -1804,6 +1825,9 @@ public class PointOfSalesForm extends StoreImplBase {
 
 
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{id}/online/exists"
+	 */
 	@Override
 	public void existsOnlineCashClosingPayments(ExistsOnlineCashClosingPaymentsRequest request, StreamObserver<ExistsOnlineCashClosingPaymentsResponse> responseObserver) {
 		try {
@@ -1823,6 +1847,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * post: "/point-of-sales/{pos_id}/cash/{id}/online"
+	 */
 	@Override
 	public void processOnlineCashClosing(ProcessOnlineCashClosingRequest request, StreamObserver<ProcessOnlineCashClosingResponse> responseObserver) {
 		try {
@@ -1842,6 +1869,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{id}/online"
+	 */
 	@Override
 	public void infoOnlineCashClosing(InfoOnlineCashClosingRequest request, StreamObserver<InfoOnlineCashClosingResponse> responseObserver) {
 		try {
@@ -1861,6 +1891,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * put: "/point-of-sales/{pos_id}/cash/{id}/online"
+	 */
 	@Override
 	public void cancelOnlineCashClosing(CancelOnlineCashClosingRequest request, StreamObserver<CancelOnlineCashClosingResponse> responseObserver) {
 		try {
@@ -5012,7 +5045,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 
-	
+
+	/**
+	 * get: "/point-of-sales/{id}"
+	 * get: "/point-of-sales/terminals/{id}"
+	 */
 	@Override
 	public void listPointOfSales(ListPointOfSalesRequest request, StreamObserver<ListPointOfSalesResponse> responseObserver) {
 		try {
@@ -5020,7 +5057,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(posList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -5184,6 +5221,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			)
 			.setConversionTypeId(
 				pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID)
+			)
+			.setIsDirectPrint(
+				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
 			)
 		;
 

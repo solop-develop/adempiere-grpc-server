@@ -37,11 +37,21 @@ package data;
 service Store {
 	//	Get POS Definition
 	rpc GetPointOfSales(PointOfSalesRequest) returns (PointOfSales) {
-		option (google.api.http) = { get: "/point-of-sales/terminals/{id}" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{id}"
+			additional_bindings: {
+				get: "/point-of-sales/terminals/{id}"
+			}
+		};
 	}
 	//	List Point of Sales
 	rpc ListPointOfSales(ListPointOfSalesRequest) returns (ListPointOfSalesResponse) {
-		option (google.api.http) = { get: "/point-of-sales/terminals" };
+		option (google.api.http) = {
+			get: "/point-of-sales"
+			additional_bindings: {
+				get: "/point-of-sales/terminals"
+			}
+		};
 	}
 	//	Get Product Price from Code / UPC / Name
 	rpc GetProductPrice(GetProductPriceRequest) returns (core_functionality.ProductPrice) {
@@ -1853,58 +1863,59 @@ message PointOfSales {
 	bool is_allows_concurrent_use = 19;
 	bool is_allows_print_document = 20;
 	bool is_allows_preview_document = 21;
+	bool is_direct_print = 22;
 	// Seller
-	bool is_allows_allocate_seller = 22;
-	core_functionality.SalesRepresentative sales_representative = 23;
-	bool is_aisle_seller = 24;
+	bool is_allows_allocate_seller = 23;
+	core_functionality.SalesRepresentative sales_representative = 24;
+	bool is_aisle_seller = 25;
 	// Customer
-	Customer template_customer = 25;
-	bool is_allows_customer_template = 26;
-	bool is_allows_create_customer = 27;
-	bool is_allows_modify_customer = 28;
+	Customer template_customer = 26;
+	bool is_allows_customer_template = 27;
+	bool is_allows_create_customer = 28;
+	bool is_allows_modify_customer = 29;
 	// Cash
-	bool is_allows_cash_opening = 29;
-	int32 default_opening_charge_id = 30;
-	bool is_allows_cash_closing = 31;
-	bool is_allows_detail_cash_closing = 32;
-	core_functionality.BankAccount cash_bank_account = 33;
-	bool is_allows_cash_withdrawal = 34;
-	int32 default_withdrawal_charge_id = 35;
-	core_functionality.BankAccount cash_transfer_bank_account = 36;
+	bool is_allows_cash_opening = 30;
+	int32 default_opening_charge_id = 31;
+	bool is_allows_cash_closing = 32;
+	bool is_allows_detail_cash_closing = 33;
+	core_functionality.BankAccount cash_bank_account = 34;
+	bool is_allows_cash_withdrawal = 35;
+	int32 default_withdrawal_charge_id = 36;
+	core_functionality.BankAccount cash_transfer_bank_account = 37;
 	// Line
-	bool is_allows_modify_quantity = 37;
-	bool is_modify_price = 38;
-	bool is_keep_price_from_customer = 39;
+	bool is_allows_modify_quantity = 38;
+	bool is_modify_price = 39;
+	bool is_keep_price_from_customer = 40;
 	// Wirte Off
-	bool is_allows_write_off_amount = 40;
-	string write_off_amount_tolerance = 41;
-	bool is_write_off_by_percent = 42;
-	string write_off_percentage_tolerance = 43;
+	bool is_allows_write_off_amount = 41;
+	string write_off_amount_tolerance = 42;
+	bool is_write_off_by_percent = 43;
+	string write_off_percentage_tolerance = 44;
 	// Discount
-	bool is_display_discount = 44;
-	bool is_allows_apply_discount = 45;
-	string maximum_discount_allowed = 46;
-	bool is_allows_modify_discount = 47;
-	string maximum_line_discount_allowed = 48;
-	bool is_allows_apply_schema_discount = 49;
-	string maximum_schema_discount_allowed = 50;
+	bool is_display_discount = 45;
+	bool is_allows_apply_discount = 46;
+	string maximum_discount_allowed = 47;
+	bool is_allows_modify_discount = 48;
+	string maximum_line_discount_allowed = 49;
+	bool is_allows_apply_schema_discount = 50;
+	string maximum_schema_discount_allowed = 51;
 	// Collect
-	bool is_allows_collect_order = 51;
-	core_functionality.SalesRepresentative collecting_agent = 52;
-	bool is_print_collect = 53;
+	bool is_allows_collect_order = 52;
+	core_functionality.SalesRepresentative collecting_agent = 53;
+	bool is_print_collect = 54;
 	// Refund
-	core_functionality.Currency refund_reference_currency = 54;
-	core_functionality.DocumentType return_document_type = 55;
-	string maximum_refund_allowed = 56;
-	string maximum_daily_refund_allowed = 57;
+	core_functionality.Currency refund_reference_currency = 55;
+	core_functionality.DocumentType return_document_type = 56;
+	string maximum_refund_allowed = 57;
+	string maximum_daily_refund_allowed = 58;
 	// Shipment
-	bool is_allows_confirm_shipment = 58;
-	bool is_confirm_complete_shipment = 59;
-	bool is_print_shipment = 60;
+	bool is_allows_confirm_shipment = 59;
+	bool is_confirm_complete_shipment = 60;
+	bool is_print_shipment = 61;
 	// Gift Card
-	bool is_allows_gift_card = 61;
-	int32 default_gift_card_charge_id = 62;
-	bool is_print_gift_card = 63;
+	bool is_allows_gift_card = 62;
+	int32 default_gift_card_charge_id = 63;
+	bool is_print_gift_card = 64;
 }
 
 // Request for create a order

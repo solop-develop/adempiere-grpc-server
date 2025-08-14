@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
@@ -42,6 +43,7 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.pos.CashClosingRequest;
 import org.spin.backend.grpc.pos.CashMovements;
 import org.spin.backend.grpc.pos.CashOpeningRequest;
@@ -583,6 +585,11 @@ public class CashServiceLogic {
 		ProcessLog.Builder processLog = ReportManagement.generateReport(
 			reportRequest.build()
 		);
+		ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+		outputBuilder.setIsDirectPrint(
+			pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+		);
+		processLog.setOutput(outputBuilder);
 
 		// preview document
 		PrintPreviewCashMovementsResponse.Builder ticket = PrintPreviewCashMovementsResponse.newBuilder()
