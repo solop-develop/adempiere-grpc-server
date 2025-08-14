@@ -114,7 +114,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			responseObserver.onNext(processReponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -295,7 +295,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			result = builder.execute();
 		} catch (Exception e) {
 			e.printStackTrace();
-			// log.severe(e.getLocalizedMessage());
+			// log.warning(e.getLocalizedMessage());
 
 			result = builder.getProcessInfo();
 			//	Set error message
@@ -431,6 +431,7 @@ public class ReportManagement extends ReportManagementImplBase {
 
 	/**
 	 * TODO: Return only report output
+	 * TODO: Add ReportEngine support to HeaderName, FooterName
 	 */
 	public static ProcessLog.Builder addReportOutput(
 		ProcessLog.Builder processBuilder,
@@ -447,84 +448,95 @@ public class ReportManagement extends ReportManagementImplBase {
 		).orElse(
 			processInfo.getPDFReport()
 		);
-		if(reportFile != null && reportFile.exists()) {
-			String validFileName = FileUtil.getValidFileName(
-				reportFile.getName()
-			);
-			ReportOutput.Builder outputBuilder = ReportOutput.newBuilder()
-				.setId(
-					processInfo.getAD_PInstance_ID()
+		if (reportFile == null || !reportFile.exists()) {
+			return processBuilder;
+		}
+		String validFileName = FileUtil.getValidFileName(
+			reportFile.getName()
+		);
+		MPInstance instance = new MPInstance(Env.getCtx(), processInfo.getAD_PInstance_ID(), null);
+		ReportOutput.Builder outputBuilder = ReportOutput.newBuilder()
+			.setId(
+				processInfo.getAD_PInstance_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					instance.getUUID()
 				)
-				.setFileName(
-					StringManager.getValidString(
+			)
+			.setFileName(
+				StringManager.getValidString(
+					validFileName
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					processInfo.getTitle()
+				)
+			)
+			.setMimeType(
+				StringManager.getValidString(
+					MimeType.getMimeType(
 						validFileName
 					)
 				)
-				.setName(
-					StringManager.getValidString(
-						processInfo.getTitle()
-					)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					process.getDescription()
 				)
-				.setMimeType(
-					StringManager.getValidString(
-						MimeType.getMimeType(
-							validFileName
-						)
-					)
-				)
-				.setDescription(
-					StringManager.getValidString(
-						process.getDescription()
-					)
-				)
-			;
+			)
+		;
 
-			//	Report Type
-			if(Util.isEmpty(reportType, true)) {
-				reportType = processInfo.getReportType();
-			}
-			if(!Util.isEmpty(FileUtil.getExtension(validFileName), true)
-					&& !FileUtil.getExtension(validFileName).equals(reportType)) {
-				reportType = FileUtil.getExtension(validFileName);
-			}
-			if (Util.isEmpty(reportType, true)) {
-				reportType = ReportUtil.DEFAULT_REPORT_TYPE;
-			}
-			outputBuilder.setReportType(
-				processInfo.getReportType()
-			);
-
-			ByteString resultFile = ByteString.empty();
-			try {
-				resultFile = ByteString.readFrom(new FileInputStream(reportFile));
-			} catch (IOException e) {
-				e.printStackTrace();
-				// log.severe(e.getLocalizedMessage());
-
-				if (Util.isEmpty(processBuilder.getSummary(), true)) {
-					processBuilder.setSummary(
-						StringManager.getValidString(
-							Msg.parseTranslation(
-								Env.getCtx(),
-								e.getLocalizedMessage()
-							)
-						)
-					);
-				}
-			}
-			if(reportType.endsWith("html") || reportType.endsWith("txt")) {
-				outputBuilder.setOutputBytes(resultFile);
-			}
-			outputBuilder.setReportType(reportType)
-				.setOutputStream(resultFile)
-				.setReportViewId(reportViewReferenceId)
-				.setPrintFormatId(printFormatReferenceId)
-				.setTableName(
-					StringManager.getValidString(tableName)
-				)
-			;
-			processBuilder.setOutput(outputBuilder);
+		//	Report Type
+		if(Util.isEmpty(reportType, true)) {
+			reportType = processInfo.getReportType();
 		}
+		if(!Util.isEmpty(FileUtil.getExtension(validFileName), true)
+				&& !FileUtil.getExtension(validFileName).equals(reportType)) {
+			reportType = FileUtil.getExtension(validFileName);
+		}
+		if (Util.isEmpty(reportType, true)) {
+			reportType = ReportUtil.DEFAULT_REPORT_TYPE;
+		}
+		outputBuilder.setReportType(
+			processInfo.getReportType()
+		);
+
+		ByteString resultFile = ByteString.empty();
+		try {
+			resultFile = ByteString.readFrom(new FileInputStream(reportFile));
+		} catch (IOException e) {
+			e.printStackTrace();
+			// log.warning(e.getLocalizedMessage());
+
+			if (Util.isEmpty(processBuilder.getSummary(), true)) {
+				processBuilder.setSummary(
+					StringManager.getValidString(
+						Msg.parseTranslation(
+							Env.getCtx(),
+							e.getLocalizedMessage()
+						)
+					)
+				);
+			}
+			processBuilder.setIsError(true);
+		}
+		if(reportType.endsWith("html") || reportType.endsWith("txt")) {
+			outputBuilder.setOutputBytes(resultFile);
+		}
+
+		outputBuilder.setReportType(reportType)
+			.setOutputStream(resultFile)
+			.setReportViewId(reportViewReferenceId)
+			.setPrintFormatId(printFormatReferenceId)
+			.setTableName(
+				StringManager.getValidString(tableName)
+			)
+			.setIsDirectPrint(
+				process.isDirectPrint()
+			)
+		;
 
 		return processBuilder;
 	}
@@ -541,7 +553,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			responseObserver.onNext(reportOutput.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -666,38 +678,58 @@ public class ReportManagement extends ReportManagementImplBase {
 			reportType = ReportUtil.DEFAULT_REPORT_TYPE;
 		}
 
-		ReportOutput.Builder builder = ReportOutput.newBuilder()
+		MPInstance instance = new MPInstance(Env.getCtx(), printInformation.getAD_PInstance_ID(), null);
+		ReportOutput.Builder outputBuilder = ReportOutput.newBuilder()
 			.setId(
-				printInformation.getAD_PInstance_ID()
+				instance.getAD_PInstance_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					instance.getUUID()
+				)
 			)
 			.setReportType(reportType)
+			.setIsDirectPrint(
+				process.isDirectPrint()
+			)
 		;
 		//	
 		File reportFile = ReportUtil.createOutput(reportEngine, reportType);
-		if (reportFile != null && reportFile.exists()) {
-			String validFileName = FileUtil.getValidFileName(
-				reportFile.getName()
-			);
-			builder.setFileName(
-					StringManager.getValidString(validFileName)
+		if (reportFile == null || !reportFile.exists()) {
+			return outputBuilder;
+		}
+		String validFileName = FileUtil.getValidFileName(
+			reportFile.getName()
+		);
+		outputBuilder.setFileName(
+				StringManager.getValidString(
+					validFileName
 				)
-				.setName(
-					StringManager.getValidString(
-						reportEngine.getName()
+			)
+			.setName(
+				StringManager.getValidString(
+					reportEngine.getName()
+				)
+			)
+			.setMimeType(
+				StringManager.getValidString(
+					MimeType.getMimeType(
+						validFileName
 					)
 				)
-				.setMimeType(
-					StringManager.getValidString(
-						MimeType.getMimeType(validFileName)
-					)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					process.getDescription()
 				)
-			;
+			)
+		;
 			// Header
 			String headerName = Msg.getMsg(
 				Env.getCtx(),
 				"Report"
 			) + ": " + reportEngine.getName() + " " + Env.getHeader(Env.getCtx(), 0);
-			builder.setHeaderName(
+			outputBuilder.setHeaderName(
 				StringManager.getValidString(headerName)
 			);
 			// Footer
@@ -707,21 +739,21 @@ public class ReportManagement extends ReportManagementImplBase {
 				.append(", ").append(Msg.getMsg(Env.getCtx(), "DataRows")).append("=")
 				.append(reportEngine.getRowCount())
 			;
-			builder.setFooterName(
+			outputBuilder.setFooterName(
 				StringManager.getValidString(
 					footerName.toString()
 				)
 			);
 			ByteString resultFile = ByteString.readFrom(new FileInputStream(reportFile));
 			if (reportType.endsWith("html") || reportType.endsWith("txt")) {
-				builder.setOutputBytes(resultFile);
+				outputBuilder.setOutputBytes(resultFile);
 			}
 			if(reportView != null) {
-				builder.setReportViewId(
+				outputBuilder.setReportViewId(
 					reportView.getAD_ReportView_ID()
 				);
 			}
-			builder.setPrintFormatId(
+			outputBuilder.setPrintFormatId(
 					printFormat.getAD_PrintFormat_ID()
 				)
 				.setTableName(
@@ -731,9 +763,9 @@ public class ReportManagement extends ReportManagementImplBase {
 				)
 				.setOutputStream(resultFile)
 			;
-		}
+
 		//	Return
-		return builder;
+		return outputBuilder;
 	}
 
 
@@ -748,7 +780,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			responseObserver.onNext(printFormatsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -822,7 +854,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			responseObserver.onNext(printResponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -990,7 +1022,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			responseObserver.onNext(reportViewsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1138,7 +1170,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			responseObserver.onNext(drillTablesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
