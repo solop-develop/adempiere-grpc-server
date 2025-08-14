@@ -1073,21 +1073,21 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 		try {
 			File outFile = File.createTempFile("WPayPrint", null);
-			String validFileName = StringManager.getValidString(
-				outFile.getName()
-			);
-			reportOutputBuilder.setName(
-				validFileName
-			);
-			reportOutputBuilder.setMimeType(
-				StringManager.getValidString(
-					MimeType.getMimeType(validFileName)
-				)
-			);
-
 			IText7Document.mergePdf(pdfList, outFile);
 			ByteString resultFile = ByteString.readFrom(new FileInputStream(outFile));
-			reportOutputBuilder.setOutputStream(resultFile);
+
+			reportOutputBuilder.setName(
+					StringManager.getValidString(
+						outFile.getName()
+					)
+				)
+				.setMimeType(
+					StringManager.getValidString(
+						MimeType.getMimeType(outFile.getName())
+					)
+				)
+				.setOutputStream(resultFile)
+			;
 
 			builder.setReportOutput(reportOutputBuilder);
 		}

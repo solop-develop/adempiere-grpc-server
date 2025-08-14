@@ -341,16 +341,27 @@ public class LogsConvertUtil {
 			)
 		;
 		if(process.isReport()) {
-			ReportOutput.Builder outputBuilder = ReportOutput.newBuilder();
-			outputBuilder.setReportType(
-				StringManager.getValidString(
-					instance.getReportType()
+			ReportOutput.Builder outputBuilder = ReportOutput.newBuilder()
+				.setId(
+					instance.getAD_PInstance_ID()
 				)
+				.setUuid(
+					StringManager.getValidString(
+						instance.getUUID()
+					)
+				)
+				.setReportType(
+					StringManager.getValidString(
+						instance.getReportType()
+					)
 				)
 				.setName(
 					StringManager.getValidString(
 						instance.getName()
 					)
+				)
+				.setIsDirectPrint(
+					process.isDirectPrint()
 				)
 			;
 			builder.setOutput(

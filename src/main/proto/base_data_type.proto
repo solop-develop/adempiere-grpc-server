@@ -133,19 +133,21 @@ message ProcessInfoLog {
 // TODO: Move to report_management
 message ReportOutput {
 	int32 id = 1;
-	string name = 2;
-	string description = 3;
-	string file_name = 4;
-	string output = 5;
-	string mime_type = 6;
-	int64 data_cols = 7;
-	int64 data_rows = 8;
-	string header_name = 9;
-	string footer_name = 10;
-	int32 print_format_id = 11;
-	int32 report_view_id = 12;
-	string table_name = 13;
-	bytes output_stream = 14;
+	string uuid = 2;
+	string name = 3;
+	string description = 4;
+	string file_name = 5;
+	string output = 6;
+	string mime_type = 7;
+	int64 data_cols = 8;
+	int64 data_rows =98;
+	string header_name = 10;
+	string footer_name = 11;
+	int32 print_format_id = 12;
+	int32 report_view_id = 13;
+	string table_name = 14;
+	bytes output_stream = 15;
 	//	Output Type
-	string report_type = 15;
+	string report_type = 16;
+	bool is_direct_print = 17;
 }

@@ -91,11 +91,11 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ProcessLog;
-import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.core_functionality.Currency;
 import org.spin.backend.grpc.core_functionality.ProductPrice;
 import org.spin.backend.grpc.pos.*;
 import org.spin.backend.grpc.pos.StoreGrpc.StoreImplBase;
+import org.spin.backend.grpc.report_management.GenerateReportRequest;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.FileUtil;
@@ -1115,17 +1115,17 @@ public class PointOfSalesForm extends StoreImplBase {
 			if (!Util.isEmpty(request.getReportType(), true)) {
 				reportType = request.getReportType();
 			}
-			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+			GenerateReportRequest.Builder reportRequest = GenerateReportRequest.newBuilder()
 				.setId(processId)
+				.setReportType(reportType)
 				.setTableName(tableName)
 				.setRecordId(recordId)
 				.setReportType(reportType)
 			;
-
-			ProcessLog.Builder processLog = BusinessData.runBusinessProcess(
-				processRequest.build()
+			ProcessLog.Builder processLog = ReportManagement.generateReport(
+				reportRequest.build()
 			);
-			
+
 			// preview document
 			ticket.setProcessLog(processLog.build());
 
@@ -1174,17 +1174,15 @@ public class PointOfSalesForm extends StoreImplBase {
 			if (!Util.isEmpty(request.getReportType(), true)) {
 				reportType = request.getReportType();
 			}
-			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+			GenerateReportRequest.Builder reportRequest = GenerateReportRequest.newBuilder()
 				.setId(processId)
+				.setReportType(reportType)
 				.setTableName(I_M_InOut.Table_Name)
-				.setRecordId(
-					request.getShipmentId()
-				)
+				.setRecordId(request.getShipmentId())
 				.setReportType(reportType)
 			;
-
-			ProcessLog.Builder processLog = BusinessData.runBusinessProcess(
-				processRequest.build()
+			ProcessLog.Builder processLog = ReportManagement.generateReport(
+				reportRequest.build()
 			);
 
 			// preview document
@@ -1234,17 +1232,17 @@ public class PointOfSalesForm extends StoreImplBase {
 			int processId = giftCardTab.getAD_Process_ID();
 
 			String reportType = "pdf";
-			RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
-					.setId(processId)
-					.setTableName(giftCardTable.get_TableName())
-					.setRecordId(
-							giftCardId
-					)
-					.setReportType(reportType)
+			if (!Util.isEmpty(request.getReportType(), true)) {
+				reportType = request.getReportType();
+			}
+			GenerateReportRequest.Builder reportRequest = GenerateReportRequest.newBuilder()
+				.setId(processId)
+				.setTableName(giftCardTable.getTableName())
+				.setRecordId(giftCardId)
+				.setReportType(reportType)
 			;
-
-			ProcessLog.Builder processLog = BusinessData.runBusinessProcess(
-					processRequest.build()
+			ProcessLog.Builder processLog = ReportManagement.generateReport(
+				reportRequest.build()
 			);
 
 			// preview document
