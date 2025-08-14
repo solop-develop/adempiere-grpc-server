@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
+import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_ConversionType;
@@ -91,6 +92,7 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ProcessLog;
+import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.core_functionality.Currency;
 import org.spin.backend.grpc.core_functionality.ProductPrice;
 import org.spin.backend.grpc.pos.*;
@@ -1125,6 +1127,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
 			);
+			ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+			outputBuilder.setIsDirectPrint(
+				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+			);
+			processLog.setOutput(outputBuilder);
 
 			// preview document
 			ticket.setProcessLog(processLog.build());
@@ -1184,6 +1191,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
 			);
+			ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+			outputBuilder.setIsDirectPrint(
+				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+			);
+			processLog.setOutput(outputBuilder);
 
 			// preview document
 			ticket.setProcessLog(processLog.build());
@@ -1244,6 +1256,11 @@ public class PointOfSalesForm extends StoreImplBase {
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
 			);
+			ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+			outputBuilder.setIsDirectPrint(
+				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+			);
+			processLog.setOutput(outputBuilder);
 
 			// preview document
 			PrintGiftCardPreviewResponse.Builder ticket = PrintGiftCardPreviewResponse.newBuilder()
@@ -1747,6 +1764,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/movements"
+	 * get: "/point-of-sales/{pos_id}/cash/{id}"
+	 */
 	@Override
 	public void listCashMovements(ListCashMovementsRequest request, StreamObserver<ListCashMovementsResponse> responseObserver) {
 		try {
@@ -1804,6 +1825,9 @@ public class PointOfSalesForm extends StoreImplBase {
 
 
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{id}/online/exists"
+	 */
 	@Override
 	public void existsOnlineCashClosingPayments(ExistsOnlineCashClosingPaymentsRequest request, StreamObserver<ExistsOnlineCashClosingPaymentsResponse> responseObserver) {
 		try {
@@ -1823,6 +1847,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * post: "/point-of-sales/{pos_id}/cash/{id}/online"
+	 */
 	@Override
 	public void processOnlineCashClosing(ProcessOnlineCashClosingRequest request, StreamObserver<ProcessOnlineCashClosingResponse> responseObserver) {
 		try {
@@ -1842,6 +1869,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{id}/online"
+	 */
 	@Override
 	public void infoOnlineCashClosing(InfoOnlineCashClosingRequest request, StreamObserver<InfoOnlineCashClosingResponse> responseObserver) {
 		try {
@@ -1861,6 +1891,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * put: "/point-of-sales/{pos_id}/cash/{id}/online"
+	 */
 	@Override
 	public void cancelOnlineCashClosing(CancelOnlineCashClosingRequest request, StreamObserver<CancelOnlineCashClosingResponse> responseObserver) {
 		try {
@@ -3605,20 +3638,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 
-	/**
-	 * Get write off amount tolerance
-	 * @param pos
-	 * @return
-	 */
-	private BigDecimal getWriteOffAmtTolerance(MPOS pos) {
-		BigDecimal writeOffAmtTolerance = AccessManagement.getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
-		int currencyId = AccessManagement.getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
-		if(currencyId > 0) {
-			writeOffAmtTolerance = OrderUtil.getConvertedAmount(pos, currencyId, writeOffAmtTolerance);
-		}
-		return writeOffAmtTolerance;
-	}
-
 
 	/**
 	 * List Orders from POS UUID
@@ -5012,7 +5031,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 
-	
+
+	/**
+	 * get: "/point-of-sales/{id}"
+	 * get: "/point-of-sales/terminals/{id}"
+	 */
 	@Override
 	public void listPointOfSales(ListPointOfSalesRequest request, StreamObserver<ListPointOfSalesResponse> responseObserver) {
 		try {
@@ -5020,7 +5043,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(posList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -5030,7 +5053,6 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
-
 	/**
 	 * Get list from user
 	 * @param request
@@ -5087,7 +5109,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			.setLimit(limit, offset)
 			.<MPOS>list()
 			.forEach(pos -> {
-				PointOfSales.Builder posBuilder = convertPointOfSales(pos);
+				PointOfSales.Builder posBuilder = org.spin.pos.service.pos.POSConvertUtil.convertPointOfSales(pos);
 				builder.addSellingPoints(posBuilder);
 			});
 		//	Set page token
@@ -5100,8 +5122,10 @@ public class PointOfSalesForm extends StoreImplBase {
 		return builder;
 	}
 
-
-
+	/**
+	 * get: "/point-of-sales/{id}"
+	 * get: "/point-of-sales/terminals/{id}"
+	 */
 	@Override
 	public void getPointOfSales(PointOfSalesRequest request, StreamObserver<PointOfSales> responseObserver) {
 		try {
@@ -5109,7 +5133,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(pos.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -5119,7 +5143,6 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
-
 	/**
 	 * Get POS builder
 	 * @param context
@@ -5127,260 +5150,11 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private PointOfSales.Builder getPosBuilder(PointOfSalesRequest request) {
-		return convertPointOfSales(
+		return org.spin.pos.service.pos.POSConvertUtil.convertPointOfSales(
 			POS.validateAndGetPOS(request.getId(), true)
 		);
 	}
 
-	/**
-	 * Convert POS
-	 * @param pos
-	 * @return
-	 */
-	private PointOfSales.Builder convertPointOfSales(MPOS pos) {
-		PointOfSales.Builder builder = PointOfSales.newBuilder()
-			.setId(
-				pos.getC_POS_ID()
-			)
-			.setName(
-				StringManager.getValidString(
-					pos.getName()
-				)
-			)
-			.setDescription(
-				StringManager.getValidString(
-					pos.getDescription()
-				)
-			)
-			.setHelp(
-				StringManager.getValidString(
-					pos.getHelp()
-				)
-			)
-			.setIsModifyPrice(
-				pos.isModifyPrice()
-			)
-			.setIsPosRequiredPin(
-				pos.isPOSRequiredPIN()
-			)
-			.setSalesRepresentative(
-				CoreFunctionalityConvert.convertSalesRepresentative(
-					MUser.get(pos.getCtx(), pos.getSalesRep_ID())
-				)
-			)
-			.setTemplateCustomer(
-				POSConvertUtil.convertCustomer(
-					pos.getBPartner()
-				)
-			)
-			.setKeyLayoutId(
-				pos.getC_POSKeyLayout_ID()
-			)
-			.setIsAisleSeller(
-				pos.get_ValueAsBoolean("IsAisleSeller")
-			)
-			.setIsSharedPos(
-				pos.get_ValueAsBoolean("IsSharedPOS")
-			)
-			.setConversionTypeId(
-				pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID)
-			)
-		;
-
-		int userId = Env.getAD_User_ID(pos.getCtx());
-
-		// Write Off
-		builder.setIsAllowsWriteOffAmount(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsWriteOffAmount)
-			)
-			.setWriteOffAmountTolerance(
-				NumberManager.getBigDecimalToString(
-					getWriteOffAmtTolerance(pos)
-				)
-			)
-			.setIsWriteOffByPercent(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent)
-			)
-			.setWriteOffPercentageTolerance(
-				NumberManager.getBigDecimalToString(
-					AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumLineDiscountAllowed)
-				)
-			)
-		;
-
-		// Discount
-		builder
-			.setIsDisplayDiscount(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsDisplayDiscount)
-			)
-			.setIsAllowsApplyDiscount(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsApplyDiscount)
-			)
-			.setMaximumDiscountAllowed(
-				NumberManager.getBigDecimalToString(
-					AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed)
-				)
-			)
-			.setIsAllowsModifyDiscount(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsModifyDiscount)
-			)
-			.setMaximumLineDiscountAllowed(
-				NumberManager.getBigDecimalToString(
-					AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumLineDiscountAllowed)
-				)
-			)
-			.setIsAllowsApplySchemaDiscount(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsApplyShemaDiscount)
-			)
-			.setMaximumSchemaDiscountAllowed(
-				NumberManager.getBigDecimalToString(
-					AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumShemaDiscountAllowed)
-				)
-			)
-		;
-
-		// Collect / Refund
-		builder
-			.setIsAllowsCollectOrder(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCollectOrder)
-			)
-			.setIsPrintCollect(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, "IsPrintCollect")
-			)
-			// TODO: Add flag column `IsAllowsRefund` to pin accesss
-			.setMaximumRefundAllowed(
-				NumberManager.getBigDecimalToString(
-					AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumRefundAllowed)
-				)
-			)
-			.setMaximumDailyRefundAllowed(
-				NumberManager.getBigDecimalToString(
-					AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumDailyRefundAllowed)
-				)
-			)
-		;
-		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_RefundReferenceCurrency_ID) > 0) {
-			builder.setRefundReferenceCurrency(
-				CoreFunctionalityConvert.convertCurrency(
-					pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_RefundReferenceCurrency_ID)
-				)
-			);
-		}
-		// if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_CollectingAgent_ID) > 0) {
-		// 	builder.setCollectingAgent(
-		// 		CoreFunctionalityConvert.convertSalesRepresentative(
-		// 			MUser.get(pos.getCtx(), pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_CollectingAgent_ID)
-		// 		)
-		// 	);
-		// }
-
-		//	Special values
-		builder
-			.setIsAllowsModifyQuantity(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsModifyQuantity)
-			)
-			.setIsAllowsReturnOrder(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsReturnOrder)
-			)
-			.setIsAllowsCreateOrder(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCreateOrder)
-			)
-			.setIsDisplayTaxAmount(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsDisplayTaxAmount)
-			)
-			.setIsAllowsConfirmShipment(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsConfirmShipment)
-			)
-			.setIsConfirmCompleteShipment(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsConfirmCompleteShipment)
-			)
-			.setIsAllowsAllocateSeller(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsAllocateSeller)
-			)
-			.setIsAllowsConcurrentUse(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsConcurrentUse)
-			)
-			.setIsAllowsCashOpening(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCashOpening)
-			)
-			.setIsAllowsCashClosing(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCashClosing)
-			)
-			.setIsAllowsCashWithdrawal(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCashWithdrawal)
-			)
-			.setIsAllowsCreateCustomer(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCreateCustomer)
-			)
-			.setIsAllowsModifyCustomer(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsModifyCustomer)
-			)
-			.setIsAllowsPrintDocument(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsPrintDocument)
-			)
-			.setIsAllowsPreviewDocument(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsPreviewDocument)
-			)
-			.setIsKeepPriceFromCustomer(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsKeepPriceFromCustomer)
-			)
-			.setIsModifyPrice(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsModifyPrice)
-			)
-			.setIsAllowsDetailCashClosing(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsDetailCashClosing)
-			)
-			.setIsAllowsCustomerTemplate(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCustomerTemplate)
-			)
-			.setIsAllowsGiftCard(
-				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsGiftCard)
-			)
-			.setDefaultGiftCardChargeId(
-				pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID)
-			)
-		;
-
-		//	Set Price List and currency
-		if(pos.getM_PriceList_ID() != 0) {
-			MPriceList priceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
-			builder.setPriceList(CoreFunctionalityConvert.convertPriceList(priceList));
-		}
-		//	Bank Account
-		if(pos.getC_BankAccount_ID() != 0) {
-			MBankAccount cashAccount = MBankAccount.get(Env.getCtx(), pos.getC_BankAccount_ID());
-			builder.setDefaultOpeningChargeId(cashAccount.get_ValueAsInt("DefaultOpeningCharge_ID"))
-				.setDefaultWithdrawalChargeId(cashAccount.get_ValueAsInt("DefaultWithdrawalCharge_ID"))
-				.setCashBankAccount(CoreFunctionalityConvert.convertBankAccount(cashAccount));
-		}
-		//	Bank Account to transfer
-		if(pos.getCashTransferBankAccount_ID() != 0) {
-			builder.setCashTransferBankAccount(CoreFunctionalityConvert.convertBankAccount(pos.getCashTransferBankAccount_ID()));
-		}
-		//	Warehouse
-		if(pos.getM_Warehouse_ID() > 0) {
-			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), pos.getM_Warehouse_ID());
-			builder.setWarehouse(CoreFunctionalityConvert.convertWarehouse(warehouse));
-		}
-		//	Price List
-		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DisplayCurrency_ID) > 0) {
-			builder.setDisplayCurrency(CoreFunctionalityConvert.convertCurrency(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DisplayCurrency_ID)));
-		}
-		//	Document Type
-		if(pos.getC_DocType_ID() > 0) {
-			builder.setDocumentType(CoreFunctionalityConvert.convertDocumentType(pos.getC_DocType_ID()));
-		}
-		//	Return Document Type
-		if(pos.get_ValueAsInt("C_DocTypeRMA_ID") > 0) {
-			builder.setReturnDocumentType(CoreFunctionalityConvert.convertDocumentType(pos.get_ValueAsInt("C_DocTypeRMA_ID")));
-		}
-		// Campaign
-		if (pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultCampaign_ID) > 0) {
-			builder.setDefaultCampaign(POSConvertUtil.convertCampaign(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultCampaign_ID)));
-		}
-		
-		return builder;
-	}
 
 
 	/**

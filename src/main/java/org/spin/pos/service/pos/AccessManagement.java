@@ -28,6 +28,7 @@ import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
 
@@ -212,6 +213,20 @@ public class AccessManagement {
 			return ColumnsAdded.COLUMNNAME_MaximumShemaDiscountAllowed;
 		}
 		return null;
+	}
+
+	/**
+	 * Get write off amount tolerance
+	 * @param pos
+	 * @return
+	 */
+	public static BigDecimal getWriteOffAmtTolerance(MPOS pos) {
+		BigDecimal writeOffAmtTolerance = AccessManagement.getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
+		int currencyId = AccessManagement.getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
+		if(currencyId > 0) {
+			writeOffAmtTolerance = OrderUtil.getConvertedAmount(pos, currencyId, writeOffAmtTolerance);
+		}
+		return writeOffAmtTolerance;
 	}
 
 }

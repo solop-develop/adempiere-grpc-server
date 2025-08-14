@@ -537,6 +537,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				process.isDirectPrint()
 			)
 		;
+		processBuilder.setOutput(outputBuilder);
 
 		return processBuilder;
 	}
