@@ -1200,6 +1200,7 @@ message PrintGiftCardPreviewRequest {
 	int32 id = 1;
 	int32 pos_id = 2;
 	int32 order_id = 3;
+	string report_type = 4;
 }
 message PrintGiftCardPreviewResponse {
 	string result = 1;

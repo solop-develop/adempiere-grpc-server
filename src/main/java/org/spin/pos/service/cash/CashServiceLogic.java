@@ -42,7 +42,6 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ProcessLog;
-import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.pos.CashClosingRequest;
 import org.spin.backend.grpc.pos.CashMovements;
 import org.spin.backend.grpc.pos.CashOpeningRequest;
@@ -56,8 +55,9 @@ import org.spin.backend.grpc.pos.PaymentSummary;
 import org.spin.backend.grpc.pos.PaymentTotal;
 import org.spin.backend.grpc.pos.PrintPreviewCashMovementsRequest;
 import org.spin.backend.grpc.pos.PrintPreviewCashMovementsResponse;
+import org.spin.backend.grpc.report_management.GenerateReportRequest;
 import org.spin.base.util.RecordUtil;
-import org.spin.grpc.service.BusinessData;
+import org.spin.grpc.service.ReportManagement;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.process.inf_POS_Sales_Detail_And_CollectionAbstract;
 import org.spin.pos.service.pos.POS;
@@ -575,14 +575,13 @@ public class CashServiceLogic {
 			builderPosId.build()
 		);
 
-		RunBusinessProcessRequest.Builder processRequest = RunBusinessProcessRequest.newBuilder()
+		GenerateReportRequest.Builder reportRequest = GenerateReportRequest.newBuilder()
 			.setId(processId)
 			.setReportType(reportType)
 			.setParameters(parameters)
 		;
-
-		ProcessLog.Builder processLog = BusinessData.runBusinessProcess(
-			processRequest.build()
+		ProcessLog.Builder processLog = ReportManagement.generateReport(
+			reportRequest.build()
 		);
 
 		// preview document
