@@ -33,6 +33,7 @@ import org.compiere.model.MProcessPara;
 import org.compiere.model.MQuery;
 import org.compiere.model.MTable;
 import org.compiere.print.ReportEngine;
+import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.base.db.WhereClauseUtil;
@@ -48,6 +49,9 @@ import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfWriter;
 
 public class ReportUtil {
+
+	/**	Logger			*/
+	private static CLogger log = CLogger.getCLogger(ReportUtil.class);
 
 	/**
 	 * Default report type format.
@@ -141,9 +145,11 @@ public class ReportUtil {
 		List<InputStream> inputStreamsList = new ArrayList<InputStream>();
 		inputFilesList.stream().forEach(inputFile -> {
 			try {
-				inputStreamsList.add(new FileInputStream(inputFile));
+				FileInputStream inputStream = new FileInputStream(inputFile);
+				inputStreamsList.add(inputStream);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
+				log.warning(e.getLocalizedMessage());
 			}
 		});
 

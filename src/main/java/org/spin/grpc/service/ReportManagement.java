@@ -99,7 +99,7 @@ import io.grpc.stub.StreamObserver;
 public class ReportManagement extends ReportManagementImplBase {
 
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(ReportManagement.class);
+	private static CLogger log = CLogger.getCLogger(ReportManagement.class);
 
 
 
@@ -505,10 +505,11 @@ public class ReportManagement extends ReportManagementImplBase {
 
 		ByteString resultFile = ByteString.empty();
 		try {
-			resultFile = ByteString.readFrom(new FileInputStream(reportFile));
+			FileInputStream inputStream = new FileInputStream(reportFile);
+			resultFile = ByteString.readFrom(inputStream);
 		} catch (IOException e) {
 			e.printStackTrace();
-			// log.warning(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 
 			if (Util.isEmpty(processBuilder.getSummary(), true)) {
 				processBuilder.setSummary(
@@ -522,12 +523,14 @@ public class ReportManagement extends ReportManagementImplBase {
 			}
 			processBuilder.setIsError(true);
 		}
-		if(reportType.endsWith("html") || reportType.endsWith("txt")) {
-			outputBuilder.setOutputBytes(resultFile);
+		if (resultFile != null) {
+			outputBuilder.setOutputStream(resultFile);
+			if(reportType.endsWith("html") || reportType.endsWith("txt")) {
+				outputBuilder.setOutputBytes(resultFile);
+			}
 		}
 
 		outputBuilder.setReportType(reportType)
-			.setOutputStream(resultFile)
 			.setReportViewId(reportViewReferenceId)
 			.setPrintFormatId(printFormatReferenceId)
 			.setTableName(
@@ -745,10 +748,22 @@ public class ReportManagement extends ReportManagementImplBase {
 					footerName.toString()
 				)
 			);
-			ByteString resultFile = ByteString.readFrom(new FileInputStream(reportFile));
-			if (reportType.endsWith("html") || reportType.endsWith("txt")) {
-				outputBuilder.setOutputBytes(resultFile);
+
+			ByteString resultFile = ByteString.empty();
+			try {
+				FileInputStream inputStream = new FileInputStream(reportFile);
+				resultFile = ByteString.readFrom(inputStream);
+			} catch (IOException e) {
+				e.printStackTrace();
+				log.warning(e.getLocalizedMessage());
 			}
+			if (resultFile != null) {
+				outputBuilder.setOutputStream(resultFile);
+				if(reportType.endsWith("html") || reportType.endsWith("txt")) {
+					outputBuilder.setOutputBytes(resultFile);
+				}
+			}
+
 			if(reportView != null) {
 				outputBuilder.setReportViewId(
 					reportView.getAD_ReportView_ID()
@@ -762,7 +777,6 @@ public class ReportManagement extends ReportManagementImplBase {
 						table.getTableName()
 					)
 				)
-				.setOutputStream(resultFile)
 			;
 
 		//	Return

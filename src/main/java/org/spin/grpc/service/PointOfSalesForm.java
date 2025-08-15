@@ -1028,9 +1028,10 @@ public class PointOfSalesForm extends StoreImplBase {
 						)
 					)
 				;
+
+				// Write a single file
 				File fileReport = ticketResult.getReportFile();
-				if(fileReport != null
-						&& fileReport.exists()) {
+				if(fileReport != null && fileReport.exists()) {
 					String validFileName = FileUtil.getValidFileName(fileReport.getName());
 					String fileType = FileUtil.getExtension(validFileName);
 					if(Util.isEmpty(fileType)) {
@@ -1038,7 +1039,8 @@ public class PointOfSalesForm extends StoreImplBase {
 					}
 					ByteString resultFile = ByteString.empty();
 					try {
-						resultFile = ByteString.readFrom(new FileInputStream(fileReport));
+						FileInputStream inputStream = new FileInputStream(fileReport);
+						resultFile = ByteString.readFrom(inputStream);
 					} catch (IOException e) {
 						log.warning(e.getLocalizedMessage());
 						builder
@@ -1067,7 +1069,36 @@ public class PointOfSalesForm extends StoreImplBase {
 						.setOutputStream(resultFile)
 					;
 				}
-				//	Write map
+
+				// Write a multiple files
+				List<File> filesReportList = ticketResult.getReportFiles();
+				if (filesReportList != null && !filesReportList.isEmpty()) {
+					filesReportList.stream().forEach(reportFile -> {
+						if(fileReport == null || !fileReport.exists()) {
+							return;
+						}
+						ByteString resultFile = ByteString.empty();
+						try {
+							FileInputStream inputStream = new FileInputStream(reportFile);
+							resultFile = ByteString.readFrom(inputStream);
+						} catch (IOException e) {
+							log.warning(e.getLocalizedMessage());
+							builder
+								.setSummary(
+									StringManager.getValidString(
+										Msg.parseTranslation(
+											Env.getCtx(),
+											e.getLocalizedMessage()
+										)
+									)
+								)
+								.setIsError(true);
+						}
+						builder.addOutputStreams(resultFile);
+					});
+				}
+
+				//	Write a map values
 				if(ticketResult.getResultValues() != null) {
 					Map<String, Object> resultValues = ticketResult.getResultValues();
 					builder.setResultValues(
