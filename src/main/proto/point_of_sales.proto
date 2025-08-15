@@ -40,16 +40,18 @@ service Store {
 		option (google.api.http) = {
 			get: "/point-of-sales"
 			additional_bindings: {
+				// TODO: Deprecated end point
 				get: "/point-of-sales/terminals"
 			}
 		};
 	}
 	rpc GetPointOfSales(PointOfSalesRequest) returns (PointOfSales) {
 		option (google.api.http) = {
-			get: "/point-of-sales/{id}"
-			additional_bindings: {
+			// get: "/point-of-sales/{id}"
+			// additional_bindings: {
+				// TODO: Deprecated end point
 				get: "/point-of-sales/terminals/{id}"
-			}
+			// }
 		};
 	}
 
@@ -120,6 +122,26 @@ service Store {
 		option (google.api.http) = {
 			put: "/point-of-sales/{pos_id}/orders/{id}/process",
 			body: "*"
+		};
+	}
+	rpc PrintTicket(PrintTicketRequest) returns (PrintTicketResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/print",
+			additional_bindings: {
+				// TODO: Deprecated end point
+				post: "/point-of-sales/{pos_id}/print-ticket",
+				body: "*"
+			}
+		};
+	}
+	rpc PrintPreview(PrintPreviewRequest) returns (PrintPreviewResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/preview",
+			additional_bindings: {
+				// TODO: Deprecated end point
+				post: "/point-of-sales/{pos_id}/print-preview",
+				body: "*"
+			}
 		};
 	}
 
@@ -303,20 +325,7 @@ service Store {
 	rpc GetAvailableRefund(GetAvailableRefundRequest) returns (AvailableRefund) {
 		option (google.api.http) = { get: "/point-of-sales/{pos_id}/available-refunds" };
 	}
-	//	Print Ticket
-	rpc PrintTicket(PrintTicketRequest) returns (PrintTicketResponse) {
-		option (google.api.http) = {
-			post: "/point-of-sales/{pos_id}/print-ticket",
-			body: "*"
-		};
-	}
-	//	Print Preview
-	rpc PrintPreview(PrintPreviewRequest) returns (PrintPreviewResponse) {
-		option (google.api.http) = {
-			post: "/point-of-sales/{pos_id}/print-preview",
-			body: "*"
-		};
-	}
+
 
 	// Bank
 	rpc ListBanks(ListBanksRequest) returns (ListBanksResponse) {
@@ -340,6 +349,7 @@ service Store {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/banks/{bank_id}/bank-accounts/{id}"
 			additional_bindings: {
+				// TODO: Deprecated end point
 				get: "/point-of-sales/{pos_id}/banks/bank-accounts/{id}"
 			}
 		};
@@ -383,12 +393,18 @@ service Store {
 	}
 	rpc PrintShipmentPreview(PrintShipmentPreviewRequest) returns (PrintShipmentPreviewResponse) {
 		option (google.api.http) = {
-			post: "/point-of-sales/{pos_id}/shipments/{shipment_id}/print-preview",
-			body: "*"
+			get: "/point-of-sales/{pos_id}/shipments/{shipment_id}/preview"
+			additional_bindings: {
+				// TODO: Deprecated end point
+				post: "/point-of-sales/{pos_id}/shipments/{shipment_id}/print-preview",
+				body: "*"
+			}
 		};
 	}
 	rpc DeleteShipment(DeleteShipmentRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/shipments" };
+		option (google.api.http) = {
+			delete: "/point-of-sales/{pos_id}/shipments/{shipment_id}"
+		};
 	}
 	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {
 		option (google.api.http) = {
@@ -411,10 +427,14 @@ service Store {
 		};
 	}
 	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines/{id}" };
+		option (google.api.http) = {
+			delete: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines/{id}"
+		};
 	}
 	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/shipments/{shipment_id}/lines"
+		};
 	}
 
 	//	Return Order
@@ -438,6 +458,7 @@ service Store {
 			post: "/point-of-sales/{pos_id}/cash",
 			body: "*"
 			additional_bindings: {
+				// TODO: Deprecated end point
 				put: "/point-of-sales/{pos_id}/cash/process-opening",
 				body: "*"
 			}
@@ -445,9 +466,10 @@ service Store {
 	}
 	rpc CashClosing(CashClosingRequest) returns (CashMovements) {
 		option (google.api.http) = {
-			post: "/point-of-sales/cash/{id}",
+			post: "/point-of-sales/{pos_id}/cash/{id}",
 			body: "*"
 			additional_bindings: {
+				// TODO: Deprecated end point
 				put: "/point-of-sales/cash/closings/{id}/process",
 				body: "*"
 			}
@@ -465,25 +487,28 @@ service Store {
 	}
 	rpc ListCashMovements(ListCashMovementsRequest) returns (ListCashMovementsResponse) {
 		option (google.api.http) = {
-			get: "/point-of-sales/{pos_id}/cash/movements"
+			get: "/point-of-sales/{pos_id}/cash/{id}"
 			additional_bindings: {
-				get: "/point-of-sales/{pos_id}/cash/{id}"
+				// TODO: Deprecated end point
+				get: "/point-of-sales/{pos_id}/cash/movements"
 			}
 		};
 	}
 	rpc ListCashSummaryMovements(ListCashSummaryMovementsRequest) returns (ListCashSummaryMovementsResponse) {
 		option (google.api.http) = {
-			get: "/point-of-sales/{pos_id}/cash/summary-movements"
+			get: "/point-of-sales/{pos_id}/cash/{id}/summary"
 			additional_bindings: {
-				get: "/point-of-sales/{pos_id}/cash/{id}/summary"
+				// TODO: Deprecated end point
+				get: "/point-of-sales/{pos_id}/cash/summary-movements"
 			}
 		};
 	}
 	rpc PrintPreviewCashMovements(PrintPreviewCashMovementsRequest) returns (PrintPreviewCashMovementsResponse) {
 		option (google.api.http) = {
-			get: "/point-of-sales/{pos_id}/cash/movements/print-preview"
+			get: "/point-of-sales/{pos_id}/cash/{bank_statement_id}/preview"
 			additional_bindings: {
-				get: "/point-of-sales/{pos_id}/cash/{bank_statement_id}/print-preview"
+				// TODO: Deprecated end point
+				get: "/point-of-sales/{pos_id}/cash/movements/print-preview"
 			}
 		};
 	}
@@ -653,8 +678,12 @@ service Store {
 	}
 	rpc PrintGiftCardPreview(PrintGiftCardPreviewRequest) returns (PrintGiftCardPreviewResponse) {
 		option (google.api.http) = {
-			post: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}/print-preview",
-			body: "*"
+			get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}/preview",
+			additional_bindings: {
+				// TODO: Deprecated end point
+				post: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}/print-preview",
+				body: "*"
+			}
 		};
 	}
 
@@ -1343,16 +1372,17 @@ message PrintTicketRequest {
 	int32 pos_id = 1;
 	int32 order_id = 2;
 }
-
-//	Response after print
 message PrintTicketResponse {
 	string summary = 1;
 	bool is_error = 2;
 	string file_name = 3;
 	string mime_type = 4;
 	bytes output_stream = 5;
-	string result_type = 6;
-	google.protobuf.Value result_values = 7;
+	repeated bytes output_streams = 6;
+	string result_type = 7;
+	google.protobuf.Value result_values = 8;
+	repeated google.protobuf.Value results_values = 9;
+	bool is_direct_print = 10;
 }
 
 //	Print Preview Ticket
@@ -1361,8 +1391,6 @@ message PrintPreviewRequest {
 	int32 order_id = 2;
 	string report_type = 3;
 }
-
-//	Response after preview
 message PrintPreviewResponse {
 	string result = 1;
 	ProcessLog process_log = 2;
@@ -1374,8 +1402,6 @@ message PrintShipmentPreviewRequest {
 	int32 shipment_id = 2;
 	string report_type = 3;
 }
-
-//	Response after preview
 message PrintShipmentPreviewResponse {
 	string result = 1;
 	ProcessLog process_log = 2;

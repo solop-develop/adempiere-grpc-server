@@ -989,22 +989,33 @@ public class PointOfSalesForm extends StoreImplBase {
 
 
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/orders/{order_id}/print"
+	 */
 	@Override
 	public void printTicket(PrintTicketRequest request, StreamObserver<PrintTicketResponse> responseObserver) {
 		try {
-			if(request.getOrderId() <= 0) {
-				log.warning("Sales Order Not Found");
-				return;
-			}
+			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+			MOrder salesOrder = OrderUtil.validateAndGetOrder(request.getOrderId());
+
 			log.fine("Print Ticket = " + request);
 			//	Print based on handler
 			TicketResult ticketResult = TicketHandler.getInstance()
-					.withPosId(request.getPosId())
-					.withTableName(I_C_Order.Table_Name)
-					.withRecordId(request.getOrderId())
-					.printTicket();
+				.withPosId(
+					pos.getC_POS_ID()
+				)
+				.withTableName(I_C_Order.Table_Name)
+				.withRecordId(
+					salesOrder.getC_Order_ID()
+				)
+				.printTicket()
+			;
 			//	Process response
-			PrintTicketResponse.Builder builder = PrintTicketResponse.newBuilder();
+			PrintTicketResponse.Builder builder = PrintTicketResponse.newBuilder()
+				.setIsDirectPrint(
+					pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+				)
+			;
 			if(ticketResult != null) {
 				builder
 					.setIsError(ticketResult.isError())
@@ -1067,35 +1078,33 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
+	/**
+	 * get: "/point-of-sales/{pos_id}/orders/{order_id}/preview"
+	 */
 	@Override
 	public void printPreview(PrintPreviewRequest request, StreamObserver<PrintPreviewResponse> responseObserver) {
 		try {
-			if (request.getOrderId() <= 0) {
-				log.warning("@FillMandatory@ @sales.order@");
-				return;
-			}
 			final int orderId = request.getOrderId();
-			MOrder order = new MOrder(Env.getCtx(), orderId, null);
-			if (order == null || order.getC_Order_ID() <= 0) {
-				log.warning("@sales.order@ (" + order + ") @NotFound@");
-				return;
-			}
+			MOrder order = OrderUtil.validateAndGetOrder(orderId);
 
-			log.fine("Print Ticket = " + request);
 			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 			int userId = Env.getAD_User_ID(pos.getCtx());
 			if (!AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsPreviewDocument)) {
 				throw new AdempiereException("@POS.PreviewDocumentNotAllowed@");
 			}
 
+			log.fine("Print Ticket = " + request);
 			PrintPreviewResponse.Builder ticket = PrintPreviewResponse.newBuilder()
 				.setResult("Ok")
 			;
@@ -1139,7 +1148,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1150,18 +1159,19 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/shipments/{shipment_id}/preview"
+	 */
 	@Override
 	public void printShipmentPreview(PrintShipmentPreviewRequest request, StreamObserver<PrintShipmentPreviewResponse> responseObserver) {
 		try {
 			if (request.getShipmentId() <= 0) {
-				log.warning("@FillMandatory@ @Shipment@");
-				return;
+				throw new AdempiereException("@FillMandatory@ @Shipment@");
 			}
 			final int shipmentId = request.getShipmentId();
 			MInOut shipment = new MInOut(Env.getCtx(), shipmentId, null);
 			if (shipment == null || shipment.getM_InOut_ID() <= 0) {
-				log.warning("@Shipment@ (" + shipmentId + ") @NotFound@");
-				return;
+				throw new AdempiereException("@Shipment@ (" + shipmentId + ") @NotFound@");
 			}
 
 			log.fine("Print Ticket = " + request);
@@ -1203,7 +1213,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1214,12 +1224,14 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/orders/{order_id}/gift-cards/{id}/preview"
+	 */
 	@Override
 	public void printGiftCardPreview(PrintGiftCardPreviewRequest request, StreamObserver<PrintGiftCardPreviewResponse> responseObserver) {
 		try {
 			if (request.getId() <= 0) {
-				log.warning("@FillMandatory@ @ECA14_GiftCard@");
-				return;
+				throw new AdempiereException("@FillMandatory@ @ECA14_GiftCard@");
 			}
 			final int giftCardId = request.getId();
 			MTable giftCardTable = MTable.get(Env.getCtx(), "ECA14_GiftCard");
@@ -1228,8 +1240,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			}
 			PO giftCard = giftCardTable.getPO(giftCardId, null);
 			if (giftCard == null || giftCard.get_ValueAsInt("ECA14_GiftCard_ID") <= 0) {
-				log.warning("@ECA14_GiftCard_ID@ (" + giftCardId + ") @NotFound@");
-				return;
+				throw new AdempiereException("@ECA14_GiftCard_ID@ (" + giftCardId + ") @NotFound@");
 			}
 
 			log.fine("Print Ticket = " + request);
@@ -1271,13 +1282,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-					Status.INTERNAL
-							.withDescription(e.getLocalizedMessage())
-							.withCause(e)
-							.asRuntimeException()
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -1765,8 +1776,8 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 	/**
-	 * get: "/point-of-sales/{pos_id}/cash/movements"
 	 * get: "/point-of-sales/{pos_id}/cash/{id}"
+	 * get: "/point-of-sales/{pos_id}/cash/movements"
 	 */
 	@Override
 	public void listCashMovements(ListCashMovementsRequest request, StreamObserver<ListCashMovementsResponse> responseObserver) {
@@ -1786,6 +1797,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{id}/summary"
+	 */
 	@Override
 	public void listCashSummaryMovements(ListCashSummaryMovementsRequest request, StreamObserver<ListCashSummaryMovementsResponse> responseObserver) {
 		try {
@@ -1804,6 +1818,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{bank_statement_id}/preview"
+	 */
 	@Override
 	public void printPreviewCashMovements(PrintPreviewCashMovementsRequest request, StreamObserver<PrintPreviewCashMovementsResponse> responseObserver) {
 		try {
