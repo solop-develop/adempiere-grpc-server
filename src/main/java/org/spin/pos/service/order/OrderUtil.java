@@ -58,7 +58,7 @@ public class OrderUtil {
 		}
 		MOrder order = new MOrder(Env.getCtx(), orderId, null);
 		if (order == null || order.getC_Order_ID() <= 0) {
-			throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			throw new AdempiereException("@C_Order_ID@ (" + orderId + ") @NotFound@");
 		}
 		return order;
 	}

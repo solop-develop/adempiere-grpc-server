@@ -275,7 +275,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 		List<Object> parameters = new ArrayList<>();
 
 		//	For client
-		whereClause.append("AD_Client_ID = ? ");
+		whereClause.append("AD_Client_ID IN (0, ?) ");
 		if(request.getIsForCurrentClient()) {
 			parameters.add(Env.getAD_Client_ID(Env.getCtx()));
 		} else {
@@ -283,7 +283,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 		}
 
 		//	For Organization
-		whereClause.append("AND AD_Org_ID = ? ");
+		whereClause.append("AND AD_Org_ID IN (0, ?) ");
 		if(request.getIsForCurrentOrganization()) {
 			parameters.add(Env.getAD_Org_ID(Env.getCtx()));
 		} else {
@@ -319,6 +319,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 		)
 			.setParameters(parameters)
 			.setOnlyActiveRecords(true)
+			.setOrderBy("ORDER BY AD_Client_ID DESC")
 		;
 		
 		ListPreferencesResponse.Builder builderList = ListPreferencesResponse.newBuilder()
