@@ -186,8 +186,8 @@ message ConversionType {
 	string name = 4;
 	string description = 5;
 	bool is_default = 6;
-	int32 business_partner_id = 7;
-	int32 parent_id = 8;
+	int32 parent_id = 7;
+	int32 business_partner_id = 8;
 }
 message ListConversionTypesRequest {
 	string filters = 1;
@@ -200,8 +200,8 @@ message ListConversionTypesRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 	// custom filters
-	int32 business_partner_id = 10;
-	google.protobuf.Timestamp date = 11;
+	google.protobuf.Timestamp date = 10;
+	int32 business_partner_id = 11;
 }
 message ListConversionTypesResponse {
 	int64 record_count = 1;
@@ -227,10 +227,10 @@ message CreateConversionRateRequest {
 	int32 organization_id = 1;
 	int32 conversion_type_id = 2;
 	google.protobuf.Timestamp date = 3;
-	int32 business_partner_id = 4;
-	int32 currency_from_id = 5;
-	int32 currency_to_id = 6;
-	string negotiated_rate = 7;
+	int32 currency_from_id = 4;
+	int32 currency_to_id = 5;
+	string negotiated_rate = 6;
+	int32 business_partner_id = 7;
 }
 
 

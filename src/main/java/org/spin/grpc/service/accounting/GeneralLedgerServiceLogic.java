@@ -61,6 +61,7 @@ import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.solop.sp032.model.MSP032Conversion;
 import org.solop.sp032.util.CurrencyConvertDocumentsUtil;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
@@ -82,6 +83,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -513,6 +515,7 @@ public class GeneralLedgerServiceLogic {
 			filtersList.add(businessPartner.getC_BPartner_ID());
 
 			String documentNo = "";
+			Timestamp dateFrom = null;
 			if (request.getOrderId() > 0) {
 				MOrder order = new MOrder(Env.getCtx(), request.getOrderId(), null);
 				if (order != null && order.getC_Order_ID() > 0) {
@@ -521,6 +524,7 @@ public class GeneralLedgerServiceLogic {
 						request.getOrderId()
 					);
 					documentNo = order.getDocumentNo();
+					dateFrom = order.getDateAcct();
 				}
 			} else if (request.getInvoiceId() > 0) {
 				MInvoice invoice = new MInvoice(Env.getCtx(), request.getInvoiceId(), null);
@@ -530,6 +534,7 @@ public class GeneralLedgerServiceLogic {
 						request.getInvoiceId()
 					);
 					documentNo = invoice.getDocumentNo();
+					dateFrom = invoice.getDateAcct();
 				}
 			} else if (request.getPaymentId() > 0) {
 				MPayment payment = new MPayment(Env.getCtx(), request.getPaymentId(), null);
@@ -539,6 +544,7 @@ public class GeneralLedgerServiceLogic {
 						request.getPaymentId()
 					);
 					documentNo = payment.getDocumentNo();
+					dateFrom = payment.getDateAcct();
 				}
 			} else if (request.getAssetAdditionId() > 0) {
 				MAssetAddition assetAddition = new MAssetAddition(Env.getCtx(), request.getAssetAdditionId(), null);
@@ -548,6 +554,7 @@ public class GeneralLedgerServiceLogic {
 						request.getAssetAdditionId()
 					);
 					documentNo = assetAddition.getDocumentNo();
+					dateFrom = assetAddition.getDateAcct();
 				}
 			} else if (request.getExpedientId() > 0) {
 				MTable table = MTable.get(Env.getCtx(), "SP009_Expedient");
@@ -559,6 +566,9 @@ public class GeneralLedgerServiceLogic {
 							request.getExpedientId()
 						);
 						documentNo = expedient.get_ValueAsString(I_C_Order.COLUMNNAME_DocumentNo);
+						dateFrom = TimeManager.getTimestampFromObject(
+							expedient.get_Value(MSP032Conversion.COLUMNNAME_DateDoc)
+						);
 					}
 				}
 			}
@@ -611,10 +621,13 @@ public class GeneralLedgerServiceLogic {
 				conversionType.saveEx();
 			}
 
-			Timestamp date = ValueManager.getDateFromTimestampDate(
-				request.getDate()
-			);
-			date = TimeUtil.getDay(date); // Remove time mark
+			if (dateFrom == null) {
+				Timestamp date = ValueManager.getDateFromTimestampDate(
+					request.getDate()
+				);
+				dateFrom = TimeUtil.getDay(date); // Remove time mark
+			}
+			final Timestamp dateTo = TimeUtil.addYears(dateFrom, CurrencyConvertDocumentsUtil.TIME_Interval);
 
 			final int clientId = Env.getAD_Client_ID(Env.getCtx());
 			final int organizationId = organization.getAD_Org_ID();
@@ -623,9 +636,9 @@ public class GeneralLedgerServiceLogic {
 				Env.getCtx(),
 				I_C_Conversion_Rate.Table_Name,
 				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ? >= ValidFrom AND ? <= ValidTo AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
-				null
+				transactionName
 			)
-				.setParameters(currencyFrom.getC_Currency_ID(), currencyTo.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, organizationId)
+				.setParameters(currencyFrom.getC_Currency_ID(), currencyTo.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), dateFrom, dateTo, clientId, organizationId)
 				.first()
 			;
 			if (conversionRate == null || conversionRate.getC_ConversionType_ID() <= 0) {
@@ -640,8 +653,8 @@ public class GeneralLedgerServiceLogic {
 				conversionRate.setC_Currency_ID_To(
 					currencyTo.getC_Currency_ID()
 				);
-				conversionRate.setValidFrom(date);
-				conversionRate.setValidTo(date);
+				conversionRate.setValidFrom(dateFrom);
+				conversionRate.setValidTo(dateTo);
 			}
 			conversionRate.setMultiplyRate(negotiatedRate);
 			conversionRate.saveEx();
@@ -654,9 +667,9 @@ public class GeneralLedgerServiceLogic {
 				Env.getCtx(),
 				I_C_Conversion_Rate.Table_Name,
 				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ? >= ValidFrom AND ? <= ValidTo AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
-				null
+				transactionName
 			)
-				.setParameters(currencyTo.getC_Currency_ID(), currencyFrom.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, organizationId)
+				.setParameters(currencyTo.getC_Currency_ID(), currencyFrom.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), dateFrom, dateTo, clientId, organizationId)
 				.first()
 			;
 			if (invertConversionRate == null || invertConversionRate.getC_ConversionType_ID() <= 0) {
@@ -671,12 +684,10 @@ public class GeneralLedgerServiceLogic {
 				invertConversionRate.setC_Currency_ID_To(
 					currencyFrom.getC_Currency_ID()
 				);
-				invertConversionRate.setValidFrom(date);
-				invertConversionRate.setValidTo(date);
+				invertConversionRate.setValidFrom(dateFrom);
+				invertConversionRate.setValidTo(dateTo);
 			}
-			invertConversionRate.setMultiplyRate(
-				conversionRate.getDivideRate()
-			);
+			invertConversionRate.setDivideRate(negotiatedRate);
 			invertConversionRate.saveEx();
 		});
 
