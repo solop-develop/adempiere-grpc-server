@@ -59,6 +59,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.solop.sp032.util.CurrencyConvertDocumentsUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -379,7 +380,8 @@ public class PaymentAllocationLogic {
 			Timestamp date = ValueManager.getDateFromTimestampDate(
 				request.getDate()
 			);
-			date = TimeUtil.getDay(date); // Remove time mark
+			final Timestamp dateFrom = TimeUtil.getDay(date); // Remove time mark
+			final Timestamp dateTo = TimeUtil.addYears(dateFrom, CurrencyConvertDocumentsUtil.TIME_Interval);
 
 			final int clientId = Env.getAD_Client_ID(Env.getCtx());
 			final int organizationId = organization.getAD_Org_ID();
@@ -388,9 +390,9 @@ public class PaymentAllocationLogic {
 				Env.getCtx(),
 				I_C_Conversion_Rate.Table_Name,
 				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ? >= ValidFrom AND ? <= ValidTo AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
-				null
+				transactionName
 			)
-				.setParameters(currencyFrom.getC_Currency_ID(), currencyTo.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, organizationId)
+				.setParameters(currencyFrom.getC_Currency_ID(), currencyTo.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), dateFrom, dateTo, clientId, organizationId)
 				.first()
 			;
 			if (conversionRate == null || conversionRate.getC_ConversionType_ID() <= 0) {
@@ -405,8 +407,8 @@ public class PaymentAllocationLogic {
 				conversionRate.setC_Currency_ID_To(
 					currencyTo.getC_Currency_ID()
 				);
-				conversionRate.setValidFrom(date);
-				conversionRate.setValidTo(date);
+				conversionRate.setValidFrom(dateFrom);
+				conversionRate.setValidTo(dateTo);
 			}
 			conversionRate.setMultiplyRate(negotiatedRate);
 			conversionRate.saveEx();
@@ -419,9 +421,9 @@ public class PaymentAllocationLogic {
 				Env.getCtx(),
 				I_C_Conversion_Rate.Table_Name,
 				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ? >= ValidFrom AND ? <= ValidTo AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
-				null
+				transactionName
 			)
-				.setParameters(currencyTo.getC_Currency_ID(), currencyFrom.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), date, date, clientId, organizationId)
+				.setParameters(currencyTo.getC_Currency_ID(), currencyFrom.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), dateFrom, dateTo, clientId, organizationId)
 				.first()
 			;
 			if (invertConversionRate == null || invertConversionRate.getC_ConversionType_ID() <= 0) {
@@ -436,12 +438,10 @@ public class PaymentAllocationLogic {
 				invertConversionRate.setC_Currency_ID_To(
 					currencyFrom.getC_Currency_ID()
 				);
-				invertConversionRate.setValidFrom(date);
-				invertConversionRate.setValidTo(date);
+				invertConversionRate.setValidFrom(dateFrom);
+				invertConversionRate.setValidTo(dateTo);
 			}
-			invertConversionRate.setMultiplyRate(
-				conversionRate.getDivideRate()
-			);
+			invertConversionRate.setDivideRate(negotiatedRate);
 			invertConversionRate.saveEx();
 		});
 
