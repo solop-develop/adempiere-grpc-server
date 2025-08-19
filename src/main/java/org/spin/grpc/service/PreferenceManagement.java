@@ -139,7 +139,8 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 			transactionName
 		)
 			.setParameters(parameters)
-			.first();
+			.first()
+		;
 
 		return preference;
 	}
@@ -363,8 +364,9 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 		if (Util.isEmpty(request.getValue(), true)) {
 			throw new AdempiereException("@FillMandatory@ @Value@");
 		}
-		if (request.getColumnName().startsWith("$") || request.getColumnName().startsWith("#")) {
-			throw new AdempiereException("@invalid@ @ColumnName@ / @Attribute@");
+		final String columnName = request.getColumnName();
+		if (columnName.startsWith("$") || columnName.startsWith("#")) {
+			throw new AdempiereException("@invalid@ @ColumnName@ / @Attribute@ " + columnName);
 		}
 
 		MRole role = MRole.getDefault();
@@ -379,7 +381,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 		} else {
 			preference = getMPreference(
 				request.getTypeValue(),
-				request.getColumnName(),
+				columnName,
 				request.getIsForCurrentClient(),
 				request.getIsForCurrentOrganization(),
 				request.getIsForCurrentUser(),
@@ -391,9 +393,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 		// is new record
 		if (preference == null || preference.getAD_Preference_ID() <= 0) {
 			preference = new MPreference(Env.getCtx(), 0, null);
-			preference.setAttribute(
-				request.getColumnName()
-			);
+			preference.setAttribute(columnName);
 		} else {
 			validatePreferenceAccess(preferenceLevel, preference);
 		}
@@ -492,13 +492,13 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 			preferences.entrySet().forEach(preferenceItem -> {
 				String columnName = preferenceItem.getKey();
 				if (columnName.startsWith("$") || columnName.startsWith("#")) {
-					throw new AdempiereException("@invalid@ @ColumnName@ / @Attribute@");
+					throw new AdempiereException("@invalid@ @ColumnName@ / @Attribute@ " + columnName);
 				}
 				Value preferenceValue = preferenceItem.getValue();
 				Object value = ValueManager.getObjectFromValue(preferenceValue);
 				String valueString = StringManager.getStringFromObject(value);
 				if (Util.isEmpty(valueString, true)) {
-					throw new AdempiereException("@FillMandatory@ @Value@");
+					throw new AdempiereException(columnName + " @FillMandatory@ @Value@");
 				}
 
 				MPreference preference = getMPreference(
