@@ -27,17 +27,19 @@ jobs:
           java-version: 17
           architecture: x64
 
-      - name: Set Main Version
-        run: echo "MAIN_VERSION=${{ github.event.release.name }}" >> src/main/java/org/spin/base/version.properties
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.0.0 # current
 
-      - name: Set Release Date
-        run: echo "DATE_VERSION=$(date +'%Y-%m-%d')" >> src/main/java/org/spin/base/version.properties
-
-      - name: Set Implementation Version
-        run: echo "IMPLEMENTATION_VERSION=${{ github.event.release.tag_name }}" >> src/main/java/org/spin/base/version.properties
+      - name: Set Version Properties
+        run: |
+          echo "MAIN_VERSION=${{ github.event.release.name }}" >> src/main/java/org/spin/base/version.properties
+          echo "DATE_VERSION=$(date +'%Y-%m-%d')" >> src/main/java/org/spin/base/version.properties
+          echo "IMPLEMENTATION_VERSION=${{ github.event.release.tag_name }}" >> src/main/java/org/spin/base/version.properties
 
       - name: Run Create Release
-        run: gradle createRelease
+        run: gradle createRelease --warning-mode all --stacktrace
         env:
           GITHUB_DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           GITHUB_DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
@@ -268,7 +270,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/focal.Dockerfile
+          file: docker/ubuntu.Dockerfile
           platforms: linux/amd64,linux/amd64/v2
           # platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true

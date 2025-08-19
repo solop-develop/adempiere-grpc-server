@@ -1,18 +1,21 @@
-FROM eclipse-temurin:17.0.12_7-jdk-alpine
+FROM eclipse-temurin:17.0.16_8-jdk-alpine-3.22
 
 LABEL maintainer="ySenih@erpya.com; EdwinBetanc0urt@outlook.com;" \
 	description="ADempiere gRPC All In One Server used as ADempiere adempiere-grpc-server"
 
 # Init ENV with default values
 ENV \
+	# Server
 	SERVER_PORT="50059" \
 	SERVER_LOG_LEVEL="WARNING" \
+	# Database
 	DB_HOST="localhost" \
 	DB_PORT="5432" \
 	DB_NAME="adempiere" \
 	DB_USER="adempiere" \
 	DB_PASSWORD="adempiere" \
 	DB_TYPE="PostgreSQL" \
+    # Connection Pool
 	IDLE_TIMEOUT="300" \
 	MINIMUM_IDLE="1" \
 	MAXIMUM_POOL_SIZE="10" \
@@ -20,6 +23,7 @@ ENV \
 	MAXIMUM_LIFETIME="6000" \
 	KEEPALIVE_TIME="360000" \
 	CONNECTION_TEST_QUERY="\"SELECT 1\"" \
+	# System
 	JAVA_OPTIONS="\"-Xms64M\" \"-Xmx1512M\"" \
 	SYSTEM_LOGO_URL="" \
 	TZ="America/Caracas"
@@ -28,8 +32,7 @@ EXPOSE ${SERVER_PORT}
 
 
 # Add operative system dependencies
-RUN rm -rf /tmp/* && \
-	apk update && \
+RUN apk update && \
 	apk add --no-cache \
 		tzdata \
 		bash \
@@ -38,7 +41,11 @@ RUN rm -rf /tmp/* && \
 		msttcorefonts-installer && \
 	fc-cache -f && \
 	echo "Set Timezone..." && \
-	echo $TZ > /etc/timezone
+	ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+	echo $TZ > /etc/timezone && \
+	# Clean up
+	rm -rf /var/cache/apk/* && \
+	rm -rf /tmp/*
 
 
 WORKDIR /opt/apps/server
