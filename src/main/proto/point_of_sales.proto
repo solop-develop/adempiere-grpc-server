@@ -2249,8 +2249,9 @@ message ExistsOnlineCashClosingPaymentsResponse {
 	int32 record_count = 1;
 }
 message ProcessOnlineCashClosingRequest {
-	int32 pos_id = 3;
-	int32 id = 1;
+	int32 pos_id = 1;
+	int32 id = 2;
+	int32 payment_method_id = 3;
 }
 message ProcessOnlineCashClosingResponse {
 	bool is_error = 1;
@@ -2259,8 +2260,9 @@ message ProcessOnlineCashClosingResponse {
 	int32 next_request_time = 4;
 }
 message InfoOnlineCashClosingRequest {
-	int32 pos_id = 3;
-	int32 id = 1;
+	int32 pos_id = 1;
+	int32 id = 2;
+	int32 payment_method_id = 3;
 }
 message InfoOnlineCashClosingResponse {
 	bool is_error = 1;
