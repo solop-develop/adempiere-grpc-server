@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 
 import com.google.protobuf.Empty;
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
@@ -34,7 +35,10 @@ import org.adempiere.core.domains.models.I_M_DiscountSchema;
 import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.interfaces.PaymentProcessorClosing;
+import org.compiere.interfaces.PaymentProcessorStatus;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MBankStatement;
 import org.compiere.model.MDiscountSchema;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
@@ -42,13 +46,16 @@ import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
+import org.compiere.model.MPaymentProcessor;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.PO;
+import org.compiere.model.PaymentProcessor;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.AvailableDiscountSchema;
@@ -67,6 +74,8 @@ import org.spin.backend.grpc.pos.GetCustomerRequest;
 import org.spin.backend.grpc.pos.GetValidGiftCardRequest;
 import org.spin.backend.grpc.pos.GiftCard;
 import org.spin.backend.grpc.pos.GiftCardLine;
+import org.spin.backend.grpc.pos.InfoOnlineCashClosingRequest;
+import org.spin.backend.grpc.pos.InfoOnlineCashClosingResponse;
 import org.spin.backend.grpc.pos.InfoOnlinePaymentRequest;
 import org.spin.backend.grpc.pos.InfoOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.ListAvailableDiscountsRequest;
@@ -85,6 +94,8 @@ import org.spin.backend.grpc.pos.ListGiftCardLinesRequest;
 import org.spin.backend.grpc.pos.ListGiftCardLinesResponse;
 import org.spin.backend.grpc.pos.ListGiftCardsRequest;
 import org.spin.backend.grpc.pos.ListGiftCardsResponse;
+import org.spin.backend.grpc.pos.ProcessOnlineCashClosingRequest;
+import org.spin.backend.grpc.pos.ProcessOnlineCashClosingResponse;
 import org.spin.backend.grpc.pos.ProcessOnlinePaymentRequest;
 import org.spin.backend.grpc.pos.ProcessOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.ShipmentLine;
@@ -1429,6 +1440,135 @@ public class POSLogic {
 			builderReference.set(builder);
 		});
 
+		return builderReference.get();
+	}
+
+	public static ProcessOnlineCashClosingResponse.Builder processOnlineCashClosing(ProcessOnlineCashClosingRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
+		}
+		int paymentMethodId = request.getPaymentMethodId();
+		if (paymentMethodId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_PaymentMethod_ID@");
+		}
+		AtomicReference<ProcessOnlineCashClosingResponse.Builder> builderReference = new AtomicReference<>();
+		Trx.run( transactionName ->{
+			ProcessOnlineCashClosingResponse.Builder builder = ProcessOnlineCashClosingResponse.newBuilder();
+			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), request.getId(), transactionName);
+			String whereClause = "C_BankAccount_ID = ?";
+			MPaymentProcessor paymentProcessor = (new Query(Env.getCtx(), "C_PaymentProcessor", whereClause, transactionName))
+				.setParameters(bankStatement.getC_BankAccount_ID())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+				.first();
+			if (paymentProcessor == null) {
+				throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
+			}
+			PO paymentProcessorRun = null;
+			try {
+				PaymentProcessor processor = PaymentProcessor.create(paymentProcessor, bankStatement, paymentMethodId);
+				if (PaymentProcessorClosing.class.isAssignableFrom(processor.getClass())) {
+					((PaymentProcessorClosing) processor).closeBatch(paymentMethodId, bankStatement.getStatementDate());
+					whereClause = "C_BankStatement_ID = ? AND C_PaymentMethod_ID = ?";
+					paymentProcessorRun = new Query(Env.getCtx(), "C_PaymentProcessorRun", whereClause, transactionName)
+						.setParameters(request.getId(), paymentMethodId)
+						.setOrderBy("Created DESC")
+						.first();
+
+				} else {
+					throw new AdempiereException(PaymentProcessorClosing.class.getName() + "Unsupported");
+				}
+			} catch (Exception e) {
+				throw new AdempiereException(e.getLocalizedMessage());
+			}
+			if (paymentProcessorRun == null) {
+				return;
+			}
+            String message = paymentProcessorRun.get_ValueAsString("ResponseMessage");
+			String status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
+			boolean isError = "E".equals(status) || "R".equals(status);
+			builder
+				.setIsError(isError)
+				.setMessage(
+					StringManager.getValidString(
+						message
+					)
+				)
+				.setStatus(
+					StringManager.getValidString(
+						status
+					)
+				)
+				.setNextRequestTime(
+					paymentProcessorRun.get_ValueAsInt("NextRequestTime")
+				)
+			;
+			builderReference.set(builder);
+
+		});
+		return builderReference.get();
+	}
+
+	public static InfoOnlineCashClosingResponse.Builder infoOnlineCashClosing(InfoOnlineCashClosingRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
+		}
+		int paymentMethodId = request.getPaymentMethodId();
+		if (paymentMethodId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_PaymentMethod_ID@");
+		}
+		AtomicReference<InfoOnlineCashClosingResponse.Builder> builderReference = new AtomicReference<>();
+		Trx.run(transactionName -> {
+			InfoOnlineCashClosingResponse.Builder builder = InfoOnlineCashClosingResponse.newBuilder();
+			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), request.getId(), transactionName);
+
+
+			String whereClause = "C_BankAccount_ID = ?";
+			MPaymentProcessor paymentProcessor = (new Query(Env.getCtx(), "C_PaymentProcessor", whereClause, transactionName))
+					.setParameters(bankStatement.getC_BankAccount_ID())
+					.setClient_ID()
+					.setOnlyActiveRecords(true)
+					.first();
+			if (paymentProcessor == null) {
+				throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
+			}
+			PO paymentProcessorRun = null;
+			PaymentProcessor processor = PaymentProcessor.create(paymentProcessor, bankStatement, paymentMethodId);
+			if (PaymentProcessorStatus.class.isAssignableFrom(processor.getClass())) {
+				((PaymentProcessorStatus) processor).transactionStatus();
+				whereClause = "C_BankStatement_ID = ? AND C_PaymentMethod_ID = ?";
+				paymentProcessorRun = new Query(Env.getCtx(), "C_PaymentProcessorRun", whereClause, transactionName)
+						.setParameters(request.getId(), paymentMethodId)
+						.setOrderBy("Created DESC")
+						.first();
+
+			} else {
+				throw new AdempiereException(PaymentProcessorClosing.class.getName() + "Unsupported");
+			}
+			String	message = paymentProcessorRun.get_ValueAsString("ResponseMessage");
+			String	status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
+
+
+			boolean isError = "E".equals(status) || "R".equals(status);
+			builder
+				.setIsError(isError)
+				.setMessage(
+					StringManager.getValidString(
+						message
+					)
+				)
+				.setStatus(
+					StringManager.getValidString(
+						status
+					)
+				)
+				.setNextRequestTime(
+					paymentProcessorRun.get_ValueAsInt("NextRequestTime")
+				)
+			;
+			;
+			builderReference.set(builder);
+		});
 		return builderReference.get();
 	}
 

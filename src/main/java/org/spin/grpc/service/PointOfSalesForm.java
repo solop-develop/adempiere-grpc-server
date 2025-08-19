@@ -1902,7 +1902,10 @@ public class PointOfSalesForm extends StoreImplBase {
 	public void processOnlineCashClosing(ProcessOnlineCashClosingRequest request, StreamObserver<ProcessOnlineCashClosingResponse> responseObserver) {
 		try {
 			log.fine("Process Online Cash Closing = " + request);
-			ProcessOnlineCashClosingResponse.Builder builder = ProcessOnlineCashClosingResponse.newBuilder();
+			ProcessOnlineCashClosingResponse.Builder builder = POSLogic.processOnlineCashClosing(
+					request
+			);
+			//ProcessOnlineCashClosingResponse.Builder builder = ProcessOnlineCashClosingResponse.newBuilder();
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1918,13 +1921,13 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 	/**
-	 * get: "/point-of-sales/{pos_id}/cash/{id}/online"
+		 * get: "/point-of-sales/{pos_id}/cash/{id}/online"
 	 */
 	@Override
 	public void infoOnlineCashClosing(InfoOnlineCashClosingRequest request, StreamObserver<InfoOnlineCashClosingResponse> responseObserver) {
 		try {
 			log.fine("Info Online Cash Closing = " + request);
-			InfoOnlineCashClosingResponse.Builder builder = InfoOnlineCashClosingResponse.newBuilder();
+			InfoOnlineCashClosingResponse.Builder builder = POSLogic.infoOnlineCashClosing(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
