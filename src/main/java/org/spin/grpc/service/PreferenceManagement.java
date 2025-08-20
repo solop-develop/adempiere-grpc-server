@@ -2,6 +2,7 @@ package org.spin.grpc.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,6 +26,7 @@ import org.spin.backend.grpc.preference_management.PreferenceManagementGrpc.Pref
 import org.spin.backend.grpc.preference_management.PreferenceType;
 import org.spin.backend.grpc.preference_management.SetMultiplePreferencesRequest;
 import org.spin.backend.grpc.preference_management.SetPreferenceRequest;
+import org.spin.service.grpc.util.base.PreferenceUtil;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -312,6 +314,13 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 			whereClause.append("AND AD_Window_ID IS NULL ");
 		}
 
+		final String placeholders = String.join(", ", Collections.nCopies(PreferenceUtil.PROPERTIES_LIST.size(), "?"));
+		whereClause.append(
+			"AND Attribute NOT IN ("
+			+ placeholders
+			+ ")"
+		);
+		parameters.addAll(PreferenceUtil.PROPERTIES_LIST);
 		Query query = new Query(
 			Env.getCtx(),
 			I_AD_Preference.Table_Name,
@@ -365,7 +374,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 			throw new AdempiereException("@FillMandatory@ @Value@");
 		}
 		final String columnName = request.getColumnName();
-		if (columnName.startsWith("$") || columnName.startsWith("#")) {
+		if (columnName.startsWith("$") || columnName.startsWith("#") || PreferenceUtil.PROPERTIES_LIST.contains(columnName)) {
 			throw new AdempiereException("@invalid@ @ColumnName@ / @Attribute@ " + columnName);
 		}
 
@@ -491,7 +500,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 			Map<String, Value> preferences = request.getPreferences().getFieldsMap();
 			preferences.entrySet().forEach(preferenceItem -> {
 				String columnName = preferenceItem.getKey();
-				if (columnName.startsWith("$") || columnName.startsWith("#")) {
+				if (columnName.startsWith("$") || columnName.startsWith("#") || PreferenceUtil.PROPERTIES_LIST.contains(columnName)) {
 					throw new AdempiereException("@invalid@ @ColumnName@ / @Attribute@ " + columnName);
 				}
 				Value preferenceValue = preferenceItem.getValue();
