@@ -63,7 +63,8 @@ service PaymentAllocation {
 	// Create Rates
 	rpc CreateConversionRate(CreateConversionRateRequest) returns (ConversionRate) {
 		option (google.api.http) = {
-			post: "/forms/payment-allocation/conversion-types/conversion-rates"
+			post: "/forms/payment-allocation/conversion-types/conversion-rates",
+			body: "*"
 		};
 	}
 
