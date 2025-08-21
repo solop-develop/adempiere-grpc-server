@@ -131,7 +131,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 	}
 
 	ListAccountingElementsResponse.Builder listAccountingElements(ListAccountingElementsRequest request) {
-		int accountingSchemaId = request.getAccountingSchemaId();
+		final int accountingSchemaId = request.getAccountingSchemaId();
 		if (accountingSchemaId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
 		}
@@ -317,7 +317,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 	}
 
 	private ListLookupItemsResponse.Builder listAccountingElementValues(ListAccountingElementValuesRequest request) {
-		int accountingSchemaId = request.getAccountingSchemaId();
+		final int accountingSchemaId = request.getAccountingSchemaId();
 		if (accountingSchemaId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
 		}
@@ -412,28 +412,29 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 
 	private Entity.Builder getAccountingCombination(GetAccountingCombinationRequest request) {
 		// Validate ID
-		if(request.getId() == 0 && Util.isEmpty(request.getValue())) {
-			throw new AdempiereException("@Record_ID@ @NotFound@");
+		if(request.getId() == 0 && Util.isEmpty(request.getAlias(), true)) {
+			throw new AdempiereException("@FillMandatory@ @C_ValidCombination_ID@ / @Alias@");
 		}
 
 		MAccount accountingCombination = null;
 		if(request.getId() > 0) {
 			accountingCombination = MAccount.getValidCombination(Env.getCtx(), request.getId(), null);
-		} else if (!Util.isEmpty(request.getValue(), true)) {
+		} else if (!Util.isEmpty(request.getAlias(), true)) {
 			// Value as combination
 			accountingCombination = new Query(
-					Env.getCtx(),
-					this.tableName,
-					MAccount.COLUMNNAME_Combination + " = ? ",
-					null
-				)
-				.setParameters(request.getValue())
-				.first();
+				Env.getCtx(),
+				this.tableName,
+				// "UPPER(Combination) LIKE '%' || UPPER(?) || '%' OR UPPER(Alias) LIKE '%' || UPPER(?) || '%' ",
+				"UPPER(Combination) = UPPER(?) OR UPPER(Alias) = UPPER(?) ",
+				null
+			)
+				.setParameters(request.getAlias(), request.getAlias())
+				.first()
+			;
 		}
 		if(accountingCombination == null) {
 			throw new AdempiereException("@Error@ @AccountCombination@ @not.found@");
 		}
-
 
 		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
 			.setTabId(this.ACCOUNT_COMBINATION_TAB)
@@ -471,20 +472,29 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 	private ListEntitiesResponse.Builder listAccountingCombinations(ListAccountingCombinationsRequest request) {
 		// Fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
+		Properties context = ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
 
-		int organizationId = request.getOrganizationId();
+		final int accountingSchemaId = request.getAccountingSchemaId();
+		if (accountingSchemaId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+		}
+		MAcctSchema accountingSchema = MAcctSchema.get(context, accountingSchemaId);
+		if (accountingSchema == null || accountingSchema.getC_AcctSchema_ID() <= 0) {
+			throw new AdempiereException("@C_AcctSchema_ID@ @NotFound@");
+		}
+
+		final int organizationId = request.getOrganizationId();
 		if (request.getOrganizationId() < 0) {
 			// throw new AdempiereException("@Org0NotAllowed@");
 			throw new AdempiereException("@FillMandatory@ @AD_Org_ID@");
 		}
 
-		int accountId = request.getAccountId();
+		final int accountId = request.getAccountId();
 		if (request.getAccountId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @Account_ID@");
 		}
 
-		MTable table = MTable.get(Env.getCtx(), this.tableName);
+		MTable table = MTable.get(context, this.tableName);
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 
 		// add where with access restriction
@@ -503,7 +513,8 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			// includes first AND
 			sqlWithRoleAccess += " AND " + dynamicWhere;
 		}
-		sqlWithRoleAccess += " AND (C_ValidCombination.AD_Org_ID = ? AND C_ValidCombination.Account_ID = ?) ";
+		sqlWithRoleAccess += " AND (C_ValidCombination.C_AcctSchema_ID = ? C_ValidCombination.AD_Org_ID = ? AND C_ValidCombination.Account_ID = ?) ";
+		params.add(accountingSchemaId);
 		params.add(organizationId);
 		params.add(accountId);
 
@@ -522,7 +533,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		count = CountUtil.countRecords(parsedSQL, this.tableName, params);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), this.tableName), parsedSQL, params);
+		builder = RecordUtil.convertListEntitiesResult(MTable.get(context, this.tableName), parsedSQL, params);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -562,7 +573,16 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 	private Entity.Builder saveAccountingCombination(SaveAccountingCombinationRequest request) {
 		// Fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
+		Properties context = ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
+
+		final int accountingSchemaId = request.getAccountingSchemaId();
+		if (accountingSchemaId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+		}
+		MAcctSchema accountingSchema = MAcctSchema.get(context, accountingSchemaId);
+		if (accountingSchema == null || accountingSchema.getC_AcctSchema_ID() <= 0) {
+			throw new AdempiereException("@C_AcctSchema_ID@ @NotFound@");
+		}
 
 		final int organizationId = request.getOrganizationId();
 		if (organizationId < 0) {
@@ -574,12 +594,6 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		if (accountId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @Account_ID@");
 		}
-
-		final int accountingSchemaId = request.getAccountingSchemaId();
-		if (accountingSchemaId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
-		}
-		MAcctSchema accountingSchema = MAcctSchema.get(Env.getCtx(), accountingSchemaId, null);
 
 		final String accountingCombinationAlias = StringManager.getValidString(
 			request.getAlias()
