@@ -34,46 +34,78 @@ package general_ledger;
 service GeneralLedger {
 	// Accounting Element
 	rpc ListAccountingElements(ListAccountingElementsRequest) returns (ListAccountingElementsResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/schemas/{accounting_schema_id}/elements" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/schemas/{accounting_schema_id}/elements"
+		};
 	}
 	rpc ListAccountingElementValues(ListAccountingElementValuesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/schemas/{accounting_schema_id}/elements/{element_type}" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/schemas/{accounting_schema_id}/elements/{element_type}"
+		};
 	}
 
 	// Accounting Combination
 	rpc getAccountingCombination(GetAccountingCombinationRequest) returns (data.Entity) {
 		option (google.api.http) = {
-			get: "/general-ledger/accounts/combinations/{id}"
+			get: "/general-ledger/accounts/schemas/{accounting_schema_id}/combinations/{id}"
+			additional_bindings: {
+				get: "/general-ledger/accounts/schemas/{accounting_schema_id}/combinations/combinantion/{value}"
+			}
+			// TODO: Deprecated
+			additional_bindings: {
+				get: "/general-ledger/accounts/combinations/combination/{value}"
+			}
 			additional_bindings: {
 				get: "/general-ledger/accounts/combinations/combination/{value}"
 			}
 		};
 	}
 	rpc ListAccountingCombinations(ListAccountingCombinationsRequest) returns (data.ListEntitiesResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/combinations" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/schemas/{accounting_schema_id}/combinations"
+			// TODO: Deprecated
+			additional_bindings: {
+				get: "/general-ledger/accounts/combinations"
+			}
+		};
 	}
 	rpc SaveAccountingCombination(SaveAccountingCombinationRequest) returns (data.Entity) {
 		option (google.api.http) = {
-			post: "/general-ledger/accounts/combinations",
+			post: "/general-ledger/accounts/schemas/{accounting_schema_id}/combinations"
 			body: "*"
+			// TODO: Deprecated
+			additional_bindings: {
+				post: "/general-ledger/accounts/combinations",
+				body: "*"
+			}
 		};
 	}
 
 	// Accounting Viewer
 	rpc ListAccountingSchemas(ListAccountingSchemasRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/schemas" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/schemas"
+		};
 	}
 	rpc ListPostingTypes(ListPostingTypesRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/posting-types" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/posting-types"
+		};
 	}
 	rpc ListOrganizations(ListOrganizationsRequest) returns (data.ListLookupItemsResponse) {
-		option (google.api.http) = { get: "/general-ledger/organizations" };
+		option (google.api.http) = {
+			get: "/general-ledger/organizations"
+		};
 	}
 	rpc ListAccountingDocuments(ListAccountingDocumentsRequest) returns (ListAccountingDocumentsResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/documents" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/documents"
+		};
 	}
 	rpc ExistsAccountingDocument(ExistsAccountingDocumentRequest) returns (ExistsAccountingDocumentResponse) {
-		option (google.api.http) = { get: "/general-ledger/accounts/facts/{accounting_schema_id}/document/{table_name}/{record_id}/exists" };
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/facts/{accounting_schema_id}/document/{table_name}/{record_id}/exists"
+		};
 	}
 	rpc ListAccountingFacts(ListAccountingFactsRequest) returns (data.ListEntitiesResponse) {
 		option (google.api.http) = {
@@ -98,7 +130,8 @@ service GeneralLedger {
 	}
 	rpc CreateConversionRate(CreateConversionRateRequest) returns (ConversionRate) {
 		option (google.api.http) = {
-			post: "/general-ledger/conversion-types/conversion-rates"
+			post: "/general-ledger/conversion-types/conversion-rates",
+			body: "*"
 		};
 	}
 }
@@ -127,6 +160,7 @@ message ListAccountingElementsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	// custom filters
 	int32 accounting_schema_id = 9;
 }
 message ListAccountingElementsResponse {
@@ -167,6 +201,7 @@ message ListAccountingElementValuesResponse {
 message GetAccountingCombinationRequest {
 	int32 id = 1;
 	string value = 2;
+	int32 accounting_schema_id = 3;
 }
 message ListAccountingCombinationsRequest {
 	string filters = 1;
@@ -176,19 +211,23 @@ message ListAccountingCombinationsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	// custom filters
 	string context_attributes = 8;
-	int32 organization_id = 9;
-	int32 account_id = 10;
+	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
+	// custom filters
+	int32 accounting_schema_id = 12;
+	int32 organization_id = 13;
+	int32 account_id = 14;
 }
 message SaveAccountingCombinationRequest {
-	int32 id = 1;
-	int32 client_id = 2;
 	int32 accounting_schema_id = 3;
 	int32 organization_id = 4;
 	int32 account_id = 5;
+	int32 client_id = 2; // TODO: Validate this
+	int32 id = 1; // TODO: Validate this
 	string alias = 6;
-	google.protobuf.Struct context_attributes = 7;
+	google.protobuf.Struct context_attributes = 7; // TODO: Validate this
 	google.protobuf.Struct attributes = 8;
 }
 
