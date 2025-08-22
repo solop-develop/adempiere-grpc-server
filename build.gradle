@@ -17,7 +17,7 @@ java {
 
 def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
-def adempiereCoreVersion = '1.2.9'
+def adempiereCoreVersion = '1.2.10'
 
 def descriptorFile = "adempiere-grpc-server.dsc"
 def javaMainClass = "org.spin.server.AllInOneServices"
@@ -87,7 +87,7 @@ dependencies {
 	implementation "com.solop.adempiere.tools:shopping-admin-connection:core-1.0.0-1.0.0"
 	implementation "com.solop.adempiere.tools:cloud-solop-notifier:core-1.0.0-1.0.0"
 	// Payment Processor
-	implementation "com.solop.adempiere.tools:payment-processor:core-1.2.3-1.0.3"
+	implementation "com.solop.adempiere.tools:payment-processor:core-1.2.3-1.0.4"
 	implementation "com.solop.adempiere.tools:warehouse-light:core-1.0.0-1.0.0"
 	implementation "com.solop.adempiere.tools:distribution-light:core-1.0.0-1.0.0"
 	implementation "com.solop.adempiere.tools:wms-light:core-1.0.0-1.0.0"
