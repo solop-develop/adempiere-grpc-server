@@ -513,7 +513,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			// includes first AND
 			sqlWithRoleAccess += " AND " + dynamicWhere;
 		}
-		sqlWithRoleAccess += " AND (C_ValidCombination.C_AcctSchema_ID = ? C_ValidCombination.AD_Org_ID = ? AND C_ValidCombination.Account_ID = ?) ";
+		sqlWithRoleAccess += " AND (C_ValidCombination.C_AcctSchema_ID = ? AND C_ValidCombination.AD_Org_ID = ? AND C_ValidCombination.Account_ID = ?) ";
 		params.add(accountingSchemaId);
 		params.add(organizationId);
 		params.add(accountId);
