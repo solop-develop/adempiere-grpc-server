@@ -15,7 +15,7 @@ ENV \
 	DB_USER="adempiere" \
 	DB_PASSWORD="adempiere" \
 	DB_TYPE="PostgreSQL" \
-    # Connection Pool
+	# Connection Pool
 	IDLE_TIMEOUT="300" \
 	MINIMUM_IDLE="1" \
 	MAXIMUM_POOL_SIZE="10" \
@@ -34,11 +34,14 @@ EXPOSE ${SERVER_PORT}
 # Add operative system dependencies
 RUN apk update && \
 	apk add --no-cache \
-		tzdata \
 		bash \
+		ca-certificates \
 		fontconfig \
+		msttcorefonts-installer \
 		ttf-dejavu \
-		msttcorefonts-installer && \
+		tzdata && \
+	echo "Install Microsoft Fonts..." && \
+	update-ms-fonts && \
 	fc-cache -f && \
 	echo "Set Timezone..." && \
 	ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \

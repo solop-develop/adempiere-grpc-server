@@ -15,7 +15,7 @@ ENV \
 	DB_USER="adempiere" \
 	DB_PASSWORD="adempiere" \
 	DB_TYPE="PostgreSQL" \
-    # Connection Pool
+	# Connection Pool
 	IDLE_TIMEOUT="300" \
 	MINIMUM_IDLE="1" \
 	MAXIMUM_POOL_SIZE="10" \
@@ -33,20 +33,23 @@ EXPOSE ${SERVER_PORT}
 
 # Add operative system dependencies
 RUN apt-get update && \
-	echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections && \
+	echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
 	apt-get install -y --no-install-recommends \
-		tzdata \
 		bash \
+		ca-certificates \
 		fontconfig \
-		fonts-dejavu \
 		fontconfig-config \
-		ttf-mscorefonts-installer && \
+		fonts-dejavu \
+		ttf-mscorefonts-installer \
+		tzdata && \
+	echo "Install Microsoft Fonts..." && \
+	dpkg-reconfigure -f noninteractive ttf-mscorefonts-installer && \
 	fc-cache -f && \
 	echo "Set Timezone..." && \
 	ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
 	echo $TZ > /etc/timezone && \
 	# Clean up
-    apt-get autoremove -y && \
+	apt-get autoremove -y && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* \
 	rm -rf /tmp/*
