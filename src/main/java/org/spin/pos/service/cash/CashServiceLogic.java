@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_AD_Process;
+import org.adempiere.core.domains.models.I_C_BankStatement;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
@@ -62,6 +63,8 @@ import org.spin.backend.grpc.pos.ListCashSummaryMovementsResponse;
 import org.spin.backend.grpc.pos.Payment;
 import org.spin.backend.grpc.pos.PaymentSummary;
 import org.spin.backend.grpc.pos.PaymentTotal;
+import org.spin.backend.grpc.pos.PrintPreviewCashClosingRequest;
+import org.spin.backend.grpc.pos.PrintPreviewCashClosingResponse;
 import org.spin.backend.grpc.pos.PrintPreviewCashMovementsRequest;
 import org.spin.backend.grpc.pos.PrintPreviewCashMovementsResponse;
 import org.spin.backend.grpc.pos.ProcessOnlineCashClosingRequest;
@@ -610,6 +613,50 @@ public class CashServiceLogic {
 
 		return ticket;
 	}
+
+
+	public static PrintPreviewCashClosingResponse.Builder printPreviewCashClosing(PrintPreviewCashClosingRequest request) throws FileNotFoundException, IOException {
+		final int banskStatementId = request.getId();
+		MBankStatement cashClosing = new MBankStatement(Env.getCtx(), banskStatementId, null);
+		if (cashClosing == null || cashClosing.getC_BankStatement_ID() <= 0) {
+			throw new AdempiereException("@Shipment@ (" + banskStatementId + ") @NotFound@");
+		}
+		
+		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
+		// ECA14_PrintVoucher
+		final int processId = 54580;
+		String reportType = "pdf";
+		if (!Util.isEmpty(request.getReportType(), true)) {
+			reportType = request.getReportType();
+		}
+
+		GenerateReportRequest.Builder reportRequest = GenerateReportRequest.newBuilder()
+			.setId(processId)
+			.setReportType(reportType)
+			.setTableName(I_C_BankStatement.Table_Name)
+			.setRecordId(cashClosing.getC_BankStatement_ID())
+		;
+		ProcessLog.Builder processLog = ReportManagement.generateReport(
+			reportRequest.build()
+		);
+		ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+		outputBuilder.setIsDirectPrint(
+			pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+		);
+		processLog.setOutput(outputBuilder);
+
+		// preview document
+		PrintPreviewCashClosingResponse.Builder ticket = PrintPreviewCashClosingResponse.newBuilder()
+			.setResult("Ok")
+			.setProcessLog(
+				processLog.build()
+			)
+		;
+
+		return ticket;
+	}
+
 
 	public static ProcessOnlineCashClosingResponse.Builder processOnlineCashClosing(ProcessOnlineCashClosingRequest request) {
 		if (request.getId() <= 0) {

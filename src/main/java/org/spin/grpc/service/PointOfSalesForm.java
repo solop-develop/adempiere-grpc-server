@@ -1162,7 +1162,6 @@ public class PointOfSalesForm extends StoreImplBase {
 				.setReportType(reportType)
 				.setTableName(tableName)
 				.setRecordId(recordId)
-				.setReportType(reportType)
 			;
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
@@ -1227,7 +1226,6 @@ public class PointOfSalesForm extends StoreImplBase {
 				.setReportType(reportType)
 				.setTableName(I_M_InOut.Table_Name)
 				.setRecordId(request.getShipmentId())
-				.setReportType(reportType)
 			;
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
@@ -1291,9 +1289,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			}
 			GenerateReportRequest.Builder reportRequest = GenerateReportRequest.newBuilder()
 				.setId(processId)
+				.setReportType(reportType)
 				.setTableName(giftCardTable.getTableName())
 				.setRecordId(giftCardId)
-				.setReportType(reportType)
 			;
 			ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
@@ -1857,6 +1855,28 @@ public class PointOfSalesForm extends StoreImplBase {
 		try {
 			log.fine("Print Cash Movements = " + request);
 			PrintPreviewCashMovementsResponse.Builder ticket = CashServiceLogic.printPreviewCashMovements(request);
+			responseObserver.onNext(ticket.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{id}/closing/preview"
+	 */
+	@Override
+	public void printPreviewCashClosing(PrintPreviewCashClosingRequest request, StreamObserver<PrintPreviewCashClosingResponse> responseObserver) {
+		try {
+			log.fine("Print Cash Closing = " + request);
+			PrintPreviewCashClosingResponse.Builder ticket = CashServiceLogic.printPreviewCashClosing(request);
 			responseObserver.onNext(ticket.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
