@@ -4740,6 +4740,13 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(payment.isProcessed()) {
 			throw new AdempiereException("@C_Payment_ID@ @Processed@");
 		}
+		// Validate onlye approval
+		if (payment.isOnline()) {
+			String onluneStatus = payment.get_ValueAsString("ResponseStatus");
+			if (!Util.isEmpty(onluneStatus, true) && onluneStatus.equals("A")) {
+				throw new AdempiereException("@C_Payment_ID@ @IsOnline@ @Processed@");
+			}
+		}
 		//	
 		if(payment.getC_Payment_ID() >= 0) {
 			if ("G".equals(payment.getTenderType())) {
