@@ -39,6 +39,7 @@ import org.compiere.model.MBankStatement;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MPaymentProcessor;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.PaymentProcessor;
 import org.compiere.model.Query;
@@ -48,6 +49,7 @@ import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.solop.process.PrintVoucherAbstract;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.pos.CashClosingRequest;
@@ -67,6 +69,8 @@ import org.spin.backend.grpc.pos.PrintPreviewCashClosingRequest;
 import org.spin.backend.grpc.pos.PrintPreviewCashClosingResponse;
 import org.spin.backend.grpc.pos.PrintPreviewCashMovementsRequest;
 import org.spin.backend.grpc.pos.PrintPreviewCashMovementsResponse;
+import org.spin.backend.grpc.pos.PrintPreviewOnlineCashClosingRequest;
+import org.spin.backend.grpc.pos.PrintPreviewOnlineCashClosingResponse;
 import org.spin.backend.grpc.pos.ProcessOnlineCashClosingRequest;
 import org.spin.backend.grpc.pos.ProcessOnlineCashClosingResponse;
 import org.spin.backend.grpc.report_management.GenerateReportRequest;
@@ -657,6 +661,49 @@ public class CashServiceLogic {
 		return ticket;
 	}
 
+	public static PrintPreviewOnlineCashClosingResponse.Builder printPreviewCashClosing(PrintPreviewOnlineCashClosingRequest request) throws FileNotFoundException, IOException {
+		final int paymentProcessorRunId = request.getId();
+		MTable processorRunTable = MTable.get(Env.getCtx(), "C_PaymentProcessorRun");
+		PO paymentProcessorRun = processorRunTable.getPO(paymentProcessorRunId, null);
+		if (paymentProcessorRun == null || paymentProcessorRun.get_ID() <= 0) {
+			throw new AdempiereException("@C_PaymentProcessorRun_ID@ @NotFound@");
+		}
+
+		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
+		// ECA14_PrintVoucher
+		final int processId = PrintVoucherAbstract.getProcessId();
+		String reportType = "pdf";
+		if (!Util.isEmpty(request.getReportType(), true)) {
+			reportType = request.getReportType();
+		}
+
+		GenerateReportRequest.Builder reportRequest = GenerateReportRequest.newBuilder()
+			.setId(processId)
+			.setReportType(reportType)
+			.setTableName("C_PaymentProcessorRun")
+			.setRecordId(paymentProcessorRunId)
+			;
+		ProcessLog.Builder processLog = ReportManagement.generateReport(
+				reportRequest.build()
+		);
+		ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
+		outputBuilder.setIsDirectPrint(
+				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
+		);
+		processLog.setOutput(outputBuilder);
+
+		// preview document
+		PrintPreviewOnlineCashClosingResponse.Builder ticket = PrintPreviewOnlineCashClosingResponse.newBuilder()
+				.setResult("Ok")
+				.setProcessLog(
+						processLog.build()
+				)
+				;
+
+		return ticket;
+	}
+
 
 	public static ProcessOnlineCashClosingResponse.Builder processOnlineCashClosing(ProcessOnlineCashClosingRequest request) {
 		if (request.getId() <= 0) {
@@ -672,10 +719,10 @@ public class CashServiceLogic {
 			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), request.getId(), transactionName);
 			String whereClause = "C_BankAccount_ID = ?";
 			MPaymentProcessor paymentProcessor = (new Query(Env.getCtx(), "C_PaymentProcessor", whereClause, transactionName))
-					.setParameters(bankStatement.getC_BankAccount_ID())
-					.setClient_ID()
-					.setOnlyActiveRecords(true)
-					.first();
+				.setParameters(bankStatement.getC_BankAccount_ID())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+				.first();
 			if (paymentProcessor == null) {
 				throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
 			}
@@ -686,9 +733,9 @@ public class CashServiceLogic {
 					((PaymentProcessorClosing) processor).closeBatch(paymentMethodId, bankStatement.getStatementDate());
 					whereClause = "C_BankStatement_ID = ? AND C_PaymentMethod_ID = ?";
 					paymentProcessorRun = new Query(Env.getCtx(), "C_PaymentProcessorRun", whereClause, transactionName)
-							.setParameters(request.getId(), paymentMethodId)
-							.setOrderBy("Created DESC")
-							.first();
+						.setParameters(request.getId(), paymentMethodId)
+						.setOrderBy("Created DESC")
+						.first();
 
 				} else {
 					throw new AdempiereException(PaymentProcessorClosing.class.getName() + "Unsupported");
@@ -703,20 +750,23 @@ public class CashServiceLogic {
 			String status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
 			boolean isError = "E".equals(status) || "R".equals(status);
 			builder
-					.setIsError(isError)
-					.setMessage(
-							StringManager.getValidString(
-									message
-							)
+				.setIsError(isError)
+				.setMessage(
+					StringManager.getValidString(
+						message
 					)
-					.setStatus(
-							StringManager.getValidString(
-									status
-							)
+				)
+				.setStatus(
+					StringManager.getValidString(
+						status
 					)
-					.setNextRequestTime(
-							paymentProcessorRun.get_ValueAsInt("NextRequestTime")
-					)
+				)
+				.setNextRequestTime(
+					paymentProcessorRun.get_ValueAsInt("NextRequestTime")
+				)
+				.setPaymentProcessorRunId(
+					paymentProcessorRun.get_ID()
+				)
 			;
 			builderReference.set(builder);
 
@@ -728,9 +778,9 @@ public class CashServiceLogic {
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
 		}
-		int paymentMethodId = request.getPaymentMethodId();
-		if (paymentMethodId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_PaymentMethod_ID@");
+		int paymentProcessorRunId = request.getPaymentProcessorRunId();
+		if (paymentProcessorRunId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_PaymentProcessorRun_ID@");
 		}
 		AtomicReference<InfoOnlineCashClosingResponse.Builder> builderReference = new AtomicReference<>();
 		Trx.run(transactionName -> {
@@ -747,16 +797,13 @@ public class CashServiceLogic {
 			if (paymentProcessor == null) {
 				throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
 			}
-			PO paymentProcessorRun = null;
-			PaymentProcessor processor = PaymentProcessor.create(paymentProcessor, bankStatement, paymentMethodId);
-			if (PaymentProcessorStatus.class.isAssignableFrom(processor.getClass())) {
-				((PaymentProcessorStatus) processor).transactionStatus();
-				whereClause = "C_BankStatement_ID = ? AND C_PaymentMethod_ID = ?";
-				paymentProcessorRun = new Query(Env.getCtx(), "C_PaymentProcessorRun", whereClause, transactionName)
-						.setParameters(request.getId(), paymentMethodId)
-						.setOrderBy("Created DESC")
-						.first();
+			MTable processorRunTable = MTable.get(Env.getCtx(), "C_PaymentProcessorRun");
 
+			PO paymentProcessorRun = null;
+			PaymentProcessor processor = PaymentProcessor.create(paymentProcessor, bankStatement, paymentProcessorRunId);
+			if (PaymentProcessorStatus.class.isAssignableFrom(processor.getClass())) {
+				((PaymentProcessorStatus) processor).transactionStatus(request.getPaymentProcessorRunId());
+				paymentProcessorRun = processorRunTable.getPO(request.getPaymentProcessorRunId(), transactionName);
 			} else {
 				throw new AdempiereException(PaymentProcessorClosing.class.getName() + "Unsupported");
 			}
@@ -766,20 +813,23 @@ public class CashServiceLogic {
 
 			boolean isError = "E".equals(status) || "R".equals(status);
 			builder
-					.setIsError(isError)
-					.setMessage(
-							StringManager.getValidString(
-									message
-							)
+				.setIsError(isError)
+				.setMessage(
+					StringManager.getValidString(
+						message
 					)
-					.setStatus(
-							StringManager.getValidString(
-									status
-							)
+				)
+				.setStatus(
+					StringManager.getValidString(
+						status
 					)
-					.setNextRequestTime(
-							paymentProcessorRun.get_ValueAsInt("NextRequestTime")
-					)
+				)
+				.setNextRequestTime(
+					paymentProcessorRun.get_ValueAsInt("NextRequestTime")
+				)
+				.setPaymentProcessorRunId(
+					paymentProcessorRun.get_ID()
+				)
 			;
 			;
 			builderReference.set(builder);

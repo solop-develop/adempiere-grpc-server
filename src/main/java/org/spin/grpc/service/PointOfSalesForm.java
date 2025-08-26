@@ -1891,6 +1891,28 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{id}/closing/preview"
+	 */
+	@Override
+	public void printPreviewOnlineCashClosing(PrintPreviewOnlineCashClosingRequest request, StreamObserver<PrintPreviewOnlineCashClosingResponse> responseObserver) {
+		try {
+			log.fine("Print Cash Closing = " + request);
+			PrintPreviewOnlineCashClosingResponse.Builder ticket = CashServiceLogic.printPreviewCashClosing(request);
+			responseObserver.onNext(ticket.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
+			);
+		}
+	}
+
 
 
 	/**
