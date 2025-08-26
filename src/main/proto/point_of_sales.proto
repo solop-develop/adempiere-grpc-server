@@ -512,6 +512,11 @@ service Store {
 			}
 		};
 	}
+	rpc PrintPreviewCashClosing(PrintPreviewCashClosingRequest) returns (PrintPreviewCashClosingResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/{id}/closing/preview"
+		};
+	}
 
 	// POS Device Closing
 	rpc ExistsOnlineCashClosingPayments(ExistsOnlineCashClosingPaymentsRequest) returns (ExistsOnlineCashClosingPaymentsResponse) {
@@ -534,6 +539,11 @@ service Store {
 		option (google.api.http) = {
 			put: "/point-of-sales/{pos_id}/cash/{id}/online",
 			body: "*"
+		};
+	}
+	rpc PrintPreviewOnlineCashClosing(PrintPreviewOnlineCashClosingRequest) returns (PrintPreviewOnlineCashClosingResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/{id}/online/preview"
 		};
 	}
 
@@ -878,6 +888,15 @@ message PrintPreviewCashMovementsRequest {
 	google.protobuf.Timestamp date_to = 6;
 }
 message PrintPreviewCashMovementsResponse {
+	string result = 1;
+	ProcessLog process_log = 2;
+}
+message PrintPreviewCashClosingRequest {
+	int32 pos_id = 1;
+	string report_type = 2;
+	int32 id = 3; // Bank Statement
+}
+message PrintPreviewCashClosingResponse {
 	string result = 1;
 	ProcessLog process_log = 2;
 }
@@ -2278,6 +2297,15 @@ message CancelOnlineCashClosingResponse {
 	bool is_error = 1;
 	string message = 2;
 	string status = 3;
+}
+message PrintPreviewOnlineCashClosingRequest {
+	int32 pos_id = 1;
+	string report_type = 2;
+	int32 id = 3; // Processor Run
+}
+message PrintPreviewOnlineCashClosingResponse {
+	string result = 1;
+	ProcessLog process_log = 2;
 }
 
 
