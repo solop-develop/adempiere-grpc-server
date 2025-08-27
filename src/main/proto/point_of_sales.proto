@@ -2277,17 +2277,19 @@ message ProcessOnlineCashClosingResponse {
 	string message = 2;
 	string status = 3;
 	int32 next_request_time = 4;
+	int32 payment_processor_run_id = 5;
 }
 message InfoOnlineCashClosingRequest {
 	int32 pos_id = 1;
 	int32 id = 2;
-	int32 payment_method_id = 3;
+	int32 payment_processor_run_id = 3;
 }
 message InfoOnlineCashClosingResponse {
 	bool is_error = 1;
 	string message = 2;
 	string status = 3;
 	int32 next_request_time = 4;
+	int32 payment_processor_run_id = 5;
 }
 message CancelOnlineCashClosingRequest {
 	int32 pos_id = 1;
