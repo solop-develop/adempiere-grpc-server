@@ -543,7 +543,7 @@ service Store {
 	}
 	rpc PrintPreviewOnlineCashClosing(PrintPreviewOnlineCashClosingRequest) returns (PrintPreviewOnlineCashClosingResponse) {
 		option (google.api.http) = {
-			get: "/point-of-sales/{pos_id}/cash/{id}/online/preview"
+			get: "/point-of-sales/{pos_id}/cash/{id}/online/{payment_processor_run_id}/preview"
 		};
 	}
 
@@ -2303,7 +2303,8 @@ message CancelOnlineCashClosingResponse {
 message PrintPreviewOnlineCashClosingRequest {
 	int32 pos_id = 1;
 	string report_type = 2;
-	int32 id = 3; // Processor Run
+	int32 id = 3;
+	int32 payment_processor_run_id = 4;
 }
 message PrintPreviewOnlineCashClosingResponse {
 	string result = 1;

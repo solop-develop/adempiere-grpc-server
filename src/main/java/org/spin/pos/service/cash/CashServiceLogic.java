@@ -662,16 +662,24 @@ public class CashServiceLogic {
 	}
 
 	public static PrintPreviewOnlineCashClosingResponse.Builder printPreviewOnlineCashClosing(PrintPreviewOnlineCashClosingRequest request) throws FileNotFoundException, IOException {
-		final int paymentProcessorRunId = request.getId();
+		final int bankStatementId = request.getId();
+		final int paymentProcessorRunId = request.getPaymentProcessorRunId();
+		if (bankStatementId <= 0) {
+			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
+		}
+		if (paymentProcessorRunId <= 0) {
+			throw new AdempiereException("@C_PaymentProcessorRun_ID@ @NotFound@");
+		}
 		MTable processorRunTable = MTable.get(Env.getCtx(), "C_PaymentProcessorRun");
 		PO paymentProcessorRun = processorRunTable.getPO(paymentProcessorRunId, null);
 		if (paymentProcessorRun == null || paymentProcessorRun.get_ID() <= 0) {
 			throw new AdempiereException("@C_PaymentProcessorRun_ID@ @NotFound@");
 		}
-
+		if(paymentProcessorRun.get_ValueAsInt("C_BankStatement_ID") != bankStatementId) {
+			throw new AdempiereException("@C_BankStatement_ID@ @Invalid@");
+		}
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 
-		// ECA14_PrintVoucher
 		final int processId = PrintVoucherAbstract.getProcessId();
 		String reportType = "pdf";
 		if (!Util.isEmpty(request.getReportType(), true)) {
