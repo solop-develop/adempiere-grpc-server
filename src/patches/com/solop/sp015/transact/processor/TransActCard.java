@@ -7,7 +7,6 @@ import com.solop.sp015.transact.dto.ITarjetasTransaccion401RespuestaConsultarTra
 import com.solop.sp015.transact.dto.ITarjetasTransaccion401RespuestaPostearTransaccion;
 import com.solop.sp015.transact.dto.ITarjetasTransaccion401TipoEstadoAvance;
 import com.solop.sp015.transact.dto.ITarjetasTransaccion401Transaccion;
-import com.solop.sp015.transact.dto.ObjectFactory;
 import com.solop.sp015.transact.dto.TarjetaCierre.ITarjetasCierre400;
 import com.solop.sp015.transact.dto.TarjetaCierre.ITarjetasCierre400Cierre;
 import com.solop.sp015.transact.dto.TarjetaCierre.ITarjetasCierre400RespuestaConsultarCierre;
@@ -189,24 +188,22 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
                 transaction.setEmpCod(getPaymentProcessor().getUserID());
                 transaction.setEmpHASH(getPaymentProcessor().getPassword());
                 transaction.setFacturaMonto(getInvoiceAmount());
-                transaction.setFacturaMontoGravado(new ObjectFactory().createDouble(getTaxBaseAmount()));
-                transaction.setFacturaMontoIVA(new ObjectFactory().createDouble(getTaxAmount()));
+                transaction.setFacturaMontoGravado(getTaxBaseAmount());
+                transaction.setFacturaMontoIVA(getTaxAmount());
                 transaction.setFacturaNro(getDocumentNo());
-                transaction.setFacturaConsumidorFinal(new ObjectFactory().createBoolean(isFinalConsumer()));
+                transaction.setFacturaConsumidorFinal(isFinalConsumer());
                 transaction.setMonedaISO(getValidCurrencyISOCode(currency.getISO_Code()));
                 transaction.setMonto(getPayment().getPayAmt().multiply(Env.ONEHUNDRED).doubleValue());
                 transaction.setOperacion(getPayment().isReceipt() ? "VTA": "DEV");
-                transaction.setMonto(getPayment().getPayAmt().multiply(Env.ONEHUNDRED).doubleValue());
-                transaction.setOperacion(getPayment().isReceipt() ? "VTA": "DEV");
-                if (getPayment().getC_CardProvider_ID() > 0) {
+                /*if (getPayment().getC_CardProvider_ID() > 0) {
                     X_C_CardProvider cardProvider = new X_C_CardProvider(getPayment().getCtx(), getPayment().getC_CardProvider_ID(), getPayment().get_TrxName());
                     Integer providerCode = getProviderCode(cardProvider.getValue());
-                    transaction.setEmisorId(new ObjectFactory().createInt(providerCode));
+                    transaction.setEmisorId(providerCode);
 
-                }
+                }*/
                 if (!getPayment().isReceipt()) {
                     Integer originalTicket = new BigDecimal(getPayment().getR_PnRef_DC()).intValue();
-                    transaction.setTicketOriginal(new ObjectFactory().createInt(originalTicket));
+                    transaction.setTicketOriginal(originalTicket);
                 }
                 transaction.setTermCod(getTerminalCode());
                 ITarjetasTransaccion401 service = getServiceConnection();
