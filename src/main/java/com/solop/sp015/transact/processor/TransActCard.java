@@ -16,20 +16,13 @@ import com.solop.sp015.transact.dto.TarjetaCierre.ITarjetasCierre400TipoEstadoAv
 import com.solop.sp015.transact.dto.TarjetaCierre.TarjetasCierre400;
 import com.solop.sp015.transact.dto.TarjetasTransaccion401;
 import com.solop.sp015.util.PaymentProcessUtil;
+import org.adempiere.core.domains.models.I_C_TaxGroup;
 import org.adempiere.core.domains.models.X_C_CardProvider;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.interfaces.PaymentProcessorClosing;
 import org.compiere.interfaces.PaymentProcessorReverse;
 import org.compiere.interfaces.PaymentProcessorStatus;
-import org.compiere.model.MBankStatement;
-import org.compiere.model.MCard;
-import org.compiere.model.MCurrency;
-import org.compiere.model.MDocType;
-import org.compiere.model.MInvoice;
-import org.compiere.model.MOrder;
-import org.compiere.model.MTable;
-import org.compiere.model.PO;
-import org.compiere.model.PaymentProcessor;
+import org.compiere.model.*;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.store.model.MCPaymentMethod;
@@ -39,6 +32,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * Trans Act Processor
@@ -111,9 +105,6 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
     static int C_PIX_QR = 36;
     static int C_TOKE_QR = 37;
 
-
-
-
     @Override
     public boolean processCC() throws IllegalArgumentException {
         //	Validate Online Payment
@@ -185,7 +176,10 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
                 transaction.setEmpCod(getPaymentProcessor().getUserID());
                 transaction.setEmpHASH(getPaymentProcessor().getPassword());
                 transaction.setFacturaMonto(getInvoiceAmount());
+                transaction.setFacturaMontoGravado(new ObjectFactory().createDouble(getTaxBaseAmount()));
+                transaction.setFacturaMontoIVA(new ObjectFactory().createDouble(getTaxAmount()));
                 transaction.setFacturaNro(getDocumentNo());
+                transaction.setFacturaConsumidorFinal(new ObjectFactory().createBoolean(isFinalConsumer()));
                 transaction.setMonedaISO(getValidCurrencyISOCode(currency.getISO_Code()));
                 transaction.setMonto(getPayment().getPayAmt().multiply(Env.ONEHUNDRED).doubleValue());
                 transaction.setOperacion(getPayment().isReceipt() ? "VTA": "DEV");
@@ -291,18 +285,80 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
         return Double.parseDouble(documentNoAsString.replaceAll("\\D+", ""));
     }
 
+    private boolean isFinalConsumer() {
+        MBPartner businessPartner = MBPartner.get(getPayment().getCtx(), getPayment().getC_BPartner_ID());
+        if(businessPartner.getC_TaxGroup_ID() <= 0) {
+            return true;
+        }
+        PO taxGroup = new Query(getPayment().getCtx(), I_C_TaxGroup.Table_Name, "C_TaxGroup_ID = ?", null).setParameters(businessPartner.getC_TaxGroup_ID()).first();
+        if(taxGroup == null) {
+            return true;
+        }
+        return Optional.ofNullable(taxGroup.get_ValueAsString("Value")).orElse("").equals("CI");
+    }
+
     private double getInvoiceAmount() {
         BigDecimal amount = Env.ZERO;
         if(getPayment().getC_Invoice_ID() > 0) {
             MInvoice invoice = new MInvoice(getPayment().getCtx(), getPayment().getC_Invoice_ID(), getPayment().get_TrxName());
             amount = invoice.getGrandTotal();
+            amount = getConvertedAmount(amount, invoice.getC_Currency_ID());
         } else if(getPayment().getC_Order_ID() > 0) {
             MOrder order = new MOrder(getPayment().getCtx(), getPayment().getC_Order_ID(), getPayment().get_TrxName());
             amount = order.getGrandTotal();
+            amount = getConvertedAmount(amount, order.getC_Currency_ID());
         } else {
             amount = getPayment().getPayAmt(true);
         }
         return amount.multiply(Env.ONEHUNDRED).doubleValue();
+    }
+
+    private double getTaxAmount() {
+        BigDecimal amount = Env.ZERO;
+        if(getPayment().getC_Invoice_ID() > 0) {
+            MInvoice invoice = new MInvoice(getPayment().getCtx(), getPayment().getC_Invoice_ID(), getPayment().get_TrxName());
+            amount = Arrays.stream(invoice.getTaxes(true))
+                    .map(MInvoiceTax::getTaxAmt)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            amount = getConvertedAmount(amount, invoice.getC_Currency_ID());
+        } else if(getPayment().getC_Order_ID() > 0) {
+            MOrder order = new MOrder(getPayment().getCtx(), getPayment().getC_Order_ID(), getPayment().get_TrxName());
+            amount = Arrays.stream(order.getTaxes(true))
+                    .map(MOrderTax::getTaxAmt)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            amount = getConvertedAmount(amount, order.getC_Currency_ID());
+        }
+        return amount.multiply(Env.ONEHUNDRED).doubleValue();
+    }
+
+    private double getTaxBaseAmount() {
+        BigDecimal amount = Env.ZERO;
+        if(getPayment().getC_Invoice_ID() > 0) {
+            MInvoice invoice = new MInvoice(getPayment().getCtx(), getPayment().getC_Invoice_ID(), getPayment().get_TrxName());
+            amount = Arrays.stream(invoice.getTaxes(true))
+                    .filter(tax -> tax.getTaxAmt().signum() != 0)
+                    .map(MInvoiceTax::getTaxBaseAmt)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            amount = getConvertedAmount(amount, invoice.getC_Currency_ID());
+        } else if(getPayment().getC_Order_ID() > 0) {
+            MOrder order = new MOrder(getPayment().getCtx(), getPayment().getC_Order_ID(), getPayment().get_TrxName());
+            amount = Arrays.stream(order.getTaxes(true))
+                    .filter(tax -> tax.getTaxAmt().signum() != 0)
+                    .map(MOrderTax::getTaxBaseAmt)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            amount = getConvertedAmount(amount, order.getC_Currency_ID());
+        }
+        return amount.multiply(Env.ONEHUNDRED).doubleValue();
+    }
+
+    public BigDecimal getConvertedAmount(BigDecimal amount, int currencyFromId) {
+        MCurrency currency = MCurrency.get(getPayment().getCtx(), getPayment().getC_Currency_ID());
+        if(currencyFromId == currency.getC_Currency_ID()
+                || amount == null
+                || amount.compareTo(Env.ZERO) == 0) {
+            return amount;
+        }
+        return MConversionRate.convert(getPayment().getCtx(), amount, currencyFromId, currency.getC_Currency_ID(), getPayment().getDateAcct(), getPayment().getC_ConversionType_ID(), getPayment().getAD_Client_ID(), getPayment().getAD_Org_ID());
     }
 
     public ITarjetasTransaccion401 getServiceConnection() {
