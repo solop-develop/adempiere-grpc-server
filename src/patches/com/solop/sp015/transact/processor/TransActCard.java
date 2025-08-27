@@ -589,11 +589,9 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
                     .replaceAll("/H", "\n")
                     .replaceAll("/N", "\n")
                     .replaceAll("\n\n", "\n")
-                    .replaceAll("\n\n\n", "\n");
-            String [] vouchers = voucherAsString.split("#BR#\n");
-            if(vouchers.length > 0) {
-                Arrays.asList(vouchers).forEach(value -> addTextValue("Voucher", value));
-            }
+                    .replaceAll("\n\n\n", "\n")
+                    .replaceAll("#BR#", "");
+            addTextValue("Voucher", voucherAsString);
         }
     }
 
