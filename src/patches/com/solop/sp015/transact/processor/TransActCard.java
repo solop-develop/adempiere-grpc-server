@@ -196,9 +196,6 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
                 transaction.setMonedaISO(getValidCurrencyISOCode(currency.getISO_Code()));
                 transaction.setMonto(getPayment().getPayAmt().multiply(Env.ONEHUNDRED).doubleValue());
                 transaction.setOperacion(getPayment().isReceipt() ? "VTA": "DEV");
-                if (!getPayment().isReceipt()) {
-                    Integer originalTicket = new BigDecimal(getPayment().getR_PnRef_DC()).intValue();
-                }
                 transaction.setMonto(getPayment().getPayAmt().multiply(Env.ONEHUNDRED).doubleValue());
                 transaction.setOperacion(getPayment().isReceipt() ? "VTA": "DEV");
                 if (getPayment().getC_CardProvider_ID() > 0) {
@@ -238,9 +235,10 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
         if(paymentMethodId <= 0) {
             throw new AdempiereException("@C_PaymentMethod_ID@ @NotFound@");
         }
-        String lastStatus = null;
-        String whereClause = "C_BankStatement_ID = ? AND C_PaymentMethod_ID = ?";
-        /*PO paymentProcessorRun = new Query(getBankStatement().getCtx(), "C_PaymentProcessorRun", whereClause, getBankStatement().get_TrxName())
+		/*
+		String lastStatus = null;
+		String whereClause = "C_BankStatement_ID = ? AND C_PaymentMethod_ID = ?";
+		PO paymentProcessorRun = new Query(getBankStatement().getCtx(), "C_PaymentProcessorRun", whereClause, getBankStatement().get_TrxName())
             .setParameters(getBankStatement().get_ID(), paymentMethodId)
             .setOrderBy("Created DESC")
             .first();
