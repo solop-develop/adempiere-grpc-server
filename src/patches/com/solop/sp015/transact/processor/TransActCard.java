@@ -195,12 +195,12 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
                 transaction.setMonedaISO(getValidCurrencyISOCode(currency.getISO_Code()));
                 transaction.setMonto(getPayment().getPayAmt().multiply(Env.ONEHUNDRED).doubleValue());
                 transaction.setOperacion(getPayment().isReceipt() ? "VTA": "DEV");
-                /*if (getPayment().getC_CardProvider_ID() > 0) {
+                if (getPayment().getC_CardProvider_ID() > 0) {
                     X_C_CardProvider cardProvider = new X_C_CardProvider(getPayment().getCtx(), getPayment().getC_CardProvider_ID(), getPayment().get_TrxName());
                     Integer providerCode = getProviderCode(cardProvider.getValue());
                     transaction.setEmisorId(providerCode);
 
-                }*/
+                }
                 if (!getPayment().isReceipt()) {
                     Integer originalTicket = new BigDecimal(getPayment().getR_PnRef_DC()).intValue();
                     transaction.setTicketOriginal(originalTicket);
