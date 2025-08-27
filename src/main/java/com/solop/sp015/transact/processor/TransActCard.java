@@ -513,7 +513,20 @@ public class TransActCard extends PaymentProcessor implements PaymentProcessorSt
         addBooleanValue("RespCierreFinalizado", response.isRespCierreFinalizado());
         com.solop.sp015.transact.dto.TarjetaCierre.ArrayOfstring voucher = response.getVoucher();
         if(voucher != null && !voucher.getString().isEmpty()) {
-            voucher.getString().forEach(value -> addTextValue("Voucher", value));
+            StringBuilder voucherValue = new StringBuilder();
+            voucher.getString().forEach(value -> voucherValue.append(value).append(Env.NL));
+            String voucherAsString = voucherValue.toString()
+                    .replaceAll("#LOGO#", "")
+                    .replaceAll("#CF#", "")
+                    .replaceAll("/I", "\n")
+                    .replaceAll("/H", "\n")
+                    .replaceAll("/N", "\n")
+                    .replaceAll("\n\n", "\n")
+                    .replaceAll("\n\n\n", "\n");
+            String [] vouchers = voucherAsString.split("#BR#\n");
+            if(vouchers.length > 0) {
+                Arrays.asList(vouchers).forEach(value -> addTextValue("Voucher", value));
+            }
         }
     }
 
