@@ -661,7 +661,7 @@ public class CashServiceLogic {
 		return ticket;
 	}
 
-	public static PrintPreviewOnlineCashClosingResponse.Builder printPreviewCashClosing(PrintPreviewOnlineCashClosingRequest request) throws FileNotFoundException, IOException {
+	public static PrintPreviewOnlineCashClosingResponse.Builder printPreviewOnlineCashClosing(PrintPreviewOnlineCashClosingRequest request) throws FileNotFoundException, IOException {
 		final int paymentProcessorRunId = request.getId();
 		MTable processorRunTable = MTable.get(Env.getCtx(), "C_PaymentProcessorRun");
 		PO paymentProcessorRun = processorRunTable.getPO(paymentProcessorRunId, null);
