@@ -4541,14 +4541,39 @@ public class PointOfSalesForm extends StoreImplBase {
 	 */
 	private void configurePriceList(MOrder order) {
 		Arrays.asList(order.getLines())
-		.forEach(orderLine -> {
-			orderLine.setPrice();
-			orderLine.setTax();
-			orderLine.saveEx();
-			if(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO).signum() == 0) {
-				orderLine.deleteEx(true);
-			}
-		});
+			.stream()
+			.filter(orderLine -> {
+				// omit charges
+				return orderLine.getM_Product_ID() > 0;
+			})
+			.forEach(orderLine -> {
+				MProductPrice productPrice = MProductPrice.get(
+					orderLine.getCtx(),
+					order.getM_PriceList_ID(),
+					orderLine.getM_Product_ID(),
+					order.get_TrxName()
+				);
+				if (productPrice == null || productPrice.getM_ProductPrice_ID() <= 0) {
+					log.warning(
+						"Sales Order: " + order.getDocumentNo()
+						+ " Line " + orderLine.getLine() + " - " + orderLine.getM_Product().getName()
+						+ " Product " + orderLine.getProduct().getValue() + " - " + orderLine.getM_Product().getName()
+						+ " No in Price List " + order.getM_PriceList().getName()
+					);
+					orderLine.deleteEx(true);
+				} else {
+					orderLine.setPrice();
+					orderLine.setTax();
+					orderLine.saveEx();
+					if(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO).signum() == 0) {
+						/*
+						// Set with price list reference
+						orderLine.deleteEx(true);
+						*/
+					}
+				}
+			})
+		;
 	}
 
 
