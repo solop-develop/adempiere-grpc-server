@@ -14,7 +14,6 @@
  ************************************************************************************/
 package org.spin.grpc.service.core_functionality;
 
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -22,7 +21,6 @@ import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_C_Country;
 import org.adempiere.core.domains.models.I_C_UOM;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MConversionRate;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLanguage;
 import org.compiere.model.MPriceList;
@@ -33,7 +31,6 @@ import org.compiere.model.Query;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
-import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.core_functionality.ConversionRate;
 import org.spin.backend.grpc.core_functionality.Country;
@@ -45,6 +42,8 @@ import org.spin.backend.grpc.core_functionality.GetPriceListRequest;
 import org.spin.backend.grpc.core_functionality.GetSystemInfoRequest;
 import org.spin.backend.grpc.core_functionality.GetUnitOfMeasureRequest;
 import org.spin.backend.grpc.core_functionality.Language;
+import org.spin.backend.grpc.core_functionality.ListConversionRatesRequest;
+import org.spin.backend.grpc.core_functionality.ListConversionRatesResponse;
 import org.spin.backend.grpc.core_functionality.ListLanguagesRequest;
 import org.spin.backend.grpc.core_functionality.ListLanguagesResponse;
 import org.spin.backend.grpc.core_functionality.ListProductConversionRequest;
@@ -56,7 +55,6 @@ import org.spin.backend.grpc.core_functionality.UnitOfMeasure;
 import org.spin.backend.grpc.core_functionality.CoreFunctionalityGrpc.CoreFunctionalityImplBase;
 import org.spin.base.Version;
 import org.spin.base.util.ContextManager;
-import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -370,13 +368,13 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ConversionRate.Builder conversionRate = CoreFunctionalityConvert.convertConversionRate(
-				getConversionRate(request)
+			ConversionRate.Builder conversionRate = CoreFunctionalityServiceLogic.getConversionRate(
+				request
 			);
 			responseObserver.onNext(conversionRate.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -388,27 +386,27 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 	}
 
 	/**
-	 * Get conversion Rate from ValidFrom, Currency From, Currency To and Conversion Type
-	 * @param request
-	 * @return
+	 * get: "/core-functionality/conversion-types/{conversion_type_id}/conversion-rates"
 	 */
-	private MConversionRate getConversionRate(GetConversionRateRequest request) {
-		if(request.getConversionTypeId() <= 0
-				|| request.getCurrencyFromId() <= 0
-				|| request.getCurrencyToId() <= 0) {
-			return null;
+	@Override
+	public void listConversionRates(ListConversionRatesRequest request, StreamObserver<ListConversionRatesResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListConversionRatesResponse.Builder conversionRatesList = CoreFunctionalityServiceLogic.listConversionRates(request);
+			responseObserver.onNext(conversionRatesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
-		//	Get values
-		Timestamp conversionDate = ValueManager.getDateFromTimestampDate(request.getConversionDate());
-		if(conversionDate == null) {
-			conversionDate = TimeUtil.getDay(System.currentTimeMillis());
-		}
-		//	
-		return RecordUtil.getConversionRate(Env.getAD_Org_ID(Env.getCtx()), 
-				request.getConversionTypeId(), 
-				request.getCurrencyFromId(), 
-				request.getCurrencyToId(), 
-				TimeUtil.getDay(conversionDate));
 	}
 
 

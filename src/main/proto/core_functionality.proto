@@ -52,7 +52,14 @@ service CoreFunctionality {
 	}
 	//	Get Currency Rate
 	rpc GetConversionRate(GetConversionRateRequest) returns (ConversionRate) {
-		option (google.api.http) = { get: "/core-functionality/conversion-rates" };
+		option (google.api.http) = {
+			get: "/core-functionality/conversion-rates"
+		};
+	}
+	rpc ListConversionRates(ListConversionRatesRequest) returns (ListConversionRatesResponse) {
+		option (google.api.http) = {
+			get: "/core-functionality/conversion-types/{conversion_type_id}/conversion-rates"
+		};
 	}
 
 	//	Get Price List
@@ -143,13 +150,6 @@ message Country {
 	Currency currency = 22;
 }
 
-// Request Currency Rate
-message GetConversionRateRequest {
-	int32 conversion_type_id = 2;
-	int32 currency_from_id = 3;
-	int32 currency_to_id = 4;
-	google.protobuf.Timestamp conversion_date = 5;
-}
 
 // Currency info
 message Currency {
@@ -172,14 +172,42 @@ message GetCurrencyRequest {
 // Conversion Rate
 message ConversionRate {
 	int32 id = 1;
-	int32 conversion_type_id = 2;
-	google.protobuf.Timestamp valid_from = 3;
-	google.protobuf.Timestamp valid_to = 4;
-	Currency currency_from = 5;
-	Currency currency_to = 6;
-	string multiply_rate = 7;
-	string divide_rate = 8;
+	string uuid = 2;
+	string key = 3;
+	int32 conversion_type_id = 4;
+	google.protobuf.Timestamp valid_from = 5;
+	google.protobuf.Timestamp valid_to = 6;
+	Currency currency_from = 7;
+	Currency currency_to = 8;
+	string multiply_rate = 9;
+	string divide_rate = 10;
 }
+message GetConversionRateRequest {
+	int32 conversion_type_id = 2;
+	int32 currency_from_id = 3;
+	int32 currency_to_id = 4;
+	google.protobuf.Timestamp conversion_date = 5;
+}
+message ListConversionRatesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	// custom filters
+	int32 conversion_type_id = 10;
+	google.protobuf.Timestamp conversion_date = 11;
+}
+message ListConversionRatesResponse {
+	int64 record_count = 1;
+	repeated ConversionRate records = 2;
+	string next_page_token = 3;
+}
+
 
 // Organization
 message Organization {
