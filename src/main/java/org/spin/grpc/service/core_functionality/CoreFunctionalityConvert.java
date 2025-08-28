@@ -274,10 +274,23 @@ public class CoreFunctionalityConvert {
 		if(conversionRate == null) {
 			return builder;
 		}
+		MCurrency currency = MCurrency.get(Env.getCtx(), conversionRate.getC_Currency_ID());
+		MCurrency currencyTo = MCurrency.get(Env.getCtx(), conversionRate.getC_Currency_ID_To());
+
 		//	convert charge
 		builder
 			.setId(
 				conversionRate.getC_Conversion_Rate_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					conversionRate.getUUID()
+				)
+			)
+			.setKey(
+				conversionRate.getC_ConversionType_ID()
+				+ "|" + currency.getISO_Code()
+				+ "|" + currencyTo.getISO_Code()
 			)
 			.setValidFrom(
 				ValueManager.getTimestampFromDate(
@@ -289,12 +302,12 @@ public class CoreFunctionalityConvert {
 			)
 			.setCurrencyFrom(
 				CoreFunctionalityConvert.convertCurrency(
-					conversionRate.getC_Currency_ID()
+					currency
 				)
 			)
 			.setCurrencyTo(
 				CoreFunctionalityConvert.convertCurrency(
-					conversionRate.getC_Currency_ID_To()
+					currencyTo
 				)
 			)
 			.setMultiplyRate(
