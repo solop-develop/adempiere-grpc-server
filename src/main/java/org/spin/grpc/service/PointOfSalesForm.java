@@ -4566,7 +4566,10 @@ public class PointOfSalesForm extends StoreImplBase {
 					orderLine.setTax();
 					orderLine.saveEx();
 					if(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO).signum() == 0) {
+						/*
+						// Set with price list reference
 						orderLine.deleteEx(true);
+						*/
 					}
 				}
 			})
