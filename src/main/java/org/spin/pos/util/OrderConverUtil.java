@@ -27,6 +27,7 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
+import org.compiere.model.MOrderTax;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MPriceList;
@@ -84,6 +85,12 @@ public class OrderConverUtil {
 		final int defaultDiscountChargeId = pos.get_ValueAsInt("DefaultDiscountCharge_ID");
 		// final int defaultGiftCardChargeId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID);
 
+		BigDecimal totalTaxAmount = Arrays.stream(order.getTaxes(true))
+			// .filter(tax -> tax.getTaxAmt().signum() != 0)
+			.map(MOrderTax::getTaxAmt)
+			.reduce(BigDecimal.ZERO, BigDecimal::add)
+		;
+
 		MRefList reference = MRefList.get(Env.getCtx(), MOrder.DOCSTATUS_AD_REFERENCE_ID, order.getDocStatus(), null);
 		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
 		List<MOrderLine> orderLines = Arrays.asList(order.getLines(true, null));
@@ -102,6 +109,7 @@ public class OrderConverUtil {
 				return Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO);
 			})
 			.reduce(BigDecimal.ZERO, BigDecimal::add)
+			.subtract(totalTaxAmount)
 		;
 
 		BigDecimal discountAmount = BigDecimal.ZERO;
@@ -287,10 +295,7 @@ public class OrderConverUtil {
 			)
 			.setTaxAmount(
 				NumberManager.getBigDecimalToString(
-					grandTotal.subtract(totalLines.add(discountAmount)).setScale(
-						priceList.getStandardPrecision(),
-						RoundingMode.HALF_UP
-					)
+					totalTaxAmount
 				)
 			)
 			.setTotalLines(
