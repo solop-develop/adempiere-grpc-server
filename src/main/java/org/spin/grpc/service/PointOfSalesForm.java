@@ -25,7 +25,6 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -53,7 +52,6 @@ import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MColumn;
-import org.compiere.model.MConversionRate;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MDiscountSchema;
 import org.compiere.model.MDocType;
@@ -69,12 +67,10 @@ import org.compiere.model.MPriceList;
 import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductPrice;
-import org.compiere.model.MProductPricing;
 import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
-import org.compiere.model.MTax;
 import org.compiere.model.MUOM;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
@@ -118,6 +114,7 @@ import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.payment.PaymentServiceLogic;
 import org.spin.pos.service.pos.POS;
+import org.spin.pos.service.product.ProductServiceLogic;
 import org.spin.pos.service.pos.AccessManagement;
 import org.spin.pos.service.seller.SellerServiceLogic;
 import org.spin.pos.util.*;
@@ -126,7 +123,6 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -207,22 +203,6 @@ public class PointOfSalesForm extends StoreImplBase {
 					.asRuntimeException());
 		}
 	}
-	
-	@Override
-	public void listProductPrice(ListProductPriceRequest request, StreamObserver<ListProductPriceResponse> responseObserver) {
-		try {
-			ListProductPriceResponse.Builder productPriceList = getProductPriceList(request);
-			responseObserver.onNext(productPriceList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-
 
 	@Override
 	public void getOrder(GetOrderRequest request, StreamObserver<Order> responseObserver) {
@@ -5602,240 +5582,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Return payment
 		return maybePayment.get();
 	}
-	
-	/**
-	 * Get Product Price Method
-	 * @param context
-	 * @param request
-	 * @return
-	 */
-	private ListProductPriceResponse.Builder getProductPriceList(ListProductPriceRequest request) {
-		ListProductPriceResponse.Builder builder = ListProductPriceResponse.newBuilder();
-		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		//	Validate Price List
-		int priceListId = pos.getM_PriceList_ID();
-		if(request.getPriceListId() > 0) {
-			priceListId = request.getPriceListId();
-		}
-		MPriceList priceList = MPriceList.get(Env.getCtx(), priceListId, null);
-		//	Get Valid From
-		AtomicReference<Timestamp> validFrom = new AtomicReference<>();
-		if(!Util.isEmpty(request.getValidFrom())) {
-			validFrom.set(
-				TimeManager.getTimestampFromString(
-					request.getValidFrom()
-				)
-			);
-		} else {
-			validFrom.set(TimeUtil.getDay(System.currentTimeMillis()));
-		}
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-
-		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer();
-		whereClause.append("IsSold = 'Y' ");
-		//	Parameters
-		List<Object> parameters = new ArrayList<Object>();
-
-		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
-			request.getSearchValue()
-		);
-		if(!Util.isEmpty(searchValue, true)) {
-			whereClause.append(
-				"AND ("
-					+ "("
-						+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
-						+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
-						+ "OR UPPER(UPC) = UPPER(?) "
-						+ "OR UPPER(SKU) = UPPER(?) "
-					+ ") "
-					+ "OR EXISTS("
-						+ "SELECT 1 FROM M_Product_PO AS po "
-						+ "WHERE po.IsActive = 'Y' "
-						+ "AND po.M_Product_ID = M_Product.M_Product_ID "
-						+ "AND UPPER(po.UPC) LIKE UPPER(?) "
-					+ ")"
-				+ ") "
-			);
-			//	Add parameters
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-		}
-
-		//	Add Price List
-		whereClause.append(
-			"AND EXISTS("
-				+ "SELECT 1 FROM M_PriceList_Version AS plv "
-				+ "INNER JOIN M_ProductPrice AS pp "
-				+ "ON(pp.M_PriceList_Version_ID = plv.M_PriceList_Version_ID) "
-				+ "WHERE plv.M_PriceList_ID = ? "
-				+ "AND plv.ValidFrom <= ? "
-				+ "AND plv.IsActive = 'Y' "
-				// + "AND pp.PriceList IS NOT NULL AND pp.PriceList > 0 "
-				// + "AND pp.PriceStd IS NOT NULL AND pp.PriceStd > 0 "
-				+ "AND pp.M_Product_ID = M_Product.M_Product_ID"
-			+ ")"
-		);
-		//	Add parameters
-		parameters.add(priceList.getM_PriceList_ID());
-		parameters.add(TimeUtil.getDay(validFrom.get()));
-		AtomicInteger warehouseId = new AtomicInteger(pos.getM_Warehouse_ID());
-		if(request.getWarehouseId() > 0) {
-			warehouseId.set(request.getWarehouseId());
-		}
-		int businessPartnerId = request.getBusinessPartnerId();
-		int displayCurrencyId = pos.get_ValueAsInt("DisplayCurrency_ID");
-		int conversionTypeId = pos.get_ValueAsInt("C_ConversionType_ID");
-		//	Get Product list
-		Query query = new Query(
-			Env.getCtx(),
-			I_M_Product.Table_Name,
-			whereClause.toString(),
-			null
-		)
-			.setParameters(parameters)
-			.setClient_ID()
-			.setOnlyActiveRecords(true)
-		;
-		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.<MProduct>list()
-		.forEach(product -> {
-			ProductPrice.Builder productPrice = convertProductPrice(
-				product,
-				businessPartnerId,
-				priceList,
-				warehouseId.get(),
-				validFrom.get(),
-				displayCurrencyId,
-				conversionTypeId,
-				null
-			);
-			builder.addProductPrices(productPrice);
-		});
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
-		);
-		return builder;
-	}
-	
-	/**
-	 * Get 
-	 * @param product
-	 * @param businessPartnerId
-	 * @param priceList
-	 * @param warehouseId
-	 * @param validFrom
-	 * @param quantity
-	 * @return
-	 */
-	private ProductPrice.Builder convertProductPrice(MProduct product, int businessPartnerId, MPriceList priceList, int warehouseId, Timestamp validFrom, int displayCurrencyId, int conversionTypeId, BigDecimal priceQuantity) {
-		ProductPrice.Builder builder = ProductPrice.newBuilder();
-		//	Get Price
-		MProductPricing productPricing = new MProductPricing(product.getM_Product_ID(), businessPartnerId, priceQuantity, true, null);
-		productPricing.setM_PriceList_ID(priceList.getM_PriceList_ID());
-		productPricing.setPriceDate(validFrom);
-		builder.setProduct(
-			CoreFunctionalityConvert.convertProduct(product)
-		);
-		int taxCategoryId = product.getC_TaxCategory_ID();
-		Optional<MTax> optionalTax = Arrays.asList(MTax.getAll(Env.getCtx()))
-			.parallelStream()
-			.filter(tax -> tax.getC_TaxCategory_ID() == taxCategoryId 
-							&& (tax.isSalesTax() 
-									|| (!Util.isEmpty(tax.getSOPOType()) 
-											&& (tax.getSOPOType().equals(MTax.SOPOTYPE_Both) 
-													|| tax.getSOPOType().equals(MTax.SOPOTYPE_SalesTax)))))
-			.findFirst()
-		;
-		//	Validate
-		if(optionalTax.isPresent()) {
-			builder.setTaxRate(CoreFunctionalityConvert.convertTaxRate(optionalTax.get()));
-		}
-		//	Set currency
-		builder.setCurrency(CoreFunctionalityConvert.convertCurrency(priceList.getC_Currency_ID()));
-		//	Price List Attributes
-		builder.setIsTaxIncluded(
-				priceList.isTaxIncluded()
-			)
-			.setValidFrom(
-				StringManager.getValidString(
-					TimeManager.getTimestampToString(
-						productPricing.getPriceDate()
-					)
-				)
-			)
-			.setPriceListName(
-				StringManager.getValidString(
-					priceList.getName()
-				)
-			)
-		;
-		//	Pricing
-		builder.setPricePrecision(productPricing.getPrecision());
-		//	Prices
-		if(Optional.ofNullable(productPricing.getPriceStd()).orElse(Env.ZERO).signum() > 0) {
-			builder.setPriceList(NumberManager.getBigDecimalToString(Optional.ofNullable(productPricing.getPriceList()).orElse(Env.ZERO)))
-				.setPriceStandard(NumberManager.getBigDecimalToString(Optional.ofNullable(productPricing.getPriceStd()).orElse(Env.ZERO)))
-				.setPriceLimit(NumberManager.getBigDecimalToString(Optional.ofNullable(productPricing.getPriceLimit()).orElse(Env.ZERO)))
-			;
-			//	Get from schema
-			if(displayCurrencyId > 0) {
-				builder.setDisplayCurrency(CoreFunctionalityConvert.convertCurrency(displayCurrencyId));
-				//	Get
-				int conversionRateId = MConversionRate.getConversionRateId(priceList.getC_Currency_ID(), displayCurrencyId, RecordUtil.getDate(), conversionTypeId, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()));
-				if(conversionRateId > 0) {
-					//	TODO: cache or re-query should be resolved
-					MConversionRate conversionRate = MConversionRate.get(Env.getCtx(), conversionRateId);
-					if(conversionRate != null) {
-						BigDecimal multiplyRate = conversionRate.getMultiplyRate();
-						builder.setDisplayPriceList(NumberManager.getBigDecimalToString(Optional.ofNullable(productPricing.getPriceList()).orElse(Env.ZERO).multiply(multiplyRate, MathContext.DECIMAL128)))
-							.setDisplayPriceStandard(NumberManager.getBigDecimalToString(Optional.ofNullable(productPricing.getPriceStd()).orElse(Env.ZERO).multiply(multiplyRate, MathContext.DECIMAL128)))
-							.setDisplayPriceLimit(NumberManager.getBigDecimalToString(Optional.ofNullable(productPricing.getPriceLimit()).orElse(Env.ZERO).multiply(multiplyRate, MathContext.DECIMAL128)))
-							.setConversionRate(CoreFunctionalityConvert.convertConversionRate(conversionRate))
-						;
-					}
-				}
-			}
-		}
-		//	Get Storage
-		if(warehouseId > 0) {
-			AtomicReference<BigDecimal> quantityOnHand = new AtomicReference<BigDecimal>(Env.ZERO);
-			AtomicReference<BigDecimal> quantityReserved = new AtomicReference<BigDecimal>(Env.ZERO);
-			AtomicReference<BigDecimal> quantityOrdered = new AtomicReference<BigDecimal>(Env.ZERO);
-			AtomicReference<BigDecimal> quantityAvailable = new AtomicReference<BigDecimal>(Env.ZERO);
-			//	
-			Arrays.asList(MStorage.getOfProduct(Env.getCtx(), product.getM_Product_ID(), null))
-				.stream()
-				.filter(storage -> storage.getM_Warehouse_ID() == warehouseId)
-				.forEach(storage -> {
-					quantityOnHand.updateAndGet(quantity -> quantity.add(storage.getQtyOnHand()));
-					quantityReserved.updateAndGet(quantity -> quantity.add(storage.getQtyReserved()));
-					quantityOrdered.updateAndGet(quantity -> quantity.add(storage.getQtyOrdered()));
-					quantityAvailable.updateAndGet(quantity -> quantity.add(storage.getQtyOnHand().subtract(storage.getQtyReserved())));
-				});
-			builder.setQuantityOnHand(NumberManager.getBigDecimalToString(quantityOnHand.get()))
-				.setQuantityReserved(NumberManager.getBigDecimalToString(quantityReserved.get()))
-				.setQuantityOrdered(NumberManager.getBigDecimalToString(quantityOrdered.get()))
-				.setQuantityAvailable(NumberManager.getBigDecimalToString(quantityAvailable.get()))
-			;
-		}
-		return builder;
-	}
 
 
 
@@ -5846,11 +5592,11 @@ public class PointOfSalesForm extends StoreImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			log.fine("Object Requested = " + request.getSearchValue());
-			ProductPrice.Builder productPrice = getProductPrice(request);
+			ProductPrice.Builder productPrice = ProductServiceLogic.getProductPrice(request);
 			responseObserver.onNext(productPrice.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -5861,126 +5607,21 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
-	/**
-	 * Get Product Price Method
-	 * @param request
-	 * @return
-	 */
-	private ProductPrice.Builder getProductPrice(GetProductPriceRequest request) {
-		//	Get Product
-		MProduct product = null;
-
-		final String searchValue = ValueManager.getDecodeUrl(
-			request.getSearchValue()
-		);
-		if(!Util.isEmpty(searchValue, true)) {
-			List<Object> parameters = new ArrayList<Object>();
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-
-			product = new Query(
-				Env.getCtx(),
-				I_M_Product.Table_Name,
-				"("
-				+ "UPPER(Value) = UPPER(?)"
-				+ "OR UPPER(Name) = UPPER(?)"
-				+ "OR UPPER(UPC) = UPPER(?)"
-				+ "OR UPPER(SKU) = UPPER(?)"
-				+ ")",
-				null
-			)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.first();
-		} else if(!Util.isEmpty(request.getUpc(), true)) {
-			if(product == null) {
-				Optional<MProduct> optionalProduct = MProduct.getByUPC(Env.getCtx(), request.getUpc(), null).stream().findAny();
-				if(optionalProduct.isPresent()) {
-					product = optionalProduct.get();
-				}
-			}
-		} else if(!Util.isEmpty(request.getSku(), true)) {
-			if(product == null) {
-				product = new Query(
-					Env.getCtx(),
-					I_M_Product.Table_Name,
-					"UPPER(SKU) = UPPER(?)",
-					null
-				)
-					.setParameters(request.getSku())
-					.setClient_ID()
-					.setOnlyActiveRecords(true)
-					.first();
-			}
-		} else if(!Util.isEmpty(request.getValue(), true)) {
-			if(product == null) {
-				product = new Query(
-					Env.getCtx(),
-					I_M_Product.Table_Name,
-					"UPPER(Value) = UPPER(?)",
-					null
-				)
-					.setParameters(request.getValue())
-					.setClient_ID()
-					.setOnlyActiveRecords(true)
-					.first();
-			}
-		} else if(!Util.isEmpty(request.getName(), true)) {
-			if(product == null) {
-				product = new Query(
-					Env.getCtx(),
-					I_M_Product.Table_Name,
-					"UPPER(Name) LIKE UPPER(?)",
-					null
-				)
-					.setParameters(request.getName())
-					.setClient_ID()
-					.setOnlyActiveRecords(true)
-					.first();
-			}
-		}
-		//	Validate product
-		if(product == null) {
-			throw new AdempiereException("@M_Product_ID@ @NotFound@");
-		}
-		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		//	Validate Price List
-		int priceListId = pos.getM_PriceList_ID();
-		if(request.getPriceListId() > 0) {
-			priceListId = request.getPriceListId();
-		}
-		MPriceList priceList = MPriceList.get(Env.getCtx(), priceListId, null);
-		AtomicInteger warehouseId = new AtomicInteger(pos.getM_Warehouse_ID());
-		if(request.getWarehouseId() > 0) {
-			warehouseId.set(request.getWarehouseId());
-		}
-		//	Get Valid From
-		AtomicReference<Timestamp> validFrom = new AtomicReference<>();
-		if(!Util.isEmpty(request.getValidFrom())) {
-			validFrom.set(
-				TimeManager.getTimestampFromString(
-					request.getValidFrom()
-				)
+	@Override
+	public void listProductPrice(ListProductPriceRequest request, StreamObserver<ListProductPriceResponse> responseObserver) {
+		try {
+			ListProductPriceResponse.Builder productPriceList = ProductServiceLogic.listProductsPrices(request);
+			responseObserver.onNext(productPriceList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
-		} else {
-			validFrom.set(TimeUtil.getDay(System.currentTimeMillis()));
 		}
-		int businessPartnerId = request.getBusinessPartnerId();
-		int displayCurrencyId = pos.get_ValueAsInt("DisplayCurrency_ID");
-		int conversionTypeId = pos.get_ValueAsInt("C_ConversionType_ID");
-		return convertProductPrice(
-			product,
-			businessPartnerId,
-			priceList,
-			warehouseId.get(),
-			validFrom.get(),
-			displayCurrencyId,
-			conversionTypeId,
-			Env.ONE
-		);
 	}
 
 	@Override
