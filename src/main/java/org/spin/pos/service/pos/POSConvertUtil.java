@@ -36,6 +36,8 @@ public class POSConvertUtil {
 	 * @return
 	 */
 	public static PointOfSales.Builder convertPointOfSales(MPOS pos) {
+		int userId = Env.getAD_User_ID(pos.getCtx());
+
 		PointOfSales.Builder builder = PointOfSales.newBuilder()
 			.setId(
 				pos.getC_POS_ID()
@@ -75,7 +77,9 @@ public class POSConvertUtil {
 				pos.getC_POSKeyLayout_ID()
 			)
 			.setIsAisleSeller(
-				pos.get_ValueAsBoolean("IsAisleSeller")
+				// pos.get_ValueAsBoolean("IsAisleSeller")
+				AccessManagement.getBooleanValueFromPOS(pos, userId, "IsAisleSeller")
+
 			)
 			.setIsSharedPos(
 				pos.get_ValueAsBoolean("IsSharedPOS")
@@ -87,8 +91,6 @@ public class POSConvertUtil {
 				pos.get_ValueAsBoolean(I_AD_Process.COLUMNNAME_IsDirectPrint)
 			)
 		;
-
-		int userId = Env.getAD_User_ID(pos.getCtx());
 
 		// Write Off
 		builder.setIsAllowsWriteOffAmount(

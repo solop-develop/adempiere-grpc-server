@@ -3751,10 +3751,16 @@ public class PointOfSalesForm extends StoreImplBase {
 				parameters.add(posId);
 			} else {
 				if(request.getIsOnlyAisleSeller()) {
+					String whereIsAisleSeller = "";
+					if (pos.get_ColumnIndex("IsAisleSeller") >= 0) {
+						whereIsAisleSeller = "AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsAisleSeller = 'Y')";
+					}
 					whereClause
-						.append(" AND DocStatus NOT IN('VO', 'CL')")
-						.append(" AND ((C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?)")
-						.append(" AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsAisleSeller = 'Y'))")
+						.append(" AND DocStatus NOT IN('VO', 'CL') ")
+						.append("AND (")
+						.append("(C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?)")
+						.append(whereIsAisleSeller)
+						.append(")")
 						.append(whereClauseWithoutProposal)
 					;
 					parameters.add(salesRepresentativeId);
