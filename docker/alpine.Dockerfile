@@ -9,12 +9,12 @@ ENV \
 	SERVER_PORT="50059" \
 	SERVER_LOG_LEVEL="WARNING" \
 	# Database
+	DB_TYPE="PostgreSQL" \
 	DB_HOST="localhost" \
 	DB_PORT="5432" \
 	DB_NAME="adempiere" \
 	DB_USER="adempiere" \
 	DB_PASSWORD="adempiere" \
-	DB_TYPE="PostgreSQL" \
 	# Connection Pool
 	IDLE_TIMEOUT="300" \
 	MINIMUM_IDLE="1" \

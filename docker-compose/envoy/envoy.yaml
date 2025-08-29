@@ -1,11 +1,12 @@
 static_resources:
   listeners:
-  - name: listener1
+  - name: adempiere_grpc_backend_proxy
     address:
       socket_address: {
         address: 0.0.0.0,
         port_value: 5555
       }
+    per_connection_buffer_limit_bytes: 94371840 # 90 MiB
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
@@ -31,19 +32,21 @@ static_resources:
               # Reference: https://envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/grpc_json_transcoder_filter#route-configs-for-transcoded-requests
               # https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/grpc_json_transcoder_filter#sample-envoy-configuration
               - match: {
-                  prefix: "/"
+                  prefix: "/",
+                  grpc: {}
                 }
                 route: {
-                  cluster: grpc,
+                  cluster: adempiere_grpc_backend_cluster,
                   timeout: 900s # 0s to disable timeout
                 }
           http_filters:
           - name: envoy.filters.http.grpc_json_transcoder
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-              proto_descriptor: "/data/service_definition.pb"
+              proto_descriptor: "/data/adempiere-grpc-server.dsc"
               services:
                 # package.service
+                # - services_enabled
                 - bank_statement_match.BankStatementMatch
                 - core_functionality.CoreFunctionality
                 - data.BusinessData
@@ -96,12 +99,14 @@ static_resources:
                 always_print_primitive_fields: true
                 always_print_enums_as_ints: false
                 preserve_proto_field_names: true
+              convert_grpc_status: true
+              ignore_unknown_query_parameters: true
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
-  - name: grpc
+  - name: adempiere_grpc_backend_cluster
     type: LOGICAL_DNS
     lb_policy: ROUND_ROBIN
     dns_lookup_family: V4_ONLY
@@ -111,7 +116,7 @@ static_resources:
         explicit_http_config:
           http2_protocol_options: {}
     load_assignment:
-      cluster_name: grpc
+      cluster_name: adempiere_grpc_backend_cluster
       endpoints:
       - lb_endpoints:
         - endpoint:
@@ -120,5 +125,5 @@ static_resources:
                 # WARNING: "docker.for.mac.localhost" has been deprecated from Docker v18.03.0.
                 # If you're running an older version of Docker, please use "docker.for.mac.localhost" instead.
                 # Reference: https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-18030-ce-mac59-2018-03-26
-                address: adempiere-grpc-server
+                address: adempiere-grpc-server # for local testing change for your ip
                 port_value: 50059
