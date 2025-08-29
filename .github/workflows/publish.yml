@@ -19,7 +19,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK 17
+      - name: Setup Java JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -199,12 +199,20 @@ jobs:
         run: |
           # Get the release type
           IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+
+          # Get branch name from release
+          BRANCH_NAME="${{ github.event.release.target_commitish }}"
+          # clean branch name (clear invalid characters to Docker tags)
+          CLEAN_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+
           # Set the base tags, always include the specific version tag
           TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}-alpine"
+          TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:$CLEAN_BRANCH_NAME-alpine"
           # If it's not a pre-release, add the "latest" tag
           if [[ "$IS_PRE_RELEASE" == "false" ]]; then
             TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:alpine"
           fi
+
           # Set the output variable for the next step to use
           echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
 
@@ -257,12 +265,20 @@ jobs:
         run: |
           # Get the release type
           IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+
+          # Get branch name from release
+          BRANCH_NAME="${{ github.event.release.target_commitish }}"
+          # clean branch name (clear invalid characters to Docker tags)
+          CLEAN_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+
           # Set the base tags, always include the specific version tag
           TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}"
+          TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:$CLEAN_BRANCH_NAME"
           # If it's not a pre-release, add the "latest" tag
           if [[ "$IS_PRE_RELEASE" == "false" ]]; then
             TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:latest"
           fi
+
           # Set the output variable for the next step to use
           echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
 
@@ -314,12 +330,20 @@ jobs:
         run: |
           # Get the release type
           IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+
+          # Get branch name from release
+          BRANCH_NAME="${{ github.event.release.target_commitish }}"
+          # clean branch name (clear invalid characters to Docker tags)
+          CLEAN_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+
           # Set the base tags, always include the specific version tag
           TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:${{ github.event.release.tag_name }}"
+          TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:$CLEAN_BRANCH_NAME"
           # If it's not a pre-release, add the "latest" tag
           if [[ "$IS_PRE_RELEASE" == "false" ]]; then
             TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:latest"
           fi
+
           # Set the output variable for the next step to use
           echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
 
