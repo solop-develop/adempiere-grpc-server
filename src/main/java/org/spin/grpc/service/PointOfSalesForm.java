@@ -2480,20 +2480,42 @@ public class PointOfSalesForm extends StoreImplBase {
 		AtomicReference<PO> refundReference = new AtomicReference<PO>();
 		Trx.run(transactionName -> {
 			GenericPO refundReferenceToCreate = new GenericPO("C_POSPaymentReference", Env.getCtx(), 0, transactionName);
-			refundReferenceToCreate.set_ValueOfColumn("Amount", NumberManager.getBigDecimalFromString(request.getAmount()));
-			refundReferenceToCreate.set_ValueOfColumn("AmtSource", NumberManager.getBigDecimalFromString(request.getSourceAmount()));
-			refundReferenceToCreate.set_ValueOfColumn(
-				"PayDate",
-				TimeUtil.getDay(System.currentTimeMillis())
-			);
+
 			if(request.getCustomerBankAccountId() > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_BP_BankAccount_ID", request.getCustomerBankAccountId());
 			}
 			refundReferenceToCreate.set_ValueOfColumn("C_BPartner_ID", request.getCustomerId());
+
+			// Currency
 			int currencyId = request.getCurrencyId();
-			if(currencyId > 0) {
-				refundReferenceToCreate.set_ValueOfColumn("C_Currency_ID", currencyId);
+			MCurrency currency = MCurrency.get(Env.getCtx(), currencyId);
+			if (currency == null || currency.getC_Currency_ID() <= 0) {
+				throw new AdempiereException("@C_Currency_ID@ @NotFound@");
 			}
+			refundReferenceToCreate.set_ValueOfColumn("C_Currency_ID", currencyId);
+
+			//	Amount
+			BigDecimal paymentAmount = NumberManager.getBigDecimalFromString(
+				request.getAmount()
+			);
+			if(paymentAmount != null) {
+				paymentAmount = paymentAmount.setScale(currency.getStdPrecision(), RoundingMode.HALF_UP);
+			}
+			refundReferenceToCreate.set_ValueOfColumn("Amount", paymentAmount);
+
+			BigDecimal amountSource = NumberManager.getBigDecimalFromString(
+				request.getSourceAmount()
+			);
+			if(amountSource != null) {
+				amountSource = amountSource.setScale(currency.getStdPrecision(), RoundingMode.HALF_UP);
+			}
+			refundReferenceToCreate.set_ValueOfColumn("AmtSource", amountSource);
+
+			refundReferenceToCreate.set_ValueOfColumn(
+				"PayDate",
+				TimeUtil.getDay(System.currentTimeMillis())
+			);
+	
 			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 			if(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID) > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_ConversionType_ID", pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
@@ -5553,10 +5575,19 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(!Util.isEmpty(request.getDescription())) {
 				payment.addDescription(request.getDescription());
 			}
+			// Currency
+			MCurrency currency = MCurrency.get(Env.getCtx(), payment.getC_Currency_ID());
+			if (currency == null || currency.getC_Currency_ID() <= 0) {
+				throw new AdempiereException("@C_Currency_ID@ @NotFound@");
+			}
 			//	Amount
 			BigDecimal paymentAmount = NumberManager.getBigDecimalFromString(
 				request.getAmount()
 			);
+			if (paymentAmount != null) {
+				paymentAmount = paymentAmount.setScale(currency.getStdPrecision(), RoundingMode.HALF_UP);
+			}
+
 			payment.setPayAmt(paymentAmount);
 			payment.setOverUnderAmt(Env.ZERO);
 			CashUtil.setCurrentDate(payment);

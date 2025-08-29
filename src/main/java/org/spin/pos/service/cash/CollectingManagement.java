@@ -16,6 +16,7 @@
 package org.spin.pos.service.cash;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.Optional;
 
@@ -76,6 +77,18 @@ public class CollectingManagement {
 		if(pointOfSalesDefinition.getC_BankAccount_ID() <= 0) {
 			throw new AdempiereException("@NoCashBook@");
 		}
+
+		// Currency
+		int currencyId = request.getCurrencyId();
+		if(currencyId <= 0) {
+			// TODO: Validate if currency with `paymentTypeAllocation`
+			currencyId = salesOrder.getC_Currency_ID();
+		}
+		MCurrency currency = MCurrency.get(Env.getCtx(), currencyId);
+		if (currency == null || currency.getC_Currency_ID() <= 0) {
+			throw new AdempiereException("@C_Currency_ID@ @NotFound@");
+		}
+
 		//	Amount
 		BigDecimal paymentAmount = NumberManager.getBigDecimalFromString(
 			request.getAmount()
@@ -83,12 +96,8 @@ public class CollectingManagement {
 		if(paymentAmount == null || paymentAmount.compareTo(Env.ZERO) == 0) {
 			throw new AdempiereException("@PayAmt@ @NotFound@");
 		}
-		//	Order
-		int currencyId = request.getCurrencyId();
-		if(currencyId <= 0) {
-			// TODO: Validate if currency with `paymentTypeAllocation`
-			currencyId = salesOrder.getC_Currency_ID();
-		}
+		paymentAmount = paymentAmount.setScale(currency.getStdPrecision(), RoundingMode.HALF_UP);
+
 		//	Throw if not exist conversion
 		ConvertUtil.validateConversion(salesOrder, currencyId, pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
 		//	
