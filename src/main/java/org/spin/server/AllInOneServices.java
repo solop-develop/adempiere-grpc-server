@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.compiere.jr.report.ReportStarter;
+import org.compiere.process.SvrProcess;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
 import org.spin.base.setup.SetupLoader;
@@ -139,6 +140,10 @@ public class AllInOneServices {
 		ReportStarter.setReportViewerProvider(
 			new ServerReportProvider()
 		);
+		SvrProcess.setPrintDocumentProvider(
+			new ServerDocumentProvider()
+		);
+
 		Ini.setProperty(
 			JWTUtil.ECA52_JWT_SECRET_KEY,
 			SetupLoader.getInstance().getServer().getJwt_secret_key()

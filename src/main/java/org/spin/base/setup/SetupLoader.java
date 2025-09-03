@@ -121,7 +121,7 @@ public class SetupLoader {
 		connection.setAppsPort(0);
 		//	Set default init
 		Ini.setProperty(Ini.P_CONNECTION, connection.toStringLong());
-		Ini.setClient(true);
+		Ini.setClient(true); // true connect pool with HikariCP, false to connect pool with c3p0
 		//	Set Database default parameters
 		//	Close inactive connections after 5 minutes 300
 		BackendDatabaseConfig.setIdleTimeout(dataBase.getIdle_timeout());
