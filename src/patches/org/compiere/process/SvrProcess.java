@@ -982,6 +982,21 @@ public abstract class SvrProcess implements ProcessCall
 		getPrintDocumentImplementation().print(documentList, printFormatId, getProcessInfo().getWindowNo(), askPrint);
 	}
 
+
+	public static void setPrintDocumentProvider(String providerClassName) {
+		IPrintDocument printDocument;
+		if (Util.isEmpty(providerClassName, true)) {
+			throw new IllegalArgumentException("Class name cannot be null or empty");
+		}
+		try {
+			Class<?> clazz = Class.forName(providerClassName);
+			Constructor<?> constructor = clazz.getDeclaredConstructor();
+			printDocument = (IPrintDocument) constructor.newInstance();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		setPrintDocumentProvider(printDocument);
+	}
 	public static void setPrintDocumentProvider(IPrintDocument provider) {
 		if (provider == null) {
 			throw new IllegalArgumentException("Cannot set print document provider to null");
