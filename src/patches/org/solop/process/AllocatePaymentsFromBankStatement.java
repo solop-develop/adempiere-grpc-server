@@ -73,9 +73,6 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 				MBankStatementLine bankStatementLine = new MBankStatementLine(getCtx(), bankStatementLineId, get_TrxName());
 				vendorTransaction.setPayAmt(bankStatementLine.getStmtAmt());
 				vendorTransaction.setReferenceNo(payment.getDocumentNo());
-				//	TODO: Generate Withdrawal from Receipts
-				MPaymentProcessor paymentProcessor = (MPaymentProcessor) batch.getC_PaymentProcessor();
-				int feeChargeId = paymentProcessor.getFeeCharge_ID();
 
 				vendorTransaction.saveEx();
 
@@ -87,97 +84,4 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 	}
 
 
-
-	private void createInvoiceChargeAllocation(
-			int businessPartnerId,
-			int currencyId,
-			int organizationId,
-			Timestamp transactionDate,
-			int chargeId,
-			String description,
-			MInvoice invoice,
-			String transactionName,
-			BigDecimal amountToApply
-	) {
-		if (invoice == null) {
-			throw new AdempiereException("@C_Invoice_ID@ @NotFound@");
-		}
-
-		if (organizationId <= 0) {
-			throw new AdempiereException("@Org0NotAllowed@");
-		}
-
-		if (chargeId <= 0) {
-			throw new AdempiereException("@C_Charge_ID@ @IsMandatory@");
-		}
-
-		// Create Allocation header
-		final String userName = Env.getContext(Env.getCtx(), "#AD_User_Name");
-		MAllocationHdr alloc = new MAllocationHdr(
-				Env.getCtx(),
-				true,
-				Env.getContextAsDate(Env.getCtx(),"@#Date@"),
-				currencyId,
-				userName,
-				transactionName
-		);
-		alloc.setAD_Org_ID(organizationId);
-
-		// Set Description
-		if (!Util.isEmpty(description, true)) {
-			alloc.setDescription(description);
-		}
-		alloc.saveEx();
-
-		// Process the single invoice
-		int C_Invoice_ID = invoice.get_ID();
-		BigDecimal DiscountAmt = Env.ZERO;
-		BigDecimal WriteOffAmt = Env.ZERO;
-		BigDecimal invoiceOpen = invoice.getOpenAmt(); //TODO: convert from invoice to allocation currency
-		// OverUnderAmt needs to be in Allocation Currency
-		BigDecimal OverUnderAmt = invoiceOpen.subtract(amountToApply)
-				.subtract(DiscountAmt)
-				.subtract(WriteOffAmt);
-
-		// Create allocation line for the invoice
-		MAllocationLine invoiceLine = new MAllocationLine(
-				alloc,
-				amountToApply,
-				DiscountAmt,
-				WriteOffAmt,
-				OverUnderAmt
-		);
-		invoiceLine.setDocInfo(businessPartnerId, invoice.getC_Order_ID(), C_Invoice_ID);
-		invoiceLine.saveEx();
-
-		// Create allocation line for the charge
-		MAllocationLine chargeLine = new MAllocationLine(
-				alloc,
-				amountToApply,
-				Env.ZERO,
-				Env.ZERO,
-				Env.ZERO
-		);
-		chargeLine.set_CustomColumn("C_Charge_ID", chargeId);
-		chargeLine.setC_BPartner_ID(businessPartnerId);
-		chargeLine.saveEx();
-
-
-
-		// Complete the allocation
-		if (alloc.get_ID() > 0) {
-			if (!alloc.processIt(DocAction.ACTION_Complete)) {
-				throw new AdempiereException("@ProcessFailed@: " + alloc.getProcessMsg());
-			}
-			alloc.saveEx();
-		}
-
-		// Test/Set IsPaid for the invoice
-
-		BigDecimal open = invoice.getOpenAmt();
-		if (open != null && open.signum() == 0) {
-			invoice.setIsPaid(true);
-			invoice.saveEx();
-		}
-	}
 }
