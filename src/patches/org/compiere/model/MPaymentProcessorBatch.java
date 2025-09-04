@@ -214,12 +214,13 @@ public class MPaymentProcessorBatch extends X_C_PaymentProcessorBatch implements
         setDiscountAmt(discountAmount);
         setWithholdingAmt(withholdingAmount);
         setTaxAmt(taxAmount);
-        setGrandTotal(grandTotalAmount);
-        BigDecimal openAmount = grandTotalAmount
+        setGrandTotal(payAmount);
+        BigDecimal openAmount = payAmount
             .subtract(feeAmount)
             .subtract(discountAmount)
             .subtract(withholdingAmount)
-            .subtract(taxAmount);
+            .subtract(taxAmount)
+            .subtract(paidAmount);
         setOpenAmt(openAmount);
         set_ValueOfColumn("PaidAmt", paidAmount);
         saveEx();

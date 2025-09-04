@@ -78,12 +78,6 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 				int feeChargeId = paymentProcessor.getFeeCharge_ID();
 
 				vendorTransaction.saveEx();
-				//Automatic Allocation
-				createInvoiceChargeAllocation(paymentProcessor.getPaymentProcessorVendor_ID(),paymentProcessor.getFeeCurrency_ID(),
-					batch.getAD_Org_ID(),payment.getDateTrx(), feeChargeId,"description",
-					vendorFeesInvoice, get_TrxName(),bankStatementLine.getStmtAmt()
-				);
-
 
 				counter.incrementAndGet();
 			});

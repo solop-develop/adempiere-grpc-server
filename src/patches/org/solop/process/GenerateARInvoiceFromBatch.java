@@ -84,6 +84,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		} else {
 			invoice.setC_DocTypeTarget_ID(MDocType.DOCBASETYPE_ARInvoice);	//	ARI
 		}
+		invoice.setIsSOTrx(true);
 		invoice.setBPartner(businessPartner);
 		invoice.setSalesRep_ID(getAD_User_ID());	//	caller
 		invoice.setDateInvoiced(getDateDoc());
@@ -115,6 +116,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		}
 		invoice.saveEx();
 
+
 		MPayment withdrawal = new MPayment(getCtx(), 0, get_TrxName());
 		withdrawal.setDocStatus(MPayment.DOCSTATUS_Drafted);
 		withdrawal.setDocAction(MPayment.DOCACTION_Complete);
@@ -129,90 +131,14 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		withdrawal.setIsReceipt(false);
 		withdrawal.setC_Currency_ID(paymentProcessor.getFeeCurrency_ID());
 		withdrawal.saveEx();
-		int feeChargeId = paymentProcessor.getFeeCharge_ID();
-		createWithdrawalChargeAllocation(paymentProcessor.getPaymentProcessorVendor_ID(),paymentProcessor.getFeeCurrency_ID(),
-				batch.getAD_Org_ID(),withdrawal.getDateTrx(), feeChargeId,"description",
-				withdrawal, get_TrxName(),withdrawal.getPayAmt()
-		);
 
-
-
-		return "@Created@ " + invoice.getDocumentNo();
-	}
-
-
-
-
-	private void createWithdrawalChargeAllocation(
-			int businessPartnerId,
-			int currencyId,
-			int organizationId,
-			Timestamp transactionDate,
-			int chargeId,
-			String description,
-			MPayment payment,
-			String transactionName,
-			BigDecimal amountToApply
-	) {
-		if (payment == null) {
-			throw new AdempiereException("@C_Payment_ID@ @NotFound@");
+		if(!withdrawal.processIt(MPayment.DOCACTION_Complete)) {
+			throw new AdempiereException(withdrawal.getProcessMsg());
 		}
+		withdrawal.saveEx();
 
-		if (organizationId <= 0) {
-			throw new AdempiereException("@Org0NotAllowed@");
-		}
 
-		if (chargeId <= 0) {
-			throw new AdempiereException("@C_Charge_ID@ @IsMandatory@");
-		}
-
-		// Create Allocation header
-		final String userName = Env.getContext(Env.getCtx(), "#AD_User_Name");
-		MAllocationHdr alloc = new MAllocationHdr(
-				Env.getCtx(),
-				true,
-				Env.getContextAsDate(Env.getCtx(),"@#Date@"),
-				currencyId,
-				userName,
-				transactionName
-		);
-		alloc.setAD_Org_ID(organizationId);
-
-		// Set Description
-		if (!Util.isEmpty(description, true)) {
-			alloc.setDescription(description);
-		}
-		alloc.saveEx();
-
-		// Create allocation line for the invoice
-		MAllocationLine invoiceLine = new MAllocationLine(
-				alloc,
-				amountToApply,
-				Env.ZERO,
-				Env.ZERO,
-				Env.ZERO
-		);
-		invoiceLine.setDocInfo(businessPartnerId, payment.getC_Order_ID(), payment.get_ID());
-		invoiceLine.saveEx();
-
-		// Create allocation line for the charge
-		MAllocationLine chargeLine = new MAllocationLine(
-				alloc,
-				amountToApply,
-				Env.ZERO,
-				Env.ZERO,
-				Env.ZERO
-		);
-		chargeLine.set_ValueOfColumn("C_Charge_ID", chargeId);
-		chargeLine.setC_BPartner_ID(businessPartnerId);
-		chargeLine.saveEx();
-		// Complete the allocation
-		if (alloc.get_ID() > 0) {
-			if (!alloc.processIt(DocAction.ACTION_Complete)) {
-				throw new AdempiereException("@ProcessFailed@: " + alloc.getProcessMsg());
-			}
-			alloc.saveEx();
-		}
+		return "@Created@: " + invoice.getDocumentNo();
 	}
 
 

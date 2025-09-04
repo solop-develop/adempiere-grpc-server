@@ -78,6 +78,7 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		} else {
 			invoice.setC_DocTypeTarget_ID(MDocType.DOCBASETYPE_APInvoice);	//	API
 		}
+		invoice.setIsSOTrx(false);
 		invoice.setBPartner(businessPartner);
 		invoice.setSalesRep_ID(getAD_User_ID());	//	caller
 		invoice.setDateInvoiced(getDateDoc());
