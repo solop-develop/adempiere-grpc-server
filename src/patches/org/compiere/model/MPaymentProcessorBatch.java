@@ -195,7 +195,7 @@ public class MPaymentProcessorBatch extends X_C_PaymentProcessorBatch implements
         BigDecimal withholdingAmount = Env.ZERO;
         BigDecimal taxAmount = Env.ZERO;
         BigDecimal grandTotalAmount = Env.ZERO;
-
+        BigDecimal paidAmount = Env.ZERO;
         for (Integer lineId : getLines()) {
             MPPBatchLine ppbLine = new MPPBatchLine(getCtx(), lineId, get_TrxName());
             payAmount = payAmount.add(ppbLine.getPayAmt());
@@ -204,6 +204,10 @@ public class MPaymentProcessorBatch extends X_C_PaymentProcessorBatch implements
             withholdingAmount = withholdingAmount.add(ppbLine.getWithholdingAmt());
             taxAmount = taxAmount.add(ppbLine.getTaxAmt());
             grandTotalAmount = grandTotalAmount.add(ppbLine.getTotalAmt());
+        }
+        for (Integer transactionId : getTransactions()) {
+            MPPVendorTransaction transaction = new MPPVendorTransaction(getCtx(), transactionId, get_TrxName());
+            paidAmount = paidAmount.add(transaction.getPayAmt());
         }
         setPayAmt(payAmount);
         setFeeAmt(feeAmount);
@@ -217,6 +221,7 @@ public class MPaymentProcessorBatch extends X_C_PaymentProcessorBatch implements
             .subtract(withholdingAmount)
             .subtract(taxAmount);
         setOpenAmt(openAmount);
+        set_ValueOfColumn("PaidAmt", paidAmount);
         saveEx();
     }
 

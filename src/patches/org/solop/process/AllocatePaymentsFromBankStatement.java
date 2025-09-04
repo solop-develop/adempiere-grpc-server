@@ -74,30 +74,16 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 				vendorTransaction.setPayAmt(bankStatementLine.getStmtAmt());
 				vendorTransaction.setReferenceNo(payment.getDocumentNo());
 				//	TODO: Generate Withdrawal from Receipts
-
-				MPayment withdrawal = new MPayment(getCtx(), 0, get_TrxName());
-				withdrawal.setDocStatus(MPayment.DOCSTATUS_Drafted);
-				withdrawal.setDocAction(MPayment.DOCACTION_Complete);
 				MPaymentProcessor paymentProcessor = (MPaymentProcessor) batch.getC_PaymentProcessor();
 				int feeChargeId = paymentProcessor.getFeeCharge_ID();
-				withdrawal.setC_Charge_ID(feeChargeId);
-				withdrawal.setPayAmt(bankStatementLine.getStmtAmt());
-				withdrawal.setC_BPartner_ID(paymentProcessor.getPaymentProcessorVendor_ID());
 
-				withdrawal.setC_DocType_ID(false);
-				withdrawal.setTenderType(MPayment.TENDERTYPE_Account);
-				withdrawal.setC_BankAccount_ID(batch.getTransitBankAccount_ID());
-				withdrawal.setIsReceipt(false);
-				withdrawal.setC_Currency_ID(paymentProcessor.getFeeCurrency_ID());
-				withdrawal.saveEx();
-
-				vendorTransaction.setC_Payment_ID(withdrawal.get_ID());
 				vendorTransaction.saveEx();
 				//Automatic Allocation
 				createInvoiceChargeAllocation(paymentProcessor.getPaymentProcessorVendor_ID(),paymentProcessor.getFeeCurrency_ID(),
 					batch.getAD_Org_ID(),payment.getDateTrx(), feeChargeId,"description",
 					vendorFeesInvoice, get_TrxName(),bankStatementLine.getStmtAmt()
 				);
+
 
 				counter.incrementAndGet();
 			});
@@ -120,7 +106,7 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 			BigDecimal amountToApply
 	) {
 		if (invoice == null) {
-			throw new AdempiereException("Invoice selection is required");
+			throw new AdempiereException("@C_Invoice_ID@ @NotFound@");
 		}
 
 		if (organizationId <= 0) {
@@ -128,7 +114,7 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 		}
 
 		if (chargeId <= 0) {
-			throw new AdempiereException("Charge ID is required");
+			throw new AdempiereException("@C_Charge_ID@ @IsMandatory@");
 		}
 
 		// Create Allocation header
