@@ -130,6 +130,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		withdrawal.setC_BankAccount_ID(batch.getTransitBankAccount_ID());
 		withdrawal.setIsReceipt(false);
 		withdrawal.setC_Currency_ID(paymentProcessor.getFeeCurrency_ID());
+		withdrawal.set_ValueOfColumn("C_PaymentProcessorBatch_ID", getRecord_ID());
 		withdrawal.saveEx();
 
 		if(!withdrawal.processIt(MPayment.DOCACTION_Complete)) {
