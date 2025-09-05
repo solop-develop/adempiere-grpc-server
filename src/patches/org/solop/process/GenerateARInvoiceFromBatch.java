@@ -19,21 +19,20 @@
 package org.solop.process;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MAllocationHdr;
-import org.compiere.model.MAllocationLine;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
+import org.compiere.model.MInvoicePaySchedule;
 import org.compiere.model.MPayment;
 import org.compiere.model.MPaymentProcessor;
 import org.compiere.model.MPaymentProcessorBatch;
 import org.compiere.model.MPriceList;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
-import org.compiere.process.DocAction;
 import org.compiere.util.Env;
-import org.compiere.util.Util;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -52,9 +51,17 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		}
 	}
 
+
 	@Override
 	protected String doIt() throws Exception {
 		MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getRecord_ID(), get_TrxName());
+		String whereClause = "C_PaymentProcessorBatch_ID = ? AND DateDoc = ?";
+		PO batchSchedule = (PO) new Query(getCtx(), "C_PaymentProcessorSchedule", whereClause, get_TrxName())
+			.setParameters(getRecord_ID(), getDateDoc())
+			.first();
+		if (batchSchedule == null) {
+			throw new AdempiereException("@C_PaymentProcessorSchedule_ID@ @NotFound@ @Date@: " +  getDateDoc());
+		}
 		if(!batch.isProcessed() || (!batch.getDocStatus().equals(MPaymentProcessorBatch.DOCSTATUS_Completed) && !batch.getDocStatus().equals(MPaymentProcessorBatch.DOCSTATUS_Closed))) {
 			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Unprocessed@");
 		}
@@ -64,11 +71,16 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		if(Optional.ofNullable(batch.getFeeAmt()).orElse(Env.ZERO).signum() == 0) {
 			throw new AdempiereException("@FeeAmt@ = 0");
 		}
+
 		MPaymentProcessor paymentProcessor = new MPaymentProcessor(getCtx(), batch.getC_PaymentProcessor_ID(), get_TrxName());
 		if(paymentProcessor.getFeeCurrency_ID() <= 0) {
 			throw new AdempiereException("@FeeCurrency_ID@ @NotFound@");
 		}
-		String whereClause = "IsSOTrx = 'Y' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO')";
+		int documentTypeId = paymentProcessor.get_ValueAsInt("SalesInvoiceDocType_ID");
+		if (documentTypeId <= 0) {
+			throw new AdempiereException("@SalesInvoiceDocType_ID@ @NotFound@");
+		}
+		whereClause = "IsSOTrx = 'Y' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO')";
 		boolean exists = new Query(getCtx(), MInvoice.Table_Name, whereClause, get_TrxName())
 			.setParameters(getRecord_ID())
 			.match();
@@ -79,15 +91,11 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		//	Create Invoice
 		MInvoice invoice = new MInvoice (getCtx(), 0, get_TrxName());
 		invoice.setClientOrg(batch.getAD_Client_ID(), batch.getAD_Org_ID());
-		if(getDocTypeTargetId() > 0) {
-			invoice.setC_DocTypeTarget_ID(getDocTypeTargetId());	//	ARI
-		} else {
-			invoice.setC_DocTypeTarget_ID(MDocType.DOCBASETYPE_ARInvoice);	//	ARI
-		}
+		invoice.setC_DocTypeTarget_ID(documentTypeId);
 		invoice.setIsSOTrx(true);
 		invoice.setBPartner(businessPartner);
 		invoice.setSalesRep_ID(getAD_User_ID());	//	caller
-		invoice.setDateInvoiced(getDateDoc());
+		invoice.setDateInvoiced(batch.getDateDoc());
 		String currencyIsoCode = MCurrency.get(getCtx(), paymentProcessor.getFeeCurrency_ID()).getISO_Code();
 		MPriceList priceList = (MPriceList) businessPartner.getPO_PriceList();
 		if (priceList == null) {
@@ -99,6 +107,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		}
 		invoice.setM_PriceList_ID(priceList.getM_PriceList_ID());
 		invoice.setC_PaymentProcessorBatch_ID(batch.getC_PaymentProcessorBatch_ID());
+		invoice.setDocumentNo(batchSchedule.get_ValueAsString("ReferenceNo"));
 		invoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
 		invoice.setDocAction(getDocAction());
 		//
@@ -108,7 +117,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
 		invoiceLine.setC_Charge_ID(paymentProcessor.getFeeCharge_ID());
 		invoiceLine.setQty(1);
-		invoiceLine.setPrice(batch.getOpenAmt());
+		invoiceLine.setPrice((BigDecimal) batchSchedule.get_Value("Amount"));
 		invoiceLine.setTax();
 		invoiceLine.saveEx();
 		if(!invoice.processIt(getDocAction())) {
@@ -116,7 +125,28 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		}
 		invoice.saveEx();
 
+		//Invoice Pay Schedule
+		MInvoicePaySchedule invoiceSchedule = new MInvoicePaySchedule(getCtx(), 0, get_TrxName());
+		invoiceSchedule.setC_Invoice_ID(invoice.get_ID());
+		invoiceSchedule.setDueDate((Timestamp) batchSchedule.get_Value("DateDoc"));
+		invoiceSchedule.setDueAmt(invoiceLine.getPriceEntered());
+		invoiceSchedule.setAD_Org_ID(invoice.getAD_Org_ID());
+		invoiceSchedule.setDiscountDate(invoiceSchedule.getDueDate());
+		invoiceSchedule.saveEx();
 
+		if (batch.get_ValueAsBoolean("IsAutomaticReceipt")) {
+			MPayment withdrawal = getWithdrawal(paymentProcessor, invoice, batch);
+			withdrawal.saveEx();
+
+			if(!withdrawal.processIt(MPayment.DOCACTION_Complete)) {
+				throw new AdempiereException(withdrawal.getProcessMsg());
+			}
+			withdrawal.saveEx();
+		}
+		return "@Created@: " + invoice.getDocumentNo();
+	}
+
+	private MPayment getWithdrawal(MPaymentProcessor paymentProcessor, MInvoice invoice, MPaymentProcessorBatch batch) {
 		MPayment withdrawal = new MPayment(getCtx(), 0, get_TrxName());
 		withdrawal.setDocStatus(MPayment.DOCSTATUS_Drafted);
 		withdrawal.setDocAction(MPayment.DOCACTION_Complete);
@@ -131,15 +161,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		withdrawal.setIsReceipt(false);
 		withdrawal.setC_Currency_ID(paymentProcessor.getFeeCurrency_ID());
 		withdrawal.set_ValueOfColumn("C_PaymentProcessorBatch_ID", getRecord_ID());
-		withdrawal.saveEx();
-
-		if(!withdrawal.processIt(MPayment.DOCACTION_Complete)) {
-			throw new AdempiereException(withdrawal.getProcessMsg());
-		}
-		withdrawal.saveEx();
-
-
-		return "@Created@: " + invoice.getDocumentNo();
+		return withdrawal;
 	}
 
 

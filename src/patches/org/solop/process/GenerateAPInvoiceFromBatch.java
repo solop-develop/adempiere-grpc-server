@@ -21,7 +21,6 @@ package org.solop.process;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCurrency;
-import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MPayment;
@@ -31,6 +30,7 @@ import org.compiere.model.MPriceList;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 /**
@@ -44,8 +44,9 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		if(getRecord_ID() <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
+		vendorDocumentType = getParameterAsString("VendorDocumentType");
 	}
-
+	String vendorDocumentType;
 	@Override
 	protected String doIt() throws Exception {
 		MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getRecord_ID(), get_TrxName());
@@ -62,9 +63,31 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		if(paymentProcessor.getFeeCurrency_ID() <= 0) {
 			throw new AdempiereException("@FeeCurrency_ID@ @NotFound@");
 		}
-		String whereClause = "IsSOTrx = 'N' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO')";
+		int documentTypeId= 0;
+		BigDecimal invoiceAmount = BigDecimal.ZERO;
+		int chargeId = 0;
+		if ("FEE".equals(vendorDocumentType)) {
+			documentTypeId = paymentProcessor.get_ValueAsInt("PurchaseInvoiceDocType_ID");
+			invoiceAmount = batch.getFeeAmt();
+			chargeId = paymentProcessor.getFeeCharge_ID();
+		} else if ("WTH".equals(vendorDocumentType)) {
+			documentTypeId = paymentProcessor.get_ValueAsInt("WithholdingDocType_ID");
+			invoiceAmount = batch.getWithholdingAmt();
+			chargeId = paymentProcessor.get_ValueAsInt("WithholdingCharge_ID");
+		}
+		if (documentTypeId <= 0) {
+			throw new AdempiereException("@C_DocTypeTarget_ID@ @NotFound@");
+		}
+		if (chargeId <= 0) {
+			throw new AdempiereException("@C_Charge_ID@ @NotFound@");
+		}
+		if (invoiceAmount.signum() <= 0) {
+			throw new AdempiereException("@Amount@ @Invalid@");
+		}
+
+		String whereClause = "IsSOTrx = 'N' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO') AND C_DocTypeTarget_ID = ?";
 		boolean exists = new Query(getCtx(), MInvoice.Table_Name, whereClause, get_TrxName())
-				.setParameters(getRecord_ID())
+				.setParameters(getRecord_ID(), documentTypeId)
 				.match();
 		if (exists) {
 			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Invalid@");
@@ -73,11 +96,7 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		//	Create Invoice
 		MInvoice invoice = new MInvoice (getCtx(), 0, get_TrxName());
 		invoice.setClientOrg(batch.getAD_Client_ID(), batch.getAD_Org_ID());
-		if(getDocTypeTargetId() > 0) {
-			invoice.setC_DocTypeTarget_ID(getDocTypeTargetId());	//	API
-		} else {
-			invoice.setC_DocTypeTarget_ID(MDocType.DOCBASETYPE_APInvoice);	//	API
-		}
+		invoice.setC_DocTypeTarget_ID(documentTypeId);
 		invoice.setIsSOTrx(false);
 		invoice.setBPartner(businessPartner);
 		invoice.setSalesRep_ID(getAD_User_ID());	//	caller
@@ -96,9 +115,9 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 
 		//	Create Invoice Line
 		MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
-		invoiceLine.setC_Charge_ID(paymentProcessor.getFeeCharge_ID());
+		invoiceLine.setC_Charge_ID(chargeId);
 		invoiceLine.setQty(1);
-		invoiceLine.setPrice(batch.getFeeAmt());
+		invoiceLine.setPrice(invoiceAmount);
 		invoiceLine.setTax();
 		invoiceLine.saveEx();
 		if(!invoice.processIt(getDocAction())) {
