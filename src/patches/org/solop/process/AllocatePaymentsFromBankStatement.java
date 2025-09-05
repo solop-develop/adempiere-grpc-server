@@ -51,9 +51,13 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 
 	@Override
 	protected String doIt() throws Exception {
+
 		MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getRecord_ID(), get_TrxName());
 		if(!batch.isProcessed() || (!batch.getDocStatus().equals(MPaymentProcessorBatch.DOCSTATUS_Completed) && !batch.getDocStatus().equals(MPaymentProcessorBatch.DOCSTATUS_Closed))) {
 			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Unprocessed@");
+		}
+		if (batch.get_ValueAsBoolean("IsAutomaticReceipt")) {
+			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @IsAutomaticReceipt@");
 		}
 		AtomicInteger counter = new AtomicInteger(0);
 		String whereClause = MInvoice.COLUMNNAME_C_PaymentProcessorBatch_ID +" = ? AND IsSOTrx = 'Y'";
@@ -63,6 +67,7 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 		if (vendorFeesInvoice == null){
 			throw new AdempiereException("@C_Invoice@ @NotFound@");
 		}
+		MPaymentProcessor paymentProcessor = new MPaymentProcessor(getCtx(), batch.getC_PaymentProcessor_ID(), get_TrxName());
 		if(!getSelectionKeys().isEmpty()) {
 			getSelectionKeys().forEach(key -> {
 				MPayment payment = new MPayment(getCtx(), key, get_TrxName());
@@ -75,6 +80,31 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 				vendorTransaction.setReferenceNo(payment.getDocumentNo());
 
 				vendorTransaction.saveEx();
+
+				MPayment withdrawal = new MPayment(getCtx(), 0, get_TrxName());
+				withdrawal.setDocStatus(MPayment.DOCSTATUS_Drafted);
+				withdrawal.setDocAction(MPayment.DOCACTION_Complete);
+
+				withdrawal.setC_Charge_ID(paymentProcessor.getFeeCharge_ID());
+				withdrawal.setPayAmt(vendorTransaction.getPayAmt());
+				withdrawal.setC_BPartner_ID(paymentProcessor.getPaymentProcessorVendor_ID());
+
+				withdrawal.setC_DocType_ID(false);
+				withdrawal.setTenderType(MPayment.TENDERTYPE_Account);
+				withdrawal.setC_BankAccount_ID(batch.getTransitBankAccount_ID());
+				withdrawal.setIsReceipt(false);
+				withdrawal.setC_Currency_ID(paymentProcessor.getFeeCurrency_ID());
+				withdrawal.set_ValueOfColumn("C_PaymentProcessorBatch_ID", getRecord_ID());
+				withdrawal.saveEx();
+
+				if(!withdrawal.processIt(MPayment.DOCACTION_Complete)) {
+					throw new AdempiereException(withdrawal.getProcessMsg());
+				}
+
+
+
+
+
 
 				counter.incrementAndGet();
 			});
