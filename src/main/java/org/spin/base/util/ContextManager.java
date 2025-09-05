@@ -325,7 +325,7 @@ public class ContextManager {
 		} else if(DisplayType.isText(displayTypeId) || DisplayType.List == displayTypeId) {
 			return contextValue;
 		} else if (DisplayType.Button == displayTypeId) {
-			// TODO: Validate with BigDecimal
+			// TODO: Validate with BigDecimal, and Text with reference
 			return contextValue;
 		}
 		//	

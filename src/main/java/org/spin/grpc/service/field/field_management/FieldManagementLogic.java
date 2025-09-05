@@ -311,7 +311,7 @@ public class FieldManagementLogic {
 
 		// Fill context
 		Properties context = Env.getCtx();
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(
 			windowNo, context, contextAttributes, true
 		);
@@ -508,10 +508,10 @@ public class FieldManagementLogic {
 			if (rs.next()) {
 				defaultValue = rs.getObject(1);
 			} else {
-				log.severe("SQL default value without results");
+				log.warning("SQL default value without results");
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 		} finally {
 			DB.close(rs, pstmt);
@@ -572,7 +572,7 @@ public class FieldManagementLogic {
 
 		//	Fill context
 		Properties context = Env.getCtx();
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(
 			windowNo, context, contextAttributes
 		);
@@ -733,9 +733,11 @@ public class FieldManagementLogic {
 			reference.TableName
 		);
 
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		// Fill context
+		Properties context = Env.getCtx();
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(
-			windowNo, Env.getCtx(), request.getContextAttributes()
+			windowNo, context, request.getContextAttributes()
 		);
 
 		//
@@ -753,7 +755,7 @@ public class FieldManagementLogic {
 		}
 
 		// add where with access restriction
-		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
+		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
 				sql.toString(),
 				null,
@@ -770,7 +772,7 @@ public class FieldManagementLogic {
 				reference.ValidationCode
 			);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
+				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
 				if (Util.isEmpty(parsedValidationCode, true)) {
 					throw new AdempiereException(
 						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
