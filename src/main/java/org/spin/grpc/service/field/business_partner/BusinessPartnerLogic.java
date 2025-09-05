@@ -104,6 +104,13 @@ public class BusinessPartnerLogic {
 	 * @return
 	 */
 	public static ListBusinessPartnersInfoResponse.Builder listBusinessPartnersInfo(ListBusinessPartnersInfoRequest request) {
+		// Fill context
+		Properties context = Env.getCtx();
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, context, request.getContextAttributes()
+		);
+
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceId(),
 			request.getFieldId(),
@@ -114,11 +121,6 @@ public class BusinessPartnerLogic {
 			request.getTableName(),
 			request.getIsWithoutValidation()
 		);
-
-		//  Fill Cintext
-		Properties context = Env.getCtx();
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
 
 		StringBuffer whereClause = new StringBuffer(" 1=1 ");
 		List<Object> parametersList = new ArrayList<>();

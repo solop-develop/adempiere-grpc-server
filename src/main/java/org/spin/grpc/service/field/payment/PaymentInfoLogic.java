@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.core.domains.models.I_C_Payment;
@@ -38,6 +39,7 @@ import org.spin.backend.grpc.field.payment.ListPaymentInfoRequest;
 import org.spin.backend.grpc.field.payment.ListPaymentInfoResponse;
 import org.spin.backend.grpc.field.payment.PaymentInfo;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
@@ -56,7 +58,6 @@ public class PaymentInfoLogic {
 	 * @param tableName
 	 * @return
 	 */
-
 	 public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
 		String whereClause = "";
 		if (!Util.isEmpty(request.getIsSalesTransaction(), true)) {
@@ -127,8 +128,11 @@ public class PaymentInfoLogic {
 	 */
 	public static ListPaymentInfoResponse.Builder listPaymentInfo(ListPaymentInfoRequest request) {
 		// Fill context
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		// ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
+		Properties context = Env.getCtx();
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributesFromString(
+			windowNo, context, request.getContextAttributes()
+		);
 
 		final String tableName = I_C_Payment.Table_Name;
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -141,6 +145,26 @@ public class PaymentInfoLogic {
 			tableName,
 			request.getIsWithoutValidation()
 		);
+
+		String whereClause = "";
+		List<Object> filtersList = new ArrayList<>(); // includes on filters criteria
+
+		// validation code of field
+		if (!request.getIsWithoutValidation()) {
+			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
+				tableName,
+				reference.ValidationCode
+			);
+			if (!Util.isEmpty(reference.ValidationCode, true)) {
+				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+				if (Util.isEmpty(parsedValidationCode, true)) {
+					throw new AdempiereException(
+						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+					);
+				}
+				whereClause += " AND " + parsedValidationCode;
+			}
+		}
 
 		//
 		String sql = "SELECT "
@@ -164,10 +188,9 @@ public class PaymentInfoLogic {
 			+ "WHERE 1=1 "
 		;
 
-		List<Object> filtersList = new ArrayList<>(); // includes on filters criteria
 		// Document No
 		if (!Util.isEmpty(request.getDocumentNo(), true)) {
-			sql += "AND UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' ";
+			whereClause += "AND UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' ";
 			filtersList.add(
 				request.getDocumentNo()
 			);
@@ -175,21 +198,21 @@ public class PaymentInfoLogic {
 		// Business Partner
 		int businessPartnerId = request.getBusinessPartnerId();
 		if (businessPartnerId > 0) {
-			sql += "AND C_BPartner_ID = ? ";
+			whereClause += "AND C_BPartner_ID = ? ";
 			filtersList.add(
 				businessPartnerId
 			);
 		}
 		// Business Partner
 		if (request.getBankAccountId() > 0) {
-			sql += "AND C_BankAccount_ID = ? ";
+			whereClause += "AND C_BankAccount_ID = ? ";
 			filtersList.add(
 				request.getBankAccountId()
 			);
 		}
 		// Is Receipt
 		if (!Util.isEmpty(request.getIsReceipt(), true)) {
-			sql += "AND IsReceipt = ? ";
+			whereClause += "AND IsReceipt = ? ";
 			filtersList.add(
 				BooleanManager.getBooleanToString(
 					request.getIsReceipt()
@@ -204,19 +227,19 @@ public class PaymentInfoLogic {
 			request.getPaymentDateTo()
 		);
 		if (dateFrom != null || dateTo != null) {
-			sql += " AND ";
+			whereClause += " AND ";
 			if (dateFrom != null && dateTo != null) {
-				sql += "TRUNC(DateTrx, 'DD') BETWEEN ? AND ? ";
+				whereClause += "TRUNC(DateTrx, 'DD') BETWEEN ? AND ? ";
 				filtersList.add(dateFrom);
 				filtersList.add(dateTo);
 			}
 			else if (dateFrom != null) {
-				sql += "TRUNC(DateTrx, 'DD') >= ? ";
+				whereClause += "TRUNC(DateTrx, 'DD') >= ? ";
 				filtersList.add(dateFrom);
 			}
 			else {
 				// DateTo != null
-				sql += "TRUNC(DateTrx, 'DD') <= ? ";
+				whereClause += "TRUNC(DateTrx, 'DD') <= ? ";
 				filtersList.add(dateTo);
 			}
 		}
@@ -225,7 +248,7 @@ public class PaymentInfoLogic {
 			request.getPayAmountFrom()
 		);
 		if (payAmountFrom != null) {
-			sql += "AND PayAmt >= ? ";
+			whereClause += "AND PayAmt >= ? ";
 			filtersList.add(
 				payAmountFrom
 			);
@@ -235,47 +258,27 @@ public class PaymentInfoLogic {
 			request.getPayAmountTo()
 		);
 		if (payAmountTo != null) {
-			sql += "AND PayAmt <= ? ";
+			whereClause += "AND PayAmt <= ? ";
 			filtersList.add(
 				payAmountTo
 			);
 		}
 
 		// add where with access restriction
-		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
+		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
-				sql.toString(),
+				sql,
 				tableName,
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
-			);
-
-		StringBuffer whereClause = new StringBuffer();
-
-		// validation code of field
-		if (!request.getIsWithoutValidation()) {
-			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
-				tableName,
-				reference.ValidationCode
-			);
-			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
-				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
-				}
-				whereClause.append(" AND ").append(parsedValidationCode);
-			}
-		}
+			)
+		;
 
 		//	For dynamic condition
 		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, filtersList);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
-			whereClause.append(" AND ")
-				.append("(")
-				.append(dynamicWhere)
-				.append(")")
-			;
+			whereClause += " AND (" + dynamicWhere + ")";
 		}
 
 		sqlWithRoleAccess += whereClause;
@@ -308,7 +311,6 @@ public class PaymentInfoLogic {
 	
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-
 		try {
 			pstmt = DB.prepareStatement(parsedSQL, null);
 			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
@@ -323,6 +325,8 @@ public class PaymentInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			pstmt = null;
+			rs = null;
 		}
 
 		return builderList;
