@@ -21,21 +21,17 @@ package org.solop.process;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCurrency;
-import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MInvoicePaySchedule;
 import org.compiere.model.MPayment;
 import org.compiere.model.MPaymentProcessor;
 import org.compiere.model.MPaymentProcessorBatch;
+import org.compiere.model.MPaymentProcessorSchedule;
 import org.compiere.model.MPriceList;
-import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
-import org.jetbrains.annotations.NotNull;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.Optional;
 
 /**
@@ -56,7 +52,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 	protected String doIt() throws Exception {
 		MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getRecord_ID(), get_TrxName());
 		String whereClause = "C_PaymentProcessorBatch_ID = ? AND DateDoc = ?";
-		PO batchSchedule = (PO) new Query(getCtx(), "C_PaymentProcessorSchedule", whereClause, get_TrxName())
+		MPaymentProcessorSchedule batchSchedule = new Query(getCtx(), "C_PaymentProcessorSchedule", whereClause, get_TrxName())
 			.setParameters(getRecord_ID(), getDateDoc())
 			.first();
 		if (batchSchedule == null) {
@@ -80,9 +76,9 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		if (documentTypeId <= 0) {
 			throw new AdempiereException("@SalesInvoiceDocType_ID@ @NotFound@");
 		}
-		whereClause = "IsSOTrx = 'Y' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO')";
+		whereClause = "IsSOTrx = 'Y' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO') AND DocumentNo = ?";
 		boolean exists = new Query(getCtx(), MInvoice.Table_Name, whereClause, get_TrxName())
-			.setParameters(getRecord_ID())
+			.setParameters(getRecord_ID(), batchSchedule.getReferenceNo())
 			.match();
 		if (exists) {
 			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Invalid@");
@@ -107,7 +103,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		}
 		invoice.setM_PriceList_ID(priceList.getM_PriceList_ID());
 		invoice.setC_PaymentProcessorBatch_ID(batch.getC_PaymentProcessorBatch_ID());
-		invoice.setDocumentNo(batchSchedule.get_ValueAsString("ReferenceNo"));
+		invoice.setDocumentNo(batchSchedule.getReferenceNo());
 		invoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
 		invoice.setDocAction(getDocAction());
 		//
@@ -117,7 +113,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
 		invoiceLine.setC_Charge_ID(paymentProcessor.getFeeCharge_ID());
 		invoiceLine.setQty(1);
-		invoiceLine.setPrice((BigDecimal) batchSchedule.get_Value("Amount"));
+		invoiceLine.setPrice(batchSchedule.getAmount());
 		invoiceLine.setTax();
 		invoiceLine.saveEx();
 		if(!invoice.processIt(getDocAction())) {
@@ -128,7 +124,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		//Invoice Pay Schedule
 		MInvoicePaySchedule invoiceSchedule = new MInvoicePaySchedule(getCtx(), 0, get_TrxName());
 		invoiceSchedule.setC_Invoice_ID(invoice.get_ID());
-		invoiceSchedule.setDueDate((Timestamp) batchSchedule.get_Value("DateDoc"));
+		invoiceSchedule.setDueDate(batchSchedule.getDateDoc());
 		invoiceSchedule.setDueAmt(invoiceLine.getPriceEntered());
 		invoiceSchedule.setAD_Org_ID(invoice.getAD_Org_ID());
 		invoiceSchedule.setDiscountDate(invoiceSchedule.getDueDate());

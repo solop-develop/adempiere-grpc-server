@@ -170,6 +170,14 @@ public class MPaymentProcessorBatch extends X_C_PaymentProcessorBatch implements
             m_processMsg = "@PeriodClosed@";
             return DocAction.STATUS_Invalid;
         }
+
+        String whereClause = "C_PaymentProcessorBatch_ID = ?";
+        BigDecimal scheduleAmount = new Query(getCtx(), MPaymentProcessorSchedule.Table_Name, whereClause, get_TrxName())
+                .setParameters(getC_PaymentProcessorBatch_ID())
+                .sum(MPaymentProcessorSchedule.COLUMNNAME_Amount);
+        if (scheduleAmount.compareTo(getOpenAmt()) != 0) {
+            throw new AdempiereException("@C_PaymentProcessorSchedule_ID@: @Amount@ (" + scheduleAmount +") <> @OpenAmt@ (" + getOpenAmt() + ") ");
+        }
         updateTotals();
         //	Add up Amounts
         m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_AFTER_PREPARE);
