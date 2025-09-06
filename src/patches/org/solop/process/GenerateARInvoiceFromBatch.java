@@ -80,9 +80,9 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		if (documentTypeId <= 0) {
 			throw new AdempiereException("@SalesInvoiceDocType_ID@ @NotFound@");
 		}
-		whereClause = "IsSOTrx = 'Y' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO')";
+		whereClause = "IsSOTrx = 'Y' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO') AND DateInvoiced = ?";
 		boolean exists = new Query(getCtx(), MInvoice.Table_Name, whereClause, get_TrxName())
-			.setParameters(getRecord_ID())
+			.setParameters(getRecord_ID(), getDateDoc())
 			.match();
 		if (exists) {
 			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Invalid@");
