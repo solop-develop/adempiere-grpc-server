@@ -45,6 +45,17 @@ service InvoiceInfoService {
 	}
 
 	// Result
+	rpc GetInvoiceInfo(GetInvoiceInfoRequest) returns (InvoiceInfo) {
+		option (google.api.http) = {
+			get: "/fields/invoices/{id}"
+			additional_bindings: {
+				get: "/fields/invoices/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/invoices/code/{code}"
+			}
+		};
+	}
 	rpc ListInvoiceInfo(ListInvoicesInfoRequest) returns (ListInvoicesInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/invoices"
@@ -66,11 +77,6 @@ service InvoiceInfoService {
 			additional_bindings: {
 				get: "/fields/orders/display-definition/{display_definition_field_id}"
 			}
-		};
-	}
-	rpc GetInvoiceInfo(GetInvoiceInfoRequest) returns (InvoiceInfo) {
-		option (google.api.http) = {
-			get: "/fields/invoices/{id}"
 		};
 	}
 	rpc ListInvoicePaySchedules(ListInvoicePaySchedulesRequest) returns (ListInvoicePaySchedulesResponse) {
@@ -97,6 +103,7 @@ message ListOrdersRequest {
 	// custom filters
 	string is_sales_transaction = 12;
 }
+
 
 // Business Partners
 message ListBusinessPartnersRequest {
@@ -138,6 +145,7 @@ message InvoiceInfo {
 message GetInvoiceInfoRequest {
 	int32 id = 1;
 	string uuid = 2;
+	string code = 3;
 }
 message ListInvoicesInfoResponse {
 	int64 record_count = 1;

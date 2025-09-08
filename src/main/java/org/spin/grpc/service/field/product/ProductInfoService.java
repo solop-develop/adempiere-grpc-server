@@ -18,6 +18,7 @@ import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.field.product.GetLastPriceListVersionRequest;
+import org.spin.backend.grpc.field.product.GetProductInfoRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetInstancesRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetsRequest;
 import org.spin.backend.grpc.field.product.ListAvailableToPromisesRequest;
@@ -39,6 +40,7 @@ import org.spin.backend.grpc.field.product.ListVendorsRequest;
 import org.spin.backend.grpc.field.product.ListWarehouseStocksRequest;
 import org.spin.backend.grpc.field.product.ListWarehouseStocksResponse;
 import org.spin.backend.grpc.field.product.ListWarehousesRequest;
+import org.spin.backend.grpc.field.product.ProductInfo;
 import org.spin.backend.grpc.field.product.ProductInfoServiceGrpc.ProductInfoServiceImplBase;
 
 import io.grpc.Status;
@@ -48,9 +50,9 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Product Info field
  */
-public class ProductInfo extends ProductInfoServiceImplBase {
+public class ProductInfoService extends ProductInfoServiceImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(ProductInfo.class);
+	private CLogger log = CLogger.getCLogger(ProductInfoService.class);
 
 
 	@Override
@@ -64,7 +66,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -87,7 +89,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -110,7 +112,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -133,7 +135,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -156,7 +158,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -179,7 +181,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -202,7 +204,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -225,7 +227,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -248,7 +250,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -271,7 +273,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -284,6 +286,26 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 
 
 	@Override
+	public void getProductInfo(GetProductInfoRequest request, StreamObserver<ProductInfo> responseObserver) {
+		try {
+			ProductInfo.Builder builder = ProductInfoLogic.getProductInfo(request);
+			responseObserver.onNext(
+				builder.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
 	public void listProductsInfo(ListProductsInfoRequest request, StreamObserver<ListProductsInfoResponse> responseObserver) {
 		try {
 			ListProductsInfoResponse.Builder buildersList = ProductInfoLogic.listProductsInfo(request);
@@ -292,7 +314,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -315,7 +337,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -338,7 +360,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -361,7 +383,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -384,7 +406,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -407,7 +429,7 @@ public class ProductInfo extends ProductInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

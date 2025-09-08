@@ -51,14 +51,14 @@ import org.spin.grpc.service.accounting.GeneralLedgerService;
 import org.spin.grpc.service.core_functionality.CoreFunctionality;
 import org.spin.grpc.service.dictionary.Dictionary;
 import org.spin.grpc.service.display_definition.DisplayDefinition;
-import org.spin.grpc.service.field.business_partner.BusinessPartnerInfo;
+import org.spin.grpc.service.field.business_partner.BusinessPartnerInfoService;
 import org.spin.grpc.service.field.field_management.FieldManagementService;
 import org.spin.grpc.service.field.in_out.InOutInfoService;
 import org.spin.grpc.service.field.invoice.InvoiceInfoService;
 import org.spin.grpc.service.field.location_address.LocationAddress;
 import org.spin.grpc.service.field.payment.PaymentInfoService;
 import org.spin.grpc.service.field.order.OrderInfoService;
-import org.spin.grpc.service.field.product.ProductInfo;
+import org.spin.grpc.service.field.product.ProductInfoService;
 import org.spin.grpc.service.form.ExpressMovement;
 import org.spin.grpc.service.form.ExpressReceipt;
 import org.spin.grpc.service.form.ExpressShipment;
@@ -180,8 +180,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new BusinessData());
 		logger.info("Service " + BusinessData.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Business Partner Info
-		serverBuilder.addService(new BusinessPartnerInfo());
-		logger.info("Service " + BusinessPartnerInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new BusinessPartnerInfoService());
+		logger.info("Service " + BusinessPartnerInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Core Implementation
 		serverBuilder.addService(new CoreFunctionality());
 		logger.info("Service " + CoreFunctionality.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -264,8 +264,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new PreferenceManagement());
 		logger.info("Service " + PreferenceManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Product
-		serverBuilder.addService(new ProductInfo());
-		logger.info("Service " + ProductInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new ProductInfoService());
+		logger.info("Service " + ProductInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	POS
 		serverBuilder.addService(new PointOfSalesForm());
 		logger.info("Service " + PointOfSalesForm.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

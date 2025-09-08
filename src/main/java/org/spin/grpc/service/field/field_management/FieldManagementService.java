@@ -18,12 +18,14 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.field.ListZoomWindowsRequest;
 import org.spin.backend.grpc.field.ListZoomWindowsResponse;
+import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsRequest;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.field.DefaultValue;
 import org.spin.backend.grpc.field.FieldManagementServiceGrpc.FieldManagementServiceImplBase;
 import org.spin.backend.grpc.field.GetDefaultValueRequest;
+import org.spin.backend.grpc.field.GetGeneralSearchRecordRequest;
 import org.spin.backend.grpc.field.GetZoomParentRecordRequest;
 import org.spin.backend.grpc.field.GetZoomParentRecordResponse;
 import org.spin.backend.grpc.field.ListGeneralSearchRecordsRequest;
@@ -32,6 +34,7 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 public class FieldManagementService extends FieldManagementServiceImplBase {
+
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(FieldManagementService.class);
 
@@ -46,7 +49,7 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 			responseObserver.onNext(defaultValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -69,7 +72,7 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -81,6 +84,26 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 	}
 
 
+	@Override
+	public void getGeneralSearchRecord(GetGeneralSearchRecordRequest request, StreamObserver<Entity> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Get General Search Record Request Null");
+			}
+			Entity.Builder builder = Entity.newBuilder();
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
 
 	@Override
 	public void listGeneralSearchRecords(ListGeneralSearchRecordsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
@@ -94,7 +117,7 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -103,7 +126,7 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 					.asRuntimeException()
 			);
 		}
-	}	
+	}
 
 
 	@Override
@@ -118,12 +141,13 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -141,12 +165,13 @@ public class FieldManagementService extends FieldManagementServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}

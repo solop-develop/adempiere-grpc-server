@@ -40,6 +40,17 @@ service BusinessPartnerInfoService {
 	}
 
 	// Result
+	rpc GetBusinessPartnerInfo(GetBusinessPartnerInfoRequest) returns (BusinessPartnerInfo) {
+		option (google.api.http) = {
+			get: "/fields/business-partners/{id}"
+			additional_bindings: {
+				get: "/fields/business-partners/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/business-partners/code/{code}"
+			}
+		};
+	}
 	rpc ListBusinessPartnersInfo(ListBusinessPartnersInfoRequest) returns (ListBusinessPartnersInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/business-partners"
@@ -111,13 +122,16 @@ message BusinessPartnerInfo {
 	bool is_customer = 15;
 	bool is_vendor = 16;
 }
-
+message GetBusinessPartnerInfoRequest {
+	int32 id = 1;
+	string uuid = 2;
+	string code = 3;
+}
 message ListBusinessPartnersInfoResponse {
 	int64 record_count = 1;
 	repeated BusinessPartnerInfo records = 2;
 	string next_page_token = 3;
 }
-
 message ListBusinessPartnersInfoRequest {
 	string filters = 1;
 	string sort_by = 2;

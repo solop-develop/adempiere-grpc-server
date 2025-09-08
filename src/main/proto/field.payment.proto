@@ -44,6 +44,17 @@ service PaymentInfoService {
 	}
 
 	// Result
+	rpc GetPaymentInfo(GetPaymentInfoRequest) returns (PaymentInfo) {
+		option (google.api.http) = {
+			get: "/fields/payments/{id}"
+			additional_bindings: {
+				get: "/fields/payments/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/payments/code/{code}"
+			}
+		};
+	}
 	rpc ListPaymentInfo(ListPaymentInfoRequest) returns (ListPaymentInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/payments"
@@ -67,6 +78,42 @@ service PaymentInfoService {
 			}
 		};
 	}
+}
+
+
+// Business Partners
+message ListBusinessPartnersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
+	// custom filters
+	string is_sales_transaction = 12;
+}
+
+
+// Bank Accountw
+message ListBankAccountRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
+	// custom filters
+	string is_sales_transaction = 12;
 }
 
 
@@ -94,6 +141,7 @@ message PaymentInfo {
 message GetPaymentInfoRequest {
 	int32 id = 1;
 	string uuid = 2;
+	string code = 3;
 }
 message ListPaymentInfoResponse {
 	int64 record_count = 1;
@@ -133,38 +181,4 @@ message ListPaymentInfoRequest {
 	google.protobuf.Timestamp payment_date_to = 26;
 	string pay_amount_from = 27;
 	string pay_amount_to = 28;
-}
-
-// Business Partners
-message ListBusinessPartnersRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-	bool is_only_active_records = 9;
-	bool is_without_validation = 10;
-	google.protobuf.Value current_value = 11;
-	// custom filters
-	string is_sales_transaction = 12;
-}
-
-// Bank Account
-message ListBankAccountRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	string context_attributes = 8;
-	bool is_only_active_records = 9;
-	bool is_without_validation = 10;
-	google.protobuf.Value current_value = 11;
-	// custom filters
-	string is_sales_transaction = 12;
 }

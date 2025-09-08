@@ -40,6 +40,17 @@ service OrderInfoService {
 	}
 
 	// Result
+	rpc GetOrderInfo(GetOrderInfoRequest) returns (OrderInfo) {
+		option (google.api.http) = {
+			get: "/fields/orders/{id}"
+			additional_bindings: {
+				get: "/fields/orders/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/orders/code/{code}"
+			}
+		};
+	}
 	rpc ListOrderInfo(ListOrdersInfoRequest) returns (ListOrdersInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/orders"
@@ -61,11 +72,6 @@ service OrderInfoService {
 			additional_bindings: {
 				get: "/fields/orders/display-definition/{display_definition_field_id}"
 			}
-		};
-	}
-	rpc GetOrderInfo(GetOrderInfoRequest) returns (OrderInfo) {
-		option (google.api.http) = {
-			get: "/fields/orders/{id}"
 		};
 	}
 }
@@ -112,6 +118,7 @@ message OrderInfo {
 message GetOrderInfoRequest {
 	int32 id = 1;
 	string uuid = 2;
+	string code = 3;
 }
 message ListOrdersInfoResponse {
 	int64 record_count = 1;

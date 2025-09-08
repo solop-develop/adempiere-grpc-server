@@ -78,6 +78,70 @@ service FieldManagementService {
 			}
 		};
 	}
+
+	// List General Search Records
+	rpc GetGeneralSearchRecord(GetGeneralSearchRecordRequest) returns (data.Entity) {
+		option (google.api.http) = {
+			// table / column
+			get: "/fields/searchs/{table_name}/{column_name}/{id}"
+			additional_bindings: {
+				get: "/fields/searchs/{table_name}/{column_name}/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/{table_name}/{column_name}/code/{code}"
+			}
+			// column id
+			additional_bindings: {
+				get: "/fields/searchs/column/{column_id}/{id}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/column/{column_id}/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/column/{column_id}/code/{code}"
+			}
+			// field id
+			additional_bindings: {
+				get: "/fields/searchs/field/{field_id}/{id}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/field/{field_id}/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/field/{field_id}/code/{code}"
+			}
+			// process parameter id
+			additional_bindings: {
+				get: "/fields/searchs/parameter/{process_parameter_id}/{id}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/parameter/{process_parameter_id}/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/parameter/{process_parameter_id}/code/{code}"
+			}
+			// browse field id
+			additional_bindings: {
+				get: "/fields/searchs/query-criteria/{browse_field_id}/{id}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/query-criteria/{browse_field_id}/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/query-criteria/{browse_field_id}/code/{code}"
+			}
+			// display definition id
+			additional_bindings: {
+				get: "/fields/searchs/display-definition/{display_definition_field_id}/{id}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/display-definition/{display_definition_field_id}/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/searchs/display-definition/{display_definition_field_id}/code/{code}"
+			}
+		};
+	}
 	// List General Search Records
 	rpc ListGeneralSearchRecords(ListGeneralSearchRecordsRequest) returns (data.ListEntitiesResponse) {
 		option (google.api.http) = {
@@ -148,6 +212,32 @@ message DefaultValue {
 }
 
 
+message GetGeneralSearchRecordRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
+	// references
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
+	// record
+	int32 id = 20;
+	string uuid = 21;
+	string code = 22;
+}
 // List Search Records Request
 message ListGeneralSearchRecordsRequest {
 	string filters = 1;

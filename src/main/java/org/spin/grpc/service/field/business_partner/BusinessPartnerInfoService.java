@@ -18,6 +18,8 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerInfoServiceGrpc.BusinessPartnerInfoServiceImplBase;
+import org.spin.backend.grpc.field.business_partner.BusinessPartnerInfo;
+import org.spin.backend.grpc.field.business_partner.GetBusinessPartnerInfoRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerAddressLocationsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerAddressLocationsResponse;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerContactsRequest;
@@ -33,9 +35,10 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Update Center
  */
-public class BusinessPartnerInfo extends BusinessPartnerInfoServiceImplBase {
+public class BusinessPartnerInfoService extends BusinessPartnerInfoServiceImplBase {
+
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(BusinessPartnerInfo.class);
+	private CLogger log = CLogger.getCLogger(BusinessPartnerInfoService.class);
 
 
 	@Override
@@ -49,7 +52,7 @@ public class BusinessPartnerInfo extends BusinessPartnerInfoServiceImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -63,6 +66,29 @@ public class BusinessPartnerInfo extends BusinessPartnerInfoServiceImplBase {
 
 
 	@Override
+	public void getBusinessPartnerInfo(GetBusinessPartnerInfoRequest request, StreamObserver<BusinessPartnerInfo> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object GetBusinessPartnerInfoRequest Null");
+			}
+			BusinessPartnerInfo.Builder entityValue = BusinessPartnerLogic.getBusinessPartnerInfo(request);
+			responseObserver.onNext(
+				entityValue.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
 	public void listBusinessPartnersInfo(ListBusinessPartnersInfoRequest request, StreamObserver<ListBusinessPartnersInfoResponse> responseObserver) {
 		try {
 			if(request == null) {
@@ -73,7 +99,7 @@ public class BusinessPartnerInfo extends BusinessPartnerInfoServiceImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -97,7 +123,7 @@ public class BusinessPartnerInfo extends BusinessPartnerInfoServiceImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
