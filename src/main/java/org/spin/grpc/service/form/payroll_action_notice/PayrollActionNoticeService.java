@@ -29,6 +29,7 @@ import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.X_AD_Reference;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MMenu;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
@@ -76,9 +77,12 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for Paryroll Action Notice Form
  */
-public class PayrollActionNotice extends PayrollActionNoticeImplBase {
+public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
+
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(PayrollActionNotice.class);
+	private CLogger log = CLogger.getCLogger(PayrollActionNoticeService.class);
+
+	public static final int FORM_ID = 53009;
 
 
 	@Override
@@ -91,7 +95,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onNext(lookupsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -101,6 +105,12 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	}
 
 	private ListLookupItemsResponse.Builder convertPayrollProcessList(Properties context, ListPayrollProcessRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		String sql = "SELECT HR_Process_ID, DocumentNo ||'-'|| Name AS DisplayColumn, "
 			+ "DocumentNo, Name, UUID, IsActive "
 			+ "FROM HR_Process "
@@ -157,7 +167,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 				lookupsList.addRecords(valueObject.build());
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			throw new AdempiereException(e);
 		} finally {
@@ -192,7 +202,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onNext(lookupsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -204,6 +214,12 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 	}
 
 	private ListLookupItemsResponse.Builder listValidEmployees(Properties context, ListValidEmployeesRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		// Get Payroll Process
 		MHRProcess payrollProcess = PayrollActionNoticeUtil.validateAndGetPayrollProcess(
 			request.getPayrollProcessId()
@@ -290,7 +306,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 				lookupsList.addRecords(valueObject.build());
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
@@ -324,7 +340,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onNext(listLookups.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -436,7 +452,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 				listLookups.addRecords(lookupBuilder.build());
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			throw new AdempiereException(e);
 		} finally {
@@ -471,7 +487,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onNext(payrollConcept.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -564,7 +580,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -734,7 +750,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			}
 		}
 		catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			throw new AdempiereException(e);
 		}
 		finally {
@@ -765,7 +781,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onNext(entity.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1101,7 +1117,7 @@ public class PayrollActionNotice extends PayrollActionNoticeImplBase {
 			responseObserver.onNext(entity.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

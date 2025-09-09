@@ -47,10 +47,10 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Bank Statement Match form
  */
-public class BankStatementMatch extends BankStatementMatchImplBase {
+public class BankStatementMatchService extends BankStatementMatchImplBase {
 
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(BankStatementMatch.class);
+	private CLogger log = CLogger.getCLogger(BankStatementMatchService.class);
 
 
 
@@ -61,11 +61,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			BankStatement.Builder builderList = BankStatementMatchServiceLogic.getBankStatement(request);
+			BankStatement.Builder builderList = BankStatementMatchLogic.getBankStatement(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -83,11 +83,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListBankStatementsResponse.Builder builder = BankStatementMatchServiceLogic.listBankStatements(request);
+			ListBankStatementsResponse.Builder builder = BankStatementMatchLogic.listBankStatements(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -106,11 +106,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = BankStatementMatchServiceLogic.listBankAccounts(request);
+			ListLookupItemsResponse.Builder builderList = BankStatementMatchLogic.listBankAccounts(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -129,11 +129,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = BankStatementMatchServiceLogic.listBusinessPartners(request);
+			ListLookupItemsResponse.Builder builderList = BankStatementMatchLogic.listBusinessPartners(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -152,11 +152,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = BankStatementMatchServiceLogic.listSearchModes(request);
+			ListLookupItemsResponse.Builder builderList = BankStatementMatchLogic.listSearchModes(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -174,11 +174,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListImportedBankMovementsResponse.Builder builder = BankStatementMatchServiceLogic.listImportedBankMovements(request);
+			ListImportedBankMovementsResponse.Builder builder = BankStatementMatchLogic.listImportedBankMovements(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -196,11 +196,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListPaymentsResponse.Builder builder = BankStatementMatchServiceLogic.listPayments(request);
+			ListPaymentsResponse.Builder builder = BankStatementMatchLogic.listPayments(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -218,11 +218,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListMatchingMovementsResponse.Builder builder = BankStatementMatchServiceLogic.listMatchingMovements(request);
+			ListMatchingMovementsResponse.Builder builder = BankStatementMatchLogic.listMatchingMovements(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -240,11 +240,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListResultMovementsResponse.Builder builder = BankStatementMatchServiceLogic.listResultMovements(request);
+			ListResultMovementsResponse.Builder builder = BankStatementMatchLogic.listResultMovements(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -262,11 +262,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			MatchPaymentsResponse.Builder builder = BankStatementMatchServiceLogic.matchPayments(request);
+			MatchPaymentsResponse.Builder builder = BankStatementMatchLogic.matchPayments(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -284,11 +284,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			UnmatchPaymentsResponse.Builder builder = BankStatementMatchServiceLogic.unmatchPayments(request);
+			UnmatchPaymentsResponse.Builder builder = BankStatementMatchLogic.unmatchPayments(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -306,11 +306,11 @@ public class BankStatementMatch extends BankStatementMatchImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ProcessMovementsResponse.Builder builder = BankStatementMatchServiceLogic.processMovements(request);
+			ProcessMovementsResponse.Builder builder = BankStatementMatchLogic.processMovements(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())

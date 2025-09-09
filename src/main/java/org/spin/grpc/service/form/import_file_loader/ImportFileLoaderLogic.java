@@ -34,6 +34,7 @@ import org.compiere.impexp.ImpFormatRow;
 import org.compiere.impexp.MImpFormat;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
@@ -82,9 +83,11 @@ import com.google.protobuf.Value;
  * @author Elsio Sanchez, Elsiosanches@gmail.com, https://github.com/ElsioSanchez
  * Service logic of Import File Loader form
  */
-public class ImportFileLoaderServiceLogic {
+public class ImportFileLoaderLogic {
 
-	public static int MAX_SHOW_LINES = 100;
+	public static final int FORM_ID = 101;
+
+	public static final int MAX_SHOW_LINES = 100;
 
 
 
@@ -155,6 +158,12 @@ public class ImportFileLoaderServiceLogic {
 
 
 	public static ListImportTablesResponse.Builder listImportTables(ListImportTablesRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		final String whereClause = "TableName LIKE 'I#_%' ESCAPE '#'";
 
 		List<MTable> importTablesList = new Query(
@@ -181,6 +190,12 @@ public class ImportFileLoaderServiceLogic {
 
 
 	public static ListLookupItemsResponse.Builder listImportFormats(ListImportFormatsRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		// validate and get table
 		final MTable table = RecordUtil.validateAndGetTable(
 			request.getTableName()

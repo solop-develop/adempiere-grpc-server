@@ -30,6 +30,7 @@ import org.compiere.model.MAcctSchemaGL;
 import org.compiere.model.MColumn;
 import org.compiere.model.MElementValue;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MMenu;
 import org.compiere.model.MPeriod;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -58,13 +59,21 @@ import org.spin.service.grpc.util.value.TimeManager;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Trial Balance Drillable Report
  */
-public class TrialBalanceDrillableServiceLogic {
+public class TrialBalanceDrillableLogic {
 
 	/**	Logger			*/
-	private static CLogger log = CLogger.getCLogger(TrialBalanceDrillableServiceLogic.class);
+	private static CLogger log = CLogger.getCLogger(TrialBalanceDrillableLogic.class);
+
+	public static final int FORM_ID = 53051;
 
 
 	public static ListLookupItemsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		final int columnId = 839; // C_Period.AD_Org_ID
 		MColumn column = MColumn.get(Env.getCtx(), columnId);
 
@@ -148,6 +157,12 @@ public class TrialBalanceDrillableServiceLogic {
 
 
 	public static Period.Builder getDefaultPeriod(GetDefaultPeriodRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		Timestamp currentTime = new Timestamp(System.currentTimeMillis());
 		int organizationId = request.getOrganizationId();
 		if (organizationId <= 0) {

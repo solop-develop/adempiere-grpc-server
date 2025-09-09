@@ -79,7 +79,7 @@ import org.spin.service.grpc.util.value.ValueManager;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Update Center
  */
-public class IssueManagementServiceLogic {
+public class IssueManagementLogic {
 
 	public static ListRequestTypesResponse.Builder listRequestTypes(ListRequestTypesRequest request) {
 		String whereClause = null;

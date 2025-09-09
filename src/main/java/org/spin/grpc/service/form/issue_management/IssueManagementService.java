@@ -83,9 +83,9 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Update Center
  */
-public class IssueManagement extends IssueManagementImplBase {
+public class IssueManagementService extends IssueManagementImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(IssueManagement.class);
+	private CLogger log = CLogger.getCLogger(IssueManagementService.class);
 
 
 	@Override
@@ -94,11 +94,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListRequestTypesResponse.Builder entityValueList = IssueManagementServiceLogic.listRequestTypes(request);
+			ListRequestTypesResponse.Builder entityValueList = IssueManagementLogic.listRequestTypes(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -117,11 +117,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListSalesRepresentativesResponse.Builder entityValueList = IssueManagementServiceLogic.listSalesRepresentatives(request);
+			ListSalesRepresentativesResponse.Builder entityValueList = IssueManagementLogic.listSalesRepresentatives(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -140,11 +140,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListPrioritiesResponse.Builder entityValueList = IssueManagementServiceLogic.listPriorities(request);
+			ListPrioritiesResponse.Builder entityValueList = IssueManagementLogic.listPriorities(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -163,11 +163,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListStatusCategoriesResponse.Builder entityValueList = IssueManagementServiceLogic.listStatusCategories(request);
+			ListStatusCategoriesResponse.Builder entityValueList = IssueManagementLogic.listStatusCategories(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -186,11 +186,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListStatusesResponse.Builder entityValueList = IssueManagementServiceLogic.listStatuses(request);
+			ListStatusesResponse.Builder entityValueList = IssueManagementLogic.listStatuses(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -209,11 +209,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListCategoriesResponse.Builder entityValueList = IssueManagementServiceLogic.listCategories(request);
+			ListCategoriesResponse.Builder entityValueList = IssueManagementLogic.listCategories(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -232,11 +232,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListGroupsResponse.Builder entityValueList = IssueManagementServiceLogic.listGroups(request);
+			ListGroupsResponse.Builder entityValueList = IssueManagementLogic.listGroups(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -255,11 +255,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListTaskStatusesResponse.Builder entityValueList = IssueManagementServiceLogic.listTaskStatuses(request);
+			ListTaskStatusesResponse.Builder entityValueList = IssueManagementLogic.listTaskStatuses(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -278,11 +278,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListBusinessPartnersResponse.Builder entityValueList = IssueManagementServiceLogic.listBusinessPartners(request);
+			ListBusinessPartnersResponse.Builder entityValueList = IssueManagementLogic.listBusinessPartners(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -301,11 +301,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ListProjectsResponse.Builder entityValueList = IssueManagementServiceLogic.listProjects(request);
+			ListProjectsResponse.Builder entityValueList = IssueManagementLogic.listProjects(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -324,11 +324,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Object Requested is Null");
 			}
-			ExistsIssuesResponse.Builder entityValueList = IssueManagementServiceLogic.existsIssues(request);
+			ExistsIssuesResponse.Builder entityValueList = IssueManagementLogic.existsIssues(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -347,11 +347,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("Process Activity Requested is Null");
 			}
-			ListIssuesReponse.Builder entityValueList = IssueManagementServiceLogic.listMyIssues(request);
+			ListIssuesReponse.Builder entityValueList = IssueManagementLogic.listMyIssues(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -370,11 +370,11 @@ public class IssueManagement extends IssueManagementImplBase {
 			if (request == null) {
 				throw new AdempiereException("List Issues Requested is Null");
 			}
-			ListIssuesReponse.Builder builderList = IssueManagementServiceLogic.listIssues(request);
+			ListIssuesReponse.Builder builderList = IssueManagementLogic.listIssues(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -397,7 +397,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -512,7 +512,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -602,7 +602,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -677,7 +677,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -803,7 +803,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -859,7 +859,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -910,7 +910,7 @@ public class IssueManagement extends IssueManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())

@@ -45,6 +45,7 @@ import org.compiere.model.MConversionRate;
 import org.compiere.model.MConversionType;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MMenu;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRole;
@@ -98,6 +99,8 @@ public class PaymentAllocationLogic {
 
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(PaymentAllocationLogic.class);
+
+	public static final int FORM_ID = 104;
 
 
 	public static MOrg validateAndGetOrganization(int organizationId) {
@@ -169,6 +172,12 @@ public class PaymentAllocationLogic {
 	}
 
 	public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		// BPartner
 		int columnId = 3499; // C_Invoice.C_BPartner_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -215,6 +224,12 @@ public class PaymentAllocationLogic {
 	}
 
 	public static ListCurrenciesResponse.Builder listCurrencies(ListCurrenciesRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		Query query = new Query(
 			Env.getCtx(),
 			I_C_Currency.Table_Name,

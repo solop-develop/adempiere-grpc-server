@@ -33,7 +33,7 @@ import org.spin.service.grpc.util.value.ValueManager;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Update Center
  */
-public class TaskManagemetServiceLogic {
+public class TaskManagemetLogic {
 
 	public static ListTasksResponse.Builder listTasks(ListTasksRequest request) throws ParseException {
 		Timestamp date = new Timestamp(System.currentTimeMillis());
