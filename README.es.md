@@ -1,8 +1,8 @@
 # ADempiere gRPC Server
 
 <p align="center">
-  <a href="https://adoptium.net/es/temurin/releases/?version=11">
-    <img src="https://badgen.net/badge/Java/11/orange" alt="Java">
+  <a href="https://adoptium.net/es/temurin/releases/?version=17">
+    <img src="https://badgen.net/badge/Java/17/orange" alt="Java">
   </a>
   <a href="https://hub.docker.com/r/solopcloud/adempiere-backend">
     <img src="https://img.shields.io/docker/pulls/solopcloud/adempiere-backend.svg" alt="Docker Pulls">
@@ -37,17 +37,17 @@ Después de instalarlo sólo tienes que ir a la carpeta de código fuente y ejec
 
 ## Ejecutando como desarrollo
 ### Limpiar
-``` bash
+``` shell
 gradle clean
 ```
 
 ### Ejecutar servidor con archivo de conexión por defecto
-``` bash
+```shell
 gradle run
 ```
 
 ### Ejecutar servidor con archivo de conexión personalizado
-``` bash
+```shell
 gradle run --args="'resources/standalone.yaml'"
 ```
 
@@ -60,7 +60,7 @@ No olvide que para ejecutar el servidor necesita establecer la línea del archiv
 - Ir a la carpeta bin
 - Ejecutar
 
-```bash
+```shell
 ./start-backend.sh "./resources/standalone.yaml"
 ```
 
@@ -91,6 +91,19 @@ docker pull solopcloud/adempiere-vue:experimental
 
 ### Requisitos mínimos de Docker
 Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igual a 3.0.
+
+#### Image variants
+
+You can find it from [Docker Hub](https://hub.docker.com/r/solopcloud/adempiere-backend/tags)
+
+ * Java Development Kit basa do en `Eclipse Temurin Alpine`:
+   * `docker pull solopcloud/adempiere-backend:alpine`
+   * `docker pull solopcloud/adempiere-backend:1.3.8-alpine`
+   * `docker pull solopcloud/adempiere-backend:main-alpine`
+ * Java Development Kit basa do en `Eclipse Temurin Noble`:
+   * `docker pull solopcloud/adempiere-backend:latest`
+   * `docker pull solopcloud/adempiere-backend:1.3.8`
+   * `docker pull solopcloud/adempiere-backend:main`
 
 ### Variables de entorno
  * `DB_TYPE`: Tipo de base de datos (compatible con `Oracle` y `PostgreSQL`). Por defecto `PostgreSQL`.
@@ -125,12 +138,12 @@ gradle build
 
 Construir imagen (alpine)
 ```shell
-docker build -t solopcloud/adempiere-backend:alpine-dev -f ./docker/alpine.Dockerfile .
+docker build -t solopcloud/adempiere-backend:dev-alpine -f ./docker/alpine.Dockerfile .
 ```
 
-Construir imagen (multi-arch)
+Construir imagen (multi-arquitectura)
 ```shell
-docker build -t solopcloud/adempiere-backend:dev -f ./docker/focal.Dockerfile .
+docker build -t solopcloud/adempiere-backend:dev -f ./docker/ubuntu.Dockerfile .
 ```
 
 ### Descargar imagen docker:

@@ -1,8 +1,8 @@
 # ADempiere gRPC Server
 
 <p align="center">
-  <a href="https://adoptium.net/es/temurin/releases/?version=11">
-    <img src="https://badgen.net/badge/Java/11/orange" alt="Java">
+  <a href="https://adoptium.net/es/temurin/releases/?version=17">
+    <img src="https://badgen.net/badge/Java/17/orange" alt="Java">
   </a>
   <a href="https://hub.docker.com/r/solopcloud/adempiere-backend">
     <img src="https://img.shields.io/docker/pulls/solopcloud/adempiere-backend.svg" alt="Docker Pulls">
@@ -42,7 +42,7 @@ gradle clean
 ```
 
 ### Execute server with default conection file
-``` bash
+```shell
 gradle run
 ```
 
@@ -92,6 +92,19 @@ docker pull solopcloud/adempiere-vue:experimental
 ### Minimal Docker Requirements
 To use this Docker image you must have your Docker engine version greater than or equal to 3.0.
 
+#### Image variants
+
+You can find it from [Docker Hub](https://hub.docker.com/r/solopcloud/adempiere-backend/tags)
+
+ * `Eclipse Temurin Alpine` java development kit based:
+   * `docker pull solopcloud/adempiere-backend:alpine`
+   * `docker pull solopcloud/adempiere-backend:1.3.8-alpine`
+   * `docker pull solopcloud/adempiere-backend:main-alpine`
+ * `Eclipse Temurin Noble` java development kit based:
+   * `docker pull solopcloud/adempiere-backend:latest`
+   * `docker pull solopcloud/adempiere-backend:1.3.8`
+   * `docker pull solopcloud/adempiere-backend:main`
+
 ### Environment variables
  * `DB_TYPE`: Database Type (Supported `Oracle` and `PostgreSQL`). Default `PostgreSQL`.
  * `DB_HOST`: Hostname for data base server. Default: `localhost`.
@@ -115,7 +128,7 @@ To use this Docker image you must have your Docker engine version greater than o
 
 ### Build docker image (for development only):
 First compile output files.
-``` bash
+```shell
 # Assembles the outputs of this project.
 gradle assemble
 
@@ -125,12 +138,12 @@ gradle build
 
 Build docker image (alpine)
 ```shell
-docker build -t solopcloud/adempiere-backend:alpine-dev -f ./docker/alpine.Dockerfile .
+docker build -t solopcloud/adempiere-backend:dev-alpine -f ./docker/alpine.Dockerfile .
 ```
 
 Build docker image (multi-arch)
 ```shell
-docker build -t solopcloud/adempiere-backend:dev -f ./docker/focal.Dockerfile .
+docker build -t solopcloud/adempiere-backend:dev -f ./docker/ubuntu.Dockerfile .
 ```
 
 ### Download docker image:
