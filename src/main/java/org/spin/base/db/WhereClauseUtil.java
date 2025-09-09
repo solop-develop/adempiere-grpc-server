@@ -298,7 +298,11 @@ public class WhereClauseUtil {
 
 			if (condition.getValues() != null) {
 				condition.getValues().forEach(currentValue -> {
-					boolean isString = DisplayType.isText(displayType) || currentValue instanceof String;
+					Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+						displayType,
+						currentValue
+					);
+					boolean isString = DisplayType.isText(displayType) || valueToFilter instanceof String;
 					boolean isEmptyString = isString && Util.isEmpty(StringManager.getStringFromObject(currentValue), true);
 					if (currentValue == null || isEmptyString) {
 						if (Util.isEmpty(additionalSQL.toString(), true)) {
@@ -322,11 +326,6 @@ public class WhereClauseUtil {
 						sqlInValue = "UPPER(?)";
 					}
 					parameterValues.append(sqlInValue);
-
-					Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
-						displayType,
-						currentValue
-					);
 					parameters.add(valueToFilter);
 				});
 			}
@@ -385,9 +384,13 @@ public class WhereClauseUtil {
 			;
 		} else if (operatorValue.equals(OperatorUtil.EQUAL) || operatorValue.equals(OperatorUtil.NOT_EQUAL)) {
 			Object parameterValue = condition.getValue();
+			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
+				displayType,
+				parameterValue
+			);
 			sqlValue = " ? ";
 
-			boolean isString = DisplayType.isText(displayType) || parameterValue instanceof String;
+			boolean isString = DisplayType.isText(displayType) || valueToFilter instanceof String;
 			boolean isEmptyString = isString && Util.isEmpty(StringManager.getStringFromObject(parameterValue), true);
 			if (isString) {
 				if (isEmptyString) {
@@ -404,10 +407,6 @@ public class WhereClauseUtil {
 				;
 			}
 
-			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
-				displayType,
-				parameterValue
-			);
 			parameters.add(valueToFilter);
 		} else {
 			// Greater, Greater Equal, Less, Less Equal
@@ -501,6 +500,7 @@ public class WhereClauseUtil {
 				parameterValues.append(sqlInValue);
 			});
 
+			// TODO: Date support with `TRUNC(columnName, 'DD')`
 			columnName = column_name.toString();
 			if (!Util.isEmpty(parameterValues.toString(), true)) {
 				sqlValue = "(" + parameterValues.toString() + ")";
@@ -531,6 +531,7 @@ public class WhereClauseUtil {
 			} else {
 				sqlValue = dbValueStart + " AND " + dbValueEnd;
 			}
+			// TODO: Date support with `TRUNC(columnName, 'DD')`
 		} else if(operatorValue.equals(OperatorUtil.LIKE) || operatorValue.equals(OperatorUtil.NOT_LIKE)) {
 			Object valueToFilter = ParameterUtil.getValueToFilterRestriction(
 				displayType,
@@ -541,6 +542,7 @@ public class WhereClauseUtil {
 				displayType
 			);
 
+			// TODO: Date support with `TRUNC(columnName, 'DD')`
 			columnName = "UPPER(" + columnName + ")";
 			sqlValue = "'%' || UPPER(" + dbValue + ") || '%'";
 		} else if(operatorValue.equals(OperatorUtil.NULL) || operatorValue.equals(OperatorUtil.NOT_NULL)) {
@@ -557,6 +559,7 @@ public class WhereClauseUtil {
 			);
 			sqlValue = dbValue;
 
+			// TODO: Date support with `TRUNC(columnName, 'DD')`
 			boolean isString = DisplayType.isText(displayType) || valueToFilter instanceof String;
 			boolean isEmptyString = isString && Util.isEmpty(StringManager.getStringFromObject(valueToFilter), true);
 			if (isString) {
