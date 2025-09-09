@@ -32,6 +32,7 @@ import org.compiere.model.MDocType;
 import org.compiere.model.MFreight;
 import org.compiere.model.MLocator;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MMenu;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MOrg;
 import org.compiere.model.MProduct;
@@ -82,8 +83,11 @@ import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class OutBoundOrderLogic {
+
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(OutBoundOrderLogic.class);
+
+	public static final int FORM_ID = 53079;
 
 
 	public static MOrg validateAndGetOrganization(int organizationId) {
@@ -113,6 +117,12 @@ public class OutBoundOrderLogic {
 	}
 
 	public static ListLookupItemsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		// Organization filter selection
 		// final int columnId = 58193; // WM_InOutBound.AD_Org_ID (needed to allow org 0)
 		final int validationRuleId = 130; // AD_Org Trx Security validation (Not Summary - Not 0)
@@ -139,6 +149,12 @@ public class OutBoundOrderLogic {
 
 
 	public static ListLookupItemsResponse.Builder listWarehouses(ListWarehousesRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		MOrg organization = validateAndGetOrganization(
 			request.getOrganizationId()
 		);

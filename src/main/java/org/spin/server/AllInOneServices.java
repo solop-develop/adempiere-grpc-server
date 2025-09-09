@@ -62,15 +62,15 @@ import org.spin.grpc.service.field.product.ProductInfoService;
 import org.spin.grpc.service.form.ExpressMovement;
 import org.spin.grpc.service.form.ExpressReceipt;
 import org.spin.grpc.service.form.ExpressShipment;
-import org.spin.grpc.service.form.bank_statement_match.BankStatementMatch;
-import org.spin.grpc.service.form.import_file_loader.ImportFileLoader;
-import org.spin.grpc.service.form.issue_management.IssueManagement;
-import org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoice;
+import org.spin.grpc.service.form.bank_statement_match.BankStatementMatchService;
+import org.spin.grpc.service.form.import_file_loader.ImportFileLoaderService;
+import org.spin.grpc.service.form.issue_management.IssueManagementService;
+import org.spin.grpc.service.form.match_po_receipt_invoice.MatchPOReceiptInvoiceService;
 import org.spin.grpc.service.form.out_bound_order.OutBoundOrderService;
 import org.spin.grpc.service.form.payment_allocation.PaymentAllocationService;
-import org.spin.grpc.service.form.payroll_action_notice.PayrollActionNotice;
-import org.spin.grpc.service.form.task_management.TaskManagement;
-import org.spin.grpc.service.form.trial_balance_drillable.TrialBalanceDrillable;
+import org.spin.grpc.service.form.payroll_action_notice.PayrollActionNoticeService;
+import org.spin.grpc.service.form.task_management.TaskManagementService;
+import org.spin.grpc.service.form.trial_balance_drillable.TrialBalanceDrillableService;
 import org.spin.service.grpc.authentication.AuthorizationServerInterceptor;
 import org.spin.service.grpc.context.ServiceContextProvider;
 
@@ -174,8 +174,8 @@ public class AllInOneServices {
 		serverBuilder.intercept(interceptor);
 
 		//	Bank Statement Match
-		serverBuilder.addService(new BankStatementMatch());
-		logger.info("Service " + BankStatementMatch.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new BankStatementMatchService());
+		logger.info("Service " + BankStatementMatchService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Business Logic
 		serverBuilder.addService(new BusinessData());
 		logger.info("Service " + BusinessData.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -216,8 +216,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new GeneralLedgerService());
 		logger.info("Service " + GeneralLedgerService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Import File Loader
-		serverBuilder.addService(new ImportFileLoader());
-		logger.info("Service " + ImportFileLoader.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new ImportFileLoaderService());
+		logger.info("Service " + ImportFileLoaderService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	In-Out
 		serverBuilder.addService(new InOutInfoService());
 		logger.info("Service " + InOutInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -225,8 +225,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new InvoiceInfoService());
 		logger.info("Service " + InvoiceInfoService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Issue Management
-		serverBuilder.addService(new IssueManagement());
-		logger.info("Service " + IssueManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new IssueManagementService());
+		logger.info("Service " + IssueManagementService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Location Address
 		serverBuilder.addService(new LocationAddress());
 		logger.info("Service " + LocationAddress.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -234,8 +234,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new LogsInfo());
 		logger.info("Service " + LogsInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Match PO-Receipt-Invocie
-		serverBuilder.addService(new MatchPOReceiptInvoice());
-		logger.info("Service " + MatchPOReceiptInvoice.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new MatchPOReceiptInvoiceService());
+		logger.info("Service " + MatchPOReceiptInvoiceService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Material Management
 		serverBuilder.addService(new MaterialManagement());
 		logger.info("Service " + MaterialManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -258,8 +258,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new PaymentPrintExport());
 		logger.info("Service " + PaymentPrintExport.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Payroll Action Notice
-		serverBuilder.addService(new PayrollActionNotice());
-		logger.info("Service " + PayrollActionNotice.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new PayrollActionNoticeService());
+		logger.info("Service " + PayrollActionNoticeService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Preference Managment
 		serverBuilder.addService(new PreferenceManagement());
 		logger.info("Service " + PreferenceManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -282,8 +282,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new SendNotifications());
 		logger.info("Service " + SendNotifications.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Task Management
-		serverBuilder.addService(new TaskManagement());
-		logger.info("Service " + TaskManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new TaskManagementService());
+		logger.info("Service " + TaskManagementService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Time Control
 		serverBuilder.addService(new TimeControl());
 		logger.info("Service " + TimeControl.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
@@ -291,8 +291,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new TimeRecord());
 		logger.info("Service " + TimeRecord.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Trial Balance Drillable Report
-		serverBuilder.addService(new TrialBalanceDrillable());
-		logger.info("Service " + TrialBalanceDrillable.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new TrialBalanceDrillableService());
+		logger.info("Service " + TrialBalanceDrillableService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Update Center
 		serverBuilder.addService(new UpdateManagement());
 		logger.info("Service " + UpdateManagement.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

@@ -39,10 +39,10 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Trial Balance Drillable Report
  */
-public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
+public class TrialBalanceDrillableService extends TrialBalanceDrillableImplBase {
 
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(TrialBalanceDrillable.class);
+	private CLogger log = CLogger.getCLogger(TrialBalanceDrillableService.class);
 
 
 
@@ -53,7 +53,7 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Organizations Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listOrganizations(request);
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableLogic.listOrganizations(request);
 			responseObserver.onNext(
 				builder.build()
 			);
@@ -79,7 +79,7 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Budgets Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listBudgets(request);
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableLogic.listBudgets(request);
 			responseObserver.onNext(
 				builder.build()
 			);
@@ -105,7 +105,7 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("User 1 Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listUser1(request);
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableLogic.listUser1(request);
 			responseObserver.onNext(
 				builder.build()
 			);
@@ -131,7 +131,7 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Periods Request Null");
 			}
-			Period.Builder builder = TrialBalanceDrillableServiceLogic.getDefaultPeriod(request);
+			Period.Builder builder = TrialBalanceDrillableLogic.getDefaultPeriod(request);
 			responseObserver.onNext(
 				builder.build()
 			);
@@ -155,7 +155,7 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Periods Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listPeriods(request);
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableLogic.listPeriods(request);
 			responseObserver.onNext(
 				builder.build()
 			);
@@ -181,7 +181,7 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Accountings Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listAccountingKeys(request);
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableLogic.listAccountingKeys(request);
 			responseObserver.onNext(
 				builder.build()
 			);
@@ -207,7 +207,7 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Report Cube Request Null");
 			}
-			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableServiceLogic.listReportCubes(request);
+			ListLookupItemsResponse.Builder builder = TrialBalanceDrillableLogic.listReportCubes(request);
 			responseObserver.onNext(
 				builder.build()
 			);
@@ -233,7 +233,7 @@ public class TrialBalanceDrillable extends TrialBalanceDrillableImplBase {
 			if (request == null) {
 				throw new AdempiereException("Fact Acct Summary Request Null");
 			}
-			ListFactAcctSummaryResponse.Builder builder = TrialBalanceDrillableServiceLogic.listFactAcctSummary(request);
+			ListFactAcctSummaryResponse.Builder builder = TrialBalanceDrillableLogic.listFactAcctSummary(request);
 			responseObserver.onNext(
 				builder.build()
 			);

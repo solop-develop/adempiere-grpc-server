@@ -34,6 +34,7 @@ import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_M_InOut;
 import org.adempiere.core.domains.models.I_M_Product;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MMenu;
 import org.compiere.model.MProduct;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
@@ -81,9 +82,11 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Match PO-Receipt-Invoice form
  */
-public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
+public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(MatchPOReceiptInvoice.class);
+	private CLogger log = CLogger.getCLogger(MatchPOReceiptInvoiceService.class);
+
+	public static final int FORM_ID = 108;
 
 
 
@@ -98,7 +101,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -201,7 +204,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -309,7 +312,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -389,7 +392,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -401,6 +404,12 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 	}
 
 	ListLookupItemsResponse.Builder listVendors(ListVendorsRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		// Business Partner
 		int validationRuleId = 52520; // C_BPartner - Vendor
 		MLookupInfo reference = ReferenceUtil.getReferenceLookupInfo(
@@ -435,7 +444,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -564,7 +573,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -633,7 +642,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			}
 		}
 		catch (SQLException e) {
-			log.log(Level.SEVERE, sql, e);
+			log.log(Level.WARNING, sql, e);
 			e.printStackTrace();
 		}
 		finally {
@@ -660,7 +669,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -745,7 +754,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			}
 		}
 		catch (SQLException e) {
-			log.log(Level.SEVERE, sql, e);
+			log.log(Level.WARNING, sql, e);
 			e.printStackTrace();
 		}
 		finally {
@@ -772,7 +781,7 @@ public class MatchPOReceiptInvoice extends MatchPORReceiptInvoiceImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

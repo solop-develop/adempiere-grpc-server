@@ -28,7 +28,7 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Update Center
  */
-public class TaskManagement extends TaskManagementImplBase {
+public class TaskManagementService extends TaskManagementImplBase {
 
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(ExpressReceipt.class);
@@ -41,13 +41,13 @@ public class TaskManagement extends TaskManagementImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListTasksResponse.Builder recordAccess = TaskManagemetServiceLogic.listTasks(
+			ListTasksResponse.Builder recordAccess = TaskManagemetLogic.listTasks(
 				request
 			);
 			responseObserver.onNext(recordAccess.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

@@ -38,10 +38,10 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Import File Loader form
  */
-public class ImportFileLoader extends ImportFileLoaderImplBase {
+public class ImportFileLoaderService extends ImportFileLoaderImplBase {
 
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(ImportFileLoader.class);
+	private CLogger log = CLogger.getCLogger(ImportFileLoaderService.class);
 
 
 	@Override
@@ -51,11 +51,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listCharsets(request);
+			ListLookupItemsResponse.Builder builderList = ImportFileLoaderLogic.listCharsets(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -75,11 +75,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListImportTablesResponse.Builder builderList = ImportFileLoaderServiceLogic.listImportTables(request);
+			ListImportTablesResponse.Builder builderList = ImportFileLoaderLogic.listImportTables(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -99,11 +99,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listImportFormats(request);
+			ListLookupItemsResponse.Builder builderList = ImportFileLoaderLogic.listImportFormats(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -127,7 +127,7 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 	// 		responseObserver.onNext(builderList.build());
 	// 		responseObserver.onCompleted();
 	// 	} catch (Exception e) {
-	// 		log.severe(e.getLocalizedMessage());
+	// 		log.warning(e.getLocalizedMessage());
 	// 		e.printStackTrace();
 	// 		responseObserver.onError(
 	// 			Status.INTERNAL
@@ -147,11 +147,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ImportFormat.Builder builderList = ImportFileLoaderServiceLogic.getImportFromat(request);
+			ImportFormat.Builder builderList = ImportFileLoaderLogic.getImportFromat(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -171,11 +171,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 				throw new AdempiereException("Object Save Records Request Null");
 			}
 
-			SaveRecordsResponse.Builder builder = ImportFileLoaderServiceLogic.saveRecords(request);
+			SaveRecordsResponse.Builder builder = ImportFileLoaderLogic.saveRecords(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -195,11 +195,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListFilePreviewResponse.Builder builderList = ImportFileLoaderServiceLogic.listFilePreview(request);
+			ListFilePreviewResponse.Builder builderList = ImportFileLoaderLogic.listFilePreview(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -219,11 +219,11 @@ public class ImportFileLoader extends ImportFileLoaderImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 
-			ListLookupItemsResponse.Builder builderList = ImportFileLoaderServiceLogic.listImportProcesses(request);
+			ListLookupItemsResponse.Builder builderList = ImportFileLoaderLogic.listImportProcesses(request);
 			responseObserver.onNext(builderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

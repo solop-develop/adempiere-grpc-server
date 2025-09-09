@@ -33,6 +33,7 @@ import org.compiere.model.MBankStatement;
 import org.compiere.model.MBankStatementLine;
 import org.compiere.model.MBankStatementMatcher;
 import org.compiere.model.MLookupInfo;
+import org.compiere.model.MMenu;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
@@ -83,9 +84,17 @@ import com.google.protobuf.Struct;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service Logic for backend of Bank Statement Match form
  */
-public abstract class BankStatementMatchServiceLogic {
+public abstract class BankStatementMatchLogic {
+
+	public static final int FORM_ID = 53077;
 
 	public static BankStatement.Builder getBankStatement(GetBankStatementRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		if (request.getId() < 0) {
 			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
 		}
@@ -468,6 +477,12 @@ public abstract class BankStatementMatchServiceLogic {
 
 
 	public static ListBankStatementsResponse.Builder listBankStatements(ListBankStatementsRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		final String whereClause = "Processed = 'N' AND Processing = 'N'";
 		Query query = new Query(
 			Env.getCtx(),
