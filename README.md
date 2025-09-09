@@ -126,6 +126,11 @@ You can find it from [Docker Hub](https://hub.docker.com/r/solopcloud/adempiere-
  * `SYSTEM_LOGO_URL`: Logo of the main image of the system, shown in the login screen.
  * `JAVA_OPTIONS`: Custom settings to the Java Virtual Machine (JVM). Default: `-Xms64M -Xmx1512M`.
 
+### Download docker image:
+```shell
+docker pull solopcloud/adempiere-backend:alpine
+```
+
 ### Build docker image (for development only):
 First compile output files.
 ```shell
@@ -146,12 +151,7 @@ Build docker image (multi-arch)
 docker build -t solopcloud/adempiere-backend:dev -f ./docker/ubuntu.Dockerfile .
 ```
 
-### Download docker image:
-```shell
-docker pull solopcloud/adempiere-backend:alpine
-```
-
-### Run container container:
+### Run container:
 ```shell
 docker run -it -d \
 	--name adempiere-backend \

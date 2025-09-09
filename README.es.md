@@ -92,15 +92,15 @@ docker pull solopcloud/adempiere-vue:experimental
 ### Requisitos mínimos de Docker
 Para utilizar esta imagen Docker debe tener su motor Docker versión mayor o igual a 3.0.
 
-#### Image variants
+#### Variantes de Imagen
 
-You can find it from [Docker Hub](https://hub.docker.com/r/solopcloud/adempiere-backend/tags)
+Lo puedes encontrar en [Docker Hub](https://hub.docker.com/r/solopcloud/adempiere-backend/tags)
 
- * Java Development Kit basa do en `Eclipse Temurin Alpine`:
+ * Java Development Kit basado en `Eclipse Temurin Alpine`:
    * `docker pull solopcloud/adempiere-backend:alpine`
    * `docker pull solopcloud/adempiere-backend:1.3.8-alpine`
    * `docker pull solopcloud/adempiere-backend:main-alpine`
- * Java Development Kit basa do en `Eclipse Temurin Noble`:
+ * Java Development Kit basado en `Eclipse Temurin Noble`:
    * `docker pull solopcloud/adempiere-backend:latest`
    * `docker pull solopcloud/adempiere-backend:1.3.8`
    * `docker pull solopcloud/adempiere-backend:main`
@@ -126,6 +126,11 @@ You can find it from [Docker Hub](https://hub.docker.com/r/solopcloud/adempiere-
  * `SYSTEM_LOGO_URL`: Logo de la imagen principal del sistema, mostrada en la pantalla del login.
  * `JAVA_OPTIONS`: Configuración personalizada de la máquina virtual Java (JVM). Por defecto: `-Xms64M -Xmx1512M`.
 
+### Descargar imagen docker:
+```shell
+docker pull solopcloud/adempiere-backend:alpine
+```
+
 ### Construir imagen docker (sólo para desarrollo):
 Primero compile los archivos de salida.
 ```shell
@@ -146,12 +151,7 @@ Construir imagen (multi-arquitectura)
 docker build -t solopcloud/adempiere-backend:dev -f ./docker/ubuntu.Dockerfile .
 ```
 
-### Descargar imagen docker:
-```shell
-docker pull solopcloud/adempiere-backend:alpine
-```
-
-### Ejecutar contenedor contenedor:
+### Ejecutar contenedor:
 ```shell
 docker run -it -d \
 	--name adempiere-backend \
