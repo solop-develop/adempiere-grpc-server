@@ -17,6 +17,7 @@ package org.spin.grpc.service.field.payment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.field.payment.GetPaymentInfoRequest;
 import org.spin.backend.grpc.field.payment.ListPaymentInfoRequest;
 import org.spin.backend.grpc.field.payment.ListPaymentInfoResponse;
 import org.spin.backend.grpc.field.payment.ListBankAccountRequest;
@@ -25,11 +26,35 @@ import org.spin.backend.grpc.field.payment.PaymentInfo;
 import org.spin.backend.grpc.field.payment.PaymentInfoServiceGrpc.PaymentInfoServiceImplBase;
 
 import io.grpc.stub.StreamObserver;
-
 import io.grpc.Status;
 
 public class PaymentInfoService extends PaymentInfoServiceImplBase {
-    private CLogger log = CLogger.getCLogger(PaymentInfo.class);
+
+	private CLogger log = CLogger.getCLogger(PaymentInfo.class);
+
+
+	@Override
+	public void getPaymentInfo(GetPaymentInfoRequest request, StreamObserver<PaymentInfo> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			PaymentInfo.Builder builder = PaymentInfoLogic.getPaymentInfo(request);
+			responseObserver.onNext(
+				builder.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
 
 	@Override
 	public void listPaymentInfo(ListPaymentInfoRequest request, StreamObserver<ListPaymentInfoResponse> responseObserver) {
@@ -43,14 +68,17 @@ public class PaymentInfoService extends PaymentInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
+
 
 	/**
 	 * @param request
@@ -68,14 +96,17 @@ public class PaymentInfoService extends PaymentInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
+
 
 	/**
 	 * @param request
@@ -93,12 +124,15 @@ public class PaymentInfoService extends PaymentInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
+
 }

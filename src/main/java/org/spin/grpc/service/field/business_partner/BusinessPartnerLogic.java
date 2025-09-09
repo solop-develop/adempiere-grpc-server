@@ -14,6 +14,9 @@
  ************************************************************************************/
 package org.spin.grpc.service.field.business_partner;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -28,6 +31,7 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -35,6 +39,7 @@ import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerAddressLocation;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerContact;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerInfo;
+import org.spin.backend.grpc.field.business_partner.GetBusinessPartnerInfoRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerAddressLocationsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerAddressLocationsResponse;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerContactsRequest;
@@ -42,10 +47,13 @@ import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerContactsR
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerGroupsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnersInfoRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnersInfoResponse;
+import org.spin.backend.grpc.field.invoice.GetInvoiceInfoRequest;
+import org.spin.backend.grpc.field.invoice.InvoiceInfo;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
+import org.spin.grpc.service.field.invoice.InvoiceInfoConvert;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
@@ -53,7 +61,7 @@ import org.spin.service.grpc.util.value.ValueManager;
 
 public class BusinessPartnerLogic {
 	
-	public static String tableName = I_C_BPartner.Table_Name;
+	public static final String Table_Name = I_C_BPartner.Table_Name;
 
 
 
@@ -98,6 +106,46 @@ public class BusinessPartnerLogic {
 
 
 
+	public static BusinessPartnerInfo.Builder getBusinessPartnerInfo(GetBusinessPartnerInfoRequest request) {
+		final int id = request.getId();
+		final String uuid = request.getUuid();
+		final String code = request.getCode();
+		if (id <= 0 && Util.isEmpty(uuid, true) && Util.isEmpty(code, true)) {
+			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@ | @UUID@ | @Value@");
+		}
+		//
+		String whereClause = null;
+		List<Object> filtersList = new ArrayList<>();
+		if (id > 0) {
+			whereClause = "C_BPartner_ID = ? ";
+			filtersList.add(id);
+		} else if (!Util.isEmpty(uuid, true)) {
+			whereClause = "UUID = ? ";
+			filtersList.add(uuid);
+		} else if (!Util.isEmpty(code, true)) {
+			whereClause = "Value = ? ";
+			filtersList.add(code);
+		}
+
+		MBPartner businessPartner = new Query(
+			Env.getCtx(),
+			Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setClient_ID()
+			.setParameters(filtersList)
+			// .setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.first()
+		;
+		
+		BusinessPartnerInfo.Builder builder = BusinessPartnerConvert.convertBusinessPartner(
+			businessPartner
+		);
+
+		return builder;
+	}
+
 	/**
 	 * Get default value base on field, process parameter, browse field or column
 	 * @param request
@@ -108,7 +156,9 @@ public class BusinessPartnerLogic {
 		Properties context = Env.getCtx();
 		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(
-			windowNo, context, request.getContextAttributes()
+			windowNo,
+			context,
+			request.getContextAttributes()
 		);
 
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -134,7 +184,7 @@ public class BusinessPartnerLogic {
 		// validation code of field
 		if (!request.getIsWithoutValidation()) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
-				tableName,
+				Table_Name,
 				reference.ValidationCode
 			);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
@@ -239,7 +289,7 @@ public class BusinessPartnerLogic {
 
 		Query query = new Query(
 			context,
-			I_C_BPartner.Table_Name,
+			Table_Name,
 			whereClause.toString(),
 			null
 		)

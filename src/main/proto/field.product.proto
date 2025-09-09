@@ -82,6 +82,17 @@ service ProductInfoService {
 	}
 
 	// Result
+	rpc GetProductInfo(GetProductInfoRequest) returns (ProductInfo) {
+		option (google.api.http) = {
+			get: "/fields/products/{id}"
+			additional_bindings: {
+				get: "/fields/products/uuid/{uuid}"
+			}
+			additional_bindings: {
+				get: "/fields/products/code/{code}"
+			}
+		};
+	}
 	rpc ListProductsInfo(ListProductsInfoRequest) returns (ListProductsInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/products"
@@ -133,6 +144,7 @@ service ProductInfoService {
 }
 
 
+// Warehouses
 message ListWarehousesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -143,8 +155,12 @@ message ListWarehousesRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
+
+// Price List Version
 message GetLastPriceListVersionRequest {
 	int32 price_list_id = 1;
 	google.protobuf.Timestamp date_ordered = 2;
@@ -160,8 +176,12 @@ message ListPricesListVersionsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
+
+// Attribute Sets
 message ListAttributeSetsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -172,8 +192,12 @@ message ListAttributeSetsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
+
+// Attribute Set Instances
 message ListAttributeSetInstancesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -184,10 +208,14 @@ message ListAttributeSetInstancesRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// custom filters
-	int32 attribute_set_id = 10;
+	int32 attribute_set_id = 12;
 }
 
+
+// Product Categories
 message ListProductCategoriesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -198,8 +226,12 @@ message ListProductCategoriesRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
+
+// Product Groups
 message ListProductGroupsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -210,8 +242,12 @@ message ListProductGroupsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
+
+// Product Classes
 message ListProductClasessRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -222,8 +258,12 @@ message ListProductClasessRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
+
+// Product Classifications
 message ListProductClassificationsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -234,8 +274,12 @@ message ListProductClassificationsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
+
+// Vendors
 message ListVendorsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -246,6 +290,8 @@ message ListVendorsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
 
@@ -284,6 +330,13 @@ message ProductInfo {
 	string document_note = 27;
 	bool is_active = 28;
 	string currency = 29; // TODO: Load with price list version
+}
+message GetProductInfoRequest {
+	int32 id = 1;
+	string uuid = 2;
+	string code = 3;
+	int32 warehouse_id = 24;
+	int32 price_list_version_id = 25;
 }
 message ListProductsInfoResponse {
 	int64 record_count = 1;

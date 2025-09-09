@@ -114,7 +114,7 @@ public class InvoiceInfoService extends InvoiceInfoServiceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object GetInvoiceInfoRequest Null");
 			}
-			InvoiceInfo.Builder entityValue = InvoiceInfoLogic.getInvoice(request);
+			InvoiceInfo.Builder entityValue = InvoiceInfoLogic.getInvoiceInfo(request);
 			responseObserver.onNext(
 				entityValue.build()
 			);

@@ -1,3 +1,17 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
 package org.spin.grpc.service.field.order;
 
 import java.math.BigDecimal;
@@ -7,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.core.domains.models.I_C_Order;
@@ -38,15 +53,36 @@ import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class OrderInfoLogic {
+
 	// public static tableName = C_Order.Table_Name;
+
+	private static final String SQL = "SELECT "
+		+ "o.C_Order_ID, o.UUID,"
+		+ "o.C_BPartner_ID,"
+		+ "(SELECT Name FROM C_BPartner AS bp WHERE bp.C_BPartner_ID = o.C_BPartner_ID) AS BusinessPartner, "
+		+ "o.DateOrdered, "
+		+ "o.DocumentNo, "
+		+ "o.C_Currency_ID, "
+		+ "((SELECT ISO_Code FROM C_Currency AS c WHERE c.C_Currency_ID = o.C_Currency_ID)) AS Currency, "
+		+ "o.GrandTotal, "
+		+ "currencyBase(o.GrandTotal, o.C_Currency_ID,o.DateAcct, o.AD_Client_ID,o.AD_Org_ID), "
+		+ "o.IsSOTrx, "
+		+ "o.Description, "
+		+ "o.POReference, "
+		+ "o.isDelivered, "
+		+ "o.DocStatus "
+		+ "FROM C_Order AS o "
+		+ "WHERE 1=1 "
+	;
+
+
 
 	/**
 	 * Validate productId and MProduct, and get instance
 	 * @param tableName
 	 * @return
 	 */
-
-	 public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
+	public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
 		String whereClause = "";
 		if (!Util.isEmpty(request.getIsSalesTransaction(), true)) {
 			boolean isSalesTransaction = BooleanManager.getBooleanFromString(
@@ -80,35 +116,48 @@ public class OrderInfoLogic {
 		return builderList;
 	}
 
-	public static OrderInfo.Builder getOrder(GetOrderInfoRequest request) {
-		final int orderId = request.getId();
-		if (orderId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Invoice_ID@");
+
+
+	public static OrderInfo.Builder getOrderInfo(GetOrderInfoRequest request) {
+		final int id = request.getId();
+		final String uuid = request.getUuid();
+		final String code = request.getCode();
+		if (id <= 0 && Util.isEmpty(uuid, true) && Util.isEmpty(code, true)) {
+			throw new AdempiereException("@FillMandatory@ @C_Order_ID@ | @UUID@ | @DocumentNo@");
 		}
-		final String sql = "SELECT "
-			+ "o.C_Order_ID, o.UUID,"
-			+ "(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=o.C_BPartner_ID) AS BusinessPartner, "
-			+ "o.DateOrdered, "
-			+ "o.DocumentNo, "
-			+ "((SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=o.C_Currency_ID)) AS Currency, "
-			+ "o.GrandTotal, "
-			+ "currencyBase(o.GrandTotal,o.C_Currency_ID,o.DateAcct, o.AD_Client_ID,o.AD_Org_ID), "
-			+ "o.IsSOTrx, "
-			+ "o.Description, "
-			+ "o.POReference, "
-			+ "o.isDelivered, "
-			+ "o.DocStatus "
-			+ "FROM C_Order AS o "
-			+ "WHERE o.C_Order_ID = ? "
-		;
+
+		//
+		List<Object> filtersList = new ArrayList<>();
+		String sql = SQL;
+		if (id > 0) {
+			sql += "AND o.C_Order_ID = ? ";
+			filtersList.add(id);
+		} else if (!Util.isEmpty(uuid, true)) {
+			sql += "AND o.UUID = ? ";
+			filtersList.add(uuid);
+		} else if (!Util.isEmpty(code, true)) {
+			sql += "AND o.DocumentNo = ? ";
+			filtersList.add(code);
+
+			// Add AD_Client_ID restriction
+			sql += "AND o.AD_Client_ID = ? ";
+			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			filtersList.add(clientId);
+		}
+
+		//	Limit to 1 record to performance
+		final int pageNumber = 1;
+		final int limit = 1;
+		final int offset = (pageNumber - 1) * limit;
+		final String parsedSQL = LimitUtil.getQueryWithLimit(sql, limit, offset);
 
 		OrderInfo.Builder builder = OrderInfo.newBuilder();
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
-			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, orderId);
+			pstmt = DB.prepareStatement(parsedSQL, null);
+			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				builder = OrderInfoConvert.convertOrderInfo(
@@ -119,6 +168,8 @@ public class OrderInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 
 		return builder;
@@ -131,8 +182,13 @@ public class OrderInfoLogic {
 	 */
 	public static ListOrdersInfoResponse.Builder listOrderInfo(ListOrdersInfoRequest request) {
 		// Fill context
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
+		Properties context = Env.getCtx();
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributesFromString(
+			windowNo,
+			context,
+			request.getContextAttributes()
+		);
 
 		String tableName;
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -147,24 +203,7 @@ public class OrderInfoLogic {
 		);
 
 		//
-		String sql = "SELECT "
-			+ "o.C_Order_ID, o.UUID,"
-			+ "o.C_BPartner_ID,"
-			+ "(SELECT Name FROM C_BPartner AS bp WHERE bp.C_BPartner_ID=o.C_BPartner_ID) AS BusinessPartner, "
-			+ "o.DateOrdered, "
-			+ "o.DocumentNo, "
-			+ "o.C_Currency_ID, "
-			+ "((SELECT ISO_Code FROM C_Currency AS c WHERE c.C_Currency_ID=o.C_Currency_ID)) AS Currency, "
-			+ "o.GrandTotal, "
-			+ "currencyBase(o.GrandTotal,o.C_Currency_ID,o.DateAcct, o.AD_Client_ID,o.AD_Org_ID), "
-			+ "o.IsSOTrx, "
-			+ "o.Description, "
-			+ "o.POReference, "
-			+ "o.isDelivered, "
-			+ "o.DocStatus "
-			+ "FROM C_Order AS o "
-			+ "WHERE 1=1 "
-		;
+		String sql = SQL;
 
 		List<Object> filtersList = new ArrayList<>(); // includes on filters criteria
 		// Document No
@@ -260,7 +299,7 @@ public class OrderInfoLogic {
 		}
 
 		// add where with access restriction
-		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
+		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
 				sql.toString(),
 				"o",
@@ -279,7 +318,7 @@ public class OrderInfoLogic {
 				reference.ValidationCode
 			);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
+				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
 				if (Util.isEmpty(parsedValidationCode, true)) {
 					throw new AdempiereException("@WhereClause@ @Unparseable@");
 				}
@@ -325,10 +364,9 @@ public class OrderInfoLogic {
 				)
 			)
 		;
-	
+
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-
 		try {
 			pstmt = DB.prepareStatement(parsedSQL, null);
 			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
@@ -343,8 +381,11 @@ public class OrderInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 
 		return builderList;
 	}
+
 }

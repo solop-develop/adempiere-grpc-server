@@ -1,3 +1,17 @@
+/************************************************************************************
+ * Copyright (C) 2018-present E.R.P. Consultores y Asociados, C.A.                  *
+ * Contributor(s): Edwin Betancourt, EdwinBetanc0urt@outlook.com                    *
+ * This program is free software: you can redistribute it and/or modify             *
+ * it under the terms of the GNU General Public License as published by             *
+ * the Free Software Foundation, either version 2 of the License, or                *
+ * (at your option) any later version.                                              *
+ * This program is distributed in the hope that it will be useful,                  *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                   *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                     *
+ * GNU General Public License for more details.                                     *
+ * You should have received a copy of the GNU General Public License                *
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
+ ************************************************************************************/
 package org.spin.grpc.service.field.invoice;
 
 import java.math.BigDecimal;
@@ -7,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.core.domains.models.I_C_Invoice;
@@ -45,6 +60,27 @@ import org.spin.service.grpc.util.value.ValueManager;
 public class InvoiceInfoLogic {
 
 	public static String tableName = I_C_Invoice.Table_Name;
+
+	private static final String SQL = "SELECT "
+		+ "i.C_Invoice_ID, i.UUID, "
+		+ "(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=i.C_BPartner_ID) AS BusinessPartner, "
+		+ "i.DateInvoiced, "
+		+ "i.DocumentNo, "
+		+ "(SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=i.C_Currency_ID) AS Currency, "
+		+ "i.GrandTotal, "
+		+ "currencyBase(i.GrandTotal, i.C_Currency_ID, i.DateAcct, i.AD_Client_ID, i.AD_Org_ID) AS ConvertedAmount, "
+		+ "invoiceOpen(C_Invoice_ID, 0) AS OpenAmt, "
+		+ "(SELECT pt.Name FROM C_PaymentTerm pt WHERE pt.C_PaymentTerm_ID = i.C_PaymentTerm_ID) AS PaymentTerm, "
+		+ "i.IsPaid, "
+		+ "i.IsSOTrx, "
+		+ "i.Description, "
+		+ "i.POReference, "
+		+ "i.DocStatus "
+		+ "FROM C_Invoice AS i "
+		+ "WHERE 1=1 "
+	;
+
+
 
 	/**
 	 * Validate productId and MProduct, and get instance
@@ -132,39 +168,46 @@ public class InvoiceInfoLogic {
 
 
 
-	public static InvoiceInfo.Builder getInvoice(GetInvoiceInfoRequest request) {
-		final int invoiceId = request.getId();
-		if (invoiceId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Invoice_ID@");
+	public static InvoiceInfo.Builder getInvoiceInfo(GetInvoiceInfoRequest request) {
+		final int id = request.getId();
+		final String uuid = request.getUuid();
+		final String code = request.getCode();
+		if (id <= 0 && Util.isEmpty(uuid, true) && Util.isEmpty(code, true)) {
+			throw new AdempiereException("@FillMandatory@ @C_Invoice_ID@ | @UUID@ | @DocumentNo@");
 		}
-	
+
 		//
-		final String sql = "SELECT "
-			+ "i.C_Invoice_ID, i.UUID, "
-			+ "(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=i.C_BPartner_ID) AS BusinessPartner, "
-			+ "i.DateInvoiced, "
-			+ "i.DocumentNo, "
-			+ "(SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=i.C_Currency_ID) AS Currency, "
-			+ "i.GrandTotal, "
-			+ "currencyBase(i.GrandTotal, i.C_Currency_ID, i.DateAcct, i.AD_Client_ID, i.AD_Org_ID) AS ConvertedAmount, "
-			+ "invoiceOpen(C_Invoice_ID, 0) AS OpenAmt, "
-			+ "(SELECT pt.Name FROM C_PaymentTerm pt WHERE pt.C_PaymentTerm_ID = i.C_PaymentTerm_ID) AS PaymentTerm, "
-			+ "i.IsPaid, "
-			+ "i.IsSOTrx, "
-			+ "i.Description, "
-			+ "i.POReference, "
-			+ "i.DocStatus "
-			+ "FROM C_Invoice AS i "
-			+ "WHERE i.C_Invoice_ID = ? "
-		;
+		List<Object> filtersList = new ArrayList<>();
+		String sql = SQL;
+		if (id > 0) {
+			sql += "AND i.C_Invoice_ID = ? ";
+			filtersList.add(id);
+		} else if (!Util.isEmpty(uuid, true)) {
+			sql += "AND i.UUID = ? ";
+			filtersList.add(uuid);
+		} else if (!Util.isEmpty(code, true)) {
+			sql += "AND i.DocumentNo = ? ";
+			filtersList.add(code);
+
+			// Add AD_Client_ID restriction
+			sql += "AND AD_Client_ID = ? ";
+			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			filtersList.add(clientId);
+		}
+
+		//	Limit to 1 record to performance
+		final int pageNumber = 1;
+		final int limit = 1;
+		final int offset = (pageNumber - 1) * limit;
+		final String parsedSQL = LimitUtil.getQueryWithLimit(sql, limit, offset);
 
 		InvoiceInfo.Builder builder = InvoiceInfo.newBuilder();
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
-			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, invoiceId);
+			pstmt = DB.prepareStatement(parsedSQL, null);
+			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				builder = InvoiceInfoConvert.convertInvoiceInfo(
@@ -175,6 +218,8 @@ public class InvoiceInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 
 		return builder;
@@ -189,8 +234,13 @@ public class InvoiceInfoLogic {
 	 */
 	public static ListInvoicesInfoResponse.Builder listInvoiceInfo(ListInvoicesInfoRequest request) {
 		// Fill context
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
+		Properties context = Env.getCtx();
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextWithAttributesFromString(
+			windowNo,
+			context,
+			request.getContextAttributes()
+		);
 
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceId(),
@@ -204,24 +254,7 @@ public class InvoiceInfoLogic {
 		);
 
 		//
-		String sql = "SELECT "
-			+ "i.C_Invoice_ID, i.UUID, "
-			+ "(SELECT Name FROM C_BPartner bp WHERE bp.C_BPartner_ID=i.C_BPartner_ID) AS BusinessPartner, "
-			+ "i.DateInvoiced, "
-			+ "i.DocumentNo, "
-			+ "(SELECT ISO_Code FROM C_Currency c WHERE c.C_Currency_ID=i.C_Currency_ID) AS Currency, "
-			+ "i.GrandTotal, "
-			+ "currencyBase(i.GrandTotal, i.C_Currency_ID, i.DateAcct, i.AD_Client_ID, i.AD_Org_ID) AS ConvertedAmount, "
-			+ "invoiceOpen(C_Invoice_ID, 0) AS OpenAmt, "
-			+ "(SELECT pt.Name FROM C_PaymentTerm pt WHERE pt.C_PaymentTerm_ID = i.C_PaymentTerm_ID) AS PaymentTerm, "
-			+ "i.IsPaid, "
-			+ "i.IsSOTrx, "
-			+ "i.Description, "
-			+ "i.POReference, "
-			+ "i.DocStatus "
-			+ "FROM C_Invoice AS i "
-			+ "WHERE 1=1 "
-		;
+		String sql = SQL;
 
 		List<Object> filtersList = new ArrayList<>(); // includes on filters criteria
 		// Document No
@@ -317,7 +350,7 @@ public class InvoiceInfoLogic {
 		}
 
 		// add where with access restriction
-		String sqlWithRoleAccess = MRole.getDefault(Env.getCtx(), false)
+		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
 				sql.toString(),
 				"i",
@@ -335,7 +368,7 @@ public class InvoiceInfoLogic {
 				reference.ValidationCode
 			);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
+				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
 				if (Util.isEmpty(parsedValidationCode, true)) {
 					throw new AdempiereException("@WhereClause@ @Unparseable@");
 				}
@@ -397,6 +430,8 @@ public class InvoiceInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 
 		return builderList;
@@ -481,6 +516,8 @@ public class InvoiceInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 
 		return builderList;

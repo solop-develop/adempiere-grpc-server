@@ -33,6 +33,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.field.payment.GetPaymentInfoRequest;
 import org.spin.backend.grpc.field.payment.ListBankAccountRequest;
 import org.spin.backend.grpc.field.payment.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.field.payment.ListPaymentInfoRequest;
@@ -53,6 +54,27 @@ import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class PaymentInfoLogic {
+
+	private static final String SQL = "SELECT "
+		+ "C_Payment_ID, UUID, "
+		+ "(SELECT b.Name || ' ' || ba.AccountNo FROM C_Bank AS b, C_BankAccount AS ba WHERE b.C_Bank_ID = ba.C_Bank_ID AND ba.C_BankAccount_ID = C_Payment.C_BankAccount_ID) AS BankAccount, "
+		+ "(SELECT Name FROM C_BPartner AS bp WHERE bp.C_BPartner_ID = C_Payment.C_BPartner_ID) AS BusinessPartner, "
+		+ "DateTrx, "
+		+ "DocumentNo, "
+		+ "IsReceipt, "
+		+ "(SELECT ISO_Code FROM C_Currency AS c WHERE c.C_Currency_ID = C_Payment.C_Currency_ID) AS Currency, "
+		+ "PayAmt, "
+		+ "(SELECT Name FROM C_DocType AS dt WHERE dt.C_DocType_ID = C_Payment.C_DocType_ID) AS DocmentType, "
+		+ "(SELECT TO_CHAR(DateTrx, 'YYYY-MM-DD') FROM C_Payment AS p1 WHERE p1.C_Payment_ID = C_Payment.C_Payment_ID) AS InfoTo, "
+		+ "A_Name, "
+		+ "currencyBase(PayAmt, C_Currency_ID, DateTrx, AD_Client_ID, AD_Org_ID), "
+		+ "DiscountAmt, "
+		+ "WriteOffAmt, "
+		+ "IsAllocated, "
+		+ "DocStatus "
+		+ "FROM C_Payment AS C_Payment "
+		+ "WHERE 1=1 "
+	;
 
 	/**
 	 * @param tableName
@@ -121,6 +143,70 @@ public class PaymentInfoLogic {
 		return builderList;
 	}
 
+
+
+	/**
+	 * Get default value base on field, process parameter, browse field or column
+	 * @param request
+	 * @return
+	 */
+	public static PaymentInfo.Builder getPaymentInfo(GetPaymentInfoRequest request) {
+		final int id = request.getId();
+		final String uuid = request.getUuid();
+		final String code = request.getCode();
+		if (id <= 0 && Util.isEmpty(uuid, true) && Util.isEmpty(code, true)) {
+			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@ | @UUID@ | @DocumentNo@");
+		}
+
+		//
+		List<Object> filtersList = new ArrayList<>();
+		String sql = SQL;
+		if (id > 0) {
+			sql += "AND C_Payment_ID = ? ";
+			filtersList.add(id);
+		} else if (!Util.isEmpty(uuid, true)) {
+			sql += "AND UUID = ? ";
+			filtersList.add(uuid);
+		} else if (!Util.isEmpty(code, true)) {
+			sql += "AND DocumentNo = ? ";
+			filtersList.add(code);
+
+			// Add AD_Client_ID restriction
+			sql += "AND AD_Client_ID = ? ";
+			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			filtersList.add(clientId);
+		}
+
+		//	Limit to 1 record to performance
+		final int pageNumber = 1;
+		final int limit = 1;
+		final int offset = (pageNumber - 1) * limit;
+		final String parsedSQL = LimitUtil.getQueryWithLimit(sql, limit, offset);
+	
+		PaymentInfo.Builder builder = PaymentInfo.newBuilder();
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(parsedSQL, null);
+			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				builder = PaymentInfoConvert.convertPaymentInfo(
+					rs
+				);
+			}
+		} catch (SQLException e) {
+			throw new AdempiereException(e);
+		} finally {
+			DB.close(rs, pstmt);
+			pstmt = null;
+			rs = null;
+		}
+
+		return builder;
+	}
+
 	/**
 	 * Get default value base on field, process parameter, browse field or column
 	 * @param request
@@ -167,26 +253,7 @@ public class PaymentInfoLogic {
 		}
 
 		//
-		String sql = "SELECT "
-			+ "C_Payment_ID, UUID, "
-			+ "(SELECT b.Name || ' ' || ba.AccountNo FROM C_Bank AS b, C_BankAccount AS ba WHERE b.C_Bank_ID = ba.C_Bank_ID AND ba.C_BankAccount_ID = C_Payment.C_BankAccount_ID) AS BankAccount, "
-			+ "(SELECT Name FROM C_BPartner AS bp WHERE bp.C_BPartner_ID = C_Payment.C_BPartner_ID) AS BusinessPartner, "
-			+ "DateTrx, "
-			+ "DocumentNo, "
-			+ "IsReceipt, "
-			+ "(SELECT ISO_Code FROM C_Currency AS c WHERE c.C_Currency_ID = C_Payment.C_Currency_ID) AS Currency, "
-			+ "PayAmt, "
-			+ "(SELECT Name FROM C_DocType AS dt WHERE dt.C_DocType_ID = C_Payment.C_DocType_ID) AS DocmentType, "
-			+ "(SELECT TO_CHAR(DateTrx, 'YYYY-MM-DD') FROM C_Payment AS p1 WHERE p1.C_Payment_ID = C_Payment.C_Payment_ID) AS InfoTo, "
-			+ "A_Name, "
-			+ "currencyBase(PayAmt, C_Currency_ID, DateTrx, AD_Client_ID, AD_Org_ID), "
-			+ "DiscountAmt, "
-			+ "WriteOffAmt, "
-			+ "IsAllocated, "
-			+ "DocStatus "
-			+ "FROM C_Payment AS C_Payment "
-			+ "WHERE 1=1 "
-		;
+		String sql = SQL;
 
 		// Document No
 		if (!Util.isEmpty(request.getDocumentNo(), true)) {
@@ -331,4 +398,5 @@ public class PaymentInfoLogic {
 
 		return builderList;
 	}
+
 }

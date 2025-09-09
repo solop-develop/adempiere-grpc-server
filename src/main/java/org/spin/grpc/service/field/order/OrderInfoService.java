@@ -14,7 +14,35 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 public class OrderInfoService extends OrderInfoServiceImplBase {
+
 	private CLogger log = CLogger.getCLogger(OrderInfo.class);
+
+
+	/**
+	 * @param request
+	 * @param responseObserver
+	 */
+	public void getOrderInfo(GetOrderInfoRequest request, StreamObserver<OrderInfo> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object GetOrderInfoRequest Null");
+			}
+			OrderInfo.Builder entityValue = OrderInfoLogic.getOrderInfo(request);
+			responseObserver.onNext(
+				entityValue.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
 
 	@Override
 	public void listOrderInfo(ListOrdersInfoRequest request, StreamObserver<ListOrdersInfoResponse> responseObserver) {
@@ -28,7 +56,7 @@ public class OrderInfoService extends OrderInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -39,31 +67,6 @@ public class OrderInfoService extends OrderInfoServiceImplBase {
 		}
 	}
 
-	/**
-	 * @param request
-	 * @param responseObserver
-	 */
-	public void getOrderInfo(GetOrderInfoRequest request, StreamObserver<OrderInfo> responseObserver) {
-		try {
-			if(request == null) {
-				throw new AdempiereException("Object GetOrderInfoRequest Null");
-			}
-			OrderInfo.Builder entityValue = OrderInfoLogic.getOrder(request);
-			responseObserver.onNext(
-				entityValue.build()
-			);
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
 
 
 	/**
@@ -79,7 +82,7 @@ public class OrderInfoService extends OrderInfoServiceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

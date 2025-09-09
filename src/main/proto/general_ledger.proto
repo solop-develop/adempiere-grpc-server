@@ -160,8 +160,11 @@ message ListAccountingElementsRequest {
 	string page_token = 6;
 	string search_value = 7;
 	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// custom filters
-	int32 accounting_schema_id = 9;
+	int32 accounting_schema_id = 12;
 }
 message ListAccountingElementsResponse {
 	int64 record_count = 1;
@@ -186,9 +189,11 @@ message ListAccountingElementValuesRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// Custom Filters
-	int32 accounting_schema_id = 10;
-	string element_type = 11;
+	int32 accounting_schema_id = 12;
+	string element_type = 13;
 }
 message ListAccountingElementValuesResponse {
 	int64 record_count = 1;
@@ -243,6 +248,8 @@ message ListAccountingSchemasRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
 
@@ -257,6 +264,8 @@ message ListPostingTypesRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
 
@@ -293,6 +302,8 @@ message ListOrganizationsRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 }
 
 // Accounting Fact
@@ -366,14 +377,16 @@ message ListConversionTypesRequest {
 	string search_value = 7;
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// custom filters
-	google.protobuf.Timestamp date = 10;
-	int32 business_partner_id = 11;
-	int32 order_id = 12;
-	int32 invoice_id = 13;
-	int32 payment_id = 14;
-	int32 asset_addition_id = 15;
-	int32 expedient_id = 16;
+	google.protobuf.Timestamp date = 12;
+	int32 business_partner_id = 13;
+	int32 order_id = 14;
+	int32 invoice_id = 15;
+	int32 payment_id = 16;
+	int32 asset_addition_id = 17;
+	int32 expedient_id = 18;
 }
 message ListConversionTypesResponse {
 	int64 record_count = 1;
