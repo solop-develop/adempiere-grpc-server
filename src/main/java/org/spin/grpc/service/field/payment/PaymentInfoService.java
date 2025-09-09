@@ -39,7 +39,7 @@ public class PaymentInfoService extends PaymentInfoServiceImplBase {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			PaymentInfo.Builder builder = PaymentInfo.newBuilder();
+			PaymentInfo.Builder builder = PaymentInfoLogic.getPaymentInfo(request);
 			responseObserver.onNext(
 				builder.build()
 			);

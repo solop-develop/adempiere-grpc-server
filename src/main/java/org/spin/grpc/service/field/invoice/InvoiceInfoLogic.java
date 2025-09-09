@@ -188,14 +188,25 @@ public class InvoiceInfoLogic {
 		} else if (!Util.isEmpty(code, true)) {
 			sql += "AND i.DocumentNo = ? ";
 			filtersList.add(code);
+
+			// Add AD_Client_ID restriction
+			sql += "AND AD_Client_ID = ? ";
+			final int clientId = Env.getAD_Client_ID(Env.getCtx());
+			filtersList.add(clientId);
 		}
+
+		//	Limit to 1 record to performance
+		final int pageNumber = 1;
+		final int limit = 1;
+		final int offset = (pageNumber - 1) * limit;
+		final String parsedSQL = LimitUtil.getQueryWithLimit(sql, limit, offset);
 
 		InvoiceInfo.Builder builder = InvoiceInfo.newBuilder();
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
-			pstmt = DB.prepareStatement(sql, null);
+			pstmt = DB.prepareStatement(parsedSQL, null);
 			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
 			rs = pstmt.executeQuery();
 			if (rs.next()) {

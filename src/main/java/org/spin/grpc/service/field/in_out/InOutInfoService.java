@@ -50,6 +50,7 @@ import io.grpc.stub.StreamObserver;
  * Service for backend of Update Center
  */
 public class InOutInfoService extends InOutInfoServiceImplBase {
+
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(InOutInfoService.class);
 

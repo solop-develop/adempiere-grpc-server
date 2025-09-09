@@ -403,8 +403,8 @@ public class ProductInfoLogic {
 		;
 
 		String sqlWhere = " WHERE p.AD_Client_ID = ? ";
-		List<Object> parametersList = new ArrayList<>();
-		parametersList.add(
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(
 			Env.getAD_Client_ID(context)
 		);
 
@@ -427,7 +427,7 @@ public class ProductInfoLogic {
 				+ " ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y') "
 			;
 			sqlWhere += " AND pr.M_PriceList_Version_ID = ? ";
-			parametersList.add(
+			filtersList.add(
 				priceListVersionId
 			);
 
@@ -516,7 +516,7 @@ public class ProductInfoLogic {
 		ResultSet rs = null;
 		try {
 			pstmt = DB.prepareStatement(parsedSQL, null);
-			ParameterUtil.setParametersFromObjectsList(pstmt, parametersList);
+			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				builder = ProductInfoConvert.convertProductInfo(
@@ -577,15 +577,15 @@ public class ProductInfoLogic {
 		;
 
 		String sqlWhere = " WHERE p.AD_Client_ID = ? ";
-		List<Object> parametersList = new ArrayList<>();
-		parametersList.add(
+		List<Object> filtersList = new ArrayList<>();
+		filtersList.add(
 			Env.getAD_Client_ID(context)
 		);
 
 		// validate is active record
 		if (request.getIsOnlyActiveRecords()) {
 			sqlWhere += "AND p.IsActive = ? ";
-			parametersList.add(true);
+			filtersList.add(true);
 		}
 
 		final String searchValue = ValueManager.getDecodeUrl(
@@ -599,10 +599,10 @@ public class ProductInfoLogic {
 				+ "OR UPPER(p.SKU) LIKE '%' || UPPER(?) || '%' "
 				+ ") "
 			;
-			parametersList.add(searchValue);
-			parametersList.add(searchValue);
-			parametersList.add(searchValue);
-			parametersList.add(searchValue);
+			filtersList.add(searchValue);
+			filtersList.add(searchValue);
+			filtersList.add(searchValue);
+			filtersList.add(searchValue);
 		}
 
 		// Value
@@ -611,7 +611,7 @@ public class ProductInfoLogic {
 		);
 		if (!Util.isEmpty(value)) {
 			sqlWhere += " AND UPPER(p.Value) LIKE '%' || UPPER(?) || '%' ";
-			parametersList.add(value);
+			filtersList.add(value);
 		}
 		// Name
 		final String name = ValueManager.getDecodeUrl(
@@ -619,7 +619,7 @@ public class ProductInfoLogic {
 		);
 		if (!Util.isEmpty(name)) {
 			sqlWhere += " AND UPPER(p.Name) LIKE '%' || UPPER(?) || '%' ";
-			parametersList.add(name);
+			filtersList.add(name);
 		}
 		// UPC/EAN
 		final String upc = ValueManager.getDecodeUrl(
@@ -627,7 +627,7 @@ public class ProductInfoLogic {
 		);
 		if (!Util.isEmpty(upc)) {
 			sqlWhere += " AND UPPER(p.UPC) LIKE '%' || UPPER(?) || '%' ";
-			parametersList.add(upc);
+			filtersList.add(upc);
 		}
 		// SKU
 		final String sku = ValueManager.getDecodeUrl(
@@ -635,7 +635,7 @@ public class ProductInfoLogic {
 		);
 		if (!Util.isEmpty(sku)) {
 			sqlWhere += " AND UPPER(p.SKU) LIKE '%' || UPPER(?) || '%' ";
-			parametersList.add(sku);
+			filtersList.add(sku);
 		}
 		// Product Category
 		final int productCategoryId = request.getProductCategoryId();
@@ -648,45 +648,45 @@ public class ProductInfoLogic {
 				+		"WHERE ppc.M_Product_Category_Parent_ID = ?))"
 			;
 
-			parametersList.add(
+			filtersList.add(
 				productCategoryId
 			);
-			parametersList.add(
+			filtersList.add(
 				productCategoryId
 			);
 		}
 		// Product Group
 		if (request.getProductGroupId() > 0) {
 			sqlWhere += " AND p.M_Product_Group_ID = ? ";
-			parametersList.add(
+			filtersList.add(
 				request.getProductGroupId()
 			);
 		}
 		// Product Class
 		if (request.getProductClassId() > 0) {
 			sqlWhere += " AND p.M_Product_Class_ID = ? ";
-			parametersList.add(
+			filtersList.add(
 				request.getProductClassId()
 			);
 		}
 		// Product Classification
 		if (request.getProductClassificationId() > 0) {
 			sqlWhere += " AND p.M_Product_Classification_ID = ? ";
-			parametersList.add(
+			filtersList.add(
 				request.getProductClassificationId()
 			);
 		}
 		// Attribute Set
 		if (request.getAttributeSetId() > 0) {
 			sqlWhere += " AND p.M_AttributeSet_ID = ? ";
-			parametersList.add(
+			filtersList.add(
 				request.getAttributeSetId()
 			);
 		}
 		// Attribute Set Instance
 		if (request.getAttributeSetInstanceId() > 0) {
 			sqlWhere += " AND p.M_AttributeSetInstance_ID = ? ";
-			parametersList.add(
+			filtersList.add(
 				request.getAttributeSetInstanceId()
 			);
 			
@@ -704,12 +704,12 @@ public class ProductInfoLogic {
 			boolean isStocked = BooleanManager.getBooleanFromString(
 				request.getIsStocked()
 			);
-			parametersList.add(isStocked);
+			filtersList.add(isStocked);
 		}
 		// Vendor
 		if (request.getVendorId() > 0) {
 			sqlWhere += " AND ppo.C_BPartner_ID = ? ";
-			parametersList.add(
+			filtersList.add(
 				request.getVendorId()
 			);
 		}
@@ -733,7 +733,7 @@ public class ProductInfoLogic {
 				+ " ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y') "
 			;
 			sqlWhere += " AND pr.M_PriceList_Version_ID = ? ";
-			parametersList.add(
+			filtersList.add(
 				priceListVersionId
 			);
 
@@ -838,7 +838,7 @@ public class ProductInfoLogic {
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = CountUtil.countRecords(sqlWithRoleAccess, tableName, "p", parametersList);
+		int count = CountUtil.countRecords(sqlWithRoleAccess, tableName, "p", filtersList);
 		//	Set page token
 		String nexPageToken = null;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
@@ -875,7 +875,7 @@ public class ProductInfoLogic {
 		ResultSet rs = null;
 		try {
 			pstmt = DB.prepareStatement(parsedSQL, null);
-			ParameterUtil.setParametersFromObjectsList(pstmt, parametersList);
+			ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				ProductInfo.Builder builder = ProductInfoConvert.convertProductInfo(
