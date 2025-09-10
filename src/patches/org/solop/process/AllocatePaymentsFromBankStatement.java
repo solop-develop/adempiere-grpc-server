@@ -56,7 +56,7 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 		if(!batch.isProcessed() || (!batch.getDocStatus().equals(MPaymentProcessorBatch.DOCSTATUS_Completed) && !batch.getDocStatus().equals(MPaymentProcessorBatch.DOCSTATUS_Closed))) {
 			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Unprocessed@");
 		}
-		if (batch.get_ValueAsBoolean("IsAutomaticReceipt")) {
+		if (batch.isAutomaticReceipt()) {
 			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @IsAutomaticReceipt@");
 		}
 		AtomicInteger counter = new AtomicInteger(0);

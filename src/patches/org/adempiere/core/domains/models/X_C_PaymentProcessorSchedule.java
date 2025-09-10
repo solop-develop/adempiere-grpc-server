@@ -41,7 +41,7 @@ public class X_C_PaymentProcessorSchedule extends PO implements I_C_PaymentProce
 	private static final long serialVersionUID = 20250905L;
 
     /** Standard Constructor */
-    public X_C_PaymentProcessorSchedule(Properties ctx, int C_PaymentProcessorSchedule_ID, String trxName)
+    public X_C_PaymentProcessorSchedule (Properties ctx, int C_PaymentProcessorSchedule_ID, String trxName)
     {
       super (ctx, C_PaymentProcessorSchedule_ID, trxName);
       /** if (C_PaymentProcessorSchedule_ID == 0)
@@ -51,7 +51,7 @@ public class X_C_PaymentProcessorSchedule extends PO implements I_C_PaymentProce
     }
 
     /** Load Constructor */
-    public X_C_PaymentProcessorSchedule(Properties ctx, ResultSet rs, String trxName)
+    public X_C_PaymentProcessorSchedule (Properties ctx, ResultSet rs, String trxName)
     {
       super (ctx, rs, trxName);
     }

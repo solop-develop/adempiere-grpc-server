@@ -18,11 +18,12 @@
 
 package org.solop.process;
 
-import java.sql.Timestamp;
 import org.compiere.process.SvrProcess;
 
+import java.sql.Timestamp;
+
 /** Generated Process for (Generate Payments For Processor Batch Invoices)
- *  @author ADempiere (generated)
+ *  @author ADempiere (generated) 
  *  @version Release 3.9.4
  */
 public abstract class GeneratePaymentsForProcessorBatchInvoiceAbstract extends SvrProcess {
