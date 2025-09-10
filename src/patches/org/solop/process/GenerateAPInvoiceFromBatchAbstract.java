@@ -18,33 +18,39 @@
 
 package org.solop.process;
 
-import java.sql.Timestamp;
 import org.compiere.process.SvrProcess;
 
-/** Generated Process for (Generate AR Invoice)
- *  @author ADempiere (generated)
+import java.sql.Timestamp;
+
+/** Generated Process for (Generate AP Invoice)
+ *  @author ADempiere (generated) 
  *  @version Release 3.9.4
  */
-public abstract class GenerateARInvoiceFromBatchAbstract extends SvrProcess {
+public abstract class GenerateAPInvoiceFromBatchAbstract extends SvrProcess {
 	/** Process Value 	*/
-	private static final String VALUE_FOR_PROCESS = "PPBGenerateARInvoice";
+	private static final String VALUE_FOR_PROCESS = "PPBGenerateAPInvoice";
 	/** Process Name 	*/
-	private static final String NAME_FOR_PROCESS = "Generate AR Invoice";
+	private static final String NAME_FOR_PROCESS = "Generate AP Invoice";
 	/** Process Id 	*/
-	private static final int ID_FOR_PROCESS = 54892;
+	private static final int ID_FOR_PROCESS = 54886;
 	/**	Parameter Name for Document Date	*/
 	public static final String DATEDOC = "DateDoc";
 	/**	Parameter Name for Document Action	*/
 	public static final String DOCACTION = "DocAction";
+	/**	Parameter Name for Vendor Document Type	*/
+	public static final String VENDORDOCUMENTTYPE = "VendorDocumentType";
 	/**	Parameter Value for Document Date	*/
 	private Timestamp dateDoc;
 	/**	Parameter Value for Document Action	*/
 	private String docAction;
+	/**	Parameter Value for Vendor Document Type	*/
+	private String vendorDocumentType;
 
 	@Override
 	protected void prepare() {
 		dateDoc = getParameterAsTimestamp(DATEDOC);
 		docAction = getParameterAsString(DOCACTION);
+		vendorDocumentType = getParameterAsString(VENDORDOCUMENTTYPE);
 	}
 
 	/**	 Getter Parameter Value for Document Date	*/
@@ -65,6 +71,16 @@ public abstract class GenerateARInvoiceFromBatchAbstract extends SvrProcess {
 	/**	 Setter Parameter Value for Document Action	*/
 	protected void setDocAction(String docAction) {
 		this.docAction = docAction;
+	}
+
+	/**	 Getter Parameter Value for Vendor Document Type	*/
+	protected String getVendorDocumentType() {
+		return vendorDocumentType;
+	}
+
+	/**	 Setter Parameter Value for Vendor Document Type	*/
+	protected void setVendorDocumentType(String vendorDocumentType) {
+		this.vendorDocumentType = vendorDocumentType;
 	}
 
 	/**	 Getter Parameter Value for Process ID	*/

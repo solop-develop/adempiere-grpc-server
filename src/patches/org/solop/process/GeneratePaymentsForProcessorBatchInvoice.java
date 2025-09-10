@@ -26,12 +26,13 @@ import org.compiere.model.MPaymentProcessor;
 import org.compiere.model.MPaymentProcessorBatch;
 import org.compiere.model.MPaymentProcessorSchedule;
 import org.compiere.model.Query;
+import org.compiere.util.DisplayType;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Generated Process for (Generate AR Invoice From Payment Processor Batch)
- *  @author ADempiere (generated) 
+ *  @author ADempiere (generated)
  *  @version Release 3.9.4
  */
 public class GeneratePaymentsForProcessorBatchInvoice extends GeneratePaymentsForProcessorBatchInvoiceAbstract
@@ -48,13 +49,12 @@ public class GeneratePaymentsForProcessorBatchInvoice extends GeneratePaymentsFo
 		String whereClause = "DateDoc = ? AND EXISTS (SELECT 1 FROM C_PaymentProcessorBatch ppb WHERE ppb.FinalAccount_ID IS NOT NULL " +
 				" AND ppb.DocStatus = 'CO' AND ppb.OpenAmt > 0 AND IsAutomaticReceipt = 'Y' AND ppb.C_PaymentProcessorBatch_ID = C_PaymentProcessorSchedule.C_PaymentProcessorBatch_ID)";
 		List<Integer> batchScheduleIds = new Query(getCtx(), MPaymentProcessorSchedule.Table_Name, whereClause, get_TrxName())
-			.setParameters(getDateDoc())
-			.getIDsAsList();
+				.setParameters(getDateDoc())
+				.getIDsAsList();
 
 		AtomicInteger created = new AtomicInteger(0);
 		String invoiceWhereClause = "DocumentNo = ? AND C_PaymentProcessorBatch_ID = ? AND DateInvoiced = ? AND IsPaid = 'N' AND DocStatus NOT IN ('RE', 'VO')";
 		batchScheduleIds.forEach(batchScheduleId -> {
-
 
 			MPaymentProcessorSchedule batchSchedule = new MPaymentProcessorSchedule(getCtx(), batchScheduleId, get_TrxName());
 			MPaymentProcessorBatch batch = (MPaymentProcessorBatch) batchSchedule.getC_PaymentProcessorBatch();
@@ -62,15 +62,15 @@ public class GeneratePaymentsForProcessorBatchInvoice extends GeneratePaymentsFo
 			if(paymentProcessor.getFeeCurrency_ID() <= 0) {
 				throw new AdempiereException("@FeeCurrency_ID@ @NotFound@");
 			}
-			int documentTypeId = paymentProcessor.get_ValueAsInt("SalesInvoiceDocType_ID");
+			int documentTypeId = paymentProcessor.getSalesInvoiceDocType_ID();
 			if (documentTypeId <= 0) {
 				throw new AdempiereException("@SalesInvoiceDocType_ID@ @NotFound@");
 			}
 
 			//	Create Invoice
 			MInvoice invoice = new Query(getCtx(), MInvoice.Table_Name, invoiceWhereClause, get_TrxName())
-				.setParameters(batchSchedule.getReferenceNo(), batch.get_ID(), batch.getDateDoc())
-				.first();
+					.setParameters(batchSchedule.getReferenceNo(), batch.get_ID(), batch.getDateDoc())
+					.first();
 			if (invoice == null) {
 				return;
 			}
@@ -88,16 +88,16 @@ public class GeneratePaymentsForProcessorBatchInvoice extends GeneratePaymentsFo
 			vendorTransaction.setDeposit_ID(payment.getC_Payment_ID());
 			vendorTransaction.setPayAmt(payment.getPayAmt());
 			vendorTransaction.setReferenceNo(payment.getDocumentNo());
+			vendorTransaction.setProcessed(true);
 			vendorTransaction.saveEx();
-
-
-
+			addLog("@C_PaymentProcessorBatch_ID@: " + batch.getDocumentNo()+ ", @DocumentNo@: " + payment.getDocumentNo() + ", @Date@: " + DisplayType.getDateFormat(DisplayType.Date).format(payment.getDateTrx()) +
+					", @PayAmount@: " + DisplayType.getNumberFormat(DisplayType.Amount).format(payment.getPayAmt()));
 			batch.updateTotals();
 			created.getAndIncrement();
 
 		});
 
-		return "";
+		return "@Created@ " + created.get();
 	}
 	private MPayment getPayment(MInvoice invoice, MPaymentProcessorBatch batch) {
 		MPayment payment = new MPayment(getCtx(), 0, get_TrxName());
@@ -105,7 +105,7 @@ public class GeneratePaymentsForProcessorBatchInvoice extends GeneratePaymentsFo
 		payment.setDocAction(MPayment.DOCACTION_Complete);
 		payment.setC_BPartner_ID(invoice.getC_BPartner_ID());
 		payment.setIsReceipt(true);
-		payment.setC_BankAccount_ID(batch.get_ValueAsInt("FinalAccount_ID"));
+		payment.setC_BankAccount_ID(batch.getFinalAccount_ID());
 		payment.setDateAcct(invoice.getDateInvoiced());
 		payment.setTenderType(MPayment.TENDERTYPE_Account);
 		payment.setPayAmt(invoice.getGrandTotal());

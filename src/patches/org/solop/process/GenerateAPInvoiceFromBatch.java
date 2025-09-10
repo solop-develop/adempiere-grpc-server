@@ -44,9 +44,8 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		if(getRecord_ID() <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
-		vendorDocumentType = getParameterAsString("VendorDocumentType");
+
 	}
-	String vendorDocumentType;
 	@Override
 	protected String doIt() throws Exception {
 		MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getRecord_ID(), get_TrxName());
@@ -66,14 +65,14 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		int documentTypeId= 0;
 		BigDecimal invoiceAmount = BigDecimal.ZERO;
 		int chargeId = 0;
-		if ("FEE".equals(vendorDocumentType)) {
-			documentTypeId = paymentProcessor.get_ValueAsInt("PurchaseInvoiceDocType_ID");
+		if ("FEE".equals(getVendorDocumentType())) {
+			documentTypeId = paymentProcessor.getPurchaseInvoiceDocType_ID();
 			invoiceAmount = batch.getFeeAmt();
 			chargeId = paymentProcessor.getFeeCharge_ID();
-		} else if ("WTH".equals(vendorDocumentType)) {
-			documentTypeId = paymentProcessor.get_ValueAsInt("WithholdingDocType_ID");
+		} else if ("WTH".equals(getVendorDocumentType())) {
+			documentTypeId = paymentProcessor.getWithholdingDocType_ID();
 			invoiceAmount = batch.getWithholdingAmt();
-			chargeId = paymentProcessor.get_ValueAsInt("WithholdingCharge_ID");
+			chargeId = paymentProcessor.getWithholdingCharge_ID();
 		}
 		if (documentTypeId <= 0) {
 			throw new AdempiereException("@C_DocTypeTarget_ID@ @NotFound@");
