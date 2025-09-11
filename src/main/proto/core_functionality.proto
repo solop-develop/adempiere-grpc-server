@@ -98,6 +98,7 @@ message SystemInfo {
 	google.protobuf.Timestamp backend_date_version = 6;
 	string backend_main_version = 7;
 	string backend_implementation_version = 8;
+	string tenant = 9;
 }
 
 // Get Country Request
