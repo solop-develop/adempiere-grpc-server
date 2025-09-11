@@ -54,6 +54,8 @@ import org.spin.backend.grpc.core_functionality.SystemInfo;
 import org.spin.backend.grpc.core_functionality.UnitOfMeasure;
 import org.spin.backend.grpc.core_functionality.CoreFunctionalityGrpc.CoreFunctionalityImplBase;
 import org.spin.base.Version;
+import org.spin.base.setup.Database;
+import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.ContextManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -68,8 +70,10 @@ import io.grpc.stub.StreamObserver;
  * Core functionality
  */
 public class CoreFunctionality extends CoreFunctionalityImplBase {
+
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(CoreFunctionality.class);
+
 	/**	Country */
 	private static CCache<String, MCountry> countryCache = new CCache<String, MCountry>(I_C_Country.Table_Name + "_UUID", 30, 0);	//	no time-out
 
@@ -81,12 +85,13 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -120,7 +125,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				)
 			;
 		}
-		
+
 		// backend info
 		builder.setBackendDateVersion(
 				ValueManager.getTimestampFromDate(
@@ -143,9 +148,20 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				)
 			)
 		;
+		String tenant = System.getenv("TENANT");
+		if (Util.isEmpty(tenant, true)) {
+			Database database = SetupLoader.getInstance().getDatabase();
+			if (database != null) {
+				tenant = database.getName();
+			}
+		}
+		builder.setTenant(
+			StringManager.getValidString(tenant)
+		);
 
 		return builder;
 	}
+
 
 
 	@Override
@@ -159,10 +175,12 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -207,7 +225,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			responseObserver.onNext(languagesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -330,7 +348,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			responseObserver.onNext(languagesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -418,7 +436,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			responseObserver.onNext(languagesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -451,7 +469,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			responseObserver.onNext(languagesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -501,7 +519,8 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			responseObserver.onNext(conversionProductList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
