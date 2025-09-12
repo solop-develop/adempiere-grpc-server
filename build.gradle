@@ -96,6 +96,7 @@ dependencies {
 	implementation "com.solop.adempiere.verticals:delivery-management-service:core-1.0.0-1.0.0"
 	implementation "com.solop.adempiere.tools:adempiere-webhook:core-1.2.9-1.0.0"
 	implementation "com.solop.adempiere.tools:external-store:core-1.0.0-1.0.0"
+	implementation "com.solop.adempiere.tools:core-tools:core-1.4.2-1.0.0"
 }
 
 configurations.all {
