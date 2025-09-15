@@ -70,7 +70,7 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 		consolidateByInventory();
 		consolidateQty.forEach((consolidateId, usedQty) -> {
 			PO consolidate = consignmentConsolidateTable.getPO(consolidateId, get_TrxName());
-			consolidate.set_ValueOfColumn("Qty", usedQty);
+			consolidate.set_ValueOfColumn("QtySold", usedQty);
 			consolidate.saveEx();
 		});
 		return "";
@@ -100,7 +100,7 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 			BigDecimal qtyUsed = new Query(getCtx(), "C_ConsignmentDetail", whereClause, get_TrxName())
 				.setParameters(inventoryLine.get_ID())
 				.sum("Qty");
-			consolidateData(inventoryLine.getM_Product_ID(), inventory.getAD_Org_ID(), inventoryLine.getMovementQty().subtract(qtyUsed),0,inventoryLineId, inventory.getMovementDate());
+			consolidateData(inventoryLine.getM_Product_ID(), inventory.getAD_Org_ID(), inventoryLine.getMovementQty().subtract(qtyUsed), qtyUsed, 0,inventoryLineId, inventory.getMovementDate());
 
 		});
 
@@ -132,14 +132,13 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 				.setParameters(invoiceLine.getC_OrderLine_ID())
 				.sum("Qty");
 			MInvoice invoice = invoiceLine.getParent();
-			consolidateData(invoiceLine.getM_Product_ID(), invoice.getAD_Org_ID(), invoiceLine.getQtyInvoiced().subtract(qtyUsed),invoiceLine.getC_OrderLine_ID(),0, invoice.getDateInvoiced());
+			consolidateData(invoiceLine.getM_Product_ID(), invoice.getAD_Org_ID(), invoiceLine.getQtyInvoiced().subtract(qtyUsed), qtyUsed, invoiceLine.getC_OrderLine_ID(),0, invoice.getDateInvoiced());
 
 		});
-
 	}
 
 
-	private void consolidateData(int productId, int orgId, BigDecimal qty, int orderLineId, int inventoryLineId, Timestamp dateDoc) {
+	private void consolidateData(int productId, int orgId, BigDecimal qty, BigDecimal qtyUsed, int orderLineId, int inventoryLineId, Timestamp dateDoc) {
 		String searchKey = productId + "|" + orgId;
 		List<ConsignmentOrderGrouping> orderLinesAndQtyList = productToOrderGroup.getOrDefault(searchKey, new ArrayList<>());
 		//TODO: Validar cantidad de Linea de Orden o de inventario contra lo asignado en C_ConsignmentDetail
@@ -151,7 +150,7 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 					"AND o2.AD_Org_ID = ?)";
 			List<Integer> openSalesOrderLineIds = new Query(getCtx(), MOrderLine.Table_Name, whereClauseOrderLine, get_TrxName())
 					.setParameters(productId, orgId)
-					.setOrderBy("Created DESC")
+					.setOrderBy("Created")
 					.getIDsAsList();
 			for (Integer openOrderLineId : openSalesOrderLineIds) {
 				MOrderLine orderLine = new MOrderLine(getCtx(), openOrderLineId, get_TrxName());
@@ -180,15 +179,17 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 			Integer consolidateId = orderLineToConsignedConsolidate.get(orderGroup.getOrderLineId());
 			if (consolidateId == null) {
 				MOrder order = new MOrder(getCtx(), orderGroup.getOrderId(), get_TrxName());
+
 				PO consolidate = consignmentConsolidateTable.getPO(0, get_TrxName());
 				consolidate.set_ValueOfColumn("C_OrderLine_ID", orderGroup.getOrderLineId());
 				consolidate.set_ValueOfColumn("C_Order_ID", orderGroup.getOrderId());
-				consolidate.set_ValueOfColumn("Qty", BigDecimal.ZERO);
+				consolidate.set_ValueOfColumn("QtySold", BigDecimal.ZERO);
 				consolidate.set_ValueOfColumn("AD_PInstance_ID", getAD_PInstance_ID());
 				consolidate.set_ValueOfColumn("C_BPartner_ID", order.getC_BPartner_ID());
 				consolidate.set_ValueOfColumn("M_Product_ID", productId);
 				consolidate.set_ValueOfColumn("DateInvoiced", dateDoc);
-				consolidate.set_ValueOfColumn("QtyToInvoice", maxQty);
+				consolidate.set_ValueOfColumn("QtyPending", maxQty);
+				consolidate.set_ValueOfColumn("QtyConsigned", qtyUsed);
 				consolidate.saveEx();
 				consolidateId = consolidate.get_ID();
 				orderLineToConsignedConsolidate.put(orderGroup.getOrderLineId(), consolidateId);
