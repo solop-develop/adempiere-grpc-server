@@ -108,7 +108,7 @@ public class BrowserLogic {
 		// Record/Role access
 		boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
 		if (!isWithAccess) {
-			throw new AdempiereException("@SearchProcess_ID@ @AccessCannotProcess@:" + process.getDisplayValue());
+			throw new AdempiereException("@SearchProcess_ID@ @AccessCannotProcess@: " + process.getDisplayValue());
 		}
 
 		//	Populate map

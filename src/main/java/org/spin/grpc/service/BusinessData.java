@@ -218,9 +218,9 @@ public class BusinessData extends BusinessDataImplBase {
 		boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
 		if(!isWithAccess) {
 			if (process.isReport()) {
-				throw new AdempiereException("@AccessCannotReport@");
+				throw new AdempiereException("@AccessCannotReport@: " + process.getDisplayValue());
 			}
-			throw new AdempiereException("@AccessCannotProcess@");
+			throw new AdempiereException("@AccessCannotProcess@: " + process.getDisplayValue());
 		}
 
 		if (process.isReport()) {
