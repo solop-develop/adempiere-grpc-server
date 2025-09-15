@@ -36,11 +36,6 @@ import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_R_MailText;
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.model.MBrowse;
-import org.adempiere.model.MBrowseField;
-import org.adempiere.model.MView;
-import org.adempiere.model.MViewColumn;
-import org.adempiere.model.MViewDefinition;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
@@ -140,24 +135,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-
-
-	@Override
-	public void exportBrowserItems(ExportBrowserItemsRequest request, StreamObserver<ExportBrowserItemsResponse> responseObserver) {
-		try {
-			log.fine("Object List Requested = " + request);
-			ExportBrowserItemsResponse.Builder entityValueList = BrowserLogic.exportBrowserItems(request);
-			responseObserver.onNext(entityValueList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -168,139 +146,6 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 	}
 
-	@Override
-	public void updateBrowserEntity(UpdateBrowserEntityRequest request, StreamObserver<Entity> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Requested is Null");
-			}
-			log.fine("UpdateBrowserEntityRequest = " + request);
-			Entity.Builder entityValue = updateBrowserEntity(request);
-			responseObserver.onNext(entityValue.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-	/**
-	 * Update Browser Entity
-	 * @param request
-	 * @return
-	 */
-	private Entity.Builder updateBrowserEntity(UpdateBrowserEntityRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @AD_Browse_ID@");
-		}
-		Properties context = Env.getCtx();
-		MBrowse browser = MBrowse.get(
-			context,
-			request.getId()
-		);
-		if (browser == null || browser.getAD_Browse_ID() <= 0) {
-			throw new AdempiereException(
-				"@AD_Browse_ID@ " + request.getId() + " @NotFound@"
-			);
-		}
-
-		if (!browser.isUpdateable()) {
-			throw new AdempiereException(
-				"@AD_Browse_ID@ " + browser.getName() + " (" + request.getId() + "), not updateable records"
-			);
-		}
-
-		if (browser.getAD_Table_ID() <= 0) {
-			throw new AdempiereException("No Table defined in the Smart Browser");
-		}
-		final MTable table = MTable.get(context, browser.getAD_Table_ID());
-
-		PO entity = RecordUtil.getEntity(context, table.getAD_Table_ID(), null, request.getRecordId(), null);
-		if (entity == null || entity.get_ID() <= 0) {
-			// Return
-			return ConvertUtil.convertEntity(entity);
-		}
-
-		MView view = new MView(context, browser.getAD_View_ID());
-		List<MViewColumn> viewColumnsList = view.getViewColumns();
-
-		request.getAttributes().getFieldsMap().entrySet().parallelStream().forEach(attribute -> {
-			// find view column definition
-			MViewColumn viewColumn = viewColumnsList
-				.parallelStream()
-				.filter(currentViewColumn -> {
-					return currentViewColumn.getColumnName().equals(attribute.getKey());
-				})
-				.findFirst()
-				.orElse(null)
-			;
-			// if view aliases not exists, next element
-			if (viewColumn == null || viewColumn.getAD_View_Column_ID() <= 0) {
-				return;
-			}
-
-			MViewDefinition viewDefinition = MViewDefinition.get(context, viewColumn.getAD_View_Definition_ID());
-			// not same table setting in smart browser and view definition
-			if (browser.getAD_Table_ID() != viewDefinition.getAD_Table_ID()) {
-				log.info("Browse Table " + browser.getAD_Table_ID() + " and View Definition Table " + viewDefinition.getAD_Table_ID() + " different ");
-				return;
-			}
-
-			MBrowseField browseField = MBrowseField.get(browser, viewColumn);
-			if (browseField == null || browseField.getAD_Browse_Field_ID() <= 0) {
-				log.warning("Browse Field no found");
-				return;
-			}
-			if (!browseField.isActive() || browseField.isReadOnly()) {
-				log.warning("Browse Field not updateable: " + browseField.getName());
-				return;
-			}
-
-			MColumn column = MColumn.get(browser.getCtx(), viewColumn.getAD_Column_ID());
-			if (column == null || column.getAD_Column_ID() <= 0) {
-				// column is not present on current table
-				return;
-			}
-			if (column.isVirtualColumn() || column.isKey() || !column.isUpdateable()) {
-				// virtual column with columnSQL
-				log.warning("Column is virtual column or not updateable: " + column.getColumnName());
-				return;
-			}
-			String columnName = column.getColumnName();
-			int referenceId = column.getAD_Reference_ID();
-
-			Object value = null;
-			if (!attribute.getValue().hasNullValue()) {
-				if (referenceId > 0) {
-					value = ValueManager.getObjectFromReference(
-						attribute.getValue(),
-						referenceId
-					);
-				}
-				if (value == null) {
-					value = ValueManager.getObjectFromValue(attribute.getValue());
-				}
-			}
-			entity.set_ValueOfColumn(columnName, value);
-		});
-		//	Save entity
-		if (entity.is_Changed()) {
-			entity.saveEx();
-		} else {
-			log.severe(
-				Msg.parseTranslation(context, "@Ignored@")
-			);
-		}
-
-		//	Return
-		return ConvertUtil.convertEntity(entity);
-	}
 
 
 	@Override
@@ -313,11 +158,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(contextInfoValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -331,11 +179,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(translationsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -349,11 +200,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(chatEntryValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -369,7 +223,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -549,7 +403,7 @@ public class UserInterface extends UserInterfaceImplBase {
 							}
 						}
 					} catch (Exception e) {
-						log.severe(e.getLocalizedMessage());
+						log.warning(e.getLocalizedMessage());
 						e.printStackTrace();
 					}
 				}
@@ -563,7 +417,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				entityBuilder.setValues(rowValues);
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 		} finally {
 			DB.close(rs, pstmt);
@@ -587,7 +441,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -765,12 +619,13 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -854,12 +709,13 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -947,7 +803,6 @@ public class UserInterface extends UserInterfaceImplBase {
 		return builder;
 	}
 
-	
 
 
 	/**
@@ -1086,7 +941,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				value = stringToObject(column, changeLog.getOldValue());
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 		}
 		//	Set value
 		entity.set_ValueOfColumn(changeLog.getAD_Column_ID(), value);
@@ -1264,12 +1119,54 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void exportBrowserItems(ExportBrowserItemsRequest request, StreamObserver<ExportBrowserItemsResponse> responseObserver) {
+		try {
+			log.fine("Object List Requested = " + request);
+			ExportBrowserItemsResponse.Builder entityValueList = BrowserLogic.exportBrowserItems(request);
+			responseObserver.onNext(entityValueList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void updateBrowserEntity(UpdateBrowserEntityRequest request, StreamObserver<Entity> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Requested is Null");
+			}
+			log.fine("UpdateBrowserEntityRequest = " + request);
+			Entity.Builder entityValue = BrowserLogic.updateBrowserEntity(request);
+			responseObserver.onNext(entityValue.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -1287,7 +1184,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1311,11 +1208,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(recordsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -1465,11 +1365,14 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(recordsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -1584,7 +1487,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(recordsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1608,11 +1511,13 @@ public class UserInterface extends UserInterfaceImplBase {
 			responseObserver.onNext(recordsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
