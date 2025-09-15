@@ -85,8 +85,11 @@ import org.spin.util.support.IAppSupport;
  * Business data service
  */
 public class BusinessData extends BusinessDataImplBase {
+
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(BusinessData.class);
+	private static CLogger log = CLogger.getCLogger(BusinessData.class);
+
+
 	@Override
 	public void getEntity(GetEntityRequest request, StreamObserver<Entity> responseObserver) {
 		try {
@@ -97,14 +100,17 @@ public class BusinessData extends BusinessDataImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-	
+
 	@Override
 	public void createEntity(CreateEntityRequest request, StreamObserver<Entity> responseObserver) {
 		try {
@@ -115,11 +121,14 @@ public class BusinessData extends BusinessDataImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -134,15 +143,16 @@ public class BusinessData extends BusinessDataImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
-
-
 
 	@Override
 	public void deleteEntitiesBatch(DeleteEntitiesBatchRequest request, StreamObserver<Empty> responseObserver) {
@@ -151,11 +161,14 @@ public class BusinessData extends BusinessDataImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -171,7 +184,7 @@ public class BusinessData extends BusinessDataImplBase {
 			responseObserver.onNext(processReponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())
@@ -268,6 +281,8 @@ public class BusinessData extends BusinessDataImplBase {
 			entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), recordId, null);
 			if(entity != null) {
 				recordId = entity.get_ID();
+			} else {
+				recordId = 0;
 			}
 		}
 
@@ -298,7 +313,9 @@ public class BusinessData extends BusinessDataImplBase {
 				selectionsList = BrowserLogic.getAllSelectionByCriteria(
 					request.getBrowserId(),
 					request.getBrowserContextAttributes(),
-					request.getCriteriaFilters()
+					request.getCriteriaFilters(),
+					request.getTableName(),
+					recordId
 				);
 			}
 			if (selectionsList == null || selectionsList.isEmpty()) {
@@ -444,7 +461,7 @@ public class BusinessData extends BusinessDataImplBase {
 			result = builder.execute();
 		} catch (Exception e) {
 			e.printStackTrace();
-			// log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 
 			result = builder.getProcessInfo();
 			//	Set error message
@@ -591,7 +608,7 @@ public class BusinessData extends BusinessDataImplBase {
 			responseObserver.onNext(entityValue.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -729,12 +746,13 @@ public class BusinessData extends BusinessDataImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}

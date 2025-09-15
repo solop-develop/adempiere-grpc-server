@@ -36,6 +36,7 @@ import org.adempiere.model.MBrowseField;
 import org.adempiere.model.MView;
 import org.adempiere.model.MViewColumn;
 import org.adempiere.model.MViewDefinition;
+import org.compiere.model.MColumn;
 import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProcessPara;
@@ -46,6 +47,7 @@ import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.eevolution.services.dsl.ProcessBuilder;
 import org.spin.backend.grpc.common.Entity;
@@ -54,11 +56,13 @@ import org.spin.backend.grpc.user_interface.ExportBrowserItemsRequest;
 import org.spin.backend.grpc.user_interface.ExportBrowserItemsResponse;
 import org.spin.backend.grpc.user_interface.ListBrowserItemsRequest;
 import org.spin.backend.grpc.user_interface.ListBrowserItemsResponse;
+import org.spin.backend.grpc.user_interface.UpdateBrowserEntityRequest;
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
+import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -81,6 +85,163 @@ public class BrowserLogic {
 
 	private static CLogger log = CLogger.getCLogger(BrowserLogic.class);
 
+
+	public static String getSearchProcessInstaceWhere(Properties context, int browserId, int searchProcessId, String tableName, int recordId, String filters) {
+		StringBuffer processInstanceWhere = new StringBuffer();
+		if (searchProcessId <= 0) {
+			return processInstanceWhere.toString();
+		}
+		// Get Instance of process
+		MProcess process = MProcess.get(
+			context,
+			searchProcessId
+		);
+		if (process == null || process.getAD_Process_ID() <= 0) {
+			throw new AdempiereException("@SearchProcess_ID@ @NotFound@");
+		}
+		//	Add to recent Item
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Process,
+			process.getAD_Process_ID()
+		);
+
+		// Record/Role access
+		boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
+		if (!isWithAccess) {
+			throw new AdempiereException("@SearchProcess_ID@ @AccessCannotProcess@:" + process.getDisplayValue());
+		}
+
+		//	Populate map
+		HashMap<String, Object> parametersMap = new HashMap<>();
+		HashMap<String, String> parametersOperator = new HashMap<>();
+		FilterManager.newInstance(filters).getConditions()
+			.parallelStream()
+			.forEach(condition -> {
+				parametersOperator.put(condition.getColumnName(), condition.getOperator());
+				parametersMap.put(condition.getColumnName(), condition.getValue());
+			});
+
+		String viewProcessInstanceColumnSql = "";
+		MBrowse browser = MBrowse.get(
+			context,
+			browserId
+		);
+		MView view = browser.getAD_View();
+		List<MViewColumn> viewColumns = view.getViewColumns();
+		HashMap<String, Object> parametersToAdd = new HashMap<>();
+		//Get Process Parameters
+		List<MProcessPara> searchProcessParameters = process.getParametersAsList();
+		for (MViewColumn viewColumn: viewColumns) {
+			String columnName = viewColumn.getColumnName();
+			if (columnName.endsWith(I_AD_PInstance.COLUMNNAME_AD_PInstance_ID)) {
+				viewProcessInstanceColumnSql = viewColumn.getColumnSQL();
+				if (searchProcessParameters.isEmpty()) {
+					break;
+				}
+			}
+			if (searchProcessParameters.isEmpty()) {
+				continue;
+			}
+			String columnSql = "";
+			int index = -1;
+			String parameterName = "";
+			Optional<MProcessPara> maybeParameter = null;
+			boolean isRange = false;
+
+			if (parametersMap.containsKey(columnName)) {
+				Object value = parametersMap.get(columnName);
+				columnSql = viewColumn.getColumnSQL();
+				index = columnSql.lastIndexOf(".");
+				parameterName = columnSql.substring(index +1);
+				String searchString = parameterName;
+				maybeParameter = searchProcessParameters.stream().filter(param -> param.getColumnName().equals(searchString)).findFirst();
+				if (maybeParameter.isEmpty()) {
+					continue;
+				}
+				isRange = maybeParameter.get().isRange();
+				String operatorName = parametersOperator.get(columnName);
+				if (isRange && !operatorName.equalsIgnoreCase(Filter.BETWEEN)
+					&& !operatorName.equalsIgnoreCase(Filter.GREATER_EQUAL)) {
+					continue;
+				}
+				if (!isRange && !operatorName.equalsIgnoreCase(Filter.EQUAL)) {
+					continue;
+				}
+				parametersToAdd.put(parameterName, value);
+			}
+			if (isRange && parametersMap.containsKey(columnName + "_To")) {
+				Object value = parametersMap.get(columnName  + "_To");
+				String operatorName = parametersOperator.get(columnName + "_To");
+				if (!operatorName.equalsIgnoreCase(Filter.LESS_EQUAL)) {
+					continue;
+				}
+				parametersToAdd.put(parameterName + "_To", value);
+			}
+		}
+
+		int tableId = 0;
+		// int recordId = 0;
+		MTable table = null;
+		if(!Util.isEmpty(tableName, true)) {
+			table = MTable.get(Env.getCtx(), tableName);
+			if (table != null && table.getAD_Table_ID() > 0) {
+				tableId = table.getAD_Table_ID();
+				PO entity = null;
+				if(RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+					entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), recordId, null);
+					if(entity != null) {
+						recordId = entity.get_ID();
+					} else {
+						recordId = 0;
+					}
+				}
+
+				if (table.getAD_Window_ID() > 0) {
+					//	Add to recent Item
+					DictionaryUtil.addToRecentItem(
+						MMenu.ACTION_Window,
+						table.getAD_Window_ID()
+					);
+				}
+			}
+		}
+
+		//	Call process builder
+		org.eevolution.services.dsl.ProcessBuilder searchProcessBuilder = ProcessBuilder.create(context)
+			.process(searchProcessId)
+			.withTitle(process.getName())
+			.withWindowNo(0)
+			.withRecordId(tableId, recordId)
+		;
+		for (Entry <String, Object> parameter: parametersToAdd.entrySet()) {
+			Object parameterValue = parameter.getValue();
+			if (parameterValue instanceof List ) {
+				@SuppressWarnings("unchecked")
+				List<Object> parameterList = (List<Object>) parameterValue;
+				if (parameterList.size() >= 2) {
+					searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0), parameterList.get(1));
+				} else {
+					searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0));
+				}
+			} else {
+				searchProcessBuilder.withParameter(parameter.getKey(), parameter.getValue());
+			}
+		}
+
+		// Execute Search Process
+		ProcessInfo processInfo = searchProcessBuilder.execute();
+		int processInstanceID = processInfo.getAD_PInstance_ID();
+		if (!Util.isEmpty(viewProcessInstanceColumnSql, true)) {
+			processInstanceWhere.append(" AND ")
+				.append(viewProcessInstanceColumnSql)
+				.append(" = ")
+				.append(processInstanceID)
+			;
+		}
+		return processInstanceWhere.toString();
+	}
+
+
 	/**
 	 * Convert Object to list
 	 * @param request
@@ -102,151 +263,32 @@ public class BrowserLogic {
 			MMenu.ACTION_SmartBrowse,
 			browser.getAD_Browse_ID()
 		);
-
-		HashMap<String, Object> parameterMap = new HashMap<>();
-		HashMap<String, String> parameterOperator = new HashMap<>();
+		
 		//	Populate map
+		HashMap<String, Object> parametersMap = new HashMap<>();
 		FilterManager.newInstance(request.getFilters()).getConditions()
-			.stream()
+			.parallelStream()
 			.forEach(condition -> {
-				parameterOperator.put(condition.getColumnName(), condition.getOperator());
-				parameterMap.put(condition.getColumnName(), condition.getValue());
+				parametersMap.put(condition.getColumnName(), condition.getValue());
 			});
 
 		//	Fill context
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
-		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
+		ContextManager.setContextWithAttributes(windowNo, context, parametersMap, false);
 		MView view = browser.getAD_View();
 
 		// Run search process
-		StringBuffer processInstanceWhere = new StringBuffer();
+		String processInstanceWhere = "";
 		if (browser.get_ColumnIndex("SearchProcess_ID") >= 0 && browser.get_ValueAsInt("SearchProcess_ID") > 0) {
-			int searchProcessId = browser.get_ValueAsInt("SearchProcess_ID");
-			// Get Instance of process
-			MProcess process = MProcess.get(
+			processInstanceWhere = getSearchProcessInstaceWhere(
 				context,
-				searchProcessId
+				browser.getAD_Browse_ID(),
+				browser.get_ValueAsInt("SearchProcess_ID"),
+				request.getTableName(),
+				request.getRecordId(),
+				request.getFilters()
 			);
-			if (process == null || process.getAD_Process_ID() <= 0) {
-				throw new AdempiereException("@SearchProcess_ID@ @NotFound@");
-			}
-
-			// Record/Role access
-			boolean isWithAccess = AccessUtil.isProcessAccess(process.getAD_Process_ID());
-			if (!isWithAccess) {
-				throw new AdempiereException("@SearchProcess_ID@ @AccessCannotProcess@");
-			}
-			String viewProcessInstanceColumnSql = "";
-			List<MViewColumn> viewColumns = view.getViewColumns();
-			HashMap<String, Object> parametersToAdd = new HashMap<>();
-			//Get Process Parameters
-			List<MProcessPara> searchProcessParameters = process.getParametersAsList();
-			for (MViewColumn viewColumn: viewColumns) {
-				String columnName = viewColumn.getColumnName();
-				if (columnName.endsWith(I_AD_PInstance.COLUMNNAME_AD_PInstance_ID)) {
-					viewProcessInstanceColumnSql = viewColumn.getColumnSQL();
-					if (searchProcessParameters.isEmpty()) {
-						break;
-					}
-				}
-				if (searchProcessParameters.isEmpty()) {
-					continue;
-				}
-				String columnSql = "";
-				int index = -1;
-				String parameterName = "";
-				Optional<MProcessPara> maybeParameter = null;
-				boolean isRange = false;
-
-				if (parameterMap.containsKey(columnName)) {
-					Object value = parameterMap.get(columnName);
-				 	columnSql = viewColumn.getColumnSQL();
-				 	index = columnSql.lastIndexOf(".");
-				 	parameterName = columnSql.substring(index +1);
-				 	String searchString = parameterName;
-			 		maybeParameter = searchProcessParameters.stream().filter(param -> param.getColumnName().equals(searchString)).findFirst();
-					if (maybeParameter.isEmpty()) {
-						continue;
-					}
-					isRange = maybeParameter.get().isRange();
-					String operatorName = parameterOperator.get(columnName);
-					if (isRange && !operatorName.equalsIgnoreCase(Filter.BETWEEN)
-						&& !operatorName.equalsIgnoreCase(Filter.GREATER_EQUAL)) {
-						continue;
-					}
-					if (!isRange && !operatorName.equalsIgnoreCase(Filter.EQUAL)) {
-						continue;
-					}
-					parametersToAdd.put(parameterName, value);
-				}
-				if (isRange && parameterMap.containsKey(columnName + "_To")) {
-					Object value = parameterMap.get(columnName  + "_To");
-					String operatorName = parameterOperator.get(columnName + "_To");
-					if (!operatorName.equalsIgnoreCase(Filter.LESS_EQUAL)) {
-						continue;
-					}
-					parametersToAdd.put(parameterName + "_To", value);
-				}
-			}
-
-			int tableId = 0;
-			int recordId = 0;
-			MTable table = null;
-			if(!Util.isEmpty(request.getTableName(), true)) {
-				table = MTable.get(Env.getCtx(), request.getTableName());
-				if (table != null && table.getAD_Table_ID() > 0) {
-					tableId = table.getAD_Table_ID();
-					PO entity = null;
-					if(RecordUtil.isValidId(request.getRecordId(), table.getAccessLevel())) {
-						entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), request.getRecordId(), null);
-						if(entity != null) {
-							recordId = entity.get_ID();
-						}
-					}
-
-					if (table.getAD_Window_ID() > 0) {
-						//	Add to recent Item
-						DictionaryUtil.addToRecentItem(
-							MMenu.ACTION_Window,
-							table.getAD_Window_ID()
-						);
-					}
-				}
-			}
-
-			//	Call process builder
-			org.eevolution.services.dsl.ProcessBuilder searchProcessBuilder = ProcessBuilder.create(context)
-				.process(searchProcessId)
-				.withTitle(process.getName())
-				.withWindowNo(0)
-				.withRecordId(tableId, recordId)
-			;
-			for (Entry <String, Object> parameter: parametersToAdd.entrySet()) {
-				Object parameterValue = parameter.getValue();
-				if (parameterValue instanceof List ) {
-					@SuppressWarnings("unchecked")
-					List<Object> parameterList = (List<Object>) parameterValue;
-					if (parameterList.size() >= 2) {
-						searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0), parameterList.get(1));
-					} else {
-						searchProcessBuilder.withParameter(parameter.getKey(), parameterList.get(0));
-					}
-				} else {
-					searchProcessBuilder.withParameter(parameter.getKey(), parameter.getValue());
-				}
-			}
-
-			// Execute Search Process
-			ProcessInfo processInfo = searchProcessBuilder.execute();
-			int processInstanceID = processInfo.getAD_PInstance_ID();
-			if (!Util.isEmpty(viewProcessInstanceColumnSql, true)) {
-				processInstanceWhere.append(" AND ")
-					.append(viewProcessInstanceColumnSql)
-					.append(" = ")
-					.append(processInstanceID)
-				;
-			}
 		}
 
 		//	get query columns
@@ -284,7 +326,7 @@ public class BrowserLogic {
 				.append(parsedWhereClause);
 		}
 
-		// Add PInstanceID validation
+		// Add Process Instance ID validation
 		whereClause.append(processInstanceWhere);
 
 		//	For dynamic condition
@@ -422,7 +464,7 @@ public class BrowserLogic {
 				);
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 		} finally {
 			DB.close(rs, pstmt);
@@ -533,7 +575,7 @@ public class BrowserLogic {
 	}
 
 
-	public static List<KeyValueSelection> getAllSelectionByCriteria(int browserId, String contextAttributes, String criteriaFilters) {
+	public static List<KeyValueSelection> getAllSelectionByCriteria(int browserId, String contextAttributes, String criteriaFilters, String tableName, int recordId) {
 		List<KeyValueSelection> selectionsList = new ArrayList<KeyValueSelection>();
 
 		Properties context = Env.getCtx();
@@ -544,8 +586,15 @@ public class BrowserLogic {
 		if (browser == null || browser.getAD_Browse_ID() <= 0) {
 			return selectionsList;
 		}
-		HashMap<String, Object> parameterMap = new HashMap<>();
+
+		//	Add to recent Item
+		DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_SmartBrowse,
+			browser.getAD_Browse_ID()
+		);
+
 		//	Populate map
+		HashMap<String, Object> parameterMap = new HashMap<>();
 		FilterManager.newInstance(criteriaFilters).getConditions()
 			.parallelStream()
 			.forEach(condition -> {
@@ -557,11 +606,26 @@ public class BrowserLogic {
 		ContextManager.setContextWithAttributesFromString(windowNo, context, contextAttributes);
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 
+		// Run search process
+		String processInstanceWhere = "";
+		if (browser.get_ColumnIndex("SearchProcess_ID") >= 0 && browser.get_ValueAsInt("SearchProcess_ID") > 0) {
+			processInstanceWhere = getSearchProcessInstaceWhere(
+				context,
+				browser.getAD_Browse_ID(),
+				browser.get_ValueAsInt("SearchProcess_ID"),
+				tableName,
+				recordId,
+				criteriaFilters
+			);
+		}
+
 		//	get query columns
 		String query = QueryUtil.getBrowserQueryWithReferences(browser);
 		String sql = Env.parseContext(context, windowNo, query, false);
 		if (Util.isEmpty(sql, true)) {
-			throw new AdempiereException("@AD_Browse_ID@ @SQL@ @Unparseable@");
+			throw new AdempiereException(
+				"@AD_Browse_ID@ " + browser.getName() + " (" + browser.getAD_Browse_ID() + "), @SQL@ @Unparseable@"
+			);
 		}
 
 		MView view = browser.getAD_View();
@@ -581,12 +645,17 @@ public class BrowserLogic {
 		if (!Util.isEmpty(where, true)) {
 			String parsedWhereClause = Env.parseContext(context, windowNo, where, false);
 			if (Util.isEmpty(parsedWhereClause, true)) {
-				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
+				throw new AdempiereException(
+					"@AD_Browse_ID@ " + browser.getName() + " (" + browser.getAD_Browse_ID() + "), @WhereClause@ @Unparseable@"
+				);
 			}
 			whereClause
 				.append(" AND ")
 				.append(parsedWhereClause);
 		}
+
+		// Add Process Instance ID validation
+		whereClause.append(processInstanceWhere);
 
 		//	For dynamic condition
 		List<Object> filterValues = new ArrayList<Object>();
@@ -598,7 +667,9 @@ public class BrowserLogic {
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			String parsedDynamicWhere = Env.parseContext(context, windowNo, dynamicWhere, false);
 			if (Util.isEmpty(parsedDynamicWhere, true)) {
-				throw new AdempiereException("@AD_Browse_ID@ @WhereClause@ @Unparseable@");
+				throw new AdempiereException(
+					"@AD_Browse_ID@ " + browser.getName() + " (" + browser.getAD_Browse_ID() + "), @WhereClause@ @Unparseable@"
+				);
 			}
 			//	Add
 			whereClause.append(" AND (")
@@ -662,6 +733,118 @@ public class BrowserLogic {
 		});
 
 		return selectionsList;
+	}
+
+	/**
+	 * Update Browser Entity
+	 * @param request
+	 * @return
+	 */
+	public static Entity.Builder updateBrowserEntity(UpdateBrowserEntityRequest request) {
+		if (request.getId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @AD_Browse_ID@");
+		}
+		Properties context = Env.getCtx();
+		MBrowse browser = MBrowse.get(
+			context,
+			request.getId()
+		);
+		if (browser == null || browser.getAD_Browse_ID() <= 0) {
+			throw new AdempiereException(
+				"@AD_Browse_ID@ " + request.getId() + " @NotFound@"
+			);
+		}
+
+		if (!browser.isUpdateable()) {
+			throw new AdempiereException(
+				"@AD_Browse_ID@ " + browser.getName() + " (" + request.getId() + "), not updateable records"
+			);
+		}
+
+		if (browser.getAD_Table_ID() <= 0) {
+			throw new AdempiereException("No Table defined in the Smart Browser");
+		}
+		final MTable table = MTable.get(context, browser.getAD_Table_ID());
+
+		PO entity = RecordUtil.getEntity(context, table.getAD_Table_ID(), null, request.getRecordId(), null);
+		if (entity == null || entity.get_ID() <= 0) {
+			// Return
+			return ConvertUtil.convertEntity(entity);
+		}
+
+		MView view = new MView(context, browser.getAD_View_ID());
+		List<MViewColumn> viewColumnsList = view.getViewColumns();
+
+		request.getAttributes().getFieldsMap().entrySet().parallelStream().forEach(attribute -> {
+			// find view column definition
+			MViewColumn viewColumn = viewColumnsList
+				.parallelStream()
+				.filter(currentViewColumn -> {
+					return currentViewColumn.getColumnName().equals(attribute.getKey());
+				})
+				.findFirst()
+				.orElse(null)
+			;
+			// if view aliases not exists, next element
+			if (viewColumn == null || viewColumn.getAD_View_Column_ID() <= 0) {
+				return;
+			}
+
+			MViewDefinition viewDefinition = MViewDefinition.get(context, viewColumn.getAD_View_Definition_ID());
+			// not same table setting in smart browser and view definition
+			if (browser.getAD_Table_ID() != viewDefinition.getAD_Table_ID()) {
+				log.info("Browse Table " + browser.getAD_Table_ID() + " and View Definition Table " + viewDefinition.getAD_Table_ID() + " different ");
+				return;
+			}
+
+			MBrowseField browseField = MBrowseField.get(browser, viewColumn);
+			if (browseField == null || browseField.getAD_Browse_Field_ID() <= 0) {
+				log.warning("Browse Field no found");
+				return;
+			}
+			if (!browseField.isActive() || browseField.isReadOnly()) {
+				log.warning("Browse Field not updateable: " + browseField.getName());
+				return;
+			}
+
+			MColumn column = MColumn.get(browser.getCtx(), viewColumn.getAD_Column_ID());
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// column is not present on current table
+				return;
+			}
+			if (column.isVirtualColumn() || column.isKey() || !column.isUpdateable()) {
+				// virtual column with columnSQL
+				log.warning("Column is virtual column or not updateable: " + column.getColumnName());
+				return;
+			}
+			String columnName = column.getColumnName();
+			int referenceId = column.getAD_Reference_ID();
+
+			Object value = null;
+			if (!attribute.getValue().hasNullValue()) {
+				if (referenceId > 0) {
+					value = ValueManager.getObjectFromReference(
+						attribute.getValue(),
+						referenceId
+					);
+				}
+				if (value == null) {
+					value = ValueManager.getObjectFromValue(attribute.getValue());
+				}
+			}
+			entity.set_ValueOfColumn(columnName, value);
+		});
+		//	Save entity
+		if (entity.is_Changed()) {
+			entity.saveEx();
+		} else {
+			log.severe(
+				Msg.parseTranslation(context, "@Ignored@")
+			);
+		}
+
+		//	Return
+		return ConvertUtil.convertEntity(entity);
 	}
 
 }
