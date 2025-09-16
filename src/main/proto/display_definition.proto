@@ -243,6 +243,7 @@ enum DefinitionType {
 	RESOURCE = 7; // As Gannt
 	TIMELINE = 8;
 	WORKFLOW = 9;
+	CUSTOM = 10;
 }
 message DefinitionMetadata {
 	int32 id = 1;
@@ -267,6 +268,7 @@ message DefinitionMetadata {
 	repeated string context_column_names = 20;
 	bool is_info_record = 21;
 	bool is_insert_record = 22;
+	bool is_custom = 23;
 }
 message ListDisplayDefinitionsMetadataResponse {
 	int64 record_count = 1;

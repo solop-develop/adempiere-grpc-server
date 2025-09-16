@@ -164,6 +164,11 @@ public class DisplayDefinitionConvertUtil {
 					I_AD_Tab.COLUMNNAME_IsInsertRecord
 				)
 			)
+			.setIsInsertRecord(
+				record.get_ValueAsBoolean(
+					"SP010_IsCustom"
+				)
+			)
 			.addAllContextColumnNames(
 				ContextManager.getContextColumnNames(
 					record.get_ValueAsString(
