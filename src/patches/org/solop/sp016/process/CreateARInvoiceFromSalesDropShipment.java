@@ -117,7 +117,7 @@ public class CreateARInvoiceFromSalesDropShipment extends CreateARInvoiceFromSal
 
 				int uOMId = salesOrderLine.getC_UOM_ID();
 				BigDecimal qtyEntered = Env.ZERO;
-				BigDecimal qtyInvoiced = (BigDecimal) consolidate.get_Value("Qty");
+				BigDecimal qtyInvoiced = (BigDecimal) consolidate.get_Value("QtySold");
 				MProduct product = MProduct.get(Env.getCtx(), invoiceLine.getM_Product_ID());
 				if(uOMId != product.getC_UOM_ID()) {
 					MUOM orderUom = MUOM.get(getCtx(), uOMId);
