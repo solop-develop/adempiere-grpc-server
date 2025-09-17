@@ -59,8 +59,8 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 			throw new AdempiereException("@FeeAmt@ = 0");
 		}
 		X_C_PPBatchConfiguration batchConfiguration = new X_C_PPBatchConfiguration(getCtx(), batch.getC_PPBatchConfiguration_ID(), get_TrxName());
-		if(batchConfiguration.getFeeCurrency_ID() <= 0) {
-			throw new AdempiereException("@FeeCurrency_ID@ @NotFound@");
+		if(batch.getC_Currency_ID() <= 0) {
+			throw new AdempiereException("@C_Currency_ID@ @NotFound@");
 		}
 		int documentTypeId= 0;
 		BigDecimal invoiceAmount = BigDecimal.ZERO;
@@ -100,7 +100,7 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		invoice.setBPartner(businessPartner);
 		invoice.setSalesRep_ID(getAD_User_ID());	//	caller
 		invoice.setDateInvoiced(getDateDoc());
-		String currencyIsoCode = MCurrency.get(getCtx(), batchConfiguration.getFeeCurrency_ID()).getISO_Code();
+		String currencyIsoCode = MCurrency.get(getCtx(), batch.getC_Currency_ID()).getISO_Code();
 		MPriceList priceList = MPriceList.getDefault(getCtx(), true, currencyIsoCode);
 		if(priceList == null) {
 			throw new IllegalArgumentException("@M_PriceList_ID@ @NotFound@ (@C_Currency_ID@ " + currencyIsoCode + ")");
