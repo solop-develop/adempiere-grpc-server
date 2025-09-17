@@ -18,6 +18,7 @@
 
 package org.solop.process;
 
+import org.adempiere.core.domains.models.X_C_PPBatchConfiguration;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCurrency;
@@ -25,7 +26,6 @@ import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MInvoicePaySchedule;
 import org.compiere.model.MPayment;
-import org.compiere.model.MPaymentProcessor;
 import org.compiere.model.MPaymentProcessorBatch;
 import org.compiere.model.MPaymentProcessorSchedule;
 import org.compiere.model.MPriceList;
@@ -65,15 +65,15 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		if(!batch.isProcessed() || (!batch.getDocStatus().equals(MPaymentProcessorBatch.DOCSTATUS_Completed) && !batch.getDocStatus().equals(MPaymentProcessorBatch.DOCSTATUS_Closed))) {
 			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Unprocessed@");
 		}
-		if(batch.getC_PaymentProcessor_ID() <= 0) {
-			throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
+		if(batch.getC_PPBatchConfiguration_ID() <= 0) {
+			throw new AdempiereException("@C_PPBatchConfiguration_ID@ @NotFound@");
 		}
 
-		MPaymentProcessor paymentProcessor = new MPaymentProcessor(getCtx(), batch.getC_PaymentProcessor_ID(), get_TrxName());
-		if(paymentProcessor.getFeeCurrency_ID() <= 0) {
+		X_C_PPBatchConfiguration batchConfiguration = new X_C_PPBatchConfiguration(getCtx(), batch.getC_PPBatchConfiguration_ID(), get_TrxName());
+		if(batchConfiguration.getFeeCurrency_ID() <= 0) {
 			throw new AdempiereException("@FeeCurrency_ID@ @NotFound@");
 		}
-		int documentTypeId = paymentProcessor.getSalesInvoiceDocType_ID();
+		int documentTypeId = batchConfiguration.getSalesInvoiceDocType_ID();
 		if (documentTypeId <= 0) {
 			throw new AdempiereException("@SalesInvoiceDocType_ID@ @NotFound@");
 		}
@@ -97,7 +97,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 			invoice.setBPartner(businessPartner);
 			invoice.setSalesRep_ID(getAD_User_ID());	//	caller
 			invoice.setDateInvoiced(batch.getDateDoc());
-			String currencyIsoCode = MCurrency.get(getCtx(), paymentProcessor.getFeeCurrency_ID()).getISO_Code();
+			String currencyIsoCode = MCurrency.get(getCtx(), batchConfiguration.getFeeCurrency_ID()).getISO_Code();
 			MPriceList priceList = (MPriceList) businessPartner.getM_PriceList();
 			if (priceList == null) {
 				priceList = MPriceList.getDefault(getCtx(), true, currencyIsoCode);
@@ -116,7 +116,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 
 			//	Create Invoice Line
 			MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
-			invoiceLine.setC_Charge_ID(paymentProcessor.getFeeCharge_ID());
+			invoiceLine.setC_Charge_ID(batchConfiguration.getFeeCharge_ID());
 			invoiceLine.setQty(1);
 			invoiceLine.setPrice(batchSchedule.getAmount());
 			invoiceLine.setTax();
@@ -146,7 +146,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		//For Withdrawal
 		BigDecimal withdrawalAmount = maybeWithdrawalAmount.get();
 		if (withdrawalAmount.signum() != 0) {
-			MPayment withdrawal = getWithdrawal(paymentProcessor, withdrawalAmount, batch);
+			MPayment withdrawal = getWithdrawal(batchConfiguration, withdrawalAmount, batch);
 			withdrawal.saveEx();
 
 			if(!withdrawal.processIt(MPayment.DOCACTION_Complete)) {
@@ -158,20 +158,20 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		return "@Created@: " + created.get();
 	}
 
-	private MPayment getWithdrawal(MPaymentProcessor paymentProcessor, BigDecimal amount, MPaymentProcessorBatch batch) {
+	private MPayment getWithdrawal(X_C_PPBatchConfiguration batchConfiguration, BigDecimal amount, MPaymentProcessorBatch batch) {
 		MPayment withdrawal = new MPayment(getCtx(), 0, get_TrxName());
 		withdrawal.setDocStatus(MPayment.DOCSTATUS_Drafted);
 		withdrawal.setDocAction(MPayment.DOCACTION_Complete);
 
-		withdrawal.setC_Charge_ID(paymentProcessor.getFeeCharge_ID());
+		withdrawal.setC_Charge_ID(batchConfiguration.getFeeCharge_ID());
 		withdrawal.setPayAmt(amount);
-		withdrawal.setC_BPartner_ID(paymentProcessor.getPaymentProcessorVendor_ID());
+		withdrawal.setC_BPartner_ID(batchConfiguration.getC_BPartner_ID());
 
 		withdrawal.setC_DocType_ID(false);
 		withdrawal.setTenderType(MPayment.TENDERTYPE_Account);
 		withdrawal.setC_BankAccount_ID(batch.getTransitBankAccount_ID());
 		withdrawal.setIsReceipt(false);
-		withdrawal.setC_Currency_ID(paymentProcessor.getFeeCurrency_ID());
+		withdrawal.setC_Currency_ID(batchConfiguration.getFeeCurrency_ID());
 		withdrawal.set_ValueOfColumn("C_PaymentProcessorBatch_ID", getRecord_ID());
 		return withdrawal;
 	}

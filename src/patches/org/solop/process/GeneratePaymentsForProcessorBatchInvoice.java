@@ -18,11 +18,11 @@
 
 package org.solop.process;
 
+import org.adempiere.core.domains.models.X_C_PPBatchConfiguration;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MPPVendorTransaction;
 import org.compiere.model.MPayment;
-import org.compiere.model.MPaymentProcessor;
 import org.compiere.model.MPaymentProcessorBatch;
 import org.compiere.model.MPaymentProcessorSchedule;
 import org.compiere.model.Query;
@@ -47,10 +47,10 @@ public class GeneratePaymentsForProcessorBatchInvoice extends GeneratePaymentsFo
 	protected String doIt() throws Exception
 	{
 		String whereClause = "DateDoc = ? AND EXISTS (SELECT 1 FROM C_PaymentProcessorBatch ppb WHERE ppb.FinalAccount_ID IS NOT NULL " +
-				" AND ppb.DocStatus = 'CO' AND ppb.OpenAmt > 0 AND IsAutomaticReceipt = 'Y' AND ppb.C_PaymentProcessorBatch_ID = C_PaymentProcessorSchedule.C_PaymentProcessorBatch_ID)";
+			" AND ppb.DocStatus = 'CO' AND ppb.OpenAmt > 0 AND IsAutomaticReceipt = 'Y' AND ppb.C_PaymentProcessorBatch_ID = C_PaymentProcessorSchedule.C_PaymentProcessorBatch_ID)";
 		List<Integer> batchScheduleIds = new Query(getCtx(), MPaymentProcessorSchedule.Table_Name, whereClause, get_TrxName())
-				.setParameters(getDateDoc())
-				.getIDsAsList();
+			.setParameters(getDateDoc())
+			.getIDsAsList();
 
 		AtomicInteger created = new AtomicInteger(0);
 		String invoiceWhereClause = "DocumentNo = ? AND C_PaymentProcessorBatch_ID = ? AND DateInvoiced = ? AND IsPaid = 'N' AND DocStatus NOT IN ('RE', 'VO')";
@@ -58,19 +58,22 @@ public class GeneratePaymentsForProcessorBatchInvoice extends GeneratePaymentsFo
 
 			MPaymentProcessorSchedule batchSchedule = new MPaymentProcessorSchedule(getCtx(), batchScheduleId, get_TrxName());
 			MPaymentProcessorBatch batch = (MPaymentProcessorBatch) batchSchedule.getC_PaymentProcessorBatch();
-			MPaymentProcessor paymentProcessor = new MPaymentProcessor(getCtx(), batch.getC_PaymentProcessor_ID(), get_TrxName());
-			if(paymentProcessor.getFeeCurrency_ID() <= 0) {
+			if (batch.getC_PPBatchConfiguration_ID() <= 0) {
+				return;
+			}
+			X_C_PPBatchConfiguration batchConfiguration = new X_C_PPBatchConfiguration(getCtx(), batch.getC_PPBatchConfiguration_ID(), get_TrxName());
+			if(batchConfiguration.getFeeCurrency_ID() <= 0) {
 				throw new AdempiereException("@FeeCurrency_ID@ @NotFound@");
 			}
-			int documentTypeId = paymentProcessor.getSalesInvoiceDocType_ID();
+			int documentTypeId = batchConfiguration.getSalesInvoiceDocType_ID();
 			if (documentTypeId <= 0) {
 				throw new AdempiereException("@SalesInvoiceDocType_ID@ @NotFound@");
 			}
 
 			//	Create Invoice
 			MInvoice invoice = new Query(getCtx(), MInvoice.Table_Name, invoiceWhereClause, get_TrxName())
-					.setParameters(batchSchedule.getReferenceNo(), batch.get_ID(), batch.getDateDoc())
-					.first();
+				.setParameters(batchSchedule.getReferenceNo(), batch.get_ID(), batch.getDateDoc())
+				.first();
 			if (invoice == null) {
 				return;
 			}
