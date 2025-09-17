@@ -70,8 +70,8 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		}
 
 		X_C_PPBatchConfiguration batchConfiguration = new X_C_PPBatchConfiguration(getCtx(), batch.getC_PPBatchConfiguration_ID(), get_TrxName());
-		if(batchConfiguration.getFeeCurrency_ID() <= 0) {
-			throw new AdempiereException("@FeeCurrency_ID@ @NotFound@");
+		if(batch.getC_Currency_ID() <= 0) {
+			throw new AdempiereException("@C_Currency_ID@ @NotFound@");
 		}
 		int documentTypeId = batchConfiguration.getSalesInvoiceDocType_ID();
 		if (documentTypeId <= 0) {
@@ -97,7 +97,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 			invoice.setBPartner(businessPartner);
 			invoice.setSalesRep_ID(getAD_User_ID());	//	caller
 			invoice.setDateInvoiced(batch.getDateDoc());
-			String currencyIsoCode = MCurrency.get(getCtx(), batchConfiguration.getFeeCurrency_ID()).getISO_Code();
+			String currencyIsoCode = MCurrency.get(getCtx(), batch.getC_Currency_ID()).getISO_Code();
 			MPriceList priceList = (MPriceList) businessPartner.getM_PriceList();
 			if (priceList == null) {
 				priceList = MPriceList.getDefault(getCtx(), true, currencyIsoCode);
@@ -171,7 +171,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 		withdrawal.setTenderType(MPayment.TENDERTYPE_Account);
 		withdrawal.setC_BankAccount_ID(batch.getTransitBankAccount_ID());
 		withdrawal.setIsReceipt(false);
-		withdrawal.setC_Currency_ID(batchConfiguration.getFeeCurrency_ID());
+		withdrawal.setC_Currency_ID(batch.getC_Currency_ID());
 		withdrawal.set_ValueOfColumn("C_PaymentProcessorBatch_ID", getRecord_ID());
 		return withdrawal;
 	}

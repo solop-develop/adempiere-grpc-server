@@ -62,8 +62,8 @@ public class GeneratePaymentsForProcessorBatchInvoice extends GeneratePaymentsFo
 				return;
 			}
 			X_C_PPBatchConfiguration batchConfiguration = new X_C_PPBatchConfiguration(getCtx(), batch.getC_PPBatchConfiguration_ID(), get_TrxName());
-			if(batchConfiguration.getFeeCurrency_ID() <= 0) {
-				throw new AdempiereException("@FeeCurrency_ID@ @NotFound@");
+			if(batch.getC_Currency_ID() <= 0) {
+				throw new AdempiereException("@C_Currency_ID@ @NotFound@");
 			}
 			int documentTypeId = batchConfiguration.getSalesInvoiceDocType_ID();
 			if (documentTypeId <= 0) {
