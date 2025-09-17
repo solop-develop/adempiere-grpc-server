@@ -629,14 +629,6 @@ public class MPaymentProcessorBatch extends X_C_PaymentProcessorBatch implements
         return getGrandTotal();
     }	//	getApprovalAmt
 
-    /**
-     * 	Get Document Currency
-     *	@return C_Currency_ID
-     */
-    public int getC_Currency_ID() {
-        return MBankAccount.get(getCtx(), getC_BankAccount_ID()).getC_Currency_ID();
-    }	//	getC_Currency_ID
-
     @Override
     public String toString()
     {
