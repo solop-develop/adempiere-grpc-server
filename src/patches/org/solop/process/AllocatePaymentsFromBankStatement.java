@@ -86,7 +86,7 @@ public class AllocatePaymentsFromBankStatement extends AllocatePaymentsFromBankS
 				withdrawal.setTenderType(MPayment.TENDERTYPE_Account);
 				withdrawal.setC_BankAccount_ID(batch.getTransitBankAccount_ID());
 				withdrawal.setIsReceipt(false);
-				withdrawal.setC_Currency_ID(batchConfiguration.getFeeCurrency_ID());
+				withdrawal.setC_Currency_ID(batch.getC_Currency_ID());
 				withdrawal.set_ValueOfColumn("C_PaymentProcessorBatch_ID", getRecord_ID());
 				withdrawal.saveEx();
 
