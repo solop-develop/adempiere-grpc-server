@@ -39,7 +39,7 @@ public class X_C_PaymentProcessorBatch extends PO implements I_C_PaymentProcesso
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20250910L;
+	private static final long serialVersionUID = 20250916L;
 
     /** Standard Constructor */
     public X_C_PaymentProcessorBatch (Properties ctx, int C_PaymentProcessorBatch_ID, String trxName)
@@ -50,9 +50,12 @@ public class X_C_PaymentProcessorBatch extends PO implements I_C_PaymentProcesso
 			setC_BankAccount_ID (0);
 			setC_BPartner_ID (0);
 			setC_BPartner_Location_ID (0);
+			setC_Currency_ID (0);
+// -1
 			setC_DocType_ID (0);
 			setC_PaymentProcessorBatch_ID (0);
 			setC_PaymentProcessor_ID (0);
+			setC_PPBatchConfiguration_ID (0);
 			setDateDoc (new Timestamp( System.currentTimeMillis() ));
 // @#Date@
 			setDocAction (null);
@@ -200,6 +203,34 @@ public class X_C_PaymentProcessorBatch extends PO implements I_C_PaymentProcesso
 		return ii.intValue();
 	}
 
+	public I_C_Currency getC_Currency() throws RuntimeException
+    {
+		return (I_C_Currency)MTable.get(getCtx(), I_C_Currency.Table_Name)
+			.getPO(getC_Currency_ID(), get_TrxName());	}
+
+	/** Set Currency.
+		@param C_Currency_ID 
+		The Currency for this record
+	  */
+	public void setC_Currency_ID (int C_Currency_ID)
+	{
+		if (C_Currency_ID < 1) 
+			set_ValueNoCheck (COLUMNNAME_C_Currency_ID, null);
+		else 
+			set_ValueNoCheck (COLUMNNAME_C_Currency_ID, Integer.valueOf(C_Currency_ID));
+	}
+
+	/** Get Currency.
+		@return The Currency for this record
+	  */
+	public int getC_Currency_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_C_Currency_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
 	public I_C_DocType getC_DocType() throws RuntimeException
     {
 		return (I_C_DocType)MTable.get(getCtx(), I_C_DocType.Table_Name)
@@ -274,6 +305,31 @@ public class X_C_PaymentProcessorBatch extends PO implements I_C_PaymentProcesso
 	public int getC_PaymentProcessor_ID () 
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_PaymentProcessor_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	public I_C_PPBatchConfiguration getC_PPBatchConfiguration() throws RuntimeException
+    {
+		return (I_C_PPBatchConfiguration)MTable.get(getCtx(), I_C_PPBatchConfiguration.Table_Name)
+			.getPO(getC_PPBatchConfiguration_ID(), get_TrxName());	}
+
+	/** Set Payment Processor Batch Configuration.
+		@param C_PPBatchConfiguration_ID Payment Processor Batch Configuration	  */
+	public void setC_PPBatchConfiguration_ID (int C_PPBatchConfiguration_ID)
+	{
+		if (C_PPBatchConfiguration_ID < 1) 
+			set_Value (COLUMNNAME_C_PPBatchConfiguration_ID, null);
+		else 
+			set_Value (COLUMNNAME_C_PPBatchConfiguration_ID, Integer.valueOf(C_PPBatchConfiguration_ID));
+	}
+
+	/** Get Payment Processor Batch Configuration.
+		@return Payment Processor Batch Configuration	  */
+	public int getC_PPBatchConfiguration_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_C_PPBatchConfiguration_ID);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();

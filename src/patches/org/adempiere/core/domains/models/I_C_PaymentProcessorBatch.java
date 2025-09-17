@@ -123,6 +123,21 @@ public interface I_C_PaymentProcessorBatch
 
 	public I_C_BPartner_Location getC_BPartner_Location() throws RuntimeException;
 
+    /** Column name C_Currency_ID */
+    public static final String COLUMNNAME_C_Currency_ID = "C_Currency_ID";
+
+	/** Set Currency.
+	  * The Currency for this record
+	  */
+	public void setC_Currency_ID (int C_Currency_ID);
+
+	/** Get Currency.
+	  * The Currency for this record
+	  */
+	public int getC_Currency_ID();
+
+	public I_C_Currency getC_Currency() throws RuntimeException;
+
     /** Column name C_DocType_ID */
     public static final String COLUMNNAME_C_DocType_ID = "C_DocType_ID";
 
@@ -165,6 +180,17 @@ public interface I_C_PaymentProcessorBatch
 	public int getC_PaymentProcessor_ID();
 
 	public I_C_PaymentProcessor getC_PaymentProcessor() throws RuntimeException;
+
+    /** Column name C_PPBatchConfiguration_ID */
+    public static final String COLUMNNAME_C_PPBatchConfiguration_ID = "C_PPBatchConfiguration_ID";
+
+	/** Set Payment Processor Batch Configuration	  */
+	public void setC_PPBatchConfiguration_ID (int C_PPBatchConfiguration_ID);
+
+	/** Get Payment Processor Batch Configuration	  */
+	public int getC_PPBatchConfiguration_ID();
+
+	public I_C_PPBatchConfiguration getC_PPBatchConfiguration() throws RuntimeException;
 
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";
