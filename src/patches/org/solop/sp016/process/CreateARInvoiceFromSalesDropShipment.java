@@ -72,8 +72,8 @@ public class CreateARInvoiceFromSalesDropShipment extends CreateARInvoiceFromSal
 	@Override
 	protected String doIt() throws Exception {
 		invoiceGrouping = InvoiceGrouping.newInstance();
-		consignmentConsolidateTable = MTable.get(getCtx(), "T_ConsigmentSales");
-		consignmentConsolidateDetailTable = MTable.get(getCtx(), "T_ConsigmentSalesDetail");
+		consignmentConsolidateTable = MTable.get(getCtx(), "T_ConsignmentSales");
+		consignmentConsolidateDetailTable = MTable.get(getCtx(), "T_ConsignmentSalesDetail");
 		consignmentDetailTable = MTable.get(getCtx(), "C_ConsignmentDetail");
 		//	Process selections
 		getSelectionKeys().forEach(consolidateId -> {
@@ -155,7 +155,7 @@ public class CreateARInvoiceFromSalesDropShipment extends CreateARInvoiceFromSal
 		MOrderLine originalPurchaseOrderLine = new Query(getCtx(), MOrderLine.Table_Name, whereClause, get_TrxName())
 				.setParameters(productId, orderId)
 				.first();
-		whereClause = "C_OrderLine_ID IN (SELECT C_OrderLine_ID FROM T_ConsigmentSalesDetail cd WHERE cd.T_ConsigmentSales_ID = ?)";
+		whereClause = "C_OrderLine_ID IN (SELECT C_OrderLine_ID FROM T_ConsignmentSalesDetail cd WHERE cd.T_ConsignmentSales_ID = ?)";
 		List<Integer> salesOrderLineIds = new Query(getCtx(), MOrderLine.Table_Name, whereClause, get_TrxName())
 				.setParameters(consolidateId)
 				.getIDsAsList();
@@ -166,8 +166,8 @@ public class CreateARInvoiceFromSalesDropShipment extends CreateARInvoiceFromSal
 			salesOrderLine.saveEx();
 		});
 
-		whereClause = "T_ConsigmentSales_ID = ?";
-		List<Integer> consolidateDetailIds = new Query(getCtx(), "T_ConsigmentSalesDetail", whereClause, get_TrxName())
+		whereClause = "T_ConsignmentSales_ID = ?";
+		List<Integer> consolidateDetailIds = new Query(getCtx(), "T_ConsignmentSalesDetail", whereClause, get_TrxName())
 				.setParameters(consolidateId)
 				.getIDsAsList();
 		consolidateDetailIds.forEach(consolidateDetailId ->{
