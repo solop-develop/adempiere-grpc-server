@@ -155,7 +155,7 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 			for (Integer openOrderLineId : openSalesOrderLineIds) {
 				MOrderLine orderLine = new MOrderLine(getCtx(), openOrderLineId, get_TrxName());
 				BigDecimal maxQty = orderLine.getQtyOrdered().subtract(orderLine.getQtyInvoiced());
-				ConsignmentOrderGrouping orderGroup = new ConsignmentOrderGrouping(maxQty, openOrderLineId);
+				ConsignmentOrderGrouping orderGroup = new ConsignmentOrderGrouping(maxQty, openOrderLineId, orderLine.getQtyOrdered());
 				orderGroup.setOrderId(orderLine.getC_Order_ID());
 				orderLinesAndQtyList.add(orderGroup);
 			}
@@ -189,7 +189,7 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 				consolidate.set_ValueOfColumn("M_Product_ID", productId);
 				consolidate.set_ValueOfColumn("DateInvoiced", dateDoc);
 				consolidate.set_ValueOfColumn("QtyPending", maxQty);
-				consolidate.set_ValueOfColumn("QtyConsigned", qtyUsed);
+				consolidate.set_ValueOfColumn("QtyConsigned", orderGroup.getOrderedAmount());
 				consolidate.saveEx();
 				consolidateId = consolidate.get_ID();
 				orderLineToConsignedConsolidate.put(orderGroup.getOrderLineId(), consolidateId);
