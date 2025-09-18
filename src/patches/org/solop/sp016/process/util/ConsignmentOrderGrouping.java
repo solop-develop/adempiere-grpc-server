@@ -8,15 +8,15 @@ public class ConsignmentOrderGrouping {
 
 
 
-    BigDecimal orderedAmount;
+    BigDecimal deliveredAmount;
     int orderLineId;
     int orderId;
 
-    public ConsignmentOrderGrouping(BigDecimal maxAmount, int orderLineId, BigDecimal orderedAmount) {
+    public ConsignmentOrderGrouping(BigDecimal maxAmount, int orderLineId, BigDecimal deliveredAmount) {
         this.maxAmount = maxAmount;
         this.orderLineId = orderLineId;
         this.usedAmount = BigDecimal.ZERO;
-        this.orderedAmount = orderedAmount;
+        this.deliveredAmount = deliveredAmount;
     }
 
     public BigDecimal getMaxAmount() {
@@ -50,7 +50,7 @@ public class ConsignmentOrderGrouping {
     public void setOrderId(int orderId) {
         this.orderId = orderId;
     }
-    public BigDecimal getOrderedAmount() { return orderedAmount; }
+    public BigDecimal getDeliveredAmount() { return deliveredAmount; }
 
-    public void setOrderedAmount(BigDecimal orderedAmount) { this.orderedAmount = orderedAmount; }
+    public void setDeliveredAmount(BigDecimal deliveredAmount) { this.deliveredAmount = deliveredAmount; }
 }
