@@ -112,6 +112,7 @@ import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
+import org.spin.pos.service.payment.PaymentConvertUtil;
 import org.spin.pos.service.payment.PaymentServiceLogic;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.service.product.ProductServiceLogic;
@@ -797,11 +798,58 @@ public class PointOfSalesForm extends StoreImplBase {
 
 
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/payment-methods/credit-card-types"
+	 */
 	@Override
 	public void listCreditCardTypes(ListCreditCardTypesRequest request,
 			StreamObserver<ListCreditCardTypesResponse> responseObserver) {
 		try {
-			ListCreditCardTypesResponse.Builder tenderTypes = POSLogic.listCreditCardTypes(request);
+			ListCreditCardTypesResponse.Builder tenderTypes = PaymentServiceLogic.listCreditCardTypes(request);
+			responseObserver.onNext(tenderTypes.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	/**
+	 * get: "/point-of-sales/{pos_id}/card-providers"
+	 */
+	@Override
+	public void listCardProviders(ListCardProvidersRequest request,
+			StreamObserver<ListCardProvidersResponse> responseObserver) {
+		try {
+			ListCardProvidersResponse.Builder tenderTypes = PaymentServiceLogic.listCardProviders(request);
+			responseObserver.onNext(tenderTypes.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	/**
+	 * get: "/point-of-sales/{pos_id}/card-providers/{card_provider_id}/cards"
+	 */
+	@Override
+	public void listCards(ListCardsRequest request,
+			StreamObserver<ListCardsResponse> responseObserver) {
+		try {
+			ListCardsResponse.Builder tenderTypes = PaymentServiceLogic.listCards(request);
 			responseObserver.onNext(tenderTypes.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1082,7 +1130,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				if(ticketResult.getResultValues() != null) {
 					Map<String, Object> resultValues = ticketResult.getResultValues();
 					builder.setResultValues(
-						ValueManager.convertObjectMapToStruct(resultValues)
+						ValueManager.getProtoValueFromObject(resultValues)
 					);
 				}
 			}
@@ -2060,14 +2108,17 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * delete: "/point-of-sales/orders/{order_id}/references/{id}"
+	 */
 	@Override
 	public void deletePaymentReference(DeletePaymentReferenceRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			Empty.Builder empty = POSLogic.deletePaymentReference(request);
+			Empty.Builder empty = PaymentServiceLogic.deletePaymentReference(request);
 			responseObserver.onNext(empty.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())

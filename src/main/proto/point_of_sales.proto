@@ -238,6 +238,16 @@ service Store {
 			get: "/point-of-sales/{pos_id}/payment-methods/credit-card-types"
 		};
 	}
+	rpc ListCardProviders(ListCardProvidersRequest) returns (ListCardProvidersResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/card-providers"
+		};
+	}
+	rpc ListCards(ListCardsRequest) returns (ListCardsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/card-providers/{card_provider_id}/cards"
+		};
+	}
 	rpc ListAvailablePaymentMethods(ListAvailablePaymentMethodsRequest) returns (ListAvailablePaymentMethodsResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/payment-methods"
@@ -2002,10 +2012,10 @@ message ProcessOrderRequest {
 // Credit Card Type
 message CreditCardType {
 	int32 id = 1;
-	string uuid = 5;
-	string value = 2;
-	string name = 3;
-	string description = 4;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
 	bool is_active = 6;
 }
 message ListCreditCardTypesRequest {
@@ -2021,6 +2031,62 @@ message ListCreditCardTypesRequest {
 message ListCreditCardTypesResponse {
 	int64 record_count = 1;
 	repeated CreditCardType records = 2;
+	string next_page_token = 3;
+}
+
+
+
+// Card Provider
+message CardProvider {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	bool is_active = 6;
+}
+message ListCardProvidersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+}
+message ListCardProvidersResponse {
+	int64 record_count = 1;
+	repeated CardProvider records = 2;
+	string next_page_token = 3;
+}
+
+
+
+// Card
+message Card {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+	bool is_active = 6;
+	optional CreditCardType credit_card_type = 7;
+}
+message ListCardsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 card_provider_id = 9;
+}
+message ListCardsResponse {
+	int64 record_count = 1;
+	repeated Card records = 2;
 	string next_page_token = 3;
 }
 
@@ -2051,6 +2117,8 @@ message PaymentReference {
 	int32 gift_card_id = 21;
 	string gift_card_code = 22;
 	optional CreditCardType credit_card_type = 23;
+	int32 card_provider_id = 24;
+	int32 card_id = 25;
 }
 message CreatePaymentReferenceRequest {
 	int32 pos_id = 1;
@@ -2075,6 +2143,8 @@ message CreatePaymentReferenceRequest {
 	optional string credit_card_verification_value = 20;
 	optional int32 credit_card_expirity_month = 21;
 	optional int32 credit_card_expirity_year = 22;
+	int32 card_provider_id = 23;
+	int32 card_id = 24;
 
 }
 message ListPaymentReferencesRequest {
@@ -2139,7 +2209,8 @@ message Payment {
 	int32 gift_card_id = 33;
 	string gift_card_code = 34;
 	optional CreditCardType credit_card_type = 35;
-	string name = 36;
+	int32 card_provider_id = 36;
+	int32 card_id = 37;
 }
 //	Create Payment
 message CreatePaymentRequest {
@@ -2168,6 +2239,8 @@ message CreatePaymentRequest {
 	optional string credit_card_verification_value = 23;
 	optional int32 credit_card_expirity_month = 24;
 	optional int32 credit_card_expirity_year = 25;
+	int32 card_provider_id = 26;
+	int32 card_id = 27;
 }
 message UpdatePaymentRequest {
 	int32 pos_id = 1;
@@ -2188,6 +2261,8 @@ message UpdatePaymentRequest {
 	optional string credit_card_verification_value = 16;
 	optional int32 credit_card_expirity_month = 17;
 	optional int32 credit_card_expirity_year = 18;
+	int32 card_provider_id = 19;
+	int32 card_id = 20;
 }
 message DeletePaymentRequest {
 	int32 id = 1;

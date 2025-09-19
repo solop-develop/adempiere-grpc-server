@@ -175,8 +175,16 @@ public class CollectingManagement {
 				payment.setCheckNo(request.getReferenceNo());
 				break;
 			case MPayment.TENDERTYPE_DirectDebit:
+				payment.setR_PnRef(request.getReferenceNo());
+				if (request.getCardProviderId() > 0) {
+					payment.set_ValueOfColumn("C_CardProvider_ID", request.getCardProviderId());
+				}
+				if (request.getCardId() > 0) {
+					payment.set_ValueOfColumn("C_Card_ID", request.getCardId());
+				}
 				break;
 			case MPayment.TENDERTYPE_CreditCard:
+				payment.setR_PnRef(request.getReferenceNo());
 				if (!Util.isEmpty(request.getCreditCardTypeValue(), true)) {
 					payment.setCreditCardType(
 						request.getCreditCardTypeValue()
@@ -198,6 +206,12 @@ public class CollectingManagement {
 				payment.setCreditCardExpYY(
 					request.getCreditCardExpirityYear()
 				);
+				if (request.getCardProviderId() > 0) {
+					payment.set_ValueOfColumn("C_CardProvider_ID", request.getCardProviderId());
+				}
+				if (request.getCardId() > 0) {
+					payment.set_ValueOfColumn("C_Card_ID", request.getCardId());
+				}
 				break;
 			case MPayment.TENDERTYPE_MobilePaymentInterbank:
             case MPayment.TENDERTYPE_Zelle:
