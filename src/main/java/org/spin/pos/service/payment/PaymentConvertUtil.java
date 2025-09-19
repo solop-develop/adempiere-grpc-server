@@ -13,7 +13,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
 
-package org.spin.pos.util;
+package org.spin.pos.service.payment;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -36,12 +36,17 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.core_functionality.Currency;
+import org.spin.backend.grpc.pos.Card;
+import org.spin.backend.grpc.pos.CardProvider;
 import org.spin.backend.grpc.pos.CreditCardType;
 import org.spin.backend.grpc.pos.Payment;
 import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.PaymentReference;
 import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.RecordUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
+import org.spin.pos.util.ColumnsAdded;
+import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -105,6 +110,103 @@ public class PaymentConvertUtil {
 		return builder;
 	}
 
+
+	public static CardProvider.Builder convertCardProvider(int cardProviderId) {
+		CardProvider.Builder builder = CardProvider.newBuilder();
+		if (cardProviderId <= 0) {
+			return builder;
+		}
+		PO cardProvider = RecordUtil.getEntity(
+			Env.getCtx(),
+			"C_CardProvider",
+			cardProviderId,
+			null
+		);
+		return convertCardProvider(cardProvider);
+	}
+	public static CardProvider.Builder convertCardProvider(PO cardProvider) {
+		CardProvider.Builder builder = CardProvider.newBuilder();
+		if (cardProvider == null || cardProvider.get_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(
+				cardProvider.get_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					cardProvider.get_UUID()
+				)
+			)
+			.setValue(
+				StringManager.getValidString(
+					cardProvider.get_ValueAsString("Value")
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					cardProvider.get_ValueAsString("Name")
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					cardProvider.get_ValueAsString("Description")
+				)
+			)
+			.setIsActive(
+				cardProvider.isActive()
+			)
+		;
+		return builder;
+	}
+
+
+	public static Card.Builder convertCard(int cardId) {
+		Card.Builder builder = Card.newBuilder();
+		if (cardId <= 0) {
+			return builder;
+		}
+		PO card = RecordUtil.getEntity(
+			Env.getCtx(),
+			"C_Card",
+			cardId,
+			null
+		);
+		return convertCard(card);
+	}
+	public static Card.Builder convertCard(PO card) {
+		Card.Builder builder = Card.newBuilder();
+		if (card == null || card.get_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(
+				card.get_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					card.get_UUID()
+				)
+			)
+			.setValue(
+				StringManager.getValidString(
+					card.get_ValueAsString("Value")
+				)
+			)
+			.setName(
+				StringManager.getValidString(
+					card.get_ValueAsString("Name")
+				)
+			)
+			.setDescription(
+				StringManager.getValidString(
+					card.get_ValueAsString("Description")
+				)
+			)
+			.setIsActive(
+				card.isActive()
+			)
+		;
+		return builder;
+	}
 
 
 	public static PaymentMethod.Builder convertPaymentMethod(MCPaymentMethod paymentMethod) {
