@@ -2573,6 +2573,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				refundReferenceToCreate.set_ValueOfColumn("C_ConversionType_ID", pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
 			}
 			MOrder salesOrder = getOrder(request.getOrderId(), transactionName);
+
 			//	Throw if not exist conversion
 			ConvertUtil.validateConversion(
 				salesOrder,

@@ -99,7 +99,12 @@ public class CollectingManagement {
 		paymentAmount = paymentAmount.setScale(currency.getStdPrecision(), RoundingMode.HALF_UP);
 
 		//	Throw if not exist conversion
-		ConvertUtil.validateConversion(salesOrder, currencyId, pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), TimeManager.getDate());
+		ConvertUtil.validateConversion(
+			salesOrder,
+			currencyId,
+			pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID),
+			TimeManager.getDate()
+		);
 		//	
 		MPayment payment = new MPayment(Env.getCtx(), 0, transactionName);
 		payment.setIsReceipt(!request.getIsRefund());
