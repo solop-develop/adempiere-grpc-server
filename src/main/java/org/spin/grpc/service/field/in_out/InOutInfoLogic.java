@@ -26,8 +26,6 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
-import org.compiere.util.DB;
-import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Entity;
@@ -39,15 +37,10 @@ import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
-import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.db.ParameterUtil;
-import org.spin.service.grpc.util.value.BooleanManager;
-import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 public class InOutInfoLogic {
 
@@ -63,7 +56,7 @@ public class InOutInfoLogic {
 			throw new AdempiereException("@FillMandatory@ @M_InOut_ID@ | @UUID@ | @DocumentNo@");
 		}
 		//
-		String whereClause = null;
+		String whereClause = "";
 		List<Object> filtersList = new ArrayList<>();
 		if (id > 0) {
 			whereClause = "M_InOut_ID = ? ";
@@ -79,7 +72,7 @@ public class InOutInfoLogic {
 		MInOut inOut = new Query(
 			Env.getCtx(),
 			Table_Name,
-			whereClause.toString(),
+			whereClause,
 			null
 		)
 			.setClient_ID()

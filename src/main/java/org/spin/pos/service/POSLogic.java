@@ -85,16 +85,15 @@ import org.spin.backend.grpc.pos.UpdateGiftCardRequest;
 import org.spin.backend.grpc.pos.UpdateShipmentLineRequest;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.DocumentUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ShipmentUtil;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 public class POSLogic {
 
@@ -195,7 +194,7 @@ public class POSLogic {
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if(!Util.isEmpty(searchValue, true)) {
@@ -356,11 +355,11 @@ public class POSLogic {
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if(!Util.isEmpty(searchValue, true)) {
-			// TODO: Check if it is better with the `LIKE` operator 
+			// TODO: Check if it is better with the `LIKE` operator
 			whereClause.append(
 				"(UPPER(Value) = UPPER(?) "
 				+ "OR UPPER(Name) = UPPER(?))"

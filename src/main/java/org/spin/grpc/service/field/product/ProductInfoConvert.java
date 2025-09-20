@@ -38,7 +38,7 @@ import org.spin.backend.grpc.field.product.RelatedProduct;
 import org.spin.backend.grpc.field.product.SubstituteProduct;
 import org.spin.backend.grpc.field.product.VendorPurchase;
 import org.spin.backend.grpc.field.product.WarehouseStock;
-import org.spin.base.util.RecordUtil;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;

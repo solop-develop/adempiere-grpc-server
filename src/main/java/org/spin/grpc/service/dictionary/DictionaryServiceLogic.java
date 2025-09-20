@@ -48,8 +48,8 @@ import org.spin.backend.grpc.dictionary.ListSelectionColumnsRequest;
 import org.spin.backend.grpc.dictionary.ListSelectionColumnsResponse;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.SearchColumn;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.StringManager;
 
 import io.vavr.control.Try;

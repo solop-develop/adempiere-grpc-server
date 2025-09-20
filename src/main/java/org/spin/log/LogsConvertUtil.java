@@ -125,7 +125,7 @@ public class LogsConvertUtil {
 				)
 			)
 			.setLogDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					recordLog.getCreated()
 				)
 			)
@@ -172,11 +172,11 @@ public class LogsConvertUtil {
 			// 		.reversed()
 			// )
 			.sorted((log1, log2) -> {
-				Timestamp from = ValueManager.getDateFromTimestampDate(
+				Timestamp from = ValueManager.getTimestampFromProtoTimestamp(
 					log1.getLogDate()
 				);
 
-				Timestamp to = ValueManager.getDateFromTimestampDate(
+				Timestamp to = ValueManager.getTimestampFromProtoTimestamp(
 					log2.getLogDate()
 				);
 
@@ -314,7 +314,7 @@ public class LogsConvertUtil {
 		builder.setIsProcessing(instance.isProcessing());
 
 		builder.setLastRun(
-			ValueManager.getTimestampFromDate(
+			ValueManager.getProtoTimestampFromTimestamp(
 				instance.getUpdated()
 			)
 		);

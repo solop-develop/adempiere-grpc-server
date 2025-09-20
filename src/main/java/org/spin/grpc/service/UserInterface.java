@@ -92,13 +92,13 @@ import org.spin.base.interim.ContextTemporaryWorkaround;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.grpc.service.ui.CalloutLogic;
 import org.spin.grpc.service.ui.UserInterfaceLogic;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
@@ -518,7 +518,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Add from reference
 		//	TODO: Add support to this functionality
 		if(!Util.isEmpty(request.getRecordReferenceUuid(), true)) {
-			String referenceWhereClause = RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
+			String referenceWhereClause = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
 			if(!Util.isEmpty(referenceWhereClause, true)) {
 				String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, referenceWhereClause);
 				if(whereClause.length() > 0) {
@@ -555,7 +555,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			sqlWithRoleAccess += " AND " + whereClause;
 		}
 		//
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), false, params);
+		String parsedSQL = org.spin.base.util.RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), false, params);
 
 		String orderByClause = "";
 		if (!Util.isEmpty(request.getSortBy(), true)) {
@@ -586,7 +586,7 @@ public class UserInterface extends UserInterfaceImplBase {
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
 			);
-		String parsedCountSQL = RecordUtil.addSearchValueAndGet(countSQL, tableName, request.getSearchValue(), false, new ArrayList<Object>());
+		String parsedCountSQL = org.spin.base.util.RecordUtil.addSearchValueAndGet(countSQL, tableName, request.getSearchValue(), false, new ArrayList<Object>());
 
 		//	Count records
 		count = CountUtil.countRecords(parsedCountSQL, tableName, params);
@@ -594,7 +594,7 @@ public class UserInterface extends UserInterfaceImplBase {
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
 		parsedSQL = parsedSQL + orderByClause;
-		builder = RecordUtil.convertListEntitiesResult(table, parsedSQL, params);
+		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(table, parsedSQL, params);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -843,7 +843,7 @@ public class UserInterface extends UserInterfaceImplBase {
 							if(value == null) {
 								return;
 							}
-							Value.Builder builderValue = ValueManager.getValueFromObject(value);
+							Value.Builder builderValue = ValueManager.getProtoValueFromObject(value);
 							if(builderValue != null) {
 								translationValues.putFields(
 									column.getColumnName(),

@@ -79,8 +79,8 @@ import org.spin.backend.grpc.display_definition.TimelineEntry;
 import org.spin.backend.grpc.display_definition.WorkflowEntry;
 import org.spin.backend.grpc.display_definition.WorkflowStep;
 import org.spin.base.util.ContextManager;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
@@ -1007,20 +1007,20 @@ public class DisplayDefinitionConvertUtil {
 
 		fieldValue.putFields(
 			"value",
-			ValueManager.getValueFromObject(
+			ValueManager.getProtoValueFromObject(
 				fieldItem.getValue()
 			).build()
 		);
 		if(!Util.isEmpty(fieldItem.getDisplayValue())) {
 			fieldValue.putFields(
 				"display_value",
-				ValueManager.getValueFromObject(
+				ValueManager.getProtoValueFromObject(
 					fieldItem.getDisplayValue()
 				).build()
 			);
 			fieldValue.putFields(
 				"table_name",
-				ValueManager.getValueFromObject(
+				ValueManager.getProtoValueFromObject(
 					fieldItem.getTableName()
 				).build()
 			);
@@ -1058,12 +1058,12 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setValidFrom(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					calendarItem.getValidFrom()
 				)
 			)
 			.setValidTo(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					calendarItem.getValidTo()
 				)
 			)
@@ -1505,12 +1505,12 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setValidFrom(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resourceItem.getValidFrom()
 				)
 			)
 			.setValidTo(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resourceItem.getValidTo()
 				)
 			)
@@ -1578,7 +1578,7 @@ public class DisplayDefinitionConvertUtil {
 				timelineItem.isReadOnly()
 			)
 			.setDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					timelineItem.getDate()
 				)
 			)
@@ -2208,7 +2208,7 @@ public class DisplayDefinitionConvertUtil {
 			Struct.Builder values = Struct.newBuilder()
 				.putFields(
 					columnName,
-					ValueManager.getValueFromObject(
+					ValueManager.getProtoValueFromObject(
 						businessPartnerLocation.get_Value(columnName)
 					).build()
 				)

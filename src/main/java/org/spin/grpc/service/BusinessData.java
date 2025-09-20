@@ -55,7 +55,6 @@ import org.spin.backend.grpc.common.UpdateEntityRequest;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.BrowserUtil;
 import org.spin.dictionary.util.DictionaryUtil;
@@ -65,6 +64,7 @@ import org.spin.eca62.support.ResourceMetadata;
 import org.spin.grpc.service.ui.BrowserLogic;
 import org.spin.model.MADAppRegistration;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 // import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.SortingManager;
@@ -492,7 +492,7 @@ public class BusinessData extends BusinessDataImplBase {
 			response.setInstanceId(instance.getAD_PInstance_ID());
 
 			response.setLastRun(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					instance.getUpdated()
 				)
 			);
@@ -778,7 +778,7 @@ public class BusinessData extends BusinessDataImplBase {
 		//	TODO: Add support to this functionality with a distinct scope
 		//	Add from reference
 		if(!Util.isEmpty(request.getRecordReferenceUuid())) {
-			String referenceWhereClause = RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
+			String referenceWhereClause = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
 			if(!Util.isEmpty(referenceWhereClause, true)) {
 				if(whereClause.length() > 0) {
 					whereClause.append(" AND ");

@@ -53,7 +53,6 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.model.MADContextInfo;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 public class DictionaryConvertUtil {
 
@@ -292,17 +291,26 @@ public class DictionaryConvertUtil {
 			)
 			.setName(
 				StringManager.getValidString(
-					ValueManager.getTranslation(form, MForm.COLUMNNAME_Name)
+					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+						form,
+						MForm.COLUMNNAME_Name
+					)
 				)
 			)
 			.setDescription(
 				StringManager.getValidString(
-					ValueManager.getTranslation(form, MForm.COLUMNNAME_Description)
+					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+						form,
+						MForm.COLUMNNAME_Description
+					)
 				)
 			)
 			.setHelp(
 				StringManager.getValidString(
-					ValueManager.getTranslation(form, MForm.COLUMNNAME_Help)
+					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+						form,
+						MForm.COLUMNNAME_Help
+					)
 				)
 			)
 			.setIsActive(
@@ -615,18 +623,28 @@ public class DictionaryConvertUtil {
 			)
 			.setName(
 				StringManager.getValidString(
-					ValueManager.getTranslation(element, M_Element.COLUMNNAME_Name)
+					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+						element,
+						M_Element.COLUMNNAME_Name
+					)
 				)
 			)
 			.setDescription(
 				StringManager.getValidString(
-					ValueManager.getTranslation(element, M_Element.COLUMNNAME_Description)
+					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+						element,
+						M_Element.COLUMNNAME_Description
+					)
 				)
 			)
 			.setHelp(
 				StringManager.getValidString(
-					ValueManager.getTranslation(element, M_Element.COLUMNNAME_Help))
+					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+						element,
+						M_Element.COLUMNNAME_Help
+					)
 				)
+			)
 			.setColumnName(
 				StringManager.getValidString(
 					element.getColumnName()

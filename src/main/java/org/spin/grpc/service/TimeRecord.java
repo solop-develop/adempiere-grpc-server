@@ -417,14 +417,14 @@ public class TimeRecord extends TimeRecordImplBase {
 		;
 		if (resourceAssignment.getAssignDateFrom() != null) {
 			builder.setAssignDateFrom(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateFrom()
 				)
 			);
 		}
 		if (resourceAssignment.getAssignDateTo() != null) {
 			builder.setAssignDateTo(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateTo()
 				)
 			);
@@ -527,8 +527,8 @@ public class TimeRecord extends TimeRecordImplBase {
 
 		// set date
 		Timestamp dateFrom = new Timestamp(System.currentTimeMillis());
-		if (ValueManager.getDateFromTimestampDate(request.getDate()) != null) {
-			dateFrom = ValueManager.getDateFromTimestampDate(
+		if (ValueManager.getTimestampFromProtoTimestamp(request.getDate()) != null) {
+			dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 				request.getDate()
 			);
 		}
@@ -601,22 +601,22 @@ public class TimeRecord extends TimeRecordImplBase {
 			+ ") "
 		;
 
-		if (ValueManager.getDateFromTimestampDate(request.getDateFrom()) != null) {
-			Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		if (ValueManager.getTimestampFromProtoTimestamp(request.getDateFrom()) != null) {
+			Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 				request.getDateFrom()
 			);
 			parametersList.add(dateFrom);
 			whereClause += " AND AssignDateFrom = ? ";
 		}
-		if (ValueManager.getDateFromTimestampDate(request.getDateTo()) != null) {
-			Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		if (ValueManager.getTimestampFromProtoTimestamp(request.getDateTo()) != null) {
+			Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 				request.getDateTo()
 			);
 			parametersList.add(dateTo);
 			whereClause += " AND AssignDateTo = ? ";
 		}
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {

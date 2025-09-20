@@ -137,7 +137,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				)
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					notice.getCreated()
 				)
 			)

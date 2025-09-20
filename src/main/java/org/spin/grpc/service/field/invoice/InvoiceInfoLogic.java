@@ -298,10 +298,10 @@ public class InvoiceInfoLogic {
 			);
 		}
 		// Date Invoiced
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getInvoiceDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getInvoiceDateTo()
 		);
 		if (dateFrom != null || dateTo != null) {

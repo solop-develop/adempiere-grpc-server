@@ -255,13 +255,13 @@ public class OrderConverUtil {
 						order.getDocStatus()
 					),
 					StringManager.getValidString(
-						ValueManager.getTranslation(
+						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Name
 						)
 					),
 					StringManager.getValidString(
-						ValueManager.getTranslation(
+						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Description
 						)
@@ -355,7 +355,7 @@ public class OrderConverUtil {
 				)
 			)
 			.setDateOrdered(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					order.getDateOrdered()
 				)
 			)

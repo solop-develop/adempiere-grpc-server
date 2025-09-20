@@ -37,7 +37,6 @@ import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.dictionary.Browser;
 import org.spin.backend.grpc.dictionary.DictionaryGrpc.DictionaryImplBase;
-import org.spin.base.util.RecordUtil;
 import org.spin.backend.grpc.dictionary.EntityRequest;
 import org.spin.backend.grpc.dictionary.Field;
 import org.spin.backend.grpc.dictionary.FieldRequest;
@@ -53,6 +52,7 @@ import org.spin.backend.grpc.dictionary.ListSelectionColumnsResponse;
 import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.Tab;
 import org.spin.backend.grpc.dictionary.Window;
+import org.spin.service.grpc.util.base.RecordUtil;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;

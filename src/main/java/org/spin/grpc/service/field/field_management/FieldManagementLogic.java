@@ -73,10 +73,10 @@ import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
@@ -272,7 +272,7 @@ public class FieldManagementLogic {
 		if (Optional.ofNullable(request.getValue()).isPresent()
 			&& !Util.isEmpty(request.getValue().getStringValue())) {
 			// URL decode to change characteres
-			// final String overwriteValue = ValueManager.getDecodeUrl(defaultValue);
+			// final String overwriteValue = StringManager.getDecodeUrl(defaultValue);
 			final String overwriteValue = request.getValue().getStringValue();
 			defaultValue = overwriteValue;
 		}
@@ -369,7 +369,7 @@ public class FieldManagementLogic {
 			} else {
 				values.putFields(
 					columnName,
-					ValueManager.getValueFromObject(defaultValueAsObject).build()
+					ValueManager.getProtoValueFromObject(defaultValueAsObject).build()
 				);
 				builder.setValues(values);
 				return builder;
@@ -483,7 +483,7 @@ public class FieldManagementLogic {
 		} else {
 			values.putFields(
 				columnName,
-				ValueManager.getValueFromObject(defaultValueAsObject).build()
+				ValueManager.getProtoValueFromObject(defaultValueAsObject).build()
 			);
 			builder.setValues(values);
 		}
@@ -617,7 +617,7 @@ public class FieldManagementLogic {
 		}
 
 		List<Object> parameters = new ArrayList<>();
-		String parsedSQL = RecordUtil.addSearchValueAndGet(
+		String parsedSQL = org.spin.base.util.RecordUtil.addSearchValueAndGet(
 			sqlWithActiveRecords,
 			reference.TableName,
 			searchValue,
@@ -798,7 +798,7 @@ public class FieldManagementLogic {
 		}
 
 		sqlWithRoleAccess += whereClause;
-		String parsedSQL = RecordUtil.addSearchValueAndGet(
+		String parsedSQL = org.spin.base.util.RecordUtil.addSearchValueAndGet(
 			sqlWithRoleAccess,
 			table.getTableName(),
 			request.getSearchValue(),
@@ -822,7 +822,7 @@ public class FieldManagementLogic {
 		);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(
+		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(
 			table,
 			parsedSQL,
 			params

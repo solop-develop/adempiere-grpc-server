@@ -293,7 +293,7 @@ public class CoreFunctionalityConvert {
 				+ "|" + currencyTo.getISO_Code()
 			)
 			.setValidFrom(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					conversionRate.getValidFrom()
 				)
 			)
@@ -323,7 +323,7 @@ public class CoreFunctionalityConvert {
 		;
 		if(conversionRate.getValidTo() != null) {
 			builder.setValidTo(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					conversionRate.getValidTo()
 				)
 			);

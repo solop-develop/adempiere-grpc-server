@@ -31,7 +31,6 @@ import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.CreatePaymentRequest;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
@@ -39,6 +38,7 @@ import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -99,7 +99,12 @@ public class CollectingManagement {
 		paymentAmount = paymentAmount.setScale(currency.getStdPrecision(), RoundingMode.HALF_UP);
 
 		//	Throw if not exist conversion
-		ConvertUtil.validateConversion(salesOrder, currencyId, pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
+		ConvertUtil.validateConversion(
+			salesOrder,
+			currencyId,
+			pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID),
+			TimeManager.getDate()
+		);
 		//	
 		MPayment payment = new MPayment(Env.getCtx(), 0, transactionName);
 		payment.setIsReceipt(!request.getIsRefund());
@@ -125,14 +130,14 @@ public class CollectingManagement {
 		);
 
 		payment.setAD_Org_ID(salesOrder.getAD_Org_ID());
-		Timestamp date = ValueManager.getDateFromTimestampDate(
+		Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
 			request.getPaymentDate()
 		);
 		if(date != null) {
 			payment.setDateTrx(date);
 			payment.setDateAcct(date);
 		}
-		Timestamp dateValue = ValueManager.getDateFromTimestampDate(
+		Timestamp dateValue = ValueManager.getTimestampFromProtoTimestamp(
 			request.getPaymentAccountDate()
 		);
 		if(dateValue != null) {

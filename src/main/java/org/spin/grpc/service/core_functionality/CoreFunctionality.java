@@ -128,7 +128,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 		// backend info
 		builder.setBackendDateVersion(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					TimeManager.getTimestampFromString(Version.DATE_VERSION)
 				)
 			)

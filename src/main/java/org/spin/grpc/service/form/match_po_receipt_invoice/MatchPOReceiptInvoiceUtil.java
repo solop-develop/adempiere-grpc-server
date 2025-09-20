@@ -110,7 +110,7 @@ public class MatchPOReceiptInvoiceUtil {
 				resultSet.getInt("Header_ID")
 			)
 			.setDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resultSet.getTimestamp(5) // Date
 				)
 			)

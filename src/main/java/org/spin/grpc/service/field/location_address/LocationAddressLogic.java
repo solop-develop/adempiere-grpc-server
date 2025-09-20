@@ -31,7 +31,6 @@ import org.spin.backend.grpc.field.location_address.ListRegionsResponse;
 import org.spin.backend.grpc.field.location_address.UpdateAddressRequest;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 public class LocationAddressLogic {
 
@@ -56,7 +55,7 @@ public class LocationAddressLogic {
 		String whereClause = null;
 		List<Object> parameters = new ArrayList<Object>();
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -142,7 +141,7 @@ public class LocationAddressLogic {
 		List<Object> parameters = new ArrayList<Object>();
 		parameters.add(country.getC_Country_ID());
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -203,7 +202,7 @@ public class LocationAddressLogic {
 			}
 		}
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {

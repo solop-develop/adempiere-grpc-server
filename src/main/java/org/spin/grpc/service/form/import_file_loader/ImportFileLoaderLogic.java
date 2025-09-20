@@ -61,13 +61,13 @@ import org.spin.backend.grpc.form.import_file_loader.ListImportTablesResponse;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsRequest;
 import org.spin.backend.grpc.form.import_file_loader.SaveRecordsResponse;
 import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.eca62.support.IS3;
 import org.spin.eca62.support.ResourceMetadata;
 import org.spin.grpc.service.BusinessData;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.model.MADAppRegistration;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -121,7 +121,7 @@ public class ImportFileLoaderLogic {
 			.setRecordCount(charsetsList.size())
 		;
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {

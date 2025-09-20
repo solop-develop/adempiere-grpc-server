@@ -247,10 +247,10 @@ public class OrderInfoLogic {
 			);
 		}
 		// Date Order
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getOrderDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getOrderDateTo()
 		);
 		if (dateFrom != null || dateTo != null) {

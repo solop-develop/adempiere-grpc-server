@@ -25,7 +25,6 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 public class ProductServiceLogic {
 	
@@ -39,7 +38,7 @@ public class ProductServiceLogic {
 		//	Get Product
 		MProduct product = null;
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if(!Util.isEmpty(searchValue, true)) {
@@ -181,7 +180,7 @@ public class ProductServiceLogic {
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if(!Util.isEmpty(searchValue, true)) {

@@ -549,17 +549,17 @@ public class IssueManagementConvertUtil {
 				)
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					request.getUpdated()
 				)
 			)
 			.setLastUpdated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					request.getUpdated()
 				)
 			)
 			.setDateNextAction(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					request.getDateNextAction()
 				)
 			)
@@ -644,7 +644,7 @@ public class IssueManagementConvertUtil {
 		}
 		builder.setId(requestUpdate.getR_RequestUpdate_ID())
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					requestUpdate.getCreated()
 				)
 			)
@@ -682,7 +682,7 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(requestAction.getR_RequestAction_ID())
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					requestAction.getCreated()
 				)
 			)

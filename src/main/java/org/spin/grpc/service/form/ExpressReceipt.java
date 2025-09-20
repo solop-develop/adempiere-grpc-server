@@ -65,11 +65,11 @@ import org.spin.backend.grpc.form.express_receipt.ReceiptLine;
 import org.spin.backend.grpc.form.express_receipt.UpdateReceiptLineRequest;
 import org.spin.backend.grpc.form.express_receipt.ExpressReceiptGrpc.ExpressReceiptImplBase;
 import org.spin.base.util.DocumentUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -114,7 +114,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -253,7 +253,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		parameters.add(businessPartnerId);
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -316,7 +316,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				purchaseOrder.getC_Order_ID()
 			)
 			.setDateOrdered(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					purchaseOrder.getDateOrdered()
 				)
 			)
@@ -368,7 +368,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		parameters.add(orderId);
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -483,12 +483,12 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				)
 			)
 			.setDateOrdered(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					receipt.getDateOrdered()
 				)
 			)
 			.setMovementDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					receipt.getMovementDate()
 				)
 			)
@@ -572,7 +572,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			// Validate
 			if (receipt == null) {
-				receipt = new MInOut(purchaseOrder, 0, RecordUtil.getDate());
+				receipt = new MInOut(purchaseOrder, 0, TimeManager.getDate());
 				if (Util.isEmpty(receipt.getMovementType())) {
 					receipt.setMovementType(X_M_InOut.MOVEMENTTYPE_VendorReceipts);
 				}
@@ -580,10 +580,10 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				if(!DocumentUtil.isDrafted(receipt)) {
 					throw new AdempiereException("@M_InOut_ID@ @Processed@");
 				}
-				receipt.setDateOrdered(RecordUtil.getDate());
-				receipt.setDateAcct(RecordUtil.getDate());
-				receipt.setDateReceived(RecordUtil.getDate());
-				receipt.setMovementDate(RecordUtil.getDate());
+				receipt.setDateOrdered(TimeManager.getDate());
+				receipt.setDateAcct(TimeManager.getDate());
+				receipt.setDateReceived(TimeManager.getDate());
+				receipt.setMovementDate(TimeManager.getDate());
 			}
 			receipt.setC_Order_ID(orderId);
 			receipt.saveEx(transactionName);

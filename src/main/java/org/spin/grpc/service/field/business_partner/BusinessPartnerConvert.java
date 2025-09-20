@@ -209,7 +209,7 @@ public class BusinessPartnerConvert {
 				)
 			)
 			.setLastContact(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					businessPartnerContact.getLastContact()
 				)
 			)

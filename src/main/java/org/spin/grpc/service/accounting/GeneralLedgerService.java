@@ -59,11 +59,11 @@ import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.UserInterface;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.Filter;
@@ -519,7 +519,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		params.add(accountId);
 
 		// add where with search value
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, this.tableName, request.getSearchValue(), params);
+		String parsedSQL = org.spin.base.util.RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, this.tableName, request.getSearchValue(), params);
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -533,7 +533,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		count = CountUtil.countRecords(parsedSQL, this.tableName, params);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(context, this.tableName), parsedSQL, params);
+		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(MTable.get(context, this.tableName), parsedSQL, params);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -1093,8 +1093,12 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		}
 
 		// Date
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(request.getDateFrom());
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(request.getDateTo());
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+			request.getDateFrom()
+		);
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+			request.getDateTo()
+		);
 		if (dateFrom != null || dateTo != null) {
 			whereClause.append(" AND ");
 			if (dateFrom != null && dateTo != null) {
@@ -1172,7 +1176,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		//  Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		parsedSQL += ("ORDER BY " + I_Fact_Acct.Table_Name + ".Fact_Acct_ID");
-		builder = RecordUtil.convertListEntitiesResult(table, parsedSQL, filtersList);
+		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(table, parsedSQL, filtersList);
 		//
 		builder.setRecordCount(count);
 		//  Set page token

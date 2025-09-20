@@ -133,12 +133,12 @@ public class ProductInfoLogic {
 		}
 
 		//	Ordered Date
-		Timestamp validPriceDate = ValueManager.getDateFromTimestampDate(
+		Timestamp validPriceDate = ValueManager.getTimestampFromProtoTimestamp(
 			request.getDateOrdered()
 		);
 		//	Invocied Date
 		if (validPriceDate == null) {
-			validPriceDate = ValueManager.getDateFromTimestampDate(
+			validPriceDate = ValueManager.getTimestampFromProtoTimestamp(
 				request.getDateInvoiced()
 			);
 		}
@@ -588,7 +588,7 @@ public class ProductInfoLogic {
 			filtersList.add(true);
 		}
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -606,7 +606,7 @@ public class ProductInfoLogic {
 		}
 
 		// Value
-		final String value = ValueManager.getDecodeUrl(
+		final String value = StringManager.getDecodeUrl(
 			request.getValue()
 		);
 		if (!Util.isEmpty(value)) {
@@ -614,7 +614,7 @@ public class ProductInfoLogic {
 			filtersList.add(value);
 		}
 		// Name
-		final String name = ValueManager.getDecodeUrl(
+		final String name = StringManager.getDecodeUrl(
 			request.getName()
 		);
 		if (!Util.isEmpty(name)) {
@@ -622,7 +622,7 @@ public class ProductInfoLogic {
 			filtersList.add(name);
 		}
 		// UPC/EAN
-		final String upc = ValueManager.getDecodeUrl(
+		final String upc = StringManager.getDecodeUrl(
 			request.getUpc()
 		);
 		if (!Util.isEmpty(upc)) {
@@ -630,7 +630,7 @@ public class ProductInfoLogic {
 			filtersList.add(upc);
 		}
 		// SKU
-		final String sku = ValueManager.getDecodeUrl(
+		final String sku = StringManager.getDecodeUrl(
 			request.getSku()
 		);
 		if (!Util.isEmpty(sku)) {

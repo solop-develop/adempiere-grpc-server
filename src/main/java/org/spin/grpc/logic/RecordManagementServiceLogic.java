@@ -59,7 +59,7 @@ import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
 import org.spin.backend.grpc.record_management.ZoomWindow;
-import org.spin.base.util.RecordUtil;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -453,7 +453,7 @@ public class RecordManagementServiceLogic {
 			MTab referenceTab = MTab.get(Env.getCtx(), tabId);
 
 			String uuidRerefenced = referenceWindow.getUUID() + "|" + referenceTab.getUUID() + "|" + referenceTable.getTableName() + "|" + zoomQuery.getZoomColumnName();
-			RecordUtil.referenceWhereClauseCache.put(uuidRerefenced, zoomQuery.getWhereClause());
+			org.spin.base.util.RecordUtil.referenceWhereClauseCache.put(uuidRerefenced, zoomQuery.getWhereClause());
 
 			recordReferenceBuilder.setUuid(uuidRerefenced)
 				.setWindowId(
@@ -484,7 +484,7 @@ public class RecordManagementServiceLogic {
 					)
 				)
 				.setValue(
-					ValueManager.getValueFromObject(
+					ValueManager.getProtoValueFromObject(
 						zoomQuery.getZoomValue()
 					).build()
 				)

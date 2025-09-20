@@ -78,8 +78,8 @@ import org.spin.backend.grpc.general_ledger.ListConversionTypesRequest;
 import org.spin.backend.grpc.general_ledger.ListConversionTypesResponse;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.base.util.LookupUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
@@ -622,7 +622,7 @@ public class GeneralLedgerServiceLogic {
 			}
 
 			if (dateFrom == null) {
-				Timestamp date = ValueManager.getDateFromTimestampDate(
+				Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
 					request.getDate()
 				);
 				dateFrom = TimeUtil.getDay(date); // Remove time mark

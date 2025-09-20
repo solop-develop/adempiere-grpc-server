@@ -816,17 +816,17 @@ public class WebStore extends WebStoreImplBase {
 				)
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					salesOrder.getCreated()
 				)
 			)
 			.setUpdated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					salesOrder.getUpdated()
 				)
 			)
 			.setTransmited(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					salesOrder.getUpdated()
 				)
 			)
@@ -889,17 +889,17 @@ public class WebStore extends WebStoreImplBase {
 				)
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					salesOrder.getCreated()
 				)
 			)
 			.setUpdated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					salesOrder.getUpdated()
 				)
 			)
 			.setTransmited(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					salesOrder.getUpdated()
 				)
 			)
@@ -2082,12 +2082,12 @@ public class WebStore extends WebStoreImplBase {
 				customer.getAD_User_ID()
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					customer.getCreated()
 				)
 			)
 			.setUpdated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					customer.getUpdated()
 				)
 			)
@@ -2809,10 +2809,14 @@ public class WebStore extends WebStoreImplBase {
 			.setVisibility(org.spin.backend.grpc.store.Product.Visibility.BOTH)
 			.setProductGroupId(product.getM_Product_Group_ID())
 			.setCreated(
-				ValueManager.getTimestampFromDate(product.getCreated())
+				ValueManager.getProtoTimestampFromTimestamp(
+					product.getCreated()
+				)
 			)
 			.setUpdated(
-				ValueManager.getTimestampFromDate(product.getUpdated())
+				ValueManager.getProtoTimestampFromTimestamp(
+					product.getUpdated()
+				)
 			)
 			//	Pricing
 			.setPrice(productPricing.getPriceStd().setScale(productPricing.getPrecision()).doubleValue())

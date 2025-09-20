@@ -63,9 +63,9 @@ import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
@@ -273,7 +273,7 @@ public class BrowserLogic {
 			});
 
 		//	Fill context
-		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
 		ContextManager.setContextWithAttributes(windowNo, context, parametersMap, false);
 		MView view = browser.getAD_View();

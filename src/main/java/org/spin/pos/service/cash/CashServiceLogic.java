@@ -74,7 +74,6 @@ import org.spin.backend.grpc.pos.PrintPreviewOnlineCashClosingResponse;
 import org.spin.backend.grpc.pos.ProcessOnlineCashClosingRequest;
 import org.spin.backend.grpc.pos.ProcessOnlineCashClosingResponse;
 import org.spin.backend.grpc.report_management.GenerateReportRequest;
-import org.spin.base.util.RecordUtil;
 import org.spin.grpc.service.ReportManagement;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.process.inf_POS_Sales_Detail_And_CollectionAbstract;
@@ -85,6 +84,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -131,7 +131,7 @@ public class CashServiceLogic {
 			paymentsIdList.forEach(paymentId -> {
 				MPayment payment = new MPayment(Env.getCtx(), paymentId, transactionName);
 				payment.setDateTrx(
-					RecordUtil.getDate()
+					TimeManager.getDate()
 				);
 				payment.saveEx();
 
@@ -236,7 +236,7 @@ public class CashServiceLogic {
 			paymentsIdList.forEach(paymentId -> {
 				MPayment payment = new MPayment(Env.getCtx(), paymentId, transactionName);
 				payment.setDateTrx(
-					RecordUtil.getDate()
+					TimeManager.getDate()
 				);
 				payment.saveEx();
 				//	
@@ -256,7 +256,7 @@ public class CashServiceLogic {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		MBankStatement cashClosing = CashManagement.getOpenCashClosing(pos, RecordUtil.getDate(), true, null);
+		MBankStatement cashClosing = CashManagement.getOpenCashClosing(pos, TimeManager.getDate(), true, null);
 		if(cashClosing == null
 				|| cashClosing.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
@@ -320,7 +320,7 @@ public class CashServiceLogic {
 				)
 			)
 			.setDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					cashClosing.getStatementDate()
 				)
 			)
@@ -384,7 +384,7 @@ public class CashServiceLogic {
 			throw new AdempiereException("@C_POS_ID@ @IsMandatory@");
 		}
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		MBankStatement cashClosing = CashManagement.getOpenCashClosing(pos, RecordUtil.getDate(), true, null);
+		MBankStatement cashClosing = CashManagement.getOpenCashClosing(pos, TimeManager.getDate(), true, null);
 		if(cashClosing == null
 				|| cashClosing.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
@@ -406,7 +406,7 @@ public class CashServiceLogic {
 				)
 			)
 			.setDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					cashClosing.getStatementDate()
 				)
 			)
@@ -559,8 +559,12 @@ public class CashServiceLogic {
 			);
 		}
 		if (request.hasDateFrom() && request.hasDateTo()) {
-			dateFrom = ValueManager.getDateFromTimestampDate(request.getDateFrom());
-			dateTo = ValueManager.getDateFromTimestampDate(request.getDateTo());
+			dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+				request.getDateFrom()
+			);
+			dateTo = ValueManager.getTimestampFromProtoTimestamp(
+				request.getDateTo()
+			);
 		} else {
 			Timestamp nowTimestamp = new Timestamp(System.currentTimeMillis());
 			dateFrom = TimeUtil.getDay(nowTimestamp);

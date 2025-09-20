@@ -43,8 +43,8 @@ import org.spin.backend.grpc.pos.ListCardsResponse;
 import org.spin.backend.grpc.pos.ListCreditCardTypesRequest;
 import org.spin.backend.grpc.pos.ListCreditCardTypesResponse;
 import org.spin.base.db.WhereClauseUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
 

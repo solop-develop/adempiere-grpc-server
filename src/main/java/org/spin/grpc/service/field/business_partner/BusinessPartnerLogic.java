@@ -14,9 +14,6 @@
  ************************************************************************************/
 package org.spin.grpc.service.field.business_partner;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -31,7 +28,6 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
-import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -47,17 +43,13 @@ import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerContactsR
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnerGroupsRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnersInfoRequest;
 import org.spin.backend.grpc.field.business_partner.ListBusinessPartnersInfoResponse;
-import org.spin.backend.grpc.field.invoice.GetInvoiceInfoRequest;
-import org.spin.backend.grpc.field.invoice.InvoiceInfo;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
-import org.spin.grpc.service.field.invoice.InvoiceInfoConvert;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 public class BusinessPartnerLogic {
 	
@@ -130,7 +122,7 @@ public class BusinessPartnerLogic {
 		MBPartner businessPartner = new Query(
 			Env.getCtx(),
 			Table_Name,
-			whereClause.toString(),
+			whereClause,
 			null
 		)
 			.setClient_ID()
@@ -197,7 +189,7 @@ public class BusinessPartnerLogic {
 		}
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if(!Util.isEmpty(searchValue, true)) {
@@ -228,7 +220,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(request.getIsVendor());
 		}
 		// Value
-		final String value = ValueManager.getDecodeUrl(
+		final String value = StringManager.getDecodeUrl(
 			request.getValue()
 		);
 		if (!Util.isEmpty(value)) {
@@ -236,7 +228,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(value);
 		}
 		// Name
-		final String name = ValueManager.getDecodeUrl(
+		final String name = StringManager.getDecodeUrl(
 			request.getName()
 		);
 		if (!Util.isEmpty(name)) {
@@ -244,7 +236,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(name);
 		}
 		// Contact
-		final String contact = ValueManager.getDecodeUrl(
+		final String contact = StringManager.getDecodeUrl(
 			request.getContact()
 		);
 		if (!Util.isEmpty(contact)) {
@@ -253,7 +245,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(contact);
 		}
 		// E-Mail
-		final String eMail = ValueManager.getDecodeUrl(
+		final String eMail = StringManager.getDecodeUrl(
 			request.getEmail()
 		);
 		if (!Util.isEmpty(eMail, true)) {
@@ -262,7 +254,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(eMail);
 		}
 		// Phone
-		final String phone = ValueManager.getDecodeUrl(
+		final String phone = StringManager.getDecodeUrl(
 			request.getPhone()
 		);
 		if (!Util.isEmpty(phone)) {
@@ -271,7 +263,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(phone);
 		}
 		// Postal Code
-		final String postalCode = ValueManager.getDecodeUrl(
+		final String postalCode = StringManager.getDecodeUrl(
 			request.getPostalCode()
 		);
 		if (!Util.isEmpty(postalCode)) {
