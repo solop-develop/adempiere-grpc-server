@@ -40,7 +40,6 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -77,7 +76,7 @@ public class SellerServiceLogic {
 			);
 		}
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 				request.getSearchValue()
 		);
 		if(!Util.isEmpty(searchValue, true)) {

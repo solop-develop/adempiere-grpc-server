@@ -67,8 +67,8 @@ import org.spin.backend.grpc.issue_management.ListTaskStatusesRequest;
 import org.spin.backend.grpc.issue_management.ListTaskStatusesResponse;
 import org.spin.backend.grpc.issue_management.UpdateIssueCommentRequest;
 import org.spin.backend.grpc.issue_management.UpdateIssueRequest;
-import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -560,7 +560,9 @@ public class IssueManagementService extends IssueManagementImplBase {
 			)
 		);
 		requestRecord.setDateNextAction(
-			ValueManager.getDateFromTimestampDate(request.getDateNextAction())
+			ValueManager.getTimestampFromProtoTimestamp(
+				request.getDateNextAction()
+			)
 		);
 		
 		requestRecord.setR_Status_ID(request.getStatusId());
@@ -763,11 +765,11 @@ public class IssueManagementService extends IssueManagementImplBase {
 
 		issueCommentsList.stream()
 			.sorted((comment1, comment2) -> {
-				Timestamp from = ValueManager.getDateFromTimestampDate(
+				Timestamp from = ValueManager.getTimestampFromProtoTimestamp(
 					comment1.getCreated()
 				);
 
-				Timestamp to = ValueManager.getDateFromTimestampDate(
+				Timestamp to = ValueManager.getTimestampFromProtoTimestamp(
 					comment2.getCreated()
 				);
 

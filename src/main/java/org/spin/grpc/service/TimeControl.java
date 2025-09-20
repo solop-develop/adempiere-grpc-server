@@ -163,11 +163,17 @@ public class TimeControl extends TimeControlImplBase {
 		;
 		if (resourceAssignment.getAssignDateFrom() != null) {
 			builder.setAssignDateFrom(
-				ValueManager.getTimestampFromDate(resourceAssignment.getAssignDateFrom()));
+				ValueManager.getProtoTimestampFromTimestamp(
+					resourceAssignment.getAssignDateFrom()
+				)
+			);
 		}
 		if (resourceAssignment.getAssignDateTo() != null) {
-		    builder.setAssignDateTo(
-				ValueManager.getTimestampFromDate(resourceAssignment.getAssignDateTo()));
+			builder.setAssignDateTo(
+				ValueManager.getProtoTimestampFromTimestamp(
+					resourceAssignment.getAssignDateTo()
+				)
+			);
 		}
 		builder.setIsConfirmed(resourceAssignment.isConfirmed())
 			.setQuantity(
@@ -318,15 +324,15 @@ public class TimeControl extends TimeControlImplBase {
 				+ " WHERE C_OrderLine.S_ResourceAssignment_ID = S_ResourceAssignment.S_ResourceAssignment_ID "
 				+ ") ";
 		}
-		if (ValueManager.getDateFromTimestampDate(request.getDateFrom()) != null) {
-			Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		if (ValueManager.getTimestampFromProtoTimestamp(request.getDateFrom()) != null) {
+			Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 				request.getDateFrom()
 			);
 			parametersList.add(dateFrom);
 			whereClause += " AND AssignDateFrom = ? ";
 		}
-		if (ValueManager.getDateFromTimestampDate(request.getDateTo()) != null) {
-			Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		if (ValueManager.getTimestampFromProtoTimestamp(request.getDateTo()) != null) {
+			Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 				request.getDateTo()
 			);
 			parametersList.add(dateTo);

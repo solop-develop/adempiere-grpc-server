@@ -27,9 +27,9 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.ListCampaignsRequest;
 import org.spin.backend.grpc.pos.ListCampaignsResponse;
-import org.spin.base.util.RecordUtil;
 import org.spin.pos.util.POSConvertUtil;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.base.RecordUtil;
+import org.spin.service.grpc.util.value.StringManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -132,7 +132,7 @@ public class POS {
 
 		String whereClause = null;
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {

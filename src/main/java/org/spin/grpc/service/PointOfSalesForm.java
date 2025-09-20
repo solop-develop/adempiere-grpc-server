@@ -97,7 +97,6 @@ import org.spin.backend.grpc.report_management.GenerateReportRequest;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.base.util.FileUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.service.POSLogic;
 import org.spin.pos.service.bank.BankManagement;
@@ -120,10 +119,12 @@ import org.spin.pos.service.pos.AccessManagement;
 import org.spin.pos.service.seller.SellerServiceLogic;
 import org.spin.pos.util.*;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -2393,7 +2394,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(pos.getAD_Org_ID());
 
 			// search value
-			final String searchValue = ValueManager.getDecodeUrl(
+			final String searchValue = StringManager.getDecodeUrl(
 				request.getSearchValue()
 			);
 			if(!Util.isEmpty(searchValue, true)) {
@@ -2444,7 +2445,7 @@ public class PointOfSalesForm extends StoreImplBase {
 						)
 					)
 					.setDocumentDate(
-						ValueManager.getTimestampFromDate(
+						ValueManager.getProtoTimestampFromTimestamp(
 							rs.getTimestamp(
 								I_C_Invoice.COLUMNNAME_DateInvoiced
 							)
@@ -2573,7 +2574,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			}
 			MOrder salesOrder = getOrder(request.getOrderId(), transactionName);
 			//	Throw if not exist conversion
-			ConvertUtil.validateConversion(salesOrder, currencyId, pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID), RecordUtil.getDate());
+			ConvertUtil.validateConversion(
+				salesOrder,
+				currencyId,
+				pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID),
+				TimeManager.getDate()
+			);
 			refundReferenceToCreate.set_ValueOfColumn("C_Order_ID", salesOrder.getC_Order_ID());
 			if(request.getPaymentMethodId() > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_PaymentMethod_ID", request.getPaymentMethodId());
@@ -2966,13 +2972,13 @@ public class PointOfSalesForm extends StoreImplBase {
 					.first();
 			//	Validate
 			if(shipment == null) {
-				shipment = new MInOut(salesOrder, 0, RecordUtil.getDate());
+				shipment = new MInOut(salesOrder, 0, TimeManager.getDate());
 				shipment.setMovementType(MInOut.MOVEMENTTYPE_CustomerShipment);
 			} else {
-				shipment.setDateOrdered(RecordUtil.getDate());
-				shipment.setDateAcct(RecordUtil.getDate());
-				shipment.setDateReceived(RecordUtil.getDate());
-				shipment.setMovementDate(RecordUtil.getDate());
+				shipment.setDateOrdered(TimeManager.getDate());
+				shipment.setDateAcct(TimeManager.getDate());
+				shipment.setDateReceived(TimeManager.getDate());
+				shipment.setMovementDate(TimeManager.getDate());
 			}
 			//	Default values
 			shipment.setC_Order_ID(orderId);
@@ -3933,22 +3939,22 @@ public class PointOfSalesForm extends StoreImplBase {
 			;
 		}
 		//	Date Order From
-		if(ValueManager.getDateFromTimestampDate(request.getDateOrderedFrom()) != null) {
+		if(ValueManager.getTimestampFromProtoTimestamp(request.getDateOrderedFrom()) != null) {
 			whereClause.append(" AND DateOrdered >= ?");
 			parameters.add(
 				TimeUtil.getDay(
-					ValueManager.getDateFromTimestampDate(
+					ValueManager.getTimestampFromProtoTimestamp(
 						request.getDateOrderedFrom()
 					)
 				)
 			);
 		}
 		//	Date Order To
-		if(ValueManager.getDateFromTimestampDate(request.getDateOrderedTo()) != null) {
+		if(ValueManager.getTimestampFromProtoTimestamp(request.getDateOrderedTo()) != null) {
 			whereClause.append(" AND DateOrdered <= ?");
 			parameters.add(
 				TimeUtil.getDay(
-					ValueManager.getDateFromTimestampDate(
+					ValueManager.getTimestampFromProtoTimestamp(
 						request.getDateOrderedTo()
 					)
 				)
@@ -4215,7 +4221,7 @@ public class PointOfSalesForm extends StoreImplBase {
 
 			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 
-			Timestamp currentDate = RecordUtil.getDate();
+			Timestamp currentDate = TimeManager.getDate();
 			CashManagement.validatePreviousCashClosing(pos, currentDate, transactionName);
 			CashManagement.getCurrentCashClosing(pos, currentDate, true, transactionName);
 
@@ -5359,7 +5365,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		Trx.run(transactionName -> {
 			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 
-			Timestamp currentDate = RecordUtil.getDate();
+			Timestamp currentDate = TimeManager.getDate();
 			CashManagement.validatePreviousCashClosing(pos, currentDate, transactionName);
 			CashManagement.getCurrentCashClosing(pos, currentDate, true, transactionName);
 
@@ -5545,7 +5551,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Load Price List Version
 		MPriceList priceList = MPriceList.get(Env.getCtx(), salesOrder.getM_PriceList_ID(), transactionName);
 		//
-		MPriceListVersion priceListVersion = priceList.getPriceListVersion (RecordUtil.getDate());
+		MPriceListVersion priceListVersion = priceList.getPriceListVersion (TimeManager.getDate());
 		List<MProductPrice> productPrices = Arrays.asList(priceListVersion.getProductPrice(" AND EXISTS("
 				+ "SELECT 1 "
 				+ "FROM C_OrderLine ol "
@@ -5598,16 +5604,16 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(!Util.isEmpty(tenderType)) {
 				payment.setTenderType(tenderType);
 			}
-			if(ValueManager.getDateFromTimestampDate(request.getPaymentDate()) != null) {
-				Timestamp date = ValueManager.getDateFromTimestampDate(
+			if(ValueManager.getTimestampFromProtoTimestamp(request.getPaymentDate()) != null) {
+				Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
 					request.getPaymentDate()
 				);
 				if(date != null) {
 					payment.setDateTrx(date);
 				}
 			}
-			if(ValueManager.getDateFromTimestampDate(request.getPaymentAccountDate()) != null) {
-				Timestamp date = ValueManager.getDateFromTimestampDate(
+			if(ValueManager.getTimestampFromProtoTimestamp(request.getPaymentAccountDate()) != null) {
+				Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
 					request.getPaymentAccountDate()
 				);
 				if(date != null) {

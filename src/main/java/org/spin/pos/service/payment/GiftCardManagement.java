@@ -39,12 +39,12 @@ import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
@@ -416,7 +416,7 @@ public class GiftCardManagement {
 		MAllocationHdr paymentAllocation = new MAllocationHdr(
 			Env.getCtx(),
 			true,
-			RecordUtil.getDate(),
+			TimeManager.getDate(),
 			returnOrder.getC_Currency_ID(),
 			description,
 			transactionName

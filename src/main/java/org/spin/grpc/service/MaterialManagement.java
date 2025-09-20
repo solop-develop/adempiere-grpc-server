@@ -80,9 +80,9 @@ import org.spin.backend.grpc.material_management.Warehouse;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -157,7 +157,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		count = CountUtil.countRecords(parsedSQL, tableName, parametersList);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		builder = RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), tableName), parsedSQL, parametersList);
+		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(MTable.get(Env.getCtx(), tableName), parsedSQL, parametersList);
 		//	
 		builder.setRecordCount(count);
 		//	Set page token
@@ -415,7 +415,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		parameters.add(productAttributeSetId);
 
 		// Add search value to filter
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -497,7 +497,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		;
 		if (attributeSetInstance.getGuaranteeDate() != null) {
 			builder.setGuaranteeDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					attributeSetInstance.getGuaranteeDate()
 				)
 			);
@@ -838,7 +838,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		// Add search value to filter
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -988,7 +988,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		// Add search value to filter
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {

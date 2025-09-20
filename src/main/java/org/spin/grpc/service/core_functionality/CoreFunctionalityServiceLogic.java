@@ -30,7 +30,6 @@ import org.spin.backend.grpc.core_functionality.ConversionRate;
 import org.spin.backend.grpc.core_functionality.GetConversionRateRequest;
 import org.spin.backend.grpc.core_functionality.ListConversionRatesRequest;
 import org.spin.backend.grpc.core_functionality.ListConversionRatesResponse;
-import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
@@ -54,12 +53,12 @@ public class CoreFunctionalityServiceLogic {
 			return null;
 		}
 		//	Get values
-		Timestamp conversionDate = ValueManager.getDateFromTimestampDate(
+		Timestamp conversionDate = ValueManager.getTimestampFromProtoTimestamp(
 			request.getConversionDate()
 		);
 		conversionDate = TimeUtil.getDay(conversionDate);
 
-		MConversionRate conversionRate = RecordUtil.getConversionRate(
+		MConversionRate conversionRate = org.spin.base.util.RecordUtil.getConversionRate(
 			Env.getAD_Org_ID(Env.getCtx()),
 			request.getConversionTypeId(),
 			request.getCurrencyFromId(),
@@ -80,7 +79,7 @@ public class CoreFunctionalityServiceLogic {
 			throw new AdempiereException("@C_ConversionType_ID@ @NotFound@");
 		}
 
-		Timestamp conversionDate = ValueManager.getDateFromTimestampDate(
+		Timestamp conversionDate = ValueManager.getTimestampFromProtoTimestamp(
 			request.getConversionDate()
 		);
 		conversionDate = TimeUtil.getDay(

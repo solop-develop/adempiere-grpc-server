@@ -153,7 +153,7 @@ public class ConvertUtil {
 		}
 
 		builder.setLogDate(
-			ValueManager.getTimestampFromDate(
+			ValueManager.getProtoTimestampFromTimestamp(
 				chatEntry.getCreated()
 			)
 		);
@@ -495,10 +495,16 @@ public class ConvertUtil {
 						order.getDocStatus()
 					),
 					StringManager.getValidString(
-						ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)
+						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+							reference,
+							I_AD_Ref_List.COLUMNNAME_Name
+						)
 					),
 					StringManager.getValidString(
-						ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description)
+						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+							reference,
+							I_AD_Ref_List.COLUMNNAME_Description
+						)
 					)
 				)
 			)
@@ -581,7 +587,11 @@ public class ConvertUtil {
 					)
 				)
 			)
-			.setDateOrdered(ValueManager.getTimestampFromDate(order.getDateOrdered()))
+			.setDateOrdered(
+				ValueManager.getProtoTimestampFromTimestamp(
+					order.getDateOrdered()
+				)
+			)
 			.setCustomer(
 				POSConvertUtil.convertCustomer(
 					(MBPartner) order.getC_BPartner()
@@ -885,10 +895,16 @@ public class ConvertUtil {
 						shipment.getDocStatus()
 					),
 					StringManager.getValidString(
-						ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Name)
+						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+							reference,
+							I_AD_Ref_List.COLUMNNAME_Name
+						)
 					),
 					StringManager.getValidString(
-						ValueManager.getTranslation(reference, I_AD_Ref_List.COLUMNNAME_Description)
+						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
+							reference,
+							I_AD_Ref_List.COLUMNNAME_Description
+						)
 					)
 				)
 			)
@@ -898,7 +914,7 @@ public class ConvertUtil {
 				)
 			)
 			.setMovementDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					shipment.getMovementDate()
 				)
 			)

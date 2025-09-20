@@ -15,7 +15,7 @@
 package org.spin.grpc.service.form.out_bound_order;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+// import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -26,7 +26,7 @@ import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_M_Product;
 import org.adempiere.core.domains.models.X_C_Order;
 import org.compiere.model.MRefList;
-import org.compiere.model.MUOM;
+// import org.compiere.model.MUOM;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.form.out_bound_order.DocumentHeader;
@@ -193,36 +193,36 @@ public class OutBoundOrderConvertUtil {
 		boolean isStocked = BooleanManager.getBooleanFromString(
 			resultSet.getString("IsStocked")
 		);
-		//	Get Precision
-		int precision = MUOM.getPrecision(Env.getCtx(), productUOMId);
 
 		if (!isStocked) {
 			qtyOnHand = qty;
 		}
 
-		//	Valid Quantity On Hand
-//		if(!deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Force) && !deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Manual)) {
-//			//FR [ 1 ]
-//			BigDecimal diff = ((BigDecimal) (isStocked ? Env.ONE : Env.ZERO))
-//				.multiply(
-//					qtyOnHand
-//						.subtract(qty)
-//						.setScale(precision, RoundingMode.HALF_UP)
-//				);
-//			//	Set Quantity
-//			if(diff.doubleValue() < 0) {
-//				qty = qty
-//					.subtract(diff.abs())
-//					.setScale(precision, RoundingMode.HALF_UP)
-//				;
-//			}
-//			//	Valid Zero
-//			if (qty.compareTo(Env.ZERO) <= 0) {
-//				// Omit this record
-//				// continue;
-//				return builder;
-//			}
-//		}
+		//	Get Precision
+		// int precision = MUOM.getPrecision(Env.getCtx(), productUOMId);
+		// 	Valid Quantity On Hand
+		// if(!deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Force) && !deliveryRuleKey.equals(X_C_Order.DELIVERYRULE_Manual)) {
+		// 	//FR [ 1 ]
+		// 	BigDecimal diff = ((BigDecimal) (isStocked ? Env.ONE : Env.ZERO))
+		// 		.multiply(
+		// 			qtyOnHand
+		// 				.subtract(qty)
+		// 				.setScale(precision, RoundingMode.HALF_UP)
+		// 		);
+		// 	//	Set Quantity
+		// 	if(diff.doubleValue() < 0) {
+		// 		qty = qty
+		// 			.subtract(diff.abs())
+		// 			.setScale(precision, RoundingMode.HALF_UP)
+		// 		;
+		// 	}
+		// 	//	Valid Zero
+		// 	if (qty.compareTo(Env.ZERO) <= 0) {
+		// 		// Omit this record
+		// 		// continue;
+		// 		return builder;
+		// 	}
+		// }
 
 		builder.setId(
 				resultSet.getInt("ID")

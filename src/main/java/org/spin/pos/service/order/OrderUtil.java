@@ -42,9 +42,9 @@ import org.compiere.process.DocAction;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * A util class for change values for documents
@@ -156,10 +156,10 @@ public class OrderUtil {
 		if(salesOrder.isProcessed() || salesOrder.isProcessing()) {
 			return;
 		}
-		if(!salesOrder.getDateOrdered().equals(RecordUtil.getDate())
-				|| !salesOrder.getDateAcct().equals(RecordUtil.getDate())) {
-			salesOrder.setDateOrdered(RecordUtil.getDate());
-			salesOrder.setDateAcct(RecordUtil.getDate());
+		if(!salesOrder.getDateOrdered().equals(TimeManager.getDate())
+				|| !salesOrder.getDateAcct().equals(TimeManager.getDate())) {
+			salesOrder.setDateOrdered(TimeManager.getDate());
+			salesOrder.setDateAcct(TimeManager.getDate());
 			salesOrder.saveEx();
 		}
 	}

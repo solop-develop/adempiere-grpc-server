@@ -51,8 +51,8 @@ import org.spin.backend.grpc.file_management.SetAttachmentDescriptionRequest;
 import org.spin.backend.grpc.file_management.SetResourceReferenceDescriptionRequest;
 import org.spin.backend.grpc.file_management.SetResourceReferenceRequest;
 import org.spin.base.util.FileUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.model.MADAttachmentReference;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -539,12 +539,12 @@ public class FileManagement extends FileManagementImplBase {
 				)
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					reference.getCreated()
 				)
 			)
 			.setUpdated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					reference.getUpdated()
 				)
 			)

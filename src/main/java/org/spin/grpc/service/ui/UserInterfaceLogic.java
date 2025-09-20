@@ -35,7 +35,7 @@ import org.spin.backend.grpc.user_interface.TreeNode;
 import org.spin.backend.grpc.user_interface.TreeType;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
-import org.spin.base.util.RecordUtil;
+import org.spin.service.grpc.util.base.RecordUtil;
 
 /**
  * This class was created for add all logic methods for User Interface service

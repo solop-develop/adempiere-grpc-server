@@ -1077,14 +1077,14 @@ public class OutBoundOrderLogic {
 			request.getWarehouseId()
 		);
 
-		Timestamp documentDate = ValueManager.getDateFromTimestampDate(
+		Timestamp documentDate = ValueManager.getTimestampFromProtoTimestamp(
 			request.getDocumentDate()
 		);
 		if (documentDate == null) {
 			throw new AdempiereException("@FillMandatory@ @DocumentDate@");
 		}
 
-		Timestamp shipmentDate = ValueManager.getDateFromTimestampDate(
+		Timestamp shipmentDate = ValueManager.getTimestampFromProtoTimestamp(
 			request.getDocumentDate()
 		);
 		if (shipmentDate == null) {

@@ -211,7 +211,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setStatementDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					bankStatement.getStatementDate()
 				)
 			)
@@ -417,7 +417,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					payment.getDateTrx()
 				)
 			)
@@ -480,7 +480,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -558,7 +558,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -600,7 +600,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDate(
-					ValueManager.getTimestampFromDate(
+					ValueManager.getProtoTimestampFromTimestamp(
 						payment.getDateTrx()
 					)
 				)
@@ -724,7 +724,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDate(
-					ValueManager.getTimestampFromDate(
+					ValueManager.getProtoTimestampFromTimestamp(
 						payment.getDateTrx()
 					)
 				)

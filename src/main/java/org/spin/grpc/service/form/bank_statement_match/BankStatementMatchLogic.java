@@ -215,10 +215,10 @@ public abstract class BankStatementMatchLogic {
 
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -287,10 +287,10 @@ public abstract class BankStatementMatchLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -346,10 +346,10 @@ public abstract class BankStatementMatchLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 
@@ -532,10 +532,10 @@ public abstract class BankStatementMatchLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -658,10 +658,10 @@ public abstract class BankStatementMatchLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 

@@ -47,7 +47,7 @@ import static com.google.protobuf.util.Timestamps.toMillis;
 public class LogsServiceLogic {
 	public static ListUserActivitesResponse.Builder listUserActivites(ListUserActivitesRequest request) {
 		final int userId = Env.getAD_User_ID(Env.getCtx());
-		Timestamp date = ValueManager.getDateFromTimestampDate(
+		Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
 			request.getDate()
 		);
 		if (date == null) {
@@ -147,7 +147,7 @@ public class LogsServiceLogic {
 		List<UserActivity> recordsList = userActivitiesList.stream().sorted((u1, u2) -> {
 			Timestamp from = null;
 			if (u1.getUserActivityType() == UserActivityType.ENTITY_LOG) {
-				from = ValueManager.getDateFromTimestampDate(
+				from = ValueManager.getTimestampFromProtoTimestamp(
 					u1.getEntityLog().getLogDate()
 				);
 			} else if (u1.getUserActivityType() == UserActivityType.PROCESS_LOG) {
@@ -162,7 +162,7 @@ public class LogsServiceLogic {
 
 			Timestamp to = null;
 			if (u2.getUserActivityType() == UserActivityType.ENTITY_LOG) {
-				to = ValueManager.getDateFromTimestampDate(
+				to = ValueManager.getTimestampFromProtoTimestamp(
 					u2.getEntityLog().getLogDate()
 				);
 			} else if (u2.getUserActivityType() == UserActivityType.PROCESS_LOG) {

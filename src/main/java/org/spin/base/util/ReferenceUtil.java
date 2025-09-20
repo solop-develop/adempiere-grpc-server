@@ -630,7 +630,13 @@ public class ReferenceUtil {
 	 */
 	private static MLookupInfo getLookupInfoFromReference(int referenceId) {
 		MLookupInfo lookupInformation = null;
-		X_AD_Reference reference = (X_AD_Reference) RecordUtil.getEntity(Env.getCtx(), I_AD_Reference.Table_Name, null, referenceId, null);
+		X_AD_Reference reference = (X_AD_Reference) org.spin.service.grpc.util.base.RecordUtil.getEntity(
+			Env.getCtx(),
+			I_AD_Reference.Table_Name,
+			null,
+			referenceId,
+			null
+		);
 		if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_TableValidation)) {
 			lookupInformation = MLookupFactory.getLookupInfo(Env.getCtx(), 0, 0, DisplayType.Search, Language.getLanguage(Env.getAD_Language(Env.getCtx())), null, reference.getAD_Reference_ID(), false, null, false);
 		} else if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_ListValidation)) {

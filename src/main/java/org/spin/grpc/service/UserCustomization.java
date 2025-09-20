@@ -69,13 +69,12 @@ import org.spin.backend.grpc.user_customization.SaveWindowCustomizationRequest;
 import org.spin.backend.grpc.user_customization.User;
 import org.spin.backend.grpc.user_customization.UserCustomizationGrpc.UserCustomizationImplBase;
 // import org.spin.base.util.AccessUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -115,7 +114,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		String whereClause = "";
 		List<Object> parameters = new ArrayList<>();
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -225,7 +224,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		List<Object> parameters = new ArrayList<>();
 		String whereClause = "";
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -330,7 +329,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		List<Object> parameters = new ArrayList<>();
 		String whereClause = "";
 
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {

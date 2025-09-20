@@ -111,7 +111,7 @@ public class WorkflowUtil {
 				workflowProcess.isProcessed()
 			)
 			.setLogDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					workflowProcess.getCreated()
 				)
 			)
@@ -245,7 +245,11 @@ public class WorkflowUtil {
 			;
 		}
 		if(workflow.getValidFrom() != null) {
-			builder.setValidFrom(ValueManager.getTimestampFromDate(workflow.getValidFrom()));
+			builder.setValidFrom(
+				ValueManager.getProtoTimestampFromTimestamp(
+					workflow.getValidFrom()
+				)
+			);
 		}
 		//	Duration Unit
 		if(!Util.isEmpty(workflow.getDurationUnit())) {
@@ -553,7 +557,7 @@ public class WorkflowUtil {
 				)
 			)
 			.setLogDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					workflowEventAudit.getCreated()
 				)
 			)
@@ -665,7 +669,7 @@ public class WorkflowUtil {
 				workflowActivity.isProcessed()
 			)
 			.setCreated(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					workflowActivity.getCreated()
 				)
 			)
@@ -737,7 +741,11 @@ public class WorkflowUtil {
 		}
 
 		if(workflowActivity.getDateLastAlert() != null) {
-			builder.setLastAlert(ValueManager.getTimestampFromDate(workflowActivity.getDateLastAlert()));
+			builder.setLastAlert(
+				ValueManager.getProtoTimestampFromTimestamp(
+					workflowActivity.getDateLastAlert()
+				)
+			);
 		}
 		//	
 		return builder;

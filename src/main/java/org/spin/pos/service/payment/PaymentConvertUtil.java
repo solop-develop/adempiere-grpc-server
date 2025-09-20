@@ -43,10 +43,10 @@ import org.spin.backend.grpc.pos.Payment;
 import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.PaymentReference;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -313,7 +313,7 @@ public class PaymentConvertUtil {
 			)
 			.setPaymentMethod(paymentMethodBuilder)
 			.setPaymentDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					(Timestamp) paymentReference.get_Value("PayDate")
 				)
 			)
@@ -467,7 +467,7 @@ public class PaymentConvertUtil {
 			)
 			.setCurrency(currencyBuilder)
 			.setPaymentDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					payment.getDateTrx()
 				)
 			)
@@ -475,7 +475,7 @@ public class PaymentConvertUtil {
 				!payment.isReceipt()
 			)
 			.setPaymentAccountDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					payment.getDateAcct()
 				)
 			)
@@ -485,13 +485,13 @@ public class PaymentConvertUtil {
 						payment.getDocStatus()
 					),
 					StringManager.getValidString(
-						ValueManager.getTranslation(
+						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Name
 						)
 					),
 					StringManager.getValidString(
-						ValueManager.getTranslation(
+						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Description
 						)

@@ -287,10 +287,10 @@ public class PaymentInfoLogic {
 			);
 		}
 		// Payment Date
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getPaymentDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getPaymentDateTo()
 		);
 		if (dateFrom != null || dateTo != null) {

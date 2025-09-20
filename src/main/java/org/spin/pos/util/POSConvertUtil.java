@@ -148,12 +148,12 @@ public class POSConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					campaign.getStartDate()
 				)
 			)
 			.setEndDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					campaign.getEndDate()
 				)
 			)
@@ -300,14 +300,14 @@ public class POSConvertUtil {
 				)
 			)
 			.setDateDoc(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					TimeManager.getTimestampFromObject(
 						giftCard.get_Value("DateDoc")
 					)
 				)
 			)
 			.setValidTo(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					TimeManager.getTimestampFromObject(
 						giftCard.get_Value("ValidTo")
 					)
@@ -963,7 +963,7 @@ public class POSConvertUtil {
 			Struct.Builder values = Struct.newBuilder()
 				.putFields(
 					columnName,
-					ValueManager.getValueFromObject(
+					ValueManager.getProtoValueFromObject(
 						businessPartnerLocation.get_Value(columnName)
 					).build()
 				)

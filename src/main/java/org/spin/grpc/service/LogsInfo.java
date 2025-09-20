@@ -65,11 +65,11 @@ import org.spin.backend.grpc.user_interface.ChatEntry;
 import org.spin.backend.grpc.logs.RecentItem;
 import org.spin.backend.grpc.wf.WorkflowProcess;
 import org.spin.base.util.ConvertUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.base.util.WorkflowUtil;
 import org.spin.log.LogsConvertUtil;
 import org.spin.log.LogsServiceLogic;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -543,7 +543,7 @@ public class LogsInfo extends LogsImplBase {
 						StringManager.getValidString(menuDescription)
 					)
 					.setUpdated(
-						ValueManager.getTimestampFromDate(
+						ValueManager.getProtoTimestampFromTimestamp(
 							recentItem.getUpdated()
 						)
 					)
@@ -702,7 +702,7 @@ public class LogsInfo extends LogsImplBase {
 				)
 			)
 			.setLogDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					recordChat.getCreated()
 				)
 			)

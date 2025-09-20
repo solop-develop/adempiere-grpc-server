@@ -54,11 +54,11 @@ import org.spin.backend.grpc.form.express_movement.UpdateMovementLineRequest;
 import org.spin.backend.grpc.form.express_movement.Warehouse;
 import org.spin.backend.grpc.form.express_movement.ExpressMovementGrpc.ExpressMovementImplBase;
 import org.spin.base.util.DocumentUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -103,7 +103,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -215,7 +215,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -331,7 +331,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				)
 			)
 			.setMovementDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					movement.getMovementDate()
 				)
 			)
@@ -374,7 +374,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		Trx.run(transactionName -> {
 			MMovement inventoryMovement = new MMovement(Env.getCtx(), 0, transactionName);
-			inventoryMovement.setMovementDate(RecordUtil.getDate()); // TODO: Verfy it
+			inventoryMovement.setMovementDate(TimeManager.getDate()); // TODO: Verfy it
 			inventoryMovement.saveEx(transactionName);
 
 			maybeMovement.set(inventoryMovement);

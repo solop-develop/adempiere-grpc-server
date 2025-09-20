@@ -26,7 +26,7 @@ import org.compiere.util.TimeUtil;
 import org.spin.backend.grpc.form.task_management.ListTasksRequest;
 import org.spin.backend.grpc.form.task_management.ListTasksResponse;
 import org.spin.backend.grpc.form.task_management.Task;
-import org.spin.base.util.RecordUtil;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -38,13 +38,13 @@ public class TaskManagemetLogic {
 	public static ListTasksResponse.Builder listTasks(ListTasksRequest request) throws ParseException {
 		Timestamp date = new Timestamp(System.currentTimeMillis());
 		if(request.getDate() != null && (request.getDate().getSeconds() > 0 || request.getDate().getNanos() > 0)) {
-			date = ValueManager.getDateFromTimestampDate(
+			date = ValueManager.getTimestampFromProtoTimestamp(
 				request.getDate()
 			);
 		}
 		Timestamp startDate = TimeUtil.getMonthFirstDay(date);
 		Timestamp endDate = TimeUtil.getMonthLastDay(date);
-		endDate = RecordUtil.getDayLastTime(endDate);
+		endDate = TimeManager.getDayLastTime(endDate);
 
 
 		ListTasksResponse.Builder listBuilder = ListTasksResponse.newBuilder();

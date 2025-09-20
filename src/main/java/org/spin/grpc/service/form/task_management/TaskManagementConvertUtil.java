@@ -63,12 +63,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setDateStartSchedule(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					project.getDateStartSchedule()
 				)
 			)
 			.setDateFinishSchedule(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					project.getDateFinishSchedule()
 				)
 			)
@@ -104,12 +104,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					project.getDateStartSchedule()
 				)
 			)
 			.setEndDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					project.getDateFinishSchedule()
 				)
 			)
@@ -150,12 +150,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setDateStartPlan(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					request.getDateStartPlan()
 				)
 			)
 			.setDateCompletePlan(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					request.getDateCompletePlan()
 				)
 			)
@@ -191,12 +191,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					request.getDateStartPlan()
 				)
 			)
 			.setEndDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					request.getDateCompletePlan()
 				)
 			)
@@ -242,12 +242,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setAssignDateForm(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateFrom()
 				)
 			)
 			.setAssignDateTo(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateTo()
 				)
 			)
@@ -285,12 +285,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateFrom()
 				)
 			)
 			.setEndDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateTo()
 				)
 			)

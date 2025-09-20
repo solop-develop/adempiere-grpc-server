@@ -89,7 +89,9 @@ public class CashManagement {
 		payment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
         String value = DB.getDocumentNo(payment.getC_DocType_ID(), transactionName, false,  payment);
         payment.setDocumentNo(value);
-        Timestamp date = ValueManager.getDateFromTimestampDate(request.getPaymentAccountDate());
+        Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
+			request.getPaymentAccountDate()
+		);
         if(date != null) {
         	payment.setDateAcct(date);
         }

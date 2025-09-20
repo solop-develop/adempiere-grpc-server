@@ -37,7 +37,7 @@ import org.compiere.util.Util;
 import org.compiere.wf.MWFActivity;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.common.ProcessLog;
-import org.spin.base.util.RecordUtil;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.StringManager;
 
 /**

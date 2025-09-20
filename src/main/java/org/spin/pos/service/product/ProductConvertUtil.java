@@ -18,7 +18,6 @@ import org.compiere.model.MTax;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.core_functionality.ProductPrice;
-import org.spin.base.util.RecordUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
@@ -131,7 +130,14 @@ public class ProductConvertUtil {
 					CoreFunctionalityConvert.convertCurrency(displayCurrency)
 				);
 				//	Get
-				int conversionRateId = MConversionRate.getConversionRateId(priceList.getC_Currency_ID(), displayCurrencyId, RecordUtil.getDate(), conversionTypeId, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()));
+				int conversionRateId = MConversionRate.getConversionRateId(
+					priceList.getC_Currency_ID(),
+					displayCurrencyId,
+					TimeManager.getDate(),
+					conversionTypeId,
+					Env.getAD_Client_ID(Env.getCtx()),
+					Env.getAD_Org_ID(Env.getCtx())
+				);
 				if(conversionRateId > 0) {
 					//	TODO: cache or re-query should be resolved
 					MConversionRate conversionRate = MConversionRate.get(Env.getCtx(), conversionRateId);

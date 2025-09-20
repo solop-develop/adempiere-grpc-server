@@ -16,14 +16,14 @@
 package org.spin.pos.service.cash;
 
 import org.compiere.model.MPayment;
-import org.spin.base.util.RecordUtil;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * A util class for change values for documents
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class CashUtil {
-	
+
 	/**
 	 * Default set date for payment
 	 * @param payment
@@ -31,7 +31,6 @@ public class CashUtil {
 	public static void setCurrentDate(MPayment payment) {
 		setCurrentDate(payment, false);
 	}
-	
 	/**
 	 * Set current date to order
 	 * @param payment
@@ -43,9 +42,10 @@ public class CashUtil {
 		if(payment.isProcessed() || payment.isProcessing() || (payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo) && !force)) {
 			return;
 		}
-		if(!payment.getDateTrx().equals(RecordUtil.getDate())) {
-			payment.setDateTrx(RecordUtil.getDate());
+		if(!payment.getDateTrx().equals(TimeManager.getDate())) {
+			payment.setDateTrx(TimeManager.getDate());
 			payment.saveEx();
 		}
 	}
+
 }

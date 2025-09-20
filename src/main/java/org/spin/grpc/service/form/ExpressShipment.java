@@ -64,11 +64,11 @@ import org.spin.backend.grpc.form.express_shipment.ShipmentLine;
 import org.spin.backend.grpc.form.express_shipment.UpdateShipmentLineRequest;
 import org.spin.backend.grpc.form.express_shipment.ExpressShipmentGrpc.ExpressShipmentImplBase;
 import org.spin.base.util.DocumentUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -113,7 +113,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -250,7 +250,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		parameters.add(businessPartnerId);
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -310,7 +310,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				salesOrder.getC_Order_ID()
 			)
 			.setDateOrdered(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					salesOrder.getDateOrdered()
 				)
 			)
@@ -362,7 +362,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		parameters.add(orderId);
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -476,12 +476,12 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				)
 			)
 			.setDateOrdered(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					shipment.getDateOrdered()
 				)
 			)
 			.setMovementDate(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					shipment.getMovementDate()
 				)
 			)
@@ -566,7 +566,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 			// Validate
 			if (shipment == null) {
-				shipment = new MInOut(salesOrder, 0, RecordUtil.getDate());
+				shipment = new MInOut(salesOrder, 0, TimeManager.getDate());
 				if (Util.isEmpty(shipment.getMovementType())) {
 					shipment.setMovementType(X_M_InOut.MOVEMENTTYPE_VendorReturns);
 				}
@@ -574,10 +574,10 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				if(!DocumentUtil.isDrafted(shipment)) {
 					throw new AdempiereException("@M_InOut_ID@ @Processed@");
 				}
-				shipment.setDateOrdered(RecordUtil.getDate());
-				shipment.setDateAcct(RecordUtil.getDate());
-				shipment.setDateReceived(RecordUtil.getDate());
-				shipment.setMovementDate(RecordUtil.getDate());
+				shipment.setDateOrdered(TimeManager.getDate());
+				shipment.setDateAcct(TimeManager.getDate());
+				shipment.setDateReceived(TimeManager.getDate());
+				shipment.setMovementDate(TimeManager.getDate());
 			}
 			shipment.setC_Order_ID(orderId);
 			shipment.saveEx(transactionName);

@@ -421,7 +421,7 @@ public class ReferenceInfo {
 			}
 			columnName = column.getColumnName();
 		} else if(!Util.isEmpty(tableName, true)) {
-			MTable table = RecordUtil.validateAndGetTable(tableName);
+			MTable table = org.spin.service.grpc.util.base.RecordUtil.validateAndGetTable(tableName);
 			if(!Util.isEmpty(columnName, true)) {
 				MColumn column = table.getColumn(columnName);
 				if (column == null || column.getAD_Column_ID() <= 0) {

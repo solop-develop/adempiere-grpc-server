@@ -50,13 +50,13 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.base.util.DocumentUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import static org.spin.pos.service.payment.GiftCardManagement.createGiftCard;
 import static org.spin.pos.service.payment.GiftCardManagement.createGiftCardReference;
@@ -546,7 +546,7 @@ public class OrderManagement {
 		if(!paymentsIds.isEmpty() || !paymentReferencesList.isEmpty()) {
 			String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
 			//	
-			MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, RecordUtil.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
+			MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, TimeManager.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
 			paymentAllocation.setAD_Org_ID(salesOrder.getAD_Org_ID());
 			//	Set Description
 			paymentAllocation.saveEx();
@@ -601,7 +601,7 @@ public class OrderManagement {
 			if(!isOpenRefund) {
 				if(openAmount.get().compareTo(Env.ZERO) != 0) {
 					String description = Msg.parseTranslation(Env.getCtx(), "@C_POS_ID@: " + pos.getName() + " - " + salesOrder.getDocumentNo());
-					MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, RecordUtil.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
+					MAllocationHdr paymentAllocation = new MAllocationHdr (Env.getCtx(), true, TimeManager.getDate(), salesOrder.getC_Currency_ID(), description, transactionName);
 					paymentAllocation.setAD_Org_ID(salesOrder.getAD_Org_ID());
 					//	Set Description
 					paymentAllocation.saveEx();

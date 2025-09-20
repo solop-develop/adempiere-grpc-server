@@ -83,10 +83,10 @@ import org.spin.backend.grpc.report_management.ReportView;
 import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.FileUtil;
-import org.spin.base.util.RecordUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.dictionary.util.ReportUtil;
 import org.spin.eca62.util.S3Manager;
+import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -347,7 +347,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			// }
 
 			responseBuilder.setLastRun(
-				ValueManager.getTimestampFromDate(
+				ValueManager.getProtoTimestampFromTimestamp(
 					instance.getUpdated()
 				)
 			);

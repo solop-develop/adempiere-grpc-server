@@ -462,7 +462,7 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		List<Object> parameters = new ArrayList<Object>();
 
 		//	For search value
-		final String searchValue = ValueManager.getDecodeUrl(
+		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
@@ -602,10 +602,10 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		}
 
 		// Date filter
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getDateTo()
 		);
 		if (dateFrom != null && dateTo != null) {
@@ -705,10 +705,10 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		whereClause += " AND lin.M_Product_ID = " + request.getProductId();
 
 		// Date filter
-		Timestamp dateFrom = ValueManager.getDateFromTimestampDate(
+		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
 			request.getDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getDateFromTimestampDate(
+		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
 			request.getDateTo()
 		);
 		if (dateFrom != null && dateTo != null) {
