@@ -24,6 +24,7 @@ import org.adempiere.core.domains.models.X_C_ProjectLineType;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
+import org.eevolution.hr.model.MHREmployee;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -281,9 +282,47 @@ public class MProjectLine extends X_C_ProjectLine
 		//	Planned Amount
 		if (isCostBased()) {
 			if(!isSummary()){
+				BigDecimal costAmount = null;
+				if (is_ValueChanged(COLUMNNAME_Ref_BPartner_ID) && getRef_BPartner_ID() > 0) {
+					MHREmployee employee = MHREmployee.getActiveEmployee(getCtx(), getRef_BPartner_ID(), get_TrxName());
+					BigDecimal rate;
+					MUOM uom = (MUOM) getC_UOM();
+					String uomCode = uom.getX12DE355();
+
+					if (employee.getDailySalary().signum() > 0) {
+						rate = BigDecimal.valueOf(8);
+						if (uomCode.equals(MUOM.X12_DAY)) {
+							rate = BigDecimal.ONE;
+						}
+						costAmount = employee.getDailySalary().divide(rate, RoundingMode.HALF_UP);
+
+					} else if (employee.getMonthlySalary().signum() > 0) {
+						rate = BigDecimal.valueOf(240);
+						if (uomCode.equals(MUOM.X12_DAY)) {
+							rate = BigDecimal.valueOf(30);
+						}
+						costAmount = employee.getMonthlySalary().divide(rate, RoundingMode.HALF_UP);
+					}
+				}
+				if (is_ValueChanged(COLUMNNAME_S_ResourceType_ID) && getS_ResourceType_ID() > 0 && costAmount == null) {
+					MResourceType resourceType = (MResourceType) getS_ResourceType();
+					MProductPricing productPrice = new MProductPricing (resourceType.getS_DefaultProduct_ID(),
+				0, BigDecimal.ONE, false, get_TrxName());
+					productPrice.setM_PriceList_ID(resourceType.getPO_PriceList_ID());
+					productPrice.setPriceDate(project.getDateStart());
+					productPrice.calculatePrice();
+					costAmount = productPrice.getPriceStd();
+
+				}
+				if (costAmount == null) {
+					costAmount = getCost();
+				}
+				setCost(costAmount);
+
+
 				BigDecimal calculatedAmt = BigDecimal.ZERO;
 				if (getCost().signum() > 0) {
-					calculatedAmt = (BigDecimal.valueOf(1+(getMargin().doubleValue()/100))).multiply(getCost());
+					calculatedAmt = (BigDecimal.valueOf(1+(getMargin().doubleValue()/100))).multiply(costAmount);
 				}
 				setPlannedPrice(calculatedAmt);
 				setPlannedAmt(getPlannedQty().multiply(calculatedAmt));

@@ -453,6 +453,86 @@ public class X_C_ProjectLine extends PO implements I_C_ProjectLine, I_Persistent
 		return ii.intValue();
 	}
 
+	public I_C_BPartner getRef_BPartner() throws RuntimeException
+	{
+		return (I_C_BPartner)MTable.get(getCtx(), I_C_BPartner.Table_Name)
+				.getPO(getRef_BPartner_ID(), get_TrxName());	}
+
+	/** Set Employee Reference.
+	 @param Ref_BPartner_ID
+	 Employee Reference
+	 */
+	public void setRef_BPartner_ID (int Ref_BPartner_ID)
+	{
+		if (Ref_BPartner_ID < 1)
+			set_Value (COLUMNNAME_Ref_BPartner_ID, null);
+		else
+			set_Value (COLUMNNAME_Ref_BPartner_ID, Integer.valueOf(Ref_BPartner_ID));
+	}
+
+	/** Get Employee Reference.
+	 @return Employee Reference
+	 */
+	public int getRef_BPartner_ID ()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_Ref_BPartner_ID);
+		if (ii == null)
+			return 0;
+		return ii.intValue();
+	}
+
+	public I_S_ResourceType getS_ResourceType() throws RuntimeException
+	{
+		return (I_S_ResourceType)MTable.get(getCtx(), I_S_ResourceType.Table_Name)
+				.getPO(getS_ResourceType_ID(), get_TrxName());	}
+
+	/** Set Resource Type.
+	 @param S_ResourceType_ID Resource Type	  */
+	public void setS_ResourceType_ID (int S_ResourceType_ID)
+	{
+		if (S_ResourceType_ID < 1)
+			set_Value (COLUMNNAME_S_ResourceType_ID, null);
+		else
+			set_Value (COLUMNNAME_S_ResourceType_ID, Integer.valueOf(S_ResourceType_ID));
+	}
+
+	/** Get Resource Type.
+	 @return Resource Type	  */
+	public int getS_ResourceType_ID ()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_S_ResourceType_ID);
+		if (ii == null)
+			return 0;
+		return ii.intValue();
+	}
+	public I_C_UOM getC_UOM() throws RuntimeException
+	{
+		return (I_C_UOM)MTable.get(getCtx(), I_C_UOM.Table_Name)
+				.getPO(getC_UOM_ID(), get_TrxName());	}
+
+	/** Set UOM.
+	 @param C_UOM_ID
+	 Unit of Measure
+	 */
+	public void setC_UOM_ID (int C_UOM_ID)
+	{
+		if (C_UOM_ID < 1)
+			set_Value (COLUMNNAME_C_UOM_ID, null);
+		else
+			set_Value (COLUMNNAME_C_UOM_ID, Integer.valueOf(C_UOM_ID));
+	}
+
+	/** Get UOM.
+	 @return Unit of Measure
+	 */
+	public int getC_UOM_ID ()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_C_UOM_ID);
+		if (ii == null)
+			return 0;
+		return ii.intValue();
+	}
+
 	public I_C_StandardProjectLine getC_StandardProjectLine() throws RuntimeException
     {
 		return (I_C_StandardProjectLine)MTable.get(getCtx(), I_C_StandardProjectLine.Table_Name)
