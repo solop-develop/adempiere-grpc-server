@@ -708,7 +708,50 @@ public interface I_C_ProjectLine
 	  */
 	public BigDecimal getPercentageCompleted();
 
-    /** Column name PlannedAmt */
+	/** Column name Ref_BPartner_ID */
+	public static final String COLUMNNAME_Ref_BPartner_ID = "Ref_BPartner_ID";
+
+	/** Set Employee Reference.
+	 * Employee Reference
+	 */
+	public void setRef_BPartner_ID (int Ref_BPartner_ID);
+
+	/** Get Employee Reference.
+	 * Employee Reference
+	 */
+	public int getRef_BPartner_ID();
+
+	public org.adempiere.core.domains.models.I_C_BPartner getRef_BPartner() throws RuntimeException;
+
+
+	/** Column name S_ResourceType_ID */
+	public static final String COLUMNNAME_S_ResourceType_ID = "S_ResourceType_ID";
+
+	/** Set Resource Type	  */
+	public void setS_ResourceType_ID (int S_ResourceType_ID);
+
+	/** Get Resource Type	  */
+	public int getS_ResourceType_ID();
+
+	public org.adempiere.core.domains.models.I_S_ResourceType getS_ResourceType() throws RuntimeException;
+
+	/** Column name C_UOM_ID */
+	public static final String COLUMNNAME_C_UOM_ID = "C_UOM_ID";
+
+	/** Set UOM.
+	 * Unit of Measure
+	 */
+	public void setC_UOM_ID (int C_UOM_ID);
+
+	/** Get UOM.
+	 * Unit of Measure
+	 */
+	public int getC_UOM_ID();
+
+	public org.adempiere.core.domains.models.I_C_UOM getC_UOM() throws RuntimeException;
+
+
+	/** Column name PlannedAmt */
     public static final String COLUMNNAME_PlannedAmt = "PlannedAmt";
 
 	/** Set Planned Amount.
