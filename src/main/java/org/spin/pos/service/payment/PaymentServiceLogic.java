@@ -90,7 +90,7 @@ public class PaymentServiceLogic {
 		query.setLimit(limit, offset)
 			.<MRefList>list()
 			.forEach(refList -> {
-				CreditCardType.Builder builder = PaymentConvertUtil.convertCreditCardType(nexPageToken);
+				CreditCardType.Builder builder = PaymentConvertUtil.convertCreditCardType(refList);
 				builderList.addRecords(builder);
 			})
 		;
@@ -198,11 +198,10 @@ public class PaymentServiceLogic {
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
 
-		if (request.getCardProviderId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_CardProvider_ID@");
+		if (request.getCardProviderId() > 0) {
+			whereClause.append("C_CardProvider_ID = ?");
+			parameters.add(request.getCardProviderId());
 		}
-		whereClause.append("C_CardProvider_ID = ?");
-		parameters.add(request.getCardProviderId());
 
 		//	For search value
 		final String searchValue = StringManager.getDecodeUrl(

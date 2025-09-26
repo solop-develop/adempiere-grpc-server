@@ -2,9 +2,9 @@ server:
     port: 50059
     log_level: WARNING
 database:
-    host: localhost
-    port: 5432
-    name: "adempiere"
+    host: 192.168.0.117
+    port: 5490
+    name: "dyd_nuevo"
     user: adempiere
     password: adempiere
     type: PostgreSQL

@@ -245,7 +245,10 @@ service Store {
 	}
 	rpc ListCards(ListCardsRequest) returns (ListCardsResponse) {
 		option (google.api.http) = {
-			get: "/point-of-sales/{pos_id}/card-providers/{card_provider_id}/cards"
+			get: "/point-of-sales/{pos_id}/card-providers/cards",
+			additional_bindings: {
+				get: "/point-of-sales/{pos_id}/card-providers/{card_provider_id}/cards"
+			}
 		};
 	}
 	rpc ListAvailablePaymentMethods(ListAvailablePaymentMethodsRequest) returns (ListAvailablePaymentMethodsResponse) {
