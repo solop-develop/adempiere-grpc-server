@@ -646,7 +646,7 @@ public class ProductInfoLogic {
 
 			//  Optional Product Category
 			sqlWhere += " AND ("
-				+ "p.M_Product_Category_ID=? "
+				+ "p.M_Product_Category_ID = ? "
 				+ "OR p.M_Product_Category_ID IN ("
 						+ "SELECT ppc.M_Product_Category_ID FROM M_Product_Category AS ppc "
 						+ "WHERE ppc.M_Product_Category_Parent_ID = ?"
