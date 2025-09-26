@@ -59,6 +59,9 @@ public class ProductInfoConvert {
 			I_M_Product.COLUMNNAME_M_Product_ID
 		);
 		MProduct product = MProduct.get(Env.getCtx(), productId);
+		if (product == null || product.getM_Product_ID() <= 0) {
+			return builder;
+		}
 
 		builder.setId(
 				productId
@@ -148,13 +151,13 @@ public class ProductInfoConvert {
 					I_M_AttributeSet.COLUMNNAME_IsInstanceAttribute
 				)
 			)
-			.setVendor(
-				StringManager.getValidString(
-					rs.getString(
-						"Vendor"
-					)
-				)
-			)
+			// .setVendor(
+			// 	StringManager.getValidString(
+			// 		rs.getString(
+			// 			"Vendor"
+			// 		)
+			// 	)
+			// )
 			.setIsActive(
 				rs.getBoolean(
 					I_M_Product.COLUMNNAME_IsActive

@@ -386,19 +386,20 @@ public class ProductInfoLogic {
 		String sqlQuery = "SELECT "
 			+ "p.M_Product_ID, p.UUID, " // + "p.Discontinued, "
 			+ "p.IsStocked AS IsStocked, "
-			+ "pc.Name AS M_Product_Category_ID, pcl.Name AS M_Product_Class_ID, "
-			+ "pcls.Name AS M_Product_Classification_ID, pg.Name AS M_Product_Group_ID, "
-			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, u.Name AS C_UOM_ID, "
-			+ "bp.Name AS Vendor, pa.IsInstanceAttribute AS IsInstanceAttribute "
+			+ "pc.Name AS M_Product_Category_ID, "
+			+ "pcl.Name AS M_Product_Class_ID, "
+			+ "pcls.Name AS M_Product_Classification_ID, "
+			+ "pg.Name AS M_Product_Group_ID, "
+			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, "
+			+ "u.Name AS C_UOM_ID, "
+			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
 		String sqlFrom = "FROM M_Product AS p"
 			+ " LEFT OUTER JOIN M_AttributeSet AS pa ON (pa.M_AttributeSet_ID=p.M_AttributeSet_ID)"
-			+ " LEFT OUTER JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsCurrentVendor='Y' AND ppo.IsActive='Y')"
 			+ " LEFT OUTER JOIN M_Product_Class AS pcl ON (pcl.M_Product_Class_ID=p.M_Product_Class_ID)"
 			+ " LEFT OUTER JOIN M_Product_Classification AS pcls ON (pcls.M_Product_Classification_ID=p.M_Product_Classification_ID)"
 			+ " LEFT OUTER JOIN M_Product_Group AS pg ON (pg.M_Product_Group_ID = p.M_Product_Group_ID)"
 			+ " LEFT OUTER JOIN M_Product_Category AS pc ON (pc.M_Product_Category_ID=p.M_Product_Category_ID)"
-			+ " LEFT OUTER JOIN C_BPartner AS bp ON (ppo.C_BPartner_ID=bp.C_BPartner_ID)"
 			+ " LEFT OUTER JOIN C_UOM AS u ON (p.C_UOM_ID=u.C_UOM_ID)"
 		;
 
@@ -560,19 +561,20 @@ public class ProductInfoLogic {
 		String sqlQuery = "SELECT "
 			+ "p.M_Product_ID, p.UUID, " // + "p.Discontinued, "
 			+ "p.IsStocked AS IsStocked, "
-			+ "pc.Name AS M_Product_Category_ID, pcl.Name AS M_Product_Class_ID, "
-			+ "pcls.Name AS M_Product_Classification_ID, pg.Name AS M_Product_Group_ID, "
-			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, u.Name AS C_UOM_ID, "
-			+ "bp.Name AS Vendor, pa.IsInstanceAttribute AS IsInstanceAttribute "
+			+ "pc.Name AS M_Product_Category_ID, "
+			+ "pcl.Name AS M_Product_Class_ID, "
+			+ "pcls.Name AS M_Product_Classification_ID, "
+			+ "pg.Name AS M_Product_Group_ID, "
+			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, "
+			+ "u.Name AS C_UOM_ID, "
+			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
 		String sqlFrom = "FROM M_Product AS p"
 			+ " LEFT OUTER JOIN M_AttributeSet AS pa ON (pa.M_AttributeSet_ID=p.M_AttributeSet_ID)"
-			+ " LEFT OUTER JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsCurrentVendor='Y' AND ppo.IsActive='Y')"
 			+ " LEFT OUTER JOIN M_Product_Class AS pcl ON (pcl.M_Product_Class_ID=p.M_Product_Class_ID)"
 			+ " LEFT OUTER JOIN M_Product_Classification AS pcls ON (pcls.M_Product_Classification_ID=p.M_Product_Classification_ID)"
 			+ " LEFT OUTER JOIN M_Product_Group AS pg ON (pg.M_Product_Group_ID = p.M_Product_Group_ID)"
 			+ " LEFT OUTER JOIN M_Product_Category AS pc ON (pc.M_Product_Category_ID=p.M_Product_Category_ID)"
-			+ " LEFT OUTER JOIN C_BPartner AS bp ON (ppo.C_BPartner_ID=bp.C_BPartner_ID)"
 			+ " LEFT OUTER JOIN C_UOM AS u ON (p.C_UOM_ID=u.C_UOM_ID)"
 		;
 
@@ -643,9 +645,13 @@ public class ProductInfoLogic {
 			// sqlWhere += " AND p.M_Product_Category_ID = ? ";
 
 			//  Optional Product Category
-			sqlWhere += " AND (p.M_Product_Category_ID=? OR p.M_Product_Category_ID IN "
-				+ 		"(SELECT ppc.M_Product_Category_ID FROM M_Product_Category AS ppc "
-				+		"WHERE ppc.M_Product_Category_Parent_ID = ?))"
+			sqlWhere += " AND ("
+				+ "p.M_Product_Category_ID = ? "
+				+ "OR p.M_Product_Category_ID IN ("
+						+ "SELECT ppc.M_Product_Category_ID FROM M_Product_Category AS ppc "
+						+ "WHERE ppc.M_Product_Category_Parent_ID = ?"
+					+ ")"
+				+ ")"
 			;
 
 			filtersList.add(
@@ -708,7 +714,12 @@ public class ProductInfoLogic {
 		}
 		// Vendor
 		if (request.getVendorId() > 0) {
-			sqlWhere += " AND ppo.C_BPartner_ID = ? ";
+			sqlWhere += " AND EXISTS("
+				+ "SELECT 1 FROM M_Product_PO AS ppo "
+				+ "WHERE ppo.C_BPartner_ID = ? "
+				+ "AND ppo.M_Product_ID = p.M_Product_ID "
+				+ ")"
+			;
 			filtersList.add(
 				request.getVendorId()
 			);
