@@ -25,6 +25,7 @@ import org.compiere.model.MDiscountSchema;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -132,11 +133,35 @@ public class OrderServiceLogic {
 				OrderManagement.configureWarehouse(salesOrder);
 			}
 			//	Discount Amount
-			BigDecimal discountRate = NumberManager.getBigDecimalFromString(
+			final BigDecimal discountRate = NumberManager.getBigDecimalFromString(
 				request.getDiscountRate()
 			);
 			if(discountRate != null) {
-				DiscountManagement.configureDiscount(salesOrder, discountRate, transactionName);
+				final int paymentMethodId = request.getPaymentMethodId();
+				if (paymentMethodId > 0) {
+					PO paymentTypeAllocation = POS.getPaymentTypeAllocation(paymentMethodId, transactionName);
+					if (paymentTypeAllocation == null || paymentTypeAllocation.get_ID() <= 0) {
+						throw new AdempiereException("@C_POSPaymentTypeAllocation_ID@ @NotFound@");
+					}
+					final boolean isDiscountApply = salesOrder.get_ValueAsBoolean("IsAutoDiscountApplied");
+					final boolean isDiscountPaymentMethod = paymentTypeAllocation.get_ValueAsBoolean("IsAllowsApplyDiscount");
+					boolean isRecalculateDiscount = false;
+					if (!isDiscountApply && isDiscountPaymentMethod) {
+						isRecalculateDiscount = true;
+					} else if (isDiscountApply && !isDiscountPaymentMethod) {
+						isRecalculateDiscount = true;
+					} else if (isDiscountApply && isDiscountPaymentMethod) {
+						isRecalculateDiscount = true;
+					}
+					salesOrder.set_ValueOfColumn("IsAutoDiscountApplied", isDiscountPaymentMethod);
+					salesOrder.saveEx(transactionName);
+
+					if (isRecalculateDiscount) {
+						DiscountManagement.configureDiscount(salesOrder, discountRate, transactionName);
+					}
+				} else {
+					DiscountManagement.configureDiscount(salesOrder, discountRate, transactionName);
+				}
 			}
 			//	Discount Off
 			BigDecimal discountRateOff = NumberManager.getBigDecimalFromString(
