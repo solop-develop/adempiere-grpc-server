@@ -32,10 +32,14 @@ import org.compiere.model.MTax;
 import org.compiere.model.MTaxCategory;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *  @author Yamel Senih, yamel.senih@solopsoftware.com, Solop <a href="http://www.solopsoftware.com">solopsoftware.com</a>
@@ -87,14 +91,32 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		if (invoiceAmount.signum() <= 0) {
 			throw new AdempiereException("@Amount@ @Invalid@");
 		}
-
 		String whereClause = "IsSOTrx = 'N' AND C_PaymentProcessorBatch_ID = ? AND DocStatus NOT IN ('RE','VO') AND C_DocTypeTarget_ID = ?";
-		boolean exists = new Query(getCtx(), MInvoice.Table_Name, whereClause, get_TrxName())
+		List<Integer> invoiceIds = new Query(getCtx(), MInvoice.Table_Name, whereClause, get_TrxName())
 				.setParameters(getRecord_ID(), documentTypeId)
-				.match();
-		if (exists) {
-			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Invalid@");
+				.getIDsAsList();
+		if (isOverwriteAmtAndCharge()) {
+			AtomicReference<BigDecimal> usedInvoiceAmount = new AtomicReference<>(BigDecimal.ZERO);
+
+			invoiceIds.forEach(invoiceId -> {
+				MInvoice invoice = new MInvoice(getCtx(), invoiceId, get_TrxName());
+				usedInvoiceAmount.getAndUpdate(current -> current.add(invoice.getGrandTotal()));
+			});
+
+			if (getAmount().signum() == 0) {
+				throw new AdempiereException("@Amount@ @Invalid@");//TODO: better message
+			}
+			if (usedInvoiceAmount.get().add(getAmount()).compareTo(invoiceAmount) > 0){
+				throw new AdempiereException("@Amount@ @Invalid@");//TODO: better message
+			}
+			invoiceAmount = getAmount();
+			chargeId = getChargeId();
+		} else {
+			if (!invoiceIds.isEmpty()) {
+				throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @Invalid@");//TODO: better message
+			}
 		}
+
 
 
 
@@ -108,15 +130,24 @@ public class GenerateAPInvoiceFromBatch extends GenerateAPInvoiceFromBatchAbstra
 		invoice.setSalesRep_ID(getAD_User_ID());	//	caller
 		invoice.setDateInvoiced(getDateDoc());
 		String currencyIsoCode = MCurrency.get(getCtx(), batch.getC_Currency_ID()).getISO_Code();
-		MPriceList priceList = MPriceList.getDefault(getCtx(), true, currencyIsoCode);
+		MPriceList priceList = MPriceList.getDefault(getCtx(), false, currencyIsoCode);
 		if(priceList == null) {
 			throw new IllegalArgumentException("@M_PriceList_ID@ @NotFound@ (@C_Currency_ID@ " + currencyIsoCode + ")");
 		}
-		MCharge charge = new MCharge(getCtx(), chargeId, get_TrxName());
-		MTaxCategory taxCategory = (MTaxCategory) charge.getC_TaxCategory();
-		MTax tax = taxCategory.getDefaultTax();
-		if (tax != null) {
-			BigDecimal taxRate = tax.getRate();
+		MCharge charge =MCharge.get(getCtx(), chargeId);
+
+		Optional<MTax> optionalTax = Arrays.asList(MTax.getAll(Env.getCtx()))
+				.parallelStream()
+				.filter(tax -> tax.getC_TaxCategory_ID() == charge.getC_TaxCategory_ID()
+						&& (!tax.isSalesTax()
+						|| (!Util.isEmpty(tax.getSOPOType())
+						&& (tax.getSOPOType().equals(MTax.SOPOTYPE_Both)
+						|| tax.getSOPOType().equals(MTax.SOPOTYPE_PurchaseTax)))))
+				.findFirst()
+				;
+
+		if (optionalTax.isPresent()) {
+			BigDecimal taxRate = optionalTax.get().getRate();
 			int precision = priceList.getStandardPrecision();
 			BigDecimal multiplier = BigDecimal.ONE.add(taxRate.divide(Env.ONEHUNDRED, precision, RoundingMode.HALF_UP));
 			invoiceAmount = invoiceAmount.divide(multiplier, precision, RoundingMode.HALF_UP);
