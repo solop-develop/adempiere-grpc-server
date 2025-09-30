@@ -920,25 +920,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
-	@Override
-	public void changePaymentMethodDiscount(ChangePaymentMethodDiscountRequest request,
-			StreamObserver<ChangePaymentMethodDiscountResponse> responseObserver) {
-		try {
-			ChangePaymentMethodDiscountResponse.Builder tenderTypes = ChangePaymentMethodDiscountResponse.newBuilder();
-			responseObserver.onNext(tenderTypes.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.warning(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
 
 
 	@Override
