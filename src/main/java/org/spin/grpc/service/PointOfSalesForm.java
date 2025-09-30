@@ -18,15 +18,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
 import org.adempiere.core.domains.models.I_AD_Process;
@@ -53,7 +50,6 @@ import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MColumn;
 import org.compiere.model.MCurrency;
-import org.compiere.model.MDiscountSchema;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
@@ -104,6 +100,7 @@ import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashServiceLogic;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.cash.CollectingManagement;
+import org.spin.pos.service.order.DiscountManagement;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderServiceLogic;
 import org.spin.pos.service.order.OrderUtil;
@@ -151,13 +148,142 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
+
+	@Override
+	public void getOrder(GetOrderRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder order = OrderConverUtil.convertOrder(
+				OrderUtil.validateAndGetOrder(
+					request.getId(),
+					null
+				)
+			);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void listOrders(ListOrdersRequest request, StreamObserver<ListOrdersResponse> responseObserver) {
+		try {
+			ListOrdersResponse.Builder ordersList = listOrders(request);
+			responseObserver.onNext(ordersList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void deleteOrder(DeleteOrderRequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			Empty.Builder order = OrderServiceLogic.deleteOrder(request);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void releaseOrder(ReleaseOrderRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder order = OrderConverUtil.convertOrder(
+				changeOrderAssigned(
+					request.getId()
+				)
+			);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void holdOrder(HoldOrderRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder order = OrderConverUtil.convertOrder(
+				changeOrderAssigned(
+					request.getId(),
+					request.getSalesRepresentativeId()
+				)
+			);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void processOrder(ProcessOrderRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder order = OrderConverUtil.convertOrder(
+				processOrder(request)
+			);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 
 
 	@Override
@@ -167,29 +293,34 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(orderLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void deleteOrderLine(DeleteOrderLineRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			Empty.Builder orderLine = deleteOrderLine(request);
-			responseObserver.onNext(orderLine.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
+	@Override
+	public void listOrderLines(ListOrderLinesRequest request, StreamObserver<ListOrderLinesResponse> responseObserver) {
+		try {
+			ListOrderLinesResponse.Builder orderLinesList = listOrderLines(request);
+			responseObserver.onNext(orderLinesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
 
 	@Override
 	public void updateOrderLine(UpdateOrderLineRequest request, StreamObserver<OrderLine> responseObserver) {
@@ -198,27 +329,26 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(orderLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
 	@Override
-	public void getOrder(GetOrderRequest request, StreamObserver<Order> responseObserver) {
+	public void deleteOrderLine(DeleteOrderLineRequest request, StreamObserver<Empty> responseObserver) {
 		try {
-			Order.Builder order = OrderConverUtil.convertOrder(
-				getOrder(
-					request.getId(),
-					null
-				)
-			);
-			responseObserver.onNext(order.build());
+			Empty.Builder orderLine = OrderServiceLogic.deleteOrderLine(request);
+			responseObserver.onNext(orderLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -623,36 +753,6 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 
-
-	@Override
-	public void listOrders(ListOrdersRequest request, StreamObserver<ListOrdersResponse> responseObserver) {
-		try {
-			ListOrdersResponse.Builder ordersList = listOrders(request);
-			responseObserver.onNext(ordersList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
-	
-	@Override
-	public void listOrderLines(ListOrderLinesRequest request, StreamObserver<ListOrderLinesResponse> responseObserver) {
-		try {
-			ListOrderLinesResponse.Builder orderLinesList = listOrderLines(request);
-			responseObserver.onNext(orderLinesList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException());
-		}
-	}
 	
 	@Override
 	public void getKeyLayout(GetKeyLayoutRequest request, StreamObserver<KeyLayout> responseObserver) {
@@ -669,50 +769,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
-
-	@Override
-	public void releaseOrder(ReleaseOrderRequest request, StreamObserver<Order> responseObserver) {
-		try {
-			Order.Builder order = OrderConverUtil.convertOrder(
-				changeOrderAssigned(
-					request.getId()
-				)
-			);
-			responseObserver.onNext(order.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-
-	@Override
-	public void holdOrder(HoldOrderRequest request, StreamObserver<Order> responseObserver) {
-		try {
-			Order.Builder order = OrderConverUtil.convertOrder(
-				changeOrderAssigned(
-					request.getId(),
-					request.getSalesRepresentativeId()
-				)
-			);
-			responseObserver.onNext(order.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
 
 
 	@Override
@@ -740,26 +796,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		return AvailableRefund.newBuilder();
 	}
 
-
-	@Override
-	public void processOrder(ProcessOrderRequest request, StreamObserver<Order> responseObserver) {
-		try {
-			Order.Builder order = OrderConverUtil.convertOrder(
-				processOrder(request)
-			);
-			responseObserver.onNext(order.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
 
 
 	@Override
@@ -870,6 +906,25 @@ public class PointOfSalesForm extends StoreImplBase {
 			StreamObserver<ListAvailablePaymentMethodsResponse> responseObserver) {
 		try {
 			ListAvailablePaymentMethodsResponse.Builder tenderTypes = listPaymentMethods(request);
+			responseObserver.onNext(tenderTypes.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void changePaymentMethodDiscount(ChangePaymentMethodDiscountRequest request,
+			StreamObserver<ChangePaymentMethodDiscountResponse> responseObserver) {
+		try {
+			ChangePaymentMethodDiscountResponse.Builder tenderTypes = ChangePaymentMethodDiscountResponse.newBuilder();
 			responseObserver.onNext(tenderTypes.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2572,7 +2627,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID) > 0) {
 				refundReferenceToCreate.set_ValueOfColumn("C_ConversionType_ID", pos.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID));
 			}
-			MOrder salesOrder = getOrder(request.getOrderId(), transactionName);
+			MOrder salesOrder = OrderUtil.validateAndGetOrder(request.getOrderId(), transactionName);
 
 			//	Throw if not exist conversion
 			ConvertUtil.validateConversion(
@@ -4084,7 +4139,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
 		int orderId = request.getOrderId();
-		MOrder order = new MOrder(Env.getCtx(), orderId, null);
+		MOrder order = OrderUtil.validateAndGetOrder(orderId);
 		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), order.get_TrxName());
 		ListOrderLinesResponse.Builder builder = ListOrderLinesResponse.newBuilder();
 		String nexPageToken = null;
@@ -4131,16 +4186,8 @@ public class PointOfSalesForm extends StoreImplBase {
 		);
 		return builder;
 	}
-	
-	/**
-	 * Get Order from UUID
-	 * @param uuid
-	 * @return
-	 */
-	private MOrder getOrder(int id, String transactionName) {
-		return (MOrder) RecordUtil.getEntity(Env.getCtx(), I_C_Order.Table_Name, id, transactionName);
-	}
-	
+
+
 	private MOrder changeOrderAssigned(int orderId) {
 		return changeOrderAssigned(orderId, 0);
 	}
@@ -4154,10 +4201,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
 		if(orderId > 0) {
 			Trx.run(transactionName -> {
-				MOrder salesOrder = getOrder(orderId, transactionName);
-				if(salesOrder == null) {
-					throw new AdempiereException("@C_Order_ID@ @NotFound@");
-				}
+				MOrder salesOrder = OrderUtil.validateAndGetOrder(orderId, transactionName);
 				if(!DocumentUtil.isDrafted(salesOrder)) {
 					throw new AdempiereException("@C_Order_ID@ @Processed@");
 				}
@@ -4184,7 +4228,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	public void updateOrder(UpdateOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
 			Order.Builder order = OrderConverUtil.convertOrder(
-				updateOrder(request)
+				OrderServiceLogic.updateOrder(request)
 			);
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
@@ -4200,447 +4244,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
-	/**
-	 * Update Order from ID
-	 * @param request
-	 * @return
-	 */
-	private MOrder updateOrder(UpdateOrderRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
-		}
-
-		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
-		Trx.run(transactionName -> {
-			MOrder salesOrder = getOrder(request.getId(), transactionName);
-			if(salesOrder == null) {
-				throw new AdempiereException("@C_Order_ID@ @NotFound@");
-			}
-			if(!DocumentUtil.isDrafted(salesOrder)) {
-				throw new AdempiereException("@C_Order_ID@ @Processed@");
-			}
-
-			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-
-			Timestamp currentDate = TimeManager.getDate();
-			CashManagement.validatePreviousCashClosing(pos, currentDate, transactionName);
-			CashManagement.getCurrentCashClosing(pos, currentDate, true, transactionName);
-
-			OrderManagement.validateOrderReleased(salesOrder);
-			//	Update Date Ordered
-			Timestamp now = TimeUtil.getDay(System.currentTimeMillis());
-			salesOrder.setDateOrdered(now);
-			salesOrder.setDateAcct(now);
-			salesOrder.setDatePromised(now);
-			//	POS
-			if(request.getPosId() > 0 && salesOrder.getC_POS_ID() <= 0) {
-				salesOrder.setC_POS_ID(request.getPosId());
-			}
-			//	Document Type
-			if(request.getDocumentTypeId() > 0) {
-				int documentTypeId = request.getDocumentTypeId();
-				if(documentTypeId > 0 && documentTypeId != salesOrder.getC_DocTypeTarget_ID()) {
-					salesOrder.setC_DocTypeTarget_ID(documentTypeId);
-					salesOrder.setC_DocType_ID(documentTypeId);
-					//	Set Sequenced No
-					String value = DB.getDocumentNo(documentTypeId, transactionName, false, salesOrder);
-					if (value != null) {
-						salesOrder.setDocumentNo(value);
-					}
-				}
-			}
-			//	Business partner
-			if(request.getCustomerId() > 0 && salesOrder.getC_POS_ID() > 0) {
-				configureBPartner(salesOrder, request.getCustomerId(), transactionName);
-			}
-			//	Description
-			if(!Util.isEmpty(request.getDescription())) {
-				salesOrder.setDescription(request.getDescription());
-			}
-			//	Campaign
-			int campaignId = request.getCampaignId();
-			if(campaignId > 0 && campaignId != salesOrder.getC_Campaign_ID()) {
-				salesOrder.setC_Campaign_ID(campaignId);
-				// update campaign on lines
-				for (MOrderLine orderLine: salesOrder.getLines()) {
-					orderLine.setC_Campaign_ID(campaignId);
-					orderLine.saveEx(transactionName);
-				}
-			}
-			//	Price List
-			int priceListId = request.getPriceListId();
-			if(priceListId > 0 && priceListId != salesOrder.getM_PriceList_ID()) {
-				salesOrder.setM_PriceList_ID(priceListId);
-				salesOrder.saveEx(transactionName);
-				configurePriceList(salesOrder);
-			}
-			//	Warehouse
-			int warehouseId = request.getWarehouseId();
-			if(warehouseId > 0) {
-				salesOrder.setM_Warehouse_ID(warehouseId);
-				salesOrder.saveEx(transactionName);
-				configureWarehouse(salesOrder);
-			}
-			//	Discount Amount
-			BigDecimal discountRate = NumberManager.getBigDecimalFromString(
-				request.getDiscountRate()
-			);
-			if(discountRate != null) {
-				configureDiscount(salesOrder, discountRate, transactionName);
-			}
-			//	Discount Off
-			BigDecimal discountRateOff = NumberManager.getBigDecimalFromString(
-				request.getDiscountRateOff()
-			);
-			BigDecimal discountAmountOff = NumberManager.getBigDecimalFromString(
-				request.getDiscountAmountOff()
-			);
-			if (request.getDiscountSchemaId() > 0) {
-				MDiscountSchema discountSchema = MDiscountSchema.get(
-					Env.getCtx(),
-					request.getDiscountSchemaId()
-				);
-				// discountRateOff = discountSchema.getFlatDiscount();
-				configureDiscount(salesOrder, discountSchema.getFlatDiscount(), transactionName);
-			}
-			if(discountRateOff != null) {
-				configureDiscountRateOff(salesOrder, discountRateOff, transactionName);
-			} else if(discountAmountOff != null) {
-				configureDiscountAmountOff(salesOrder, discountAmountOff, transactionName);
-			}
-
-			// Sales Representative
-			if (request.getSalesRepresentativeId() > 0) {
-				salesOrder.setSalesRep_ID(request.getSalesRepresentativeId());
-			}
-
-			//	Save
-			salesOrder.saveEx(transactionName);
-			salesOrder.load(transactionName);
-			orderReference.set(salesOrder);
-		});
-
-		//	Return order
-		return orderReference.get();
-	}
-
-	/**
-	 * 	Set BPartner, update price list and locations
-	 *  Configuration of Business Partner has priority over POS configuration
-	 *	@param order
-	 *	@param businessPartnerId id
-	 */
-	public void configureBPartner(MOrder order, int businessPartnerId, String transactionName) {
-		//	Valid if has a Order
-		if(DocumentUtil.isCompleted(order)
-				|| DocumentUtil.isVoided(order))
-			return;
-		log.fine( "CPOS.setC_BPartner_ID=" + businessPartnerId);
-		boolean isSamePOSPartner = false;
-		// TODO: Validate order.getC_POS_ID > 0 and pos != null
-		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), null);
-		//	Validate BPartner
-		if (businessPartnerId == 0) {
-			isSamePOSPartner = true;
-			businessPartnerId = pos.getC_BPartnerCashTrx_ID();
-		}
-		//	Get BPartner
-		MBPartner partner = MBPartner.get(Env.getCtx(), businessPartnerId);
-		partner.set_TrxName(null);
-		if (partner == null || partner.get_ID() == 0) {
-			throw new AdempiereException("POS.NoBPartnerForOrder");
-		} else {
-			log.info("CPOS.SetC_BPartner_ID -" + partner);
-			order.setBPartner(partner);
-			AtomicBoolean priceListIsChanged = new AtomicBoolean(false);
-			if(partner.getM_PriceList_ID() > 0 && pos.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsKeepPriceFromCustomer)) {
-				MPriceList businesPartnerPriceList = MPriceList.get(Env.getCtx(), partner.getM_PriceList_ID(), null);
-				MPriceList currentPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
-				if(currentPriceList.getC_Currency_ID() != businesPartnerPriceList.getC_Currency_ID()) {
-					order.setM_PriceList_ID(currentPriceList.getM_PriceList_ID());
-				} else if(currentPriceList.getM_PriceList_ID() != partner.getM_PriceList_ID()) {
-					priceListIsChanged.set(true);
-				}
-			} else {
-				order.setM_PriceList_ID(pos.getM_PriceList_ID());
-			}
-			//	
-			MBPartnerLocation [] partnerLocations = partner.getLocations(true);
-			if(partnerLocations.length > 0) {
-				for(MBPartnerLocation partnerLocation : partnerLocations) {
-					if(partnerLocation.isBillTo())
-						order.setBill_Location_ID(partnerLocation.getC_BPartner_Location_ID());
-					if(partnerLocation.isShipTo())
-						order.setShip_Location_ID(partnerLocation.getC_BPartner_Location_ID());
-				}				
-			}
-			//	Validate Same BPartner
-			if(isSamePOSPartner) {
-				if(order.getPaymentRule() == null)
-					order.setPaymentRule(MOrder.PAYMENTRULE_Cash);
-			}
-			//	Set Sales Representative
-			if (order.getC_BPartner().getSalesRep_ID() != 0) {
-				order.setSalesRep_ID(order.getC_BPartner().getSalesRep_ID());
-			} else {
-				order.setSalesRep_ID(Env.getAD_User_ID(Env.getCtx()));
-			}
-			//	Save Header
-			order.saveEx(transactionName);
-			//	Load Price List Version
-			Arrays.asList(order.getLines(true, "Line"))
-			.forEach(orderLine -> {
-				orderLine.setC_BPartner_ID(partner.getC_BPartner_ID());
-				orderLine.setC_BPartner_Location_ID(order.getC_BPartner_Location_ID());
-				orderLine.setPrice();
-				orderLine.setTax();
-				orderLine.saveEx(transactionName);
-				if(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO).signum() == 0
-						&& priceListIsChanged.get()) {
-					orderLine.saveEx(transactionName);
-				}
-			});
-		}
-		//	Change for payments
-		MPayment.getOfOrder(order).forEach(payment -> {
-			if(DocumentUtil.isCompleted(payment)
-					|| DocumentUtil.isVoided(payment)) {
-				throw new AdempiereException("@C_Payment_ID@ @Processed@ " + payment.getDocumentNo());
-			}
-			//	Change Business Partner
-			payment.setC_BPartner_ID(order.getC_BPartner_ID());
-			payment.saveEx(transactionName);
-		});
-	}
-	
-	/**
-	 * Configure Warehouse after change
-	 * @param order
-	 */
-	private void configureWarehouse(MOrder order) {
-		Arrays.asList(order.getLines())
-		.forEach(orderLine -> {
-			orderLine.setM_Warehouse_ID(order.getM_Warehouse_ID());
-			orderLine.saveEx();
-		});
-	}
-
-	/**
-	 * Configure Discount for all lines
-	 * @param order
-	 */
-	private void configureDiscount(MOrder order, BigDecimal discountRate, String transactionName) {
-		MPOS pos = POS.validateAndGetPOS(order.getC_POS_ID(), false);
-		Arrays.asList(order.getLines())
-			.forEach(orderLine -> {
-				updateOrderLine(
-					transactionName,
-					pos,
-					orderLine.getC_OrderLine_ID(),
-					null,
-					null,
-					discountRate,
-					false,
-					0,
-					0
-				);
-			})
-		;
-	}
-
-	/**
-	 * Configure Discount Off for order
-	 * @param order
-	 */
-	private void configureDiscountRateOff(MOrder order, BigDecimal discountRateOff, String transactionName) {
-		if(discountRateOff == null) {
-			return;
-		}
-		MPOS pos = new MPOS(order.getCtx(), order.getC_POS_ID(), order.get_TrxName());
-		if(pos.get_ValueAsInt("DefaultDiscountCharge_ID") <= 0) {
-			throw new AdempiereException("@DefaultDiscountCharge_ID@ @NotFound@");
-		}
-		//	Validate Discount
-		Optional<BigDecimal> baseAmount = Arrays.asList(order.getLines()).stream()
-				.filter(ordeLine -> ordeLine.getC_Charge_ID() != pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID))
-				.map(ordeLine -> ordeLine.getLineNetAmt())
-		.collect(Collectors.reducing(BigDecimal::add));
-		//	Get Base amount
-		if(baseAmount.isPresent()
-				&& baseAmount.get().compareTo(Env.ZERO) > 0) {
-			int precision = MCurrency.getStdPrecision(order.getCtx(), order.getC_Currency_ID());
-			BigDecimal finalPrice = getFinalPrice(baseAmount.get(), discountRateOff, precision);
-			createDiscountLine(pos, order, baseAmount.get().subtract(finalPrice), transactionName);
-			//	Set Discount Rate
-			order.set_ValueOfColumn("FlatDiscount", discountRateOff);
-			order.saveEx(transactionName);
-		} else {
-			deleteDiscountLine(pos, order, transactionName);
-		}
-	}
-	
-	/**
-	 * Get final price based on base price and discount applied
-	 * @param basePrice
-	 * @param discount
-	 * @return
-	 */
-	public static BigDecimal getFinalPrice(BigDecimal basePrice, BigDecimal discount, int precision) {
-		basePrice = Optional.ofNullable(basePrice).orElse(Env.ZERO);
-		discount = Optional.ofNullable(discount).orElse(Env.ZERO);
-		//	A = 100 - discount
-		BigDecimal multiplier = Env.ONE.subtract(discount.divide(Env.ONEHUNDRED, MathContext.DECIMAL128));
-		//	B = A / 100
-		BigDecimal finalPrice = basePrice.multiply(multiplier);
-		finalPrice = finalPrice.setScale(precision, RoundingMode.HALF_UP);
-		return finalPrice;
-	}
-	
-	/**
-	 * Get discount based on base price and price list
-	 * @param finalPrice
-	 * @param basePrice
-	 * @param precision
-	 * @return
-	 */
-	public static BigDecimal getDiscount(BigDecimal basePrice, BigDecimal finalPrice, int precision) {
-		finalPrice = Optional.ofNullable(finalPrice).orElse(Env.ZERO);
-		basePrice = Optional.ofNullable(basePrice).orElse(Env.ZERO);
-		BigDecimal discount = Env.ZERO;
-		if (basePrice.compareTo(Env.ZERO) != 0) {
-			discount = basePrice.subtract(finalPrice);
-			discount = discount.divide(basePrice, MathContext.DECIMAL128);
-			discount = discount.multiply(Env.ONEHUNDRED);
-		}
-		if (discount.scale() > precision) {
-			discount = discount.setScale(precision, RoundingMode.HALF_UP);
-		}
-		return discount;
-	}
-	
-	/**
-	 * Configure Discount Off for order
-	 * @param order
-	 */
-	private void configureDiscountAmountOff(MOrder order, BigDecimal discountAmountOff, String transactionName) {
-		if(discountAmountOff == null) {
-			return;
-		}
-		MPOS pos = new MPOS(order.getCtx(), order.getC_POS_ID(), order.get_TrxName());
-		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID) <= 0) {
-			throw new AdempiereException("@DefaultDiscountCharge_ID@ @NotFound@");
-		}
-		int defaultDiscountChargeId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID);
-		boolean isAllowsApplyDiscount = AccessManagement.getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), ColumnsAdded.COLUMNNAME_IsAllowsApplyDiscount);
-		if(!isAllowsApplyDiscount) {
-			throw new AdempiereException("@POS.ApplyDiscountNotAllowed@");
-		}
-		BigDecimal maximumDiscountAllowed = AccessManagement.getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), ColumnsAdded.COLUMNNAME_MaximumDiscountAllowed);
-		BigDecimal baseAmount = Optional.ofNullable(Arrays.asList(order.getLines()).stream()
-				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
-				.map(ordeLine -> ordeLine.getLineNetAmt())
-				.reduce(BigDecimal.ZERO, BigDecimal::add)).orElse(Env.ZERO);
-		if(baseAmount.compareTo(Env.ZERO) <= 0) {
-			deleteDiscountLine(pos, order, transactionName);
-			return;
-		}
-		//	
-		int precision = MCurrency.getStdPrecision(order.getCtx(), order.getC_Currency_ID());
-		BigDecimal discountRateOff = getDiscount(baseAmount, baseAmount.add(discountAmountOff), precision).negate();
-		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
-			throw new AdempiereException("@POS.MaximumDiscountAllowedExceeded@");
-		}
-		//	Create Discount line
-		createDiscountLine(pos, order, discountAmountOff, transactionName);
-		//	Set Discount Rate
-		order.set_ValueOfColumn("FlatDiscount", discountRateOff);
-		order.saveEx(transactionName);
-	}
-	
-	/**
-	 * Delete Discount Line
-	 * @param pos
-	 * @param order
-	 * @param transactionName
-	 */
-	private void deleteDiscountLine(MPOS pos, MOrder order, String transactionName) {
-		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines())
-			.parallelStream()
-			.filter(ordeLine -> ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID))
-			.findFirst()
-		;
-		maybeOrderLine.ifPresent(discountLine -> discountLine.deleteEx(true,transactionName));
-	}
-	
-	/**
-	 * Create Discount Line
-	 * @param pos
-	 * @param order
-	 * @param amount
-	 * @param transactionName
-	 */
-	private void createDiscountLine(MPOS pos, MOrder order, BigDecimal amount, String transactionName) {
-		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines())
-			.parallelStream()
-			.filter(ordeLine -> {
-				return ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID);
-			})
-			.findFirst()
-		;
-		MOrderLine discountOrderLine = null;
-		if(maybeOrderLine.isPresent()) {
-			discountOrderLine = maybeOrderLine.get();
-		} else {
-			discountOrderLine = new MOrderLine(order);
-			discountOrderLine.setC_Charge_ID(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID));
-		}
-		discountOrderLine.setQty(Env.ONE);
-		discountOrderLine.setPrice(amount.negate());
-		discountOrderLine.setM_AttributeSetInstance_ID(0);
-		//	
-		discountOrderLine.saveEx(transactionName);
-	}
-	
-	/**
-	 * Configure Price List after change
-	 * @param order
-	 */
-	private void configurePriceList(MOrder order) {
-		Arrays.asList(order.getLines())
-			.stream()
-			.filter(orderLine -> {
-				// omit charges
-				return orderLine.getM_Product_ID() > 0;
-			})
-			.forEach(orderLine -> {
-				MProductPrice productPrice = MProductPrice.get(
-					orderLine.getCtx(),
-					order.getM_PriceList_ID(),
-					orderLine.getM_Product_ID(),
-					order.get_TrxName()
-				);
-				if (productPrice == null || productPrice.getM_ProductPrice_ID() <= 0) {
-					log.warning(
-						"Sales Order: " + order.getDocumentNo()
-						+ " Line " + orderLine.getLine() + " - " + orderLine.getM_Product().getName()
-						+ " Product " + orderLine.getProduct().getValue() + " - " + orderLine.getM_Product().getName()
-						+ " No in Price List " + order.getM_PriceList().getName()
-					);
-					orderLine.deleteEx(true);
-				} else {
-					orderLine.setPrice();
-					orderLine.setTax();
-					orderLine.saveEx();
-					if(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO).signum() == 0) {
-						/*
-						// Set with price list reference
-						orderLine.deleteEx(true);
-						*/
-					}
-				}
-			})
-		;
-	}
 
 
 	/**
@@ -4671,13 +4274,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			// TODO: Validate By Current Document, Payments Methods and Daily Acumulated
 		}
 		else if(request.getRequestedAccess().equals(ColumnsAdded.COLUMNNAME_IsAllowsWriteOffAmount)) {
-			if (request.getOrderId() <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
-			}
-			MOrder order = new MOrder(Env.getCtx(), request.getOrderId(), null);
-			if (order == null || order.getC_Order_ID() <= 0) {
-				throw new AdempiereException("@C_Order_ID@ @NotFound@");
-			}
+			MOrder order = OrderUtil.validateAndGetOrder(request.getOrderId());
 
 			MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), null);
 			int standardPrecision = priceList.getStandardPrecision();
@@ -4735,91 +4332,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		//
 		return priceList.getPriceListVersion(validFrom);
 	}
-	
-	/**
-	 * Delete order line from uuid
-	 * @param request
-	 * @return
-	 */
-	private Empty.Builder deleteOrderLine(DeleteOrderLineRequest request) {
-		if(request.getId() <= 0) {
-			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
-		}
-		Trx.run(transactionName -> {
-			MOrderLine orderLine = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, I_C_OrderLine.COLUMNNAME_C_OrderLine_ID + " = ?", transactionName)
-					.setParameters(request.getId())
-					.setClient_ID()
-					.first();
-			if(orderLine != null
-					&& orderLine.getC_OrderLine_ID() != 0) {
-				//	Validate processed Order
-				if(orderLine.isProcessed()) {
-					throw new AdempiereException("@C_OrderLine_ID@ @Processed@");
-				}
-				if(orderLine != null
-						&& orderLine.getC_Order_ID() >= 0) {
-					MOrder order = orderLine.getParent();
-					OrderManagement.validateOrderReleased(order);
-					orderLine.deleteEx(true);
-					//	Apply Discount from order
-					configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
-				}
-			}
-		});
-		//	Return
-		return Empty.newBuilder();
-	}
 
 
 
-	@Override
-	public void deleteOrder(DeleteOrderRequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			Empty.Builder order = deleteOrder(request);
-			responseObserver.onNext(order.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-
-	/**
-	 * Delete order from id
-	 * @param request
-	 * @return
-	 */
-	private Empty.Builder deleteOrder(DeleteOrderRequest request) {
-		int orderId = request.getId();
-		if(orderId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
-		}
-		MOrder order = new MOrder(Env.getCtx(), orderId, null);
-		if(order == null || order.getC_Order_ID() <= 0) {
-			throw new AdempiereException("@C_Order_ID@ @NotFound@");
-		}
-		//	Validate drafted
-		if(!DocumentUtil.isDrafted(order)) {
-			throw new AdempiereException("@C_Order_ID@ @Processed@");
-		}
-		//	Validate processed Order
-		if(order.isProcessed()) {
-			throw new AdempiereException("@C_Order_ID@ @Processed@");
-		}
-		//
-		OrderManagement.validateOrderReleased(order);
-		order.deleteEx(true);
-
-		//	Return
-		return Empty.newBuilder();
-	}
-	
 	/**
 	 * Delete payment from uuid
 	 * @param request
@@ -4895,7 +4410,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		Trx.run(transactionName -> {
 			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 			//	Quantity
-			MOrderLine orderLine = updateOrderLine(
+			MOrderLine orderLine = OrderManagement.updateOrderLine(
 				transactionName,
 				pos,
 				orderLineId,
@@ -5033,7 +4548,11 @@ public class PointOfSalesForm extends StoreImplBase {
 				//	Save Line
 				orderLine.saveEx(transactionName);
 				//	Apply Discount from order
-				configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
+				DiscountManagement.configureDiscountRateOff(
+					order,
+					(BigDecimal) order.get_Value("FlatDiscount"),
+					transactionName
+				);
 				orderLineReference.set(orderLine);
 			}
 		});
@@ -5104,105 +4623,19 @@ public class PointOfSalesForm extends StoreImplBase {
 				//	Save Line
 				orderLine.saveEx(transactionName);
 				//	Apply Discount from order
-				configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
+				DiscountManagement.configureDiscountRateOff(
+					order,
+					(BigDecimal) order.get_Value("FlatDiscount"),
+					transactionName
+				);
 				orderLineReference.set(orderLine);
 			}
 		});
 		return orderLineReference.get();
 			
 	} //	addOrUpdateLine
-	
-	/***
-	 * Update order line
-	 * @param transactionName
-	 * @param orderLineId
-	 * @param quantity
-	 * @param price
-	 * @param discountRate
-	 * @param isAddQuantity
-	 * @param warehouseId
-	 * @return
-	 */
-	private MOrderLine updateOrderLine(String transactionName, MPOS pos, int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId, int unitOfMeasureId) {
-		if(orderLineId <= 0) {
-			return null;
-		}
 
-		MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
-		MOrder order = orderLine.getParent();
-		order.set_TrxName(transactionName);
-		OrderManagement.validateOrderReleased(order);
-		OrderUtil.setCurrentDate(order);
-		orderLine.setHeaderInfo(order);
-		//	Valid Complete
-		if (!DocumentUtil.isDrafted(order)) {
-			throw new AdempiereException("@C_Order_ID@ @Processed@");
-		}
-		int precision = MPriceList.getPricePrecision(Env.getCtx(), order.getM_PriceList_ID());
-		BigDecimal quantityToChange = quantity;
-		//	Get if is null
-		if(quantity != null) {
-			if(isAddQuantity) {
-				BigDecimal currentQuantity = orderLine.getQtyEntered();
-				if(currentQuantity == null) {
-					currentQuantity = Env.ZERO;
-				}
-				quantityToChange = currentQuantity.add(quantityToChange);
-			}
-			if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
-				// if(warehouseId != orderLine.get_ValueAsInt("Ref_WarehouseSource_ID")
-				// 		|| unitOfMeasureId != orderLine.getC_UOM_ID()) {
-				// 	throw new AdempiereException("@ActionNotAllowedHere@");
-				// }
-				MOrderLine sourceRmaLine = new MOrderLine(Env.getCtx(), orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID), transactionName);
-				BigDecimal availableQuantity = OrderUtil.getAvailableQuantityForSell(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID), orderLineId, sourceRmaLine.getQtyEntered(), quantityToChange);
-				if(availableQuantity.compareTo(Env.ZERO) > 0) {
-					//	Update order quantity
-					quantityToChange = availableQuantity;
-				} else {
-					throw new AdempiereException("@QtyInsufficient@");
-				}
-			}
-			orderLine.setQty(quantityToChange);
-		}
-		//	Calculate discount from final price
-		if(price != null
-				|| discountRate != null) {
-			if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
-				throw new AdempiereException("@ActionNotAllowedHere@");
-			}
-			// TODO: Verify with Price Entered/Actual
-			BigDecimal priceToOrder = orderLine.getPriceActual();
-			BigDecimal discountRateToOrder = Env.ZERO;
-			if (price != null) {
-				priceToOrder = price;
-				discountRateToOrder = getDiscount(orderLine.getPriceList(), price, precision);
-			}
-			//	Calculate final price from discount
-			if (discountRate != null) {
-				discountRateToOrder = discountRate;
-				priceToOrder = getFinalPrice(orderLine.getPriceList(), discountRate, precision);
-				priceToOrder = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), priceToOrder);
-			}
-			orderLine.setDiscount(discountRateToOrder);
-			orderLine.setPrice(priceToOrder);
-		}
-		//	
-		if(warehouseId > 0) {
-			// orderLine.setM_Warehouse_ID(warehouseId);
-			orderLine.set_ValueOfColumn("Ref_WarehouseSource_ID", warehouseId);
-		}
-		//	Validate UOM
-		OrderUtil.updateUomAndQuantity(orderLine, unitOfMeasureId, quantityToChange);
-		//	Set values
-		orderLine.setTax();
-		orderLine.saveEx(transactionName);
-		//	Apply Discount from order
-		configureDiscountRateOff(order, (BigDecimal) order.get_Value("FlatDiscount"), transactionName);
 
-		return orderLine;
-	} //	UpdateLine
-	
 	/**
 	 * Set UOM and Quantity based on unit of measure
 	 * @param inOutLine
@@ -5666,7 +5099,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		Trx.run(transactionName -> {
 			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 			if(request.getOrderId() > 0) {
-				MOrder salesOrder = getOrder(request.getOrderId(), transactionName);
+				MOrder salesOrder = OrderUtil.validateAndGetOrder(request.getOrderId(), transactionName);
 				maybePayment.set(CollectingManagement.createPaymentFromOrder(salesOrder, request, pos, transactionName));
 			} else if(request.getChargeId() > 0) {
 				maybePayment.set(CashManagement.createPaymentFromCharge(request.getChargeId(), request, pos, transactionName));

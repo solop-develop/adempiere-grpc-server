@@ -117,7 +117,7 @@ public class CollectingManagement {
 		}
 		// Set Online Payment
 		payment.setIsOnline(
-				paymentTypeAllocation.get_ValueAsBoolean("IsOnline")
+			paymentTypeAllocation.get_ValueAsBoolean("IsOnline")
 		);
 		payment.setC_PaymentMethod_ID(paymentMethodId);
 
