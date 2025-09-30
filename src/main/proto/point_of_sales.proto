@@ -2432,6 +2432,7 @@ message UpdateOrderRequest {
 	string discount_amount_off = 11;
 	int32 sales_representative_id = 12;
 	int32 discount_schema_id = 13;
+	int32 payment_method_id = 14; // to discount rate by payment method
 }
 
 // Request for update a order line
