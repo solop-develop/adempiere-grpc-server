@@ -31,14 +31,16 @@ import org.compiere.model.MPaymentProcessorBatch;
 import org.compiere.model.MPaymentProcessorSchedule;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MTax;
-import org.compiere.model.MTaxCategory;
 import org.compiere.model.Query;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -107,6 +109,25 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 			if(priceList == null || priceList.get_ID() <= 0) {
 				throw new IllegalArgumentException("@M_PriceList_ID@ @NotFound@ (@C_Currency_ID@ " + currencyIsoCode + ")");
 			}
+
+			BigDecimal invoiceAmount = batchSchedule.getAmount();
+			MCharge charge =MCharge.get(getCtx(), batchConfiguration.getSalesInvoiceCharge_ID());
+			Optional<MTax> optionalTax = Arrays.asList(MTax.getAll(Env.getCtx()))
+				.parallelStream()
+				.filter(tax -> tax.getC_TaxCategory_ID() == charge.getC_TaxCategory_ID()
+					&& (tax.isSalesTax()
+					|| (!Util.isEmpty(tax.getSOPOType())
+					&& (tax.getSOPOType().equals(MTax.SOPOTYPE_Both)
+					|| tax.getSOPOType().equals(MTax.SOPOTYPE_SalesTax)))))
+				.findFirst()
+				;
+			if (optionalTax.isPresent()) {
+				BigDecimal taxRate = optionalTax.get().getRate();
+				int precision = priceList.getStandardPrecision();
+				BigDecimal multiplier = BigDecimal.ONE.add(taxRate.divide(Env.ONEHUNDRED, precision, RoundingMode.HALF_UP));
+				invoiceAmount = invoiceAmount.divide(multiplier, precision, RoundingMode.HALF_UP);
+			}
+
 			invoice.setM_PriceList_ID(priceList.getM_PriceList_ID());
 			invoice.setC_PaymentProcessorBatch_ID(batch.getC_PaymentProcessorBatch_ID());
 			invoice.setDocumentNo(batchSchedule.getReferenceNo());
@@ -119,7 +140,7 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 			MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
 			invoiceLine.setC_Charge_ID(batchConfiguration.getSalesInvoiceCharge_ID());
 			invoiceLine.setQty(1);
-			invoiceLine.setPrice(batchSchedule.getAmount());
+			invoiceLine.setPrice(invoiceAmount);
 			invoiceLine.setTax();
 			invoiceLine.saveEx();
 			if(!invoice.processIt(getDocAction())) {
