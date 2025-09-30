@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_C_ConversionType;
@@ -30,21 +31,26 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MCharge;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MOrder;
+import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MPriceList;
+import org.compiere.model.MProductPrice;
 import org.compiere.model.MTable;
 import org.compiere.model.MTax;
 import org.compiere.model.MUser;
+import org.compiere.model.MUOMConversion;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
+import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
@@ -66,7 +72,157 @@ import static org.spin.pos.service.payment.GiftCardManagement.createGiftCardRefe
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class OrderManagement {
-	
+
+	/**	Logger			*/
+	private static CLogger log = CLogger.getCLogger(OrderManagement.class);
+
+
+	/**
+	 * Configure Warehouse after change
+	 * @param order
+	 */
+	public static void configureWarehouse(MOrder order) {
+		Arrays.asList(order.getLines())
+			.forEach(orderLine -> {
+				orderLine.setM_Warehouse_ID(order.getM_Warehouse_ID());
+				orderLine.saveEx();
+			})
+		;
+	}
+
+
+	/**
+	 * Configure Price List after change
+	 * @param order
+	 */
+	public static void configurePriceList(MOrder order) {
+		Arrays.asList(order.getLines())
+			.stream()
+			.filter(orderLine -> {
+				// omit charges
+				return orderLine.getM_Product_ID() > 0;
+			})
+			.forEach(orderLine -> {
+				MProductPrice productPrice = MProductPrice.get(
+					orderLine.getCtx(),
+					order.getM_PriceList_ID(),
+					orderLine.getM_Product_ID(),
+					order.get_TrxName()
+				);
+				if (productPrice == null || productPrice.getM_ProductPrice_ID() <= 0) {
+					log.warning(
+						"Sales Order: " + order.getDocumentNo()
+						+ " Line " + orderLine.getLine() + " - " + orderLine.getM_Product().getName()
+						+ " Product " + orderLine.getProduct().getValue() + " - " + orderLine.getM_Product().getName()
+						+ " No in Price List " + order.getM_PriceList().getName()
+					);
+					orderLine.deleteEx(true);
+				} else {
+					orderLine.setPrice();
+					orderLine.setTax();
+					orderLine.saveEx();
+					if(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO).signum() == 0) {
+						/*
+						// Set with price list reference
+						orderLine.deleteEx(true);
+						*/
+					}
+				}
+			})
+		;
+	}
+
+
+	/**
+	 * 	Set BPartner, update price list and locations
+	 *  Configuration of Business Partner has priority over POS configuration
+	 *	@param order
+	 *	@param businessPartnerId id
+	 */
+	public static void configureBPartner(MOrder order, int businessPartnerId, String transactionName) {
+		//	Valid if has a Order
+		if(DocumentUtil.isCompleted(order)
+				|| DocumentUtil.isVoided(order))
+			return;
+		log.fine( "CPOS.setC_BPartner_ID=" + businessPartnerId);
+		boolean isSamePOSPartner = false;
+		// TODO: Validate order.getC_POS_ID > 0 and pos != null
+		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), null);
+		//	Validate BPartner
+		if (businessPartnerId == 0) {
+			isSamePOSPartner = true;
+			businessPartnerId = pos.getC_BPartnerCashTrx_ID();
+		}
+		//	Get BPartner
+		MBPartner partner = MBPartner.get(Env.getCtx(), businessPartnerId);
+		partner.set_TrxName(null);
+		if (partner == null || partner.get_ID() == 0) {
+			throw new AdempiereException("POS.NoBPartnerForOrder");
+		} else {
+			log.info("CPOS.SetC_BPartner_ID -" + partner);
+			order.setBPartner(partner);
+			AtomicBoolean priceListIsChanged = new AtomicBoolean(false);
+			if(partner.getM_PriceList_ID() > 0 && pos.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsKeepPriceFromCustomer)) {
+				MPriceList businesPartnerPriceList = MPriceList.get(Env.getCtx(), partner.getM_PriceList_ID(), null);
+				MPriceList currentPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
+				if(currentPriceList.getC_Currency_ID() != businesPartnerPriceList.getC_Currency_ID()) {
+					order.setM_PriceList_ID(currentPriceList.getM_PriceList_ID());
+				} else if(currentPriceList.getM_PriceList_ID() != partner.getM_PriceList_ID()) {
+					priceListIsChanged.set(true);
+				}
+			} else {
+				order.setM_PriceList_ID(pos.getM_PriceList_ID());
+			}
+			//	
+			MBPartnerLocation [] partnerLocations = partner.getLocations(true);
+			if(partnerLocations.length > 0) {
+				for(MBPartnerLocation partnerLocation : partnerLocations) {
+					if(partnerLocation.isBillTo())
+						order.setBill_Location_ID(partnerLocation.getC_BPartner_Location_ID());
+					if(partnerLocation.isShipTo())
+						order.setShip_Location_ID(partnerLocation.getC_BPartner_Location_ID());
+				}				
+			}
+			//	Validate Same BPartner
+			if(isSamePOSPartner) {
+				if(order.getPaymentRule() == null)
+					order.setPaymentRule(MOrder.PAYMENTRULE_Cash);
+			}
+			//	Set Sales Representative
+			if (order.getC_BPartner().getSalesRep_ID() != 0) {
+				order.setSalesRep_ID(order.getC_BPartner().getSalesRep_ID());
+			} else {
+				order.setSalesRep_ID(Env.getAD_User_ID(Env.getCtx()));
+			}
+			//	Save Header
+			order.saveEx(transactionName);
+			//	Load Price List Version
+			Arrays.asList(order.getLines(true, "Line"))
+			.forEach(orderLine -> {
+				orderLine.setC_BPartner_ID(partner.getC_BPartner_ID());
+				orderLine.setC_BPartner_Location_ID(order.getC_BPartner_Location_ID());
+				orderLine.setPrice();
+				orderLine.setTax();
+				orderLine.saveEx(transactionName);
+				if(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO).signum() == 0
+						&& priceListIsChanged.get()) {
+					orderLine.saveEx(transactionName);
+				}
+			});
+		}
+		//	Change for payments
+		MPayment.getOfOrder(order).forEach(payment -> {
+			if(DocumentUtil.isCompleted(payment)
+					|| DocumentUtil.isVoided(payment)) {
+				throw new AdempiereException("@C_Payment_ID@ @Processed@ " + payment.getDocumentNo());
+			}
+			//	Change Business Partner
+			payment.setC_BPartner_ID(order.getC_BPartner_ID());
+			payment.saveEx(transactionName);
+		});
+	}
+
+
 	public static MOrder processOrder(MPOS pos, int orderId, boolean isRefundOpen) {
 		if(orderId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
@@ -682,4 +838,104 @@ public class OrderManagement {
 			paymentAllocationLine.saveEx();
 		}
 	}
+
+	/***
+	 * Update order line
+	 * @param transactionName
+	 * @param orderLineId
+	 * @param quantity
+	 * @param price
+	 * @param discountRate
+	 * @param isAddQuantity
+	 * @param warehouseId
+	 * @return
+	 */
+	public static MOrderLine updateOrderLine(String transactionName, MPOS pos, int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId, int unitOfMeasureId) {
+		if(orderLineId <= 0) {
+			return null;
+		}
+
+		MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
+		MOrder order = orderLine.getParent();
+		order.set_TrxName(transactionName);
+		OrderManagement.validateOrderReleased(order);
+		OrderUtil.setCurrentDate(order);
+		orderLine.setHeaderInfo(order);
+		//	Valid Complete
+		if (!DocumentUtil.isDrafted(order)) {
+			throw new AdempiereException("@C_Order_ID@ @Processed@");
+		}
+		int precision = MPriceList.getPricePrecision(Env.getCtx(), order.getM_PriceList_ID());
+		BigDecimal quantityToChange = quantity;
+		//	Get if is null
+		if(quantity != null) {
+			if(isAddQuantity) {
+				BigDecimal currentQuantity = orderLine.getQtyEntered();
+				if(currentQuantity == null) {
+					currentQuantity = Env.ZERO;
+				}
+				quantityToChange = currentQuantity.add(quantityToChange);
+			}
+			if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
+				// if(warehouseId != orderLine.get_ValueAsInt("Ref_WarehouseSource_ID")
+				// 		|| unitOfMeasureId != orderLine.getC_UOM_ID()) {
+				// 	throw new AdempiereException("@ActionNotAllowedHere@");
+				// }
+				MOrderLine sourceRmaLine = new MOrderLine(Env.getCtx(), orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID), transactionName);
+				BigDecimal availableQuantity = OrderUtil.getAvailableQuantityForSell(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID), orderLineId, sourceRmaLine.getQtyEntered(), quantityToChange);
+				if(availableQuantity.compareTo(Env.ZERO) > 0) {
+					//	Update order quantity
+					quantityToChange = availableQuantity;
+				} else {
+					throw new AdempiereException("@QtyInsufficient@");
+				}
+			}
+			orderLine.setQty(quantityToChange);
+		}
+		//	Calculate discount from final price
+		if(price != null
+				|| discountRate != null) {
+			if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
+				throw new AdempiereException("@ActionNotAllowedHere@");
+			}
+			// TODO: Verify with Price Entered/Actual
+			BigDecimal priceToOrder = orderLine.getPriceActual();
+			BigDecimal discountRateToOrder = Env.ZERO;
+			if (price != null) {
+				priceToOrder = price;
+				discountRateToOrder = DiscountManagement.getDiscount(
+					orderLine.getPriceList(),
+					price,
+					precision
+				);
+			}
+			//	Calculate final price from discount
+			if (discountRate != null) {
+				discountRateToOrder = discountRate;
+				priceToOrder = DiscountManagement.getFinalPrice(orderLine.getPriceList(), discountRate, precision);
+				priceToOrder = MUOMConversion.convertProductFrom(orderLine.getCtx(), orderLine.getM_Product_ID(), orderLine.getC_UOM_ID(), priceToOrder);
+			}
+			orderLine.setDiscount(discountRateToOrder);
+			orderLine.setPrice(priceToOrder);
+		}
+		//	
+		if(warehouseId > 0) {
+			// orderLine.setM_Warehouse_ID(warehouseId);
+			orderLine.set_ValueOfColumn("Ref_WarehouseSource_ID", warehouseId);
+		}
+		//	Validate UOM
+		OrderUtil.updateUomAndQuantity(orderLine, unitOfMeasureId, quantityToChange);
+		//	Set values
+		orderLine.setTax();
+		orderLine.saveEx(transactionName);
+		//	Apply Discount from order
+		DiscountManagement.configureDiscountRateOff(
+			order,
+			(BigDecimal) order.get_Value("FlatDiscount"),
+			transactionName
+		);
+
+		return orderLine;
+	} // UpdateLine
+
 }

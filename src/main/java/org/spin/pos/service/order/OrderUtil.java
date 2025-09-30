@@ -53,6 +53,9 @@ import org.spin.service.grpc.util.value.TimeManager;
 public class OrderUtil {
 
 	public static MOrder validateAndGetOrder(int orderId) {
+		return validateAndGetOrder(orderId, null);
+	}
+	public static MOrder validateAndGetOrder(int orderId, String transactionName) {
 		if (orderId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
@@ -62,8 +65,9 @@ public class OrderUtil {
 		}
 		return order;
 	}
-	
-    public static boolean isDelivered(int orderId, String transactionName) {
+
+
+	public static boolean isDelivered(int orderId, String transactionName) {
  		String sql = "SELECT M_InOut_ID FROM M_InOut "
 			+ "WHERE C_Order_ID=? AND DocStatus IN ('CO','CL')";
 		int deliveryId = DB.getSQLValue(transactionName, sql, orderId);
