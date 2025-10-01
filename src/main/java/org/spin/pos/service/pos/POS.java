@@ -138,7 +138,14 @@ public class POS {
 		
 		MPOS pos = validateAndGetPOS(request.getPosId(), true);
 
-		String whereClause = "1=1 ";
+		String whereClause = "(IsActive = 'Y' ";
+		final int defaultCampaigndId = pos.get_ValueAsInt("DefaultCampaign_ID");
+		if (defaultCampaigndId > 0) {
+			filtersList.add(defaultCampaigndId);
+			whereClause += " OR C_Campaign_ID = ? ";
+		}
+		whereClause += ") ";
+
 		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
@@ -152,12 +159,6 @@ public class POS {
 			;
 		}
 
-		final int defaultCampaigndId = pos.get_ValueAsInt("DefaultCampaign_ID");
-		if (defaultCampaigndId > 0) {
-			filtersList.add(defaultCampaigndId);
-			whereClause += " OR C_Campaign_ID = ? ";
-		}
-
 		Query query = new Query(
 			Env.getCtx(),
 			I_C_Campaign.Table_Name,
@@ -165,7 +166,7 @@ public class POS {
 			null
 		)
 			.setParameters(filtersList)
-			.setOnlyActiveRecords(true)
+			// .setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
 
