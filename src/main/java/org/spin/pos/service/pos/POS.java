@@ -133,16 +133,29 @@ public class POS {
 	}
 
 	public static ListCampaignsResponse.Builder listCampaigns(ListCampaignsRequest request) {
+		
 		List<Object> filtersList = new ArrayList<>();
+		
+		MPOS pos = validateAndGetPOS(request.getPosId(), true);
 
-		String whereClause = null;
-
+		String whereClause = "1=1 ";
 		final String searchValue = StringManager.getDecodeUrl(
 			request.getSearchValue()
 		);
 		if (!Util.isEmpty(searchValue, true)) {
 			filtersList.add(searchValue);
-			whereClause = "UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
+			filtersList.add(searchValue);
+			whereClause = " AND ("
+				+ "UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Value) LIKE '%' || UPPER(?) || '%' "
+				+ ")"
+			;
+		}
+
+		final int defaultCampaigndId = pos.get_ValueAsInt("DefaultCampaign_ID");
+		if (defaultCampaigndId > 0) {
+			filtersList.add(defaultCampaigndId);
+			whereClause += " OR C_Campaign_ID = ? ";
 		}
 
 		Query query = new Query(
