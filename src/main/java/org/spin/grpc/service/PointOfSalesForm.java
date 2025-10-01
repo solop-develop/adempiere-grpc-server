@@ -823,7 +823,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(warehouses.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -930,7 +931,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(priceList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -966,11 +968,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(documentTypes.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -3518,62 +3523,72 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListAvailableWarehousesResponse.Builder listWarehouses(ListAvailableWarehousesRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
+		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
 		ListAvailableWarehousesResponse.Builder builder = ListAvailableWarehousesResponse.newBuilder();
 		final String TABLE_NAME = "C_POSWarehouseAllocation";
 		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
 			return builder;
 		}
-		String nexPageToken = null;
+
+		String whereClause = "C_POS_ID = ? ";
+		ArrayList<Object> filtersList = new ArrayList<Object>();
+		filtersList.add(pos.getC_POS_ID());
+
+		//	Get Product list
+		Query query = new Query(
+			Env.getCtx(),
+			TABLE_NAME,
+			whereClause,
+			null
+		)
+			.setParameters(filtersList)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo)
+		;
+		int count = query.count();
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 
-		//	Aisle Seller
-		int posId = request.getPosId();
-		//	Get Product list
-		Query query = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ?", null)
-				.setParameters(posId)
-				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo);
-		int count = query.count();
 		query
-		.setLimit(limit, offset)
-		.list()
-		.forEach(availableWarehouse -> {
-			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), availableWarehouse.get_ValueAsInt("M_Warehouse_ID"));
-			builder.addWarehouses(
-				AvailableWarehouse.newBuilder()
-					.setId(
-						warehouse.getM_Warehouse_ID()
-					)
-					.setKey(
-						StringManager.getValidString(
-							warehouse.getValue()
+			.setLimit(limit, offset)
+			.list()
+			.forEach(availableWarehouse -> {
+				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), availableWarehouse.get_ValueAsInt("M_Warehouse_ID"));
+				builder.addWarehouses(
+					AvailableWarehouse.newBuilder()
+						.setId(
+							warehouse.getM_Warehouse_ID()
 						)
-					)
-					.setName(
-						StringManager.getValidString(
-							warehouse.getName()
+						.setKey(
+							StringManager.getValidString(
+								warehouse.getValue()
+							)
 						)
-					)
-					.setIsPosRequiredPin(
-						availableWarehouse.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
-					)
-			);
-		});
-		//	
-		builder.setRecordCount(count);
+						.setName(
+							StringManager.getValidString(
+								warehouse.getName()
+							)
+						)
+						.setIsPosRequiredPin(
+							availableWarehouse.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+						)
+				);
+			})
+		;
+
 		//	Set page token
+		String nexPageToken = null;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
-		);
+		builder.setRecordCount(count)
+			.setNextPageToken(
+				StringManager.getValidString(nexPageToken)
+			)
+		;
 		return builder;
 	}
 	
@@ -3583,9 +3598,8 @@ public class PointOfSalesForm extends StoreImplBase {
 	 * @return
 	 */
 	private ListAvailablePriceListResponse.Builder listPriceList(ListAvailablePriceListRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
+		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
 		ListAvailablePriceListResponse.Builder builder = ListAvailablePriceListResponse.newBuilder();
 		final String TABLE_NAME = "C_POSPriceListAllocation";
 		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
@@ -3597,14 +3611,17 @@ public class PointOfSalesForm extends StoreImplBase {
 		int offset = (pageNumber - 1) * limit;
 
 		//	Dynamic where clause
-		//	Aisle Seller
-		int posId = request.getPosId();
-		//	Get Product list
-		Query query = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ?", null)
-				.setParameters(posId)
-				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo);
+		Query query = new Query(
+			Env.getCtx(),
+			TABLE_NAME,
+			"C_POS_ID = ?",
+			null
+		)
+			.setParameters(pos.getC_POS_ID())
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo)
+		;
 		int count = query.count();
 		query
 		.setLimit(limit, offset)
@@ -5591,12 +5608,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(cashListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
