@@ -306,7 +306,7 @@ public class ElectronicInvoicing implements ModelValidator {
 				MInOut inOut = (MInOut) po;
 				MDocType documentType = MDocType.get(inOut.getCtx(), inOut.getC_DocType_ID());
 				if((!inOut.isReversal() || documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsAllowsReverse))
-						&& (inOut.isSOTrx()|| MInOut.MOVEMENTTYPE_CustomerReturns.equals(inOut.getMovementType()))) {
+						&& (inOut.isSOTrx())) {
 
 					if (inOut.isReversal()) {
 						inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsSent, false);
