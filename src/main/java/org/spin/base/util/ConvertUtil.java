@@ -926,7 +926,7 @@ public class ConvertUtil {
 			)
 			.setIsManualDocument(
 				shipment.get_ValueAsBoolean(
-					ColumnsAdded.COLUMNNAME_IsAllowsCreateManualDocument
+					ColumnsAdded.COLUMNNAME_IsManualDocument
 				)
 			)
 		;

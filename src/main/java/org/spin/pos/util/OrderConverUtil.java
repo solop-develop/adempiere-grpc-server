@@ -404,7 +404,7 @@ public class OrderConverUtil {
 			.setIsOnlinePaymentApproved(isOnlinePaymentApproved)
 			.setIsManualDocument(
 				order.get_ValueAsBoolean(
-					ColumnsAdded.COLUMNNAME_IsAllowsCreateManualDocument
+					ColumnsAdded.COLUMNNAME_IsManualDocument
 				)
 			)
 		;
