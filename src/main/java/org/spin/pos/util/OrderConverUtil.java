@@ -407,6 +407,20 @@ public class OrderConverUtil {
 					ColumnsAdded.COLUMNNAME_IsManualDocument
 				)
 			)
+			.setManualInvociceDocumentNo(
+				StringManager.getValidString(
+					order.get_ValueAsString(
+						"ManualInvoiceDocumentNo"
+					)
+				)
+			)
+			.setManualShipmentDocumentNo(
+				StringManager.getValidString(
+					order.get_ValueAsString(
+						"ManualShipmentDocumentNo"
+					)
+				)
+			)
 		;
 	}
 
