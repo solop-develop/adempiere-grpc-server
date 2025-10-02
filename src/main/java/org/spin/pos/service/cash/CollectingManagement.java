@@ -24,11 +24,9 @@ import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.I_C_PaymentMethod;
 import org.adempiere.exceptions.AdempiereException;
+import org.apache.poi.ss.formula.functions.T;
 import org.compiere.model.*;
-import org.compiere.util.DB;
-import org.compiere.util.Env;
-import org.compiere.util.Msg;
-import org.compiere.util.Util;
+import org.compiere.util.*;
 import org.spin.backend.grpc.pos.CreatePaymentRequest;
 import org.spin.base.util.ConvertUtil;
 import org.spin.pos.service.order.OrderManagement;
@@ -130,20 +128,27 @@ public class CollectingManagement {
 		);
 
 		payment.setAD_Org_ID(salesOrder.getAD_Org_ID());
+		payment.setDateTrx(salesOrder.getDateOrdered());
+		payment.setDateAcct(salesOrder.getDateAcct());
+		payment.setTenderType(tenderType);
 		Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
-			request.getPaymentDate()
+				request.getPaymentDate()
+		);
+		Timestamp accountingDate = ValueManager.getTimestampFromProtoTimestamp(
+				request.getPaymentAccountDate()
 		);
 		if(date != null) {
-			payment.setDateTrx(date);
-			payment.setDateAcct(date);
+			date = TimeUtil.getDay(date);
+		} else {
+			date = TimeManager.getDate();
 		}
-		Timestamp dateValue = ValueManager.getTimestampFromProtoTimestamp(
-			request.getPaymentAccountDate()
-		);
-		if(dateValue != null) {
-			payment.setDateAcct(dateValue);
+		if(accountingDate != null) {
+			accountingDate = TimeUtil.getDay(accountingDate);
+		} else {
+			accountingDate = TimeManager.getDate();
 		}
-		payment.setTenderType(tenderType);
+		setDateFromTenderType(payment, tenderType, date, accountingDate);
+		 // Description
 		payment.setDescription(
 			Optional.of(
 				request.getDescription()
@@ -280,6 +285,17 @@ public class CollectingManagement {
 		}
 		payment.saveEx(transactionName);
 		return payment;
+	}
+
+	private static void setDateFromTenderType(MPayment payment, String tenderType, Timestamp dateTrx, Timestamp dateAcct) {
+		if(tenderType.equals(MPayment.TENDERTYPE_CreditCard)
+				|| tenderType.equals(MPayment.TENDERTYPE_DirectDebit)
+				|| tenderType.equals(MPayment.TENDERTYPE_MobilePaymentInterbank)
+				|| tenderType.equals(MPayment.TENDERTYPE_Zelle)) {
+			payment.setDateAcct(dateAcct);
+			payment.setDateTrx(dateTrx);
+			payment.saveEx();
+		}
 	}
 
 }
