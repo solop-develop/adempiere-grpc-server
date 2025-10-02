@@ -1003,7 +1003,7 @@ message Shipment {
 	int32 order_id = 8;
 	bool is_processed = 9;
 	bool is_processing = 10;
-	bool is_manual = 11;
+	bool is_manual_document = 11;
 	string manual_shipment_document_no = 12;
 }
 
@@ -2491,7 +2491,7 @@ message Order {
 	bool is_processed = 32;
 	bool is_processing = 33;
 	bool is_online_payment_approved = 34;
-	bool is_manual = 35;
+	bool is_manual_document = 35;
 	string manual_invocice_document_no = 36;
 	string manual_shipment_document_no = 37;
 	string manual_movement_document_no = 38;
