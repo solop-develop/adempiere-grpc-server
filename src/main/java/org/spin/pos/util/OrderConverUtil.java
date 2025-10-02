@@ -287,10 +287,11 @@ public class OrderConverUtil {
 			)
 			.setDiscountAmount(
 				NumberManager.getBigDecimalToString(
-					Optional.ofNullable(totalDiscountAmount).orElse(Env.ZERO).setScale(
-						priceList.getStandardPrecision(),
-						RoundingMode.HALF_UP
-					)
+					Optional.ofNullable(totalDiscountAmount).orElse(Env.ZERO)
+						.setScale(
+							priceList.getStandardPrecision(),
+							RoundingMode.HALF_UP
+						)
 				)
 			)
 			.setTaxAmount(
@@ -379,13 +380,17 @@ public class OrderConverUtil {
 				!isReturnOrder
 			)
 			.setSourceRmaId(
-				order.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID)
+				order.get_ValueAsInt(
+					ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID
+				)
 			)
 			.setIsRma(
 				isReturnOrder
 			)
 			.setSourceOrderId(
-				order.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID)
+				order.get_ValueAsInt(
+					ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID
+				)
 			)
 			.setIsBindingOffer(
 				OrderUtil.isBindingOffer(order)
@@ -397,6 +402,11 @@ public class OrderConverUtil {
 				order.isProcessing()
 			)
 			.setIsOnlinePaymentApproved(isOnlinePaymentApproved)
+			.setIsManualDocument(
+				order.get_ValueAsBoolean(
+					ColumnsAdded.COLUMNNAME_IsAllowsCreateManualDocument
+				)
+			)
 		;
 	}
 
