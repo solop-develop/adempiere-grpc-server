@@ -103,6 +103,12 @@ service Store {
 			body: "*"
 		};
 	}
+	rpc UpdateManualOrder(UpdateManualOrderRequest) returns (Order) {
+		option (google.api.http) = {
+			put: "/point-of-sales/{pos_id}/orders/{id}/manual",
+			body: "*"
+		};
+	}
 	rpc ReleaseOrder(ReleaseOrderRequest) returns (Order) {
 		option (google.api.http) = {
 			put: "/point-of-sales/{pos_id}/orders/{id}/release",
@@ -992,6 +998,8 @@ message Shipment {
 	int32 order_id = 8;
 	bool is_processed = 9;
 	bool is_processing = 10;
+	bool is_manual = 11;
+	string manual_shipment_document_no = 12;
 }
 
 // Request for Process a Shipment
@@ -1955,6 +1963,8 @@ message PointOfSales {
 	bool is_allows_gift_card = 62;
 	int32 default_gift_card_charge_id = 63;
 	bool is_print_gift_card = 64;
+	// Is Manual Document
+	bool is_allows_create_manual_document = 65;
 }
 message ListPointOfSalesResponse {
 	int64 record_count = 1;
@@ -2434,6 +2444,13 @@ message UpdateOrderRequest {
 	int32 discount_schema_id = 13;
 	int32 payment_method_id = 14; // to discount rate by payment method
 }
+message UpdateManualOrderRequest {
+	int32 id = 1;
+	int32 pos_id = 2;
+	string manual_invocice_document_no = 3;
+	string manual_shipment_document_no = 4;
+	string manual_movement_document_no = 5;
+}
 
 // Request for update a order line
 message UpdateOrderLineRequest {
@@ -2497,6 +2514,10 @@ message Order {
 	bool is_processed = 32;
 	bool is_processing = 33;
 	bool is_online_payment_approved = 34;
+	bool is_manual = 35;
+	string manual_invocice_document_no = 36;
+	string manual_shipment_document_no = 37;
+	string manual_movement_document_no = 38;
 }
 
 // Sales Order Line

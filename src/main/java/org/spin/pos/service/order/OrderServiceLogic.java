@@ -37,6 +37,7 @@ import org.spin.backend.grpc.pos.DeleteOrderRequest;
 import org.spin.backend.grpc.pos.Order;
 import org.spin.backend.grpc.pos.ProcessReverseSalesRequest;
 import org.spin.backend.grpc.pos.ReverseSalesRequest;
+import org.spin.backend.grpc.pos.UpdateManualOrderRequest;
 import org.spin.backend.grpc.pos.UpdateOrderRequest;
 import org.spin.base.util.DocumentUtil;
 import org.spin.pos.service.cash.CashManagement;
@@ -60,10 +61,6 @@ public class OrderServiceLogic {
 	 * @return
 	 */
 	public static MOrder updateOrder(UpdateOrderRequest request) {
-		if (request.getId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
-		}
-
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder salesOrder = OrderUtil.validateAndGetOrder(request.getId(), transactionName);
@@ -198,6 +195,37 @@ public class OrderServiceLogic {
 		//	Return order
 		return orderReference.get();
 	}
+
+
+
+	public static Order.Builder updateManualOrder(UpdateManualOrderRequest request) {
+		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
+		Trx.run(transactionName -> {
+			MOrder salesOrder = OrderUtil.validateAndGetOrder(request.getId(), transactionName);
+			if(!DocumentUtil.isDrafted(salesOrder)) {
+				throw new AdempiereException("@C_Order_ID@ @Processed@");
+			}
+			// if (salesOrder.get_ValueAsBoolean("IsManual")) {
+			// 	throw new AdempiereException("@C_Order_ID@ @IsManual@");
+			// }
+
+			final String manualInvociceDocumentNo = request.getManualInvociceDocumentNo();
+			salesOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvociceDocumentNo);
+
+			final String manualShipmentDocumentNo = request.getManualShipmentDocumentNo();
+			salesOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
+
+			final String manualMovementDocumentNo = request.getManualMovementDocumentNo();
+			salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
+
+			salesOrder.saveEx();
+		});
+
+		return OrderConverUtil.convertOrder(
+			orderReference.get()
+		);
+	}
+
 
 
 	/**
