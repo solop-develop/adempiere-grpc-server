@@ -215,8 +215,8 @@ public class OrderServiceLogic {
 			final String manualShipmentDocumentNo = request.getManualShipmentDocumentNo();
 			salesOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
 
-			final String manualMovementDocumentNo = request.getManualMovementDocumentNo();
-			salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
+			// final String manualMovementDocumentNo = request.getManualMovementDocumentNo();
+			// salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
 
 			salesOrder.saveEx();
 		});
