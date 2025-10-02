@@ -106,7 +106,7 @@ public class POSConvertUtil {
 			)
 			.setWriteOffPercentageTolerance(
 				NumberManager.getBigDecimalToString(
-					AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_MaximumLineDiscountAllowed)
+					AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_WriteOffPercentageTolerance)
 				)
 			)
 		;

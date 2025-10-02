@@ -257,6 +257,24 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 	@Override
+	public void getPaymentDifference(GetPaymentDifferenceRequest request, StreamObserver<GetPaymentDifferenceResponse> responseObserver) {
+		try {
+			GetPaymentDifferenceResponse.Builder order = PaymentServiceLogic.getPaymentDifference(request);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
 	public void releaseOrder(ReleaseOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
 			Order.Builder order = OrderConverUtil.convertOrder(
