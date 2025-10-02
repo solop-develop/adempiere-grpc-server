@@ -15,13 +15,18 @@
 
 package org.spin.pos.service.payment;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_Reference;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MOrder;
+import org.compiere.model.MPOS;
+import org.compiere.model.MPriceList;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
@@ -36,6 +41,8 @@ import org.spin.backend.grpc.pos.CreditCardType;
 import org.spin.backend.grpc.pos.DeletePaymentReferenceRequest;
 import org.spin.backend.grpc.pos.ExistsUnapprovedOnlinePaymentsRequest;
 import org.spin.backend.grpc.pos.ExistsUnapprovedOnlinePaymentsResponse;
+import org.spin.backend.grpc.pos.GetPaymentDifferenceRequest;
+import org.spin.backend.grpc.pos.GetPaymentDifferenceResponse;
 import org.spin.backend.grpc.pos.ListCardProvidersRequest;
 import org.spin.backend.grpc.pos.ListCardProvidersResponse;
 import org.spin.backend.grpc.pos.ListCardsRequest;
@@ -43,9 +50,14 @@ import org.spin.backend.grpc.pos.ListCardsResponse;
 import org.spin.backend.grpc.pos.ListCreditCardTypesRequest;
 import org.spin.backend.grpc.pos.ListCreditCardTypesResponse;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.pos.service.order.OrderUtil;
+import org.spin.pos.service.pos.AccessManagement;
+import org.spin.pos.service.pos.POS;
+import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 
 import com.google.protobuf.Empty;
@@ -333,6 +345,96 @@ public class PaymentServiceLogic {
 			.setRecordCount(
 				countRecords
 			)
+		;
+
+		return builder;
+	}
+
+
+	public static GetPaymentDifferenceResponse.Builder getPaymentDifference(GetPaymentDifferenceRequest request) {
+		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+		MOrder salesOrder = OrderUtil.validateAndGetOrder(request.getId());
+
+		BigDecimal grandTotal = salesOrder.getGrandTotal();
+		BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(salesOrder);
+		BigDecimal totalOpenAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount));
+		BigDecimal totalRefundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount).negate());
+
+		int userId = Env.getAD_User_ID(pos.getCtx());
+		BigDecimal tolerancePercent = Env.ZERO;
+		BigDecimal toleranceAmount = Env.ZERO;
+		BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(totalPaymentAmount).orElse(Env.ZERO)).abs();
+		boolean isTolerancePercent = AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent);
+		boolean isAllowedTolerance = false;
+		if (isTolerancePercent) {
+			tolerancePercent = AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_WriteOffPercentageTolerance);
+
+			MPriceList priceList = MPriceList.get(Env.getCtx(), salesOrder.getM_PriceList_ID(), null);
+			int standardPrecision = priceList.getStandardPrecision();
+			BigDecimal allowedPercent = tolerancePercent;
+			BigDecimal writeOffPercent = OrderUtil.getWriteOffPercent(totalOpenAmount, totalPaymentAmount, standardPrecision);
+			if(allowedPercent.compareTo(Env.ZERO) == 0 || allowedPercent.compareTo(writeOffPercent) >= 0) {
+				isAllowedTolerance = true;
+			}
+		} else {
+			toleranceAmount = AccessManagement.getWriteOffAmtTolerance(pos);
+
+			BigDecimal allowedAmount = tolerancePercent;
+			int allowedCurrencyId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_WriteOffAmtCurrency_ID);
+			if (allowedCurrencyId <= 0) {
+				MPriceList posPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
+				allowedCurrencyId = posPriceList.getC_Currency_ID();
+			}
+			allowedAmount = OrderUtil.getConvertedAmountFrom(
+				salesOrder,
+				allowedCurrencyId,
+				allowedAmount
+			);
+			if(allowedAmount.compareTo(Env.ZERO) == 0 || allowedAmount.compareTo(writeOffAmount) >= 0) {
+				isAllowedTolerance = true;
+			}
+		}
+
+		GetPaymentDifferenceResponse.Builder builder = GetPaymentDifferenceResponse.newBuilder()
+			.setId(
+				salesOrder.getC_Order_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					salesOrder.getUUID()
+				)
+			)
+			.setDocumentNo(
+				StringManager.getValidString(
+					salesOrder.getDocumentNo()
+				)
+			)
+			.setSalesOrderAmount(
+				NumberManager.getBigDecimalToString(
+					grandTotal
+				)
+			)
+			.setRefundAmount(
+				NumberManager.getBigDecimalToString(
+					totalRefundAmount
+				)
+			)
+			.setDifferenceAmount(
+				NumberManager.getBigDecimalToString(
+					totalOpenAmount
+				)
+			)
+			.setToleranceAmount(
+				NumberManager.getBigDecimalToString(
+					toleranceAmount
+				)
+			)
+			.setTolerancePercentage(
+				NumberManager.getBigDecimalToString(
+					tolerancePercent
+				)
+			)
+			.setIsWithinTolerance(isAllowedTolerance)
 		;
 
 		return builder;

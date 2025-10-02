@@ -124,6 +124,11 @@ service Store {
 	rpc DeleteOrder(DeleteOrderRequest) returns (google.protobuf.Empty) {
 		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/orders/{id}" };
 	}
+	rpc GetPaymentDifference(GetPaymentDifferenceRequest) returns (GetPaymentDifferenceResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/orders/{id}/payment-difference"
+		};
+	}
 	rpc ProcessOrder(ProcessOrderRequest) returns (Order) {
 		option (google.api.http) = {
 			put: "/point-of-sales/{pos_id}/orders/{id}/process",
@@ -2399,13 +2404,6 @@ message PrintPreviewOnlineCashClosingResponse {
 	ProcessLog process_log = 2;
 }
 
-
-// Request for delete a order
-message DeleteOrderRequest {
-	int32 id = 1;
-	int32 pos_id = 2;
-}
-
 // Request for delete a order
 message DeleteOrderLineRequest {
 	int32 order_id = 1;
@@ -2428,22 +2426,6 @@ message CreateOrderLineRequest {
 }
 
 // Request for update a order
-message UpdateOrderRequest {
-	int32 id = 1;
-	int32 pos_id = 2;
-	int32 customer_id = 3;
-	int32 document_type_id = 4;
-	int32 price_list_id = 5;
-	int32 warehouse_id = 6;
-	string description = 7;
-	int32 campaign_id = 8;
-	string discount_rate = 9;
-	string discount_rate_off = 10;
-	string discount_amount_off = 11;
-	int32 sales_representative_id = 12;
-	int32 discount_schema_id = 13;
-	int32 payment_method_id = 14; // to discount rate by payment method
-}
 message UpdateManualOrderRequest {
 	int32 id = 1;
 	int32 pos_id = 2;
@@ -2466,17 +2448,12 @@ message UpdateOrderLineRequest {
 	int32 pos_id = 10;
 }
 
-// Request for get a order
-message GetOrderRequest {
-	int32 id = 1;
-	int32 pos_id = 2;
-}
-
 // Request for get a key layout
 message GetKeyLayoutRequest {
 	int32 key_layout_id = 3;
 	int32 pos_id = 4;
 }
+
 
 // Sales Order
 message Order {
@@ -2519,6 +2496,48 @@ message Order {
 	string manual_shipment_document_no = 37;
 	string manual_movement_document_no = 38;
 }
+message GetOrderRequest {
+	int32 id = 1;
+	int32 pos_id = 2;
+}
+message UpdateOrderRequest {
+	int32 id = 1;
+	int32 pos_id = 2;
+	int32 customer_id = 3;
+	int32 document_type_id = 4;
+	int32 price_list_id = 5;
+	int32 warehouse_id = 6;
+	string description = 7;
+	int32 campaign_id = 8;
+	string discount_rate = 9;
+	string discount_rate_off = 10;
+	string discount_amount_off = 11;
+	int32 sales_representative_id = 12;
+	int32 discount_schema_id = 13;
+	int32 payment_method_id = 14; // to discount rate by payment method
+}
+message DeleteOrderRequest {
+	int32 id = 1;
+	int32 pos_id = 2;
+}
+message GetPaymentDifferenceRequest {
+	int32 id = 1;
+	int32 pos_id = 2;
+}
+message GetPaymentDifferenceResponse {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	string sales_order_amount = 4; // grand total
+	string payments_amount = 5; // collected amount
+	string refund_amount = 6;
+	string difference_amount = 7;
+	bool is_overpayment = 8;
+	string tolerance_amount = 9;
+	string tolerance_percentage = 10;
+	bool is_within_tolerance = 11;
+}
+
 
 // Sales Order Line
 message OrderLine {
