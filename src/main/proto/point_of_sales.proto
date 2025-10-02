@@ -1955,21 +1955,23 @@ message PointOfSales {
 	bool is_allows_collect_order = 52;
 	core_functionality.SalesRepresentative collecting_agent = 53;
 	bool is_print_collect = 54;
+	bool is_allows_open_amount = 55;
+	string maximum_open_amount = 56;
 	// Refund
-	core_functionality.Currency refund_reference_currency = 55;
-	core_functionality.DocumentType return_document_type = 56;
-	string maximum_refund_allowed = 57;
-	string maximum_daily_refund_allowed = 58;
+	core_functionality.Currency refund_reference_currency = 57;
+	core_functionality.DocumentType return_document_type = 58;
+	string maximum_refund_allowed = 59;
+	string maximum_daily_refund_allowed = 60;
 	// Shipment
-	bool is_allows_confirm_shipment = 59;
-	bool is_confirm_complete_shipment = 60;
-	bool is_print_shipment = 61;
+	bool is_allows_confirm_shipment = 61;
+	bool is_confirm_complete_shipment = 62;
+	bool is_print_shipment = 63;
 	// Gift Card
-	bool is_allows_gift_card = 62;
-	int32 default_gift_card_charge_id = 63;
-	bool is_print_gift_card = 64;
-	// Is Manual Document
-	bool is_allows_create_manual_document = 65;
+	bool is_allows_gift_card = 64;
+	int32 default_gift_card_charge_id = 65;
+	bool is_print_gift_card = 66;
+	// Manual Document
+	bool is_allows_create_manual_document = 67;
 }
 message ListPointOfSalesResponse {
 	int64 record_count = 1;

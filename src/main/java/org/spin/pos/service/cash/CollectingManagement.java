@@ -24,7 +24,6 @@ import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.I_C_PaymentMethod;
 import org.adempiere.exceptions.AdempiereException;
-import org.apache.poi.ss.formula.functions.T;
 import org.compiere.model.*;
 import org.compiere.util.*;
 import org.spin.backend.grpc.pos.CreatePaymentRequest;
