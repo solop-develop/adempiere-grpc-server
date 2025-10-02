@@ -542,11 +542,22 @@ public class OrderUtil {
 	 * @return
 	 */
 	public static BigDecimal getWriteOffPercent(BigDecimal openAmount, BigDecimal paymentAmount, int precision) {
-		if(Optional.ofNullable(openAmount).orElse(Env.ZERO).compareTo(Env.ZERO) == 0) {
-			return null;
+		BigDecimal totalOpenAmount = Optional.ofNullable(openAmount)
+			.orElse(Env.ZERO)
+		;
+		if(totalOpenAmount.compareTo(Env.ZERO) == 0) {
+			return Env.ZERO;
 		}
-		BigDecimal difference = Optional.ofNullable(openAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(paymentAmount).orElse(Env.ZERO));
-		return difference.divide(Optional.ofNullable(openAmount).orElse(Env.ZERO), MathContext.DECIMAL128).setScale(precision, RoundingMode.HALF_UP).multiply(Env.ONEHUNDRED);
+		BigDecimal difference = totalOpenAmount.subtract(
+			Optional.ofNullable(paymentAmount).orElse(Env.ZERO)
+		);
+		return difference.divide(
+				totalOpenAmount,
+				MathContext.DECIMAL128
+			)
+			.setScale(precision, RoundingMode.HALF_UP)
+			.multiply(Env.ONEHUNDRED)
+		;
 	}
 	
 	/**
