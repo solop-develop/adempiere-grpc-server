@@ -150,6 +150,14 @@ public class POSConvertUtil {
 			.setIsPrintCollect(
 				AccessManagement.getBooleanValueFromPOS(pos, userId, "IsPrintCollect")
 			)
+			.setIsAllowsOpenAmount(
+				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount)
+			)
+			.setMaximumOpenAmount(
+				NumberManager.getBigDecimalToString(
+					AccessManagement.getBigDecimalValueFromPOS(pos, userId, "MaximumOpenAmount")
+				)
+			)
 			// TODO: Add flag column `IsAllowsRefund` to pin accesss
 			.setMaximumRefundAllowed(
 				NumberManager.getBigDecimalToString(

@@ -27,6 +27,7 @@ public interface ColumnsAdded {
 	String COLUMNNAME_IsAllowsCashOpening = "IsAllowsCashOpening";
 	String COLUMNNAME_IsAllowsCashWithdrawal = "IsAllowsCashWithdrawal";
 	String COLUMNNAME_IsAllowsCollectOrder = "IsAllowsCollectOrder";
+	String COLUMNNAME_IsAllowsOpenAmount = "IsAllowsOpenAmount";
 	String COLUMNNAME_IsAllowsConfirmShipment = "IsAllowsConfirmShipment";
 	String COLUMNNAME_IsAllowsConfirmShipmentByOrder = "IsAllowsConfirmShipmentByOrder";
 	String COLUMNNAME_IsAllowsCreateCustomer = "IsAllowsCreateCustomer";
