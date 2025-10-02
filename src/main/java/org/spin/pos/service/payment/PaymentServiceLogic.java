@@ -359,11 +359,16 @@ public class PaymentServiceLogic {
 		BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(salesOrder);
 		BigDecimal totalOpenAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount));
 		BigDecimal totalRefundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount).negate());
+		BigDecimal differenceAmount = totalOpenAmount;
+		if (totalRefundAmount.compareTo(Env.ZERO) != 0) {
+			differenceAmount = totalRefundAmount.abs();
+		}
 
 		int userId = Env.getAD_User_ID(pos.getCtx());
 		BigDecimal tolerancePercent = Env.ZERO;
 		BigDecimal toleranceAmount = Env.ZERO;
 		BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(totalPaymentAmount).orElse(Env.ZERO)).abs();
+
 		boolean isTolerancePercent = AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent);
 		boolean isAllowedTolerance = false;
 		if (isTolerancePercent) {
@@ -421,8 +426,11 @@ public class PaymentServiceLogic {
 			)
 			.setDifferenceAmount(
 				NumberManager.getBigDecimalToString(
-					totalOpenAmount
+					differenceAmount
 				)
+			)
+			.setIsOverpayment(
+				differenceAmount.compareTo(Env.ZERO) == 0
 			)
 			.setToleranceAmount(
 				NumberManager.getBigDecimalToString(
