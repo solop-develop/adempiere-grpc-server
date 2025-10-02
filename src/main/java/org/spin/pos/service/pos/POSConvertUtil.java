@@ -242,6 +242,9 @@ public class POSConvertUtil {
 			.setDefaultGiftCardChargeId(
 				pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID)
 			)
+			.setIsAllowsCreateManualDocument(
+				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCreateManualDocument)
+			)
 		;
 
 		//	Set Price List and currency
@@ -252,30 +255,53 @@ public class POSConvertUtil {
 		//	Bank Account
 		if(pos.getC_BankAccount_ID() != 0) {
 			MBankAccount cashAccount = MBankAccount.get(Env.getCtx(), pos.getC_BankAccount_ID());
-			builder.setDefaultOpeningChargeId(cashAccount.get_ValueAsInt("DefaultOpeningCharge_ID"))
-				.setDefaultWithdrawalChargeId(cashAccount.get_ValueAsInt("DefaultWithdrawalCharge_ID"))
-				.setCashBankAccount(CoreFunctionalityConvert.convertBankAccount(cashAccount));
+			builder.setDefaultOpeningChargeId(
+					cashAccount.get_ValueAsInt("DefaultOpeningCharge_ID")
+				)
+				.setDefaultWithdrawalChargeId(
+					cashAccount.get_ValueAsInt("DefaultWithdrawalCharge_ID")
+				)
+				.setCashBankAccount(
+					CoreFunctionalityConvert.convertBankAccount(cashAccount)
+				)
+			;
 		}
 		//	Bank Account to transfer
 		if(pos.getCashTransferBankAccount_ID() != 0) {
-			builder.setCashTransferBankAccount(CoreFunctionalityConvert.convertBankAccount(pos.getCashTransferBankAccount_ID()));
+			builder.setCashTransferBankAccount(
+				CoreFunctionalityConvert.convertBankAccount(
+					pos.getCashTransferBankAccount_ID()
+				)
+			);
 		}
 		//	Warehouse
 		if(pos.getM_Warehouse_ID() > 0) {
 			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), pos.getM_Warehouse_ID());
-			builder.setWarehouse(CoreFunctionalityConvert.convertWarehouse(warehouse));
+			builder.setWarehouse(
+				CoreFunctionalityConvert.convertWarehouse(warehouse)
+			);
 		}
 		//	Price List
 		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DisplayCurrency_ID) > 0) {
-			builder.setDisplayCurrency(CoreFunctionalityConvert.convertCurrency(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DisplayCurrency_ID)));
+			builder.setDisplayCurrency(CoreFunctionalityConvert.convertCurrency(
+				pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DisplayCurrency_ID))
+			);
 		}
 		//	Document Type
 		if(pos.getC_DocType_ID() > 0) {
-			builder.setDocumentType(CoreFunctionalityConvert.convertDocumentType(pos.getC_DocType_ID()));
+			builder.setDocumentType(
+				CoreFunctionalityConvert.convertDocumentType(
+					pos.getC_DocType_ID()
+				)
+			);
 		}
 		//	Return Document Type
 		if(pos.get_ValueAsInt("C_DocTypeRMA_ID") > 0) {
-			builder.setReturnDocumentType(CoreFunctionalityConvert.convertDocumentType(pos.get_ValueAsInt("C_DocTypeRMA_ID")));
+			builder.setReturnDocumentType(
+				CoreFunctionalityConvert.convertDocumentType(
+					pos.get_ValueAsInt("C_DocTypeRMA_ID")
+				)
+			);
 		}
 		// Campaign
 		if (pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultCampaign_ID) > 0) {

@@ -88,4 +88,6 @@ public interface ColumnsAdded {
 	String COLUMNNAME_DateDoc = "DateDoc";
 	String COLUMNNAME_Amount = "Amount";
 	String IsMandatoryCreditMemoRef = "IsMandatoryCreditMemoRef";
+	//
+	String COLUMNNAME_IsAllowsCreateManualDocument = "IsAllowsCreateManualDocument";
 }

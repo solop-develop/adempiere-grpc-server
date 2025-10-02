@@ -201,6 +201,44 @@ public class PointOfSalesForm extends StoreImplBase {
 	}
 
 	@Override
+	public void updateOrder(UpdateOrderRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder order = OrderConverUtil.convertOrder(
+				OrderServiceLogic.updateOrder(request)
+			);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void updateManualOrder(UpdateManualOrderRequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder order = OrderServiceLogic.updateManualOrder(request);
+			responseObserver.onNext(order.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
 	public void deleteOrder(DeleteOrderRequest request, StreamObserver<Empty> responseObserver) {
 		try {
 			Empty.Builder order = OrderServiceLogic.deleteOrder(request);
@@ -240,7 +278,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
-
 	@Override
 	public void holdOrder(HoldOrderRequest request, StreamObserver<Order> responseObserver) {
 		try {
@@ -273,7 +310,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(order.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -4218,28 +4255,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		//	Return order
 		return orderReference.get();
-	}
-
-
-
-	@Override
-	public void updateOrder(UpdateOrderRequest request, StreamObserver<Order> responseObserver) {
-		try {
-			Order.Builder order = OrderConverUtil.convertOrder(
-				OrderServiceLogic.updateOrder(request)
-			);
-			responseObserver.onNext(order.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
 	}
 
 
