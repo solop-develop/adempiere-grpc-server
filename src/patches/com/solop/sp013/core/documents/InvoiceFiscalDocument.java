@@ -133,6 +133,7 @@ public class InvoiceFiscalDocument implements IFiscalDocument {
     private String organizationCountryName;
     private String currencyCode;
     private int documentFormat;
+    private boolean isManualDocument;
 
     private List<IFiscalDocumentLine> fiscalDocumentLines;
     private List<IFiscalDocumentTax> fiscalDocumentTaxes;
@@ -296,6 +297,7 @@ public class InvoiceFiscalDocument implements IFiscalDocument {
         this.phone = businessPartnerLocation.getPhone();
         this.eMail = businessPartnerLocation.getEMail();
         this.postalCode = location.getPostal();
+        this.isManualDocument = document.isManualDocument();
 
         if(document.getSalesRep_ID() != 0) {
             MUser salesRepresentative = MUser.get(document.getCtx(), document.getSalesRep_ID());
@@ -519,10 +521,12 @@ public class InvoiceFiscalDocument implements IFiscalDocument {
     @Override public List<IFiscalDocumentTax> getFiscalDocumentTaxes() { return fiscalDocumentTaxes; }
     @Override public List<IFiscalDocumentPayment> getFiscalDocumentPayments() { return fiscalDocumentPayments; }
     @Override public List<ReversalDocument> getFiscalReversalDocuments() { return fiscalReversalDocuments; }
-    
+    @Override public boolean isManualDocument() {return isManualDocument; }
     @Override
     public IFiscalDocument withFiscalDocumentNo(String fiscalDocumentNo) {
         this.fiscalDocumentNo = fiscalDocumentNo;
         return this;
     }
+
+
 }
