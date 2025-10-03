@@ -45,7 +45,31 @@ import org.spin.service.grpc.util.value.ValueManager;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class CashManagement {
-	
+
+	public static boolean isCashMovementWithOnlinePaymentApproved(int cashMovementId) {
+		if (cashMovementId <= 0) {
+			return false;
+		}
+		MBankStatement cashMovement = new MBankStatement(Env.getCtx(), cashMovementId, null);
+		if (cashMovement == null || cashMovement.getC_BankStatement_ID() <= 0) {
+			return false;
+		}
+		// Exists Online Payment Approved
+		final String sql = "SELECT 1 "
+			+ "FROM C_Payment AS p "
+			+ "INNER JOIN C_BankStatementLine AS line "
+			+ "ON line.C_Payment_ID = p.C_Payment_ID "
+			+ "WHERE p.IsOnline = 'Y' "
+			+ "AND p.ResponseStatus = 'A' "
+			+ "AND line.C_BankStatement_ID = ? "
+			+ "AND line.C_Payment_ID = p.C_Payment_ID "
+			+ "LIMIT 1"
+		;
+		boolean isOnlinePaymentApproved = 1 == DB.getSQLValue(null, sql, cashMovementId);
+		return isOnlinePaymentApproved;
+	}
+
+
 	/**
 	 * Create Payment based on request, transaction name and pos
 	 * @param request

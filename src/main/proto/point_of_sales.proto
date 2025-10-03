@@ -831,6 +831,7 @@ message CashMovements {
 	repeated PaymentSummary cash_movements = 8;
 	repeated PaymentTotal total_movements = 9;
 	bool is_online_payments = 10;
+	bool is_online_closing_approved = 11;
 }
 message CashOpeningRequest {
 	int32 pos_id = 1;
@@ -871,11 +872,14 @@ message ListCashMovementsResponse {
 	string next_page_token = 3;
 	// header values
 	int32 id = 4;
-	string document_no = 5;
-	string name = 6;
-	google.protobuf.Timestamp date = 7;
-	repeated PaymentTotal total_movements = 8;
-	bool is_online_payments = 9;
+	string uuid = 5;
+	string document_no = 6;
+	string name = 7;
+	google.protobuf.Timestamp date = 8;
+	repeated PaymentTotal total_movements = 9;
+	bool is_online_payments = 10;
+	bool is_online_closing_approved = 11;
+
 }
 message ListCashSummaryMovementsRequest {
 	string filters = 1;
@@ -897,11 +901,13 @@ message ListCashSummaryMovementsResponse {
 	string next_page_token = 3;
 	// header values
 	int32 id = 4;
-	string document_no = 5;
-	string name = 6;
-	google.protobuf.Timestamp date = 7;
-	repeated PaymentTotal total_movements = 8;
-	bool is_online_payments = 9;
+	string uuid = 5;
+	string document_no = 6;
+	string name = 7;
+	google.protobuf.Timestamp date = 8;
+	repeated PaymentTotal total_movements = 9;
+	bool is_online_payments = 10;
+	bool is_online_closing_approved = 11;
 }
 message PrintPreviewCashMovementsRequest {
 	int32 pos_id = 1;
