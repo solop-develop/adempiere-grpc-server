@@ -16,7 +16,9 @@
  *****************************************************************************/
 package com.solop.sp013.core.documents;
 
+import com.solop.sp013.core.model.X_SP013_ElectronicLineSummary;
 import com.solop.sp013.core.util.ElectronicInvoicingChanges;
+import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_TaxGroup;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
@@ -26,22 +28,26 @@ import org.compiere.model.MConversionRate;
 import org.compiere.model.MCountry;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
-import org.compiere.model.MInOut;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MLocation;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrg;
 import org.compiere.model.MOrgInfo;
 import org.compiere.model.MPOS;
+import org.compiere.model.MPayment;
+import org.compiere.model.MPaymentTerm;
+import org.compiere.model.MPriceList;
 import org.compiere.model.MRegion;
+import org.compiere.model.MSalesRegion;
 import org.compiere.model.MTable;
 import org.compiere.model.MUOM;
-import org.compiere.model.MWarehouse;
+import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.model.MADAppRegistration;
 
@@ -55,12 +61,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Implementation of IFiscalDocument for Material Receipt sources
+ * Implementation of IFiscalDocument for Invoice sources
  * @author Yamel Senih, yamel.senih@solopsoftware.com, Solop <a href="http://www.solopsoftware.com">solopsoftware.com</a>
  */
-public class InOutFiscalDocument implements IFiscalDocument {
+public class InvoiceFiscalDocument implements IFiscalDocument {
 
-    private MInOut inOut;
+    private MInvoice invoice;
     private int fiscalSenderId;
     private MCurrency organizationCurrency;
     private BigDecimal conversionRate;
@@ -133,16 +139,16 @@ public class InOutFiscalDocument implements IFiscalDocument {
     private List<IFiscalDocumentPayment> fiscalDocumentPayments;
     private List<ReversalDocument> fiscalReversalDocuments;
 
-    public InOutFiscalDocument(MInOut document, int fiscalSenderId) {
+    public InvoiceFiscalDocument(MInvoice document, int fiscalSenderId) {
         if(document == null) {
-            throw new AdempiereException("@M_InOut_ID@ @NotFound@");
+            throw new AdempiereException("@C_Invoice_ID@ @NotFound@");
         }
         this.fiscalSenderId = fiscalSenderId;
-        this.inOut = document;
+        this.invoice = document;
         convertDocument(document);
     }
 
-    private void convertDocument(MInOut document) {
+    private void convertDocument(MInvoice document) {
         fiscalDocumentLines = new ArrayList<>();
         fiscalDocumentTaxes = new ArrayList<>();
         fiscalDocumentPayments = new ArrayList<>();
@@ -150,9 +156,53 @@ public class InOutFiscalDocument implements IFiscalDocument {
         
         loadOrganizationData(document);
         
-        MDocType documentType = MDocType.get(document.getCtx(), document.getC_DocType_ID());
+        MDocType documentType = MDocType.get(document.getCtx(), document.getC_DocTypeTarget_ID());
         if(Util.isEmpty(documentType.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalDocumentType))) {
             throw new AdempiereException("@" + ElectronicInvoicingChanges.SP013_FiscalDocumentType + "@ @NotFound@");
+        }
+
+        if(documentType.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalDocumentType)
+            .equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Debit_Note)
+            || documentType.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalDocumentType)
+            .equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Credit_Note)) {
+            int invoiceToAllocateId = document.get_ValueAsInt(ElectronicInvoicingChanges.ReferenceDocument_ID);
+            if(invoiceToAllocateId > 0) {
+                MInvoice allocatedDocument = new MInvoice(document.getCtx(), invoiceToAllocateId, document.get_TrxName());
+                addReversalDocument(allocatedDocument);
+            } else {
+                List<Integer> allocateInvoiceIds = new Query(document.getCtx(), I_C_Invoice.Table_Name, "EXISTS(SELECT 1 FROM C_AllocateInvoice ai " +
+                        "WHERE ai.ReferenceDocument_ID = C_Invoice.C_Invoice_ID " +
+                        "AND ai.C_Invoice_ID = ?)", document.get_TrxName())
+                        .setParameters(document.getC_Invoice_ID())
+                        .getIDsAsList();
+                allocateInvoiceIds.forEach(allocatedInvoiceId -> {
+                    MInvoice allocatedDocument = new MInvoice(document.getCtx(), allocatedInvoiceId, document.get_TrxName());
+                    addReversalDocument(allocatedDocument);
+                });
+            }
+        } else if(documentType.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalDocumentType)
+                .equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Withholding)
+                && document.isReversal()) {
+            Timestamp documentDate = TimeUtil.getDayTime(document.getDateInvoiced(), document.getUpdated());
+            String senderNo = null;
+            String documentNo = document.getDocumentNo().replaceAll("^", "");
+            if(document.get_ValueAsInt(ElectronicInvoicingChanges.SP013_FiscalSender_ID) > 0) {
+                senderNo = MADAppRegistration.getById(document.getCtx(), document.get_ValueAsInt(ElectronicInvoicingChanges.SP013_FiscalSender_ID), document.get_TrxName()).getValue();
+            }
+            addReversalDocumentInfo(documentNo, documentDate, senderNo, getTransactionType());
+        }
+
+        String whereClause = X_SP013_ElectronicLineSummary.COLUMNNAME_C_Invoice_ID + " = ?";
+        List<Integer> electronicLineSummaryIds = new Query(document.getCtx(), X_SP013_ElectronicLineSummary.Table_Name, whereClause, document.get_TrxName())
+                .setParameters(document.get_ID())
+                .getIDsAsList();
+        if (!electronicLineSummaryIds.isEmpty()) {
+            BigDecimal summaryTotal = new Query(document.getCtx(), X_SP013_ElectronicLineSummary.Table_Name, whereClause, document.get_TrxName())
+                    .setParameters(document.get_ID())
+                    .sum(X_SP013_ElectronicLineSummary.COLUMNNAME_LineTotalAmt);
+            if (document.getTotalLines().compareTo(summaryTotal) != 0) {
+                throw new AdempiereException("@SP013.SummaryTotalAmt_Invalid@: @TotalAmt@: " + summaryTotal.toString() + " <> @TotalLines@:  " + document.getTotalLines().toString());
+            }
         }
 
         this.documentType = documentType.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalDocumentType);
@@ -167,58 +217,15 @@ public class InOutFiscalDocument implements IFiscalDocument {
             }
         }
 
-
-        MOrder order = null;
-        if(document.getC_Order_ID() > 0) {
-            order = (MOrder) document.getC_Order();
-            MCurrency currency = MCurrency.get(document.getCtx(), order.getC_Currency_ID());
-            this.currencyCode = currency.getISO_Code();
-        } else {
-            this.currencyCode = organizationCurrency.getISO_Code();
-        }
-        MInOut reverseOriginalDocument = null;
-        if (document.getReversal_ID() > 0) {
-            reverseOriginalDocument = new MInOut(document.getCtx(), document.getReversal_ID(), document.get_TrxName());
-        }
-        if (MInOut.MOVEMENTTYPE_CustomerReturns.equals(document.getMovementType())) {
-            if (order != null) {
-                int sourceOrderId =order.get_ValueAsInt("ECA14_Source_Order_ID");
-                String whereClause = "C_Order_ID = ?";
-                reverseOriginalDocument = new Query(document.getCtx(), MInOut.Table_Name, whereClause, document.get_TrxName())
-                    .setParameters(sourceOrderId)
-                    .first();
-            }
-        }
-        if (reverseOriginalDocument != null){
-            String senderNo = null;
-            String documentNo = reverseOriginalDocument.getDocumentNo().replaceAll("^", "");
-            if(reverseOriginalDocument.get_ValueAsInt(ElectronicInvoicingChanges.SP013_FiscalSender_ID) > 0) {
-                senderNo = MADAppRegistration.getById(document.getCtx(), reverseOriginalDocument.get_ValueAsInt(ElectronicInvoicingChanges.SP013_FiscalSender_ID), document.get_TrxName()).getValue();
-            }
-            String reversalTransactionType = null;
-            MDocType reversalDocumentType = MDocType.get(document.getCtx(), document.getC_DocType_ID());
-            if(reversalDocumentType.get_ValueAsInt(ElectronicInvoicingChanges.SP013_TransactionType_ID) > 0) {
-                MTable transactionTypeTable = MTable.get(document.getCtx(), ElectronicInvoicingChanges.SP013_TransactionType);
-                if(transactionTypeTable != null) {
-                    PO transactionType = transactionTypeTable.getPO(reversalDocumentType.get_ValueAsInt(ElectronicInvoicingChanges.SP013_TransactionType_ID), document.get_TrxName());
-                    if(transactionType != null) {
-                        reversalTransactionType = transactionType.get_ValueAsString("Value");
-                    } else {
-                        throw new AdempiereException("@" + ElectronicInvoicingChanges.ReferenceDocument_ID + "@ " + "(@" + ElectronicInvoicingChanges.SP013_TransactionType_ID + "@) @NotFound@");
-                    }
-                }
-            } else  {
-                throw new AdempiereException("@" + ElectronicInvoicingChanges.ReferenceDocument_ID + "@ " + "(@" + ElectronicInvoicingChanges.SP013_TransactionType_ID + "@) @NotFound@");
-            }
-
-            addReversalDocumentInfo(documentNo,reverseOriginalDocument.getMovementDate(), senderNo, reversalTransactionType);
-        }
-
+        MCurrency currency = MCurrency.get(document.getCtx(), document.getC_Currency_ID());
+        this.currencyCode = currency.getISO_Code();
+        
         MBPartner businessPartner = (MBPartner) document.getC_BPartner();
         MBPartnerLocation businessPartnerLocation = (MBPartnerLocation) document.getC_BPartner_Location();
         MLocation location = (MLocation) businessPartnerLocation.getC_Location();
         MCountry country = MCountry.get(document.getCtx(), location.getC_Country_ID());
         MRegion region = MRegion.get(document.getCtx(), location.getC_Region_ID());
+        MPriceList priceList = MPriceList.get(document.getCtx(), document.getM_PriceList_ID(), null);
         
         I_C_TaxGroup businessPartnerTaxGroup = businessPartner.getC_TaxGroup();
         if(businessPartnerTaxGroup != null) {
@@ -232,8 +239,8 @@ public class InOutFiscalDocument implements IFiscalDocument {
         }
         
         String sOReference = null;
-        if(order != null) {
-            sOReference = order.getDocumentNo();
+        if(document.getC_Order_ID() != 0) {
+            sOReference = document.getC_Order().getDocumentNo();
         }
         int documentFormat = -1;
         String documentFormatString = null;
@@ -261,7 +268,7 @@ public class InOutFiscalDocument implements IFiscalDocument {
         this.documentFormat = documentFormat;
         this.documentUuid = document.getUUID();
         this.documentNo = document.getDocumentNo();
-        this.documentDate = document.getMovementDate();
+        this.documentDate = document.getDateInvoiced();
         this.businessPartnerName = businessPartner.getName();
         this.businessPartnerLastName = businessPartner.getName2();
         this.businessPartnerTaxId = businessPartner.getTaxID();
@@ -280,45 +287,74 @@ public class InOutFiscalDocument implements IFiscalDocument {
         this.poReferenceNo = document.getPOReference();
         this.soReferenceNo = sOReference;
         this.documentTypeName = documentType.getPrintName();
-        this.documentTypeId = document.getC_DocType_ID();
-        this.dueDate = document.getMovementDate();
+        this.totalLines = document.getTotalLines();
+        this.grandTotal = document.getGrandTotal();
+        this.discountPrinted = document.isDiscountPrinted();
+        this.documentTypeId = document.getC_DocTypeTarget_ID();
+        this.taxIncluded = priceList.isTaxIncluded();
+        this.dueDate = document.getDateInvoiced();
         this.phone = businessPartnerLocation.getPhone();
         this.eMail = businessPartnerLocation.getEMail();
         this.postalCode = location.getPostal();
 
-        MWarehouse warehouse = MWarehouse.get(document.getCtx(), document.getM_Warehouse_ID());
-        this.warehouseName = warehouse.getName();
-
-        BigDecimal totalLines = Env.ZERO;
-        BigDecimal grandTotal = Env.ZERO;
-        AtomicInteger productQuantities = new AtomicInteger(0);
-
-        Arrays.asList(document.getLines()).forEach(documentLine -> {
-            fiscalDocumentLines.add(new InOutFiscalDocumentLine(documentLine));
-            MUOM uom = MUOM.get(document.getCtx(), documentLine.getC_UOM_ID());
-            if(uom.get_ColumnIndex(ElectronicInvoicingChanges.SP013_EachUnitCount) >= 0 && uom.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_EachUnitCount)) {
-                productQuantities.getAndAdd(Optional.ofNullable(documentLine.getMovementQty()).orElse(Env.ZERO).intValue());
-            } else {
-                productQuantities.getAndIncrement();
-            }
-        });
-
-        for(IFiscalDocumentLine line : fiscalDocumentLines) {
-            totalLines = totalLines.add(line.getLineNetAmount());
-            grandTotal = grandTotal.add(line.getLineTotalAmount());
+        if(document.getSalesRep_ID() != 0) {
+            MUser salesRepresentative = MUser.get(document.getCtx(), document.getSalesRep_ID());
+            this.salesRepresentativeValue = salesRepresentative.getValue();
+            this.salesRepresentativeName = salesRepresentative.getName();
+        }
+        
+        if(document.getC_SalesRegion_ID() != 0) {
+            MSalesRegion salesRegion = MSalesRegion.getById(document.getCtx(), document.getC_SalesRegion_ID(), document.get_TrxName());
+            this.salesRegionValue = salesRegion.getValue();
+            this.salesRegionName = salesRegion.getName();
+        }
+        
+        if(document.getC_PaymentTerm_ID() != 0) {
+            MPaymentTerm paymentTerm = (MPaymentTerm) document.getC_PaymentTerm();
+            this.paymentTerm = paymentTerm.getName();
+            this.daysDue = paymentTerm.getNetDays();
+            this.dueDate = TimeUtil.addDays(document.getDateInvoiced(), paymentTerm.getNetDays());
         }
 
-        this.totalLines = totalLines;
-        this.grandTotal = grandTotal;
-        this.productQuantities = productQuantities.get();
-
-        String amountInWords = Msg.getAmtInWords(Env.getLanguage(document.getCtx()), DisplayType.getNumberFormat(DisplayType.Amount).format(grandTotal));
+        String amountInWords = Msg.getAmtInWords(Env.getLanguage(document.getCtx()), DisplayType.getNumberFormat(DisplayType.Amount).format(document.getGrandTotal()));
         if(!Util.isEmpty(amountInWords)) {
             this.amountInWords = amountInWords;
         }
+
+        AtomicInteger productQuantities = new AtomicInteger(0);
+
+        if (!electronicLineSummaryIds.isEmpty()) {
+            electronicLineSummaryIds.forEach( summaryLineId -> {
+                X_SP013_ElectronicLineSummary summaryLine = new X_SP013_ElectronicLineSummary(document.getCtx(), summaryLineId, document.get_TrxName());
+                fiscalDocumentLines.add(new InvoiceFiscalDocumentLine(summaryLine));
+                MUOM uom = MUOM.get(document.getCtx(), summaryLine.getC_UOM_ID());
+                if(uom.get_ColumnIndex(ElectronicInvoicingChanges.SP013_EachUnitCount) >= 0 && uom.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_EachUnitCount)) {
+                    productQuantities.getAndAdd(Optional.ofNullable(summaryLine.getQty()).orElse(Env.ZERO).intValue());
+                } else {
+                    productQuantities.getAndIncrement();
+                }
+            });
+        } else {
+            Arrays.asList(document.getLines()).forEach(documentLine -> {
+                fiscalDocumentLines.add(new InvoiceFiscalDocumentLine(documentLine));
+                MUOM uom = MUOM.get(document.getCtx(), documentLine.getC_UOM_ID());
+                if(uom.get_ColumnIndex(ElectronicInvoicingChanges.SP013_EachUnitCount) >= 0 && uom.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_EachUnitCount)) {
+                    productQuantities.getAndAdd(Optional.ofNullable(documentLine.getQtyInvoiced()).orElse(Env.ZERO).intValue());
+                } else {
+                    productQuantities.getAndIncrement();
+                }
+            });
+        }
+
+        this.productQuantities = productQuantities.get();
+        
+        Arrays.asList(document.getTaxes(true)).forEach(documentTax -> fiscalDocumentTaxes.add(new InvoiceTaxFiscalDocumentTax(documentTax)));
+        
+        MOrder order = (MOrder) document.getC_Order();
+        MPayment.getOfOrder(order).forEach(payment -> fiscalDocumentPayments.add(new PaymentFiscalDocumentPayment(payment)));
     }
 
-    private void loadOrganizationData(MInOut document) {
+    private void loadOrganizationData(MInvoice document) {
         MOrg organization = MOrg.get(document.getCtx(), document.getAD_Org_ID());
         MOrgInfo organizationInfo = MOrgInfo.get(document.getCtx(), document.getAD_Org_ID(), document.get_TrxName());
         int currencyId = organizationInfo.get_ValueAsInt(ElectronicInvoicingChanges.SP013_FiscalCurrency_ID);
@@ -355,15 +391,9 @@ public class InOutFiscalDocument implements IFiscalDocument {
     @Override
     public BigDecimal getCurrencyRate() {
         if(Optional.ofNullable(conversionRate).orElse(Env.ZERO).compareTo(Env.ZERO) <= 0) {
-            if(inOut.getC_Order_ID() > 0) {
-                MOrder order = (MOrder) inOut.getC_Order();
-                conversionRate = MConversionRate.getRate(order.getC_Currency_ID(), organizationCurrency.getC_Currency_ID(), 
-                    inOut.getMovementDate(), order.getC_ConversionType_ID(), inOut.getAD_Client_ID(), inOut.getAD_Org_ID());
-            } else {
-                conversionRate = BigDecimal.ONE;
-            }
+            conversionRate = MConversionRate.getRate(invoice.getC_Currency_ID(), organizationCurrency.getC_Currency_ID(), invoice.getDateAcct(), invoice.getC_ConversionType_ID(), invoice.getAD_Client_ID(), invoice.getAD_Org_ID());
             if(conversionRate == null || conversionRate.compareTo(Env.ZERO) == 0) {
-                throw new AdempiereException("Error converting currency");
+                throw new AdempiereException(MConversionRate.getErrorMessage(invoice.getCtx(), "ErrorConvertingDocumentCurrencyToBaseCurrency", invoice.getC_Currency_ID(), organizationCurrency.getC_Currency_ID(), invoice.getC_ConversionType_ID(), invoice.getDateAcct(), invoice.get_TrxName()));
             }
         }
         return conversionRate;
@@ -371,7 +401,9 @@ public class InOutFiscalDocument implements IFiscalDocument {
 
     @Override
     public BigDecimal getConvertedAmount(BigDecimal amount) {
-        if(amount == null || amount.compareTo(Env.ZERO) == 0) {
+        if(invoice.getC_Currency_ID() == organizationCurrency.getC_Currency_ID()
+                || amount == null
+                || amount.compareTo(Env.ZERO) == 0) {
             return amount;
         }
         getCurrencyRate();
@@ -387,30 +419,30 @@ public class InOutFiscalDocument implements IFiscalDocument {
     public ReversalDocument getFirstReversalDocument() {
         return fiscalReversalDocuments.stream().findFirst().orElse(new ReversalDocument());
     }
-
     /**
      * @param reversalDocument the reversalDocument to set
      */
-    public final InOutFiscalDocument addReversalDocument(MInvoice reversalDocument) {
+    public final InvoiceFiscalDocument addReversalDocument(MInvoice reversalDocument) {
         fiscalReversalDocuments.add(new ReversalDocument(reversalDocument));
         return this;
     }
 
-    public final InOutFiscalDocument addReversalDocumentInfo(String documentNo, Timestamp documentDate, String fiscalSenderNo, String transactionType) {
+    public final InvoiceFiscalDocument addReversalDocumentInfo(String documentNo, Timestamp documentDate, String fiscalSenderNo, String transactionType) {
         fiscalReversalDocuments.add(new ReversalDocument(documentNo, documentDate, fiscalSenderNo, transactionType));
         return this;
     }
 
+
     @Override
     public int getInvoiceId() {
+        if(invoice != null) {
+            return invoice.getC_Invoice_ID();
+        }
         return 0;
     }
 
     @Override
     public int getInOutId() {
-        if(inOut != null) {
-            return inOut.getM_InOut_ID();
-        }
         return 0;
     }
 
