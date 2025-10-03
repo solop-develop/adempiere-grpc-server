@@ -293,7 +293,6 @@ public class CollectingManagement {
 				|| tenderType.equals(MPayment.TENDERTYPE_Zelle)) {
 			payment.setDateAcct(dateAcct);
 			payment.setDateTrx(dateTrx);
-			payment.saveEx();
 		}
 	}
 
