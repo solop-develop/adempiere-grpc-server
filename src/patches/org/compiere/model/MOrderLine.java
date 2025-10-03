@@ -946,26 +946,26 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 					if(!getParent().isReturnOrder()) {
 						throw new ProductNotOnPriceListException(m_productPrice, getLine());
 					}
-				} else if(newRecord
-						|| is_ValueChanged(COLUMNNAME_M_Product_ID)
-						|| is_ValueChanged(COLUMNNAME_C_UOM_ID)
-						|| is_ValueChanged(COLUMNNAME_QtyEntered)
-						|| is_ValueChanged(COLUMNNAME_PriceEntered)) {
-					if(!getParent().isReturnOrder()) {
-						setPriceList(m_productPrice.getPriceList());
-						setPriceLimit(m_productPrice.getPriceLimit());
-						MProduct product = MProduct.get(getCtx(), getM_Product_ID());
-						BigDecimal priceEntered = MUOMConversion.convertProductFrom (getCtx(), getM_Product_ID(), getC_UOM_ID(), getPriceList());
-						setPriceEntered(priceEntered);
-						setPriceActual(getPriceList());
-						if(product.isWithoutDiscount()) {
-							setDiscount(Env.ZERO);
-						} else {
-							if(Optional.ofNullable(getDiscount()).orElse(Env.ZERO).signum() == 0) {
-								setDiscount(m_productPrice.getDiscount());
-							}
+				}
+				if(!getParent().isReturnOrder()) {
+					setPriceList(m_productPrice.getPriceList());
+					setPriceLimit(m_productPrice.getPriceLimit());
+					MProduct product = MProduct.get(getCtx(), getM_Product_ID());
+					if(product.isWithoutDiscount()) {
+						setDiscount(Env.ZERO);
+					} else {
+						if(Optional.ofNullable(getDiscount()).orElse(Env.ZERO).signum() == 0) {
+							setDiscount(m_productPrice.getDiscount());
 						}
 					}
+					BigDecimal priceActual = m_productPrice.getPriceStd();
+					if(is_ValueChanged(COLUMNNAME_Discount)) {
+						priceActual = getPriceList()
+								.multiply(Env.ONE.subtract(getDiscount().divide(Env.ONEHUNDRED, m_precision, RoundingMode.HALF_UP)));
+					}
+					setPriceActual(priceActual);
+					BigDecimal priceEntered = MUOMConversion.convertProductFrom (getCtx(), getM_Product_ID(), getC_UOM_ID(), priceActual);
+					setPriceEntered(priceEntered);
 				}
 			}
 		}
