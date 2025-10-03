@@ -176,13 +176,16 @@ public class CashServiceLogic {
 				throw new AdempiereException("@C_BankStatement_ID@ @Processed@");
 			}
 
-			// boolean isOnlinePaymentApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(bankStatementId);
-			// if (isOnlinePaymentApproved) {
-			// 	boolean isOnlineClosingApproved = bankStatement.get_ValueAsBoolean("IsOnlineClosingApproved");
-			// 	if (!isOnlineClosingApproved) {
-			// 		throw new AdempiereException("@C_BankStatement_ID@ (" + bankStatement.getDocumentNo() + ") @POS.PreviousCashClosingOpened@ (@Online@)");
-			// 	}
-			// }
+			MPOS pos = MPOS.get(Env.getCtx(), request.getPosId());
+			if (pos.isValidateOnlineClosing()) {
+				boolean isOnlinePaymentApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(bankStatementId);
+				if (isOnlinePaymentApproved) {
+					boolean isOnlineClosingApproved = bankStatement.isOnlineClosingApproved();
+					if (!isOnlineClosingApproved) {
+						throw new AdempiereException("@C_BankStatement_ID@ (" + bankStatement.getDocumentNo() + ") @POS.PreviousCashClosingOpened@ (@Online@)");
+					}
+				}
+			}
 
 			if(!Util.isEmpty(request.getDescription(), true)) {
 				bankStatement.addDescription(request.getDescription());
@@ -347,7 +350,7 @@ public class CashServiceLogic {
 			)
 			.setIsOnlinePayments(isOnlinePaymentsApproved)
 			.setIsOnlineClosingApproved(
-				cashClosing.get_ValueAsBoolean("IsOnlineClosingApproved")
+				cashClosing.isOnlineClosingApproved()
 			)
 		;
 
@@ -439,7 +442,7 @@ public class CashServiceLogic {
 			)
 			.setIsOnlinePayments(isOnlinePaymentsApproved)
 			.setIsOnlineClosingApproved(
-				cashClosing.get_ValueAsBoolean("IsOnlineClosingApproved")
+				cashClosing.isOnlineClosingApproved()
 			)
 		;
 
@@ -800,9 +803,6 @@ public class CashServiceLogic {
 			String status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
 			boolean isError = "E".equals(status) || "R".equals(status);
 
-			bankStatement.set_ValueOfColumn("IsOnlineClosingApproved", !isError);
-			bankStatement.saveEx();
-
 			builder
 				.setIsError(isError)
 				.setMessage(
@@ -868,6 +868,10 @@ public class CashServiceLogic {
 			String	message = paymentProcessorRun.get_ValueAsString("ResponseMessage");
 			String	status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
 			boolean isError = "E".equals(status) || "R".equals(status);
+			if ("A".equals(paymentProcessorRun.get_ValueAsString("ResponseStatus"))) {
+				bankStatement.setIsOnlineClosingApproved(true);
+				bankStatement.saveEx();
+			}
 			builder
 				.setIsError(isError)
 				.setMessage(
