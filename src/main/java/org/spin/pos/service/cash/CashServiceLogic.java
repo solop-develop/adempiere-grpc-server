@@ -176,7 +176,7 @@ public class CashServiceLogic {
 				throw new AdempiereException("@C_BankStatement_ID@ @Processed@");
 			}
 
-			MPOS pos = MPOS.get(Env.getCtx(), request.getPosId());
+			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 			if (pos.isValidateOnlineClosing()) {
 				boolean isOnlinePaymentApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(bankStatementId);
 				if (isOnlinePaymentApproved) {
