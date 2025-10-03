@@ -961,7 +961,9 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 						if(product.isWithoutDiscount()) {
 							setDiscount(Env.ZERO);
 						} else {
-							setDiscount(m_productPrice.getDiscount());
+							if(Optional.ofNullable(getDiscount()).orElse(Env.ZERO).signum() == 0) {
+								setDiscount(m_productPrice.getDiscount());
+							}
 						}
 					}
 				}
