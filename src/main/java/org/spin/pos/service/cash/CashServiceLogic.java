@@ -165,15 +165,26 @@ public class CashServiceLogic {
 		AtomicReference<MBankStatement> bankStatementReference = new AtomicReference<MBankStatement>();
 		Trx.run(transactionName -> {
 			int bankStatementId = request.getId();
-			if(bankStatementId <= 0
-					&& request.getId() <= 0) {
-				throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
+			if(bankStatementId <= 0) {
+				throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
 			}
 			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, transactionName);
+			if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
+				throw new AdempiereException("@C_BankStatement_ID@ (" + bankStatementId + ") @NotFound@");
+			}
 			if(bankStatement.isProcessed()) {
 				throw new AdempiereException("@C_BankStatement_ID@ @Processed@");
 			}
-			if(!Util.isEmpty(request.getDescription())) {
+
+			// boolean isOnlinePaymentApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(bankStatementId);
+			// if (isOnlinePaymentApproved) {
+			// 	boolean isOnlineClosingApproved = bankStatement.get_ValueAsBoolean("IsOnlineClosingApproved");
+			// 	if (!isOnlineClosingApproved) {
+			// 		throw new AdempiereException("@C_BankStatement_ID@ (" + bankStatement.getDocumentNo() + ") @POS.PreviousCashClosingOpened@ (@Online@)");
+			// 	}
+			// }
+
+			if(!Util.isEmpty(request.getDescription(), true)) {
 				bankStatement.addDescription(request.getDescription());
 			}
 			bankStatement.setDocStatus(MBankStatement.DOCSTATUS_Drafted);
@@ -304,11 +315,17 @@ public class CashServiceLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 
-		HashMap<Integer, BigDecimal> cashCurrencySummary = new HashMap<Integer, BigDecimal>();
+		boolean isOnlinePaymentsApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(cashClosing.getC_BankStatement_ID());
+
 		ListCashMovementsResponse.Builder builder = ListCashMovementsResponse.newBuilder()
 			.setId(
 				cashClosing.getC_BankStatement_ID()
 			)
+			.setUuid((
+				StringManager.getValidString(
+					cashClosing.getUUID()
+				)
+			))
 			.setDocumentNo(
 				StringManager.getValidString(
 					cashClosing.getDocumentNo()
@@ -328,8 +345,13 @@ public class CashServiceLogic {
 			.setNextPageToken(
 				StringManager.getValidString(nexPageToken)
 			)
+			.setIsOnlinePayments(isOnlinePaymentsApproved)
+			.setIsOnlineClosingApproved(
+				cashClosing.get_ValueAsBoolean("IsOnlineClosingApproved")
+			)
 		;
 
+		HashMap<Integer, BigDecimal> cashCurrencySummary = new HashMap<Integer, BigDecimal>();
 		query
 			.setLimit(limit, offset)
 			.getIDsAsList()
@@ -385,15 +407,20 @@ public class CashServiceLogic {
 		}
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 		MBankStatement cashClosing = CashManagement.getOpenCashClosing(pos, TimeManager.getDate(), true, null);
-		if(cashClosing == null
-				|| cashClosing.getC_BankStatement_ID() <= 0) {
+		if(cashClosing == null || cashClosing.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
 		}
 
-		Map<CurrencyCashKey, BigDecimal> cashCurrencySummary = new HashMap<CurrencyCashKey, BigDecimal>();
+		boolean isOnlinePaymentsApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(cashClosing.getC_BankStatement_ID());
+
 		ListCashSummaryMovementsResponse.Builder builder = ListCashSummaryMovementsResponse.newBuilder()
 			.setId(
 				cashClosing.getC_BankStatement_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					cashClosing.getUUID()
+				)
 			)
 			.setDocumentNo(
 				StringManager.getValidString(
@@ -410,6 +437,10 @@ public class CashServiceLogic {
 					cashClosing.getStatementDate()
 				)
 			)
+			.setIsOnlinePayments(isOnlinePaymentsApproved)
+			.setIsOnlineClosingApproved(
+				cashClosing.get_ValueAsBoolean("IsOnlineClosingApproved")
+			)
 		;
 
 		String nexPageToken = null;
@@ -417,11 +448,11 @@ public class CashServiceLogic {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		String sql = "SELECT "
-				+ "pm.C_PaymentMethod_ID, "
-				+ "pm.Name AS PaymentMethodName, "
-				+ "pm.TenderType AS TenderTypeCode, "
-				+ "p.C_Currency_ID, "
-				;
+			+ "pm.C_PaymentMethod_ID, "
+			+ "pm.Name AS PaymentMethodName, "
+			+ "pm.TenderType AS TenderTypeCode, "
+			+ "p.C_Currency_ID, "
+		;
 		if (request.getIsDetailMovementType()) {
 			sql += "p.IsReceipt, ";
 		}
@@ -447,8 +478,10 @@ public class CashServiceLogic {
 		if (request.getIsDetailMovementType()) {
 			sql += ", p.IsReceipt ";
 		}
+
 		AtomicInteger counter = new AtomicInteger(0);
-		//	Count records
+		Map<CurrencyCashKey, BigDecimal> cashCurrencySummary = new HashMap<CurrencyCashKey, BigDecimal>();
+
 		List<Object> parameters = new ArrayList<Object>();
 		parameters.add(pos.getC_POS_ID());
 		parameters.add(cashClosing.getC_BankStatement_ID());
@@ -503,6 +536,7 @@ public class CashServiceLogic {
 		}).onFailure(throwable -> {
 			throw new AdempiereException(throwable);
 		});
+
 		cashCurrencySummary.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
 			CurrencyCashKey currencyCashKey = entry.getKey();
 			BigDecimal totalAmount = entry.getValue();
@@ -669,10 +703,10 @@ public class CashServiceLogic {
 		final int bankStatementId = request.getId();
 		final int paymentProcessorRunId = request.getPaymentProcessorRunId();
 		if (bankStatementId <= 0) {
-			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
 		}
 		if (paymentProcessorRunId <= 0) {
-			throw new AdempiereException("@C_PaymentProcessorRun_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @C_PaymentProcessorRun_ID@");
 		}
 		MTable processorRunTable = MTable.get(Env.getCtx(), "C_PaymentProcessorRun");
 		PO paymentProcessorRun = processorRunTable.getPO(paymentProcessorRunId, null);
@@ -695,7 +729,7 @@ public class CashServiceLogic {
 			.setReportType(reportType)
 			.setTableName("C_PaymentProcessorRun")
 			.setRecordId(paymentProcessorRunId)
-			;
+		;
 		ProcessLog.Builder processLog = ReportManagement.generateReport(
 				reportRequest.build()
 		);
@@ -707,11 +741,11 @@ public class CashServiceLogic {
 
 		// preview document
 		PrintPreviewOnlineCashClosingResponse.Builder ticket = PrintPreviewOnlineCashClosingResponse.newBuilder()
-				.setResult("Ok")
-				.setProcessLog(
-						processLog.build()
-				)
-				;
+			.setResult("Ok")
+			.setProcessLog(
+					processLog.build()
+			)
+		;
 
 		return ticket;
 	}
@@ -729,6 +763,10 @@ public class CashServiceLogic {
 		Trx.run( transactionName ->{
 			ProcessOnlineCashClosingResponse.Builder builder = ProcessOnlineCashClosingResponse.newBuilder();
 			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), request.getId(), transactionName);
+			if (bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
+				throw new AdempiereException("@C_BankStatement_ID@ (" + request.getId() + ") @NotFound@");
+			}
+
 			String whereClause = "C_BankAccount_ID = ?";
 			MPaymentProcessor paymentProcessor = (new Query(Env.getCtx(), "C_PaymentProcessor", whereClause, transactionName))
 				.setParameters(bankStatement.getC_BankAccount_ID())
@@ -761,6 +799,10 @@ public class CashServiceLogic {
 			String message = paymentProcessorRun.get_ValueAsString("ResponseMessage");
 			String status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
 			boolean isError = "E".equals(status) || "R".equals(status);
+
+			bankStatement.set_ValueOfColumn("IsOnlineClosingApproved", !isError);
+			bankStatement.saveEx();
+
 			builder
 				.setIsError(isError)
 				.setMessage(
@@ -798,15 +840,18 @@ public class CashServiceLogic {
 		Trx.run(transactionName -> {
 			InfoOnlineCashClosingResponse.Builder builder = InfoOnlineCashClosingResponse.newBuilder();
 			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), request.getId(), transactionName);
-
+			if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
+				throw new AdempiereException("@C_BankStatement_ID@ (" + request.getId() + ") @NotFound@");
+			}
 
 			String whereClause = "C_BankAccount_ID = ?";
 			MPaymentProcessor paymentProcessor = (new Query(Env.getCtx(), "C_PaymentProcessor", whereClause, transactionName))
-					.setParameters(bankStatement.getC_BankAccount_ID())
-					.setClient_ID()
-					.setOnlyActiveRecords(true)
-					.first();
-			if (paymentProcessor == null) {
+				.setParameters(bankStatement.getC_BankAccount_ID())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+				.first()
+			;
+			if (paymentProcessor == null || paymentProcessor.getC_PaymentProcessor_ID() <= 0) {
 				throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
 			}
 			MTable processorRunTable = MTable.get(Env.getCtx(), "C_PaymentProcessorRun");
@@ -819,10 +864,9 @@ public class CashServiceLogic {
 			} else {
 				throw new AdempiereException(PaymentProcessorClosing.class.getName() + "Unsupported");
 			}
+
 			String	message = paymentProcessorRun.get_ValueAsString("ResponseMessage");
 			String	status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
-
-
 			boolean isError = "E".equals(status) || "R".equals(status);
 			builder
 				.setIsError(isError)
