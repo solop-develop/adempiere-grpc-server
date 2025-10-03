@@ -254,7 +254,6 @@ public class CollectingManagement {
 				payment.setDescription(request.getDescription());
 				break;
 		}
-
 		//	Set Bank Id
 		if(request.getBankId() > 0) {
 			payment.set_ValueOfColumn(MBank.COLUMNNAME_C_Bank_ID, request.getBankId());
