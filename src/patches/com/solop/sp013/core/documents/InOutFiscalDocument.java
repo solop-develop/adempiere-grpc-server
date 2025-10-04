@@ -127,6 +127,7 @@ public class InOutFiscalDocument implements IFiscalDocument {
     private String organizationCountryName;
     private String currencyCode;
     private int documentFormat;
+    private boolean isManualDocument;
 
     private List<IFiscalDocumentLine> fiscalDocumentLines;
     private List<IFiscalDocumentTax> fiscalDocumentTaxes;
@@ -210,7 +211,6 @@ public class InOutFiscalDocument implements IFiscalDocument {
             } else  {
                 throw new AdempiereException("@" + ElectronicInvoicingChanges.ReferenceDocument_ID + "@ " + "(@" + ElectronicInvoicingChanges.SP013_TransactionType_ID + "@) @NotFound@");
             }
-
             addReversalDocumentInfo(documentNo,reverseOriginalDocument.getMovementDate(), senderNo, reversalTransactionType);
         }
 
@@ -332,7 +332,7 @@ public class InOutFiscalDocument implements IFiscalDocument {
         this.organizationPhone = organizationInfo.getPhone();
         this.organizationEmail = organizationInfo.getEMail();
         this.organizationFiscalCode = organizationInfo.get_ValueAsString(ElectronicInvoicingChanges.SP013_OrgFiscalCode);
-        
+        this.isManualDocument = document.isManualDocument();
         MLocation location = (MLocation) organizationInfo.getC_Location();
         if(location != null) {
             MCountry country = MCountry.get(document.getCtx(), location.getC_Country_ID());
@@ -487,6 +487,7 @@ public class InOutFiscalDocument implements IFiscalDocument {
     @Override public List<IFiscalDocumentTax> getFiscalDocumentTaxes() { return fiscalDocumentTaxes; }
     @Override public List<IFiscalDocumentPayment> getFiscalDocumentPayments() { return fiscalDocumentPayments; }
     @Override public List<ReversalDocument> getFiscalReversalDocuments() { return fiscalReversalDocuments; }
+    @Override public boolean isManualDocument() {return isManualDocument; }
     
     @Override
     public IFiscalDocument withFiscalDocumentNo(String fiscalDocumentNo) {
