@@ -1095,7 +1095,7 @@ public class MOrder extends X_C_Order implements DocAction
 		}
 
 		if (newRecord || is_ValueChanged(COLUMNNAME_C_DocTypeTarget_ID)) {
-			setIsManualDocument(getC_DocType().isGenerateManualDocument());
+			setIsManualDocument(getC_DocTypeTarget().isGenerateManualDocument());
 		}
 		return true;
 	}	//	beforeSave
