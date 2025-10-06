@@ -60,6 +60,7 @@ import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.payment.GiftCardManagement;
 import org.spin.pos.service.payment.PaymentManagement;
+import org.spin.pos.service.pos.AccessManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -229,9 +230,13 @@ public class OrderManagement {
 		}
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
-			MOrder salesOrder = new MOrder(Env.getCtx(), orderId, transactionName);
-			if(salesOrder.getC_Order_ID() <= 0) {
-				throw new AdempiereException("@C_Order_ID@ @NotFound@");
+			MOrder salesOrder = OrderUtil.validateAndGetOrder(orderId, transactionName);
+			final int userId = Env.getAD_User_ID(pos.getCtx());
+			if (salesOrder.get_ValueAsBoolean("IsManualDocument")) {
+				boolean isAllowsManualDocument = AccessManagement.getBooleanValueFromPOS(pos, userId, "IsAllowsCreateManualDocuments");
+				if (!isAllowsManualDocument) {
+					throw new AdempiereException("@ActionNotAllowedHere@: @IsAllowsCreateManualDocuments@");
+				}
 			}
 
 			// Verify online payments
