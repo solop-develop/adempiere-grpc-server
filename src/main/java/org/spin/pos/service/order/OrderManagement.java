@@ -232,7 +232,7 @@ public class OrderManagement {
 		Trx.run(transactionName -> {
 			MOrder salesOrder = OrderUtil.validateAndGetOrder(orderId, transactionName);
 			final int userId = Env.getAD_User_ID(pos.getCtx());
-			if (salesOrder.isManualDocument()) {
+			if (salesOrder.get_ValueAsBoolean("IsManualDocument")) {
 				boolean isAllowsManualDocument = AccessManagement.getBooleanValueFromPOS(pos, userId, "IsAllowsCreateManualDocuments");
 				if (!isAllowsManualDocument) {
 					throw new AdempiereException("@ActionNotAllowedHere@: @IsAllowsCreateManualDocuments@");
