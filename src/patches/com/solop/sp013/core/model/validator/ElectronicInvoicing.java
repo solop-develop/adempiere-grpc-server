@@ -108,7 +108,7 @@ public class ElectronicInvoicing implements ModelValidator {
 								fiscalDocumentType = ElectronicInvoicingChanges.SP013_FiscalDocumentType_Invoice;
 							}
 						}
-						int documentTypeId = ElectronicInvoicingUtil.getDocumentTypeFromTaxGroup(invoice.getCtx(), fiscalDocumentType, customer.getC_TaxGroup_ID());
+						int documentTypeId = ElectronicInvoicingUtil.getDocumentTypeFromTaxGroup(invoice.getCtx(), fiscalDocumentType, customer.getC_TaxGroup_ID(), invoice.isManualDocument());
 						if(documentTypeId > 0) {
 							invoice.setC_DocTypeTarget_ID(documentTypeId);
 						}
