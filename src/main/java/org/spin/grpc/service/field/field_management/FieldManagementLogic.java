@@ -874,6 +874,12 @@ public class FieldManagementLogic {
 			table.getKeyColumns()
 		);
 
+		String keyColumn = lookupInfo.KeyColumn;
+		// Remove table name: `C_DocType.C_DocType_ID` -> `C_DocType_ID`
+		if (keyColumn.contains(".")) {
+			keyColumn = keyColumn.substring(keyColumn.lastIndexOf(".") + 1);
+		}
+
 		builderList.setTableName(
 				StringManager.getValidString(
 					lookupInfo.TableName
@@ -881,7 +887,7 @@ public class FieldManagementLogic {
 			)
 			.setKeyColumnName(
 				StringManager.getValidString(
-					lookupInfo.KeyColumn
+					keyColumn
 				)
 			)
 			.addAllKeyColumns(
