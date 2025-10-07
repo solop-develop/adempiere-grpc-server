@@ -182,7 +182,7 @@ public class CashServiceLogic {
 				if (isOnlinePaymentApproved) {
 					boolean isOnlineClosingApproved = bankStatement.isOnlineClosingApproved();
 					if (!isOnlineClosingApproved) {
-						throw new AdempiereException("@C_BankStatement_ID@ (" + bankStatement.getDocumentNo() + ") @POS.PreviousCashClosingOpened@ (@Online@)");
+						throw new AdempiereException("@C_BankStatement_ID@ @Online@ (" + bankStatement.getDocumentNo() + ") @POS.PreviousCashClosingOpened@ (@Online@)");
 					}
 				}
 			}
