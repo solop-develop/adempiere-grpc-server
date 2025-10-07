@@ -422,7 +422,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(giftCard.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -440,7 +440,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(giftCard.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -458,7 +458,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(giftCard.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -476,7 +476,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(listGiftCards.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -494,7 +494,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(giftCard.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -512,7 +512,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(orderLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -532,7 +532,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(giftCardLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -550,7 +550,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(giftCardLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -568,7 +568,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(listGiftCardLines.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -586,7 +586,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(giftCardLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -604,7 +604,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(giftCardLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -622,7 +622,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(listAvailableOrderLines.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -640,12 +640,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(listAvailableOrderLines.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
-					Status.INTERNAL
-							.withDescription(e.getLocalizedMessage())
-							.withCause(e)
-							.asRuntimeException()
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -816,11 +817,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(keyLayout.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -833,11 +837,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(availableRefund.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -861,6 +868,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -1005,7 +1013,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(currencies.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -1042,7 +1051,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(documentTypes.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -1061,7 +1071,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1079,7 +1089,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1101,7 +1111,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1635,12 +1645,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -1653,12 +1664,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(bankAccountsBuilderList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -1746,11 +1758,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(shipment.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -1761,7 +1776,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(shipmentLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1779,7 +1794,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(shipmentLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1797,11 +1812,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(nothing.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -1812,11 +1830,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(shipmentLinesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -1827,11 +1848,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(shipment.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -2030,10 +2054,10 @@ public class PointOfSalesForm extends StoreImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-					Status.INTERNAL
-							.withDescription(e.getLocalizedMessage())
-							.withCause(e)
-							.asRuntimeException()
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -2195,7 +2219,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(refund.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -2216,6 +2241,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -2232,11 +2258,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(refundReferenceList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -2245,16 +2274,25 @@ public class PointOfSalesForm extends StoreImplBase {
 	@Override
 	public void createRMA(CreateRMARequest request, StreamObserver<RMA> responseObserver) {
 		try {
-			MOrder rma = ReturnSalesOrder.createRMAFromOrder(request.getPosId(), request.getSourceOrderId(), request.getSalesRepresentativeId(), request.getIsCreateLinesFromOrder(), null);
+			MOrder rma = ReturnSalesOrder.createRMAFromOrder(
+				request.getPosId(),
+				request.getSourceOrderId(),
+				request.getSalesRepresentativeId(),
+				request.getIsCreateLinesFromOrder(),
+				null
+			);
 			RMA.Builder returnOrder = ConvertUtil.convertRMA(rma);
 			responseObserver.onNext(returnOrder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -2273,7 +2311,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(returnLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -2298,7 +2336,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(returnLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -2316,11 +2354,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(Empty.newBuilder().build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -2331,11 +2372,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(Empty.newBuilder().build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -2346,11 +2390,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(rmaLinesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 	
@@ -2369,6 +2416,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -2392,7 +2440,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(salesOrder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -2417,7 +2465,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(salesOrder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -2435,7 +2484,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(response.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -3158,7 +3207,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -3400,7 +3449,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(customer.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -4030,8 +4079,9 @@ public class PointOfSalesForm extends StoreImplBase {
 			;
 		}
 		if(request.getIsWaitingForShipment()) {
-			whereClause.append(" AND DocStatus IN('CO') AND NOT EXISTS(SELECT 1 FROM M_InOut io WHERE io.C_Order_ID = C_Order.C_Order_ID AND io.DocStatus IN('CO', 'CL'))")
-			.append(whereClauseWithoutProposal)
+			whereClause.append(" AND DocStatus IN('CO') ")
+				.append("AND NOT EXISTS(SELECT 1 FROM M_InOut io WHERE io.C_Order_ID = C_Order.C_Order_ID AND io.DocStatus IN('CO', 'CL'))")
+				.append(whereClauseWithoutProposal)
 			;
 		}
 		if(request.getIsClosed()) {
@@ -4050,24 +4100,22 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Date Order From
 		if(ValueManager.getTimestampFromProtoTimestamp(request.getDateOrderedFrom()) != null) {
 			whereClause.append(" AND DateOrdered >= ?");
-			parameters.add(
-				TimeUtil.getDay(
-					ValueManager.getTimestampFromProtoTimestamp(
-						request.getDateOrderedFrom()
-					)
+			Timestamp dateFrom = TimeUtil.getDay(
+				ValueManager.getTimestampFromProtoTimestamp(
+					request.getDateOrderedFrom()
 				)
 			);
+			parameters.add(dateFrom);
 		}
 		//	Date Order To
 		if(ValueManager.getTimestampFromProtoTimestamp(request.getDateOrderedTo()) != null) {
 			whereClause.append(" AND DateOrdered <= ?");
-			parameters.add(
-				TimeUtil.getDay(
-					ValueManager.getTimestampFromProtoTimestamp(
-						request.getDateOrderedTo()
-					)
+			Timestamp dateTo = TimeUtil.getDay(
+				ValueManager.getTimestampFromProtoTimestamp(
+					request.getDateOrderedTo()
 				)
 			);
+			parameters.add(dateTo);
 		}
 
 		//	Get Product list
@@ -5174,6 +5222,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -5194,11 +5243,13 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(stocks.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -5382,7 +5433,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(cashListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -5481,11 +5532,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(cashListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -5542,11 +5596,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(cashListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -5603,11 +5660,14 @@ public class PointOfSalesForm extends StoreImplBase {
 			responseObserver.onNext(cashListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException());
+					.asRuntimeException()
+			);
 		}
 	}
 
