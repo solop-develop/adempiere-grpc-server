@@ -74,6 +74,7 @@ import org.spin.backend.grpc.pos.PrintPreviewOnlineCashClosingResponse;
 import org.spin.backend.grpc.pos.ProcessOnlineCashClosingRequest;
 import org.spin.backend.grpc.pos.ProcessOnlineCashClosingResponse;
 import org.spin.backend.grpc.report_management.GenerateReportRequest;
+import org.spin.base.util.DocumentUtil;
 import org.spin.grpc.service.ReportManagement;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.process.inf_POS_Sales_Detail_And_CollectionAbstract;
@@ -158,49 +159,59 @@ public class CashServiceLogic {
 	 * @return
 	 */
 	public static CashMovements.Builder cashClosing(CashClosingRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+		final MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
+		final int bankStatementId = request.getId();
+		if(bankStatementId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
 		}
+		MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, null);
+		if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
+			throw new AdempiereException("@C_BankStatement_ID@ (" + bankStatementId + ") @NotFound@");
+		}
+		if (bankStatement.isProcessing()) {
+			throw new AdempiereException("@C_BankStatement_ID@ (#" + bankStatement.getDocumentNo() + ") @Processing@");
+		}
+		if (bankStatement.isProcessed() || !DocumentUtil.isDrafted(bankStatement)) {
+			throw new AdempiereException("@C_BankStatement_ID@ (#" + bankStatement.getDocumentNo() + ") @Processed@");
+		}
+		bankStatement.setProcessing(true);
+		bankStatement.saveEx();
 
 		AtomicReference<MBankStatement> bankStatementReference = new AtomicReference<MBankStatement>();
-		Trx.run(transactionName -> {
-			int bankStatementId = request.getId();
-			if(bankStatementId <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
-			}
-			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, transactionName);
-			if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
-				throw new AdempiereException("@C_BankStatement_ID@ (" + bankStatementId + ") @NotFound@");
-			}
-			if(bankStatement.isProcessed()) {
-				throw new AdempiereException("@C_BankStatement_ID@ @Processed@");
-			}
-
-			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-			if (pos.isValidateOnlineClosing()) {
-				boolean isOnlinePaymentApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(bankStatementId);
-				if (isOnlinePaymentApproved) {
-					boolean isOnlineClosingApproved = bankStatement.isOnlineClosingApproved();
-					if (!isOnlineClosingApproved) {
-						throw new AdempiereException("@C_BankStatement_ID@ @Online@ (" + bankStatement.getDocumentNo() + ") @POS.PreviousCashClosingOpened@ (@Online@)");
+		try {
+			Trx.run(transactionName -> {
+				if (pos.isValidateOnlineClosing()) {
+					boolean isOnlinePaymentApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(bankStatementId);
+					if (isOnlinePaymentApproved) {
+						boolean isOnlineClosingApproved = bankStatement.isOnlineClosingApproved();
+						if (!isOnlineClosingApproved) {
+							throw new AdempiereException("@C_BankStatement_ID@ @Online@ (" + bankStatement.getDocumentNo() + ") @POS.PreviousCashClosingOpened@ (@Online@)");
+						}
 					}
 				}
-			}
 
-			if(!Util.isEmpty(request.getDescription(), true)) {
-				bankStatement.addDescription(request.getDescription());
-			}
-			bankStatement.setDocStatus(MBankStatement.DOCSTATUS_Drafted);
-			bankStatement.setDocAction(MBankStatement.ACTION_Complete);
-			bankStatement.saveEx(transactionName);
-			if(!bankStatement.processIt(DocAction.ACTION_Complete)) {
-				throw new AdempiereException(bankStatement.getProcessMsg());
-			}
-			bankStatement.saveEx(transactionName);
+				if(!Util.isEmpty(request.getDescription(), true)) {
+					bankStatement.addDescription(request.getDescription());
+				}
+				bankStatement.setDocStatus(MBankStatement.DOCSTATUS_Drafted);
+				bankStatement.setDocAction(MBankStatement.ACTION_Complete);
+				bankStatement.saveEx(transactionName);
+				if(!bankStatement.processIt(DocAction.ACTION_Complete)) {
+					throw new AdempiereException(bankStatement.getProcessMsg());
+				}
+				bankStatement.saveEx(transactionName);
 
-			//
-			bankStatementReference.set(bankStatement);
-		});
+				//
+				bankStatementReference.set(bankStatement);
+			});
+		} catch (Exception exception) {
+			// relauch original exception
+			throw exception;
+		} finally {
+			bankStatement.setProcessing(false);
+			bankStatement.saveEx();
+		}
 
 		CashMovements.Builder cashClosing = CashConvertUtil.convertCashMovements(
 			bankStatementReference.get()
