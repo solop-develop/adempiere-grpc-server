@@ -165,22 +165,23 @@ public class CashServiceLogic {
 		if(bankStatementId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
 		}
-		MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, null);
-		if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
+		MBankStatement bankStatementControl = new MBankStatement(Env.getCtx(), bankStatementId, null);
+		if(bankStatementControl == null || bankStatementControl.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ (" + bankStatementId + ") @NotFound@");
 		}
-		if (bankStatement.isProcessing()) {
-			throw new AdempiereException("@C_BankStatement_ID@ (#" + bankStatement.getDocumentNo() + ") @Processing@");
+		if (bankStatementControl.isProcessing()) {
+			throw new AdempiereException("@C_BankStatement_ID@ (#" + bankStatementControl.getDocumentNo() + ") @Processing@");
 		}
-		if (bankStatement.isProcessed() || !DocumentUtil.isDrafted(bankStatement)) {
-			throw new AdempiereException("@C_BankStatement_ID@ (#" + bankStatement.getDocumentNo() + ") @Processed@");
+		if (bankStatementControl.isProcessed() || !DocumentUtil.isDrafted(bankStatementControl)) {
+			throw new AdempiereException("@C_BankStatement_ID@ (#" + bankStatementControl.getDocumentNo() + ") @Processed@");
 		}
-		bankStatement.setProcessing(true);
-		bankStatement.saveEx();
+		bankStatementControl.setProcessing(true);
+		bankStatementControl.saveEx();
 
 		AtomicReference<MBankStatement> bankStatementReference = new AtomicReference<MBankStatement>();
 		try {
 			Trx.run(transactionName -> {
+				MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, transactionName);
 				if (pos.isValidateOnlineClosing()) {
 					boolean isOnlinePaymentApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(bankStatementId);
 					if (isOnlinePaymentApproved) {
@@ -209,8 +210,8 @@ public class CashServiceLogic {
 			// relauch original exception
 			throw exception;
 		} finally {
-			bankStatement.setProcessing(false);
-			bankStatement.saveEx();
+			bankStatementControl.setProcessing(false);
+			bankStatementControl.saveEx();
 		}
 
 		CashMovements.Builder cashClosing = CashConvertUtil.convertCashMovements(
