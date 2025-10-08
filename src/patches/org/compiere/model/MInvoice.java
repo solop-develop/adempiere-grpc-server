@@ -2826,7 +2826,7 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 			return MPOS.get(getCtx(), getC_POS_ID()).getC_BankAccount_ID();
 		}
 		//	Default
-		MBankAccount bankAccount = MBankAccount.getDefault(getCtx(), getAD_Org_ID(), X_C_Bank.BANKTYPE_CashJournal);
+		MBankAccount bankAccount = MBankAccount.getDefault(getCtx(), getAD_Org_ID(), X_C_Bank.BANKTYPE_CashJournal, isSOTrx());
 		if (bankAccount != null) {
 			return bankAccount.getC_BankAccount_ID();
 		}
@@ -2872,9 +2872,7 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 		//
 		MPayment paymentCash = new MPayment(getCtx(), 0, get_TrxName());
 		paymentCash.setC_BankAccount_ID(cashAccountId);
-		paymentCash.setC_DocType_ID(true);
-        String value = DB.getDocumentNo(paymentCash.getC_DocType_ID(),get_TrxName(), false,  paymentCash);
-        paymentCash.setDocumentNo(value);
+		paymentCash.setC_DocType_ID(isSOTrx());
         paymentCash.setDateAcct(getDateAcct());
         paymentCash.setDateTrx(getDateInvoiced());
         paymentCash.setTenderType(MPayment.TENDERTYPE_Cash);
@@ -2884,6 +2882,37 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
         paymentCash.setPayAmt(getGrandTotal());
         paymentCash.setOverUnderAmt(Env.ZERO);
         paymentCash.setC_Invoice_ID(getC_Invoice_ID());
+		paymentCash.setAD_Org_ID(getAD_Org_ID());
+		if(getAD_OrgTrx_ID() > 0) {
+			paymentCash.setAD_OrgTrx_ID(getAD_OrgTrx_ID());
+		}
+		if(getSalesRep_ID() > 0) {
+			paymentCash.setCollectingAgent_ID(getSalesRep_ID());
+		}
+		if(getC_Project_ID() > 0) {
+			paymentCash.setC_Project_ID(getC_Project_ID());
+		}
+		if(getC_Activity_ID() > 0) {
+			paymentCash.setC_Activity_ID(getC_Activity_ID());
+		}
+		if(getC_Campaign_ID() > 0) {
+			paymentCash.setC_Campaign_ID(getC_Campaign_ID());
+		}
+		if(getS_Contract_ID() > 0) {
+			paymentCash.setS_Contract_ID(getS_Contract_ID());
+		}
+		if(getUser1_ID() > 0) {
+			paymentCash.setUser1_ID(getUser1_ID());
+		}
+		if(getUser2_ID() > 0) {
+			paymentCash.setUser2_ID(getUser2_ID());
+		}
+		if(getUser3_ID() > 0) {
+			paymentCash.setUser3_ID(getUser3_ID());
+		}
+		if(getUser4_ID() > 0) {
+			paymentCash.setUser4_ID(getUser4_ID());
+		}
 		paymentCash.saveEx();
 		if (!paymentCash.processIt(X_C_Payment.DOCACTION_Complete)) {
 			processMsg = paymentCash.getProcessMsg();
