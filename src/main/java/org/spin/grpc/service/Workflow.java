@@ -96,7 +96,7 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onNext(workflowBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -144,7 +144,8 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -152,6 +153,58 @@ public class Workflow extends WorkflowImplBase {
 					.asRuntimeException()
 			);
 		}
+	}
+
+	/**
+	 * Convert request for workflow to builder
+	 * @param context
+	 * @param request
+	 * @return
+	 */
+	private ListWorkflowsResponse.Builder convertWorkflows(Properties context, ListWorkflowsRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+
+		StringBuffer whereClause = new StringBuffer();
+		List<Object> parameters = new ArrayList<>();
+		//	
+		whereClause
+			.append(I_AD_Workflow.COLUMNNAME_AD_Table_ID).append(" = ?");
+		//	Set parameters
+		parameters.add(table.getAD_Table_ID());
+		//	Get page and count
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+
+		Query query = new Query(context, I_AD_Workflow.Table_Name, whereClause.toString(), null)
+				.setParameters(parameters);
+		int count = query.count();
+		List<MWorkflow> workflowList = query
+			.setLimit(limit, offset)
+			.<MWorkflow>list()
+		;
+		//	
+		ListWorkflowsResponse.Builder builder = ListWorkflowsResponse.newBuilder();
+		//	Convert Record Log
+		for(MWorkflow workflowDefinition : workflowList) {
+			WorkflowDefinition.Builder valueObject = WorkflowUtil.convertWorkflowDefinition(workflowDefinition);
+			builder.addWorkflows(valueObject.build());
+		}
+		//	
+		builder.setRecordCount(count);
+		//	Set page token
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builder.setNextPageToken(
+			StringManager.getValidString(nexPageToken)
+		);
+		//	Return
+		return builder;
 	}
 
 
@@ -168,7 +221,8 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onNext(activitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -216,9 +270,10 @@ public class Workflow extends WorkflowImplBase {
 		;
 		int count = query.count();
 		List<MWFActivity> workflowActivitiesList = query
-				.setLimit(limit, offset)
-				.setOrderBy("Priority DESC, Created")
-				.<MWFActivity>list();
+			.setLimit(limit, offset)
+			.setOrderBy("Priority DESC, Created")
+			.<MWFActivity>list()
+		;
 		//	
 		ListWorkflowActivitiesResponse.Builder builder = ListWorkflowActivitiesResponse.newBuilder();
 		//	Convert Record Log
@@ -253,7 +308,7 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -431,7 +486,7 @@ public class Workflow extends WorkflowImplBase {
 		//	Return
 		return builder;
 	}
-	
+
 	/**
 	 * Fill Vector with DocAction Ref_List(135) values
 	 * @param v_value
@@ -447,24 +502,26 @@ public class Workflow extends WorkflowImplBase {
 			throw new IllegalArgumentException("v_description parameter is null");
 		
 		String sql;
-		if (Env.isBaseLanguage(Env.getCtx(), "AD_Ref_List"))
+		if (Env.isBaseLanguage(Env.getCtx(), "AD_Ref_List")) {
 			sql = "SELECT Value, Name, Description FROM AD_Ref_List "
-				+ "WHERE AD_Reference_ID=? ORDER BY Name";
-		else
+				+ "WHERE AD_Reference_ID=? ORDER BY Name"
+			;
+		}
+		else {
 			sql = "SELECT l.Value, t.Name, t.Description "
 				+ "FROM AD_Ref_List l, AD_Ref_List_Trl t "
 				+ "WHERE l.AD_Ref_List_ID=t.AD_Ref_List_ID"
 				+ " AND t.AD_Language='" + Env.getAD_Language(Env.getCtx()) + "'"
-				+ " AND l.AD_Reference_ID=? ORDER BY t.Name";
+				+ " AND l.AD_Reference_ID=? ORDER BY t.Name"
+			;
+		}
 		PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
-		try
-		{
+		try {
 			preparedStatement = DB.prepareStatement(sql, null);
 			preparedStatement.setInt(1, DocAction.DOCSTATUS_AD_REFERENCE_ID);
 			resultSet = preparedStatement.executeQuery();
-			while (resultSet.next())
-			{
+			while (resultSet.next()) {
 				String value = resultSet.getString(1);
 				String name = resultSet.getString(2);
 				String description = resultSet.getString(3);
@@ -476,8 +533,7 @@ public class Workflow extends WorkflowImplBase {
 				v_description.add(description);
 			}
 		}
-		catch (SQLException e)
-		{
+		catch (SQLException e) {
 			log.log(Level.SEVERE, sql, e);
 		}
 		finally {
@@ -485,58 +541,6 @@ public class Workflow extends WorkflowImplBase {
 			resultSet = null;
 			preparedStatement = null;
 		}
-
-	}
-	
-	/**
-	 * Convert request for workflow to builder
-	 * @param context
-	 * @param request
-	 * @return
-	 */
-	private ListWorkflowsResponse.Builder convertWorkflows(Properties context, ListWorkflowsRequest request) {
-		// validate and get table
-		final MTable table = RecordUtil.validateAndGetTable(
-			request.getTableName()
-		);
-
-		StringBuffer whereClause = new StringBuffer();
-		List<Object> parameters = new ArrayList<>();
-		//	
-		whereClause
-			.append(I_AD_Workflow.COLUMNNAME_AD_Table_ID).append(" = ?");
-		//	Set parameters
-		parameters.add(table.getAD_Table_ID());
-		//	Get page and count
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-
-		Query query = new Query(context, I_AD_Workflow.Table_Name, whereClause.toString(), null)
-				.setParameters(parameters);
-		int count = query.count();
-		List<MWorkflow> workflowList = query
-				.setLimit(limit, offset)
-				.<MWorkflow>list();
-		//	
-		ListWorkflowsResponse.Builder builder = ListWorkflowsResponse.newBuilder();
-		//	Convert Record Log
-		for(MWorkflow workflowDefinition : workflowList) {
-			WorkflowDefinition.Builder valueObject = WorkflowUtil.convertWorkflowDefinition(workflowDefinition);
-			builder.addWorkflows(valueObject.build());
-		}
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
-		);
-		//	Return
-		return builder;
 	}
 
 
@@ -553,7 +557,7 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -718,7 +722,7 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onNext(processReponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -728,7 +732,7 @@ public class Workflow extends WorkflowImplBase {
 			);
 		}
 	}
-	
+
 	/**
 	 * Run a process from request
 	 * @param request
@@ -743,6 +747,7 @@ public class Workflow extends WorkflowImplBase {
 	}
 
 
+
 	@Override
 	public void process(ProcessRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -754,7 +759,8 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onNext(processReponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -822,7 +828,8 @@ public class Workflow extends WorkflowImplBase {
 			responseObserver.onNext(processReponse.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -863,4 +870,5 @@ public class Workflow extends WorkflowImplBase {
 
 		return Empty.newBuilder();
 	}
+
 }

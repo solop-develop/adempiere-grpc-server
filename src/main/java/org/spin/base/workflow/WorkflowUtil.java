@@ -111,11 +111,11 @@ public class WorkflowUtil {
 				StringManager.getValidString(tableName)
 			)
 		;
+
 		try {
 			if (!table.isDocument()) {
 				throw new AdempiereException("@NotValid@ @AD_Table_ID@ @IsDocument@@");
 			}
-
 			if (recordId <= 0) {
 				throw new AdempiereException("@Record_ID@ @NotFound@");
 			}
@@ -127,6 +127,10 @@ public class WorkflowUtil {
 			//	Validate as document
 			if (!DocAction.class.isAssignableFrom(entity.getClass())) {
 				throw new AdempiereException("@Invalid@ @Document@");
+			}
+			boolean isProcessing = entity.get_ValueAsBoolean("Processing");
+			if (isProcessing) {
+				throw new AdempiereException("@Error@ @PO@ @Processing@");
 			}
 
 			Integer doctypeId = (Integer) entity.get_Value("C_DocType_ID");
@@ -140,6 +144,7 @@ public class WorkflowUtil {
 			if (!isWithAccess) {
 				throw new AdempiereException("@AccessCannotProcess@");
 			}
+			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_Processing, true);
 			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_DocAction, documentAction);
 			entity.saveEx();
 			//	Process It
@@ -178,8 +183,8 @@ public class WorkflowUtil {
 								e.getLocalizedMessage()
 							);
 							processInfo.setError(true);
+							// processInfo.getSummary();
 							log.warning(processInfo.toString());
-							processInfo.getSummary();
 							throw new AdempiereException(e);
 						}
 					}
@@ -189,7 +194,13 @@ public class WorkflowUtil {
 						workFlow.startWait(processInfo);	//	may return null
 					}
 					String summary = processInfo.getSummary();
-					response.setSummary(
+					response.setInstanceId(
+							processInfo.getAD_PInstance_ID()
+						)
+						.setName(
+							StringManager.getValidString(name)
+						)
+						.setSummary(
 							StringManager.getValidString(
 								Msg.parseTranslation(
 									context,
@@ -205,7 +216,7 @@ public class WorkflowUtil {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 
 			String summary = e.getLocalizedMessage();
 			response.setSummary(
@@ -218,6 +229,11 @@ public class WorkflowUtil {
 				)
 				.setIsError(true)
 			;
+		} finally {
+			PO entity = RecordUtil.getEntity(context, table.getTableName(), recordId, null);
+			// TODO: Validate if is change on same thread
+			entity.set_ValueOfColumn(I_C_Order.COLUMNNAME_Processing, false);
+			entity.saveEx();
 		}
 
 		return response;
