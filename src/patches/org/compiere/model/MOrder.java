@@ -2028,6 +2028,9 @@ public class MOrder extends X_C_Order implements DocAction
 		if(!isSOTrx()) {
 			return;
 		}
+		if(getLink_Order_ID() > 0) {
+			return;
+		}
 		MDropShipSetup dropShipSetup = MDropShipSetup.getSetupFromSalesOrder(this);
 		if(dropShipSetup == null || !dropShipSetup.isCreatePOAutomatically()) {
 			return;
