@@ -370,10 +370,14 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	}
 
 	private Movement.Builder createMovement(CreateMovementRequest request) {
+		int projectId = request.getProjectId();
+		int activityId = request.getActivityId();
 		AtomicReference<MMovement> maybeMovement = new AtomicReference<MMovement>();
 
 		Trx.run(transactionName -> {
 			MMovement inventoryMovement = new MMovement(Env.getCtx(), 0, transactionName);
+			inventoryMovement.setC_Project_ID(projectId);
+			inventoryMovement.setC_Activity_ID(activityId);
 			inventoryMovement.setMovementDate(TimeManager.getDate()); // TODO: Verfy it
 			inventoryMovement.saveEx(transactionName);
 
@@ -524,6 +528,8 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		if (warehouseToId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_WarehouseTo_ID@");
 		}
+		int projectId = request.getProjectId();
+		int activityId = request.getActivityId();
 
 		AtomicReference<MMovementLine> movementLineReference = new AtomicReference<MMovementLine>();
 
@@ -593,6 +599,8 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				movementLine.setM_Locator_ID(locator.getM_Locator_ID());
 				movementLine.setM_LocatorTo_ID(locatorTo.getM_Locator_ID());
 				movementLine.setM_Product_ID(productId);
+				movementLine.setC_Project_ID(projectId);
+				movementLine.setC_Activity_ID(activityId);
 			}
 
 			movementLine.setMovementQty(quantity);

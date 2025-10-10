@@ -155,6 +155,8 @@ message ListProductsResponse {
 message CreateReceiptRequest {
 	int32 order_id = 1;
 	bool is_create_lines_from_order = 2;
+	int32 project_id = 3;
+	int32 activity_id = 4;
 }
 
 message Receipt {
@@ -183,6 +185,8 @@ message CreateReceiptLineRequest {
 	int32 product_id = 3;
 	string quantity = 4;
 	bool is_quantity_from_order_line = 5;
+	int32 project_id = 6;
+	int32 activity_id = 7;
 }
 
 message ReceiptLine {
@@ -221,4 +225,6 @@ message UpdateReceiptLineRequest {
 	int32 id = 2;
 	string description = 3;
 	string quantity = 4;
+	int32 project_id = 5;
+	int32 activity_id = 6;
 }
