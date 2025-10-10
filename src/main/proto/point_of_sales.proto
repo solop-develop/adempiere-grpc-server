@@ -122,7 +122,9 @@ service Store {
 		};
 	}
 	rpc DeleteOrder(DeleteOrderRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/orders/{id}" };
+		option (google.api.http) = {
+			delete: "/point-of-sales/{pos_id}/orders/{id}"
+		};
 	}
 	rpc GetPaymentDifference(GetPaymentDifferenceRequest) returns (GetPaymentDifferenceResponse) {
 		option (google.api.http) = {
