@@ -62,7 +62,7 @@ public class ContextManager {
 	/**
 	 * Prefix context of accounting prefix ($)
 	 */
-	public final static String ACCOUNTING_CONTEXT_PREFIX = "#";
+	public final static String ACCOUNTING_CONTEXT_PREFIX = "$";
 
 	/**
 	 * Prefix context of preference prefix (P|)
