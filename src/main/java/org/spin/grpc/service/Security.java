@@ -163,7 +163,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(serviceBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -184,7 +184,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(sessionBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -206,7 +206,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(sessionBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -228,7 +228,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(sessionBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -296,7 +296,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(UserInfo.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -319,7 +319,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(rolesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -413,7 +413,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(organizationsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -605,7 +605,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(organizationsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -737,7 +737,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(sessionBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -890,7 +890,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(sessionBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -934,7 +934,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(sessionBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1062,14 +1062,15 @@ public class Security extends SecurityImplBase {
 	 * @param session
 	 */
 	private void populateDefaultPreferences(SessionInfo.Builder session) {
-		MCountry country = MCountry.get(Env.getCtx(), Env.getContextAsInt(Env.getCtx(), "#C_Country_ID"));
+		Properties context = Env.getCtx();
+		MCountry country = MCountry.get(context, Env.getContextAsInt(Env.getCtx(), "#C_Country_ID"));
 		Country.Builder countryBuilder = convertCountry(country);
 		session.setCountry(
 			countryBuilder.build()
 		);
 
 		//	Set values for currency
-		MCurrency currency = MCurrency.get(Env.getCtx(), country.getC_Currency_ID());
+		MCurrency currency = MCurrency.get(context, country.getC_Currency_ID());
 		Currency.Builder currencyBuilder = CoreFunctionalityConvert.convertCurrency(currency);
 		session.setCurrency(
 			currencyBuilder.build()
@@ -1079,30 +1080,37 @@ public class Security extends SecurityImplBase {
 			StringManager.getValidString(
 				ContextManager.getDefaultLanguage(
 					Env.getAD_Language(
-						Env.getCtx()
+						context
 					)
 				)
 			)
 		);
 		//	Set default context
 		Struct.Builder contextValues = Struct.newBuilder();
-		Env.getCtx().entrySet()
+		context.entrySet()
 			.stream()
-			.filter(keyValue -> {
-				return ContextManager.isSessionContext(
-					String.valueOf(
-						keyValue.getKey()
-					)
+			.filter(contextKeyValue -> {
+				final String contextKey = StringManager.getStringFromObject(
+					contextKeyValue.getKey()
 				);
+				return ContextManager.isPreferenceConext(contextKey) ||
+					ContextManager.isSessionContext(contextKey)
+				;
 			})
 			.forEach(contextKeyValue -> {
-				contextValues.putFields(
-					contextKeyValue.getKey().toString(),
-					convertObjectFromContext(
-						(String) contextKeyValue.getValue()
-					).build()
+				final String contextKey = StringManager.getStringFromObject(
+					contextKeyValue.getKey()
 				);
-			});
+				final String contextStringValue = StringManager.getStringFromObject(
+					contextKeyValue.getValue()
+				);
+				Value.Builder contextProtoValue = convertProtoValueFromContext(contextStringValue);
+				contextValues.putFields(
+					contextKey,
+					contextProtoValue.build()
+				);
+			})
+		;
 		session.setDefaultContext(contextValues);
 	}
 
@@ -1111,18 +1119,22 @@ public class Security extends SecurityImplBase {
 	 * @param value
 	 * @return
 	 */
-	private Value.Builder convertObjectFromContext(String value) {
+	private Value.Builder convertProtoValueFromContext(String value) {
 		Value.Builder builder = Value.newBuilder();
-		if (Util.isEmpty(value)) {
+		if (Util.isEmpty(value, true)) {
 			return builder;
 		}
 		if (NumberManager.isNumeric(value)) {
-			builder.setNumberValue(NumberManager.getIntFromString(value));
+			builder.setNumberValue(
+				NumberManager.getIntFromString(value)
+			);
 		} else if (BooleanManager.isBoolean(value)) {
-			boolean booleanValue = BooleanManager.getBooleanFromString(value.trim());
+			boolean booleanValue = BooleanManager.getBooleanFromString(
+				value.trim()
+			);
 			builder.setBoolValue(booleanValue);
 		} else if(TimeManager.isDate(value)) {
-			return ValueManager.getValueFromTimestamp(
+			builder = ValueManager.getValueFromTimestamp(
 				TimeManager.getTimestampFromString(value)
 			);
 		} else {
@@ -1461,7 +1473,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(menuBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1814,7 +1826,7 @@ public class Security extends SecurityImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
