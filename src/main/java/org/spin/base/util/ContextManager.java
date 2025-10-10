@@ -38,6 +38,7 @@ import org.compiere.util.Util;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -52,6 +53,36 @@ public class ContextManager {
 	
 	/**	Language */
 	private static CCache<String, String> languageCache = new CCache<String, String>("Language-gRPC-Service", 30, 0);	//	no time-out
+
+	/**
+	 * Prefix context of global prefix (#)
+	 */
+	public final static String GLOBAL_CONTEXT_PREFIX = "#";
+
+	/**
+	 * Prefix context of accounting prefix ($)
+	 */
+	public final static String ACCOUNTING_CONTEXT_PREFIX = "#";
+
+	/**
+	 * Prefix context of preference prefix (P|)
+	 */
+	public final static String PREFERENCE_CONTEXT_PREFIX = "#";
+
+	/**
+	 * Prefix context of preference prefix (P0123|)
+	 */
+	public final static String PREFERENCE_CONTEXT_REGEX = "^P(?:\\||\\d+\\|).*";
+
+	/**
+	 * Prefix context of tab sequence prefix (0|)
+	 */
+	public final static String TAB_CONTEXT_PREFIX = "\\d\\|";
+
+	/**
+	 * Prefix context of sql value prefix (@SQL=) or (@SQL =)
+	 */
+	public final static String SQL_CONTEXT_PREFIX = "^(@SQL)\\s*=";
 
 
 	public static String joinStrings(String... stringValues) {
@@ -68,7 +99,6 @@ public class ContextManager {
 				.filter(s -> !Util.isEmpty(s, true))
 				.toArray(String[]::new)
 		);
-
 	}
 
 	/**
@@ -149,14 +179,25 @@ public class ContextManager {
 	}
 
 
+
 	/**
-	 * Is Session context, #Global or $Accounting
+	 * Is Session context, `#ColumnName` -> `#AD_Client_ID` or `$ColumnName` -> `$C_Currency_ID`
 	 * @param contextKey
 	 * @return
 	 */
 	public static boolean isSessionContext(String contextKey) {
-		return contextKey.startsWith("#") || contextKey.startsWith("$");
+		return contextKey.startsWith(GLOBAL_CONTEXT_PREFIX) || contextKey.startsWith(ACCOUNTING_CONTEXT_PREFIX);
 	}
+
+	/**
+	 * Is preference context, `P|ColumnName` -> `P|EntityType` or `P1234|ColumnName` -> `P5001|C_Tax_ID`
+	 * @param contextKey
+	 * @return
+	 */
+	public static boolean isPreferenceConext(String contextKey) {
+		return contextKey.startsWith(PREFERENCE_CONTEXT_PREFIX) || contextKey.matches("^P\\d+\\|.*");
+	}
+
 
 
 	public static Properties setContextWithAttributesFromObjectMap(int windowNo, Properties context, Map<String, Object> attributes) {
@@ -205,6 +246,7 @@ public class ContextManager {
 	}
 
 
+
 	/**
 	 * Set context on window by object value
 	 * @param windowNo
@@ -216,19 +258,25 @@ public class ContextManager {
 	 */
 	public static void setWindowContextByObject(Properties context, int windowNo, String key, Object value) {
 		if (value instanceof Integer) {
-			Env.setContext(context, windowNo, key, (Integer) value);
+			int currentValue = NumberManager.getIntFromObject(value);
+			Env.setContext(context, windowNo, key, currentValue);
 		} else if (value instanceof BigDecimal) {
 			String currentValue = null;
 			if (value != null) {
-				currentValue = value.toString();
+				currentValue = NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromObject(value)
+				);
 			}
 			Env.setContext(context, windowNo, key, currentValue);
 		} else if (value instanceof Timestamp) {
-			Env.setContext(context, windowNo, key, (Timestamp) value);
+			Timestamp currentValue = TimeManager.getTimestampFromObject(value);
+			Env.setContext(context, windowNo, key, currentValue);
 		} else if (value instanceof Boolean) {
-			Env.setContext(context, windowNo, key, (Boolean) value);
+			boolean currentValue = BooleanManager.getBooleanFromObject(value);
+			Env.setContext(context, windowNo, key, currentValue);
 		} else if (value instanceof String) {
-			Env.setContext(context, windowNo, key, (String) value);
+			String currentValue = StringManager.getStringFromObject(value);
+			Env.setContext(context, windowNo, key, currentValue);
 		} else if (value instanceof ArrayList) {
 			// range values
 			List<?> values = (List<?>) value;
@@ -265,21 +313,29 @@ public class ContextManager {
 	 */
 	public static void setTabContextByObject(Properties context, int windowNo, int tabNo, String key, Object value) {
 		if (value instanceof Integer) {
-			Integer currentValue = (Integer) value;
-			Env.setContext(context, windowNo, tabNo, key, currentValue.toString());
+			String currentValue = NumberManager.getIntToString(
+				NumberManager.getIntFromObject(value)
+			);
+			Env.setContext(context, windowNo, tabNo, key, currentValue);
 		}else if (value instanceof BigDecimal) {
 			String currentValue = null;
 			if (value != null) {
-				currentValue = value.toString();
+				currentValue = NumberManager.getBigDecimalToString(
+					NumberManager.getBigDecimalFromObject(value)
+				);
 			}
 			Env.setContext(context, windowNo, tabNo, key, currentValue);
 		} else if (value instanceof Timestamp) {
-			Timestamp currentValue = (Timestamp) value;
-			Env.setContext(context, windowNo, tabNo, key, currentValue.toString());
+			String currentValue = TimeManager.getTimestampToString(
+				TimeManager.getTimestampFromObject(value)
+			);
+			Env.setContext(context, windowNo, tabNo, key, currentValue);
 		} else if (value instanceof Boolean) {
-			Env.setContext(context, windowNo, tabNo, key, (Boolean) value);
+			boolean currentValue = BooleanManager.getBooleanFromObject(value);
+			Env.setContext(context, windowNo, tabNo, key, currentValue);
 		} else if (value instanceof String) {
-			Env.setContext(context, windowNo, tabNo, key, (String) value);
+			String currentValue = StringManager.getStringFromObject(value);
+			Env.setContext(context, windowNo, tabNo, key, currentValue);
 		}
 	}
 
