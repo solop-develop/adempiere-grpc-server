@@ -83,8 +83,8 @@ dependencies {
 	implementation "com.solop.adempiere.verticals:import-export-management:core-1.4.4-1.0.0"
 	implementation "com.solop.adempiere.verticals:agency-project:core-1.0.0-1.0.0"
 	// Electronic Invoicing
-	implementation "com.solop.adempiere.tools:electronic-invoicing:core-1.4.4-1.0.0"
-	implementation "com.solop.adempiere.tools:shopping-admin-connection:core-1.0.0-1.0.0"
+	implementation "com.solop.adempiere.tools:electronic-invoicing:core-1.4.8-1.0.0"
+	implementation "com.solop.adempiere.tools:shopping-admin-connection:core-1.4.8-1.0.0"
 	implementation "com.solop.adempiere.tools:cloud-solop-notifier:core-1.0.0-1.0.0"
 	// Payment Processor
 	implementation "com.solop.adempiere.tools:payment-processor:core-1.4.7-1.0.0"
