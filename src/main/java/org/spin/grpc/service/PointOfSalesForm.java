@@ -63,7 +63,6 @@ import org.compiere.model.MPriceList;
 import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductPrice;
-import org.compiere.model.MResourceAssignment;
 import org.compiere.model.MStorage;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
@@ -76,7 +75,6 @@ import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
-import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
@@ -100,7 +98,6 @@ import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashServiceLogic;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.cash.CollectingManagement;
-import org.spin.pos.service.order.DiscountManagement;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderServiceLogic;
 import org.spin.pos.service.order.OrderUtil;
@@ -341,10 +338,13 @@ public class PointOfSalesForm extends StoreImplBase {
 
 
 
+	/**
+	 * post: "/point-of-sales/{pos_id}/orders/{order_id}/lines"
+	 */
 	@Override
 	public void createOrderLine(CreateOrderLineRequest request, StreamObserver<OrderLine> responseObserver) {
 		try {
-			OrderLine.Builder orderLine = createAndConvertOrderLine(request);
+			OrderLine.Builder orderLine = OrderServiceLogic.createAndConvertOrderLine(request);
 			responseObserver.onNext(orderLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -377,10 +377,13 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * put: "/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}"
+	 */
 	@Override
 	public void updateOrderLine(UpdateOrderLineRequest request, StreamObserver<OrderLine> responseObserver) {
 		try {
-			OrderLine.Builder orderLine = updateAndConvertOrderLine(request);
+			OrderLine.Builder orderLine = OrderServiceLogic.updateAndConvertOrderLine(request);
 			responseObserver.onNext(orderLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -395,6 +398,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * delete: "/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}"
+	 */
 	@Override
 	public void deleteOrderLine(DeleteOrderLineRequest request, StreamObserver<Empty> responseObserver) {
 		try {
@@ -4472,247 +4478,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		//	Return
 		return Empty.newBuilder();
 	}
-	
-	/**
-	 * Create order line and return this
-	 * @param request
-	 * @return
-	 */
-	private OrderLine.Builder updateAndConvertOrderLine(UpdateOrderLineRequest request) {
-		//	Validate Order
-		int orderLineId = request.getId();
-		if(orderLineId <= 0) {
-			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
-		}
 
-		AtomicReference<MOrderLine> maybeOrderLine = new AtomicReference<MOrderLine>();
-		Trx.run(transactionName -> {
-			MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-			//	Quantity
-			MOrderLine orderLine = OrderManagement.updateOrderLine(
-				transactionName,
-				pos,
-				orderLineId,
-				NumberManager.getBigDecimalFromString(request.getQuantity()),
-				NumberManager.getBigDecimalFromString(request.getPrice()),
-				NumberManager.getBigDecimalFromString(request.getDiscountRate()),
-				request.getIsAddQuantity(),
-				request.getWarehouseId(),
-				request.getUomId()
-			);
-			maybeOrderLine.set(orderLine);
-		});
-		return OrderConverUtil.convertOrderLine(
-			maybeOrderLine.get()
-		);
-	}
-
-	/**
-	 * Create order line and return this
-	 * @param request
-	 * @return
-	 */
-	private OrderLine.Builder createAndConvertOrderLine(CreateOrderLineRequest request) {
-		//	Validate Order
-		int orderId = request.getOrderId();
-		if(orderId <= 0) {
-			throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
-		}
-		//	Validate Product and charge
-		if(request.getProductId() <= 0
-				&& request.getChargeId() <= 0
-				&& request.getResourceAssignmentId() <= 0) {
-			throw new AdempiereException("@M_Product_ID@ / @C_Charge_ID@ / @S_ResourceAssignment_ID@ @NotFound@");
-		}
-		MOrderLine orderLine = null;
-		if (request.getResourceAssignmentId() > 0) {
-			orderLine = addOrderLineFromResourceAssigment(
-				orderId,
-				request.getResourceAssignmentId(),
-				request.getWarehouseId()
-			);
-		} else {
-			orderLine = addOrderLine(
-				orderId,
-				request.getProductId(),
-				request.getChargeId(),
-				request.getWarehouseId(),
-				NumberManager.getBigDecimalFromString(
-					request.getQuantity()
-				)
-			);
-		}
-		//	Quantity
-		return OrderConverUtil.convertOrderLine(orderLine);
-	}
-	
-	private MOrderLine addOrderLineFromResourceAssigment(int orderId, int resourceAssignmentId, int warehouseId) {
-		if(orderId <= 0) {
-			return null;
-		}
-		//	
-		AtomicReference<MOrderLine> orderLineReference = new AtomicReference<MOrderLine>();
-		Trx.run(transactionName -> {
-			MOrder order = new MOrder(Env.getCtx(), orderId, transactionName);
-			//	Valid Complete
-			if (!DocumentUtil.isDrafted(order)) {
-				throw new AdempiereException("@C_Order_ID@ @Processed@");
-			}
-			OrderUtil.setCurrentDate(order);
-			// catch Exceptions at order.getLines()
-			Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines(true, "Line"))
-				.parallelStream()
-				.filter(orderLine -> {
-					return resourceAssignmentId != 0 &&
-						resourceAssignmentId == orderLine.getS_ResourceAssignment_ID();
-				})
-				.findFirst()
-			;
-
-			MResourceAssignment resourceAssigment = new MResourceAssignment(Env.getCtx(), resourceAssignmentId, transactionName);
-			if (!resourceAssigment.isConfirmed()) {
-				resourceAssigment = TimeControl.confirmResourceAssignment(resourceAssignmentId);
-			}
-			BigDecimal quantity = resourceAssigment.getQty();
-
-			if(maybeOrderLine.isPresent()) {
-				MOrderLine orderLine = maybeOrderLine.get();
-				//	Set Quantity
-				BigDecimal quantityToOrder = quantity;
-				if(quantity == null) {
-					quantityToOrder = orderLine.getQtyEntered();
-					quantityToOrder = quantityToOrder.add(Env.ONE);
-				}
-				orderLine.setS_ResourceAssignment_ID(resourceAssignmentId);
-
-				OrderUtil.updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
-				orderLineReference.set(orderLine);
-			} else {
-				BigDecimal quantityToOrder = quantity;
-				if(quantity == null) {
-					quantityToOrder = Env.ONE;
-				}
-				//create new line
-				MOrderLine orderLine = new MOrderLine(order);
-
-				MProduct product = new Query(
-					order.getCtx(),
-					MProduct.Table_Name,
-					" S_Resource_ID = ? ",
-					null
-				)
-					.setParameters(resourceAssigment.getS_Resource_ID())
-					.first();
-				if (product != null && product.getM_Product_ID() > 0) {
-					orderLine.setProduct(product);
-					orderLine.setC_UOM_ID(product.getC_UOM_ID());
-				}
-				orderLine.setS_ResourceAssignment_ID(resourceAssignmentId);
-
-				orderLine.setQty(quantityToOrder);
-				orderLine.setPrice();
-				orderLine.setTax();
-				StringBuffer description = new StringBuffer(
-					StringManager.getValidString(
-						resourceAssigment.getName()
-					)
-				);
-				if (!Util.isEmpty(resourceAssigment.getDescription())) {
-					description.append(" (" + resourceAssigment.getDescription() + ")");
-				}
-				description.append(": ").append(DisplayType.getDateFormat(DisplayType.DateTime).format(resourceAssigment.getAssignDateFrom()));
-				description.append(" ~ ").append(DisplayType.getDateFormat(DisplayType.DateTime).format(resourceAssigment.getAssignDateTo()));
-				orderLine.setDescription(description.toString());
-
-				//	Save Line
-				orderLine.saveEx(transactionName);
-				//	Apply Discount from order
-				DiscountManagement.configureDiscountRateOff(
-					order,
-					(BigDecimal) order.get_Value("FlatDiscount"),
-					transactionName
-				);
-				orderLineReference.set(orderLine);
-			}
-		});
-		return orderLineReference.get();
-	}
-	
-	/***
-	 * Add order line
-	 * @param orderId
-	 * @param productId
-	 * @param chargeId
-	 * @param warehouseId
-	 * @param quantity
-	 * @return
-	 */
-	private MOrderLine addOrderLine(int orderId, int productId, int chargeId, int warehouseId, BigDecimal quantity) {
-		if(orderId <= 0) {
-			return null;
-		}
-		//	
-		AtomicReference<MOrderLine> orderLineReference = new AtomicReference<MOrderLine>();
-		Trx.run(transactionName -> {
-			MOrder order = new MOrder(Env.getCtx(), orderId, transactionName);
-			//	Valid Complete
-			if (!DocumentUtil.isDrafted(order)) {
-				throw new AdempiereException("@C_Order_ID@ @Processed@");
-			}
-			OrderUtil.setCurrentDate(order);
-			StringBuffer whereClause = new StringBuffer(I_C_OrderLine.COLUMNNAME_C_Order_ID + " = ?");
-			List<Object> parameters = new ArrayList<>();
-			parameters.add(orderId);
-			if(productId > 0) {
-				whereClause.append(" AND M_Product_ID = ?");
-				parameters.add(productId);
-			} else if(chargeId > 0){
-				whereClause.append(" AND C_Charge_ID = ?");
-				parameters.add(chargeId);
-			}
-			MOrderLine orderLine = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, whereClause.toString(), transactionName)
-					.setParameters(parameters)
-					.first();
-			if(orderLine != null
-					&& orderLine.getC_OrderLine_ID() > 0) {
-				//	Set Quantity
-				BigDecimal quantityToOrder = quantity;
-				if(quantity == null) {
-					quantityToOrder = orderLine.getQtyEntered();
-					quantityToOrder = quantityToOrder.add(Env.ONE);
-				}
-				OrderUtil.updateUomAndQuantity(orderLine, orderLine.getC_UOM_ID(), quantityToOrder);
-				orderLineReference.set(orderLine);
-			} else {
-				BigDecimal quantityToOrder = quantity;
-				if(quantity == null) {
-					quantityToOrder = Env.ONE;
-				}
-				//create new line
-				orderLine = new MOrderLine(order);
-				orderLine.setC_Campaign_ID(order.getC_Campaign_ID());
-				if(chargeId > 0) {
-					orderLine.setC_Charge_ID(chargeId);
-				} else if(productId > 0) {
-					orderLine.setProduct(MProduct.get(order.getCtx(), productId));
-				}
-				orderLine.setQty(quantityToOrder);
-				orderLine.setPrice();
-				orderLine.setTax();
-				//	Save Line
-				orderLine.saveEx(transactionName);
-				//	Apply Discount from order
-				DiscountManagement.configureDiscountRateOff(
-					order,
-					(BigDecimal) order.get_Value("FlatDiscount"),
-					transactionName
-				);
-				orderLineReference.set(orderLine);
-			}
-		});
-		return orderLineReference.get();
-			
-	} //	addOrUpdateLine
 
 
 	/**
