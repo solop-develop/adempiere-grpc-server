@@ -857,19 +857,26 @@ public class OrderManagement {
 	 */
 	public static MOrderLine updateOrderLine(String transactionName, MPOS pos, int orderLineId, BigDecimal quantity, BigDecimal price, BigDecimal discountRate, boolean isAddQuantity, int warehouseId, int unitOfMeasureId) {
 		if(orderLineId <= 0) {
-			return null;
+			throw new AdempiereException("@FillMandatory@ @C_OrderLine_ID@");
+		}
+		MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
+		if (orderLine == null || orderLine.getC_OrderLine_ID() <= 0) {
+			throw new AdempiereException("@C_OrderLine_ID@ (" + orderLineId + ") @NotFound@");
+		}
+		if(orderLine.isProcessed()) {
+			throw new AdempiereException("@C_OrderLine_ID@ (#" + orderLine.getLine() + ") @Processed@");
 		}
 
-		MOrderLine orderLine = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
 		MOrder order = orderLine.getParent();
 		order.set_TrxName(transactionName);
-		OrderManagement.validateOrderReleased(order);
-		OrderUtil.setCurrentDate(order);
-		orderLine.setHeaderInfo(order);
 		//	Valid Complete
 		if (!DocumentUtil.isDrafted(order)) {
-			throw new AdempiereException("@C_Order_ID@ @Processed@");
+			throw new AdempiereException("@C_Order_ID@ (#" + order.getDocumentNo() + ") @Processed@");
 		}
+		OrderManagement.validateOrderReleased(order);
+
+		OrderUtil.setCurrentDate(order);
+		orderLine.setHeaderInfo(order);
 		int precision = MPriceList.getPricePrecision(Env.getCtx(), order.getM_PriceList_ID());
 		BigDecimal quantityToChange = quantity;
 		//	Get if is null
@@ -898,8 +905,7 @@ public class OrderManagement {
 			orderLine.setQty(quantityToChange);
 		}
 		//	Calculate discount from final price
-		if(price != null
-				|| discountRate != null) {
+		if(price != null || discountRate != null) {
 			if(orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMALine_ID) > 0) {
 				throw new AdempiereException("@ActionNotAllowedHere@");
 			}

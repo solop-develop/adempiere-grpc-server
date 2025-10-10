@@ -175,7 +175,9 @@ service Store {
 		};
 	}
 	rpc DeleteOrderLine(DeleteOrderLineRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}" };
+		option (google.api.http) = {
+			delete: "/point-of-sales/{pos_id}/orders/{order_id}/lines/{id}"
+		};
 	}
 
 	//	Get a Key Layout
