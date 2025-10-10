@@ -270,9 +270,8 @@ public class OrderServiceLogic {
 	public static OrderLine.Builder createAndConvertOrderLine(CreateOrderLineRequest request) {
 		//	Validate Order
 		final int orderId = request.getOrderId();
-		if(orderId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_OrderLine_ID@");
-		}
+		OrderUtil.validateAndGetOrder(orderId);
+
 		//	Validate Product and charge
 		if(request.getProductId() <= 0
 				&& request.getChargeId() <= 0
