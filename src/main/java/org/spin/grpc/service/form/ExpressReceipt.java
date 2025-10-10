@@ -529,6 +529,8 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 	private Receipt.Builder createReceipt(CreateReceiptRequest request) {
 		int orderId = request.getOrderId();
+		int projectId = request.getProjectId();
+		int activityId = request.getActivityId();
 		if (orderId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
@@ -582,6 +584,8 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				}
 				receipt.setDateOrdered(TimeManager.getDate());
 				receipt.setDateAcct(TimeManager.getDate());
+				receipt.setC_Project_ID(projectId);
+				receipt.setC_Activity_ID(activityId);
 				receipt.setDateReceived(TimeManager.getDate());
 				receipt.setMovementDate(TimeManager.getDate());
 			}
@@ -766,6 +770,8 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		if (productId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_Product_ID@");
 		}
+		int projectId = request.getProjectId();
+		int activityId = request.getActivityId();
 
 		AtomicReference<MInOutLine> receiptLineReference = new AtomicReference<MInOutLine>();
 
@@ -824,10 +830,14 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				BigDecimal orderQuantity = receiptLine.getQtyEntered();
 				orderQuantity = orderQuantity.add(quantity);
 				receiptLine.setQty(orderQuantity);
+				receiptLine.setC_Project_ID(projectId);
+				receiptLine.setC_Activity_ID(activityId);
 			} else {
 				receiptLine = new MInOutLine(receipt);
 				receiptLine.setOrderLine(purchaseOrderLine, 0, quantity);
 				receiptLine.setQty(quantity);
+				receiptLine.setC_Project_ID(projectId);
+				receiptLine.setC_Activity_ID(activityId);
 			}
 			receiptLine.saveEx(transactionName);
 

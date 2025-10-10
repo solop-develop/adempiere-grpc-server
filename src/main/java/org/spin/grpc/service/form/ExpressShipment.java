@@ -525,6 +525,8 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		if (orderId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
+		int projectId = request.getProjectId();
+		int activityId = request.getActivityId();
 
 		AtomicReference<MInOut> maybeShipment = new AtomicReference<MInOut>();
 		Trx.run(transactionName -> {
@@ -568,6 +570,8 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			if (shipment == null) {
 				shipment = new MInOut(salesOrder, 0, TimeManager.getDate());
 				if (Util.isEmpty(shipment.getMovementType())) {
+					shipment.setC_Project_ID(projectId);
+					shipment.setC_Activity_ID(activityId);
 					shipment.setMovementType(X_M_InOut.MOVEMENTTYPE_VendorReturns);
 				}
 			} else {
@@ -576,9 +580,13 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				}
 				shipment.setDateOrdered(TimeManager.getDate());
 				shipment.setDateAcct(TimeManager.getDate());
+				shipment.setC_Project_ID(projectId);
+				shipment.setC_Activity_ID(activityId);
 				shipment.setDateReceived(TimeManager.getDate());
 				shipment.setMovementDate(TimeManager.getDate());
 			}
+			shipment.setC_Project_ID(projectId);
+			shipment.setC_Activity_ID(activityId);
 			shipment.setC_Order_ID(orderId);
 			shipment.saveEx(transactionName);
 
@@ -742,6 +750,8 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 	private ShipmentLine.Builder createShipmentLine(CreateShipmentLineRequest request) {
 		int shipmentId = request.getShipmentId();
+		int projectId = request.getProjectId();
+		int activityId = request.getActivityId();
 		if (shipmentId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_InOut_ID@");
 		}
@@ -811,10 +821,14 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				BigDecimal orderQuantity = shipmentLine.getQtyEntered();
 				orderQuantity = orderQuantity.add(quantity);
 				shipmentLine.setQty(orderQuantity);
+				shipmentLine.setC_Project_ID(projectId);
+				shipmentLine.setC_Activity_ID(activityId);
 			} else {
 				shipmentLine = new MInOutLine(shipment);
 				shipmentLine.setOrderLine(salesOrderLine, 0, quantity);
 				shipmentLine.setQty(quantity);
+				shipmentLine.setC_Project_ID(projectId);
+				shipmentLine.setC_Activity_ID(activityId);
 			}
 			shipmentLine.saveEx(transactionName);
 

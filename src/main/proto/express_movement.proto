@@ -123,6 +123,8 @@ message ListProductsResponse {
 
 // Movement
 message CreateMovementRequest {
+	int32 project_id = 1;
+	int32 activity_id = 2;
 }
 
 message Movement {
@@ -151,6 +153,8 @@ message CreateMovementLineRequest {
 	string description = 4;
 	int32 product_id = 5;
 	string quantity = 6;
+	int32 project_id = 7;
+	int32 activity_id = 8;
 }
 
 message MovementLine {
@@ -161,6 +165,8 @@ message MovementLine {
 	string description = 5;
 	string quantity = 6;
 	int32 line = 7;
+	int32 project_id = 8;
+	int32 activity_id = 9;
 }
 
 message ListMovementLinesRequest {
