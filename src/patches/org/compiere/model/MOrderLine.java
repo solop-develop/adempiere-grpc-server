@@ -26,7 +26,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -962,7 +961,9 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 					BigDecimal priceActual = m_productPrice.getPriceStd();
 					if(is_ValueChanged(COLUMNNAME_Discount)) {
 						priceActual = getPriceList()
-								.multiply(Env.ONE.subtract(getDiscount().divide(Env.ONEHUNDRED, MathContext.DECIMAL128)));
+								.multiply(Env.ONE.subtract(getDiscount().divide(Env.ONEHUNDRED, m_precision, RoundingMode.HALF_UP)));
+					} else if(is_ValueChanged(COLUMNNAME_PriceActual)) {
+						priceActual = getPriceActual();
 					}
 					setPriceActual(priceActual);
 					BigDecimal priceEntered = MUOMConversion.convertProductFrom (getCtx(), getM_Product_ID(), getC_UOM_ID(), priceActual);
