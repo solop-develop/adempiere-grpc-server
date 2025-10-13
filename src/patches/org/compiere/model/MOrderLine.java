@@ -959,11 +959,11 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 						}
 					}
 					BigDecimal priceActual = m_productPrice.getPriceStd();
-					if(is_ValueChanged(COLUMNNAME_Discount)) {
+					if(is_ValueChanged(COLUMNNAME_PriceActual)) {
+						priceActual = getPriceActual();
+					} else if(is_ValueChanged(COLUMNNAME_Discount)) {
 						priceActual = getPriceList()
 								.multiply(Env.ONE.subtract(getDiscount().divide(Env.ONEHUNDRED, m_precision, RoundingMode.HALF_UP)));
-					} else if(is_ValueChanged(COLUMNNAME_PriceActual)) {
-						priceActual = getPriceActual();
 					}
 					setPriceActual(priceActual);
 					BigDecimal priceEntered = MUOMConversion.convertProductFrom (getCtx(), getM_Product_ID(), getC_UOM_ID(), priceActual);
