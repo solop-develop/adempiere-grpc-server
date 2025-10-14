@@ -2019,8 +2019,13 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 			//	For Inbound Order
 			if(invoiceLine.getWM_InOutBoundLine_ID() > 0) {
 				MWMInOutBoundLine outboundLine = new MWMInOutBoundLine(invoiceLine.getCtx(), invoiceLine.getWM_InOutBoundLine_ID(), invoiceLine.get_TrxName());
-				outboundLine.setC_InvoiceLine_ID(invoiceLine.getC_InvoiceLine_ID());
-				outboundLine.setC_Invoice_ID(invoiceLine.getC_Invoice_ID());
+				if(!isReversal()) {
+					outboundLine.setC_InvoiceLine_ID(invoiceLine.getC_InvoiceLine_ID());
+					outboundLine.setC_Invoice_ID(invoiceLine.getC_Invoice_ID());
+				} else {
+					outboundLine.setC_InvoiceLine_ID(-1);
+					outboundLine.setC_Invoice_ID(-1);
+				}
 				outboundLine.saveEx();
 			}
 		});	//	for all lines

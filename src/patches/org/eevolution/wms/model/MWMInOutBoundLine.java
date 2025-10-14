@@ -79,7 +79,7 @@ public class MWMInOutBoundLine extends X_WM_InOutBoundLine
 
 	public BigDecimal getInvoiceQtyInvoiced() {
 		return new Query(getCtx(), I_C_InvoiceLine.Table_Name,
-				I_C_InvoiceLine.COLUMNNAME_WM_InOutBoundLine_ID + "=? AND EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Invoice_ID = C_InvoiceLine.C_Invoice_ID AND i.DocStatus IN('CO', 'CL')" , get_TrxName())
+				I_C_InvoiceLine.COLUMNNAME_WM_InOutBoundLine_ID + "=? AND EXISTS(SELECT 1 FROM C_Invoice i WHERE i.C_Invoice_ID = C_InvoiceLine.C_Invoice_ID AND i.DocStatus IN('CO', 'CL'))" , get_TrxName())
 				.setClient_ID()
 				.setParameters(getWM_InOutBoundLine_ID())
 				.sum(MInvoiceLine.COLUMNNAME_QtyInvoiced);

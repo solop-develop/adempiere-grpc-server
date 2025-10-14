@@ -74,14 +74,34 @@ public class GenerateInvoiceInOutBound extends GenerateInvoiceInOutBoundAbstract
 	private void createAndProcessInvoices() {
 		groupedOutBoundLines.entrySet().stream().filter(Objects::nonNull).forEach(entry -> {
 			try {
+				Map<Integer, Boolean> orderCache = new HashMap<>();
 				Trx.run(transactionName -> {
 					List<MWMInOutBoundLine> lines = entry.getValue();
 					AtomicReference<MInvoice> maybeInvoice = new AtomicReference<>();
-					lines.forEach(outboundLine -> {
+					lines.stream().filter(outboundLine -> {
 						MOrderLine orderLine = outboundLine.getOrderLine();
+						MOrder order = orderLine.getParent();
+						if(order.getInvoiceRule().equals(MOrder.INVOICERULE_AfterOrderDelivered) && outboundLine.getM_InOut_ID() <= 0) {
+							if(orderCache.containsKey(outboundLine.getC_Order_ID())) {
+								return false;
+							}
+							addLog("@Error@ @C_Order_ID@ " + order.getDocumentNo() + " - " + "@M_InOut_ID@ @NotFound@");
+							orderCache.put(outboundLine.getC_Order_ID(), true);
+							return false;
+						}
+						if(order.getInvoiceRule().equals(MOrder.INVOICERULE_AfterDelivery)) {
+							if(outboundLine.getM_InOut_ID() <= 0) {
+								MProduct product = MProduct.get(getCtx(), outboundLine.getM_Product_ID());
+								addLog("@Error@ @C_Order_ID@ " + order.getDocumentNo() + " - " + "@M_InOut_ID@ @NotFound@: " + product.getValue() + " - " + product.getName());
+								return false;
+							}
+						}
+						return true;
+					}).forEach(outboundLine -> {
+						MOrderLine orderLine = outboundLine.getOrderLine();
+						MOrder order = orderLine.getParent();
 						MInvoice invoice = maybeInvoice.get();
 						if (invoice == null) {
-							MOrder order = orderLine.getParent();
 							invoice = new MInvoice(order, 0, getDateInvoiced());
 							if(getDocTypeTargetId() > 0) {
 								invoice.setC_DocType_ID(getDocTypeTargetId());
@@ -106,16 +126,17 @@ public class GenerateInvoiceInOutBound extends GenerateInvoiceInOutBoundAbstract
 						invoiceLine.saveEx();
 					});
 					MInvoice invoice = maybeInvoice.get();
-					invoice.setDocAction(getDocAction());
-					if (!invoice.processIt(getDocAction())) {
-						addLog("@ProcessFailed@ : " + invoice.getProcessMsg());
-						throw new AdempiereException("@ProcessFailed@ :" + invoice.getProcessMsg());
+					if(invoice != null) {
+						invoice.setDocAction(getDocAction());
+						if (!invoice.processIt(getDocAction())) {
+							addLog("@ProcessFailed@ : " + invoice.getProcessMsg());
+							throw new AdempiereException("@ProcessFailed@ :" + invoice.getProcessMsg());
+						}
+						invoice.saveEx();
+						created++;
+						addToMessage(invoice.getDocumentNo());
+						invoicesToPrint.add(invoice);
 					}
-					invoice.saveEx();
-					created++;
-					addToMessage(invoice.getDocumentNo());
-					invoicesToPrint.add(invoice);
-
 				});
 			} catch (Exception e) {
 				addLog(e.getLocalizedMessage());
