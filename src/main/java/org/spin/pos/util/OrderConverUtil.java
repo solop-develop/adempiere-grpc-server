@@ -159,20 +159,31 @@ public class OrderConverUtil {
 		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
 
 		//	
-		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
-			BigDecimal paymentAmount = payment.getPayAmt();
-			if(paymentAmount.compareTo(Env.ZERO) == 0
-					&& payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
-				MInvoice creditMemo = new Query(payment.getCtx(), MInvoice.Table_Name, "C_Payment_ID = ?", payment.get_TrxName()).setParameters(payment.getC_Payment_ID()).first();
-				if(creditMemo != null) {
-					paymentAmount = creditMemo.getGrandTotal();
+		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order)
+			.stream()
+			.map(payment -> {
+				BigDecimal paymentAmount = payment.getPayAmt();
+				if(paymentAmount.compareTo(Env.ZERO) == 0 && payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
+					MInvoice creditMemo = new Query(
+						payment.getCtx(),
+						MInvoice.Table_Name,
+						"C_Payment_ID = ?",
+						payment.get_TrxName()
+					)
+						.setParameters(payment.getC_Payment_ID())
+						.first()
+					;
+					if(creditMemo != null) {
+						paymentAmount = creditMemo.getGrandTotal();
+					}
 				}
-			}
-			if(!payment.isReceipt()) {
-				paymentAmount = payment.getPayAmt().negate();
-			}
-			return ConvertUtil.getConvetedAmount(order, payment, paymentAmount);
-		}).collect(Collectors.reducing(BigDecimal::add));
+				if(!payment.isReceipt()) {
+					paymentAmount = payment.getPayAmt().negate();
+				}
+				return ConvertUtil.getConvertedAmount(order, payment, paymentAmount);
+			})
+			.collect(Collectors.reducing(BigDecimal::add))
+		;
 
 		BigDecimal grandTotal = order.getGrandTotal();
 		BigDecimal grandTotalConverted = OrderUtil.getConvertedAmountTo(

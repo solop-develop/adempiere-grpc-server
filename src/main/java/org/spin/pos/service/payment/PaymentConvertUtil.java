@@ -267,7 +267,7 @@ public class PaymentConvertUtil {
 		amount.setScale(presicion, RoundingMode.HALF_UP);
 
 		MOrder order = new MOrder(Env.getCtx(), paymentReference.get_ValueAsInt("C_Order_ID"), null);
-		BigDecimal convertedAmount = ConvertUtil.getConvetedAmount(order, paymentReference, amount)
+		BigDecimal convertedAmount = ConvertUtil.getConvertedAmount(order, paymentReference, amount)
 			.setScale(presicion, RoundingMode.HALF_UP)
 		;
 
@@ -392,18 +392,19 @@ public class PaymentConvertUtil {
 
 		MCPaymentMethod paymentMethod = MCPaymentMethod.getById(Env.getCtx(), payment.get_ValueAsInt("C_PaymentMethod_ID"), null);
 		PaymentMethod.Builder paymentMethodBuilder = convertPaymentMethod(paymentMethod);
-		
+
 		Currency.Builder currencyBuilder = CoreFunctionalityConvert.convertCurrency(
 			payment.getC_Currency_ID()
 		);
 		MOrder order = new MOrder(payment.getCtx(), payment.getC_Order_ID(), null);
-		BigDecimal convertedAmount = ConvertUtil.getConvetedAmount(order, payment, paymentAmount)
-			.setScale(presicion, RoundingMode.HALF_UP);
+		BigDecimal convertedAmount = ConvertUtil.getConvertedAmount(order, payment, paymentAmount)
+			.setScale(presicion, RoundingMode.HALF_UP)
+		;
 		String invoiceNo = null;
 		if(payment.getC_Invoice_ID() > 0) {
 			invoiceNo = payment.getC_Invoice().getDocumentNo();
 		}
-		
+
 		//	Convert
 		builder
 			.setId(

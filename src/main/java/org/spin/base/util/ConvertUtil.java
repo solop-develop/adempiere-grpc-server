@@ -384,49 +384,79 @@ public class ConvertUtil {
 		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
 		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
 		BigDecimal totalLines = orderLines.stream()
-				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
-				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
+			.filter(orderLine -> {
+				return orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0;
+			})
+			.map(orderLine -> {
+				return Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO);
+			})
+			.reduce(BigDecimal.ZERO, BigDecimal::add)
+		;
 		BigDecimal discountAmount = orderLines.stream()
-				.filter(orderLine -> orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId)
-				.map(orderLine -> Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
+			.filter(orderLine -> {
+				return orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId;
+			})
+			.map(orderLine -> {
+				return Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO);
+			})
+			.reduce(BigDecimal.ZERO, BigDecimal::add)
+		;
 		BigDecimal lineDiscountAmount = orderLines.stream()
-				.filter(orderLine -> orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0)
-				.map(orderLine -> {
-					BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
-					BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
-					BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
-						.multiply(Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO));
-					return discountLine;
-				})
-				.reduce(BigDecimal.ZERO, BigDecimal::add);
+			.filter(orderLine -> {
+				return orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0;
+			})
+			.map(orderLine -> {
+				BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
+				BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
+				BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
+					.multiply(
+						Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO)
+					)
+				;
+				return discountLine;
+			})
+			.reduce(BigDecimal.ZERO, BigDecimal::add)
+		;
 		//	
 		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
-		
+
 		//	
-		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream().map(payment -> {
-			BigDecimal paymentAmount = payment.getPayAmt();
-			if(paymentAmount.compareTo(Env.ZERO) == 0
-					&& payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
-				MInvoice creditMemo = new Query(payment.getCtx(), MInvoice.Table_Name, "C_Payment_ID = ?", payment.get_TrxName()).setParameters(payment.getC_Payment_ID()).first();
-				if(creditMemo != null) {
-					paymentAmount = creditMemo.getGrandTotal();
+		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream()
+			.map(payment -> {
+				BigDecimal paymentAmount = payment.getPayAmt();
+				if(paymentAmount.compareTo(Env.ZERO) == 0
+						&& payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
+					MInvoice creditMemo = new Query(
+						payment.getCtx(),
+						MInvoice.Table_Name,
+						"C_Payment_ID = ?",
+						payment.get_TrxName()
+					)
+						.setParameters(payment.getC_Payment_ID())
+						.first()
+					;
+					if(creditMemo != null) {
+						paymentAmount = creditMemo.getGrandTotal();
+					}
 				}
-			}
-			if(!payment.isReceipt()) {
-				paymentAmount = payment.getPayAmt().negate();
-			}
-			return getConvetedAmount(order, payment, paymentAmount);
-		}).collect(Collectors.reducing(BigDecimal::add));
+				if(!payment.isReceipt()) {
+					paymentAmount = payment.getPayAmt().negate();
+				}
+				return getConvertedAmount(order, payment, paymentAmount);
+			})
+			.collect(Collectors.reducing(BigDecimal::add))
+		;
 
 		List<PO> paymentReferencesList = OrderUtil.getPaymentReferencesList(order);
 		Optional<BigDecimal> paymentReferenceAmount = paymentReferencesList.stream()
-				.map(paymentReference -> {
-			BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
-			if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
-				amount = amount.negate();
-			}
-			return getConvetedAmount(order, paymentReference, amount);
-		}).collect(Collectors.reducing(BigDecimal::add));
+			.map(paymentReference -> {
+				BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
+				if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
+					amount = amount.negate();
+				}
+				return getConvertedAmount(order, paymentReference, amount);
+			}).collect(Collectors.reducing(BigDecimal::add))
+		;
 		BigDecimal grandTotal = order.getGrandTotal();
 		BigDecimal paymentAmount = Env.ZERO;
 		if(paidAmount.isPresent()) {
@@ -447,7 +477,7 @@ public class ConvertUtil {
 			chargeAmt = maybeChargeAmt.get()
 				.setScale(standardPrecision, RoundingMode.HALF_UP);
 		}
-		
+
 		BigDecimal totalPaymentAmount = paymentAmount;
 		if(paymentReferenceAmount.isPresent()) {
 			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
@@ -620,7 +650,7 @@ public class ConvertUtil {
 			)
 		;
 	}
-	
+
 	/**
 	 * Get Converted Amount based on Order currency
 	 * @param order
@@ -628,17 +658,26 @@ public class ConvertUtil {
 	 * @return
 	 * @return BigDecimal
 	 */
-	public static BigDecimal getConvetedAmount(MOrder order, PO payment, BigDecimal amount) {
+	public static BigDecimal getConvertedAmount(MOrder order, PO payment, BigDecimal amount) {
 		if(payment.get_ValueAsInt("C_Currency_ID") == order.getC_Currency_ID()
 				|| amount == null
 				|| amount.compareTo(Env.ZERO) == 0) {
 			return amount;
 		}
-		BigDecimal convertedAmount = MConversionRate.convert(payment.getCtx(), amount, payment.get_ValueAsInt("C_Currency_ID"), order.getC_Currency_ID(), order.getDateAcct(), payment.get_ValueAsInt("C_ConversionType_ID"), payment.getAD_Client_ID(), payment.getAD_Org_ID());
+		BigDecimal convertedAmount = MConversionRate.convert(
+			payment.getCtx(),
+			amount,
+			payment.get_ValueAsInt("C_Currency_ID"),
+			order.getC_Currency_ID(),
+			order.getDateAcct(),
+			payment.get_ValueAsInt("C_ConversionType_ID"),
+			payment.getAD_Client_ID(),
+			payment.getAD_Org_ID()
+		);
 		//	
 		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
 	}
-	
+
 	/**
 	 * Get Converted Amount based on Order currency
 	 * @param pos
@@ -646,14 +685,23 @@ public class ConvertUtil {
 	 * @return
 	 * @return BigDecimal
 	 */
-	public static BigDecimal getConvetedAmount(MPOS pos, MPayment payment, BigDecimal amount) {
+	public static BigDecimal getConvertedAmount(MPOS pos, MPayment payment, BigDecimal amount) {
 		MPriceList priceList = MPriceList.get(pos.getCtx(), pos.getM_PriceList_ID(), null);
 		if(payment.getC_Currency_ID() == priceList.getC_Currency_ID()
 				|| amount == null
 				|| amount.compareTo(Env.ZERO) == 0) {
 			return amount;
 		}
-		BigDecimal convertedAmount = MConversionRate.convert(pos.getCtx(), amount, payment.getC_Currency_ID(), priceList.getC_Currency_ID(), payment.getDateAcct(), payment.getC_ConversionType_ID(), payment.getAD_Client_ID(), payment.getAD_Org_ID());
+		BigDecimal convertedAmount = MConversionRate.convert(
+			pos.getCtx(),
+			amount,
+			payment.getC_Currency_ID(),
+			priceList.getC_Currency_ID(),
+			payment.getDateAcct(),
+			payment.getC_ConversionType_ID(),
+			payment.getAD_Client_ID(),
+			payment.getAD_Org_ID()
+		);
 		//	
 		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
 	}
@@ -665,7 +713,7 @@ public class ConvertUtil {
 	 * @return
 	 * @return BigDecimal
 	 */
-	private static BigDecimal getConvetedAmount(MOrder order, MPayment payment, BigDecimal amount) {
+	private static BigDecimal getConvertedAmount(MOrder order, MPayment payment, BigDecimal amount) {
 		if(payment.getC_Currency_ID() == order.getC_Currency_ID()
 				|| amount == null
 				|| amount.compareTo(Env.ZERO) == 0) {

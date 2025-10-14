@@ -34,7 +34,7 @@ import org.spin.service.grpc.util.value.NumberManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Seller Management for backend of Point Of Sales form
+ * Seller Access Management for backend of Point Of Sales form
  */
 public class AccessManagement {
 
@@ -116,9 +116,13 @@ public class AccessManagement {
 	 * @return
 	 */
 	public static PO getUserAllowed(Properties context, int posId, int userId, String transactionName) {
+		MTable table = MTable.get(Env.getCtx(), "C_POSSellerAllocation");
+		if (table == null) {
+			return null;
+		}
 		return new Query(
 			context,
-			"C_POSSellerAllocation",
+			table,
 			"C_POS_ID = ? AND SalesRep_ID = ?",
 			transactionName
 		)
@@ -149,7 +153,6 @@ public class AccessManagement {
 		if (table == null) {
 			throw new AdempiereException("@TableName@ @NotFound@ C_POSSellerAllocation");
 		}
-
 
 		StringBuffer whereClause = new StringBuffer()
 			.append(
@@ -189,7 +192,7 @@ public class AccessManagement {
 		//	Get if exists
 		return new Query(
 			Env.getCtx(),
-			table.getTableName(),
+			table,
 			whereClause.toString(),
 			null
 		)
@@ -198,6 +201,7 @@ public class AccessManagement {
 			.first()
 		;
 	}
+
 
 	private static String getAmountAccessColumnName(String requestedAccess) {
 		if(requestedAccess == null) {
@@ -212,8 +216,21 @@ public class AccessManagement {
 		if (requestedAccess.equals(ColumnsAdded.COLUMNNAME_IsAllowsApplyShemaDiscount)) {
 			return ColumnsAdded.COLUMNNAME_MaximumShemaDiscountAllowed;
 		}
+		if (requestedAccess.equals(ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent)) {
+			return ColumnsAdded.COLUMNNAME_WriteOffPercentageTolerance;
+		}
+		if (requestedAccess.equals(ColumnsAdded.COLUMNNAME_IsAllowsWriteOffAmount)) {
+			return ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance;
+		}
+		if (requestedAccess.equals(ColumnsAdded.COLUMNNAME_IsAllowsCollectOrder)) {
+			return ColumnsAdded.COLUMNNAME_MaximumRefundAllowed;
+		}
+		if (requestedAccess.equals(ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount)) {
+			// return ColumnsAdded.COLUMNNAME_MaximumOpenAmount;
+		}
 		return null;
 	}
+
 
 	/**
 	 * Get write off amount tolerance
@@ -221,8 +238,13 @@ public class AccessManagement {
 	 * @return
 	 */
 	public static BigDecimal getWriteOffAmtTolerance(MPOS pos) {
-		BigDecimal writeOffAmtTolerance = AccessManagement.getBigDecimalValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtTolerance");
-		int currencyId = AccessManagement.getIntegerValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), "WriteOffAmtCurrency_ID");
+		final int userId = Env.getAD_User_ID(Env.getCtx());
+		BigDecimal writeOffAmtTolerance = AccessManagement.getBigDecimalValueFromPOS(
+			pos,
+			userId,
+			ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance
+		);
+		int currencyId = AccessManagement.getIntegerValueFromPOS(pos, userId, "WriteOffAmtCurrency_ID");
 		if(currencyId > 0) {
 			writeOffAmtTolerance = OrderUtil.getConvertedAmount(pos, currencyId, writeOffAmtTolerance);
 		}
