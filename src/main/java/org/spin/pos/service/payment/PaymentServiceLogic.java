@@ -35,20 +35,21 @@ import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.spin.backend.grpc.pos.AccessFlag;
 import org.spin.backend.grpc.pos.Card;
 import org.spin.backend.grpc.pos.CardProvider;
 import org.spin.backend.grpc.pos.CreditCardType;
 import org.spin.backend.grpc.pos.DeletePaymentReferenceRequest;
 import org.spin.backend.grpc.pos.ExistsUnapprovedOnlinePaymentsRequest;
 import org.spin.backend.grpc.pos.ExistsUnapprovedOnlinePaymentsResponse;
-import org.spin.backend.grpc.pos.GetPaymentDifferenceRequest;
-import org.spin.backend.grpc.pos.GetPaymentDifferenceResponse;
 import org.spin.backend.grpc.pos.ListCardProvidersRequest;
 import org.spin.backend.grpc.pos.ListCardProvidersResponse;
 import org.spin.backend.grpc.pos.ListCardsRequest;
 import org.spin.backend.grpc.pos.ListCardsResponse;
 import org.spin.backend.grpc.pos.ListCreditCardTypesRequest;
 import org.spin.backend.grpc.pos.ListCreditCardTypesResponse;
+import org.spin.backend.grpc.pos.ValidateProcessSalesOrderRequest;
+import org.spin.backend.grpc.pos.ValidateProcessSalesOrderResponse;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.service.pos.AccessManagement;
@@ -351,20 +352,89 @@ public class PaymentServiceLogic {
 	}
 
 
-	public static GetPaymentDifferenceResponse.Builder getPaymentDifference(GetPaymentDifferenceRequest request) {
+	public static ValidateProcessSalesOrderResponse.Builder validateProcessSalesOrder(ValidateProcessSalesOrderRequest request) {
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 		MOrder salesOrder = OrderUtil.validateAndGetOrder(request.getId());
 
+		final int userId = Env.getAD_User_ID(pos.getCtx());
+		PO seller = AccessManagement.getUserAllowed(Env.getCtx(), pos.getC_POS_ID(), userId, null);
+		if (seller == null || seller.get_ID() <= 0) {
+			throw new AdempiereException("@C_POSSellerAllocation_ID@/@SalesRep_ID@ @NotFound@");
+		}
+
 		BigDecimal grandTotal = salesOrder.getGrandTotal();
 		BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(salesOrder);
-		BigDecimal totalOpenAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount));
+		BigDecimal totalOpenAmount = OrderUtil.getTotalOpenAmount(salesOrder);
+
 		BigDecimal totalRefundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount).negate());
 		BigDecimal differenceAmount = totalOpenAmount;
 		if (totalRefundAmount.compareTo(Env.ZERO) != 0) {
 			differenceAmount = totalRefundAmount.abs();
 		}
 
-		int userId = Env.getAD_User_ID(pos.getCtx());
+		ValidateProcessSalesOrderResponse.Builder builder = ValidateProcessSalesOrderResponse.newBuilder()
+			.setId(
+				salesOrder.getC_Order_ID()
+			)
+			.setUuid(
+				StringManager.getValidString(
+					salesOrder.getUUID()
+				)
+			)
+			.setDocumentNo(
+				StringManager.getValidString(
+					salesOrder.getDocumentNo()
+				)
+			)
+			.setSalesOrderAmount(
+				NumberManager.getBigDecimalToString(
+					grandTotal
+				)
+			)
+			.setPaymentsAmount(
+				NumberManager.getBigDecimalToString(
+					totalPaymentAmount
+				)
+			)
+			.setRefundAmount(
+				NumberManager.getBigDecimalToString(
+					totalRefundAmount
+				)
+			)
+			.setDifferenceAmount(
+				NumberManager.getBigDecimalToString(
+					differenceAmount
+				)
+			)
+		;
+
+		final boolean isOpenAmount = differenceAmount.compareTo(Env.ZERO) != 0;
+		if (isOpenAmount) {
+			AccessFlag.Builder accessFlagBuilder = AccessFlag.newBuilder()
+				.setIsOk(true)
+				.setIsWithAccess(
+					seller.get_ValueAsBoolean(
+						ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
+					)
+				)
+				.setIsRequirePin(
+					!seller.get_ValueAsBoolean(
+						ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
+					)
+				)
+				.setRequestedAccess(
+					ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
+				)
+				// .setRequestedAmount(
+				// 	ColumnsAdded.COLUMNNAME_MaximumOpenAmount
+				// )
+				.setRequestesValue(
+					NumberManager.getBigDecimalToString(differenceAmount)
+				)
+			;
+			builder.addAccessFlags(accessFlagBuilder);
+		}
+
 		BigDecimal tolerancePercent = Env.ZERO;
 		BigDecimal toleranceAmount = Env.ZERO;
 		BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(totalPaymentAmount).orElse(Env.ZERO)).abs();
@@ -384,53 +454,54 @@ public class PaymentServiceLogic {
 		} else {
 			toleranceAmount = AccessManagement.getWriteOffAmtTolerance(pos);
 
-			BigDecimal allowedAmount = tolerancePercent;
 			int allowedCurrencyId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_WriteOffAmtCurrency_ID);
 			if (allowedCurrencyId <= 0) {
 				MPriceList posPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
 				allowedCurrencyId = posPriceList.getC_Currency_ID();
 			}
-			allowedAmount = OrderUtil.getConvertedAmountFrom(
+			BigDecimal allowedAmount = OrderUtil.getConvertedAmountFrom(
 				salesOrder,
 				allowedCurrencyId,
-				allowedAmount
+				toleranceAmount
 			);
-			if(allowedAmount.compareTo(Env.ZERO) == 0 || allowedAmount.compareTo(writeOffAmount) >= 0) {
+			if(allowedAmount.compareTo(Env.ZERO) == 0) {
 				isAllowedTolerance = true;
+			} else if (allowedAmount.compareTo(writeOffAmount) > 0) {
+				isAllowedTolerance = true;
+				AccessFlag.Builder accessFlagBuilder = AccessFlag.newBuilder()
+					.setIsOk(true)
+					.setIsWithAccess(false)
+					.setIsRequirePin(true)
+					.setRequestedAmount(
+						ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance
+					)
+					.setRequestesValue(
+						NumberManager.getBigDecimalToString(writeOffAmount)
+					)
+				;
+				builder.addAccessFlags(accessFlagBuilder);
+			} else {
+				AccessFlag.Builder accessFlagBuilder = AccessFlag.newBuilder()
+					.setIsOk(true)
+					.setIsWithAccess(true)
+					.setIsRequirePin(false)
+					.setRequestedAmount(
+						ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance
+					)
+					.setRequestesValue(
+						NumberManager.getBigDecimalToString(writeOffAmount)
+					)
+				;
+				builder.addAccessFlags(accessFlagBuilder);
 			}
 		}
 
-		GetPaymentDifferenceResponse.Builder builder = GetPaymentDifferenceResponse.newBuilder()
-			.setId(
-				salesOrder.getC_Order_ID()
-			)
-			.setUuid(
-				StringManager.getValidString(
-					salesOrder.getUUID()
-				)
-			)
-			.setDocumentNo(
-				StringManager.getValidString(
-					salesOrder.getDocumentNo()
-				)
-			)
-			.setSalesOrderAmount(
-				NumberManager.getBigDecimalToString(
-					grandTotal
-				)
-			)
-			.setRefundAmount(
-				NumberManager.getBigDecimalToString(
-					totalRefundAmount
-				)
-			)
-			.setDifferenceAmount(
-				NumberManager.getBigDecimalToString(
-					differenceAmount
-				)
-			)
+		final boolean isOkToProcess = !isOpenAmount && isAllowedTolerance;
+
+		builder
+			.setIsOk(isOkToProcess)
 			.setIsOverpayment(
-				differenceAmount.compareTo(Env.ZERO) == 0
+				isOpenAmount
 			)
 			.setToleranceAmount(
 				NumberManager.getBigDecimalToString(

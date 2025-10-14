@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.exceptions.AdempiereException;
@@ -106,7 +107,7 @@ public class OrderUtil {
 	}
 
 	public static Optional<BigDecimal> getPaymentChargeOrCredit(MOrder order, boolean isCredit) {
-		return getPaymentReferencesList(order)
+		Stream<BigDecimal> paymentReferencesStream = getPaymentReferencesList(order)
 			.stream()
 			.filter(paymentReference -> {
 				return paymentReference.get_ValueAsBoolean("IsReceipt") == isCredit;
@@ -115,7 +116,39 @@ public class OrderUtil {
 				BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
 				return getConvertedAmount(order, paymentReference, amount);
 			})
-			.reduce(BigDecimal::add);
+		;
+
+		Stream<BigDecimal> paymentStream = MPayment.getOfOrder(order)
+			.stream()
+			.filter(payment -> {
+				return payment.isReceipt() == isCredit;
+			})
+			.map(payment -> {
+				BigDecimal paymentAmount = payment.getPayAmt();
+				if(paymentAmount.compareTo(Env.ZERO) == 0 && payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
+					MInvoice creditMemo = new Query(
+						payment.getCtx(),
+						MInvoice.Table_Name,
+						"C_Payment_ID = ?",
+						payment.get_TrxName()
+					)
+						.setParameters(payment.getC_Payment_ID())
+						.first()
+					;
+					if(creditMemo != null) {
+						paymentAmount = creditMemo.getGrandTotal();
+					}
+				}
+				// if(!payment.isReceipt()) {
+				// 	paymentAmount = payment.getPayAmt().negate();
+				// }
+				return getConvertedAmount(order, payment, paymentAmount);
+			})
+		;
+
+		return Stream.concat(paymentReferencesStream, paymentStream)
+			.reduce(BigDecimal::add)
+		;
 	}
 
 	/**
