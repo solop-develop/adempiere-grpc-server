@@ -16,7 +16,6 @@
 package org.spin.pos.service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -25,21 +24,17 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.protobuf.Empty;
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
-import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_C_POS;
 import org.adempiere.core.domains.models.I_M_DiscountSchema;
 import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MBPartner;
 import org.compiere.model.MDiscountSchema;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
-import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
-import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.PO;
@@ -53,11 +48,8 @@ import org.spin.backend.grpc.pos.CancelOnlinePaymentRequest;
 import org.spin.backend.grpc.pos.CancelOnlinePaymentResponse;
 import org.spin.backend.grpc.pos.CreateGiftCardLineRequest;
 import org.spin.backend.grpc.pos.CreateGiftCardRequest;
-import org.spin.backend.grpc.pos.Customer;
-import org.spin.backend.grpc.pos.CustomerTemplate;
 import org.spin.backend.grpc.pos.DeleteGiftCardLineRequest;
 import org.spin.backend.grpc.pos.DeleteGiftCardRequest;
-import org.spin.backend.grpc.pos.GetCustomerRequest;
 import org.spin.backend.grpc.pos.GetValidGiftCardRequest;
 import org.spin.backend.grpc.pos.GiftCard;
 import org.spin.backend.grpc.pos.GiftCardLine;
@@ -69,10 +61,6 @@ import org.spin.backend.grpc.pos.ListAvailableOrderLinesForGiftCardRequest;
 import org.spin.backend.grpc.pos.ListAvailableOrderLinesForGiftCardResponse;
 import org.spin.backend.grpc.pos.ListAvailableOrderLinesForRMARequest;
 import org.spin.backend.grpc.pos.ListAvailableOrderLinesForRMAResponse;
-import org.spin.backend.grpc.pos.ListCustomerTemplatesRequest;
-import org.spin.backend.grpc.pos.ListCustomerTemplatesResponse;
-import org.spin.backend.grpc.pos.ListCustomersRequest;
-import org.spin.backend.grpc.pos.ListCustomersResponse;
 import org.spin.backend.grpc.pos.ListGiftCardLinesRequest;
 import org.spin.backend.grpc.pos.ListGiftCardLinesResponse;
 import org.spin.backend.grpc.pos.ListGiftCardsRequest;
@@ -83,11 +71,9 @@ import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.backend.grpc.pos.UpdateGiftCardLineRequest;
 import org.spin.backend.grpc.pos.UpdateGiftCardRequest;
 import org.spin.backend.grpc.pos.UpdateShipmentLineRequest;
-import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.DocumentUtil;
 import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ShipmentUtil;
-import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
@@ -181,378 +167,6 @@ public class POSLogic {
 		return builderList;
 	}
 
-
-	/**
-	 * Get Customer
-	 * @param request
-	 * @return
-	 */
-	public static ListCustomersResponse.Builder listCustomers(ListCustomersRequest request) {
-		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer();
-		//	Parameters
-		List<Object> parameters = new ArrayList<Object>();
-
-		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
-				request.getSearchValue()
-			)
-		).strip();
-		if(!Util.isEmpty(searchValue, true)) {
-			whereClause.append("("
-				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(TaxID) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Name2) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%'"
-				+ ")"
-			);
-			//	Add parameters
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-		}
-		//	For value
-		if(!Util.isEmpty(request.getValue(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(UPPER(Value) LIKE UPPER(?))"
-			);
-			//	Add parameters
-			parameters.add(request.getValue());
-		}
-		//	For name
-		if(!Util.isEmpty(request.getName(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(UPPER(Name) LIKE '%' || UPPER(?) || '%')"
-			);
-			//	Add parameters
-			parameters.add(request.getName());
-		}
-		//	for contact name
-		if(!Util.isEmpty(request.getContactName(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(EXISTS(SELECT 1 FROM AD_User u "
-				+ "WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(u.Name) LIKE UPPER(?)))"
-			);
-			//	Add parameters
-			parameters.add(request.getContactName());
-		}
-		//	EMail
-		if(!Util.isEmpty(request.getEmail(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(EXISTS(SELECT 1 FROM AD_User u "
-				+ "WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(u.EMail) LIKE UPPER(?)))"
-			);
-		}
-		//	Phone
-		if(!Util.isEmpty(request.getPhone(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"("
-				+ "EXISTS(SELECT 1 FROM AD_User u "
-				+ "WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(u.Phone) LIKE UPPER(?)) "
-				+ "OR EXISTS(SELECT 1 FROM C_BPartner_Location bpl "
-				+ "WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(bpl.Phone) LIKE UPPER(?))"
-				+ ")"
-			);
-			//	Add parameters
-			parameters.add(request.getPhone());
-			parameters.add(request.getPhone());
-		}
-		//	Postal Code
-		if(!Util.isEmpty(request.getPostalCode(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(EXISTS(SELECT 1 FROM C_BPartner_Location bpl "
-				+ "INNER JOIN C_Location l ON(l.C_Location_ID = bpl.C_Location_ID) "
-				+ "WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(l.Postal) LIKE UPPER(?)))"
-			);
-			//	Add parameters
-			parameters.add(request.getPostalCode());
-		}
-		//	
-		String criteriaWhereClause = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), I_C_BPartner.Table_Name, parameters);
-		if(whereClause.length() > 0
-				&& !Util.isEmpty(criteriaWhereClause)) {
-			whereClause.append(" AND (").append(criteriaWhereClause).append(")");
-		}
-
-		//	Get Product list
-		Query query = new Query(
-			Env.getCtx(),
-			I_C_BPartner.Table_Name,
-			whereClause.toString(),
-			null
-		)
-			.setParameters(parameters)
-			.setOnlyActiveRecords(true)
-			.setClient_ID()
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
-
-		int count = query.count();
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-		//	Set page token
-		String nexPageToken = null;
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-
-		ListCustomersResponse.Builder builderList = ListCustomersResponse.newBuilder()
-			.setRecordCount(count)
-			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
-			)
-		;
-
-		query.setLimit(limit, offset)
-			.getIDsAsList()
-			.stream()
-			.forEach(businessPartnerId -> {
-				Customer.Builder customBuilder = POSConvertUtil.convertCustomer(
-					businessPartnerId
-				);
-				builderList.addCustomers(customBuilder);
-			});
-	
-		//	Default return
-		return builderList;
-	}
-
-	/**
-	 * Get Customer
-	 * @param request
-	 * @return
-	 */
-	public static Customer.Builder getCustomer(GetCustomerRequest request) {
-		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer();
-		//	Parameters
-		List<Object> parameters = new ArrayList<Object>();
-
-		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
-				request.getSearchValue()
-			)
-		).strip();
-		if(!Util.isEmpty(searchValue, true)) {
-			// TODO: Check if it is better with the `LIKE` operator
-			whereClause.append(
-				"(UPPER(Value) = UPPER(?) "
-				+ "OR UPPER(Name) = UPPER(?))"
-			);
-			//	Add parameters
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-		}
-		//	For value
-		if(!Util.isEmpty(request.getValue(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(UPPER(Value) = UPPER(?))"
-			);
-			//	Add parameters
-			parameters.add(request.getValue());
-		}
-		//	For name
-		if(!Util.isEmpty(request.getName(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(UPPER(Name) = UPPER(?))"
-			);
-			//	Add parameters
-			parameters.add(request.getName());
-		}
-		//	for contact name
-		if(!Util.isEmpty(request.getContactName(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(EXISTS(SELECT 1 FROM AD_User u "
-				+ "WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(u.Name) = UPPER(?)))"
-			);
-			//	Add parameters
-			parameters.add(request.getContactName());
-		}
-		//	EMail
-		if(!Util.isEmpty(request.getEmail(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(EXISTS(SELECT 1 FROM AD_User u "
-				+ "WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(u.EMail) = UPPER(?)))"
-			);
-			//	Add parameters
-			parameters.add(request.getEmail());
-		}
-		//	Phone
-		if(!Util.isEmpty(request.getPhone(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"("
-				+ "EXISTS(SELECT 1 FROM AD_User u "
-				+ "WHERE u.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(u.Phone) = UPPER(?)) "
-				+ "OR EXISTS(SELECT 1 FROM C_BPartner_Location bpl "
-				+ "WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(bpl.Phone) = UPPER(?))"
-				+ ")"
-			);
-			//	Add parameters
-			parameters.add(request.getPhone());
-			parameters.add(request.getPhone());
-		}
-		//	Postal Code
-		if(!Util.isEmpty(request.getPostalCode(), true)) {
-			if(whereClause.length() > 0) {
-				whereClause.append(" AND ");
-			}
-			whereClause.append(
-				"(EXISTS(SELECT 1 FROM C_BPartner_Location bpl "
-				+ "INNER JOIN C_Location l ON(l.C_Location_ID = bpl.C_Location_ID) "
-				+ "WHERE bpl.C_BPartner_ID = C_BPartner.C_BPartner_ID "
-				+ "AND UPPER(l.Postal) = UPPER(?)))"
-			);
-			//	Add parameters
-			parameters.add(request.getPostalCode());
-		}
-
-		//	Get business partner
-		MBPartner businessPartner = new Query(
-			Env.getCtx(),
-			I_C_BPartner.Table_Name,
-			whereClause.toString(),
-			null
-		)
-			.setParameters(parameters)
-			.setClient_ID()
-			.setOnlyActiveRecords(true)
-			.first()
-		;
-		//	Default return
-		return POSConvertUtil.convertCustomer(
-			businessPartner
-		);
-	}
-
-
-	/**
-	 * Get Customer
-	 * @param request
-	 * @return
-	 */
-	public static ListCustomerTemplatesResponse.Builder listCustomerTemplates(ListCustomerTemplatesRequest request) {		
-		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-
-		ListCustomerTemplatesResponse.Builder builderList = ListCustomerTemplatesResponse.newBuilder();
-
-		final String TABLE_NAME = "C_POSBPTemplate";
-		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
-			// table not found
-			return builderList;
-		}
-
-		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer();
-		//	Parameters
-		List<Object> parameters = new ArrayList<Object>();
-
-		// Add pos filter
-		whereClause.append("C_POS_ID = ? ");
-		parameters.add(
-			pos.getC_POS_ID()
-		);
-
-		// whereClause.append(
-		// 	"AND EXISTS("
-		// 	+ "SELECT 1 FROM C_BPartner AS bp "
-		// 	+ "WHERE bp.C_BPartner_ID = C_POSBPTemplate.C_BPartner_ID "
-		// 	+ "AND bp.IsActive = ? "
-		// 	+ ")"
-		// );
-		// parameters.add(true);
-
-		//	Get Customer Tempates list
-		Query query = new Query(
-			Env.getCtx(),
-			TABLE_NAME,
-			whereClause.toString(),
-			null
-		)
-			.setParameters(parameters)
-			.setOnlyActiveRecords(true)
-			.setClient_ID()
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-			.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo)
-		;
-
-		int count = query.count();
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-		//	Set page token
-		String nexPageToken = null;
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-
-		builderList
-			.setRecordCount(count)
-			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
-			)
-		;
-
-		query.setLimit(limit, offset)
-			.list()
-			.stream()
-			.forEach(posCustomerTemplate -> {
-				CustomerTemplate.Builder customerTemplateBuilder = POSConvertUtil.convertCustomerTemplate(
-					posCustomerTemplate
-				);
-				builderList.addCustomerTemplates(customerTemplateBuilder);
-			});
-	
-		//	Default return
-		return builderList;
-	}
 
 
 	public static ShipmentLine.Builder updateShipmentLine(UpdateShipmentLineRequest request) {

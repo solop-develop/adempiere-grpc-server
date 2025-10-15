@@ -23,7 +23,6 @@ import java.util.Optional;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_C_Payment;
-import org.compiere.model.MBPartner;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
@@ -44,8 +43,8 @@ import org.spin.backend.grpc.pos.PaymentMethod;
 import org.spin.backend.grpc.pos.PaymentReference;
 import org.spin.base.util.ConvertUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
+import org.spin.pos.service.customer.CustomerConvertUtil;
 import org.spin.pos.util.ColumnsAdded;
-import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
@@ -462,8 +461,8 @@ public class PaymentConvertUtil {
 				payment.getC_Bank_ID()
 			)
 			.setCustomer(
-				POSConvertUtil.convertCustomer(
-					(MBPartner) payment.getC_BPartner()
+				CustomerConvertUtil.convertCustomer(
+					payment.getC_BPartner()
 				)
 			)
 			.setCurrency(currencyBuilder)
