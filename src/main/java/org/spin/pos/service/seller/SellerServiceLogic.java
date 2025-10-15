@@ -75,10 +75,13 @@ public class SellerServiceLogic {
 				+ ") "
 			);
 		}
-		//	For search value
-		final String searchValue = StringManager.getDecodeUrl(
+
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
 				request.getSearchValue()
-		);
+			)
+		).strip();
 		if(!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
 				" AND ( "

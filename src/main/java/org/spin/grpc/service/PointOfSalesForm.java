@@ -2544,10 +2544,12 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(request.getCustomerId());
 			parameters.add(pos.getAD_Org_ID());
 
-			// search value
-			final String searchValue = StringManager.getDecodeUrl(
-				request.getSearchValue()
-			);
+			// URL decode to change characteres and add search value to filter
+			final String searchValue = StringManager.getValidString(
+				StringManager.getDecodeUrl(
+					request.getSearchValue()
+				)
+			).strip();
 			if(!Util.isEmpty(searchValue, true)) {
 				whereClause.append(" AND UPPER(i.DocumentNo) LIKE '%' || UPPER(?) || '%'");
 				//	Add parameters

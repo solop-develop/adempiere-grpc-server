@@ -104,9 +104,12 @@ public class IssueManagementLogic {
 		String whereClause = null;
 		List<Object> filtersList = new ArrayList<>();
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			filtersList.add(searchValue);
 			whereClause = " UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
@@ -163,9 +166,12 @@ public class IssueManagementLogic {
 		;
 		List<Object> filtersList = new ArrayList<>();
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
 			filtersList.add(searchValue);
@@ -219,9 +225,12 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 		filtersList.add(X_R_Request.PRIORITY_AD_Reference_ID);
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
 			filtersList.add(searchValue);
@@ -274,10 +283,12 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
-		//		For search value
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
 				"UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -355,9 +366,12 @@ public class IssueManagementLogic {
 			;
 		}
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			filtersList.add(searchValue);
 			filtersList.add(searchValue);
@@ -418,10 +432,12 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
-		//	For search value
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
 				"UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -479,10 +495,12 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
-		//	For search value
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
 				"UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -542,9 +560,12 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 		filtersList.add(X_R_Request.TASKSTATUS_AD_Reference_ID);
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			filtersList.add(searchValue);
 			whereClause += " AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
@@ -598,10 +619,12 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 		String whereClause = "";
 
-		//		For search value
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause = "("
 				+ "UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -665,10 +688,12 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 		StringBuffer whereClause = new StringBuffer();
 
-		//		For search value
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
 				"(UPPER(Name) LIKE '%' || UPPER(?) || '%' "
@@ -777,9 +802,12 @@ public class IssueManagementLogic {
 			+ "AND (SalesRep_ID=? OR AD_Role_ID = ?) "
 		;
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "
@@ -996,9 +1024,12 @@ public class IssueManagementLogic {
 		List<Object> parametersList = new ArrayList<>();
 		String whereClause = "Processed='N' ";
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "

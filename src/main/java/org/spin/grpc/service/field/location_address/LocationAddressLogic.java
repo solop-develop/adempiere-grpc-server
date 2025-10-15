@@ -55,9 +55,12 @@ public class LocationAddressLogic {
 		String whereClause = null;
 		List<Object> parameters = new ArrayList<Object>();
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause = "("
 				+ "UPPER(CountryCode) LIKE '%' || UPPER(?) || '%' "
@@ -141,9 +144,12 @@ public class LocationAddressLogic {
 		List<Object> parameters = new ArrayList<Object>();
 		parameters.add(country.getC_Country_ID());
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause = "AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
 			parameters.add(searchValue);
@@ -202,9 +208,12 @@ public class LocationAddressLogic {
 			}
 		}
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += "AND UPPER(Name) LIKE '%' || UPPER(?) || '%' ";
 			parameters.add(searchValue);

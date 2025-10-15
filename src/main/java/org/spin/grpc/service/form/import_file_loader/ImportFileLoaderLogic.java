@@ -121,9 +121,12 @@ public class ImportFileLoaderLogic {
 			.setRecordCount(charsetsList.size())
 		;
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			charsetsList = charsetsList.parallelStream().filter(charset -> {
 				return charset.name().toLowerCase().contains(

@@ -157,10 +157,12 @@ public class RecordUtil {
 			return sql;
 		}
 
-		// URL decode to change characteres
-		final String searchValue = StringManager.getDecodeUrl(
-			search_value
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				search_value
+			)
+		).strip();
 
 		String lang = Env.getAD_Language(Env.getCtx());
 		// search on trl table
@@ -439,7 +441,7 @@ public class RecordUtil {
 							}
 						}
 					} catch (Exception e) {
-						log.severe(e.getLocalizedMessage());
+						log.warning(e.getLocalizedMessage());
 					}
 				}
 
@@ -454,7 +456,7 @@ public class RecordUtil {
 				recordCount++;
 			}
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 		} finally {
 			DB.close(rs, pstmt);
