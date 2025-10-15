@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -625,45 +626,36 @@ public class WhereClauseUtil {
 	 * @return
 	 */
 	public static String getWhereClauseFromCriteria(String filters, String tableName, String tableAlias, List<Object> params) {
-		// TODO: Add 1=1 to remove `if (whereClause.length() > 0)` and change stream with parallelStream
-		StringBuffer whereClause = new StringBuffer();
-		// Vaidate and Table
 		final MTable table = RecordUtil.validateAndGetTable(tableName);
 		if (Util.isEmpty(tableAlias, true)) {
 			tableAlias = tableName;
 		}
 		final String tableNameAlias = tableAlias;
-		FilterManager.newInstance(filters).getConditions()
+		String whereClause = FilterManager.newInstance(filters).getConditions()
 			.stream()
-			.filter(condition -> {
-				return !Util.isEmpty(condition.getColumnName(), true);
-			})
-			.forEach(condition -> {
-				// TODO: Validate range columns `_To`
+			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
+			.map(condition -> {
 				MColumn column = table.getColumn(condition.getColumnName());
 				if (column == null || column.getAD_Column_ID() <= 0) {
-					// filter key does not exist as a column, next loop
-					return;
+					return null;
 				}
-				if (whereClause.length() > 0) {
-					whereClause.append(" AND ");
-				}
-				int displayTypeId = column.getAD_Reference_ID();
 				// set table alias to column name
 				// TODO: Evaluate support to columnSQL
-				String columnName = tableNameAlias + "." + column.getColumnName();
-				condition.setColumnName(columnName);
-				String restriction = WhereClauseUtil.getRestrictionByOperator(
+				condition.setColumnName(tableNameAlias + "." + column.getColumnName());
+				return WhereClauseUtil.getRestrictionByOperator(
 					condition,
-					displayTypeId,
+					column.getAD_Reference_ID(),
 					params
 				);
-
-				whereClause.append(restriction);
-
-		});
-		//	Return where clause
-		return whereClause.toString();
+			})
+			.filter(Objects::nonNull)
+			.collect(Collectors.joining(" AND "));
+		
+		if (Util.isEmpty(whereClause, true)) {
+			return "";
+		}
+		
+		return " ( " + whereClause + " ) ";
 	}
 
 
