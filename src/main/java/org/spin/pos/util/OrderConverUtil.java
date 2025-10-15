@@ -23,7 +23,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
-import org.compiere.model.MBPartner;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
@@ -44,6 +43,7 @@ import org.spin.backend.grpc.pos.OrderLine;
 import org.spin.base.util.ConvertUtil;
 import org.spin.grpc.service.TimeControl;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
+import org.spin.pos.service.customer.CustomerConvertUtil;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -372,8 +372,8 @@ public class OrderConverUtil {
 				)
 			)
 			.setCustomer(
-				POSConvertUtil.convertCustomer(
-					(MBPartner) order.getC_BPartner()
+				CustomerConvertUtil.convertCustomer(
+					order.getC_BPartner()
 				)
 			)
 			.setCampaign(

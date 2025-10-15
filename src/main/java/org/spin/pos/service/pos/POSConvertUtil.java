@@ -24,6 +24,7 @@ import org.compiere.model.MWarehouse;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.pos.PointOfSales;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
+import org.spin.pos.service.customer.CustomerConvertUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
@@ -69,7 +70,7 @@ public class POSConvertUtil {
 				)
 			)
 			.setTemplateCustomer(
-				org.spin.pos.util.POSConvertUtil.convertCustomer(
+				CustomerConvertUtil.convertCustomer(
 					pos.getBPartner()
 				)
 			)

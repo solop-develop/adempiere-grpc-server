@@ -335,7 +335,9 @@ service Store {
 		};
 	}
 	rpc ListCustomers(ListCustomersRequest) returns (ListCustomersResponse) {
-		option (google.api.http) = { get: "/point-of-sales/customers" };
+		option (google.api.http) = {
+			get: "/point-of-sales/customers"
+		};
 	}
 	rpc UpdateCustomer(UpdateCustomerRequest) returns (Customer) {
 		option (google.api.http) = {

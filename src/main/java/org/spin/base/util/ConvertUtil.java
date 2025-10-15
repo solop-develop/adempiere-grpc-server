@@ -72,6 +72,7 @@ import org.spin.backend.grpc.user_interface.ModeratorStatus;
 import org.spin.base.interim.ContextTemporaryWorkaround;
 import org.spin.grpc.service.FileManagement;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
+import org.spin.pos.service.customer.CustomerConvertUtil;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.pos.util.POSConvertUtil;
@@ -623,8 +624,8 @@ public class ConvertUtil {
 				)
 			)
 			.setCustomer(
-				POSConvertUtil.convertCustomer(
-					(MBPartner) order.getC_BPartner()
+				CustomerConvertUtil.convertCustomer(
+					order.getC_BPartner()
 				)
 			)
 			.setCampaign(
