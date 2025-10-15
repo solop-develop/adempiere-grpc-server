@@ -461,10 +461,12 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		//	Parameters
 		List<Object> parameters = new ArrayList<Object>();
 
-		//	For search value
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "

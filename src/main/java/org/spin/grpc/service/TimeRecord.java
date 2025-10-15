@@ -109,11 +109,13 @@ public class TimeRecord extends TimeRecordImplBase {
 			responseObserver.onNext(recordsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -214,11 +216,13 @@ public class TimeRecord extends TimeRecordImplBase {
 			responseObserver.onNext(recordsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -472,11 +476,13 @@ public class TimeRecord extends TimeRecordImplBase {
 			responseObserver.onNext(entity.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -574,11 +580,13 @@ public class TimeRecord extends TimeRecordImplBase {
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -616,9 +624,12 @@ public class TimeRecord extends TimeRecordImplBase {
 			whereClause += " AND AssignDateTo = ? ";
 		}
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// search value
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(Name) LIKE '%' || UPPER(?) || '%' "

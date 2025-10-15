@@ -146,9 +146,12 @@ public class POS {
 		}
 		whereClause += ") ";
 
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			filtersList.add(searchValue);
 			filtersList.add(searchValue);

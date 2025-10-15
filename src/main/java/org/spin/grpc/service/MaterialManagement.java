@@ -111,11 +111,14 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -268,11 +271,14 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			responseObserver.onNext(productAttributeSetBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -331,11 +337,13 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -379,11 +387,14 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			responseObserver.onNext(recordsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -414,10 +425,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 		parameters.add(productAttributeSetId);
 
-		// Add search value to filter
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND (UPPER(Description) LIKE '%' || UPPER(?) || '%')";
 			parameters.add(searchValue);
@@ -720,11 +733,14 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -818,11 +834,14 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			responseObserver.onNext(recordsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException());
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -837,10 +856,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			parameters.add(warehouseId);
 		}
 
-		// Add search value to filter
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%'"
@@ -963,11 +984,13 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			responseObserver.onNext(recordsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
 		}
 	}
@@ -987,10 +1010,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			parameters.add(warehouseId);
 		}
 
-		// Add search value to filter
-		final String searchValue = StringManager.getDecodeUrl(
-			request.getSearchValue()
-		);
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = StringManager.getValidString(
+			StringManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "(UPPER(Value) LIKE '%' || UPPER(?) || '%')"
