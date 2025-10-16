@@ -175,6 +175,9 @@ public class CommissionsModelValidator implements ModelValidator {
 
 	private void createOrderFromCommission(MCommission commissionDefinition, MCommissionRun commissionRun, MOrder originalOrder, MInvoice originalInvoice) {
 
+		if (commissionRun.getGrandTotal().signum() == 0) {
+			return;
+		}
 		MOrder order = new MOrder (commissionRun.getCtx(), 0, commissionRun.get_TrxName());
 		order.setClientOrg(commissionRun.getAD_Client_ID(), commissionRun.getAD_Org_ID());
 		order.setIsSOTrx(true);
@@ -193,6 +196,8 @@ public class CommissionsModelValidator implements ModelValidator {
 		} else {
 			order.setC_DocTypeTarget_ID();	//	POO
 		}
+		MDocType docType = MDocType.get(order.getCtx(), order.getC_DocTypeTarget_ID());
+		order.setIsSOTrx(docType.isSOTrx());
 		int partnerId = 0;
 		int salesRepId = 0;
 		Timestamp dateOrdered = null;
@@ -227,7 +232,7 @@ public class CommissionsModelValidator implements ModelValidator {
 			currencyId = commissionDefinition.getC_Currency_ID();
 		}
 		MCurrency currency = MCurrency.get(commissionRun.getCtx(), currencyId);
-		MPriceList defaultPriceList = MPriceList.getDefault(commissionRun.getCtx(), true, currency.getISO_Code());
+		MPriceList defaultPriceList = MPriceList.getDefault(commissionRun.getCtx(), order.isSOTrx(), currency.getISO_Code());
 		//TODO: IsTaxIncluded for CommissionDefinition
 		if(defaultPriceList != null) {
 			order.setM_PriceList_ID(defaultPriceList.getM_PriceList_ID());
