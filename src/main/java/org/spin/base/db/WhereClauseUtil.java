@@ -626,6 +626,7 @@ public class WhereClauseUtil {
 	 * @return
 	 */
 	public static String getWhereClauseFromCriteria(String filters, String tableName, String tableAlias, List<Object> params) {
+		// Vaidate and get table
 		final MTable table = RecordUtil.validateAndGetTable(tableName);
 		if (Util.isEmpty(tableAlias, true)) {
 			tableAlias = tableName;
@@ -648,11 +649,12 @@ public class WhereClauseUtil {
 				// TODO: Evaluate support to columnSQL
 				String columnName = tableNameAlias + "." + column.getColumnName();
 				condition.setColumnName(columnName);
-				return WhereClauseUtil.getRestrictionByOperator(
+				String restriction = WhereClauseUtil.getRestrictionByOperator(
 					condition,
 					displayTypeId,
 					params
 				);
+				return restriction;
 			})
 			.filter(Objects::nonNull)
 			.collect(Collectors.joining(" AND "))
