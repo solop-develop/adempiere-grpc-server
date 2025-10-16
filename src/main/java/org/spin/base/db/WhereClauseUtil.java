@@ -633,28 +633,35 @@ public class WhereClauseUtil {
 		final String tableNameAlias = tableAlias;
 		String whereClause = FilterManager.newInstance(filters).getConditions()
 			.stream()
-			.filter(condition -> !Util.isEmpty(condition.getColumnName(), true))
+			.filter(condition -> {
+				return !Util.isEmpty(condition.getColumnName(), true);
+			})
 			.map(condition -> {
+				// TODO: Validate range columns `_To`
 				MColumn column = table.getColumn(condition.getColumnName());
 				if (column == null || column.getAD_Column_ID() <= 0) {
+					// filter key does not exist as a column, next loop
 					return null;
 				}
+				int displayTypeId = column.getAD_Reference_ID();
 				// set table alias to column name
 				// TODO: Evaluate support to columnSQL
-				condition.setColumnName(tableNameAlias + "." + column.getColumnName());
+				String columnName = tableNameAlias + "." + column.getColumnName();
+				condition.setColumnName(columnName);
 				return WhereClauseUtil.getRestrictionByOperator(
 					condition,
-					column.getAD_Reference_ID(),
+					displayTypeId,
 					params
 				);
 			})
 			.filter(Objects::nonNull)
-			.collect(Collectors.joining(" AND "));
-		
+			.collect(Collectors.joining(" AND "))
+		;
+
 		if (Util.isEmpty(whereClause, true)) {
 			return "";
 		}
-		
+		//	Return where clause
 		return " ( " + whereClause + " ) ";
 	}
 
