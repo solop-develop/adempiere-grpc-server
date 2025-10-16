@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -625,28 +626,23 @@ public class WhereClauseUtil {
 	 * @return
 	 */
 	public static String getWhereClauseFromCriteria(String filters, String tableName, String tableAlias, List<Object> params) {
-		// TODO: Add 1=1 to remove `if (whereClause.length() > 0)` and change stream with parallelStream
-		StringBuffer whereClause = new StringBuffer();
-		// Vaidate and Table
+		// Vaidate and get table
 		final MTable table = RecordUtil.validateAndGetTable(tableName);
 		if (Util.isEmpty(tableAlias, true)) {
 			tableAlias = tableName;
 		}
 		final String tableNameAlias = tableAlias;
-		FilterManager.newInstance(filters).getConditions()
+		String whereClause = FilterManager.newInstance(filters).getConditions()
 			.stream()
 			.filter(condition -> {
 				return !Util.isEmpty(condition.getColumnName(), true);
 			})
-			.forEach(condition -> {
+			.map(condition -> {
 				// TODO: Validate range columns `_To`
 				MColumn column = table.getColumn(condition.getColumnName());
 				if (column == null || column.getAD_Column_ID() <= 0) {
 					// filter key does not exist as a column, next loop
-					return;
-				}
-				if (whereClause.length() > 0) {
-					whereClause.append(" AND ");
+					return null;
 				}
 				int displayTypeId = column.getAD_Reference_ID();
 				// set table alias to column name
@@ -658,12 +654,17 @@ public class WhereClauseUtil {
 					displayTypeId,
 					params
 				);
+				return restriction;
+			})
+			.filter(Objects::nonNull)
+			.collect(Collectors.joining(" AND "))
+		;
 
-				whereClause.append(restriction);
-
-		});
+		if (Util.isEmpty(whereClause, true)) {
+			return "";
+		}
 		//	Return where clause
-		return whereClause.toString();
+		return " ( " + whereClause + " ) ";
 	}
 
 
