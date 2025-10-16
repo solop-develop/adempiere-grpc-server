@@ -567,32 +567,33 @@ public class OrderUtil {
 		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
 		return openAmount.setScale(priceList.getStandardPrecision()).compareTo(Env.ZERO) == 0;
 	}
-	
+
 	/**
 	 * Get Write Off Amount based on open amount vs payment amount
 	 * @param openAmount
 	 * @param paymentAmount
 	 * @return
 	 */
-	public static BigDecimal getWriteOffPercent(BigDecimal openAmount, BigDecimal paymentAmount, int precision) {
-		BigDecimal totalOpenAmount = Optional.ofNullable(openAmount)
+	public static BigDecimal getWriteOffPercent(BigDecimal openAmount, BigDecimal totalSalesOrder, int precision) {
+		final BigDecimal difference = Optional.ofNullable(openAmount)
 			.orElse(Env.ZERO)
 		;
-		if(totalOpenAmount.compareTo(Env.ZERO) == 0) {
+		if(difference.compareTo(Env.ZERO) == 0) {
 			return Env.ZERO;
 		}
-		BigDecimal difference = totalOpenAmount.subtract(
-			Optional.ofNullable(paymentAmount).orElse(Env.ZERO)
-		);
+		final BigDecimal grandTotal = Optional.ofNullable(totalSalesOrder)
+			.orElse(Env.ZERO)
+		;
 		return difference.divide(
-				totalOpenAmount,
+				grandTotal,
 				MathContext.DECIMAL128
 			)
-			.setScale(precision, RoundingMode.HALF_UP)
 			.multiply(Env.ONEHUNDRED)
+			.setScale(precision, RoundingMode.HALF_UP)
 		;
 	}
-	
+
+
 	/**
 	 * Get Payment Amount
 	 * @param order

@@ -412,114 +412,135 @@ public class PaymentServiceLogic {
 			)
 		;
 
+		boolean isAllowedTolerance = false;
 		final boolean isOpenAmount = differenceAmount.compareTo(Env.ZERO) != 0;
 		if (isOpenAmount) {
-			AccessFlag.Builder accessFlagBuilder = AccessFlag.newBuilder()
-				.setIsOk(true)
-				.setIsWithAccess(
-					seller.get_ValueAsBoolean(
-						ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
-					)
-				)
-				.setIsRequirePin(
-					!seller.get_ValueAsBoolean(
-						ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
-					)
-				)
-				.setRequestedAccess(
-					ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
-				)
-				// .setRequestedAmount(
-				// 	ColumnsAdded.COLUMNNAME_MaximumOpenAmount
-				// )
-				.setRequestesValue(
-					NumberManager.getBigDecimalToString(differenceAmount)
-				)
-			;
-			builder.addAccessFlags(accessFlagBuilder);
-		}
-
-		BigDecimal tolerancePercent = Env.ZERO;
-		BigDecimal toleranceAmount = Env.ZERO;
-		BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(totalPaymentAmount).orElse(Env.ZERO)).abs();
-
-		boolean isTolerancePercent = AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent);
-		boolean isAllowedTolerance = false;
-		if (isTolerancePercent) {
-			tolerancePercent = AccessManagement.getBigDecimalValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_WriteOffPercentageTolerance);
-
-			MPriceList priceList = MPriceList.get(Env.getCtx(), salesOrder.getM_PriceList_ID(), null);
-			int standardPrecision = priceList.getStandardPrecision();
-			BigDecimal allowedPercent = tolerancePercent;
-			BigDecimal writeOffPercent = OrderUtil.getWriteOffPercent(totalOpenAmount, totalPaymentAmount, standardPrecision);
-			if(allowedPercent.compareTo(Env.ZERO) == 0 || allowedPercent.compareTo(writeOffPercent) >= 0) {
-				isAllowedTolerance = true;
-			}
-		} else {
-			toleranceAmount = AccessManagement.getWriteOffAmtTolerance(pos);
-
-			int allowedCurrencyId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_WriteOffAmtCurrency_ID);
-			if (allowedCurrencyId <= 0) {
-				MPriceList posPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
-				allowedCurrencyId = posPriceList.getC_Currency_ID();
-			}
-			BigDecimal allowedAmount = OrderUtil.getConvertedAmountFrom(
-				salesOrder,
-				allowedCurrencyId,
-				toleranceAmount
-			);
-			if(allowedAmount.compareTo(Env.ZERO) == 0) {
-				isAllowedTolerance = true;
-			} else if (allowedAmount.compareTo(writeOffAmount) > 0) {
-				isAllowedTolerance = true;
+			if (totalRefundAmount.compareTo(Env.ZERO) > 0) {
+				// refund with gift card
 				AccessFlag.Builder accessFlagBuilder = AccessFlag.newBuilder()
 					.setIsOk(true)
-					.setIsWithAccess(false)
-					.setIsRequirePin(true)
-					.setRequestedAmount(
-						ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance
+					.setIsWithAccess(
+						seller.get_ValueAsBoolean(
+							ColumnsAdded.COLUMNNAME_IsAllowsGiftCard
+						)
 					)
+					.setIsRequirePin(
+						!seller.get_ValueAsBoolean(
+							ColumnsAdded.COLUMNNAME_IsAllowsGiftCard
+						)
+					)
+					.setRequestedAccess(
+						ColumnsAdded.COLUMNNAME_IsAllowsGiftCard
+					)
+					// .setRequestedAmount(
+					// 	ColumnsAdded.COLUMNNAME_MaximumOpenAmount
+					// )
 					.setRequestesValue(
-						NumberManager.getBigDecimalToString(writeOffAmount)
+						NumberManager.getBigDecimalToString(differenceAmount)
 					)
 				;
 				builder.addAccessFlags(accessFlagBuilder);
 			} else {
+				// open amount
 				AccessFlag.Builder accessFlagBuilder = AccessFlag.newBuilder()
 					.setIsOk(true)
-					.setIsWithAccess(true)
-					.setIsRequirePin(false)
-					.setRequestedAmount(
-						ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance
+					.setIsWithAccess(
+						seller.get_ValueAsBoolean(
+							ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
+						)
 					)
+					.setIsRequirePin(
+						!seller.get_ValueAsBoolean(
+							ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
+						)
+					)
+					.setRequestedAccess(
+						ColumnsAdded.COLUMNNAME_IsAllowsOpenAmount
+					)
+					// .setRequestedAmount(
+					// 	ColumnsAdded.COLUMNNAME_MaximumOpenAmount
+					// )
 					.setRequestesValue(
-						NumberManager.getBigDecimalToString(writeOffAmount)
+						NumberManager.getBigDecimalToString(differenceAmount)
 					)
 				;
 				builder.addAccessFlags(accessFlagBuilder);
 			}
+
+			final boolean isTolerancePercent = AccessManagement.getBooleanValueFromPOS(
+				pos,
+				userId,
+				ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent
+			);
+			if (isTolerancePercent) {
+				final BigDecimal tolerancePercent = AccessManagement.getBigDecimalValueFromPOS(
+					pos,
+					userId,
+					ColumnsAdded.COLUMNNAME_WriteOffPercentageTolerance
+				);
+
+				MPriceList priceList = MPriceList.get(Env.getCtx(), salesOrder.getM_PriceList_ID(), null);
+				int standardPrecision = priceList.getStandardPrecision();
+				BigDecimal allowedPercent = tolerancePercent;
+				BigDecimal writeOffPercent = OrderUtil.getWriteOffPercent(totalOpenAmount, grandTotal, standardPrecision);
+				if(allowedPercent.compareTo(Env.ZERO) == 0) {
+					isAllowedTolerance = true;
+				} else {
+					isAllowedTolerance = allowedPercent.compareTo(writeOffPercent.abs()) >= 0;
+					AccessFlag.Builder accessFlagBuilder = AccessFlag.newBuilder()
+						.setIsOk(true)
+						.setIsWithAccess(isAllowedTolerance)
+						.setIsRequirePin(!isAllowedTolerance)
+						.setRequestedAmount(
+							ColumnsAdded.COLUMNNAME_WriteOffPercentageTolerance
+						)
+						.setRequestesValue(
+							NumberManager.getBigDecimalToString(writeOffPercent)
+						)
+					;
+					builder.addAccessFlags(accessFlagBuilder);
+				}
+			} else {
+				BigDecimal toleranceAmount = AccessManagement.getWriteOffAmtTolerance(pos);
+
+				int allowedCurrencyId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_WriteOffAmtCurrency_ID);
+				if (allowedCurrencyId <= 0) {
+					MPriceList posPriceList = MPriceList.get(Env.getCtx(), pos.getM_PriceList_ID(), null);
+					allowedCurrencyId = posPriceList.getC_Currency_ID();
+				}
+				BigDecimal allowedAmount = OrderUtil.getConvertedAmountFrom(
+					salesOrder,
+					allowedCurrencyId,
+					toleranceAmount
+				);
+				if(allowedAmount.compareTo(Env.ZERO) == 0) {
+					isAllowedTolerance = true;
+				} else {
+					BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount)
+						.orElse(Env.ZERO)
+						.abs()
+					;
+					isAllowedTolerance = allowedAmount.compareTo(writeOffAmount) >= 0;
+					AccessFlag.Builder accessFlagBuilder = AccessFlag.newBuilder()
+						.setIsOk(true)
+						.setIsWithAccess(isAllowedTolerance)
+						.setIsRequirePin(!isAllowedTolerance)
+						.setRequestedAmount(
+							ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance
+						)
+						.setRequestesValue(
+							NumberManager.getBigDecimalToString(writeOffAmount)
+						)
+					;
+					builder.addAccessFlags(accessFlagBuilder);
+				}
+			}
 		}
 
 		final boolean isOkToProcess = !isOpenAmount && isAllowedTolerance;
-
 		builder
 			.setIsOk(isOkToProcess)
-			.setIsOverpayment(
-				isOpenAmount
-			)
-			.setToleranceAmount(
-				NumberManager.getBigDecimalToString(
-					toleranceAmount
-				)
-			)
-			.setTolerancePercentage(
-				NumberManager.getBigDecimalToString(
-					tolerancePercent
-				)
-			)
-			.setIsWithinTolerance(isAllowedTolerance)
 		;
-
 		return builder;
 	}
 
