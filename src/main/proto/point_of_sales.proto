@@ -2554,13 +2554,9 @@ message ValidateProcessSalesOrderResponse {
 	string sales_order_amount = 4; // grand total
 	string payments_amount = 5; // collected amount
 	string refund_amount = 6;
-	bool is_ok = 7;
-	bool is_overpayment = 8;
-	string difference_amount = 10;
-	bool is_within_tolerance = 11;
-	string tolerance_amount = 12;
-	string tolerance_percentage = 13;
-	repeated AccessFlag access_flags = 14;
+	string difference_amount = 7;
+	bool is_ok = 8;
+	repeated AccessFlag access_flags = 9;
 }
 
 

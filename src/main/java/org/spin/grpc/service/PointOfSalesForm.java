@@ -249,6 +249,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/orders/{id}/validate-process"
+	 */
 	@Override
 	public void validateProcessSalesOrder(ValidateProcessSalesOrderRequest request, StreamObserver<ValidateProcessSalesOrderResponse> responseObserver) {
 		try {
@@ -3961,7 +3964,7 @@ public class PointOfSalesForm extends StoreImplBase {
 	/**
 	 * Validate User PIN
 	 * @param userPin
-     */
+	 */
 	private Empty.Builder validatePIN(ValidatePINRequest request) {
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), false);
 
@@ -3990,10 +3993,13 @@ public class PointOfSalesForm extends StoreImplBase {
 
 			MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), null);
 			int standardPrecision = priceList.getStandardPrecision();
+			BigDecimal grandTotal = order.getGrandTotal();
 			BigDecimal totalOpenAmount = OrderUtil.getTotalOpenAmount(order);
-			BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(order);
-			BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount).orElse(Env.ZERO).subtract(Optional.ofNullable(totalPaymentAmount).orElse(Env.ZERO)).abs();
-			BigDecimal writeOffPercent = OrderUtil.getWriteOffPercent(totalOpenAmount, totalPaymentAmount, standardPrecision);
+			BigDecimal writeOffAmount = Optional.ofNullable(totalOpenAmount)
+				.orElse(Env.ZERO)
+				.abs()
+			;
+			BigDecimal writeOffPercent = OrderUtil.getWriteOffPercent(totalOpenAmount, grandTotal, standardPrecision);
 			//	For Write off
 			if(supervisorAccess.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_ECA14_WriteOffByPercent)) {
 				BigDecimal allowedPercent = Optional.ofNullable((BigDecimal) supervisorAccess.get_Value(ColumnsAdded.COLUMNNAME_WriteOffPercentageTolerance)).orElse(Env.ZERO);
@@ -4004,7 +4010,9 @@ public class PointOfSalesForm extends StoreImplBase {
 					throw new AdempiereException("@POS.WriteOffNotAllowedByAmount@");
 				}
 			} else {
-				BigDecimal allowedAmount = Optional.ofNullable((BigDecimal) supervisorAccess.get_Value(ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance)).orElse(Env.ZERO);
+				BigDecimal allowedAmount = Optional.ofNullable(
+					(BigDecimal) supervisorAccess.get_Value(ColumnsAdded.COLUMNNAME_WriteOffAmtTolerance)
+				).orElse(Env.ZERO);
 				int allowedCurrencyId = supervisorAccess.get_ValueAsInt(ColumnsAdded.COLUMNNAME_WriteOffAmtCurrency_ID);
 				if(allowedCurrencyId <= 0) {
 					allowedCurrencyId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_WriteOffAmtCurrency_ID);
