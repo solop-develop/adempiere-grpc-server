@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Form;
-import org.adempiere.core.domains.models.I_AD_Menu;
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_AD_Window;
 import org.adempiere.core.domains.models.I_AD_Workflow;
@@ -75,13 +74,13 @@ public class Role extends DictionaryDocument {
 					+ "FROM AD_Tree AS tr "
 					+ "WHERE tr.IsActive = 'Y' "
 					+ "AND tr.AD_Client_ID IN(0, ?) "
-					+ "AND tr.AD_Table_ID = ? "
+					+ "AND tr.TreeType = 'MM' "
 					+ "AND tr.IsAllNodes = 'Y' "
 					+ "AND ROWNUM = 1 "
 					+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID"
 				;
 				//	Get Tree
-				treeId = DB.getSQLValue(null, sql, role.getAD_Client_ID(), I_AD_Menu.Table_ID);
+				treeId = DB.getSQLValue(null, sql, role.getAD_Client_ID());
 			}
 		}
 		MTree tree = MTree.get(role.getCtx(), treeId, null);
