@@ -64,9 +64,7 @@ public class OrderCommissionsByVendor implements ICommissionCalculation {
 		String tableName, lineTableName, dateColumnName, qtyColumnName, invoiceLineColumnName;
 		if (invoiceId > 0) {
 			MInvoice invoice = new MInvoice(context, invoiceId, transactionName);
-			if (invoice.isSOTrx()){
-				return;
-			}
+
 			if (invoice.isReversal() || (!invoice.getDocStatus().equals(MOrder.DOCSTATUS_InProgress)
 				&& !invoice.getDocStatus().equals(MOrder.DOCSTATUS_Completed)
 				&& !invoice.getDocStatus().equals(MOrder.DOCSTATUS_Closed ))){
@@ -86,9 +84,7 @@ public class OrderCommissionsByVendor implements ICommissionCalculation {
 			}
 
 			MOrder order = new MOrder(context, orderId, transactionName);
-			if (order.isSOTrx()){
-				return;
-			}
+
 			if (!order.getDocStatus().equals(MOrder.DOCSTATUS_InProgress)
 				&& !order.getDocStatus().equals(MOrder.DOCSTATUS_Completed)
 				&& !order.getDocStatus().equals(MOrder.DOCSTATUS_Closed )){
