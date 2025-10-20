@@ -24,6 +24,7 @@ import org.compiere.process.DocAction;
 import org.compiere.process.DocumentEngine;
 import org.compiere.process.DocumentReversalEnabled;
 import org.compiere.util.*;
+import org.eevolution.wms.model.MWMInOutBoundLine;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -276,7 +277,6 @@ public class MInOut extends X_M_InOut implements DocAction , DocumentReversalEna
 		inOutTo.saveEx(trxName);
 		if (counter) {
 			inOutfrom.setRef_InOut_ID(inOutTo.getM_InOut_ID());
-			inOutfrom.saveEx();
 		}
 		
 		if (inOutTo.copyLinesFrom(inOutfrom, counter, setOrder) <= 0) {
@@ -1491,6 +1491,10 @@ public class MInOut extends X_M_InOut implements DocAction , DocumentReversalEna
 						return DocAction.STATUS_Invalid;
 					}
 				}
+				//	Set Inoutbound order
+				if(inOutLine.getWM_InOutBoundLine_ID() > 0) {
+					setInoutBoundLineValues(inOutLine);
+				}
 			}	//	stock movement
 
 			//	Correct Order Line
@@ -1652,6 +1656,19 @@ public class MInOut extends X_M_InOut implements DocAction , DocumentReversalEna
 		setDocAction(DOCACTION_Close);
 		return DocAction.STATUS_Completed;
 	}	//	completeIt
+
+	private void setInoutBoundLineValues(MInOutLine inOutLine) {
+		MWMInOutBoundLine outboundLine = new MWMInOutBoundLine(inOutLine.getCtx(), inOutLine.getWM_InOutBoundLine_ID(), get_TrxName());
+		outboundLine.setPickedQty(Optional.ofNullable(outboundLine.getShipmentQtyDelivered()).orElse(Env.ZERO).add(inOutLine.getMovementQty()));
+		if(!isReversal()) {
+			outboundLine.setM_InOutLine_ID(inOutLine.getM_InOutLine_ID());
+			outboundLine.setM_InOut_ID(inOutLine.getM_InOut_ID());
+		} else {
+			outboundLine.setM_InOutLine_ID(-1);
+			outboundLine.setM_InOut_ID(-1);
+		}
+		outboundLine.saveEx();
+	}
 
 	/* Save array of documents to process AFTER completing this one */
 	ArrayList<PO> docsPostProcess = new ArrayList<PO>();
