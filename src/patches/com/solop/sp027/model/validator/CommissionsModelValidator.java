@@ -23,6 +23,7 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MClient;
 import org.compiere.model.MCommission;
 import org.compiere.model.MCommissionRun;
+import org.compiere.model.MCommissionType;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
@@ -214,7 +215,7 @@ public class CommissionsModelValidator implements ModelValidator {
 		MBPartner businessPartner = MBPartner.get(commissionRun.getCtx(), partnerId);
 		order.setBPartner(businessPartner);
 		//if (businessPartner.get_ValueAsBoolean("BillToRelationship")) {//TODO: BillToRelationship Column
-		String billBPartnerWhere = I_C_BP_Relation.COLUMNNAME_C_BPartner_ID + "=? AND " + I_C_BP_Relation.COLUMNNAME_IsBillTo + "='Y'";
+		/*String billBPartnerWhere = I_C_BP_Relation.COLUMNNAME_C_BPartner_ID + "=? AND " + I_C_BP_Relation.COLUMNNAME_IsBillTo + "='Y'";
 		X_C_BP_Relation bpRelation = new Query(order.getCtx(), I_C_BP_Relation.Table_Name, billBPartnerWhere, order.get_TrxName())
 				.setParameters(order.getC_BPartner_ID())
 				.setOnlyActiveRecords(true)
@@ -225,7 +226,7 @@ public class CommissionsModelValidator implements ModelValidator {
 		}
 		if (billBPartner != null) {
 			order.setBill_BPartner_ID(billBPartner.get_ID());
-		}
+		}*/
 		//}
 		int currencyId = commissionRun.get_ValueAsInt("C_Currency_ID");
 		if(currencyId == 0) {
@@ -248,6 +249,7 @@ public class CommissionsModelValidator implements ModelValidator {
 		//
 		boolean isDirectInvoice = false;
 		if(originalOrder != null) {
+			order.setM_Warehouse_ID(originalOrder.getM_Warehouse_ID());
 			order.addDescription(Msg.parseTranslation(commissionRun.getCtx(), "@C_Order_ID@ " + originalOrder.getDocumentNo()));
 			//	Set Project
 			if(originalOrder.getC_Project_ID() > 0) {
