@@ -412,7 +412,7 @@ public class PaymentServiceLogic {
 			)
 		;
 
-		boolean isAllowedTolerance = false;
+		boolean isAllowedTolerance = true;
 		final boolean isOpenAmount = differenceAmount.compareTo(Env.ZERO) != 0;
 		if (isOpenAmount) {
 			if (totalRefundAmount.compareTo(Env.ZERO) > 0) {
