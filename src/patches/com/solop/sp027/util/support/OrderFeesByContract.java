@@ -118,7 +118,7 @@ public class OrderFeesByContract implements ICommissionCalculation {
 				parameters.add(commissionRun.getDateDoc());
 			}
 			//	Default Where
-			criteria.addWhereClause(" WHERE o.DocStatus IN('CO', 'CL', 'IP') AND o.IsSOTrx = 'Y' " +
+			criteria.addWhereClause(" WHERE o.IsSOTrx = 'Y' " +
 					" AND o.C_Order_ID = ? " +
 					" AND o.C_BPartner_ID = ?");
 
