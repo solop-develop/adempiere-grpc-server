@@ -151,13 +151,13 @@ public class ProductInfoConvert {
 					I_M_AttributeSet.COLUMNNAME_IsInstanceAttribute
 				)
 			)
-			// .setVendor(
-			// 	StringManager.getValidString(
-			// 		rs.getString(
-			// 			"Vendor"
-			// 		)
-			// 	)
-			// )
+			.setVendor(
+				StringManager.getValidString(
+					rs.getString(
+						"Vendor"
+					)
+				)
+			)
 			.setIsActive(
 				rs.getBoolean(
 					I_M_Product.COLUMNNAME_IsActive
