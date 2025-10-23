@@ -567,15 +567,18 @@ public class ProductInfoLogic {
 			+ "pg.Name AS M_Product_Group_ID, "
 			+ "p.Value, p.Name, p.UPC, p.SKU, p.IsActive, "
 			+ "u.Name AS C_UOM_ID, "
+			+ "bp.Name AS Vendor, "
 			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
-		String sqlFrom = "FROM M_Product AS p"
-			+ " LEFT OUTER JOIN M_AttributeSet AS pa ON (pa.M_AttributeSet_ID=p.M_AttributeSet_ID)"
-			+ " LEFT OUTER JOIN M_Product_Class AS pcl ON (pcl.M_Product_Class_ID=p.M_Product_Class_ID)"
-			+ " LEFT OUTER JOIN M_Product_Classification AS pcls ON (pcls.M_Product_Classification_ID=p.M_Product_Classification_ID)"
-			+ " LEFT OUTER JOIN M_Product_Group AS pg ON (pg.M_Product_Group_ID = p.M_Product_Group_ID)"
-			+ " LEFT OUTER JOIN M_Product_Category AS pc ON (pc.M_Product_Category_ID=p.M_Product_Category_ID)"
-			+ " LEFT OUTER JOIN C_UOM AS u ON (p.C_UOM_ID=u.C_UOM_ID)"
+		String sqlFrom = "FROM M_Product AS p "
+			+ "LEFT JOIN M_Product_Class AS pcl ON (pcl.M_Product_Class_ID = p.M_Product_Class_ID) "
+			+ "LEFT JOIN M_Product_Classification AS pcls ON (pcls.M_Product_Classification_ID = p.M_Product_Classification_ID) "
+			+ "LEFT JOIN M_Product_Group AS pg ON (pg.M_Product_Group_ID = p.M_Product_Group_ID) "
+			+ "LEFT JOIN M_Product_Category AS pc ON (pc.M_Product_Category_ID = p.M_Product_Category_ID) "
+			+ "LEFT JOIN C_UOM AS u ON (p.C_UOM_ID = u.C_UOM_ID) "
+			+ "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsCurrentVendor = 'Y' AND ppo.IsActive = 'Y') "
+			+ "LEFT JOIN C_BPartner AS bp ON (ppo.C_BPartner_ID = bp.C_BPartner_ID) "
+			+ "LEFT JOIN M_AttributeSet AS pa ON (pa.M_AttributeSet_ID = p.M_AttributeSet_ID) "
 		;
 
 		String sqlWhere = " WHERE p.AD_Client_ID = ? ";
@@ -651,24 +654,18 @@ public class ProductInfoLogic {
 			sqlWhere += " AND ("
 				+ "p.M_Product_Category_ID = ? "
 				+ "OR p.M_Product_Category_ID IN ("
-						+ "SELECT ppc.M_Product_Category_ID FROM M_Product_Category AS ppc "
-						+ "WHERE ppc.M_Product_Category_Parent_ID = ?"
+						+ "SELECT ppc.M_Product_Category_ID "
+						+ "FROM M_Product_Category AS ppc "
+						+ "WHERE ppc.M_Product_Category_Parent_ID = ? "
+						+ "AND ppc.IsActive = 'Y' "
 					+ ")"
 				+ ")"
 			;
-
 			filtersList.add(
 				productCategoryId
 			);
 			filtersList.add(
 				productCategoryId
-			);
-		}
-		// Product Group
-		if (request.getProductGroupId() > 0) {
-			sqlWhere += " AND p.M_Product_Group_ID = ? ";
-			filtersList.add(
-				request.getProductGroupId()
 			);
 		}
 		// Product Class
@@ -683,6 +680,13 @@ public class ProductInfoLogic {
 			sqlWhere += " AND p.M_Product_Classification_ID = ? ";
 			filtersList.add(
 				request.getProductClassificationId()
+			);
+		}
+		// Product Group
+		if (request.getProductGroupId() > 0) {
+			sqlWhere += " AND p.M_Product_Group_ID = ? ";
+			filtersList.add(
+				request.getProductGroupId()
 			);
 		}
 		// Attribute Set
@@ -718,9 +722,10 @@ public class ProductInfoLogic {
 		// Vendor
 		if (request.getVendorId() > 0) {
 			sqlWhere += " AND EXISTS("
-				+ "SELECT 1 FROM M_Product_PO AS ppo "
-				+ "WHERE ppo.C_BPartner_ID = ? "
-				+ "AND ppo.M_Product_ID = p.M_Product_ID "
+					+ "SELECT 1 FROM M_Product_PO AS ppo "
+					+ "WHERE ppo.C_BPartner_ID = ? "
+					+ "AND ppo.M_Product_ID = p.M_Product_ID "
+					// + "AND ppo.IsActive = 'Y' "
 				+ ")"
 			;
 			filtersList.add(
@@ -744,7 +749,7 @@ public class ProductInfoLogic {
 				+			" FROM M_ProductPrice AS mpp, M_PriceList_Version AS mplv "
 				+			" WHERE mplv.M_PriceList_Version_ID = mpp.M_PriceList_Version_ID AND mplv.IsActive = 'Y'"
 				+		") AS pr"
-				+ " ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y') "
+				+ " ON (p.M_Product_ID = pr.M_Product_ID AND pr.IsActive = 'Y') "
 			;
 			sqlWhere += " AND pr.M_PriceList_Version_ID = ? ";
 			filtersList.add(
@@ -752,9 +757,10 @@ public class ProductInfoLogic {
 			);
 
 			final String priceListWhere = "EXISTS ("
-				+ "SELECT 1 FROM M_PriceList_Version AS plv "
-				+ "WHERE plv.M_PriceList_ID = M_PriceList.M_PriceList_ID "
-				+ "AND plv.M_Pricelist_Version_ID = ? "
+					+ "SELECT 1 FROM M_PriceList_Version AS plv "
+					+ "WHERE plv.M_PriceList_ID = M_PriceList.M_PriceList_ID "
+					+ "AND plv.M_Pricelist_Version_ID = ? "
+					// + "AND plv.IsActive = 'Y' "
 				+ ")"
 			; 
 			MPriceList priceList = new Query(
@@ -779,11 +785,11 @@ public class ProductInfoLogic {
 		boolean isUnconfirmed = false;
 		if (warhouseId > 0) {
 			sqlQuery += ", "
-				+ "CASE WHEN p.IsBOM='N' AND (p.ProductType!='I' OR p.IsStocked='N') "
+				+ "CASE WHEN p.IsBOM = 'N' AND (p.ProductType != 'I' OR p.IsStocked = 'N') "
 					+ "THEN to_number(get_Sysconfig('QTY_TO_SHOW_FOR_SERVICES', '99999', p.AD_Client_ID, 0), '99999999999') "
 					+ "ELSE bomQtyAvailable(p.M_Product_ID, " + warhouseId + ", 0) "
 				+ "END AS QtyAvailable, "
-				+ "CASE WHEN p.IsBOM='N' AND (p.ProductType!='I' OR p.IsStocked='N') "
+				+ "CASE WHEN p.IsBOM = 'N' AND (p.ProductType != 'I' OR p.IsStocked = 'N') "
 					+ "THEN to_number(get_Sysconfig('QTY_TO_SHOW_FOR_SERVICES', '99999', p.AD_Client_ID, 0), '99999999999') "
 					+ "ELSE bomQtyOnHand(p.M_Product_ID, " + warhouseId + ", 0) "
 				+ "END AS QtyOnHand, "
@@ -795,14 +801,14 @@ public class ProductInfoLogic {
 			if (isUnconfirmed) {
 				sqlQuery += ", "
 					+ "(SELECT SUM(c.TargetQty) FROM M_InOutLineConfirm AS c "
-						+ "INNER JOIN M_InOutLine AS il ON (c.M_InOutLine_ID=il.M_InOutLine_ID) "
-						+ "INNER JOIN M_InOut AS i ON (il.M_InOut_ID=i.M_InOut_ID) "
-						+ "WHERE c.Processed='N' AND i.M_Warehouse_ID=" + warhouseId + " AND il.M_Product_ID=p.M_Product_ID) "
+						+ "INNER JOIN M_InOutLine AS il ON (c.M_InOutLine_ID = il.M_InOutLine_ID) "
+						+ "INNER JOIN M_InOut AS i ON (il.M_InOut_ID = i.M_InOut_ID) "
+						+ "WHERE c.Processed = 'N' AND i.M_Warehouse_ID = " + warhouseId + " AND il.M_Product_ID = p.M_Product_ID) "
 					+ "AS QtyUnconfirmed, "
 					+ "(SELECT SUM(c.TargetQty) FROM M_MovementLineConfirm AS c "
-						+ "INNER JOIN M_MovementLine AS ml ON (c.M_MovementLine_ID=ml.M_MovementLine_ID) "
-						+ "INNER JOIN M_Locator AS l ON (ml.M_LocatorTo_ID=l.M_Locator_ID) "
-						+ "WHERE c.Processed='N' AND l.M_Warehouse_ID=" + warhouseId + " AND ml.M_Product_ID=p.M_Product_ID) "
+						+ "INNER JOIN M_MovementLine AS ml ON (c.M_MovementLine_ID = ml.M_MovementLine_ID) "
+						+ "INNER JOIN M_Locator AS l ON (ml.M_LocatorTo_ID = l.M_Locator_ID) "
+						+ "WHERE c.Processed = 'N' AND l.M_Warehouse_ID = " + warhouseId + " AND ml.M_Product_ID = p.M_Product_ID) "
 					+ "AS QtyUnconfirmedMove "
 				;
 			}
@@ -812,7 +818,7 @@ public class ProductInfoLogic {
 			if (request.getIsOnlyStockAvailable()) {
 				// compare with `QtyOnHand` column
 				sqlWhere += " AND ("
-					+ "CASE WHEN p.IsBOM='N' AND (p.ProductType!='I' OR p.IsStocked='N') "
+					+ "CASE WHEN p.IsBOM = 'N' AND (p.ProductType != 'I' OR p.IsStocked = 'N') "
 						+ "THEN to_number(get_Sysconfig('QTY_TO_SHOW_FOR_SERVICES', '99999', p.AD_Client_ID, 0), '99999999999') "
 						+ "ELSE bomQtyOnHand(p.M_Product_ID, " + warhouseId + ", 0) "
 					+ "END > 0"
