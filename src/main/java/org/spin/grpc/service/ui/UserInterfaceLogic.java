@@ -43,8 +43,6 @@ import org.spin.service.grpc.util.base.RecordUtil;
  */
 public class UserInterfaceLogic {
 
-
-
 	public static ListTreeNodesResponse.Builder listTreeNodes(ListTreeNodesRequest request) {
 		if (Util.isEmpty(request.getTableName(), true) && request.getTabId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Table_ID@");
@@ -52,7 +50,7 @@ public class UserInterfaceLogic {
 		Properties context = Env.getCtx();
 
 		// get element id
-		int elementId = request.getElementId();
+		final int elementId = request.getElementId();
 		MTable table = null;
 		// tab where clause
 		String whereClause = null;
@@ -93,14 +91,20 @@ public class UserInterfaceLogic {
 			);
 		}
 
+		ListTreeNodesResponse.Builder builder = ListTreeNodesResponse.newBuilder();
+
 		final int clientId = Env.getAD_Client_ID(context);
-		int treeId = getDefaultTreeIdFromTableName(clientId, table.getTableName(), elementId);
+		final int treeId = getDefaultTreeIdFromTableName(clientId, table.getTableName(), elementId);
+		if (treeId <= 0) {
+			return builder;
+		}
 		MTree tree = new MTree(context, treeId, false, true, whereClause, null);
+		if (tree == null || tree.getAD_Tree_ID() <= 0) {
+			return builder;
+		}
 
 		MTreeNode treeNode = tree.getRoot();
-
-		int treeNodeId = request.getId();
-		ListTreeNodesResponse.Builder builder = ListTreeNodesResponse.newBuilder();
+		final int treeNodeId = request.getId();
 
 		TreeType.Builder treeTypeBuilder = UserInterfaceConvertUtil.convertTreeType(tree.getTreeType());
 		builder.setTreeType(treeTypeBuilder);
@@ -134,34 +138,37 @@ public class UserInterfaceLogic {
 	}
 
 	public static int getDefaultTreeIdFromTableName(int clientId, String tableName, int elementId) {
-		if(Util.isEmpty(tableName)) {
-			return -1;
+		int treeId = -1;
+		if(Util.isEmpty(tableName, true)) {
+			return treeId;
+		}
+		MTable table = MTable.get(Env.getCtx(), tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			return treeId;
 		}
 		//
-		Integer treeId = null;
-		String whereClause = new String();
+		String elementWhereClause = "";
 		//	Valid Accounting Element
 		if (elementId > 0) {
-			whereClause = " AND EXISTS ("
+			elementWhereClause = " AND EXISTS ("
 				+ "SELECT 1 FROM C_Element ae "
-				+ "WHERE ae.C_Element_ID=" + elementId
-				+ " AND tr.AD_Tree_ID=ae.AD_Tree_ID) "
+				+ "WHERE ae.C_Element_ID = " + elementId
+				+ " AND tr.AD_Tree_ID = ae.AD_Tree_ID "
+				+ ") "
 			;
 		}
-		if(treeId == null || treeId == 0) {
-			String sql = "SELECT tr.AD_Tree_ID "
-				+ "FROM AD_Tree tr "
-				+ "INNER JOIN AD_Table tb ON (tr.AD_Table_ID=tb.AD_Table_ID) "
-				+ "WHERE tr.AD_Client_ID IN(0, ?) "
-				+ "AND tb.TableName=? "
-				+ "AND tr.IsActive='Y' "
-				+ "AND tr.IsAllNodes='Y' "
-				+ whereClause
-				+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID"
-			;
-			//	Get Tree
-			treeId = DB.getSQLValue(null, sql, clientId, tableName);
-		}
+		final String sql = "SELECT tr.AD_Tree_ID "
+			+ "FROM AD_Tree AS tr "
+			+ "WHERE tr.IsActive = 'Y' "
+			+ "AND tr.AD_Client_ID IN(0, ?) "
+			+ "AND tr.AD_Table_ID = ? "
+			+ "AND tr.IsAllNodes = 'Y' "
+			+ elementWhereClause
+			+ "AND ROWNUM = 1 "
+			+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID"
+		;
+		//	Get Tree
+		treeId = DB.getSQLValue(null, sql, clientId, table.getAD_Table_ID());
 		//	Default Return
 		return treeId;
 	}

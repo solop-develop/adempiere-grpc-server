@@ -212,9 +212,16 @@ public class ContextTemporaryWorkaround {
 			Timestamp dateOrdered = ValueManager.getTimestampFromValue(
 				recordRow.getFieldsMap().get(I_C_Order.COLUMNNAME_DateOrdered)
 			);
+			final String sql = "SELECT M_PriceList_Version_ID "
+				+ "FROM M_PriceList_Version "
+				+ "WHERE M_PriceList_ID = ? "
+					+ "AND ValidFrom <= ? "
+				+ "ORDER BY ValidFrom DESC "
+				+ "LIMIT 1"
+			;
 			int priceListVersionId = DB.getSQLValue(
 				null,
-				"SELECT M_PriceList_Version_ID FROM M_PriceList_Version WHERE M_PriceList_ID = ? AND ValidFrom <= ? ORDER BY ValidFrom DESC",
+				sql,
 				priceListId,
 				dateOrdered
 			);

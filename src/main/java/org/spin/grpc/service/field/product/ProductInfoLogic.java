@@ -364,7 +364,7 @@ public class ProductInfoLogic {
 		final int clientId = Env.getAD_Client_ID(Env.getCtx());
 		int no = DB.getSQLValue(
 			null,
-			"SELECT 1 FROM M_InOutLineConfirm WHERE AD_Client_ID = ?",
+			"SELECT 1 FROM M_InOutLineConfirm WHERE AD_Client_ID = ? LIMIT 1",
 			clientId
 		);
 		if (no > 0) {
@@ -372,7 +372,7 @@ public class ProductInfoLogic {
 		}
 		no = DB.getSQLValue(
 			null,
-			"SELECT 1 FROM M_MovementLineConfirm WHERE AD_Client_ID = ?",
+			"SELECT 1 FROM M_MovementLineConfirm WHERE AD_Client_ID = ? LIMIT 1",
 			clientId
 		);
 		return no > 0;

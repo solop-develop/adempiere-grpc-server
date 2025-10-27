@@ -244,7 +244,7 @@ public class Security extends SecurityImplBase {
 		//	Language
 		String language = Env.getAD_Language(context);
 		if (!Util.isEmpty(request.getLanguage(), true)) {
-			language = ContextManager.getDefaultLanguage(request.getLanguage());
+			language = SessionManager.getDefaultLanguage(request.getLanguage());
 		}
 
 		// warehouse
@@ -1098,15 +1098,17 @@ public class Security extends SecurityImplBase {
 			currencyBuilder.build()
 		);
 
-		session.setLanguage(
-			StringManager.getValidString(
-				ContextManager.getDefaultLanguage(
-					Env.getAD_Language(
-						context
-					)
-				)
+		String language = SessionManager.getDefaultLanguage(
+			Env.getAD_Language(
+				context
 			)
 		);
+		session.setLanguage(
+			StringManager.getValidString(
+				language
+			)
+		);
+
 		//	Set default context
 		Struct.Builder contextValues = Struct.newBuilder();
 		context.entrySet()
@@ -1297,16 +1299,28 @@ public class Security extends SecurityImplBase {
 	 */
 	private UserInfo.Builder getUserInfo(UserInfoRequest request) {
 		MSession session = MSession.get(Env.getCtx(), false);
-		List<MRole> roleList = new Query(Env.getCtx(), I_AD_Role.Table_Name, 
-				"EXISTS(SELECT 1 FROM AD_User_Roles ur "
+		final String whereClause = "EXISTS("
+				+ "SELECT 1 FROM AD_User_Roles AS ur "
 				+ "WHERE ur.AD_Role_ID = AD_Role.AD_Role_ID "
-				+ "AND ur.AD_User_ID = ?)", null)
-				.setParameters(session.getCreatedBy())
-				.setOnlyActiveRecords(true)
-				.<MRole>list();
+				+ "AND ur.AD_User_ID = ? "
+				+ "AND ur.IsActive = 'Y' "
+				// TODO: add `LIMIT 1` or `AND ROWNUM = 1` to best performance
+			+ ")"
+		;
+		int roleCount = new Query(
+			Env.getCtx(),
+			I_AD_Role.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(session.getCreatedBy())
+			.setOnlyActiveRecords(true)
+			// .getIDsAsList()
+			// .<MRole>list()
+			.count()
+		;
 		//	Validate
-		if(roleList == null
-				|| roleList.size() == 0) {
+		if(roleCount <= 0) {
 			return null;
 		}
 		//	Get it
@@ -1523,11 +1537,12 @@ public class Security extends SecurityImplBase {
 		MMenu menu = new MMenu(Env.getCtx(), 0, null);
 		menu.setName(Msg.getMsg(Env.getCtx(), "Menu"));
 		//	Get Reference
-		int treeId = DB.getSQLValue(null,
-			"SELECT COALESCE(r.AD_Tree_Menu_ID, ci.AD_Tree_Menu_ID)"
-			+ "FROM AD_ClientInfo ci"
-			+ " INNER JOIN AD_Role r ON (ci.AD_Client_ID=r.AD_Client_ID) "
-			+ "WHERE AD_Role_ID=?", roleId);
+		final String sql = "SELECT COALESCE(r.AD_Tree_Menu_ID, ci.AD_Tree_Menu_ID) AS AD_Tree_ID "
+			+ "FROM AD_ClientInfo AS ci "
+			+ "INNER JOIN AD_Role AS r ON (ci.AD_Client_ID = r.AD_Client_ID) "
+			+ "WHERE AD_Role_ID = ?"
+		;
+		int treeId = DB.getSQLValue(null, sql, roleId);
 		if (treeId <= 0) {
 			treeId = MTree.getDefaultTreeIdFromTableId(menu.getAD_Client_ID(), I_AD_Menu.Table_ID);
 		}

@@ -445,9 +445,15 @@ public class RecordManagementServiceLogic {
 			MWindow referenceWindow = MWindow.get(Env.getCtx(), zoomInfo.windowId);
 			MTable referenceTable = MTable.get(Env.getCtx(), zoomQuery.getZoomTableName());
 
+			final String sql = "SELECT AD_Tab_ID "
+				+ "FROM AD_Tab "
+				+ "WHERE AD_Window_ID = ? AND AD_Table_ID = ? "
+				+ "ORDER BY SeqNo "
+				+ "LIMIT 1"
+			;
 			int tabId = DB.getSQLValue(
 				null,
-				"SELECT AD_Tab_ID FROM AD_Tab WHERE AD_Window_ID= ? AND AD_Table_ID = ? ORDER BY SeqNo",
+				sql,
 				referenceWindow.getAD_Window_ID(), referenceTable.getAD_Table_ID()
 			);
 			MTab referenceTab = MTab.get(Env.getCtx(), tabId);

@@ -69,19 +69,27 @@ public class OrderUtil {
 
 
 	public static boolean isDelivered(int orderId, String transactionName) {
- 		String sql = "SELECT M_InOut_ID FROM M_InOut "
-			+ "WHERE C_Order_ID=? AND DocStatus IN ('CO','CL')";
+ 		final String sql = "SELECT M_InOut_ID "
+			+ "FROM M_InOut "
+			+ "WHERE C_Order_ID = ? "
+				+ "AND DocStatus IN ('CO','CL') "
+			+ "LIMIT 1"
+		;
 		int deliveryId = DB.getSQLValue(transactionName, sql, orderId);
 		return deliveryId > 0;
 	}
-    
-    public static boolean isInvoiced(int orderId, String transactionName) {
-    	String sql = "SELECT C_Invoice_ID FROM C_Invoice "
-    			+ "WHERE C_Order_ID=? AND DocStatus IN ('CO','CL')";
-    		int invoiceId = DB.getSQLValue(transactionName, sql, orderId);
-    		return invoiceId > 0;
+
+	public static boolean isInvoiced(int orderId, String transactionName) {
+		final String sql = "SELECT C_Invoice_ID "
+			+ "FROM C_Invoice "
+			+ "WHERE C_Order_ID = ? "
+				+ "AND DocStatus IN ('CO','CL') "
+			+ "LIMIT 1"
+		;
+		int invoiceId = DB.getSQLValue(transactionName, sql, orderId);
+		return invoiceId > 0;
 	}
-	
+
 	/**
 	 * Get Refund references from order
 	 * @param order

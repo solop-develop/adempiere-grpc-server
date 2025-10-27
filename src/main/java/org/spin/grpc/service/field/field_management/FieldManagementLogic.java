@@ -1026,7 +1026,8 @@ public class FieldManagementLogic {
 				+ "FROM " + currentTable.getTableName() + " AS child "
 				+ "WHERE child." + currentLinkColumn + " = parent." + parentKeyColum
 				+ " AND child." + currentKeycolumn.getColumnName() + " = ?"
-			+ ")"
+			+ ") "
+			+ "LIMIT 1"
 		;
 		Object currentValue = ValueManager.getObjectFromReference(
 			request.getValue(),

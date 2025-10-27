@@ -30,12 +30,14 @@ public class FieldCustomUtil {
 
 		// final String sql = "SELECT AD_Window_ID FROM AD_Window "
 		// 	+ "WHERE EXISTS( "
-		// 	+ "	SELECT 1 FROM AD_Tab t "
-		// 	+ "	INNER JOIN AD_Field f "
-		// 	+ "	ON t.AD_Tab_ID = f.AD_Tab_ID "
-		// 	+ "	AND t.AD_Window_ID = ad_window.AD_Window_ID "
-		// 	+ "	WHERE f.AD_Field_ID = ? "
-		// 	+")";
+		// 	+ "SELECT 1 FROM AD_Tab t "
+		// 	+ "INNER JOIN AD_Field f "
+		// 	+ "ON t.AD_Tab_ID = f.AD_Tab_ID "
+		// 	+ "AND t.AD_Window_ID = AD_Window.AD_Window_ID "
+		// 	+ "WHERE f.AD_Field_ID = ? "
+		// 	+") "
+		//	+ "LIMIT 1"
+		//	;
 		// int windowId = DB.getSQLValueEx(null, sql, fieldId);
 		// ASPUtil.getInstance().getWindow(windowId);
 

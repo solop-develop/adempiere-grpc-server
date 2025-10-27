@@ -58,9 +58,10 @@ public class WorkflowUtil {
 	 *	@return true if status not changed
 	 */
 	public static boolean checkStatus(String tableName, int recordId, String documentStatus) {
-		final String sql = "SELECT 2 FROM " + tableName 
-			+ " WHERE " + tableName + "_ID=" + recordId
-			+ " AND DocStatus='" + documentStatus + "'"
+		final String sql = "SELECT 2 FROM " + tableName + " "
+			+ "WHERE " + tableName + "_ID = " + recordId + " "
+			+ "AND DocStatus = '" + documentStatus + "' "
+			+ "LIMIT 1"
 		;
 		int result = DB.getSQLValue(null, sql);
 		return result == 2;
@@ -89,9 +90,10 @@ public class WorkflowUtil {
 		final String sql = "SELECT 1" // DISTINCT rl.Value
 			+ " FROM AD_Document_Action_Access a"
 			+ " INNER JOIN AD_Ref_List rl ON (rl.AD_Reference_ID=135 AND rl.AD_Ref_List_ID=a.AD_Ref_List_ID)"
-			+ " WHERE a.IsActive='Y' AND a.AD_Client_ID=? AND a.C_DocType_ID=?" // #1,2
+			+ " WHERE a.IsActive = 'Y' AND a.AD_Client_ID = ? AND a.C_DocType_ID = ?" // #1,2
 			+ " AND rl.Value = ?"
 			+ " AND " + role.getIncludedRolesWhereClause("a.AD_Role_ID", params)
+			+ " LIMIT 1"
 		;
 		int withAccess = DB.getSQLValue(null, sql, params);
 		return withAccess == 1;

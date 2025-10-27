@@ -4954,7 +4954,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			throw new AdempiereException("@ECA14_Shortcut@ @NotFound@");
 		}
 
-		final String sqlShorcut = "SELECT ECA14_Command FROM C_POSCommandShortcut WHERE C_POS_ID = ? AND ECA14_Shortcut = ?";
+		final String sqlShorcut = "SELECT ECA14_Command FROM C_POSCommandShortcut WHERE C_POS_ID = ? AND ECA14_Shortcut = ? LIMIT 1";
 		String commandUsed = DB.getSQLValueString(null, sqlShorcut, pos.getC_POS_ID(), request.getShortcut());
 		if (!Util.isEmpty(commandUsed, true)) {
 			throw new AdempiereException("@ECA14_Shortcut@ @Used@ " + commandUsed);
