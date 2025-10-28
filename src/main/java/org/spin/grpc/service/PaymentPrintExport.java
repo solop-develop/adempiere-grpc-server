@@ -453,15 +453,16 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 		// validate and Payment Rule
 		MRefList paymentRule = validateAndGetPaymentRule(request.getPaymentRule());
 
-		StringBuilder sql = new StringBuilder();
-		sql.append("SELECT ")
+		StringBuilder sql = new StringBuilder()
+			.append("SELECT ")
 			.append(I_C_BankAccountDoc.COLUMNNAME_CurrentNext)
 			.append(" FROM ")
 			.append(I_C_BankAccountDoc.Table_Name)
 			.append(" WHERE ")
-			.append(I_C_BankAccountDoc.COLUMNNAME_C_BankAccount_ID).append("=? AND ")
-			.append(I_C_BankAccountDoc.COLUMNNAME_PaymentRule).append("=? AND ")
-			.append(I_C_BankAccountDoc.COLUMNNAME_IsActive).append("=?")
+			.append(I_C_BankAccountDoc.COLUMNNAME_C_BankAccount_ID).append(" = ? ")
+			.append("AND ").append(I_C_BankAccountDoc.COLUMNNAME_PaymentRule).append(" = ? ")
+			.append("AND ").append(I_C_BankAccountDoc.COLUMNNAME_IsActive).append(" = ? ")
+			.append("LIMIT 1")
 		;
 
 		List<Object> parameters = new ArrayList<>();
@@ -856,10 +857,11 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 	public static void validatePrintFormatByCheck(int paySelectionCheckId) {
 		String sql = "SELECT bad.Check_PrintFormat_ID " //	1
-			+ "FROM C_PaySelectionCheck d"
-			+ " INNER JOIN C_PaySelection ps ON (d.C_PaySelection_ID = ps.C_PaySelection_ID)"
-			+ " INNER JOIN C_BankAccountDoc bad ON (ps.C_BankAccount_ID = bad.C_BankAccount_ID AND d.PaymentRule = bad.PaymentRule)"
-			+ "WHERE d.C_PaySelectionCheck_ID = ?"
+			+ "FROM C_PaySelectionCheck AS d "
+			+ "INNER JOIN C_PaySelection ps ON (d.C_PaySelection_ID = ps.C_PaySelection_ID) "
+			+ "INNER JOIN C_BankAccountDoc bad ON (ps.C_BankAccount_ID = bad.C_BankAccount_ID AND d.PaymentRule = bad.PaymentRule) "
+			+ "WHERE d.C_PaySelectionCheck_ID = ? "
+			+ "LIMIT 1"
 		; //	info from BankAccount
 		int value = DB.getSQLValue(null, sql, paySelectionCheckId);
 		if (value <= 0) {
@@ -1006,11 +1008,12 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 	public static void validatePrintFormatByRemittance(int paySelectionCheckId) {
 		final String sql = "pf.Remittance_PrintFormat_ID " //	1
-			+ "FROM C_PaySelectionCheck d"
-			+ " INNER JOIN AD_PrintForm pf ON (d.AD_Client_ID=pf.AD_Client_ID)"
-			+ "WHERE d.C_PaySelectionCheck_ID = ?"
-			+ " AND pf.AD_Org_ID IN (0, d.AD_Org_ID) "
-			+ " ORDER BY pf.AD_Org_ID DESC"
+			+ "FROM C_PaySelectionCheck AS d "
+			+ "INNER JOIN AD_PrintForm pf ON (d.AD_Client_ID = pf.AD_Client_ID) "
+			+ "WHERE d.C_PaySelectionCheck_ID = ? "
+				+ "AND pf.AD_Org_ID IN (0, d.AD_Org_ID) "
+			+ "ORDER BY pf.AD_Org_ID DESC "
+			+ "LIMIT 1"
 		; //	info from BankAccount
 		int value = DB.getSQLValue(null, sql, paySelectionCheckId);
 		if (value <= 0) {

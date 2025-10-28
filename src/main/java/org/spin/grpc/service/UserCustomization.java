@@ -505,7 +505,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			String columnKey = entity.get_TableName() + "_ID";
 
 			// instance window
-			String sql = "SELECT AD_WindowCustom_ID FROM AD_WindowCustom WHERE AD_Window_ID = ? AND " + columnKey + " = ? ";
+			final String sql = "SELECT AD_WindowCustom_ID FROM AD_WindowCustom WHERE AD_Window_ID = ? AND " + columnKey + " = ? LIMIT 1";
 			int customWindowId = DB.getSQLValueEx(
 				transactionName,
 				sql,
@@ -675,9 +675,8 @@ public class UserCustomization extends UserCustomizationImplBase {
 		);
 		String columnKey = entity.get_TableName() + "_ID";
 
-
 		// instance browse
-		String sql = "SELECT AD_Browse_ID FROM AD_BrowseCustom WHERE AD_Browse_ID = ? AND " + columnKey + " = ? ";
+		final String sql = "SELECT AD_Browse_ID FROM AD_BrowseCustom WHERE AD_Browse_ID = ? AND " + columnKey + " = ? LIMIT 1";
 		int customBrowseId = DB.getSQLValueEx(
 			null,
 			sql,
@@ -845,7 +844,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 		String columnKey = entity.get_TableName() + "_ID";
 
 		// instance process
-		String sql = "SELECT AD_ProcessCustom_ID FROM AD_ProcessCustom WHERE AD_Process_ID = ? AND " + columnKey + " = ? ";
+		final String sql = "SELECT AD_ProcessCustom_ID FROM AD_ProcessCustom WHERE AD_Process_ID = ? AND " + columnKey + " = ? LIMIT 1";
 		int customProcessId = DB.getSQLValueEx(
 			null,
 			sql,

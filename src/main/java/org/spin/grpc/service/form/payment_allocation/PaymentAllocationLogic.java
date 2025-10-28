@@ -1208,7 +1208,8 @@ public class PaymentAllocationLogic {
 			//  Invoice variables
 			int C_Invoice_ID = invoice.getId();
 			String sql = "SELECT invoiceOpen(C_Invoice_ID, 0) "
-				+ "FROM C_Invoice WHERE C_Invoice_ID = ?"
+				+ "FROM C_Invoice "
+				+ "WHERE C_Invoice_ID = ?"
 			;
 			BigDecimal open = DB.getSQLValueBD(transactionName, sql, C_Invoice_ID);
 			if (open != null && open.signum() == 0) {

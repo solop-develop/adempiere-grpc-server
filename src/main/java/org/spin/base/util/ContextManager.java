@@ -30,10 +30,8 @@ import org.compiere.model.MClient;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLanguage;
 import org.compiere.util.CCache;
-import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -404,41 +402,5 @@ public class ContextManager {
 		//	Default
 		return MCountry.getDefault(Env.getCtx());
 	}
-	
-	/**
-	 * Get Default from language
-	 * @param language
-	 * @return
-	 */
-	public static String getDefaultLanguage(String language) {
-		MClient client = MClient.get(Env.getCtx());
-		String clientLanguage = client.getAD_Language();
-		if(!Util.isEmpty(clientLanguage)
-				&& Util.isEmpty(language)) {
-			return clientLanguage;
-		}
-		String defaultLanguage = language;
-		if(Util.isEmpty(language)) {
-			language = Language.AD_Language_en_US;
-		}
-		//	Using es / en instead es_VE / en_US
-		//	get default
-		if(language.length() == 2) {
-			defaultLanguage = languageCache.get(language);
-			if(!Util.isEmpty(defaultLanguage)) {
-				return defaultLanguage;
-			}
-			defaultLanguage = DB.getSQLValueString(null, "SELECT AD_Language "
-					+ "FROM AD_Language "
-					+ "WHERE LanguageISO = ? "
-					+ "AND (IsSystemLanguage = 'Y' OR IsBaseLanguage = 'Y')", language);
-			//	Set language
-			languageCache.put(language, defaultLanguage);
-		}
-		if(Util.isEmpty(defaultLanguage)) {
-			defaultLanguage = Language.AD_Language_en_US;
-		}
-		//	Default return
-		return defaultLanguage;
-	}
+
 }

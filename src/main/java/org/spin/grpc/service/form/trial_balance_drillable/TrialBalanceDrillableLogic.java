@@ -306,7 +306,7 @@ public class TrialBalanceDrillableLogic {
 
 
 		int clientId = Env.getAD_Client_ID(context);
-		int accountingSchemaId = DB.getSQLValue(null, "SELECT MIN(C_AcctSchema_ID) FROM C_AcctSchema WHERE AD_CLient_ID=?", clientId);
+		int accountingSchemaId = DB.getSQLValue(null, "SELECT MIN(C_AcctSchema_ID) FROM C_AcctSchema WHERE AD_CLient_ID = ?", clientId);
 		// if (accountingSchemaId <= 0) {
 		// 	accountingSchemaId = Env.getContextAsInt(context, "$C_AcctSchema_ID");
 		// }
@@ -377,7 +377,7 @@ public class TrialBalanceDrillableLogic {
 		String accountingToValue = null;
 
 		if (accountingFromId > 0 || accountingToId > 0) {
-			final String sqlAccountingValue = "SELECT Value from C_ElementValue WHERE C_ElementValue_ID = ?";
+			final String sqlAccountingValue = "SELECT Value FROM C_ElementValue WHERE C_ElementValue_ID = ? LIMIT 1";
 			accountingFromValue = DB.getSQLValueString(null, sqlAccountingValue, accountingFromId);
 			accountingToValue = DB.getSQLValueString(null, sqlAccountingValue, accountingToId);
 
