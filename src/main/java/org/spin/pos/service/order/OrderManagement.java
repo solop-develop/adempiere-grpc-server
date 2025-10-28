@@ -225,71 +225,89 @@ public class OrderManagement {
 
 
 	public static MOrder processOrder(MPOS pos, int orderId, boolean isRefundOpen) {
-		if(orderId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
+		MOrder salesOrderControl = OrderUtil.validateAndGetOrder(orderId, null);
+		if (salesOrderControl.isProcessing()) {
+			throw new AdempiereException("@C_Order_ID@ (#" + salesOrderControl.getDocumentNo() + ") @Processing@");
 		}
+		if (salesOrderControl.isProcessed() || !DocumentUtil.isDrafted(salesOrderControl)) {
+			throw new AdempiereException("@C_Order_ID@ (#" + salesOrderControl.getDocumentNo() + ") @Processed@");
+		}
+		salesOrderControl.setProcessing(true);
+		salesOrderControl.saveEx();
+
 		AtomicReference<MOrder> orderReference = new AtomicReference<MOrder>();
-		Trx.run(transactionName -> {
-			MOrder salesOrder = OrderUtil.validateAndGetOrder(orderId, transactionName);
-			final int userId = Env.getAD_User_ID(pos.getCtx());
-			if (salesOrder.get_ValueAsBoolean("IsManualDocument")) {
-				boolean isAllowsManualDocument = AccessManagement.getBooleanValueFromPOS(pos, userId, "IsAllowsCreateManualDocuments");
-				if (!isAllowsManualDocument) {
-					throw new AdempiereException("@ActionNotAllowedHere@: @IsAllowsCreateManualDocuments@");
+		try {
+			Trx.run(transactionName -> {
+				MOrder salesOrder = OrderUtil.validateAndGetOrder(orderId, transactionName);
+				final int userId = Env.getAD_User_ID(pos.getCtx());
+				if (salesOrder.get_ValueAsBoolean("IsManualDocument")) {
+					boolean isAllowsManualDocument = AccessManagement.getBooleanValueFromPOS(pos, userId, "IsAllowsCreateManualDocuments");
+					if (!isAllowsManualDocument) {
+						throw new AdempiereException("@ActionNotAllowedHere@: @IsAllowsCreateManualDocuments@");
+					}
 				}
-			}
 
-			// Verify online payments
-			int onlinePaymentsWithoutApproved = PaymentManagement.isOrderWithoutOnlinePaymentApproved(
-				salesOrder.getC_Order_ID()
-			);
-			if (onlinePaymentsWithoutApproved > 0) {
-				throw new AdempiereException("@PaymentFormController: PaymentNotProcessed@");
-			}
-
-			CashManagement.validatePreviousCashClosing(pos, salesOrder.getDateOrdered(), transactionName);
-			CashManagement.getCurrentCashClosing(pos, salesOrder.getDateOrdered(), true, transactionName);
-
-			List<PO> paymentReferences = getPaymentReferences(salesOrder);
-			if(!OrderUtil.isValidOrder(salesOrder)) {
-				throw new AdempiereException("@ActionNotAllowedHere@");
-			}
-			boolean isOpenToRefund = isRefundOpen;
-			BigDecimal paymentReferenceAmount = getPaymentReferenceAmount(salesOrder, paymentReferences);
-			if(paymentReferenceAmount.compareTo(Env.ZERO) != 0) {
-				isOpenToRefund = true;
-			}
-			if(DocumentUtil.isDrafted(salesOrder)) {
-				// In case the Order is Invalid, set to In Progress; otherwise it will not be completed
-				if (salesOrder.getDocStatus().equalsIgnoreCase(MOrder.STATUS_Invalid))  {
-					salesOrder.setDocStatus(MOrder.STATUS_InProgress);
+				// Verify online payments
+				int onlinePaymentsWithoutApproved = PaymentManagement.isOrderWithoutOnlinePaymentApproved(
+					salesOrder.getC_Order_ID()
+				);
+				if (onlinePaymentsWithoutApproved > 0) {
+					throw new AdempiereException("@PaymentFormController: PaymentNotProcessed@");
 				}
-				//	Set default values
-				salesOrder.setDocAction(DocAction.ACTION_Complete);
-				OrderUtil.setCurrentDate(salesOrder);
+
+				CashManagement.validatePreviousCashClosing(pos, salesOrder.getDateOrdered(), transactionName);
+				CashManagement.getCurrentCashClosing(pos, salesOrder.getDateOrdered(), true, transactionName);
+
+				List<PO> paymentReferences = getPaymentReferences(salesOrder);
+				if(!OrderUtil.isValidOrder(salesOrder)) {
+					throw new AdempiereException("@ActionNotAllowedHere@");
+				}
+				boolean isOpenToRefund = isRefundOpen;
+				BigDecimal paymentReferenceAmount = getPaymentReferenceAmount(salesOrder, paymentReferences);
+				if(paymentReferenceAmount.compareTo(Env.ZERO) != 0) {
+					isOpenToRefund = true;
+				}
+				if(DocumentUtil.isDrafted(salesOrder)) {
+					// In case the Order is Invalid, set to In Progress; otherwise it will not be completed
+					if (salesOrder.getDocStatus().equalsIgnoreCase(MOrder.STATUS_Invalid))  {
+						salesOrder.setDocStatus(MOrder.STATUS_InProgress);
+					}
+					//	Set default values
+					salesOrder.setDocAction(DocAction.ACTION_Complete);
+					OrderUtil.setCurrentDate(salesOrder);
+					salesOrder.saveEx();
+					//	Update Process if exists
+					if (!salesOrder.processIt(MOrder.DOCACTION_Complete)) {
+						throw new AdempiereException("@ProcessFailed@ :" + salesOrder.getProcessMsg());
+					}
+					//	Release Order
+					int invoiceId = salesOrder.getC_Invoice_ID();
+					if(invoiceId > 0) {
+						salesOrder.setIsInvoiced(true);
+					}
+					salesOrder.set_ValueOfColumn("AssignedSalesRep_ID", null);
+					salesOrder.saveEx();
+				}
+
+				processPayments(salesOrder, pos, isOpenToRefund, transactionName);
+				//	Process all references
+				processPaymentReferences(salesOrder, pos, paymentReferences, transactionName);
+				//	Create
+				salesOrder.setProcessing(false);
 				salesOrder.saveEx();
-				//	Update Process if exists
-				if (!salesOrder.processIt(MOrder.DOCACTION_Complete)) {
-					throw new AdempiereException("@ProcessFailed@ :" + salesOrder.getProcessMsg());
-				}
-				//	Release Order
-				int invoiceId = salesOrder.getC_Invoice_ID();
-				if(invoiceId > 0) {
-					salesOrder.setIsInvoiced(true);
-				}
-				salesOrder.set_ValueOfColumn("AssignedSalesRep_ID", null);
-				salesOrder.saveEx();
-			}
+				orderReference.set(salesOrder);
+			});
+		} catch (Exception exception) {
+			// relauch original exception
+			throw exception;
+		} finally {
+			salesOrderControl.setProcessing(false);
+			salesOrderControl.saveEx();
+		}
 
-			processPayments(salesOrder, pos, isOpenToRefund, transactionName);
-			//	Process all references
-			processPaymentReferences(salesOrder, pos, paymentReferences, transactionName);
-			//	Create
-			orderReference.set(salesOrder);
-		});
 		return orderReference.get();
 	}
-	
+
 	public static MOrder createOrderFromOther(int posId, int salesRepresentativeId, int sourceOrderId) {
 		if(posId <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
@@ -328,7 +346,7 @@ public class OrderManagement {
 		});
 		return orderReference.get();
 	}
-	
+
 	public static MOrder createOrderFromRMA(int posId, int salesRepresentativeId, int sourceOrderId) {
 		if(posId <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
@@ -433,7 +451,7 @@ public class OrderManagement {
 		CashUtil.setCurrentDate(payment);
 		payment.saveEx(transactionName);
 	}
-	
+
 	private static void setDefaultValuesFromPOS(MPOS pos, MOrder salesOrder) {
 		salesOrder.setM_PriceList_ID(pos.getM_PriceList_ID());
 		salesOrder.setM_Warehouse_ID(pos.getM_Warehouse_ID());
@@ -458,7 +476,7 @@ public class OrderManagement {
 			salesOrder.setC_ConversionType_ID(pos.get_ValueAsInt(MOrder.COLUMNNAME_C_ConversionType_ID));
 		}
 	}
-	
+
 	/**
 	 * Process Payment references
 	 * @param salesOrder
@@ -516,7 +534,7 @@ public class OrderManagement {
 		//	
 		return new Query(order.getCtx(), "C_POSPaymentReference", "C_Order_ID = ? AND IsPaid = 'N' AND Processed = 'N'", order.get_TrxName()).setParameters(order.getC_Order_ID()).list();
 	}
-	
+
 	/**
 	 * Get Refund Reference Amount
 	 * @param order
@@ -527,9 +545,9 @@ public class OrderManagement {
 		Optional<BigDecimal> paymentReferenceAmount = paymentReferences.stream().map(refundReference -> {
 			return OrderUtil.getConvertedAmount(order, refundReference, ((BigDecimal) refundReference.get_Value("Amount")));
 		}).reduce(BigDecimal::add);
-        return paymentReferenceAmount.orElse(Env.ZERO);
-    }
-	
+		return paymentReferenceAmount.orElse(Env.ZERO);
+	}
+
 	private static void createCreditMemoReference(MOrder salesOrder, MPayment payment, String transactionName) {
 		if(payment.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Invoice_Reference_ID) <= 0) {
 			return;
@@ -543,7 +561,7 @@ public class OrderManagement {
 		creditMemo.setC_Payment_ID(payment.getC_Payment_ID());
 		creditMemo.saveEx(transactionName);
 	}
-	
+
 	/**
 	 * Create Credit Memo from payment
 	 * @param salesOrder
@@ -634,7 +652,7 @@ public class OrderManagement {
 			throw new AdempiereException("@POS.SalesRepAssigned@");
 		}
 	}
-	
+
 	/**
 	 * Process payment of Order
 	 * @param salesOrder
