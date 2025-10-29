@@ -353,10 +353,10 @@ public class IssueManagementLogic {
 
 		if (requestStatusCategoryId > 0) {
 			filtersList.add(requestStatusCategoryId);
-			whereClause = "R_StatusCategory_ID = ? ";
+			whereClause += "AND R_StatusCategory_ID = ? ";
 		} else if (requestTypeId > 0) {
 			filtersList.add(requestTypeId);
-			whereClause = "EXISTS ("
+			whereClause += "AND EXISTS ("
 				+ "SELECT * FROM R_RequestType rt "
 				+ "INNER JOIN R_StatusCategory sc "
 				+ "ON (rt.R_StatusCategory_ID = sc.R_StatusCategory_ID) "
