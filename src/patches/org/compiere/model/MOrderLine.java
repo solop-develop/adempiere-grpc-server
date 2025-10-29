@@ -881,6 +881,10 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 			setOrder (getParent());
 		if (m_M_PriceList_ID == 0)
 			setHeaderInfo(getParent());
+		if (getDateOrdered() == null)
+			setDateOrdered(getParent().getDateOrdered());
+		if (getDatePromised() == null)
+			setDatePromised(getParent().getDatePromised());
 		//Project
 		if (getC_Project_ID() <= 0) {
 			if (get_ValueAsInt("C_ProjectLine_ID") > 0) {
