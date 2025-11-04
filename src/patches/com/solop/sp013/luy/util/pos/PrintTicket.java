@@ -84,22 +84,21 @@ public class PrintTicket implements IPrintTicket {
 			if (invoiceFile != null) {
 				pdfList.add(invoiceFile);
 			}
-            MPOS pos = (MPOS)MTable.get(invoice.getCtx(), I_C_POS.Table_Name)
-					.getPO(handler.getPosId(), invoice.get_TrxName());
-            if (pos != null) {
-                if (pos.get_ValueAsBoolean("IsPrintCollet")){
-                    File collectFile = printCollect(invoice.getC_Order_ID(), invoice.get_TrxName());
-                    if (collectFile != null) {
-                        pdfList.add(collectFile);
-                    }
-                }
-                if (pos.get_ValueAsBoolean("IsPrintGiftCard")) {
+			if (handler.getPosId() > 0) {
+				MPOS pos = new MPOS(Env.getCtx(), handler.getPosId(), handler.getTransactionName());
+				if (pos.get_ValueAsBoolean("IsPrintCollet")){
+					File collectFile = printCollect(invoice.getC_Order_ID(), invoice.get_TrxName());
+					if (collectFile != null) {
+						pdfList.add(collectFile);
+					}
+				}
+				if (pos.get_ValueAsBoolean("IsPrintGiftCard")) {
 					List<File> giftCardsFiles = printGiftCard(invoice.getC_Order_ID(), invoice.get_TrxName());
 					if (giftCardsFiles != null) {
 						pdfList.addAll(giftCardsFiles);
 					}
-                }
-            }
+				}
+			}
             File resultPdf = null;
             try {
                 resultPdf = File.createTempFile("InvoicePrint", ".pdf");
