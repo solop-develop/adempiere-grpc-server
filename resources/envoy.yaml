@@ -41,7 +41,7 @@ static_resources:
           - name: envoy.filters.http.grpc_json_transcoder
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-              proto_descriptor: "/data/service_definition.pb"
+              proto_descriptor: "/data/adempiere-grpc-server.dsc"
               services:
                 # package.service
                 - bank_statement_match.BankStatementMatch
