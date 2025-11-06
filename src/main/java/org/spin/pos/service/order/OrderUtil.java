@@ -61,7 +61,7 @@ public class OrderUtil {
 			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
 		MOrder order = new MOrder(Env.getCtx(), orderId, transactionName);
-		if (order.getC_Order_ID() <= 0) {
+		if (order == null || order.getC_Order_ID() <= 0) {
 			throw new AdempiereException("@C_Order_ID@ (" + orderId + ") @NotFound@");
 		}
 		return order;

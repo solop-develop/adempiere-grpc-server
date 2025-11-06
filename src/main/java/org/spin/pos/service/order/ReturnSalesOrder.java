@@ -1,17 +1,17 @@
 /*************************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it    		 *
+ * This program is free software; you can redistribute it and/or modify it           *
  * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope   		 *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 		 *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           		 *
- * See the GNU General Public License for more details.                       		 *
- * You should have received a copy of the GNU General Public License along    		 *
- * with this program; if not, write to the Free Software Foundation, Inc.,    		 *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     		 *
- * For the text or an alternative of this public license, you may reach us    		 *
+ * by the Free Software Foundation. This program is distributed in the hope          *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
+ * See the GNU General Public License for more details.                              *
+ * You should have received a copy of the GNU General Public License along           *
+ * with this program; if not, write to the Free Software Foundation, Inc.,           *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
+ * For the text or an alternative of this public license, you may reach us           *
  * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com				  		                 *
+ * Contributor(s): Yamel Senih www.erpya.com                                         *
  *************************************************************************************/
 package org.spin.pos.service.order;
 
@@ -31,14 +31,16 @@ import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.base.util.DocumentUtil;
+import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.service.grpc.util.value.BooleanManager;
 
 /**
  * This class was created for return a order by product
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class ReturnSalesOrder {
-	
+
 	/**
 	 * Create a Return order and cancel all payments
 	 * @param posId
@@ -49,13 +51,11 @@ public class ReturnSalesOrder {
 	 * @return
 	 */
 	public static MOrder createRMAFromOrder(int posId, int sourceOrderId, int salesRepresentativeId, boolean copyLines, String description) {
-		if(posId <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
+		MPOS pos = POS.validateAndGetPOS(posId, true);
+
 		if(sourceOrderId <= 0) {
 			throw new AdempiereException("@C_Order_ID@ @NotFound@");
 		}
-		MPOS pos = new MPOS(Env.getCtx(), posId, null);
 		MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, null);
 		//	Validate source document
 		if(DocumentUtil.isDrafted(sourceOrder) 
@@ -64,11 +64,15 @@ public class ReturnSalesOrder {
 				|| !OrderUtil.isValidOrder(sourceOrder)) {
 			throw new AdempiereException("@ActionNotAllowedHere@");
 		}
-		MOrder returnOrder = new Query(Env.getCtx(), I_C_Order.Table_Name, 
-				"DocStatus = 'DR' "
-				+ "AND " + ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID + " = ? ", null)
-				.setParameters(sourceOrderId)
-				.first();
+		MOrder returnOrder = new Query(
+			Env.getCtx(),
+			I_C_Order.Table_Name,
+			"DocStatus = 'DR' AND " + ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID + " = ? ",
+			null
+		)
+			.setParameters(sourceOrderId)
+			.first()
+		;
 		if(returnOrder != null) {
 			return returnOrder;
 		}
@@ -89,7 +93,7 @@ public class ReturnSalesOrder {
 		});
 		return orderReference.get();
 	}
-    
+
 	public static MOrderLine updateRMALine(int rmaLineId, BigDecimal quantity, String descrption) {
 		AtomicReference<MOrderLine> returnOrderReference = new AtomicReference<MOrderLine>();
 		Trx.run(transactionName -> {
@@ -120,7 +124,7 @@ public class ReturnSalesOrder {
 		});
 		return returnOrderReference.get();
 	}
-	
+
     /**
      * Create a RMA Line from Order
      * @param rmaId
@@ -190,12 +194,11 @@ public class ReturnSalesOrder {
 	 * @see {@link ReverseSalesTransaction#processReverseSalesOrder} method
 	 * @return
 	 */
-	public static MOrder processRMA(int rmaId, int posId, String documentAction, String description) {
+	public static MOrder processRMA(int rmaId, int posId, String documentAction, String description, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo) {
+		POS.validateAndGetPOS(posId, true);
+
 		if(rmaId <= 0) {
-			throw new AdempiereException("@M_RMA_ID@ @NotFound@");
-		}
-		if(posId <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+			throw new AdempiereException("@FillMandatory@ @M_RMA_ID@");
 		}
 		if(Util.isEmpty(documentAction)) {
 			throw new AdempiereException("@DocAction@ @IsMandatory@");
@@ -207,26 +210,48 @@ public class ReturnSalesOrder {
 		) {
 			throw new AdempiereException("@DocAction@ @Invalid@");
 		}
+
 		AtomicReference<MOrder> rmaReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
-			MOrder rma = new MOrder(Env.getCtx(), rmaId, transactionName);
-			if(rma.isProcessed()) {
+			MOrder returnOrder = RMAUtil.validateAndGetRMA(rmaId, transactionName);
+			if(returnOrder.isProcessed()) {
 				throw new AdempiereException("@M_RMA_ID@ @Processed@");
 			}
-			Optional.ofNullable(description).ifPresent(rma::addDescription);
-			if (!rma.processIt(documentAction)) {
-				throw new AdempiereException("@ProcessFailed@ :" + rma.getProcessMsg());
+
+			final boolean isManualReturnOrder = returnOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
+			if (isManualReturnOrder) {
+				final int sourceOrderId = returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID);
+				MOrder salesOrder = OrderUtil.validateAndGetOrder(sourceOrderId, transactionName);
+				final boolean isManualSalesOrder = salesOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
+				if (isManualSalesOrder != isManualReturnOrder) {
+					throw new AdempiereException(
+						"@M_RMA_ID@ (" + returnOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualReturnOrder)
+						+ " | " +
+						"@C_Order_ID@ (" + salesOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualSalesOrder)
+					);
+				}
+
+				returnOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
+				returnOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
+				// salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
+				returnOrder.saveEx();
 			}
-			rma.saveEx(transactionName);
+
+			Optional.ofNullable(description).ifPresent(returnOrder::addDescription);
+
+			if (!returnOrder.processIt(documentAction)) {
+				throw new AdempiereException("@ProcessFailed@ :" + returnOrder.getProcessMsg());
+			}
+			returnOrder.saveEx(transactionName);
 			//	Generate Return
-			RMAUtil.generateReturnFromRMA(rma, transactionName);
+			RMAUtil.generateReturnFromRMA(returnOrder, transactionName);
 			//	Generate Credit Memo
-			RMAUtil.generateCreditMemoFromRMA(rma, transactionName);
-			if(!rma.processIt(MOrder.DOCACTION_Close)) {
-				throw new AdempiereException("@ProcessFailed@ :" + rma.getProcessMsg());
+			RMAUtil.generateCreditMemoFromRMA(returnOrder, transactionName);
+			if(!returnOrder.processIt(MOrder.DOCACTION_Close)) {
+				throw new AdempiereException("@ProcessFailed@ :" + returnOrder.getProcessMsg());
 			}
-			rma.saveEx(transactionName);
-			rmaReference.set(rma);
+			returnOrder.saveEx(transactionName);
+			rmaReference.set(returnOrder);
 		});
 		return rmaReference.get();
 	}

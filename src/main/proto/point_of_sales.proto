@@ -87,6 +87,12 @@ service Store {
 			body: "*"
 		};
 	}
+	rpc CopyOrder(CopyOrderRequest) returns (Order) {
+		option (google.api.http) = {
+			post: "/point-of-sales/orders/{source_order_id}/copy",
+			body: "*"
+		};
+	}
 	rpc GetOrder(GetOrderRequest) returns (Order) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/orders/{id}"
@@ -622,65 +628,60 @@ service Store {
 	rpc ListCampaigns(ListCampaignsRequest) returns (ListCampaignsResponse) {
 		option (google.api.http) = { get: "/point-of-sales/terminals/{pos_id}/campaigns" };
 	}
-	//	Copy Order
-	rpc CopyOrder(CopyOrderRequest) returns (Order) {
-		option (google.api.http) = {
-			post: "/point-of-sales/orders/{source_order_id}/copy",
-			body: "*"
-		};
-	}
-	//	Return
-	//	Create Return
+
+	//	Create Return Material Approval
 	rpc CreateRMA(CreateRMARequest) returns (RMA) {
 		option (google.api.http) = {
 			post: "/point-of-sales/returns",
 			body: "*"
 		};
 	}
-	//	Delete Return
 	rpc DeleteRMA(DeleteRMARequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/returns/{id}" };
-	}
-	//	Create Return Line
-	rpc CreateRMALine(CreateRMALineRequest) returns (RMALine) {
 		option (google.api.http) = {
-			post: "/point-of-sales/returns/{rma_id}/lines",
-			body: "*"
+			delete: "/point-of-sales/returns/{id}"
 		};
 	}
-	//	Delete Return Line
-	rpc DeleteRMALine(DeleteRMALineRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/point-of-sales/returns/{rma_id}/lines/{id}" };
-	}
-	//	Update RMA Line
-	rpc UpdateRMALine(UpdateRMALineRequest) returns (RMALine) {
-		option (google.api.http) = {
-			put: "/point-of-sales/returns/{rma_id}/lines/{id}",
-			body: "*"
-		};
-	}
-	//	List Return Line
-	rpc ListRMALines(ListRMALinesRequest) returns (ListRMALinesResponse) {
-		option (google.api.http) = { get: "/point-of-sales/returns/{rma_id}/lines" };
-	}
-	//	Process Return
 	rpc ProcessRMA(ProcessRMARequest) returns (RMA) {
 		option (google.api.http) = {
 			put: "/point-of-sales/returns/{rma_id}/process",
 			body: "*"
 		};
 	}
-	//	Create Order from RMA
 	rpc CreateOrderFromRMA(CreateOrderFromRMARequest) returns (Order) {
 		option (google.api.http) = {
 			post: "/point-of-sales/returns/{source_rma_id}/create-order",
 			body: "*"
 		};
 	}
+	rpc CreateRMALine(CreateRMALineRequest) returns (RMALine) {
+		option (google.api.http) = {
+			post: "/point-of-sales/returns/{rma_id}/lines",
+			body: "*"
+		};
+	}
+	rpc ListRMALines(ListRMALinesRequest) returns (ListRMALinesResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/returns/{rma_id}/lines"
+		};
+	}
+	rpc UpdateRMALine(UpdateRMALineRequest) returns (RMALine) {
+		option (google.api.http) = {
+			put: "/point-of-sales/returns/{rma_id}/lines/{id}",
+			body: "*"
+		};
+	}
+	rpc DeleteRMALine(DeleteRMALineRequest) returns (google.protobuf.Empty) {
+		option (google.api.http) = {
+			delete: "/point-of-sales/returns/{rma_id}/lines/{id}"
+		};
+	}
+
 	//	Credit Memo as Payment Method
 	//	List Refund References
 	rpc ListCustomerCredits(ListCustomerCreditsRequest) returns (ListCustomerCreditsResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/customers/{customer_id}/credits" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/customers/{customer_id}/credits"
+		};
 	}
 
 	//	Gift Card
@@ -938,72 +939,8 @@ message PrintPreviewCashClosingResponse {
 }
 
 
-// Request for create a Shipment from Order
-message CreateShipmentRequest {
-	int32 order_id = 1;
-	int32 sales_representative_id = 2;
-	int32 pos_id = 3;
-	bool is_create_lines_from_order = 4;
-}
 
-// Request for create a Shipment from Order
-message GetOpenShipmentRequest {
-	int32 order_id = 1;
-	int32 pos_id = 2;
-}
-
-// Request for delete a Shipment
-message DeleteShipmentRequest {
-	int32 shipment_id = 1;
-	int32 pos_id = 2;
-}
-
-// Request for delete a Shipment Line
-message DeleteShipmentLineRequest {
-	int32 shipment_id = 1;
-	int32 id = 2;
-	int32 pos_id = 3;
-}
-
-// Request for delete a Shipment Line
-message UpdateShipmentLineRequest {
-	int32 shipment_id = 1;
-	int32 id = 2;
-	string description = 3;
-	string quantity = 4;
-	int32 pos_id = 5;
-}
-
-// Request for Create a Shipment Line
-message CreateShipmentLineRequest {
-	int32 shipment_id = 1;
-	int32 order_line_id = 2;
-	string description = 3;
-	string quantity = 4;
-	int32 pos_id = 5;
-}
-
-//	List Shipment Lines Request
-message ListShipmentLinesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	int32 shipment_id = 8;
-	int32 pos_id = 9;
-}
-
-//	List shipment Lines
-message ListShipmentLinesResponse {
-	int64 record_count = 1;
-	repeated ShipmentLine shipment_lines = 2;
-	string next_page_token = 3;
-}
-
-// Shipment
+//  Shipment from Order
 message Shipment {
 	int32 id = 1;
 	string document_no = 2;
@@ -1018,30 +955,22 @@ message Shipment {
 	bool is_manual_document = 11;
 	string manual_shipment_document_no = 12;
 }
-
-// Request for Process a Shipment
-message ProcessShipmentRequest {
-	int32 id = 1;
-	string description = 2;
-	string document_action = 3;
-	int32 pos_id = 4;
+message CreateShipmentRequest {
+	int32 order_id = 1;
+	int32 sales_representative_id = 2;
+	int32 pos_id = 3;
+	bool is_create_lines_from_order = 4;
+}
+message GetOpenShipmentRequest {
+	int32 order_id = 1;
+	int32 pos_id = 2;
+}
+message DeleteShipmentRequest {
+	int32 shipment_id = 1;
+	int32 pos_id = 2;
 }
 
-// Request for Reverse a Sales Transaction
-message ReverseSalesRequest {
-	int32 pos_id = 1;
-	int32 id = 2;
-	string description = 3;
-}
-message ProcessReverseSalesRequest {
-	int32 pos_id = 1;
-	int32 id = 2;
-	int32 source_order_id = 3;
-	string description = 4;
-}
-
-
-// Sales Shipment Line
+// Shipment Line
 message ShipmentLine {
 	int32 id = 1;
 	int32 order_line_id = 2;
@@ -1054,6 +983,72 @@ message ShipmentLine {
 	core_functionality.ProductConversion uom = 9;
 	core_functionality.ProductConversion product_uom = 10;
 }
+message CreateShipmentLineRequest {
+	int32 shipment_id = 1;
+	int32 order_line_id = 2;
+	string description = 3;
+	string quantity = 4;
+	int32 pos_id = 5;
+}
+message ListShipmentLinesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 shipment_id = 8;
+	int32 pos_id = 9;
+}
+message ListShipmentLinesResponse {
+	int64 record_count = 1;
+	repeated ShipmentLine shipment_lines = 2;
+	string next_page_token = 3;
+}
+message UpdateShipmentLineRequest {
+	int32 shipment_id = 1;
+	int32 id = 2;
+	string description = 3;
+	string quantity = 4;
+	int32 pos_id = 5;
+}
+message DeleteShipmentLineRequest {
+	int32 shipment_id = 1;
+	int32 id = 2; // shipment line id
+	int32 pos_id = 3;
+}
+
+
+
+// Request for Process a Shipment
+message ProcessShipmentRequest {
+	int32 id = 1;
+	string description = 2;
+	string document_action = 3;
+	int32 pos_id = 4;
+}
+
+// Reverse a Sales Transaction
+message ReverseSalesRequest {
+	int32 pos_id = 1;
+	int32 id = 2; // sales order
+	string description = 3;
+	string manual_invoice_document_no = 4;
+	string manual_shipment_document_no = 5;
+	string manual_movement_document_no = 6;
+}
+message ProcessReverseSalesRequest {
+	int32 pos_id = 1;
+	int32 id = 2; // return order
+	int32 source_order_id = 3; // sales order
+	string description = 4;
+	string manual_invoice_document_no = 5;
+	string manual_shipment_document_no = 6;
+	string manual_movement_document_no = 7;
+}
+
+
 
 // Bank
 message Bank {
@@ -2005,7 +2000,7 @@ message PointOfSalesRequest {
 
 
 
-// Request for create a order
+// Sales Order
 message CreateOrderRequest {
 	int32 pos_id = 1;
 	int32 customer_id = 2;
@@ -2015,22 +2010,21 @@ message CreateOrderRequest {
 	int32 sales_representative_id = 6;
 	int32 campaign_id = 7;
 }
-
-// Request for release a order
+message CopyOrderRequest {
+	int32 source_order_id = 1;
+	int32 sales_representative_id = 2;
+	int32 pos_id = 3;
+}
 message ReleaseOrderRequest {
 	int32 pos_id = 1;
 	int32 sales_representative_id = 2;
 	int32 id = 3;
 }
-
-// Request for hold a order
 message HoldOrderRequest {
 	int32 pos_id = 1;
 	int32 sales_representative_id = 2;
 	int32 id = 3;
 }
-
-// Request for process a order
 message ProcessOrderRequest {
 	int32 pos_id = 1;
 	int32 id = 2;
@@ -2443,7 +2437,7 @@ message CreateOrderLineRequest {
 message UpdateManualOrderRequest {
 	int32 id = 1;
 	int32 pos_id = 2;
-	string manual_invocice_document_no = 3;
+	string manual_invoice_document_no = 3;
 	string manual_shipment_document_no = 4;
 	string manual_movement_document_no = 5;
 }
@@ -2506,7 +2500,7 @@ message Order {
 	bool is_processing = 33;
 	bool is_online_payment_approved = 34;
 	bool is_manual_document = 35;
-	string manual_invocice_document_no = 36;
+	string manual_invoice_document_no = 36;
 	string manual_shipment_document_no = 37;
 	string manual_movement_document_no = 38;
 }
@@ -2787,44 +2781,28 @@ message ListCampaignsResponse {
 	string next_page_token = 3;
 }
 
-//	Copy Order
-// Request for Copy a Order from Source Order
-message CopyOrderRequest {
-	int32 source_order_id = 1;
-	int32 sales_representative_id = 2;
-	int32 pos_id = 3;
-}
 
-//	Return Order
 
-// Request for get a Return from Order
+// Return Material Approval (RMA)
 message GetOpenRMARequest {
 	int32 source_order_id = 1;
 	int32 pos_id = 2;
 }
-
-// Request for create a Return from Order
 message CreateRMARequest {
 	int32 source_order_id = 1;
 	int32 sales_representative_id = 2;
 	int32 pos_id = 3;
 	bool is_create_lines_from_order = 4;
 }
-
-// Request for delete a Return
 message DeleteRMARequest {
 	int32 id = 1;
 	int32 pos_id = 2;
 }
-
-// Request for delete a Return Line
 message DeleteRMALineRequest {
 	int32 id = 1;
 	int32 pos_id = 2;
 	int32 rma_id = 3;
 }
-
-// Request for delete a Return Line
 message UpdateRMALineRequest {
 	int32 id = 1;
 	string description = 2;
@@ -2832,8 +2810,6 @@ message UpdateRMALineRequest {
 	int32 pos_id = 4;
 	int32 rma_id = 5;
 }
-
-// Request for Create a Return Line
 message CreateRMALineRequest {
 	int32 rma_id = 1;
 	int32 source_order_line_id = 2;
@@ -2841,8 +2817,6 @@ message CreateRMALineRequest {
 	string quantity = 4;
 	int32 pos_id = 5;
 }
-
-//	List Return Lines Request
 message ListRMALinesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -2854,60 +2828,58 @@ message ListRMALinesRequest {
 	int32 pos_id = 8;
 	int32 rma_id = 9;
 }
-
-//	List RMA Lines
 message ListRMALinesResponse {
 	int64 record_count = 1;
 	repeated RMALine rma_lines = 2;
 	string next_page_token = 3;
 }
-
-// Request for Process a Return
 message ProcessRMARequest {
-	int32 rma_id = 1;
-	string description = 2;
-	string document_action = 3;
-	int32 pos_id = 4;
+	int32 pos_id = 1;
+	int32 rma_id = 2;
+	string description = 3;
+	string document_action = 4;
+	string manual_invoice_document_no = 5;
+	string manual_shipment_document_no = 6;
+	string manual_movement_document_no = 7;
 }
-
-// Request for Create a new Sales Order from a RMA
 message CreateOrderFromRMARequest {
 	int32 source_rma_id = 1;
 	int32 sales_representative_id = 2;
 	int32 pos_id = 3;
 }
-
-// Return Order
 message RMA {
 	int32 id = 1;
-	string document_no = 2;
-	core_functionality.DocumentType document_type = 3;
-	core_functionality.SalesRepresentative sales_representative = 4;
-	DocumentStatus document_status = 5;
-	core_functionality.PriceList price_list = 6;
-	core_functionality.Warehouse warehouse = 7;
-	string total_lines = 8;
-	string grand_total = 9;
-	string tax_amount = 10;
-	string discount_amount = 11;
-	google.protobuf.Timestamp date_ordered = 12;
-	Customer customer = 13;
-	bool is_delivered = 14;
-	string order_reference = 15;
-	string description = 16;
-	Campaign campaign = 17;
-	string display_currency_rate = 18;
-	string open_amount = 19;
-	string payment_amount = 20;
-	string refund_amount = 21;
-	string charge_amount = 22;
-	string credit_amount = 23;
-	int32 source_order_id = 24;
-	bool is_processed = 25;
-	bool is_processing = 26;
+	string uuid = 2;
+	string document_no = 3;
+	core_functionality.DocumentType document_type = 4;
+	core_functionality.SalesRepresentative sales_representative = 5;
+	DocumentStatus document_status = 6;
+	core_functionality.PriceList price_list = 7;
+	core_functionality.Warehouse warehouse = 8;
+	string total_lines = 9;
+	string grand_total = 10;
+	string tax_amount = 11;
+	string discount_amount = 12;
+	google.protobuf.Timestamp date_ordered = 13;
+	Customer customer = 14;
+	bool is_delivered = 15;
+	string order_reference = 16;
+	string description = 17;
+	Campaign campaign = 18;
+	string display_currency_rate = 19;
+	string open_amount = 20;
+	string payment_amount = 21;
+	string refund_amount = 22;
+	string charge_amount = 23;
+	string credit_amount = 24;
+	int32 source_order_id = 25;
+	bool is_processed = 26;
+	bool is_processing = 27;
+	bool is_manual_document = 28;
+	string manual_invoice_document_no = 29;
+	string manual_shipment_document_no = 30;
+	string manual_movement_document_no = 31;
 }
-
-// Return Order Line
 message RMALine {
 	int32 id = 1;
 	core_functionality.Product product = 2;
@@ -2943,6 +2915,8 @@ message RMALine {
 	int32 source_order_line_id = 31;
 }
 
+
+
 // Customer Credit Memo
 message CreditMemo {
 	int32 id = 1;
@@ -2955,7 +2929,6 @@ message CreditMemo {
 	bool is_processed = 8;
 	bool is_processing = 9;
 }
-
 message ListCustomerCreditsRequest {
 	string filters = 1;
 	string sort_by = 2;
