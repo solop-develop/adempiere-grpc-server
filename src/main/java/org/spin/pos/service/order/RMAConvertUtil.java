@@ -12,8 +12,7 @@
  * You should have received a copy of the GNU General Public License                *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.            *
  ************************************************************************************/
-
-package org.spin.pos.util;
+package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,7 +25,6 @@ import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
-import org.compiere.model.MOrderTax;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MPriceList;
@@ -36,119 +34,65 @@ import org.compiere.model.MStorage;
 import org.compiere.model.MTax;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.MUser;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
-import org.spin.backend.grpc.pos.Order;
-import org.spin.backend.grpc.pos.OrderLine;
+import org.spin.backend.grpc.pos.RMA;
+import org.spin.backend.grpc.pos.RMALine;
 import org.spin.base.util.ConvertUtil;
-import org.spin.grpc.service.TimeControl;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.service.customer.CustomerConvertUtil;
-import org.spin.pos.service.order.OrderUtil;
-import org.spin.pos.service.payment.PaymentManagement;
+import org.spin.pos.util.ColumnsAdded;
+import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.StringManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
-/**
- * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
- * Sales Order Convert Util for backend of Point Of Sales form
- */
-public class OrderConverUtil {
+public class RMAConvertUtil {
 
 	/**
-	 * Convert Order from entity
-	 * @param orderId
-	 * @return
-	 */
-	public static Order.Builder convertOder(int orderId) {
-		Order.Builder builder = Order.newBuilder();
-		if(orderId <= 0) {
-			return builder;
-		}
-		MOrder order = new MOrder(Env.getCtx(), orderId, null);
-		return OrderConverUtil.convertOrder(
-			order
-		);
-	}
-	/**
-	 * Convert Order from entity
+	 * Convert RMA
 	 * @param order
 	 * @return
 	 */
-	public static Order.Builder convertOrder(MOrder order) {
-		Order.Builder builder = Order.newBuilder();
+	public static RMA.Builder convertRMA(MOrder order) {
+		RMA.Builder builder = RMA.newBuilder();
 		if(order == null) {
 			return builder;
 		}
 		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), order.get_TrxName());
-		final int defaultDiscountChargeId = pos.get_ValueAsInt("DefaultDiscountCharge_ID");
-		// final int defaultGiftCardChargeId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_DefaultGiftCardCharge_ID);
-
-		BigDecimal totalTaxAmount = Arrays.stream(order.getTaxes(true))
-			// .filter(tax -> tax.getTaxAmt().signum() != 0)
-			.map(MOrderTax::getTaxAmt)
-			.reduce(BigDecimal.ZERO, BigDecimal::add)
-		;
-
+		int defaultDiscountChargeId = pos.get_ValueAsInt("DefaultDiscountCharge_ID");
 		MRefList reference = MRefList.get(Env.getCtx(), MOrder.DOCSTATUS_AD_REFERENCE_ID, order.getDocStatus(), null);
 		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
-		List<MOrderLine> orderLines = Arrays.asList(order.getLines(true, null));
+		List<MOrderLine> orderLines = Arrays.asList(order.getLines());
 		BigDecimal totalLines = orderLines.stream()
 			.filter(orderLine -> {
-				int chargeOrdeLineId = orderLine.getC_Charge_ID();
-				// if (chargeOrdeLineId <= 0) {
-				// 	return true;
-				// }
-				if (defaultDiscountChargeId <= 0) {
-					return true;
-				}
-				return chargeOrdeLineId != defaultDiscountChargeId; // && chargeOrdeLineId != defaultGiftCardChargeId;
+				return orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0;
 			})
 			.map(orderLine -> {
 				return Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO);
 			})
 			.reduce(BigDecimal.ZERO, BigDecimal::add)
-			.subtract(totalTaxAmount)
 		;
-
-		BigDecimal discountAmount = BigDecimal.ZERO;
-		if (defaultDiscountChargeId > 0) {
-			discountAmount = orderLines.stream()
-				.filter(orderLine -> {
-					int chargeOrdeLineId = orderLine.getC_Charge_ID();
-					if (chargeOrdeLineId <= 0) {
-						return false;
-					}
-					return chargeOrdeLineId == defaultDiscountChargeId;
-				})
-				.map(orderLine -> {
-					return Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO);
-				})
-				.reduce(BigDecimal.ZERO, BigDecimal::add)
-			;
-		}
-
+		BigDecimal discountAmount = orderLines.stream()
+			.filter(orderLine -> {
+				return orderLine.getC_Charge_ID() > 0 && orderLine.getC_Charge_ID() == defaultDiscountChargeId;
+			})
+			.map(orderLine -> {
+				return Optional.ofNullable(orderLine.getLineNetAmt()).orElse(Env.ZERO);
+			})
+			.reduce(BigDecimal.ZERO, BigDecimal::add)
+		;
 		BigDecimal lineDiscountAmount = orderLines.stream()
 			.filter(orderLine -> {
-				int chargeOrdeLineId = orderLine.getC_Charge_ID();
-				// if (chargeOrdeLineId <= 0) {
-				// 	return true;
-				// }
-				if (defaultDiscountChargeId <= 0) {
-					return true;
-				}
-				return chargeOrdeLineId != defaultDiscountChargeId; // && chargeOrdeLineId != defaultGiftCardChargeId;
+				return orderLine.getC_Charge_ID() != defaultDiscountChargeId || defaultDiscountChargeId == 0;
 			})
 			.map(orderLine -> {
 				BigDecimal priceActualAmount = Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO);
 				BigDecimal priceListAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO);
 				BigDecimal discountLine = priceListAmount.subtract(priceActualAmount)
 					.multiply(
-						Optional.ofNullable(
-							orderLine.getQtyOrdered()
-						)
-							.orElse(Env.ZERO)
+						Optional.ofNullable(orderLine.getQtyOrdered()).orElse(Env.ZERO)
 					)
 				;
 				return discountLine;
@@ -159,11 +103,11 @@ public class OrderConverUtil {
 		BigDecimal totalDiscountAmount = discountAmount.add(lineDiscountAmount);
 
 		//	
-		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order)
-			.stream()
+		Optional<BigDecimal> paidAmount = MPayment.getOfOrder(order).stream()
 			.map(payment -> {
 				BigDecimal paymentAmount = payment.getPayAmt();
-				if(paymentAmount.compareTo(Env.ZERO) == 0 && payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
+				if(paymentAmount.compareTo(Env.ZERO) == 0
+						&& payment.getTenderType().equals(MPayment.TENDERTYPE_CreditMemo)) {
 					MInvoice creditMemo = new Query(
 						payment.getCtx(),
 						MInvoice.Table_Name,
@@ -185,46 +129,45 @@ public class OrderConverUtil {
 			.collect(Collectors.reducing(BigDecimal::add))
 		;
 
+		List<PO> paymentReferencesList = OrderUtil.getPaymentReferencesList(order);
+		Optional<BigDecimal> paymentReferenceAmount = paymentReferencesList.stream()
+			.map(paymentReference -> {
+				BigDecimal amount = ((BigDecimal) paymentReference.get_Value("Amount"));
+				if(paymentReference.get_ValueAsBoolean("IsReceipt")) {
+					amount = amount.negate();
+				}
+				return ConvertUtil.getConvertedAmount(order, paymentReference, amount);
+			}).collect(Collectors.reducing(BigDecimal::add))
+		;
 		BigDecimal grandTotal = order.getGrandTotal();
-		BigDecimal grandTotalConverted = OrderUtil.getConvertedAmountTo(
-			order,
-			pos.get_ValueAsInt(
-				ColumnsAdded.COLUMNNAME_DisplayCurrency_ID
-			),
-			grandTotal
-		);
-
 		BigDecimal paymentAmount = Env.ZERO;
 		if(paidAmount.isPresent()) {
 			paymentAmount = paidAmount.get();
 		}
 
-		BigDecimal creditAmt = OrderUtil.getCreditAmount(order);
-		BigDecimal chargeAmt = OrderUtil.getChargeAmount(order);
-		BigDecimal totalPaymentAmount = OrderUtil.getTotalPaymentAmount(order);
-		final boolean isReturnOrder = order.isReturnOrder();
-		if (isReturnOrder) {
-			totalPaymentAmount = totalPaymentAmount.negate();
+		int standardPrecision = priceList.getStandardPrecision();
+
+		BigDecimal creditAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
+		Optional<BigDecimal> maybeCreditAmt = OrderUtil.getPaymentChargeOrCredit(order, true);
+		if (maybeCreditAmt.isPresent()) {
+			creditAmt = maybeCreditAmt.get()
+				.setScale(standardPrecision, RoundingMode.HALF_UP);
+		}
+		BigDecimal chargeAmt = BigDecimal.ZERO.setScale(standardPrecision, RoundingMode.HALF_UP);
+		Optional<BigDecimal> maybeChargeAmt = OrderUtil.getPaymentChargeOrCredit(order, false);
+		if (maybeChargeAmt.isPresent()) {
+			chargeAmt = maybeChargeAmt.get()
+				.setScale(standardPrecision, RoundingMode.HALF_UP);
 		}
 
-		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount));
-		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0 ? Env.ZERO : grandTotal.subtract(totalPaymentAmount).negate());
+		BigDecimal totalPaymentAmount = paymentAmount;
+		if(paymentReferenceAmount.isPresent()) {
+			totalPaymentAmount = totalPaymentAmount.subtract(paymentReferenceAmount.get());
+		}
+
+		BigDecimal openAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) < 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount));
+		BigDecimal refundAmount = (grandTotal.subtract(totalPaymentAmount).compareTo(Env.ZERO) > 0? Env.ZERO: grandTotal.subtract(totalPaymentAmount).negate());
 		BigDecimal displayCurrencyRate = ConvertUtil.getDisplayConversionRateFromOrder(order);
-
-		if (order.getC_Invoice_ID() > 0) {
-			MInvoice invoice = new MInvoice(order.getCtx(), order.getC_Invoice_ID(), order.get_TrxName());
-			builder.setInvoiceNo(
-				StringManager.getValidString(
-					invoice.getDocumentNo()
-				)
-			);
-		}
-
-		// Exists Online Payment Approved
-		boolean isOnlinePaymentApproved = PaymentManagement.isOrderWithOnlinePaymentApproved(
-			order.getC_Order_ID()
-		);
-
 		//	Convert
 		return builder
 			.setId(
@@ -234,6 +177,9 @@ public class OrderConverUtil {
 				StringManager.getValidString(
 					order.getUUID()
 				)
+			)
+			.setSourceOrderId(
+				order.getRef_Order_ID()
 			)
 			.setDocumentType(
 				CoreFunctionalityConvert.convertDocumentType(
@@ -293,21 +239,21 @@ public class OrderConverUtil {
 					order.getM_Warehouse_ID()
 				)
 			)
-			.setIsDelivered(
-				order.isDelivered()
-			)
+			.setIsDelivered(order.isDelivered())
 			.setDiscountAmount(
 				NumberManager.getBigDecimalToString(
-					Optional.ofNullable(totalDiscountAmount).orElse(Env.ZERO)
-						.setScale(
-							priceList.getStandardPrecision(),
-							RoundingMode.HALF_UP
-						)
+					Optional.ofNullable(totalDiscountAmount).orElse(Env.ZERO).setScale(
+						priceList.getStandardPrecision(),
+						RoundingMode.HALF_UP
+					)
 				)
 			)
 			.setTaxAmount(
 				NumberManager.getBigDecimalToString(
-					totalTaxAmount
+					grandTotal.subtract(totalLines.add(discountAmount)).setScale(
+						priceList.getStandardPrecision(),
+						RoundingMode.HALF_UP
+					)
 				)
 			)
 			.setTotalLines(
@@ -321,14 +267,6 @@ public class OrderConverUtil {
 			.setGrandTotal(
 				NumberManager.getBigDecimalToString(
 					grandTotal.setScale(
-						priceList.getStandardPrecision(),
-						RoundingMode.HALF_UP
-					)
-				)
-			)
-			.setGrandTotalConverted(
-				NumberManager.getBigDecimalToString(
-					grandTotalConverted.setScale(
 						priceList.getStandardPrecision(),
 						RoundingMode.HALF_UP
 					)
@@ -382,29 +320,14 @@ public class OrderConverUtil {
 				)
 			)
 			.setChargeAmount(
-				NumberManager.getBigDecimalToString(chargeAmt)
+				NumberManager.getBigDecimalToString(
+					chargeAmt
+				)
 			)
 			.setCreditAmount(
-				NumberManager.getBigDecimalToString(creditAmt)
-			)
-			.setIsOrder(
-				!isReturnOrder
-			)
-			.setSourceRmaId(
-				order.get_ValueAsInt(
-					ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID
+				NumberManager.getBigDecimalToString(
+					creditAmt
 				)
-			)
-			.setIsRma(
-				isReturnOrder
-			)
-			.setSourceOrderId(
-				order.get_ValueAsInt(
-					ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID
-				)
-			)
-			.setIsBindingOffer(
-				OrderUtil.isBindingOffer(order)
 			)
 			.setIsProcessed(
 				order.isProcessed()
@@ -412,7 +335,6 @@ public class OrderConverUtil {
 			.setIsProcessing(
 				order.isProcessing()
 			)
-			.setIsOnlinePaymentApproved(isOnlinePaymentApproved)
 			.setIsManualDocument(
 				order.get_ValueAsBoolean(
 					ColumnsAdded.COLUMNNAME_IsManualDocument
@@ -436,21 +358,15 @@ public class OrderConverUtil {
 	}
 
 
-
-	/**
-	 * Convert order line to stub
-	 * @param orderLine
-	 * @return
-	 */
-	public static OrderLine.Builder convertOrderLine(MOrderLine orderLine) {
-		OrderLine.Builder builder = OrderLine.newBuilder();
+	public static RMALine.Builder convertRMALine(MOrderLine orderLine) {
+		RMALine.Builder builder = RMALine.newBuilder();
 		if(orderLine == null) {
 			return builder;
 		}
 		MTax tax = MTax.get(Env.getCtx(), orderLine.getC_Tax_ID());
 		MOrder order = orderLine.getParent();
-		MPOS pos = new MPOS(Env.getCtx(), order.getC_POS_ID(), order.get_TrxName());
 		MPriceList priceList = MPriceList.get(Env.getCtx(), order.getM_PriceList_ID(), order.get_TrxName());
+		boolean isTaxIncluded = priceList.isTaxIncluded();
 		BigDecimal quantityEntered = orderLine.getQtyEntered();
 		BigDecimal quantityOrdered = orderLine.getQtyOrdered();
 		//	Units
@@ -461,35 +377,25 @@ public class OrderConverUtil {
 		BigDecimal discountRate = orderLine.getDiscount();
 		BigDecimal discountAmount = Optional.ofNullable(orderLine.getPriceList()).orElse(Env.ZERO).subtract(Optional.ofNullable(orderLine.getPriceActual()).orElse(Env.ZERO));
 		//	Taxes
-		BigDecimal priceTaxAmount = tax.calculateTax(priceAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
-		BigDecimal priceBaseTaxAmount = tax.calculateTax(priceBaseAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
-		BigDecimal priceListTaxAmount = tax.calculateTax(priceListAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
+		BigDecimal priceTaxAmount = tax.calculateTax(priceAmount, isTaxIncluded, priceList.getStandardPrecision());
+		BigDecimal priceBaseTaxAmount = tax.calculateTax(priceBaseAmount, isTaxIncluded, priceList.getStandardPrecision());
+		BigDecimal priceListTaxAmount = tax.calculateTax(priceListAmount, isTaxIncluded, priceList.getStandardPrecision());
 		//	Prices with tax
-		BigDecimal priceListWithTaxAmount = priceListAmount.add(priceListTaxAmount);
-		BigDecimal priceBaseWithTaxAmount = priceBaseAmount.add(priceBaseTaxAmount);
-		BigDecimal priceWithTaxAmount = priceAmount.add(priceTaxAmount);
+		BigDecimal priceListWithTaxAmount = isTaxIncluded? priceListAmount: priceListAmount.add(priceListTaxAmount);
+		BigDecimal priceBaseWithTaxAmount = isTaxIncluded? priceBaseAmount: priceBaseAmount.add(priceBaseTaxAmount);
+		BigDecimal priceWithTaxAmount = isTaxIncluded? priceAmount: priceAmount.add(priceTaxAmount);
 		//	Totals
 		BigDecimal totalDiscountAmount = discountAmount.multiply(quantityOrdered);
 		BigDecimal totalAmount = orderLine.getLineNetAmt();
-		BigDecimal totalAmountConverted = OrderUtil.getConvertedAmountTo(
-			order,
-			pos.get_ValueAsInt(
-				ColumnsAdded.COLUMNNAME_DisplayCurrency_ID
-			),
-			totalAmount
-		);
 		BigDecimal totalBaseAmount = totalAmount.subtract(totalDiscountAmount);
-		BigDecimal totalTaxAmount = tax.calculateTax(totalAmount, priceList.isTaxIncluded(), priceList.getStandardPrecision());
+		BigDecimal totalTaxAmount = tax.calculateTax(totalAmount, false, priceList.getStandardPrecision());
 		BigDecimal totalBaseAmountWithTax = totalBaseAmount.add(totalTaxAmount);
 		BigDecimal totalAmountWithTax = totalAmount.add(totalTaxAmount);
-		BigDecimal totalAmountWithTaxConverted = OrderUtil.getConvertedAmountTo(
-			order,
-			pos.get_ValueAsInt(
-				ColumnsAdded.COLUMNNAME_DisplayCurrency_ID
-			),
-			totalAmountWithTax
-		);
-
+		//	Add Tax for Include Tax
+		if(isTaxIncluded) {
+			totalBaseAmount = totalBaseAmountWithTax;
+			totalAmount = totalAmount.add(totalTaxAmount);
+		}
 		MUOMConversion uom = null;
 		MUOMConversion productUom = null;
 		if (orderLine.getM_Product_ID() > 0) {
@@ -526,16 +432,12 @@ public class OrderConverUtil {
 		int standardPrecision = priceList.getStandardPrecision();
 		BigDecimal availableQuantity = MStorage.getQtyAvailable(orderLine.getM_Warehouse_ID(), 0, orderLine.getM_Product_ID(), orderLine.getM_AttributeSetInstance_ID(), null);
 		//	Convert
-		return builder.setId(
+		return builder
+			.setId(
 				orderLine.getC_OrderLine_ID()
 			)
-			.setUuid(
-				StringManager.getValidString(
-					orderLine.getUUID()
-				)
-			)
-			.setOrderId(
-				orderLine.getC_Order_ID()
+			.setSourceOrderLineId(
+				orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID)
 			)
 			.setLine(
 				orderLine.getLine()
@@ -571,7 +473,8 @@ public class OrderConverUtil {
 						standardPrecision,
 						RoundingMode.HALF_UP
 					)
-				))
+				)
+			)
 			.setQuantityOrdered(
 				NumberManager.getBigDecimalToString(
 					quantityOrdered.setScale(
@@ -724,25 +627,9 @@ public class OrderConverUtil {
 					)
 				)
 			)
-			.setTotalAmountConverted(
-				NumberManager.getBigDecimalToString(
-					totalAmountConverted.setScale(
-						standardPrecision,
-						RoundingMode.HALF_UP
-					)
-				)
-			)
 			.setTotalAmountWithTax(
 				NumberManager.getBigDecimalToString(
 					totalAmountWithTax.setScale(
-						standardPrecision,
-						RoundingMode.HALF_UP
-					)
-				)
-			)
-			.setTotalAmountWithTaxConverted(
-				NumberManager.getBigDecimalToString(
-					totalAmountWithTaxConverted.setScale(
 						standardPrecision,
 						RoundingMode.HALF_UP
 					)
@@ -753,26 +640,6 @@ public class OrderConverUtil {
 			)
 			.setProductUom(
 				CoreFunctionalityConvert.convertProductConversion(productUom)
-			)
-			.setResourceAssignment(
-				TimeControl.convertResourceAssignment(
-					orderLine.getS_ResourceAssignment_ID()
-				)
-			)
-			.setSourceRmaLineId(
-				orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_RMA_ID)
-			)
-			.setSourceOrderLineId(
-				orderLine.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID)
-			)
-			.setGiftCardQuantity(
-				NumberManager.getBigDecimalToString(
-					NumberManager.getBigDecimalFromString(
-						orderLine.get_ValueAsString(
-							"GiftCardQuantity"
-						)
-					)
-				)
 			)
 		;
 	}

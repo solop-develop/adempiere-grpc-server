@@ -47,7 +47,22 @@ import org.spin.pos.util.ColumnsAdded;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class RMAUtil {
-    
+
+	public static MOrder validateAndGetRMA(int rmaId) {
+		return validateAndGetRMA(rmaId, null);
+	}
+	public static MOrder validateAndGetRMA(int rmaId, String transactionName) {
+		if (rmaId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @M_RMA_ID@");
+		}
+		MOrder rma = new MOrder(Env.getCtx(), rmaId, transactionName);
+		if (rma == null || rma.getC_Order_ID() <= 0) {
+			throw new AdempiereException("@M_RMA_ID@ (" + rmaId + ") @NotFound@");
+		}
+		return rma;
+	}
+
+
 	/**
 	 * Get Default document Type
 	 * @param pointOfSales
@@ -61,11 +76,17 @@ public class RMAUtil {
 			return pointOfSales.get_ValueAsInt("C_DocTypeRMA_ID");
 		}
 		//	Get from current sales order document type
-		PO documentTypeAllocation = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID IN(?, ?) AND C_DocType_ID = ?", null)
+		PO documentTypeAllocation = new Query(
+			Env.getCtx(),
+			TABLE_NAME,
+			"C_POS_ID IN(?, ?) AND C_DocType_ID = ?",
+			null
+		)
 			.setParameters(pointOfSales.getC_POS_ID(), sessionPosId, salesOrderDocumentTypeId)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
-			.first();
+			.first()
+		;
 		int returnDocumentTypeId = 0;
 		if(documentTypeAllocation == null 
 				|| documentTypeAllocation.get_ID() <= 0) {
@@ -79,35 +100,47 @@ public class RMAUtil {
 		//	
 		return returnDocumentTypeId;
 	}
-	
-	
-    /**
-     * Get Invoice Line Reference
-     * @param sourceOrderLine
-     * @param transactionName
-     * @return
-     */
-    public static int getInvoiceLineReferenceId(MOrderLine sourceOrderLine, String transactionName) {
-    	return new Query(sourceOrderLine.getCtx(), I_C_InvoiceLine.Table_Name, "C_OrderLine_ID = ?", transactionName)
-    			.setParameters(sourceOrderLine.getC_OrderLine_ID())
-    			.setClient_ID()
-    			.firstId();
-    }
-    
-    /**
-     * Get Shipment reference
-     * @param sourceOrderLine
-     * @param transactionName
-     * @return
-     */
-    public static int getShipmentLineReferenceId(MOrderLine sourceOrderLine, String transactionName) {
-    	return new Query(sourceOrderLine.getCtx(), I_M_InOutLine.Table_Name, "C_OrderLine_ID = ?", transactionName)
-    			.setParameters(sourceOrderLine.getC_OrderLine_ID())
-    			.setClient_ID()
-    			.firstId();
-    }
-    
-    
+
+
+	/**
+	 * Get Invoice Line Reference
+	 * @param sourceOrderLine
+	 * @param transactionName
+	 * @return
+	 */
+	public static int getInvoiceLineReferenceId(MOrderLine sourceOrderLine, String transactionName) {
+		return new Query(
+			sourceOrderLine.getCtx(),
+			I_C_InvoiceLine.Table_Name,
+			"C_OrderLine_ID = ?",
+			transactionName
+		)
+			.setParameters(sourceOrderLine.getC_OrderLine_ID())
+			.setClient_ID()
+			.firstId()
+		;
+	}
+
+	/**
+	 * Get Shipment reference
+	 * @param sourceOrderLine
+	 * @param transactionName
+	 * @return
+	 */
+	public static int getShipmentLineReferenceId(MOrderLine sourceOrderLine, String transactionName) {
+		return new Query(
+			sourceOrderLine.getCtx(),
+			I_M_InOutLine.Table_Name,
+			"C_OrderLine_ID = ?",
+			transactionName
+		)
+			.setParameters(sourceOrderLine.getC_OrderLine_ID())
+			.setClient_ID()
+			.firstId()
+		;
+	}
+
+
     /**
      * Create return order from source order
      * @param pos
@@ -165,7 +198,7 @@ public class RMAUtil {
 		returnOrder.saveEx();
 		return returnOrder;
     }
-    
+
     /**
      * Copy a order line and create a new instance for RMA Line
      * @param rma
@@ -323,7 +356,7 @@ public class RMAUtil {
 		returnOrder.setIsDelivered(true);
 		shipment.saveEx();
     }
-    
+
     /**
      * Create all lines from order
      * @param sourceOrder
@@ -371,7 +404,7 @@ public class RMAUtil {
 				returnOrderLine.saveEx(transactionName);
     		});
     }
-    
+
     /**
      * Create all lines from order
      * @param sourceOrder
@@ -393,7 +426,7 @@ public class RMAUtil {
     			}
     		});
     }
-    
+
     /**
      * Get Available Quantity for Return Order
      * @param sourceOrderLineId
@@ -418,7 +451,7 @@ public class RMAUtil {
     	}
     	return quantityToReturn;
     }
-    
+
     /**
      * Get sum of complete returned quantity for order
      * @param sourceOrderLineId
@@ -439,7 +472,7 @@ public class RMAUtil {
     			.aggregate(I_C_OrderLine.COLUMNNAME_QtyEntered, Query.AGGREGATE_SUM);
     	return Optional.ofNullable(quantity).orElse(Env.ZERO);
     }
-    
+
     /**
      * Delete RMA Line
      * @param rmaLineId
@@ -463,7 +496,7 @@ public class RMAUtil {
 			}
 		});
     }
-    
+
     /**
      * Delete RMA
      * @param rmaId
@@ -486,5 +519,6 @@ public class RMAUtil {
 				rmaLine.deleteEx(true);
 			}
 		});
-    }
+	}
+
 }

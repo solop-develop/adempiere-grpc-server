@@ -99,6 +99,7 @@ import org.spin.pos.service.customer.CustomerServiceLogic;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderServiceLogic;
 import org.spin.pos.service.order.OrderUtil;
+import org.spin.pos.service.order.RMAConvertUtil;
 import org.spin.pos.service.order.RMAUtil;
 import org.spin.pos.service.order.ReturnSalesOrder;
 import org.spin.pos.service.order.ShipmentUtil;
@@ -2336,7 +2337,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				request.getIsCreateLinesFromOrder(),
 				null
 			);
-			RMA.Builder returnOrder = ConvertUtil.convertRMA(rma);
+			RMA.Builder returnOrder = RMAConvertUtil.convertRMA(rma);
 			responseObserver.onNext(returnOrder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2350,7 +2351,77 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
-	
+
+	@Override
+	public void deleteRMA(DeleteRMARequest request, StreamObserver<Empty> responseObserver) {
+		try {
+			RMAUtil.deleteRMA(request.getId());
+			responseObserver.onNext(Empty.newBuilder().build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void processRMA(ProcessRMARequest request, StreamObserver<RMA> responseObserver) {
+		try {
+			RMA.Builder rma = RMAConvertUtil.convertRMA(
+				ReturnSalesOrder.processRMA(
+					request.getRmaId(),
+					request.getPosId(),
+					request.getDocumentAction(),
+					request.getDescription(),
+					request.getManualInvoiceDocumentNo(),
+					request.getManualShipmentDocumentNo(),
+					request.getManualMovementDocumentNo()
+				)
+			);
+			responseObserver.onNext(rma.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	@Override
+	public void createOrderFromRMA(CreateOrderFromRMARequest request, StreamObserver<Order> responseObserver) {
+		try {
+			Order.Builder salesOrder = OrderConverUtil.convertOrder(
+				OrderManagement.createOrderFromRMA(
+					request.getPosId(),
+					request.getSalesRepresentativeId(),
+					request.getSourceRmaId()
+				)
+			);
+			responseObserver.onNext(salesOrder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	@Override
 	public void createRMALine(CreateRMALineRequest request, StreamObserver<RMALine> responseObserver) {
 		try {
@@ -2362,7 +2433,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				),
 				request.getDescription()
 			);
-			RMALine.Builder returnLine = ConvertUtil.convertRMALine(rmaLine);
+			RMALine.Builder returnLine = RMAConvertUtil.convertRMALine(rmaLine);
 			responseObserver.onNext(returnLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2376,7 +2447,25 @@ public class PointOfSalesForm extends StoreImplBase {
 			);
 		}
 	}
-	
+
+	@Override
+	public void listRMALines(ListRMALinesRequest request, StreamObserver<ListRMALinesResponse> responseObserver) {
+		try {
+			ListRMALinesResponse.Builder rmaLinesList = listRMALines(request);
+			responseObserver.onNext(rmaLinesList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
 	@Override
 	public void updateRMALine(UpdateRMALineRequest request, StreamObserver<RMALine> responseObserver) {
 		try {
@@ -2387,7 +2476,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				),
 				request.getDescription()
 			);
-			RMALine.Builder returnLine = ConvertUtil.convertRMALine(rmaLine);
+			RMALine.Builder returnLine = RMAConvertUtil.convertRMALine(rmaLine);
 			responseObserver.onNext(returnLine.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -2420,66 +2509,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
-	@Override
-	public void deleteRMA(DeleteRMARequest request, StreamObserver<Empty> responseObserver) {
-		try {
-			RMAUtil.deleteRMA(request.getId());
-			responseObserver.onNext(Empty.newBuilder().build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.warning(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-	
-	@Override
-	public void listRMALines(ListRMALinesRequest request, StreamObserver<ListRMALinesResponse> responseObserver) {
-		try {
-			ListRMALinesResponse.Builder rmaLinesList = listRMALines(request);
-			responseObserver.onNext(rmaLinesList.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.warning(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
-	
-	@Override
-	public void processRMA(ProcessRMARequest request, StreamObserver<RMA> responseObserver) {
-		try {
-			RMA.Builder rma = ConvertUtil.convertRMA(
-				ReturnSalesOrder.processRMA(
-					request.getRmaId(),
-					request.getPosId(),
-					request.getDocumentAction(),
-					request.getDescription()
-				)
-			);
-			responseObserver.onNext(rma.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.warning(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
 
 
 	@Override
@@ -2506,30 +2535,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
-
-	@Override
-	public void createOrderFromRMA(CreateOrderFromRMARequest request, StreamObserver<Order> responseObserver) {
-		try {
-			Order.Builder salesOrder = OrderConverUtil.convertOrder(
-				OrderManagement.createOrderFromRMA(
-					request.getPosId(),
-					request.getSalesRepresentativeId(),
-					request.getSourceRmaId()
-				)
-			);
-			responseObserver.onNext(salesOrder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.warning(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
-			);
-		}
-	}
 
 
 	@Override
@@ -2872,18 +2877,25 @@ public class PointOfSalesForm extends StoreImplBase {
 			whereClause.append(" AND (C_Charge_ID IS NULL OR C_Charge_ID <> ?)");
 		}
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, whereClause.toString(), null)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true);
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_OrderLine.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+		;
 		int count = query.count();
 		query
-		.setLimit(limit, offset)
-		.setOrderBy(I_C_OrderLine.COLUMNNAME_Line)
-		.<MOrderLine>list()
-		.forEach(rmaLine -> {
-			builder.addRmaLines(ConvertUtil.convertRMALine(rmaLine));
-		});
+			.setLimit(limit, offset)
+			.setOrderBy(I_C_OrderLine.COLUMNNAME_Line)
+			.<MOrderLine>list()
+			.forEach(rmaLine -> {
+				builder.addRmaLines(RMAConvertUtil.convertRMALine(rmaLine));
+			})
+		;
 		//	
 		builder.setRecordCount(count);
 		//	Set page token

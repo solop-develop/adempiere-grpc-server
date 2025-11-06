@@ -219,8 +219,8 @@ public class OrderServiceLogic {
 			// 	throw new AdempiereException("@C_Order_ID@ @IsManual@");
 			// }
 
-			final String manualInvociceDocumentNo = request.getManualInvociceDocumentNo();
-			salesOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvociceDocumentNo);
+			final String manualInvoiceDocumentNo = request.getManualInvoiceDocumentNo();
+			salesOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
 
 			final String manualShipmentDocumentNo = request.getManualShipmentDocumentNo();
 			salesOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
@@ -563,28 +563,25 @@ public class OrderServiceLogic {
 	 * @return Order.Builder
 	 */
 	public static Order.Builder reverseSalesTransaction(ReverseSalesRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_POS_ID@");
-		}
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		if (pos.getC_POS_ID() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
+
 		int orderId = request.getId();
 		if (orderId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
 
-		MOrder returnOrder = null;
 		// Exists Online Payment Approved
 		boolean isOnlinePaymentApproved = PaymentManagement.isOrderWithOnlinePaymentApproved(
 			orderId
 		);
-		returnOrder = ReverseSalesTransaction.returnSalesOrder(
+		MOrder returnOrder = ReverseSalesTransaction.returnSalesOrder(
 			pos,
 			orderId,
 			request.getDescription(),
-			!isOnlinePaymentApproved
+			!isOnlinePaymentApproved,
+			request.getManualInvoiceDocumentNo(),
+			request.getManualShipmentDocumentNo(),
+			request.getManualMovementDocumentNo()
 		);
 		//	Default
 		Order.Builder builder = OrderConverUtil.convertOrder(returnOrder);
@@ -599,13 +596,8 @@ public class OrderServiceLogic {
 	 * @return Order.Builder
 	 */
 	public static Order.Builder processReverseSales(ProcessReverseSalesRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_POS_ID@");
-		}
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		if (pos.getC_POS_ID() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
+
 		final int salesOrderId = request.getSourceOrderId();
 		if (salesOrderId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @ECA14_Source_Order_ID@");
@@ -620,10 +612,14 @@ public class OrderServiceLogic {
 			MOrder returnOrder = new MOrder(Env.getCtx(), returnOrderId, transactionName);
 
 			MOrder sourceOrder = new MOrder(Env.getCtx(), salesOrderId, transactionName);
+
 			returnOrder = ReverseSalesTransaction.processReverseSalesOrder(
 				pos,
 				sourceOrder,
 				returnOrder,
+				request.getManualInvoiceDocumentNo(),
+				request.getManualShipmentDocumentNo(),
+				request.getManualMovementDocumentNo(),
 				transactionName
 			);
 			returnOrderReference.set(returnOrder);

@@ -100,7 +100,7 @@ public class POS {
 			pos = new MPOS(Env.getCtx(), posId, null);
 		}
 		if (pos == null || pos.getC_POS_ID() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
+			throw new AdempiereException("@C_POS_ID@ (" + posId +") @NotFound@");
 		}
 		return pos;
 	}
@@ -131,6 +131,7 @@ public class POS {
 		}
 		return validateAndGetPOS(posUuid, requery);
 	}
+
 
 	public static ListCampaignsResponse.Builder listCampaigns(ListCampaignsRequest request) {
 		
