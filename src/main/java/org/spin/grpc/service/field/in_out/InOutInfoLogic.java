@@ -40,7 +40,7 @@ import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class InOutInfoLogic {
 
@@ -182,7 +182,7 @@ public class InOutInfoLogic {
 		}
 		//	Set next page
 		builder.setNextPageToken(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				nexPageToken
 			)
 		);

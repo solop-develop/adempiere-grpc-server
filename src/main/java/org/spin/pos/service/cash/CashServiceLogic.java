@@ -84,7 +84,7 @@ import org.spin.pos.util.CurrencyCashKey;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -337,17 +337,17 @@ public class CashServiceLogic {
 				cashClosing.getC_BankStatement_ID()
 			)
 			.setUuid((
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cashClosing.getUUID()
 				)
 			))
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cashClosing.getDocumentNo()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cashClosing.getName()
 				)
 			)
@@ -358,7 +358,7 @@ public class CashServiceLogic {
 			)
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 			.setIsOnlinePayments(isOnlinePaymentsApproved)
 			.setIsOnlineClosingApproved(
@@ -433,17 +433,17 @@ public class CashServiceLogic {
 				cashClosing.getC_BankStatement_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cashClosing.getUUID()
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cashClosing.getDocumentNo()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cashClosing.getName()
 				)
 			)
@@ -510,12 +510,12 @@ public class CashServiceLogic {
 								resultset.getInt("C_PaymentMethod_ID")
 						)
 						.setPaymentMethodName(
-								StringManager.getValidString(
+								TextManager.getValidString(
 										resultset.getString("PaymentMethodName")
 								)
 						)
 						.setTenderTypeCode(
-								StringManager.getValidString(
+								TextManager.getValidString(
 										tenderTypeCode
 								)
 						)
@@ -576,7 +576,7 @@ public class CashServiceLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 			.setRecordCount(counter.get())
 		;
@@ -599,7 +599,7 @@ public class CashServiceLogic {
 		Timestamp dateFrom = null;
 		Timestamp dateTo = null;
 		if (request.getBankStatementId() > 0) {
-			Value.Builder bankStatementBuilder = ValueManager.getValueFromInt(
+			Value.Builder bankStatementBuilder = NumberManager.getProtoValueFromInt(
 				request.getBankStatementId()
 			);
 			parameters.putFields(
@@ -608,10 +608,10 @@ public class CashServiceLogic {
 			);
 		}
 		if (request.hasDateFrom() && request.hasDateTo()) {
-			dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+			dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 				request.getDateFrom()
 			);
-			dateTo = ValueManager.getTimestampFromProtoTimestamp(
+			dateTo = TimeManager.getTimestampFromProtoTimestamp(
 				request.getDateTo()
 			);
 		} else {
@@ -620,10 +620,10 @@ public class CashServiceLogic {
 			dateTo = dateFrom;
 		}
 
-		Value.Builder builderDateInvoiced = ValueManager.getValueFromTimestamp(
+		Value.Builder builderDateInvoiced = TimeManager.getProtoValueFromTimestamp(
 			dateFrom
 		);
-		Value.Builder builderDateInvoicedTo = ValueManager.getValueFromTimestamp(
+		Value.Builder builderDateInvoicedTo = TimeManager.getProtoValueFromTimestamp(
 			dateTo
 		);
 		Value valueDateFrom = builderDateInvoiced.build();
@@ -637,7 +637,7 @@ public class CashServiceLogic {
 			valueDateTo
 		);
 
-		Value.Builder builderPosId = ValueManager.getValueFromInt(
+		Value.Builder builderPosId = NumberManager.getProtoValueFromInt(
 			pos.getC_POS_ID()
 		);
 
@@ -818,12 +818,12 @@ public class CashServiceLogic {
 			builder
 				.setIsError(isError)
 				.setMessage(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						message
 					)
 				)
 				.setStatus(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						status
 					)
 				)
@@ -887,12 +887,12 @@ public class CashServiceLogic {
 			builder
 				.setIsError(isError)
 				.setMessage(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						message
 					)
 				)
 				.setStatus(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						status
 					)
 				)

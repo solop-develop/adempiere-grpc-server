@@ -49,7 +49,10 @@ import org.spin.backend.grpc.common.ReportOutput;
 import org.spin.backend.grpc.logs.ChangeLog;
 import org.spin.backend.grpc.logs.EntityEventType;
 import org.spin.backend.grpc.logs.EntityLog;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -76,7 +79,7 @@ public class LogsConvertUtil {
 				recordLog.getRecord_ID()
 			)
 			.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -89,7 +92,7 @@ public class LogsConvertUtil {
 			builder.setWindowId(window.getAD_Window_ID());
 		}
 		builder.setDisplayedName(
-			StringManager.getValidString(displayedName)
+			TextManager.getValidString(displayedName)
 		);
 
 		// created by
@@ -98,7 +101,7 @@ public class LogsConvertUtil {
 				user.getAD_User_ID()
 			)
 			.setCreatedByName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getName()
 				)
 			)
@@ -110,7 +113,7 @@ public class LogsConvertUtil {
 				user.getAD_User_ID()
 			)
 			.setUpdatedByName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getName()
 				)
 			)
@@ -120,7 +123,7 @@ public class LogsConvertUtil {
 				recordLog.getAD_Session_ID()
 			)
 			.setTransactionName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					recordLog.getTrxName()
 				)
 			)
@@ -140,6 +143,7 @@ public class LogsConvertUtil {
 		//	Return
 		return builder;
 	}
+
 
 	/**
 	 * Convert PO class from change log  list to builder
@@ -172,11 +176,11 @@ public class LogsConvertUtil {
 			// 		.reversed()
 			// )
 			.sorted((log1, log2) -> {
-				Timestamp from = ValueManager.getTimestampFromProtoTimestamp(
+				Timestamp from = TimeManager.getTimestampFromProtoTimestamp(
 					log1.getLogDate()
 				);
 
-				Timestamp to = ValueManager.getTimestampFromProtoTimestamp(
+				Timestamp to = TimeManager.getTimestampFromProtoTimestamp(
 					log2.getLogDate()
 				);
 
@@ -216,7 +220,7 @@ public class LogsConvertUtil {
 		ChangeLog.Builder builder = ChangeLog.newBuilder();
 		MColumn column = MColumn.get(recordLog.getCtx(), recordLog.getAD_Column_ID());
 		builder.setColumnName(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				column.getColumnName()
 			)
 		);
@@ -239,24 +243,17 @@ public class LogsConvertUtil {
 			}
 		}
 		builder.setDisplayColumnName(
-				StringManager.getValidString(displayColumnName)
+				TextManager.getValidString(displayColumnName)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					recordLog.getDescription()
 				)
 			)
 		;
 		String oldValue = recordLog.getOldValue();
 		String newValue = recordLog.getNewValue();
-		//	Set Old Value
-		builder.setOldValue(
-			StringManager.getValidString(oldValue)
-			)
-			.setNewValue(
-				StringManager.getValidString(newValue)
-			)
-		;
+
 		//	Set Display Values
 		if (oldValue != null && oldValue.equals(MChangeLog.NULL)) {
 			oldValue = null;
@@ -286,12 +283,20 @@ public class LogsConvertUtil {
 			displayNewValue = newValue;
 		}
 
-		//	Set display values
-		builder.setOldDisplayValue(
-				StringManager.getValidString(displayOldValue)
+		builder
+			//	Set Old Value
+			.setOldValue(
+				TextManager.getValidString(oldValue)
+			)
+			.setNewValue(
+				TextManager.getValidString(newValue)
+			)	
+			//	Set display values
+			.setOldDisplayValue(
+				TextManager.getValidString(displayOldValue)
 			)
 			.setNewDisplayValue(
-				StringManager.getValidString(displayNewValue)
+				TextManager.getValidString(displayNewValue)
 			)
 		;
 		return builder;
@@ -325,17 +330,17 @@ public class LogsConvertUtil {
 				process.getAD_Process_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.get_UUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getDescription()
 				)
 			)
@@ -346,17 +351,17 @@ public class LogsConvertUtil {
 					instance.getAD_PInstance_ID()
 				)
 				.setUuid(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						instance.getUUID()
 					)
 				)
 				.setReportType(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						instance.getReportType()
 					)
 				)
 				.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						instance.getName()
 					)
 				)
@@ -369,7 +374,7 @@ public class LogsConvertUtil {
 			);
 		}
 		builder.setSummary(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				Msg.parseTranslation(
 					Env.getCtx(),
 					instance.getErrorMsg()
@@ -392,7 +397,7 @@ public class LogsConvertUtil {
 				message = Msg.parseTranslation(Env.getCtx(), message);
 			}
 			logBuilder.setLog(
-				StringManager.getValidString(message)
+				TextManager.getValidString(message)
 			);
 			builder.addLogs(logBuilder.build());
 		}
@@ -415,13 +420,13 @@ public class LogsConvertUtil {
 				//	Validate
 				if(number != null && !number.equals(Env.ZERO)) {
 					hasFromParameter = true;
-					parameterBuilder = ValueManager.getValueFromInteger(
+					parameterBuilder = NumberManager.getProtoValueFromInteger(
 						number.intValue()
 					);
 				}
 				if(numberTo != null && !numberTo.equals(Env.ZERO)) {
 					hasToParameter = true;
-					parameterBuilder = ValueManager.getValueFromInteger(
+					parameterBuilder = NumberManager.getProtoValueFromInteger(
 						numberTo.intValue()
 					);
 				}
@@ -431,11 +436,11 @@ public class LogsConvertUtil {
 				//	Validate
 				if(number != null && !number.equals(Env.ZERO)) {
 					hasFromParameter = true;
-					parameterBuilder = ValueManager.getValueFromBigDecimal(number);
+					parameterBuilder = NumberManager.getProtoValueFromBigDecimal(number);
 				}
 				if(numberTo != null && !numberTo.equals(Env.ZERO)) {
 					hasToParameter = true;
-					parameterBuilder = ValueManager.getValueFromBigDecimal(numberTo);
+					parameterBuilder = NumberManager.getProtoValueFromBigDecimal(numberTo);
 				}
 			} else if(DisplayType.isDate(displayType)) {
 				Timestamp date = parameter.getP_Date();
@@ -443,17 +448,17 @@ public class LogsConvertUtil {
 				//	Validate
 				if(date != null) {
 					hasFromParameter = true;
-					parameterBuilder = ValueManager.getValueFromTimestamp(date);
+					parameterBuilder = TimeManager.getProtoValueFromTimestamp(date);
 				}
 				if(dateTo != null) {
 					hasToParameter = true;
-					parameterBuilder = ValueManager.getValueFromTimestamp(dateTo);
+					parameterBuilder = TimeManager.getProtoValueFromTimestamp(dateTo);
 				}
 			} else if(DisplayType.YesNo == displayType) {
 				String value = parameter.getP_String();
 				if(!Util.isEmpty(value, true)) {
 					hasFromParameter = true;
-					parameterBuilder = ValueManager.getValueFromStringBoolean(value);
+					parameterBuilder = BooleanManager.getProtoValueFromBoolean(value);
 				}
 			} else {
 				String value = parameter.getP_String();
@@ -461,11 +466,11 @@ public class LogsConvertUtil {
 				//	Validate
 				if(!Util.isEmpty(value)) {
 					hasFromParameter = true;
-					parameterBuilder = ValueManager.getValueFromString(value);
+					parameterBuilder = TextManager.getProtoValueFromString(value);
 				}
 				if(!Util.isEmpty(valueTo)) {
 					hasToParameter = true;
-					parameterBuilder = ValueManager.getValueFromString(valueTo);
+					parameterBuilder = TextManager.getProtoValueFromString(valueTo);
 				}
 			}
 			//	For parameter
@@ -494,7 +499,7 @@ public class LogsConvertUtil {
 		}
 
 		builder.setColumnName(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				instancePara.getParameterName()
 			)
 		);
@@ -513,7 +518,7 @@ public class LogsConvertUtil {
 					processPara.getAD_Process_Para_ID()
 				)
 				.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						processPara.get_Translation(I_AD_Process_Para.COLUMNNAME_Name)
 					)
 				)
@@ -535,11 +540,11 @@ public class LogsConvertUtil {
 			//	Validate
 			if(number != null && !number.equals(Env.ZERO)) {
 				hasFromParameter = true;
-				parameterBuilder = ValueManager.getValueFromInteger(number.intValue());
+				parameterBuilder = NumberManager.getProtoValueFromInteger(number.intValue());
 			}
 			if(numberTo != null && !numberTo.equals(Env.ZERO)) {
 				hasToParameter = true;
-				parameterBuilder = ValueManager.getValueFromInteger(numberTo.intValue());
+				parameterBuilder = NumberManager.getProtoValueFromInteger(numberTo.intValue());
 			}
 		} else if(DisplayType.isNumeric(displayType)) {
 			BigDecimal number = instancePara.getP_Number();
@@ -547,11 +552,11 @@ public class LogsConvertUtil {
 			//	Validate
 			if(number != null && !number.equals(Env.ZERO)) {
 				hasFromParameter = true;
-				parameterBuilder = ValueManager.getValueFromBigDecimal(number);
+				parameterBuilder = NumberManager.getProtoValueFromBigDecimal(number);
 			}
 			if(numberTo != null && !numberTo.equals(Env.ZERO)) {
 				hasToParameter = true;
-				parameterBuilder = ValueManager.getValueFromBigDecimal(numberTo);
+				parameterBuilder = NumberManager.getProtoValueFromBigDecimal(numberTo);
 			}
 		} else if(DisplayType.isDate(displayType)) {
 			Timestamp date = instancePara.getP_Date();
@@ -559,17 +564,17 @@ public class LogsConvertUtil {
 			//	Validate
 			if(date != null) {
 				hasFromParameter = true;
-				parameterBuilder = ValueManager.getValueFromTimestamp(date);
+				parameterBuilder = TimeManager.getProtoValueFromTimestamp(date);
 			}
 			if(dateTo != null) {
 				hasToParameter = true;
-				parameterBuilder = ValueManager.getValueFromTimestamp(dateTo);
+				parameterBuilder = TimeManager.getProtoValueFromTimestamp(dateTo);
 			}
 		} else if(DisplayType.YesNo == displayType) {
 			String value = instancePara.getP_String();
 			if(!Util.isEmpty(value, true)) {
 				hasFromParameter = true;
-				parameterBuilder = ValueManager.getValueFromStringBoolean(value);
+				parameterBuilder = BooleanManager.getProtoValueFromBoolean(value);
 			}
 		} else {
 			String value = instancePara.getP_String();
@@ -577,11 +582,11 @@ public class LogsConvertUtil {
 			//	Validate
 			if(!Util.isEmpty(value)) {
 				hasFromParameter = true;
-				parameterBuilder = ValueManager.getValueFromString(value);
+				parameterBuilder = TextManager.getProtoValueFromString(value);
 			}
 			if(!Util.isEmpty(valueTo)) {
 				hasToParameter = true;
-				parameterBuilder = ValueManager.getValueFromString(valueTo);
+				parameterBuilder = TextManager.getProtoValueFromString(valueTo);
 			}
 		}
 

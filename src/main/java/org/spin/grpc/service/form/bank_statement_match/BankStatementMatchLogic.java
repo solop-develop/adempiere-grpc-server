@@ -74,8 +74,8 @@ import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import com.google.protobuf.Struct;
 
@@ -116,13 +116,13 @@ public abstract class BankStatementMatchLogic {
 		Struct.Builder valuesUnMatched = Struct.newBuilder()
 			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					MatchMode.MODE_NOT_MATCHED_VALUE
 				).build()
 			)
 			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					Msg.translate(Env.getCtx(), "NotMatched")
 				).build()
 			)
@@ -138,13 +138,13 @@ public abstract class BankStatementMatchLogic {
 		Struct.Builder valuesMatched = Struct.newBuilder()
 			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					MatchMode.MODE_MATCHED_VALUE
 				).build()
 			)
 			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					Msg.translate(Env.getCtx(), "Matched")
 				).build()
 			)
@@ -215,10 +215,10 @@ public abstract class BankStatementMatchLogic {
 
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -253,7 +253,7 @@ public abstract class BankStatementMatchLogic {
 		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -287,10 +287,10 @@ public abstract class BankStatementMatchLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -346,10 +346,10 @@ public abstract class BankStatementMatchLogic {
 		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
 
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 
@@ -507,7 +507,7 @@ public abstract class BankStatementMatchLogic {
 		ListBankStatementsResponse.Builder builderList = ListBankStatementsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -532,10 +532,10 @@ public abstract class BankStatementMatchLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 		//	Amount
@@ -658,10 +658,10 @@ public abstract class BankStatementMatchLogic {
 
 		//	For parameters
 		//	Date Trx
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 
@@ -737,7 +737,7 @@ public abstract class BankStatementMatchLogic {
 			});
 
 		builder.setMessage(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				Msg.parseTranslation(
 					Env.getCtx(),
 					"BankStatementMatch.MatchedProcessed"

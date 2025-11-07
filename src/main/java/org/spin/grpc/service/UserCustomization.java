@@ -74,7 +74,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import com.google.protobuf.Empty;
 
@@ -116,8 +116,8 @@ public class UserCustomization extends UserCustomizationImplBase {
 		List<Object> parameters = new ArrayList<>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -154,7 +154,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		query
@@ -183,17 +183,17 @@ public class UserCustomization extends UserCustomizationImplBase {
 				user.getAD_User_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getDescription()
 				)
 			)
@@ -230,8 +230,8 @@ public class UserCustomization extends UserCustomizationImplBase {
 		String whereClause = "";
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -268,7 +268,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		query
@@ -297,12 +297,12 @@ public class UserCustomization extends UserCustomizationImplBase {
 				role.getAD_Role_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					role.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					role.getDescription()
 				)
 			)
@@ -339,8 +339,8 @@ public class UserCustomization extends UserCustomizationImplBase {
 		String whereClause = "";
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -377,7 +377,7 @@ public class UserCustomization extends UserCustomizationImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		query
@@ -409,17 +409,17 @@ public class UserCustomization extends UserCustomizationImplBase {
 				aspLevel.getASP_Level_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					aspLevel.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					aspLevel.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					aspLevel.getDescription()
 				)
 			)

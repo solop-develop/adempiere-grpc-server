@@ -47,8 +47,8 @@ import org.spin.pos.service.customer.CustomerConvertUtil;
 import org.spin.pos.service.order.OrderUtil;
 import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -214,7 +214,7 @@ public class OrderConverUtil {
 		if (order.getC_Invoice_ID() > 0) {
 			MInvoice invoice = new MInvoice(order.getCtx(), order.getC_Invoice_ID(), order.get_TrxName());
 			builder.setInvoiceNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					invoice.getDocumentNo()
 				)
 			);
@@ -231,7 +231,7 @@ public class OrderConverUtil {
 				order.getC_Order_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.getUUID()
 				)
 			)
@@ -241,7 +241,7 @@ public class OrderConverUtil {
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.getDocumentNo()
 				)
 			)
@@ -251,27 +251,27 @@ public class OrderConverUtil {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.getDescription()
 				)
 			)
 			.setOrderReference(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.getPOReference()
 				)
 			)
 			.setDocumentStatus(
 				ConvertUtil.convertDocumentStatus(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						order.getDocStatus()
 					),
-					StringManager.getValidString(
+					TextManager.getValidString(
 						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Name
 						)
 					),
-					StringManager.getValidString(
+					TextManager.getValidString(
 						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Description
@@ -367,7 +367,7 @@ public class OrderConverUtil {
 				)
 			)
 			.setDateOrdered(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					order.getDateOrdered()
 				)
 			)
@@ -419,14 +419,14 @@ public class OrderConverUtil {
 				)
 			)
 			.setManualInvoiceDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.get_ValueAsString(
 						"ManualInvoiceDocumentNo"
 					)
 				)
 			)
 			.setManualShipmentDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.get_ValueAsString(
 						"ManualShipmentDocumentNo"
 					)
@@ -530,7 +530,7 @@ public class OrderConverUtil {
 				orderLine.getC_OrderLine_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					orderLine.getUUID()
 				)
 			)
@@ -541,12 +541,12 @@ public class OrderConverUtil {
 				orderLine.getLine()
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					orderLine.getDescription()
 				)
 			)
 			.setLineDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					orderLine.getName()
 				)
 			)

@@ -23,7 +23,7 @@ import org.compiere.model.MOrder;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.field.order.OrderInfo;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 /**
@@ -48,14 +48,14 @@ public class OrderInfoConvert {
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_C_Order.COLUMNNAME_UUID
 					)
 				)
 			)
 			.setDisplayValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.getDisplayValue()
 				)
 			)
@@ -65,19 +65,19 @@ public class OrderInfoConvert {
 				)
 			)
 			.setBusinessPartner(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("BusinessPartner")
 				)
 			)
 			.setDateOrdered(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					rs.getTimestamp(
 						I_C_Order.COLUMNNAME_DateOrdered
 					)
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_C_Order.COLUMNNAME_DocumentNo
 					)
@@ -89,7 +89,7 @@ public class OrderInfoConvert {
 				)
 			)
 			.setCurrency(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("Currency")
 				)
 			)
@@ -117,21 +117,21 @@ public class OrderInfoConvert {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_C_Order.COLUMNNAME_Description
 					)
 				)
 			)
 			.setPoReference(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_C_Order.COLUMNNAME_POReference
 					)
 				)
 			)
 			.setDocumentStatus(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.getDocStatusName()
 				)
 			)

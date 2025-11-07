@@ -56,7 +56,7 @@ import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.OrderConverUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 import com.google.protobuf.Empty;
@@ -369,7 +369,7 @@ public class OrderServiceLogic {
 				orderLine.setPrice();
 				orderLine.setTax();
 				StringBuffer description = new StringBuffer(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						resourceAssigment.getName()
 					)
 				);

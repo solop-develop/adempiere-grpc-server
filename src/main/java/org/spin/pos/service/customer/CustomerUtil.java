@@ -62,10 +62,15 @@ public class CustomerUtil {
 				int referenceId = getReferenceId(entity.get_Table_ID(), key);
 				Object value = null;
 				if(referenceId > 0) {
-					value = ValueManager.getObjectFromReference(attribute, referenceId);
+					value = ValueManager.getObjectFromProtoValue(
+						attribute,
+						referenceId
+					);
 				} 
 				if(value == null) {
-					value = ValueManager.getObjectFromValue(attribute);
+					value = ValueManager.getObjectFromProtoValue(
+						attribute
+					);
 				}
 				entity.set_ValueOfColumn(key, value);
 			});

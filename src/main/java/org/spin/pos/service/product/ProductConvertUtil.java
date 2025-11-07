@@ -20,7 +20,7 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.core_functionality.ProductPrice;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 public class ProductConvertUtil {
@@ -73,14 +73,14 @@ public class ProductConvertUtil {
 				priceList.isTaxIncluded()
 			)
 			.setValidFrom(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					TimeManager.getTimestampToString(
 						productPricing.getPriceDate()
 					)
 				)
 			)
 			.setPriceListName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					priceList.getName()
 				)
 			)

@@ -32,8 +32,8 @@ import org.spin.backend.grpc.core_functionality.ListConversionRatesRequest;
 import org.spin.backend.grpc.core_functionality.ListConversionRatesResponse;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -53,7 +53,7 @@ public class CoreFunctionalityServiceLogic {
 			return null;
 		}
 		//	Get values
-		Timestamp conversionDate = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp conversionDate = TimeManager.getTimestampFromProtoTimestamp(
 			request.getConversionDate()
 		);
 		conversionDate = TimeUtil.getDay(conversionDate);
@@ -79,7 +79,7 @@ public class CoreFunctionalityServiceLogic {
 			throw new AdempiereException("@C_ConversionType_ID@ @NotFound@");
 		}
 
-		Timestamp conversionDate = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp conversionDate = TimeManager.getTimestampFromProtoTimestamp(
 			request.getConversionDate()
 		);
 		conversionDate = TimeUtil.getDay(
@@ -129,7 +129,7 @@ public class CoreFunctionalityServiceLogic {
 		ListConversionRatesResponse.Builder builderList = ListConversionRatesResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 

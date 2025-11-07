@@ -47,7 +47,8 @@ import org.spin.backend.grpc.notice_management.User;
 import org.spin.backend.grpc.notice_management.NoticeManagementGrpc.NoticeManagementImplBase;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -83,22 +84,22 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				user.getAD_User_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getDescription()
 				)
 			)
@@ -106,7 +107,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		// client of user record
 		MClient clientUser = MClient.get(Env.getCtx(), user.getAD_Client_ID());
 		builder.setClientUuid(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				clientUser.getUUID()
 			)
 		);
@@ -132,7 +133,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		}
 		builder.setId(notice.getAD_Note_ID())
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					notice.getUUID()
 				)
 			)
@@ -142,7 +143,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				)
 			)
 			.setMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(
 						Env.getCtx(),
 						notice.getMessage()
@@ -158,17 +159,17 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				notice.getRecord_ID()
 			)
 			.setReference(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					notice.getReference()
 				)
 			)
 			.setTextMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					notice.getTextMsg()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					notice.getDescription()
 				)
 			)
@@ -183,7 +184,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		}
 		if (organization != null && organization.getAD_Org_ID() >= 0) {
 			builder.setOrganization(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getDisplayValue()
 				)
 			);
@@ -195,7 +196,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				table.getAD_Table_ID()
 				)
 				.setTableName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						table.getTableName()
 					)
 				)
@@ -260,7 +261,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		ListNoticesResponse.Builder builderList = ListNoticesResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -370,7 +371,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		ListUsersResponse.Builder builderList = ListUsersResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -414,13 +415,13 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		final int processId = 241;
 		Struct.Builder parameters = Struct.newBuilder();
 		if (request.getUserId() > 0) {
-			Value.Builder value = ValueManager.getValueFromInt(
+			Value.Builder value = NumberManager.getProtoValueFromInt(
 				request.getUserId()
 			);
 			parameters.putFields("AD_User_ID", value.build());
 		}
 		if (request.getKeepLogDays() > 0) {
-			Value.Builder value = ValueManager.getValueFromInt(
+			Value.Builder value = NumberManager.getProtoValueFromInt(
 				request.getKeepLogDays()
 			);
 			parameters.putFields("KeepLogDays", value.build());
@@ -437,7 +438,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		// Response
 		DeleteNoticesResponse.Builder builder = DeleteNoticesResponse.newBuilder()
 			.setSummary(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(
 						Env.getCtx(),
 						processLog.getSummary()

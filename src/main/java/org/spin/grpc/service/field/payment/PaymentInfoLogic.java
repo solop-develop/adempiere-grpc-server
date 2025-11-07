@@ -50,8 +50,8 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 public class PaymentInfoLogic {
 
@@ -287,10 +287,10 @@ public class PaymentInfoLogic {
 			);
 		}
 		// Payment Date
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getPaymentDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getPaymentDateTo()
 		);
 		if (dateFrom != null || dateTo != null) {
@@ -370,7 +370,7 @@ public class PaymentInfoLogic {
 		ListPaymentInfoResponse.Builder builderList = ListPaymentInfoResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					nexPageToken
 				)
 			)

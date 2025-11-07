@@ -60,7 +60,7 @@ import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
 import org.spin.backend.grpc.record_management.ZoomWindow;
 import org.spin.service.grpc.util.base.RecordUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -116,7 +116,7 @@ public class RecordManagementServiceLogic {
 		});
 		ToggleIsActiveRecordsBatchResponse.Builder builder = ToggleIsActiveRecordsBatchResponse.newBuilder()
 			.setMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(
 						Env.getCtx(),
 						errorMessage.toString()
@@ -162,7 +162,7 @@ public class RecordManagementServiceLogic {
 		});
 		ToggleIsActiveRecordResponse.Builder builder = ToggleIsActiveRecordResponse.newBuilder()
 			.setMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(
 						Env.getCtx(),
 						errorMessage.toString()
@@ -193,17 +193,17 @@ public class RecordManagementServiceLogic {
 				window.getAD_Window_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getDescription()
 				)
 			)
@@ -216,7 +216,7 @@ public class RecordManagementServiceLogic {
 		;
 		if (!isBaseLanguage) {
 			builder.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 						window.get_Translation(
 							I_AD_Window.COLUMNNAME_Name,
 							language
@@ -224,7 +224,7 @@ public class RecordManagementServiceLogic {
 					)
 				)
 				.setDescription(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						window.get_Translation(
 							I_AD_Window.COLUMNNAME_Description,
 							language
@@ -252,12 +252,12 @@ public class RecordManagementServiceLogic {
 					tab.getAD_Tab_ID()
 				)
 				.setTabUuid(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						tab.getUUID()
 					)
 				)
 				.setTabName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						tab.getName()
 					)
 				)
@@ -267,7 +267,7 @@ public class RecordManagementServiceLogic {
 			;
 			if (!isBaseLanguage) {
 				builder.setTabName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						window.get_Translation(
 							I_AD_Tab.COLUMNNAME_Name,
 							language
@@ -303,12 +303,12 @@ public class RecordManagementServiceLogic {
 				table.getAD_Table_ID()
 			)
 			.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getTableName()
 				)
 			)
 			.setKeyColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					keyColumnName
 				)
 			)
@@ -469,12 +469,12 @@ public class RecordManagementServiceLogic {
 					referenceTab.getAD_Tab_ID()
 				)
 				.setTableName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						zoomQuery.getZoomTableName()
 					)
 				)
 				.setWhereClause(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						zoomQuery.getWhereClause()
 					)
 				)
@@ -485,7 +485,7 @@ public class RecordManagementServiceLogic {
 					zoomInfo.destinationDisplay + " (#" + zoomQuery.getRecordCount() + ")"
 				)
 				.setColumnName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						zoomQuery.getZoomColumnName()
 					)
 				)
@@ -544,7 +544,7 @@ public class RecordManagementServiceLogic {
 		int recordId = request.getRecordId();
 		RecordAccess.Builder builder = RecordAccess.newBuilder()
 			.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getTableName()
 				)
 			)
@@ -556,7 +556,7 @@ public class RecordManagementServiceLogic {
 			builder.addCurrentRoles(RecordAccessRole.newBuilder()
 				.setId(role.getAD_Role_ID())
 				.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						role.getName()
 					)
 				)
@@ -571,7 +571,7 @@ public class RecordManagementServiceLogic {
 				RecordAccessRole.newBuilder()
 					.setId(role.getAD_Role_ID())
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							role.getName()
 						)
 					)
@@ -638,7 +638,7 @@ public class RecordManagementServiceLogic {
 			int tableId = table.getAD_Table_ID();
 			AtomicInteger recordId = new AtomicInteger(request.getRecordId());
 			builder.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 						table.getTableName()
 					)
 				)
@@ -667,7 +667,7 @@ public class RecordManagementServiceLogic {
 					RecordAccessRole.newBuilder()
 						.setId(role.getAD_Role_ID())
 						.setName(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								role.getName()
 							)
 						)

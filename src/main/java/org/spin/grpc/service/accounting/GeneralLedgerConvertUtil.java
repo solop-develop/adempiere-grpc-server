@@ -34,7 +34,7 @@ import org.spin.backend.grpc.general_ledger.ConversionRate;
 import org.spin.backend.grpc.general_ledger.ConversionType;
 import org.spin.backend.grpc.general_ledger.Currency;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 /**
  * This class was created for add all convert methods for General Ledger service
@@ -66,22 +66,22 @@ public class GeneralLedgerConvertUtil {
 				currency.getC_Currency_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getUUID()
 				)
 			)
 			.setIsoCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getISO_Code()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getDescription()
 				)
 			)
 			.setSymbol(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getCurSymbol()
 				)
 			)
@@ -119,22 +119,22 @@ public class GeneralLedgerConvertUtil {
 				conversionType.getC_ConversionType_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionType.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionType.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionType.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionType.getDescription()
 				)
 			)
@@ -191,7 +191,7 @@ public class GeneralLedgerConvertUtil {
 				conversionRate.getC_Conversion_Rate_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionRate.getUUID()
 				)
 			)
@@ -247,12 +247,12 @@ public class GeneralLedgerConvertUtil {
 				table.getAD_Table_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getName()
 				)
 			)
 			.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getTableName()
 				)
 			)

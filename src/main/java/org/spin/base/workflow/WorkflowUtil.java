@@ -38,7 +38,7 @@ import org.compiere.wf.MWFActivity;
 import org.compiere.wf.MWorkflow;
 import org.spin.backend.grpc.common.ProcessLog;
 import org.spin.service.grpc.util.base.RecordUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -110,7 +110,7 @@ public class WorkflowUtil {
 		Properties context = Env.getCtx();
 		ProcessLog.Builder response = ProcessLog.newBuilder()
 			.setResultTableName(
-				StringManager.getValidString(tableName)
+				TextManager.getValidString(tableName)
 			)
 		;
 
@@ -200,10 +200,10 @@ public class WorkflowUtil {
 							processInfo.getAD_PInstance_ID()
 						)
 						.setName(
-							StringManager.getValidString(name)
+							TextManager.getValidString(name)
 						)
 						.setSummary(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								Msg.parseTranslation(
 									context,
 									summary
@@ -222,7 +222,7 @@ public class WorkflowUtil {
 
 			String summary = e.getLocalizedMessage();
 			response.setSummary(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						Msg.parseTranslation(
 							context,
 							summary

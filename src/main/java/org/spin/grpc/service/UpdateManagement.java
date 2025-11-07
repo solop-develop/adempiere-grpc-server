@@ -44,7 +44,7 @@ import org.spin.backend.grpc.update.StepValue;
 import org.spin.backend.grpc.update.Update;
 import org.spin.backend.grpc.update.UpdateCenterGrpc.UpdateCenterImplBase;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -152,7 +152,7 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				nexPageToken
 			)
 		);
@@ -170,17 +170,17 @@ public class UpdateManagement extends UpdateCenterImplBase {
 				migrationStep.getAD_MigrationStep_ID()
 			)
 			.setAction(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migrationStep.getAction()
 				)
 			)
 			.setComments(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migrationStep.getComments()
 				)
 			)
 			.setStepType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migrationStep.getStepType()
 				)
 			)
@@ -197,12 +197,12 @@ public class UpdateManagement extends UpdateCenterImplBase {
 				migrationStep.getSeqNo()
 			)
 			.setSqlStatement(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migrationStep.getSQLStatement()
 				)
 			)
 			.setRollbackStatement(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migrationStep.getRollbackStatement()
 				)
 			)
@@ -238,17 +238,17 @@ public class UpdateManagement extends UpdateCenterImplBase {
 				migrationData.getAD_Column_ID()
 			)
 			.setOldValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migrationData.getOldValue()
 				)
 			)
 			.setBackupValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migrationData.getBackupValue()
 				)
 			)
 			.setNewValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migrationData.getNewValue()
 				)
 			)
@@ -307,7 +307,7 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -323,7 +323,7 @@ public class UpdateManagement extends UpdateCenterImplBase {
 				migration.getAD_Migration_ID()
 			)
 			.setEntityType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migration.getEntityType()
 				)
 			)
@@ -331,17 +331,17 @@ public class UpdateManagement extends UpdateCenterImplBase {
 				migration.getSeqNo()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migration.getName()
 				)
 			)
 			.setComments(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migration.getComments()
 				)
 			)
 			.setReleaseNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					migration.getReleaseNo()
 				)
 			)
@@ -407,7 +407,7 @@ public class UpdateManagement extends UpdateCenterImplBase {
 			nexPageToken = LimitUtil.getPagePrefix("page-token") + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -423,32 +423,32 @@ public class UpdateManagement extends UpdateCenterImplBase {
 				entityType.getAD_EntityType_ID()
 			)
 			.setEntityType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entityType.getEntityType()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entityType.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entityType.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entityType.getHelp()
 				)
 			)
 			.setVersion(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entityType.getVersion()
 				)
 			)
 			.setModelPackage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entityType.getModelPackage()
 				)
 			)
@@ -484,22 +484,22 @@ public class UpdateManagement extends UpdateCenterImplBase {
 				modification.getSeqNo()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					modification.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					modification.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					modification.getHelp()
 				)
 			)
 			.setVersion(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					modification.getVersion()
 				)
 			)

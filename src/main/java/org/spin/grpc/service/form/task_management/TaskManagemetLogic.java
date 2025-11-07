@@ -27,7 +27,6 @@ import org.spin.backend.grpc.form.task_management.ListTasksRequest;
 import org.spin.backend.grpc.form.task_management.ListTasksResponse;
 import org.spin.backend.grpc.form.task_management.Task;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -36,12 +35,13 @@ import org.spin.service.grpc.util.value.ValueManager;
 public class TaskManagemetLogic {
 
 	public static ListTasksResponse.Builder listTasks(ListTasksRequest request) throws ParseException {
-		Timestamp date = new Timestamp(System.currentTimeMillis());
-		if(request.getDate() != null && (request.getDate().getSeconds() > 0 || request.getDate().getNanos() > 0)) {
-			date = ValueManager.getTimestampFromProtoTimestamp(
-				request.getDate()
-			);
+		Timestamp date = TimeManager.getTimestampFromProtoTimestamp(
+			request.getDate()
+		);
+		if (date == null) {
+			date = new Timestamp(System.currentTimeMillis());
 		}
+
 		Timestamp startDate = TimeUtil.getMonthFirstDay(date);
 		Timestamp endDate = TimeUtil.getMonthLastDay(date);
 		endDate = TimeManager.getDayLastTime(endDate);

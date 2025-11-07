@@ -49,7 +49,7 @@ import org.spin.backend.grpc.pos.ShipmentLine;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.service.payment.PaymentConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
@@ -77,22 +77,22 @@ public class POSConvertUtil {
 				bank.getC_Bank_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bank.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bank.getDescription()
 				)
 			)
 			.setRoutingNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bank.getRoutingNo()
 				)
 			)
 			.setSwiftCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bank.getSwiftCode()
 				)
 			)
@@ -120,12 +120,12 @@ public class POSConvertUtil {
 				campaign.getC_Campaign_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					campaign.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					campaign.getDescription()
 				)
 			)
@@ -168,7 +168,7 @@ public class POSConvertUtil {
 				availablePaymentMethod.get_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					paymentMethodName
 				)
 			)
@@ -261,21 +261,21 @@ public class POSConvertUtil {
 				giftCard.get_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					giftCard.get_ValueAsString(
 						I_C_Order.COLUMNNAME_UUID
 					)
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					giftCard.get_ValueAsString(
 						I_C_Order.COLUMNNAME_DocumentNo
 					)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					giftCard.get_ValueAsString(
 						I_C_Order.COLUMNNAME_Description
 					)
@@ -413,7 +413,7 @@ public class POSConvertUtil {
 				giftCardLine.get_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					giftCardLine.get_ValueAsString("UUID")
 				)
 			).setProduct(
@@ -422,7 +422,7 @@ public class POSConvertUtil {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					giftCardLine.get_ValueAsString("Description")
 				)
 			)
@@ -523,7 +523,7 @@ public class POSConvertUtil {
 				orderLine.get_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					orderLine.getUUID()
 				)
 			).setProduct(
@@ -532,7 +532,7 @@ public class POSConvertUtil {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					orderLine.getDescription()
 				)
 			)
@@ -569,12 +569,12 @@ public class POSConvertUtil {
 				commandShortcut.get_ValueAsInt(I_C_POS.COLUMNNAME_C_POS_ID)
 			)
 			.setCommand(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					commandShortcut.get_ValueAsString("ECA14_Command")
 				)
 			)
 			.setShortcut(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					commandShortcut.get_ValueAsString("ECA14_Shortcut")
 				)
 			)
@@ -639,7 +639,7 @@ public class POSConvertUtil {
 				shipmentLine.getLine()
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					shipmentLine.getDescription()
 				)
 			)

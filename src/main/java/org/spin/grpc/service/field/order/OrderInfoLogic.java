@@ -49,8 +49,8 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 public class OrderInfoLogic {
 
@@ -247,10 +247,10 @@ public class OrderInfoLogic {
 			);
 		}
 		// Date Order
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getOrderDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getOrderDateTo()
 		);
 		if (dateFrom != null || dateTo != null) {
@@ -359,7 +359,7 @@ public class OrderInfoLogic {
 		ListOrdersInfoResponse.Builder builderList = ListOrdersInfoResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					nexPageToken
 				)
 			)

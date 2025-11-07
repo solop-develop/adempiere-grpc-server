@@ -85,8 +85,9 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.value.CollectionManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
@@ -169,7 +170,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		return builder;
@@ -426,8 +427,8 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		parameters.add(productAttributeSetId);
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -472,7 +473,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		return builderList;
@@ -490,18 +491,18 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 		builder.setId(attributeSetInstance.getM_AttributeSetInstance_ID())
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSetInstance.getDescription()
 				)
 			)
 			.setLot(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSetInstance.getLot()
 				)
 			)
 			.setLotId(attributeSetInstance.getM_Lot_ID())
 			.setSerial(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSetInstance.getSerNo())
 				)
 			.setProductAttributeSet(
@@ -551,7 +552,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 
 		builder.setId(0)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeInstance.getValue()
 				)
 			)
@@ -578,12 +579,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 		builder.setId(attributeSet.getM_AttributeSet_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSet.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSet.getDescription()
 				)
 			)
@@ -592,12 +593,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			.setIsLotMandatory(attributeSet.isLotMandatory())
 			.setLotControlId(attributeSet.getM_LotCtl_ID())
 			.setLotCharStartOverwrite(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSet.getLotCharSOverwrite()
 				)
 			)
 			.setLotCharEndOverwrite(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSet.getLotCharEOverwrite()
 				)
 			)
@@ -605,12 +606,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			.setIsSerialMandatory(attributeSet.isSerNoMandatory())
 			.setSerialControlId(attributeSet.getM_SerNoCtl_ID())
 			.setSerialCharStartOverwrite(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSet.getSerNoCharSOverwrite()
 				)
 			)
 			.setSerialCharEndOverwrite(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSet.getSerNoCharEOverwrite()
 				)
 			)
@@ -618,7 +619,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			.setIsGuaranteeDateMandatory(attributeSet.isGuaranteeDateMandatory())
 			.setGuaranteeDays(attributeSet.getGuaranteeDays())
 			.setMandatoryType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attributeSet.getMandatoryType()
 				)
 			)
@@ -655,17 +656,17 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 		builder.setId(attribute.getM_Attribute_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attribute.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attribute.getDescription()
 				)
 			)
 			.setValueType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attribute.getAttributeValueType()
 				)
 			)
@@ -704,17 +705,17 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 		builder.setId(productAttributeValue.getM_AttributeValue_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					productAttributeValue.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					productAttributeValue.getDescription()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					productAttributeValue.getValue()
 				)
 			)
@@ -761,7 +762,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			attributeSetInstace.setM_AttributeSet_ID(product.getM_AttributeSet_ID());
 			attributeSetInstace.saveEx();
 
-			Map<String, Object> attributesValues = ValueManager.convertValuesMapToObjects(
+			Map<String, Object> attributesValues = CollectionManager.getMapObjectFromMapProtoValue(
 				request.getAttributes().getFieldsMap()
 			);
 			List<MAttribute> attributes = Arrays.asList(atttibuteSet.getMAttributes(isProductASI));
@@ -857,8 +858,8 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -913,7 +914,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		return builderList;
@@ -945,17 +946,17 @@ public class MaterialManagement extends MaterialManagementImplBase {
 				warehouse.getM_Warehouse_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getDescription()
 				)
 			)
@@ -1011,8 +1012,8 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -1095,7 +1096,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		return builderList;
@@ -1109,33 +1110,33 @@ public class MaterialManagement extends MaterialManagementImplBase {
 
 		builder.setId(locator.getM_Locator_ID())
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					locator.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					locator.getValue()
 				)
 			)
 			.setDisplayValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					locator.getDisplayValue()
 				)
 			)
 			.setIsDefault(locator.isDefault())
 			.setAisle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					locator.getX()
 				)
 			)
 			.setBin(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					locator.getX()
 				)
 			)
 			.setLevel(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					locator.getZ()
 				)
 			)

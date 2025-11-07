@@ -49,7 +49,7 @@ import org.spin.service.grpc.util.db.OperatorUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 /**
  * Class for handle SQL Where Clause
@@ -304,7 +304,7 @@ public class WhereClauseUtil {
 						currentValue
 					);
 					boolean isString = DisplayType.isText(displayType) || valueToFilter instanceof String;
-					boolean isEmptyString = isString && Util.isEmpty(StringManager.getStringFromObject(currentValue), true);
+					boolean isEmptyString = isString && Util.isEmpty(TextManager.getStringFromObject(currentValue), true);
 					if (currentValue == null || isEmptyString) {
 						if (Util.isEmpty(additionalSQL.toString(), true)) {
 							additionalSQL.append("(SELECT " + baseColumnName + " WHERE " + baseColumnName + " IS NULL)");
@@ -365,8 +365,8 @@ public class WhereClauseUtil {
 			}
 		} else if(operatorValue.equals(OperatorUtil.LIKE) || operatorValue.equals(OperatorUtil.NOT_LIKE)) {
 			columnName = "UPPER(" + columnName + ")";
-			String valueToFilter = StringManager.getValidString(
-				StringManager.getStringFromObject(
+			String valueToFilter = TextManager.getValidString(
+				TextManager.getStringFromObject(
 					condition.getValue()
 				)
 			);
@@ -392,7 +392,7 @@ public class WhereClauseUtil {
 			sqlValue = " ? ";
 
 			boolean isString = DisplayType.isText(displayType) || valueToFilter instanceof String;
-			boolean isEmptyString = isString && Util.isEmpty(StringManager.getStringFromObject(parameterValue), true);
+			boolean isEmptyString = isString && Util.isEmpty(TextManager.getStringFromObject(parameterValue), true);
 			if (isString) {
 				if (isEmptyString) {
 					parameterValue = "";
@@ -467,7 +467,7 @@ public class WhereClauseUtil {
 
 			condition.getValues().forEach(currentValue -> {
 				boolean isString = DisplayType.isText(displayType) || currentValue instanceof String;
-				boolean isEmptyString = isString && Util.isEmpty(StringManager.getStringFromObject(currentValue), true);
+				boolean isEmptyString = isString && Util.isEmpty(TextManager.getStringFromObject(currentValue), true);
 				if (currentValue == null || isEmptyString) {
 					if (Util.isEmpty(additionalSQL.toString(), true)) {
 						additionalSQL.append("(SELECT " + baseColumnName + " WHERE " + baseColumnName + " IS NULL)");
@@ -562,7 +562,7 @@ public class WhereClauseUtil {
 
 			// TODO: Date support with `TRUNC(columnName, 'DD')`
 			boolean isString = DisplayType.isText(displayType) || valueToFilter instanceof String;
-			boolean isEmptyString = isString && Util.isEmpty(StringManager.getStringFromObject(valueToFilter), true);
+			boolean isEmptyString = isString && Util.isEmpty(TextManager.getStringFromObject(valueToFilter), true);
 			if (isString) {
 				if (isEmptyString) {
 					valueToFilter = "";

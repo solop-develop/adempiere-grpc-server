@@ -27,7 +27,7 @@ import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.service.customer.CustomerConvertUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class POSConvertUtil {
 
@@ -44,17 +44,17 @@ public class POSConvertUtil {
 				pos.getC_POS_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					pos.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					pos.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					pos.getHelp()
 				)
 			)

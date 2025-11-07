@@ -38,7 +38,7 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.CreatePaymentRequest;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * This class was created for add all helper method for Cash Management
@@ -113,7 +113,7 @@ public class CashManagement {
 		payment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
         String value = DB.getDocumentNo(payment.getC_DocType_ID(), transactionName, false,  payment);
         payment.setDocumentNo(value);
-        Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
+        Timestamp date = TimeManager.getTimestampFromProtoTimestamp(
 			request.getPaymentAccountDate()
 		);
         if(date != null) {

@@ -57,7 +57,7 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -104,8 +104,8 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -170,17 +170,17 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				warehouse.getM_Warehouse_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getDescription()
 				)
 			)
@@ -219,8 +219,8 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -263,7 +263,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -296,22 +296,22 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				product.getM_Product_ID()
 			)
 			.setUpc(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getUPC()
 				)
 			)
 			.setSku(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getSKU()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getName()
 				)
 			)
@@ -332,7 +332,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				movement.getM_Movement_ID()
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					movement.getDocumentNo()
 				)
 			)
@@ -342,7 +342,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					movement.getDescription()
 				)
 			)
@@ -615,7 +615,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 			movementLine.setMovementQty(quantity);
 			movementLine.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getDescription()
 				)
 			);
@@ -727,7 +727,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 			movementLine.setMovementQty(quantity);
 			movementLine.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getDescription()
 				)
 			);
@@ -782,7 +782,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					movementLine.getDescription()
 				)
 			)
@@ -839,7 +839,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		ListMovementLinesResponse.Builder builderList = ListMovementLinesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 

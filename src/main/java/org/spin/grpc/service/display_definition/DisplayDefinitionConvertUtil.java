@@ -83,7 +83,7 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -118,24 +118,24 @@ public class DisplayDefinitionConvertUtil {
 				record.get_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					record.get_UUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					record.get_ValueAsString("Value")
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					record.get_ValueAsString(
 						I_AD_Element.COLUMNNAME_Name
 					)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					record.get_ValueAsString(
 						I_AD_Element.COLUMNNAME_Description
 					)
@@ -145,7 +145,7 @@ public class DisplayDefinitionConvertUtil {
 				table.getAD_Table_ID()
 			)
 			.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -180,7 +180,7 @@ public class DisplayDefinitionConvertUtil {
 
 		String displayType = record.get_ValueAsString(DisplayDefinitionChanges.SP010_DisplayType);
 		builder.setDisplayType(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				displayType
 			)
 		);
@@ -196,7 +196,7 @@ public class DisplayDefinitionConvertUtil {
 					MColumn validFromColumn = MColumn.get(Env.getCtx(), validFromColumnId);
 					if (validFromColumn != null && validFromColumn.getAD_Column_ID() > 0) {
 						builder.setValidFromColumn(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								validFromColumn.getColumnName()
 							)
 						);
@@ -209,7 +209,7 @@ public class DisplayDefinitionConvertUtil {
 					MColumn validToColumn = MColumn.get(Env.getCtx(), validToColumnId);
 					if (validToColumn != null && validToColumn.getAD_Column_ID() > 0) {
 						builder.setValidToColumn(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								validToColumn.getColumnName()
 							)
 						);
@@ -266,7 +266,7 @@ public class DisplayDefinitionConvertUtil {
 					MColumn groupColumn = MColumn.get(Env.getCtx(), groupColumnId);
 					if (groupColumn != null && groupColumn.getAD_Column_ID() > 0) {
 						builder.setGroupColumn(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								groupColumn.getColumnName()
 							)
 						);
@@ -287,7 +287,7 @@ public class DisplayDefinitionConvertUtil {
 					MColumn validFromColumn = MColumn.get(Env.getCtx(), validFromColumnId);
 					if (validFromColumn != null && validFromColumn.getAD_Column_ID() > 0) {
 						builder.setValidFromColumn(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								validFromColumn.getColumnName()
 							)
 						);
@@ -300,7 +300,7 @@ public class DisplayDefinitionConvertUtil {
 					MColumn validToColumn = MColumn.get(Env.getCtx(), validToColumnId);
 					if (validToColumn != null && validToColumn.getAD_Column_ID() > 0) {
 						builder.setValidToColumn(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								validToColumn.getColumnName()
 							)
 						);
@@ -317,7 +317,7 @@ public class DisplayDefinitionConvertUtil {
 					MColumn dateColumn = MColumn.get(Env.getCtx(), dateColumnId);
 					if (dateColumn != null && dateColumn.getAD_Column_ID() > 0) {
 						builder.setDateColumn(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								dateColumn.getColumnName()
 							)
 						);
@@ -538,12 +538,12 @@ public class DisplayDefinitionConvertUtil {
 				);
 				DependentFieldDefinition.Builder builder = DependentFieldDefinition.newBuilder()
 					.setId(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							currentField.get_UUID()
 						)
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							currentField.get_UUID()
 						)
 					)
@@ -551,7 +551,7 @@ public class DisplayDefinitionConvertUtil {
 						currentField.get_ID()
 					)
 					.setColumnName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							currentColumnName
 						)
 					)
@@ -559,12 +559,12 @@ public class DisplayDefinitionConvertUtil {
 						displayDefinition.get_ID()
 					)
 					.setParentUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							displayDefinition.get_UUID()
 						)
 					)
 					.setParentName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							displayDefinition.get_ValueAsString(
 								I_AD_Field.COLUMNNAME_Name
 							)
@@ -594,7 +594,7 @@ public class DisplayDefinitionConvertUtil {
 			+ Optional.ofNullable(info.ValidationCode).orElse("")
 		);
 		builder.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					info.TableName
 				)
 			)
@@ -643,14 +643,14 @@ public class DisplayDefinitionConvertUtil {
 				fieldGroup.getAD_FieldGroup_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldGroup.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(name))
+				TextManager.getValidString(name))
 			.setFieldGroupType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldGroup.getFieldGroupType()
 				)
 			)
@@ -705,12 +705,12 @@ public class DisplayDefinitionConvertUtil {
 		}
 
 		builder.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinitionItem.get_UUID()
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinitionItem.get_UUID()
 				)
 			)
@@ -723,26 +723,26 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getColumnName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinitionItem.get_Translation(
 						I_AD_Column.COLUMNNAME_Description
 					)
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinitionItem.get_Translation(
 						I_AD_Column.COLUMNNAME_Help
 					)
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinitionItem.get_Translation(
 						I_AD_Column.COLUMNNAME_Name
 					)
@@ -762,7 +762,7 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setDisplayLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinitionItem.get_ValueAsString(
 						I_AD_Field.COLUMNNAME_DisplayLogic
 					)
@@ -774,7 +774,7 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setReadOnlyLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getReadOnlyLogic()
 				)
 			)
@@ -782,12 +782,12 @@ public class DisplayDefinitionConvertUtil {
 				isMandatory
 			)
 			.setMandatoryLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getMandatoryLogic()
 				)
 			)
 			.setDefaultValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					defaultValue
 				)
 			)
@@ -899,12 +899,12 @@ public class DisplayDefinitionConvertUtil {
 		}
 
 		builder.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getUUID()
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getUUID()
 				)
 			)
@@ -912,26 +912,26 @@ public class DisplayDefinitionConvertUtil {
 				column.getAD_Column_ID()
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getColumnName()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.get_Translation(
 						I_AD_Column.COLUMNNAME_Name
 					)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.get_Translation(
 						I_AD_Column.COLUMNNAME_Description
 					)
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.get_Translation(
 						I_AD_Column.COLUMNNAME_Help
 					)
@@ -942,7 +942,7 @@ public class DisplayDefinitionConvertUtil {
 			)
 			.setIsDisplayed(true)
 			.setReadOnlyLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getReadOnlyLogic()
 				)
 			)
@@ -950,12 +950,12 @@ public class DisplayDefinitionConvertUtil {
 				column.isMandatory()
 			)
 			.setMandatoryLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getMandatoryLogic()
 				)
 			)
 			.setDefaultValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getDefaultValue()
 				)
 			)
@@ -1043,17 +1043,17 @@ public class DisplayDefinitionConvertUtil {
 				calendarItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					calendarItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					calendarItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					calendarItem.getDescription()
 				)
 			)
@@ -1074,7 +1074,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		calendarItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1097,12 +1097,12 @@ public class DisplayDefinitionConvertUtil {
 		}
 		builder
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					group.getGroupCode()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					group.getName()
 				)
 			)
@@ -1123,17 +1123,17 @@ public class DisplayDefinitionConvertUtil {
 				expandCollapseItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					expandCollapseItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					expandCollapseItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					expandCollapseItem.getDescription()
 				)
 			)
@@ -1144,7 +1144,7 @@ public class DisplayDefinitionConvertUtil {
 				expandCollapseItem.isReadOnly()
 			)
 			.setGroupId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					expandCollapseItem.getGroupCode()
 				)
 			)
@@ -1155,7 +1155,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		expandCollapseItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1181,17 +1181,17 @@ public class DisplayDefinitionConvertUtil {
 				generalItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					generalItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					generalItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					generalItem.getDescription()
 				)
 			)
@@ -1205,7 +1205,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		generalItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1228,7 +1228,7 @@ public class DisplayDefinitionConvertUtil {
 		}
 		builder
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					summaryItem.getName()
 				)
 			)
@@ -1236,17 +1236,17 @@ public class DisplayDefinitionConvertUtil {
 				summaryItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					summaryItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					summaryItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					summaryItem.getDescription()
 				)
 			)
@@ -1267,7 +1267,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		summaryItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1298,22 +1298,22 @@ public class DisplayDefinitionConvertUtil {
 				childItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					childItem.getUuid()
 				)
 			)
 			// .setTitle(
-			// 	StringManager.getValidString(
+			// 	TextManager.getValidString(
 			// 		summaryItem.getName()
 			// 	)
 			// )
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					childItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					childItem.getDescription()
 				)
 			)
@@ -1332,7 +1332,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		childItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1356,12 +1356,12 @@ public class DisplayDefinitionConvertUtil {
 		}
 		builder
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanColumn.getGroupCode()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanColumn.getName()
 				)
 			)
@@ -1382,17 +1382,17 @@ public class DisplayDefinitionConvertUtil {
 				kanbanItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanItem.getDescription()
 				)
 			)
@@ -1403,7 +1403,7 @@ public class DisplayDefinitionConvertUtil {
 				kanbanItem.isReadOnly()
 			)
 			.setGroupId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanItem.getGroupCode()
 				)
 			)
@@ -1414,7 +1414,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		kanbanItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1440,17 +1440,17 @@ public class DisplayDefinitionConvertUtil {
 				mosaicItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					mosaicItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					mosaicItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					mosaicItem.getDescription()
 				)
 			)
@@ -1464,7 +1464,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		mosaicItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1490,17 +1490,17 @@ public class DisplayDefinitionConvertUtil {
 				resourceItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceItem.getDescription()
 				)
 			)
@@ -1518,12 +1518,12 @@ public class DisplayDefinitionConvertUtil {
 				resourceItem.isConfirmed()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceItem.getName()
 				)
 			)
 			.setGroupName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceItem.getGroupName()
 				)
 			)
@@ -1531,7 +1531,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		resourceItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1557,17 +1557,17 @@ public class DisplayDefinitionConvertUtil {
 				timelineItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					timelineItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					timelineItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					timelineItem.getDescription()
 				)
 			)
@@ -1586,7 +1586,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		timelineItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1608,12 +1608,12 @@ public class DisplayDefinitionConvertUtil {
 		}
 		builder
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanColumn.getGroupCode()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanColumn.getName()
 				)
 			)
@@ -1634,17 +1634,17 @@ public class DisplayDefinitionConvertUtil {
 				workflowItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					workflowItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					workflowItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					workflowItem.getDescription()
 				)
 			)
@@ -1655,7 +1655,7 @@ public class DisplayDefinitionConvertUtil {
 				workflowItem.isReadOnly()
 			)
 			.setGroupId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					workflowItem.getGroupCode()
 				)
 			)
@@ -1666,7 +1666,7 @@ public class DisplayDefinitionConvertUtil {
 		Struct.Builder fields = Struct.newBuilder();
 		workflowItem.getFields().entrySet().forEach(field -> {
 			BaseFieldItem fieldItem = field.getValue();
-			String columnName = StringManager.getValidString(
+			String columnName = TextManager.getValidString(
 				fieldItem.getColumnName()
 			);
 			Value fieldValue = convertFieldItem(fieldItem);
@@ -1690,17 +1690,17 @@ public class DisplayDefinitionConvertUtil {
 				baseItem.getId()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					baseItem.getUuid()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					baseItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					baseItem.getDescription()
 				)
 			)
@@ -1737,7 +1737,7 @@ public class DisplayDefinitionConvertUtil {
 				Struct.Builder fieldItem = Struct.newBuilder();
 
 				// value
-				Value.Builder valueBuilder = ValueManager.getValueFromReference(
+				Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
 					fieldEntry.getValue(),
 					referenceId
 				);
@@ -1750,7 +1750,7 @@ public class DisplayDefinitionConvertUtil {
 				if (fieldEntry.getValue() == null || Util.isEmpty(displayValue, true)) {
 					displayValue = null;
 				}
-				Value.Builder displayValueBuilder = ValueManager.getValueFromString(
+				Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
 					displayValue
 				);
 				fieldItem.putFields(
@@ -1811,7 +1811,7 @@ public class DisplayDefinitionConvertUtil {
 							columnName
 						);
 						// value
-						Value.Builder valueBuilder = ValueManager.getValueFromReference(
+						Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
 							value,
 							column.getAD_Reference_ID()
 						);
@@ -1870,7 +1870,7 @@ public class DisplayDefinitionConvertUtil {
 						if (value == null || Util.isEmpty(displayValue, true)) {
 							displayValue = null;
 						}
-						Value.Builder displayValueBuilder = ValueManager.getValueFromString(
+						Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
 							displayValue
 						);
 						fieldItem.putFields(
@@ -1915,17 +1915,17 @@ public class DisplayDefinitionConvertUtil {
 				businessPartner.getC_BPartner_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getUUID()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					baseItem.getTitle()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					baseItem.getDescription()
 				)
 			)
@@ -1959,7 +1959,7 @@ public class DisplayDefinitionConvertUtil {
 					Struct.Builder fieldItem = Struct.newBuilder();
 
 					// value
-					Value.Builder valueBuilder = ValueManager.getValueFromReference(
+					Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
 						fieldEntry.getValue(),
 						referenceId
 					);
@@ -1972,7 +1972,7 @@ public class DisplayDefinitionConvertUtil {
 					if (fieldEntry.getValue() == null || Util.isEmpty(displayValue, true)) {
 						displayValue = null;
 					}
-					Value.Builder displayValueBuilder = ValueManager.getValueFromString(
+					Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
 						displayValue
 					);
 					fieldItem.putFields(
@@ -2010,7 +2010,7 @@ public class DisplayDefinitionConvertUtil {
 			;
 		}).forEach(column -> {
 			String columnName = column.getColumnName();
-			Value value = ValueManager.getValueFromReference(
+			Value value = ValueManager.getProtoValueFromObject(
 					businessPartner.get_Value(columnName),
 					column.getAD_Reference_ID()
 				).build();
@@ -2046,67 +2046,67 @@ public class DisplayDefinitionConvertUtil {
 				businessPartnerLocation.getC_BPartner_Location_ID()
 			)
 			.setDisplayValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.toString()
 				)
 			)
 			.setPostalCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getPostal()
 				)
 			)
 			.setPostalCodeAdditional(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getPostal_Add()
 				)
 			)
 			.setAddress1(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress1()
 				)
 			)
 			.setAddress2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress2()
 				)
 			)
 			.setAddress3(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress3()
 				)
 			)
 			.setAddress4(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress4()
 				)
 			)
 			.setPostalCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getPostal()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getDescription()
 				)
 			)
 			.setLocationName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getName()
 				)
 			)
 			.setContactName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getContactPerson()
 				)
 			)
 			.setEmail(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getEMail()
 				)
 			)
 			.setPhone(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getPhone()
 				)
 			)
@@ -2142,13 +2142,13 @@ public class DisplayDefinitionConvertUtil {
 		}
 		//	
 		builder.setPhone(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(Optional.ofNullable(phone).orElse(""))
 			)
 		);
 		MCountry country = MCountry.get(Env.getCtx(), location.getC_Country_ID());
 		builder.setCountryCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getCountryCode()
 				)
 			)
@@ -2165,7 +2165,7 @@ public class DisplayDefinitionConvertUtil {
 						city.getC_City_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							city.getName()
 						)
 					)
@@ -2174,7 +2174,7 @@ public class DisplayDefinitionConvertUtil {
 			builder.setCity(
 				City.newBuilder()
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							location.getCity()
 						)
 					)
@@ -2190,7 +2190,7 @@ public class DisplayDefinitionConvertUtil {
 						region.getC_Region_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							region.getName()
 						)
 					)

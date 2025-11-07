@@ -54,7 +54,7 @@ import org.spin.base.util.FileUtil;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -497,37 +497,37 @@ public class FileManagement extends FileManagementImplBase {
 				reference.getAD_AttachmentReference_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					reference.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					reference.getFileName()
 				)
 			)
 			.setFileName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					reference.getValidFileName()
 				)
 			)
 			.setValidFileName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					reference.getValidFileName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					reference.getDescription()
 				)
 			)
 			.setTextMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					reference.getTextMsg()
 				)
 			)
 			.setContentType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					MimeType.getMimeType(
 						reference.getFileName()
 					)
@@ -581,12 +581,12 @@ public class FileManagement extends FileManagementImplBase {
 				attachment.getAD_Attachment_ID()
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attachment.getTitle()
 				)
 			)
 			.setTextMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attachment.getTextMsg()
 				)
 			)

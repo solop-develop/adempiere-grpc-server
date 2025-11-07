@@ -114,7 +114,8 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -248,7 +249,7 @@ public class DisplayDefinitionServiceLogic {
 		builderList
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 		MTable referenceTable = MTable.get(Env.getCtx(), displayTableName);
@@ -484,7 +485,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -505,17 +506,17 @@ public class DisplayDefinitionServiceLogic {
 		ExpandCollapse expandCollapseDefinition = new ExpandCollapse(displayDefinition.get_ID());
 		ListExpandCollapsesDefinitionResponse.Builder builderList = ListExpandCollapsesDefinitionResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					expandCollapseDefinition.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					expandCollapseDefinition.getDescription()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					expandCollapseDefinition.getColumnName(
 						DisplayDefinitionChanges.SP010_Group_ID
 					)
@@ -560,17 +561,17 @@ public class DisplayDefinitionServiceLogic {
 
 		ListExpandCollapsesDataResponse.Builder builderList = ListExpandCollapsesDataResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getDescription()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getColumnName()
 				)
 			)
@@ -578,7 +579,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -596,7 +597,7 @@ public class DisplayDefinitionServiceLogic {
 		}
 		Map<String, List<ExpandCollapseEntry>> groups = new HashMap<>();
 		displayData.getExpandCollapses().forEach(expandCollapseItem -> {
-			String groupId = StringManager.getValidString(
+			String groupId = TextManager.getValidString(
 				expandCollapseItem.getGroupCode()
 			);
 
@@ -611,7 +612,7 @@ public class DisplayDefinitionServiceLogic {
 		});
 		List<ExpandCollapseGroup> groupsList = new ArrayList<ExpandCollapseGroup>();
 		groupsMap.entrySet().forEach(groupEntry -> {
-			String groupId = StringManager.getValidString(
+			String groupId = TextManager.getValidString(
 				groupEntry.getKey()
 			);
 			ExpandCollapseGroup.Builder builderGroup = DisplayDefinitionConvertUtil.convertExpandCollapseGroup(groupEntry.getValue());
@@ -666,12 +667,12 @@ public class DisplayDefinitionServiceLogic {
 
 		ListGeneralsDataResponse.Builder builderList = ListGeneralsDataResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getDescription()
 				)
 			)
@@ -679,7 +680,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -722,12 +723,12 @@ public class DisplayDefinitionServiceLogic {
 
 		ListHierarchiesDataResponse.Builder builderList = ListHierarchiesDataResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getDescription()
 				)
 			)
@@ -735,7 +736,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -756,17 +757,17 @@ public class DisplayDefinitionServiceLogic {
 		Kanban kanbanDefinition = new Kanban(displayDefinition.get_ID());
 		ListKanbansDefinitionResponse.Builder builderList = ListKanbansDefinitionResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanDefinition.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanDefinition.getDescription()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					kanbanDefinition.getColumnName(
 						DisplayDefinitionChanges.SP010_Group_ID
 					)
@@ -810,17 +811,17 @@ public class DisplayDefinitionServiceLogic {
 
 		ListKanbansDataResponse.Builder builderList = ListKanbansDataResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getDescription()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getColumnName()
 				)
 			)
@@ -828,7 +829,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -846,7 +847,7 @@ public class DisplayDefinitionServiceLogic {
 		}
 		Map<String, List<KanbanEntry>> groups = new HashMap<>();
 		displayData.getKanbans().forEach(kanbanItem -> {
-			String groupId = StringManager.getValidString(
+			String groupId = TextManager.getValidString(
 				kanbanItem.getGroupCode()
 			);
 
@@ -861,7 +862,7 @@ public class DisplayDefinitionServiceLogic {
 		});
 		List<KanbanStep> groupsList = new ArrayList<KanbanStep>();
 		groupsMap.entrySet().forEach(groupEntry -> {
-			String groupId = StringManager.getValidString(
+			String groupId = TextManager.getValidString(
 				groupEntry.getKey()
 			);
 			KanbanStep.Builder builderGroup = DisplayDefinitionConvertUtil.convertKanbanStep(groupEntry.getValue());
@@ -916,12 +917,12 @@ public class DisplayDefinitionServiceLogic {
 
 		ListMosaicsDataResponse.Builder builderList = ListMosaicsDataResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getDescription()
 				)
 			)
@@ -929,7 +930,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -979,7 +980,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 		Map<String, List<ResourceItem>> resourcesGroup = new HashMap<>();
@@ -996,13 +997,13 @@ public class DisplayDefinitionServiceLogic {
 		});
 		resourcesGroup.entrySet().forEach(entry -> {
 			ResourceGroup.Builder group = ResourceGroup.newBuilder()
-				.setName(StringManager.getValidString(entry.getKey()))
+				.setName(TextManager.getValidString(entry.getKey()))
 			;
 			entry.getValue().forEach(resource -> {
 				ResourceGroupChild.Builder child = ResourceGroupChild.newBuilder()
 					.setId(resource.getId())
-					.setUuid(StringManager.getValidString(resource.getUuid()))
-					.setName(StringManager.getValidString(resource.getName()))
+					.setUuid(TextManager.getValidString(resource.getUuid()))
+					.setName(TextManager.getValidString(resource.getName()))
 				;
 				group.addResources(child);
 			});
@@ -1050,7 +1051,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -1072,17 +1073,17 @@ public class DisplayDefinitionServiceLogic {
 
 		ListWorkflowsDefinitionResponse.Builder builderList = ListWorkflowsDefinitionResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					worflowDefinition.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					worflowDefinition.getDescription()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					worflowDefinition.getColumnName(
 						DisplayDefinitionChanges.SP010_Group_ID
 					)
@@ -1142,17 +1143,17 @@ public class DisplayDefinitionServiceLogic {
 
 		ListWorkflowsDataResponse.Builder builderList = ListWorkflowsDataResponse.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getDescription()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					displayData.getColumnName()
 				)
 			)
@@ -1160,7 +1161,7 @@ public class DisplayDefinitionServiceLogic {
 				count
 			)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -1212,13 +1213,13 @@ public class DisplayDefinitionServiceLogic {
 			Value attributeValue = attributes.get(columnName);
 			if (attributeValue != null && !attributeValue.hasNullValue()) {
 				if (displayTypeId > 0) {
-					value = ValueManager.getObjectFromReference(
+					value = ValueManager.getProtoValueFromObject(
 						attributeValue,
 						displayTypeId
 					);
 				} 
 				if (value == null) {
-					value = ValueManager.getObjectFromValue(
+					value = ValueManager.getProtoValueFromObject(
 						attributeValue
 					);
 				}
@@ -1327,17 +1328,17 @@ public class DisplayDefinitionServiceLogic {
 				// checks if the column exists in the database
 				return;
 			}
-			int referenceId = column.getAD_Reference_ID();
+			int displayTypeId = column.getAD_Reference_ID();
 			Object value = null;
 			if (!attribute.getValue().hasNullValue()) {
-				if (referenceId > 0) {
-					value = ValueManager.getObjectFromReference(
+				if (displayTypeId > 0) {
+					value = ValueManager.getProtoValueFromObject(
 						attribute.getValue(),
-						referenceId
+						displayTypeId
 					);
 				} 
 				if (value == null) {
-					value = ValueManager.getObjectFromValue(
+					value = ValueManager.getProtoValueFromObject(
 						attribute.getValue()
 					);
 				}
@@ -1412,16 +1413,12 @@ public class DisplayDefinitionServiceLogic {
 			MResourceAssignment resourceAssignment = new MResourceAssignment(context, 0, transationName);
 
 			// Name
-			String resourceName = null;
 			Value nameValue = attributes.get(
 				I_S_ResourceAssignment.COLUMNNAME_Name
 			);
-			// TODO: Remove with PR https://github.com/adempiere/adempiere-grpc-utils/pull/46
-			if (nameValue != null) {
-				resourceName = ValueManager.getStringFromValue(
-					nameValue
-				);
-			}
+			String resourceName = TextManager.getStringFromProtoValue(
+				nameValue
+			);
 			if (Util.isEmpty(resourceName, true)) {
 				// Fill with default name (on zk is `.`)
 				resourceName = "-";
@@ -1441,7 +1438,7 @@ public class DisplayDefinitionServiceLogic {
 			resourceAssignment.setDescription(resourceDescription);
 			*/
 			// Assign Date From
-			Timestamp resourceAssignDateFrom = ValueManager.getTimestampFromValue(
+			Timestamp resourceAssignDateFrom = TimeManager.getTimestampFromProtoValue(
 				attributes.get(
 					I_S_ResourceAssignment.COLUMNNAME_AssignDateFrom
 				)
@@ -1451,14 +1448,14 @@ public class DisplayDefinitionServiceLogic {
 			}
 			resourceAssignment.setAssignDateFrom(resourceAssignDateFrom);
 			// Assign Date From
-			Timestamp resourceAssignDateTo = ValueManager.getTimestampFromValue(
+			Timestamp resourceAssignDateTo = TimeManager.getTimestampFromProtoValue(
 				attributes.get(
 					I_S_ResourceAssignment.COLUMNNAME_AssignDateTo
 				)
 			);
 			resourceAssignment.setAssignDateTo(resourceAssignDateTo);
 			// Resource
-			int resourceId = ValueManager.getIntegerFromValue(
+			int resourceId = NumberManager.getIntegerFromProtoValue(
 				attributes.get(
 					I_S_ResourceAssignment.COLUMNNAME_S_Resource_ID
 				)
@@ -1490,13 +1487,13 @@ public class DisplayDefinitionServiceLogic {
 				Value attributeValue = attributes.get(columnName);
 				if (attributeValue != null && !attributeValue.hasNullValue()) {
 					if (displayTypeId > 0) {
-						value = ValueManager.getObjectFromReference(
+						value = ValueManager.getProtoValueFromObject(
 							attributeValue,
 							displayTypeId
 						);
 					} 
 					if (value == null) {
-						value = ValueManager.getObjectFromValue(
+						value = ValueManager.getProtoValueFromObject(
 							attributeValue
 						);
 					}
@@ -1634,13 +1631,13 @@ public class DisplayDefinitionServiceLogic {
 				Object value = null;
 				if (!attribute.getValue().hasNullValue()) {
 					if (referenceId > 0) {
-						value = ValueManager.getObjectFromReference(
+						value = ValueManager.getObjectFromProtoValue(
 							attribute.getValue(),
 							referenceId
 						);
 					} 
 					if (value == null) {
-						value = ValueManager.getObjectFromValue(
+						value = ValueManager.getObjectFromProtoValue(
 							attribute.getValue()
 						);
 					}
@@ -1665,13 +1662,13 @@ public class DisplayDefinitionServiceLogic {
 				Object value = null;
 				if (!attribute.getValue().hasNullValue()) {
 					if (referenceId > 0) {
-						value = ValueManager.getObjectFromReference(
+						value = ValueManager.getObjectFromProtoValue(
 							attribute.getValue(),
 							referenceId
 						);
 					} 
 					if (value == null) {
-						value = ValueManager.getObjectFromValue(
+						value = ValueManager.getObjectFromProtoValue(
 							attribute.getValue()
 						);
 					}
@@ -1770,13 +1767,13 @@ public class DisplayDefinitionServiceLogic {
 		if(attributes != null) {
 			attributes.keySet().forEach(key -> {
 				Value attribute = attributes.get(key);
-				int referenceId = getReferenceId(entity.get_Table_ID(), key);
+				int displayTypeId = getReferenceId(entity.get_Table_ID(), key);
 				Object value = null;
-				if(referenceId > 0) {
-					value = ValueManager.getObjectFromReference(attribute, referenceId);
+				if(displayTypeId > 0) {
+					value = ValueManager.getProtoValueFromObject(attribute, displayTypeId);
 				} 
 				if(value == null) {
-					value = ValueManager.getObjectFromValue(attribute);
+					value = ValueManager.getProtoValueFromObject(attribute);
 				}
 				entity.set_ValueOfColumn(key, value);
 			});

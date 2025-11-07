@@ -23,7 +23,7 @@ import org.spin.backend.grpc.pos.City;
 import org.spin.backend.grpc.pos.Customer;
 import org.spin.backend.grpc.pos.CustomerTemplate;
 import org.spin.backend.grpc.pos.Region;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -55,12 +55,12 @@ public class CustomerConvertUtil {
 				businessPartner.getC_BPartner_ID()
 			)
 			.setKey(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDisplayValue()
 				)
 			)
@@ -105,37 +105,37 @@ public class CustomerConvertUtil {
 				businessPartner.getC_BPartner_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getValue()
 				)
 			)
 			.setTaxId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getTaxID()
 				)
 			)
 			.setDuns(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDUNS()
 				)
 			)
 			.setNaics(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getNAICS()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName()
 				)
 			)
 			.setLastName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName2()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDescription()
 				)
 			)
@@ -156,7 +156,7 @@ public class CustomerConvertUtil {
 			;
 		}).forEach(column -> {
 			String columnName = column.getColumnName();
-			Value value = ValueManager.getValueFromReference(
+			Value value = ValueManager.getProtoValueFromObject(
 					businessPartner.get_Value(columnName),
 					column.getAD_Reference_ID()
 				).build();
@@ -196,67 +196,67 @@ public class CustomerConvertUtil {
 				businessPartnerLocation.getC_BPartner_Location_ID()
 			)
 			.setDisplayValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.toString()
 				)
 			)
 			.setPostalCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getPostal()
 				)
 			)
 			.setPostalCodeAdditional(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getPostal_Add()
 				)
 			)
 			.setAddress1(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress1()
 				)
 			)
 			.setAddress2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress2()
 				)
 			)
 			.setAddress3(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress3()
 				)
 			)
 			.setAddress4(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress4()
 				)
 			)
 			.setPostalCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getPostal()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getDescription()
 				)
 			)
 			.setLocationName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getName()
 				)
 			)
 			.setContactName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getContactPerson()
 				)
 			)
 			.setEmail(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getEMail()
 				)
 			)
 			.setPhone(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getPhone()
 				)
 			)
@@ -292,13 +292,13 @@ public class CustomerConvertUtil {
 		}
 		//	
 		builder.setPhone(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(Optional.ofNullable(phone).orElse(""))
 			)
 		);
 		MCountry country = MCountry.get(Env.getCtx(), location.getC_Country_ID());
 		builder.setCountryCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getCountryCode()
 				)
 			)
@@ -315,7 +315,7 @@ public class CustomerConvertUtil {
 						city.getC_City_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							city.getName()
 						)
 					)
@@ -324,7 +324,7 @@ public class CustomerConvertUtil {
 			builder.setCity(
 				City.newBuilder()
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							location.getCity()
 						)
 					)
@@ -340,7 +340,7 @@ public class CustomerConvertUtil {
 						region.getC_Region_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							region.getName()
 						)
 					)

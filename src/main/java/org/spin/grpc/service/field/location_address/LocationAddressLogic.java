@@ -30,7 +30,7 @@ import org.spin.backend.grpc.field.location_address.ListRegionsRequest;
 import org.spin.backend.grpc.field.location_address.ListRegionsResponse;
 import org.spin.backend.grpc.field.location_address.UpdateAddressRequest;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class LocationAddressLogic {
 
@@ -56,8 +56,8 @@ public class LocationAddressLogic {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -100,7 +100,7 @@ public class LocationAddressLogic {
 					country.getC_Country_ID()
 				)
 				.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						name
 					)
 				)
@@ -145,8 +145,8 @@ public class LocationAddressLogic {
 		parameters.add(country.getC_Country_ID());
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -176,7 +176,7 @@ public class LocationAddressLogic {
 						region.getC_Region_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							region.getName()
 						)
 					)
@@ -209,8 +209,8 @@ public class LocationAddressLogic {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -240,7 +240,7 @@ public class LocationAddressLogic {
 						city.getC_City_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							city.getName()
 						)
 					)

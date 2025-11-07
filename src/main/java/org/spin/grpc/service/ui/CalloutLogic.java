@@ -46,7 +46,9 @@ import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.util.WindowUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.CollectionManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -292,7 +294,7 @@ public class CalloutLogic {
 
 			// set values on Env.getCtx()
 			Map<String, Integer> displayTypeColumns = WindowUtil.getTabFieldsDisplayType(tab);
-			Map<String, Object> attributes = ValueManager.convertValuesMapToObjects(
+			Map<String, Object> attributes = CollectionManager.getMapObjectFromMapProtoValue(
 				request.getContextAttributes().getFieldsMap(),
 				displayTypeColumns
 			);
@@ -305,11 +307,11 @@ public class CalloutLogic {
 			MColumn column = MColumn.get(Env.getCtx(), field.getAD_Column_ID());
 			int columnDisplayTypeId = column.getAD_Reference_ID();
 			//
-			Object oldValue = ValueManager.getObjectFromReference(
+			Object oldValue = ValueManager.getObjectFromProtoValue(
 				request.getOldValue(),
 				columnDisplayTypeId
 			);
-			Object value = ValueManager.getObjectFromReference(
+			Object value = ValueManager.getObjectFromProtoValue(
 				request.getValue(),
 				columnDisplayTypeId
 			);
@@ -390,7 +392,7 @@ public class CalloutLogic {
 			;
 			list.forEach(gridFieldItem -> {
 				Object contextValue = gridFieldItem.getValue();
-				Value.Builder valueBuilder = ValueManager.getValueFromReference(
+				Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
 					contextValue,
 					gridFieldItem.getDisplayType()
 				);
@@ -412,7 +414,7 @@ public class CalloutLogic {
 							MRefList referenceList = MRefList.get(
 								Env.getCtx(),
 								gridFieldItem.getAD_Reference_Value_ID(),
-								StringManager.getStringFromObject(
+								TextManager.getStringFromObject(
 									contextValue
 								),
 								null
@@ -460,7 +462,7 @@ public class CalloutLogic {
 						}
 					}
 
-					Value.Builder displayValueBuilder = ValueManager.getValueFromString(
+					Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
 						contextDisplayValue
 					);
 					contextValues.putFields(
@@ -475,14 +477,14 @@ public class CalloutLogic {
 			// always add is sales transaction on context
 			String isSalesTransaction = Env.getContext(Env.getCtx(), windowNo, "IsSOTrx", true);
 			if (!Util.isEmpty(isSalesTransaction, true)) {
-				Value.Builder valueBuilder = ValueManager.getValueFromStringBoolean(isSalesTransaction);
+				Value.Builder valueBuilder = BooleanManager.getProtoValueFromBoolean(isSalesTransaction);
 				contextValues.putFields(
 					"IsSOTrx",
 					valueBuilder.build()
 				);
 			}
 			calloutBuilder.setResult(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						Msg.parseTranslation(
 							Env.getCtx(),
 							result

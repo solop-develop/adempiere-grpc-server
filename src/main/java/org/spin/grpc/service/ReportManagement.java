@@ -87,7 +87,7 @@ import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.dictionary.util.ReportUtil;
 import org.spin.eca62.util.S3Manager;
 import org.spin.service.grpc.util.base.RecordUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.ByteString;
@@ -181,17 +181,17 @@ public class ReportManagement extends ReportManagementImplBase {
 				process.getAD_Process_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getDescription()
 				)
 			)
@@ -264,9 +264,14 @@ public class ReportManagement extends ReportManagementImplBase {
 
 				Object value = null;
 				if (displayTypeId > 0) {
-					value = ValueManager.getObjectFromReference(parameter.getValue(), displayTypeId);
+					value = ValueManager.getObjectFromProtoValue(
+						parameter.getValue(),
+						displayTypeId
+					);
 				} else {
-					value = ValueManager.getObjectFromValue(parameter.getValue());
+					value = ValueManager.getObjectFromProtoValue(
+						parameter.getValue()
+					);
 				}
 				Optional<Entry<String, Value>> maybeToParameter = parametersList.entrySet().parallelStream()
 					.filter(parameterValue -> {
@@ -277,9 +282,14 @@ public class ReportManagement extends ReportManagementImplBase {
 					if(maybeToParameter.isPresent()) {
 						Object valueTo = null;
 						if (displayTypeId > 0) {
-							valueTo = ValueManager.getObjectFromReference(maybeToParameter.get().getValue(), displayTypeId);
+							valueTo = ValueManager.getObjectFromProtoValue(
+								maybeToParameter.get().getValue(),
+								displayTypeId
+							);
 						} else {
-							valueTo = ValueManager.getObjectFromValue(maybeToParameter.get().getValue());
+							valueTo = ValueManager.getObjectFromProtoValue(
+								maybeToParameter.get().getValue()
+							);
 						}
 						builder.withParameter(columnName, value, valueTo);
 					} else {
@@ -304,7 +314,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				summary = e.getLocalizedMessage();
 			}
 			result.setSummary(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(
 						Env.getCtx(),
 						summary
@@ -391,7 +401,7 @@ public class ReportManagement extends ReportManagementImplBase {
 		);
 		if(!Util.isEmpty(result.getSummary(), true)) {
 			responseBuilder.setSummary(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(
 						Env.getCtx(),
 						result.getSummary()
@@ -401,7 +411,7 @@ public class ReportManagement extends ReportManagementImplBase {
 		}
 		//	
 		responseBuilder.setResultTableName(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				result.getResultTableName()
 			)
 		);
@@ -460,29 +470,29 @@ public class ReportManagement extends ReportManagementImplBase {
 				processInfo.getAD_PInstance_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					instance.getUUID()
 				)
 			)
 			.setFileName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					validFileName
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processInfo.getTitle()
 				)
 			)
 			.setMimeType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					MimeType.getMimeType(
 						validFileName
 					)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getDescription()
 				)
 			)
@@ -513,7 +523,7 @@ public class ReportManagement extends ReportManagementImplBase {
 
 			if (Util.isEmpty(processBuilder.getSummary(), true)) {
 				processBuilder.setSummary(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						Msg.parseTranslation(
 							Env.getCtx(),
 							e.getLocalizedMessage()
@@ -534,7 +544,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			.setReportViewId(reportViewReferenceId)
 			.setPrintFormatId(printFormatReferenceId)
 			.setTableName(
-				StringManager.getValidString(tableName)
+				TextManager.getValidString(tableName)
 			)
 			.setIsDirectPrint(
 				process.isDirectPrint()
@@ -688,7 +698,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				instance.getAD_PInstance_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					instance.getUUID()
 				)
 			)
@@ -706,24 +716,24 @@ public class ReportManagement extends ReportManagementImplBase {
 			reportFile.getName()
 		);
 		outputBuilder.setFileName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					validFileName
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					reportEngine.getName()
 				)
 			)
 			.setMimeType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					MimeType.getMimeType(
 						validFileName
 					)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getDescription()
 				)
 			)
@@ -734,7 +744,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				"Report"
 			) + ": " + reportEngine.getName() + " " + Env.getHeader(Env.getCtx(), 0);
 			outputBuilder.setHeaderName(
-				StringManager.getValidString(headerName)
+				TextManager.getValidString(headerName)
 			);
 			// Footer
 			StringBuffer footerName = new StringBuffer ();
@@ -744,7 +754,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				.append(reportEngine.getRowCount())
 			;
 			outputBuilder.setFooterName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					footerName.toString()
 				)
 			);
@@ -773,7 +783,7 @@ public class ReportManagement extends ReportManagementImplBase {
 					printFormat.getAD_PrintFormat_ID()
 				)
 				.setTableName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						table.getTableName()
 					)
 				)
@@ -846,7 +856,7 @@ public class ReportManagement extends ReportManagementImplBase {
 					File outFile = File.createTempFile("BatchPrint_", ".pdf");
 					IText7Document.mergePdf(files, outFile);
 					printResponse.setFileName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							S3Manager.putTemporaryFile(outFile)
 						)
 					);
@@ -859,7 +869,7 @@ public class ReportManagement extends ReportManagementImplBase {
 					    }
 					}
 					printResponse.setFileName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							S3Manager.putTemporaryFile(outFile)
 						)
 					);
@@ -966,17 +976,17 @@ public class ReportManagement extends ReportManagementImplBase {
 						printFormat.getAD_PrintFormat_ID()
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							printFormat.getUUID()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							printFormat.getName()
 						)
 					)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							printFormat.getDescription()
 						)
 					)
@@ -997,7 +1007,7 @@ public class ReportManagement extends ReportManagementImplBase {
 							table.getAD_Table_ID()
 						)
 						.setTableName(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								table.getTableName()
 							)
 						)
@@ -1142,15 +1152,15 @@ public class ReportManagement extends ReportManagementImplBase {
 						reportView.getAD_ReportView_ID()
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							reportView.getUUID()
 						)
 					)
 					.setName(
-						StringManager.getValidString(name)
+						TextManager.getValidString(name)
 					)
 					.setDescription(
-						StringManager.getValidString(description)
+						TextManager.getValidString(description)
 					)
 				;
 
@@ -1160,7 +1170,7 @@ public class ReportManagement extends ReportManagementImplBase {
 							table.getAD_Table_ID()
 						)
 						.setTableName(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								table.getTableName()
 							)
 						)
@@ -1242,7 +1252,7 @@ public class ReportManagement extends ReportManagementImplBase {
 						drillTableId
 					)
 					.setTableName(
-						StringManager.getValidString(drillTableName)
+						TextManager.getValidString(drillTableName)
 				);
 
 				String name = element.getPrintName();
@@ -1262,7 +1272,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				}
 				//	Print Name
 				drillTable.setPrintName(
-					StringManager.getValidString(name)
+					TextManager.getValidString(name)
 				);
 				recordCount++;
 				//	Add to list

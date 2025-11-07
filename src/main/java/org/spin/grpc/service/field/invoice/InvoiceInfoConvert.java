@@ -25,7 +25,7 @@ import org.spin.backend.grpc.field.invoice.InvoiceInfo;
 import org.spin.backend.grpc.field.invoice.InvoicePaySchedule;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 /**
@@ -50,38 +50,38 @@ public class InvoiceInfoConvert {
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_C_Invoice.COLUMNNAME_UUID
 					)
 				)
 			)
 			.setDisplayValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					invoice.getDisplayValue()
 				)
 			)
 			.setBusinessPartner(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("BusinessPartner")
 				)
 			)
 			.setDateInvoiced(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					rs.getTimestamp(
 						I_C_Invoice.COLUMNNAME_DateInvoiced
 					)
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_C_Invoice.COLUMNNAME_DocumentNo
 					)
 				)
 			)
 			.setCurrency(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("Currency")
 				)
 			)
@@ -103,7 +103,7 @@ public class InvoiceInfoConvert {
 				)
 			)
 			.setPaymentTerm(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("PaymentTerm")
 				)
 			)
@@ -118,19 +118,19 @@ public class InvoiceInfoConvert {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_C_Invoice.COLUMNNAME_Description
 					)
 				)
 			)
 			.setPoReference(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					I_C_Invoice.COLUMNNAME_POReference
 				)
 			)
 			.setDocumentStatus(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					invoice.getDocStatusName()
 				)
 			)
@@ -152,7 +152,7 @@ public class InvoiceInfoConvert {
 				)
 			)
 			// .setUuid(
-			// 	StringManager.getValidString(
+			// 	TextManager.getValidString(
 			// 		rs.getString(
 			// 			I_C_InvoicePaySchedule.COLUMNNAME_UUID
 			// 		)
@@ -162,14 +162,14 @@ public class InvoiceInfoConvert {
 				rs.getInt("PaymentCount")
 			)
 			.setDueDate(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					rs.getTimestamp(
 						I_C_InvoicePaySchedule.COLUMNNAME_DueDate
 					)
 				)
 			)
 			.setCurrency(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("Currency")
 				)
 			)

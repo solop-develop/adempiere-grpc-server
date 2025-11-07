@@ -39,7 +39,7 @@ import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import com.google.protobuf.Empty;
 
@@ -77,8 +77,8 @@ public class SellerServiceLogic {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -119,7 +119,7 @@ public class SellerServiceLogic {
 		ListAvailableSellersResponse.Builder builder = ListAvailableSellersResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					nextPageToken
 				)
 			)

@@ -29,8 +29,7 @@ import org.spin.backend.grpc.field.DefaultValue;
 import org.spin.backend.grpc.field.ZoomWindow;
 import org.spin.base.util.LookupUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import com.google.protobuf.Struct;
 
@@ -61,32 +60,32 @@ public class FieldManagementConvert {
 			builder.setId(integerValue);
 			values.putFields(
 				LookupUtil.KEY_COLUMN_KEY,
-				ValueManager.getValueFromInteger(integerValue).build()
+				NumberManager.getProtoValueFromInteger(integerValue).build()
 			);
 		} else {
 			values.putFields(
 				LookupUtil.KEY_COLUMN_KEY,
-				ValueManager.getValueFromString((String) keyValue).build()
+				TextManager.getProtoValueFromString((String) keyValue).build()
 			);
 		}
 		//	Set Value
 		if(!Util.isEmpty(value)) {
 			values.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueManager.getValueFromString(value).build()
+				TextManager.getProtoValueFromString(value).build()
 			);
 		}
 		//	Display column
 		if(!Util.isEmpty(displayValue)) {
 			values.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(displayValue).build()
+				TextManager.getProtoValueFromString(displayValue).build()
 			);
 		}
 		// UUID Value
 		values.putFields(
 			LookupUtil.UUID_COLUMN_KEY,
-			ValueManager.getValueFromString(uuidValue).build()
+			TextManager.getProtoValueFromString(uuidValue).build()
 		);
 
 		builder.setValues(values);
@@ -113,17 +112,17 @@ public class FieldManagementConvert {
 				window.getAD_Window_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getDescription()
 				)
 			)
@@ -136,7 +135,7 @@ public class FieldManagementConvert {
 		;
 		if (!isBaseLanguage) {
 			builder.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 						window.get_Translation(
 							I_AD_Window.COLUMNNAME_Name,
 							language
@@ -144,7 +143,7 @@ public class FieldManagementConvert {
 					)
 				)
 				.setDescription(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						window.get_Translation(
 							I_AD_Window.COLUMNNAME_Description,
 							language
@@ -172,12 +171,12 @@ public class FieldManagementConvert {
 					tab.getAD_Tab_ID()
 				)
 				.setTabUuid(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						tab.getUUID()
 					)
 				)
 				.setTabName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						tab.getName()
 					)
 				)
@@ -187,7 +186,7 @@ public class FieldManagementConvert {
 			;
 			if (!isBaseLanguage) {
 				builder.setTabName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						window.get_Translation(
 							I_AD_Tab.COLUMNNAME_Name,
 							language

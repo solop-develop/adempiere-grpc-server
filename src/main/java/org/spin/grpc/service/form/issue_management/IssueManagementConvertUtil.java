@@ -55,7 +55,7 @@ import org.spin.backend.grpc.issue_management.StatusCategory;
 import org.spin.backend.grpc.issue_management.TaskStatus;
 import org.spin.backend.grpc.issue_management.User;
 import org.spin.model.MADAttachmentReference;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -92,15 +92,15 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(priority.getAD_Ref_List_ID())
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					priority.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(name)
+				TextManager.getValidString(name)
 			)
 			.setDescription(
-				StringManager.getValidString(description)
+				TextManager.getValidString(description)
 			)
 		;
 
@@ -134,15 +134,15 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(taskStatus.getAD_Ref_List_ID())
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					taskStatus.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(name)
+				TextManager.getValidString(name)
 			)
 			.setDescription(
-				StringManager.getValidString(description)
+				TextManager.getValidString(description)
 			)
 		;
 
@@ -165,12 +165,12 @@ public class IssueManagementConvertUtil {
 		}
 		builder.setId(user.getAD_User_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getDescription()
 				)
 			)
@@ -187,7 +187,7 @@ public class IssueManagementConvertUtil {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setAvatar(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							attachmentReference.getFileName()
 						)
 					);
@@ -224,15 +224,15 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(dueType.getAD_Ref_List_ID())
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					dueType.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(name)
+				TextManager.getValidString(name)
 			)
 			.setDescription(
-				StringManager.getValidString(description)
+				TextManager.getValidString(description)
 			)
 		;
 
@@ -258,12 +258,12 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(requestType.getR_RequestType_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					requestType.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					requestType.getDescription()
 				)
 			)
@@ -314,12 +314,12 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(statusCategory.getR_StatusCategory_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					statusCategory.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					statusCategory.getDescription()
 				)
 			)
@@ -350,17 +350,17 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(status.getR_Status_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					status.getName()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					status.getValue()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					status.getDescription()
 				)
 			)
@@ -394,12 +394,12 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(category.getR_Category_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					category.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					category.getDescription()
 				)
 			)
@@ -427,12 +427,12 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(group.getR_Group_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					group.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					group.getDescription()
 				)
 			)
@@ -460,17 +460,17 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(businessPartner.getC_BPartner_ID())
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDescription()
 				)
 			)
@@ -498,17 +498,17 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(project.getC_Project_ID())
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					project.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					project.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					project.getDescription()
 				)
 			)
@@ -534,17 +534,17 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(request.getR_Request_ID())
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getDocumentNo()
 				)
 			)
 			.setSubject(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getSubject()
 				)
 			)
 			.setSummary(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getSummary()
 				)
 			)
@@ -649,7 +649,7 @@ public class IssueManagementConvertUtil {
 				)
 			)
 			.setResult(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					requestUpdate.getResult()
 				)
 			)
@@ -960,12 +960,12 @@ public class IssueManagementConvertUtil {
 			column.getAD_Reference_Value_ID()
 		);
 		if (Util.isEmpty(displayedValue, true)) {
-			displayedValue = StringManager.getStringFromObject(
+			displayedValue = TextManager.getStringFromObject(
 				value
 			);
 		}
 
-		Value.Builder valueBuilder = ValueManager.getValueFromReference(
+		Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
 			value,
 			column.getAD_Reference_ID()
 		);
@@ -973,7 +973,7 @@ public class IssueManagementConvertUtil {
 		builder
 			.setColumnName(columnName)
 			.setLabel(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					label
 				)
 			)
@@ -981,7 +981,7 @@ public class IssueManagementConvertUtil {
 				valueBuilder
 			)
 			.setDisplayedValue(
-				StringManager.getValidString(displayedValue)
+				TextManager.getValidString(displayedValue)
 			)
 		;
 

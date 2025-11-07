@@ -65,7 +65,8 @@ import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
@@ -392,7 +393,7 @@ public class PaymentAllocationLogic {
 				conversionType.saveEx();
 			}
 
-			Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
+			Timestamp date = TimeManager.getTimestampFromProtoTimestamp(
 				request.getDate()
 			);
 			final Timestamp dateFrom = TimeUtil.getDay(date); // Remove time mark
@@ -478,7 +479,7 @@ public class PaymentAllocationLogic {
 		int businessPartnerId = request.getBusinessPartnerId();
 		validateAndGetBusinessPartner(businessPartnerId);
 
-		Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp date = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDate()
 		);
 		date = TimeUtil.getDay(date); // Remove time mark
@@ -603,12 +604,12 @@ public class PaymentAllocationLogic {
 				Payment.Builder paymentBuilder = Payment.newBuilder()
 					.setId(paymentId)
 					// .setUuid(
-					// 	StringManager.getValidString(
+					// 	TextManager.getValidString(
 					// 		rs.getString(I_C_Payment.COLUMNNAME_UUID)
 					// 	)
 					// )
 					.setDocumentNo(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(I_C_Payment.COLUMNNAME_DocumentNo)
 						)
 					)
@@ -622,7 +623,7 @@ public class PaymentAllocationLogic {
 					)
 					.setIsReceipt(isReceipt)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(I_C_Payment.COLUMNNAME_Description)
 						)
 					)
@@ -675,7 +676,7 @@ public class PaymentAllocationLogic {
 		int businessPartnerId = request.getBusinessPartnerId();
 		validateAndGetBusinessPartner(businessPartnerId);
 
-		Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp date = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDate()
 		);
 		date = TimeUtil.getDay(date); // Remove time mark
@@ -818,12 +819,12 @@ public class PaymentAllocationLogic {
 				Invoice.Builder invoiceBuilder = Invoice.newBuilder()
 					.setId(invoiceId)
 					// .setUuid(
-					// 	StringManager.getValidString(
+					// 	TextManager.getValidString(
 					// 		rs.getString(I_C_Invoice.COLUMNNAME_UUID)
 					// 	)
 					// )
 					.setDocumentNo(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
 						)
 					)
@@ -837,7 +838,7 @@ public class PaymentAllocationLogic {
 					)
 					.setIsSalesTransaction(isSalesTransaction)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(I_C_Invoice.COLUMNNAME_Description)
 						)
 					)
@@ -936,14 +937,14 @@ public class PaymentAllocationLogic {
 	public static Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
 		AtomicReference<Timestamp> transactionDateReference = new AtomicReference<Timestamp>();
 		paymentSelection.forEach(paymentSelected -> {
-			Timestamp paymentDate = ValueManager.getTimestampFromProtoTimestamp(
+			Timestamp paymentDate = TimeManager.getTimestampFromProtoTimestamp(
 				paymentSelected.getTransactionDate()
 			);
 			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), paymentDate);
 			transactionDateReference.set(transactionDate);
 		});
 		invoiceSelection.forEach(invoiceSelected -> {
-			Timestamp invoiceDate = ValueManager.getTimestampFromProtoTimestamp(
+			Timestamp invoiceDate = TimeManager.getTimestampFromProtoTimestamp(
 				invoiceSelected.getDateInvoiced()
 			);
 			Timestamp transactionDate = TimeUtil.max(transactionDateReference.get(), invoiceDate);
@@ -970,7 +971,7 @@ public class PaymentAllocationLogic {
 
 		Trx.run(transactionName -> {
 			// transaction date
-			Timestamp transactionDate = ValueManager.getTimestampFromProtoTimestamp(
+			Timestamp transactionDate = TimeManager.getTimestampFromProtoTimestamp(
 				request.getDate()
 			);
 			if (transactionDate == null) {
@@ -999,7 +1000,7 @@ public class PaymentAllocationLogic {
 
 		return ProcessResponse.newBuilder()
 			.setMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(
 						context,
 						atomicStatus.get()

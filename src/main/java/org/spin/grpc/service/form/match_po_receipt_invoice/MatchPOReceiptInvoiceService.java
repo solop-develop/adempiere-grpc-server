@@ -70,8 +70,8 @@ import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import com.google.protobuf.Struct;
 
@@ -121,13 +121,13 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		Struct.Builder valuesInvoice = Struct.newBuilder()
 			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					MatchType.INVOICE_VALUE
 				).build()
 			)
 			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
 				).build()
 			)
@@ -142,13 +142,13 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		Struct.Builder valuesReceipt = Struct.newBuilder()
 			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					MatchType.RECEIPT_VALUE
 				).build()
 			)
 			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
 				).build()
 			)
@@ -165,13 +165,13 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		Struct.Builder valuesOrder = Struct.newBuilder()
 			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					MatchType.PURCHASE_ORDER_VALUE
 				).build()
 			)
 			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
 				).build()
 			)
@@ -227,13 +227,13 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 			Struct.Builder valuesInvoice = Struct.newBuilder()
 				.putFields(
 					LookupUtil.VALUE_COLUMN_KEY,
-					ValueManager.getValueFromInt(
+					NumberManager.getProtoValueFromInt(
 						MatchType.INVOICE_VALUE
 					).build()
 				)
 				.putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueManager.getValueFromString(
+					TextManager.getProtoValueFromString(
 						Msg.translate(context, I_C_Invoice.COLUMNNAME_C_Invoice_ID)
 					).build()
 				)
@@ -248,13 +248,13 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 			Struct.Builder valuesOrder = Struct.newBuilder()
 				.putFields(
 					LookupUtil.VALUE_COLUMN_KEY,
-					ValueManager.getValueFromInt(
+					NumberManager.getProtoValueFromInt(
 						MatchType.PURCHASE_ORDER_VALUE
 					).build()
 				)
 				.putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueManager.getValueFromString(
+					TextManager.getProtoValueFromString(
 						Msg.translate(context, I_C_Order.COLUMNNAME_C_Order_ID)
 					).build()
 				)
@@ -273,13 +273,13 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 			Struct.Builder valuesReceipt = Struct.newBuilder()
 				.putFields(
 					LookupUtil.VALUE_COLUMN_KEY,
-					ValueManager.getValueFromInt(
+					NumberManager.getProtoValueFromInt(
 						MatchType.RECEIPT_VALUE
 					).build()
 				)
 				.putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueManager.getValueFromString(
+					TextManager.getProtoValueFromString(
 						Msg.translate(context, I_M_InOut.COLUMNNAME_M_InOut_ID)
 					).build()
 				)
@@ -332,13 +332,13 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		Struct.Builder valuesUnMatched = Struct.newBuilder()
 			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					MatchMode.MODE_NOT_MATCHED_VALUE
 				).build()
 			)
 			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					Msg.translate(context, "NotMatched")
 				).build()
 			)
@@ -354,13 +354,13 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		Struct.Builder valuesMatched = Struct.newBuilder()
 			.putFields(
 				LookupUtil.VALUE_COLUMN_KEY,
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					MatchMode.MODE_MATCHED_VALUE
 				).build()
 			)
 			.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					Msg.translate(context, "Matched")
 				).build()
 			)
@@ -462,8 +462,8 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -507,7 +507,7 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -539,22 +539,22 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 				product.getM_Product_ID()
 			)
 			.setUpc(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getUPC()
 				)
 			)
 			.setSku(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getSKU()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getName()
 				)
 			)
@@ -604,10 +604,10 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		}
 
 		// Date filter
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateTo()
 		);
 		if (dateFrom != null && dateTo != null) {
@@ -707,10 +707,10 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 		whereClause += " AND lin.M_Product_ID = " + request.getProductId();
 
 		// Date filter
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateTo()
 		);
 		if (dateFrom != null && dateTo != null) {
@@ -876,7 +876,7 @@ public class MatchPOReceiptInvoiceService extends MatchPORReceiptInvoiceImplBase
 
 		return ProcessResponse.newBuilder()
 			.setMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					atomicStatus.get()
 				)
 			)

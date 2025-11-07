@@ -89,8 +89,8 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 public class ProductInfoLogic {
 
@@ -133,12 +133,12 @@ public class ProductInfoLogic {
 		}
 
 		//	Ordered Date
-		Timestamp validPriceDate = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp validPriceDate = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateOrdered()
 		);
 		//	Invocied Date
 		if (validPriceDate == null) {
-			validPriceDate = ValueManager.getTimestampFromProtoTimestamp(
+			validPriceDate = TimeManager.getTimestampFromProtoTimestamp(
 				request.getDateInvoiced()
 			);
 		}
@@ -527,7 +527,7 @@ public class ProductInfoLogic {
 					isUnconfirmed
 				);
 				builder.setCurrency(
-					StringManager.getValidString(currencyCode)
+					TextManager.getValidString(currencyCode)
 				);
 			}
 		} catch (SQLException e) {
@@ -594,8 +594,8 @@ public class ProductInfoLogic {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -614,7 +614,7 @@ public class ProductInfoLogic {
 		}
 
 		// Value
-		final String value = StringManager.getDecodeUrl(
+		final String value = TextManager.getDecodeUrl(
 			request.getValue()
 		);
 		if (!Util.isEmpty(value)) {
@@ -622,7 +622,7 @@ public class ProductInfoLogic {
 			filtersList.add(value);
 		}
 		// Name
-		final String name = StringManager.getDecodeUrl(
+		final String name = TextManager.getDecodeUrl(
 			request.getName()
 		);
 		if (!Util.isEmpty(name)) {
@@ -630,7 +630,7 @@ public class ProductInfoLogic {
 			filtersList.add(name);
 		}
 		// UPC/EAN
-		final String upc = StringManager.getDecodeUrl(
+		final String upc = TextManager.getDecodeUrl(
 			request.getUpc()
 		);
 		if (!Util.isEmpty(upc)) {
@@ -638,7 +638,7 @@ public class ProductInfoLogic {
 			filtersList.add(upc);
 		}
 		// SKU
-		final String sku = StringManager.getDecodeUrl(
+		final String sku = TextManager.getDecodeUrl(
 			request.getSku()
 		);
 		if (!Util.isEmpty(sku)) {
@@ -868,7 +868,7 @@ public class ProductInfoLogic {
 		ListProductsInfoResponse.Builder builderList = ListProductsInfoResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					nexPageToken
 				)
 			)
@@ -905,7 +905,7 @@ public class ProductInfoLogic {
 					isUnconfirmed
 				);
 				builder.setCurrency(
-					StringManager.getValidString(currencyCode)
+					TextManager.getValidString(currencyCode)
 				);
 				builderList.addRecords(builder);
 			}
