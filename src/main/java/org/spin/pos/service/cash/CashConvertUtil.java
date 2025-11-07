@@ -19,7 +19,7 @@ import org.compiere.model.MBankStatement;
 import org.spin.backend.grpc.pos.CashMovements;
 import org.spin.base.util.ConvertUtil;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 public class CashConvertUtil {
@@ -35,17 +35,17 @@ public class CashConvertUtil {
 				bankStatement.getC_BankStatement_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bankStatement.getUUID()
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bankStatement.getDocumentNo()
 				)
 			)
 			.setDate(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					bankStatement.getStatementDate()
 				)
 			)
@@ -62,7 +62,7 @@ public class CashConvertUtil {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bankStatement.getDescription()
 				)
 			)

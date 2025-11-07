@@ -63,7 +63,7 @@ import org.spin.dictionary.util.WindowUtil;
 import org.spin.model.MADFieldCondition;
 import org.spin.model.MADFieldDefinition;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class WindowConvertUtil {
 
@@ -84,31 +84,35 @@ public class WindowConvertUtil {
 		//	
 		Window.Builder builder = Window.newBuilder()
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getUUID()
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getUUID()
 				)
 			)
 			.setInternalId(
 				window.getAD_Window_ID()
 			)
-			.setName(window.getName())
+			.setName(
+				TextManager.getValidString(
+					window.getName()
+				)
+			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getHelp()
 				)
 			)
 			.setWindowType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					window.getWindowType()
 				)
 			)
@@ -205,12 +209,12 @@ public class WindowConvertUtil {
 			.collect(Collectors.toList())
 		;
 		builder.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getUUID()
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getUUID()
 				)
 			)
@@ -218,7 +222,7 @@ public class WindowConvertUtil {
 				table.getAD_Table_ID()
 			)
 			.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -281,12 +285,12 @@ public class WindowConvertUtil {
 		//	create build
 		Tab.Builder builder = Tab.newBuilder()
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tab.getUUID()
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tab.getUUID()
 				)
 			)
@@ -294,17 +298,17 @@ public class WindowConvertUtil {
 				tab.getAD_Tab_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tab.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tab.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tab.getHelp()
 				)
 			)
@@ -312,12 +316,12 @@ public class WindowConvertUtil {
 				!isReadOnly && tab.isInsertRecord()
 			)
 			.setCommitWarning(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tab.getCommitWarning()
 				)
 			)
 			.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -326,12 +330,12 @@ public class WindowConvertUtil {
 			)
 			.setSequence(tab.getSeqNo())
 			.setDisplayLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tab.getDisplayLogic()
 				)
 			)
 			.setReadOnlyLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tab.getReadOnlyLogic()
 				)
 			)
@@ -400,7 +404,7 @@ public class WindowConvertUtil {
 				if (parentColumn != null && parentColumn.getAD_Column_ID() > 0) {
 					// filter_column_name
 					builder.setFilterColumnName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							parentColumn.getColumnName()
 						)
 					);
@@ -424,7 +428,7 @@ public class WindowConvertUtil {
 						process.getAD_Process_ID()
 					)
 					.setProcessUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							process.getUUID()
 						)
 					)
@@ -448,7 +452,7 @@ public class WindowConvertUtil {
 				);
 				builder.addProcesses(processBuilder.build());
 				builder.addProcessesUuid(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						process.getUUID()
 					)
 				);
@@ -510,12 +514,12 @@ public class WindowConvertUtil {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					field.getUUID()
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					field.getUUID()
 				)
 			)
@@ -523,51 +527,51 @@ public class WindowConvertUtil {
 				field.getAD_Field_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					field.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					field.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					field.getHelp()
 				)
 			)
 			.setCallout(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getCallout()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getColumnName()
 				)
 			)
 			// .setElementName(
-			// 	StringManager.getValidString(
+			// 	TextManager.getValidString(
 			// 		element.getColumnName()
 			// 	)
 			// )
 			.setColumnSql(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getColumnSQL()
 				)
 			)
 			.setDefaultValue(
-				StringManager.getValidString(defaultValue)
+				TextManager.getValidString(defaultValue)
 			)
 			.setDisplayLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					field.getDisplayLogic()
 				)
 			)
 			.setDisplayType(displayTypeId)
 			.setFormatPattern(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getFormatPattern()
 				)
 			)
@@ -592,24 +596,24 @@ public class WindowConvertUtil {
 			.setIsTranslated(column.isTranslated())
 			.setIsUpdateable(column.isUpdateable())
 			.setMandatoryLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getMandatoryLogic()
 				)
 			)
 			.setReadOnlyLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getReadOnlyLogic()
 				)
 			)
 			.setSequence(field.getSeqNo())
 			.setGridSequence(field.getSeqNoGrid())
 			.setValueMax(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getValueMax()
 				)
 			)
 			.setValueMin(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getValueMin()
 				)
 			)
@@ -701,7 +705,7 @@ public class WindowConvertUtil {
 			// ASP default displayed field as panel
 			if (fieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsPanel(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						fieldCustom.get_ValueAsString(
 							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
 						)
@@ -711,7 +715,7 @@ public class WindowConvertUtil {
 			// ASP default displayed field as table
 			if (fieldCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsTable(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						fieldCustom.get_ValueAsString(
 							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_TABLE_COLUMN_NAME
 						)
@@ -820,12 +824,12 @@ public class WindowConvertUtil {
 						);
 						DependentField.Builder builder = DependentField.newBuilder()
 							.setId(
-								StringManager.getValidString(
+								TextManager.getValidString(
 									currentField.getUUID()
 								)
 							)
 							.setUuid(
-								StringManager.getValidString(
+								TextManager.getValidString(
 									currentField.getUUID()
 								)
 							)
@@ -833,7 +837,7 @@ public class WindowConvertUtil {
 								currentField.getAD_Field_ID()
 							)
 							.setColumnName(
-								StringManager.getValidString(
+								TextManager.getValidString(
 									currentColumnName
 								)
 							)
@@ -841,12 +845,12 @@ public class WindowConvertUtil {
 								tab.getAD_Tab_ID()
 							)
 							.setParentUuid(
-								StringManager.getValidString(
+								TextManager.getValidString(
 									tab.getUUID()
 								)
 							)
 							.setParentName(
-								StringManager.getValidString(
+								TextManager.getValidString(
 									tab.getName()
 								)
 							)
@@ -884,14 +888,14 @@ public class WindowConvertUtil {
 		builder = FieldGroup.newBuilder()
 			.setId(fieldGroup.getAD_FieldGroup_ID())
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldGroup.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(name))
+				TextManager.getValidString(name))
 			.setFieldGroupType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldGroup.getFieldGroupType()
 				)
 			)
@@ -913,19 +917,21 @@ public class WindowConvertUtil {
 		MADFieldDefinition fieldDefinition  = new MADFieldDefinition(context, fieldDefinitionId, null);
 		//	Reference
 		builder = FieldDefinition.newBuilder()
-			.setId(fieldDefinition.getAD_FieldDefinition_ID())
+			.setId(
+				fieldDefinition.getAD_FieldDefinition_ID()
+			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinition.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinition.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fieldDefinition.getName()
 				)
 			)
@@ -940,17 +946,17 @@ public class WindowConvertUtil {
 					condition.getAD_FieldCondition_ID()
 				)
 				.setUuid(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						condition.getUUID()
 					)
 				)
 				.setCondition(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						condition.getCondition()
 					)
 				)
 				.setStylesheet(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						condition.getStylesheet()
 					)
 				)

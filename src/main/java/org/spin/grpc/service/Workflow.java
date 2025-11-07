@@ -72,7 +72,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import com.google.protobuf.Empty;
 
@@ -201,7 +201,7 @@ public class Workflow extends WorkflowImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -288,7 +288,7 @@ public class Workflow extends WorkflowImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -410,17 +410,17 @@ public class Workflow extends WorkflowImplBase {
 				if (status.equals(valueList.get(i))) {
 					DocumentStatus.Builder documentStatusBuilder = DocumentStatus.newBuilder()
 						.setValue(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								valueList.get(i)
 							)
 						)
 						.setName(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								nameList.get(i)
 							)
 						)
 						.setDescription(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								descriptionList.get(i)
 							)
 						)
@@ -462,17 +462,17 @@ public class Workflow extends WorkflowImplBase {
 				if (option.equals(valueList.get(i))) {
 					DocumentStatus.Builder documentActionBuilder = DocumentStatus.newBuilder()
 						.setValue(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								valueList.get(i)
 							)
 						)
 						.setName(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								nameList.get(i)
 							)
 						)
 						.setDescription(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								descriptionList.get(i)
 							)
 						)
@@ -783,7 +783,7 @@ public class Workflow extends WorkflowImplBase {
 				throw new AdempiereException("@AD_WF_Activity_ID@ @NotFound@");
 			}
 
-			String message = StringManager.getValidString(
+			String message = TextManager.getValidString(
 				request.getMessage()
 			);
 			int userId = Env.getAD_User_ID(Env.getCtx());
@@ -860,7 +860,7 @@ public class Workflow extends WorkflowImplBase {
 			throw new AdempiereException("@AD_User_ID@ @NotFound@");
 		}
 
-		String message = StringManager.getValidString(
+		String message = TextManager.getValidString(
 			request.getMessage()
 		);
 		boolean isSuccefully = workActivity.forwardTo(user.getAD_User_ID(), message);

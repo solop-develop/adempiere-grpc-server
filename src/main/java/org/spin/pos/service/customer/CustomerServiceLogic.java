@@ -39,7 +39,7 @@ import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
 public class CustomerServiceLogic {
@@ -259,8 +259,8 @@ public class CustomerServiceLogic {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -386,8 +386,8 @@ public class CustomerServiceLogic {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -519,7 +519,7 @@ public class CustomerServiceLogic {
 		ListCustomersResponse.Builder builderList = ListCustomersResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -758,7 +758,7 @@ public class CustomerServiceLogic {
 		builderList
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 

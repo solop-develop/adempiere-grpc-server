@@ -27,7 +27,7 @@ import org.spin.backend.grpc.preference_management.PreferenceType;
 import org.spin.backend.grpc.preference_management.SetMultiplePreferencesRequest;
 import org.spin.backend.grpc.preference_management.SetPreferenceRequest;
 import org.spin.service.grpc.util.base.PreferenceUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -175,7 +175,7 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 				preference.getAD_Preference_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					preference.getUUID()
 				)
 			)
@@ -192,12 +192,12 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 				preference.getAD_Window_ID()
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					preference.getAttribute()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					preference.getValue()
 				)
 			)
@@ -504,8 +504,8 @@ public class PreferenceManagement extends PreferenceManagementImplBase {
 					throw new AdempiereException("@invalid@ @ColumnName@ / @Attribute@ " + columnName);
 				}
 				Value preferenceValue = preferenceItem.getValue();
-				Object value = ValueManager.getObjectFromValue(preferenceValue);
-				String valueString = StringManager.getStringFromObject(value);
+				Object value = ValueManager.getObjectFromProtoValue(preferenceValue);
+				String valueString = TextManager.getStringFromObject(value);
 				if (Util.isEmpty(valueString, true)) {
 					throw new AdempiereException(columnName + " @FillMandatory@ @Value@");
 				}

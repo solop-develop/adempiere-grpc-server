@@ -57,7 +57,7 @@ import org.spin.base.Version;
 import org.spin.base.setup.Database;
 import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.ContextManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -101,7 +101,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 		MSystem adempiereInfo = MSystem.get(Env.getCtx());
 		if (adempiereInfo != null) {
-			String name = StringManager.getValidString(
+			String name = TextManager.getValidString(
 				adempiereInfo.getName()
 			);
 			if (name.trim().equals("?")) {
@@ -109,17 +109,17 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			}
 			builder.setName(name)
 				.setReleaseNo(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						adempiereInfo.getReleaseNo()
 					)
 				)
 				.setVersion(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						adempiereInfo.getVersion()
 					)
 				)
 				.setLastBuildInfo(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						adempiereInfo.getLastBuildInfo()
 					)
 				)
@@ -133,17 +133,17 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 				)
 			)
 			.setBackendMainVersion(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Version.MAIN_VERSION
 				)
 			)
 			.setBackendImplementationVersion(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Version.IMPLEMENTATION_VERSION
 				)
 			)
 			.setLogoUrl(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					System.getenv("SYSTEM_LOGO_URL")
 				)
 			)
@@ -156,7 +156,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			}
 		}
 		builder.setTenant(
-			StringManager.getValidString(tenant)
+			TextManager.getValidString(tenant)
 		);
 
 		return builder;
@@ -302,30 +302,30 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 		}
 		return languaBuilder
 			.setLanguage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					language.getAD_Language()
 				)
 			)
 			.setCountryCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					language.getCountryCode()
 				)
 			)
 			.setLanguageIso(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					language.getLanguageISO()
 				)
 			)
 			.setLanguageName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					language.getName()
 				)
 			)
 			.setDatePattern(
-				StringManager.getValidString(datePattern)
+				TextManager.getValidString(datePattern)
 			)
 			.setTimePattern(
-				StringManager.getValidString(timePattern)
+				TextManager.getValidString(timePattern)
 			)
 			.setIsBaseLanguage(
 				language.isBaseLanguage()

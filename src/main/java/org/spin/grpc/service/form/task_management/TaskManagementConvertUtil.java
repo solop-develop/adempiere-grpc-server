@@ -24,7 +24,7 @@ import org.spin.backend.grpc.form.task_management.ResourceAssignment;
 import org.spin.backend.grpc.form.task_management.Task;
 import org.spin.backend.grpc.form.task_management.TaskType;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 /**
@@ -53,12 +53,12 @@ public class TaskManagementConvertUtil {
 				project.getC_Project_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					project.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					project.getValue()
 				)
 			)
@@ -99,7 +99,7 @@ public class TaskManagementConvertUtil {
 				project.getValue() + " - " + project.getName()
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					project.getDescription()
 				)
 			)
@@ -140,12 +140,12 @@ public class TaskManagementConvertUtil {
 			request.getR_Request_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getUUID()
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getDocumentNo()
 				)
 			)
@@ -186,7 +186,7 @@ public class TaskManagementConvertUtil {
 				request.getDisplayValue()
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getSummary()
 				)
 			)
@@ -227,12 +227,12 @@ public class TaskManagementConvertUtil {
 				resourceAssignment.getS_ResourceAssignment_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceAssignment.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceAssignment.getName()
 				)
 			)
@@ -275,12 +275,12 @@ public class TaskManagementConvertUtil {
 				TaskType.RESOURCE_ASSIGNMENT
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceAssignment.getDisplayValue()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceAssignment.getDescription()
 				)
 			)

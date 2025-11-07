@@ -103,9 +103,8 @@ import org.spin.service.grpc.util.base.PreferenceUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
 import com.google.protobuf.Struct;
@@ -148,12 +147,12 @@ public class Security extends SecurityImplBase {
 						service.getKey()
 					)
 					.setDisplayName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							service.getValue().get(OpenIDUtil.DISPLAYNAME)
 						)
 					)
 					.setAuthorizationUri(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							service.getValue().get(OpenIDUtil.ENDPOINT_Authorization_URI)
 						)
 					)
@@ -403,7 +402,7 @@ public class Security extends SecurityImplBase {
 		ListRolesResponse.Builder builder = ListRolesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 		query
@@ -523,7 +522,7 @@ public class Security extends SecurityImplBase {
 		ListOrganizationsResponse.Builder builder = ListOrganizationsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 		//	Get List
@@ -560,7 +559,7 @@ public class Security extends SecurityImplBase {
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					organizationBuilder.setCorporateBrandingImage(
-						StringManager.getValidString(
+						TextManager.getValidString(
 						attachmentReference.getFileName()
 					)
 				);
@@ -571,42 +570,42 @@ public class Security extends SecurityImplBase {
 				organization.getAD_Org_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getDescription()
 				)
 			)
 			.setDuns(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getDUNS()
 				)
 			)
 			.setTaxId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getTaxID()
 				)
 			)
 			.setPhone(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getPhone()
 				)
 			)
 			.setPhone2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getPhone2()
 				)
 			)
 			.setFax(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getFax()
 				)
 			)
@@ -671,7 +670,7 @@ public class Security extends SecurityImplBase {
 		ListWarehousesResponse.Builder builder = ListWarehousesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					nexPageToken
 				)
 			)
@@ -710,22 +709,22 @@ public class Security extends SecurityImplBase {
 				warehouse.getM_Warehouse_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getDescription()
 				)
 			)
@@ -1055,22 +1054,22 @@ public class Security extends SecurityImplBase {
 				country.getC_Country_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getName()
 				)
 			)
 			.setCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getCountryCode()
 				)
 			)
 			.setDisplaySequence(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getDisplaySequence()
 				)
 			)
@@ -1104,7 +1103,7 @@ public class Security extends SecurityImplBase {
 			)
 		);
 		session.setLanguage(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				language
 			)
 		);
@@ -1114,7 +1113,7 @@ public class Security extends SecurityImplBase {
 		context.entrySet()
 			.stream()
 			.filter(contextKeyValue -> {
-				final String contextKey = StringManager.getStringFromObject(
+				final String contextKey = TextManager.getStringFromObject(
 					contextKeyValue.getKey()
 				);
 				return ContextManager.isPreferenceConext(contextKey) ||
@@ -1122,10 +1121,10 @@ public class Security extends SecurityImplBase {
 				;
 			})
 			.forEach(contextKeyValue -> {
-				final String contextKey = StringManager.getStringFromObject(
+				final String contextKey = TextManager.getStringFromObject(
 					contextKeyValue.getKey()
 				);
-				final String contextStringValue = StringManager.getStringFromObject(
+				final String contextStringValue = TextManager.getStringFromObject(
 					contextKeyValue.getValue()
 				);
 				Value.Builder contextProtoValue = convertProtoValueFromContext(contextStringValue);
@@ -1158,12 +1157,12 @@ public class Security extends SecurityImplBase {
 			);
 			builder.setBoolValue(booleanValue);
 		} else if(TimeManager.isDate(value)) {
-			builder = ValueManager.getValueFromTimestamp(
+			builder = TimeManager.getProtoValueFromTimestamp(
 				TimeManager.getTimestampFromString(value)
 			);
 		} else {
 			builder.setStringValue(
-				StringManager.getValidString(value)
+				TextManager.getValidString(value)
 			);
 		}
 		//	
@@ -1205,7 +1204,7 @@ public class Security extends SecurityImplBase {
 				session.getUUID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					session.getDescription()
 				)
 			)
@@ -1237,27 +1236,27 @@ public class Security extends SecurityImplBase {
 				user.getAD_User_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getDescription()
 				)
 			)
 			.setComments(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getComments()
 				)
 			)
@@ -1265,7 +1264,7 @@ public class Security extends SecurityImplBase {
 		// client of user record
 		MClient clientUser = MClient.get(Env.getCtx(), user.getAD_Client_ID());
 		userInfo.setClientUuid(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				clientUser.getUUID()
 			)
 		);
@@ -1282,7 +1281,7 @@ public class Security extends SecurityImplBase {
 			);
 			if(attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 				userInfo.setImage(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						attachmentReference.getFileName()
 					)
 				);
@@ -1347,17 +1346,17 @@ public class Security extends SecurityImplBase {
 				client.getAD_Client_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					client.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					client.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					client.getDescription()
 				)
 			)
@@ -1370,7 +1369,7 @@ public class Security extends SecurityImplBase {
 			dictionaryCode = clientInfoSystem.get_ValueAsString("ECA56_DictionaryCode");
 		}
 		builder.setDictionaryCode(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				dictionaryCode
 			)
 		);
@@ -1387,7 +1386,7 @@ public class Security extends SecurityImplBase {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogo(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							attachmentReference.getFileName()
 						)
 					);
@@ -1402,7 +1401,7 @@ public class Security extends SecurityImplBase {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogoReport(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							attachmentReference.getFileName()
 						)
 					);
@@ -1417,7 +1416,7 @@ public class Security extends SecurityImplBase {
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogoWeb(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							attachmentReference.getFileName()
 						)
 					);
@@ -1449,17 +1448,17 @@ public class Security extends SecurityImplBase {
 				role.getAD_Role_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					role.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					role.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					role.getDescription()
 				)
 			)
@@ -1600,11 +1599,11 @@ public class Security extends SecurityImplBase {
 		}
 		Menu.Builder builder = Menu.newBuilder()
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					menu.getUUID()
 				))
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					menu.getUUID()
 				)
 			)
@@ -1616,12 +1615,12 @@ public class Security extends SecurityImplBase {
 			// 	menu.getSeqNo()
 			// )
 			.setName(
-				StringManager.getValidString(name)
+				TextManager.getValidString(name)
 			)
 			.setDescription(
-				StringManager.getValidString(description))
+				TextManager.getValidString(description))
 			.setAction(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					menu.getAction()
 				)
 			)
@@ -1644,22 +1643,22 @@ public class Security extends SecurityImplBase {
 						form.getAD_Form_ID()
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							form.getUUID()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							form.get_Translation(I_AD_Form.COLUMNNAME_Name)
 						)
 					)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							form.get_Translation(I_AD_Form.COLUMNNAME_Description)
 						)
 					)
 					.setHelp(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							form.get_Translation(I_AD_Form.COLUMNNAME_Help)
 						)
 					)
@@ -1668,7 +1667,7 @@ public class Security extends SecurityImplBase {
 						form.getAD_Form_ID()
 					)
 					.setActionUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							form.getUUID()
 						)
 					)
@@ -1680,22 +1679,22 @@ public class Security extends SecurityImplBase {
 						window.getAD_Window_ID()
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							window.getUUID()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							window.get_Translation(I_AD_Window.COLUMNNAME_Name)
 						)
 					)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							window.get_Translation(I_AD_Window.COLUMNNAME_Description)
 						)
 					)
 					.setHelp(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							window.get_Translation(I_AD_Window.COLUMNNAME_Help)
 						)
 					)
@@ -1704,7 +1703,7 @@ public class Security extends SecurityImplBase {
 						window.getAD_Window_ID()
 					)
 					.setActionUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							window.getUUID()
 						)
 					)
@@ -1718,22 +1717,22 @@ public class Security extends SecurityImplBase {
 						process.getAD_Process_ID()
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							process.getUUID()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							process.get_Translation(I_AD_Process.COLUMNNAME_Name)
 						)
 					)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							process.get_Translation(I_AD_Process.COLUMNNAME_Description)
 						)
 					)
 					.setHelp(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							process.get_Translation(I_AD_Process.COLUMNNAME_Help)
 						)
 					)
@@ -1742,7 +1741,7 @@ public class Security extends SecurityImplBase {
 						process.getAD_Process_ID()
 					)
 					.setActionUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							process.getUUID()
 						)
 					)
@@ -1754,22 +1753,22 @@ public class Security extends SecurityImplBase {
 						smartBrowser.getAD_Browse_ID()
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							smartBrowser.getUUID()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Name)
 						)
 					)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Description)
 						)
 					)
 					.setHelp(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Help)
 						)
 					)
@@ -1778,7 +1777,7 @@ public class Security extends SecurityImplBase {
 						smartBrowser.getAD_Browse_ID()
 					)
 					.setActionUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							smartBrowser.getUUID()
 						)
 					)
@@ -1790,22 +1789,22 @@ public class Security extends SecurityImplBase {
 						workflow.getAD_Workflow_ID()
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							workflow.getUUID()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Name)
 						)
 					)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Description)
 						)
 					)
 					.setHelp(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Help)
 						)
 					)
@@ -1814,7 +1813,7 @@ public class Security extends SecurityImplBase {
 						workflow.getAD_Workflow_ID()
 					)
 					.setActionUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							workflow.getUUID()
 						)
 					)
@@ -1970,7 +1969,7 @@ public class Security extends SecurityImplBase {
 
 		builder.setIsAccess(isWithAccess)
 			.setMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(
 						Env.getCtx(),
 						message

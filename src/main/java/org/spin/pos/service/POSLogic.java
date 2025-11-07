@@ -79,7 +79,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class POSLogic {
 
@@ -132,12 +132,12 @@ public class POSLogic {
 						discountSchema.getM_DiscountSchema_ID()
 					)
 					.setKey(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							discountSchema.getName()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							discountSchema.getName()
 						)
 					)
@@ -162,7 +162,7 @@ public class POSLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builderList;
 	}
@@ -486,7 +486,7 @@ public class POSLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -636,7 +636,7 @@ public class POSLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 
@@ -793,7 +793,7 @@ public class POSLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 
@@ -841,7 +841,7 @@ public class POSLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 
@@ -864,12 +864,12 @@ public class POSLogic {
 			builder
 				.setIsError(isError)
 				.setMessage(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						message
 					)
 				)
 				.setStatus(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						status
 					)
 				)
@@ -903,12 +903,12 @@ public class POSLogic {
 			builder
 				.setIsError(isError)
 				.setMessage(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						message
 					)
 				)
 				.setStatus(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						status
 					)
 				)
@@ -941,12 +941,12 @@ public class POSLogic {
 			builder
 				.setIsError(isError)
 				.setMessage(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						message
 					)
 				)
 				.setStatus(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						status
 					)
 				)

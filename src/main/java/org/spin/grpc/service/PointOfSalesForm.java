@@ -116,7 +116,7 @@ import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -1211,7 +1211,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				builder
 					.setIsError(ticketResult.isError())
 					.setSummary(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							Msg.parseTranslation(
 								Env.getCtx(),
 								ticketResult.getSummary()
@@ -1236,7 +1236,7 @@ public class PointOfSalesForm extends StoreImplBase {
 						log.warning(e.getLocalizedMessage());
 						builder
 							.setSummary(
-								StringManager.getValidString(
+								TextManager.getValidString(
 									Msg.parseTranslation(
 										Env.getCtx(),
 										e.getLocalizedMessage()
@@ -1247,15 +1247,15 @@ public class PointOfSalesForm extends StoreImplBase {
 					}
 					builder
 						.setFileName(
-							StringManager.getValidString(validFileName)
+							TextManager.getValidString(validFileName)
 						)
 						.setMimeType(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								MimeType.getMimeType(validFileName)
 							)
 						)
 						.setResultType(
-							StringManager.getValidString(fileType)
+							TextManager.getValidString(fileType)
 						)
 						.setOutputStream(resultFile)
 					;
@@ -1276,7 +1276,7 @@ public class PointOfSalesForm extends StoreImplBase {
 							log.warning(e.getLocalizedMessage());
 							builder
 								.setSummary(
-									StringManager.getValidString(
+									TextManager.getValidString(
 										Msg.parseTranslation(
 											Env.getCtx(),
 											e.getLocalizedMessage()
@@ -1775,7 +1775,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					count
 				)
 				.setNextPageToken(
-					StringManager.getValidString(nexPageToken)
+					TextManager.getValidString(nexPageToken)
 				)
 			;
 			query
@@ -2599,8 +2599,8 @@ public class PointOfSalesForm extends StoreImplBase {
 			parameters.add(pos.getAD_Org_ID());
 
 			// URL decode to change characteres and add search value to filter
-			final String searchValue = StringManager.getValidString(
-				StringManager.getDecodeUrl(
+			final String searchValue = TextManager.getValidString(
+				TextManager.getDecodeUrl(
 					request.getSearchValue()
 				)
 			).strip();
@@ -2638,14 +2638,14 @@ public class PointOfSalesForm extends StoreImplBase {
 						)
 					)
 					.setDocumentNo(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(
 								I_C_Invoice.COLUMNNAME_DocumentNo
 							)
 						)
 					)
 					.setDescription(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(
 								I_C_Invoice.COLUMNNAME_Description
 							)
@@ -2705,7 +2705,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -2903,7 +2903,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -2946,7 +2946,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -3003,7 +3003,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -3315,12 +3315,12 @@ public class PointOfSalesForm extends StoreImplBase {
 							warehouse.getM_Warehouse_ID()
 						)
 						.setKey(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								warehouse.getValue()
 							)
 						)
 						.setName(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								warehouse.getName()
 							)
 						)
@@ -3338,7 +3338,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		builder.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 		return builder;
@@ -3386,12 +3386,12 @@ public class PointOfSalesForm extends StoreImplBase {
 						priceList.getM_PriceList_ID()
 					)
 					.setKey(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							priceList.getName()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							priceList.getName()
 						)
 					)
@@ -3407,7 +3407,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -3469,7 +3469,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -3513,12 +3513,12 @@ public class PointOfSalesForm extends StoreImplBase {
 					documentType.getC_DocType_ID()
 				)
 				.setKey(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						documentType.getName()
 					)
 				)
 				.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						documentType.getPrintName()
 					)
 				)
@@ -3534,7 +3534,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -3576,7 +3576,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -3746,23 +3746,21 @@ public class PointOfSalesForm extends StoreImplBase {
 			;
 		}
 		//	Date Order From
-		if(ValueManager.getTimestampFromProtoTimestamp(request.getDateOrderedFrom()) != null) {
+		Timestamp dateOrderedFrom = TimeManager.getTimestampFromProtoTimestamp(
+			request.getDateOrderedFrom()
+		);
+		if(dateOrderedFrom != null) {
 			whereClause.append(" AND DateOrdered >= ?");
-			Timestamp dateFrom = TimeUtil.getDay(
-				ValueManager.getTimestampFromProtoTimestamp(
-					request.getDateOrderedFrom()
-				)
-			);
+			Timestamp dateFrom = TimeUtil.getDay(dateOrderedFrom);
 			parameters.add(dateFrom);
 		}
 		//	Date Order To
-		if(ValueManager.getTimestampFromProtoTimestamp(request.getDateOrderedTo()) != null) {
+		Timestamp dateOrderedTo = TimeManager.getTimestampFromProtoTimestamp(
+			request.getDateOrderedTo()
+		);
+		if(dateOrderedTo != null) {
 			whereClause.append(" AND DateOrdered <= ?");
-			Timestamp dateTo = TimeUtil.getDay(
-				ValueManager.getTimestampFromProtoTimestamp(
-					request.getDateOrderedTo()
-				)
-			);
+			Timestamp dateTo = TimeUtil.getDay(dateOrderedTo);
 			parameters.add(dateTo);
 		}
 
@@ -3794,7 +3792,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		ListOrdersResponse.Builder builder = ListOrdersResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -3873,7 +3871,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -3931,7 +3929,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -4233,7 +4231,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -4530,22 +4528,23 @@ public class PointOfSalesForm extends StoreImplBase {
 			if(!Util.isEmpty(tenderType)) {
 				payment.setTenderType(tenderType);
 			}
-			if(ValueManager.getTimestampFromProtoTimestamp(request.getPaymentDate()) != null) {
-				Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
-					request.getPaymentDate()
-				);
-				if(date != null) {
-					payment.setDateTrx(date);
-				}
+
+			Timestamp paymentDate = TimeManager.getTimestampFromProtoTimestamp(
+				request.getPaymentDate()
+			);
+			if(paymentDate != null) {
+				payment.setDateTrx(paymentDate);
 			}
-			if(ValueManager.getTimestampFromProtoTimestamp(request.getPaymentAccountDate()) != null) {
-				Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
-					request.getPaymentAccountDate()
-				);
-				if(date != null) {
-					payment.setDateAcct(date);
-				}
+
+
+			Timestamp paymentAccountDate = TimeManager.getTimestampFromProtoTimestamp(
+				request.getPaymentAccountDate()
+			);
+			if(paymentAccountDate != null) {
+
+				payment.setDateAcct(paymentAccountDate);
 			}
+
 			//	Set Bank Id
 			if(request.getBankId() > 0) {
 				payment.set_ValueOfColumn(MBank.COLUMNNAME_C_Bank_ID, request.getBankId());
@@ -4732,7 +4731,7 @@ public class PointOfSalesForm extends StoreImplBase {
 				nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 			}
 			builder.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			);
 		});
 		
@@ -4818,7 +4817,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		Trx.run(transactionName -> {
 			MAttributeSetInstance attribute = new MAttributeSetInstance(Env.getCtx(), storage.getM_AttributeSetInstance_ID(), transactionName);
 			builder.setAttributeName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					attribute.getDescription()
 				)
 			);
@@ -4901,12 +4900,12 @@ public class PointOfSalesForm extends StoreImplBase {
 						bankAccount.getC_BankAccount_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							bankAccount.getName()
 						)
 					)
 					.setKey(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							bankAccount.getAccountNo()
 						)
 					)
@@ -4929,7 +4928,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -5047,7 +5046,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		ListCommandShortcutsResponse.Builder builderList = ListCommandShortcutsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 

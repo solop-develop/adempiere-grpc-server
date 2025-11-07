@@ -59,7 +59,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import com.google.protobuf.Empty;
 
@@ -95,7 +95,7 @@ public class PaymentServiceLogic {
 		ListCreditCardTypesResponse.Builder builderList = ListCreditCardTypesResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -127,8 +127,8 @@ public class PaymentServiceLogic {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -181,7 +181,7 @@ public class PaymentServiceLogic {
 		ListCardProvidersResponse.Builder builderList = ListCardProvidersResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -219,8 +219,8 @@ public class PaymentServiceLogic {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -273,7 +273,7 @@ public class PaymentServiceLogic {
 		ListCardsResponse.Builder builderList = ListCardsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -381,12 +381,12 @@ public class PaymentServiceLogic {
 				salesOrder.getC_Order_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					salesOrder.getUUID()
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					salesOrder.getDocumentNo()
 				)
 			)

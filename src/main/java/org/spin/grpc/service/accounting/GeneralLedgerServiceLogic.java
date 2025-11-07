@@ -82,9 +82,8 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -218,7 +217,7 @@ public class GeneralLedgerServiceLogic {
 		ListLookupItemsResponse.Builder builder = ListLookupItemsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -258,7 +257,7 @@ public class GeneralLedgerServiceLogic {
 		ListAccountingDocumentsResponse.Builder builderList = ListAccountingDocumentsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -622,7 +621,7 @@ public class GeneralLedgerServiceLogic {
 			}
 
 			if (dateFrom == null) {
-				Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
+				Timestamp date = TimeManager.getTimestampFromProtoTimestamp(
 					request.getDate()
 				);
 				dateFrom = TimeUtil.getDay(date); // Remove time mark

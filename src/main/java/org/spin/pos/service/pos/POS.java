@@ -29,7 +29,7 @@ import org.spin.backend.grpc.pos.ListCampaignsRequest;
 import org.spin.backend.grpc.pos.ListCampaignsResponse;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.util.base.RecordUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -148,8 +148,8 @@ public class POS {
 		whereClause += ") ";
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();

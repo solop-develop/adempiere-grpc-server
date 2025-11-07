@@ -62,9 +62,11 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
+import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.CollectionManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.Struct;
@@ -516,32 +518,32 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 		;
 		Struct.Builder rowValues = Struct.newBuilder();
 
-		Value.Builder id = ValueManager.getValueFromInteger(
+		Value.Builder id = NumberManager.getProtoValueFromInteger(
 			conceptDefinition.getHR_Concept_ID()
 		);
 		rowValues.putFields(MHRConcept.COLUMNNAME_HR_Concept_ID, id.build());
 
-		Value.Builder uuid = ValueManager.getValueFromString(
+		Value.Builder uuid = TextManager.getProtoValueFromString(
 			conceptDefinition.getUUID()
 		);
 		rowValues.putFields(MHRConcept.COLUMNNAME_UUID, uuid.build());
 
-		Value.Builder name = ValueManager.getValueFromString(
+		Value.Builder name = TextManager.getProtoValueFromString(
 			conceptDefinition.getName()
 		);
 		rowValues.putFields(MHRConcept.COLUMNNAME_Name, name.build());
 
-		Value.Builder value = ValueManager.getValueFromString(
+		Value.Builder value = TextManager.getProtoValueFromString(
 			conceptDefinition.getValue()
 		);
 		rowValues.putFields(MHRConcept.COLUMNNAME_Name, value.build());
 
-		Value.Builder type = ValueManager.getValueFromString(
+		Value.Builder type = TextManager.getProtoValueFromString(
 			conceptDefinition.getType()
 		);
 		rowValues.putFields(MHRConcept.COLUMNNAME_Type, type.build());
 
-		Value.Builder columnType = ValueManager.getValueFromString(
+		Value.Builder columnType = TextManager.getProtoValueFromString(
 			conceptDefinition.getColumnType()
 		);
 		rowValues.putFields(MHRConcept.COLUMNNAME_ColumnType, columnType.build());
@@ -552,12 +554,12 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 			X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceId, null);
 			referenceUuid = reference.getUUID();
 		}
-		Value.Builder referenceIdValue = ValueManager.getValueFromInteger(
+		Value.Builder referenceIdValue = NumberManager.getProtoValueFromInteger(
 			conceptDefinition.getAD_Reference_ID()
 		);
 		rowValues.putFields(MHRConcept.COLUMNNAME_AD_Reference_ID, referenceIdValue.build());
 
-		Value.Builder referenceUuidValue = ValueManager.getValueFromString(
+		Value.Builder referenceUuidValue = TextManager.getProtoValueFromString(
 			referenceUuid
 		);
 		rowValues.putFields(MHRConcept.COLUMNNAME_AD_Reference_ID + "_UUID", referenceUuidValue.build());
@@ -651,13 +653,13 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 				Struct.Builder rowValues = Struct.newBuilder();
 
 				// AD_Org_ID
-				Value.Builder organizationId = ValueManager.getValueFromInteger(
+				Value.Builder organizationId = NumberManager.getProtoValueFromInteger(
 					rs.getInt(MHRMovement.COLUMNNAME_AD_Org_ID)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_AD_Org_ID, organizationId.build());
 
 				// DisplayColumn_AD_Org_ID
-				Value.Builder organizationName = ValueManager.getValueFromString(
+				Value.Builder organizationName = TextManager.getProtoValueFromString(
 					rs.getString(1)
 				);
 				rowValues.putFields(
@@ -668,18 +670,18 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 				);
 
 				// HR_Movement_ID
-				Value.Builder movementId = ValueManager.getValueFromInteger(
+				Value.Builder movementId = NumberManager.getProtoValueFromInteger(
 					rs.getInt(MHRMovement.COLUMNNAME_HR_Movement_ID)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_HR_Movement_ID, movementId.build());
 				// movement UUID
-				Value.Builder processUuid = ValueManager.getValueFromString(
+				Value.Builder processUuid = TextManager.getProtoValueFromString(
 					rs.getString(MHRMovement.COLUMNNAME_UUID)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_UUID, processUuid.build());
 
 				// DisplayColumn_HR_Movement_ID
-				Value.Builder movementName = ValueManager.getValueFromString(
+				Value.Builder movementName = TextManager.getProtoValueFromString(
 					rs.getString(2)
 				);
 				rowValues.putFields(
@@ -690,13 +692,13 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 				);
 
 				// ValidFrom
-				Value.Builder validFrom = ValueManager.getValueFromTimestamp(
+				Value.Builder validFrom = TimeManager.getProtoValueFromTimestamp(
 					rs.getTimestamp(MHRMovement.COLUMNNAME_ValidFrom)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_ValidFrom, validFrom.build());
 
 				// ColumnType
-				Value.Builder columnType = ValueManager.getValueFromString(
+				Value.Builder columnType = TextManager.getProtoValueFromString(
 					rs.getString(4)
 				);
 				rowValues.putFields("ColumnType", columnType.build());
@@ -714,31 +716,31 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 				rowValues.putFields(MHRMovement.COLUMNNAME_Amount, amount);
 
 				// ServiceDate
-				Value.Builder serviceDate = ValueManager.getValueFromTimestamp(
+				Value.Builder serviceDate = TimeManager.getProtoValueFromTimestamp(
 					rs.getTimestamp(MHRMovement.COLUMNNAME_ServiceDate)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_ServiceDate, serviceDate.build());
 
 				// TextMsg
-				Value.Builder textMessage = ValueManager.getValueFromString(
+				Value.Builder textMessage = TextManager.getProtoValueFromString(
 					rs.getString(MHRMovement.COLUMNNAME_TextMsg)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_TextMsg, textMessage.build());
 
 				// Description
-				Value.Builder description = ValueManager.getValueFromString(
+				Value.Builder description = TextManager.getProtoValueFromString(
 					rs.getString(MHRMovement.COLUMNNAME_Description)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_Description, description.build());
 
 				// Concept
-				Value.Builder concept = ValueManager.getValueFromString(
+				Value.Builder concept = TextManager.getProtoValueFromString(
 					rs.getString(MHRMovement.COLUMNNAME_HR_Concept_ID)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_HR_Concept_ID, concept.build());
 
 				// Process ID
-				Value.Builder processId = ValueManager.getValueFromInteger(
+				Value.Builder processId = NumberManager.getProtoValueFromInteger(
 					rs.getInt(MHRMovement.COLUMNNAME_HR_Process_ID)
 				);
 				rowValues.putFields(MHRMovement.COLUMNNAME_HR_Process_ID, processId.build());
@@ -763,7 +765,7 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 
 		//	Set page token
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		
 		return builder;
@@ -817,7 +819,7 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 		movement.setHR_Concept_ID(conceptId);
 
 
-		Map<String, Object> attributesList = ValueManager.convertValuesMapToObjects(
+		Map<String, Object> attributesList = CollectionManager.getMapObjectFromMapProtoValue(
 			request.getAttributes().getFieldsMap()
 		);
 		if (concept.getColumnType().equals(MHRConcept.COLUMNTYPE_Quantity)) {
@@ -945,41 +947,41 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_HR_Movement_ID,
-			(ValueManager.getValueFromInteger(
-				payrollMovement.getHR_Movement_ID())
+			NumberManager.getProtoValueFromInteger(
+				payrollMovement.getHR_Movement_ID()
 			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_UUID,
-			(ValueManager.getValueFromString(
-				payrollMovement.getUUID())
+			TextManager.getProtoValueFromString(
+				payrollMovement.getUUID()
 			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_IsManual,
-			(ValueManager.getValueFromBoolean(
+			BooleanManager.getProtoValueFromBoolean(
 				payrollMovement.isManual()
-			)).build()
+			).build()
 		);
 
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_SeqNo,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getSeqNo()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_HR_Concept_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getHR_Concept_ID()
-			)).build()
+			).build()
 		);
 
 		rowValues.putFields(
 			MHRConcept.COLUMNNAME_HR_Concept_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getHR_Concept_ID()
-			)).build()
+			).build()
 		);
 		// Values
 		rowValues.putFields(
@@ -996,108 +998,108 @@ public class PayrollActionNoticeService extends PayrollActionNoticeImplBase {
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_TextMsg,
-			(ValueManager.getValueFromString(
+			TextManager.getProtoValueFromString(
 				payrollMovement.getTextMsg()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_ServiceDate,
-			(ValueManager.getValueFromTimestamp(
+			TimeManager.getProtoValueFromTimestamp(
 				payrollMovement.getServiceDate()
-			)).build()
+			).build()
 		);
 
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_HR_Concept_Category_ID,
-			(ValueManager.getValueFromInteger(
-				payrollMovement.getHR_Concept_Category_ID())
+			NumberManager.getProtoValueFromInteger(
+				payrollMovement.getHR_Concept_Category_ID()
 			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_Description,
-			(ValueManager.getValueFromString(
+			TextManager.getProtoValueFromString(
 				payrollMovement.getDescription()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_HR_Process_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getHR_Process_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_PeriodNo,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getPeriodNo()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_ValidFrom,
-			(ValueManager.getValueFromTimestamp(
+			TimeManager.getProtoValueFromTimestamp(
 				payrollMovement.getValidFrom()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_ValidTo,
-			(ValueManager.getValueFromTimestamp(
+			TimeManager.getProtoValueFromTimestamp(
 				payrollMovement.getValidTo()
-			)).build()
+			).build()
 		);
 
 		// employee attributes
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 		rowValues.putFields(
 			MHRMovement.COLUMNNAME_AD_Org_ID,
-			(ValueManager.getValueFromInteger(
+			NumberManager.getProtoValueFromInteger(
 				payrollMovement.getAD_Org_ID()
-			)).build()
+			).build()
 		);
 
 		entityBulder.setValues(rowValues);

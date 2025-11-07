@@ -27,7 +27,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.user_interface.TreeNode;
 import org.spin.backend.grpc.user_interface.TreeType;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 /**
  * This class was created for add all convert methods for User Interface service
@@ -68,15 +68,15 @@ public class UserInterfaceConvertUtil {
 				treeType.getAD_Ref_List_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					treeType.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(name)
+				TextManager.getValidString(name)
 			)
 			.setDescription(
-				StringManager.getValidString(description)
+				TextManager.getValidString(description)
 			)
 		;
 		return builder;
@@ -94,12 +94,12 @@ public class UserInterfaceConvertUtil {
 				treeNode.getSeqNo()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					treeNode.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					treeNode.getDescription()
 				)
 			)

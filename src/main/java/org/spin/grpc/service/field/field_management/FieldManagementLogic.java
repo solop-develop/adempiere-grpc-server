@@ -81,7 +81,7 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -272,7 +272,7 @@ public class FieldManagementLogic {
 		if (Optional.ofNullable(request.getValue()).isPresent()
 			&& !Util.isEmpty(request.getValue().getStringValue())) {
 			// URL decode to change characteres
-			// final String overwriteValue = StringManager.getDecodeUrl(defaultValue);
+			// final String overwriteValue = TextManager.getDecodeUrl(defaultValue);
 			final String overwriteValue = request.getValue().getStringValue();
 			defaultValue = overwriteValue;
 		}
@@ -683,7 +683,7 @@ public class FieldManagementLogic {
 					)
 				);
 				valueObject.setTableName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						reference.TableName
 					)
 				);
@@ -698,7 +698,7 @@ public class FieldManagementLogic {
 		//	
 		builder.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					nexPageToken
 				)
 			)
@@ -835,7 +835,7 @@ public class FieldManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				nexPageToken
 			)
 		);
@@ -881,12 +881,12 @@ public class FieldManagementLogic {
 		}
 
 		builderList.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					lookupInfo.TableName
 				)
 			)
 			.setKeyColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					keyColumn
 				)
 			)
@@ -894,7 +894,7 @@ public class FieldManagementLogic {
 				keyColumnsList
 			)
 			.setDisplayColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					lookupInfo.DisplayColumn
 				)
 			)
@@ -1003,17 +1003,17 @@ public class FieldManagementLogic {
 				parentTab.getAD_Tab_ID()
 			)
 			.setParentTabUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					parentTab.getUUID()
 				)
 			)
 			.setKeyColumn(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					parentKeyColum
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					parentTab.get_Translation(
 						I_AD_Tab.COLUMNNAME_Name
 					)
@@ -1029,7 +1029,7 @@ public class FieldManagementLogic {
 			+ ") "
 			+ "LIMIT 1"
 		;
-		Object currentValue = ValueManager.getObjectFromReference(
+		Object currentValue = ValueManager.getObjectFromProtoValue(
 			request.getValue(),
 			currentKeycolumn.getAD_Reference_ID()
 		);

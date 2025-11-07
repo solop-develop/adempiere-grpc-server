@@ -23,7 +23,7 @@ import org.spin.backend.grpc.pos.ListProductPriceResponse;
 import org.spin.pos.service.pos.POS;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 public class ProductServiceLogic {
@@ -39,8 +39,8 @@ public class ProductServiceLogic {
 		MProduct product = null;
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -183,8 +183,8 @@ public class ProductServiceLogic {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -262,7 +262,7 @@ public class ProductServiceLogic {
 		ListProductPriceResponse.Builder builder = ListProductPriceResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 

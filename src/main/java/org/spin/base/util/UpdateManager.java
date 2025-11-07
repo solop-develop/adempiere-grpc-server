@@ -25,7 +25,7 @@ import org.spin.backend.grpc.update.ListStepsResponse;
 import org.spin.backend.grpc.update.ListUpdatesRequest;
 import org.spin.backend.grpc.update.ListUpdatesResponse;
 import org.spin.backend.grpc.update.UpdateCenterGrpc;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -131,7 +131,7 @@ public class UpdateManager {
 			return blockingStub.listPackages(
 				ListPackagesRequest.newBuilder()
 					.setPageToken(
-						StringManager.getValidString(pageToken))
+						TextManager.getValidString(pageToken))
 					.setVersion(version)
 					.setReleaseNo(releaseNo)
 					.build()
@@ -156,11 +156,11 @@ public class UpdateManager {
 			return blockingStub.listUpdates(
 				ListUpdatesRequest.newBuilder()
 					.setPageToken(
-						StringManager.getValidString(pageToken)
+						TextManager.getValidString(pageToken)
 					)
 					.setEntityType(entityType)
 					.setReleaseNo(
-						StringManager.getValidString(releaseNo)
+						TextManager.getValidString(releaseNo)
 					)
 					.build()
 			);
@@ -183,7 +183,7 @@ public class UpdateManager {
 			return blockingStub.listSteps(
 				ListStepsRequest.newBuilder()
 					.setPageToken(
-						StringManager.getValidString(pageToken))
+						TextManager.getValidString(pageToken))
 					.setUpdateId(updateId)
 					.setFromStep(fromStep)
 					.build()

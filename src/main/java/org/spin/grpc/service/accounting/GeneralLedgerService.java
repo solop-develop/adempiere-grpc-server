@@ -68,8 +68,9 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.CollectionManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
@@ -189,12 +190,12 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			String columnName = accountingElement.getColumnName();
 			AccountingElement.Builder elemeBuilder = AccountingElement.newBuilder()
 				.setColumnName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						columnName
 					)
 				)
 				.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						accountingElement.getName()
 					)
 				)
@@ -208,7 +209,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 					accountingElement.isBalanced()
 				)
 				.setElementType(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						accountingElement.getElementType()
 					)
 				)
@@ -221,7 +222,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 						field.getDisplayType()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							field.getHeader()
 						)
 					)
@@ -252,12 +253,12 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 						I_C_ElementValue.Table_ID
 					)
 					.setTableName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							I_C_ElementValue.Table_Name
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							accountingElement.getName()
 						)
 					)
@@ -265,7 +266,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			}
 			if (AccountingUtils.USER_ELEMENT_COLUMNS.contains(columnName)) {
 				elemeBuilder.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						accountingElement.getName()
 					)
 				);
@@ -277,7 +278,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 							table.getAD_Table_ID()
 						)
 						.setTableName(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								table.getTableName()
 							)
 						)
@@ -543,7 +544,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		}
 		//	Set next page
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		return builder;
@@ -595,13 +596,15 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			throw new AdempiereException("@FillMandatory@ @Account_ID@");
 		}
 
-		final String accountingCombinationAlias = StringManager.getValidString(
+		final String accountingCombinationAlias = TextManager.getValidString(
 			request.getAlias()
 		);
 
 		List<MAcctSchemaElement> acctingSchemaElements = Arrays.asList(accountingSchema.getAcctSchemaElements());
 
-		Map<String, Object> attributesList = ValueManager.convertValuesMapToObjects(request.getAttributes().getFieldsMap());
+		Map<String, Object> attributesList = CollectionManager.getMapObjectFromMapProtoValue(
+			request.getAttributes().getFieldsMap()
+		);
 		attributesList.put(I_C_ValidCombination.COLUMNNAME_AD_Org_ID, organizationId);
 		attributesList.put(I_C_ValidCombination.COLUMNNAME_Account_ID, accountId);
 
@@ -620,7 +623,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				accountingCombinationId = rs.getInt(1);
-				accountingAlias = StringManager.getValidString(
+				accountingAlias = TextManager.getValidString(
 					rs.getString(2)
 				);
 			}
@@ -842,7 +845,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 				errorMessage
 			);
 			rePostBuilder.setErrorMsg(
-				StringManager.getValidString(errorMessage)
+				TextManager.getValidString(errorMessage)
 			);
 		}
 
@@ -1093,10 +1096,10 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		}
 
 		// Date
-		Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateFrom()
 		);
-		Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateTo()
 		);
 		if (dateFrom != null || dateTo != null) {
@@ -1186,7 +1189,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		}
 		//  Set next page
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		return builder;

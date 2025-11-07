@@ -39,7 +39,7 @@ import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 /**
  * A util class for change values for documents
@@ -88,7 +88,7 @@ public class BankManagement {
 		ListBanksResponse.Builder builderList = ListBanksResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 

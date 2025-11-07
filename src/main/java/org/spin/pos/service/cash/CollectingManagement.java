@@ -36,7 +36,6 @@ import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * This class manage all related to collecting and payment methods
@@ -130,10 +129,10 @@ public class CollectingManagement {
 		payment.setDateTrx(salesOrder.getDateOrdered());
 		payment.setDateAcct(salesOrder.getDateAcct());
 		payment.setTenderType(tenderType);
-		Timestamp date = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp date = TimeManager.getTimestampFromProtoTimestamp(
 				request.getPaymentDate()
 		);
-		Timestamp accountingDate = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp accountingDate = TimeManager.getTimestampFromProtoTimestamp(
 				request.getPaymentAccountDate()
 		);
 		if(date != null) {

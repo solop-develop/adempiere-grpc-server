@@ -29,16 +29,15 @@ import java.util.regex.Pattern;
 import org.compiere.model.MClient;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLanguage;
-import org.compiere.util.CCache;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.CollectionManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -48,9 +47,6 @@ import com.google.protobuf.Value;
  * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
  */
 public class ContextManager {
-	
-	/**	Language */
-	private static CCache<String, String> languageCache = new CCache<String, String>("Language-gRPC-Service", 30, 0);	//	no time-out
 
 	/**
 	 * Prefix context of global prefix (#)
@@ -207,7 +203,13 @@ public class ContextManager {
 	}
 	
 	public static Properties setContextWithAttributesFromValuesMap(int windowNo, Properties context, Map<String, Value> attributes) {
-		return setContextWithAttributes(windowNo, context, ValueManager.convertValuesMapToObjects(attributes), true);
+		Map<String, Object> attributesObject = CollectionManager.getMapObjectFromMapProtoValue(attributes);
+		return setContextWithAttributes(
+			windowNo,
+			context,
+			attributesObject,
+			true
+		);
 	}
 
 	public static Properties setContextWithAttributesFromString(int windowNo, Properties context, String jsonValues) {
@@ -215,7 +217,7 @@ public class ContextManager {
 	}
 
 	public static Properties setContextWithAttributesFromString(int windowNo, Properties context, String jsonValues, boolean isClearWindow) {
-		Map<String, Object> attributes = ValueManager.convertJsonStringToMap(jsonValues);
+		Map<String, Object> attributes = CollectionManager.getMapFromJsomString(jsonValues);
 		return setContextWithAttributes(windowNo, context, attributes, isClearWindow);
 	}
 
@@ -273,7 +275,7 @@ public class ContextManager {
 			boolean currentValue = BooleanManager.getBooleanFromObject(value);
 			Env.setContext(context, windowNo, key, currentValue);
 		} else if (value instanceof String) {
-			String currentValue = StringManager.getStringFromObject(value);
+			String currentValue = TextManager.getStringFromObject(value);
 			Env.setContext(context, windowNo, key, currentValue);
 		} else if (value instanceof ArrayList) {
 			// range values
@@ -332,7 +334,7 @@ public class ContextManager {
 			boolean currentValue = BooleanManager.getBooleanFromObject(value);
 			Env.setContext(context, windowNo, tabNo, key, currentValue);
 		} else if (value instanceof String) {
-			String currentValue = StringManager.getStringFromObject(value);
+			String currentValue = TextManager.getStringFromObject(value);
 			Env.setContext(context, windowNo, tabNo, key, currentValue);
 		}
 	}

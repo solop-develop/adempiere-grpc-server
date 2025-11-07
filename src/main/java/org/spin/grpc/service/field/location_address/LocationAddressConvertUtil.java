@@ -24,7 +24,7 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.field.location_address.Address;
 import org.spin.backend.grpc.field.location_address.Country;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class LocationAddressConvertUtil {
 
@@ -38,17 +38,17 @@ public class LocationAddressConvertUtil {
 				country.getC_Country_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getUUID()
 				)
 			)
 			.setCountryCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getCountryCode()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.get_Translation(
 						I_C_Country.COLUMNNAME_Name
 					)
@@ -58,19 +58,19 @@ public class LocationAddressConvertUtil {
 				country.isHasRegion()
 			)
 			.setRegionName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.get_Translation(
 						I_C_Country.COLUMNNAME_RegionName
 					)
 				)
 			)
 			.setCaptureSequence(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getCaptureSequence()
 				)
 			)
 			.setDisplaySequence(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getDisplaySequence()
 				)
 			)
@@ -78,7 +78,7 @@ public class LocationAddressConvertUtil {
 				country.isAddressLinesReverse()
 			)
 			.setDisplaySequenceLocal(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getDisplaySequenceLocal()
 				)
 			)
@@ -86,7 +86,7 @@ public class LocationAddressConvertUtil {
 				country.isAddressLinesLocalReverse()
 			)
 			.setExpressionPostalCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getExpressionPostal()
 				)
 			)
@@ -94,7 +94,7 @@ public class LocationAddressConvertUtil {
 				country.isHasPostal_Add()
 			)
 			.setExpressionPostalCodeAdditional(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getExpressionPostal_Add()
 				)
 			)
@@ -143,12 +143,12 @@ public class LocationAddressConvertUtil {
 				address.getC_Location_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.getUUID()
 				)
 			)
 			.setDisplayValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.toString()
 				)
 			)
@@ -156,7 +156,7 @@ public class LocationAddressConvertUtil {
 				address.getC_Country_ID()
 			)
 			.setCountryName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					countryName
 				)
 			)
@@ -164,7 +164,7 @@ public class LocationAddressConvertUtil {
 				address.getC_Region_ID()
 			)
 			.setRegionName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					regionName
 				)
 			)
@@ -172,42 +172,42 @@ public class LocationAddressConvertUtil {
 				address.getC_City_ID()
 			)
 			.setCityName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cityName
 				)
 			)
 			.setCity(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.getCity()
 				)
 			)
 			.setAddress1(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.getAddress1()
 				)
 			)
 			.setAddress2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.getAddress2()
 				)
 			)
 			.setAddress3(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.getAddress3()
 				)
 			)
 			.setAddress4(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.getAddress4()
 				)
 			)
 			.setPostalCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.getPostal()
 				)
 			)
 			.setPostalCodeAdditional(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					address.getPostal_Add()
 				)
 			)

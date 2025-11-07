@@ -20,8 +20,8 @@ import org.compiere.model.MRefList;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.LookupItem;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import com.google.protobuf.Struct;
 
@@ -77,35 +77,35 @@ public class LookupUtil {
 			builder.setId((Integer) keyValue);
 			values.putFields(
 				KEY_COLUMN_KEY,
-				ValueManager.getValueFromInteger((Integer) keyValue).build()
+				NumberManager.getProtoValueFromInteger((Integer) keyValue).build()
 			);
 		} else {
 			values.putFields(
 				KEY_COLUMN_KEY,
-				ValueManager.getValueFromString((String) keyValue).build()
+				TextManager.getProtoValueFromString((String) keyValue).build()
 			);
 		}
 		//	Set Value
 		if(!Util.isEmpty(value)) {
 			values.putFields(
 				VALUE_COLUMN_KEY,
-				ValueManager.getValueFromString(value).build()
+				TextManager.getProtoValueFromString(value).build()
 			);
 		}
 		//	Display column
 		if(!Util.isEmpty(displayValue)) {
 			values.putFields(
 				DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(displayValue).build()
+				TextManager.getProtoValueFromString(displayValue).build()
 			);
 		}
 		// UUID Value
 		values.putFields(
 			LookupUtil.UUID_COLUMN_KEY,
-			ValueManager.getValueFromString(uuidValue).build()
+			TextManager.getProtoValueFromString(uuidValue).build()
 		);
 		builder.setUuid(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				uuidValue
 			)
 		);
@@ -130,7 +130,7 @@ public class LookupUtil {
 
 		builder.setId(refList.getAD_Ref_List_ID())
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					refList.getUUID()
 				)
 			)
@@ -140,13 +140,13 @@ public class LookupUtil {
 		// Key Column
 		values.putFields(
 			KEY_COLUMN_KEY,
-			ValueManager.getValueFromString(refList.getValue()).build()
+			TextManager.getProtoValueFromString(refList.getValue()).build()
 		);
 
 		//	Value
 		values.putFields(
 			LookupUtil.VALUE_COLUMN_KEY,
-			ValueManager.getValueFromString(refList.getValue()).build()
+			TextManager.getProtoValueFromString(refList.getValue()).build()
 		);
 
 		//	Display column
@@ -157,13 +157,15 @@ public class LookupUtil {
 		}
 		values.putFields(
 			LookupUtil.DISPLAY_COLUMN_KEY,
-			ValueManager.getValueFromString(name).build()
+			TextManager.getProtoValueFromString(name).build()
 		);
 
 		// UUID Value
 		values.putFields(
 			LookupUtil.UUID_COLUMN_KEY,
-			ValueManager.getValueFromString(refList.getUUID()).build()
+			TextManager.getProtoValueFromString(
+				refList.getUUID()
+			).build()
 		);
 
 		builder.setValues(values);

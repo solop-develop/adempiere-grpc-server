@@ -69,9 +69,8 @@ import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.model.MADAppRegistration;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.support.AppSupportHandler;
 import org.spin.util.support.IAppSupport;
 
@@ -122,8 +121,8 @@ public class ImportFileLoaderLogic {
 		;
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -137,7 +136,7 @@ public class ImportFileLoaderLogic {
 		}
 
 		charsetsList.parallelStream().forEach(charset -> {
-			Value.Builder value = ValueManager.getValueFromString(
+			Value.Builder value = TextManager.getProtoValueFromString(
 				charset.name()
 			);
 			Struct.Builder values = Struct.newBuilder()
@@ -363,7 +362,7 @@ public class ImportFileLoaderLogic {
 		;
 		SaveRecordsResponse.Builder builder = SaveRecordsResponse.newBuilder()
 			.setMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					message
 				)
 			)
@@ -485,7 +484,7 @@ public class ImportFileLoaderLogic {
 		ListFilePreviewResponse.Builder builderList = ListFilePreviewResponse.newBuilder()
 			.setRecordCount(count)
 			.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					table.getTableName()
 				)
 			)
@@ -525,7 +524,7 @@ public class ImportFileLoaderLogic {
 					try {
 						if (row.isDate()) {
 							Timestamp dateValue = TimeManager.getTimestampFromString(entry);
-							valueBuilder = ValueManager.getValueFromTimestamp(dateValue);
+							valueBuilder = TimeManager.getProtoValueFromTimestamp(dateValue);
 						} else if (row.isNumber()) {
 							BigDecimal numberValue = null;
 							if (!Util.isEmpty(entry, true)) {
@@ -536,9 +535,9 @@ public class ImportFileLoaderLogic {
 									);
 								}
 							}
-							valueBuilder = ValueManager.getValueFromBigDecimal(numberValue);
+							valueBuilder = NumberManager.getProtoValueFromBigDecimal(numberValue);
 						} else {
-							valueBuilder = ValueManager.getValueFromString(entry);
+							valueBuilder = TextManager.getProtoValueFromString(entry);
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -615,7 +614,7 @@ public class ImportFileLoaderLogic {
 			builderItem.setTableName(I_AD_Process.Table_Name);
 			builderItem.setId(processDefinition.getAD_Process_ID());
 			builderItem.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processDefinition.getUUID()
 				)
 			);

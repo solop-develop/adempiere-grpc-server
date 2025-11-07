@@ -49,7 +49,7 @@ import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class BusinessPartnerLogic {
 	
@@ -189,8 +189,8 @@ public class BusinessPartnerLogic {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -222,7 +222,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(request.getIsVendor());
 		}
 		// Value
-		final String value = StringManager.getDecodeUrl(
+		final String value = TextManager.getDecodeUrl(
 			request.getValue()
 		);
 		if (!Util.isEmpty(value)) {
@@ -230,7 +230,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(value);
 		}
 		// Name
-		final String name = StringManager.getDecodeUrl(
+		final String name = TextManager.getDecodeUrl(
 			request.getName()
 		);
 		if (!Util.isEmpty(name)) {
@@ -238,7 +238,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(name);
 		}
 		// Contact
-		final String contact = StringManager.getDecodeUrl(
+		final String contact = TextManager.getDecodeUrl(
 			request.getContact()
 		);
 		if (!Util.isEmpty(contact)) {
@@ -247,7 +247,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(contact);
 		}
 		// E-Mail
-		final String eMail = StringManager.getDecodeUrl(
+		final String eMail = TextManager.getDecodeUrl(
 			request.getEmail()
 		);
 		if (!Util.isEmpty(eMail, true)) {
@@ -256,7 +256,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(eMail);
 		}
 		// Phone
-		final String phone = StringManager.getDecodeUrl(
+		final String phone = TextManager.getDecodeUrl(
 			request.getPhone()
 		);
 		if (!Util.isEmpty(phone)) {
@@ -265,7 +265,7 @@ public class BusinessPartnerLogic {
 			parametersList.add(phone);
 		}
 		// Postal Code
-		final String postalCode = StringManager.getDecodeUrl(
+		final String postalCode = TextManager.getDecodeUrl(
 			request.getPostalCode()
 		);
 		if (!Util.isEmpty(postalCode)) {
@@ -307,7 +307,7 @@ public class BusinessPartnerLogic {
 		ListBusinessPartnersInfoResponse.Builder builderList = ListBusinessPartnersInfoResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					nexPageToken
 				)
 			)
@@ -388,7 +388,7 @@ public class BusinessPartnerLogic {
 		ListBusinessPartnerAddressLocationsResponse.Builder builderList = ListBusinessPartnerAddressLocationsResponse.newBuilder()
 			.setRecordCount(recordCount)
 			.setNextPageToken(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					nexPageToken
 				)
 			)

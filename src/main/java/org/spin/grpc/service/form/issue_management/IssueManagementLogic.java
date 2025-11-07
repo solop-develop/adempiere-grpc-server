@@ -88,9 +88,8 @@ import org.spin.backend.grpc.issue_management.User;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -105,8 +104,8 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -140,7 +139,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequestTypes
@@ -167,8 +166,8 @@ public class IssueManagementLogic {
 		List<Object> filtersList = new ArrayList<>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -202,7 +201,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		querySaleRepresentatives
@@ -226,8 +225,8 @@ public class IssueManagementLogic {
 		filtersList.add(X_R_Request.PRIORITY_AD_Reference_ID);
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -262,7 +261,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryPriority
@@ -284,8 +283,8 @@ public class IssueManagementLogic {
 		StringBuffer whereClause = new StringBuffer();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -322,7 +321,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -367,8 +366,8 @@ public class IssueManagementLogic {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -409,7 +408,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -433,8 +432,8 @@ public class IssueManagementLogic {
 		StringBuffer whereClause = new StringBuffer();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -472,7 +471,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -496,8 +495,8 @@ public class IssueManagementLogic {
 		StringBuffer whereClause = new StringBuffer();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -535,7 +534,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -561,8 +560,8 @@ public class IssueManagementLogic {
 		filtersList.add(X_R_Request.TASKSTATUS_AD_Reference_ID);
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -598,7 +597,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryPriority
@@ -620,8 +619,8 @@ public class IssueManagementLogic {
 		String whereClause = "";
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -665,7 +664,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -689,8 +688,8 @@ public class IssueManagementLogic {
 		StringBuffer whereClause = new StringBuffer();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -730,7 +729,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -803,8 +802,8 @@ public class IssueManagementLogic {
 		;
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -903,10 +902,10 @@ public class IssueManagementLogic {
 		}
 
 		// Created Date
-		Timestamp createdFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp createdFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getCreatedFrom()
 		);
-		Timestamp createdTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp createdTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getCreatedTo()
 		);
 		if (createdFrom != null || createdTo != null) {
@@ -928,10 +927,10 @@ public class IssueManagementLogic {
 		}
 
 		// Date Next Action
-		Timestamp dateNextActionFrom = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateNextActionFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateNextActionFrom()
 		);
-		Timestamp dateNextActionTo = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp dateNextActionTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDateNextActionFrom()
 		);
 		whereClause += " AND (DateNextAction IS NULL ";
@@ -1001,7 +1000,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -1025,8 +1024,8 @@ public class IssueManagementLogic {
 		String whereClause = "Processed='N' ";
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -1152,7 +1151,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -1225,7 +1224,7 @@ public class IssueManagementLogic {
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
 		requestRecord.setPriority(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				request.getPriorityValue()
 			)
 		);
@@ -1299,12 +1298,12 @@ public class IssueManagementLogic {
 		requestRecord.setSummary(request.getSummary());
 		requestRecord.setSalesRep_ID(salesRepresentativeId);
 		requestRecord.setPriority(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				request.getPriorityValue()
 			)
 		);
 		requestRecord.setDateNextAction(
-			ValueManager.getTimestampFromProtoTimestamp(
+			TimeManager.getTimestampFromProtoTimestamp(
 				request.getDateNextAction()
 			)
 		);
@@ -1443,7 +1442,7 @@ public class IssueManagementLogic {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		List<IssueComment.Builder> issueCommentsList = new ArrayList<>();
@@ -1471,11 +1470,11 @@ public class IssueManagementLogic {
 
 		issueCommentsList.stream()
 			.sorted((comment1, comment2) -> {
-				Timestamp from = ValueManager.getTimestampFromProtoTimestamp(
+				Timestamp from = TimeManager.getTimestampFromProtoTimestamp(
 					comment1.getCreated()
 				);
 
-				Timestamp to = ValueManager.getTimestampFromProtoTimestamp(
+				Timestamp to = TimeManager.getTimestampFromProtoTimestamp(
 					comment2.getCreated()
 				);
 
@@ -1509,7 +1508,7 @@ public class IssueManagementLogic {
 		}
 		MRequest requestRecord = new MRequest(Env.getCtx(), recordId, null);
 		requestRecord.setResult(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				request.getResult()
 			)
 		);
@@ -1556,7 +1555,7 @@ public class IssueManagementLogic {
 		}
 
 		requestUpdate.setResult(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				request.getResult()
 			)
 		);

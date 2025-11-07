@@ -47,8 +47,8 @@ import org.spin.pos.service.customer.CustomerConvertUtil;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.store.model.MCPaymentMethod;
 
 /**
@@ -83,22 +83,22 @@ public class PaymentConvertUtil {
 				creditCardTypeReference.getAD_Ref_List_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					creditCardTypeReference.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					creditCardTypeReference.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					creditCardTypeReference.get_Translation(I_AD_Ref_List.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					creditCardTypeReference.get_Translation(I_AD_Ref_List.COLUMNNAME_Description)
 				)
 			)
@@ -132,22 +132,22 @@ public class PaymentConvertUtil {
 				cardProvider.get_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cardProvider.get_UUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cardProvider.get_ValueAsString("Value")
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cardProvider.get_ValueAsString("Name")
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					cardProvider.get_ValueAsString("Description")
 				)
 			)
@@ -181,22 +181,22 @@ public class PaymentConvertUtil {
 				card.get_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					card.get_UUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					card.get_ValueAsString("Value")
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					card.get_ValueAsString("Name")
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					card.get_ValueAsString("Description")
 				)
 			)
@@ -218,22 +218,22 @@ public class PaymentConvertUtil {
 				paymentMethod.getC_PaymentMethod_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					paymentMethod.getName()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					paymentMethod.getValue()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					paymentMethod.getDescription()
 				)
 			)
 			.setTenderType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					paymentMethod.getTenderType()
 				)
 			)
@@ -276,7 +276,7 @@ public class PaymentConvertUtil {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					paymentReference.get_ValueAsString("Description")
 				)
 			)
@@ -284,7 +284,7 @@ public class PaymentConvertUtil {
 				!paymentReference.get_ValueAsBoolean("IsReceipt")
 			)
 			.setTenderTypeCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					paymentReference.get_ValueAsString("TenderType")
 				)
 			)
@@ -312,7 +312,7 @@ public class PaymentConvertUtil {
 			)
 			.setPaymentMethod(paymentMethodBuilder)
 			.setPaymentDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					(Timestamp) paymentReference.get_Value("PayDate")
 				)
 			)
@@ -351,7 +351,7 @@ public class PaymentConvertUtil {
 							giftCard.get_ID()
 						)
 						.setGiftCardCode(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								giftCard.get_ValueAsString(
 									I_C_Payment.COLUMNNAME_DocumentNo
 								)
@@ -416,25 +416,25 @@ public class PaymentConvertUtil {
 				payment.getC_POS_ID()
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					payment.getDocumentNo()
 				)
 			)
 			.setOrderDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					order.getDocumentNo()
 				)
 			)
 			.setInvoiceDocumentNo(
-				StringManager.getValidString(invoiceNo)
+				TextManager.getValidString(invoiceNo)
 			)
 			.setTenderTypeCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					payment.getTenderType()
 				)
 			)
 			.setReferenceNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Optional.ofNullable(
 						payment.getCheckNo()
 					).orElse(
@@ -443,7 +443,7 @@ public class PaymentConvertUtil {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					payment.getDescription()
 				)
 			)
@@ -467,7 +467,7 @@ public class PaymentConvertUtil {
 			)
 			.setCurrency(currencyBuilder)
 			.setPaymentDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					payment.getDateTrx()
 				)
 			)
@@ -475,22 +475,22 @@ public class PaymentConvertUtil {
 				!payment.isReceipt()
 			)
 			.setPaymentAccountDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					payment.getDateAcct()
 				)
 			)
 			.setDocumentStatus(
 				ConvertUtil.convertDocumentStatus(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						payment.getDocStatus()
 					),
-					StringManager.getValidString(
+					TextManager.getValidString(
 						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Name
 						)
 					),
-					StringManager.getValidString(
+					TextManager.getValidString(
 						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Description
@@ -534,17 +534,17 @@ public class PaymentConvertUtil {
 				payment.isOnline()
 			)
 			.setResponseStatus(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					payment.get_ValueAsString("ResponseStatus")
 				)
 			)
 			.setResponseMessage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					payment.get_ValueAsString("ResponseMessage")
 				)
 			)
 			.setResponseCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					payment.get_ValueAsString("ResponseCode")
 				)
 			)
@@ -565,7 +565,7 @@ public class PaymentConvertUtil {
 							giftCard.get_ID()
 						)
 						.setGiftCardCode(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								giftCard.get_ValueAsString(
 									I_C_Payment.COLUMNNAME_DocumentNo
 								)

@@ -52,7 +52,7 @@ import org.spin.backend.grpc.dictionary.SearchColumn;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.model.MADContextInfo;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class DictionaryConvertUtil {
 
@@ -112,12 +112,12 @@ public class DictionaryConvertUtil {
 		}
 		builder
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entity.get_UUID()
 				)
 			)
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entity.get_UUID()
 				)
 			)
@@ -125,17 +125,17 @@ public class DictionaryConvertUtil {
 				entity.get_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entity.get_Translation(I_AD_Element.COLUMNNAME_Name)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entity.get_Translation(I_AD_Element.COLUMNNAME_Description)
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					entity.get_Translation(I_AD_Element.COLUMNNAME_Help)
 				)
 			)
@@ -162,7 +162,7 @@ public class DictionaryConvertUtil {
 			+ Optional.ofNullable(info.ValidationCode).orElse("")
 		);
 		builder.setTableName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					info.TableName
 				)
 			)
@@ -203,22 +203,22 @@ public class DictionaryConvertUtil {
 				contextInfoValue.getAD_ContextInfo_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					contextInfoValue.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					contextInfoValue.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					contextInfoValue.getDescription()
 				)
 			)
 			.setSqlStatement(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					contextInfoValue.getSQLStatement()
 				)
 			)
@@ -232,12 +232,12 @@ public class DictionaryConvertUtil {
 					message.getAD_Message_ID()
 				)
 				.setValue(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						message.getValue()
 					)
 				)
 				.setMessageText(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						Msg.parseTranslation(
 							context,
 							message.get_Translation(I_AD_Message.COLUMNNAME_MsgText)
@@ -245,7 +245,7 @@ public class DictionaryConvertUtil {
 					)
 				)
 				.setMessageTip(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						Msg.parseTranslation(
 							context,
 							message.get_Translation(I_AD_Message.COLUMNNAME_MsgTip)
@@ -277,12 +277,12 @@ public class DictionaryConvertUtil {
 
 		//	
 		builder.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					form.getUUID()
 				)
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					form.getUUID()
 				)
 			)
@@ -290,7 +290,7 @@ public class DictionaryConvertUtil {
 				form.getAD_Form_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 						form,
 						MForm.COLUMNNAME_Name
@@ -298,7 +298,7 @@ public class DictionaryConvertUtil {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 						form,
 						MForm.COLUMNNAME_Description
@@ -306,7 +306,7 @@ public class DictionaryConvertUtil {
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 						form,
 						MForm.COLUMNNAME_Help
@@ -339,7 +339,7 @@ public class DictionaryConvertUtil {
 			}
 			//	Set
 			builder.setFileName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					fileName.substring(beginIndex, endIndex))
 				)
 			;
@@ -378,11 +378,11 @@ public class DictionaryConvertUtil {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getUUID()
 				))
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getUUID()
 				)
 			)
@@ -390,48 +390,48 @@ public class DictionaryConvertUtil {
 				column.getAD_Column_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getHelp()
 				)
 			)
 			.setCallout(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getCallout()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getColumnName()
 				)
 			)
 			.setElementName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					element.getColumnName()
 				)
 			)
 			.setColumnSql(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getColumnSQL()
 				)
 			)
 			.setDefaultValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					defaultValue
 				)
 			)
 			.setDisplayType(displayTypeId)
 			.setFormatPattern(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getFormatPattern()
 				)
 			)
@@ -449,23 +449,23 @@ public class DictionaryConvertUtil {
 			.setIsTranslated(column.isTranslated())
 			.setIsUpdateable(column.isUpdateable())
 			.setMandatoryLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getMandatoryLogic()
 				)
 			)
 			.setReadOnlyLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getReadOnlyLogic()
 				)
 			)
 			.setSequence(column.getSeqNo())
 			.setValueMax(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getValueMax()
 				)
 			)
 			.setValueMin(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					column.getValueMin()
 				)
 			)
@@ -557,7 +557,7 @@ public class DictionaryConvertUtil {
 						table.getAD_Table_ID()
 					)
 					.setParentUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							table.getUUID()
 						)
 					)
@@ -565,12 +565,12 @@ public class DictionaryConvertUtil {
 						table.getTableName()
 					)
 					.setId(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							currentColumn.getUUID()
 						)
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							currentColumn.getUUID()
 						)
 					)
@@ -610,11 +610,11 @@ public class DictionaryConvertUtil {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					element.getUUID()
 				))
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					element.getUUID()
 				)
 			)
@@ -622,7 +622,7 @@ public class DictionaryConvertUtil {
 				element.getAD_Element_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 						element,
 						M_Element.COLUMNNAME_Name
@@ -630,7 +630,7 @@ public class DictionaryConvertUtil {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 						element,
 						M_Element.COLUMNNAME_Description
@@ -638,7 +638,7 @@ public class DictionaryConvertUtil {
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 						element,
 						M_Element.COLUMNNAME_Help
@@ -646,12 +646,12 @@ public class DictionaryConvertUtil {
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					element.getColumnName()
 				)
 			)
 			.setElementName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					element.getColumnName()
 				)
 			)
@@ -697,7 +697,7 @@ public class DictionaryConvertUtil {
 		if (field.getAD_Reference_ID() > 0) {
 			displayTypeId = field.getAD_Reference_ID();
 		}
-		String name = StringManager.getValidString(
+		String name = TextManager.getValidString(
 			Msg.translate(
 				field.getCtx(),
 				column.getColumnName()
@@ -715,7 +715,7 @@ public class DictionaryConvertUtil {
 				column.getColumnName()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					name
 				)
 			)
@@ -738,7 +738,7 @@ public class DictionaryConvertUtil {
 				column.getColumnName()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.translate(
 						column.getCtx(),
 						column.getColumnName()

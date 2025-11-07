@@ -31,7 +31,9 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.service.grpc.util.value.BooleanManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -84,14 +86,14 @@ public class ContextTemporaryWorkaround {
 				String docSubTypeSO = Env.getContext(Env.getCtx(), windowNo, "OrderType");
 				contextValues.putFields(
 					"OrderType",
-					ValueManager.getValueFromString(docSubTypeSO).build()
+					TextManager.getProtoValueFromString(docSubTypeSO).build()
 				);
 
 				// - HasCharges
 				String hasCharges = Env.getContext(Env.getCtx(), windowNo, "HasCharges");
 				contextValues.putFields(
 					"HasCharges",
-					ValueManager.getValueFromStringBoolean(hasCharges).build()
+					BooleanManager.getProtoValueFromBoolean(hasCharges).build()
 				);
 			}
 			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.priceList")) {
@@ -99,7 +101,7 @@ public class ContextTemporaryWorkaround {
 				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
 				contextValues.putFields(
 					"M_PriceList_Version_ID",
-					ValueManager.getValueFromInteger(priceListVersionId).build()
+					NumberManager.getProtoValueFromInteger(priceListVersionId).build()
 				);
 			}
 			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.product")) {
@@ -107,14 +109,14 @@ public class ContextTemporaryWorkaround {
 				int priceListVersionId = Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_Version_ID");
 				contextValues.putFields(
 					"M_PriceList_Version_ID",
-					ValueManager.getValueFromInteger(priceListVersionId).build()
+					NumberManager.getProtoValueFromInteger(priceListVersionId).build()
 				);
 
 				// - DiscountSchema
 				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
 				contextValues.putFields(
 					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+					BooleanManager.getProtoValueFromBoolean(isDiscountSchema).build()
 				);
 			}
 			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.charge")) {
@@ -122,7 +124,7 @@ public class ContextTemporaryWorkaround {
 				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
 				contextValues.putFields(
 					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+					BooleanManager.getProtoValueFromBoolean(isDiscountSchema).build()
 				);
 			}
 			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.amt")) {
@@ -130,7 +132,7 @@ public class ContextTemporaryWorkaround {
 				String isDiscountSchema = Env.getContext(Env.getCtx(), windowNo, "DiscountSchema");
 				contextValues.putFields(
 					"DiscountSchema",
-					ValueManager.getValueFromStringBoolean(isDiscountSchema).build()
+					BooleanManager.getProtoValueFromBoolean(isDiscountSchema).build()
 				);
 			}
 			else if (calloutClassAndMethod.equals("org.compiere.model.CalloutOrder.qty")) {
@@ -138,13 +140,13 @@ public class ContextTemporaryWorkaround {
 				String isConversion = Env.getContext(Env.getCtx(), windowNo, "UOMConversion");
 				contextValues.putFields(
 					"UOMConversion",
-					ValueManager.getValueFromStringBoolean(isConversion).build()
+					BooleanManager.getProtoValueFromBoolean(isConversion).build()
 				);
 			} else if (calloutClassAndMethod.equals("org.compiere.model.CalloutPayment.docType")) {
 				String isSalesTransaction = Env.getContext(Env.getCtx(), windowNo, "IsSOTrx");
 				contextValues.putFields(
 					"IsSOTrx",
-					ValueManager.getValueFromStringBoolean(isSalesTransaction).build()
+					BooleanManager.getProtoValueFromBoolean(isSalesTransaction).build()
 				);
 			}
 			calloutBuilder.setValues(contextValues);
@@ -167,14 +169,14 @@ public class ContextTemporaryWorkaround {
 		}
 		if (I_C_Payment.Table_Name.equals(tableName)) {
 			// AS `org.compiere.model.CalloutPayment.docType` to `IsSOTrx`
-			int documentTypeId = ValueManager.getIntegerFromValue(
+			int documentTypeId = NumberManager.getIntegerFromProtoValue(
 				recordRow.getFieldsMap().get(I_C_Payment.COLUMNNAME_C_DocType_ID)
 			);
 			if (documentTypeId > 0) {
 				MDocType documentType = MDocType.get(Env.getCtx(), documentTypeId);
 				boolean isSalesTransaction = documentType.isSOTrx();
 
-				Value.Builder valueBuilder = ValueManager.getValueFromBoolean(
+				Value.Builder valueBuilder = BooleanManager.getProtoValueFromBoolean(
 					isSalesTransaction
 				);
 				recordRow.putFields(
@@ -184,12 +186,12 @@ public class ContextTemporaryWorkaround {
 			}
 		} else if (I_C_Order.Table_Name.equals(tableName)) {
 			// AS `org.compiere.model.CalloutOrder.docType` to `OrderType`
-			int documentTypeId = ValueManager.getIntegerFromValue(
+			int documentTypeId = NumberManager.getIntegerFromProtoValue(
 				recordRow.getFieldsMap().get(I_C_Payment.COLUMNNAME_C_DocType_ID)
 			);
 			if (documentTypeId > 0) {
 				MDocType documentType = MDocType.get(Env.getCtx(), documentTypeId);
-				Value.Builder subTypeBuilder = ValueManager.getValueFromString(
+				Value.Builder subTypeBuilder = TextManager.getProtoValueFromString(
 					documentType.getDocSubTypeSO()
 				);
 				recordRow.putFields(
@@ -197,7 +199,7 @@ public class ContextTemporaryWorkaround {
 					subTypeBuilder.build()
 				);
 
-				Value.Builder hasChargesBuilder = ValueManager.getValueFromBoolean(
+				Value.Builder hasChargesBuilder = BooleanManager.getProtoValueFromBoolean(
 					documentType.isHasCharges()
 				);
 				recordRow.putFields(
@@ -206,10 +208,10 @@ public class ContextTemporaryWorkaround {
 				);
 			}
 
-			int priceListId = ValueManager.getIntegerFromValue(
+			int priceListId = NumberManager.getIntegerFromProtoValue(
 				recordRow.getFieldsMap().get(I_C_Order.COLUMNNAME_M_PriceList_ID)
 			);
-			Timestamp dateOrdered = ValueManager.getTimestampFromValue(
+			Timestamp dateOrdered = TimeManager.getTimestampFromProtoValue(
 				recordRow.getFieldsMap().get(I_C_Order.COLUMNNAME_DateOrdered)
 			);
 			final String sql = "SELECT M_PriceList_Version_ID "
@@ -226,7 +228,7 @@ public class ContextTemporaryWorkaround {
 				dateOrdered
 			);
 			if (priceListVersionId > 0) {
-				Value.Builder priceListVersionBuilder = ValueManager.getValueFromInt(
+				Value.Builder priceListVersionBuilder = NumberManager.getProtoValueFromInt(
 					priceListVersionId
 				);
 				recordRow.putFields(
@@ -236,21 +238,21 @@ public class ContextTemporaryWorkaround {
 			}
 		} else if (I_C_OrderLine.Table_Name.equals(tableName)) {
 			// AS `org.compiere.model.CalloutOrder.qty` to `DiscountSchema`
-			int chargeId = ValueManager.getIntegerFromValue(
+			int chargeId = NumberManager.getIntegerFromProtoValue(
 				recordRow.getFieldsMap().get(I_C_OrderLine.COLUMNNAME_C_Charge_ID)
 			);
 			// AS `org.compiere.model.CalloutOrder.qty` to `UOMConversion`
-			int productId = ValueManager.getIntegerFromValue(
+			int productId = NumberManager.getIntegerFromProtoValue(
 				recordRow.getFieldsMap().get(I_C_OrderLine.COLUMNNAME_M_Product_ID)
 			);
 			if (productId > 0) {
-				int orderId = ValueManager.getIntegerFromValue(
+				int orderId = NumberManager.getIntegerFromProtoValue(
 					recordRow.getFieldsMap().get(I_C_OrderLine.COLUMNNAME_C_Order_ID)
 				);
-				int businessPartnerId = ValueManager.getIntegerFromValue(
+				int businessPartnerId = NumberManager.getIntegerFromProtoValue(
 					recordRow.getFieldsMap().get(I_C_OrderLine.COLUMNNAME_C_BPartner_ID)
 				);
-				BigDecimal quantityOrdered = ValueManager.getBigDecimalFromValue(
+				BigDecimal quantityOrdered = NumberManager.getBigDecimalFromProtoValue(
 					recordRow.getFieldsMap().get(I_C_OrderLine.COLUMNNAME_QtyOrdered)
 				);
 				
@@ -266,7 +268,7 @@ public class ContextTemporaryWorkaround {
 				MProductPricing pp = new MProductPricing(productId, businessPartnerId, quantityOrdered, isSOTrx, null);
 				boolean isDiscountSchema = pp.isDiscountSchema();
 
-				Value.Builder valueBuilder = ValueManager.getValueFromBoolean(
+				Value.Builder valueBuilder = BooleanManager.getProtoValueFromBoolean(
 					isDiscountSchema
 				);
 				recordRow.putFields(
@@ -274,10 +276,10 @@ public class ContextTemporaryWorkaround {
 					valueBuilder.build()
 				);
 
-				BigDecimal quantityEntered = ValueManager.getBigDecimalFromValue(
+				BigDecimal quantityEntered = NumberManager.getBigDecimalFromProtoValue(
 					recordRow.getFieldsMap().get(I_C_OrderLine.COLUMNNAME_QtyEntered)
 				);
-				int unitOfMeasureId = ValueManager.getIntegerFromValue(
+				int unitOfMeasureId = NumberManager.getIntegerFromProtoValue(
 					recordRow.getFieldsMap().get(I_C_OrderLine.COLUMNNAME_C_UOM_ID)
 				);
 				BigDecimal quantityEntered1 = quantityEntered.setScale(
@@ -292,7 +294,7 @@ public class ContextTemporaryWorkaround {
 				}
 
 				boolean isConversion = quantityEntered.compareTo(quantityOrdered) != 0;
-				Value.Builder uomConversionBuilder = ValueManager.getValueFromBoolean(
+				Value.Builder uomConversionBuilder = BooleanManager.getProtoValueFromBoolean(
 					isConversion
 				);
 				recordRow.putFields(
@@ -300,7 +302,7 @@ public class ContextTemporaryWorkaround {
 					uomConversionBuilder.build()
 				);
 			} else if (chargeId > 0) {
-				Value.Builder valueBuilder = ValueManager.getValueFromBoolean(
+				Value.Builder valueBuilder = BooleanManager.getProtoValueFromBoolean(
 					false
 				);
 				recordRow.putFields(

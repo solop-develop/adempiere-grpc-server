@@ -38,7 +38,7 @@ import org.spin.backend.grpc.form.payment_allocation.DocumentType;
 import org.spin.backend.grpc.form.payment_allocation.Organization;
 import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 public class PaymentAllocationConvertUtil {
 
@@ -59,17 +59,17 @@ public class PaymentAllocationConvertUtil {
 				organization.getAD_Org_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getName()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getName()
 				)
 			)
@@ -104,22 +104,22 @@ public class PaymentAllocationConvertUtil {
 				currency.getC_Currency_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getUUID()
 				)
 			)
 			.setIsoCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getISO_Code()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getDescription()
 				)
 			)
 			.setSymbol(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getCurSymbol()
 				)
 			)
@@ -159,22 +159,22 @@ public class PaymentAllocationConvertUtil {
 				conversionType.getC_ConversionType_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionType.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionType.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionType.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionType.getDescription()
 				)
 			)
@@ -206,7 +206,7 @@ public class PaymentAllocationConvertUtil {
 				conversionRate.getC_Conversion_Rate_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionRate.getUUID()
 				)
 			)
@@ -261,22 +261,22 @@ public class PaymentAllocationConvertUtil {
 				documentType.getC_DocType_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					documentType.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					documentType.get_Translation(I_C_DocType.COLUMNNAME_Name)
 				)
 			)
 			.setPrintName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					documentType.get_Translation(I_C_DocType.COLUMNNAME_PrintName)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					documentType.get_Translation(I_C_DocType.COLUMNNAME_Description)
 				)
 			)
@@ -314,20 +314,20 @@ public class PaymentAllocationConvertUtil {
 				transactionType.getAD_Ref_List_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					transactionType.getUUID()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					transactionType.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(name)
+				TextManager.getValidString(name)
 			)
 			.setDescription(
-				StringManager.getValidString(description)
+				TextManager.getValidString(description)
 			)
 		;
 
@@ -346,17 +346,17 @@ public class PaymentAllocationConvertUtil {
 				charge.getC_Charge_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					charge.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					charge.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					charge.getDescription()
 				)
 			)

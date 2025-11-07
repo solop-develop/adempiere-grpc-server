@@ -105,7 +105,7 @@ import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.query.SortingManager;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -332,7 +332,7 @@ public class UserInterface extends UserInterfaceImplBase {
 						//	Display Columns
 						if(column == null) {
 							String displayValue = rs.getString(index);
-							Value.Builder displayValueBuilder = ValueManager.getValueFromString(displayValue);
+							Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(displayValue);
 
 							rowValues.putFields(
 								columnName,
@@ -347,13 +347,13 @@ public class UserInterface extends UserInterfaceImplBase {
 						if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnName.toLowerCase())) {
 							final String uuid = rs.getString(index);
 							entityBuilder.setUuid(
-								StringManager.getValidString(uuid)
+								TextManager.getValidString(uuid)
 							);
 						}
 						//	From field
 						String fieldColumnName = column.getColumnName();
 						Object value = rs.getObject(index);
-						Value.Builder valueBuilder = ValueManager.getValueFromReference(
+						Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
 							value,
 							column.getAD_Reference_ID()
 						);
@@ -371,7 +371,7 @@ public class UserInterface extends UserInterfaceImplBase {
 							);
 							if (clientEntity != null) {
 								final String clientUuid = clientEntity.get_UUID();
-								Value.Builder valueUuidBuilder = ValueManager.getValueFromString(
+								Value.Builder valueUuidBuilder = TextManager.getProtoValueFromString(
 									clientUuid
 								);
 								rowValues.putFields(
@@ -388,7 +388,7 @@ public class UserInterface extends UserInterfaceImplBase {
 									PO entityRow = tableRow.getPO(rs.getInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
 									if (entityRow != null) {
 										final String recordIdDisplayValue = entityRow.getDisplayValue();
-										Value.Builder recordIdDisplayBuilder = ValueManager.getValueFromString(
+										Value.Builder recordIdDisplayBuilder = TextManager.getProtoValueFromString(
 											recordIdDisplayValue
 										);
 										rowValues.putFields(
@@ -602,7 +602,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		//	Return
 		return builder;
@@ -661,13 +661,13 @@ public class UserInterface extends UserInterfaceImplBase {
 			int referenceId = column.getAD_Reference_ID();
 			Object value = null;
 			if (referenceId > 0) {
-				value = ValueManager.getObjectFromReference(
+				value = ValueManager.getObjectFromProtoValue(
 					attribute.getValue(),
 					referenceId
 				);
 			} 
 			if (value == null) {
-				value = ValueManager.getObjectFromValue(
+				value = ValueManager.getObjectFromProtoValue(
 					attribute.getValue()
 				);
 			}
@@ -774,13 +774,13 @@ public class UserInterface extends UserInterfaceImplBase {
 			Object value = null;
 			if (!attribute.getValue().hasNullValue()) {
 				if (referenceId > 0) {
-					value = ValueManager.getObjectFromReference(
+					value = ValueManager.getObjectFromProtoValue(
 						attribute.getValue(),
 						referenceId
 					);
 				} 
 				if (value == null) {
-					value = ValueManager.getObjectFromValue(
+					value = ValueManager.getObjectFromProtoValue(
 						attribute.getValue()
 					);
 				}
@@ -853,7 +853,7 @@ public class UserInterface extends UserInterfaceImplBase {
 							//	Set Language
 							if(Util.isEmpty(translationBuilder.getLanguage())) {
 								translationBuilder.setLanguage(
-									StringManager.getValidString(
+									TextManager.getValidString(
 										translation.get_ValueAsString(I_AD_Language.COLUMNNAME_AD_Language)
 									)
 								);
@@ -1093,7 +1093,7 @@ public class UserInterface extends UserInterfaceImplBase {
 					String messageText = Msg.getMsg(Env.getAD_Language(Env.getCtx()), message.getValue(), arguments);
 					//	Set result message
 					builder.setMessageText(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							Msg.parseTranslation(
 								Env.getCtx(),
 								messageText
@@ -1309,31 +1309,31 @@ public class UserInterface extends UserInterfaceImplBase {
 			Struct.Builder values = Struct.newBuilder();
 			values.putFields(
 				keyColumn.getColumnName(),
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					entity.get_ValueAsInt(keyColumn.getColumnName())
 				).build()
 			);
 			values.putFields(
 				LookupUtil.UUID_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					entity.get_UUID()
 				).build()
 			);
 			values.putFields(
 				LookupUtil.DISPLAY_COLUMN_KEY,
-				ValueManager.getValueFromString(
+				TextManager.getProtoValueFromString(
 					entity.getDisplayValue()
 				).build()
 			);
 			values.putFields(
 				sortColumnName,
-				ValueManager.getValueFromInt(
+				NumberManager.getProtoValueFromInt(
 					entity.get_ValueAsInt(sortColumnName)
 				).build()
 			);
 			values.putFields(
 				includedColumnName,
-				ValueManager.getValueFromBoolean(
+				BooleanManager.getProtoValueFromBoolean(
 					entity.get_ValueAsBoolean(includedColumnName)
 				).build()
 			);
@@ -1347,7 +1347,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		return builderList;
@@ -1422,7 +1422,9 @@ public class UserInterface extends UserInterfaceImplBase {
 				// set new values
 				entitySelection.getValues().getFieldsMap().entrySet()
 					.forEach(attribute -> {
-						Object value = ValueManager.getObjectFromValue(attribute.getValue());
+						Object value = ValueManager.getObjectFromProtoValue(
+							attribute.getValue()
+						);
 						entity.set_ValueOfColumn(attribute.getKey(), value);
 					});
 				entity.saveEx(transacctionName);
@@ -1436,31 +1438,31 @@ public class UserInterface extends UserInterfaceImplBase {
 				// set attributes
 				values.putFields(
 					keyColumn.getColumnName(),
-					ValueManager.getValueFromInt(
+					NumberManager.getProtoValueFromInt(
 						entity.get_ValueAsInt(keyColumn.getColumnName())
 					).build()
 				);
 				values.putFields(
 					LookupUtil.UUID_COLUMN_KEY,
-					ValueManager.getValueFromString(
+					TextManager.getProtoValueFromString(
 						entity.get_UUID()
 					).build()
 				);
 				values.putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY,
-					ValueManager.getValueFromString(
+					TextManager.getProtoValueFromString(
 						entity.getDisplayValue()
 					).build()
 				);
 				values.putFields(
 					sortColumnName,
-					ValueManager.getValueFromInt(
+					NumberManager.getProtoValueFromInt(
 						entity.get_ValueAsInt(sortColumnName)
 					).build()
 				);
 				values.putFields(
 					includedColumnName,
-					ValueManager.getValueFromBoolean(
+					BooleanManager.getProtoValueFromBoolean(
 						entity.get_ValueAsBoolean(includedColumnName)
 					).build()
 				);
@@ -1548,7 +1550,7 @@ public class UserInterface extends UserInterfaceImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		query
@@ -1569,23 +1571,23 @@ public class UserInterface extends UserInterfaceImplBase {
 			return builder;
 		}
 
-		String mailText = StringManager.getValidString(mailTemplate.getMailText())
-			+ StringManager.getValidString(mailTemplate.getMailText2())
-			+ StringManager.getValidString(mailTemplate.getMailText3())
+		String mailText = TextManager.getValidString(mailTemplate.getMailText())
+			+ TextManager.getValidString(mailTemplate.getMailText2())
+			+ TextManager.getValidString(mailTemplate.getMailText3())
 		;
 		builder.setId(mailTemplate.getR_MailText_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					mailTemplate.getName()
 				)
 			)
 			.setSubject(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					mailTemplate.getMailHeader()
 				)
 			)
 			.setMailText(
-				StringManager.getValidString(mailText)
+				TextManager.getValidString(mailText)
 			)
 		;
 

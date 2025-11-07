@@ -50,7 +50,7 @@ import org.spin.service.grpc.util.db.FromUtil;
 import org.spin.service.grpc.util.db.OrderByUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -158,8 +158,8 @@ public class RecordUtil {
 		}
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				search_value
 			)
 		).strip();
@@ -370,7 +370,7 @@ public class RecordUtil {
 						//	Display Columns
 						if(field == null) {
 							String displayValue = rs.getString(index);
-							Value.Builder displayValueBuilder = ValueManager.getValueFromString(displayValue);
+							Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(displayValue);
 
 							rowValues.putFields(
 								columnName,
@@ -385,13 +385,13 @@ public class RecordUtil {
 						if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnName.toLowerCase())) {
 							final String uuid = rs.getString(index);
 							entityBuilder.setUuid(
-								StringManager.getValidString(uuid)
+								TextManager.getValidString(uuid)
 							);
 						}
 						//	From field
 						String fieldColumnName = field.getColumnName();
 						Object value = rs.getObject(index);
-						Value.Builder valueBuilder = ValueManager.getValueFromReference(
+						Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
 							value,
 							field.getAD_Reference_ID()
 						);
@@ -409,7 +409,7 @@ public class RecordUtil {
 							);
 							if (clientEntity != null) {
 								final String clientUuid = clientEntity.get_UUID();
-								Value.Builder valueUuidBuilder = ValueManager.getValueFromString(
+								Value.Builder valueUuidBuilder = TextManager.getProtoValueFromString(
 									clientUuid
 								);
 								rowValues.putFields(
@@ -426,7 +426,7 @@ public class RecordUtil {
 									PO entityRow = tableRow.getPO(rs.getInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
 									if (entityRow != null) {
 										final String recordIdDisplayValue = entityRow.getDisplayValue();
-										Value.Builder recordIdDisplayBuilder = ValueManager.getValueFromString(
+										Value.Builder recordIdDisplayBuilder = TextManager.getProtoValueFromString(
 											recordIdDisplayValue
 										);
 										rowValues.putFields(

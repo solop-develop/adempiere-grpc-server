@@ -149,7 +149,7 @@ import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.model.MWDeliveryViaRuleAllocation;
@@ -811,7 +811,7 @@ public class WebStore extends WebStoreImplBase {
 				salesOrder.getC_Order_ID()
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					salesOrder.getDocumentNo()
 				)
 			)
@@ -851,12 +851,12 @@ public class WebStore extends WebStoreImplBase {
 			builder.addOrderLines(
 				OrderLine.newBuilder()
 					.setSku(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							product.getSKU()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							product.getName()
 						)
 					)
@@ -884,7 +884,7 @@ public class WebStore extends WebStoreImplBase {
 				salesOrder.getC_Order_ID()
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					salesOrder.getDocumentNo()
 				)
 			)
@@ -924,12 +924,12 @@ public class WebStore extends WebStoreImplBase {
 			builder.addOrderLines(
 				OrderLine.newBuilder()
 					.setSku(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							product.getSKU()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							product.getName()
 						)
 					)
@@ -1244,12 +1244,12 @@ public class WebStore extends WebStoreImplBase {
 				builder.addPaymentMethods(
 					PaymentMethod.newBuilder()
 						.setCode(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								paymentMethod.getValue()
 							)
 						)
 						.setName(
-							StringManager.getValidString(
+							TextManager.getValidString(
 								paymentMethod.getName()
 							)
 						)
@@ -1348,7 +1348,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -1392,7 +1392,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		return builder;
 	}
@@ -1567,12 +1567,12 @@ public class WebStore extends WebStoreImplBase {
 			builder.addPaymentMethods(
 				PaymentMethod.newBuilder()
 					.setCode(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							paymentMethod.getValue()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							paymentMethod.getName()
 						)
 					)
@@ -1585,7 +1585,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		//	
 		return builder;
@@ -1761,12 +1761,12 @@ public class WebStore extends WebStoreImplBase {
 						product.getM_Product_ID()
 					)
 					.setSku(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							product.getSKU()
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							product.getName()
 						)
 					)
@@ -1852,12 +1852,12 @@ public class WebStore extends WebStoreImplBase {
 					items.size()
 				)
 				.setBaseCurrencyCode(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						currency.getISO_Code()
 					)
 				)
 				.setQuoteCurrencyCode(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						currency.getISO_Code()
 					)
 				)
@@ -1920,12 +1920,12 @@ public class WebStore extends WebStoreImplBase {
 				product.getM_Product_ID()
 			)
 			.setSku(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getSKU()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getName()
 				)
 			)
@@ -2027,13 +2027,13 @@ public class WebStore extends WebStoreImplBase {
 				location.saveEx(transactionName);
 				//	Update location of business partner
 				businessPartnerLocation.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						address.getFirstName()
 					)
 				);
 				businessPartnerLocation.set_ValueOfColumn(
 					MBPartner.COLUMNNAME_Description,
-					StringManager.getValidString(
+					TextManager.getValidString(
 						address.getLastName()
 					)
 				);
@@ -2064,17 +2064,17 @@ public class WebStore extends WebStoreImplBase {
 		Customer.Builder builder = Customer.newBuilder();
 		//	Set builder
 		builder.setEmail(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customer.getEMail()
 				)
 			)
 			.setFirstName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customer.getName()
 				)
 			)
 			.setLastName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customer.get_ValueAsString(MBPartner.COLUMNNAME_Name2)
 				)
 			)
@@ -2092,7 +2092,7 @@ public class WebStore extends WebStoreImplBase {
 				)
 			)
 			.setOrganizationName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					MOrg.get(Env.getCtx(), customer.getAD_Org_ID()).getName()
 				)
 			)
@@ -2203,41 +2203,41 @@ public class WebStore extends WebStoreImplBase {
 				MCountry.get(Env.getCtx(), location.getC_Country_ID()).getCountryCode()
 			)
 			.setPostalCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getPostal()
 				)
 			)
 			.setPhone(
-				StringManager.getValidString(Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(
+				TextManager.getValidString(Optional.ofNullable(businessPartnerLocation.getPhone()).orElse(
 					Optional.ofNullable(phone).orElse(""))
 				)
 			)
 			.setFirstName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getName()
 				)
 			)
 			.setLastName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.get_ValueAsString(MBPartner.COLUMNNAME_Description)
 				)
 			)
 			.setAddress1(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress1()
 				)
 			)
 			.setAddress2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress2())
 				)
 			.setAddress3(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress3()
 				)
 			)
 			.setAddress4(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					location.getAddress4()
 				)
 			)
@@ -2259,7 +2259,7 @@ public class WebStore extends WebStoreImplBase {
 						city.getC_City_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							city.getName()
 						)
 					)
@@ -2268,7 +2268,7 @@ public class WebStore extends WebStoreImplBase {
 			builder.setCity(
 				City.newBuilder()
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							location.getCity()
 						)
 					)
@@ -2283,7 +2283,7 @@ public class WebStore extends WebStoreImplBase {
 						region.getC_Region_ID()
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							region.getName()
 						)
 					)
@@ -2292,7 +2292,7 @@ public class WebStore extends WebStoreImplBase {
 			builder.setCity(
 				City.newBuilder()
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							location.getCity()
 						)
 					)
@@ -2540,7 +2540,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		//	
 		return builder;
@@ -2598,7 +2598,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		//	
 		return builder;
@@ -2661,7 +2661,7 @@ public class WebStore extends WebStoreImplBase {
 				product.getM_Product_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getName()
 				)
 			)
@@ -2669,7 +2669,7 @@ public class WebStore extends WebStoreImplBase {
 				Env.getAD_Org_ID(Env.getCtx())
 			)
 			.setUrl(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getDescriptionURL()
 				)
 			)
@@ -2794,12 +2794,12 @@ public class WebStore extends WebStoreImplBase {
 				product.getM_Product_ID()
 			)
 			.setSku(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getSKU()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getName()
 				)
 			)
@@ -2825,7 +2825,7 @@ public class WebStore extends WebStoreImplBase {
 				Attribute.newBuilder()
 					.setAttributeCode("description")
 					.setValue(
-						StringManager.getValidString(product.getDescription())
+						TextManager.getValidString(product.getDescription())
 					)
 			)
 		;
@@ -2864,7 +2864,7 @@ public class WebStore extends WebStoreImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		//	
 		return builder;

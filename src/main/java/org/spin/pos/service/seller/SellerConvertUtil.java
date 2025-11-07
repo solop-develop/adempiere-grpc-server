@@ -21,7 +21,7 @@ import org.compiere.model.MUser;
 import org.compiere.util.Env;
 import org.spin.backend.grpc.pos.AvailableSeller;
 import org.spin.model.MADAttachmentReference;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.util.AttachmentUtil;
 
 public class SellerConvertUtil {
@@ -40,22 +40,22 @@ public class SellerConvertUtil {
 				user.getAD_User_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getDescription()
 				)
 			)
 			.setComments(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getComments()
 				)
 			)
@@ -73,7 +73,7 @@ public class SellerConvertUtil {
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
 				sellerInfo.setImage(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						attachmentReference.getValidFileName()
 					)
 				);

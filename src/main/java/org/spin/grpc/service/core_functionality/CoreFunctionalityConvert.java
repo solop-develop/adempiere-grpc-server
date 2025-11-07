@@ -56,7 +56,7 @@ import org.spin.backend.grpc.core_functionality.UnitOfMeasure;
 import org.spin.backend.grpc.core_functionality.Warehouse;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -113,34 +113,34 @@ public class CoreFunctionalityConvert {
 				currency.getC_Currency_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getUUID()
 				)
 			)
 			.setIsoCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getISO_Code()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getDescription()
 				)
 			)
 			// TODO: Deprecated replace with `name`
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getDescription()
 				)
 			)
 			.setSymbol(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getCurSymbol()
 				)
 			)
 			// TODO: Deprecated replace with `symbol`
 			.setCurSymbol(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					currency.getCurSymbol()
 				)
 			)
@@ -168,22 +168,22 @@ public class CoreFunctionalityConvert {
 				country.getC_Country_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getUUID()
 				)
 			)
 			.setCountryCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getCountryCode()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getDescription()
 				)
 			)
@@ -191,12 +191,12 @@ public class CoreFunctionalityConvert {
 				country.isHasRegion()
 			)
 			.setRegionName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getRegionName()
 				)
 			)
 			.setDisplaySequence(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getDisplaySequence()
 				)
 			)
@@ -204,12 +204,12 @@ public class CoreFunctionalityConvert {
 				country.isAddressLinesReverse()
 			)
 			.setCaptureSequence(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getCaptureSequence()
 				)
 			)
 			.setDisplaySequenceLocal(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getDisplaySequenceLocal()
 				)
 			)
@@ -220,22 +220,22 @@ public class CoreFunctionalityConvert {
 				country.isHasPostal_Add()
 			)
 			.setExpressionPhone(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getExpressionPhone()
 				)
 			)
 			.setMediaSize(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getMediaSize()
 				)
 			)
 			.setExpressionBankRoutingNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getExpressionBankRoutingNo()
 				)
 			)
 			.setExpressionBankAccountNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getExpressionBankAccountNo()
 				)
 			)
@@ -246,7 +246,7 @@ public class CoreFunctionalityConvert {
 				country.isPostcodeLookup()
 			)
 			.setLanguage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					country.getAD_Language()
 				)
 			)
@@ -283,7 +283,7 @@ public class CoreFunctionalityConvert {
 				conversionRate.getC_Conversion_Rate_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					conversionRate.getUUID()
 				)
 			)
@@ -360,17 +360,17 @@ public class CoreFunctionalityConvert {
 			.setId(
 				documentType.getC_DocType_ID())
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					documentType.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					documentType.getDescription()
 				)
 			)
 			.setPrintName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					documentType.getPrintName()
 				)
 			)
@@ -405,17 +405,17 @@ public class CoreFunctionalityConvert {
 				bankAccount.getC_BankAccount_ID()
 			)
 			.setAccountNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bankAccount.getAccountNo()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bankAccount.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bankAccount.getDescription()
 				)
 			)
@@ -423,12 +423,12 @@ public class CoreFunctionalityConvert {
 				bankAccount.isDefault()
 			)
 			.setBban(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bankAccount.getBBAN()
 				)
 			)
 			.setIban(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					bankAccount.getIBAN()
 				)
 			)
@@ -491,37 +491,37 @@ public class CoreFunctionalityConvert {
 				businessPartner.getC_BPartner_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getValue()
 				)
 			)
 			.setTaxId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getTaxID()
 				)
 			)
 			.setDuns(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDUNS()
 				)
 			)
 			.setNaics(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getNAICS()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName()
 				)
 			)
 			.setLastName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName2()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDescription()
 				)
 			)
@@ -543,12 +543,12 @@ public class CoreFunctionalityConvert {
 				salesRepresentative.getAD_User_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					salesRepresentative.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					salesRepresentative.getDescription()
 				)
 			)
@@ -572,27 +572,27 @@ public class CoreFunctionalityConvert {
 				unitOfMeasure.getC_UOM_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					unitOfMeasure.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Name)
 				)
 			)
 			.setCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					unitOfMeasure.getX12DE355()
 				)
 			)
 			.setSymbol(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_UOMSymbol)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					unitOfMeasure.get_Translation(I_C_UOM.COLUMNNAME_Description)
 				)
 			)
@@ -670,12 +670,12 @@ public class CoreFunctionalityConvert {
 				charge.getC_Charge_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					charge.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					charge.getDescription()
 				)
 			)
@@ -709,37 +709,37 @@ public class CoreFunctionalityConvert {
 				product.getM_Product_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getHelp()
 				)
 			)
 			.setDocumentNote(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getDocumentNote()
 				)
 			)
 			.setUomName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					MUOM.get(product.getCtx(), product.getC_UOM_ID()).getName()
 				)
 			)
 			.setDescriptionUrl(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getDescriptionURL()
 				)
 			)
@@ -757,22 +757,22 @@ public class CoreFunctionalityConvert {
 				product.isSold()
 			)
 			.setImageUrl(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getImageURL()
 				)
 			)
 			.setUpc(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getUPC()
 				)
 			)
 			.setSku(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getSKU()
 				)
 			)
 			.setVersionNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getVersionNo()
 				)
 			)
@@ -818,12 +818,12 @@ public class CoreFunctionalityConvert {
 				)
 			)
 			.setTaxCategory(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getC_TaxCategory().getName()
 				)
 			)
 			.setProductCategoryName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					MProductCategory.get(product.getCtx(), product.getM_Product_Category_ID()).getName()
 				)
 			)
@@ -831,7 +831,7 @@ public class CoreFunctionalityConvert {
 		//	Group
 		if(product.getM_Product_Group_ID() != 0) {
 			builder.setProductGroupName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getM_Product_Group().getName()
 				)
 			);
@@ -839,7 +839,7 @@ public class CoreFunctionalityConvert {
 		//	Class
 		if(product.getM_Product_Class_ID() != 0) {
 			builder.setProductClassName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getM_Product_Class().getName()
 				)
 			);
@@ -847,7 +847,7 @@ public class CoreFunctionalityConvert {
 		//	Classification
 		if(product.getM_Product_Classification_ID() != 0) {
 			builder.setProductClassificationName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getM_Product_Classification().getName()
 				)
 			);
@@ -872,17 +872,17 @@ public class CoreFunctionalityConvert {
 				priceList.getM_PriceList_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					priceList.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					priceList.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					priceList.getDescription()
 				)
 			)
@@ -935,7 +935,7 @@ public class CoreFunctionalityConvert {
 		}
 		return Organization.newBuilder()
 			.setCorporateBrandingImage(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					corporateImageBranding.get()
 				)
 			)
@@ -943,37 +943,37 @@ public class CoreFunctionalityConvert {
 				organization.getAD_Org_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organization.getDescription()
 				)
 			)
 			.setDuns(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getDUNS()
 				)
 			)
 			.setTaxId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getTaxID()
 				)
 			)
 			.setPhone(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getPhone()
 				)
 			)
 			.setPhone2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getPhone2()
 				)
 			)
 			.setFax(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					organizationInfo.getFax()
 				)
 			)
@@ -1008,12 +1008,12 @@ public class CoreFunctionalityConvert {
 				warehouse.getM_Warehouse_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					warehouse.getDescription()
 				)
 			)
@@ -1033,17 +1033,17 @@ public class CoreFunctionalityConvert {
 		}
 		return TaxRate.newBuilder()
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tax.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tax.getDescription()
 				)
 			)
 			.setTaxIndicator(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					tax.getTaxIndicator()
 				)
 			)

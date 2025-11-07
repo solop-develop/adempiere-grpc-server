@@ -45,7 +45,7 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchType;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Matched;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Vendor;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class MatchPOReceiptInvoiceUtil {
@@ -71,22 +71,22 @@ public class MatchPOReceiptInvoiceUtil {
 				businessPartner.getC_BPartner_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getValue()
 				)
 			)
 			.setTaxId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getTaxID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDescription()
 				)
 			)
@@ -115,7 +115,7 @@ public class MatchPOReceiptInvoiceUtil {
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
 				)
 			)
@@ -136,7 +136,7 @@ public class MatchPOReceiptInvoiceUtil {
 				resultSet.getInt(I_C_InvoiceLine.COLUMNNAME_M_Product_ID)
 			)
 			.setProductName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("M_Product_Name")
 				)
 			)
@@ -144,7 +144,7 @@ public class MatchPOReceiptInvoiceUtil {
 				resultSet.getInt(I_C_Invoice.COLUMNNAME_C_BPartner_ID)
 			)
 			.setVendorName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("C_BPartner_Name")
 				)
 			)

@@ -50,7 +50,7 @@ import org.spin.backend.grpc.dictionary.Process;
 import org.spin.backend.grpc.dictionary.SearchColumn;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.service.grpc.util.base.RecordUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 
 import io.vavr.control.Try;
 
@@ -336,7 +336,7 @@ public class DictionaryServiceLogic {
 		}
 
 		responseBuilder.setTableName(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				tableName
 			)
 		);

@@ -52,8 +52,8 @@ import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -80,17 +80,17 @@ public class TimeRecord extends TimeRecordImplBase {
 				request.getR_Request_ID()
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getDocumentNo()
 				)
 			)
 			.setSubject(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getSubject()
 				)
 			)
 			.setSummary(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getSummary()
 				)
 			)
@@ -162,7 +162,7 @@ public class TimeRecord extends TimeRecordImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -192,12 +192,12 @@ public class TimeRecord extends TimeRecordImplBase {
 				project.getC_Project_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					project.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					project.getName()
 				)
 			)
@@ -260,7 +260,7 @@ public class TimeRecord extends TimeRecordImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		queryRequests
@@ -288,17 +288,17 @@ public class TimeRecord extends TimeRecordImplBase {
 				resourceType.getS_ResourceType_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceType.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceType.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceType.getDescription()
 				)
 			)
@@ -326,17 +326,17 @@ public class TimeRecord extends TimeRecordImplBase {
 				user.getAD_User_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					user.getDescription()
 				)
 			)
@@ -368,7 +368,7 @@ public class TimeRecord extends TimeRecordImplBase {
 				resource.getS_ResourceType_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resource.getName()
 				)
 			)
@@ -409,26 +409,26 @@ public class TimeRecord extends TimeRecordImplBase {
 				resourceAssignment.getS_ResourceAssignment_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceAssignment.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resourceAssignment.getDescription()
 				)
 			)
 		;
 		if (resourceAssignment.getAssignDateFrom() != null) {
 			builder.setAssignDateFrom(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateFrom()
 				)
 			);
 		}
 		if (resourceAssignment.getAssignDateTo() != null) {
 			builder.setAssignDateTo(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateTo()
 				)
 			);
@@ -526,15 +526,15 @@ public class TimeRecord extends TimeRecordImplBase {
 		resourceAssignment.setName(request.getName());
 		resourceAssignment.setQty(quantity);
 		resourceAssignment.setDescription(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				request.getDescription()
 			)
 		);
 
 		// set date
 		Timestamp dateFrom = new Timestamp(System.currentTimeMillis());
-		if (ValueManager.getTimestampFromProtoTimestamp(request.getDate()) != null) {
-			dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		if (TimeManager.getTimestampFromProtoTimestamp(request.getDate()) != null) {
+			dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 				request.getDate()
 			);
 		}
@@ -609,15 +609,15 @@ public class TimeRecord extends TimeRecordImplBase {
 			+ ") "
 		;
 
-		if (ValueManager.getTimestampFromProtoTimestamp(request.getDateFrom()) != null) {
-			Timestamp dateFrom = ValueManager.getTimestampFromProtoTimestamp(
+		if (TimeManager.getTimestampFromProtoTimestamp(request.getDateFrom()) != null) {
+			Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 				request.getDateFrom()
 			);
 			parametersList.add(dateFrom);
 			whereClause += " AND AssignDateFrom = ? ";
 		}
-		if (ValueManager.getTimestampFromProtoTimestamp(request.getDateTo()) != null) {
-			Timestamp dateTo = ValueManager.getTimestampFromProtoTimestamp(
+		if (TimeManager.getTimestampFromProtoTimestamp(request.getDateTo()) != null) {
+			Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 				request.getDateTo()
 			);
 			parametersList.add(dateTo);
@@ -625,8 +625,8 @@ public class TimeRecord extends TimeRecordImplBase {
 		}
 
 		// search value
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -666,7 +666,7 @@ public class TimeRecord extends TimeRecordImplBase {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builderList.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 
 		return builderList;

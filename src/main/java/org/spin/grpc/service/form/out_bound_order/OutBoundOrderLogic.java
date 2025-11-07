@@ -79,8 +79,8 @@ import org.spin.backend.grpc.form.out_bound_order.ListWarehousesRequest;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 public class OutBoundOrderLogic {
 
@@ -1077,14 +1077,14 @@ public class OutBoundOrderLogic {
 			request.getWarehouseId()
 		);
 
-		Timestamp documentDate = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp documentDate = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDocumentDate()
 		);
 		if (documentDate == null) {
 			throw new AdempiereException("@FillMandatory@ @DocumentDate@");
 		}
 
-		Timestamp shipmentDate = ValueManager.getTimestampFromProtoTimestamp(
+		Timestamp shipmentDate = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDocumentDate()
 		);
 		if (shipmentDate == null) {
@@ -1376,12 +1376,12 @@ public class OutBoundOrderLogic {
 				);
 				log.fine(message);
 				builder.setFreightDocumentNo(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							freightOrder.getDocumentNo()
 						)
 					)
 					.setFreightMessage(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							freightMessage
 						)
 					)
@@ -1392,12 +1392,12 @@ public class OutBoundOrderLogic {
 					linesQuantity.get()
 				)
 				.setDocumentNo(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						outBoundOrder.getDocumentNo()
 					)
 				)
 				.setMessage(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						message
 					)
 				)

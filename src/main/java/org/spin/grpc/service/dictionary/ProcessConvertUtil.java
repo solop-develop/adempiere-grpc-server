@@ -38,7 +38,7 @@ import org.spin.backend.grpc.dictionary.ReportExportType;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.custom.ProcessParaCustomUtil;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.util.AbstractExportFormat;
 import org.spin.util.ReportExportHandler;
 
@@ -74,11 +74,11 @@ public class ProcessConvertUtil {
 
 		Process.Builder builder = Process.newBuilder()
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getUUID()
 				))
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getUUID()
 				)
 			)
@@ -86,22 +86,22 @@ public class ProcessConvertUtil {
 				process.getAD_Process_ID()
 			)
 			.setCode(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					process.getHelp()
 				)
 			)
@@ -151,12 +151,12 @@ public class ProcessConvertUtil {
 			for(AbstractExportFormat reportType : exportHandler.getExportFormatList()) {
 				ReportExportType.Builder reportExportType = ReportExportType.newBuilder()
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							reportType.getName()
 						)
 					)
 					.setType(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							reportType.getExtension()
 						)
 					)
@@ -287,12 +287,12 @@ public class ProcessConvertUtil {
 				final String currentColumnName = currentParameter.getColumnName();
 				DependentField.Builder builder = DependentField.newBuilder()
 					.setId(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							currentParameter.getUUID()
 						)
 					)
 					.setUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							currentParameter.getUUID()
 						)
 					)
@@ -300,7 +300,7 @@ public class ProcessConvertUtil {
 						currentParameter.getAD_Process_Para_ID()
 					)
 					.setColumnName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							currentColumnName
 						)
 					)
@@ -308,12 +308,12 @@ public class ProcessConvertUtil {
 						process.getAD_Process_ID()
 					)
 					.setParentUuid(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							process.getUUID()
 						)
 					)
 					.setParentName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							process.getName()
 						)
 					)
@@ -342,11 +342,11 @@ public class ProcessConvertUtil {
 		//	Convert
 		Field.Builder builder = Field.newBuilder()
 			.setId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getUUID()
 				))
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getUUID()
 				)
 			)
@@ -354,42 +354,42 @@ public class ProcessConvertUtil {
 				processParameter.getAD_Process_Para_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getHelp()
 				)
 			)
 			.setColumnName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getColumnName()
 				)
 			)
 			.setElementName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getColumnName()
 				)
 			)
 			.setDefaultValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getDefaultValue()
 				)
 			)
 			.setDefaultValueTo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getDefaultValue2()
 				)
 			)
 			.setDisplayLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getDisplayLogic()
 				)
 			)
@@ -399,23 +399,23 @@ public class ProcessConvertUtil {
 			.setIsMandatory(processParameter.isMandatory())
 			.setIsRange(processParameter.isRange())
 			.setReadOnlyLogic(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getReadOnlyLogic()
 				)
 			)
 			.setSequence(processParameter.getSeqNo())
 			.setValueMax(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getValueMax()
 				)
 			)
 			.setValueMin(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getValueMin()
 				)
 			)
 			.setVFormat(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					processParameter.getVFormat()
 				)
 			)
@@ -458,7 +458,7 @@ public class ProcessConvertUtil {
 			// ASP default displayed field as panel
 			if (processParaCustom.get_ColumnIndex(org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME) >= 0) {
 				builder.setIsDisplayedAsPanel(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						processParaCustom.get_ValueAsString(
 							org.spin.dictionary.util.DictionaryUtil.IS_DISPLAYED_AS_PANEL_COLUMN_NAME
 						)

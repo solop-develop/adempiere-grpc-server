@@ -25,7 +25,7 @@ import org.spin.backend.grpc.field.business_partner.BusinessPartnerAddressLocati
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerContact;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerInfo;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 public class BusinessPartnerConvert {
@@ -52,42 +52,42 @@ public class BusinessPartnerConvert {
 				businessPartner.getC_BPartner_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getUUID()
 				)
 			)
 			.setDisplayValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDisplayValue()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getValue()
 				)
 			)
 			.setTaxId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getTaxID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName()
 				)
 			)
 			.setName2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName2()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDescription()
 				)
 			)
 			.setBusinessPartnerGroup(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerGroup.getName()
 				)
 			)
@@ -164,47 +164,47 @@ public class BusinessPartnerConvert {
 				businessPartnerContact.getAD_User_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerContact.getUUID()
 				)
 			)
 			.setGreeting(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					greetingName
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerContact.getName()
 				)
 			)
 			.setTitle(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerContact.getTitle()
 				)
 			)
 			.setAddress(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					locationName
 				)
 			)
 			.setPhone(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerContact.getPhone()
 				)
 			)
 			.setPhone2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerContact.getPhone2()
 				)
 			)
 			.setFax(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerContact.getFax()
 				)
 			)
 			.setEmail(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerContact.getEMail()
 				)
 			)
@@ -214,7 +214,7 @@ public class BusinessPartnerConvert {
 				)
 			)
 			.setLastResult(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerContact.getLastResult()
 				)
 			)
@@ -256,42 +256,42 @@ public class BusinessPartnerConvert {
 				businessPartnerLocation.getC_BPartner_Location_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getDescription()
 				)
 			)
 			.setPhone(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getPhone()
 				)
 			)
 			.setPhone2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getPhone2()
 				)
 			)
 			.setFax(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getFax()
 				)
 			)
 			.setAddress(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					locationName
 				)
 			)
 			.setMapUrl(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartnerLocation.getMapURL()
 				)
 			)

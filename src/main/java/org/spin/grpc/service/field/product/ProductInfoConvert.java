@@ -40,7 +40,7 @@ import org.spin.backend.grpc.field.product.VendorPurchase;
 import org.spin.backend.grpc.field.product.WarehouseStock;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 /**
@@ -67,19 +67,19 @@ public class ProductInfoConvert {
 				productId
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_UUID
 					)
 				)
 			)
 			.setDisplayValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getDisplayValue()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_Value
 					)
@@ -91,56 +91,56 @@ public class ProductInfoConvert {
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_Name
 					)
 				)
 			)
 			.setUpc(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_UPC
 					)
 				)
 			)
 			.setSku(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_SKU
 					)
 				)
 			)
 			.setUom(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_C_UOM_ID
 					)
 				)
 			)
 			.setProductCategory(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_M_Product_Category_ID
 					)
 				)
 			)
 			.setProductClass(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_M_Product_Class_ID
 					)
 				)
 			)
 			.setProductClassification(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_M_Product_Classification_ID
 					)
 				)
 			)
 			.setProductGroup(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_M_Product_Group_ID
 					)
@@ -152,7 +152,7 @@ public class ProductInfoConvert {
 				)
 			)
 			.setVendor(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						"Vendor"
 					)
@@ -260,7 +260,7 @@ public class ProductInfoConvert {
 
 		builder.setId(id)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					RecordUtil.getUuidFromId(
 						I_M_Warehouse.Table_Name,
 						id
@@ -268,7 +268,7 @@ public class ProductInfoConvert {
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("WarehouseName")
 				)
 			)
@@ -318,28 +318,28 @@ public class ProductInfoConvert {
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_Value
 					)
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Substitute.COLUMNNAME_Name
 					)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Substitute.COLUMNNAME_Description
 					)
 				)
 			)
 			.setWarehouse(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("Warehouse")
 				)
 			)
@@ -389,28 +389,28 @@ public class ProductInfoConvert {
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Product.COLUMNNAME_Value
 					)
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Substitute.COLUMNNAME_Name
 					)
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_M_Substitute.COLUMNNAME_Description
 					)
 				)
 			)
 			.setWarehouse(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("Warehouse")
 				)
 			)
@@ -486,24 +486,24 @@ public class ProductInfoConvert {
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("Warehouse")
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString(
 						I_C_Order.COLUMNNAME_DocumentNo
 					)
 				)
 			)
 			.setLocator(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("Locator")
 				)
 			)
 			.setDate(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					rs.getTimestamp(5)
 				)
 			)
@@ -533,7 +533,7 @@ public class ProductInfoConvert {
 				)
 			)
 			.setBusinessPartner(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					rs.getString("BP_Name")
 				)
 			)
@@ -560,12 +560,12 @@ public class ProductInfoConvert {
 					businesPartner.getC_BPartner_ID()
 				)
 				.setUuid(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						businesPartner.getUUID()
 					)
 				)
 				.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						businesPartner.getName()
 					)
 				)
@@ -575,7 +575,7 @@ public class ProductInfoConvert {
 		MUOM unitOfMeasure = MUOM.get(Env.getCtx(), productVendor.getC_UOM_ID());
 		if (unitOfMeasure != null && unitOfMeasure.getC_UOM_ID() > 0) {
 			builder.setUnitOfMeasure(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					unitOfMeasure.getName()
 				)
 			);
@@ -593,7 +593,7 @@ public class ProductInfoConvert {
 				productVendor.isCurrentVendor()
 			)
 			.setCurrency(
-				StringManager.getValidString(currencyCode)
+				TextManager.getValidString(currencyCode)
 			)
 			.setListPrice(
 				NumberManager.getBigDecimalToString(
@@ -611,7 +611,7 @@ public class ProductInfoConvert {
 				)
 			)
 			.setVendorProductKey(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					productVendor.getVendorProductNo()
 				)
 			)

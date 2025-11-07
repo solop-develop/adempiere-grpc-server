@@ -33,7 +33,7 @@ import org.spin.backend.grpc.form.out_bound_order.DocumentHeader;
 import org.spin.backend.grpc.form.out_bound_order.DocumentLine;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 public class OutBoundOrderConvertUtil {
@@ -47,28 +47,28 @@ public class OutBoundOrderConvertUtil {
 				resultSet.getInt("ID")
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString(
 						I_AD_Element.COLUMNNAME_UUID
 					)
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString(
 						I_C_Order.COLUMNNAME_DocumentNo
 					)
 				)
 			)
 			.setDateOrdered(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resultSet.getTimestamp(
 						I_C_Order.COLUMNNAME_DateOrdered
 					)
 				)
 			)
 			.setDatePromised(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resultSet.getTimestamp(
 						I_C_Order.COLUMNNAME_DatePromised
 					)
@@ -80,17 +80,17 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setWarehouse(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Warehouse")
 				)
 			)
 			.setRegion(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Region")
 				)
 			)
 			.setCity(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("City")
 				)
 			)
@@ -100,7 +100,7 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setSalesRepresentative(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("SalesRep")
 				)
 			)
@@ -110,12 +110,12 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setBusinessPartnerValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("PartnerValue")
 				)
 			)
 			.setBusinessPartner(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Partner")
 				)
 			)
@@ -123,27 +123,27 @@ public class OutBoundOrderConvertUtil {
 				resultSet.getInt("C_BPartner_Location_ID")
 			)
 			.setLocation(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Location")
 				)
 			)
 			.setAddress1(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Address1")
 				)
 			)
 			.setAddress2(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Address2")
 				)
 			)
 			.setAddress3(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Address3")
 				)
 			)
 			.setAddress4(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Address4")
 				)
 			)
@@ -178,7 +178,7 @@ public class OutBoundOrderConvertUtil {
 		).orElse(
 			Env.ZERO
 		);
-		String deliveryRuleKey = StringManager.getValidString(
+		String deliveryRuleKey = TextManager.getValidString(
 			resultSet.getString("DeliveryRule")
 		);
 		if(Util.isEmpty(deliveryRuleKey, true)) {
@@ -228,7 +228,7 @@ public class OutBoundOrderConvertUtil {
 				resultSet.getInt("ID")
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString(
 						I_AD_Element.COLUMNNAME_UUID
 					)
@@ -238,7 +238,7 @@ public class OutBoundOrderConvertUtil {
 				resultSet.getInt("Parent_ID")
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString(
 						I_C_Order.COLUMNNAME_DocumentNo
 					)
@@ -250,7 +250,7 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setWarehouse(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Warehouse")
 				)
 			)
@@ -260,12 +260,12 @@ public class OutBoundOrderConvertUtil {
 				)
 			)
 			.setProductValue(
-				StringManager.getStringFromObject(
+				TextManager.getStringFromObject(
 					resultSet.getString("ProductValue")
 				)
 			)
 			.setProduct(
-				StringManager.getStringFromObject(
+				TextManager.getStringFromObject(
 					resultSet.getString("Product")
 				)
 			)
@@ -273,7 +273,7 @@ public class OutBoundOrderConvertUtil {
 				productUOMId
 			)
 			.setUom(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("UOMSymbol")
 				)
 			)
@@ -281,7 +281,7 @@ public class OutBoundOrderConvertUtil {
 				resultSet.getInt("Order_UOM_ID")
 			)
 			.setOrderUom(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					resultSet.getString("Order_UOMSymbol")
 				)
 			)
@@ -346,7 +346,7 @@ public class OutBoundOrderConvertUtil {
 				deliveryRuleKey
 			)
 			.setDeliveryRule(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					deliveryRule
 				)
 			)

@@ -68,7 +68,7 @@ import org.spin.base.util.DocumentUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -115,8 +115,8 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		List<Object> parameters = new ArrayList<Object>();
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -185,22 +185,22 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				businessPartner.getC_BPartner_ID()
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getValue()
 				)
 			)
 			.setTaxId(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getTaxID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					businessPartner.getDescription()
 				)
 			)
@@ -257,8 +257,8 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		parameters.add(businessPartnerId);
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -327,7 +327,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					purchaseOrder.getDocumentNo()
 				)
 			)
@@ -376,8 +376,8 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		parameters.add(orderId);
 
 		// URL decode to change characteres and add search value to filter
-		final String searchValue = StringManager.getValidString(
-			StringManager.getDecodeUrl(
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
@@ -420,7 +420,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		ListProductsResponse.Builder builderList = ListProductsResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 
@@ -453,22 +453,22 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				product.getM_Product_ID()
 			)
 			.setUpc(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getUPC()
 				)
 			)
 			.setSku(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getSKU()
 				)
 			)
 			.setValue(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getValue()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					product.getName()
 				)
 			)
@@ -488,7 +488,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				receipt.getM_InOut_ID()
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					receipt.getDocumentNo()
 				)
 			)
@@ -982,7 +982,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 			receiptLine.setQty(quantity);
 			receiptLine.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					request.getDescription()
 				)
 			);
@@ -1037,7 +1037,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					receiptLine.getDescription()
 				)
 			)
@@ -1092,7 +1092,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		ListReceiptLinesResponse.Builder builderList = ListReceiptLinesResponse.newBuilder()
 			.setRecordCount(count)
 			.setNextPageToken(
-				StringManager.getValidString(nexPageToken)
+				TextManager.getValidString(nexPageToken)
 			)
 		;
 

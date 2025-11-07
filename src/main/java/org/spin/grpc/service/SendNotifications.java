@@ -48,7 +48,7 @@ import org.spin.eca62.support.ResourceMetadata;
 import org.spin.model.MADAppRegistration;
 import org.spin.queue.notification.DefaultNotifier;
 import org.spin.queue.util.QueueLoader;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.util.support.AppSupportHandler;
 import org.spin.util.support.IAppSupport;
 
@@ -177,17 +177,17 @@ public class SendNotifications extends SendNotificationsImplBase{
 			String description = refList.get_Translation(I_AD_Ref_List.COLUMNNAME_Value);
 			NotifcationType.Builder builder = NotifcationType.newBuilder()
 				.setName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						name
 					)
 				)
 				.setValue(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						value
 					)
 				)
 				.setDescription(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						description
 					)
 				)

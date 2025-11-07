@@ -63,7 +63,7 @@ import org.spin.grpc.service.FileManagement;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.util.ColumnsAdded;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -90,7 +90,7 @@ public class ConvertUtil {
 				log.getP_ID()
 			)
 			.setLog(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					Msg.parseTranslation(Env.getCtx(), log.getP_Msg())
 				)
 			)
@@ -115,12 +115,12 @@ public class ConvertUtil {
 				chatEntry.getCM_Chat_ID()
 			)
 			.setSubject(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					chatEntry.getSubject()
 				)
 			)
 			.setCharacterData(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					chatEntry.getCharacterData()
 				)
 			)
@@ -132,7 +132,7 @@ public class ConvertUtil {
 					chatEntry.getAD_User_ID()
 				)
 				.setUserName(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						user.getName()
 					)
 				)
@@ -195,13 +195,13 @@ public class ConvertUtil {
 
 		final String uuid = entity.get_UUID();
 		entityBuilder.setUuid(
-			StringManager.getValidString(uuid)
+			TextManager.getValidString(uuid)
 		);
 
 		//	Convert attributes
 		POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), entity.get_Table_ID());
 		entityBuilder.setTableName(
-			StringManager.getValidString(
+			TextManager.getValidString(
 				poInfo.getTableName()
 			)
 		);
@@ -211,7 +211,7 @@ public class ConvertUtil {
 			String columnName = poInfo.getColumnName(index);
 			int displayTypeId = poInfo.getColumnDisplayType(index);
 			Object value = entity.get_Value(index);
-			Value.Builder builderValue = ValueManager.getValueFromReference(
+			Value.Builder builderValue = ValueManager.getProtoValueFromObject(
 				value,
 				displayTypeId
 			);
@@ -252,7 +252,7 @@ public class ConvertUtil {
 						}
 					}
 				}
-				Value.Builder builderDisplayValue = ValueManager.getValueFromString(displayValue);
+				Value.Builder builderDisplayValue = TextManager.getProtoValueFromString(displayValue);
 				rowValues.putFields(
 					LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
 					builderDisplayValue.build()
@@ -268,7 +268,7 @@ public class ConvertUtil {
 				);
 				if (clientEntity != null) {
 					final String clientUuid = clientEntity.get_UUID();
-					Value.Builder valueUuidBuilder = ValueManager.getValueFromString(
+					Value.Builder valueUuidBuilder = TextManager.getProtoValueFromString(
 						clientUuid
 					);
 					rowValues.putFields(
@@ -285,7 +285,7 @@ public class ConvertUtil {
 						PO entityRow = tableRow.getPO(entity.get_ValueAsInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
 						if (entityRow != null) {
 							final String recordIdDisplayValue = entityRow.getDisplayValue();
-							Value.Builder recordIdDisplayBuilder = ValueManager.getValueFromString(
+							Value.Builder recordIdDisplayBuilder = TextManager.getProtoValueFromString(
 								recordIdDisplayValue
 							);
 							rowValues.putFields(
@@ -322,13 +322,13 @@ public class ConvertUtil {
 	public static DocumentAction.Builder convertDocumentAction(String value, String name, String description) {
 		return DocumentAction.newBuilder()
 			.setValue(
-				StringManager.getValidString(value)
+				TextManager.getValidString(value)
 			)
 			.setName(
-				StringManager.getValidString(name)
+				TextManager.getValidString(name)
 			)
 			.setDescription(
-				StringManager.getValidString(description)
+				TextManager.getValidString(description)
 			)
 		;
 	}
@@ -343,13 +343,13 @@ public class ConvertUtil {
 	public static DocumentStatus.Builder convertDocumentStatus(String value, String name, String description) {
 		return DocumentStatus.newBuilder()
 			.setValue(
-				StringManager.getValidString(value)
+				TextManager.getValidString(value)
 			)
 			.setName(
-				StringManager.getValidString(name)
+				TextManager.getValidString(name)
 			)
 			.setDescription(
-				StringManager.getValidString(description)
+				TextManager.getValidString(description)
 			)
 		;
 	}
@@ -521,52 +521,52 @@ public class ConvertUtil {
 				customerBankAccount.getC_BP_BankAccount_ID()
 			)
 			.setCity(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_City()
 				)
 			)
 			.setCountry(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_Country()
 				)
 			)
 			.setEmail(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_EMail()
 				)
 			)
 			.setDriverLicense(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_Ident_DL()
 				)
 			)
 			.setSocialSecurityNumber(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_Ident_SSN()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_Name()
 				)
 			)
 			.setState(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_State()
 				)
 			)
 			.setStreet(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_Street()
 				)
 			)
 			.setZip(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getA_Zip()
 				)
 			)
 			.setBankAccountType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getBankAccountType()
 				)
 			)
@@ -579,27 +579,27 @@ public class ConvertUtil {
 				customer.getC_BPartner_ID()
 			)
 			.setAddressVerified(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getR_AvsAddr()
 				)
 			)
 			.setZipVerified(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getR_AvsZip()
 				)
 			)
 			.setRoutingNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getRoutingNo()
 				)
 			)
 			.setAccountNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getAccountNo()
 				)
 			)
 			.setIban(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					customerBankAccount.getIBAN()
 				)
 			)
@@ -633,7 +633,7 @@ public class ConvertUtil {
 				)
 			)
 			.setDocumentNo(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					shipment.getDocumentNo()
 				)
 			)
@@ -644,16 +644,16 @@ public class ConvertUtil {
 			)
 			.setDocumentStatus(
 				ConvertUtil.convertDocumentStatus(
-					StringManager.getValidString(
+					TextManager.getValidString(
 						shipment.getDocStatus()
 					),
-					StringManager.getValidString(
+					TextManager.getValidString(
 						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Name
 						)
 					),
-					StringManager.getValidString(
+					TextManager.getValidString(
 						org.spin.service.grpc.util.base.RecordUtil.getTranslation(
 							reference,
 							I_AD_Ref_List.COLUMNNAME_Description
@@ -715,22 +715,22 @@ public class ConvertUtil {
 				keyLayout.getC_POSKeyLayout_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					keyLayout.getName()
 				)
 			)
 			.setDescription(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					keyLayout.getDescription()
 				)
 			)
 			.setHelp(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					keyLayout.getHelp()
 				)
 			)
 			.setLayoutType(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					keyLayout.getPOSKeyLayoutType()
 				)
 			)
@@ -768,7 +768,7 @@ public class ConvertUtil {
 				key.getC_POSKeyLayout_ID()
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					key.getName()
 				)
 			)
@@ -791,7 +791,7 @@ public class ConvertUtil {
 				)
 			)
 			.setProductValue(
-				StringManager.getValidString(productValue)
+				TextManager.getValidString(productValue)
 			)
 			.setResourceReference(
 				FileManagement.convertResourceReference(

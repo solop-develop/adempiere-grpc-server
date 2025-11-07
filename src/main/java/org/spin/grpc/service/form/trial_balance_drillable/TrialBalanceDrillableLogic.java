@@ -52,7 +52,7 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 /**
@@ -179,12 +179,12 @@ public class TrialBalanceDrillableLogic {
 				period.getC_Period_ID()
 			)
 			.setUuid(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					period.getUUID()
 				)
 			)
 			.setName(
-				StringManager.getValidString(
+				TextManager.getValidString(
 					period.getName()
 				)
 			)
@@ -192,12 +192,12 @@ public class TrialBalanceDrillableLogic {
 				period.getPeriodNo()
 			)
 			.setStartDate(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					period.getStartDate()
 				)
 			)
 			.setEndDate(
-				TimeManager.convertDateToValue(
+				TimeManager.getProtoTimestampFromTimestamp(
 					period.getEndDate()
 				)
 			)
@@ -477,14 +477,14 @@ public class TrialBalanceDrillableLogic {
 						)
 					)
 					.setValue(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(
 								I_C_ElementValue.COLUMNNAME_Value
 							)
 						)
 					)
 					.setName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(
 								I_C_ElementValue.COLUMNNAME_Name
 							)
@@ -496,7 +496,7 @@ public class TrialBalanceDrillableLogic {
 					// 	)
 					// )
 					.setUserListName(
-						StringManager.getValidString(
+						TextManager.getValidString(
 							rs.getString(
 								"userlist1"
 							)

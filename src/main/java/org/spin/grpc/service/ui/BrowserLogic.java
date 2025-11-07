@@ -71,7 +71,8 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
-import org.spin.service.grpc.util.value.StringManager;
+import org.spin.service.grpc.util.value.NumberManager;
+import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -375,7 +376,7 @@ public class BrowserLogic {
 		builder.addAllRecords(entitiesList);
 		//	Validate page token
 		builder.setNextPageToken(
-			StringManager.getValidString(nexPageToken)
+			TextManager.getValidString(nexPageToken)
 		);
 		builder.setRecordCount(count);
 		//	Return
@@ -413,7 +414,7 @@ public class BrowserLogic {
 			if (fieldKey != null && fieldKey.get_ID() > 0) {
 				keyColumnName = fieldKey.getAD_View_Column().getColumnName();
 			}
-			keyColumnName = StringManager.getValidString(keyColumnName);
+			keyColumnName = TextManager.getValidString(keyColumnName);
 
 			//	Get from Query
 			rs = pstmt.executeQuery();
@@ -434,7 +435,7 @@ public class BrowserLogic {
 						//	Display Columns
 						if(field == null) {
 							String displayValue = rs.getString(index);
-							Value.Builder displayValueBuilder = ValueManager.getValueFromString(displayValue);
+							Value.Builder displayValueBuilder = ValueManager.getProtoValueFromObject(displayValue);
 
 							rowValues.putFields(
 								columnName,
@@ -445,7 +446,7 @@ public class BrowserLogic {
 						//	From field
 						String fieldColumnName = field.getAD_View_Column().getColumnName();
 						Object value = rs.getObject(index);
-						Value.Builder valueBuilder = ValueManager.getValueFromReference(
+						Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
 							value,
 							field.getAD_Reference_ID()
 						);
@@ -717,7 +718,7 @@ public class BrowserLogic {
 				rowSelection.putFields(columnName, valueBuilder);
 			});
 
-			int selectionId = ValueManager.getIntegerFromValue(
+			int selectionId = NumberManager.getIntegerFromProtoValue(
 				valuesRow.get(
 					keyColumnName
 				)
@@ -823,13 +824,15 @@ public class BrowserLogic {
 			Object value = null;
 			if (!attribute.getValue().hasNullValue()) {
 				if (referenceId > 0) {
-					value = ValueManager.getObjectFromReference(
+					value = ValueManager.getObjectFromProtoValue(
 						attribute.getValue(),
 						referenceId
 					);
 				}
 				if (value == null) {
-					value = ValueManager.getObjectFromValue(attribute.getValue());
+					value = ValueManager.getObjectFromProtoValue(
+						attribute.getValue()
+					);
 				}
 			}
 			entity.set_ValueOfColumn(columnName, value);
