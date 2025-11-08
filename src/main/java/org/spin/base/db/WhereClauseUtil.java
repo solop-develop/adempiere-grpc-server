@@ -62,11 +62,11 @@ public class WhereClauseUtil {
 
 
 	/**
-	 * Add and get talbe alias to columns in validation code sql
-	 * @param tableName
-	 * @param tableAlias
-	 * @param dynamicValidation
-	 * @return {String}
+	 * Add and get table alias to columns in validation code sql
+	* @param tableName table name
+	* @param tableAlias table alias to main table name
+	* @param dynamicValidation sql with restriction
+	* @return {String}
 	 */
 	public static String getWhereRestrictionsWithAlias(String tableName, String tableAlias, String dynamicValidation) {
 		String validationCode = getWhereRestrictionsWithAlias(tableAlias, dynamicValidation);
@@ -86,9 +86,9 @@ public class WhereClauseUtil {
 	}
 
 	/**
-	 * Add and get talbe alias to columns in validation code sql
-	 * @param tableAlias
-	 * @param dynamicValidation
+	 * Add and get table alias to columns in validation code sql
+	 * @param tableAlias table name or table alias
+	 * @param dynamicValidation sql with restriction
 	 * @return {String}
 	 */
 	public static String getWhereRestrictionsWithAlias(String tableAlias, String dynamicValidation) {
@@ -98,21 +98,29 @@ public class WhereClauseUtil {
 
 		// Check if the table alias is already present in the validation
 		Matcher matcherTableAliases = Pattern.compile(
-				tableAlias + "\\.",
-				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+				"\\b" + tableAlias + "\\.", // We search for the alias followed by a period.
+				Pattern.CASE_INSENSITIVE // | Pattern.DOTALL
 			)
 			.matcher(dynamicValidation);
 
 		String validationCode = dynamicValidation;
+
+		// If the alias in the main table already exists, we do nothing.
 		if (!matcherTableAliases.find()) {
 			// Regular expression to identify table aliases in subqueries
 			final String tableAliasRegex = "\\b(?:FROM|JOIN)\\s+(\\w+)\\s+(?:AS\\s+)?(\\w+)\\b";
 
-			// Regular expression to identify columns that do not have a table alias
-			final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)(\\w+)(\\s+){0,1}";
+			// Regular expression to identify columns without aliases. Captures any word (column) that does NOT:
+			// - be immediately followed by a period (avoids already qualified columns)
+			// - be immediately preceded by a period (avoids being the table/alias of a qualified column)
+			// - be an SQL keyword (e.g., JOIN, IN, etc.)
+			// - is inside a subquery (this is the most complex and is done with the logic of the original code)
+			final String columnsRegex = "\\b(?<!\\.\\b)(?![\\w]+\\.)(\\w+)(\\s*[=><!]|\\s*\\b(?:IN|NOT\\s+IN|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL|BETWEEN|NOT\\s+BETWEEN)\\b)";
+			// final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)(\\w+)(\\s*)";
 
-			// Expresión regular para operadores SQL
-			final String sqlOperatorsRegex = OperatorUtil.SQL_OPERATORS_REGEX;
+
+			// Regular expression to sql operators
+			// final String sqlOperatorsRegex = OperatorUtil.SQL_OPERATORS_REGEX;
 
 			// Compile regular expressions
 			Pattern patternTableAlias = Pattern.compile(
@@ -120,30 +128,36 @@ public class WhereClauseUtil {
 				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
 			);
 			Pattern patternColumnName = Pattern.compile(
-				columnsRegex + sqlOperatorsRegex,
-				Pattern.DOTALL
+				columnsRegex, // + sqlOperatorsRegex,
+				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
 			);
 
-			// Identify and store table aliases
+			// Identify and store subquery aliases to avoid prefixing them
 			Matcher matchTableAlias = patternTableAlias.matcher(validationCode);
 			Set<String> tableAliases = new HashSet<>();
 			while (matchTableAlias.find()) {
 				// Store the table aliases found
-				tableAliases.add(matchTableAlias.group(2)); // group(2) is the alias of table
+				// group(2) is the alias of the table (e.g., ‘i’, ‘il’, ‘ol’)
+				tableAliases.add(matchTableAlias.group(2));
 			}
 
-			// Replace columns that do not have table aliases and are not table aliases
+			// Replace columns that do not have aliases and are not aliases of tables in subqueries
 			Matcher matchColumnName = patternColumnName.matcher(validationCode);
 			StringBuffer sb = new StringBuffer();
 			while (matchColumnName.find()) {
-				String columnName = matchColumnName.group(1);
+				String columnName = matchColumnName.group(1); // The column without an alias (e.g., C_Order_ID)
+				String operatorOrSpace = matchColumnName.group(2); // The operator or space that follows
+
 				if (columnName != null) {
+					// Check if the column name is a subquery alias
+					// You can also add a list of additional SQL keywords here if needed
 					if (!tableAliases.contains(columnName)) {
-						// If it is not a table alias, add the alias
-						matchColumnName.appendReplacement(sb, tableAlias + "." + columnName + matchColumnName.group(2));
+						// If it is NOT a subquery alias, add the alias from the main table
+						// We use the full expression to handle case sensitivity safely
+						matchColumnName.appendReplacement(sb, tableAlias + "." + columnName + operatorOrSpace);
 					} else {
-						// If it is a table alias, leave it unchanged
-						matchColumnName.appendReplacement(sb, columnName + matchColumnName.group(2));
+						// If it is an alias (such as ‘i’, ‘il’, etc.), leave it unchanged.
+						matchColumnName.appendReplacement(sb, columnName + operatorOrSpace);
 					}
 				}
 			}
