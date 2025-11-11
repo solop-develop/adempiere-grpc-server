@@ -228,7 +228,9 @@ public class OrderServiceLogic {
 			// final String manualMovementDocumentNo = request.getManualMovementDocumentNo();
 			// salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
 
-			salesOrder.saveEx();
+			salesOrder.saveEx(transactionName);
+			salesOrder.load(transactionName);
+			orderReference.set(salesOrder);
 		});
 
 		return OrderConverUtil.convertOrder(
