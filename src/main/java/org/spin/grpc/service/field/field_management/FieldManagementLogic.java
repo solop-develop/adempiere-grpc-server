@@ -848,7 +848,6 @@ public class FieldManagementLogic {
 
 	public static ListZoomWindowsResponse.Builder listZoomWindows(ListZoomWindowsRequest request) {
 		Properties context = Env.getCtx();
-		ListZoomWindowsResponse.Builder builderList = ListZoomWindowsResponse.newBuilder();
 
 		MLookupInfo lookupInfo = ReferenceInfo.getInfoFromRequest(
 			0,
@@ -860,8 +859,9 @@ public class FieldManagementLogic {
 			0, null
 		);
 
+		ListZoomWindowsResponse.Builder builder = ListZoomWindowsResponse.newBuilder();
 		if (lookupInfo == null) {
-			return builderList;
+			return builder;
 		}
 
 		List<String> contextColumnsList = ContextManager.getContextColumnNames(
@@ -881,7 +881,7 @@ public class FieldManagementLogic {
 			keyColumn = keyColumn.substring(keyColumn.lastIndexOf(".") + 1);
 		}
 
-		builderList.setTableName(
+		builder.setTableName(
 				TextManager.getValidString(
 					lookupInfo.TableName
 				)
@@ -980,11 +980,10 @@ public class FieldManagementLogic {
 		}
 
 		int mainWindowId = 0;
-		boolean isSOTrx = true;
 		if (lookupInfo.ZoomWindowPO == 0 || zoomQuery == null) {
 			mainWindowId = lookupInfo.ZoomWindow;
 		} else {
-			isSOTrx = DB.isSOTrx(lookupInfo.TableName, zoomQuery.getWhereClause(false));
+			boolean isSOTrx = DB.isSOTrx(lookupInfo.TableName, zoomQuery.getWhereClause(false));
 			if (!isSOTrx) {
 				mainWindowId = lookupInfo.ZoomWindowPO;
 			} else {
@@ -995,10 +994,9 @@ public class FieldManagementLogic {
 			ZoomWindow.Builder mainWindowBuilder = FieldManagementConvert.convertZoomWindow(
 				context,
 				mainWindowId,
-				lookupInfo.TableName,
-				isSOTrx
+				lookupInfo.TableName
 			);
-			builderList.setMainZoomWindow(mainWindowBuilder);
+			builder.setMainZoomWindow(mainWindowBuilder);
 		}
 
 		//	Sales Window Reference
@@ -1006,27 +1004,29 @@ public class FieldManagementLogic {
 			ZoomWindow.Builder windowSalesBuilder = FieldManagementConvert.convertZoomWindow(
 				context,
 				lookupInfo.ZoomWindow,
-				lookupInfo.TableName,
-				false
+				lookupInfo.TableName
 			);
-			builderList.addZoomWindows(
-				windowSalesBuilder.build()
-			);
+			builder.setSalesZoomWindow(windowSalesBuilder)
+				.addZoomWindows(
+					windowSalesBuilder.build()
+				)
+			;
 		}
 		// window reference Purchase Order
 		if (lookupInfo.ZoomWindowPO > 0) {
 			ZoomWindow.Builder windowPurchaseBuilder = FieldManagementConvert.convertZoomWindow(
 				context,
 				lookupInfo.ZoomWindowPO,
-				lookupInfo.TableName,
-				true
+				lookupInfo.TableName
 			);
-			builderList.addZoomWindows(
-				windowPurchaseBuilder.build()
-			);
+			builder.setPurchaseZoomWindow(windowPurchaseBuilder)
+				.addZoomWindows(
+					windowPurchaseBuilder.build()
+				)
+			;
 		}
 
-		return builderList;
+		return builder;
 	}
 
 
@@ -1085,7 +1085,8 @@ public class FieldManagementLogic {
 					.reversed()
 			)
 			.findFirst()
-			.orElse(null);
+			.orElse(null)
+		;
 		GetZoomParentRecordResponse.Builder builder = GetZoomParentRecordResponse.newBuilder();
 		if (parentTab == null) {
 			return builder;

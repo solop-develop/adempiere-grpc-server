@@ -99,15 +99,18 @@ public class FieldManagementConvert {
 	 * @param context
 	 * @param windowId
 	 * @param tableName
-	 * @param isPurchase
 	 * @return
 	 */
-	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName, boolean isPurchase) {
+	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName) {
 		String language = Env.getAD_Language(context);
 		boolean isBaseLanguage = Env.isBaseLanguage(context, null);
 
+		ZoomWindow.Builder builder = ZoomWindow.newBuilder();
 		MWindow window = MWindow.get(context, windowId);
-		ZoomWindow.Builder builder = ZoomWindow.newBuilder()
+		if (window == null || window.getAD_Window_ID() <= 0) {
+			return builder;
+		}
+		builder
 			.setId(
 				window.getAD_Window_ID()
 			)
@@ -130,8 +133,7 @@ public class FieldManagementConvert {
 				window.isSOTrx()
 			)
 			.setIsPurchase(
-				// TODO: !window.isSOTrx()
-				isPurchase
+				!window.isSOTrx()
 			)
 		;
 		if (!isBaseLanguage) {
@@ -158,7 +160,8 @@ public class FieldManagementConvert {
 		Optional<MTab> maybeTab = Arrays.asList(
 			window.getTabs(false, null)
 		)
-			.stream().filter(currentTab -> {
+			.parallelStream()
+			.filter(currentTab -> {
 				if (!currentTab.isActive()) {
 					return false;
 				}
