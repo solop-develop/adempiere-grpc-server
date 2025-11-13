@@ -980,11 +980,10 @@ public class FieldManagementLogic {
 		}
 
 		int mainWindowId = 0;
-		boolean isSOTrx = true;
 		if (lookupInfo.ZoomWindowPO == 0 || zoomQuery == null) {
 			mainWindowId = lookupInfo.ZoomWindow;
 		} else {
-			isSOTrx = DB.isSOTrx(lookupInfo.TableName, zoomQuery.getWhereClause(false));
+			boolean isSOTrx = DB.isSOTrx(lookupInfo.TableName, zoomQuery.getWhereClause(false));
 			if (!isSOTrx) {
 				mainWindowId = lookupInfo.ZoomWindowPO;
 			} else {
@@ -995,8 +994,7 @@ public class FieldManagementLogic {
 			ZoomWindow.Builder mainWindowBuilder = FieldManagementConvert.convertZoomWindow(
 				context,
 				mainWindowId,
-				lookupInfo.TableName,
-				isSOTrx
+				lookupInfo.TableName
 			);
 			builderList.setMainZoomWindow(mainWindowBuilder);
 		}
@@ -1006,8 +1004,7 @@ public class FieldManagementLogic {
 			ZoomWindow.Builder windowSalesBuilder = FieldManagementConvert.convertZoomWindow(
 				context,
 				lookupInfo.ZoomWindow,
-				lookupInfo.TableName,
-				false
+				lookupInfo.TableName
 			);
 			builderList.addZoomWindows(
 				windowSalesBuilder.build()
@@ -1018,8 +1015,7 @@ public class FieldManagementLogic {
 			ZoomWindow.Builder windowPurchaseBuilder = FieldManagementConvert.convertZoomWindow(
 				context,
 				lookupInfo.ZoomWindowPO,
-				lookupInfo.TableName,
-				true
+				lookupInfo.TableName
 			);
 			builderList.addZoomWindows(
 				windowPurchaseBuilder.build()
@@ -1085,7 +1081,8 @@ public class FieldManagementLogic {
 					.reversed()
 			)
 			.findFirst()
-			.orElse(null);
+			.orElse(null)
+		;
 		GetZoomParentRecordResponse.Builder builder = GetZoomParentRecordResponse.newBuilder();
 		if (parentTab == null) {
 			return builder;

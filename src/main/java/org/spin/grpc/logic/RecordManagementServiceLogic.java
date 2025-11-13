@@ -183,12 +183,16 @@ public class RecordManagementServiceLogic {
 	 * @param isPurchase
 	 * @return
 	 */
-	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName, boolean isPurchase) {
+	public static ZoomWindow.Builder convertZoomWindow(Properties context, int windowId, String tableName ) {
 		String language = Env.getAD_Language(context);
 		boolean isBaseLanguage = Env.isBaseLanguage(context, null);
 
+		ZoomWindow.Builder builder = ZoomWindow.newBuilder();
 		MWindow window = MWindow.get(context, windowId);
-		ZoomWindow.Builder builder = ZoomWindow.newBuilder()
+		if (window == null || window.getAD_Window_ID() <= 0) {
+			return builder;
+		}
+		builder
 			.setId(
 				window.getAD_Window_ID()
 			)
@@ -211,7 +215,7 @@ public class RecordManagementServiceLogic {
 				window.isSOTrx()
 			)
 			.setIsPurchase(
-				isPurchase
+				!window.isSOTrx()
 			)
 		;
 		if (!isBaseLanguage) {
@@ -238,7 +242,8 @@ public class RecordManagementServiceLogic {
 		Optional<MTab> maybeTab = Arrays.asList(
 			window.getTabs(false, null)
 		)
-			.stream().filter(currentTab -> {
+			.parallelStream()
+			.filter(currentTab -> {
 				if (!currentTab.isActive()) {
 					return false;
 				}
@@ -330,11 +335,10 @@ public class RecordManagementServiceLogic {
 		}
 
 		int mainWindowId = 0;
-		boolean isSOTrx = true;
 		if (table.getPO_Window_ID() == 0 || zoomQuery == null) {
 			mainWindowId = table.getAD_Window_ID();
 		} else {
-			isSOTrx = DB.isSOTrx(table.getTableName(), zoomQuery.getWhereClause(false));
+			boolean isSOTrx = DB.isSOTrx(table.getTableName(), zoomQuery.getWhereClause(false));
 			if (!isSOTrx) {
 				mainWindowId = table.getPO_Window_ID();
 			} else {
@@ -345,8 +349,7 @@ public class RecordManagementServiceLogic {
 			ZoomWindow.Builder mainWindowBuilder = convertZoomWindow(
 				table.getCtx(),
 				mainWindowId,
-				table.getTableName(),
-				isSOTrx
+				table.getTableName()
 			);
 			builder.setMainZoomWindow(mainWindowBuilder);
 		}
@@ -355,8 +358,7 @@ public class RecordManagementServiceLogic {
 			ZoomWindow.Builder windowSalesBuilder = convertZoomWindow(
 				table.getCtx(),
 				table.getAD_Window_ID(),
-				table.getTableName(),
-				false
+				table.getTableName()
 			);
 			builder.addZoomWindows(
 				windowSalesBuilder.build()
@@ -366,8 +368,7 @@ public class RecordManagementServiceLogic {
 			ZoomWindow.Builder windowPurchaseBuilder = convertZoomWindow(
 				table.getCtx(),
 				table.getPO_Window_ID(),
-				table.getTableName(),
-				true
+				table.getTableName()
 			);
 			builder.addZoomWindows(
 				windowPurchaseBuilder.build()
