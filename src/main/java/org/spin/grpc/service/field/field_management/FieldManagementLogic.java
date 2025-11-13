@@ -44,6 +44,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MProcessPara;
+import org.compiere.model.MQuery;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTab;
@@ -903,7 +904,104 @@ public class FieldManagementLogic {
 			)
 		;
 
-		//	Window Reference
+		MQuery zoomQuery = lookupInfo.ZoomQuery;
+		Object value = ValueManager.getObjectFromProtoValue(
+			request.getValue(),
+			lookupInfo.DisplayType
+		);
+		if (zoomQuery == null && value != null) {
+			zoomQuery = new MQuery();	//	ColumnName might be changed in MTab.validateQuery
+			String keyTableName = lookupInfo.TableName;
+			String keyColumnName = lookupInfo.KeyColumn;
+
+			//	Check if it is a Table Reference
+			if (lookupInfo != null) {
+				final int AD_Reference_ID = lookupInfo.AD_Reference_Value_ID;
+				if (DisplayType.List == lookupInfo.DisplayType) {
+					keyColumnName = "AD_Ref_List_ID";
+					keyTableName = "AD_Ref_List";
+					value = DB.getSQLValue(
+						null,
+						"SELECT AD_Ref_List_ID FROM AD_Ref_List WHERE AD_Reference_ID = ? AND Value = ?",
+						AD_Reference_ID,
+						value
+					);
+				} else {
+					if (AD_Reference_ID > 0) {
+						String query = "SELECT kc.ColumnName, kt.TableName"
+							+ " FROM AD_Ref_Table rt"
+							+ " INNER JOIN AD_Column kc ON (rt.AD_Key=kc.AD_Column_ID)"
+							+ " INNER JOIN AD_Table kt ON (rt.AD_Table_ID=kt.AD_Table_ID)"
+							+ " WHERE rt.AD_Reference_ID = ?"
+						;
+						PreparedStatement pstmt = null;
+						ResultSet rs = null;
+						try {
+							pstmt = DB.prepareStatement(query, null);
+							pstmt.setInt(1, AD_Reference_ID);
+							rs = pstmt.executeQuery();
+							if (rs.next()) {
+								keyColumnName = rs.getString(1);
+								keyTableName = rs.getString(2);
+							}
+						}
+						catch (Exception e) {
+							log.warning(query);
+						}
+						finally {
+							DB.close(rs, pstmt);
+							rs = null; pstmt = null;
+						}
+					}	//	Table Reference
+				}
+			}	//	MLookup
+
+			if (!Util.isEmpty(keyColumnName, true)) {
+				zoomQuery.addRestriction(keyColumnName, MQuery.EQUAL, value);
+				zoomQuery.setZoomColumnName(keyColumnName);
+				zoomQuery.setZoomTableName(keyTableName);
+			}
+			else {
+				String columnName = lookupInfo.KeyColumn;
+				zoomQuery.addRestriction(columnName, MQuery.EQUAL, value);
+				if (columnName.indexOf(".") > 0) {
+					zoomQuery.setZoomColumnName(columnName.substring(columnName.indexOf(".") + 1));
+					zoomQuery.setZoomTableName(columnName.substring(0, columnName.indexOf(".")));
+				}
+				else {
+					zoomQuery.setZoomColumnName(columnName);
+					//remove _ID to get table name
+					zoomQuery.setZoomTableName(columnName.substring(0, columnName.length() - 3));
+				}
+			}
+			zoomQuery.setZoomValue(value);
+
+			zoomQuery.setRecordCount(1);	//	guess
+		}
+
+		int mainWindowId = 0;
+		boolean isSOTrx = true;
+		if (lookupInfo.ZoomWindowPO == 0 || zoomQuery == null) {
+			mainWindowId = lookupInfo.ZoomWindow;
+		} else {
+			isSOTrx = DB.isSOTrx(lookupInfo.TableName, zoomQuery.getWhereClause(false));
+			if (!isSOTrx) {
+				mainWindowId = lookupInfo.ZoomWindowPO;
+			} else {
+				mainWindowId = lookupInfo.ZoomWindow;
+			}
+		}
+		if (mainWindowId > 0) {
+			ZoomWindow.Builder mainWindowBuilder = FieldManagementConvert.convertZoomWindow(
+				context,
+				mainWindowId,
+				lookupInfo.TableName,
+				isSOTrx
+			);
+			builderList.setMainZoomWindow(mainWindowBuilder);
+		}
+
+		//	Sales Window Reference
 		if (lookupInfo.ZoomWindow > 0) {
 			ZoomWindow.Builder windowSalesBuilder = FieldManagementConvert.convertZoomWindow(
 				context,

@@ -130,6 +130,7 @@ public class FieldManagementConvert {
 				window.isSOTrx()
 			)
 			.setIsPurchase(
+				// TODO: !window.isSOTrx()
 				isPurchase
 			)
 		;
