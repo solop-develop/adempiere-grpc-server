@@ -188,7 +188,9 @@ message ListZoomWindowsResponse {
 	repeated string key_columns = 4;
 	string display_column_name = 5;
 	ZoomWindow main_zoom_window = 6;
-	repeated ZoomWindow zoom_windows = 7;
+	ZoomWindow sales_zoom_window = 7;
+	ZoomWindow purchase_zoom_window = 8;
+	repeated ZoomWindow zoom_windows = 9; // deprecated
 }
 
 

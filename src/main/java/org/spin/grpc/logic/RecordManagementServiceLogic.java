@@ -360,9 +360,11 @@ public class RecordManagementServiceLogic {
 				table.getAD_Window_ID(),
 				table.getTableName()
 			);
-			builder.addZoomWindows(
-				windowSalesBuilder.build()
-			);
+			builder.setSalesZoomWindow(windowSalesBuilder)
+				.addZoomWindows(
+					windowSalesBuilder.build()
+				)
+			;
 		}
 		if (table.getPO_Window_ID() > 0) {
 			ZoomWindow.Builder windowPurchaseBuilder = convertZoomWindow(
@@ -370,9 +372,11 @@ public class RecordManagementServiceLogic {
 				table.getPO_Window_ID(),
 				table.getTableName()
 			);
-			builder.addZoomWindows(
-				windowPurchaseBuilder.build()
-			);
+			builder.setPurchaseZoomWindow(windowPurchaseBuilder)
+				.addZoomWindows(
+					windowPurchaseBuilder.build()
+				)
+			;
 		}
 		return builder;
 	}
