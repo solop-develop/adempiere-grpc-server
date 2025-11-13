@@ -317,6 +317,40 @@ public class RecordManagementServiceLogic {
 			)
 		;
 
+		Object value = ValueManager.getObjectFromProtoValue(
+			request.getValue()
+		);
+		MQuery zoomQuery = new MQuery();	//	ColumnName might be changed in MTab.validateQuery
+		if (value != null) {
+			zoomQuery.addRestriction(keyColumnName, MQuery.EQUAL, value);
+			zoomQuery.setZoomColumnName(keyColumnName);
+			zoomQuery.setZoomTableName(table.getTableName());
+			zoomQuery.setZoomValue(value);
+			zoomQuery.setRecordCount(1);	//	guess
+		}
+
+		int mainWindowId = 0;
+		boolean isSOTrx = true;
+		if (table.getPO_Window_ID() == 0 || zoomQuery == null) {
+			mainWindowId = table.getAD_Window_ID();
+		} else {
+			isSOTrx = DB.isSOTrx(table.getTableName(), zoomQuery.getWhereClause(false));
+			if (!isSOTrx) {
+				mainWindowId = table.getPO_Window_ID();
+			} else {
+				mainWindowId = table.getAD_Window_ID();
+			}
+		}
+		if (mainWindowId > 0) {
+			ZoomWindow.Builder mainWindowBuilder = convertZoomWindow(
+				table.getCtx(),
+				mainWindowId,
+				table.getTableName(),
+				isSOTrx
+			);
+			builder.setMainZoomWindow(mainWindowBuilder);
+		}
+
 		if (table.getAD_Window_ID() > 0) {
 			ZoomWindow.Builder windowSalesBuilder = convertZoomWindow(
 				table.getCtx(),

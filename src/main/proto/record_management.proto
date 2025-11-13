@@ -52,10 +52,14 @@ service RecordManagement {
 
 	// References on Record
 	rpc ExistsRecordReferences(ExistsRecordReferencesRequest) returns (ExistsRecordReferencesResponse) {
-		option (google.api.http) = { get: "/record-management/references/{tab_id}/{record_id}/exists" };
+		option (google.api.http) = {
+			get: "/record-management/references/{tab_id}/{record_id}/exists"
+		};
 	}
 	rpc ListRecordReferences(ListRecordReferencesRequest) returns (ListRecordReferencesResponse) {
-		option (google.api.http) = { get: "/record-management/references/{tab_id}/{record_id}" };
+		option (google.api.http) = {
+			get: "/record-management/references/{tab_id}/{record_id}"
+		};
 	}
 
 	// Private Access
@@ -160,6 +164,9 @@ message ListRecordReferencesResponse {
 message ListZoomWindowsRequest {
 	string table_name = 1;
 	int32 table_id = 2;
+	// int32 record_id = 3;
+	google.protobuf.Value value = 3; // Record ID or Value of List
+	string context_attributes = 4;
 }
 message ZoomWindow {
 	int32 id = 1;
@@ -180,7 +187,8 @@ message ListZoomWindowsResponse {
 	string key_column_name = 3;
 	repeated string key_columns = 4;
 	string display_column_name = 5;
-	repeated ZoomWindow zoom_windows = 6;
+	ZoomWindow main_zoom_window = 6;
+	repeated ZoomWindow zoom_windows = 7;
 }
 
 

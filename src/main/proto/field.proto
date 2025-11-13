@@ -276,6 +276,7 @@ message ListZoomWindowsRequest {
 	string column_name = 7;
 	// current value
 	google.protobuf.Value value = 8;
+	string context_attributes = 9;
 }
 message ZoomWindow {
 	int32 id = 1;
@@ -296,7 +297,8 @@ message ListZoomWindowsResponse {
 	repeated string key_columns = 3;
 	string display_column_name = 4;
 	repeated string context_column_names = 5;
-	repeated ZoomWindow zoom_windows = 6;
+	ZoomWindow main_zoom_window = 6;
+	repeated ZoomWindow zoom_windows = 7;
 }
 
 message GetZoomParentRecordRequest {
