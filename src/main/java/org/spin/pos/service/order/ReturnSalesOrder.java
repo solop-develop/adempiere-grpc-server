@@ -222,6 +222,7 @@ public class ReturnSalesOrder {
 			if (isManualReturnOrder) {
 				final int sourceOrderId = returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID);
 				MOrder salesOrder = OrderUtil.validateAndGetOrder(sourceOrderId, transactionName);
+				/*
 				final boolean isManualSalesOrder = salesOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
 				if (isManualSalesOrder != isManualReturnOrder) {
 					throw new AdempiereException(
@@ -230,6 +231,7 @@ public class ReturnSalesOrder {
 						"@C_Order_ID@ (" + salesOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualSalesOrder)
 					);
 				}
+				*/
 
 				returnOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
 				returnOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);

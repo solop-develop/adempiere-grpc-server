@@ -96,6 +96,7 @@ public class ReverseSalesTransaction {
 		CashManagement.validatePreviousCashClosing(pos, sourceOrder.getDateOrdered(), transactionName);
 
 		final boolean isManualReturnOrder = returnOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
+		/*
 		final boolean isManualSalesOrder = sourceOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
 		if (isManualSalesOrder != isManualReturnOrder) {
 			throw new AdempiereException(
@@ -104,6 +105,7 @@ public class ReverseSalesTransaction {
 				"@C_Order_ID@ (" + sourceOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualSalesOrder)
 			);
 		}
+		*/
 		if (isManualReturnOrder) {
 			returnOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
 			returnOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
