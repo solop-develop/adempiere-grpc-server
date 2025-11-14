@@ -1030,6 +1030,9 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/document-types"
+	 */
 	@Override
 	public void listAvailableDocumentTypes(ListAvailableDocumentTypesRequest request,
 			StreamObserver<ListAvailableDocumentTypesResponse> responseObserver) {
@@ -2617,6 +2620,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			sql.append(whereClause);
 			sql.append(" ORDER BY i.DateInvoiced DESC");
 			count = CountUtil.countRecords(sql.toString(), "C_Invoice i", parameters);
+			int recordCount = 0;
 			pstmt = DB.prepareStatement(sql.toString(), null);
 			int index = 1;
 			pstmt.setInt(index++, request.getCustomerId());
@@ -2652,7 +2656,7 @@ public class PointOfSalesForm extends StoreImplBase {
 						)
 					)
 					.setDocumentDate(
-						ValueManager.getProtoTimestampFromTimestamp(
+						TimeManager.getProtoTimestampFromTimestamp(
 							rs.getTimestamp(
 								I_C_Invoice.COLUMNNAME_DateInvoiced
 							)
@@ -2690,13 +2694,19 @@ public class PointOfSalesForm extends StoreImplBase {
 				;
 				//	
 				builder.addRecords(creditMemo.build());
-				count++;
+				recordCount++;
+			}
+
+			if (count <= 0) {
+				count = recordCount;
 			}
 		} catch (Exception e) {
 			log.severe(e.getLocalizedMessage());
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 		//	
 		builder.setRecordCount(count);
@@ -3473,72 +3483,89 @@ public class PointOfSalesForm extends StoreImplBase {
 		);
 		return builder;
 	}
-	
+
+
 	/**
 	 * List Document Types from POS UUID
 	 * @param request
 	 * @return
 	 */
 	private ListAvailableDocumentTypesResponse.Builder listDocumentTypes(ListAvailableDocumentTypesRequest request) {
-		if(request.getPosId() <= 0) {
-			throw new AdempiereException("@C_POS_ID@ @NotFound@");
-		}
+		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
+
 		ListAvailableDocumentTypesResponse.Builder builder = ListAvailableDocumentTypesResponse.newBuilder();
 		final String TABLE_NAME = "C_POSDocumentTypeAllocation";
 		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
 			return builder;
 		}
+
+		//	Dynamic where clause
+		List<Object> filtersList = new ArrayList<>();
+		String whereClause = "C_POS_ID = ? ";
+		filtersList.add(pos.getC_POS_ID());
+		if (request.getIsOnlyRma()) {
+			whereClause += "AND IsRMA = ? ";
+			filtersList.add(request.getIsOnlyRma());
+		}
+
+		//	Get Product list
+		Query query = new Query(
+			Env.getCtx(),
+			TABLE_NAME,
+			whereClause,
+			null
+		)
+			.setParameters(filtersList)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo)
+		;
+
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-
-		//	Dynamic where clause
-		//	Aisle Seller
-		int posId = request.getPosId();
-		//	Get Product list
-		Query query = new Query(Env.getCtx(), TABLE_NAME, "C_POS_ID = ?", null)
-				.setParameters(posId)
-				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.setOrderBy(I_AD_PrintFormatItem.COLUMNNAME_SeqNo);
 		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.list()
-		.forEach(availableDocumentType -> {
-			MDocType documentType = MDocType.get(Env.getCtx(), availableDocumentType.get_ValueAsInt("C_DocType_ID"));
-			builder.addDocumentTypes(AvailableDocumentType.newBuilder()
-				.setId(
-					documentType.getC_DocType_ID()
-				)
-				.setKey(
-					TextManager.getValidString(
-						documentType.getName()
-					)
-				)
-				.setName(
-					TextManager.getValidString(
-						documentType.getPrintName()
-					)
-				)
-				.setIsPosRequiredPin(
-					availableDocumentType.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
-				)
-			);
-		});
-		//	
-		builder.setRecordCount(count);
 		//	Set page token
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builder.setNextPageToken(
-			TextManager.getValidString(nexPageToken)
-		);
+		builder.setRecordCount(count)
+			.setNextPageToken(
+				TextManager.getValidString(nexPageToken)
+			)
+		;
+
+		query
+			.setLimit(limit, offset)
+			.list()
+			.forEach(availableDocumentType -> {
+				MDocType documentType = MDocType.get(Env.getCtx(), availableDocumentType.get_ValueAsInt("C_DocType_ID"));
+				builder.addDocumentTypes(AvailableDocumentType.newBuilder()
+					.setId(
+						documentType.getC_DocType_ID()
+					)
+					.setKey(
+						TextManager.getValidString(
+							documentType.getName()
+						)
+					)
+					.setName(
+						TextManager.getValidString(
+							documentType.getPrintName()
+						)
+					)
+					.setIsPosRequiredPin(
+						availableDocumentType.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+					)
+				);
+			})
+		;
+		//	
 		return builder;
 	}
-	
+
+
 	/**
 	 * List Currencies from POS UUID
 	 * @param request

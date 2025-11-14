@@ -288,7 +288,9 @@ service Store {
 	}
 	//	List of Available Document Types
 	rpc ListAvailableDocumentTypes(ListAvailableDocumentTypesRequest) returns (ListAvailableDocumentTypesResponse) {
-		option (google.api.http) = { get: "/point-of-sales/{pos_id}/document-types" };
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/document-types"
+		};
 	}
 	//	List of Available Discounts
 	rpc ListAvailableDiscounts(ListAvailableDiscountsRequest) returns (ListAvailableDiscountsResponse) {
@@ -1715,6 +1717,7 @@ message ListAvailableDocumentTypesRequest {
 	string page_token = 6;
 	string search_value = 7;
 	int32 pos_id = 8;
+	bool is_only_rma = 9;
 }
 
 //	List Available Warehouses
