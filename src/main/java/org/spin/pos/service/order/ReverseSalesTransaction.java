@@ -97,13 +97,13 @@ public class ReverseSalesTransaction {
 
 		final boolean isManualReturnOrder = returnOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
 		final boolean isManualSalesOrder = sourceOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
-		if (isManualSalesOrder != isManualReturnOrder) {
+		/*if (isManualSalesOrder != isManualReturnOrder) {
 			throw new AdempiereException(
 				"@M_RMA_ID@ (" + returnOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualReturnOrder)
 				+ " | " +
 				"@C_Order_ID@ (" + sourceOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualSalesOrder)
 			);
-		}
+		}*/
 		if (isManualReturnOrder) {
 			returnOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
 			returnOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
