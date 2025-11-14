@@ -1539,7 +1539,8 @@ public class Security extends SecurityImplBase {
 		final String sql = "SELECT COALESCE(r.AD_Tree_Menu_ID, ci.AD_Tree_Menu_ID) AS AD_Tree_ID "
 			+ "FROM AD_ClientInfo AS ci "
 			+ "INNER JOIN AD_Role AS r ON (ci.AD_Client_ID = r.AD_Client_ID) "
-			+ "WHERE AD_Role_ID = ?"
+			+ "WHERE AD_Role_ID = ? "
+			+ "LIMIT 1 "
 		;
 		int treeId = DB.getSQLValue(null, sql, roleId);
 		if (treeId <= 0) {
