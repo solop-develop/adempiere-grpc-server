@@ -42,8 +42,6 @@ public class DemandAndMinimumInventory implements ReplenishInterface_V2 {
 	public static final String COLUMNNAME_LastReplenishmentDate = "LastReplenishmentDate";
 
 	public static final String COLUMNNAME_DateTrx = "DateTrx";
-	public static final String COLUMNNAME_DateFrom = "DateFrom";
-	public static final String COLUMNNAME_DateTo = "DateTo";
 
 	@Override
 	public BigDecimal getQtyToOrder(MWarehouse warehouse, X_T_Replenish replenishLine, SvrProcess processInstance) {
