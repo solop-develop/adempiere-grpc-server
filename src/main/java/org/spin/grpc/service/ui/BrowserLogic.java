@@ -18,6 +18,7 @@ package org.spin.grpc.service.ui;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -46,6 +47,7 @@ import org.compiere.model.PO;
 import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
@@ -73,6 +75,7 @@ import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -168,6 +171,18 @@ public class BrowserLogic {
 				if (!isRange && !operatorName.equalsIgnoreCase(Filter.EQUAL)) {
 					continue;
 				}
+				//Ensure the value is Timestamp when parameter should be Date
+				if(maybeParameter.get().getAD_Reference_ID() == DisplayType.Date
+					|| maybeParameter.get().getAD_Reference_ID() == DisplayType.DateTime){
+
+					if (value instanceof List<?>) {
+						((List<Object>) value).replaceAll(TimeManager::getTimestampFromObject);
+					} else {
+						value = TimeManager.getTimestampFromObject(value);
+					}
+
+				}
+
 				parametersToAdd.put(parameterName, value);
 			}
 			if (isRange && parametersMap.containsKey(columnName + "_To")) {
