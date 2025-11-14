@@ -922,7 +922,7 @@ public class FieldManagementLogic {
 					keyTableName = "AD_Ref_List";
 					value = DB.getSQLValue(
 						null,
-						"SELECT AD_Ref_List_ID FROM AD_Ref_List WHERE AD_Reference_ID = ? AND Value = ?",
+						"SELECT AD_Ref_List_ID FROM AD_Ref_List WHERE AD_Reference_ID = ? AND Value = ? LIMIT 1 ",
 						AD_Reference_ID,
 						value
 					);

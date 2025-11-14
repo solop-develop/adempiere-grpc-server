@@ -261,7 +261,7 @@ public class ContextTemporaryWorkaround {
 				// )
 				String isSalesTransaction = DB.getSQLValueString(
 					null,
-					"SELECT IsSOTrx FROM C_Order WHERE C_Order_ID = ?",
+					"SELECT IsSOTrx FROM C_Order WHERE C_Order_ID = ? LIMIT 1",
 					orderId
 				);
 				boolean isSOTrx = BooleanManager.getBooleanFromString(isSalesTransaction);
