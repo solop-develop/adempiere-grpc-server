@@ -3493,19 +3493,19 @@ public class PointOfSalesForm extends StoreImplBase {
 	private ListAvailableDocumentTypesResponse.Builder listDocumentTypes(ListAvailableDocumentTypesRequest request) {
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
 
-		ListAvailableDocumentTypesResponse.Builder builder = ListAvailableDocumentTypesResponse.newBuilder();
+		ListAvailableDocumentTypesResponse.Builder builderList = ListAvailableDocumentTypesResponse.newBuilder();
 		final String TABLE_NAME = "C_POSDocumentTypeAllocation";
 		if(MTable.getTable_ID(TABLE_NAME) <= 0) {
-			return builder;
+			return builderList;
 		}
 
 		//	Dynamic where clause
 		List<Object> filtersList = new ArrayList<>();
 		String whereClause = "C_POS_ID = ? ";
+		final boolean isOnlyRMA = request.getIsOnlyRma();
 		filtersList.add(pos.getC_POS_ID());
-		if (request.getIsOnlyRma()) {
-			whereClause += "AND IsRMA = ? ";
-			filtersList.add(request.getIsOnlyRma());
+		if (isOnlyRMA) {
+			whereClause += "AND POSReturnDocumentType_ID IS NOT NULL ";
 		}
 
 		//	Get Product list
@@ -3530,7 +3530,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builder.setRecordCount(count)
+		builderList.setRecordCount(count)
 			.setNextPageToken(
 				TextManager.getValidString(nexPageToken)
 			)
@@ -3540,8 +3540,17 @@ public class PointOfSalesForm extends StoreImplBase {
 			.setLimit(limit, offset)
 			.list()
 			.forEach(availableDocumentType -> {
-				MDocType documentType = MDocType.get(Env.getCtx(), availableDocumentType.get_ValueAsInt("C_DocType_ID"));
-				builder.addDocumentTypes(AvailableDocumentType.newBuilder()
+				int documentTypeId = availableDocumentType.get_ValueAsInt("C_DocType_ID");
+				if (isOnlyRMA) {
+					documentTypeId = availableDocumentType.get_ValueAsInt("POSReturnDocumentType_ID");
+				}
+				if (documentTypeId <= 0) {
+					// is empty, break loop
+					return;
+				}
+				MDocType documentType = MDocType.get(Env.getCtx(), documentTypeId);
+
+				AvailableDocumentType.Builder builder = AvailableDocumentType.newBuilder()
 					.setId(
 						documentType.getC_DocType_ID()
 					)
@@ -3558,11 +3567,18 @@ public class PointOfSalesForm extends StoreImplBase {
 					.setIsPosRequiredPin(
 						availableDocumentType.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
 					)
+					.setIsActive(
+						documentType.isActive() && availableDocumentType.get_ValueAsBoolean("IsActive")
+					)
+					.setIsReturnDocument(isOnlyRMA)
+				;
+				builderList.addDocumentTypes(
+					builder
 				);
 			})
 		;
 		//	
-		return builder;
+		return builderList;
 	}
 
 

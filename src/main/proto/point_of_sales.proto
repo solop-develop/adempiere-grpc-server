@@ -1679,13 +1679,37 @@ message AvailableDiscountSchema {
 	string flat_discount_percetage = 5;
 }
 
+
+
 // Available Document Type
+message ListAvailableDocumentTypesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	bool is_only_rma = 9;
+}
+message ListAvailableDocumentTypesResponse {
+	int64 record_count = 1;
+	repeated AvailableDocumentType document_types = 2;
+	string next_page_token = 3;
+}
+
 message AvailableDocumentType {
 	int32 id = 1;
-	string key = 2;
-	string name = 3;
-	bool is_pos_required_pin = 4;
+	string uuid = 2;
+	string key = 3;
+	string name = 4;
+	bool is_active = 5;
+	bool is_pos_required_pin = 6;
+	bool is_return_document = 7;
 }
+
+
 
 // Available Price List
 message AvailablePriceList {
@@ -1705,19 +1729,6 @@ message ListAvailableWarehousesRequest {
 	string page_token = 6;
 	string search_value = 7;
 	int32 pos_id = 8;
-}
-
-//	List document types for POS
-message ListAvailableDocumentTypesRequest {
-	string filters = 1;
-	string sort_by = 2;
-	repeated string group_columns = 3;
-	repeated string select_columns = 4;
-	int32 page_size = 5;
-	string page_token = 6;
-	string search_value = 7;
-	int32 pos_id = 8;
-	bool is_only_rma = 9;
 }
 
 //	List Available Warehouses
@@ -1773,12 +1784,6 @@ message ListAvailablePaymentMethodsResponse {
 
 
 
-//	List Available Document Types
-message ListAvailableDocumentTypesResponse {
-	int64 record_count = 1;
-	repeated AvailableDocumentType document_types = 2;
-	string next_page_token = 3;
-}
 
 //	List price list for POS
 message ListAvailablePriceListRequest {
