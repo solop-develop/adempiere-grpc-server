@@ -113,6 +113,9 @@ public class DashboardingConvertUtil {
 		String menuName = "";
 		String menuDescription = "";
 		MMenu menu = MMenu.getFromId(context, treeNodeMenu.getNode_ID());
+		if (menu == null) {
+			return builder;
+		}
 		builder.setMenuId(menu.getAD_Menu_ID());
 		String action = MMenu.ACTION_Window;
 		if (!menu.isCentrallyMaintained()) {

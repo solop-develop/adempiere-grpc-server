@@ -44,8 +44,8 @@ import static com.google.protobuf.util.Timestamps.toMillis;
  * Service Logic for backend of Logs
  */
 public class LogsServiceLogic {
+
 	public static ListUserActivitesResponse.Builder listUserActivites(ListUserActivitesRequest request) {
-		final int userId = Env.getAD_User_ID(Env.getCtx());
 		Timestamp date = TimeManager.getTimestampFromProtoTimestamp(
 			request.getDate()
 		);
@@ -54,6 +54,8 @@ public class LogsServiceLogic {
 			date = new Timestamp(System.currentTimeMillis());
 		}
 		List<UserActivity> userActivitiesList = new ArrayList<>();
+
+		final int userId = Env.getAD_User_ID(Env.getCtx());
 
 		// Process Log
 		final String whereClauseProcessLog = "AD_User_ID = ? AND TRUNC(Created, 'DD') = ?";
@@ -84,7 +86,6 @@ public class LogsServiceLogic {
 				userActivitiesList.add(userBuilder.build());
 			})
 		;
-
 
 		// Record Log
 		String whereClauseRecordsLog = "CreatedBy = ? AND TRUNC(Created, 'DD') = ?";
@@ -143,44 +144,46 @@ public class LogsServiceLogic {
 		;
 
 		// All activities
-		List<UserActivity> recordsList = userActivitiesList.stream().sorted((u1, u2) -> {
-			Timestamp from = null;
-			if (u1.getUserActivityType() == UserActivityType.ENTITY_LOG) {
-				from = TimeManager.getTimestampFromProtoTimestamp(
-					u1.getEntityLog().getLogDate()
-				);
-			} else if (u1.getUserActivityType() == UserActivityType.PROCESS_LOG) {
-				from = TimeManager.getTimestampFromLong(
-					toMillis(u1.getProcessLog().getLastRun())
-				);
-			} else if (u1.getUserActivityType() == UserActivityType.NOTICE) {
-				from = TimeManager.getTimestampFromLong(
-					toMillis(u1.getNotice().getCreated())
-				);
-			}
+		List<UserActivity> recordsList = userActivitiesList.stream()
+			.sorted((u1, u2) -> {
+				Timestamp from = null;
+				if (u1.getUserActivityType() == UserActivityType.ENTITY_LOG) {
+					from = TimeManager.getTimestampFromProtoTimestamp(
+						u1.getEntityLog().getLogDate()
+					);
+				} else if (u1.getUserActivityType() == UserActivityType.PROCESS_LOG) {
+					from = TimeManager.getTimestampFromLong(
+						toMillis(u1.getProcessLog().getLastRun())
+					);
+				} else if (u1.getUserActivityType() == UserActivityType.NOTICE) {
+					from = TimeManager.getTimestampFromLong(
+						toMillis(u1.getNotice().getCreated())
+					);
+				}
 
-			Timestamp to = null;
-			if (u2.getUserActivityType() == UserActivityType.ENTITY_LOG) {
-				to = TimeManager.getTimestampFromProtoTimestamp(
-					u2.getEntityLog().getLogDate()
-				);
-			} else if (u2.getUserActivityType() == UserActivityType.PROCESS_LOG) {
-				to = TimeManager.getTimestampFromLong(
-					toMillis((u2.getProcessLog().getLastRun())));
-			} else if (u2.getUserActivityType() == UserActivityType.NOTICE) {
-				to = TimeManager.getTimestampFromLong(
-					toMillis(u2.getNotice().getCreated())
-				);
-			}
+				Timestamp to = null;
+				if (u2.getUserActivityType() == UserActivityType.ENTITY_LOG) {
+					to = TimeManager.getTimestampFromProtoTimestamp(
+						u2.getEntityLog().getLogDate()
+					);
+				} else if (u2.getUserActivityType() == UserActivityType.PROCESS_LOG) {
+					to = TimeManager.getTimestampFromLong(
+						toMillis((u2.getProcessLog().getLastRun())));
+				} else if (u2.getUserActivityType() == UserActivityType.NOTICE) {
+					to = TimeManager.getTimestampFromLong(
+						toMillis(u2.getNotice().getCreated())
+					);
+				}
 
-			if (from == null || to == null) {
-				// prevent Null Pointer Exception
-				return 0;
-			}
-			return to.compareTo(from);
+				if (from == null || to == null) {
+					// prevent Null Pointer Exception
+					return 0;
+				}
+				return to.compareTo(from);
 
-		})
-		.collect(Collectors.toList());
+			})
+			.collect(Collectors.toList())
+		;
 
 		builderList.setRecordCount(count)
 			.addAllRecords(recordsList)
