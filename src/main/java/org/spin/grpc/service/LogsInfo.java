@@ -73,7 +73,6 @@ import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -97,7 +96,7 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -121,7 +120,7 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -144,7 +143,7 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -230,14 +229,14 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
 					.withCause(e)
-					.asRuntimeException())
-			;
+					.asRuntimeException()
+			);
 		}
 	}
 
@@ -265,26 +264,37 @@ public class LogsInfo extends LogsImplBase {
 		int id = request.getId();
 		parameters.add(table.getAD_Table_ID());
 		parameters.add(id);
-		//	Get page and count
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
+
 		Query query = new Query(
 			Env.getCtx(),
 			I_AD_WF_Process.Table_Name,
 			whereClause.toString(),
 			null
 		)
-			.setParameters(parameters);
+			.setParameters(parameters)
+		;
+
+		//	Get page and count
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		int count = query.count();
-		List<MWFProcess> workflowProcessLogList = query
-				.setLimit(limit, offset)
-				.setOrderBy(I_AD_WF_Process.COLUMNNAME_Updated + " DESC")
-				.<MWFProcess>list();
-		//	
+		if(count > offset && count > limit) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
 		ListWorkflowLogsResponse.Builder builder = ListWorkflowLogsResponse.newBuilder()
 			.setRecordCount(count)
+			.setNextPageToken(
+				TextManager.getValidString(nexPageToken)
+			)
+		;
+
+		List<MWFProcess> workflowProcessLogList = query
+			.setLimit(limit, offset)
+			.setOrderBy(I_AD_WF_Process.COLUMNNAME_Updated + " DESC")
+			.<MWFProcess>list()
 		;
 		//	Convert Record Log
 		for(MWFProcess workflowProcessLog : workflowProcessLogList) {
@@ -292,13 +302,6 @@ public class LogsInfo extends LogsImplBase {
 			builder.addWorkflowLogs(valueObject.build());
 		}
 
-		//	Set page token
-		if(count > offset && count > limit) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			TextManager.getValidString(nexPageToken)
-		);
 		//	Return
 		return builder;
 	}
@@ -315,7 +318,7 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -357,14 +360,20 @@ public class LogsInfo extends LogsImplBase {
 		List<Object> parameters = new ArrayList<>();
 		parameters.add(table.getAD_Table_ID());
 		parameters.add(recordId);
+
 		Query query = new Query(
 			Env.getCtx(),
 			I_AD_ChangeLog.Table_Name,
 			whereClause.toString(),
 			null
 		)
-			.setParameters(parameters);
+			.setParameters(parameters)
+		;
+
 		int count = query.count();
+		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder()
+			.setRecordCount(count)
+		;
 
 		List<MChangeLog> recordLogList = query
 			.<MChangeLog>list()
@@ -373,7 +382,6 @@ public class LogsInfo extends LogsImplBase {
 		//	Convert Record Log
 		List<EntityLog.Builder> recordsLogsBuilderList = LogsConvertUtil.convertRecordLog(recordLogList);
 
-		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder();
 		recordsLogsBuilderList.forEach(recordLog -> {
 			builder.addEntityLogs(recordLog);
 		});
@@ -414,10 +422,6 @@ public class LogsInfo extends LogsImplBase {
 			)
 		;
 
-		//	
-		builder.setRecordCount(count)
-		;
-
 		//	Return
 		return builder;
 	}
@@ -434,7 +438,7 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -543,7 +547,7 @@ public class LogsInfo extends LogsImplBase {
 						TextManager.getValidString(menuDescription)
 					)
 					.setUpdated(
-						ValueManager.getProtoTimestampFromTimestamp(
+						TimeManager.getProtoTimestampFromTimestamp(
 							recentItem.getUpdated()
 						)
 					)
@@ -571,7 +575,7 @@ public class LogsInfo extends LogsImplBase {
 				builder.addRecentItems(recentItemBuilder.build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				log.severe(e.getLocalizedMessage());
+				log.warning(e.getLocalizedMessage());
 			}
 		}
 		builder.setRecordCount(recentItemsList.size());
@@ -590,39 +594,48 @@ public class LogsInfo extends LogsImplBase {
 		if(request.getId() <= 0) {
 			throw new AdempiereException("@CM_Chat_ID@ @NotFound@");
 		}
+
+		int id = request.getId();
+		Query query = new Query(
+			Env.getCtx(),
+			I_CM_ChatEntry.Table_Name,
+			I_CM_ChatEntry.COLUMNNAME_CM_Chat_ID + " = ?",
+			null
+		)
+			.setParameters(id)
+		;
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-
-		int id = request.getId();
-		Query query = new Query(Env.getCtx(), I_CM_ChatEntry.Table_Name, I_CM_ChatEntry.COLUMNNAME_CM_Chat_ID + " = ?", null)
-				.setParameters(id);
 		int count = query.count();
+		if(count > offset && count > limit) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+	
 		List<MChatEntry> chatEntryList = query
-				.setLimit(limit, offset)
-				.<MChatEntry>list();
+			.setLimit(limit, offset)
+			.<MChatEntry>list()
+		;
 		//	
-		ListChatEntriesResponse.Builder builder = ListChatEntriesResponse.newBuilder();
+		ListChatEntriesResponse.Builder builder = ListChatEntriesResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+			TextManager.getValidString(nexPageToken)
+		);
+
 		//	Convert Record Log
 		for(MChatEntry chatEntry : chatEntryList) {
 			ChatEntry.Builder valueObject = ConvertUtil.convertChatEntry(chatEntry);
 			builder.addChatEntries(valueObject.build());
 		}
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		if(count > offset && count > limit) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			TextManager.getValidString(nexPageToken)
-		);
 		//	Return
 		return builder;
 	}
-	
+
+
 	/**
 	 * Convert request for record chats to builder
 	 * @param request
@@ -640,39 +653,49 @@ public class LogsInfo extends LogsImplBase {
 		whereClause
 			.append(I_CM_Chat.COLUMNNAME_AD_Table_ID).append(" = ?")
 			.append(" AND ")
-			.append(I_CM_Chat.COLUMNNAME_Record_ID).append(" = ?");
+			.append(I_CM_Chat.COLUMNNAME_Record_ID).append(" = ?")
+		;
 		//	Set parameters
 		int id = request.getId();
 		parameters.add(table.getAD_Table_ID());
 		parameters.add(id);
+
+		Query query = new Query(
+			Env.getCtx(),
+			I_CM_Chat.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
+		;
+
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-
-		Query query = new Query(Env.getCtx(), I_CM_Chat.Table_Name, whereClause.toString(), null)
-				.setParameters(parameters);
 		int count = query.count();
+		if(count > offset && count > limit) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
 		List<MChat> chatList = query
-				.setLimit(limit, offset)
-				.<MChat>list();
+			.setLimit(limit, offset)
+			.<MChat>list()
+		;
 		//	
-		ListEntityChatsResponse.Builder builder = ListEntityChatsResponse.newBuilder();
+		ListEntityChatsResponse.Builder builder = ListEntityChatsResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				TextManager.getValidString(nexPageToken)
+			)
+		;
+
 		//	Convert Record Log
 		for(MChat chat : chatList) {
 			EntityChat.Builder valueObject = convertRecordChat(chat);
 			builder.addEntityChats(valueObject.build());
 		}
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
-		if(count > offset && count > limit) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		builder.setNextPageToken(
-			TextManager.getValidString(nexPageToken)
-		);
 		//	Return
 		return builder;
 	}
@@ -702,7 +725,7 @@ public class LogsInfo extends LogsImplBase {
 				)
 			)
 			.setLogDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					recordChat.getCreated()
 				)
 			)
@@ -759,7 +782,7 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -769,7 +792,7 @@ public class LogsInfo extends LogsImplBase {
 			);
 		}
 	}
-	
+
 	private ExistsChatEntriesResponse.Builder existsChatEntries(ExistsChatEntriesRequest request) {
 		// validate and get table
 		final MTable table = RecordUtil.validateAndGetTable(
@@ -789,7 +812,7 @@ public class LogsInfo extends LogsImplBase {
 			+ ")"
 		;
 		int recordCount = new Query(
-				Env.getCtx(),
+			Env.getCtx(),
 			I_CM_ChatEntry.Table_Name,
 			whereClause,
 			null
@@ -797,12 +820,14 @@ public class LogsInfo extends LogsImplBase {
 			.setParameters(recordId, table.getAD_Table_ID())
 			.count()
 		;
-		
+
 		ExistsChatEntriesResponse.Builder builder = ExistsChatEntriesResponse.newBuilder()
-			.setRecordCount(recordCount);
+			.setRecordCount(recordCount)
+		;
 
 		return builder;
 	}
+
 
 
 	@Override
@@ -815,7 +840,7 @@ public class LogsInfo extends LogsImplBase {
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(Status.INTERNAL
 				.withDescription(e.getLocalizedMessage())

@@ -26,6 +26,7 @@ import org.adempiere.core.domains.models.I_AD_PInstance_Log;
 import org.adempiere.core.domains.models.I_AD_Process_Para;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_AD_Window;
+import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.X_AD_PInstance_Log;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MColumn;
@@ -128,7 +129,7 @@ public class LogsConvertUtil {
 				)
 			)
 			.setLogDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					recordLog.getCreated()
 				)
 			)
@@ -152,10 +153,14 @@ public class LogsConvertUtil {
 	 */
 	public static List<EntityLog.Builder> convertRecordLog(List<MChangeLog> recordLogList) {
 		Map<Integer, EntityLog.Builder> indexMap = new HashMap<Integer, EntityLog.Builder>();
-		recordLogList.parallelStream()
+		List<MChangeLog> changeLogsList = recordLogList.parallelStream()
 			.filter(recordLog -> {
 				return !indexMap.containsKey(recordLog.getAD_ChangeLog_ID());
 			})
+			.collect(Collectors.toList());
+		;
+
+		changeLogsList
 			// .sorted(
 			// 	Comparator.comparing(MChangeLog::getCreated)
 			// )
@@ -163,14 +168,17 @@ public class LogsConvertUtil {
 				indexMap.put(recordLog.getAD_ChangeLog_ID(), convertRecordLogHeader(recordLog));
 			});
 		//	convert changes
-		recordLogList.parallelStream().forEach(recordLog -> {
-			ChangeLog.Builder changeLog = convertChangeLog(recordLog);
-			EntityLog.Builder recordLogBuilder = indexMap.get(recordLog.getAD_ChangeLog_ID());
-			recordLogBuilder.addChangeLogs(changeLog);
-			indexMap.put(recordLog.getAD_ChangeLog_ID(), recordLogBuilder);
-		});
+		recordLogList.parallelStream()
+			.forEach(recordLog -> {
+				ChangeLog.Builder changeLog = convertChangeLog(recordLog);
+				EntityLog.Builder recordLogBuilder = indexMap.get(recordLog.getAD_ChangeLog_ID());
+				recordLogBuilder.addChangeLogs(changeLog);
+				indexMap.put(recordLog.getAD_ChangeLog_ID(), recordLogBuilder);
+			})
+		;
 
-		List<EntityLog.Builder> entitiesListBuilder = indexMap.values().stream()
+		List<EntityLog.Builder> entitiesListBuilder = indexMap.values()
+			.stream()
 			// .sorted(
 			// 	Comparator.comparing(EntityLog.Builder::getLogDate)
 			// 		.reversed()
@@ -219,29 +227,37 @@ public class LogsConvertUtil {
 	public static ChangeLog.Builder convertChangeLog(MChangeLog recordLog) {
 		ChangeLog.Builder builder = ChangeLog.newBuilder();
 		MColumn column = MColumn.get(recordLog.getCtx(), recordLog.getAD_Column_ID());
+		int displayTypeId = column.getAD_Reference_ID();
+		
+		final String columnName = column.getColumnName();
 		builder.setColumnName(
 			TextManager.getValidString(
-				column.getColumnName()
+				columnName
 			)
 		);
+
 		String displayColumnName = column.getName();
-		if(column.getColumnName().equals("ProcessedOn")) {
+		if(columnName.equals(I_C_Order.COLUMNNAME_ProcessedOn)) {
 			M_Element element = M_Element.get(recordLog.getCtx(), "LastRun");
+			if (element.getAD_Reference_ID() > 0) {
+				displayTypeId = element.getAD_Reference_ID();
+			}
 			displayColumnName = element.getName();
 			if(!Env.isBaseLanguage(recordLog.getCtx(), "")) {
 				String translation = element.get_Translation(MColumn.COLUMNNAME_Name);
-				if(!Util.isEmpty(translation)) {
+				if(!Util.isEmpty(translation, true)) {
 					displayColumnName = translation;
 				}
 			}
 		} else {
 			if(!Env.isBaseLanguage(recordLog.getCtx(), "")) {
 				String translation = column.get_Translation(MColumn.COLUMNNAME_Name);
-				if(!Util.isEmpty(translation)) {
+				if(!Util.isEmpty(translation, true)) {
 					displayColumnName = translation;
 				}
 			}
 		}
+
 		builder.setDisplayColumnName(
 				TextManager.getValidString(displayColumnName)
 			)
@@ -251,35 +267,43 @@ public class LogsConvertUtil {
 				)
 			)
 		;
-		String oldValue = recordLog.getOldValue();
-		String newValue = recordLog.getNewValue();
 
+		//	Set Old Values
+		String oldValue = recordLog.getOldValue();
 		//	Set Display Values
 		if (oldValue != null && oldValue.equals(MChangeLog.NULL)) {
 			oldValue = null;
 		}
-		String displayOldValue = ValueManager.getDisplayedValueFromReference(
-			recordLog.getCtx(),
-			oldValue,
-			column.getColumnName(),
-			column.getAD_Reference_ID(),
-			column.getAD_Reference_Value_ID()
-		);
+		String displayOldValue = null;
+		if (oldValue != null) {
+			displayOldValue = ValueManager.getDisplayedValueFromReference(
+				recordLog.getCtx(),
+				oldValue,
+				columnName,
+				displayTypeId,
+				column.getAD_Reference_Value_ID()
+			);
+		}
 		if (Util.isEmpty(displayOldValue, true)) {
 			displayOldValue = oldValue;
 		}
-		
+
+		//	Set New Values
+		String newValue = recordLog.getNewValue();
 		if (newValue != null && newValue.equals(MChangeLog.NULL)) {
 			newValue = null;
 		}
-		String displayNewValue = ValueManager.getDisplayedValueFromReference(
-			recordLog.getCtx(),
-			newValue,
-			column.getColumnName(),
-			column.getAD_Reference_ID(),
-			column.getAD_Reference_Value_ID()
-		);
-		if (Util.isEmpty(displayOldValue, true)) {
+		String displayNewValue = null;
+		if (newValue != null) {
+			displayNewValue = ValueManager.getDisplayedValueFromReference(
+				recordLog.getCtx(),
+				newValue,
+				columnName,
+				displayTypeId,
+				column.getAD_Reference_Value_ID()
+			);
+		}
+		if (Util.isEmpty(displayNewValue, true)) {
 			displayNewValue = newValue;
 		}
 
@@ -319,7 +343,7 @@ public class LogsConvertUtil {
 		builder.setIsProcessing(instance.isProcessing());
 
 		builder.setLastRun(
-			ValueManager.getProtoTimestampFromTimestamp(
+			TimeManager.getProtoTimestampFromTimestamp(
 				instance.getUpdated()
 			)
 		);
