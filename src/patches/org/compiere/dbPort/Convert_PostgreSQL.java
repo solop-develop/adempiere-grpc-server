@@ -152,7 +152,7 @@ public class Convert_PostgreSQL extends Convert_SQL92 {
 		}
 		// recoverQuotedStrings add "limit" on column name and reserved word on pagination
 		if (cmpString.indexOf("LIMIT") != -1) {
-			// statement = convertLimit(statement);
+			statement = convertLimit(statement);
 		}
 		result.add(statement);
 		
