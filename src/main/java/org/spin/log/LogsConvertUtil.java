@@ -244,21 +244,22 @@ public class LogsConvertUtil {
 			}
 			displayColumnName = element.getName();
 			if(!Env.isBaseLanguage(recordLog.getCtx(), "")) {
-				String translation = element.get_Translation(MColumn.COLUMNNAME_Name);
-				if(!Util.isEmpty(translation, true)) {
-					displayColumnName = translation;
+				String translationName = element.get_Translation(MColumn.COLUMNNAME_Name);
+				if(!Util.isEmpty(translationName, true)) {
+					displayColumnName = translationName;
 				}
 			}
 		} else {
 			if(!Env.isBaseLanguage(recordLog.getCtx(), "")) {
-				String translation = column.get_Translation(MColumn.COLUMNNAME_Name);
-				if(!Util.isEmpty(translation, true)) {
-					displayColumnName = translation;
+				String translationName = column.get_Translation(MColumn.COLUMNNAME_Name);
+				if(!Util.isEmpty(translationName, true)) {
+					displayColumnName = translationName;
 				}
 			}
 		}
 
-		builder.setDisplayColumnName(
+		builder.setDisplayType(displayTypeId)
+			.setDisplayColumnName(
 				TextManager.getValidString(displayColumnName)
 			)
 			.setDescription(
