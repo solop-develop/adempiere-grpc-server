@@ -102,7 +102,8 @@ public class LogsServiceLogic {
 		count += queryRecordLogs.count();
 		List<MChangeLog> recordLogList = queryRecordLogs
 			.setOrderBy(I_AD_PInstance.COLUMNNAME_Created + " DESC")
-			.<MChangeLog>list();
+			.<MChangeLog>list()
+		;
 
 		//	Convert Record Log
 		List<EntityLog.Builder> recordsLogsBuilderList = LogsConvertUtil.convertRecordLog(recordLogList);
