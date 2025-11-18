@@ -581,6 +581,7 @@ public class OrderServiceLogic {
 			orderId,
 			request.getDescription(),
 			!isOnlinePaymentApproved,
+			request.getManualDocumentTypeId(),
 			request.getManualInvoiceDocumentNo(),
 			request.getManualShipmentDocumentNo(),
 			request.getManualMovementDocumentNo()
@@ -619,6 +620,7 @@ public class OrderServiceLogic {
 				pos,
 				sourceOrder,
 				returnOrder,
+				request.getManualDocumentTypeId(),
 				request.getManualInvoiceDocumentNo(),
 				request.getManualShipmentDocumentNo(),
 				request.getManualMovementDocumentNo(),

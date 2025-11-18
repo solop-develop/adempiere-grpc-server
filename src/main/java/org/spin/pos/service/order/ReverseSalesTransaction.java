@@ -26,7 +26,6 @@ import org.compiere.util.Util;
 import org.spin.base.util.DocumentUtil;
 import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.util.ColumnsAdded;
-import org.spin.service.grpc.util.value.BooleanManager;
 
 /**
  * This class was created for Reverse Sales Transaction
@@ -41,7 +40,7 @@ public class ReverseSalesTransaction {
 	 * @param description
 	 * @return
 	 */
-	public static MOrder returnSalesOrder(MPOS pos, int sourceOrderId, String description, boolean processDocuments, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo) {
+	public static MOrder returnSalesOrder(MPOS pos, int sourceOrderId, String description, boolean processDocuments, int manualDocumentTypeId, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo) {
 		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
@@ -74,6 +73,7 @@ public class ReverseSalesTransaction {
 					pos,
 					sourceOrder,
 					returnOrder,
+					manualDocumentTypeId,
 					manualInvoiceDocumentNo,
 					manualShipmentDocumentNo,
 					manualMovementDocumentNo,
@@ -92,7 +92,7 @@ public class ReverseSalesTransaction {
 	 * @param transactionName
 	 * @return
 	 */
-	public static MOrder processReverseSalesOrder(MPOS pos, MOrder sourceOrder, MOrder returnOrder, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo,  String transactionName) {
+	public static MOrder processReverseSalesOrder(MPOS pos, MOrder sourceOrder, MOrder returnOrder, int manualDocumentTypeId, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo,  String transactionName) {
 		CashManagement.validatePreviousCashClosing(pos, sourceOrder.getDateOrdered(), transactionName);
 
 		final boolean isManualReturnOrder = returnOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
@@ -110,6 +110,9 @@ public class ReverseSalesTransaction {
 			returnOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
 			returnOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
 			// salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
+			if (manualDocumentTypeId > 0) {
+				returnOrder.setC_DocTypeTarget_ID(manualDocumentTypeId);
+			}
 			returnOrder.saveEx(transactionName);
 		}
 
