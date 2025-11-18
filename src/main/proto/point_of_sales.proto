@@ -1036,18 +1036,20 @@ message ReverseSalesRequest {
 	int32 pos_id = 1;
 	int32 id = 2; // sales order
 	string description = 3;
-	string manual_invoice_document_no = 4;
-	string manual_shipment_document_no = 5;
-	string manual_movement_document_no = 6;
+	int32 manual_document_type_id = 4;
+	string manual_invoice_document_no = 5;
+	string manual_shipment_document_no = 6;
+	string manual_movement_document_no = 7;
 }
 message ProcessReverseSalesRequest {
 	int32 pos_id = 1;
 	int32 id = 2; // return order
-	int32 source_order_id = 3; // sales order
-	string description = 4;
-	string manual_invoice_document_no = 5;
-	string manual_shipment_document_no = 6;
-	string manual_movement_document_no = 7;
+	string description = 3;
+	int32 source_order_id = 4; // sales order
+	int32 manual_document_type_id = 5;
+	string manual_invoice_document_no = 6;
+	string manual_shipment_document_no = 7;
+	string manual_movement_document_no = 8;
 }
 
 
