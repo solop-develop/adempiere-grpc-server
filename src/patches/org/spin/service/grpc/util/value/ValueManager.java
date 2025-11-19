@@ -162,6 +162,7 @@ public class ValueManager {
 	 * @param value
 	 * @return Object
 	 */
+	@Deprecated
 	public static Object getObjectFromReference(Value value, int referenceId) {
 		return getObjectFromProtoValue(value, referenceId);
 	}
@@ -362,6 +363,7 @@ public class ValueManager {
 	 * @param value
 	 * @return Value.Builder
 	 */
+	@Deprecated
 	public static Value.Builder getValueFromBoolean(boolean value) {
 		return BooleanManager.getProtoValueFromBoolean(value);
 	}
@@ -370,6 +372,7 @@ public class ValueManager {
 	 * @param value
 	 * @return Value.Builder
 	 */
+	@Deprecated
 	public static Value.Builder getValueFromBoolean(Boolean value) {
 		return BooleanManager.getProtoValueFromBoolean(value);
 	}
@@ -711,6 +714,7 @@ public class ValueManager {
 	 * @param displayTypeColumns Map(ColumnName, DisplayType)
 	 * @return
 	 */
+	@Deprecated
 	public static Map<String, Object> convertValuesMapToObjects(Map<String, Value> values, Map<String, Integer> displayTypeColumns) {
 		return CollectionManager.getMapObjectFromMapProtoValue(values, displayTypeColumns);
 	}
