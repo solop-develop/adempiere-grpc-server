@@ -1213,13 +1213,13 @@ public class DisplayDefinitionServiceLogic {
 			Value attributeValue = attributes.get(columnName);
 			if (attributeValue != null && !attributeValue.hasNullValue()) {
 				if (displayTypeId > 0) {
-					value = ValueManager.getProtoValueFromObject(
+					value = ValueManager.getObjectFromProtoValue(
 						attributeValue,
 						displayTypeId
 					);
 				} 
 				if (value == null) {
-					value = ValueManager.getProtoValueFromObject(
+					value = ValueManager.getObjectFromProtoValue(
 						attributeValue
 					);
 				}
