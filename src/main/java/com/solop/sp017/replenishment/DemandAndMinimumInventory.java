@@ -46,7 +46,7 @@ public class DemandAndMinimumInventory implements ReplenishInterface_V2 {
 	@Override
 	public BigDecimal getQtyToOrder(MWarehouse warehouse, X_T_Replenish replenishLine, SvrProcess processInstance) {
 		MReplenish replenish = getReplenishForProduct(replenishLine, warehouse.getM_Warehouse_ID());
-		Timestamp lastReplenishmentDate = new Timestamp(System.currentTimeMillis());
+		Timestamp lastReplenishmentDate = null;
 		if(replenish != null) {
 			if(replenish.get_Value(COLUMNNAME_LastReplenishmentDate) != null) {
 				lastReplenishmentDate = (Timestamp) replenish.get_Value(COLUMNNAME_LastReplenishmentDate);
@@ -55,14 +55,18 @@ public class DemandAndMinimumInventory implements ReplenishInterface_V2 {
 			params.add(replenishLine.getM_Product_ID());
 			params.add(warehouse.getM_Warehouse_ID());
 
-			String dateValidation = "AND t.MovementDate >= ? ";
+			String dateValidation = "";
 
 			if (processInstance.getParameterAsTimestamp(COLUMNNAME_DateTrx) != null) {
 				dateValidation = "AND t.MovementDate >= ? AND t.MovementDate <= ?";
 				params.add(processInstance.getParameterAsTimestamp(COLUMNNAME_DateTrx));
 				params.add(processInstance.getParameterToAsTimestamp(COLUMNNAME_DateTrx));
 			} else {
-				params.add(lastReplenishmentDate);
+				if (lastReplenishmentDate != null) {
+					dateValidation = "AND t.MovementDate >= ?";
+					params.add(lastReplenishmentDate);
+				}
+
 			}
 			//	Get from last replenish
 			BigDecimal quantityToOrder = DB.getSQLValueBDEx(replenishLine.get_TrxName(), "SELECT ABS(SUM(t.MovementQty)) "
