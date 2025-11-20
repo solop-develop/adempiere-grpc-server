@@ -33,7 +33,6 @@ import org.compiere.util.Util;
 import org.spin.base.util.DocumentUtil;
 import org.spin.pos.service.pos.POS;
 import org.spin.pos.util.ColumnsAdded;
-import org.spin.service.grpc.util.value.BooleanManager;
 
 /**
  * This class was created for return a order by product
@@ -194,7 +193,7 @@ public class ReturnSalesOrder {
 	 * @see {@link ReverseSalesTransaction#processReverseSalesOrder} method
 	 * @return
 	 */
-	public static MOrder processRMA(int rmaId, int posId, String documentAction, String description, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo) {
+	public static MOrder processRMA(int rmaId, int posId, String documentAction, String description, int manualDocumentTypeId, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo) {
 		POS.validateAndGetPOS(posId, true);
 
 		if(rmaId <= 0) {
@@ -219,24 +218,26 @@ public class ReturnSalesOrder {
 			}
 
 			final boolean isManualReturnOrder = returnOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
+			/*
+			final int sourceOrderId = returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID);
+			MOrder salesOrder = OrderUtil.validateAndGetOrder(sourceOrderId, transactionName);
+			final boolean isManualSalesOrder = salesOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
+			if (isManualSalesOrder != isManualReturnOrder) {
+				throw new AdempiereException(
+					"@M_RMA_ID@ (" + returnOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualReturnOrder)
+					+ " | " +
+					"@C_Order_ID@ (" + salesOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualSalesOrder)
+				);
+			}
+			*/
 			if (isManualReturnOrder) {
-				final int sourceOrderId = returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID);
-				MOrder salesOrder = OrderUtil.validateAndGetOrder(sourceOrderId, transactionName);
-				/*
-				final boolean isManualSalesOrder = salesOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
-				if (isManualSalesOrder != isManualReturnOrder) {
-					throw new AdempiereException(
-						"@M_RMA_ID@ (" + returnOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualReturnOrder)
-						+ " | " +
-						"@C_Order_ID@ (" + salesOrder.getDocumentNo() + ") @IsManualDocument@:" + BooleanManager.getBooleanToTranslated(isManualSalesOrder)
-					);
-				}
-				*/
-
 				returnOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
 				returnOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
 				// salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
-				returnOrder.saveEx();
+				if (manualDocumentTypeId > 0) {
+					returnOrder.setC_DocTypeTarget_ID(manualDocumentTypeId);
+				}
+				returnOrder.saveEx(transactionName);
 			}
 
 			Optional.ofNullable(description).ifPresent(returnOrder::addDescription);
@@ -245,6 +246,7 @@ public class ReturnSalesOrder {
 				throw new AdempiereException("@ProcessFailed@ :" + returnOrder.getProcessMsg());
 			}
 			returnOrder.saveEx(transactionName);
+
 			//	Generate Return
 			RMAUtil.generateReturnFromRMA(returnOrder, transactionName);
 			//	Generate Credit Memo

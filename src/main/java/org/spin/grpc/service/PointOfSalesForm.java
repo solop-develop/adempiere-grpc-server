@@ -2382,6 +2382,7 @@ public class PointOfSalesForm extends StoreImplBase {
 					request.getPosId(),
 					request.getDocumentAction(),
 					request.getDescription(),
+					request.getManualDocumentTypeId(),
 					request.getManualInvoiceDocumentNo(),
 					request.getManualShipmentDocumentNo(),
 					request.getManualMovementDocumentNo()
