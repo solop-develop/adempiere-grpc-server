@@ -2447,9 +2447,10 @@ message CreateOrderLineRequest {
 message UpdateManualOrderRequest {
 	int32 id = 1;
 	int32 pos_id = 2;
-	string manual_invoice_document_no = 3;
-	string manual_shipment_document_no = 4;
-	string manual_movement_document_no = 5;
+	int32 manual_document_type_id = 3;
+	string manual_invoice_document_no = 4;
+	string manual_shipment_document_no = 5;
+	string manual_movement_document_no = 6;
 }
 
 // Request for update a order line
@@ -2848,9 +2849,10 @@ message ProcessRMARequest {
 	int32 rma_id = 2;
 	string description = 3;
 	string document_action = 4;
-	string manual_invoice_document_no = 5;
-	string manual_shipment_document_no = 6;
-	string manual_movement_document_no = 7;
+	int32 manual_document_type_id = 5;
+	string manual_invoice_document_no = 6;
+	string manual_shipment_document_no = 7;
+	string manual_movement_document_no = 8;
 }
 message CreateOrderFromRMARequest {
 	int32 source_rma_id = 1;

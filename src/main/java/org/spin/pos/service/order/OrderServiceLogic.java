@@ -215,8 +215,8 @@ public class OrderServiceLogic {
 			if(!DocumentUtil.isDrafted(salesOrder)) {
 				throw new AdempiereException("@C_Order_ID@ @Processed@");
 			}
-			// if (salesOrder.get_ValueAsBoolean("IsManual")) {
-			// 	throw new AdempiereException("@C_Order_ID@ @IsManual@");
+			// if (salesOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument)) {
+			// 	throw new AdempiereException("@C_Order_ID@ @IsManualDocument@");
 			// }
 
 			final String manualInvoiceDocumentNo = request.getManualInvoiceDocumentNo();
@@ -227,6 +227,11 @@ public class OrderServiceLogic {
 
 			// final String manualMovementDocumentNo = request.getManualMovementDocumentNo();
 			// salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
+
+			final int manualDocumentTypeId = request.getManualDocumentTypeId();
+			if (manualDocumentTypeId > 0) {
+				salesOrder.setC_DocTypeTarget_ID(manualDocumentTypeId);
+			}
 
 			salesOrder.saveEx(transactionName);
 			salesOrder.load(transactionName);
