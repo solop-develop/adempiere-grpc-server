@@ -1082,26 +1082,30 @@ public class MOrder extends X_C_Order implements DocAction
 			}
 		}
 		//	Set Default Drop Ship
-		if(newRecord || is_ValueChanged(COLUMNNAME_AD_Org_ID) || is_ValueChanged(COLUMNNAME_C_DocTypeTarget_ID)) {
+		if(newRecord || is_ValueChanged(COLUMNNAME_AD_Org_ID) || is_ValueChanged(COLUMNNAME_C_DocTypeTarget_ID)
+			|| is_ValueChanged(MProjectLine.COLUMNNAME_C_ProjectLine_ID)) {
 			MDropShipSetup dropShipSetup = MDropShipSetup.getSetupFromSalesOrder(this);
 			if(dropShipSetup != null) {
-				setDropShip_BPartner_ID(dropShipSetup.getDropShip_BPartner_ID());
-				setDropShip_Location_ID(dropShipSetup.getDropShip_Location_ID());
+				setIsDropShip(true);
 				if(dropShipSetup.getDropShip_User_ID() > 0) {
 					setDropShip_User_ID(dropShipSetup.getDropShip_User_ID());
 				}
-				setIsDropShip(true);
+				if (dropShipSetup.isDocumentBasedBPartner()){
+					if(get_ValueAsInt(MProjectLine.COLUMNNAME_C_ProjectLine_ID) > 0){
+						MProjectLine projectLine = new MProjectLine(getCtx(), get_ValueAsInt(MProjectLine.COLUMNNAME_C_ProjectLine_ID), get_TrxName());
+						if(projectLine.get_ValueAsBoolean(MOrder.COLUMNNAME_IsDropShip)){
+							setDropShip_BPartner_ID(projectLine.get_ValueAsInt(MOrder.COLUMNNAME_DropShip_BPartner_ID));
+							setDropShip_Location_ID(projectLine.get_ValueAsInt(MOrder.COLUMNNAME_DropShip_Location_ID));
+						}
+					}
+				} else {
+					setDropShip_BPartner_ID(dropShipSetup.getDropShip_BPartner_ID());
+					setDropShip_Location_ID(dropShipSetup.getDropShip_Location_ID());
+				}
 			}
 		}
 
-		if(get_ValueAsInt(MProjectLine.COLUMNNAME_C_ProjectLine_ID) > 0){
-			MProjectLine projectLine = new MProjectLine(getCtx(), get_ValueAsInt(MProjectLine.COLUMNNAME_C_ProjectLine_ID), get_TrxName());
-			if(projectLine.get_ValueAsBoolean(MOrder.COLUMNNAME_IsDropShip)){
-				setDropShip_BPartner_ID(projectLine.get_ValueAsInt(MOrder.COLUMNNAME_DropShip_BPartner_ID));
-				setDropShip_Location_ID(projectLine.get_ValueAsInt(MOrder.COLUMNNAME_DropShip_Location_ID));
-				setIsDropShip(true);
-			}
-		}
+
 		if (newRecord || is_ValueChanged(COLUMNNAME_C_DocTypeTarget_ID)) {
 			setIsManualDocument(getC_DocTypeTarget().isGenerateManualDocument());
 		}
@@ -2042,6 +2046,9 @@ public class MOrder extends X_C_Order implements DocAction
 		MDropShipSetup dropShipSetup = MDropShipSetup.getSetupFromSalesOrder(this);
 		if(dropShipSetup == null || !dropShipSetup.isCreatePOAutomatically()) {
 			return;
+		}
+		if (getDropShip_BPartner_ID() <= 0) {
+			throw new AdempiereException("@DropShip_BPartner_ID@ @NotFound@");
 		}
 		MOrder purchaseOrder = new MOrder (getCtx(), 0, get_TrxName());
 		purchaseOrder.setClientOrg(getAD_Client_ID(), getAD_Org_ID());
