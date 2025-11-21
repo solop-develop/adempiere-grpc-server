@@ -149,7 +149,7 @@ public class ReportManagement extends ReportManagementImplBase {
 		int printFormatId, int reportViewId, boolean isSummary,
 		String tableName, int recordId
 	) {
-		if(reportId <= 0) {
+			if(reportId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @AD_Process_ID@");
 		}
 		//	Get Process definition
@@ -230,6 +230,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			.withWindowNo(0)
 			.withTitle(process.getName())
 			.withoutTransactionClose()
+			.withPrintFormatId(printFormatId);
 		;
 		//	Set Report Export Type
 		if(Util.isEmpty(reportType, true)) {
