@@ -230,6 +230,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			.withWindowNo(0)
 			.withTitle(process.getName())
 			.withoutTransactionClose()
+			.withPrintFormatId(printFormatId);
 		;
 		//	Set Report Export Type
 		if(Util.isEmpty(reportType, true)) {
