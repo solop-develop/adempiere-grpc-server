@@ -8,8 +8,6 @@ plugins {
 	id "io.github.uoxx3.project-environment" version "1.0.1"
 }
 
-group 'com.nikhilm'
-
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_17
@@ -59,8 +57,8 @@ dependencies {
         ]
     )
 	implementation "io.netty:netty-handler:4.1.107.Final"
-    implementation "io.grpc:grpc-alts:${grpcVersion}"
 	runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-alts:${grpcVersion}"
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation "io.grpc:grpc-netty:${grpcVersion}"
@@ -71,7 +69,7 @@ dependencies {
 	//	Others
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
-	//	ADempiere Core
+	//	ADempiere Core + Patches + Features
 	implementation "org.solop.adempiere:adempiere-core:${adempiereCoreVersion}"
 	implementation "com.solop.adempiere.tools:solop-core:core-1.4.16-1.0.2"
 	implementation "com.solop.adempiere.tools:display-definition:core-1.0.0-1.0.0"
