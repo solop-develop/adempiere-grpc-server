@@ -520,11 +520,18 @@ public class UserInterface extends UserInterfaceImplBase {
 		if(!Util.isEmpty(request.getRecordReferenceUuid(), true)) {
 			String referenceWhereClause = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
 			if(!Util.isEmpty(referenceWhereClause, true)) {
-				String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(tableName, referenceWhereClause);
+				String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
+					tableName,
+					referenceWhereClause
+				);
 				if(whereClause.length() > 0) {
 					whereClause.append(" AND ");
 				}
-				whereClause.append("(").append(validationCode).append(")");
+				whereClause
+					.append("(")
+					.append(validationCode)
+					.append(")")
+				;
 			}
 		}
 

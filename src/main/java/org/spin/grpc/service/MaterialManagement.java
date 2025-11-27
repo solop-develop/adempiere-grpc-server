@@ -88,7 +88,7 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.CollectionManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -511,7 +511,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		;
 		if (attributeSetInstance.getGuaranteeDate() != null) {
 			builder.setGuaranteeDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					attributeSetInstance.getGuaranteeDate()
 				)
 			);
@@ -847,7 +847,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 	}
 
 	private ListAvailableWarehousesResponse.Builder listAvailableWarehouses(ListAvailableWarehousesRequest request) {
-		String whereClause = "1 = 1";
+		String whereClause = "1=1";
 		List<Object> parameters = new ArrayList<Object>();
 
 		// Add warehouse to filter
@@ -999,9 +999,9 @@ public class MaterialManagement extends MaterialManagementImplBase {
 	private ListLocatorsResponse.Builder listLocators(ListLocatorsRequest request) {
 		// Fill Env.getCtx()
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
-		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
+		ContextManager.setContextWithAttributesFromString(windowNo, Env.getCtx(), request.getContextAttributes());
 
-		String whereClause = "1 = 1";
+		String whereClause = " 1=1 ";
 		List<Object> parameters = new ArrayList<Object>();
 
 		// Add warehouse to filter
@@ -1041,19 +1041,19 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			request.getColumnName(),
 			I_M_Locator.Table_Name
 		);
-		if (reference != null) {
+		if (reference != null && !request.getIsWithoutValidation() && !Util.isEmpty(reference.ValidationCode, true)) {
 			// validation code of field
-			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(I_M_Locator.Table_Name, reference.ValidationCode);
+			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
+				I_M_Locator.Table_Name,
+				reference.ValidationCode
+			);
 			String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
-			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
-				}
-				if (!Util.isEmpty(whereClause, true)) {
-					whereClause += " AND ";
-				}
-				whereClause += parsedValidationCode;
+			if (Util.isEmpty(parsedValidationCode, true)) {
+				throw new AdempiereException(
+					"@AD_Reference_ID@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+				);
 			}
+			whereClause += " AND " + parsedValidationCode;
 		}
 
 		Query query = new Query(

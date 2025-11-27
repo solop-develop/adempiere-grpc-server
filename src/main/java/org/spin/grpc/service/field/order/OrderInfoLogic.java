@@ -54,7 +54,7 @@ import org.spin.service.grpc.util.value.TimeManager;
 
 public class OrderInfoLogic {
 
-	// public static tableName = C_Order.Table_Name;
+	public final static String Table_Name = I_C_Order.Table_Name;
 
 	private static final String SQL = "SELECT "
 		+ "o.C_Order_ID, o.UUID,"
@@ -79,7 +79,7 @@ public class OrderInfoLogic {
 
 	/**
 	 * Validate productId and MProduct, and get instance
-	 * @param tableName
+	 * @param request
 	 * @return
 	 */
 	public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
@@ -190,7 +190,6 @@ public class OrderInfoLogic {
 			request.getContextAttributes()
 		);
 
-		String tableName;
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceId(),
 			request.getFieldId(),
@@ -198,7 +197,7 @@ public class OrderInfoLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			tableName = "C_Order",
+			Table_Name,
 			request.getIsWithoutValidation()
 		);
 
@@ -308,26 +307,28 @@ public class OrderInfoLogic {
 			)
 		;
 
-		StringBuffer whereClause = new StringBuffer();
-
+		StringBuffer whereClause = new StringBuffer(" 1=1 ");
 		// validation code of field
-		if (!request.getIsWithoutValidation()) {
+		if (!request.getIsWithoutValidation() && !Util.isEmpty(reference.ValidationCode, true)) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
-				tableName,
+				Table_Name,
 				"o",
 				reference.ValidationCode
 			);
-			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
-				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
-				}
-				whereClause.append(" AND ").append(parsedValidationCode);
+			String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+			if (Util.isEmpty(parsedValidationCode, true)) {
+				throw new AdempiereException(
+					"@AD_Reference_ID@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+				);
 			}
+			whereClause
+				.append(" AND ")
+				.append(parsedValidationCode)
+			;
 		}
 
 		//	For dynamic condition
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, "o", filtersList);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), Table_Name, "o", filtersList);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
 			whereClause.append(" AND ")
@@ -337,14 +338,17 @@ public class OrderInfoLogic {
 			;
 		}
 
+		if (!whereClause.toString().trim().startsWith("AND")) {
+			sqlWithRoleAccess += " AND ";
+		}
 		sqlWithRoleAccess += whereClause;
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, "o", request.getSearchValue(), filtersList);
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, Table_Name, "o", request.getSearchValue(), filtersList);
 
 		//	Get page and count
 		final int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		final int limit = LimitUtil.getPageSize(request.getPageSize());
 		final int offset = (pageNumber - 1) * limit;
-		final int count = CountUtil.countRecords(parsedSQL, tableName, "o", filtersList);
+		final int count = CountUtil.countRecords(parsedSQL, Table_Name, "o", filtersList);
 
 		//	Add Row Number
 		parsedSQL += " ORDER BY o.DateOrdered DESC, o.DocumentNo ";

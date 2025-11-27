@@ -80,7 +80,7 @@ public class InOutInfoLogic {
 			// .setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 			.first()
 		;
-		
+
 		// Entity.Builder builder = BusinessPartnerConver.convertBusinessPartner(
 		// 	businessPartner
 		// );
@@ -129,21 +129,22 @@ public class InOutInfoLogic {
 				MRole.SQL_RO
 			);
 
-		StringBuffer whereClause = new StringBuffer();
-
+		StringBuffer whereClause = new StringBuffer(" 1=1 ");
 		// validation code of field
-		if (!request.getIsWithoutValidation()) {
+		if (!request.getIsWithoutValidation() && !Util.isEmpty(reference.ValidationCode, true)) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
 				Table_Name,
 				reference.ValidationCode
 			);
-			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
-				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
-				}
-				whereClause.append(" AND ").append(parsedValidationCode);
+			String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
+			if (Util.isEmpty(parsedValidationCode, true)) {
+				throw new AdempiereException(
+					"@AD_Reference_ID@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+				);
 			}
+			whereClause.append(" AND ")
+				.append(parsedValidationCode)
+			;
 		}
 
 		//	For dynamic condition
@@ -151,13 +152,19 @@ public class InOutInfoLogic {
 		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), Table_Name, params);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
-			whereClause.append(" AND ")
+			whereClause
+				.append(" AND ")
 				.append("(")
 				.append(dynamicWhere)
-				.append(")");
+				.append(")")
+			;
 		}
 
+		if (!whereClause.toString().trim().startsWith("AND")) {
+			sqlWithRoleAccess += " AND ";
+		}
 		sqlWithRoleAccess += whereClause;
+
 		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, Table_Name, request.getSearchValue(), params);
 
 		//	Get page and count
