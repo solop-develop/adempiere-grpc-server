@@ -55,6 +55,8 @@ import org.spin.service.grpc.util.value.TimeManager;
 
 public class PaymentInfoLogic {
 
+	public final static String Table_Name = I_C_Payment.Table_Name;
+
 	private static final String SQL = "SELECT "
 		+ "C_Payment_ID, UUID, "
 		+ "(SELECT b.Name || ' ' || ba.AccountNo FROM C_Bank AS b, C_BankAccount AS ba WHERE b.C_Bank_ID = ba.C_Bank_ID AND ba.C_BankAccount_ID = C_Payment.C_BankAccount_ID) AS BankAccount, "
@@ -76,8 +78,9 @@ public class PaymentInfoLogic {
 		+ "WHERE 1=1 "
 	;
 
+
 	/**
-	 * @param tableName
+	 * @param request
 	 * @return
 	 */
 	 public static ListLookupItemsResponse.Builder listBusinessPartners(ListBusinessPartnersRequest request) {
@@ -97,7 +100,7 @@ public class PaymentInfoLogic {
 			DisplayType.TableDir,
 			0, 0, 0,
 			0,
-			I_C_Payment.COLUMNNAME_C_BPartner_ID, I_C_Payment.Table_Name,
+			I_C_Payment.COLUMNNAME_C_BPartner_ID, Table_Name,
 			0,
 			whereClause
 		);
@@ -115,7 +118,7 @@ public class PaymentInfoLogic {
 	}
 
 	/**
-	 * @param tableName
+	 * @param request
 	 * @return
 	 */
 
@@ -126,7 +129,7 @@ public class PaymentInfoLogic {
 			DisplayType.TableDir,
 			0, 0, 0,
 			0,
-			I_C_Payment.COLUMNNAME_C_BankAccount_ID, I_C_Payment.Table_Name,
+			I_C_Payment.COLUMNNAME_C_BankAccount_ID, Table_Name,
 			0,
 			whereClause
 		);
@@ -220,7 +223,6 @@ public class PaymentInfoLogic {
 			windowNo, context, request.getContextAttributes()
 		);
 
-		final String tableName = I_C_Payment.Table_Name;
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			request.getReferenceId(),
 			request.getFieldId(),
@@ -228,17 +230,17 @@ public class PaymentInfoLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			tableName,
+			Table_Name,
 			request.getIsWithoutValidation()
 		);
 
-		String whereClause = "";
+		String whereClause = " 1=1 ";
 		List<Object> filtersList = new ArrayList<>(); // includes on filters criteria
 
 		// validation code of field
 		if (!request.getIsWithoutValidation()) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
-				tableName,
+				Table_Name,
 				reference.ValidationCode
 			);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
@@ -335,27 +337,31 @@ public class PaymentInfoLogic {
 		String sqlWithRoleAccess = MRole.getDefault(context, false)
 			.addAccessSQL(
 				sql,
-				tableName,
+				Table_Name,
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
 			)
 		;
 
 		//	For dynamic condition
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, filtersList);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), Table_Name, filtersList);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
 			whereClause += " AND (" + dynamicWhere + ")";
 		}
 
+		if (!whereClause.trim().startsWith("AND")) {
+			sqlWithRoleAccess += " AND ";
+		}
 		sqlWithRoleAccess += whereClause;
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, request.getSearchValue(), filtersList);
+
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, Table_Name, request.getSearchValue(), filtersList);
 
 		//	Get page and count
 		final int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		final int limit = LimitUtil.getPageSize(request.getPageSize());
 		final int offset = (pageNumber - 1) * limit;
-		final int count = CountUtil.countRecords(parsedSQL, tableName, filtersList);
+		final int count = CountUtil.countRecords(parsedSQL, Table_Name, filtersList);
 
 		//	Add Row Number
 		parsedSQL += " ORDER BY DateTrx DESC, DocumentNo ";

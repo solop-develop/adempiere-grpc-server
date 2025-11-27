@@ -160,7 +160,7 @@ public class BusinessPartnerLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			request.getTableName(),
+			Table_Name,
 			request.getIsWithoutValidation()
 		);
 
@@ -182,9 +182,14 @@ public class BusinessPartnerLogic {
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
 				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
 				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
+					throw new AdempiereException(
+						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+					);
 				}
-				whereClause.append(" AND ").append(parsedValidationCode);
+				whereClause
+					.append(" AND ")
+					.append(parsedValidationCode)
+				;
 			}
 		}
 

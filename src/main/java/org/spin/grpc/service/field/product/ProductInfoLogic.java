@@ -94,7 +94,7 @@ import org.spin.service.grpc.util.value.TimeManager;
 
 public class ProductInfoLogic {
 
-	public static String tableName = I_M_Product.Table_Name;
+	public final static String Table_Name = I_M_Product.Table_Name;
 
 
 	public static ListLookupItemsResponse.Builder listWarehouses(ListWarehousesRequest request) {
@@ -549,7 +549,7 @@ public class ProductInfoLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			request.getTableName(),
+			Table_Name,
 			request.getIsWithoutValidation()
 		);
 
@@ -841,14 +841,16 @@ public class ProductInfoLogic {
 		// validation code of field
 		if (!request.getIsWithoutValidation()) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
-				tableName,
+				Table_Name,
 				"p",
 				reference.ValidationCode
 			);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
 				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
 				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
+					throw new AdempiereException(
+						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+					);
 				}
 				sqlWithRoleAccess += " AND " + parsedValidationCode;
 			}
@@ -858,7 +860,7 @@ public class ProductInfoLogic {
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = CountUtil.countRecords(sqlWithRoleAccess, tableName, "p", filtersList);
+		int count = CountUtil.countRecords(sqlWithRoleAccess, Table_Name, "p", filtersList);
 		//	Set page token
 		String nexPageToken = null;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
@@ -924,7 +926,7 @@ public class ProductInfoLogic {
 
 	/**
 	 * Validate productId and MProduct, and get instance
-	 * @param tableName
+	 * @param productId
 	 * @return
 	 */
 	public static MProduct validateAndGetProduct(int productId) {

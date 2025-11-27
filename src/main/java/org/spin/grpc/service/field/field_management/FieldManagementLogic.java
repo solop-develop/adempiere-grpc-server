@@ -582,7 +582,7 @@ public class FieldManagementLogic {
 		sql = Env.parseContext(context, windowNo, sql, false);
 		if(Util.isEmpty(sql, true)
 				&& !Util.isEmpty(reference.Query, true)) {
-			throw new AdempiereException("@AD_Reference_ID@ @WhereClause@ @Unparseable@");
+			throw new AdempiereException("@AD_Reference_ID@ @Code@/@WhereClause@ @Unparseable@");
 		}
 
 		// TODO: Fix with list document type
@@ -764,8 +764,7 @@ public class FieldManagementLogic {
 				MRole.SQL_RO
 			);
 
-		StringBuffer whereClause = new StringBuffer();
-
+		StringBuffer whereClause = new StringBuffer(" 1=1 ");
 		// validation code of field
 		if (!request.getIsWithoutValidation()) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
@@ -779,7 +778,10 @@ public class FieldManagementLogic {
 						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
 					);
 				}
-				whereClause.append(" AND ").append(parsedValidationCode);
+				whereClause
+					.append(" AND ")
+					.append(parsedValidationCode)
+				;
 			}
 		}
 
@@ -798,7 +800,11 @@ public class FieldManagementLogic {
 				.append(")");
 		}
 
+		if (!whereClause.toString().trim().startsWith("AND")) {
+			sqlWithRoleAccess += " AND ";
+		}
 		sqlWithRoleAccess += whereClause;
+
 		String parsedSQL = org.spin.base.util.RecordUtil.addSearchValueAndGet(
 			sqlWithRoleAccess,
 			table.getTableName(),

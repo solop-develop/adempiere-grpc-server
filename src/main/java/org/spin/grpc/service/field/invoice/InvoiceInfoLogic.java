@@ -59,7 +59,7 @@ import org.spin.service.grpc.util.value.TimeManager;
 
 public class InvoiceInfoLogic {
 
-	public static String tableName = I_C_Invoice.Table_Name;
+	public final static String Table_Name = I_C_Invoice.Table_Name;
 
 	private static final String SQL = "SELECT "
 		+ "i.C_Invoice_ID, i.UUID, "
@@ -84,7 +84,7 @@ public class InvoiceInfoLogic {
 
 	/**
 	 * Validate productId and MProduct, and get instance
-	 * @param tableName
+	 * @param invoiceId
 	 * @return
 	 */
 	public static MInvoice validateAndGetInvoice(int invoiceId) {
@@ -249,7 +249,7 @@ public class InvoiceInfoLogic {
 			request.getBrowseFieldId(),
 			request.getColumnId(),
 			request.getColumnName(),
-			tableName,
+			Table_Name,
 			request.getIsWithoutValidation()
 		);
 
@@ -358,42 +358,51 @@ public class InvoiceInfoLogic {
 				MRole.SQL_RO
 			);
 
-		StringBuffer whereClause = new StringBuffer();
-
+		StringBuffer whereClause = new StringBuffer(" 1=1 ");
 		// validation code of field
 		if (!request.getIsWithoutValidation()) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
-				tableName,
+				Table_Name,
 				"i",
 				reference.ValidationCode
 			);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
 				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
 				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
+					throw new AdempiereException(
+						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+					);
 				}
-				whereClause.append(" AND ").append(parsedValidationCode);
+				whereClause.append(" AND ")
+					.append(parsedValidationCode)
+				;
 			}
 		}
 
 		//	For dynamic condition
-		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), tableName, "i", filtersList);
+		String dynamicWhere = WhereClauseUtil.getWhereClauseFromCriteria(request.getFilters(), Table_Name, "i", filtersList);
 		if (!Util.isEmpty(dynamicWhere, true)) {
 			//	Add includes first AND
-			whereClause.append(" AND ")
+			whereClause
+				.append(" AND ")
 				.append("(")
 				.append(dynamicWhere)
-				.append(")");
+				.append(")")
+			;
 		}
 
+		if (!whereClause.toString().trim().startsWith("AND")) {
+			sqlWithRoleAccess += " AND ";
+		}
 		sqlWithRoleAccess += whereClause;
-		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, tableName, "i", request.getSearchValue(), filtersList);
+
+		String parsedSQL = RecordUtil.addSearchValueAndGet(sqlWithRoleAccess, Table_Name, "i", request.getSearchValue(), filtersList);
 
 		//	Get page and count
 		final int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		final int limit = LimitUtil.getPageSize(request.getPageSize());
 		final int offset = (pageNumber - 1) * limit;
-		final int count = CountUtil.countRecords(parsedSQL, tableName, "i", filtersList);
+		final int count = CountUtil.countRecords(parsedSQL, Table_Name, "i", filtersList);
 
 		//	Add Row Number
 		parsedSQL += " ORDER BY i.DateInvoiced desc, i.DocumentNo ";
@@ -482,7 +491,7 @@ public class InvoiceInfoLogic {
 		);
 		final int limit = LimitUtil.getPageSize(request.getPageSize());
 		final int offset = (pageNumber - 1) * limit;
-		final int count = CountUtil.countRecords(sql, tableName, "i", parametersList);
+		final int count = CountUtil.countRecords(sql, Table_Name, "i", parametersList);
 		//	Set page token
 		String nexPageToken = null;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {

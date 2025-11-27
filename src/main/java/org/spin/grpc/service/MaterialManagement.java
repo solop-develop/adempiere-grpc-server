@@ -88,7 +88,7 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.CollectionManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -511,7 +511,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		;
 		if (attributeSetInstance.getGuaranteeDate() != null) {
 			builder.setGuaranteeDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					attributeSetInstance.getGuaranteeDate()
 				)
 			);
@@ -1001,7 +1001,7 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		ContextManager.setContextWithAttributesFromStruct(windowNo, Env.getCtx(), request.getContextAttributes());
 
-		String whereClause = "1 = 1";
+		String whereClause = " 1=1 ";
 		List<Object> parameters = new ArrayList<Object>();
 
 		// Add warehouse to filter
@@ -1043,16 +1043,16 @@ public class MaterialManagement extends MaterialManagementImplBase {
 		);
 		if (reference != null) {
 			// validation code of field
-			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(I_M_Locator.Table_Name, reference.ValidationCode);
+			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
+				I_M_Locator.Table_Name,
+				reference.ValidationCode
+			);
 			String parsedValidationCode = Env.parseContext(Env.getCtx(), windowNo, validationCode, false);
 			if (!Util.isEmpty(reference.ValidationCode, true)) {
 				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException("@WhereClause@ @Unparseable@");
+					throw new AdempiereException("@Code@/@WhereClause@ @Unparseable@");
 				}
-				if (!Util.isEmpty(whereClause, true)) {
-					whereClause += " AND ";
-				}
-				whereClause += parsedValidationCode;
+				whereClause += " AND " + parsedValidationCode;
 			}
 		}
 

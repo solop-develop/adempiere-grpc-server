@@ -115,9 +115,16 @@ public class WhereClauseUtil {
 			// - be immediately preceded by a period (avoids being the table/alias of a qualified column)
 			// - be an SQL keyword (e.g., JOIN, IN, etc.)
 			// - is inside a subquery (this is the most complex and is done with the logic of the original code)
-			final String columnsRegex = "\\b(?<!\\.\\b)(?![\\w]+\\.)(\\w+)(\\s*[=><!]|\\s*\\b(?:IN|NOT\\s+IN|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL|BETWEEN|NOT\\s+BETWEEN)\\b)";
+			// final String columnsRegex = "\\b(?<!\\.\\b)(?![\\w]+\\.)(\\w+)(\\s*[=><!]|\\s*\\b(?:IN|NOT\\s+IN|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL|BETWEEN|NOT\\s+BETWEEN)\\b)";
 			// final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)(\\w+)(\\s*)";
-
+			final String columnsRegex = 
+				"\\b(?<!\\.)(?<!\\w\\.)" + // Lookbehind: Not preceded by . or word.
+				"(?!\\w+\\.)" + // Lookahead: Not followed by a word and a period (prevents matching 'C_Invoice' in 'C_Invoice.DocStatus')
+				"(?!\\b(?:FROM|JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)" + // Lookahead: Not an SQL keyword.
+				"(\\w+)" + // Group 1: The column name
+				"(\\s*)" + // Group 2: Optional whitespace
+				"(?=" + OperatorUtil.SQL_OPERATORS_REGEX + ")" // Lookahead: Must be followed by an operator.
+			;
 
 			// Regular expression to sql operators
 			// final String sqlOperatorsRegex = OperatorUtil.SQL_OPERATORS_REGEX;
