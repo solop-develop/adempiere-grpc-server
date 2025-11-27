@@ -174,23 +174,21 @@ public class BusinessPartnerLogic {
 		}
 
 		// validation code of field
-		if (!request.getIsWithoutValidation()) {
+		if (!request.getIsWithoutValidation() && !Util.isEmpty(reference.ValidationCode, true)) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
 				Table_Name,
 				reference.ValidationCode
 			);
-			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
-				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException(
-						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
-					);
-				}
-				whereClause
-					.append(" AND ")
-					.append(parsedValidationCode)
-				;
+			String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+			if (Util.isEmpty(parsedValidationCode, true)) {
+				throw new AdempiereException(
+					"@AD_Reference_ID@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+				);
 			}
+			whereClause
+				.append(" AND ")
+				.append(parsedValidationCode)
+			;
 		}
 
 		// URL decode to change characteres and add search value to filter

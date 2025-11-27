@@ -839,21 +839,19 @@ public class ProductInfoLogic {
 			);
 
 		// validation code of field
-		if (!request.getIsWithoutValidation()) {
+		if (!request.getIsWithoutValidation() && !Util.isEmpty(reference.ValidationCode, true)) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
 				Table_Name,
 				"p",
 				reference.ValidationCode
 			);
-			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
-				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException(
-						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
-					);
-				}
-				sqlWithRoleAccess += " AND " + parsedValidationCode;
+			String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+			if (Util.isEmpty(parsedValidationCode, true)) {
+				throw new AdempiereException(
+					"@AD_Reference_ID@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+				);
 			}
+			sqlWithRoleAccess += " AND " + parsedValidationCode;
 		}
 
 		//	Count records

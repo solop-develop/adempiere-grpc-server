@@ -580,9 +580,10 @@ public class FieldManagementLogic {
 
 		String sql = reference.Query;
 		sql = Env.parseContext(context, windowNo, sql, false);
-		if(Util.isEmpty(sql, true)
-				&& !Util.isEmpty(reference.Query, true)) {
-			throw new AdempiereException("@AD_Reference_ID@ @Code@/@WhereClause@ @Unparseable@");
+		if(Util.isEmpty(sql, true) && !Util.isEmpty(reference.Query, true)) {
+			throw new AdempiereException(
+				"@AD_Reference_ID@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+			);
 		}
 
 		// TODO: Fix with list document type
@@ -766,23 +767,21 @@ public class FieldManagementLogic {
 
 		StringBuffer whereClause = new StringBuffer(" 1=1 ");
 		// validation code of field
-		if (!request.getIsWithoutValidation()) {
+		if (!request.getIsWithoutValidation() && !Util.isEmpty(reference.ValidationCode, true)) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
 				table.getTableName(),
 				reference.ValidationCode
 			);
-			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
-				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException(
-						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
-					);
-				}
-				whereClause
-					.append(" AND ")
-					.append(parsedValidationCode)
-				;
+			String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+			if (Util.isEmpty(parsedValidationCode, true)) {
+				throw new AdempiereException(
+					"@AD_Reference_ID@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+				);
 			}
+			whereClause
+				.append(" AND ")
+				.append(parsedValidationCode)
+			;
 		}
 
 		//	For dynamic condition

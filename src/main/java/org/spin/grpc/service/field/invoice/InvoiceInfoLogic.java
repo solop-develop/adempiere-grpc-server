@@ -360,23 +360,21 @@ public class InvoiceInfoLogic {
 
 		StringBuffer whereClause = new StringBuffer(" 1=1 ");
 		// validation code of field
-		if (!request.getIsWithoutValidation()) {
+		if (!request.getIsWithoutValidation() && !Util.isEmpty(reference.ValidationCode, true)) {
 			String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
 				Table_Name,
 				"i",
 				reference.ValidationCode
 			);
-			if (!Util.isEmpty(reference.ValidationCode, true)) {
-				String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
-				if (Util.isEmpty(parsedValidationCode, true)) {
-					throw new AdempiereException(
-						"@Reference@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
-					);
-				}
-				whereClause.append(" AND ")
-					.append(parsedValidationCode)
-				;
+			String parsedValidationCode = Env.parseContext(context, windowNo, validationCode, false);
+			if (Util.isEmpty(parsedValidationCode, true)) {
+				throw new AdempiereException(
+					"@AD_Reference_ID@ " + reference.KeyColumn + ", @Code@/@WhereClause@ @Unparseable@"
+				);
 			}
+			whereClause.append(" AND ")
+				.append(parsedValidationCode)
+			;
 		}
 
 		//	For dynamic condition

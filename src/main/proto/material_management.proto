@@ -64,7 +64,31 @@ service MaterialManagement {
 		option (google.api.http) = { get: "/material-management/warehouses" };
 	}
 	rpc ListLocators(ListLocatorsRequest) returns (ListLocatorsResponse) {
-		option (google.api.http) = { get: "/material-management/locators" };
+		option (google.api.http) = {
+			get: "/fields/locators"
+			additional_bindings: {
+				// TODO: Deprecated endpoint, to be removed in future versions
+				get: "/material-management/locators"
+			}
+			additional_bindings: {
+				get: "/fields/locators/table/{table_name}/{column_name}"
+			}
+			additional_bindings: {
+				get: "/fields/locators/column/{column_id}"
+			}
+			additional_bindings: {
+				get: "/fields/locators/field/{field_id}"
+			}
+			additional_bindings: {
+				get: "/fields/locators/parameter/{process_parameter_id}"
+			}
+			additional_bindings: {
+				get: "/fields/locators/query-criteria/{browse_field_id}"
+			}
+			additional_bindings: {
+				get: "/fields/locators/display-definition/{display_definition_field_id}"
+			}
+		};
 	}
 }
 
@@ -258,16 +282,21 @@ message ListLocatorsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
-	google.protobuf.Struct context_attributes = 8;
-	int32 warehouse_id = 9;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
 	// references
-	int32 process_parameter_id = 10;
-	int32 field_id = 11;
-	int32 browse_field_id = 12;
-	int32 reference_id = 13;
-	int32 column_id = 14;
-	string table_name = 15;
-	string column_name = 16;
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
+	// custom filters
+	int32 warehouse_id = 20;
 }
 
 message ListLocatorsResponse {
