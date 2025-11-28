@@ -137,12 +137,31 @@ public class UserInterfaceLogic {
 		return builder;
 	}
 
+	public static int getDefaultTreeIdFromTableName(int clientId, String tableName) {
+		return getDefaultTreeIdFromTableName(clientId, tableName, 0);
+	}
 	public static int getDefaultTreeIdFromTableName(int clientId, String tableName, int elementId) {
-		int treeId = -1;
-		if(Util.isEmpty(tableName, true)) {
-			return treeId;
+		if (Util.isEmpty(tableName, true)) {
+			return -1;
 		}
 		MTable table = MTable.get(Env.getCtx(), tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			return -1;
+		}
+		// call main method
+		return getDefaultTreeIdFromTableId(clientId, table.getAD_Table_ID(), elementId);
+	}
+
+	public static int getDefaultTreeIdFromTableId(int clientId, int tableId) {
+		// MTree.getDefaultTreeIdFromTableId(menu.getAD_Client_ID(), I_AD_Menu.Table_ID);
+		return getDefaultTreeIdFromTableId(clientId, tableId, 0);
+	}
+	public static int getDefaultTreeIdFromTableId(int clientId, int tableId, int elementId) {
+		int treeId = -1;
+		if(tableId <= 0) {
+			return treeId;
+		}
+		MTable table = MTable.get(Env.getCtx(), tableId);
 		if (table == null || table.getAD_Table_ID() <= 0) {
 			return treeId;
 		}

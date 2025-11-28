@@ -1524,50 +1524,93 @@ public class Security extends SecurityImplBase {
 	 * @return
 	 */
 	private MenuResponse.Builder convertMenu() {
-		int roleId = Env.getAD_Role_ID(Env.getCtx());
-		int userId = Env.getAD_User_ID(Env.getCtx());
-		String language = Env.getAD_Language(Env.getCtx());
-		String menuKey = roleId + "|" + userId + "|" + language;
+		final int clientId = Env.getAD_Client_ID(Env.getCtx());
+		final int roleId = Env.getAD_Role_ID(Env.getCtx());
+		final int userId = Env.getAD_User_ID(Env.getCtx());
+		final String language = Env.getAD_Language(Env.getCtx());
+		final String menuKey = roleId + "|" + userId + "|" + language;
+
 		MenuResponse.Builder builderList = menuCache.get(menuKey);
 		if(builderList != null) {
 			return builderList;
 		}
 
-		MMenu menu = new MMenu(Env.getCtx(), 0, null);
-		menu.setName(Msg.getMsg(Env.getCtx(), "Menu"));
-		//	Get Reference
-		final String sql = "SELECT COALESCE(r.AD_Tree_Menu_ID, ci.AD_Tree_Menu_ID) AS AD_Tree_ID "
-			+ "FROM AD_ClientInfo AS ci "
-			+ "INNER JOIN AD_Role AS r ON (ci.AD_Client_ID = r.AD_Client_ID) "
-			+ "WHERE AD_Role_ID = ? "
-			+ "LIMIT 1 "
-		;
-		int treeId = DB.getSQLValue(null, sql, roleId);
-		if (treeId <= 0) {
-			treeId = MTree.getDefaultTreeIdFromTableId(menu.getAD_Client_ID(), I_AD_Menu.Table_ID);
+		MRole role = MRole.get(Env.getCtx(), roleId);
+		if(role == null) {
+			log.warning("@AD_Role_ID@ @NotFound@. @AD_Client_ID@=" + clientId + ", @AD_Role_ID@" + roleId + ", @AD_User_ID@=" + userId);
+			return builderList;
+			// throw new AdempiereException("@AD_Role_ID@ @NotFound@
 		}
 
-		if(treeId > 0) {
-			builderList = MenuResponse.newBuilder();
-			MTree tree = new MTree(Env.getCtx(), treeId, false, false, null, null);
-			//	
-			// Menu.Builder builder = convertMenu(Env.getCtx(), menu, 0, language);
-			//	Get main node
-			MTreeNode rootNode = tree.getRoot();
-			Enumeration<?> childrens = rootNode.children();
-			while (childrens.hasMoreElements()) {
-				MTreeNode child = (MTreeNode)childrens.nextElement();
-				Menu.Builder childBuilder = convertMenu(
-					Env.getCtx(),
-					MMenu.getFromId(Env.getCtx(), child.getNode_ID()),
-					child.getParent_ID(),
-					language
-				);
-				//	Explode child
-				addChildren(Env.getCtx(), childBuilder, child, language);
-				// builder.addChildren(childBuilder.build());
-				builderList.addMenus(childBuilder);
+		int treeId = role.getAD_Tree_Menu_ID();
+		if (treeId <= 0) {
+			MClientInfo clientInfo = MClientInfo.get(role.getCtx(), clientId);
+			if (clientInfo == null) {
+				// throw new AdempiereException("@AD_Client_ID@ @NotFound@");
+				log.warning("@AD_Client_ID@ @NotFound@. @AD_Client_ID@=" + clientId + ", @AD_Role_ID@" + roleId + ", @AD_User_ID@=" + userId);
+				return builderList;
 			}
+			treeId = clientInfo.getAD_Tree_Menu_ID();
+
+			if (treeId <= 0) {
+				// treeId = MTree.getDefaultTreeIdFromTableId(clientId, I_AD_Menu.Table_ID);
+				// treeId = UserInterfaceLogic.getDefaultTreeIdFromTableId(clientId, I_AD_Menu.Table_ID);
+
+				//	Get `AD_Tree_Menu_ID` from role or client info
+				// final String sql = "SELECT COALESCE(r.AD_Tree_Menu_ID, ci.AD_Tree_Menu_ID) AS AD_Tree_ID "
+				// 	+ "FROM AD_ClientInfo AS ci "
+				// 	+ "INNER JOIN AD_Role AS r ON (ci.AD_Client_ID = r.AD_Client_ID) "
+				// 	+ "WHERE AD_Role_ID = ? "
+				// 	+ "LIMIT 1 "
+				// ;
+
+				// Get `AD_Tree_Menu_ID` from active tree
+				final String sql = "SELECT tr.AD_Tree_ID "
+					+ "FROM AD_Tree AS tr "
+					+ "WHERE tr.IsActive = 'Y' "
+					+ "AND tr.AD_Client_ID IN(0, ?) "
+					+ "AND tr.TreeType = 'MM' "
+					+ "AND tr.IsAllNodes = 'Y' "
+					+ "AND ROWNUM = 1 "
+					// Client company after system, is default 'Y', and first created tree id
+					+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID "
+				;
+				//	Get Tree
+				treeId = DB.getSQLValue(null, sql, clientId);
+			}
+		}
+
+		// without menu tree
+		if (treeId <= 0) {
+			// throw new AdempiereException("@AD_Tree_Menu_ID@ @NotFound@");
+			log.warning("@AD_Tree_Menu_ID@ @NotFound@. @AD_Client_ID@=" + clientId + ", @AD_Role_ID@" + roleId + ", @AD_User_ID@=" + userId + ", @AD_Tree_ID@=" + treeId);
+			return builderList;
+		}
+
+		builderList = MenuResponse.newBuilder();
+		MTree tree = new MTree(Env.getCtx(), treeId, false, false, null, null);
+		if (tree == null || tree.getAD_Tree_ID() <= 0) {
+			// throw new AdempiereException("@AD_Tree_Menu_ID@ @NotFound@");
+			log.warning("@AD_Tree_Menu_ID@ @NotFound@. @AD_Client_ID@=" + clientId + ", @AD_Role_ID@" + roleId + ", @AD_User_ID@=" + userId + ", @AD_Tree_ID@=" + treeId);
+			return builderList;
+		}
+
+		//	Get main node
+		MTreeNode rootNode = tree.getRoot();
+		Enumeration<?> childrens = rootNode.children();
+		while (childrens.hasMoreElements()) {
+			MTreeNode child = (MTreeNode)childrens.nextElement();
+			MMenu menu = MMenu.getFromId(Env.getCtx(), child.getNode_ID());
+			Menu.Builder childBuilder = convertMenu(
+				Env.getCtx(),
+				menu,
+				child.getParent_ID(),
+				language
+			);
+			//	Explode child
+			addChildren(Env.getCtx(), childBuilder, child, language);
+			// builder.addChildren(childBuilder.build());
+			builderList.addMenus(childBuilder);
 		}
 
 		//	Set from DB
@@ -1585,6 +1628,10 @@ public class Security extends SecurityImplBase {
 	 * @return
 	 */
 	private Menu.Builder convertMenu(Properties context, MMenu menu, int parentId, String language) {
+		Menu.Builder builder = Menu.newBuilder();
+		if (menu == null) {
+			return builder;
+		}
 		String name = null;
 		String description = null;
 		if(!Util.isEmpty(language)) {
@@ -1598,7 +1645,7 @@ public class Security extends SecurityImplBase {
 		if(Util.isEmpty(description, true)) {
 			description = menu.getDescription();
 		}
-		Menu.Builder builder = Menu.newBuilder()
+		builder
 			.setId(
 				TextManager.getValidString(
 					menu.getUUID()
@@ -1636,9 +1683,10 @@ public class Security extends SecurityImplBase {
 			)
 		;
 		//	Supported actions
-		if(!Util.isEmpty(menu.getAction(), true)) {
+		final String menuAction = menu.getAction();
+		if(!Util.isEmpty(menuAction, true)) {
 			DictionaryEntity.Builder actionReference = DictionaryEntity.newBuilder();
-			if(menu.getAction().equals(MMenu.ACTION_Form) && menu.getAD_Form_ID() > 0) {
+			if(menuAction.equals(MMenu.ACTION_Form) && menu.getAD_Form_ID() > 0) {
 				MForm form = new MForm(context, menu.getAD_Form_ID(), null);
 				actionReference.setId(
 						form.getAD_Form_ID()
@@ -1674,8 +1722,8 @@ public class Security extends SecurityImplBase {
 					)
 					.setForm(actionReference)
 				;
-			} else if (menu.getAction().equals(MMenu.ACTION_Window) && menu.getAD_Window_ID() > 0) {
-				MWindow window = new MWindow(context, menu.getAD_Window_ID(), null);
+			} else if (menuAction.equals(MMenu.ACTION_Window) && menu.getAD_Window_ID() > 0) {
+				MWindow window = MWindow.get(context, menu.getAD_Window_ID());
 				actionReference.setId(
 						window.getAD_Window_ID()
 					)
@@ -1711,7 +1759,7 @@ public class Security extends SecurityImplBase {
 					.setWindow(actionReference)
 				;
 				
-			} else if ((menu.getAction().equals(MMenu.ACTION_Process) || menu.getAction().equals(MMenu.ACTION_Report))
+			} else if ((menuAction.equals(MMenu.ACTION_Process) || menuAction.equals(MMenu.ACTION_Report))
 					&& menu.getAD_Process_ID() > 0) {
 				MProcess process = MProcess.get(context, menu.getAD_Process_ID());
 				actionReference.setId(
@@ -1748,7 +1796,7 @@ public class Security extends SecurityImplBase {
 					)
 					.setProcess(actionReference)
 				;
-			} else if (menu.getAction().equals(MMenu.ACTION_SmartBrowse) && menu.getAD_Browse_ID() > 0) {
+			} else if (menuAction.equals(MMenu.ACTION_SmartBrowse) && menu.getAD_Browse_ID() > 0) {
 				MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
 				actionReference.setId(
 						smartBrowser.getAD_Browse_ID()
@@ -1784,7 +1832,7 @@ public class Security extends SecurityImplBase {
 					)
 					.setBrowser(actionReference)
 				;
-			} else if (menu.getAction().equals(MMenu.ACTION_WorkFlow) && menu.getAD_Workflow_ID() > 0) {
+			} else if (menuAction.equals(MMenu.ACTION_WorkFlow) && menu.getAD_Workflow_ID() > 0) {
 				MWorkflow workflow = MWorkflow.get(context, menu.getAD_Workflow_ID());
 				actionReference.setId(
 						workflow.getAD_Workflow_ID()
