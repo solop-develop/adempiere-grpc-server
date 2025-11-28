@@ -379,12 +379,21 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	private Movement.Builder createMovement(CreateMovementRequest request) {
 		int projectId = request.getProjectId();
 		int activityId = request.getActivityId();
+		int campaignId = request.getCampaignId();
+		int bpartnerId = request.getBpartnerId();
+		int user1Id = request.getUser1Id();
+		int user4Id = request.getUser4Id();
+
 		AtomicReference<MMovement> maybeMovement = new AtomicReference<MMovement>();
 
 		Trx.run(transactionName -> {
 			MMovement inventoryMovement = new MMovement(Env.getCtx(), 0, transactionName);
 			inventoryMovement.setC_Project_ID(projectId);
 			inventoryMovement.setC_Activity_ID(activityId);
+			inventoryMovement.setC_Campaign_ID(campaignId);
+			inventoryMovement.setC_BPartner_ID(bpartnerId);
+			inventoryMovement.setUser1_ID(user1Id);
+			inventoryMovement.setUser4_ID(user4Id);
 			inventoryMovement.setMovementDate(TimeManager.getDate()); // TODO: Verfy it
 			inventoryMovement.saveEx(transactionName);
 
@@ -541,6 +550,10 @@ public class ExpressMovement extends ExpressMovementImplBase {
 		int projectId = request.getProjectId();
 		int activityId = request.getActivityId();
 
+		int campaignId = request.getCampaignId();
+		int user1Id = request.getUser1Id();
+		int user4Id = request.getUser4Id();
+
 		AtomicReference<MMovementLine> movementLineReference = new AtomicReference<MMovementLine>();
 
 		Trx.run(transactionName -> {
@@ -611,6 +624,9 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				movementLine.setM_Product_ID(productId);
 				movementLine.setC_Project_ID(projectId);
 				movementLine.setC_Activity_ID(activityId);
+				movementLine.setC_Campaign_ID(campaignId);
+				movementLine.setUser1_ID(user1Id);
+				movementLine.setUser4_ID(user4Id);
 			}
 
 			movementLine.setMovementQty(quantity);
