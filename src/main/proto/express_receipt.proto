@@ -157,6 +157,11 @@ message CreateReceiptRequest {
 	bool is_create_lines_from_order = 2;
 	int32 project_id = 3;
 	int32 activity_id = 4;
+	int32 bpartner_id = 5;
+	int32 user1_id = 6;
+	int32 user_element2_id = 7;
+	int32 user4_id = 8;
+	int32 campaign_id = 9;
 }
 
 message Receipt {
@@ -187,6 +192,11 @@ message CreateReceiptLineRequest {
 	bool is_quantity_from_order_line = 5;
 	int32 project_id = 6;
 	int32 activity_id = 7;
+	int32 bpartner_id = 8;
+	int32 user1_id = 9;
+	int32 user_element2_id = 10;
+	int32 user4_id = 11;
+	int32 campaign_id = 12;
 }
 
 message ReceiptLine {
@@ -227,4 +237,9 @@ message UpdateReceiptLineRequest {
 	string quantity = 4;
 	int32 project_id = 5;
 	int32 activity_id = 6;
+	int32 bpartner_id = 7;
+	int32 user1_id = 8;
+	int32 user_element2_id = 9;
+	int32 user4_id = 10;
+	int32 campaign_id = 11;
 }
