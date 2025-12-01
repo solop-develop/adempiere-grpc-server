@@ -457,7 +457,14 @@ public class ImportFileLoaderLogic {
 
 		// Charset
 		String charsetValue = request.getCharset();
+		InputStreamReader reader = new InputStreamReader(inputStream);
+		String suggestedCharsetValue = reader.getEncoding();
+		if ((Util.isEmpty(charsetValue, true) || !Charset.isSupported(charsetValue)) && !Util.isEmpty(suggestedCharsetValue, true)) {
+			// suggested character set
+			charsetValue = suggestedCharsetValue;
+		}
 		if (Util.isEmpty(charsetValue, true) || !Charset.isSupported(charsetValue)) {
+			// default character set
 			charsetValue = Charset.defaultCharset().name();
 		}
 		Charset charset = Charset.forName(charsetValue);
@@ -487,6 +494,9 @@ public class ImportFileLoaderLogic {
 				TextManager.getValidString(
 					table.getTableName()
 				)
+			)
+			.setSuggestedCharset(
+				TextManager.getValidString(suggestedCharsetValue)
 			)
 		;
 
