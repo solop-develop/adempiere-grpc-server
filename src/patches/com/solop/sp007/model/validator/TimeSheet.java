@@ -28,6 +28,7 @@ import org.compiere.util.CLogger;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A validator for create additional line of sales order wjen it have a resource
@@ -102,8 +103,7 @@ public class TimeSheet implements ModelValidator {
 	}
 	private BigDecimal calculateHours(Timestamp start, Timestamp end) {
 		long difference = end.getTime() - start.getTime();
-		double MILLISECONDS = (1000.0 * 60 * 60);
-		return BigDecimal.valueOf(difference / MILLISECONDS).setScale(2, RoundingMode.DOWN);
+		return BigDecimal.valueOf(difference / (double)TimeUnit.HOURS.toMillis(1)).setScale(2, RoundingMode.DOWN);
 	}
 
 	@Override
