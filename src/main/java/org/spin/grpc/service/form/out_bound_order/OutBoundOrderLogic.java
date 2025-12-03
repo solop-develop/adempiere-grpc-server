@@ -510,9 +510,9 @@ public class OutBoundOrderLogic {
 					"FROM DD_Order ord " +
 					"INNER JOIN DD_OrderLine lord ON(lord.DD_Order_ID = ord.DD_Order_ID) " +
 					"LEFT JOIN " +
-					"    (SELECT lord.M_AttributeSetInstance_ID, productattribute(lord.M_AttributeSetInstance_ID) AS ProductAttribute " +
+					"    (SELECT lord.DD_OrderLine_ID, lord.M_AttributeSetInstance_ID, productattribute(lord.M_AttributeSetInstance_ID) AS ProductAttribute " +
 					"    FROM DD_OrderLine lord) AS attr " +
-					"    ON lord.M_AttributeSetInstance_ID = attr.M_AttributeSetInstance_ID " +
+					"    ON(attr.DD_OrderLine_ID = lord.DD_OrderLine_ID AND lord.M_AttributeSetInstance_ID = attr.M_AttributeSetInstance_ID) " +
 					"INNER JOIN M_Locator l ON(l.M_Locator_ID = lord.M_Locator_ID) " + 
 					"INNER JOIN M_Warehouse alm ON(alm.M_Warehouse_ID = l.M_Warehouse_ID) " +
 					"INNER JOIN M_Product pro ON(pro.M_Product_ID = lord.M_Product_ID) " +
@@ -596,9 +596,9 @@ public class OutBoundOrderLogic {
 					"FROM C_Order ord " +
 					"INNER JOIN C_OrderLine lord ON(lord.C_Order_ID = ord.C_Order_ID) " +
 					"LEFT JOIN " +
-					"    (SELECT lord.M_AttributeSetInstance_ID, productattribute(lord.M_AttributeSetInstance_ID) AS ProductAttribute " +
+					"    (SELECT lord.C_OrderLine_ID, lord.M_AttributeSetInstance_ID, productattribute(lord.M_AttributeSetInstance_ID) AS ProductAttribute " +
 					"    FROM C_OrderLine lord) AS attr " +
-					"    ON lord.M_AttributeSetInstance_ID = attr.M_AttributeSetInstance_ID " +
+					"    ON(attr.C_OrderLine_ID = lord.C_OrderLine_ID AND lord.M_AttributeSetInstance_ID = attr.M_AttributeSetInstance_ID) " +
 					"INNER JOIN M_Warehouse alm ON(alm.M_Warehouse_ID = lord.M_Warehouse_ID) " +
 					"INNER JOIN M_Product pro ON(pro.M_Product_ID = lord.M_Product_ID) " +
 					"INNER JOIN C_UOM uom ON(uom.C_UOM_ID = lord.C_UOM_ID) " +
