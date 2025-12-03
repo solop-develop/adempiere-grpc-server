@@ -55,6 +55,7 @@ dependencies {
             '*.jar'
         ]
     )
+	implementation 'org.jsoup:jsoup:1.17.2'
 	implementation "io.netty:netty-handler:4.1.107.Final"
 	runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
     implementation "io.grpc:grpc-alts:${grpcVersion}"
