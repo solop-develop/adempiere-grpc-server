@@ -2063,7 +2063,7 @@ public class MOrder extends X_C_Order implements DocAction
 		//	Set Vendor
 		MBPartner vendor = new MBPartner (getCtx(), getDropShip_BPartner_ID(), get_TrxName());
 		purchaseOrder.setBPartner(vendor);
-		MPriceList priceList = MPriceList.getDefault(getCtx(), false, getC_Currency().getISO_Code());
+		MPriceList priceList = MPriceList.getDefault(getCtx(), false,  getCurrencyISO());
 		purchaseOrder.setM_PriceList_ID(priceList.get_ID());
 		purchaseOrder.setIsDropShip(true);
 		purchaseOrder.setDropShip_BPartner_ID(getDropShip_BPartner_ID());
