@@ -48,12 +48,10 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 	/**	Lines	*/
 	private Map<String, List<ConsignmentOrderGrouping>> productToOrderGroup;
 	private Map<Integer, Integer> orderLineToConsignedConsolidate;
-	private Map<Integer, BigDecimal> consolidateQty;
 	@Override
 	protected void prepare() {
 		super.prepare();
 	}
-	private AtomicInteger qtyTest = new AtomicInteger(0);
 
 	MTable consignmentConsolidateTable;
 	MTable consignmentDetailTable;
@@ -62,7 +60,6 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 	protected String doIt() throws Exception {
 		productToOrderGroup = new HashMap<>();
 		orderLineToConsignedConsolidate = new HashMap<>();
-		consolidateQty = new HashMap<>();
 		consignmentConsolidateTable = MTable.get(getCtx(), "T_ConsignmentSales");
 		consignmentDetailTable = MTable.get(getCtx(), "T_ConsignmentSalesDetail");
 		if (consignmentConsolidateTable == null || consignmentConsolidateTable.get_ID() <= 0) {
@@ -72,30 +69,10 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 			throw new AdempiereException("@AD_Table_ID@ T_ConsignmentSalesDetail @NotFound@");
 		}
 
-		long startTime = System.nanoTime();
 		consolidateByInvoice();
 		consolidateByInventory();
-		long endTime = System.nanoTime();
-		long durationNano = endTime - startTime;
-		long durationMilli = durationNano / 1000000;
-		double durationSecond = durationMilli /1000.0;
-		double durationMinute = durationSecond/(60.0);
 
-		System.out.println("----------------FOR CONSOLIDATE--------------");
-		System.out.println("duration Mili: " + durationMilli);
-		System.out.println("Duration second: " + durationSecond);
-		System.out.println("Duration: " + durationMinute);
-		startTime = System.nanoTime();
-		System.out.println("----------------FOR INSERTING--------------");
 		InsertParallel();
-		endTime = System.nanoTime();
-		durationNano = endTime - startTime;
-		durationMilli = durationNano / 1000000;
-		durationSecond = durationMilli /1000.0;
-		durationMinute = durationSecond/60.0;
-		System.out.println("duration Mili: " + durationMilli);
-		System.out.println("Duration second: " + durationSecond);
-		System.out.println("Duration: " + durationMinute);
 		return "";
 	}
 
@@ -256,7 +233,6 @@ public class ConsolidateConsignmentSalesForInvoice extends ConsolidateConsignmen
 								transactionName);
 						orderLineToConsignedConsolidate.put(orderGroup.getOrderLineId(), consolidateId);
 					}
-					consolidateQty.put(consolidateId, orderGroup.getUsedAmount());
 
 					List<Object> params = new ArrayList<>();
 					params.add(orderGroup.getClientSalesOrderLineId());
