@@ -2063,11 +2063,15 @@ public class MOrder extends X_C_Order implements DocAction
 		//	Set Vendor
 		MBPartner vendor = new MBPartner (getCtx(), getDropShip_BPartner_ID(), get_TrxName());
 		purchaseOrder.setBPartner(vendor);
-		MPriceList priceList = MPriceList.getDefault(getCtx(), false,  getCurrencyISO());
-		if (priceList == null || priceList.get_ID() <= 0) {
+		if (!dropShipSetup.isUseVendorPriceList()){
+			MPriceList priceList = MPriceList.getDefault(getCtx(), false,  getCurrencyISO());
+			if (priceList != null && priceList.get_ID() > 0) {
+				purchaseOrder.setM_PriceList_ID(priceList.get_ID());
+			}
+		}
+		if (purchaseOrder.getM_PriceList_ID() <= 0) {
 			throw new AdempiereException("@M_PriceList_ID@ @NotFound@");
 		}
-		purchaseOrder.setM_PriceList_ID(priceList.get_ID());
 		purchaseOrder.setIsDropShip(true);
 		purchaseOrder.setDropShip_BPartner_ID(getDropShip_BPartner_ID());
 		purchaseOrder.setDropShip_Location_ID(getDropShip_Location_ID());
