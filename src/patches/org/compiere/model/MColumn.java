@@ -581,8 +581,8 @@ public class MColumn extends X_AD_Column
 					sql.append(" CHECK (").append(getColumnName()).append(" IN ('Y','N'))");
 			sql.append(DB.SQLSTATEMENT_SEPARATOR);
 			boolean isOracle = DB.isOracle();
-			String alterColumn= isOracle?" MODIFY " : " ALTER COLUMN ";
-			String setColumnData = isOracle? "": " SET";
+			String alterColumn= isOracle ? " MODIFY " : " ALTER COLUMN ";
+			String setColumnData = isOracle ?  "": " SET";
 			//  Set the default value for new records
 			String defaultValue = getDefaultValueSQL();
 			sql.append("ALTER TABLE ")
