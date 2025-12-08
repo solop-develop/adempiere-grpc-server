@@ -156,6 +156,8 @@ public class ElectronicInvoicingUtil {
 					return taxGroup.get_ValueAsInt(ElectronicInvoicingChanges.SP013_MCreditDocType_ID);
 				} else if(fiscalDocumentType.equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Debit_Note)) {
 					return taxGroup.get_ValueAsInt(ElectronicInvoicingChanges.SP013_MDebitDocType_ID);
+				} else {
+					return taxGroup.get_ValueAsInt(ElectronicInvoicingChanges.SP013_MInvoiceDocType_ID);
 				}
 			} else {
 				if(fiscalDocumentType.equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Invoice)) {
@@ -164,6 +166,8 @@ public class ElectronicInvoicingUtil {
 					return taxGroup.get_ValueAsInt(ElectronicInvoicingChanges.SP013_CreditDocType_ID);
 				} else if(fiscalDocumentType.equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Debit_Note)) {
 					return taxGroup.get_ValueAsInt(ElectronicInvoicingChanges.SP013_DebitDocType_ID);
+				} else {
+					return taxGroup.get_ValueAsInt(ElectronicInvoicingChanges.SP013_InvoiceDocType_ID);
 				}
 			}
 
