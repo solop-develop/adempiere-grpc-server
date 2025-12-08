@@ -97,34 +97,35 @@ public class ElectronicInvoicing implements ModelValidator {
 			log.fine(" TYPE_BEFORE_NEW || TYPE_BEFORE_CHANGE");
 			if (po.get_TableName().equals(MInvoice.Table_Name)) {
 				MInvoice invoice = (MInvoice) po;
-				if(invoice.isSOTrx()) {
-					if(type == TYPE_BEFORE_NEW || invoice.is_ValueChanged(I_C_Invoice.COLUMNNAME_C_BPartner_ID)) {
-						MBPartner customer = MBPartner.get(invoice.getCtx(), invoice.getC_BPartner_ID());
-						MDocType documentType = MDocType.get(invoice.getCtx(), invoice.getC_DocTypeTarget_ID());
-						String fiscalDocumentType = ElectronicInvoicingChanges.SP013_FiscalDocumentType_Invoice;
-						if(documentType != null) {
-							fiscalDocumentType = documentType.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalDocumentType);
-							if(Util.isEmpty(fiscalDocumentType, true)) {
-								fiscalDocumentType = ElectronicInvoicingChanges.SP013_FiscalDocumentType_Invoice;
+
+				MDocType documentType = MDocType.get(invoice.getCtx(), invoice.getC_DocTypeTarget_ID());
+				if (documentType != null && documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsElectronicDocument)){
+					if(invoice.isSOTrx()) {
+
+						if(type == TYPE_BEFORE_NEW || invoice.is_ValueChanged(I_C_Invoice.COLUMNNAME_C_BPartner_ID)) {
+							MBPartner customer = MBPartner.get(invoice.getCtx(), invoice.getC_BPartner_ID());
+
+							String fiscalDocumentType = documentType.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalDocumentType);
+
+							if (!Util.isEmpty(fiscalDocumentType, true)){
+								int documentTypeId = ElectronicInvoicingUtil.getDocumentTypeFromTaxGroup(invoice.getCtx(), fiscalDocumentType, customer.getC_TaxGroup_ID(), invoice.isManualDocument());
+								if(documentTypeId > 0) {
+									invoice.setC_DocTypeTarget_ID(documentTypeId);
+								}
+							}
+
+							MBPartner mbPartner = (MBPartner) invoice.getC_BPartner();
+							String electronicBillingCriteria = mbPartner.get_ValueAsString("SP013_BillingCriteria");
+							if (!Util.isEmpty(electronicBillingCriteria, true)) {
+								invoice.set_ValueOfColumn("SP013_BillingCriteria", mbPartner.get_ValueAsString("SP013_BillingCriteria"));
 							}
 						}
-						int documentTypeId = ElectronicInvoicingUtil.getDocumentTypeFromTaxGroup(invoice.getCtx(), fiscalDocumentType, customer.getC_TaxGroup_ID(), invoice.isManualDocument());
-						if(documentTypeId > 0) {
-							invoice.setC_DocTypeTarget_ID(documentTypeId);
-						}
 
-						MBPartner mbPartner = (MBPartner) invoice.getC_BPartner();
-						String electronicBillingCriteria = mbPartner.get_ValueAsString("SP013_BillingCriteria");
-						if (!Util.isEmpty(electronicBillingCriteria, true)) {
-							invoice.set_ValueOfColumn("SP013_BillingCriteria", mbPartner.get_ValueAsString("SP013_BillingCriteria"));
-						}
 					}
-
-				}
-				if(type == TYPE_BEFORE_NEW || invoice.is_ValueChanged(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)) {
-					MDocType documentType = MDocType.get(invoice.getCtx(), invoice.getC_DocTypeTarget_ID());
-					invoice.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsElectronicDocument, documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsElectronicDocument));
-					invoice.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsAllowsReverse, documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsAllowsReverse));
+					if(type == TYPE_BEFORE_NEW || invoice.is_ValueChanged(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)) {
+						invoice.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsElectronicDocument, documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsElectronicDocument));
+						invoice.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsAllowsReverse, documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsAllowsReverse));
+					}
 				}
 				//	Set Allocated Document
 				if(type == TYPE_BEFORE_NEW) {
@@ -182,10 +183,14 @@ public class ElectronicInvoicing implements ModelValidator {
 		} else if (type == TYPE_AFTER_CHANGE) {
 			if(po.get_TableName().equals(I_C_Invoice.Table_Name)) {
 				MInvoice invoice = (MInvoice) po;
-				if (invoice.is_ValueChanged("SP013_BillingCriteria")){
-					ElectronicInvoicingSummaryGrouping grouping = ElectronicInvoicingSummaryGrouping.newInstance(invoice);
-					grouping.process();
+				MDocType documentType = MDocType.get(invoice.getCtx(), invoice.getC_DocTypeTarget_ID());
+				if (documentType != null && documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsElectronicDocument)){
+					if (invoice.is_ValueChanged("SP013_BillingCriteria")){
+						ElectronicInvoicingSummaryGrouping grouping = ElectronicInvoicingSummaryGrouping.newInstance(invoice);
+						grouping.process();
+					}
 				}
+
 			}
 		}
 		return null;
