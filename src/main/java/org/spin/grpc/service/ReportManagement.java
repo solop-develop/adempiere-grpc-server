@@ -88,6 +88,7 @@ import org.spin.dictionary.util.ReportUtil;
 import org.spin.eca62.util.S3Manager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.ByteString;
@@ -242,25 +243,33 @@ public class ReportManagement extends ReportManagementImplBase {
 		Map<String, Value> parametersList = new HashMap<String, Value>();
 		parametersList.putAll(parameters.getFieldsMap());
 		if(parameters.getFieldsCount() > 0) {
-			List<Entry<String, Value>> parametersListWithoutRange = parametersList.entrySet().parallelStream()
+			List<Entry<String, Value>> parametersListWithoutRange = parametersList.entrySet()
+				.parallelStream()
 				.filter(parameterValue -> {
 					return !parameterValue.getKey().endsWith("_To");
 				})
-				.collect(Collectors.toList());
+				.collect(Collectors.toList())
+			;
 			for(Entry<String, Value> parameter : parametersListWithoutRange) {
 				final String columnName = parameter.getKey();
+				final String columnNameTo = columnName + "_To";
 				int displayTypeId = -1;
+				boolean isMandatory = false;
+				boolean isRange = false;
 				MProcessPara processParameter = new Query(
 					Env.getCtx(),
 					I_AD_Process_Para.Table_Name,
 					"AD_Process_ID = ? AND (ColumnName = ? OR ColumnName = ?)",
 					null
 				)
-					.setParameters(process.getAD_Process_ID(), columnName, columnName + "_To")
+					.setParameters(process.getAD_Process_ID(), columnName, columnNameTo)
 					.first()
 				;
 				if (processParameter != null) {
+					// TODO: validate `AD_PInstance` and `Record_ID` columns
 					displayTypeId = processParameter.getAD_Reference_ID();
+					isMandatory = processParameter.isMandatory();
+					isRange = processParameter.isRange();
 				}
 
 				Object value = null;
@@ -274,29 +283,40 @@ public class ReportManagement extends ReportManagementImplBase {
 						parameter.getValue()
 					);
 				}
-				Optional<Entry<String, Value>> maybeToParameter = parametersList.entrySet().parallelStream()
+
+				if (!isRange) {
+					if (isMandatory && value == null) {
+						throw new AdempiereException("@FillMandatory@ @" + columnName + "@");
+					}
+					builder.withParameter(columnName, value);
+					continue;
+				}
+
+				// _To parameter
+				Optional<Entry<String, Value>> maybeToParameter = parametersList.entrySet()
+					.parallelStream()
 					.filter(parameterValue -> {
-						return parameterValue.getKey().equals(columnName + "_To");
+						return parameterValue.getKey().equals(columnNameTo);
 					})
-					.findFirst();
-				if(value != null) {
-					if(maybeToParameter.isPresent()) {
-						Object valueTo = null;
-						if (displayTypeId > 0) {
-							valueTo = ValueManager.getObjectFromProtoValue(
-								maybeToParameter.get().getValue(),
-								displayTypeId
-							);
-						} else {
-							valueTo = ValueManager.getObjectFromProtoValue(
-								maybeToParameter.get().getValue()
-							);
-						}
-						builder.withParameter(columnName, value, valueTo);
+					.findFirst()
+				;
+				Object valueTo = null;
+				if(maybeToParameter.isPresent()) {
+					if (displayTypeId > 0) {
+						valueTo = ValueManager.getObjectFromProtoValue(
+							maybeToParameter.get().getValue(),
+							displayTypeId
+						);
 					} else {
-						builder.withParameter(columnName, value);
+						valueTo = ValueManager.getObjectFromProtoValue(
+							maybeToParameter.get().getValue()
+						);
 					}
 				}
+				if (isMandatory && (value == null || valueTo == null)) {
+					throw new AdempiereException("@FillMandatory@ @" + columnName + "@ / @" + columnName + "@ @To@");
+				}
+				builder.withParameter(columnName, value, valueTo);
 			}
 		}
 
@@ -341,9 +361,6 @@ public class ReportManagement extends ReportManagementImplBase {
 				)
 				.first()
 			;
-			responseBuilder.setInstanceId(
-				instance.getAD_PInstance_ID()
-			);
 
 			// if (!Util.isEmpty(instance.getErrorMsg(), true)) {
 			// 	result.setError(true);
@@ -357,11 +374,15 @@ public class ReportManagement extends ReportManagementImplBase {
 			// 	result.setSummary(errorMessage);
 			// }
 
-			responseBuilder.setLastRun(
-				ValueManager.getProtoTimestampFromTimestamp(
-					instance.getUpdated()
+			responseBuilder.setInstanceId(
+					instance.getAD_PInstance_ID()
 				)
-			);
+				.setLastRun(
+					TimeManager.getProtoTimestampFromTimestamp(
+						instance.getUpdated()
+					)
+				)
+			;
 
 			if(instance.getAD_PrintFormat_ID() > 0) {
 				printFormatId = instance.getAD_PrintFormat_ID();
@@ -416,15 +437,6 @@ public class ReportManagement extends ReportManagementImplBase {
 				result.getResultTableName()
 			)
 		);
-		//	Convert Log
-		if(result.getLogList() != null) {
-			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
-				ProcessInfoLog.Builder infoLogBuilder = ConvertUtil.convertProcessInfoLog(log);
-				responseBuilder.addLogs(
-					infoLogBuilder.build()
-				);
-			}
-		}
 		//	Verify Output
 		responseBuilder = addReportOutput(
 			responseBuilder,
@@ -435,6 +447,16 @@ public class ReportManagement extends ReportManagementImplBase {
 			reportViewReferenceId,
 			tableNameReference
 		);
+
+		//	Convert Log
+		if(result.getLogList() != null) {
+			for(org.compiere.process.ProcessInfoLog log : result.getLogList()) {
+				ProcessInfoLog.Builder infoLogBuilder = ConvertUtil.convertProcessInfoLog(log);
+				responseBuilder.addLogs(
+					infoLogBuilder.build()
+				);
+			}
+		}
 
 		return responseBuilder;
 	}

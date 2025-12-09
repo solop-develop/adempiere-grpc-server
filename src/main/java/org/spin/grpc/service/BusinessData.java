@@ -70,6 +70,7 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.query.SortingManager;
 import org.spin.service.grpc.util.value.CollectionManager;
 import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
@@ -396,18 +397,24 @@ public class BusinessData extends BusinessDataImplBase {
 			;
 			for(Entry<String, Value> parameter : parametersListWithoutRange) {
 				final String columnName = parameter.getKey();
+				final String columnNameTo = columnName + "_To";
 				int displayTypeId = -1;
+				boolean isMandatory = false;
+				boolean isRange = false;
 				MProcessPara processParameter = new Query(
 					Env.getCtx(),
 					I_AD_Process_Para.Table_Name,
 					"AD_Process_ID = ? AND (ColumnName = ? OR ColumnName = ?)",
 					null
 				)
-					.setParameters(process.getAD_Process_ID(), columnName, columnName + "_To")
+					.setParameters(process.getAD_Process_ID(), columnName, columnNameTo)
 					.first()
 				;
 				if (processParameter != null) {
+					// TODO: validate null or `AD_PInstance` and `Record_ID` columns to break
 					displayTypeId = processParameter.getAD_Reference_ID();
+					isMandatory = processParameter.isMandatory();
+					isRange = processParameter.isRange();
 				}
 
 				Object value = null;
@@ -421,39 +428,49 @@ public class BusinessData extends BusinessDataImplBase {
 						parameter.getValue()
 					);
 				}
+				//	For Document Action
+				if(value != null && columnName.equals(I_C_Order.COLUMNNAME_DocAction)) {
+					documentAction = TextManager.getStringFromObject(value);
+				}
+
+				if (!isRange) {
+					if (isMandatory && value == null) {
+						throw new AdempiereException("@FillMandatory@ @" + columnName + "@");
+					}
+					//	Get Valid Local file
+					value = getValidParameterValue(value, displayTypeId);
+					builder.withParameter(columnName, value);
+					continue;
+				}
+
+				// _To parameter
 				Optional<Entry<String, Value>> maybeToParameter = parametersList
 					.entrySet()
 					.parallelStream()
 					.filter(parameterValue -> {
-						return parameterValue.getKey().equals(parameter.getKey() + "_To");
+						return parameterValue.getKey().equals(columnNameTo);
 					})
 					.findFirst()
 				;
-				if(value != null) {
-					value = getValidParameterValue(value, displayTypeId);
-					if(maybeToParameter.isPresent()) {
-						Object valueTo = null;
-						if (displayTypeId > 0) {
-							valueTo = ValueManager.getObjectFromProtoValue(
-								maybeToParameter.get().getValue(),
-								displayTypeId
-							);
-						} else {
-							valueTo = ValueManager.getObjectFromProtoValue(
-								maybeToParameter.get().getValue()
-							);
-						}
-						valueTo = getValidParameterValue(valueTo, displayTypeId);
-						//	Get Valid Local file
-						builder.withParameter(columnName, value, valueTo);
+				Object valueTo = null;
+				if(maybeToParameter.isPresent()) {
+					if (displayTypeId > 0) {
+						valueTo = ValueManager.getObjectFromProtoValue(
+							maybeToParameter.get().getValue(),
+							displayTypeId
+						);
 					} else {
-						builder.withParameter(columnName, value);
+						valueTo = ValueManager.getObjectFromProtoValue(
+							maybeToParameter.get().getValue()
+						);
 					}
-					//	For Document Action
-					if(columnName.equals(I_C_Order.COLUMNNAME_DocAction)) {
-						documentAction = (String) value;
-					}
+					//	Get Valid Local file
+					valueTo = getValidParameterValue(valueTo, displayTypeId);
 				}
+				if (isMandatory && (value == null || valueTo == null)) {
+					throw new AdempiereException("@FillMandatory@ @" + columnName + "@ / @" + columnName + "@ @To@");
+				}
+				builder.withParameter(columnName, value, valueTo);
 			}
 		}
 		//	For Document
@@ -491,7 +508,7 @@ public class BusinessData extends BusinessDataImplBase {
 		}
 
 		//	Get process instance from identifier
-		if(result.getAD_PInstance_ID() != 0) {
+		if(result.getAD_PInstance_ID() > 0) {
 			MPInstance instance = new Query(
 				Env.getCtx(),
 				I_AD_PInstance.Table_Name,
@@ -499,14 +516,17 @@ public class BusinessData extends BusinessDataImplBase {
 				null
 			)
 				.setParameters(result.getAD_PInstance_ID())
-				.first();
-			response.setInstanceId(instance.getAD_PInstance_ID());
-
-			response.setLastRun(
-				ValueManager.getProtoTimestampFromTimestamp(
-					instance.getUpdated()
+				.first()
+			;
+			response.setInstanceId(
+					instance.getAD_PInstance_ID()
 				)
-			);
+				.setLastRun(
+					TimeManager.getProtoTimestampFromTimestamp(
+						instance.getUpdated()
+					)
+				)
+			;
 		}
 
 		//	
@@ -555,7 +575,11 @@ public class BusinessData extends BusinessDataImplBase {
 				if(clientInfo.getFileHandler_ID() <= 0) {
 					throw new AdempiereException("@FileHandler_ID@ @NotFound@");
 				}
-				MADAppRegistration genericConnector = MADAppRegistration.getById(Env.getCtx(), clientInfo.getFileHandler_ID(), null);
+				MADAppRegistration genericConnector = MADAppRegistration.getById(
+					Env.getCtx(),
+					clientInfo.getFileHandler_ID(),
+					null
+				);
 				if(genericConnector == null) {
 					throw new AdempiereException("@AD_AppRegistration_ID@ @NotFound@");
 				}
