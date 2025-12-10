@@ -132,6 +132,12 @@ service Dictionary {
 		};
 	}
 
+	rpc ListReportFields(ListSelectionColumnsRequest) returns (ListSelectionColumnsResponse) {
+		option (google.api.http) = {
+			get: "/dictionary/report-fields/{table_name}"
+		};
+	}
+
 	// List Search Info Fields
 	rpc ListSearchFields(ListSearchFieldsRequest) returns (ListSearchFieldsResponse) {
 		option (google.api.http) = {
