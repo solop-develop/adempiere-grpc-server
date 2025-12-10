@@ -464,6 +464,29 @@ public class Dictionary extends DictionaryImplBase {
 
 
 	@Override
+	public void listReportFields(ListSelectionColumnsRequest request, StreamObserver<ListSelectionColumnsResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListSelectionColumnsResponse.Builder fielsListBuilder = DictionaryServiceLogic.listReportFields(request);
+			responseObserver.onNext(fielsListBuilder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.severe(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
 	public void listSearchFields(ListSearchFieldsRequest request, StreamObserver<ListSearchFieldsResponse> responseObserver) {
 		try {
 			if (request == null) {

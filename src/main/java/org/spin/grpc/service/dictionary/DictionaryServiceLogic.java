@@ -313,6 +313,90 @@ public class DictionaryServiceLogic {
 		return fieldsListBuilder;
 	}
 
+	public static ListSelectionColumnsResponse.Builder listReportFields(ListSelectionColumnsRequest request) {
+		final String tableName = request.getTableName();
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			tableName
+		);
+
+		Properties context = Env.getCtx();
+		Query query = new Query(
+			context,
+			I_AD_Column.Table_Name,
+			"AD_Table_ID = ?",
+			null
+		)
+			.setOrderBy(I_AD_Column.COLUMNNAME_ColumnName)
+			.setParameters(table.getAD_Table_ID())
+		;
+
+		ListSelectionColumnsResponse.Builder fieldsListBuilder = ListSelectionColumnsResponse.newBuilder()
+			.setRecordCount(
+				query.count()
+			)
+		;
+
+		AtomicInteger sequence = new AtomicInteger(0);
+		query
+			.getIDsAsList()
+			.forEach(columnId -> {
+				MColumn column = MColumn.get(context, columnId);
+				if (column == null || column.getAD_Column_ID() <= 0) {
+					return;
+				}
+				final String columnName = column.getColumnName();
+				Field.Builder fieldBuilder = DictionaryConvertUtil.convertFieldByColumn(
+					context,
+					column
+				);
+				fieldBuilder.setSequence(
+						sequence.incrementAndGet()
+					)
+					.setIsDisplayed(true)
+					.setIsMandatory(false)
+				;
+				fieldsListBuilder.addSelectionColumns(
+						columnName
+					)
+					.addSelectionFields(
+						fieldBuilder
+					)
+				;
+			})
+		;
+
+		if (fieldsListBuilder.getSelectionColumnsCount() <= 0) {
+			MColumn valueColumn = table.getColumn("Value");
+			if (valueColumn != null) {
+				fieldsListBuilder.addSelectionColumns(
+					"Value"
+				);
+			}
+			MColumn nameColumn = table.getColumn("Name");
+			if (nameColumn != null) {
+				fieldsListBuilder.addSelectionColumns(
+					"Name"
+				);
+			}
+			MColumn documentNoColumn = table.getColumn("DocumentNo");
+			if (documentNoColumn != null) {
+				fieldsListBuilder.addSelectionColumns(
+					"DocumentNo"
+				);
+			}
+		}
+		if (fieldsListBuilder.getSelectionColumnsCount() <= 0) {
+			fieldsListBuilder.addAllSelectionColumns(
+				Arrays.asList(
+					table.getKeyColumns()
+				)
+			);
+		}
+
+		return fieldsListBuilder;
+	}
+
 
 
 	public static ListSearchFieldsResponse.Builder listSearchFields(ListSearchFieldsRequest request) {
