@@ -63,9 +63,10 @@ import io.grpc.stub.StreamObserver;
  * Get all dictionary meta-data
  */
 public class Dictionary extends DictionaryImplBase {
+
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(Dictionary.class);
-	
+
 	@Override
 	public void getWindow(EntityRequest request, StreamObserver<Window> responseObserver) {
 		try {
@@ -73,7 +74,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(windowBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -83,6 +84,7 @@ public class Dictionary extends DictionaryImplBase {
 			);
 		}
 	}
+
 	/**
 	 * Request Window: can be only window or child
 	 * @param request
@@ -118,7 +120,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(tabBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -165,7 +167,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(processBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -183,7 +185,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(processBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -203,7 +205,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(browserBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -252,7 +254,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(formBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -286,7 +288,8 @@ public class Dictionary extends DictionaryImplBase {
 		)
 			.setParameters(formId)
 			.setOnlyActiveRecords(true)
-			.first();
+			.first()
+		;
 
 		if (form == null || form.getAD_Form_ID() <= 0) {
 			throw new AdempiereException("@AD_Form_ID@ @NotFound@");
@@ -299,22 +302,6 @@ public class Dictionary extends DictionaryImplBase {
 
 
 
-//	/**
-//	 * Get Field group from Tab
-//	 * @param tabId
-//	 * @return
-//	 */
-//	private int[] getFieldGroupIdsFromTab(int tabId) {
-//		return DB.getIDsEx(null, "SELECT f.AD_FieldGroup_ID "
-//				+ "FROM AD_Field f "
-//				+ "INNER JOIN AD_FieldGroup fg ON(fg.AD_FieldGroup_ID = f.AD_FieldGroup_ID) "
-//				+ "WHERE f.AD_Tab_ID = ? "
-//				+ "AND fg.FieldGroupType = ? "
-//				+ "GROUP BY f.AD_FieldGroup_ID", tabId, X_AD_FieldGroup.FIELDGROUPTYPE_Tab);
-//	}
-
-
-
 	@Override
 	public void getField(FieldRequest request, StreamObserver<Field> responseObserver) {
 		try {
@@ -322,7 +309,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(fieldBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -370,7 +357,7 @@ public class Dictionary extends DictionaryImplBase {
 		}
 		return builder;
 	}
-	
+
 	/**
 	 * Convert Field from UUID
 	 * @param id
@@ -387,7 +374,7 @@ public class Dictionary extends DictionaryImplBase {
 			.setOnlyActiveRecords(true)
 			.first()
 		;
-				
+
 		// TODO: Remove conditional with fix the issue https://github.com/solop-develop/backend/issues/28
 		String language = context.getProperty(Env.LANGUAGE);
 		if(!Language.isBaseLanguage(language)) {
@@ -427,7 +414,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -450,7 +437,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -473,7 +460,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -496,7 +483,7 @@ public class Dictionary extends DictionaryImplBase {
 			responseObserver.onNext(fielsListBuilder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

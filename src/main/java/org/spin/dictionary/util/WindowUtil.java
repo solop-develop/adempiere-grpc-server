@@ -310,4 +310,27 @@ public class WindowUtil {
 		return new ArrayList<MProcess>(processList.values());
 	}
 
+
+
+	// /**
+	//  * Get Field group from Tab
+	//  * @param tabId
+	//  * @return
+	//  */
+	// private int[] getFieldGroupIdsFromTab(int tabId) {
+	// 	final String sql = "SELECT f.AD_FieldGroup_ID "
+	// 		+ "FROM AD_Field AS f "
+	// 		+ "INNER JOIN AD_FieldGroup AS fg ON(fg.AD_FieldGroup_ID = f.AD_FieldGroup_ID) "
+	// 		+ "WHERE f.AD_Tab_ID = ? "
+	// 			+ "AND fg.FieldGroupType = ? "
+	// 		+ "GROUP BY f.AD_FieldGroup_ID"
+	// 	;
+	// 	return DB.getIDsEx(
+	// 		null,
+	// 		sql,
+	// 		tabId,
+	// 		X_AD_FieldGroup.FIELDGROUPTYPE_Tab
+	// 	);
+	// }
+
 }
