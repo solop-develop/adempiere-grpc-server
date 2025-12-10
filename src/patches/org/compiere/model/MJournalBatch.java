@@ -280,7 +280,9 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction
 	{
 		if (getC_Period_ID() <= 0) {
 			MPeriod period = MPeriod.get(getCtx(), getDateAcct(), getAD_Org_ID(), get_TrxName());
-			setC_Period_ID(period.get_ID());
+			if (period != null && period.get_ID() > 0){
+				setC_Period_ID(period.get_ID());
+			}
 		}
 		return true;
 	}	//	beforeSave
