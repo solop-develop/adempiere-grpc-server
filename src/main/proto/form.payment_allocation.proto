@@ -425,6 +425,8 @@ message ProcessRequest {
 	repeated InvoiceSelection invoice_selections = 9;
 	bool is_multi_currency = 10;
 	int32 conversion_type_id = 11;
+	string table_name = 12;
+	int32 record_id = 13;
 }
 message ProcessResponse {
 	string message = 1;

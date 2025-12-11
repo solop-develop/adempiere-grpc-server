@@ -985,6 +985,8 @@ public class PaymentAllocationLogic {
 			BigDecimal totalDifference = NumberManager.getBigDecimalFromString(
 				request.getTotalDifference()
 			);
+			String tableName =  request.getTableName();
+			int recordId = request.getRecordId();
 			String status = saveData(
 				windowNo, businessPartner.getC_BPartner_ID(),
 				currency.getC_Currency_ID(), request.getIsMultiCurrency(),
@@ -993,6 +995,8 @@ public class PaymentAllocationLogic {
 				totalDifference,
 				request.getPaymentSelectionsList(),
 				request.getInvoiceSelectionsList(),
+				tableName,
+				recordId,
 				transactionName
 			);
 			atomicStatus.set(status);
@@ -1018,6 +1022,8 @@ public class PaymentAllocationLogic {
 		BigDecimal totalDifference,
 		List<PaymentSelection> paymentSelection,
 		List<InvoiceSelection> invoiceSelection,
+		String tableName,
+		int recordId,
 		String transactionName
 	) {
 		if (paymentSelection == null || invoiceSelection == null || (paymentSelection.size() + invoiceSelection.size() == 0)) {
@@ -1065,6 +1071,11 @@ public class PaymentAllocationLogic {
 		//	Set Description
 		if (!Util.isEmpty(description, true)) {
 			alloc.setDescription(description);
+		}
+
+		if (!Util.isEmpty(tableName,true) && recordId > 0) {
+			String columnName = tableName + "_ID";
+			alloc.set_ValueOfColumn(columnName, recordId);
 		}
 		alloc.saveEx();
 
