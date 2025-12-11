@@ -90,13 +90,22 @@ public class TimeSheet implements ModelValidator {
 			}
 		}
 		if(entity.get_TableName().equals(I_S_ResourceAssignment.Table_Name)) {
-			if (type == TYPE_BEFORE_NEW || (type == TYPE_BEFORE_CHANGE
-					&& (entity.is_ValueChanged(MResourceAssignment.COLUMNNAME_AssignDateFrom)
-					|| entity.is_ValueChanged(MResourceAssignment.COLUMNNAME_AssignDateTo)))) {
 
-				MResourceAssignment resourceAssignment = (MResourceAssignment) entity;
-				BigDecimal quantityEntered = calculateHours(resourceAssignment.getAssignDateFrom(), resourceAssignment.getAssignDateTo());
-				resourceAssignment.setQty(quantityEntered);
+			MResourceAssignment resourceAssignment = (MResourceAssignment) entity;
+			if (resourceAssignment.getQty().signum() == 0 && (resourceAssignment.getAssignDateFrom() == null || resourceAssignment.getAssignDateTo() == null)) {
+				throw new AdempiereException("@Qty@, @AssignDateFrom@ @or@ @AssignDateTo@ @NotFound@");
+			}
+			if (resourceAssignment.getAssignDateFrom() != null && resourceAssignment.getAssignDateTo() != null
+				&& resourceAssignment.getAssignDateFrom().after(resourceAssignment.getAssignDateTo())) {
+				throw new AdempiereException("@AssignDateFrom@ (" + resourceAssignment.getAssignDateFrom() + ") > @AssignDateTo@ ("+resourceAssignment.getAssignDateTo() + ")");
+			}
+
+			if (type == TYPE_BEFORE_NEW || type == TYPE_BEFORE_CHANGE
+				&& (entity.is_ValueChanged(MResourceAssignment.COLUMNNAME_AssignDateFrom) || entity.is_ValueChanged(MResourceAssignment.COLUMNNAME_AssignDateTo))) {
+				if (resourceAssignment.getQty().signum() == 0) {
+					BigDecimal quantityEntered = calculateHours(resourceAssignment.getAssignDateFrom(), resourceAssignment.getAssignDateTo());
+					resourceAssignment.setQty(quantityEntered);
+				}
 			}
 		}
 		return null;
