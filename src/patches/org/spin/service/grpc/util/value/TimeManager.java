@@ -162,7 +162,6 @@ public class TimeManager {
 		} else if (stringValue.length() == TIMEZONE_FORMAT.length()){
 			try{
 				Instant instant = Instant.parse(stringValue);
-				System.out.println("Parsed Instant (UTC): " + instant);
 				return Timestamp.from(instant);
 			} catch (Exception e) {
 				//
