@@ -95,15 +95,18 @@ public class WhereClauseUtil {
 		if (Util.isEmpty(dynamicValidation, true)) {
 			return "";
 		}
+		String validationCode = dynamicValidation
+			.replaceAll("\\s+", " ")
+			.trim()
+		;
 
 		// Check if the table alias is already present in the validation
 		Matcher matcherTableAliases = Pattern.compile(
 				"\\b" + tableAlias + "\\.", // We search for the alias followed by a period.
 				Pattern.CASE_INSENSITIVE // | Pattern.DOTALL
 			)
-			.matcher(dynamicValidation);
+			.matcher(validationCode);
 
-		String validationCode = dynamicValidation;
 
 		// If the alias in the main table already exists, we do nothing.
 		if (!matcherTableAliases.find()) {
@@ -115,16 +118,55 @@ public class WhereClauseUtil {
 			// - be immediately preceded by a period (avoids being the table/alias of a qualified column)
 			// - be an SQL keyword (e.g., JOIN, IN, etc.)
 			// - is inside a subquery (this is the most complex and is done with the logic of the original code)
-			// final String columnsRegex = "\\b(?<!\\.\\b)(?![\\w]+\\.)(\\w+)(\\s*[=><!]|\\s*\\b(?:IN|NOT\\s+IN|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL|BETWEEN|NOT\\s+BETWEEN)\\b)";
-			// final String columnsRegex = "\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))(?<!\\w\\.)(?!(?:JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)(\\w+)(\\s*)";
-			final String columnsRegex = 
-				"\\b(?<!\\.)(?<!\\w\\.)" + // Lookbehind: Not preceded by . or word.
-				"(?!\\w+\\.)" + // Lookahead: Not followed by a word and a period (prevents matching 'C_Invoice' in 'C_Invoice.DocStatus')
-				"(?!\\b(?:FROM|JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)" + // Lookahead: Not an SQL keyword.
-				"(\\w+)" + // Group 1: The column name
-				"(\\s*)" + // Group 2: Optional whitespace
-				"(?=" + OperatorUtil.SQL_OPERATORS_REGEX + ")" // Lookahead: Must be followed by an operator.
+			final String columnsRegex =
+				"\\b(?<!\\.\\b)(?![\\w]+\\.)" +
+				"(\\w+)" +
+				"(\\s*[=><!]|\\s*\\b" +
+				"(?:IN|NOT\\s+IN|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL|BETWEEN|NOT\\s+BETWEEN)\\b)"
 			;
+			// final String columnsRegex =
+			// 	"\\b(?![\\w.]+\\.)(?<![\\w\\s]+(\\.\\w+))" +
+			// 	"(?<!\\w+\\.)" +
+			// 	// "(?!(?:FROM|JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)" +
+			// 	"(?!(?:FROM|JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL|SELECT|WHERE|GROUP\\s+BY|HAVING|UPDATE|DELETE|INSERT|VALUES|SET|AS|ON)\\b)" +
+			// 	"(\\w+)" + // Group 1: The column name
+			// 	"(\\s*)" + // Group 2: Optional whitespace
+			// 	"(?=\\s*" + OperatorUtil.SQL_OPERATORS_REGEX + ")" // Lookahead: Must be followed by optional space and an operator.
+			// ;
+			// final String columnsRegex = 
+			// 	"\\b(?<!\\.)(?<!\\w\\.)" + // Lookbehind: Not preceded by . or word.
+			// 	"(?!\\w+\\.)" + // Lookahead: Not followed by a word and a period (prevents matching 'C_Invoice' in 'C_Invoice.DocStatus')
+			// 	"(?!\\b(?:FROM|JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)" + // Lookahead: Not an SQL keyword.
+			// 	"(\\w+)" + // Group 1: The column name
+			// 	"(\\s*)" + // Group 2: Optional whitespace
+			// 	"(?=" + OperatorUtil.SQL_OPERATORS_REGEX + ")" // Lookahead: Must be followed by an operator.
+			// ;
+			// final String columnsRegex_ =
+			// 	"\\b(?![\\w.]+\\.)(?<![\\w\\s]+(?:\\.\\w+))" + // <-- Usar (?:\\.\\w+) aquí
+			// 	"(?<!\\w+\\.)" +
+			// 	"(?!(?:FROM|JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL|SELECT|WHERE|GROUP\\s+BY|HAVING|UPDATE|DELETE|INSERT|VALUES|SET|AS|ON)\\b)" + 
+			// 	"(\\w+)" + // Group 1: The column name
+			// 	"(\\s*)" + // Group 2: Optional whitespace
+			// 	"(?=\\s*(?:" + OperatorUtil.SQL_OPERATORS_REGEX + "))" // <-- Usar (?:op) aquí también
+			// ;
+			// final String columnsRegex =
+			// 	"\\b(?<!\\.)(?<!\\w\\.)" + // Lookbehind: Not preceded by . or word.
+			// 	"(?!\\w+\\.)" + // Lookahead: Not followed by a word and a period (prevents matching 'C_Invoice' in 'C_Invoice.DocStatus')
+			// 	"(?!\\b(?:FROM|JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL)\\b)" + // Lookahead: Not an SQL keyword.
+			// 	"(\\w+)" + // Group 1: The column name
+			// 	"(\\s*)" + // Group 2: Optional whitespace
+			// 	"(?=" + OperatorUtil.SQL_OPERATORS_REGEX + ")" // Lookahead: Must be followed by an operator.
+			// ;
+			// final String columnsRegex =
+			// 	"\\b(?<!\\.)(?<!\\w\\.)" + // Lookbehind: Not preceded by . or word.
+			// 	"(?!\\w+\\.)" + // Lookahead: Not followed by a word and a period
+			// 	// **AJUSTE CLAVE:** Excluye palabras clave de SQL de ESTRUCTURA.
+			// 	// Esto incluye FROM, JOIN, SELECT, WHERE, y otros que definen la sintaxis de la consulta.
+			// 	"(?!\\b(?:FROM|JOIN|ORDER\\s+BY|DISTINCT|NOT\\s+IN|IN|NOT\\s+BETWEEN|BETWEEN|NOT\\s+LIKE|LIKE|IS\\s+NULL|IS\\s+NOT\\s+NULL|SELECT|WHERE|GROUP\\s+BY|HAVING|UPDATE|DELETE|INSERT|VALUES|SET|AS|ON)\\b)" +
+			// 	"(\\w+)" + // Group 1: The column name
+			// 	// "(\\s*)" + // Group 2: Optional whitespace
+			// 	"(?=\\s*" + OperatorUtil.SQL_OPERATORS_REGEX + ")" // Lookahead: Must be followed by an operator.
+			// ;
 
 			// Regular expression to sql operators
 			// final String sqlOperatorsRegex = OperatorUtil.SQL_OPERATORS_REGEX;
@@ -143,9 +185,14 @@ public class WhereClauseUtil {
 			Matcher matchTableAlias = patternTableAlias.matcher(validationCode);
 			Set<String> tableAliases = new HashSet<>();
 			while (matchTableAlias.find()) {
-				// Store the table aliases found
-				// group(2) is the alias of the table (e.g., ‘i’, ‘il’, ‘ol’)
-				tableAliases.add(matchTableAlias.group(2));
+				// Group 1: The table name (ex., C_OrderLine, M_InOutLine)
+				String tableName = matchTableAlias.group(1); 
+				// Group 2: The table alias (ex., ol, il, dt)
+				String aliasName = matchTableAlias.group(2);
+
+				// Añadir AMBOS a la lista de exclusiones (tableAliases)
+				tableAliases.add(aliasName);
+				tableAliases.add(tableName);
 			}
 
 			// Replace columns that do not have aliases and are not aliases of tables in subqueries
@@ -156,14 +203,12 @@ public class WhereClauseUtil {
 				String operatorOrSpace = matchColumnName.group(2); // The operator or space that follows
 
 				if (columnName != null) {
-					// Check if the column name is a subquery alias
-					// You can also add a list of additional SQL keywords here if needed
+					// Check if the column name is a subquery alias OR a subquery table name
 					if (!tableAliases.contains(columnName)) {
-						// If it is NOT a subquery alias, add the alias from the main table
-						// We use the full expression to handle case sensitivity safely
+						// If it is NOT a subquery alias/table, add the alias from the main table
 						matchColumnName.appendReplacement(sb, tableAlias + "." + columnName + operatorOrSpace);
 					} else {
-						// If it is an alias (such as ‘i’, ‘il’, etc.), leave it unchanged.
+						// If it is an alias or table name (such as ‘i’, ‘il’, etc., or M_InOut, M_InOutline), leave it unchanged.
 						matchColumnName.appendReplacement(sb, columnName + operatorOrSpace);
 					}
 				}
