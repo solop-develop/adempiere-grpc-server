@@ -516,9 +516,9 @@ public class UserInterface extends UserInterfaceImplBase {
 		}
 
 		//	Add from reference
-		//	TODO: Add support to this functionality
 		if(!Util.isEmpty(request.getRecordReferenceUuid(), true)) {
 			String referenceWhereClause = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
+			//	TODO: When is null refresh cache
 			if(!Util.isEmpty(referenceWhereClause, true)) {
 				String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
 					tableName,
@@ -595,22 +595,22 @@ public class UserInterface extends UserInterfaceImplBase {
 			);
 		String parsedCountSQL = org.spin.base.util.RecordUtil.addSearchValueAndGet(countSQL, tableName, request.getSearchValue(), false, new ArrayList<Object>());
 
-		//	Count records
-		count = CountUtil.countRecords(parsedCountSQL, tableName, params);
 		//	Add Row Number
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
 		parsedSQL = parsedSQL + orderByClause;
 		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(table, parsedSQL, params);
-		//	
-		builder.setRecordCount(count);
-		//	Set page token
+
+		//	Count records, Set page token
+		count = CountUtil.countRecords(parsedCountSQL, tableName, params);
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builder.setNextPageToken(
-			TextManager.getValidString(nexPageToken)
-		);
+		builder.setRecordCount(count)
+			.setNextPageToken(
+				TextManager.getValidString(nexPageToken)
+			)
+		;
 		//	Return
 		return builder;
 	}
