@@ -349,8 +349,8 @@ public class FieldManagementLogic {
 			} else {
 				defaultValueAsObject = integerValue;
 			}
-		} else if (DisplayType.isNumeric(displayTypeId)) {
-			defaultValueAsObject = NumberManager.getIntegerFromObject(defaultValueAsObject);
+		} else if (DisplayType.isNumeric(displayTypeId) && DisplayType.Integer != displayTypeId) {
+			defaultValueAsObject = NumberManager.getBigDecimalFromObject(defaultValueAsObject);
 		}
 
 		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
