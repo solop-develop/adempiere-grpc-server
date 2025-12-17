@@ -15,13 +15,6 @@
 
 package org.spin.service.grpc.util.value;
 
-import com.google.protobuf.Struct;
-import com.google.protobuf.Value;
-import org.compiere.util.DisplayType;
-import org.compiere.util.Env;
-import org.compiere.util.TimeUtil;
-import org.compiere.util.Util;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -35,6 +28,14 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Map;
 
+import org.compiere.util.DisplayType;
+import org.compiere.util.Env;
+import org.compiere.util.TimeUtil;
+import org.compiere.util.Util;
+
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
+
 /**
  * Class for handle Time (TimesTamp, Date, Long) values
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -42,8 +43,8 @@ import java.util.Map;
 public class TimeManager {
 
 	/**	Date format	*/
-	private static final String TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	private static final String DATE_FORMAT = "yyyy-MM-dd";
+	private static final String TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	private static final String TIMEZONE_FORMAT = "yyyy-MM-ddTHH:mm:ss.000Z";
 
 
@@ -161,13 +162,15 @@ public class TimeManager {
 			format = TIME_FORMAT;
 		} else if (stringValue.length() == TIMEZONE_FORMAT.length()){
 			try{
-				Instant instant = Instant.parse(stringValue);
-				return Timestamp.from(instant);
+				return getTimestampFromInstant(stringValue);
 			} catch (Exception e) {
 				//
 			}
+		} else if(stringValue.length() != DATE_FORMAT.length() && stringValue.length() != TIMEZONE_FORMAT.length() && stringValue.length() != TIMEZONE_FORMAT.length()) {
+			// throw new AdempiereException(
+			// 	"Invalid date format, please use some like this: \"" + DATE_FORMAT + "\" or \"" + TIME_FORMAT + "\"" or \"" + TIMEZONE_FORMAT + "\""
+			// );
 		}
-
 
 		Date validDate = null;
 		try {
@@ -235,6 +238,20 @@ public class TimeManager {
 		return null;
 	}
 
+	public static Timestamp getTimestampFromInstant(Instant value) {
+		if (value != null) {
+			return Timestamp.from(value);
+		}
+		return null;
+	}
+	public static Timestamp getTimestampFromInstant(String value) {
+		Instant instant = getInstantFromString(value);
+		if (instant != null) {
+			return getTimestampFromInstant(instant);
+		}
+		return null;
+	}
+
 	public static Timestamp getTimestampFromDouble(double value) {
 		if (value > 0.0) {
 			return new Timestamp(
@@ -264,6 +281,14 @@ public class TimeManager {
 		return value.getTime();
 	}
 
+
+
+	public static Instant getInstantFromString(String value) {
+		if (!Util.isEmpty(value, true)) {
+			return Instant.parse(value);
+		}
+		return null;
+	}
 
 
 	/**
