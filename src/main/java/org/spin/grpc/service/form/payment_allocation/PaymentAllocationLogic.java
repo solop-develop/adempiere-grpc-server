@@ -33,6 +33,7 @@ import org.adempiere.core.domains.models.I_C_Charge;
 import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Conversion_Rate;
 import org.adempiere.core.domains.models.I_C_Currency;
+import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
@@ -41,6 +42,7 @@ import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MAllocationLine;
 import org.compiere.model.MBPartner;
+import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MConversionType;
 import org.compiere.model.MCurrency;
@@ -67,7 +69,6 @@ import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
 import org.spin.backend.grpc.form.payment_allocation.ConversionType;
@@ -489,7 +490,8 @@ public class PaymentAllocationLogic {
 		 *    1-TrxDate, 2-DocumentNo, (3-Currency, 4-PayAmt,)
 		 *    5-ConvAmt, 6-ConvOpen, 7-Allocated
 		 */
-		StringBuffer sql = new StringBuffer("SELECT p.DateTrx, p.DocumentNo, p.C_Payment_ID,"	//	1..3
+		StringBuffer sql = new StringBuffer(
+			"SELECT p.DateTrx, p.DocumentNo, p.C_Payment_ID,"	//	1..3
 			+ "p.C_DocType_ID, "
 			+ "c.ISO_Code, p.PayAmt,"			//	4..5
 			+ "currencyConvert(p.PayAmt, p.C_Currency_ID, ?, ?, "
@@ -509,7 +511,8 @@ public class PaymentAllocationLogic {
 			sql.append("p.C_ConversionType_ID, ");
 		}
 
-		sql.append("p.AD_Client_ID, p.AD_Org_ID) AS ConvertedAmt,"//		#1, #2
+		sql.append(
+			"p.AD_Client_ID, p.AD_Org_ID) AS ConvertedAmt,"//		#1, #2
 			+ "currencyConvert(paymentAvailable(C_Payment_ID), p.C_Currency_ID, ?, ?, "
 		);
 		parametersList.add(
@@ -525,7 +528,8 @@ public class PaymentAllocationLogic {
 			sql.append("p.C_ConversionType_ID, ");
 		}
 
-		sql.append("p.AD_Client_ID, p.AD_Org_ID) AS AvailableAmt,"	//	7   #3, #4
+		sql.append(
+			"p.AD_Client_ID, p.AD_Org_ID) AS AvailableAmt,"	//	7   #3, #4
 			+ "p.MultiplierAP, p.IsReceipt, p.AD_Org_ID, p.Description " //	8..11
 			+ "FROM C_Payment_v p "		//	Corrected for AP/AR
 			+ "INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) "
@@ -547,8 +551,23 @@ public class PaymentAllocationLogic {
 			String isReceipt = BooleanManager.getBooleanToString(
 				transactionType.equals(X_T_InvoiceGL.APAR_ReceivablesOnly)
 			);
-			sql.append(" AND p.IsReceipt= '" + isReceipt +"'" );
+			sql.append(" AND p.IsReceipt= '" + isReceipt + "'" );
 		}
+
+		// Exclude deferred checks
+		MTable documentTypeTable = MTable.get(context, I_C_DocType.Table_Name);
+		MColumn isManualAssignmentColumn = documentTypeTable.getColumn("IsAllowsManualAssignment");
+		if (isManualAssignmentColumn != null && isManualAssignmentColumn.getAD_Column_ID() > 0) {
+			sql.append(
+				" AND EXISTS("
+					+ "SELECT 1 "
+					+ "FROM C_DocType AS dt "
+					+ "WHERE dt.C_DocType_ID = p.C_DocType_ID "
+						+ "AND dt.IsAllowsManualAssignment = 'Y' "
+				+ ")"
+			);
+		}
+
 		sql.append(" ORDER BY p.DateTrx, p.DocumentNo");
 
 		// role security
@@ -617,7 +636,7 @@ public class PaymentAllocationLogic {
 						documentTypeBuilder
 					)
 					.setTransactionDate(
-						ValueManager.getProtoTimestampFromTimestamp(
+						TimeManager.getProtoTimestampFromTimestamp(
 							rs.getTimestamp(I_C_Payment.COLUMNNAME_DateTrx)
 						)
 					)
@@ -762,6 +781,21 @@ public class PaymentAllocationLogic {
 			);
 			sql.append(" AND i.IsSOTrx= '" + isReceipt +"'" );
 		}
+
+		// Exclude deferred checks
+		MTable documentTypeTable = MTable.get(context, I_C_DocType.Table_Name);
+		MColumn isManualAssignmentColumn = documentTypeTable.getColumn("IsAllowsManualAssignment");
+		if (isManualAssignmentColumn != null && isManualAssignmentColumn.getAD_Column_ID() > 0) {
+			sql.append(
+				" AND EXISTS("
+					+ "SELECT 1 "
+					+ "FROM C_DocType AS dt "
+					+ "WHERE dt.C_DocType_ID = i.C_DocTypeTarget_ID "
+						+ "AND dt.IsAllowsManualAssignment = 'Y' "
+				+ ")"
+			);
+		}
+
 		sql.append(" ORDER BY i.DateInvoiced, i.DocumentNo");
 
 		// role security
@@ -832,7 +866,7 @@ public class PaymentAllocationLogic {
 						targetDocumentTypeBuilder
 					)
 					.setDateInvoiced(
-						ValueManager.getProtoTimestampFromTimestamp(
+						TimeManager.getProtoTimestampFromTimestamp(
 							rs.getTimestamp(I_C_Invoice.COLUMNNAME_DateInvoiced)
 						)
 					)
