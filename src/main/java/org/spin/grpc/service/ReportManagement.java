@@ -903,6 +903,7 @@ public class ReportManagement extends ReportManagementImplBase {
 			responseObserver.onCompleted();
 		} catch (Exception e) {
 			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
 					.withDescription(e.getLocalizedMessage())
@@ -925,6 +926,7 @@ public class ReportManagement extends ReportManagementImplBase {
 				&& request.getReportViewId() <= 0) {
 			throw new AdempiereException("@TableName@ / @AD_Process_ID@ / @AD_ReportView_ID@ @NotFound@");
 		}
+
 		String whereClause = "1=2";
 		List<Object> parameters = new ArrayList<>();
 		//	For Table Name
@@ -982,7 +984,6 @@ public class ReportManagement extends ReportManagementImplBase {
 			null
 		)
 			.setParameters(parameters)
-			.setClient_ID()
 			.setOnlyActiveRecords(true)
 			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
 		;
@@ -1051,7 +1052,8 @@ public class ReportManagement extends ReportManagementImplBase {
 				}
 				//	add
 				builder.addPrintFormats(printFormatBuilder);
-			});
+			})
+		;
 
 		//	Return
 		return builder;
