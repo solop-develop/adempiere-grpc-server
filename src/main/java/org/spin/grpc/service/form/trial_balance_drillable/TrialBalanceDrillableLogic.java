@@ -337,9 +337,9 @@ public class TrialBalanceDrillableLogic {
 		sql.append( " COALESCE(SUM(CASE WHEN (DateAcct  BETWEEN (? :: date) AND (? :: date)) AND PostingType = 'B' THEN (AmtacctDr-AmtacctCr) ELSE 0 END), 0) AS total2,");
 		sql.append( " COALESCE(Sum(CASE WHEN ((DateAcct  >= (? :: date) OR ev.AccountType NOT IN ('E','R')) AND DateAcct  <= (? :: date)) AND PostingType='A' THEN (AmtacctDr-AmtacctCr) ELSE 0 END), 0) AS total3,");
 		sql.append( " COALESCE(Sum(CASE WHEN ((DateAcct  >= (? :: date) OR ev.AccountType NOT IN ('E','R')) AND DateAcct  <= (? :: date)) AND PostingType='B' THEN (AmtacctDr-AmtacctCr) ELSE 0 END), 0) AS total4,");
-		// sql.append(" fs.User1_ID, ");
+		sql.append(" fs.User1_ID, ");
 		sql.append(" u1.Value AS userlist1 ");
-		sql.append(" FROM  Fact_Acct_Summary fs" 
+		sql.append(" FROM  Fact_Acct_Summary fs"
 		+ " INNER JOIN C_ElementValue ev ON fs.Account_ID = ev.C_ElementValue_ID AND fs.AD_Client_ID = ev.AD_Client_ID ");
 		sql.append(" LEFT OUTER JOIN C_ElementValue u1 ON (fs.user1_id=u1.C_ElementValue_ID) ");
 		sql.append(" WHERE fs.AD_Client_ID=? ");
@@ -490,11 +490,11 @@ public class TrialBalanceDrillableLogic {
 							)
 						)
 					)
-					// .setUserListId(
-					// 	rs.getInt(
-					// 		I_Fact_Acct_Summary.COLUMNNAME_User1_ID
-					// 	)
-					// )
+					.setUserListId(
+						rs.getInt(
+							I_Fact_Acct_Summary.COLUMNNAME_User1_ID
+						)
+					)
 					.setUserListName(
 						TextManager.getValidString(
 							rs.getString(
