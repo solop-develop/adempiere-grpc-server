@@ -16,16 +16,26 @@
 
 package org.spin.grpc.service.ui;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_Column;
+import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MColumn;
+import org.compiere.model.MQuery;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MTree;
 import org.compiere.model.MTreeNode;
+import org.compiere.model.MWindow;
+import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -42,6 +52,122 @@ import org.spin.service.grpc.util.base.RecordUtil;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com , https://github.com/EdwinBetanc0urt
  */
 public class UserInterfaceLogic {
+
+	public static String getWhereClauseFromChildTab(MQuery zoomQuery, MTab currentTab) {
+		String whereClause = zoomQuery.getWhereClause();
+		final String zoomTableName = zoomQuery.getZoomTableName();
+		final String zoomColumnname = zoomQuery.getZoomColumnName();
+		final MTable zoomTable = MTable.get(Env.getCtx(), zoomTableName);
+		if (zoomTable != null && zoomTable.getAD_Table_ID() > 0) {
+			MWindow window = MWindow.get(Env.getCtx(), currentTab.getAD_Window_ID());
+			MTab mainTab = new Query(
+					Env.getCtx(),
+					I_AD_Tab.Table_Name,
+					"AD_Window_ID = ? AND IsSortTab = 'N'",
+					null
+				)
+				.setParameters(currentTab.getAD_Window_ID())
+				.setOrderBy(I_AD_Tab.COLUMNNAME_SeqNo)
+				.setOnlyActiveRecords(true)
+				.first()
+			;
+			if (mainTab != null && mainTab.getAD_Tab_ID() > 0) {
+				MTable mainTabTable = MTable.get(Env.getCtx(), mainTab.getAD_Table_ID());
+				final String mainTabTableName = mainTabTable.getTableName();
+				if (!zoomTableName.equalsIgnoreCase(mainTabTableName)) {
+					AtomicReference<String> whereClasueReference = new AtomicReference<String>();
+					List<MTab> tabsList = Arrays.asList(
+						window.getTabs(false, null)
+					)
+						.stream()
+						.filter(tabItem -> {
+							if (!tabItem.isActive()) {
+								return false;
+							}
+							if (tabItem.isSortTab()) {
+								return false;
+							}
+							return true;
+						})
+						.collect(Collectors.toList())
+					;
+					for (MTab tabItem : tabsList) {
+						MTable tabTable = MTable.get(Env.getCtx(), tabItem.getAD_Table_ID());
+						final String tabTableName = tabTable.getTableName();
+						if (!zoomTableName.equalsIgnoreCase(tabTableName)) {
+							// break loop
+							continue;
+						}
+						// if (mainTab.getTabLevel() < tabItem.getTabLevel()) {
+						// 	// break loop
+						// 	continue;
+						// }
+
+						List<MColumn> columnsList = Arrays.asList(
+							tabTable.getColumns(false)
+						);
+						for (MColumn columnItem : columnsList) {
+							final String fieldColumnName = columnItem.getColumnName();
+							if (fieldColumnName.equalsIgnoreCase(zoomColumnname)) {
+								String linkColumnName = "";
+								if (tabItem.getAD_Column_ID() > 0) {
+									MColumn linkColunm = MColumn.get(Env.getCtx(), tabItem.getAD_Column_ID());
+									linkColumnName = linkColunm.getColumnName();
+								}
+								if (Util.isEmpty(linkColumnName, true)) {
+									MColumn column = null;
+									if (columnItem.isParent()) {
+										column = columnItem;
+									} else {
+										column = new Query(
+											Env.getCtx(),
+											I_AD_Column.Table_Name,
+											"AD_Table_ID = ? AND IsParent = 'Y'",
+											null
+										)
+											.setParameters(tabTable.getAD_Table_ID())
+											.first()
+										;
+									}
+									if (column == null || column.getAD_Column_ID() <= 0) {
+										break;
+									}
+									linkColumnName = column.getColumnName();
+								}
+								int parentId = DB.getSQLValue(null, "SELECT " + linkColumnName + " FROM " + tabTableName + " WHERE " + zoomQuery.getWhereClause());
+								if (parentId <= 0) {
+									// break loop
+									continue;
+								}
+
+								String newWhereClause = "";
+								if (!Util.isEmpty(zoomQuery.getWhereClause(), true)) {
+									newWhereClause = " AND " + zoomQuery.getWhereClause();
+								}
+								final String tableAlias = tabTableName;
+								String whereExists = ""
+									+ " EXISTS("
+										+ "SELECT 1 FROM " + tabTableName + " AS " + tableAlias + " "
+										+ "WHERE "
+										+ mainTabTableName + "." + linkColumnName + " = " + tableAlias + "." + linkColumnName
+										+ newWhereClause + " "
+									+ ") "
+								;
+								whereClasueReference.set(whereExists);
+								break;
+							}
+						}
+					}
+
+					if (whereClasueReference.get() != null) {
+						whereClause = whereClasueReference.get();
+					}
+				}
+			}
+		}
+
+		return whereClause;
+	}
 
 	public static ListTreeNodesResponse.Builder listTreeNodes(ListTreeNodesRequest request) {
 		if (Util.isEmpty(request.getTableName(), true) && request.getTabId() <= 0) {

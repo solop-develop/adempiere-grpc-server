@@ -47,6 +47,7 @@ import org.compiere.model.MForm;
 import org.compiere.model.MGoal;
 import org.compiere.model.MMeasure;
 import org.compiere.model.MMenu;
+import org.compiere.model.MQuery;
 import org.compiere.model.MRole;
 import org.compiere.model.MRule;
 import org.compiere.model.MTab;
@@ -122,7 +123,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onNext(chart.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -280,7 +281,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onNext(pendingDocumentsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -337,7 +338,8 @@ public class Dashboarding extends DashboardingImplBase {
 					int tabId = DB.getSQLValue(
 						null,
 						sql,
-						referenceWindow.getAD_Window_ID(), table.getAD_Table_ID()
+						referenceWindow.getAD_Window_ID(),
+						table.getAD_Table_ID()
 					);
 					MTab referenceTab = MTab.get(context, tabId);
 					pendingDocumentBuilder.setWindowId(
@@ -364,7 +366,14 @@ public class Dashboarding extends DashboardingImplBase {
 				}
 
 				String uuid = uuidRerefenced + "|" + table.getTableName();
-				org.spin.base.util.RecordUtil.referenceWhereClauseCache.put(uuid, documentStatus.getWhereClause());
+				MQuery queryReference = new MQuery(
+					table.getTableName()
+				);
+				queryReference.addRestriction(documentStatus.getWhereClause());
+				org.spin.base.util.RecordUtil.referenceWhereClauseCache.put(
+					uuid,
+					queryReference
+				);
 
 				//	Set quantity
 				pendingDocumentBuilder.setRecordCount(
@@ -397,7 +406,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onNext(dashboardsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -586,7 +595,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onNext(favoritesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -648,7 +657,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onNext(favoritesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -875,7 +884,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onNext(resourceReference.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -931,7 +940,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onNext(chartsList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL
@@ -1049,7 +1058,7 @@ public class Dashboarding extends DashboardingImplBase {
 			responseObserver.onNext(chart.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
+			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
 				Status.INTERNAL

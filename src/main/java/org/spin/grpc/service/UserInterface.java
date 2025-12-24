@@ -44,6 +44,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMenu;
 import org.compiere.model.MMessage;
+import org.compiere.model.MQuery;
 import org.compiere.model.MRole;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
@@ -517,21 +518,29 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		//	Add from reference
 		if(!Util.isEmpty(request.getRecordReferenceUuid(), true)) {
-			String referenceWhereClause = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
+			MQuery zoomQuery = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(
+				request.getRecordReferenceUuid()
+			);
 			//	TODO: When is null refresh cache
-			if(!Util.isEmpty(referenceWhereClause, true)) {
-				String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
-					tableName,
-					referenceWhereClause
+			if (zoomQuery != null) {
+				final String referenceWhereClause = UserInterfaceLogic.getWhereClauseFromChildTab(
+					zoomQuery,
+					tab
 				);
-				if(whereClause.length() > 0) {
-					whereClause.append(" AND ");
+				if(!Util.isEmpty(referenceWhereClause, true)) {
+					String validationCode = WhereClauseUtil.getWhereRestrictionsWithAlias(
+						tableName,
+						referenceWhereClause
+					);
+					if(whereClause.length() > 0) {
+						whereClause.append(" AND ");
+					}
+					whereClause
+						.append("(")
+						.append(validationCode)
+						.append(")")
+					;
 				}
-				whereClause
-					.append("(")
-					.append(validationCode)
-					.append(")")
-				;
 			}
 		}
 

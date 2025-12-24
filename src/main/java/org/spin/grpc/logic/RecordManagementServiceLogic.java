@@ -398,14 +398,15 @@ public class RecordManagementServiceLogic {
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		// validate multiple keys as accounting tables and translation tables
-		if (table == null || !table.isSingleKey()) {
+		if (table == null || table.getAD_Table_ID() <= 0 || !table.isSingleKey()) {
 			return builder;
 		}
 
 		// validate record
 		int recordId = request.getRecordId();
-		RecordUtil.validateRecordId(recordId, table.getAccessLevel());
-
+		if (RecordUtil.isValidId(recordId, table.getAccessLevel())) {
+			return builder;
+		}
 		PO entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), recordId, null);
 		if (entity == null) {
 			// 	throw new AdempiereException("@Record_ID@ @NotFound@");
@@ -413,11 +414,12 @@ public class RecordManagementServiceLogic {
 		}
 
 		List<ZoomInfoFactory.ZoomInfo> zoomInfos = ZoomInfoFactory.retrieveZoomInfos(entity, tab.getAD_Window_ID())
-			.stream()
+			.parallelStream()
 			.filter(zoomInfo -> {
 				return zoomInfo.query.getRecordCount() > 0;
 			})
-			.collect(Collectors.toList());
+			.collect(Collectors.toList())
+		;
 		if (zoomInfos == null || zoomInfos.isEmpty()) {
 			return builder;
 		}
@@ -447,12 +449,7 @@ public class RecordManagementServiceLogic {
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
 		// validate multiple keys as accounting tables and translation tables
-		if (!table.isSingleKey()) {
-			return builder;
-		}
-
-		// validate multiple keys as accounting tables and translation tables
-		if (table == null || !table.isSingleKey()) {
+		if (table == null || table.getAD_Table_ID() <= 0 || !table.isSingleKey()) {
 			return builder;
 		}
 
@@ -467,11 +464,12 @@ public class RecordManagementServiceLogic {
 		}
 
 		List<ZoomInfoFactory.ZoomInfo> zoomInfos = ZoomInfoFactory.retrieveZoomInfos(entity, tab.getAD_Window_ID())
-			.stream()
+			.parallelStream()
 			.filter(zoomInfo -> {
 				return zoomInfo.query.getRecordCount() > 0;
 			})
-			.collect(Collectors.toList());
+			.collect(Collectors.toList())
+		;
 		if (zoomInfos == null || zoomInfos.isEmpty()) {
 			return builder;
 		}
@@ -482,7 +480,15 @@ public class RecordManagementServiceLogic {
 			RecordReferenceInfo.Builder recordReferenceBuilder = RecordReferenceInfo.newBuilder();
 
 			MWindow referenceWindow = MWindow.get(Env.getCtx(), zoomInfo.windowId);
+			// TODO: Omit windows with sales transaction flag
+			// boolean isSOTrx = DB.isSOTrx(zoomQuery.getZoomTableName(), zoomQuery.getWhereClause(false));
+			// if (isSOTrx != referenceWindow.isSOTrx()) {
+			// 	return;
+			// }
 			MTable referenceTable = MTable.get(Env.getCtx(), zoomQuery.getZoomTableName());
+			if (referenceTable == null || referenceTable.getAD_Table_ID() <= 0) {
+				return;
+			}
 
 			final String sql = "SELECT AD_Tab_ID "
 				+ "FROM AD_Tab "
@@ -498,7 +504,7 @@ public class RecordManagementServiceLogic {
 			MTab referenceTab = MTab.get(Env.getCtx(), tabId);
 
 			String uuidRerefenced = referenceWindow.getUUID() + "|" + referenceTab.getUUID() + "|" + referenceTable.getTableName() + "|" + zoomQuery.getZoomColumnName();
-			org.spin.base.util.RecordUtil.referenceWhereClauseCache.put(uuidRerefenced, zoomQuery.getWhereClause());
+			org.spin.base.util.RecordUtil.referenceWhereClauseCache.put(uuidRerefenced, zoomQuery);
 
 			recordReferenceBuilder.setUuid(uuidRerefenced)
 				.setWindowId(
@@ -539,7 +545,10 @@ public class RecordManagementServiceLogic {
 			builder.addReferences(recordReferenceBuilder.build());
 		});
 
-		builder.setRecordCount(zoomInfos.size());
+		builder.setRecordCount(
+			// TODO: Change with `builder.getReferencesCount()`
+			zoomInfos.size()
+		);
 
 		//	Return
 		return builder;
