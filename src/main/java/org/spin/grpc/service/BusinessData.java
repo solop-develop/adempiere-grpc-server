@@ -621,9 +621,10 @@ public class BusinessData extends BusinessDataImplBase {
 	 * @return
 	 */
 	private Entity.Builder getEntity(GetEntityRequest request) {
-		String tableName = request.getTableName();
+		final String tableName = request.getTableName();
+		MTable table = RecordUtil.validateAndGetTable(tableName);
 		PO entity = null;
-		if(request.getId() != 0) {
+		if(RecordUtil.isValidId(request.getId(), table)) {
 			entity = RecordUtil.getEntity(Env.getCtx(), tableName, request.getId(), null);
 		} else if(request.getFilters() != null) {
 			List<Object> parameters = new ArrayList<Object>();
@@ -823,12 +824,22 @@ public class BusinessData extends BusinessDataImplBase {
 		//	TODO: Add support to this functionality with a distinct scope
 		//	Add from reference
 		if(!Util.isEmpty(request.getRecordReferenceUuid())) {
-			String referenceWhereClause = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(request.getRecordReferenceUuid());
-			if(!Util.isEmpty(referenceWhereClause, true)) {
-				if(whereClause.length() > 0) {
-					whereClause.append(" AND ");
+			MQuery zoomQuery = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(
+				request.getRecordReferenceUuid()
+			);
+			//	TODO: When is null refresh cache
+			if (zoomQuery != null) {
+				final String referenceWhereClause = zoomQuery.getWhereClause();
+				if(!Util.isEmpty(referenceWhereClause, true)) {
+					if(whereClause.length() > 0) {
+						whereClause.append(" AND ");
+					}
+					whereClause
+						.append("(")
+						.append(referenceWhereClause)
+						.append(")")
+					;
 				}
-				whereClause.append("(").append(referenceWhereClause).append(")");
 			}
 		}
 

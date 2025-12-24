@@ -33,6 +33,7 @@ import org.adempiere.core.domains.models.I_AD_Table;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
+import org.compiere.model.MQuery;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CCache;
@@ -66,7 +67,7 @@ public class RecordUtil {
 
 
 	/**	Reference cache	*/
-	public static CCache<String, String> referenceWhereClauseCache = new CCache<String, String>("Record_Reference_WhereClause", 30, 0);	//	no time-out
+	public static CCache<String, MQuery> referenceWhereClauseCache = new CCache<String, MQuery>("Record_Reference_WhereClause", 30, 0);	//	no time-out
 
 
 
