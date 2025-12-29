@@ -15,7 +15,7 @@ java {
 
 def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
-def adempiereCoreVersion = '1.4.22'
+def adempiereCoreVersion = '1.4.23'
 
 def descriptorFile = "adempiere-grpc-server.dsc"
 def javaMainClass = "org.spin.server.AllInOneServices"
