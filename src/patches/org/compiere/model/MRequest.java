@@ -997,7 +997,6 @@ public class MRequest extends X_R_Request
 		updateOrCreateRequestAction(COLUMNNAME_DateStartPlan, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_QtySpent, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_IsInvoiced, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_DurationEstimated, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_URL, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_R_Milestone_ID, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_R_Release_ID, newRecord);
