@@ -28,13 +28,16 @@ public class MIteration extends X_R_Iteration {
         String timeUnit = "";
         if (newRecord || is_ValueChanged(COLUMNNAME_DateFrom) || is_ValueChanged(COLUMNNAME_DateTo)) {
             if (isExactMonths(getDateFrom(), getDateTo())) {
-                timeQty = TimeUtil.getMonthsBetween(getDateFrom(), getDateTo());
+                timeQty = getMonths(getDateFrom(), getDateTo());
                 timeUnit = TIMEUNIT_Month;
             } else if (isExactWeeks(getDateFrom(), getDateTo())){
-                timeQty = TimeUtil.getWeeksBetween(getDateFrom(), getDateTo());
+                timeQty = getWeeks(getDateFrom(), getDateTo());
                 timeUnit = TIMEUNIT_Week;
             } else {
-                timeQty = TimeUtil.getDaysBetween(getDateFrom(), getDateTo(), true,0);
+                timeQty = (int) ChronoUnit.DAYS.between(
+                    getDateFrom().toLocalDateTime().toLocalDate(),
+                    getDateTo().toLocalDateTime().toLocalDate()
+                );
                 timeUnit = TIMEUNIT_Day;
             }
             setDuration(timeQty);
@@ -45,34 +48,58 @@ public class MIteration extends X_R_Iteration {
     }
 
 
-    private boolean isExactMonths(Timestamp ts1, Timestamp ts2) {
-        LocalDate ldt1 = ts1.toLocalDateTime().toLocalDate();
-        LocalDate ldt2 = ts2.toLocalDateTime().toLocalDate();
+    private boolean isExactMonths(Timestamp dateFrom, Timestamp dateTo) {
+        LocalDate localDateFrom = dateFrom.toLocalDateTime().toLocalDate();
+        LocalDate localDateTo = dateTo.toLocalDateTime().toLocalDate();
         // Calculate months between first days
         long months = ChronoUnit.MONTHS.between(
-                ldt1.withDayOfMonth(1),
-                ldt2.withDayOfMonth(1)
+                localDateFrom.withDayOfMonth(1),
+                localDateTo.withDayOfMonth(1)
         );
         // Check if plusMonths gives exact match
-        LocalDate test = ldt1.plusMonths(months);
-        return test.equals(ldt2);
+        LocalDate test = localDateFrom.plusMonths(months);
+        return test.equals(localDateTo);
+    }
+
+    private int getMonths(Timestamp dateFrom, Timestamp dateTo){
+        LocalDate localDateFrom = dateFrom.toLocalDateTime().toLocalDate();
+        LocalDate localDateTo = dateTo.toLocalDateTime().toLocalDate();
+        // Calculate months between first days
+        long months = ChronoUnit.MONTHS.between(
+                localDateFrom.withDayOfMonth(1),
+                localDateTo.withDayOfMonth(1)
+        );
+        return (int) months;
+    }
+
+    private int getWeeks(Timestamp dateFrom, Timestamp dateTo){
+        LocalDate localDateFrom = dateFrom.toLocalDateTime().toLocalDate();
+        LocalDate localDateTo = dateTo.toLocalDateTime().toLocalDate();
+        int daysBetween = (int) ChronoUnit.DAYS.between(localDateFrom, localDateTo);
+        return daysBetween/7;
     }
     private boolean isExactWeeks(Timestamp ts1, Timestamp ts2) {
-        LocalDate date1 = ts1.toLocalDateTime().toLocalDate();
-        LocalDate date2 = ts2.toLocalDateTime().toLocalDate();
+        LocalDate localDateFrom = ts1.toLocalDateTime().toLocalDate();
+        LocalDate localDateTo = ts2.toLocalDateTime().toLocalDate();
 
-        long daysBetween = ChronoUnit.DAYS.between(date1, date2);
+        long daysBetween = ChronoUnit.DAYS.between(localDateFrom, localDateTo);
         return daysBetween % 7 == 0;
 
     }
 
     public void updateCompletedPercentage(){
-        String whereClause = "R_Iteration_ID = ?";
+        String whereClause = "EXISTS (SELECT 1 FROM R_RequestAction ra " +
+                "WHERE ra.R_Request_ID = R_Request.R_Request_ID " +
+                "AND ra.R_Iteration_ID = ?)";
         int totalIssues = new Query(getCtx(), MRequest.Table_Name, whereClause, get_TrxName())
             .setParameters(get_ID())
             .setOnlyActiveRecords(true)
             .count();
-        whereClause = "R_Iteration_ID = ? AND TaskStatus in ('D', 'C')";
+        whereClause = "EXISTS (SELECT 1 FROM R_RequestAction ra " +
+                "INNER JOIN R_Status rs ON (rs.R_Status_ID = R_Request.R_Status_ID) " +
+                "WHERE ra.R_Request_ID = R_Request.R_Request_ID " +
+                "AND ra.R_Iteration_ID = ? " +
+                "AND rs.IsClosed = 'Y')";
         int completedIssues = new Query(getCtx(), MRequest.Table_Name, whereClause, get_TrxName())
             .setParameters(get_ID())
             .setOnlyActiveRecords(true)
