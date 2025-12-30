@@ -988,14 +988,7 @@ public class MRequest extends X_R_Request
 		updateOrCreateRequestAction(COLUMNNAME_TaskStatus, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_DateStartPlan, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_DateCompletePlan, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_R_RequestType_ID, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_R_RequestType_ID, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_R_RequestType_ID, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_R_RequestType_ID, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_R_Group_ID, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_DateStartPlan, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_QtySpent, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_IsInvoiced, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_URL, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_R_Milestone_ID, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_R_Release_ID, newRecord);
