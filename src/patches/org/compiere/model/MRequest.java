@@ -1005,6 +1005,9 @@ public class MRequest extends X_R_Request
 			return;
 		}
 		if((newRecord && get_Value(columnName) != null) || is_ValueChanged(columnName)){
+			if(MColumn.getColumn_ID(MRequestAction.Table_Name, columnName) <= 0) {
+				return;
+			}
 			String whereClause = "R_Request_ID = ? AND ("+columnName+" IS NOT NULL OR NullColumns = ?) AND Updated = Created";
 			MRequestAction requestAction = new Query(getCtx(), MRequestAction.Table_Name, whereClause, get_TrxName())
 					.setParameters(get_ID(), columnName)
@@ -1109,7 +1112,7 @@ public class MRequest extends X_R_Request
 				}
 			}
 		}
-		if (is_ValueChanged(COLUMNNAME_R_Iteration_ID) || is_ValueChanged(COLUMNNAME_TaskStatus)){
+		if (is_ValueChanged(COLUMNNAME_R_Iteration_ID) || is_ValueChanged(COLUMNNAME_R_Status_ID)){
 			int oldIterationId = get_ValueOldAsInt(COLUMNNAME_R_Iteration_ID);
 			if (oldIterationId != 0 && oldIterationId != getR_Iteration_ID()) {
 				MIteration oldIteration = new MIteration(getCtx(), oldIterationId, get_TrxName());
@@ -1122,7 +1125,7 @@ public class MRequest extends X_R_Request
 				iteration.saveEx();
 			}
 		}
-		if (is_ValueChanged(COLUMNNAME_R_Milestone_ID) || is_ValueChanged(COLUMNNAME_TaskStatus)){
+		if (is_ValueChanged(COLUMNNAME_R_Milestone_ID) || is_ValueChanged(COLUMNNAME_R_Status_ID)){
 			int oldMilestoneId = get_ValueOldAsInt(COLUMNNAME_R_Milestone_ID);
 			if (oldMilestoneId != 0 && oldMilestoneId != getR_Milestone_ID()) {
 				MMilestone oldIteration = new MMilestone(getCtx(), oldMilestoneId, get_TrxName());

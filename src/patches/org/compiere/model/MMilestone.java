@@ -26,12 +26,18 @@ public class MMilestone extends X_R_Milestone {
 
 
     public void updateCompletedPercentage(){
-        String whereClause = "R_Milestone_ID = ?";
+        String whereClause = "EXISTS (SELECT 1 FROM R_RequestAction ra " +
+                "WHERE ra.R_Request_ID = R_Request.R_Request_ID " +
+                "AND ra.R_Milestone_ID = ?)";
         int totalIssues = new Query(getCtx(), MRequest.Table_Name, whereClause, get_TrxName())
             .setParameters(get_ID())
             .setOnlyActiveRecords(true)
             .count();
-        whereClause = "R_Milestone_ID = ? AND TaskStatus in ('D', 'C')";
+        whereClause = "EXISTS (SELECT 1 FROM R_RequestAction ra " +
+                "INNER JOIN R_Status rs ON (rs.R_Status_ID = R_Request.R_Status_ID) " +
+                "WHERE ra.R_Request_ID = R_Request.R_Request_ID " +
+                "AND ra.R_Milestone_ID = ? " +
+                "AND rs.IsClosed = 'Y')";
         int completedIssues = new Query(getCtx(), MRequest.Table_Name, whereClause, get_TrxName())
             .setParameters(get_ID())
             .setOnlyActiveRecords(true)
