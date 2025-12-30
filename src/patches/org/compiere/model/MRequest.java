@@ -977,7 +977,6 @@ public class MRequest extends X_R_Request
 		updateOrCreateRequestAction(COLUMNNAME_M_InOut_ID, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_M_RMA_ID, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_C_Campaign_ID, newRecord);
-		updateOrCreateRequestAction(COLUMNNAME_RequestAmt, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_IsInvoiced, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_C_Activity_ID, newRecord);
 		updateOrCreateRequestAction(COLUMNNAME_DateNextAction, newRecord);
