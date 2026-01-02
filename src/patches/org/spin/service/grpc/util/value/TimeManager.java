@@ -27,6 +27,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
@@ -214,7 +215,10 @@ public class TimeManager {
 		if (Util.isEmpty(pattern, true)) {
 			pattern = TIME_FORMAT;
 		}
-		return new SimpleDateFormat(pattern).format(date);
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+		simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		String timeString = simpleDateFormat.format(date);
+		return timeString;
 	}
 
 	/**
@@ -239,17 +243,17 @@ public class TimeManager {
 	}
 
 	public static Timestamp getTimestampFromInstant(Instant value) {
-		if (value != null) {
-			return Timestamp.from(value);
+		if (value == null) {
+			return null;
 		}
-		return null;
+		return new Timestamp(value.toEpochMilli());
 	}
 	public static Timestamp getTimestampFromInstant(String value) {
 		Instant instant = getInstantFromString(value);
-		if (instant != null) {
-			return getTimestampFromInstant(instant);
+		if (instant == null) {
+			return null;
 		}
-		return null;
+		return getTimestampFromInstant(instant);
 	}
 
 	public static Timestamp getTimestampFromDouble(double value) {
