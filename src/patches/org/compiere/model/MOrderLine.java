@@ -978,7 +978,10 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 						}
 					}
 					if(is_ValueChanged(COLUMNNAME_PriceActual)) {
-						priceActual = getPriceActual();
+						if(!product.isWithoutDiscount() || getParent().getC_POS_ID() <= 0) {
+							priceActual = getPriceActual();
+						}
+
 					} else if(is_ValueChanged(COLUMNNAME_Discount)) {
 						priceActual = getPriceList()
 								.multiply(Env.ONE.subtract(getDiscount().divide(Env.ONEHUNDRED, m_precision, RoundingMode.HALF_UP)));
