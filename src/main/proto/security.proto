@@ -192,6 +192,8 @@ message SessionInfo {
 	UserInfo user_info = 7;
 	Role role_info = 8;
 	google.protobuf.Struct default_context = 9;
+	Organization organization_info = 10;
+	Warehouse warehouse_info = 11;
 }
 
 message SetSessionAttributeRequest {
