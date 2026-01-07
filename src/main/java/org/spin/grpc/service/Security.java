@@ -385,7 +385,7 @@ public class Security extends SecurityImplBase {
 			null
 		)
 			.setParameters(userId, userId)
-			.setOnlyActiveRecords(true)
+			// .setOnlyActiveRecords(true)
 		;
 
 		//	Get page and count
@@ -1870,6 +1870,26 @@ public class Security extends SecurityImplBase {
 				;
 			}
 		}
+
+		// new UI
+		if (menu.get_ColumnIndex("WebPath") >= 0 && Util.isEmpty(menu.get_ValueAsString("WebPath"))) {
+			builder.setWebPath(
+				TextManager.getValidString(
+					menu.get_ValueAsString("WebPath")
+				)
+			);
+		}
+		if (menu.get_ColumnIndex("AD_Module_ID") >= 0 && menu.get_ValueAsInt("AD_Module_ID") > 0) {
+			builder.setModuleId(
+				menu.get_ValueAsInt("AD_Module_ID")
+			);
+		}
+		if (menu.get_ColumnIndex("AD_SubModule_ID") >= 0 && menu.get_ValueAsInt("AD_SubModule_ID") > 0) {
+			builder.setSubModuleId(
+				menu.get_ValueAsInt("AD_SubModule_ID")
+			);
+		}
+
 		return builder;
 	}
 

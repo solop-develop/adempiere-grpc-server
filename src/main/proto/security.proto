@@ -68,6 +68,8 @@ service Security {
 			get: "/security/session-info"
 		};
 	}
+
+	// Set (Create/Update) Session Attribute
 	rpc SetSessionAttribute(SetSessionAttributeRequest) returns (Session) {
 		option (google.api.http) = {
 			put: "/security/session-attribute",
@@ -332,6 +334,10 @@ message Menu {
 	bool is_summary = 7;
 	bool is_sales_transaction = 8;
 	bool is_read_only = 9;
+	// new ui
+	string web_path = 20;
+	int32 module_id = 21;
+	int32 sub_module_id = 22;
 	// Supported References
 	optional string action = 10;
 	optional int32 action_id = 11;
