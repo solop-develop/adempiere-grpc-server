@@ -546,6 +546,15 @@ public class Security extends SecurityImplBase {
 	 * @param organization
 	 * @return
 	 */
+	public static Organization.Builder convertOrganization(int organizationId) {
+		Organization.Builder organizationBuilder = Organization.newBuilder();
+		if (organizationId < 0) {
+			return organizationBuilder;
+		}
+		MOrg organization = MOrg.get(Env.getCtx(), organizationId);
+		organizationBuilder = convertOrganization(organization);
+		return organizationBuilder;
+	}
 	public static Organization.Builder convertOrganization(MOrg organization) {
 		Organization.Builder organizationBuilder = Organization.newBuilder();
 		if (organization == null) {
@@ -572,6 +581,11 @@ public class Security extends SecurityImplBase {
 			.setUuid(
 				TextManager.getValidString(
 					organization.getUUID()
+				)
+			)
+			.setValue(
+				TextManager.getValidString(
+					organization.getValue()
 				)
 			)
 			.setName(
@@ -700,6 +714,15 @@ public class Security extends SecurityImplBase {
 	 * @param warehouse
 	 * @return
 	 */
+	public static Warehouse.Builder convertWarehouse(int warehouseId) {
+		Warehouse.Builder warehouseBuilder = Warehouse.newBuilder();
+		if (warehouseId < 0) {
+			return warehouseBuilder;
+		}
+		MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+		warehouseBuilder = convertWarehouse(warehouse);
+		return warehouseBuilder;
+	}
 	public static Warehouse.Builder convertWarehouse(MWarehouse warehouse) {
 		Warehouse.Builder warehouseBuilder = Warehouse.newBuilder();
 		if (warehouse == null) {
@@ -780,7 +803,7 @@ public class Security extends SecurityImplBase {
 		int roleId = -1;
 		int organizationId = -1;
 		int warehouseId = -1;
-		if(!Util.isEmpty(request.getToken())) {
+		if(!Util.isEmpty(request.getToken(), true)) {
 			MADToken token = SessionManager.createSessionFromToken(request.getToken());
 			if(Optional.ofNullable(token).isPresent()) {
 				userId = token.getAD_User_ID();
@@ -788,14 +811,21 @@ public class Security extends SecurityImplBase {
 				organizationId = token.getAD_Org_ID();
 			}
 		} else {
+			if(Util.isEmpty(request.getUserName(), true)) {
+				throw new AdempiereException("@FillMandatory@ @AD_User_ID@");
+			}
+			if(Util.isEmpty(request.getUserPass(), true)) {
+				throw new AdempiereException("@FillMandatory@ @Password@");
+			}
+
 			userId = getUserId(request.getUserName(), request.getUserPass());
 			//	Get Values from role
 			if(userId < 0) {
-				throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
+				throw new AdempiereException("@AD_User_ID@ / @Password@ @NotFound@. @AD_Role_ID@ / @AD_Org_ID@ @NotMatched@");
 			}
 			MUser user = MUser.get(Env.getCtx(), userId);
 			if (user == null) {
-				throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
+				throw new AdempiereException("@AD_User_ID@ @NotFound@");
 			}
 
 			List<MPreference> preferencesList = new ArrayList<MPreference>();
@@ -1219,6 +1249,19 @@ public class Security extends SecurityImplBase {
 			MRole.get(context, session.getAD_Role_ID())
 		);
 		builder.setRoleInfo(roleBuilder.build());
+
+		//	Set organization
+		Organization.Builder organizationBuilder = convertOrganization(
+			session.getAD_Org_ID()
+		);
+		builder.setOrganizationInfo(organizationBuilder);
+
+		//	Set warehouse
+		Warehouse.Builder warehousBuilder = convertWarehouse(
+			Env.getContextAsInt(context, "#M_Warehouse_ID")
+		);
+		builder.setWarehouseInfo(warehousBuilder);
+
 		//	Set default context
 		populateDefaultPreferences(builder);
 		//	Return session
