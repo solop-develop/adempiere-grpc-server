@@ -1445,6 +1445,16 @@ public class WebStore extends WebStoreImplBase {
 			//	Get Price List
 			MPriceList priceList = MPriceList.get(Env.getCtx(), store.getM_PriceList_ID(), transactionName);
 			MWarehouse warehouse = MWarehouse.get(Env.getCtx(), store.getM_Warehouse_ID());
+			// if (store.getM_Warehouse_ID() == 0) {
+			// 	warehouse = new Query(
+			// 		Env.getCtx(),
+			// 		I_M_Warehouse.Table_Name,
+			// 		"M_Warehouse_ID = 0",
+			// 		null
+			// 	)
+			// 		.first()
+			// 	;
+			// }
 			Timestamp validFrom = new Timestamp(System.currentTimeMillis());
 			FreightEngine freightEngine = FreightEngineFactory.getFreightEngine(Env.getAD_Client_ID(Env.getCtx()));
 			//	Get Methods
