@@ -152,6 +152,16 @@ public class ExpressMovement extends ExpressMovementImplBase {
 			// .parallelStream()
 			.forEach(warehouseId -> {
 				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+				if (warehouseId == 0) {
+					warehouse = new Query(
+						Env.getCtx(),
+						I_M_Warehouse.Table_Name,
+						"M_Warehouse_ID = 0",
+						null
+					)
+						.first()
+					;
+				}
 				Warehouse.Builder builder = convertWarehouse(warehouse);
 				builderList.addRecords(builder);
 			})

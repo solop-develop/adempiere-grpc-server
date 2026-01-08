@@ -552,6 +552,16 @@ public class Security extends SecurityImplBase {
 			return organizationBuilder;
 		}
 		MOrg organization = MOrg.get(Env.getCtx(), organizationId);
+		if (organizationId == 0) {
+			organization = new Query(
+				Env.getCtx(),
+				I_AD_Org.Table_Name,
+				"AD_Org_ID = 0",
+				null
+			)
+				.first()
+			;
+		}
 		organizationBuilder = convertOrganization(organization);
 		return organizationBuilder;
 	}
@@ -720,6 +730,16 @@ public class Security extends SecurityImplBase {
 			return warehouseBuilder;
 		}
 		MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+		if (warehouseId == 0) {
+			warehouse = new Query(
+				Env.getCtx(),
+				I_M_Warehouse.Table_Name,
+				"M_Warehouse_ID = 0",
+				null
+			)
+				.first()
+			;
+		}
 		warehouseBuilder = convertWarehouse(warehouse);
 		return warehouseBuilder;
 	}

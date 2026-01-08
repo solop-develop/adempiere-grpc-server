@@ -39,6 +39,7 @@ import org.adempiere.core.domains.models.I_M_InOut;
 import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.core.domains.models.I_M_Product;
 import org.adempiere.core.domains.models.I_M_Storage;
+import org.adempiere.core.domains.models.I_M_Warehouse;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.GenericPO;
 import org.compiere.model.MAttributeSetInstance;
@@ -3319,7 +3320,18 @@ public class PointOfSalesForm extends StoreImplBase {
 			.setLimit(limit, offset)
 			.list()
 			.forEach(availableWarehouse -> {
-				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), availableWarehouse.get_ValueAsInt("M_Warehouse_ID"));
+				final int warehouseId = availableWarehouse.get_ValueAsInt("M_Warehouse_ID");
+				MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+				if (warehouseId == 0) {
+					warehouse = new Query(
+						Env.getCtx(),
+						I_M_Warehouse.Table_Name,
+						"M_Warehouse_ID = 0",
+						null
+					)
+						.first()
+					;
+				}
 				builder.addWarehouses(
 					AvailableWarehouse.newBuilder()
 						.setId(

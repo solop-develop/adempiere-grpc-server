@@ -14,6 +14,7 @@
  ************************************************************************************/
 package org.spin.grpc.service.form.payment_allocation;
 
+import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_ConversionType;
@@ -47,6 +48,16 @@ public class PaymentAllocationConvertUtil {
 			return Organization.newBuilder();
 		}
 		MOrg organization = MOrg.get(Env.getCtx(), organizationId);
+		if (organizationId == 0) {
+			organization = new Query(
+				Env.getCtx(),
+				I_AD_Org.Table_Name,
+				"AD_Org_ID = 0",
+				null
+			)
+				.first()
+			;
+		}
 		return convertOrganization(organization);
 	}
 	public static Organization.Builder convertOrganization(MOrg organization) {
