@@ -42,6 +42,7 @@ public class RecordHoursWorked extends RecordHoursWorkedAbstract {
 		if (isSelection()) {
 			recordIds = getSelectionKeys();
 		} else if(getRecord_ID() > 0 && getTableName() != null) {
+			recordIds.add(getRecord_ID());
 			if(getTableName().equals(I_R_Request.Table_Name)) {
 				setRequestId(getRecord_ID());
 			} else if(getTableName().equals(I_C_Project.Table_Name)) {
@@ -49,7 +50,6 @@ public class RecordHoursWorked extends RecordHoursWorkedAbstract {
 			} else if(getTableName().equals("S_Contract")) {
 				setContractId(getRecord_ID());
 			}
-			loadDefaultValues();
 		}
 	}
 	
@@ -104,21 +104,21 @@ public class RecordHoursWorked extends RecordHoursWorkedAbstract {
 		recordIds.forEach(recordId -> {
 			if (isSelection()){
 				setRequestId(recordId);
-				loadDefaultValues();
 				setDescription(getSelectionAsString(recordId, "R_Description"));
 				setQuantityHours(getSelectionAsBigDecimal(recordId, "R_SP007_QuantityHours"));
 				setActivity(getSelectionAsString(recordId, "R_SP007_Activity"));
 			}
+			loadDefaultValues();
 			ResourceAssignment assignment = ResourceAssignment.newInstance()
-					.withOrganizationId(getOrgId())
-					.withResourceId(getResourceId())
-					.withServiceDate(getServiceDate())
-					.withUserId(getAD_User_ID())
-					.withQuantity(getQuantityHours())
-					.withReason(getActivity())
-					.withDescription(getDescription())
-					.withTransactionName(get_TrxName())
-					;
+				.withOrganizationId(getOrgId())
+				.withResourceId(getResourceId())
+				.withServiceDate(getServiceDate())
+				.withUserId(getAD_User_ID())
+				.withQuantity(getQuantityHours())
+				.withReason(getActivity())
+				.withDescription(getDescription())
+				.withTransactionName(get_TrxName())
+				;
 			if(getBPartnerId() > 0) {
 				assignment.withCustomValue("C_BPartner_ID", getBPartnerId());
 			}
