@@ -19,6 +19,8 @@ package org.spin.eca56.util.support.documents;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Form;
@@ -32,6 +34,7 @@ import org.compiere.model.MMenu;
 import org.compiere.model.MProcess;
 import org.compiere.model.MWindow;
 import org.compiere.model.PO;
+import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.compiere.wf.MWorkflow;
 import org.spin.eca56.util.support.DictionaryDocument;
@@ -138,7 +141,13 @@ public class MenuItem extends DictionaryDocument {
 		}
 
 		// new UI
-		if (menu.get_ColumnIndex("WebPath") >= 0 && Util.isEmpty(menu.get_ValueAsString("WebPath"))) {
+		if (menu.get_ColumnIndex("WebPath") >= 0 && !Util.isEmpty(menu.get_ValueAsString("WebPath"))) {
+			final String targetPath = getTargetPath(
+				menu.get_ValueAsString("WebPath"),
+				menu.get_ValueAsInt("AD_Module_ID"),
+				menu.get_ValueAsInt("AD_SubModule_ID")
+			);
+			detail.put("target_path", targetPath);
 			detail.put("web_path", menu.get_ValueAsString("WebPath"));
 		}
 		if (menu.get_ColumnIndex("AD_Module_ID") >= 0 && menu.get_ValueAsInt("AD_Module_ID") > 0) {
@@ -150,7 +159,21 @@ public class MenuItem extends DictionaryDocument {
 
 		return detail;
 	}
-	
+
+	private String getTargetPath(String webPath, int moduleId, int subModuleId) {
+		if (Util.isEmpty(webPath, true) || !webPath.contains("@")) {
+			return webPath;
+		}
+		Properties context = Env.getCtx();
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+
+		Env.setContext(context, windowNo, "AD_Module_ID", moduleId);
+		Env.setContext(context, windowNo, "AD_SubModule_ID", subModuleId);
+
+		final String targetParh = Env.parseContext(context, windowNo, webPath, false);
+		return targetParh;
+	}
+
 	@Override
 	public DictionaryDocument withEntity(PO entity) {
 		MMenu menu = (MMenu) entity;

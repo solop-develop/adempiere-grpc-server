@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.adempiere.core.domains.models.I_AD_Browse;
 import org.adempiere.core.domains.models.I_AD_Form;
@@ -1593,16 +1594,17 @@ public class Security extends SecurityImplBase {
 		final String language = Env.getAD_Language(Env.getCtx());
 		final String menuKey = roleId + "|" + userId + "|" + language;
 
-		MenuResponse.Builder builderList = menuCache.get(menuKey);
-		if(builderList != null) {
+		MenuResponse.Builder builderList = MenuResponse.newBuilder();
+		if(menuCache.containsKey(menuKey)) {
+			builderList = menuCache.get(menuKey);
 			return builderList;
 		}
 
 		MRole role = MRole.get(Env.getCtx(), roleId);
 		if(role == null) {
+			// throw new AdempiereException("@AD_Role_ID@ @NotFound@
 			log.warning("@AD_Role_ID@ @NotFound@. @AD_Client_ID@=" + clientId + ", @AD_Role_ID@" + roleId + ", @AD_User_ID@=" + userId);
 			return builderList;
-			// throw new AdempiereException("@AD_Role_ID@ @NotFound@
 		}
 
 		int treeId = role.getAD_Tree_Menu_ID();
@@ -1935,12 +1937,21 @@ public class Security extends SecurityImplBase {
 		}
 
 		// new UI
-		if (menu.get_ColumnIndex("WebPath") >= 0 && Util.isEmpty(menu.get_ValueAsString("WebPath"))) {
-			builder.setWebPath(
-				TextManager.getValidString(
-					menu.get_ValueAsString("WebPath")
-				)
+		if (menu.get_ColumnIndex("WebPath") >= 0 && !Util.isEmpty(menu.get_ValueAsString("WebPath"))) {
+			final String targetPath = getTargetPath(
+				menu.get_ValueAsString("WebPath"),
+				menu.get_ValueAsInt("AD_Module_ID"),
+				menu.get_ValueAsInt("AD_SubModule_ID")
 			);
+			builder.setTargetPath(
+					TextManager.getValidString(targetPath)
+				)
+				.setWebPath(
+					TextManager.getValidString(
+						menu.get_ValueAsString("WebPath")
+					)
+				)
+			;
 		}
 		if (menu.get_ColumnIndex("AD_Module_ID") >= 0 && menu.get_ValueAsInt("AD_Module_ID") > 0) {
 			builder.setModuleId(
@@ -1954,6 +1965,20 @@ public class Security extends SecurityImplBase {
 		}
 
 		return builder;
+	}
+
+	private String getTargetPath(String webPath, int moduleId, int subModuleId) {
+		if (Util.isEmpty(webPath, true) || !webPath.contains("@")) {
+			return webPath;
+		}
+		Properties context = Env.getCtx();
+		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+
+		Env.setContext(context, windowNo, "AD_Module_ID", moduleId);
+		Env.setContext(context, windowNo, "AD_SubModule_ID", subModuleId);
+
+		final String targetParh = Env.parseContext(context, windowNo, webPath, false);
+		return targetParh;
 	}
 
 	/**

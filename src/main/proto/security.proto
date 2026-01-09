@@ -338,8 +338,9 @@ message Menu {
 	bool is_read_only = 9;
 	// new ui
 	string web_path = 20;
-	int32 module_id = 21;
-	int32 sub_module_id = 22;
+	string target_path = 22;
+	int32 module_id = 23;
+	int32 sub_module_id = 24;
 	// Supported References
 	optional string action = 10;
 	optional int32 action_id = 11;
