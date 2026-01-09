@@ -69,7 +69,6 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -84,7 +83,8 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(ExpressShipment.class);
 	
-	public String tableName = I_M_InOut.Table_Name;
+	public static String TABLE_NAME = I_M_InOut.Table_Name;
+
 
 
 	@Override
@@ -208,6 +208,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 	}
 
 
+
 	@Override
 	public void listSalesOrders(ListSalesOrdersRequest request, StreamObserver<ListSalesOrdersResponse> responseObserver) {
 		try {
@@ -295,6 +296,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		;
 
 		query.setLimit(limit, offset)
+			.setOrderBy("DateOrdered DESC")
 			.getIDsAsList()
 			// .parallelStream()
 			.forEach(salesOrderId -> {
@@ -316,7 +318,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				salesOrder.getC_Order_ID()
 			)
 			.setDateOrdered(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					salesOrder.getDateOrdered()
 				)
 			)
@@ -470,6 +472,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 	}
 
 
+
 	Shipment.Builder convertShipment(MInOut shipment) {
 		Shipment.Builder builder = Shipment.newBuilder();
 		if (shipment == null) {
@@ -485,12 +488,12 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				)
 			)
 			.setDateOrdered(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					shipment.getDateOrdered()
 				)
 			)
 			.setMovementDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					shipment.getMovementDate()
 				)
 			)
@@ -506,6 +509,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 		return builder;
 	}
+
 
 
 	@Override

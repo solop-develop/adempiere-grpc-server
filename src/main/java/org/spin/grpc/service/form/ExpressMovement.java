@@ -59,7 +59,6 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -74,7 +73,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(ExpressMovement.class);
 	
-	public String tableName = I_M_Movement.Table_Name;
+	public static String TABLE_NAME = I_M_Movement.Table_Name;
 
 
 	@Override
@@ -198,6 +197,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 
 		return builder;
 	}
+
 
 
 	@Override
@@ -347,7 +347,7 @@ public class ExpressMovement extends ExpressMovementImplBase {
 				)
 			)
 			.setMovementDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					movement.getMovementDate()
 				)
 			)

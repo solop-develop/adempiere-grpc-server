@@ -70,7 +70,6 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -85,7 +84,8 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(ExpressReceipt.class);
 	
-	public String tableName = I_M_InOut.Table_Name;
+	public static String TABLE_NAME = I_M_InOut.Table_Name;
+
 
 
 	@Override
@@ -210,6 +210,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 
+
 	@Override
 	public void listPurchaseOrders(ListPurchaseOrdersRequest request, StreamObserver<ListPurchaseOrdersResponse> responseObserver) {
 		try {
@@ -298,6 +299,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		;
 
 		query.setLimit(limit, offset)
+			.setOrderBy("DateOrdered DESC")
 			.getIDsAsList()
 			// .parallelStream()
 			.forEach(purchaseOrderId -> {
@@ -322,7 +324,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				purchaseOrder.getC_Order_ID()
 			)
 			.setDateOrdered(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					purchaseOrder.getDateOrdered()
 				)
 			)
@@ -478,6 +480,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 	}
 
 
+
 	Receipt.Builder convertReceipt(MInOut receipt) {
 		Receipt.Builder builder = Receipt.newBuilder();
 		if (receipt == null) {
@@ -493,12 +496,12 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 				)
 			)
 			.setDateOrdered(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					receipt.getDateOrdered()
 				)
 			)
 			.setMovementDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					receipt.getMovementDate()
 				)
 			)
@@ -514,6 +517,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 
 		return builder;
 	}
+
 
 
 	@Override
@@ -543,7 +547,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		int projectId = request.getProjectId();
 		int activityId = request.getActivityId();
 		int campaignId = request.getCampaignId();
-		int bpartnerId = request.getBpartnerId();
+		// int bPartnerId = request.getBpartnerId();
 		int user1Id = request.getUser1Id();
 		int user4Id = request.getUser4Id();
 		if (orderId <= 0) {
@@ -794,7 +798,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		int projectId = request.getProjectId();
 		int activityId = request.getActivityId();
 		int campaignId = request.getCampaignId();
-		int bpartnerId = request.getBpartnerId();
+		// int bPartnerId = request.getBpartnerId();
 		int user1Id = request.getUser1Id();
 		int user4Id = request.getUser4Id();
 
@@ -956,7 +960,7 @@ public class ExpressReceipt extends ExpressReceiptImplBase {
 		int projectId = request.getProjectId();
 		int activityId = request.getActivityId();
 		int campaignId = request.getCampaignId();
-		int bpartnerId = request.getBpartnerId();
+		// int bPartnerId = request.getBpartnerId();
 		int user1Id = request.getUser1Id();
 		int user4Id = request.getUser4Id();
 		if (receiptLineId <= 0) {
