@@ -16,6 +16,7 @@
  *****************************************************************************/
 package org.solop.queue.setup;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MProcess;
 import org.compiere.model.MScheduler;
 import org.compiere.model.MSchedulerPara;
@@ -36,6 +37,9 @@ public class AccountingAndCostSetup implements ISetupDefinition {
 	@Override
 	public String doIt(Properties context, String transactionName) {
 		//	Scheduler
+		if (Env.getAD_Client_ID(context) == 0) {
+			throw new AdempiereException("@AD_Client_ID@ = System");
+		}
 		createAccountingSchedule(context, transactionName);
 		createCostingSchedule(context, transactionName);
 		return "@AD_SetupDefinition_ID@ @Ok@";
