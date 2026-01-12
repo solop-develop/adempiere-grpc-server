@@ -15,7 +15,7 @@ java {
 
 def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
-def adempiereCoreVersion = '1.4.23'
+def adempiereCoreVersion = '1.4.25'
 
 def descriptorFile = "adempiere-grpc-server.dsc"
 def javaMainClass = "org.spin.server.AllInOneServices"
@@ -76,7 +76,7 @@ dependencies {
 	// Firebase Connector
 	implementation "com.solop.adempiere.tools:adempiere-firebase-connector:core-1.0.0-1.0.0"
 	// Time Control
-	implementation "com.solop.adempiere.tools:time-control:core-1.4.22-1.0.0"
+	implementation "com.solop.adempiere.tools:time-control:core-1.4.22-1.0.1"
 	implementation "com.solop.adempiere.tools:performance-analysis:core-1.2.6-1.0.0"
 	implementation "com.solop.adempiere.verticals:import-export-management:core-1.4.21-1.0.1"
 	implementation "com.solop.adempiere.verticals:agency-project:core-1.4.22-1.0.0"
