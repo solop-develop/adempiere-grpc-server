@@ -86,7 +86,6 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -210,6 +209,7 @@ public class CashServiceLogic {
 			// relauch original exception
 			throw exception;
 		} finally {
+			bankStatementControl.load(null);
 			bankStatementControl.setProcessing(false);
 			bankStatementControl.saveEx();
 		}
@@ -352,7 +352,7 @@ public class CashServiceLogic {
 				)
 			)
 			.setDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					cashClosing.getStatementDate()
 				)
 			)
@@ -448,7 +448,7 @@ public class CashServiceLogic {
 				)
 			)
 			.setDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					cashClosing.getStatementDate()
 				)
 			)
@@ -482,12 +482,12 @@ public class CashServiceLogic {
 		}
 
 		sql += " AS PaymentAmount "
-				+ "FROM C_Payment AS p "
-				+ "INNER JOIN C_PaymentMethod AS pm ON(pm.C_PaymentMethod_ID = p.C_PaymentMethod_ID) "
-				+ "WHERE p.DocStatus IN('CO', 'CL') "
-				+ "AND p.C_POS_ID = ? "
-				+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl WHERE bsl.C_Payment_ID = p.C_Payment_ID AND bsl.C_BankStatement_ID = ?) "
-				+ "GROUP BY pm.C_PaymentMethod_ID, pm.Name, pm.TenderType, p.C_Currency_ID"
+			+ "FROM C_Payment AS p "
+			+ "INNER JOIN C_PaymentMethod AS pm ON(pm.C_PaymentMethod_ID = p.C_PaymentMethod_ID) "
+			+ "WHERE p.DocStatus IN('CO', 'CL') "
+			+ "AND p.C_POS_ID = ? "
+			+ "AND EXISTS(SELECT 1 FROM C_BankStatementLine bsl WHERE bsl.C_Payment_ID = p.C_Payment_ID AND bsl.C_BankStatement_ID = ?) "
+			+ "GROUP BY pm.C_PaymentMethod_ID, pm.Name, pm.TenderType, p.C_Currency_ID"
 		;
 
 		if (request.getIsDetailMovementType()) {
@@ -506,33 +506,33 @@ public class CashServiceLogic {
 				BigDecimal amount = resultset.getBigDecimal("PaymentAmount");
 				String tenderTypeCode = resultset.getString("TenderTypeCode");
 				PaymentSummary.Builder paymentSummary = PaymentSummary.newBuilder()
-						.setPaymentMethodId(
-								resultset.getInt("C_PaymentMethod_ID")
+					.setPaymentMethodId(
+						resultset.getInt("C_PaymentMethod_ID")
+					)
+					.setPaymentMethodName(
+						TextManager.getValidString(
+							resultset.getString("PaymentMethodName")
 						)
-						.setPaymentMethodName(
-								TextManager.getValidString(
-										resultset.getString("PaymentMethodName")
-								)
+					)
+					.setTenderTypeCode(
+						TextManager.getValidString(
+							tenderTypeCode
 						)
-						.setTenderTypeCode(
-								TextManager.getValidString(
-										tenderTypeCode
-								)
+					)
+					.setCurrency(
+						CoreFunctionalityConvert.convertCurrency(
+							currencyId
 						)
-						.setCurrency(
-								CoreFunctionalityConvert.convertCurrency(
-										currencyId
-								)
+					)
+					.setAmount(
+						NumberManager.getBigDecimalToString(
+							amount
 						)
-						.setAmount(
-								NumberManager.getBigDecimalToString(
-										amount
-								)
-						)
-						;
+					)
+				;
 				if (request.getIsDetailMovementType()) {
 					paymentSummary.setIsRefund(
-							!resultset.getBoolean("IsReceipt")
+						!resultset.getBoolean("IsReceipt")
 					);
 				}
 
@@ -558,10 +558,14 @@ public class CashServiceLogic {
 			PaymentTotal.Builder paymentTotalBuilder = PaymentTotal.newBuilder()
 				.setCurrency(
 					CoreFunctionalityConvert.convertCurrency(
-							currencyCashKey.getCurrencyId()
+						currencyCashKey.getCurrencyId()
 					)
 				)
-					.setDescription(currencyCashKey.getValidDisplayValue())
+				.setDescription(
+					TextManager.getValidString(
+						currencyCashKey.getValidDisplayValue()
+					)
+				)
 				.setTotalAmount(
 					NumberManager.getBigDecimalToString(
 						totalAmount
@@ -603,8 +607,8 @@ public class CashServiceLogic {
 				request.getBankStatementId()
 			);
 			parameters.putFields(
-					MBankStatement.COLUMNNAME_C_BankStatement_ID,
-					bankStatementBuilder.build()
+				MBankStatement.COLUMNNAME_C_BankStatement_ID,
+				bankStatementBuilder.build()
 			);
 		}
 		if (request.hasDateFrom() && request.hasDateTo()) {
@@ -746,7 +750,7 @@ public class CashServiceLogic {
 			.setRecordId(paymentProcessorRunId)
 		;
 		ProcessLog.Builder processLog = ReportManagement.generateReport(
-				reportRequest.build()
+			reportRequest.build()
 		);
 		ReportOutput.Builder outputBuilder = processLog.getOutputBuilder();
 		outputBuilder.setIsDirectPrint(
@@ -758,7 +762,7 @@ public class CashServiceLogic {
 		PrintPreviewOnlineCashClosingResponse.Builder ticket = PrintPreviewOnlineCashClosingResponse.newBuilder()
 			.setResult("Ok")
 			.setProcessLog(
-					processLog.build()
+				processLog.build()
 			)
 		;
 
@@ -783,11 +787,17 @@ public class CashServiceLogic {
 			}
 
 			String whereClause = "C_BankAccount_ID = ?";
-			MPaymentProcessor paymentProcessor = (new Query(Env.getCtx(), "C_PaymentProcessor", whereClause, transactionName))
+			MPaymentProcessor paymentProcessor = new Query(
+				Env.getCtx(),
+				"C_PaymentProcessor",
+				whereClause,
+				transactionName
+			)
 				.setParameters(bankStatement.getC_BankAccount_ID())
 				.setClient_ID()
 				.setOnlyActiveRecords(true)
-				.first();
+				.first()
+			;
 			if (paymentProcessor == null) {
 				throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
 			}
@@ -797,11 +807,16 @@ public class CashServiceLogic {
 				if (PaymentProcessorClosing.class.isAssignableFrom(processor.getClass())) {
 					((PaymentProcessorClosing) processor).closeBatch(paymentMethodId, bankStatement.getStatementDate());
 					whereClause = "C_BankStatement_ID = ? AND C_PaymentMethod_ID = ?";
-					paymentProcessorRun = new Query(Env.getCtx(), "C_PaymentProcessorRun", whereClause, transactionName)
+					paymentProcessorRun = new Query(
+						Env.getCtx(),
+						"C_PaymentProcessorRun",
+						whereClause,
+						transactionName
+					)
 						.setParameters(request.getId(), paymentMethodId)
 						.setOrderBy("Created DESC")
-						.first();
-
+						.first()
+					;
 				} else {
 					throw new AdempiereException(PaymentProcessorClosing.class.getName() + "Unsupported");
 				}

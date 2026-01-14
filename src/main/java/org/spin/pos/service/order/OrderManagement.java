@@ -301,6 +301,7 @@ public class OrderManagement {
 			// relauch original exception
 			throw exception;
 		} finally {
+			salesOrderControl.load(null);
 			salesOrderControl.setProcessing(false);
 			salesOrderControl.saveEx();
 		}

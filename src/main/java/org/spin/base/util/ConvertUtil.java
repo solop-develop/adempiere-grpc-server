@@ -424,7 +424,16 @@ public class ConvertUtil {
 				|| amount.compareTo(Env.ZERO) == 0) {
 			return amount;
 		}
-		BigDecimal convertedAmount = MConversionRate.convert(payment.getCtx(), amount, payment.getC_Currency_ID(), order.getC_Currency_ID(), payment.getDateAcct(), payment.getC_ConversionType_ID(), payment.getAD_Client_ID(), payment.getAD_Org_ID());
+		BigDecimal convertedAmount = MConversionRate.convert(
+			payment.getCtx(),
+			amount,
+			payment.getC_Currency_ID(),
+			order.getC_Currency_ID(),
+			payment.getDateAcct(),
+			payment.getC_ConversionType_ID(),
+			payment.getAD_Client_ID(),
+			payment.getAD_Org_ID()
+		);
 		//	
 		return Optional.ofNullable(convertedAmount).orElse(Env.ZERO);
 	}
@@ -437,11 +446,19 @@ public class ConvertUtil {
 	 */
 	public static BigDecimal getDisplayConversionRateFromOrder(MOrder order) {
 		MPOS pos = MPOS.get(order.getCtx(), order.getC_POS_ID());
-		if(order.getC_Currency_ID() == pos.get_ValueAsInt("DisplayCurrency_ID")
-				|| pos.get_ValueAsInt("DisplayCurrency_ID") <= 0) {
+		final int displayCurrencyId = pos.get_ValueAsInt("DisplayCurrency_ID");
+		if(order.getC_Currency_ID() == displayCurrencyId
+				|| displayCurrencyId <= 0) {
 			return Env.ONE;
 		}
-		BigDecimal conversionRate = MConversionRate.getRate(order.getC_Currency_ID(), pos.get_ValueAsInt("DisplayCurrency_ID"), order.getDateAcct(), order.getC_ConversionType_ID(), order.getAD_Client_ID(), order.getAD_Org_ID());
+		BigDecimal conversionRate = MConversionRate.getRate(
+			order.getC_Currency_ID(),
+			displayCurrencyId,
+			order.getDateAcct(),
+			order.getC_ConversionType_ID(),
+			order.getAD_Client_ID(),
+			order.getAD_Org_ID()
+		);
 		//	
 		return Optional.ofNullable(conversionRate).orElse(Env.ZERO);
 	}
@@ -461,7 +478,7 @@ public class ConvertUtil {
 		if(paymentReference.get_ValueAsInt("C_Currency_ID") == order.getC_Currency_ID()) {
 			return Env.ONE;
 		}
-		
+
 		Timestamp conversionDate = TimeManager.getTimestampFromString(
 			paymentReference.get_ValueAsString("PayDate")
 		);
@@ -488,20 +505,24 @@ public class ConvertUtil {
 		if(currencyId == order.getC_Currency_ID()) {
 			return;
 		}
-		int convertionRateId = MConversionRate.getConversionRateId(currencyId, 
-				order.getC_Currency_ID(), 
-				transactionDate, 
-				conversionTypeId, 
-				order.getAD_Client_ID(), 
-				order.getAD_Org_ID());
+		int convertionRateId = MConversionRate.getConversionRateId(
+			currencyId,
+			order.getC_Currency_ID(),
+			transactionDate,
+			conversionTypeId,
+			order.getAD_Client_ID(),
+			order.getAD_Org_ID()
+		);
 		if(convertionRateId == -1) {
-			String error = MConversionRate.getErrorMessage(order.getCtx(), 
-					"ErrorConvertingDocumentCurrencyToBaseCurrency", 
-					currencyId, 
-					order.getC_Currency_ID(), 
-					conversionTypeId, 
-					transactionDate, 
-					null);
+			String error = MConversionRate.getErrorMessage(
+				order.getCtx(),
+				"ErrorConvertingDocumentCurrencyToBaseCurrency",
+				currencyId,
+				order.getC_Currency_ID(),
+				conversionTypeId,
+				transactionDate,
+				null
+			);
 			throw new AdempiereException(error);
 		}
 	}
