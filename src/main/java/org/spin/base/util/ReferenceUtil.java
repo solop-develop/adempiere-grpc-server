@@ -256,7 +256,17 @@ public class ReferenceUtil {
 		} else if((DisplayType.TableDir == referenceId || (DisplayType.Table == referenceId || DisplayType.Search == referenceId)
 			&& columnName.endsWith("_ID")) && referenceValueId <= 0) {
 			//	Add Display
-			final String displayColumn = MLookupFactory.getLookup_TableDirEmbed(languageValue, columnName, tableName);
+			String displayColumn = MLookupFactory.getLookup_TableDirEmbed(
+				languageValue,
+				columnName,
+				tableName
+			);
+			if (Util.isEmpty(displayColumn, true)) {
+				// TODO: Validate if is `NULL` column, or `tableName.columnName` to same value, or break and return
+				// displayColumn = "NULL";
+				// displayColumn = tableName + "." + columnName;
+				return null; // if is empty break as null and omit
+			}
 			referenceInfo.setDisplayColumnValue("(" + displayColumn + ")");
 			referenceInfo.setHasJoinValue(false);
 		} else {
