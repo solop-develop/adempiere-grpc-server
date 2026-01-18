@@ -3676,9 +3676,7 @@ public class PointOfSalesForm extends StoreImplBase {
 
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<Object>();
-		whereClause.append("(C_Order.AD_Org_ID = ? OR C_Order.C_POS_ID = ?)");
-		parameters.add(orgId);
-		parameters.add(posId);
+		whereClause.append("(1=1) ");
 
 		final String whereClauseWithoutProposal = " AND NOT EXISTS(SELECT 1 FROM C_DocType dt "
 			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
