@@ -1869,6 +1869,7 @@ message ListOrdersRequest {
 	google.protobuf.Timestamp date_ordered_from = 24;
 	google.protobuf.Timestamp date_ordered_to = 25;
 	int32 sales_representative_id = 26;
+	bool is_list_all_orgs = 27;
 }
 
 //	List Order Lines Response
@@ -1989,6 +1990,7 @@ message PointOfSales {
 	bool is_print_gift_card = 66;
 	// Manual Document
 	bool is_allows_create_manual_document = 67;
+	bool is_access_all_orgs = 68;
 }
 message ListPointOfSalesResponse {
 	int64 record_count = 1;

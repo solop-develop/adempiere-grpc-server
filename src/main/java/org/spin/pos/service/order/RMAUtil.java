@@ -177,7 +177,8 @@ public class RMAUtil {
 		returnOrder.setIsTransferred (false);
 		returnOrder.setPosted (false);
 		returnOrder.setProcessed (false);
-		returnOrder.setAD_Org_ID(sourceOrder.getAD_Org_ID());
+		returnOrder.setAD_Org_ID(pos.getAD_Org_ID());
+		returnOrder.setM_Warehouse_ID(pos.getM_Warehouse_ID());
 		returnOrder.saveEx(sourceOrder.get_TrxName());
 		int targetDocumentTypeId = RMAUtil.getReturnDocumentTypeId(sourceOrder.getC_POS_ID(), pos.getC_POS_ID(), sourceOrder.getC_DocTypeTarget_ID());
 		//	Set Document base for return

@@ -3673,45 +3673,52 @@ public class PointOfSalesForm extends StoreImplBase {
 		int salesRepresentativeId = request.getSalesRepresentativeId();
 		int orgId = pos.getAD_Org_ID();
 		MUser salesRepresentative = MUser.get(Env.getCtx(), salesRepresentativeId);
-
 		StringBuffer whereClause = new StringBuffer();
 		List<Object> parameters = new ArrayList<Object>();
-		whereClause.append("(C_Order.AD_Org_ID = ? OR C_Order.C_POS_ID = ?)");
-		parameters.add(orgId);
-		parameters.add(posId);
-
 		final String whereClauseWithoutProposal = " AND NOT EXISTS(SELECT 1 FROM C_DocType dt "
-			+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
-			+ "AND dt.DocSubTypeSO IN('ON', 'OB'))"
-		;
-		if(!salesRepresentative.get_ValueAsBoolean("IsPOSManager")) {
-			if(pos.get_ValueAsBoolean("IsConfidentialInfo")) {
-				whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR C_Order.AssignedSalesRep_ID = ?) AND C_Order.C_POS_ID = ?)");
-				parameters.add(salesRepresentativeId);
-				parameters.add(salesRepresentativeId);
-				parameters.add(posId);
-			} else {
-				if(request.getIsOnlyAisleSeller()) {
-					String whereIsAisleSeller = "";
-					if (pos.get_ColumnIndex("IsAisleSeller") >= 0) {
-						whereIsAisleSeller = "AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsAisleSeller = 'Y')";
-					}
-					whereClause
-						.append(" AND DocStatus NOT IN('VO', 'CL') ")
-						.append("AND (")
-						.append("(C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?)")
-						.append(whereIsAisleSeller)
-						.append(")")
-						.append(whereClauseWithoutProposal)
-					;
+				+ "WHERE dt.C_DocType_ID = C_Order.C_DocTypeTarget_ID "
+				+ "AND dt.DocSubTypeSO IN('ON', 'OB'))"
+				;
+		//	Validate if should list all orgs
+		boolean isAllOrgs = request.getIsListAllOrgs();
+
+		if (isAllOrgs) {
+			whereClause.append("(1=1) ");
+		} else {
+			whereClause.append("(C_Order.AD_Org_ID = ? OR C_Order.C_POS_ID = ?) ");
+			parameters.add(orgId);
+			parameters.add(posId);
+
+
+			if(!salesRepresentative.get_ValueAsBoolean("IsPOSManager")) {
+				if(pos.get_ValueAsBoolean("IsConfidentialInfo")) {
+					whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR C_Order.AssignedSalesRep_ID = ?) AND C_Order.C_POS_ID = ?)");
 					parameters.add(salesRepresentativeId);
 					parameters.add(salesRepresentativeId);
-					parameters.add(salesRepresentativeId);
+					parameters.add(posId);
 				} else {
-					whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?) AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsSharedPOS = 'Y'))");
-					parameters.add(salesRepresentativeId);
-					parameters.add(salesRepresentativeId);
-					parameters.add(salesRepresentativeId);
+					if(request.getIsOnlyAisleSeller()) {
+						String whereIsAisleSeller = "";
+						if (pos.get_ColumnIndex("IsAisleSeller") >= 0) {
+							whereIsAisleSeller = "AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsAisleSeller = 'Y')";
+						}
+						whereClause
+							.append(" AND DocStatus NOT IN('VO', 'CL') ")
+							.append("AND (")
+							.append("(C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?)")
+							.append(whereIsAisleSeller)
+							.append(")")
+							.append(whereClauseWithoutProposal)
+						;
+						parameters.add(salesRepresentativeId);
+						parameters.add(salesRepresentativeId);
+						parameters.add(salesRepresentativeId);
+					} else {
+						whereClause.append(" AND ((C_Order.SalesRep_ID = ? OR COALESCE(C_Order.AssignedSalesRep_ID, ?) = ?) AND EXISTS(SELECT 1 FROM C_POS p WHERE p.C_POS_ID = C_Order.C_POS_ID AND p.IsSharedPOS = 'Y'))");
+						parameters.add(salesRepresentativeId);
+						parameters.add(salesRepresentativeId);
+						parameters.add(salesRepresentativeId);
+					}
 				}
 			}
 		}
@@ -3760,6 +3767,7 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(request.getIsOnlyProcessed()) {
 			whereClause.append(" AND DocStatus IN('CO')");
 		}
+
 		//	Is Invoiced
 		if(request.getIsWaitingForInvoice()) {
 			whereClause.append(" AND DocStatus NOT IN('VO', 'CL')")

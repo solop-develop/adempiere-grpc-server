@@ -254,6 +254,9 @@ public class POSConvertUtil {
 			.setIsAllowsCreateManualDocument(
 				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAllowsCreateManualDocument)
 			)
+			.setIsAccessAllOrgs(
+				AccessManagement.getBooleanValueFromPOS(pos, userId, ColumnsAdded.COLUMNNAME_IsAccessAllOrgs)
+			)
 		;
 
 		//	Set Price List and currency
