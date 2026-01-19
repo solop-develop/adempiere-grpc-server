@@ -92,4 +92,5 @@ public interface ColumnsAdded {
 	//
 	String COLUMNNAME_IsManualDocument = "IsManualDocument";
 	String COLUMNNAME_IsAllowsCreateManualDocument = "IsAllowsCreateManualDocument";
+	String COLUMNNAME_IsAccessAllOrgs = "IsAccessAllOrgs";
 }
