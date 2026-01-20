@@ -192,13 +192,16 @@ public class InvoiceFiscalDocument implements IFiscalDocument {
         } else if(documentType.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalDocumentType)
                 .equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Withholding)
                 && document.getReversal_ID() > 0) {
-            Timestamp documentDate = TimeUtil.getDayTime(document.getDateInvoiced(), document.getUpdated());
+
+            MInvoice reversalDocument = new MInvoice(document.getCtx(), document.getReversal_ID(), document.get_TrxName());
+            addReversalDocument(reversalDocument);
+            /*Timestamp documentDate = TimeUtil.getDayTime(document.getDateInvoiced(), document.getUpdated());
             String senderNo = null;
             String documentNo = document.getDocumentNo().replaceAll("^", "");
             if(document.get_ValueAsInt(ElectronicInvoicingChanges.SP013_FiscalSender_ID) > 0) {
                 senderNo = MADAppRegistration.getById(document.getCtx(), document.get_ValueAsInt(ElectronicInvoicingChanges.SP013_FiscalSender_ID), document.get_TrxName()).getValue();
             }
-            addReversalDocumentInfo(documentNo, documentDate, senderNo, getTransactionType());
+            addReversalDocumentInfo(documentNo, documentDate, senderNo, getTransactionType());*/
         }
 
         String whereClause = X_SP013_ElectronicLineSummary.COLUMNNAME_C_Invoice_ID + " = ?";

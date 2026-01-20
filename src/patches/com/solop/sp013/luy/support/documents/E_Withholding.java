@@ -3,7 +3,6 @@ package com.solop.sp013.luy.support.documents;
 import com.solop.sp013.core.documents.IFiscalDocument;
 import com.solop.sp013.core.documents.IFiscalDocumentLine;
 import com.solop.sp013.core.documents.ReversalDocument;
-import com.solop.sp013.core.util.ElectronicInvoicingChanges;
 import com.solop.sp013.luy.cfe.dto.invoicy.CFEInvoiCyType;
 import com.solop.sp013.luy.cfe.dto.invoicy.RetPerc;
 import com.solop.sp013.luy.util.StringUtil;
@@ -23,7 +22,6 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Implementation for e-Ticket:
@@ -48,13 +46,10 @@ public class E_Withholding implements ICFEDocument {
         CFEInvoiCyType.IdDoc invoicyIdDoc = new CFEInvoiCyType.IdDoc();
         invoicyIdDoc.setCFETipoCFE(new BigInteger(document.getTransactionType()));
         invoicyIdDoc.setCFEFchEmis(convertTimestampToGregorianCalendar(document.getDocumentDate()));
-        /*if(document.hasReversalDocument() && document.getGrandTotal().compareTo(Env.ZERO) < 0) {
-            String prefix = getPrefix(document.getFirstReversalDocument().getDocumentNo());
-            if(!Util.isEmpty(prefix)) {
-                invoicyIdDoc.setCFESerie(prefix);
-            }
-            invoicyIdDoc.setCFENro(getDocumentNo(document.getFirstReversalDocument().getDocumentNo()).add(BigInteger.ONE));
-        }*/
+        if(document.getFiscalDocumentNo() != null) {
+            invoicyIdDoc.setCFESerie(getPrefix(document.getFiscalDocumentNo()));
+            invoicyIdDoc.setCFENro(getDocumentNo(document.getFiscalDocumentNo()));
+        }
         if(document.isTaxIncluded()) {
             invoicyIdDoc.setCFEMntBruto(BigInteger.valueOf(1));
         } else {
@@ -233,6 +228,8 @@ public class E_Withholding implements ICFEDocument {
             referenceItem.setRefFechaCFEref(convertTimestampToGregorianCalendar(reversalDocument.getDocumentDate()));
 
             if (MSysConfig.getBooleanValue("INVOICY_USENEWDATA", false, Env.getAD_Client_ID(Env.getCtx()))){
+                referenceItem.setRefTpoMonedaRef(reversalDocument.getCurrencyCode());
+                referenceItem.setRefTipCambioRef(reversalDocument.getConversionRate());
                 referenceItem.setRefTipCambioRef(BigDecimal.ONE);
                 referenceItem.setRefTpoMonedaRef("UYU");
             }
