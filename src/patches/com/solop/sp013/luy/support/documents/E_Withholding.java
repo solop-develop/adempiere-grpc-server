@@ -230,8 +230,6 @@ public class E_Withholding implements ICFEDocument {
             if (MSysConfig.getBooleanValue("INVOICY_USENEWDATA", false, Env.getAD_Client_ID(Env.getCtx()))){
                 referenceItem.setRefTpoMonedaRef(reversalDocument.getCurrencyCode());
                 referenceItem.setRefTipCambioRef(reversalDocument.getConversionRate());
-                referenceItem.setRefTipCambioRef(BigDecimal.ONE);
-                referenceItem.setRefTpoMonedaRef("UYU");
             }
 
             references.add(referenceItem);
