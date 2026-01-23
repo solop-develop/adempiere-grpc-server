@@ -80,10 +80,11 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 		StringBuilder whereClause = new StringBuilder();
 		whereClause.append(MBankStatement.COLUMNNAME_C_BankAccount_ID).append("=? AND ")
 				.append("TRUNC(").append(MBankStatement.COLUMNNAME_StatementDate).append(",'DD')=? AND ")
-				.append(MBankStatement.COLUMNNAME_Processed).append("=?");
+				.append(MBankStatement.COLUMNNAME_Processed).append("=? AND ")
+				.append(MBankStatement.COLUMNNAME_Processing).append(" <> ?");
 		MBankStatement bankStatement = new Query(payment.getCtx() , MBankStatement.Table_Name , whereClause.toString(), payment.get_TrxName())
 				.setClient_ID()
-				.setParameters(payment.getC_BankAccount_ID(), TimeUtil.getDay(payment.getDateTrx()) , false)
+				.setParameters(payment.getC_BankAccount_ID(), TimeUtil.getDay(payment.getDateTrx()) , false, true)
 				.first();
 		if (bankStatement == null || bankStatement.get_ID() <= 0)
 		{
