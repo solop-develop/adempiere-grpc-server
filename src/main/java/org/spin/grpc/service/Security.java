@@ -332,7 +332,6 @@ public class Security extends SecurityImplBase {
 	
 	/**
 	 * Convert languages to gRPC
-	 * @param context
 	 * @param request
 	 * @return
 	 */
@@ -409,13 +408,16 @@ public class Security extends SecurityImplBase {
 		query
 			.setOrderBy(I_AD_Role.COLUMNNAME_Name)
 			// .setLimit(limit, offset)
-			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
-			.<MRole>list()
-			.forEach(role -> {
+			.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
+			.forEach(roleId -> {
+			// .<MRole>list()
+			// .forEach(role -> {
 				// MRole.get static method not instance the role in 0=* (asterisk)
 				// MRole role = role.get(Env.getCtx(), roleId);
+				Role.Builder orgBuilder = convertRole(roleId);
+				// Role.Builder orgBuilder = convertRole(role);
 				builder.addRoles(
-					convertRole(role)
+					orgBuilder
 				);
 			});
 		//	Return
@@ -530,12 +532,12 @@ public class Security extends SecurityImplBase {
 		query
 			.setOrderBy(I_AD_Org.COLUMNNAME_Name)
 			// .setLimit(limit, offset)
-			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
-			.<MOrg>list()
-			.forEach(organization -> {
+			.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
+			// .<MOrg>list()
+			.forEach(organizationId -> {
 				// MOrg.get static method not instance the organization in 0=* (asterisk)
 				// MOrg organization = MOrg.get(Env.getCtx(), organizationId);
-				Organization.Builder organizationBuilder = convertOrganization(organization);
+				Organization.Builder organizationBuilder = convertOrganization(organizationId);
 				builder.addOrganizations(organizationBuilder);
 			});
 		//	
@@ -544,7 +546,7 @@ public class Security extends SecurityImplBase {
 
 	/**
 	 * Convert organization
-	 * @param organization
+	 * @param organizationId
 	 * @return
 	 */
 	public static Organization.Builder convertOrganization(int organizationId) {
@@ -706,12 +708,12 @@ public class Security extends SecurityImplBase {
 		query
 			//.setLimit(limit, offset)
 			.setOrderBy(I_M_Warehouse.COLUMNNAME_Name)
-			// .getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
-			.<MWarehouse>list()
-			.forEach(warehouse -> {
+			.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
+			// .<MWarehouse>list()
+			.forEach(warehouseId -> {
 				// MWarehouse.get static method not instance the warehouse in 0=* (asterisk)
 				// MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
-				Warehouse.Builder warehouseBuilder = convertWarehouse(warehouse);
+				Warehouse.Builder warehouseBuilder = convertWarehouse(warehouseId);
 				builder.addWarehouses(
 					warehouseBuilder
 				);
@@ -722,7 +724,7 @@ public class Security extends SecurityImplBase {
 
 	/**
 	 * Convert warehouse
-	 * @param warehouse
+	 * @param warehouseId
 	 * @return
 	 */
 	public static Warehouse.Builder convertWarehouse(int warehouseId) {
@@ -816,6 +818,7 @@ public class Security extends SecurityImplBase {
 	/**
 	 * Get and convert session
 	 * @param request
+	 * @param isDefaultRole
 	 * @return
 	 */
 	private Session.Builder runLogin(LoginRequest request, boolean isDefaultRole) {
@@ -907,6 +910,7 @@ public class Security extends SecurityImplBase {
 	 * @param userId
 	 * @param organizationId
 	 * @param warehouseId
+	 * @param isOpenID
 	 * @return
 	 */
 	private Session.Builder createValidSession(boolean isDefaultRole, String clientVersion, String language, int roleId, int userId, int organizationId, int warehouseId, boolean isOpenID) {
@@ -1492,10 +1496,28 @@ public class Security extends SecurityImplBase {
 	}
 
 
+	private Role.Builder convertRole(int roleId) {
+		Role.Builder roleBuilder = Role.newBuilder();
+		if (roleId < 0) {
+			return roleBuilder;
+		}
+		MRole role = MRole.get(Env.getCtx(), roleId);
+		if (roleId == 0) {
+			role = new Query(
+				Env.getCtx(),
+				I_AD_Role.Table_Name,
+				"AD_Role_ID = 0",
+				null
+			)
+				.first()
+			;
+		}
+		roleBuilder = convertRole(role);
+		return roleBuilder;
+	}
 	/**
 	 * Convert role from model class
 	 * @param role
-	 * @param withAccess
 	 * @return
 	 */
 	private Role.Builder convertRole(MRole role) {
@@ -1689,7 +1711,6 @@ public class Security extends SecurityImplBase {
 	 * @param menu
 	 * @param parentId
 	 * @param language
-	 * @param withChild
 	 * @return
 	 */
 	private Menu.Builder convertMenu(Properties context, MMenu menu, int parentId, String language) {
