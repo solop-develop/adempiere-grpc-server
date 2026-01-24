@@ -133,16 +133,16 @@ public class SessionManager {
 	 * Get Default Country
 	 * @return
 	 */
-	public static MCountry getDefaultCountry() {
-		MClient client = MClient.get (Env.getCtx());
-		MLanguage language = MLanguage.get(Env.getCtx(), client.getAD_Language());
-		MCountry country = MCountry.get(Env.getCtx(), language.getCountryCode());
+	public static MCountry getDefaultCountry(Properties context) {
+		MClient client = MClient.get(context);
+		MLanguage language = MLanguage.get(client.getCtx(), client.getAD_Language());
+		MCountry country = MCountry.get(client.getCtx(), language.getCountryCode());
 		//	Verify
 		if(country != null) {
 			return country;
 		}
 		//	Default
-		return MCountry.getDefault(Env.getCtx());
+		return MCountry.getDefault(client.getCtx());
 	}
 	
 	/**
@@ -313,13 +313,12 @@ public class SessionManager {
 
 		Env.setContext (context, "#Date", TimeUtil.getDay(System.currentTimeMillis()));
 		MRole role = MRole.get(context, sessionData.roleId);
-		//	Warehouse / Org
-		Env.setContext(context, "#M_Warehouse_ID", sessionData.warehouseId);
+		//	Client / Org / Warehouse
 		Env.setContext(context, "#AD_Client_ID", role.getAD_Client_ID());
 		Env.setContext(context, "#AD_Org_ID", sessionData.organizationId);
-		//	Role Info
+		Env.setContext(context, "#M_Warehouse_ID", sessionData.warehouseId);
+		//	Role / User Info
 		Env.setContext(context, "#AD_Role_ID", sessionData.roleId);
-		//	User Info
 		Env.setContext(context, "#AD_User_ID", sessionData.userId);
 		//	
 		if (!isNewSession) {
@@ -533,7 +532,7 @@ public class SessionManager {
 		if(value == null) {
 			String sessionTimeoutAsString = MSysConfig.getValue(
 				"WEBUI_DEFAULT_TIMEOUT",
-				Env.getAD_Client_ID(Env.getCtx()),
+				Env.getAD_Client_ID(user.getCtx()),
 				0
 			);
 			sessionTimeout = NumberManager.getIntFromString(
@@ -844,10 +843,10 @@ public class SessionManager {
 			rs.close();
 			pstmt.close();
 			/**Define AcctSchema , Currency, HasAlias for Multi AcctSchema**/
-			MAcctSchema[] ass = MAcctSchema.getClientAcctSchema(Env.getCtx(), clientId);
+			MAcctSchema[] ass = MAcctSchema.getClientAcctSchema(context, clientId);
 			if(ass != null && ass.length > 1) {
 				for(MAcctSchema as : ass) {
-					acctSchemaId = MClientInfo.get(Env.getCtx(), clientId).getC_AcctSchema1_ID();
+					acctSchemaId = MClientInfo.get(context, clientId).getC_AcctSchema1_ID();
 					if (as.getAD_OrgOnly_ID() > 0) {
 						if (as.isSkipOrg(orgId)) {
 							continue;
@@ -944,7 +943,7 @@ public class SessionManager {
 			DB.close(rs, pstmt);
 		}
 		//	Country
-		MCountry country = getDefaultCountry();
+		MCountry country = getDefaultCountry(context);
 		if(country != null && country.getC_Country_ID() > 0) {
 			Env.setContext(context, "#C_Country_ID", country.getC_Country_ID());
 		}

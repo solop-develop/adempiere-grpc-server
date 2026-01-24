@@ -26,12 +26,11 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.compiere.model.MClient;
 import org.compiere.model.MCountry;
-import org.compiere.model.MLanguage;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.query.Filter;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.CollectionManager;
@@ -97,8 +96,7 @@ public class ContextManager {
 
 	/**
 	 * Get Context column names from context
-	 * @param context
-	 * @return
+	 * @param values
 	 * @return List<String>
 	 */
 	public static List<String> getContextColumnNames(String... values) {
@@ -226,6 +224,7 @@ public class ContextManager {
 	 * @param windowNo
 	 * @param context
 	 * @param attributes
+	 * @param isClearWindow
 	 * @return {Properties} context with new values
 	 */
 	public static Properties setContextWithAttributes(int windowNo, Properties context, Map<String, Object> attributes, boolean isClearWindow) {
@@ -249,7 +248,6 @@ public class ContextManager {
 
 	/**
 	 * Set context on window by object value
-	 * @param windowNo
 	 * @param context
 	 * @param windowNo
 	 * @param key
@@ -303,7 +301,6 @@ public class ContextManager {
 
 	/**
 	 * Set context on tab by object value
-	 * @param windowNo
 	 * @param context
 	 * @param windowNo
 	 * @param tabNo
@@ -343,11 +340,8 @@ public class ContextManager {
 
 	/**
 	 * Set context on window by object value
-	 * @param windowNo
-	 * @param context
-	 * @param windowNo
-	 * @param key
-	 * @param value
+	 * @param contextValue
+	 * @param displayTypeId
 	 * @return {Properties} context with new values
 	 */
 	public static Object getContextVaue(String contextValue, int displayTypeId) {
@@ -393,16 +387,17 @@ public class ContextManager {
 	 * Get Default Country
 	 * @return
 	 */
-	public static MCountry getDefaultCountry() {
-		MClient client = MClient.get (Env.getCtx());
-		MLanguage language = MLanguage.get(Env.getCtx(), client.getAD_Language());
-		MCountry country = MCountry.get(Env.getCtx(), language.getCountryCode());
-		//	Verify
-		if(country != null) {
-			return country;
-		}
-		//	Default
-		return MCountry.getDefault(Env.getCtx());
+	public static MCountry getDefaultCountry(Properties context) {
+		// MClient client = MClient.get(context);
+		// MLanguage language = MLanguage.get(context, client.getAD_Language());
+		// MCountry country = MCountry.get(context, language.getCountryCode());
+		// //	Verify
+		// if(country != null) {
+		// 	return country;
+		// }
+		// //	Default
+		// return MCountry.getDefault(context);
+		return SessionManager.getDefaultCountry(context);
 	}
 
 }

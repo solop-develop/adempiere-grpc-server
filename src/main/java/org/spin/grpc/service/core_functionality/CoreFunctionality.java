@@ -59,7 +59,6 @@ import org.spin.base.setup.SetupLoader;
 import org.spin.base.util.ContextManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -128,7 +127,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 		// backend info
 		builder.setBackendDateVersion(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					TimeManager.getTimestampFromString(Version.DATE_VERSION)
 				)
 			)
@@ -186,15 +185,15 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 
 	/**
 	 * Convert a Country
-	 * @param context
 	 * @param request
 	 * @return
 	 */
 	private Country.Builder getCountry(GetCountryRequest request) {
+		Properties context = Env.getCtx();
 		String key = null;
 		MCountry country = null;
 		if(request.getId() <= 0) {
-			country = ContextManager.getDefaultCountry();
+			country = ContextManager.getDefaultCountry(context);
 		}
 		int id = request.getId();
 		if(id > 0
@@ -202,7 +201,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			key = "ID:|" + request.getId();
 			country = countryCache.put(key, country);
 			if(country == null) {
-				country = MCountry.get(Env.getCtx(), request.getId());
+				country = MCountry.get(context, request.getId());
 			}
 		}
 		if(!Util.isEmpty(key)
@@ -210,7 +209,7 @@ public class CoreFunctionality extends CoreFunctionalityImplBase {
 			countryCache.put(key, country);
 		}
 		//	Return
-		return CoreFunctionalityConvert.convertCountry(Env.getCtx(), country);
+		return CoreFunctionalityConvert.convertCountry(context, country);
 	}
 
 
