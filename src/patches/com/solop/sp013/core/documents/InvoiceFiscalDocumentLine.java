@@ -28,7 +28,7 @@ import org.compiere.model.MUOM;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.spin.model.MWHSetting;
+import org.spin.model.MWHDefinition;
 import org.spin.model.MWHWithholding;
 
 import java.math.BigDecimal;
@@ -137,11 +137,11 @@ public class InvoiceFiscalDocumentLine implements IFiscalDocumentLine {
                 .setClient_ID()
                 .first();
         if (withholding != null && withholding.get_ID() > 0) {
-            MWHSetting setting = (MWHSetting)withholding.getWH_Setting();
-            if (setting == null || setting.get_ID() <= 0) {
-                throw new AdempiereException("@WH_Setting_ID@ @NotFound@");
+            MWHDefinition withholdingDefinition = (MWHDefinition)withholding.getWH_Definition();
+            if (withholdingDefinition == null || withholdingDefinition.get_ID() <= 0) {
+                throw new AdempiereException("@WH_Definition_ID@ @NotFound@");
             }
-            String code = setting.getValue();
+            String code = withholdingDefinition.get_ValueAsString("Value");
             BigDecimal percentage = withholding.getWithholdingRate();
             this.withholdingCode = code;
             this.withholdingRate = Optional.ofNullable(percentage).orElse(Env.ZERO);
