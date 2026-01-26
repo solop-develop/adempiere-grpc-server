@@ -36,7 +36,7 @@ import java.util.List;
 public class E_Withholding implements ICFEDocument {
     private IFiscalDocument document;
     private final CFEInvoiCyType ficalConvertedDocument;
-    private final int CONVERSION_RATE_SCALE = 3;
+    static final int CONVERSION_RATE_SCALE = 3;
 
     public E_Withholding() {
         ficalConvertedDocument = new CFEInvoiCyType();
@@ -186,7 +186,7 @@ public class E_Withholding implements ICFEDocument {
     private static CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem getRetencPercepItem(IFiscalDocumentLine documentLine) {
         CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem withholdingItemDetail = new CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem();
         withholdingItemDetail.setIteRetPercCodRet(documentLine.getWithholdingCode());
-        withholdingItemDetail.setIteRetPercTasa(documentLine.getWithholdingRate().toBigInteger());
+        withholdingItemDetail.setIteRetPercTasa(documentLine.getWithholdingRate().setScale(CONVERSION_RATE_SCALE, RoundingMode.HALF_UP));
 //            withholdingItemDetail.setIteRetPercMntSujetoaRet(retPercResg.getMntSujetoaRet());
         withholdingItemDetail.setIteRetPercValRetPerc(documentLine.getLineTotalAmount().setScale(2, RoundingMode.HALF_UP).abs());
         withholdingItemDetail.setIteRetPerc(RetPerc.R);
