@@ -3052,7 +3052,7 @@ public class CFEInvoiCyType {
                     @XmlElement(name = "IteRetPercDscRet")
                     protected String iteRetPercDscRet;
                     @XmlElement(name = "IteRetPercTasa")
-                    protected BigInteger iteRetPercTasa;
+                    protected BigDecimal iteRetPercTasa;
                     @XmlElement(name = "IteRetPercMntSujetoaRet")
                     protected BigDecimal iteRetPercMntSujetoaRet;
                     @XmlElement(name = "IteRetPercValRetPerc", required = true)
@@ -3116,7 +3116,7 @@ public class CFEInvoiCyType {
                      *     {@link BigInteger }
                      *     
                      */
-                    public BigInteger getIteRetPercTasa() {
+                    public BigDecimal getIteRetPercTasa() {
                         return iteRetPercTasa;
                     }
 
@@ -3128,7 +3128,7 @@ public class CFEInvoiCyType {
                      *     {@link BigInteger }
                      *     
                      */
-                    public void setIteRetPercTasa(BigInteger value) {
+                    public void setIteRetPercTasa(BigDecimal value) {
                         this.iteRetPercTasa = value;
                     }
 
