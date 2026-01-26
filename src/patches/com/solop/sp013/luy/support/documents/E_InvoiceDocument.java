@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class E_InvoiceDocument implements ICFEDocument {
     private IFiscalDocument document;
     private final CFEInvoiCyType ficalConvertedDocument;
-
+    private final int CONVERSION_RATE_SCALE = 3;
 
     public E_InvoiceDocument() {
         ficalConvertedDocument = new CFEInvoiCyType();
@@ -155,7 +155,7 @@ public class E_InvoiceDocument implements ICFEDocument {
     private CFEInvoiCyType.Totales convertTotals() {
         CFEInvoiCyType.Totales totals = new CFEInvoiCyType.Totales();
         totals.setTotTpoMoneda(com.solop.sp013.luy.cfe.dto.invoicy.TipMonType.valueOf(document.getCurrencyCode()));
-        totals.setTotTpoCambio(document.getCurrencyRate().setScale(3, RoundingMode.HALF_UP));
+        totals.setTotTpoCambio(document.getCurrencyRate().setScale(CONVERSION_RATE_SCALE, RoundingMode.HALF_UP));
         totals.setTotMntNoGrv(Env.ZERO);
         totals.setTotMntExpoyAsim(Env.ZERO);
         totals.setTotMntImpuestoPerc(Env.ZERO);
@@ -287,7 +287,7 @@ public class E_InvoiceDocument implements ICFEDocument {
                     referenceItem.setRefTpoDocRef(new BigInteger(reversalDocument.getTransactionType()));
                     referenceItem.setRefFechaCFEref(convertTimestampToGregorianCalendar(reversalDocument.getDocumentDate()));
                     if (MSysConfig.getBooleanValue("INVOICY_USENEWDATA", false, Env.getAD_Client_ID(Env.getCtx()))){
-                        referenceItem.setRefTipCambioRef(reversalDocument.getConversionRate().setScale(3, RoundingMode.HALF_UP));
+                        referenceItem.setRefTipCambioRef(reversalDocument.getConversionRate().setScale(CONVERSION_RATE_SCALE, RoundingMode.HALF_UP));
                         referenceItem.setRefTpoMonedaRef(reversalDocument.getCurrencyCode());
                     }
                     references.add(referenceItem);
