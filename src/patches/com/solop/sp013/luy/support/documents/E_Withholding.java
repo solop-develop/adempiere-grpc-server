@@ -46,6 +46,7 @@ public class E_Withholding implements ICFEDocument {
         CFEInvoiCyType.IdDoc invoicyIdDoc = new CFEInvoiCyType.IdDoc();
         invoicyIdDoc.setCFETipoCFE(new BigInteger(document.getTransactionType()));
         invoicyIdDoc.setCFEFchEmis(convertTimestampToGregorianCalendar(document.getDocumentDate()));
+        invoicyIdDoc.setCFEIdCompra(document.getPoReferenceNo());
         if(document.getFiscalDocumentNo() != null) {
             invoicyIdDoc.setCFESerie(getPrefix(document.getFiscalDocumentNo()));
             invoicyIdDoc.setCFENro(getDocumentNo(document.getFiscalDocumentNo()));
@@ -229,7 +230,7 @@ public class E_Withholding implements ICFEDocument {
 
             if (MSysConfig.getBooleanValue("INVOICY_USENEWDATA", false, Env.getAD_Client_ID(Env.getCtx()))){
                 referenceItem.setRefTpoMonedaRef(reversalDocument.getCurrencyCode());
-                referenceItem.setRefTipCambioRef(reversalDocument.getConversionRate());
+                referenceItem.setRefTipCambioRef(reversalDocument.getConversionRate().setScale(3, RoundingMode.HALF_UP));
             }
 
             references.add(referenceItem);
