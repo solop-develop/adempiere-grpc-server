@@ -55,6 +55,7 @@ public class GiftCardModelValidator implements ModelValidator {
 		}
 		engine.addModelChange(MProduct.Table_Name, this);
 		engine.addModelChange(MOrderLine.Table_Name, this);
+		engine.addModelChange(MOrder.Table_Name, this);
 
 		engine.addDocValidate(MOrder.Table_Name, this);
 	}
@@ -80,7 +81,7 @@ public class GiftCardModelValidator implements ModelValidator {
 		}else if (po instanceof MOrder) {
 			MOrder order = (MOrder) po;
 			if (type == TYPE_BEFORE_NEW
-				|| (order.is_ValueChanged(MOrder.COLUMNNAME_C_DocTypeTarget_ID) && order.getC_DocType_ID() > 0)) {
+				|| (order.is_ValueChanged(MOrder.COLUMNNAME_C_DocTypeTarget_ID) && order.getC_DocTypeTarget_ID() > 0)) {
 				MDocType docType = order.getDocumentType();
 				order.set_ValueOfColumn(IGiftCard.IsGenerateGiftCard, docType.get_ValueAsBoolean(IGiftCard.IsGenerateGiftCard));
 			}
@@ -167,6 +168,7 @@ public class GiftCardModelValidator implements ModelValidator {
 	private void createGiftCard(MOrder order, MOrderLine orderLine, BigDecimal qty, MTable giftCardTable, MTable giftCardLineTable) {
 
 		PO giftCard = giftCardTable.getPO(0, order.get_TrxName());
+		giftCard.setAD_Org_ID(order.getAD_Org_ID());
 		giftCard.set_ValueOfColumn(MOrder.COLUMNNAME_C_BPartner_ID, order.getC_BPartner_ID());
 		giftCard.set_ValueOfColumn(MOrder.COLUMNNAME_C_ConversionType_ID, order.getC_ConversionType_ID());
 		giftCard.set_ValueOfColumn(MOrder.COLUMNNAME_C_Currency_ID, order.getC_Currency_ID());
@@ -179,6 +181,7 @@ public class GiftCardModelValidator implements ModelValidator {
 		giftCard.saveEx();
 
 		PO giftCardLine = giftCardLineTable.getPO(0, order.get_TrxName());
+		giftCardLine.setAD_Org_ID(giftCard.getAD_Org_ID());
 		giftCardLine.set_ValueOfColumn(IGiftCard.Amount, qty.multiply(orderLine.getPriceEntered()));
 		giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_C_OrderLine_ID, orderLine.getC_OrderLine_ID());
 		giftCardLine.set_ValueOfColumn(MOrderLine.COLUMNNAME_C_UOM_ID, orderLine.getC_UOM_ID());
