@@ -30,6 +30,8 @@ import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_M_InOut;
 import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.core.domains.models.I_M_Product;
+import org.adempiere.core.domains.models.I_WM_InOutBound;
+import org.adempiere.core.domains.models.I_WM_InOutBoundLine;
 import org.adempiere.core.domains.models.X_M_InOut;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MDocType;
@@ -43,6 +45,8 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
+import org.eevolution.wms.model.MWMInOutBound;
+import org.eevolution.wms.model.MWMInOutBoundLine;
 import org.spin.backend.grpc.form.express_shipment.BusinessPartner;
 import org.spin.backend.grpc.form.express_shipment.CreateShipmentLineRequest;
 import org.spin.backend.grpc.form.express_shipment.CreateShipmentRequest;
@@ -50,12 +54,15 @@ import org.spin.backend.grpc.form.express_shipment.DeleteShipmentLineRequest;
 import org.spin.backend.grpc.form.express_shipment.DeleteShipmentRequest;
 import org.spin.backend.grpc.form.express_shipment.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.form.express_shipment.ListBusinessPartnersResponse;
+import org.spin.backend.grpc.form.express_shipment.ListOutBoundOrdersRequest;
+import org.spin.backend.grpc.form.express_shipment.ListOutBoundOrdersResponse;
 import org.spin.backend.grpc.form.express_shipment.ListProductsRequest;
 import org.spin.backend.grpc.form.express_shipment.ListProductsResponse;
 import org.spin.backend.grpc.form.express_shipment.ListSalesOrdersRequest;
 import org.spin.backend.grpc.form.express_shipment.ListSalesOrdersResponse;
 import org.spin.backend.grpc.form.express_shipment.ListShipmentLinesRequest;
 import org.spin.backend.grpc.form.express_shipment.ListShipmentLinesResponse;
+import org.spin.backend.grpc.form.express_shipment.OutBoundOrder;
 import org.spin.backend.grpc.form.express_shipment.ProcessShipmentRequest;
 import org.spin.backend.grpc.form.express_shipment.Product;
 import org.spin.backend.grpc.form.express_shipment.SalesOrder;
@@ -210,6 +217,130 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 
 	@Override
+	public void listOutBoundOrders(ListOutBoundOrdersRequest request, StreamObserver<ListOutBoundOrdersResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			ListOutBoundOrdersResponse.Builder builderList = listOutBoundOrders(request);
+			responseObserver.onNext(builderList.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	ListOutBoundOrdersResponse.Builder listOutBoundOrders(ListOutBoundOrdersRequest request) {
+		Properties context = Env.getCtx();
+
+		String whereClause = "AD_Client_ID = ? ";
+		List<Object> parameters = new ArrayList<Object>();
+		parameters.add(Env.getAD_Client_ID(context));
+
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
+		if (!Util.isEmpty(searchValue, true)) {
+			whereClause += " AND ("
+				+ "UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "
+				+ ")"
+			;
+			//	Add parameters
+			parameters.add(searchValue);
+		}
+
+		Query query = new Query(
+			context,
+			I_WM_InOutBound.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(parameters)
+			.setClient_ID()
+			// .setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
+
+		int count = query.count();
+		String nexPageToken = "";
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		//	Set page token
+		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListOutBoundOrdersResponse.Builder builderList = ListOutBoundOrdersResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(nexPageToken)
+		;
+
+		query.setLimit(limit, offset)
+			.setOrderBy("Created DESC")
+			.getIDsAsList()
+			.forEach(outBoundOrderId -> {
+				MWMInOutBound outBoundOrder = new MWMInOutBound(context, outBoundOrderId, null);
+				OutBoundOrder.Builder builder = convertOutBoundOrder(outBoundOrder);
+				builderList.addRecords(builder);
+			})
+		;
+
+		return builderList;
+	}
+
+	OutBoundOrder.Builder convertOutBoundOrder(MWMInOutBound outBoundOrder) {
+		OutBoundOrder.Builder builder = OutBoundOrder.newBuilder();
+		if (outBoundOrder == null) {
+			return builder;
+		}
+
+		builder.setId(
+				outBoundOrder.getWM_InOutBound_ID()
+			)
+			.setUuid(
+				TextManager.getValidString(
+					outBoundOrder.getUUID()
+				)
+			)
+			.setDocumentNo(
+				TextManager.getValidString(
+					outBoundOrder.getDocumentNo()
+				)
+			)
+			.setPickDate(
+				TimeManager.getProtoTimestampFromTimestamp(
+					outBoundOrder.getPickDate()
+				)
+			)
+			.setShipDate(
+				TimeManager.getProtoTimestampFromTimestamp(
+					outBoundOrder.getShipDate()
+				)
+			)
+			.setDescription(
+				TextManager.getValidString(
+					outBoundOrder.getDescription()
+				)
+			)
+		;
+
+		return builder;
+	}
+
+
+
+	@Override
 	public void listSalesOrders(ListSalesOrdersRequest request, StreamObserver<ListSalesOrdersResponse> responseObserver) {
 		try {
 			if (request == null) {
@@ -244,12 +375,14 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			throw new AdempiereException("@FillMandatory@ @C_BPartner_ID@");
 		}
 
-		String whereClause = "IsSOTrx='Y' "
+		String whereClause = "IsSOTrx = 'Y' "
 			+ "AND C_BPartner_ID = ? "
 			+ "AND DocStatus IN ('CL','CO')"
-			+ "AND EXISTS(SELECT 1 FROM C_OrderLine ol "
-			+ "WHERE ol.C_Order_ID = C_Order.C_Order_ID "
-			+ "AND COALESCE(ol.QtyOrdered, 0) - COALESCE(ol.QtyDelivered, 0) > 0)"
+			+ "AND EXISTS("
+				+ "SELECT 1 FROM C_OrderLine AS ol "
+				+ "WHERE ol.C_Order_ID = C_Order.C_Order_ID "
+				+ "AND COALESCE(ol.QtyOrdered, 0) - COALESCE(ol.QtyDelivered, 0) > 0"
+			+") "
 		;
 		List<Object> parameters = new ArrayList<Object>();
 		parameters.add(businessPartnerId);
@@ -267,6 +400,22 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			;
 			//	Add parameters
 			parameters.add(searchValue);
+		}
+
+		if (request.getOutBoundOrderId() > 0) {
+			whereClause += " AND EXISTS("
+					+ "SELECT 1 FROM WM_InOutboundLine AS obl "
+					+ "JOIN C_OrderLine AS ol ON obl.C_OrderLine_ID = ol.C_OrderLine_ID "
+					+ "WHERE "
+						+ "obl.WM_InOutbound_ID = ? "
+						+ "AND ol.C_Order_ID = C_Order.C_Order_ID "
+						+ "AND ("
+							+ "obl.C_Order_ID = C_Order.C_Order_ID "
+							+ "OR obl.C_OrderLine_ID = ol.C_OrderLine_ID "
+						+ ")"
+				+ ") "
+			;
+			parameters.add(request.getOutBoundOrderId());
 		}
 
 		Query query = new Query(
@@ -316,6 +465,11 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		}
 		builder.setId(
 				salesOrder.getC_Order_ID()
+			)
+			.setUuid(
+				TextManager.getValidString(
+					salesOrder.getUUID()
+				)
 			)
 			.setDateOrdered(
 				TimeManager.getProtoTimestampFromTimestamp(
@@ -766,16 +920,15 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 	}
 
 	private ShipmentLine.Builder createShipmentLine(CreateShipmentLineRequest request) {
-		int shipmentId = request.getShipmentId();
-		int projectId = request.getProjectId();
-		int activityId = request.getActivityId();
+		final int shipmentId = request.getShipmentId();
 		if (shipmentId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_InOut_ID@");
 		}
-		int productId = request.getProductId();
+		final int productId = request.getProductId();
 		if (productId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_Product_ID@");
 		}
+		final int outBoundOrderId = request.getOutBoundOrderId();
 
 		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
 
@@ -789,9 +942,11 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			}
 
 			final String whereClause = "M_Product_ID = ? "
-				+ "AND EXISTS(SELECT 1 FROM M_InOut "
-				+ "WHERE M_InOut.C_Order_ID = C_OrderLine.C_Order_ID "
-				+ "AND M_InOut.M_InOut_ID = ?)"
+				+ "AND EXISTS("
+					+ "SELECT 1 FROM M_InOut AS out "
+					+ "WHERE out.C_Order_ID = C_OrderLine.C_Order_ID "
+					+ "AND out.M_InOut_ID = ? "
+				+") "
 			;
 			MOrderLine salesOrderLine = new Query(
 				Env.getCtx(),
@@ -801,7 +956,8 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			)
 				.setParameters(productId, shipmentId)
 				.setClient_ID()
-				.first();
+				.first()
+			;
 			if (salesOrderLine == null || salesOrderLine.getC_OrderLine_ID() <= 0) {
 				throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 			}
@@ -824,14 +980,16 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				throw new AdempiereException("@QtyInsufficient@");
 			}
 
+			final int projectId = request.getProjectId();
+			final int activityId = request.getActivityId();
+
 			Optional<MInOutLine> maybeShipmentLine = Arrays.asList(shipment.getLines(true))
 				.parallelStream()
 				.filter(shipmentLineTofind -> {
 					return shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
 				})
-				.findFirst();
-
-
+				.findFirst()
+			;
 			MInOutLine shipmentLine = null;
 			if (maybeShipmentLine.isPresent()) {
 				shipmentLine = maybeShipmentLine.get();
@@ -847,6 +1005,24 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 				shipmentLine.setC_Project_ID(projectId);
 				shipmentLine.setC_Activity_ID(activityId);
 			}
+
+			// Link to OutBound Line if provided
+			if (outBoundOrderId > 0) {
+				MWMInOutBoundLine outBoundLine = new Query(
+					Env.getCtx(),
+					I_WM_InOutBoundLine.Table_Name,
+					"C_OrderLine_ID = ? AND WM_InOutBound_ID = ?",
+					transactionName
+				)
+					.setParameters(salesOrderLine.getC_OrderLine_ID(), outBoundOrderId)
+					.setClient_ID()
+					.first()
+				;
+				if (outBoundLine != null && outBoundLine.getWM_InOutBoundLine_ID() > 0) {
+					shipmentLine.setWM_InOutBoundLine_ID(outBoundLine.getWM_InOutBoundLine_ID());
+				}
+			}
+
 			shipmentLine.saveEx(transactionName);
 
 			shipmentLineReference.set(shipmentLine);
