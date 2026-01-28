@@ -47,6 +47,9 @@ public class PPBatchAdjustDifferences extends PPBatchAdjustDifferencesAbstract
 	@Override
 	protected String doIt() throws Exception
 	{
+		if (getRecord_ID() <= 0) {
+			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @NotFound@");
+		}
 		if (getCorrectAmount().signum() == 0) {
 			throw new AdempiereException("@CorrectAmount@: 0");
 		}
@@ -56,11 +59,12 @@ public class PPBatchAdjustDifferences extends PPBatchAdjustDifferencesAbstract
 		if (getChargeId() <= 0) {
 			throw new AdempiereException("@C_Charge_ID@ @NotFound@");
 		}
+		MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getRecord_ID(), get_TrxName());
+		if (batch.isProcessed()) {
+			throw new AdempiereException("@C_PaymentProcessorBatch_ID@ @DocProcessed@");
+		}
 
 		MPayment originalPayment = new MPayment(getCtx(), getPaymentId(), get_TrxName());
-		if (originalPayment.get_ID() <= 0) {
-			throw new AdempiereException("@C_Payment_ID@ @NotFound@");
-		}
 
 		if (!originalPayment.getDocStatus().equals(MPayment.DOCSTATUS_Completed)
 				&& !originalPayment.getDocStatus().equals(MPayment.DOCSTATUS_Closed)) {
@@ -68,7 +72,9 @@ public class PPBatchAdjustDifferences extends PPBatchAdjustDifferencesAbstract
 		}
 
 		BigDecimal difference = originalPayment.getPayAmt().subtract(getCorrectAmount());
-
+		if (!originalPayment.isReceipt()){
+			difference = difference.negate();
+		}
 		if (difference.signum() == 0) {
 			throw new AdempiereException ("@CorrectAmount@ = @PayAmt@");
 		}
@@ -90,7 +96,7 @@ public class PPBatchAdjustDifferences extends PPBatchAdjustDifferencesAbstract
 		adjustmentPayment.setIsReceipt(isReceipt);
 		adjustmentPayment.setPayAmt(adjustmentAmount);
 		adjustmentPayment.setC_Charge_ID(getChargeId());
-
+		adjustmentPayment.setAD_Org_ID(originalPayment.getAD_Org_ID());
 		adjustmentPayment.setC_Invoice_ID(-1);
 		adjustmentPayment.setC_Order_ID(-1);
 		adjustmentPayment.setWithdrawal_ID(-1);
@@ -116,9 +122,8 @@ public class PPBatchAdjustDifferences extends PPBatchAdjustDifferencesAbstract
 			originalPayment, adjustmentPayment, adjustmentAmount, description);
 
 		// Assign the payment to the PaymentProcessorBatch
-		if (getRecord_ID() > 0) {
-			assignPaymentToBatch(adjustmentPayment, adjustmentAmount, isReceipt);
-		}
+		assignPaymentToBatch(adjustmentPayment, adjustmentAmount, isReceipt, batch.getAD_Org_ID());
+
 
 		return "@C_Payment_ID@: " + adjustmentPayment.getDocumentNo() +
 			   " - @C_BankStatement_ID@: " + bankStatement.getDocumentNo() +
@@ -141,7 +146,7 @@ public class PPBatchAdjustDifferences extends PPBatchAdjustDifferencesAbstract
 	{
 
 		MBankStatement bankStatement = new MBankStatement(getCtx(), 0, get_TrxName());
-		bankStatement.setAD_Org_ID(adjustmentPayment.getAD_Org_ID());
+		bankStatement.setAD_Org_ID(originalPayment.getAD_Org_ID());
 		bankStatement.setC_BankAccount_ID(originalPayment.getC_BankAccount_ID());
 		bankStatement.setStatementDate(documentDate);
 		bankStatement.setName(Msg.parseTranslation(getCtx(), "@Difference@: @C_Payment_ID@") + ": " +
@@ -177,12 +182,12 @@ public class PPBatchAdjustDifferences extends PPBatchAdjustDifferencesAbstract
 	private void assignPaymentToBatch(
 		MPayment adjustmentPayment,
 		BigDecimal adjustmentAmount,
-		boolean isReceipt)
+		boolean isReceipt, int orgId)
 	{
 		MPPBatchLine ppBatchLine = new MPPBatchLine(getCtx(), 0, get_TrxName());
 		ppBatchLine.setC_PaymentProcessorBatch_ID(getRecord_ID());
 		ppBatchLine.setC_Payment_ID(adjustmentPayment.getC_Payment_ID());
-
+		ppBatchLine.setAD_Org_ID(orgId);
 		// Determine multiplier: negative for payments (not receipts)
 		BigDecimal multiplier = isReceipt ? BigDecimal.ONE : BigDecimal.ONE.negate();
 
